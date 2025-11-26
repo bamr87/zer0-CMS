@@ -1,49 +1,95 @@
-.. Parodynews documentation master file, created by
-   sphinx-quickstart on Fri Sep 20 19:37:28 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+=====================================
+Parodynews Documentation
+=====================================
 
-Parodynews documentation
-========================
-
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
-Welcome to Parodynews's documentation!
-======================================
-
-**parortd** (/lu'make/) is a Python library for cooks and food lovers that
-creates recipes mixing random ingredients.  It pulls data from the `Open Food
-Facts database <https://world.openfoodfacts.org/>`_ and offers a *simple* and
-*intuitive* API.
+Welcome to the Parodynews documentation! Parodynews is a Django-based parody news generator 
+that leverages OpenAI's API to create satirical content. This application provides a complete 
+workflow for managing AI assistants, generating content, and publishing to GitHub Pages.
 
 .. note::
 
-   This project is under active development.
+   This documentation is actively being developed. If you find any issues or have suggestions,
+   please open an issue on `GitHub <https://github.com/bamr87/barodybroject>`_.
+
+Quick Links
+===========
+
+* :doc:`getting-started/installation` - Get started quickly
+* :doc:`api-reference/index` - Complete API reference
+* :doc:`user-guide/index` - User guides and tutorials
+* :doc:`developer-guide/index` - Contributing to the project
+
+Features
+========
+
+* **AI-Powered Content Generation**: Leverage OpenAI's GPT models for creating parody news
+* **Assistant Management**: Configure and manage multiple AI assistants with custom instructions
+* **Thread-Based Workflows**: Organize conversations and content generation in threads
+* **GitHub Integration**: Automatically publish content to GitHub Pages
+* **Django Admin Interface**: Comprehensive admin interface for managing all aspects
+* **REST API**: Full REST API support via Django REST Framework
+* **Docker Support**: Containerized development and deployment
+* **Azure Ready**: Deploy to Azure Container Apps with Bicep templates
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started
+   :hidden:
 
-Contents
---------
+   getting-started/index
 
 .. toctree::
+   :maxdepth: 2
+   :caption: User Guide
+   :hidden:
 
-   usage
-   api
-   views
+   user-guide/index
 
-Check out the :doc:`usage` section for further information.
-:ref:`install <installation>` the project.
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer Guide
+   :hidden:
 
-Modules
-=======
+   developer-guide/index
 
-.. autosummary::
-   :toctree: modules
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+   :hidden:
 
-   foobar.foo
-   foobar.bar
-   foobar.bar.baz
+   api-reference/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Integrations
+   :hidden:
+
+   integrations/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+   :hidden:
+
+   tutorials/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: How-To Guides
+   :hidden:
+
+   how-to/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+   :hidden:
+
+   reference/index
+
+Indices and Tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
