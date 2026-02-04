@@ -1,0 +1,129 @@
+# DrSAI CI/CD Pipeline
+# Runs tests, linting, and publishes to PyPI on release tags
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    defaults:
+      run:
+        working-directory: drsai
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: drsai/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Download NLTK data
+        run: |
+          python -c "import nltk; nltk.download('cmudict', quiet=True)"
+
+      - name: Run linting (ruff)
+        run: ruff check src/
+
+      - name: Run formatting check (black)
+        run: black --check src/ tests/
+
+      - name: Run type checking (mypy)
+        run: mypy src/drsai/ --ignore-missing-imports
+        continue-on-error: true  # Don't fail on type errors for now
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ -v --cov=drsai --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          files: drsai/coverage.xml
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drsai
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dev dependencies
+        run: |
+          pip install ruff black mypy
+
+      - name: Run ruff
+        run: ruff check src/
+
+      - name: Run black
+        run: black --check src/ tests/
+
+  publish:
+    name: Publish to PyPI
+    needs: [test, lint]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write  # For trusted publishing
+
+    defaults:
+      run:
+        working-directory: drsai
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tools
+        run: |
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: drsai/dist/
+
+
