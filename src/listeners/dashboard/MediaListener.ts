@@ -67,6 +67,18 @@ export class MediaListener extends BaseListener {
           Folders.createFolder(msg?.payload.hexoAssetFolderPath);
         }
         break;
+      case DashboardMessage.processImage:
+        await this.processImage(msg?.payload);
+        break;
+      case DashboardMessage.getImageProcessingProviders:
+        this.getImageProcessingProviders();
+        break;
+      case DashboardMessage.getImageProcessingPrompts:
+        this.getImageProcessingPrompts();
+        break;
+      case DashboardMessage.estimateImageProcessingCost:
+        this.estimateImageProcessingCost(msg?.payload);
+        break;
     }
   }
 
@@ -279,4 +291,130 @@ export class MediaListener extends BaseListener {
       // Do nothing
     }
   }
+
+  /**
+   * Process an image with AI
+   * @param data
+   */
+  private static async processImage(data: {
+    file: string;
+    prompt: string;
+    provider?: string;
+    options?: any;
+    page: number;
+    folder: string | null;
+  }) {
+    try {
+      const { AiImageProcessor } = await import('../../services/AiImageProcessor');
+      const { ImageBackup } = await import('../../helpers/ImageBackup');
+
+      // Check if feature is enabled
+      if (!AiImageProcessor.isEnabled()) {
+        this.sendMsg(DashboardCommand.showNotification, {
+          type: 'warning',
+          message: localize(LocalizationKey.listenersDashboardMediaListenersImageProcessingDisabled)
+        });
+        return;
+      }
+
+      // Create backup before processing
+      await ImageBackup.createBackup(data.file);
+
+      // Process the image
+      const result = await AiImageProcessor.processImage(data.file, {
+        prompt: data.prompt,
+        provider: data.provider as 'openai' | 'stability' | 'custom',
+        ...data.options
+      });
+
+      if (result.success && result.imageData) {
+        // Save the processed image
+        const MediaHelpers = (await import('../../helpers/MediaHelpers')).MediaHelpers;
+        const fileName = parse(data.file).base;
+        const folderPath = parse(data.file).dir;
+
+        await MediaHelpers.saveFile({
+          fileName,
+          contents: result.imageData,
+          folder: folderPath
+        });
+
+        // Add to processing history
+        await ImageBackup.addHistory(data.file, {
+          timestamp: new Date(),
+          prompt: data.prompt,
+          provider: data.provider || 'openai',
+          originalPath: data.file,
+          processedPath: data.file,
+          success: true
+        });
+
+        this.sendMsg(DashboardCommand.showNotification, {
+          type: 'success',
+          message: localize(LocalizationKey.listenersDashboardMediaListenersImageProcessingSuccess)
+        });
+
+        // Refresh media files
+        this.sendMediaFiles(data.page || 0, data.folder || '');
+      } else {
+        this.sendMsg(DashboardCommand.showNotification, {
+          type: 'error',
+          message: localize(
+            LocalizationKey.listenersDashboardMediaListenersImageProcessingFailed,
+            result.error || 'Unknown error'
+          )
+        });
+      }
+    } catch (error) {
+      const errorMsg = (error as Error).message;
+      this.sendMsg(DashboardCommand.showNotification, {
+        type: 'error',
+        message: localize(LocalizationKey.listenersDashboardMediaListenersImageProcessingError, errorMsg)
+      });
+    }
+  }
+
+  /**
+   * Get available image processing providers
+   */
+  private static getImageProcessingProviders() {
+    try {
+      const { AiImageProcessor } = require('../../services/AiImageProcessor');
+      const providers = AiImageProcessor.getAvailableProviders();
+
+      this.sendMsg(DashboardCommand.imageProcessingProviders, providers);
+    } catch (error) {
+      this.sendMsg(DashboardCommand.imageProcessingProviders, []);
+    }
+  }
+
+  /**
+   * Get default image processing prompts
+   */
+  private static getImageProcessingPrompts() {
+    try {
+      const { AiImageProcessor } = require('../../services/AiImageProcessor');
+      const prompts = AiImageProcessor.getDefaultPrompts();
+
+      this.sendMsg(DashboardCommand.imageProcessingPrompts, prompts);
+    } catch (error) {
+      this.sendMsg(DashboardCommand.imageProcessingPrompts, []);
+    }
+  }
+
+  /**
+   * Estimate image processing cost
+   * @param data
+   */
+  private static estimateImageProcessingCost(data: { provider: string; size: string }) {
+    try {
+      const { AiImageProcessor } = require('../../services/AiImageProcessor');
+      const cost = AiImageProcessor.estimateCost(data.provider, data.size);
+
+      this.sendMsg(DashboardCommand.imageProcessingCost, cost);
+    } catch (error) {
+      this.sendMsg(DashboardCommand.imageProcessingCost, 0);
+    }
+  }
 }
+

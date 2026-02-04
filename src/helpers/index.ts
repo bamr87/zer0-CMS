@@ -9,6 +9,7 @@ export * from './Extension';
 export * from './FilesHelper';
 export * from './FrameworkDetector';
 export * from './GroupBy';
+export * from './ImageBackup';
 export * from './ImageHelper';
 export * from './Logger';
 export * from './MediaHelpers';

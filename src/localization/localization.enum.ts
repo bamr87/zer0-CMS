@@ -2703,5 +2703,104 @@ export enum LocalizationKey {
   /**
    * Starting local server
    */
-  servicesTerminalOpenLocalServerTerminalTerminalOptionMessage = 'services.terminal.openLocalServerTerminal.terminalOption.message'
+  servicesTerminalOpenLocalServerTerminalTerminalOptionMessage = 'services.terminal.openLocalServerTerminal.terminalOption.message',
+  
+  /**
+   * No API key found for provider: {0}
+   */
+  servicesAiImageProcessorNoApiKey = 'services.aiImageProcessor.noApiKey',
+  /**
+   * Image file not found: {0}
+   */
+  servicesAiImageProcessorFileNotFound = 'services.aiImageProcessor.fileNotFound',
+  /**
+   * Unsupported provider: {0}
+   */
+  servicesAiImageProcessorUnsupportedProvider = 'services.aiImageProcessor.unsupportedProvider',
+  /**
+   * The {0} image processing took too long. Please try again later.
+   */
+  servicesAiImageProcessorTimeout = 'services.aiImageProcessor.timeout',
+  /**
+   * No result returned from AI provider
+   */
+  servicesAiImageProcessorNoResult = 'services.aiImageProcessor.noResult',
+  /**
+   * No custom endpoint configured
+   */
+  servicesAiImageProcessorNoCustomEndpoint = 'services.aiImageProcessor.noCustomEndpoint',
+  /**
+   * API key not configured for {0}. Please set it in settings: {1}
+   */
+  servicesAiImageProcessorMissingApiKey = 'services.aiImageProcessor.missingApiKey',
+  
+  /**
+   * AI image processing is disabled. Enable it in settings first.
+   */
+  commandsImageProcessingDisabled = 'commands.imageProcessing.disabled',
+  /**
+   * Custom prompt...
+   */
+  commandsImageProcessingCustomPrompt = 'commands.imageProcessing.customPrompt',
+  /**
+   * Select a processing prompt
+   */
+  commandsImageProcessingSelectPrompt = 'commands.imageProcessing.selectPrompt',
+  /**
+   * Enter your custom processing prompt
+   */
+  commandsImageProcessingEnterPrompt = 'commands.imageProcessing.enterPrompt',
+  /**
+   * E.g., Enhance image quality and remove noise
+   */
+  commandsImageProcessingPromptPlaceholder = 'commands.imageProcessing.promptPlaceholder',
+  /**
+   * Select AI provider
+   */
+  commandsImageProcessingSelectProvider = 'commands.imageProcessing.selectProvider',
+  /**
+   * Process image with {0}? Estimated cost: ${1}
+   */
+  commandsImageProcessingConfirm = 'commands.imageProcessing.confirm',
+  /**
+   * Proceed
+   */
+  commonProceed = 'common.proceed',
+  /**
+   * Processing image with AI...
+   */
+  commandsImageProcessingProgress = 'commands.imageProcessing.progress',
+  /**
+   * Image processed successfully!
+   */
+  commandsImageProcessingSuccess = 'commands.imageProcessing.success',
+  /**
+   * Failed to process image: {0}
+   */
+  commandsImageProcessingFailed = 'commands.imageProcessing.failed',
+  /**
+   * Error processing image: {0}
+   */
+  commandsImageProcessingError = 'commands.imageProcessing.error',
+  
+  /**
+   * Deleting media folder
+   */
+  listenersDashboardMediaListenersDeleteMediaFolderProgressTitle = 'listeners.dashboard.mediaListeners.deleteMediaFolder.progressTitle',
+  /**
+   * AI image processing is disabled
+   */
+  listenersDashboardMediaListenersImageProcessingDisabled = 'listeners.dashboard.mediaListeners.imageProcessing.disabled',
+  /**
+   * Image processed successfully
+   */
+  listenersDashboardMediaListenersImageProcessingSuccess = 'listeners.dashboard.mediaListeners.imageProcessing.success',
+  /**
+   * Failed to process image: {0}
+   */
+  listenersDashboardMediaListenersImageProcessingFailed = 'listeners.dashboard.mediaListeners.imageProcessing.failed',
+  /**
+   * Error processing image: {0}
+   */
+  listenersDashboardMediaListenersImageProcessingError = 'listeners.dashboard.mediaListeners.imageProcessing.error'
 }

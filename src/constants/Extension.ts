@@ -49,6 +49,9 @@ export const COMMAND_NAME = {
   insertMedia: getCommandName('insertMedia'),
   insertSnippet: getCommandName('insertSnippet'),
 
+  // AI Image Processing
+  processPreviewImage: getCommandName('processPreviewImage'),
+
   // WYSIWYG
   bold: getCommandName('markup.bold'),
   italic: getCommandName('markup.italic'),

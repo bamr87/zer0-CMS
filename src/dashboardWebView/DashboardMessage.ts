@@ -48,6 +48,10 @@ export enum DashboardMessage {
   createHexoAssetFolder = 'createHexoAssetFolder',
   getUnmappedMedia = 'getUnmappedMedia',
   remapMediaMetadata = 'remapMediaMetadata',
+  processImage = 'processImage',
+  getImageProcessingProviders = 'getImageProcessingProviders',
+  getImageProcessingPrompts = 'getImageProcessingPrompts',
+  estimateImageProcessingCost = 'estimateImageProcessingCost',
 
   // Data dashboard
   getDataEntries = 'getDataEntries',

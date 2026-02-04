@@ -31,7 +31,8 @@ import {
   Settings,
   StatusListener,
   Chatbot,
-  Taxonomy
+  Taxonomy,
+  ImageProcessing
 } from './commands';
 import { join } from 'path';
 import { Terminal } from './services';
@@ -131,6 +132,9 @@ export async function activate(context: vscode.ExtensionContext) {
   ContentType.registerCommands();
   Content.registerCommands();
   Folders.registerCommands();
+
+  // Image processing commands
+  ImageProcessing.registerCommands();
 
   // Project commands
   Project.registerCommands();

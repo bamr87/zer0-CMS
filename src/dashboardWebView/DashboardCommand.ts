@@ -11,5 +11,11 @@ export enum DashboardCommand {
   searchReady = 'searchReady',
 
   // Taxonomy dashboard
-  setTaxonomyData = 'setTaxonomyData'
+  setTaxonomyData = 'setTaxonomyData',
+
+  // Image processing
+  imageProcessingProviders = 'imageProcessingProviders',
+  imageProcessingPrompts = 'imageProcessingPrompts',
+  imageProcessingCost = 'imageProcessingCost',
+  showNotification = 'showNotification'
 }

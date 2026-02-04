@@ -145,6 +145,51 @@
           "markdownDescription": "%setting.frontMatter.sponsors.ai.enabled.markdownDescription%",
           "scope": "Sponsors"
         },
+        "frontMatter.ai.image.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%setting.frontMatter.ai.image.enabled.markdownDescription%"
+        },
+        "frontMatter.ai.image.provider": {
+          "type": "string",
+          "enum": ["openai", "stability", "custom"],
+          "default": "openai",
+          "markdownDescription": "%setting.frontMatter.ai.image.provider.markdownDescription%"
+        },
+        "frontMatter.ai.image.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%setting.frontMatter.ai.image.openaiApiKey.markdownDescription%"
+        },
+        "frontMatter.ai.image.stabilityApiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%setting.frontMatter.ai.image.stabilityApiKey.markdownDescription%"
+        },
+        "frontMatter.ai.image.customApiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%setting.frontMatter.ai.image.customApiKey.markdownDescription%"
+        },
+        "frontMatter.ai.image.customEndpoint": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%setting.frontMatter.ai.image.customEndpoint.markdownDescription%"
+        },
+        "frontMatter.ai.image.defaultPrompts": {
+          "type": "array",
+          "default": [
+            "Enhance image quality and remove noise",
+            "Improve lighting and colors",
+            "Remove background",
+            "Make image more professional",
+            "Sharpen details and increase clarity"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "%setting.frontMatter.ai.image.defaultPrompts.markdownDescription%"
+        },
         "frontMatter.extensibility.scripts": {
           "type": "array",
           "markdownDescription": "%setting.frontMatter.extensibility.scripts.markdownDescription%",
@@ -2308,6 +2353,12 @@
           "dark": "/assets/icons/media-dark.svg",
           "light": "/assets/icons/media-light.svg"
         }
+      },
+      {
+        "command": "frontMatter.processPreviewImage",
+        "title": "%command.frontMatter.processPreviewImage%",
+        "category": "Front Matter",
+        "icon": "$(sparkle)"
       },
       {
         "command": "frontMatter.insertSnippet",

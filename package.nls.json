@@ -27,6 +27,7 @@
   "command.frontMatter.init": "Initialize project",
   "command.frontMatter.insertCategories": "Insert categories",
   "command.frontMatter.insertMedia": "Insert media into your content",
+  "command.frontMatter.processPreviewImage": "Process preview image with AI",
   "command.frontMatter.insertSnippet": "Insert snippet into your content",
   "command.frontMatter.insertTags": "Insert tags",
   "command.frontMatter.markup.italic": "Italic",
@@ -292,5 +293,13 @@
 
   "setting.frontMatter.git.disableOnBranches.markdownDescription": "Specify the branches on which you want to disable the Git actions. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.git.disableonbranches) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.git.disableonbranches%22%5D)",
   "setting.frontMatter.git.requiresCommitMessage.markdownDescription": "Specify if you want to require a commit message when publishing your changes for a specified branch. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.git.requirescommitmessage) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.git.requirescommitmessage%22%5D)",
-  "setting.frontMatter.copilot.family.markdownDescription": "Specify the LLM family of the Copilot you want to use. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.copilot.family) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.copilot.family%22%5D)"
+  "setting.frontMatter.copilot.family.markdownDescription": "Specify the LLM family of the Copilot you want to use. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.copilot.family) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.copilot.family%22%5D)",
+  
+  "setting.frontMatter.ai.image.enabled.markdownDescription": "Specify if you want to enable AI-powered image processing features. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.ai.image.enabled) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.ai.image.enabled%22%5D)",
+  "setting.frontMatter.ai.image.provider.markdownDescription": "Specify the AI provider to use for image processing (openai, stability, or custom). [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.ai.image.provider) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.ai.image.provider%22%5D)",
+  "setting.frontMatter.ai.image.openaiApiKey.markdownDescription": "Specify your OpenAI API key for image processing. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.ai.image.openaiApiKey) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.ai.image.openaiApiKey%22%5D)",
+  "setting.frontMatter.ai.image.stabilityApiKey.markdownDescription": "Specify your Stability AI API key for image processing. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.ai.image.stabilityApiKey) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.ai.image.stabilityApiKey%22%5D)",
+  "setting.frontMatter.ai.image.customApiKey.markdownDescription": "Specify your custom API key for image processing. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.ai.image.customApiKey) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.ai.image.customApiKey%22%5D)",
+  "setting.frontMatter.ai.image.customEndpoint.markdownDescription": "Specify the custom API endpoint for image processing. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.ai.image.customEndpoint) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.ai.image.customEndpoint%22%5D)",
+  "setting.frontMatter.ai.image.defaultPrompts.markdownDescription": "Specify the default prompts available for image processing. [Docs](https://frontmatter.codes/docs/settings/overview#frontmatter.ai.image.defaultPrompts) - [View in VS Code](command:simpleBrowser.show?%5B%22https://frontmatter.codes/docs/settings/overview%23frontmatter.ai.image.defaultPrompts%22%5D)"
 }

@@ -6,6 +6,7 @@ export * from './Content';
 export * from './Dashboard';
 export * from './Diagnostics';
 export * from './Folders';
+export * from './ImageProcessing';
 export * from './Preview';
 export * from './Project';
 export * from './Settings';
