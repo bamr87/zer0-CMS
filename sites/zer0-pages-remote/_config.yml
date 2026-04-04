@@ -25,6 +25,8 @@
 
 # Site Settings ###################################################################
 
+site_configured          : true   # Tells the theme this site has been personalised
+
 founder                  : "Amr Abdel-Motaleb"
 remote_theme             : "bamr87/zer0-mistakes"
 gem                      : &gem "jekyll-theme-zer0"
@@ -32,9 +34,9 @@ gem                      : &gem "jekyll-theme-zer0"
 
 ## Github Information
 github_user              : &github_user "bamr87"
-repository_name          : &github_repository "zer0-mistakes"
+repository_name          : &github_repository "zer0-pages-remote"
 repository               : [*github_user, "/", *github_repository] # GitHub username/repo-name
-local_repo               : &local_repo "zer0-mistakes"
+local_repo               : &local_repo "zer0-pages-remote"
 branch                   : &branch "main"
 repo_map                 : "/sitemap/"
 portfolio                : &portfolio [*github_user, '.', 'github.io']
