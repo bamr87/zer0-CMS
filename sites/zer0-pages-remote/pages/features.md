@@ -12,7 +12,8 @@ comments: false
 toc: true
 ---
 
-{% assign all_features = site.data.features.features | default: empty_array %}
+{% assign empty_arr = "" | split: "" %}
+{% assign all_features = site.data.features.features | default: empty_arr %}
 
 # {{ page.title }}
 
