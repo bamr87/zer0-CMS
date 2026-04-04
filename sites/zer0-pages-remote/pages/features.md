@@ -12,18 +12,20 @@ comments: false
 toc: true
 ---
 
+{% assign all_features = site.data.features.features | default: empty_array %}
+
 # {{ page.title }}
 
-Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.features.features.size }} features are documented with references, links, and implementation details.
+Complete feature registry for the zer0-mistakes Jekyll theme. All {{ all_features.size }} features are documented with references, links, and implementation details.
 
 ---
 
 ## 🏗 Core Infrastructure
 
 <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-{% assign jekyll_features = site.data.features.features | where_exp: "item", "item.tags contains 'jekyll'" %}
-{% assign docker_features = site.data.features.features | where_exp: "item", "item.tags contains 'docker'" %}
-{% assign bootstrap_features = site.data.features.features | where_exp: "item", "item.tags contains 'bootstrap'" %}
+{% assign jekyll_features = all_features | where_exp: "item", "item.tags contains 'jekyll'" %}
+{% assign docker_features = all_features | where_exp: "item", "item.tags contains 'docker'" %}
+{% assign bootstrap_features = all_features | where_exp: "item", "item.tags contains 'bootstrap'" %}
 {% assign core_features = jekyll_features | concat: docker_features | concat: bootstrap_features | uniq | slice: 0, 3 %}
 {% for feature in core_features %}
 <div class="col">
@@ -79,7 +81,7 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
 ## 🤖 AI-Powered Features
 
 <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-{% assign ai_features = site.data.features.features | where_exp: "item", "item.tags contains 'ai'" %}
+{% assign ai_features = all_features | where_exp: "item", "item.tags contains 'ai'" %}
 {% for feature in ai_features %}
 <div class="col">
   <div class="card h-100 border-primary">
@@ -126,8 +128,8 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
 ## 🔒 Analytics & Privacy
 
 <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-{% assign privacy_only = site.data.features.features | where_exp: "item", "item.tags contains 'privacy'" %}
-{% assign analytics_only = site.data.features.features | where_exp: "item", "item.tags contains 'analytics'" %}
+{% assign privacy_only = all_features | where_exp: "item", "item.tags contains 'privacy'" %}
+{% assign analytics_only = all_features | where_exp: "item", "item.tags contains 'analytics'" %}
 {% assign privacy_features = privacy_only | concat: analytics_only | uniq %}
 {% for feature in privacy_features %}
 <div class="col">
@@ -175,9 +177,9 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
 ## 🧭 Navigation & User Interface
 
 <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-{% assign nav_only = site.data.features.features | where_exp: "item", "item.tags contains 'navigation'" %}
-{% assign access_only = site.data.features.features | where_exp: "item", "item.tags contains 'accessibility'" %}
-{% assign ui_only = site.data.features.features | where_exp: "item", "item.tags contains 'ui'" %}
+{% assign nav_only = all_features | where_exp: "item", "item.tags contains 'navigation'" %}
+{% assign access_only = all_features | where_exp: "item", "item.tags contains 'accessibility'" %}
+{% assign ui_only = all_features | where_exp: "item", "item.tags contains 'ui'" %}
 {% assign nav_features = nav_only | concat: access_only | concat: ui_only | uniq %}
 {% for feature in nav_features %}
 <div class="col">
@@ -225,9 +227,9 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
 ## 📓 Content Management
 
 <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-{% assign content_only = site.data.features.features | where_exp: "item", "item.tags contains 'content'" %}
-{% assign jupyter_only = site.data.features.features | where_exp: "item", "item.tags contains 'jupyter'" %}
-{% assign mermaid_only = site.data.features.features | where_exp: "item", "item.tags contains 'mermaid'" %}
+{% assign content_only = all_features | where_exp: "item", "item.tags contains 'content'" %}
+{% assign jupyter_only = all_features | where_exp: "item", "item.tags contains 'jupyter'" %}
+{% assign mermaid_only = all_features | where_exp: "item", "item.tags contains 'mermaid'" %}
 {% assign content_features = content_only | concat: jupyter_only | concat: mermaid_only | uniq %}
 {% for feature in content_features %}
 <div class="col">
@@ -275,10 +277,10 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
 ## 🔧 Developer Experience
 
 <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-{% assign testing_only = site.data.features.features | where_exp: "item", "item.tags contains 'testing'" %}
-{% assign cicd_only = site.data.features.features | where_exp: "item", "item.tags contains 'ci-cd'" %}
-{% assign auto_only = site.data.features.features | where_exp: "item", "item.tags contains 'automation'" %}
-{% assign release_only = site.data.features.features | where_exp: "item", "item.tags contains 'release'" %}
+{% assign testing_only = all_features | where_exp: "item", "item.tags contains 'testing'" %}
+{% assign cicd_only = all_features | where_exp: "item", "item.tags contains 'ci-cd'" %}
+{% assign auto_only = all_features | where_exp: "item", "item.tags contains 'automation'" %}
+{% assign release_only = all_features | where_exp: "item", "item.tags contains 'release'" %}
 {% assign dev_features = testing_only | concat: cicd_only | concat: auto_only | concat: release_only | uniq %}
 {% for feature in dev_features %}
 <div class="col">
@@ -337,7 +339,7 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
       </tr>
     </thead>
     <tbody>
-      {% for feature in site.data.features.features %}
+      {% for feature in all_features %}
       <tr>
         <td><code>{{ feature.id }}</code></td>
         <td>
@@ -377,7 +379,7 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
   <div class="col-6 col-md-3">
     <div class="card">
       <div class="card-body">
-        <h3 class="display-4">{{ site.data.features.features.size }}</h3>
+        <h3 class="display-4">{{ all_features.size }}</h3>
         <p class="text-muted">Total Features</p>
       </div>
     </div>
@@ -385,7 +387,7 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
   <div class="col-6 col-md-3">
     <div class="card">
       <div class="card-body">
-        <h3 class="display-4">{{ site.data.features.features | where: "implemented", true | size }}</h3>
+        <h3 class="display-4">{{ all_features | where: "implemented", true | size }}</h3>
         <p class="text-muted">Implemented</p>
       </div>
     </div>
@@ -393,7 +395,7 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
   <div class="col-6 col-md-3">
     <div class="card">
       <div class="card-body">
-        {% assign ai_count = site.data.features.features | where_exp: "item", "item.tags contains 'ai'" | size %}
+        {% assign ai_count = all_features | where_exp: "item", "item.tags contains 'ai'" | size %}
         <h3 class="display-4">{{ ai_count }}</h3>
         <p class="text-muted">AI-Powered</p>
       </div>
@@ -402,8 +404,8 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
   <div class="col-6 col-md-3">
     <div class="card">
       <div class="card-body">
-        {% assign priv_tags = site.data.features.features | where_exp: "item", "item.tags contains 'privacy'" %}
-        {% assign gdpr_tags = site.data.features.features | where_exp: "item", "item.tags contains 'gdpr'" %}
+        {% assign priv_tags = all_features | where_exp: "item", "item.tags contains 'privacy'" %}
+        {% assign gdpr_tags = all_features | where_exp: "item", "item.tags contains 'gdpr'" %}
         {% assign privacy_count = priv_tags | concat: gdpr_tags | uniq | size %}
         <h3 class="display-4">{{ privacy_count }}</h3>
         <p class="text-muted">Privacy-First</p>
@@ -417,7 +419,7 @@ Complete feature registry for the zer0-mistakes Jekyll theme. All {{ site.data.f
 ## 🎯 Feature Categories
 
 {% assign all_tags = "" | split: "" %}
-{% for feature in site.data.features.features %}
+{% for feature in all_features %}
   {% for tag in feature.tags %}
     {% unless all_tags contains tag %}
       {% assign all_tags = all_tags | push: tag %}
