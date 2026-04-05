@@ -25,7 +25,7 @@
 
 # Site Settings ###################################################################
 
-site_configured          : true   # Tells the theme this site has been personalised
+site_configured          : false   # Tells the theme this site has been personalised
 
 founder                  : "Amr Abdel-Motaleb"
 remote_theme             : "bamr87/zer0-mistakes"
