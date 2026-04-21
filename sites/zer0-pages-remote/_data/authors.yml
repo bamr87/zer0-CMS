@@ -1,0 +1,11 @@
+# Site Authors
+# Add your author information here
+
+default:
+  name: "Amr Abdel-Motaleb"
+  bio: "Update this in _data/authors.yml"
+  avatar: "/assets/images/avatar-placeholder.png"
+  github: "bamr87"
+  twitter: ""
+  email: "amr@zer0-mistakes.com"
+  role: "Site Owner"

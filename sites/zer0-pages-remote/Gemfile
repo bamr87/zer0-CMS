@@ -1,0 +1,8 @@
+source "https://rubygems.org"
+
+# github-pages includes jekyll-remote-theme, jekyll-github-metadata,
+# and all other plugins allowed on GitHub Pages.
+gem "github-pages", group: :jekyll_plugins
+
+# webrick is required for Ruby 3.x (removed from stdlib)
+gem "webrick"
