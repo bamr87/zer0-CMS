@@ -94,6 +94,12 @@ plugins:
 
 # ── Exclude from Build ────────────────────────────────────────────────────────
 exclude:
+  - Gemfile
   - Gemfile.lock
   - README.md
   - LICENSE
+  - vendor/                 # bundler install dir on CI
+  - .bundle/
+  - node_modules/
+  - .backup-pre-install/
+  - .github/
