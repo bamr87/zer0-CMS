@@ -1,39 +1,18 @@
 ---
-layout: home
+layout: welcome
 title: Home
 permalink: /
 ---
 
-# Welcome to Your Jekyll Site
+# Welcome to your new site
 
-This site was created using the **Zer0-Mistakes Jekyll Theme**.
+This page is rendered by the
+[**bamr87/zer0-mistakes**](https://github.com/bamr87/zer0-mistakes)
+remote theme.
 
-<div class="row mt-4">
-<div class="col-md-4 mb-3">
-<div class="card h-100">
-<div class="card-body">
-<h5 class="card-title"><i class="bi bi-rocket-takeoff"></i> Quick Start</h5>
-<p class="card-text">Get your site up and running in minutes with our step-by-step guide.</p>
-<a href="/quickstart/" class="btn btn-primary">Get Started</a>
-</div>
-</div>
-</div>
-<div class="col-md-4 mb-3">
-<div class="card h-100">
-<div class="card-body">
-<h5 class="card-title"><i class="bi bi-book"></i> Documentation</h5>
-<p class="card-text">Learn how to customize and extend your site with comprehensive docs.</p>
-<a href="/docs/" class="btn btn-outline-primary">Read Docs</a>
-</div>
-</div>
-</div>
-<div class="col-md-4 mb-3">
-<div class="card h-100">
-<div class="card-body">
-<h5 class="card-title"><i class="bi bi-info-circle"></i> About</h5>
-<p class="card-text">Learn about the theme features and how to make the most of them.</p>
-<a href="/about/" class="btn btn-outline-secondary">About Theme</a>
-</div>
-</div>
-</div>
-</div>
+While `_config.yml` still contains placeholder values, the layout above
+shows the configuration wizard and getting-started instructions.
+
+Once you set `site_configured: true` in `_config.yml`
+(or fill in `title`, `founder`, and `email`), this content will replace
+the welcome screen automatically.
