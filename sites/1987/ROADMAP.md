@@ -10,28 +10,29 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Selected by the last `plan-roadmap` run for the current tick._
-
-- _(run `/grow` to begin the first tick)_
-
-## Backlog
-_Prioritized queue. Top items are pulled into **Now** each tick._
+_Selected by the last `plan-roadmap` run for the current tick (2026-06-07)._
 
 1. `content` — Deep-dive: Black Monday crash → `society-economics/black-monday.md`.
 2. `content` — Deep-dive: INF Treaty signing → `history-politics/inf-treaty.md`.
 3. `structure` — Generate `TIMELINE.md` from knowledge table rows.
-4. `content` — Deep-dive: Supernova 1987A → `science-technology/supernova-1987a.md`.
-5. `content` — Deep-dive: Montreal Protocol → `history-politics/montreal-protocol.md`.
-6. `structure` — Generate category index pages `<category-slug>/index.md` for each taxonomy entry.
-7. `content` — Fill under-represented categories up to ≥3 dedicated files each (start: Arts & Culture, People).
-8. `structure` — Generate `INDEX.md` linking every topic file by category.
-9. `structure` — Add cross-reference "Related" links between topic files.
-10. `meta` — Run `/evolve` to audit the customization layer (every ~5th tick).
+
+## Backlog
+_Prioritized queue. Top items are pulled into **Now** each tick._
+
+1. `content` — Deep-dive: Supernova 1987A → `science-technology/supernova-1987a.md`.
+2. `content` — Deep-dive: Montreal Protocol → `history-politics/montreal-protocol.md`.
+3. `structure` — Generate category index pages `<category-slug>/index.md` for each taxonomy entry.
+4. `content` — Fill under-represented categories up to ≥3 dedicated files each (start: Arts & Culture, People).
+5. `structure` — Generate `INDEX.md` linking every topic file by category.
+6. `structure` — Add cross-reference "Related" links between topic files.
+7. `meta` — Run `/evolve` to audit the customization layer (every ~5th tick).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
-- _(nothing yet — run `/grow` to start)_
+- `2026-06-07` — Deep-dive: Black Monday crash → `society-economics/black-monday.md` (content).
+- `2026-06-07` — Deep-dive: INF Treaty signing → `history-politics/inf-treaty.md` (content).
+- `2026-06-07` — Generated `TIMELINE.md` from knowledge table rows (structure).
 
 ## Ideas
 _Discovered follow-ups, unscored. Promote to Backlog when ready._

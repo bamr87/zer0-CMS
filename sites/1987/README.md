@@ -18,8 +18,8 @@
 
 | Event | Description |
 |---|---|
-| Black Monday stock market crash | On October 19, the Dow Jones Industrial Average falls 22.6% in a single day, the largest one-day percentage drop in history. |
-| INF Treaty signed | Reagan and Gorbachev sign the Intermediate-Range Nuclear Forces Treaty in Washington, the first arms-control agreement to eliminate an entire class of nuclear weapons. |
+| [Black Monday stock market crash](society-economics/black-monday.md) | On October 19, the Dow Jones Industrial Average falls 22.6% in a single day, the largest one-day percentage drop in history. |
+| [INF Treaty signed](history-politics/inf-treaty.md) | Reagan and Gorbachev sign the Intermediate-Range Nuclear Forces Treaty in Washington, the first arms-control agreement to eliminate an entire class of nuclear weapons. |
 | Iran-Contra hearings | Congressional hearings expose covert U.S. arms sales to Iran and illegal funding of Nicaraguan Contras; Oliver North's testimony rivets the nation. |
 | First Intifada begins | Palestinian uprising against Israeli occupation breaks out in Gaza and the West Bank in December, reshaping Middle East politics. |
 | Supernova 1987A observed | The brightest supernova visible from Earth since 1604 is observed in the Large Magellanic Cloud, providing unprecedented data on stellar death. |

@@ -74,14 +74,16 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (12 rows across all five categories as of genesis).
-- **Dedicated topic files:** none yet (`<category-slug>/<topic-slug>.md` — to be created by deep-dives).
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (12 rows across all five categories; 2 rows now link to dedicated files).
+- **Dedicated topic files:**
+  - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
+  - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
+- `TIMELINE.md` — generated from knowledge table rows (tick 1, 2026-06-07).
 - Category index pages `<category-slug>/index.md` — *not yet generated*.
-- `TIMELINE.md` (concept is time-oriented) — *not yet generated*.
 - `INDEX.md` / README TOC — *not yet generated*.
 - Cross-reference "Related" links between topic files — *not yet generated*.
 
@@ -129,3 +131,18 @@ the concept-agnostic framework established by the 1764 and 1897 instances. Boots
 - `ROADMAP.md` — initial backlog seeded from taxonomy.
 - `.github/` customization layer — concept-agnostic agents, skills, prompts, and instructions
   copied from the 1897 instance.
+
+### Tick 1 — 2026-06-07
+
+First autonomous growth tick via `/grow`. Items completed from the backlog:
+
+- **Content**: Researched Black Monday (October 19, 1987) via Wikipedia and Federal Reserve History.
+  Created `society-economics/black-monday.md` (full frontmatter, Summary, Significance, Sources).
+  Linked from README knowledge table.
+- **Content**: Researched INF Treaty (December 8, 1987) via Wikipedia and US State Dept archives.
+  Created `history-politics/inf-treaty.md` (full frontmatter, Summary, Significance, Sources).
+  Linked from README knowledge table.
+- **Structure**: Generated `TIMELINE.md` from all 12 knowledge-table rows, with links to the two
+  new dedicated files.
+- **Meta**: Updated `ROADMAP.md` (moved 3 items from Backlog to Now → Done). Synced `seed.md`
+  sections 4 and 5 to reflect new content and structure inventory.
