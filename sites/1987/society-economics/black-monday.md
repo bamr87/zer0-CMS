@@ -27,3 +27,11 @@ The crash also effectively ended the Louvre Accord and shifted perceptions about
 
 - [Black Monday (1987) — Wikipedia](https://en.wikipedia.org/wiki/Black_Monday_(1987))
 - [Black Monday: The Stock Market Crash of 1987 — Federal Reserve History](https://www.federalreservehistory.org/essays/stock_market_crash_of_1987)
+
+<!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — the other defining global event of late 1987.
+- [Supernova 1987A](../science-technology/supernova-1987a.md) — another landmark event of the same year.
+- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+<!-- END GENERATED: related -->

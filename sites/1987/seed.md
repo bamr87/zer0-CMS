@@ -74,18 +74,21 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (12 rows across all five categories; 2 rows now link to dedicated files).
-- **Dedicated topic files:**
-  - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (12 rows across all five categories; 4 rows now link to dedicated files).
+- **Dedicated topic files (4):**
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
+  - `science-technology/supernova-1987a.md` — Supernova 1987A (February 23, 1987).
+  - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
+  - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
+- **Coverage:** four of five categories have ≥1 dedicated file; **People** has none yet.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — generated from knowledge table rows (tick 1, 2026-06-07).
-- Category index pages `<category-slug>/index.md` — *not yet generated*.
-- `INDEX.md` / README TOC — *not yet generated*.
-- Cross-reference "Related" links between topic files — *not yet generated*.
+- `TIMELINE.md` — chronological table of the 12 knowledge-table events; generated region wrapped in markers; links the 4 dedicated files (tick 2, 2026-06-07).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries (People is a "no entries yet" stub).
+- `INDEX.md` — master index grouping every topic file by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 4 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -166,3 +169,26 @@ change only — no knowledge-base content or concept changed.
 
 Because `.github/` stays canonical, the `sync-seed`, `evolve`, and `genesis` machinery continues to
 operate on it unchanged; the `/evolve` flow now also keeps the `.claude/` adapters in sync.
+
+### Tick 2 — 2026-06-07
+
+Second autonomous growth tick via `/grow`. Planning prioritized filling empty taxonomy categories
+over enriching ones already covered. Items completed:
+
+- **Content** (Curator): Researched **Supernova 1987A** (observed February 23, 1987) via Wikipedia
+  and Encyclopædia Britannica. Created `science-technology/supernova-1987a.md` (full frontmatter,
+  Summary, Significance, Sources) — first file in the Science & Technology category. Linked the
+  existing README row.
+- **Content** (Curator): Researched **Full Metal Jacket** (Kubrick, US release June 26, 1987) via
+  Wikipedia and Encyclopædia Britannica. Created `arts-culture/full-metal-jacket.md` — first file in
+  the Arts & Culture category. Linked the existing README row.
+- **Structure**: Ran `build-structure` to generate, with marker-wrapped regions: category index
+  pages for all five taxonomy entries (`<category-slug>/index.md`; People is a stub), a master
+  `INDEX.md` grouping topics by category, and `## Related` cross-reference blocks inside all four
+  dedicated topic files. Regenerated `TIMELINE.md` (sorted, markers added, new files linked).
+- **Verify**: 12 README rows unchanged (no duplicates); all internal markdown links resolve; both
+  new files carry required frontmatter and ≥2 authoritative sources.
+- **Record**: Moved completed items to ROADMAP Done; refilled Backlog; synced seed §4–5.
+
+Coverage after this tick: four of five categories have ≥1 dedicated file (only **People** remains
+empty), and the structural layer (indices, master index, timeline, cross-refs) now exists.

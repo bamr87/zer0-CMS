@@ -27,3 +27,11 @@ The treaty signaled a fundamental shift in US-Soviet relations and contributed d
 
 - [Intermediate-Range Nuclear Forces Treaty — Wikipedia](https://en.wikipedia.org/wiki/Intermediate-Range_Nuclear_Forces_Treaty)
 - [INF Treaty — U.S. Department of State](https://2009-2017.state.gov/t/avc/trty/102360.htm)
+
+<!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the other defining global event of late 1987.
+- [Full Metal Jacket](../arts-culture/full-metal-jacket.md) — a 1987 cultural touchstone reflecting the Cold War–era military experience.
+- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+<!-- END GENERATED: related -->
