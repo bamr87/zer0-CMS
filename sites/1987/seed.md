@@ -146,3 +146,23 @@ First autonomous growth tick via `/grow`. Items completed from the backlog:
   new dedicated files.
 - **Meta**: Updated `ROADMAP.md` (moved 3 items from Backlog to Now → Done). Synced `seed.md`
   sections 4 and 5 to reflect new content and structure inventory.
+
+### Claude Code Compatibility — 2026-06-07
+
+Added a **Claude Code adapter layer** so the framework's prompts, agents, and skills run natively in
+Claude Code, alongside the existing `.github/` (Copilot / VS Code) layer. `.github/` remains the
+single source of truth; the new files are thin adapters that delegate to it. Tooling/compatibility
+change only — no knowledge-base content or concept changed.
+
+- Added `CLAUDE.md` — repo guidance for Claude Code (seed-as-DNA model, generated-vs-hand-authored
+  file rules, growth loop, command surface, content conventions).
+- Added `.claude/commands/` — 7 slash commands (`/grow`, `/genesis`, `/deep-dive`, `/update-readme`,
+  `/encode-seed`, `/publish`, `/evolve`) mirroring `.github/prompts/`.
+- Added `.claude/agents/` — `architect` and `curator` subagents mirroring `.github/agents/`.
+  Orchestration runs in the main thread via `/grow` (Claude Code subagents cannot spawn subagents).
+- Added `.claude/skills/` — 6 skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`,
+  `sync-seed`, `publish-session`) mirroring `.github/skills/`.
+- Added `.gitignore` — excludes `.claude/worktrees/` and local settings.
+
+Because `.github/` stays canonical, the `sync-seed`, `evolve`, and `genesis` machinery continues to
+operate on it unchanged; the `/evolve` flow now also keeps the `.claude/` adapters in sync.
