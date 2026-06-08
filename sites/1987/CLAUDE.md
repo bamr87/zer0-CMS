@@ -46,9 +46,9 @@ Delegation is strict — respect it when extending agents:
 
 `ROADMAP.md` tracks work in **Now / Backlog / Done / Ideas**, each item tagged `content | structure | meta`. The Architect pulls from Now/Backlog; `plan-roadmap` rewrites it each tick.
 
-## Commands (these are prompts, not shell scripts)
+## Commands (slash commands, not shell scripts)
 
-Invoke via the `.github/prompts/` files. The primary entry points:
+These run natively as Claude Code slash commands (`.claude/commands/`) — thin adapters over the canonical `.github/prompts/` files. The primary entry points:
 
 | Command | Purpose |
 |---|---|
@@ -61,6 +61,22 @@ Invoke via the `.github/prompts/` files. The primary entry points:
 | `/publish` | Thin wrapper over the `publish-session` skill (encode-seed → review → commit → push). |
 
 Lower-level skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`, `sync-seed`, `publish-session`) are usually invoked *by* the agents/prompts above rather than directly. The full architecture inventory is `seed.md` §3.
+
+## Claude Code integration (the `.claude/` layer)
+
+The AI tooling originates in `.github/` (GitHub Copilot / VS Code format). A parallel **`.claude/` layer makes the same prompts, agents, and skills work natively in Claude Code** — they are **thin adapters that delegate to the canonical `.github/` files**, so `.github/` stays the single source of truth.
+
+| Claude Code | Mirrors | Notes |
+|---|---|---|
+| `.claude/commands/*.md` (`/grow`, `/genesis`, `/deep-dive`, `/update-readme`, `/encode-seed`, `/publish`, `/evolve`) | `.github/prompts/*.prompt.md` | Native slash commands; each reads & follows its canonical prompt. |
+| `.claude/agents/{architect,curator}.md` | `.github/agents/*.agent.md` | Subagents (spawned via the Task tool). |
+| `.claude/skills/<name>/SKILL.md` | `.github/skills/<name>/SKILL.md` | Auto-triggered by `description`; body points to the canonical procedure. |
+
+**Editing rule**: change the canonical `.github/` file; keep the matching `.claude/` adapter's `description` frontmatter in sync (the `/evolve` flow enforces this). Don't fork the procedure into the adapter.
+
+**Execution model** — one Claude Code constraint shapes the design: **subagents cannot spawn subagents**. So delegating orchestration (Architect → Curator) runs in the **main thread via `/grow`**, which spawns the **Curator** subagent for content items. The `architect` subagent still exists for direct use, but when invoked that way it executes content itself rather than sub-delegating.
+
+**Worktree / git caveat**: this repo is a git submodule whose shared config sets `core.worktree`. Inside a *linked git worktree* (e.g. `.claude/worktrees/…`), plain `git status` misreports every tracked file as deleted and `git add -A` is unsafe. Run git from a normal clone, or scope each command: `GIT_WORK_TREE=<worktree-abs-path> git -C <worktree-abs-path> …`. `.claude/worktrees/` and local settings are gitignored.
 
 ## Content conventions
 
