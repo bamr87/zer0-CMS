@@ -15,7 +15,8 @@ file where one exists.
 | Jun 12 | History & Politics | President Reagan delivers his "Tear down this wall" speech at the Brandenburg Gate in West Berlin. |
 | Jun 26 | Arts & Culture | [**Full Metal Jacket**](arts-culture/full-metal-jacket.md) — Stanley Kubrick's two-part Vietnam War film premieres, joining *RoboCop* and *Lethal Weapon* in a landmark year for Hollywood. |
 | Jul 7 | History & Politics | Congressional hearings on the Iran-Contra affair open; Oliver North testifies, riveting the nation. |
-| Sep 16 | History & Politics | The Montreal Protocol is signed by 46 nations, the first global environmental protection agreement, aimed at phasing out ozone-depleting CFCs. |
+| Aug 17 | People | [**Rudolf Hess**](people/rudolf-hess.md), Hitler's former deputy, dies at 93 in Spandau Prison, Berlin — its sole prisoner since 1966 — ending four-power Allied custody and prompting the prison's demolition. |
+| Sep 16 | History & Politics | [**Montreal Protocol**](history-politics/montreal-protocol.md) is signed by 46 nations, the first global environmental protection agreement, aimed at phasing out ozone-depleting CFCs. |
 | Sep 1987 | Science & Technology | FDA approves fluoxetine (Prozac), the first SSRI antidepressant, transforming treatment of depression worldwide. |
 | Oct 19 | Society & Economics | [**Black Monday**](society-economics/black-monday.md) — the Dow Jones Industrial Average falls 22.6% in a single day, the largest one-day percentage drop in history; worldwide losses estimated at US$1.71 trillion. |
 | Nov 1987 | Science & Technology | DNA evidence is used for the first time to convict a criminal (Robert Melias in the UK), opening a new era in forensic science. |

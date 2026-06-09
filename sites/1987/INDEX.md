@@ -7,6 +7,7 @@ Master index of all content in this knowledge base, grouped by category. See als
 ## History & Politics
 _Category index: [history-politics/index.md](history-politics/index.md)_
 
+- [Montreal Protocol (September 16, 1987)](history-politics/montreal-protocol.md)
 - [INF Treaty (December 8, 1987)](history-politics/inf-treaty.md)
 
 ## Science & Technology
@@ -27,5 +28,5 @@ _Category index: [society-economics/index.md](society-economics/index.md)_
 ## People
 _Category index: [people/index.md](people/index.md)_
 
-- _No dedicated topic files yet._
+- [Rudolf Hess (death, August 17, 1987)](people/rudolf-hess.md)
 <!-- END GENERATED: master-index -->

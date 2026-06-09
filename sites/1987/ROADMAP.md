@@ -10,22 +10,25 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Cleared — tick 2 items completed (2026-06-07). Next `plan-roadmap` run will select from Backlog._
+_Cleared — tick 3 items completed (2026-06-08). Next `plan-roadmap` run will select from Backlog._
 
 _(empty)_
 
 ## Backlog
 _Prioritized queue. Top items are pulled into **Now** each tick._
 
-1. `content` — Deep-dive: Montreal Protocol → `history-politics/montreal-protocol.md`.
-2. `content` — People: a notable figure of 1987 (births/deaths/key actors) → `people/` (fills empty People category).
-3. `content` — Fill under-represented categories up to ≥3 dedicated files each (Science & Tech, Arts & Culture, Society & Economics, History & Politics each have 1).
-4. `content` — Deep-dive: Reagan's "Tear down this wall" speech → `history-politics/`.
+1. `content` — Fill under-represented categories up to ≥3 dedicated files each (Science & Tech, Arts & Culture, Society & Economics, History & Politics each have 1).
+2. `content` — Deep-dive: Reagan's "Tear down this wall" speech (June 12, 1987) → `history-politics/`.
+3. `content` — Deep-dive: First Intifada → `history-politics/`.
+4. `content` — Deep-dive: Iran-Contra hearings → `history-politics/`.
 5. `meta` — Run `/evolve` to audit the customization layer (every ~5th tick).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-08` — People: Rudolf Hess (death) → `people/rudolf-hess.md` — closes the last empty category (content).
+- `2026-06-08` — Deep-dive: Montreal Protocol → `history-politics/montreal-protocol.md` (content).
+- `2026-06-08` — Refreshed category indices, `INDEX.md`, `TIMELINE.md`, and cross-refs for new files (structure).
 - `2026-06-07` — Deep-dive: Supernova 1987A → `science-technology/supernova-1987a.md` (content).
 - `2026-06-07` — Deep-dive: *Full Metal Jacket* → `arts-culture/full-metal-jacket.md` (content).
 - `2026-06-07` — Generated category index pages, `INDEX.md`, and cross-reference "Related" links (structure).
