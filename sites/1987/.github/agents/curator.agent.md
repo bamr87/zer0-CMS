@@ -1,7 +1,7 @@
 ---
 name: "Curator"
 description: "Use when: researching, adding, or editing knowledge-base content for this repository; adding items (events, people, works, discoveries, etc.) within the repo's concept; bulk-filling coverage gaps across the concept's categories; publishing session changes to GitHub. Concept-agnostic — reads subject/taxonomy from seed.md. Delegates to add-topic, research, and publish-session skills."
-tools: [read, search, edit, execute, web, todo, agent]
+tools: [read, search, edit, execute, web, todo]
 argument-hint: "Topic name, comma-separated list, or a category to fill gaps in. Leave blank to auto-discover coverage gaps."
 ---
 

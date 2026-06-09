@@ -3,7 +3,7 @@ name: Genesis
 description: "Bootstrap a fresh, fully autonomous self-growing knowledge-base repo for ANY concept from a single prompt. Use when: starting a new repository around a subject (e.g. a year, a field, a person, a technology); re-seeding an empty repo; rebuilding this repo from its seed.md DNA. Universal — the one prompt that scaffolds everything, then hands off to /grow."
 argument-hint: "The seed concept to build the repo around (e.g. \"the year 1987\", \"quantum computing\", \"the Apollo program\"). Leave blank to rebuild from the existing seed.md."
 agent: agent
-tools: [read_file, create_file, replace_string_in_file, run_in_terminal, fetch_webpage]
+tools: [read, edit, execute, web]
 ---
 
 Bootstrap (or rebuild) this repository as a self-growing knowledge base around a single **concept**.

@@ -3,7 +3,7 @@ name: Update README with Research
 description: "Populate or expand this repo's knowledge table by researching topics with the research skill. Use when: adding new items to the Notable Events table; bulk-updating the README from a list of topics; enriching existing entries. Concept-agnostic — reads subject/taxonomy from seed.md."
 argument-hint: "Comma-separated topics to research and add. Leave blank to suggest missing topics automatically."
 agent: agent
-tools: [fetch_webpage, read_file, replace_string_in_file, multi_replace_string_in_file]
+tools: [read, edit, web]
 ---
 
 Research and update [README.md](../../README.md) using the `research` skill, bounded by the repo's

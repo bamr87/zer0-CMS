@@ -3,7 +3,7 @@ name: Deep Dive a Topic
 description: "Research a single topic within the repo concept in depth and create a dedicated markdown file for it. Use when: exploring a specific item (event, person, work, discovery) in detail; creating a standalone article beyond a knowledge-table row; building out the category folders. Concept-agnostic — reads subject/taxonomy from seed.md. Do NOT use for bulk-adding (use add-topic) or quick table-only additions (use update-readme)."
 argument-hint: "A topic within the repo concept to explore in depth. Leave blank to pick the most notable table item lacking a dedicated file."
 agent: agent
-tools: [fetch_webpage, read_file, create_file, replace_string_in_file]
+tools: [read, edit, web]
 ---
 
 Research the provided topic in depth and produce a dedicated markdown file for it, per the repo's

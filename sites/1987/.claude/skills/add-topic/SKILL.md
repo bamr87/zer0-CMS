@@ -11,6 +11,6 @@ Summary:
 1. **Determine topics** — use the provided list (split on commas); if none, auto-discover gaps (count README rows per `concept.taxonomy` category; propose 1–2 in-scope topics per under-represented category, fewer than 3 entries).
 2. **Research each topic** via the **research** skill (≥2 authoritative sources; confirm in-scope; skip + note anything that isn't).
 3. **Choose format** — table row only (1–3 facts / minor) vs. dedicated file + row (4+ facts / notable); when in doubt prefer the dedicated file.
-4. **Create/update files** — table row in `README.md` `## Notable Events`, and/or `<category-slug>/<topic-slug>.md` per `.github/instructions/content.instructions.md`. Never duplicate rows; preserve existing content.
+4. **Create/update files** — table row in `README.md` under the heading named by `concept.conventions.knowledge_table` (read from `seed.md`), and/or `<category-slug>/<topic-slug>.md` per `.github/instructions/content.instructions.md`. Never duplicate rows; preserve existing content.
 5. **Link** the dedicated file from the README row; **report** a summary table (Topic | Format | File | Status).
 6. Optionally log the session to the seed Evolution Log via `/encode-seed`.

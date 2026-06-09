@@ -50,7 +50,8 @@ When in doubt, prefer the dedicated file.
 
 ### Step 4a — Add a Knowledge-Table Row
 
-Open [README.md](../../../README.md) and add a row to the `## Notable Events` table:
+Open [README.md](../../../README.md) and add a row under the heading named by
+`concept.conventions.knowledge_table` (read from [seed.md](../../../seed.md)):
 `| Item | One-sentence description ending with its significance |`. Do not duplicate existing rows;
 preserve all other content.
 

@@ -250,3 +250,28 @@ dedicated topic files. Items completed:
 
 Coverage after this tick: History & Politics has **3 dedicated files** (first category to reach
 that threshold), Society & Economics has 2 files; 8 files total across all five categories.
+
+### Evolve Audit — 2026-06-09
+
+Ran one `/evolve` audit of the full customization layer (`.github/` agents, skills, prompts,
+instructions; `.claude/` adapter layer). No FAIL items found. Three WARN items fixed:
+
+1. **`curator.agent.md` removed `agent` tool** — the Curator is a leaf worker and must not spawn
+   subagents; having `agent` in its tool list violated the delegation hierarchy. Removed `agent`
+   from `tools` in `.github/agents/curator.agent.md`.
+2. **`add-topic` concept-agnosticism fix** — Step 4a in `.github/skills/add-topic/SKILL.md` (and
+   its `.claude/skills/add-topic/SKILL.md` adapter) hardcoded `## Notable Events` instead of
+   reading the heading from `concept.conventions.knowledge_table`. Updated both to reference the
+   concept convention directly, preserving framework retargetability.
+3. **Tool naming standardised in 5 prompts** — `.github/prompts/genesis.prompt.md`,
+   `deep-dive.prompt.md`, `update-readme.prompt.md`, `encode-seed.prompt.md`, and `publish.prompt.md`
+   used GitHub Copilot concrete tool names (`read_file`, `create_file`, `fetch_webpage`,
+   `run_in_terminal`, `replace_string_in_file`) while the rest of the layer used the abstract
+   aliases (`read`, `edit`, `execute`, `web`) documented in `agents.instructions.md`. Standardised
+   all five to abstract aliases.
+
+Files changed: `.github/agents/curator.agent.md`, `.github/skills/add-topic/SKILL.md`,
+`.github/prompts/genesis.prompt.md`, `.github/prompts/deep-dive.prompt.md`,
+`.github/prompts/update-readme.prompt.md`, `.github/prompts/encode-seed.prompt.md`,
+`.github/prompts/publish.prompt.md`, `.claude/skills/add-topic/SKILL.md`.
+No files added or removed; seed.md sections 1–7 not regenerated (file inventory unchanged).
