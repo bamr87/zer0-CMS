@@ -31,6 +31,7 @@ The treaty signaled a fundamental shift in US-Soviet relations and contributed d
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [Reagan's "Tear Down This Wall" Speech (June 12, 1987)](reagan-berlin-speech.md) — Reagan's Brandenburg Gate address preceded the INF Treaty signing by six months, building the diplomatic groundwork.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the other defining global event of late 1987.
 - [Full Metal Jacket](../arts-culture/full-metal-jacket.md) — a 1987 cultural touchstone reflecting the Cold War–era military experience.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)

@@ -7,6 +7,7 @@ Master index of all content in this knowledge base, grouped by category. See als
 ## History & Politics
 _Category index: [history-politics/index.md](history-politics/index.md)_
 
+- [Reagan's "Tear Down This Wall" Speech (June 12, 1987)](history-politics/reagan-berlin-speech.md)
 - [Montreal Protocol (September 16, 1987)](history-politics/montreal-protocol.md)
 - [INF Treaty (December 8, 1987)](history-politics/inf-treaty.md)
 
@@ -24,6 +25,7 @@ _Category index: [arts-culture/index.md](arts-culture/index.md)_
 _Category index: [society-economics/index.md](society-economics/index.md)_
 
 - [Black Monday (October 19, 1987)](society-economics/black-monday.md)
+- [FDA Approves Prozac (December 29, 1987)](society-economics/prozac-fda-approval.md)
 
 ## People
 _Category index: [people/index.md](people/index.md)_

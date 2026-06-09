@@ -74,23 +74,25 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (13 rows across all five categories; 6 rows now link to dedicated files).
-- **Dedicated topic files (6):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (13 rows across all five categories; 8 rows now link to dedicated files).
+- **Dedicated topic files (8):**
+  - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
   - `history-politics/montreal-protocol.md` — Montreal Protocol (September 16, 1987).
   - `science-technology/supernova-1987a.md` — Supernova 1987A (February 23, 1987).
   - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
+  - `society-economics/prozac-fda-approval.md` — FDA approves Prozac/fluoxetine (December 29, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
-- **Coverage:** all five categories now have ≥1 dedicated file (History & Politics has 2).
+- **Coverage:** all five categories have ≥1 dedicated file; History & Politics has 3 files, Society & Economics has 2 files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — chronological table of the dated 1987 events; generated region wrapped in markers; links the 6 dedicated files (tick 3, 2026-06-08).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; all five now list ≥1 topic file.
-- `INDEX.md` — master index grouping every topic file by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 6 dedicated topic files.
+- `TIMELINE.md` — chronological table of the dated 1987 events; generated region wrapped in markers; links all 8 dedicated files (tick 4, 2026-06-09).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 3 topics, Society & Economics lists 2 topics.
+- `INDEX.md` — master index grouping all 8 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 8 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -219,3 +221,32 @@ category (**People**) and resolving the top backlog deep-dive. Items completed:
 
 Coverage after this tick: **all five taxonomy categories have ≥1 dedicated file** (6 files total),
 and the structural layer is current.
+
+### Tick 4 — 2026-06-09
+
+Fourth autonomous growth tick via `/grow`. Planning prioritized increasing file depth in
+under-represented categories and converting the two most prominent un-linked README rows into
+dedicated topic files. Items completed:
+
+- **Content**: Researched **Reagan's "Tear Down This Wall" speech** (June 12, 1987) via Wikipedia
+  and the Miller Center (University of Virginia). Created `history-politics/reagan-berlin-speech.md`
+  (third file in History & Politics). Updated the existing README row to link the new file; no new
+  row added. Key facts verified: speechwriter Peter Robinson, ~45,000-person crowd at Brandenburg
+  Gate, NSC/State Dept opposition overruled by Reagan, wall fell November 9, 1989.
+- **Content**: Researched **FDA approval of Prozac/fluoxetine** (December 29, 1987) via Wikipedia
+  and primary literature (Wong et al., *Life Sciences*, 1974). Created
+  `society-economics/prozac-fda-approval.md` (second file in Society & Economics). Updated the
+  existing README row to link the new file. Fixed a prior TIMELINE.md error: the Prozac entry had
+  been miscategorised as "Science & Technology / Sep 1987" — corrected to "Society & Economics /
+  Dec 29".
+- **Structure**: Refreshed generated regions in `TIMELINE.md` (new links, fixed Prozac entry),
+  `INDEX.md`, `history-politics/index.md`, `society-economics/index.md`, and `## Related` blocks
+  in all 8 dedicated topic files (including back-links added to `inf-treaty.md`, `montreal-protocol.md`,
+  and `black-monday.md`).
+- **Verify**: README still 13 rows (no new rows; 8 now link to files); both new files carry required
+  frontmatter and ≥2 authoritative sources; all internal links resolve.
+- **Record**: Moved tick 4 items to ROADMAP Done; updated Backlog; synced seed §4–5 (6→8 files;
+  H&P now 3 files, S&E now 2 files).
+
+Coverage after this tick: History & Politics has **3 dedicated files** (first category to reach
+that threshold), Society & Economics has 2 files; 8 files total across all five categories.

@@ -32,6 +32,7 @@ Implementation produced a clear scientific success: the depletion of stratospher
 ## Related
 
 - [INF Treaty (December 8, 1987)](inf-treaty.md) — the other landmark 1987 multilateral agreement, in arms control rather than the environment.
+- [Reagan's "Tear Down This Wall" Speech (June 12, 1987)](reagan-berlin-speech.md) — Reagan's public challenge to the Soviet bloc, part of the same year's wave of diplomatic pressure.
 - [Supernova 1987A](../science-technology/supernova-1987a.md) — a 1987 scientific milestone in the natural sciences.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->
