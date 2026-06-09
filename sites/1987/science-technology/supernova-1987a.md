@@ -31,6 +31,7 @@ Its identified blue-supergiant progenitor forced astronomers to broaden their un
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [DNA Fingerprinting Enters the Courtroom](dna-fingerprinting.md) — another Science & Technology landmark of 1987.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — another landmark event of 1987.
 - [Full Metal Jacket](../arts-culture/full-metal-jacket.md) — a 1987 cultural landmark.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)

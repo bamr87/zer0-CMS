@@ -10,7 +10,7 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Cleared — tick 4 items completed (2026-06-09). Next `plan-roadmap` run will select from Backlog._
+_Cleared — tick 5 items completed (2026-06-09). Next `plan-roadmap` run will select from Backlog._
 
 _(empty)_
 
@@ -19,13 +19,15 @@ _Prioritized queue. Top items are pulled into **Now** each tick._
 
 1. `content` — Deep-dive: First Intifada (December 1987) → `history-politics/first-intifada.md`.
 2. `content` — Deep-dive: Iran-Contra hearings → `history-politics/iran-contra.md`.
-3. `content` — Add 2nd Science & Technology file (e.g., DNA fingerprinting in criminal court).
-4. `content` — Add 2nd Arts & Culture file (e.g., Aretha Franklin / Rock and Roll Hall of Fame inauguration).
-5. `meta` — Run `/evolve` to audit the customization layer (every ~5th tick).
+3. `content` — Add 2nd People file (e.g., Mathias Rust, the West German teenager who landed on Red Square, May 28, 1987).
+4. `meta` — Run `/evolve` to audit the customization layer (every ~5th tick).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-09` — DNA fingerprinting in criminal court (November 1987) → `science-technology/dna-fingerprinting.md` (content; Science & Technology now 2 files).
+- `2026-06-09` — Aretha Franklin / Rock and Roll Hall of Fame (January 21, 1987) → `arts-culture/aretha-franklin-hof.md` (content; Arts & Culture now 2 files).
+- `2026-06-09` — Refreshed `TIMELINE.md`, `INDEX.md`, category indices, and cross-refs for two new files (structure).
 - `2026-06-09` — Reagan's "Tear down this wall" speech (June 12, 1987) → `history-politics/reagan-berlin-speech.md` (content; H&P now 3 files).
 - `2026-06-09` — FDA approves Prozac (December 29, 1987) → `society-economics/prozac-fda-approval.md` (content; Society & Economics now 2 files).
 - `2026-06-09` — Refreshed `TIMELINE.md`, `INDEX.md`, category indices, and cross-refs for new files (structure).

@@ -74,25 +74,26 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (13 rows across all five categories; 8 rows now link to dedicated files).
-- **Dedicated topic files (8):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (13 rows across all five categories; 10 rows now link to dedicated files).
+- **Dedicated topic files (10):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
   - `history-politics/montreal-protocol.md` — Montreal Protocol (September 16, 1987).
   - `science-technology/supernova-1987a.md` — Supernova 1987A (February 23, 1987).
+  - `science-technology/dna-fingerprinting.md` — DNA fingerprinting first criminal conviction (November 13, 1987).
   - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
+  - `arts-culture/aretha-franklin-hof.md` — Aretha Franklin inducted into Rock and Roll Hall of Fame (January 21, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
-  - `society-economics/prozac-fda-approval.md` — FDA approves Prozac/fluoxetine (December 29, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
-- **Coverage:** all five categories have ≥1 dedicated file; History & Politics has 3 files, Society & Economics has 2 files.
+- **Coverage:** all five categories have ≥2 dedicated files except People (1 file); History & Politics has 3 files, Society & Economics has 2 files, Science & Technology has 2 files, Arts & Culture has 2 files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — chronological table of the dated 1987 events; generated region wrapped in markers; links all 8 dedicated files (tick 4, 2026-06-09).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 3 topics, Society & Economics lists 2 topics.
-- `INDEX.md` — master index grouping all 8 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 8 dedicated topic files.
+- `TIMELINE.md` — chronological table of the dated 1987 events; generated region wrapped in markers; links all 10 dedicated files (tick 5, 2026-06-09). Corrected Aretha Franklin entry from "Jan 29" to "Jan 21".
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 3 topics, Science & Technology lists 2 topics, Arts & Culture lists 2 topics, Society & Economics lists 2 topics.
+- `INDEX.md` — master index grouping all 10 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 10 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -275,3 +276,15 @@ Files changed: `.github/agents/curator.agent.md`, `.github/skills/add-topic/SKIL
 `.github/prompts/update-readme.prompt.md`, `.github/prompts/encode-seed.prompt.md`,
 `.github/prompts/publish.prompt.md`, `.claude/skills/add-topic/SKILL.md`.
 No files added or removed; seed.md sections 1–7 not regenerated (file inventory unchanged).
+
+### Tick 5 — 2026-06-09
+
+Fifth autonomous growth tick via `/grow`. Planning prioritized filling under-represented categories: Science & Technology and Arts & Culture each had only one dedicated file, making them the highest-priority targets. Items completed:
+
+- **Content**: Researched **DNA fingerprinting entering the courtroom** (November 1987) via Wikipedia and Guinness World Records. Created `science-technology/dna-fingerprinting.md` — the **second file in Science & Technology**. Key facts verified: Alec Jeffreys invented RFLP-based DNA profiling at the University of Leicester in 1984; Richard Buckland was the first person exonerated by DNA (Narborough case, 1986); Robert Melias (UK, November 13, 1987) was the first person in the world convicted using DNA evidence (Guinness record); Tommie Lee Andrews (USA) was convicted by the same method the same month. Linked the existing README row.
+- **Content**: Researched **Aretha Franklin's Rock and Roll Hall of Fame induction** (January 21, 1987) via the Rock & Roll Hall of Fame and HISTORY.com. Created `arts-culture/aretha-franklin-hof.md` — the **second file in Arts & Culture**. Key facts verified: induction ceremony January 21, 1987, Waldorf-Astoria Hotel, New York City; inducted by Keith Richards; Franklin did not attend (Cecil Franklin and Clive Davis accepted); she was the first of 15 performers in the 1987 class and the first woman ever inducted; Guinness World Record confirms the milestone. Also corrected a prior TIMELINE.md error: the Aretha Franklin entry had "Jan 29" — corrected to "Jan 21". Updated the existing README row with a link and corrected description.
+- **Structure**: Refreshed generated regions in `TIMELINE.md` (new links, date correction), `INDEX.md`, `science-technology/index.md`, `arts-culture/index.md`, and `## Related` blocks in `supernova-1987a.md` (added DNA fingerprinting sibling link) and `full-metal-jacket.md` (added Aretha Franklin sibling link). Both new files include marker-wrapped `## Related` blocks.
+- **Verify**: README still 13 rows (no new rows; 10 now link to dedicated files); both new files carry required frontmatter and ≥2 authoritative sources; all internal links resolve.
+- **Record**: Moved tick 5 items to ROADMAP Done; updated Backlog; synced seed §4–5 (8→10 files; Science & Technology and Arts & Culture now each have 2 files).
+
+Coverage after this tick: **four of five taxonomy categories (History & Politics, Science & Technology, Arts & Culture, Society & Economics) have ≥2 dedicated files**; People still has 1 file (top next priority).

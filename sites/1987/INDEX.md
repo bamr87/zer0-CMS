@@ -15,11 +15,13 @@ _Category index: [history-politics/index.md](history-politics/index.md)_
 _Category index: [science-technology/index.md](science-technology/index.md)_
 
 - [Supernova 1987A](science-technology/supernova-1987a.md)
+- [DNA Fingerprinting Enters the Courtroom (November 13, 1987)](science-technology/dna-fingerprinting.md)
 
 ## Arts & Culture
 _Category index: [arts-culture/index.md](arts-culture/index.md)_
 
 - [Full Metal Jacket](arts-culture/full-metal-jacket.md)
+- [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame (January 21, 1987)](arts-culture/aretha-franklin-hof.md)
 
 ## Society & Economics
 _Category index: [society-economics/index.md](society-economics/index.md)_

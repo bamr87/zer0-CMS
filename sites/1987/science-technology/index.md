@@ -6,6 +6,7 @@ Discoveries, inventions, and technological breakthroughs of 1987.
 | Topic | Description |
 |---|---|
 | [Supernova 1987A](supernova-1987a.md) | A core-collapse supernova in the Large Magellanic Cloud — the brightest seen from Earth since 1604 and the first source of directly detected supernova neutrinos. |
+| [DNA Fingerprinting Enters the Courtroom](dna-fingerprinting.md) | On November 13, 1987 Robert Melias became the first person in the world convicted using DNA evidence, opening a new era in forensic science. |
 <!-- END GENERATED: category-index:science-technology -->
 
 See also the [master index](../INDEX.md) and [timeline](../TIMELINE.md).
