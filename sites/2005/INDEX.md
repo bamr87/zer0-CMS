@@ -9,14 +9,14 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 |-------|-------------|
 | Iraqi Parliamentary Elections | Iraq's first multi-party elections since 1953, January 30. |
 | Kyoto Protocol enters force | International climate treaty took legal effect February 16. |
-| 7/7 London bombings | Four coordinated suicide bomb attacks on London's transit, July 7. |
+| [7/7 London bombings](history-politics/77-london-bombings.md) | Four coordinated suicide bomb attacks on London's transit, July 7. |
 
 ## Science & Technology ([index](science-technology/index.md))
 
 | Topic | Description |
 |-------|-------------|
 | Huygens lands on Titan | First landing in the outer solar system, January 14. |
-| YouTube founded | Video-sharing platform registered February 14. |
+| [YouTube founded](science-technology/youtube-founded.md) | Video-sharing platform registered February 14. |
 | Deep Impact mission | First active excavation of a comet's interior, July 4. |
 
 ## Arts & Culture ([index](arts-culture/index.md))
@@ -30,7 +30,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
-| Hurricane Katrina | Devastating Category 3 storm struck August 29, ~1,800 deaths. |
+| [Hurricane Katrina](society-economics/hurricane-katrina.md) | Devastating Category 3 storm struck August 29, ~1,800 deaths. |
 
 ## People ([index](people/index.md))
 

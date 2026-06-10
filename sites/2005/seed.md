@@ -74,16 +74,16 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 2005` (12 rows across all five categories; 0 rows link to dedicated files).
-- **Dedicated topic files:** none yet — all five categories have index stubs but no topic files.
+- **Knowledge table:** `README.md` → `## Notable Events of 2005` (12 rows; 3 rows link to dedicated files).
+- **Dedicated topic files:** 3 — `society-economics/hurricane-katrina.md`, `history-politics/77-london-bombings.md`, `science-technology/youtube-founded.md`.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — generated; 12 dated rows sorted chronologically.
-- Category index pages `<category-slug>/index.md` — generated for all 5 categories (history-politics, science-technology, arts-culture, society-economics, people); listing knowledge-table entries per category.
-- `INDEX.md` — generated; master index grouped by taxonomy category.
-- Cross-reference `## Related` blocks — not yet generated (requires topic files to exist).
+- `TIMELINE.md` — generated; 12 dated rows, 3 linked to dedicated topic files.
+- Category index pages `<category-slug>/index.md` — generated for all 5 categories; history-politics, science-technology, and society-economics now link their dedicated topic files.
+- `INDEX.md` — generated; master index grouped by taxonomy category; 3 entries link to topic files.
+- Cross-reference `## Related` blocks — not yet generated (planned next tick).
 
 ## 6. Growth Loop
 
@@ -149,3 +149,15 @@ First growth tick. Ran the build-structure skill to generate the initial structu
 - Created `people/index.md`: category index listing 3 People entries.
 - Updated `ROADMAP.md`: moved 3 structure items to Done; promoted 3 high-priority content deep-dives to Now.
 - Updated `seed.md` §4–5: reflected new structure inventory and category directories.
+
+---
+
+### Tick 2: First Deep-Dive Articles — 2026-06-09
+
+Second growth tick. Created the first three dedicated topic files and wired them into the structure.
+
+- Created `society-economics/hurricane-katrina.md`, `history-politics/77-london-bombings.md`, and `science-technology/youtube-founded.md` (each with ≥2 authoritative sources).
+- Linked all three from the `README.md` knowledge table (3 of 12 rows now link to dedicated files).
+- Regenerated category indices (history-politics, science-technology, society-economics) to link topic files and drop the "no dedicated topic files yet" stubs.
+- Updated `TIMELINE.md` and `INDEX.md` to reference the three new files.
+- Updated `ROADMAP.md`: moved 3 deep-dive items to Done; promoted Iraqi elections, Huygens, and Pope John Paul II to Now; flagged the `## Related` cross-reference task as actionable.
