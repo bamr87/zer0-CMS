@@ -74,26 +74,29 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (13 rows across all five categories; 10 rows now link to dedicated files).
-- **Dedicated topic files (10):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (14 rows across all five categories; 12 rows now link to dedicated files).
+- **Dedicated topic files (12):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
   - `history-politics/montreal-protocol.md` — Montreal Protocol (September 16, 1987).
+  - `history-politics/first-intifada.md` — First Intifada (December 9, 1987).
   - `science-technology/supernova-1987a.md` — Supernova 1987A (February 23, 1987).
   - `science-technology/dna-fingerprinting.md` — DNA fingerprinting first criminal conviction (November 13, 1987).
   - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `arts-culture/aretha-franklin-hof.md` — Aretha Franklin inducted into Rock and Roll Hall of Fame (January 21, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
+  - `society-economics/prozac-fda-approval.md` — FDA approves Prozac (December 29, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
-- **Coverage:** all five categories have ≥2 dedicated files except People (1 file); History & Politics has 3 files, Society & Economics has 2 files, Science & Technology has 2 files, Arts & Culture has 2 files.
+  - `people/mathias-rust.md` — Mathias Rust flight to Red Square (May 28, 1987).
+- **Coverage:** History & Politics has 4 files; Society & Economics has 2 files; Science & Technology has 2 files; Arts & Culture has 2 files; People has 2 files. All categories now have ≥2 dedicated files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — chronological table of the dated 1987 events; generated region wrapped in markers; links all 10 dedicated files (tick 5, 2026-06-09). Corrected Aretha Franklin entry from "Jan 29" to "Jan 21".
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 3 topics, Science & Technology lists 2 topics, Arts & Culture lists 2 topics, Society & Economics lists 2 topics.
-- `INDEX.md` — master index grouping all 10 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 10 dedicated topic files.
+- `TIMELINE.md` — 14-row chronological table including all 12 dedicated files; Mathias Rust (May 28) and First Intifada (Dec 9) entries added (tick 6, 2026-06-10).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 4 topics, Science & Technology lists 2 topics, Arts & Culture lists 2 topics, Society & Economics lists 2 topics, People lists 2 topics.
+- `INDEX.md` — master index grouping all 12 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 12 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -288,3 +291,34 @@ Fifth autonomous growth tick via `/grow`. Planning prioritized filling under-rep
 - **Record**: Moved tick 5 items to ROADMAP Done; updated Backlog; synced seed §4–5 (8→10 files; Science & Technology and Arts & Culture now each have 2 files).
 
 Coverage after this tick: **four of five taxonomy categories (History & Politics, Science & Technology, Arts & Culture, Society & Economics) have ≥2 dedicated files**; People still has 1 file (top next priority).
+
+### Tick 6 — 2026-06-10
+
+Sixth autonomous growth tick via `/grow`. Planning prioritized filling the People category (only 1 file) and converting the First Intifada README row — the highest-value un-linked backlog item. Items completed:
+
+- **Content**: Researched **Mathias Rust's flight to Red Square** (May 28, 1987) via Wikipedia and
+  Smithsonian Air & Space Magazine. Created `people/mathias-rust.md` — the **second file in the
+  People category**, closing the last category gap. Key facts: 18-year-old West German amateur pilot
+  (50 hrs experience) flew a Reims Cessna F172P from Helsinki-Malmi Airport to Bolshoy Moskvoretsky
+  Bridge beside Red Square in ~5.5 hours; Soviet air-defense failures exploited; arrested, sentenced
+  to 4 years (served 14 months at Lefortovo); Defence Minister Sokolov and Air Defence chief Koldunov
+  dismissed; hundreds of officers purged. Added new README knowledge-table row linked to the file.
+- **Content**: Researched the **First Intifada** (December 9, 1987) via Wikipedia and Encyclopædia
+  Britannica. Created `history-politics/first-intifada.md` — the **fourth file in History & Politics**.
+  Key facts: triggered by December 8 truck crash at Erez checkpoint killing 4 Palestinians from
+  Jabalia refugee camp; characterized by civil disobedience, strikes, stone-throwing; Hamas founded
+  in response; ~1,100–1,200 Palestinians and 160–200 Israelis killed 1987–1993; led to PLO's 1988
+  Declaration of Independence and the Oslo Accords (September 13, 1993). Linked the existing README
+  row (no new row added).
+- **Structure**: Updated TIMELINE.md (Mathias Rust inserted at May 28; First Intifada Dec 9 entry
+  now links dedicated file); INDEX.md (2 new entries); `history-politics/index.md` (First Intifada
+  row); `people/index.md` (Mathias Rust row). Generated marker-wrapped `## Related` blocks in both
+  new files; updated Related blocks in `inf-treaty.md` (added First Intifada link), `rudolf-hess.md`
+  (added Mathias Rust link).
+- **Verify**: README now 14 rows (1 new for Mathias Rust; 12 link to dedicated files); no duplicate
+  rows; all internal links resolve; both new files carry required frontmatter and ≥2 authoritative
+  sources (Wikipedia + Smithsonian/Britannica).
+- **Record**: Moved tick 6 items to ROADMAP Done; refilled Backlog; synced seed §4–5 (10→12 files).
+
+Coverage after this tick: **all five taxonomy categories now have ≥2 dedicated files** (12 files
+total). History & Politics has 4 files, all others have 2. README has 14 rows with 12 linked.

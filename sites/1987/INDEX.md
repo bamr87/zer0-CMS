@@ -10,6 +10,7 @@ _Category index: [history-politics/index.md](history-politics/index.md)_
 - [Reagan's "Tear Down This Wall" Speech (June 12, 1987)](history-politics/reagan-berlin-speech.md)
 - [Montreal Protocol (September 16, 1987)](history-politics/montreal-protocol.md)
 - [INF Treaty (December 8, 1987)](history-politics/inf-treaty.md)
+- [First Intifada (December 9, 1987)](history-politics/first-intifada.md)
 
 ## Science & Technology
 _Category index: [science-technology/index.md](science-technology/index.md)_
@@ -33,4 +34,5 @@ _Category index: [society-economics/index.md](society-economics/index.md)_
 _Category index: [people/index.md](people/index.md)_
 
 - [Rudolf Hess (death, August 17, 1987)](people/rudolf-hess.md)
+- [Mathias Rust — Flight to Red Square (May 28, 1987)](people/mathias-rust.md)
 <!-- END GENERATED: master-index -->

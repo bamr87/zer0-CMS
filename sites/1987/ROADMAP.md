@@ -10,21 +10,24 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Cleared — tick 5 items completed (2026-06-09). Next `plan-roadmap` run will select from Backlog._
+_Tick 6 completed (2026-06-10). Cleared._
 
 _(empty)_
 
 ## Backlog
 _Prioritized queue. Top items are pulled into **Now** each tick._
 
-1. `content` — Deep-dive: First Intifada (December 1987) → `history-politics/first-intifada.md`.
-2. `content` — Deep-dive: Iran-Contra hearings → `history-politics/iran-contra.md`.
-3. `content` — Add 2nd People file (e.g., Mathias Rust, the West German teenager who landed on Red Square, May 28, 1987).
-4. `meta` — Run `/evolve` to audit the customization layer (every ~5th tick).
+1. `content` — Deep-dive: Iran-Contra hearings → `history-politics/iran-contra.md`.
+2. `content` — Deep-dive: Microsoft Windows 2.0 → `science-technology/windows-2.md`.
+3. `content` — 3rd People file (e.g., Desmond Tutu, or Joseph Biden becomes Senate Judiciary chair, 1987).
+4. `meta` — Run `/evolve` to audit the customization layer (overdue — tick 6 is past the ~5th tick threshold).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-10` — Mathias Rust flight to Red Square (May 28, 1987) → `people/mathias-rust.md` (content; People now 2 files).
+- `2026-06-10` — First Intifada begins (December 9, 1987) → `history-politics/first-intifada.md` (content; H&P now 4 files).
+- `2026-06-10` — Refreshed TIMELINE.md, INDEX.md, category indices, cross-refs for 2 new files (structure).
 - `2026-06-09` — DNA fingerprinting in criminal court (November 1987) → `science-technology/dna-fingerprinting.md` (content; Science & Technology now 2 files).
 - `2026-06-09` — Aretha Franklin / Rock and Roll Hall of Fame (January 21, 1987) → `arts-culture/aretha-franklin-hof.md` (content; Arts & Culture now 2 files).
 - `2026-06-09` — Refreshed `TIMELINE.md`, `INDEX.md`, category indices, and cross-refs for two new files (structure).
