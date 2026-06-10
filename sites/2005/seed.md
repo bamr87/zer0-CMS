@@ -75,15 +75,15 @@ seed.
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
 - **Knowledge table:** `README.md` → `## Notable Events of 2005` (12 rows across all five categories; 0 rows link to dedicated files).
-- **Dedicated topic files:** none yet — all five categories are empty stubs at genesis.
+- **Dedicated topic files:** none yet — all five categories have index stubs but no topic files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — not yet generated; will be built on first growth tick.
-- Category index pages `<category-slug>/index.md` — not yet generated.
-- `INDEX.md` — not yet generated.
-- Cross-reference `## Related` blocks — not yet generated.
+- `TIMELINE.md` — generated; 12 dated rows sorted chronologically.
+- Category index pages `<category-slug>/index.md` — generated for all 5 categories (history-politics, science-technology, arts-culture, society-economics, people); listing knowledge-table entries per category.
+- `INDEX.md` — generated; master index grouped by taxonomy category.
+- Cross-reference `## Related` blocks — not yet generated (requires topic files to exist).
 
 ## 6. Growth Loop
 
@@ -133,3 +133,19 @@ Definition (`seed.md` §1) and the starter content files are new. Bootstrapped w
 - `ROADMAP.md` — initial backlog seeded from taxonomy.
 - `.github/` and `.claude/` customization layers — copied verbatim from the 1987 instance; no
   concept-specific content in either layer.
+
+---
+
+### Tick 1: Structure Generation — 2026-06-09
+
+First growth tick. Ran the build-structure skill to generate the initial structural layer from the 12-row knowledge table in README.md.
+
+- Created `TIMELINE.md`: chronological table of all 12 knowledge-table events, sorted by date (2005-01-14 to 2005-12-09), with generated markers.
+- Created `INDEX.md`: master index of all content grouped by the 5 taxonomy categories, with generated markers.
+- Created `history-politics/index.md`: category index listing 3 History & Politics entries.
+- Created `science-technology/index.md`: category index listing 3 Science & Technology entries.
+- Created `arts-culture/index.md`: category index listing 2 Arts & Culture entries.
+- Created `society-economics/index.md`: category index listing 1 Society & Economics entry.
+- Created `people/index.md`: category index listing 3 People entries.
+- Updated `ROADMAP.md`: moved 3 structure items to Done; promoted 3 high-priority content deep-dives to Now.
+- Updated `seed.md` §4–5: reflected new structure inventory and category directories.

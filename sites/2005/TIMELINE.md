@@ -1,0 +1,22 @@
+<!-- BEGIN GENERATED: timeline — maintained by build-structure; do not edit by hand -->
+# Timeline of 2005
+
+A chronological record of notable events of the year 2005, sourced from the knowledge table in [README.md](README.md) and dedicated topic files.
+
+| Date | Event | Category | File |
+|------|-------|----------|------|
+| 2005-01-14 | Huygens lands on Titan | Science & Technology | — |
+| 2005-01-30 | Iraqi Parliamentary Elections | History & Politics | — |
+| 2005-02-14 | YouTube founded | Science & Technology | — |
+| 2005-02-16 | Kyoto Protocol enters force | History & Politics | — |
+| 2005-04-02 | Pope John Paul II dies | People | — |
+| 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | — |
+| 2005-07-04 | Deep Impact mission | Science & Technology | — |
+| 2005-07-07 | 7/7 London bombings | History & Politics | — |
+| 2005-08-29 | Hurricane Katrina | Society & Economics | — |
+| 2005-09-18 | Angela Merkel elected Chancellor | People | — |
+| 2005-10-24 | Rosa Parks dies | People | — |
+| 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | — |
+
+> Generated from 12 knowledge-table rows. Links update when dedicated topic files are created.
+<!-- END GENERATED: timeline -->

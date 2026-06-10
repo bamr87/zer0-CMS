@@ -7,17 +7,14 @@
 
 | Item | Tag | Notes |
 |---|---|---|
-| Generate TIMELINE.md from README knowledge table | structure | 12 dated rows ready |
-| Generate category index pages (all 5 slugs) | structure | stub directories exist |
-| Generate master INDEX.md | structure | first structural pass |
+| Deep-dive: Hurricane Katrina (Aug 29, 2005) | content | high — most significant U.S. disaster of 2005 |
+| Deep-dive: 7/7 London Bombings (Jul 7, 2005) | content | high — major geopolitical/terrorism event |
+| Deep-dive: YouTube founding (Feb 14, 2005) | content | high — transformative technology origin |
 
 ## Backlog
 
 | Item | Tag | Priority |
 |---|---|---|
-| Deep-dive: Hurricane Katrina (Aug 29, 2005) | content | high — most significant U.S. disaster |
-| Deep-dive: 7/7 London Bombings (Jul 7, 2005) | content | high — major geopolitical event |
-| Deep-dive: YouTube founding (Feb 14, 2005) | content | high — transformative technology |
 | Deep-dive: Iraqi Parliamentary Elections (Jan 30, 2005) | content | high — post-invasion milestone |
 | Deep-dive: Huygens probe on Titan (Jan 14, 2005) | content | high — outer-solar-system first |
 | Deep-dive: Pope John Paul II (Apr 2, 2005) | content | high — global significance |
@@ -27,12 +24,16 @@
 | Deep-dive: Rosa Parks death (Oct 24, 2005) | content | medium |
 | Deep-dive: *Brokeback Mountain* (Dec 9, 2005) | content | medium |
 | Deep-dive: *Star Wars* Episode III (May 19, 2005) | content | low |
+| Add cross-reference ## Related blocks to topic files | structure | after first topic files exist |
 | Periodic /evolve audit of .github/ layer | meta | quarterly |
 
 ## Done
 
 | Item | Tag | Completed |
 |---|---|---|
+| Generate TIMELINE.md from README knowledge table | structure | 2026-06-09 |
+| Generate category index pages (all 5 slugs) | structure | 2026-06-09 |
+| Generate master INDEX.md | structure | 2026-06-09 |
 | Genesis: seed.md, README.md, ROADMAP.md, .github/ layer | meta | 2026-06-08 |
 
 ## Ideas
