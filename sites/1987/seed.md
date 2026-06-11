@@ -74,29 +74,31 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (14 rows across all five categories; 12 rows now link to dedicated files).
-- **Dedicated topic files (12):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (14 rows across all five categories; all 14 rows now link to dedicated files).
+- **Dedicated topic files (14):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
+  - `history-politics/iran-contra.md` — Iran-Contra affair congressional hearings (July 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
   - `history-politics/montreal-protocol.md` — Montreal Protocol (September 16, 1987).
   - `history-politics/first-intifada.md` — First Intifada (December 9, 1987).
   - `science-technology/supernova-1987a.md` — Supernova 1987A (February 23, 1987).
   - `science-technology/dna-fingerprinting.md` — DNA fingerprinting first criminal conviction (November 13, 1987).
+  - `science-technology/windows-2.md` — Microsoft Windows 2.0 released (December 9, 1987).
   - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `arts-culture/aretha-franklin-hof.md` — Aretha Franklin inducted into Rock and Roll Hall of Fame (January 21, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
   - `society-economics/prozac-fda-approval.md` — FDA approves Prozac (December 29, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
   - `people/mathias-rust.md` — Mathias Rust flight to Red Square (May 28, 1987).
-- **Coverage:** History & Politics has 4 files; Society & Economics has 2 files; Science & Technology has 2 files; Arts & Culture has 2 files; People has 2 files. All categories now have ≥2 dedicated files.
+- **Coverage:** History & Politics has 5 files; Science & Technology has 3 files; Arts & Culture has 2 files; Society & Economics has 2 files; People has 2 files. All categories have ≥2 dedicated files; all 14 README rows link to dedicated files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — 14-row chronological table including all 12 dedicated files; Mathias Rust (May 28) and First Intifada (Dec 9) entries added (tick 6, 2026-06-10).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 4 topics, Science & Technology lists 2 topics, Arts & Culture lists 2 topics, Society & Economics lists 2 topics, People lists 2 topics.
-- `INDEX.md` — master index grouping all 12 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 12 dedicated topic files.
+- `TIMELINE.md` — 15-row chronological table including all 14 dedicated files; Windows 2.0 date corrected (was "Jan–Mar", now Dec 9) and Iran-Contra entry now links its file (tick 7, 2026-06-11).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists 3 topics, Arts & Culture lists 2 topics, Society & Economics lists 2 topics, People lists 2 topics.
+- `INDEX.md` — master index grouping all 14 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 14 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -322,3 +324,15 @@ Sixth autonomous growth tick via `/grow`. Planning prioritized filling the Peopl
 
 Coverage after this tick: **all five taxonomy categories now have ≥2 dedicated files** (12 files
 total). History & Politics has 4 files, all others have 2. README has 14 rows with 12 linked.
+
+### Tick 7 — 2026-06-11
+
+Seventh autonomous growth tick via `/grow`. Planning prioritized converting the two remaining unlinked README rows into dedicated files, completing full README coverage. Items completed:
+
+- **Content**: Researched the **Iran-Contra affair** (congressional hearings, May–August 1987) via Wikipedia and Encyclopædia Britannica. Created `history-politics/iran-contra.md` — the **fifth file in History & Politics**. Key facts verified: arms shipments to Iran began August 1985; Boland Amendment (1984) prohibited Contra aid; *Ash-Shiraa* exposed the affair November 3, 1986; Tower Commission report February 26, 1987; joint congressional hearings May–August 1987; Oliver North testified July 7–14, drawing ~55 million viewers on the first day; North transferred ~$48 million to Contras; convictions of North and Poindexter later reversed on appeal; Bush pardoned 6 officials December 24, 1992; Reagan approval fell from 67% to 46%. Linked the existing README row.
+- **Content**: Researched **Microsoft Windows 2.0** (released December 9, 1987) via Wikipedia and This Day in Tech History. Created `science-technology/windows-2.md` — the **third file in Science & Technology**. Key facts verified: released December 9, 1987; introduced overlapping/resizable windows (vs tiled in 1.0), desktop icons, keyboard shortcuts, 16-color VGA support, "Minimize"/"Maximize" terminology; Windows/386 variant (available September 1987) used i386 protected mode with preemptive multitasking and virtual 8086 mode; GUI versions of Word and Excel; 1M+ copies by 1988; Apple sued Microsoft and HP March 17, 1988 over "look and feel" — court ruled largely in Microsoft's favour; Microsoft supported Windows 2.0 until December 31, 2001. Also corrected a prior TIMELINE.md error: Windows 2.0 was listed as "Jan – Mar" (wrong) — corrected to December 9. Linked the existing README row.
+- **Structure**: Refreshed TIMELINE.md (Windows 2.0 date fixed, Iran-Contra entry now linked; timeline grows from 14 to 15 rows); INDEX.md (2 new entries); `history-politics/index.md` (Iran-Contra row); `science-technology/index.md` (Windows 2.0 row). Updated `## Related` blocks in `inf-treaty.md` (Iran-Contra link added), `reagan-berlin-speech.md` (Iran-Contra link added, marker format standardized), `dna-fingerprinting.md` (Windows 2.0 link added). Both new files include marker-wrapped `## Related` blocks.
+- **Verify**: README still 14 rows (no new rows added; **all 14 now link to dedicated files**); no duplicate rows; all internal links resolve; both new files carry required frontmatter and ≥2 authoritative sources.
+- **Record**: Moved tick 7 items to ROADMAP Done; refilled Backlog with 3rd People file, 3rd Arts & Culture file, AIDS/ACT UP, and `/evolve` audit; synced seed §4–5 (12→14 files).
+
+Coverage after this tick: **all 14 README knowledge-table rows now link to dedicated topic files** (14 files total). History & Politics has 5 files, Science & Technology has 3 files, Arts & Culture has 2 files, Society & Economics has 2 files, People has 2 files.

@@ -19,12 +19,14 @@ The phrase was written by White House speechwriter Peter Robinson following a re
 
 The speech is regarded as one of Reagan's defining rhetorical moments and a key symbolic milestone in the latter Cold War. It intensified international pressure on the Soviet bloc's policy of division and reinforced the message conveyed by the INF Treaty signed later that same year. When the Berlin Wall fell on November 9, 1989 — less than two and a half years after the speech — the phrase "tear down this wall" became shorthand for the entire arc of Cold War resolution. The address has been cited by historians as emblematic of the power of public diplomacy and is regularly ranked among the greatest American presidential speeches.
 
-<!-- BEGIN GENERATED: related -->
+<!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
 - [INF Treaty (December 8, 1987)](inf-treaty.md) — Reagan and Gorbachev signed the INF Treaty just six months after the Brandenburg Gate speech, fulfilling the diplomatic pressure it symbolised.
-- [Montreal Protocol (September 16, 1987)](montreal-protocol.md) — Another landmark international agreement concluded in the same year, reflecting 1987's unusually productive multilateral diplomacy.
-<!-- END GENERATED -->
+- [Iran-Contra Affair (1986–1987)](iran-contra.md) — the domestic scandal running in parallel with Reagan's Cold War diplomacy throughout 1987.
+- [Montreal Protocol (September 16, 1987)](montreal-protocol.md) — another landmark international agreement concluded in the same year, reflecting 1987's unusually productive multilateral diplomacy.
+- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+<!-- END GENERATED: related -->
 
 ## Sources
 

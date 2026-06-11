@@ -32,6 +32,7 @@ In the decades after 1987, DNA profiling became the gold standard of forensic id
 ## Related
 
 - [Supernova 1987A](supernova-1987a.md) — another Science & Technology landmark of 1987.
+- [Microsoft Windows 2.0 (December 9, 1987)](windows-2.md) — the other major Science & Technology milestone of 1987.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the defining economic event of the same year.
 - [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — the landmark arms-control agreement of 1987.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)

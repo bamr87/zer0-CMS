@@ -10,21 +10,24 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Tick 6 completed (2026-06-10). Cleared._
+_Tick 7 completed (2026-06-11). Cleared._
 
 _(empty)_
 
 ## Backlog
 _Prioritized queue. Top items are pulled into **Now** each tick._
 
-1. `content` — Deep-dive: Iran-Contra hearings → `history-politics/iran-contra.md`.
-2. `content` — Deep-dive: Microsoft Windows 2.0 → `science-technology/windows-2.md`.
-3. `content` — 3rd People file (e.g., Desmond Tutu, or Joseph Biden becomes Senate Judiciary chair, 1987).
-4. `meta` — Run `/evolve` to audit the customization layer (overdue — tick 6 is past the ~5th tick threshold).
+1. `content` — 3rd People file (e.g., Desmond Tutu, Joseph Biden becomes Senate Judiciary chair, or another notable 1987 figure).
+2. `content` — 3rd Arts & Culture file (e.g., *RoboCop*, *Lethal Weapon*, or *Sign 'O' the Times* by Prince).
+3. `content` — 3rd Society & Economics file (e.g., AIDS crisis / ACT UP founding in 1987).
+4. `meta` — Run `/evolve` to audit the customization layer (overdue — now past tick 7).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-11` — Iran-Contra hearings → `history-politics/iran-contra.md` (content; H&P now 5 files; all README rows now linked).
+- `2026-06-11` — Microsoft Windows 2.0 → `science-technology/windows-2.md` (content; Science & Technology now 3 files).
+- `2026-06-11` — Refreshed TIMELINE.md (Windows 2.0 date corrected, Iran-Contra linked), INDEX.md, category indices, cross-refs for 2 new files (structure).
 - `2026-06-10` — Mathias Rust flight to Red Square (May 28, 1987) → `people/mathias-rust.md` (content; People now 2 files).
 - `2026-06-10` — First Intifada begins (December 9, 1987) → `history-politics/first-intifada.md` (content; H&P now 4 files).
 - `2026-06-10` — Refreshed TIMELINE.md, INDEX.md, category indices, cross-refs for 2 new files (structure).
