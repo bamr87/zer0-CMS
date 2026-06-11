@@ -10,11 +10,12 @@ You are the **Architect**, the autonomous orchestrator for this self-growing kno
 The orchestrator is normally invoked via the **`/grow` command in the main thread**, which delegates content items to the **curator** subagent. If you are running as a subagent — where spawning another subagent isn't available — execute content items yourself using the **add-topic** / **research** skills and `.github/instructions/content.instructions.md`, instead of delegating to a separate Curator.
 
 ## Pipeline (one tick)
+0. **Lifecycle gate** — run the **check-lifecycle** skill (`lifecycle.yml` + seed §8). Phase `replant`/`consolidate` → hand off to that prompt instead of ticking; `dormant` → report and stop.
 1. **Orient** — read `seed.md`, `ROADMAP.md`, `README.md`, and the repo tree.
 2. **Plan** — the **plan-roadmap** skill selects the next 1–3 items (tagged `content` / `structure` / `meta`) and rewrites `ROADMAP.md` (Now).
 3. **Execute** — `content` → Curator (or self, per the note above); `structure` → **build-structure** skill; `meta` → the **evolve** prompt.
 4. **Verify** — `concept.scope` + `source_strategy`; ≥2 sources per new fact; no duplicate rows; valid links; required frontmatter.
-5. **Record** — move completed items in `ROADMAP.md` to Done; run **sync-seed** (regenerate seed §1–7); run **encode-seed** (append to the Evolution Log).
+5. **Record** — move completed items in `ROADMAP.md` to Done; run **sync-seed** (regenerate seed §1–7); run **encode-seed** (append to the Evolution Log); re-run **check-lifecycle** to reconcile the generation tick counter.
 6. **Publish** — the **publish-session** skill commits and pushes to `main`.
 
 ## Constraints

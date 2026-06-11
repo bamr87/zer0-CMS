@@ -31,6 +31,8 @@ Editing a generated file by hand gets silently overwritten on the next growth ti
 | `TIMELINE.md`, `INDEX.md`, `<category>/index.md`, `## Related` cross-refs | `build-structure` skill | ❌ generated |
 | `README.md` knowledge table rows | `add-topic` / `curator` / `update-readme` | ✅ via skills |
 | `<category-slug>/<topic-slug>.md` topic files | `curator` / `deep-dive` | ✅ via skills |
+| `lifecycle.yml` `state` block | `check-lifecycle` / `replant` / `consolidate` | ❌ machine-maintained |
+| `lifecycle.yml` `policy` block | hand-tuned | ✅ deliberate knob changes only |
 
 `build-structure` wraps every generated region in `<!-- BEGIN GENERATED: <artifact> ... -->` / `<!-- END GENERATED -->` markers and only rewrites inside them — keep hand-written content outside the markers. It is idempotent: a rerun with no content change must produce no diff (stable ordering).
 
@@ -46,6 +48,15 @@ Delegation is strict — respect it when extending agents:
 
 `ROADMAP.md` tracks work in **Now / Backlog / Done / Ideas**, each item tagged `content | structure | meta`. The Architect pulls from Now/Backlog; `plan-roadmap` rewrites it each tick.
 
+## The repo lifecycle (grow → replant → consolidate)
+
+Beyond single ticks, each repo lives inside a **lineage** — see [LIFECYCLE.md](LIFECYCLE.md) (design) and [lifecycle.yml](lifecycle.yml) (state). Every tick starts with the `check-lifecycle` skill (pipeline step 0), which counts ticks from seed.md §8 (the source of truth) and gates the run:
+
+- after `replant_after_ticks` (default **3**) growth ticks, `/replant` finalizes this repo as `mature` and spawns a successor repo for the next concept (per `lifecycle.policy.succession.rule`), planting only the framework + carried-forward `lifecycle.yml`;
+- when the lineage reaches `consolidate_at_members` (default **7**), `/consolidate` — run from the newest member — merges all members into one range-named repo (e.g. `2005-2011`), preserves every Evolution Log, and archives the members.
+
+Unattended operation runs via the scheduled [`.github/workflows/grow.yml`](.github/workflows/grow.yml), which is planted verbatim into every successor. Never hand-edit `lifecycle.yml`'s `state` block; tune only `policy`.
+
 ## Commands (slash commands, not shell scripts)
 
 These run natively as Claude Code slash commands (`.claude/commands/`) — thin adapters over the canonical `.github/prompts/` files. The primary entry points:
@@ -59,8 +70,10 @@ These run natively as Claude Code slash commands (`.claude/commands/`) — thin 
 | `/evolve [scope]` | Audit & improve the `.github/` customization layer itself (descriptions, minimal tools, delegation, concept-agnosticism). |
 | `/encode-seed` | Append a session entry to `seed.md` §8 Evolution Log. |
 | `/publish` | Thin wrapper over the `publish-session` skill (encode-seed → review → commit → push). |
+| `/replant [--force\|subject]` | End this repo's growth generation (mark `mature`) and spawn the successor repo for the next concept in the lineage. Normally triggered by the lifecycle gate, not by hand. |
+| `/consolidate [--dry-run]` | Merge a completed 7-member lineage into one range-named repo and archive the members. Run from the newest member. |
 
-Lower-level skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`, `sync-seed`, `publish-session`) are usually invoked *by* the agents/prompts above rather than directly. The full architecture inventory is `seed.md` §3.
+Lower-level skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`, `sync-seed`, `publish-session`, `check-lifecycle`) are usually invoked *by* the agents/prompts above rather than directly. The full architecture inventory is `seed.md` §3.
 
 ## Claude Code integration (the `.claude/` layer)
 
@@ -68,7 +81,7 @@ The AI tooling originates in `.github/` (GitHub Copilot / VS Code format). A par
 
 | Claude Code | Mirrors | Notes |
 |---|---|---|
-| `.claude/commands/*.md` (`/grow`, `/genesis`, `/deep-dive`, `/update-readme`, `/encode-seed`, `/publish`, `/evolve`) | `.github/prompts/*.prompt.md` | Native slash commands; each reads & follows its canonical prompt. |
+| `.claude/commands/*.md` (`/grow`, `/genesis`, `/deep-dive`, `/update-readme`, `/encode-seed`, `/publish`, `/evolve`, `/replant`, `/consolidate`) | `.github/prompts/*.prompt.md` | Native slash commands; each reads & follows its canonical prompt. |
 | `.claude/agents/{architect,curator}.md` | `.github/agents/*.agent.md` | Subagents (spawned via the Task tool). |
 | `.claude/skills/<name>/SKILL.md` | `.github/skills/<name>/SKILL.md` | Auto-triggered by `description`; body points to the canonical procedure. |
 

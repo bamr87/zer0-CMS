@@ -7,7 +7,7 @@ Bootstrap or rebuild this repository as a self-growing knowledge base around a s
 
 Follow the canonical procedure in `.github/prompts/genesis.prompt.md` exactly:
 
-1. **Determine the concept** — use `$ARGUMENTS` as the `subject`; if blank, read the existing `seed.md` Concept Definition (rebuild mode).
+1. **Determine the concept** — use `$ARGUMENTS` as the `subject`; if blank, read the existing `seed.md` Concept Definition (rebuild mode); if blank and `seed.md` is missing but `lifecycle.yml` exists, use the newest lineage member's `subject` (freshly planted successor).
 2. **Derive the Concept Definition** appropriate to *that* subject — `scope`, a 4–7 entry `taxonomy` (name + kebab-case slug), `source_strategy` (≥2 authoritative sources), and `conventions`.
 3. **Write `seed.md`** (the DNA) — section 1 Concept Definition + sections 2–7, and start/preserve section 8 Evolution Log.
 4. **Ensure the customization layer exists** — the concept-agnostic `.github/` instructions, skills, agents, and prompts (and this `.claude/` adapter layer that mirrors them).

@@ -24,6 +24,12 @@ parameterized by it; never assume a specific subject.
 
 ## Pipeline (one tick)
 
+### 0 — Lifecycle gate
+Invoke the **check-lifecycle** skill (reads [lifecycle.yml](../../lifecycle.yml) + seed.md §8). If
+the phase is `replant` or `consolidate`, do **not** run a growth tick — hand off to the **replant**
+or **consolidate** prompt respectively and stop. If `dormant`, report and stop. Only phase `grow`
+continues below.
+
 ### 1 — Orient
 Read [seed.md](../../seed.md) (Concept Definition + inventories), [ROADMAP.md](../../ROADMAP.md),
 [README.md](../../README.md), and the repo tree. Understand current state.
@@ -48,6 +54,7 @@ table rows, all links resolve, dedicated files have required frontmatter.
 - Move completed items in `ROADMAP.md` to **Done**; add any discovered follow-ups to **Ideas/Backlog**.
 - Invoke the **sync-seed** skill to regenerate seed.md sections 1–7 from current state.
 - Run the **encode-seed** prompt to append this tick to the seed Evolution Log.
+- Re-run **check-lifecycle** to reconcile `generation_ticks` in `lifecycle.yml` with the log.
 
 ### 6 — Publish
 Invoke the **publish-session** skill: commit and push to `main`.

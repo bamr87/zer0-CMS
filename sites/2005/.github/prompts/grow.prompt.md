@@ -12,6 +12,8 @@ Run **one growth tick** by following the Architect's pipeline. Read the **Concep
 Delegate the full tick to the **Architect** agent
 ([architect.agent.md](../agents/architect.agent.md)), which executes:
 
+0. **Lifecycle gate** — the **check-lifecycle** skill reads [lifecycle.yml](../../lifecycle.yml);
+   phase `replant`/`consolidate` hands off to that prompt instead of ticking; `dormant` stops.
 1. **Orient** — read [seed.md](../../seed.md), [ROADMAP.md](../../ROADMAP.md),
    [README.md](../../README.md), and the repo tree.
 2. **Plan** — `plan-roadmap` skill selects the next 1–3 items (honor any argument override).
@@ -20,7 +22,8 @@ Delegate the full tick to the **Architect** agent
 4. **Verify** — enforce `concept.scope` + `concept.source_strategy`; no duplicate rows; valid links;
    required frontmatter.
 5. **Record** — update [ROADMAP.md](../../ROADMAP.md); run **sync-seed** (regenerate seed sections
-   1–7); run **encode-seed** (append to the Evolution Log).
+   1–7); run **encode-seed** (append to the Evolution Log); re-run **check-lifecycle** to reconcile
+   the generation tick counter.
 6. **Publish** — **publish-session** skill commits and pushes to `main`.
 
 End with the Architect's Tick Summary (items done, structure regenerated, roadmap delta, commit SHA).
