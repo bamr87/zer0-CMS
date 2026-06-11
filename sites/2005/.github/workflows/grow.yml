@@ -1,0 +1,64 @@
+# Scheduled growth tick — the heartbeat of the self-growing knowledge base.
+#
+# Each run executes ONE lifecycle-gated tick: check-lifecycle decides grow | replant |
+# consolidate | dormant, and the corresponding prompt runs. The same workflow file is
+# planted verbatim into every spawned repo, so the whole lineage shares one heartbeat.
+#
+# Required repository secrets (see LIFECYCLE.md → Setup):
+#   ANTHROPIC_API_KEY  — Claude API key for claude-code-action.
+#   LIFECYCLE_PAT      — (fine-grained) PAT with contents:write on this repo PLUS
+#                        repo-creation + archive rights on the owner account. Only
+#                        needed for replant/consolidate phases; plain growth ticks
+#                        work with contents:write alone.
+
+name: grow
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # one tick daily; 3-tick generations replant roughly twice a week
+  workflow_dispatch:
+    inputs:
+      args:
+        description: "Optional /grow arguments (item count or targets), or --force for /replant"
+        required: false
+        default: ""
+
+# Never let two ticks overlap — replant/consolidate are not concurrency-safe.
+concurrency:
+  group: lifecycle-tick
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # PAT (when present) lets publish-session push to main and lets the
+          # replant/consolidate prompts create and archive sibling repos via `gh`.
+          token: ${{ secrets.LIFECYCLE_PAT || github.token }}
+
+      - name: Run one lifecycle-gated tick
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ secrets.LIFECYCLE_PAT || github.token }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Run one lifecycle-gated tick of this self-growing knowledge base.
+
+            1. If seed.md is missing or has no Concept Definition, this is a freshly
+               planted successor: run /genesis (blank — it derives the concept from
+               lifecycle.yml's newest lineage member) and stop after publishing.
+            2. Otherwise run the check-lifecycle skill and follow its decision:
+               - grow        -> run /grow ${{ inputs.args }}
+               - replant     -> run /replant ${{ inputs.args }}
+               - consolidate -> run /consolidate
+               - dormant     -> report and exit without changes.
+
+            Follow the repository's CLAUDE.md and canonical .github/ prompts exactly;
+            publish only through the publish-session skill.
+          claude_args: "--max-turns 150"

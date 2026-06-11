@@ -15,6 +15,9 @@ This is the universal entry point: one prompt → a fully autonomous repo that t
 ### 1. Determine the concept
 - **If an argument was given**, that string is the `subject`.
 - **If blank**, read the existing [seed.md](../../seed.md) and use its Concept Definition (rebuild mode).
+- **If blank and seed.md is missing/empty** but [lifecycle.yml](../../lifecycle.yml) exists, this is
+  a freshly planted successor: the `subject` is the newest `lineage` member's `subject`
+  (successor-germination mode).
 
 ### 2. Derive the Concept Definition
 For a new subject, derive — appropriate to *that* subject, not copied from any example:
