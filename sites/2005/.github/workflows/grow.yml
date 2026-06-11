@@ -33,6 +33,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
+      issues: write
+      id-token: write # required: claude-code-action exchanges an OIDC token for its GitHub token
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
