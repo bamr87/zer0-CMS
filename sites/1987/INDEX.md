@@ -8,6 +8,7 @@ Master index of all content in this knowledge base, grouped by category. See als
 _Category index: [history-politics/index.md](history-politics/index.md)_
 
 - [Reagan's "Tear Down This Wall" Speech (June 12, 1987)](history-politics/reagan-berlin-speech.md)
+- [Iran-Contra Affair (1986–1987)](history-politics/iran-contra.md)
 - [Montreal Protocol (September 16, 1987)](history-politics/montreal-protocol.md)
 - [INF Treaty (December 8, 1987)](history-politics/inf-treaty.md)
 - [First Intifada (December 9, 1987)](history-politics/first-intifada.md)
@@ -17,6 +18,7 @@ _Category index: [science-technology/index.md](science-technology/index.md)_
 
 - [Supernova 1987A](science-technology/supernova-1987a.md)
 - [DNA Fingerprinting Enters the Courtroom (November 13, 1987)](science-technology/dna-fingerprinting.md)
+- [Microsoft Windows 2.0 (December 9, 1987)](science-technology/windows-2.md)
 
 ## Arts & Culture
 _Category index: [arts-culture/index.md](arts-culture/index.md)_
