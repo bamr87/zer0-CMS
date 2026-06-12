@@ -40,6 +40,10 @@ env:
   TICK_PROMPT: |
     Run one lifecycle-gated tick of this self-growing knowledge base.
 
+    0. Check the PHASE environment variable (echo "$PHASE"). If it is
+       "distill", run /distill — the lineage meta-review on the frontier
+       model (review all members, improve the cycle, write the seed-package/
+       bootstrap kit) — publish, and stop. Otherwise continue.
     1. If seed.md is missing or has no Concept Definition, this is a freshly
        planted successor: run /genesis (blank — it derives the concept from
        lifecycle.yml's newest lineage member) and stop after publishing.
@@ -91,13 +95,27 @@ jobs:
           # replant/consolidate prompts create and archive sibling repos via `gh`.
           token: ${{ secrets.LIFECYCLE_PAT || github.token }}
 
-      # The tick model is a lifecycle policy knob, not a hardcoded value.
-      - name: Resolve tick model from lifecycle policy
+      # Phase + model are lifecycle policy knobs, not hardcoded values. When the
+      # lineage reaches distill_at_members and state.distilled_at is still null,
+      # this run becomes the one-time distillation meta-review on the frontier
+      # model instead of a growth tick.
+      - name: Resolve phase and model from lifecycle policy
         id: model
         run: |
-          model=$(grep -E '^\s*tick:' lifecycle.yml | head -1 | sed -E 's/.*tick:[[:space:]]*"?([^"#]+)"?.*/\1/' | xargs)
-          echo "model=${model:-claude-sonnet-4-6}" >> "$GITHUB_OUTPUT"
-          echo "Tick model: ${model:-claude-sonnet-4-6}"
+          tick_model=$(grep -E '^[[:space:]]*tick:' lifecycle.yml | head -1 | sed -E 's/.*tick:[[:space:]]*"?([^"#]+)"?.*/\1/' | xargs)
+          distill_model=$(grep -E '^[[:space:]]*distill:' lifecycle.yml | head -1 | sed -E 's/.*distill:[[:space:]]*"?([^"#]+)"?.*/\1/' | xargs)
+          threshold=$(grep -E '^[[:space:]]*distill_at_members:' lifecycle.yml | head -1 | grep -oE '[0-9]+' || true)
+          members=$(grep -cE '^[[:space:]]*- subject:' lifecycle.yml || true)
+          pending=$(grep -E '^[[:space:]]*distilled_at:' lifecycle.yml | head -1 | grep -c null || true)
+          phase=tick
+          model="${tick_model:-claude-sonnet-4-6}"
+          if [ "${members:-0}" -ge "${threshold:-999}" ] && [ "${pending:-0}" -eq 1 ]; then
+            phase=distill
+            model="${distill_model:-claude-fable-5}"
+          fi
+          echo "phase=$phase" >> "$GITHUB_OUTPUT"
+          echo "model=$model" >> "$GITHUB_OUTPUT"
+          echo "Phase: $phase — model: $model (members=${members:-0}, distill threshold=${threshold:-unset})"
 
       - name: Run one lifecycle-gated tick (API credits)
         id: primary
@@ -110,6 +128,7 @@ jobs:
           # consolidate prompts run repo-creation/archival commands with
           # GH_TOKEN="$LIFECYCLE_PAT".
           LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
+          PHASE: ${{ steps.model.outputs.phase }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: ${{ env.TICK_PROMPT }}
@@ -131,6 +150,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         env:
           LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
+          PHASE: ${{ steps.model.outputs.phase }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: ${{ env.TICK_PROMPT }}

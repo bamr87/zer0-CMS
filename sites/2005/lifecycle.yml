@@ -27,10 +27,17 @@ lifecycle:
       # unless their agent file overrides it. Raise to claude-opus-4-8 only for
       # one-off hard interventions.
       tick: "claude-sonnet-4-6"
+      # Frontier model for the one-time lineage meta-review (/distill) — deep
+      # cross-repo analysis and seed-package design warrant the top model.
+      distill: "claude-fable-5"
+    # Lineage size that triggers the one-time distillation meta-review.
+    distill_at_members: 3
 
   state:
     # growing | mature (replanted; successor spawned) | consolidated (merged + archived)
     status: mature
+    # Set by /distill when the lineage meta-review has run (null = pending).
+    distilled_at: null
     # Growth ticks recorded in seed.md §8 since the most recent Genesis or Replant entry.
     # seed.md §8 is the source of truth; check-lifecycle reconciles this number each tick.
     generation_ticks: 0
