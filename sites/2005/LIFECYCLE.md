@@ -73,6 +73,13 @@ check-lifecycle*. Because the workflow file is planted verbatim into every succe
 lineage shares one autonomous heartbeat — no external orchestrator tracks the repos; each repo
 carries its own state.
 
+**Shepherd fallback** — pushing workflow files into a successor requires the PAT to have the
+`workflow` scope (classic) / Workflows: write (fine-grained). If a successor was planted without
+`grow.yml`, the lineage still runs: a **mature** repo's workflow does not stop at `dormant` — it
+walks the lineage chain (each member's `lifecycle.yml` names its successor), clones the newest
+growing member with `LIFECYCLE_PAT`, and executes that repo's tick inside the runner. The oldest
+repo's heartbeat thereby drives the whole family until members carry their own.
+
 ## Setup (once per owner account)
 
 1. **Secrets** — in each repo (or as organization secrets so successors inherit them automatically):

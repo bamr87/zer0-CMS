@@ -66,12 +66,24 @@ jobs:
                - grow        -> run /grow ${{ inputs.args }}
                - replant     -> run /replant ${{ inputs.args }}
                - consolidate -> run /consolidate
-               - dormant     -> report and exit without changes.
+               - dormant     -> shepherd mode (step 3).
+            3. Shepherd mode — this repo is mature but the lineage lives on. Read
+               lifecycle.yml and walk the lineage chain to the NEWEST member: clone
+               each successor with
+               git clone "https://x-access-token:${LIFECYCLE_PAT}@github.com/<owner>/<repo>.git"
+               and read ITS lifecycle.yml (each member appends its own successor),
+               until you reach the newest member. Then cd into that clone and run
+               this same procedure from step 1 there — germinate it via /genesis if
+               it has no seed, else obey its check-lifecycle gate (grow / replant /
+               consolidate). All pushes in the clone go through the LIFECYCLE_PAT
+               remote. If the newest member is already consolidated, report that the
+               lineage is complete and exit without changes.
 
             Follow the repository's CLAUDE.md and canonical .github/ prompts exactly;
             publish only through the publish-session skill. The ambient GitHub token
-            is scoped to this repo only; for replant/consolidate repo creation and
-            archival, prefix gh commands with GH_TOKEN="$LIFECYCLE_PAT".
+            is scoped to this repo only; for any cross-repo work (cloning lineage
+            members, repo creation, archival) use GH_TOKEN="$LIFECYCLE_PAT" / the
+            x-access-token remote shown above.
           # Agent mode denies Bash (git push, gh repo create) by default — allow the
           # tools the tick pipeline needs. show_full_output surfaces the tick report
           # in the job log for observability.
