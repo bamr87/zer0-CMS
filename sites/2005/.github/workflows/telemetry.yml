@@ -57,10 +57,12 @@ jobs:
         run: |
           set -euo pipefail
           dir=/tmp/artifacts
-          meta='null'; primary='null'; fallback='null'
-          [ -s "$dir/meta.json" ] && meta=$(jq -c . "$dir/meta.json" 2>/dev/null || echo null)
-          [ -s "$dir/execution-api-key.json" ] && primary=$(jq -c . "$dir/execution-api-key.json" 2>/dev/null || echo null)
-          [ -s "$dir/execution-subscription.json" ] && fallback=$(jq -c . "$dir/execution-subscription.json" 2>/dev/null || echo null)
+          # Execution logs can be megabytes — they must reach jq as FILES
+          # (--slurpfile), never as CLI arguments (E2BIG: "Argument list too long").
+          for f in meta execution-api-key execution-subscription; do
+            if [ -s "$dir/$f.json" ] && jq -ce . "$dir/$f.json" > "/tmp/$f.norm.json" 2>/dev/null; then :
+            else echo null > "/tmp/$f.norm.json"; fi
+          done
 
           jq -cn \
             --arg schema "evolution-telemetry/v1" \
@@ -69,9 +71,9 @@ jobs:
             --arg event "$WR_EVENT" --arg conclusion "$WR_CONCLUSION" \
             --arg sha "$WR_SHA" --arg started "$WR_STARTED" \
             --arg completed "$WR_UPDATED" --arg url "$WR_URL" \
-            --argjson meta "$meta" \
-            --argjson primary "$primary" \
-            --argjson fallback "$fallback" \
+            --slurpfile meta /tmp/meta.norm.json \
+            --slurpfile primary /tmp/execution-api-key.norm.json \
+            --slurpfile fallback /tmp/execution-subscription.norm.json \
             '{
               schema: $schema,
               repo: $repo,
@@ -80,8 +82,8 @@ jobs:
                 event: $event, conclusion: $conclusion, head_sha: $sha,
                 started_at: $started, completed_at: $completed, url: $url
               },
-              phase_resolution: $meta,
-              attempts: { api_key: $primary, subscription: $fallback },
+              phase_resolution: $meta[0],
+              attempts: { api_key: $primary[0], subscription: $fallback[0] },
               collected_at: (now | todate)
             }' > /tmp/record.json
 
