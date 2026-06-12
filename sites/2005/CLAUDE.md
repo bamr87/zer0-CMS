@@ -73,7 +73,7 @@ These run natively as Claude Code slash commands (`.claude/commands/`) — thin 
 | `/replant [--force\|subject]` | End this repo's growth generation (mark `mature`) and spawn the successor repo for the next concept in the lineage. Normally triggered by the lifecycle gate, not by hand. |
 | `/consolidate [--dry-run]` | Merge a completed 7-member lineage into one range-named repo and archive the members. Run from the newest member. |
 
-Lower-level skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`, `sync-seed`, `publish-session`, `check-lifecycle`) are usually invoked *by* the agents/prompts above rather than directly. The full architecture inventory is `seed.md` §3.
+Lower-level skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`, `sync-seed`, `publish-session`, `check-lifecycle`, `pollinate`) are usually invoked *by* the agents/prompts above rather than directly. The full architecture inventory is `seed.md` §3. `pollinate` keeps framework files convergent across the lineage in both directions via Claude-authored auto-merged PRs — foundational changes made anywhere reach every member repo; per-instance files (content, `seed.md`, `lifecycle.yml`) are never pollinated.
 
 ## Claude Code integration (the `.claude/` layer)
 

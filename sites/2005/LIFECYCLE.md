@@ -80,12 +80,21 @@ walks the lineage chain (each member's `lifecycle.yml` names its successor), clo
 growing member with `LIFECYCLE_PAT`, and executes that repo's tick inside the runner. The oldest
 repo's heartbeat thereby drives the whole family until members carry their own.
 
-**Framework propagation** — workflow-level logic (tick model, auth fallback, tool config) applies
-lineage-wide automatically because every shepherd-driven tick executes through the driving repo's
-workflow and policy. The planted `.github/`/`.claude/` files in members are spawn-time snapshots,
-so the shepherd also **syncs the canonical framework from the driving repo into the member clone
-before each tick** (`chore: sync framework from lineage driver`) — framework improvements reach
-every member on its next tick, never touching member content or state files.
+**Framework propagation (pollination)** — workflow-level logic (tick model, auth fallback, tool
+config) applies lineage-wide automatically because every shepherd-driven tick executes through the
+driving repo's workflow and policy. For the planted framework files, the `pollinate` skill keeps
+the lineage convergent **in both directions** with Claude-authored, auto-merged pull requests:
+
+- **forward** — before each tick, any lineage member whose `.github/`/`.claude/`/`CLAUDE.md`/
+  `LIFECYCLE.md` drifted from the driver gets a `pollinate/from-<driver>-<date>` PR, squash-merged
+  automatically;
+- **backward** — after each tick, framework changes the member made (e.g. `/evolve` learnings)
+  come back to the driver as a `pollinate/from-<member>-<date>` PR; the next forward pass fans
+  them out to every other member.
+
+Content, `seed.md`, `README.md`, `ROADMAP.md`, and `lifecycle.yml` are never pollinated — they are
+per-instance. Conflicting both-sides edits are left as open PRs for human review, never
+force-merged. The PR trail is the lineage's learning ledger.
 
 ## Model policy (cost)
 
