@@ -108,6 +108,15 @@ harness already routes its own trivial internal calls to Haiku 4.5 ($1/$5). Rais
 `claude-opus-4-8` only for one-off hard interventions (e.g. untangling a botched consolidation),
 then lower it back.
 
+### 6. `.github/workflows/telemetry.yml` — the evolution ledger
+
+After every completed grow run, a second workflow downloads the run's raw agent execution logs
+(full conversation, tool calls, usage, cost — staged as a run artifact by `grow.yml`) and appends
+one self-contained JSON record to **`telemetry/evolution.jsonl.gz`** — the append-only,
+machine-readable history of every AI input/output in the loop, schema `evolution-telemetry/v1`.
+Built for detached evaluation and monitoring tools: stream with `gunzip -c | jq` or load with
+`pandas.read_json(lines=True)`. See [telemetry/README.md](telemetry/README.md).
+
 ## Setup (once per owner account)
 
 1. **Secrets** — in each repo (or as organization secrets so successors inherit them automatically):

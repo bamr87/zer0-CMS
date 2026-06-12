@@ -145,6 +145,19 @@ jobs:
             --allowedTools "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,TodoWrite,Task,Skill"
           show_full_output: true
 
+      # --- telemetry staging -------------------------------------------------
+      # The action writes the full agent conversation (all inputs/outputs, tool
+      # calls, usage) to claude-execution-output.json. Stage a copy per auth
+      # attempt + the phase resolution, and publish them as a run artifact; the
+      # telemetry workflow appends them to the evolution ledger after the run.
+      - name: Stage phase resolution for telemetry
+        if: always()
+        run: |
+          mkdir -p /tmp/agent-telemetry
+          printf '{"phase":"%s","model":"%s"}\n' \
+            "${{ steps.model.outputs.phase }}" "${{ steps.model.outputs.model }}" \
+            > /tmp/agent-telemetry/meta.json
+
       # claude-code-action exits 0 even when the API rejects requests with
       # "Credit balance is too low" — detect that from the execution output so
       # the subscription fallback actually fires on credit exhaustion.
@@ -153,6 +166,8 @@ jobs:
         if: always()
         run: |
           out=/home/runner/work/_temp/claude-execution-output.json
+          mkdir -p /tmp/agent-telemetry
+          [ -f "$out" ] && cp "$out" /tmp/agent-telemetry/execution-api-key.json
           if [ -f "$out" ] && grep -q "Credit balance is too low" "$out"; then
             echo "exhausted=true" >> "$GITHUB_OUTPUT"
             echo "::warning::API credit balance exhausted — falling back to Claude subscription"
@@ -178,3 +193,23 @@ jobs:
             --max-turns 150
             --allowedTools "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,TodoWrite,Task,Skill"
           show_full_output: true
+
+      - name: Stage fallback execution log for telemetry
+        if: always()
+        run: |
+          out=/home/runner/work/_temp/claude-execution-output.json
+          # Only the fallback's output remains at this path if that step ran
+          # (each action invocation overwrites it; the API-key copy was staged
+          # by the detect step before the fallback started).
+          if [ -f "$out" ] && [ "${{ steps.credits.outputs.exhausted }}" = "true" -o "${{ steps.primary.outcome }}" = "failure" ]; then
+            cp "$out" /tmp/agent-telemetry/execution-subscription.json
+          fi
+
+      - name: Upload agent telemetry artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-telemetry-${{ github.run_id }}
+          path: /tmp/agent-telemetry/
+          if-no-files-found: ignore
+          retention-days: 14

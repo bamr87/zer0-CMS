@@ -33,6 +33,7 @@ Editing a generated file by hand gets silently overwritten on the next growth ti
 | `<category-slug>/<topic-slug>.md` topic files | `curator` / `deep-dive` | ✅ via skills |
 | `lifecycle.yml` `state` block | `check-lifecycle` / `replant` / `consolidate` | ❌ machine-maintained |
 | `lifecycle.yml` `policy` block | hand-tuned | ✅ deliberate knob changes only |
+| `telemetry/evolution.jsonl.gz` | `telemetry.yml` workflow (append-only) | ❌ machine-appended; never edit/reorder |
 
 `build-structure` wraps every generated region in `<!-- BEGIN GENERATED: <artifact> ... -->` / `<!-- END GENERATED -->` markers and only rewrites inside them — keep hand-written content outside the markers. It is idempotent: a rerun with no content change must produce no diff (stable ordering).
 
