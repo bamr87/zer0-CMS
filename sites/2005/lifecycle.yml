@@ -53,5 +53,9 @@ lifecycle:
         spawned_from: "bamr87/1987"
       - subject: "the year 2006"
         repo: "year-of-ai/2006"
-        status: growing
+        status: mature
         spawned_from: "year-of-ai/2005"
+      - subject: "the year 2007"
+        repo: "year-of-ai/2007"
+        status: growing
+        spawned_from: "year-of-ai/2006"

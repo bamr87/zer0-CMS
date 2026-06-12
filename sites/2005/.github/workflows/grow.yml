@@ -57,7 +57,11 @@ env:
        each successor with
        git clone "https://x-access-token:${LIFECYCLE_PAT}@github.com/<owner>/<repo>.git"
        and read ITS lifecycle.yml (each member appends its own successor),
-       until you reach the newest member. Before executing the tick there,
+       until you reach the newest member. RECONCILE THE REGISTRY: this
+       repo's lifecycle.yml lineage is the registry the phase resolver
+       reads — append any members discovered during the walk that it lacks
+       (and correct stale statuses), commit and push as
+       "chore: reconcile lineage registry". Before executing the tick there,
        run the POLLINATE skill (forward pass): propagate this repo's
        canonical framework (.github/, .claude/, CLAUDE.md, LIFECYCLE.md)
        into any drifted lineage member via an auto-merged pull request —

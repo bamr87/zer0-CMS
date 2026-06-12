@@ -62,6 +62,11 @@ first — everything is parameterized by them.
    `/genesis` itself (the grow workflow handles this).
 5. **Close the loop** — fill the successor link into this repo's README *Status* line and
    `lifecycle.yml`, amend/commit/push via **publish-session**.
+6. **Register with the driver** — if this repo is not the lineage's first member, also append the
+   successor (and this repo's `mature` status) to the **driver repo's** `lifecycle.yml` lineage
+   (clone `lineage[0]` via `GH_TOKEN="$LIFECYCLE_PAT"`, edit, push
+   `chore: reconcile lineage registry`). The driver's lineage is the registry its workflow's phase
+   resolver reads — a stale registry delays distill/consolidate triggers.
 
 ## Output Format
 
