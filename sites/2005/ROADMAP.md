@@ -3,23 +3,21 @@
 > Managed by the `plan-roadmap` skill. Do not hand-edit — rewritten each tick.
 > Tags: `content` | `structure` | `meta`
 
+> **Generation closed at replant (2026-06-12).** This repo reached its growth-tick budget
+> and is now `mature`. Unfinished Now/Backlog items were collapsed into Ideas below; Done
+> remains as the generation's record. Growth continues in the successor repo (the year 2006).
+
 ## Now
 
 | Item | Tag | Notes |
 |---|---|---|
-| Deep-dive: Huygens probe on Titan (Jan 14, 2005) | content | high — outer-solar-system first |
-| Deep-dive: Kyoto Protocol enters force (Feb 16, 2005) | content | medium |
+| _(none — generation closed at replant)_ | | |
 
 ## Backlog
 
 | Item | Tag | Priority |
 |---|---|---|
-| Deep-dive: Angela Merkel elected (Sep 18, 2005) | content | medium |
-| Deep-dive: Deep Impact mission (Jul 4, 2005) | content | medium |
-| Deep-dive: Rosa Parks death (Oct 24, 2005) | content | medium |
-| Deep-dive: *Brokeback Mountain* (Dec 9, 2005) | content | medium |
-| Deep-dive: *Star Wars* Episode III (May 19, 2005) | content | low |
-| Periodic /evolve audit of .github/ layer | meta | quarterly |
+| _(none — collapsed into Ideas at replant)_ | | |
 
 ## Done
 
@@ -44,3 +42,11 @@
 - Discovery of Eris / Xena (Jul 29, 2005) — led to Pluto's reclassification
 - Live 8 concerts / Make Poverty History campaign (Jul 2, 2005)
 - London 7/21 attempted bombings (Jul 21, 2005) — follow-on to 7/7
+- Deep-dive: Huygens probe on Titan (Jan 14, 2005) — content — _deferred at replant_
+- Deep-dive: Kyoto Protocol enters force (Feb 16, 2005) — content — _deferred at replant_
+- Deep-dive: Angela Merkel elected (Sep 18, 2005) — content — _deferred at replant_
+- Deep-dive: Deep Impact mission (Jul 4, 2005) — content — _deferred at replant_
+- Deep-dive: Rosa Parks death (Oct 24, 2005) — content — _deferred at replant_
+- Deep-dive: *Brokeback Mountain* (Dec 9, 2005) — content — _deferred at replant_
+- Deep-dive: *Star Wars* Episode III (May 19, 2005) — content — _deferred at replant_
+- Periodic /evolve audit of .github/ layer — meta — _deferred at replant_

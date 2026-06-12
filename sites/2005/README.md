@@ -1,5 +1,10 @@
 # The Year 2005
 
+> **Status: mature (generation closed 2026-06-12).** This repository completed its growth
+> generation (3 ticks) and has been replanted. Growth now continues in its successor,
+> [year-of-ai/2006](https://github.com/year-of-ai/2006) — the year 2006. This repo remains a
+> complete, seed-rebuildable knowledge base of the year 2005.
+
 A self-growing knowledge base about **the year 2005** — history, science, technology, arts, society, and people.
 
 This repository is both a knowledge base and a reusable framework. It expands autonomously via `/grow`, which researches new on-topic content, builds structure, verifies facts, and publishes — all driven by the Concept Definition in [`seed.md`](seed.md). To retarget the framework at a different subject, run `/genesis "<new concept>"`.

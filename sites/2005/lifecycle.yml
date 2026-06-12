@@ -23,7 +23,7 @@ lifecycle:
 
   state:
     # growing | mature (replanted; successor spawned) | consolidated (merged + archived)
-    status: growing
+    status: mature
     # Growth ticks recorded in seed.md §8 since the most recent Genesis or Replant entry.
     # seed.md §8 is the source of truth; check-lifecycle reconciles this number each tick.
     generation_ticks: 3
@@ -35,5 +35,9 @@ lifecycle:
     lineage:
       - subject: "the year 2005"
         repo: "year-of-ai/2005"
-        status: growing
+        status: mature
         spawned_from: "bamr87/1987"
+      - subject: "the year 2006"
+        repo: "year-of-ai/2006"
+        status: growing
+        spawned_from: "year-of-ai/2005"

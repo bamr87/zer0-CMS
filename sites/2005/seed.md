@@ -61,6 +61,7 @@ seed.
 | `.github/skills/plan-roadmap/SKILL.md` | skill | Read state → score → pick next items → rewrite ROADMAP.md. |
 | `.github/skills/sync-seed/SKILL.md` | skill | Regenerate this seed's sections 1–7 from live repo state. |
 | `.github/skills/publish-session/SKILL.md` | skill | encode-seed → review → commit → push to main. |
+| `.github/skills/check-lifecycle/SKILL.md` | skill | Lifecycle gate: count ticks → decide grow / replant / consolidate. |
 | `.github/agents/curator.agent.md` | agent | Content specialist: research & write per the concept. |
 | `.github/agents/architect.agent.md` | agent | Orchestrator: runs one `/grow` tick end-to-end; delegates. |
 | `.github/prompts/genesis.prompt.md` | prompt | `/genesis "<concept>"` — bootstrap a fresh autonomous repo for any subject. |
@@ -70,6 +71,9 @@ seed.
 | `.github/prompts/encode-seed.prompt.md` | prompt | Append a session entry to the Evolution Log (section 8). |
 | `.github/prompts/publish.prompt.md` | prompt | Thin wrapper over the publish-session skill. |
 | `.github/prompts/evolve.prompt.md` | prompt | Audit & improve the customization layer itself. |
+| `.github/prompts/replant.prompt.md` | prompt | `/replant` — finalize this generation and spawn the successor repo. |
+| `.github/prompts/consolidate.prompt.md` | prompt | `/consolidate` — merge a completed lineage into one range-named repo. |
+| `.github/workflows/grow.yml` | workflow | Scheduled unattended `/grow` tick; planted verbatim into every successor. |
 
 ## 4. Content Inventory
 
@@ -175,3 +179,29 @@ Third growth tick (the last of this generation before the replant gate at 3 tick
 - Regenerated `history-politics/index.md` (now links Iraqi elections, Pope, and 7/7), `INDEX.md`, and `TIMELINE.md` (file links for Iraqi elections and Pope).
 - Updated `ROADMAP.md`: moved the two deep-dives and the cross-reference task to Done; promoted Huygens and Kyoto Protocol to Now.
 - Updated `seed.md` §4–5: dedicated files 3→5, table links 3→5, cross-references now generated.
+
+---
+
+### Replant — 2026-06-12
+
+Growth generation closed. The `check-lifecycle` skill reported phase `replant`
+(`generation_ticks` 3 = `replant_after_ticks` 3, status `growing`; lineage 1 of 7 members, well
+below consolidation). Part A finalized this repo in place and Part B spawned the successor for the
+year 2006 per `lifecycle.policy.succession.rule`.
+
+**Generation summary** — the year 2005, 3 growth ticks: 12 knowledge-table rows (5 linked to
+dedicated files), 5 dedicated topic files across History & Politics (3), Science & Technology (1),
+and Society & Economics (1); full structural layer (`TIMELINE.md`, `INDEX.md`, 5 category indices,
+`## Related` cross-references in all 5 topic files).
+
+Part A — finalize in place:
+- Ran the `build-structure` skill — all generated artifacts already current from Tick 3; idempotent, no diff.
+- Compacted `ROADMAP.md`: collapsed unfinished Now/Backlog (Huygens, Kyoto, Merkel, Deep Impact, Rosa Parks, *Brokeback Mountain*, *Star Wars* Ep. III, /evolve audit) into Ideas tagged _deferred at replant_; Done retained as the generation's record.
+- Ran the `sync-seed` skill: regenerated §1–7; §3 Architecture +4 files (check-lifecycle skill, replant + consolidate prompts, grow.yml workflow); §4–5 unchanged.
+- Marked maturity: `lifecycle.yml` `state.status: mature`, this repo's lineage entry `status: mature`, appended the `the year 2006` successor member (`status: growing`, `spawned_from: year-of-ai/2005`); added a Status line to `README.md` naming the successor.
+
+Part B — spawn the successor:
+- Derived successor subject `the year 2006` from the succession rule.
+- Created `year-of-ai/2006` (public) and planted **only** the framework: `.github/` (less `grow.yml`, see below), `.claude/`, `CLAUDE.md`, `.gitignore`, `LIFECYCLE.md`, and a carried-forward `lifecycle.yml` (same policy, full lineage, `status: growing`, `generation_ticks: 0`). No content/README-table/ROADMAP/seed inventories carried over — the successor grows its own from genesis.
+- **Credential limitation:** the `LIFECYCLE_PAT` used here lacks the `workflow`/"Workflows" permission, so `.github/workflows/grow.yml` could be planted neither by git push (rejected) nor via the Contents API (403). It is the only framework file not carried. A maintainer must add it once with a workflow-scoped token to enable unattended scheduled growth; until then the successor can be grown by invoking `/grow` manually.
+- Germination: the successor's first `/grow` detects the missing seed and runs `/genesis "the year 2006"` to bootstrap.
