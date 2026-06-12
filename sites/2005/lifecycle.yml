@@ -20,6 +20,13 @@ lifecycle:
       naming_rule: "Hyphenated range of the lineage's years, oldest-newest (e.g. 2005-2011)."
       # Layout rule for merged content inside the consolidated repository.
       layout: "One top-level directory per lineage member, named by its subject slug (e.g. 2005/, 2006/)."
+    models:
+      # Model the scheduled tick runs on (read by .github/workflows/grow.yml).
+      # Growth ticks are research + writing + mechanical structure work —
+      # Sonnet-tier ($3/$15 per MTok vs Opus $5/$25). Subagents inherit this
+      # unless their agent file overrides it. Raise to claude-opus-4-8 only for
+      # one-off hard interventions.
+      tick: "claude-sonnet-4-6"
 
   state:
     # growing | mature (replanted; successor spawned) | consolidated (merged + archived)

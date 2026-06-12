@@ -1,15 +1,23 @@
 # Scheduled growth tick — the heartbeat of the self-growing knowledge base.
 #
 # Each run executes ONE lifecycle-gated tick: check-lifecycle decides grow | replant |
-# consolidate | dormant, and the corresponding prompt runs. The same workflow file is
-# planted verbatim into every spawned repo, so the whole lineage shares one heartbeat.
+# consolidate | dormant (shepherd), and the corresponding prompt runs. The same
+# workflow file is planted into every spawned repo, so the whole lineage shares one
+# heartbeat; a mature repo's heartbeat shepherds the newest growing member.
 #
-# Required repository secrets (see LIFECYCLE.md → Setup):
-#   ANTHROPIC_API_KEY  — Claude API key for claude-code-action.
-#   LIFECYCLE_PAT      — (fine-grained) PAT with contents:write on this repo PLUS
-#                        repo-creation + archive rights on the owner account. Only
-#                        needed for replant/consolidate phases; plain growth ticks
-#                        work with contents:write alone.
+# Required repository/org secrets (see LIFECYCLE.md → Setup):
+#   ANTHROPIC_API_KEY        — Claude API key (primary auth for claude-code-action).
+#   LIFECYCLE_PAT            — PAT with contents:write + repo-creation/archive rights
+#                              on the owner org. Needed for replant/consolidate and
+#                              shepherd mode; plain growth ticks work without it.
+#   CLAUDE_CODE_OAUTH_TOKEN  — optional fallback: a Claude subscription OAuth token
+#                              (generate with `claude setup-token`). If the API-key
+#                              run fails (e.g. credits exhausted), the tick is
+#                              retried once on the subscription.
+#
+# Model policy: the tick runs on the model named in lifecycle.yml →
+# policy.models.tick (default claude-sonnet-4-6). Growth ticks are research +
+# writing + mechanical structure work — Sonnet-tier; Opus is not required.
 
 name: grow
 
@@ -28,6 +36,36 @@ concurrency:
   group: lifecycle-tick
   cancel-in-progress: false
 
+env:
+  TICK_PROMPT: |
+    Run one lifecycle-gated tick of this self-growing knowledge base.
+
+    1. If seed.md is missing or has no Concept Definition, this is a freshly
+       planted successor: run /genesis (blank — it derives the concept from
+       lifecycle.yml's newest lineage member) and stop after publishing.
+    2. Otherwise run the check-lifecycle skill and follow its decision:
+       - grow        -> run /grow ${{ inputs.args }}
+       - replant     -> run /replant ${{ inputs.args }}
+       - consolidate -> run /consolidate
+       - dormant     -> shepherd mode (step 3).
+    3. Shepherd mode — this repo is mature but the lineage lives on. Read
+       lifecycle.yml and walk the lineage chain to the NEWEST member: clone
+       each successor with
+       git clone "https://x-access-token:${LIFECYCLE_PAT}@github.com/<owner>/<repo>.git"
+       and read ITS lifecycle.yml (each member appends its own successor),
+       until you reach the newest member. Then cd into that clone and run
+       this same procedure from step 1 there — germinate it via /genesis if
+       it has no seed, else obey its check-lifecycle gate (grow / replant /
+       consolidate). All pushes in the clone go through the LIFECYCLE_PAT
+       remote. If the newest member is already consolidated, report that the
+       lineage is complete and exit without changes.
+
+    Follow the repository's CLAUDE.md and canonical .github/ prompts exactly;
+    publish only through the publish-session skill. The ambient GitHub token
+    is scoped to this repo only; for any cross-repo work (cloning lineage
+    members, repo creation, archival) use GH_TOKEN="$LIFECYCLE_PAT" / the
+    x-access-token remote shown above.
+
 jobs:
   tick:
     runs-on: ubuntu-latest
@@ -45,7 +83,17 @@ jobs:
           # replant/consolidate prompts create and archive sibling repos via `gh`.
           token: ${{ secrets.LIFECYCLE_PAT || github.token }}
 
-      - name: Run one lifecycle-gated tick
+      # The tick model is a lifecycle policy knob, not a hardcoded value.
+      - name: Resolve tick model from lifecycle policy
+        id: model
+        run: |
+          model=$(grep -E '^\s*tick:' lifecycle.yml | head -1 | sed -E 's/.*tick:[[:space:]]*"?([^"#]+)"?.*/\1/' | xargs)
+          echo "model=${model:-claude-sonnet-4-6}" >> "$GITHUB_OUTPUT"
+          echo "Tick model: ${model:-claude-sonnet-4-6}"
+
+      - name: Run one lifecycle-gated tick (API credits)
+        id: primary
+        continue-on-error: true # fall back to the Claude subscription below
         uses: anthropics/claude-code-action@v1
         env:
           # claude-code-action overrides GH_TOKEN/GITHUB_TOKEN in the agent's
@@ -56,38 +104,30 @@ jobs:
           LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: |
-            Run one lifecycle-gated tick of this self-growing knowledge base.
-
-            1. If seed.md is missing or has no Concept Definition, this is a freshly
-               planted successor: run /genesis (blank — it derives the concept from
-               lifecycle.yml's newest lineage member) and stop after publishing.
-            2. Otherwise run the check-lifecycle skill and follow its decision:
-               - grow        -> run /grow ${{ inputs.args }}
-               - replant     -> run /replant ${{ inputs.args }}
-               - consolidate -> run /consolidate
-               - dormant     -> shepherd mode (step 3).
-            3. Shepherd mode — this repo is mature but the lineage lives on. Read
-               lifecycle.yml and walk the lineage chain to the NEWEST member: clone
-               each successor with
-               git clone "https://x-access-token:${LIFECYCLE_PAT}@github.com/<owner>/<repo>.git"
-               and read ITS lifecycle.yml (each member appends its own successor),
-               until you reach the newest member. Then cd into that clone and run
-               this same procedure from step 1 there — germinate it via /genesis if
-               it has no seed, else obey its check-lifecycle gate (grow / replant /
-               consolidate). All pushes in the clone go through the LIFECYCLE_PAT
-               remote. If the newest member is already consolidated, report that the
-               lineage is complete and exit without changes.
-
-            Follow the repository's CLAUDE.md and canonical .github/ prompts exactly;
-            publish only through the publish-session skill. The ambient GitHub token
-            is scoped to this repo only; for any cross-repo work (cloning lineage
-            members, repo creation, archival) use GH_TOKEN="$LIFECYCLE_PAT" / the
-            x-access-token remote shown above.
+          prompt: ${{ env.TICK_PROMPT }}
           # Agent mode denies Bash (git push, gh repo create) by default — allow the
           # tools the tick pipeline needs. show_full_output surfaces the tick report
           # in the job log for observability.
           claude_args: >-
+            --model ${{ steps.model.outputs.model }}
+            --max-turns 150
+            --allowedTools "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,TodoWrite,Task,Skill"
+          show_full_output: true
+
+      # Fallback: if the API-key run failed (credits exhausted, auth error, etc.),
+      # retry the tick once on the Claude subscription via OAuth token. Skipped
+      # cleanly when the secret is unset. Ticks are gated and republish-safe, so a
+      # double attempt cannot double-apply a tick.
+      - name: Run one lifecycle-gated tick (Claude subscription fallback)
+        if: steps.primary.outcome == 'failure'
+        uses: anthropics/claude-code-action@v1
+        env:
+          LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: ${{ env.TICK_PROMPT }}
+          claude_args: >-
+            --model ${{ steps.model.outputs.model }}
             --max-turns 150
             --allowedTools "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,TodoWrite,Task,Skill"
           show_full_output: true

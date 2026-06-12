@@ -80,10 +80,25 @@ walks the lineage chain (each member's `lifecycle.yml` names its successor), clo
 growing member with `LIFECYCLE_PAT`, and executes that repo's tick inside the runner. The oldest
 repo's heartbeat thereby drives the whole family until members carry their own.
 
+## Model policy (cost)
+
+The tick model is a lifecycle policy knob: `lifecycle.policy.models.tick` (read by the workflow at
+the start of every run; default `claude-sonnet-4-6`). Growth ticks are research, writing, and
+mechanical structure work — squarely Sonnet-tier ($3/$15 per MTok vs Opus 4.8's $5/$25, a ~40%
+per-token saving with no quality loss for this workload). Subagents (Curator/Architect) declare
+`model: sonnet` in their `.claude/agents/` frontmatter and otherwise inherit the tick model; the
+harness already routes its own trivial internal calls to Haiku 4.5 ($1/$5). Raise the knob to
+`claude-opus-4-8` only for one-off hard interventions (e.g. untangling a botched consolidation),
+then lower it back.
+
 ## Setup (once per owner account)
 
 1. **Secrets** — in each repo (or as organization secrets so successors inherit them automatically):
    - `ANTHROPIC_API_KEY` — Claude API key used by `claude-code-action`.
+   - `CLAUDE_CODE_OAUTH_TOKEN` — *optional fallback*: a Claude subscription OAuth token (run
+     `claude setup-token` locally and paste the result). If the API-key run fails — credits
+     exhausted, auth error — the workflow retries the tick once on the subscription. Ticks are
+     lifecycle-gated, so a retried tick cannot double-apply.
    - `LIFECYCLE_PAT` — a PAT with `contents: write` on the family's repos **plus repository
      creation and archive** rights on the owner org (classic PAT: `repo` scope; fine-grained:
      Contents write + Administration write, org-authorized). Plain grow ticks work without it;
