@@ -65,4 +65,10 @@ jobs:
 
             Follow the repository's CLAUDE.md and canonical .github/ prompts exactly;
             publish only through the publish-session skill.
-          claude_args: "--max-turns 150"
+          # Agent mode denies Bash (git push, gh repo create) by default — allow the
+          # tools the tick pipeline needs. show_full_output surfaces the tick report
+          # in the job log for observability.
+          claude_args: >-
+            --max-turns 150
+            --allowedTools "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,TodoWrite,Task,Skill"
+          show_full_output: true
