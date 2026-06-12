@@ -145,12 +145,27 @@ jobs:
             --allowedTools "Bash,Edit,Write,Read,Glob,Grep,WebFetch,WebSearch,TodoWrite,Task,Skill"
           show_full_output: true
 
+      # claude-code-action exits 0 even when the API rejects requests with
+      # "Credit balance is too low" — detect that from the execution output so
+      # the subscription fallback actually fires on credit exhaustion.
+      - name: Detect credit exhaustion
+        id: credits
+        if: always()
+        run: |
+          out=/home/runner/work/_temp/claude-execution-output.json
+          if [ -f "$out" ] && grep -q "Credit balance is too low" "$out"; then
+            echo "exhausted=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::API credit balance exhausted — falling back to Claude subscription"
+          else
+            echo "exhausted=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # Fallback: if the API-key run failed (credits exhausted, auth error, etc.),
       # retry the tick once on the Claude subscription via OAuth token. Skipped
       # cleanly when the secret is unset. Ticks are gated and republish-safe, so a
       # double attempt cannot double-apply a tick.
       - name: Run one lifecycle-gated tick (Claude subscription fallback)
-        if: steps.primary.outcome == 'failure'
+        if: steps.primary.outcome == 'failure' || steps.credits.outputs.exhausted == 'true'
         uses: anthropics/claude-code-action@v1
         env:
           LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
