@@ -31,8 +31,8 @@ The film's two-part structure, austere visual style, and ambivalent moral stance
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
-- [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame](aretha-franklin-hof.md) — another Arts & Culture milestone of 1987.
-- [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — the Cold War–era arms-control milestone of the same year.
-- [Supernova 1987A](../science-technology/supernova-1987a.md) — another landmark event of 1987.
+- [Sign 'O' the Times (Prince, March 31, 1987)](sign-o-the-times.md) — another Arts & Culture landmark of 1987, Prince's acclaimed double album.
+- [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame](aretha-franklin-hof.md) — another Arts & Culture milestone of the same year.
+- [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — the Cold War–era arms-control milestone of 1987.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

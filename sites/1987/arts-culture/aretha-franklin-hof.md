@@ -31,8 +31,8 @@ The milestone also drew sustained attention to structural gender disparities in 
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
-- [Full Metal Jacket](full-metal-jacket.md) — another Arts & Culture landmark of 1987.
-- [Rudolf Hess (death, August 17, 1987)](../people/rudolf-hess.md) — a notable People event of the same year.
+- [Sign 'O' the Times (Prince, March 31, 1987)](sign-o-the-times.md) — another Arts & Culture landmark of 1987, Prince's acclaimed double album released the same year.
+- [Full Metal Jacket (June 26, 1987)](full-metal-jacket.md) — Stanley Kubrick's Vietnam War film, another major cultural event of 1987.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the defining economic event of 1987.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

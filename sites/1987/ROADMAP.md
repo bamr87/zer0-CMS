@@ -10,21 +10,24 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Tick 7 completed (2026-06-11). Cleared._
+_Tick 8 completed (2026-06-12). Cleared._
 
 _(empty)_
 
 ## Backlog
 _Prioritized queue. Top items are pulled into **Now** each tick._
 
-1. `content` — 3rd People file (e.g., Desmond Tutu, Joseph Biden becomes Senate Judiciary chair, or another notable 1987 figure).
-2. `content` — 3rd Arts & Culture file (e.g., *RoboCop*, *Lethal Weapon*, or *Sign 'O' the Times* by Prince).
-3. `content` — 3rd Society & Economics file (e.g., AIDS crisis / ACT UP founding in 1987).
-4. `meta` — Run `/evolve` to audit the customization layer (overdue — now past tick 7).
+1. `content` — 3rd People file (e.g., Gary Hart withdrawal from 1988 presidential race; Klaus Barbie trial/sentencing July 4, 1987; or Desmond Tutu's anti-apartheid role in 1987).
+2. `content` — 4th Arts & Culture file (e.g., *RoboCop* released July 17, 1987; *Lethal Weapon*; or Michael Jackson's *Bad* album August 31, 1987).
+3. `content` — 4th Society & Economics file (e.g., 1987 World Series: Minnesota Twins vs. St. Louis Cardinals; stock market recovery through Q4 1987).
+4. `meta` — Run `/evolve` to audit the customization layer (overdue — now past tick 8).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-12` — *Sign 'O' the Times* (Prince, March 31, 1987) → `arts-culture/sign-o-the-times.md` (content; Arts & Culture now 3 files).
+- `2026-06-12` — ACT UP founding (March 12, 1987) → `society-economics/act-up-founding.md` (content; Society & Economics now 3 files).
+- `2026-06-12` — Refreshed TIMELINE.md (+2 entries), INDEX.md, `arts-culture/index.md`, `society-economics/index.md`, and cross-refs in 4 sibling files (structure).
 - `2026-06-11` — Iran-Contra hearings → `history-politics/iran-contra.md` (content; H&P now 5 files; all README rows now linked).
 - `2026-06-11` — Microsoft Windows 2.0 → `science-technology/windows-2.md` (content; Science & Technology now 3 files).
 - `2026-06-11` — Refreshed TIMELINE.md (Windows 2.0 date corrected, Iran-Contra linked), INDEX.md, category indices, cross-refs for 2 new files (structure).

@@ -31,8 +31,8 @@ The crash also effectively ended the Louvre Accord and shifted perceptions about
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [ACT UP Founded (March 12, 1987)](act-up-founding.md) — another Society & Economics landmark of 1987, the founding of the AIDS direct-action movement.
 - [FDA Approves Prozac (December 29, 1987)](prozac-fda-approval.md) — another major Society & Economics event of 1987, reshaping healthcare rather than financial markets.
 - [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — the other defining global event of late 1987.
-- [Supernova 1987A](../science-technology/supernova-1987a.md) — another landmark event of the same year.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

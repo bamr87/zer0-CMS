@@ -5,6 +5,7 @@ Social movements, markets, sport, and everyday life in 1987.
 <!-- BEGIN GENERATED: category-index:society-economics — maintained by build-structure; do not edit by hand -->
 | Topic | Description |
 |---|---|
+| [ACT UP Founded (March 12, 1987)](act-up-founding.md) | The AIDS Coalition to Unleash Power is established in New York City, launching a direct-action movement that transforms U.S. AIDS policy and FDA drug-approval processes. |
 | [Black Monday (October 19, 1987)](black-monday.md) | Stock markets crash worldwide; the Dow Jones Industrial Average falls 22.6% in a single day, the largest one-day percentage drop in its history. |
 | [FDA Approves Prozac (December 29, 1987)](prozac-fda-approval.md) | The FDA approves fluoxetine (Prozac), the first SSRI antidepressant, launching a new era in psychiatric treatment worldwide. |
 <!-- END GENERATED: category-index:society-economics -->

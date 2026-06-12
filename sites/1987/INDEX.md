@@ -23,12 +23,14 @@ _Category index: [science-technology/index.md](science-technology/index.md)_
 ## Arts & Culture
 _Category index: [arts-culture/index.md](arts-culture/index.md)_
 
-- [Full Metal Jacket](arts-culture/full-metal-jacket.md)
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame (January 21, 1987)](arts-culture/aretha-franklin-hof.md)
+- [Sign 'O' the Times (Prince, March 31, 1987)](arts-culture/sign-o-the-times.md)
+- [Full Metal Jacket (June 26, 1987)](arts-culture/full-metal-jacket.md)
 
 ## Society & Economics
 _Category index: [society-economics/index.md](society-economics/index.md)_
 
+- [ACT UP Founded (March 12, 1987)](society-economics/act-up-founding.md)
 - [Black Monday (October 19, 1987)](society-economics/black-monday.md)
 - [FDA Approves Prozac (December 29, 1987)](society-economics/prozac-fda-approval.md)
 

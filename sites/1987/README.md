@@ -32,6 +32,8 @@
 | [Microsoft Windows 2.0 released](science-technology/windows-2.md) | Microsoft releases Windows 2.0, introducing overlapping windows and laying groundwork for the future Windows interface. |
 | [Rudolf Hess dies in Spandau](people/rudolf-hess.md) | Hitler's former deputy dies at 93 in Berlin's Spandau Prison on August 17, ending four-power Allied custody and the prison's demolition. |
 | [Mathias Rust lands in Red Square](people/mathias-rust.md) | An 18-year-old West German amateur pilot flies a Cessna from Helsinki to Moscow's Red Square on May 28, humiliating Soviet air defenses and triggering a historic military purge. |
+| [*Sign 'O' the Times* released](arts-culture/sign-o-the-times.md) | Prince releases his acclaimed double album on March 31, widely considered his finest work and one of the greatest albums in popular music history. |
+| [ACT UP founded](society-economics/act-up-founding.md) | The AIDS Coalition to Unleash Power is established in New York City on March 12, launching a direct-action movement that transforms U.S. AIDS policy and drug approval processes. |
 
 ## Contributing
 

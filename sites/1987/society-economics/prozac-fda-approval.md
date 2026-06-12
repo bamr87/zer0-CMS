@@ -21,13 +21,16 @@ Clinical trials submitted to the FDA demonstrated efficacy in reducing depressiv
 
 The FDA approval of Prozac in 1987 transformed the treatment of depression and reshaped the pharmaceutical landscape. The SSRI class it inaugurated became the dominant first-line treatment for depression, anxiety disorders, and obsessive-compulsive disorder worldwide. The drug's success prompted Eli Lilly competitors to develop their own SSRIs (sertraline/Zoloft in 1991, paroxetine/Paxil in 1992), establishing the class as the standard of care. Beyond pharmacology, Prozac's cultural prominence accelerated public discourse about mental illness, reduced some stigma around seeking treatment, and fueled debate over whether psychiatric medications alter personality rather than merely treat disease. Critics also raised concerns about over-prescribing and long-term dependence, issues that remain active in clinical and policy discussions.
 
-<!-- BEGIN GENERATED: related -->
-## Related
-
-- [Black Monday (October 19, 1987)](black-monday.md) — The year's other defining Society & Economics event: a global financial shock that, like Prozac's approval, transformed markets and public consciousness in 1987.
-<!-- END GENERATED -->
-
 ## Sources
 
 1. Wikipedia — "Fluoxetine": https://en.wikipedia.org/wiki/Fluoxetine
 2. Shorter, Edward. "The History of Lithium Therapy" and fluoxetine context in *A History of Psychiatry* (1997); Shorter's account corroborated by Eli Lilly corporate history and Wong, D.T. et al., "Fluoxetine: A selective inhibitor of serotonin uptake," *Life Sciences* 15 (1974): 471–479.
+
+<!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [ACT UP Founded (March 12, 1987)](act-up-founding.md) — another Society & Economics landmark of 1987, the founding of the AIDS direct-action movement that would also push for faster drug approvals.
+- [Black Monday (October 19, 1987)](black-monday.md) — the defining economic shock of 1987.
+- [Sign 'O' the Times (Prince, March 31, 1987)](../arts-culture/sign-o-the-times.md) — Prince's album whose title track directly addressed the AIDS epidemic in the same year.
+- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+<!-- END GENERATED: related -->

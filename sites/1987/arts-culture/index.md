@@ -6,6 +6,7 @@ Films, music, literature, art, and cultural moments of 1987.
 | Topic | Description |
 |---|---|
 | [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame](aretha-franklin-hof.md) | On January 21, 1987, Aretha Franklin became the first woman inducted into the Rock and Roll Hall of Fame, at the ceremony in New York City. |
+| [Sign 'O' the Times (Prince)](sign-o-the-times.md) | Prince's double album released March 31, 1987, widely considered his finest work and one of the greatest albums in popular music history. |
 | [Full Metal Jacket](full-metal-jacket.md) | Stanley Kubrick's two-part Vietnam War film, released June 26, 1987, a landmark entry in the cinema of the Vietnam War. |
 <!-- END GENERATED: category-index:arts-culture -->
 

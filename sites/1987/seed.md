@@ -74,8 +74,8 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (14 rows across all five categories; all 14 rows now link to dedicated files).
-- **Dedicated topic files (14):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (16 rows across all five categories; all 16 rows link to dedicated files).
+- **Dedicated topic files (16):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/iran-contra.md` — Iran-Contra affair congressional hearings (July 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
@@ -86,19 +86,21 @@ seed.
   - `science-technology/windows-2.md` — Microsoft Windows 2.0 released (December 9, 1987).
   - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `arts-culture/aretha-franklin-hof.md` — Aretha Franklin inducted into Rock and Roll Hall of Fame (January 21, 1987).
+  - `arts-culture/sign-o-the-times.md` — Prince's *Sign 'O' the Times* double album (March 31, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
   - `society-economics/prozac-fda-approval.md` — FDA approves Prozac (December 29, 1987).
+  - `society-economics/act-up-founding.md` — ACT UP founding (March 12, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
   - `people/mathias-rust.md` — Mathias Rust flight to Red Square (May 28, 1987).
-- **Coverage:** History & Politics has 5 files; Science & Technology has 3 files; Arts & Culture has 2 files; Society & Economics has 2 files; People has 2 files. All categories have ≥2 dedicated files; all 14 README rows link to dedicated files.
+- **Coverage:** History & Politics has 5 files; Science & Technology has 3 files; Arts & Culture has 3 files; Society & Economics has 3 files; People has 2 files. All categories have ≥2 dedicated files; all 16 README rows link to dedicated files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — 15-row chronological table including all 14 dedicated files; Windows 2.0 date corrected (was "Jan–Mar", now Dec 9) and Iran-Contra entry now links its file (tick 7, 2026-06-11).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists 3 topics, Arts & Culture lists 2 topics, Society & Economics lists 2 topics, People lists 2 topics.
-- `INDEX.md` — master index grouping all 14 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 14 dedicated topic files.
+- `TIMELINE.md` — 17-row chronological table including all 16 dedicated files; two new entries added in tick 8 (ACT UP founding Mar 12, *Sign 'O' the Times* Mar 31).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists 3 topics, Arts & Culture lists 3 topics, Society & Economics lists 3 topics, People lists 2 topics.
+- `INDEX.md` — master index grouping all 16 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 16 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -336,3 +338,15 @@ Seventh autonomous growth tick via `/grow`. Planning prioritized converting the 
 - **Record**: Moved tick 7 items to ROADMAP Done; refilled Backlog with 3rd People file, 3rd Arts & Culture file, AIDS/ACT UP, and `/evolve` audit; synced seed §4–5 (12→14 files).
 
 Coverage after this tick: **all 14 README knowledge-table rows now link to dedicated topic files** (14 files total). History & Politics has 5 files, Science & Technology has 3 files, Arts & Culture has 2 files, Society & Economics has 2 files, People has 2 files.
+
+### Tick 8 — 2026-06-12
+
+Eighth autonomous growth tick via `/grow`. Planning prioritized filling the two equally under-represented categories — Arts & Culture and Society & Economics (each at 2 files) — by selecting the highest-impact items from the Backlog. Items completed:
+
+- **Content**: Researched ***Sign 'O' the Times*** by Prince (released March 31, 1987) via Wikipedia and Albumism. Created `arts-culture/sign-o-the-times.md` — the **third file in Arts & Culture**. Key facts verified: 9th studio album by Prince, double album, 16 tracks; released March 31, 1987 on Paisley Park Records/Warner Bros.; evolved from three abandoned projects (Dream Factory, Camille, Crystal Ball — triple album Warner Bros. rejected); Prince's first release after disbanding The Revolution; extensive Linn LM-1 and Fairlight CMI use; genre fusion (funk, soul, hip-hop, psychedelic pop, electro, rock); title track addressed AIDS, gang violence, drug abuse; three top-10 singles: "Sign 'O' the Times" (#3), "U Got the Look" featuring Sheena Easton (#2), "I Could Never Take the Place of Your Man" (#10); peaked at #6 Billboard 200, #1 Switzerland; Grammy Album of the Year nominee (lost to U2's *The Joshua Tree*); won 1987 Pazz & Jop critics' poll; inducted Grammy Hall of Fame 2017; Rolling Stone 500 Greatest #45 (2020). Added new README row.
+- **Content**: Researched **ACT UP founding** (March 12, 1987) via Wikipedia and Encyclopædia Britannica. Created `society-economics/act-up-founding.md` — the **third file in Society & Economics**. Key facts verified: founded March 12, 1987 at the Lesbian and Gay Community Services Center, New York City; Larry Kramer (playwright, GMHC co-founder) initiated after speaking to ~300 attendees; full name AIDS Coalition to Unleash Power; non-partisan, non-violent direct action; first action March 24, 1987 — Wall Street protest (~250 members, 17 arrested) demanding greater access to experimental AIDS drugs; June 1987 protest against Northwest Orient Airlines policy barring people with AIDS; national debut at Second National March on Washington, October 1987; October 1988 FDA demonstration transformed drug-approval processes; ACT UP forced change to CDC definition of AIDS to include opportunistic infections affecting women and injection drug users. Added new README row.
+- **Structure**: Refreshed TIMELINE.md (2 new entries inserted chronologically at Mar 12 and Mar 31; timeline grows from 15 to 17 rows); INDEX.md (2 new entries under Arts & Culture and Society & Economics); `arts-culture/index.md` (Sign 'O' the Times row added); `society-economics/index.md` (ACT UP row added). Updated marker-wrapped `## Related` blocks in `aretha-franklin-hof.md`, `full-metal-jacket.md`, `black-monday.md`, and `prozac-fda-approval.md` (also standardized prozac marker format). Both new files include marker-wrapped `## Related` blocks.
+- **Verify**: README now 16 rows (+2 new; all 16 link to dedicated files); no duplicate rows; all internal links resolve; both new files carry required frontmatter and ≥2 authoritative sources (Wikipedia + Albumism/Britannica).
+- **Record**: Moved tick 8 items to ROADMAP Done; refreshed Backlog (3rd People file, 4th Arts & Culture file, 4th Society & Economics, overdue /evolve); synced seed §4–5 (14→16 files).
+
+Coverage after this tick: **16 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has 3 files, Arts & Culture has **3 files**, Society & Economics has **3 files**, People has 2 files. README has 16 rows, all linked.
