@@ -7,27 +7,27 @@
 
 | Item | Tag | Notes |
 |---|---|---|
-| Deep-dive: Iraqi Parliamentary Elections (Jan 30, 2005) | content | high — post-invasion milestone |
 | Deep-dive: Huygens probe on Titan (Jan 14, 2005) | content | high — outer-solar-system first |
-| Deep-dive: Pope John Paul II (Apr 2, 2005) | content | high — global significance |
+| Deep-dive: Kyoto Protocol enters force (Feb 16, 2005) | content | medium |
 
 ## Backlog
 
 | Item | Tag | Priority |
 |---|---|---|
-| Deep-dive: Kyoto Protocol enters force (Feb 16, 2005) | content | medium |
 | Deep-dive: Angela Merkel elected (Sep 18, 2005) | content | medium |
 | Deep-dive: Deep Impact mission (Jul 4, 2005) | content | medium |
 | Deep-dive: Rosa Parks death (Oct 24, 2005) | content | medium |
 | Deep-dive: *Brokeback Mountain* (Dec 9, 2005) | content | medium |
 | Deep-dive: *Star Wars* Episode III (May 19, 2005) | content | low |
-| Add cross-reference ## Related blocks to topic files | structure | high — topic files now exist |
 | Periodic /evolve audit of .github/ layer | meta | quarterly |
 
 ## Done
 
 | Item | Tag | Completed |
 |---|---|---|
+| Deep-dive: Pope John Paul II (Apr 2, 2005) | content | 2026-06-11 |
+| Deep-dive: Iraqi Parliamentary Elections (Jan 30, 2005) | content | 2026-06-11 |
+| Add cross-reference ## Related blocks to topic files | structure | 2026-06-11 |
 | Deep-dive: Hurricane Katrina (Aug 29, 2005) | content | 2026-06-09 |
 | Deep-dive: 7/7 London Bombings (Jul 7, 2005) | content | 2026-06-09 |
 | Deep-dive: YouTube founding (Feb 14, 2005) | content | 2026-06-09 |

@@ -25,3 +25,10 @@ YouTube's founding marked a defining moment in the rise of user-generated conten
 
 - [YouTube — Encyclopædia Britannica](https://www.britannica.com/topic/YouTube)
 - [How YouTube Changed the World — BBC](https://www.bbc.com/news/technology-44855553)
+
+<!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [7/7 London Bombings](../history-politics/77-london-bombings.md) — user-shot footage of the attacks typified the user-generated-media shift YouTube embodied.
+- [Hurricane Katrina](../society-economics/hurricane-katrina.md) — early example of citizen video spreading disaster news online.
+<!-- END GENERATED: crossrefs -->

@@ -7,8 +7,9 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
-| Iraqi Parliamentary Elections | Iraq's first multi-party elections since 1953, January 30. |
+| [Iraqi Parliamentary Elections](history-politics/iraqi-elections-2005.md) | Iraq's first multi-party elections since 1953, January 30. |
 | Kyoto Protocol enters force | International climate treaty took legal effect February 16. |
+| [Pope John Paul II dies](history-politics/pope-john-paul-ii-death.md) | 26-year papacy ended April 2; succeeded by Benedict XVI. |
 | [7/7 London bombings](history-politics/77-london-bombings.md) | Four coordinated suicide bomb attacks on London's transit, July 7. |
 
 ## Science & Technology ([index](science-technology/index.md))
@@ -36,7 +37,6 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
-| Pope John Paul II dies | 26-year papacy ended April 2; succeeded by Benedict XVI. |
 | Angela Merkel elected Chancellor | Germany's first female Chancellor, September 18. |
 | Rosa Parks dies | Civil rights icon died October 24 aged 92. |
 

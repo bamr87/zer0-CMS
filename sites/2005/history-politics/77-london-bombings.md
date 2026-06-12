@@ -25,3 +25,12 @@ The 7 July bombings were the first suicide attacks carried out in the United Kin
 
 - [7 July 2005 London bombings — Encyclopædia Britannica](https://www.britannica.com/event/London-bombings-of-2005)
 - [7/7 London bombings — BBC News](https://www.bbc.co.uk/news/uk-33429594)
+
+<!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [January 2005 Iraqi Parliamentary Election](iraqi-elections-2005.md) — concurrent flashpoint of 2005 geopolitics and insurgency.
+- [Death of Pope John Paul II](pope-john-paul-ii-death.md) — another defining 2005 event covered by global media.
+- [Hurricane Katrina](../society-economics/hurricane-katrina.md) — comparable test of emergency response and civil resilience in 2005.
+- [Founding of YouTube](../science-technology/youtube-founded.md) — citizen camera-phone footage of the attacks marked the user-generated-media moment YouTube launched into.
+<!-- END GENERATED: crossrefs -->

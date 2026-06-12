@@ -7,7 +7,6 @@ No dedicated topic files yet — see the [master knowledge table](../README.md#n
 
 | Topic | Description |
 |-------|-------------|
-| Pope John Paul II dies | 26-year papacy ended April 2; succeeded by Benedict XVI. |
 | Angela Merkel elected Chancellor | Germany's first female Chancellor, September 18. |
 | Rosa Parks dies | Civil rights icon died October 24 aged 92. |
 

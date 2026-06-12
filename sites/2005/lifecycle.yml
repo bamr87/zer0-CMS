@@ -26,7 +26,7 @@ lifecycle:
     status: growing
     # Growth ticks recorded in seed.md §8 since the most recent Genesis or Replant entry.
     # seed.md §8 is the source of truth; check-lifecycle reconciles this number each tick.
-    generation_ticks: 2
+    generation_ticks: 3
     # Reference instance the framework was inherited from. NOT counted toward consolidation.
     origin: "bamr87/1987"
     # Spawn chain, oldest first. Carried forward (and appended to) by every spawn,

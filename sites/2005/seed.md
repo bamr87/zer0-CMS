@@ -74,16 +74,16 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 2005` (12 rows; 3 rows link to dedicated files).
-- **Dedicated topic files:** 3 — `society-economics/hurricane-katrina.md`, `history-politics/77-london-bombings.md`, `science-technology/youtube-founded.md`.
+- **Knowledge table:** `README.md` → `## Notable Events of 2005` (12 rows; 5 rows link to dedicated files).
+- **Dedicated topic files:** 5 — `history-politics/77-london-bombings.md`, `history-politics/iraqi-elections-2005.md`, `history-politics/pope-john-paul-ii-death.md`, `science-technology/youtube-founded.md`, `society-economics/hurricane-katrina.md`.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — generated; 12 dated rows, 3 linked to dedicated topic files.
-- Category index pages `<category-slug>/index.md` — generated for all 5 categories; history-politics, science-technology, and society-economics now link their dedicated topic files.
-- `INDEX.md` — generated; master index grouped by taxonomy category; 3 entries link to topic files.
-- Cross-reference `## Related` blocks — not yet generated (planned next tick).
+- `TIMELINE.md` — generated; 12 dated rows, 5 linked to dedicated topic files.
+- Category index pages `<category-slug>/index.md` — generated for all 5 categories; history-politics (3 links), science-technology, and society-economics link their dedicated topic files.
+- `INDEX.md` — generated; master index grouped by taxonomy category; 5 entries link to topic files.
+- Cross-reference `## Related` blocks — generated inside all 5 dedicated topic files (2–4 links each).
 
 ## 6. Growth Loop
 
@@ -161,3 +161,17 @@ Second growth tick. Created the first three dedicated topic files and wired them
 - Regenerated category indices (history-politics, science-technology, society-economics) to link topic files and drop the "no dedicated topic files yet" stubs.
 - Updated `TIMELINE.md` and `INDEX.md` to reference the three new files.
 - Updated `ROADMAP.md`: moved 3 deep-dive items to Done; promoted Iraqi elections, Huygens, and Pope John Paul II to Now; flagged the `## Related` cross-reference task as actionable.
+
+---
+
+### Tick 3: More Deep-Dives + Cross-References — 2026-06-11
+
+Third growth tick (the last of this generation before the replant gate at 3 ticks). Two new History & Politics deep-dive articles plus the first cross-reference layer.
+
+- Created `history-politics/pope-john-paul-ii-death.md` (death of Pope John Paul II, April 2, 2005; 2005 conclave; succession by Benedict XVI) and `history-politics/iraqi-elections-2005.md` (January 30, 2005 Transitional National Assembly election) — each with ≥2 authoritative sources (encyclopedic + specialist/official).
+- Linked the existing `README.md` rows "Iraqi Parliamentary Elections" and "Pope John Paul II dies" to the new files (now 5 of 12 rows link to dedicated files; no duplicate rows added).
+- Generated `## Related` cross-reference blocks (2–4 links each, inside `build-structure` markers) in all 5 dedicated topic files — the first cross-reference layer.
+- Reconciled categorization: moved "Pope John Paul II dies" from People to History & Politics in `INDEX.md`, `people/index.md`, `TIMELINE.md`, and `history-politics/index.md` to match the new file's frontmatter category.
+- Regenerated `history-politics/index.md` (now links Iraqi elections, Pope, and 7/7), `INDEX.md`, and `TIMELINE.md` (file links for Iraqi elections and Pope).
+- Updated `ROADMAP.md`: moved the two deep-dives and the cross-reference task to Done; promoted Huygens and Kyoto Protocol to Now.
+- Updated `seed.md` §4–5: dedicated files 3→5, table links 3→5, cross-references now generated.
