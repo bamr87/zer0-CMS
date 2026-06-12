@@ -19,6 +19,10 @@ Each taxonomy entry has a `name` and a `slug` (used for folder names and frontma
 
 - Follow `concept.source_strategy`: verify every fact against **at least two authoritative sources**
   (one encyclopedic such as Wikipedia/Britannica; one specialist where possible).
+- The specialist source must itself be authoritative: official/institutional publications (press
+  releases, government or scientific bodies, court/SEC filings), established news organizations,
+  or academic work. Fan sites, hobbyist blogs, and content farms do **not** count toward the
+  two-source minimum (cite them only as a supplementary third link, if at all).
 - Confirm the topic falls **within `concept.scope`**. Reject or note topics outside it.
 - Prefer primary-era / authoritative sources when available.
 

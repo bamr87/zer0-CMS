@@ -37,7 +37,7 @@ lifecycle:
     # growing | mature (replanted; successor spawned) | consolidated (merged + archived)
     status: mature
     # Set by /distill when the lineage meta-review has run (null = pending).
-    distilled_at: null
+    distilled_at: "2026-06-12"
     # Growth ticks recorded in seed.md §8 since the most recent Genesis or Replant entry.
     # seed.md §8 is the source of truth; check-lifecycle reconciles this number each tick.
     generation_ticks: 0

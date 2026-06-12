@@ -205,3 +205,39 @@ Part B — spawn the successor:
 - Created `year-of-ai/2006` (public) and planted **only** the framework: `.github/` (less `grow.yml`, see below), `.claude/`, `CLAUDE.md`, `.gitignore`, `LIFECYCLE.md`, and a carried-forward `lifecycle.yml` (same policy, full lineage, `status: growing`, `generation_ticks: 0`). No content/README-table/ROADMAP/seed inventories carried over — the successor grows its own from genesis.
 - **Credential limitation:** the `LIFECYCLE_PAT` used here lacks the `workflow`/"Workflows" permission, so `.github/workflows/grow.yml` could be planted neither by git push (rejected) nor via the Contents API (403). It is the only framework file not carried. A maintainer must add it once with a workflow-scoped token to enable unattended scheduled growth; until then the successor can be grown by invoking `/grow` manually.
 - Germination: the successor's first `/grow` detects the missing seed and runs `/genesis "the year 2006"` to bootstrap.
+
+---
+
+### Distillation — 2026-06-12
+
+One-time lineage meta-review on the frontier model (`policy.models.distill: claude-fable-5`),
+triggered by the lifecycle gate: lineage 3 members ≥ `distill_at_members` 3, `distilled_at` null.
+Reviewed all three members (year-of-ai/2005, /2006, /2007 — seeds, Evolution Logs, lifecycle
+state, content, framework drift) plus the driver's 11-PR merged failure-and-fix ledger.
+
+**Findings:**
+- Birth requirement proven twice: framework + carried `lifecycle.yml` only; genesis regrew
+  seed/README/roadmap/content in every generation. Nothing carried beyond that was ever used.
+- The PAT's missing `workflow` scope is the most-recurring gap — `grow.yml` could not be planted
+  into either successor; the whole lineage runs on the driver's shepherd cron.
+- The failure ledger's deepest lessons live in `grow.yml` itself: `claude-code-action` clobbers
+  `GH_TOKEN` (PAT must travel as `LIFECYCLE_PAT`), exits 0 on credit exhaustion (output grep
+  fires the subscription fallback), needs `id-token: write` and explicit `--allowedTools`.
+- Member content quality is consistently high and format-convergent, but specialist sources
+  drifted toward fan media (Bleacher Report, Cult of Mac) in two member articles.
+- Framework drift across members was minimal: only `replant.prompt.md` (driver-registry step 6
+  not yet fanned out) and the absent `workflows/` dir.
+
+**Cycle improvements applied (fan out via pollinate next shepherd tick):**
+- `replant.prompt.md` — plant `grow.yml` gracefully: if the PAT lacks workflow scope, plant
+  everything else, log the omission, never fail the replant.
+- `LIFECYCLE.md` — Setup now explicitly requires `workflow` scope on `LIFECYCLE_PAT`.
+- `content.instructions.md` — specialist source must be institutional/official; fan sites and
+  hobbyist blogs no longer count toward the two-source minimum.
+
+**Seed package distilled:** `seed-package/` — `README.md` (configure-and-launch incl. the
+"the year 1776" worked example), `seed.template.md`, `lifecycle.template.yml`, `MANIFEST.md`
+(load-bearing vs regenerable file map). Test of done: an org + two secrets + the manifest's
+files reach a germinated, self-growing first repo with no other input.
+
+`lifecycle.yml` `state.distilled_at` set to 2026-06-12; future runs resolve phase `tick` again.

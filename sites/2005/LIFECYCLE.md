@@ -118,7 +118,10 @@ then lower it back.
      lifecycle-gated, so a retried tick cannot double-apply.
    - `LIFECYCLE_PAT` — a PAT with `contents: write` on the family's repos **plus repository
      creation and archive** rights on the owner org (classic PAT: `repo` scope; fine-grained:
-     Contents write + Administration write, org-authorized). Plain grow ticks work without it;
+     Contents write + Administration write, org-authorized). **Also grant `workflow` scope
+     (classic) / Workflows: write (fine-grained)** — without it replants cannot plant
+     `.github/workflows/grow.yml` into successors (every member then depends on the shepherd
+     fallback alone; this was the most-recurring gap in practice). Plain grow ticks work without it;
      replant/consolidate require it. Prefer org-level secrets — a successor repo created by
      `/replant` cannot set its own secrets. Note: `claude-code-action` overrides
      `GH_TOKEN`/`GITHUB_TOKEN` in the agent environment with its own repo-scoped app token, so

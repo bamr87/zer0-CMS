@@ -50,6 +50,10 @@ first — everything is parameterized by them.
    `GH_TOKEN="$LIFECYCLE_PAT" gh repo create <owner>/<slug> --public`.
 3. **Plant only the necessary context and files** — nothing else:
    - `.github/` and `.claude/` layers, copied **verbatim** (they are concept-agnostic);
+     `.github/workflows/grow.yml` needs the PAT to carry `workflow` scope (classic) /
+     Workflows: write (fine-grained) — if the push is rejected for that one file, plant
+     everything else, record the omission in the replant log entry, and continue (the shepherd
+     fallback in LIFECYCLE.md keeps the successor growing); **never fail the replant over it**;
    - `CLAUDE.md` and `.gitignore`;
    - `lifecycle.yml` — same `policy`, `state.status: growing`, `state.generation_ticks: 0`, the
      **full lineage carried forward** with the new member appended
