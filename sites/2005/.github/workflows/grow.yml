@@ -53,12 +53,19 @@ env:
        each successor with
        git clone "https://x-access-token:${LIFECYCLE_PAT}@github.com/<owner>/<repo>.git"
        and read ITS lifecycle.yml (each member appends its own successor),
-       until you reach the newest member. Then cd into that clone and run
-       this same procedure from step 1 there — germinate it via /genesis if
-       it has no seed, else obey its check-lifecycle gate (grow / replant /
-       consolidate). All pushes in the clone go through the LIFECYCLE_PAT
-       remote. If the newest member is already consolidated, report that the
-       lineage is complete and exit without changes.
+       until you reach the newest member. Before executing the tick there,
+       SYNC THE FRAMEWORK: copy .github/ , .claude/ , CLAUDE.md, and
+       LIFECYCLE.md from THIS repo's checkout over the clone's copies where
+       they differ — the lineage driver is the canonical framework source.
+       Never touch the member's content, seed.md, ROADMAP.md, or
+       lifecycle.yml. Commit any sync as "chore: sync framework from lineage
+       driver"; if the push is rejected for workflow scope, drop the
+       .github/workflows/ changes and push the rest. Then cd into that clone
+       and run this same procedure from step 1 there — germinate it via
+       /genesis if it has no seed, else obey its check-lifecycle gate (grow /
+       replant / consolidate). All pushes in the clone go through the
+       LIFECYCLE_PAT remote. If the newest member is already consolidated,
+       report that the lineage is complete and exit without changes.
 
     Follow the repository's CLAUDE.md and canonical .github/ prompts exactly;
     publish only through the publish-session skill. The ambient GitHub token

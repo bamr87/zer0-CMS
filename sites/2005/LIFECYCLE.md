@@ -80,6 +80,13 @@ walks the lineage chain (each member's `lifecycle.yml` names its successor), clo
 growing member with `LIFECYCLE_PAT`, and executes that repo's tick inside the runner. The oldest
 repo's heartbeat thereby drives the whole family until members carry their own.
 
+**Framework propagation** — workflow-level logic (tick model, auth fallback, tool config) applies
+lineage-wide automatically because every shepherd-driven tick executes through the driving repo's
+workflow and policy. The planted `.github/`/`.claude/` files in members are spawn-time snapshots,
+so the shepherd also **syncs the canonical framework from the driving repo into the member clone
+before each tick** (`chore: sync framework from lineage driver`) — framework improvements reach
+every member on its next tick, never touching member content or state files.
+
 ## Model policy (cost)
 
 The tick model is a lifecycle policy knob: `lifecycle.policy.models.tick` (read by the workflow at
