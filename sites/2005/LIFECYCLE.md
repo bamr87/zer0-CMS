@@ -77,10 +77,14 @@ carries its own state.
 
 1. **Secrets** — in each repo (or as organization secrets so successors inherit them automatically):
    - `ANTHROPIC_API_KEY` — Claude API key used by `claude-code-action`.
-   - `LIFECYCLE_PAT` — a (fine-grained) PAT with `contents: write` on the family's repos **plus
-     repository creation and archive** rights on the owner account. Plain grow ticks work without
-     it; replant/consolidate require it. Prefer org-level secrets — a successor repo created by
-     `/replant` cannot set its own secrets.
+   - `LIFECYCLE_PAT` — a PAT with `contents: write` on the family's repos **plus repository
+     creation and archive** rights on the owner org (classic PAT: `repo` scope; fine-grained:
+     Contents write + Administration write, org-authorized). Plain grow ticks work without it;
+     replant/consolidate require it. Prefer org-level secrets — a successor repo created by
+     `/replant` cannot set its own secrets. Note: `claude-code-action` overrides
+     `GH_TOKEN`/`GITHUB_TOKEN` in the agent environment with its own repo-scoped app token, so
+     the workflow passes the PAT as the dedicated `LIFECYCLE_PAT` env var and the replant /
+     consolidate prompts invoke `GH_TOKEN="$LIFECYCLE_PAT" gh …` explicitly.
 2. **Enable the workflow** — merge `.github/workflows/grow.yml`; adjust the cron to taste
    (daily ⇒ a 3-tick generation replants roughly twice a week; a 7-member year family consolidates
    in ~5 weeks).

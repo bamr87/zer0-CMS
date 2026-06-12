@@ -18,8 +18,11 @@ first — everything is parameterized by them.
 
 1. Run the **check-lifecycle** skill. Proceed only if it reports phase `replant`
    (`generation_ticks ≥ replant_after_ticks`), or the user passed `--force`.
-2. Confirm push access and the ability to create repositories (GitHub CLI `gh` with a PAT that has
-   repo-creation scope, or the GitHub MCP `create_repository` tool). If absent, stop and report —
+2. Confirm push access and the ability to create repositories. In CI the ambient GitHub token is
+   scoped to this repo only and **cannot** create repos — the PAT arrives as the `LIFECYCLE_PAT`
+   environment variable; verify it is non-empty and run repo-creation/archival commands as
+   `GH_TOKEN="$LIFECYCLE_PAT" gh …`. (Interactively: any `gh` credential with repo-creation scope,
+   or the GitHub MCP `create_repository` tool.) If no such credential exists, stop and report —
    never half-replant.
 
 ## Part A — Finalize this repo (compact in place)
@@ -43,7 +46,8 @@ first — everything is parameterized by them.
    lineage member (e.g. "the year 2005" → "the year 2006"). If the user passed an explicit subject,
    use that instead.
 2. **Create the repository** under the same owner, named by the successor's subject slug (e.g.
-   `2006`), public unless the lineage says otherwise.
+   `2006`), public unless the lineage says otherwise. In CI:
+   `GH_TOKEN="$LIFECYCLE_PAT" gh repo create <owner>/<slug> --public`.
 3. **Plant only the necessary context and files** — nothing else:
    - `.github/` and `.claude/` layers, copied **verbatim** (they are concept-agnostic);
    - `CLAUDE.md` and `.gitignore`;

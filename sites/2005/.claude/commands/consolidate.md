@@ -23,7 +23,8 @@ Outline:
 6. **Retire members** — status `consolidated`, README banner pointing to the new repo, push, then
    archive on GitHub. Never delete.
 
-Honor `--dry-run`: plan only, no writes. End with the `## Consolidation Summary` block from the
-canonical prompt.
+Honor `--dry-run`: plan only, no writes. In CI the ambient token is repo-scoped — use
+`GH_TOKEN="$LIFECYCLE_PAT" gh …` for repo creation, member pushes, and archival. End with the
+`## Consolidation Summary` block from the canonical prompt.
 
 Arguments: $ARGUMENTS

@@ -34,6 +34,6 @@ lifecycle:
     # consolidation threshold.
     lineage:
       - subject: "the year 2005"
-        repo: "bamr87/2005"
+        repo: "year-of-ai/2005"
         status: growing
         spawned_from: "bamr87/1987"

@@ -21,8 +21,10 @@ Read [lifecycle.yml](../../lifecycle.yml) first — the lineage, the
    is complete).
 2. Every other member should be `mature`. If this repo is still `growing`, finish Part A of the
    **replant** prompt first (finalize in place) — but do **not** spawn another successor.
-3. Confirm repo-creation and archive permissions (PAT / GitHub MCP). With `--dry-run`, skip all
-   writes and emit the plan only.
+3. Confirm repo-creation and archive permissions. In CI the ambient GitHub token is scoped to this
+   repo only — use the `LIFECYCLE_PAT` environment variable (`GH_TOKEN="$LIFECYCLE_PAT" gh …`) for
+   creating the consolidated repo, pushing to members, and archiving them. With `--dry-run`, skip
+   all writes and emit the plan only.
 
 ## Procedure
 

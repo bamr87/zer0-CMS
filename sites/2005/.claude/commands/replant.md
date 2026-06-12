@@ -20,7 +20,8 @@ Two halves of one operation:
    (lineage + new member, ticks reset to 0), then run `/genesis "<successor subject>"` there — or
    leave it to the successor's first scheduled `/grow`.
 
-Stop and report (never half-replant) if repo-creation credentials are unavailable.
+Stop and report (never half-replant) if repo-creation credentials are unavailable. In CI the
+ambient token is repo-scoped — use `GH_TOKEN="$LIFECYCLE_PAT" gh …` for repo creation/archival.
 End with the `## Replant Summary` block from the canonical prompt.
 
 Arguments: $ARGUMENTS

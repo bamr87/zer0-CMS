@@ -48,7 +48,12 @@ jobs:
       - name: Run one lifecycle-gated tick
         uses: anthropics/claude-code-action@v1
         env:
-          GH_TOKEN: ${{ secrets.LIFECYCLE_PAT || github.token }}
+          # claude-code-action overrides GH_TOKEN/GITHUB_TOKEN in the agent's
+          # environment with its own app token (scoped to this repo only), so the
+          # PAT must travel under a name the action won't clobber. The replant and
+          # consolidate prompts run repo-creation/archival commands with
+          # GH_TOKEN="$LIFECYCLE_PAT".
+          LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
@@ -64,7 +69,9 @@ jobs:
                - dormant     -> report and exit without changes.
 
             Follow the repository's CLAUDE.md and canonical .github/ prompts exactly;
-            publish only through the publish-session skill.
+            publish only through the publish-session skill. The ambient GitHub token
+            is scoped to this repo only; for replant/consolidate repo creation and
+            archival, prefix gh commands with GH_TOKEN="$LIFECYCLE_PAT".
           # Agent mode denies Bash (git push, gh repo create) by default — allow the
           # tools the tick pipeline needs. show_full_output surfaces the tick report
           # in the job log for observability.
