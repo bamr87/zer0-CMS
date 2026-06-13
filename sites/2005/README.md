@@ -1,5 +1,10 @@
 # The Year 2005
 
+> **Consolidated into [year-of-ai/2005-2011](https://github.com/year-of-ai/2005-2011).**
+> This repository is archived and read-only. All content has been preserved under the
+> `2005/` directory in the consolidated range repository.
+
+
 > **Status: mature (generation closed 2026-06-12).** This repository completed its growth
 > generation (3 ticks) and has been replanted. Growth now continues in its successor,
 > [year-of-ai/2006](https://github.com/year-of-ai/2006) — the year 2006. This repo remains a

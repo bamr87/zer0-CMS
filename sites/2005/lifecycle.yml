@@ -38,7 +38,7 @@ lifecycle:
 
   state:
     # growing | mature (replanted; successor spawned) | consolidated (merged + archived)
-    status: mature
+    status: consolidated
     # Set by /distill when the lineage meta-review has run (null = pending).
     distilled_at: "2026-06-12"
     # Growth ticks recorded in seed.md §8 since the most recent Genesis or Replant entry.
@@ -52,31 +52,31 @@ lifecycle:
     lineage:
       - subject: "the year 2005"
         repo: "year-of-ai/2005"
-        status: mature
+        status: consolidated
         spawned_from: "bamr87/1987"
       - subject: "the year 2006"
         repo: "year-of-ai/2006"
-        status: mature
+        status: consolidated
         spawned_from: "year-of-ai/2005"
       - subject: "the year 2007"
         repo: "year-of-ai/2007"
-        status: mature
+        status: consolidated
         spawned_from: "year-of-ai/2006"
       - subject: "the year 2008"
         repo: "year-of-ai/2008"
-        status: mature
+        status: consolidated
         spawned_from: "year-of-ai/2007"
       - subject: "the year 2009"
         repo: "year-of-ai/2009"
-        status: mature
+        status: consolidated
         spawned_from: "year-of-ai/2008"
         successor: "year-of-ai/2010"
       - subject: "the year 2010"
         repo: "year-of-ai/2010"
-        status: mature
+        status: consolidated
         spawned_from: "year-of-ai/2009"
         successor: "year-of-ai/2011"
       - subject: "the year 2011"
         repo: "year-of-ai/2011"
-        status: growing
+        status: consolidated
         spawned_from: "year-of-ai/2010"
