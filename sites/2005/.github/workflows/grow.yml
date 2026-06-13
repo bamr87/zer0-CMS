@@ -65,7 +65,12 @@ env:
        run the POLLINATE skill (forward pass): propagate this repo's
        canonical framework (.github/, .claude/, CLAUDE.md, LIFECYCLE.md)
        into any drifted lineage member via an auto-merged pull request —
-       never touching content, seed.md, ROADMAP.md, or lifecycle.yml. Then
+       never touching content, seed.md, ROADMAP.md, or lifecycle.yml.
+       KNOWN FACT (learning L002 — do NOT re-investigate or re-flag each
+       run): .github/workflows/ is intentionally NOT propagated while
+       LIFECYCLE_PAT lacks `workflow` scope; pollinate excludes it by
+       design and the lineage runs on this shepherd. Skip workflow files
+       silently — do not diff, attempt, or report them. Then
        cd into the newest member's clone and run this same procedure from
        step 1 there — germinate it via /genesis if it has no seed, else obey
        its check-lifecycle gate (grow / replant / consolidate). After the

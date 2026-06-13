@@ -27,9 +27,12 @@ lifecycle:
       # unless their agent file overrides it. Raise to claude-opus-4-8 only for
       # one-off hard interventions.
       tick: "claude-sonnet-4-6"
-      # Frontier model for the one-time lineage meta-review (/distill) — deep
-      # cross-repo analysis and seed-package design warrant the top model.
-      distill: "claude-fable-5"
+      # Per-generation learning flywheel (/learn) — telemetry → embedded prompt
+      # edits. Pattern-spotting + targeted edits; Sonnet-tier, off the critical path.
+      learn: "claude-sonnet-4-6"
+      # Deep one-time lineage meta-review (/distill) — cross-repo analysis +
+      # seed-package design. (Opus 4.8 for now; raise to a frontier model later.)
+      distill: "claude-opus-4-8"
     # Lineage size that triggers the one-time distillation meta-review.
     distill_at_members: 3
 

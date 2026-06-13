@@ -34,6 +34,7 @@ Editing a generated file by hand gets silently overwritten on the next growth ti
 | `lifecycle.yml` `state` block | `check-lifecycle` / `replant` / `consolidate` | ❌ machine-maintained |
 | `lifecycle.yml` `policy` block | hand-tuned | ✅ deliberate knob changes only |
 | `telemetry/evolution.jsonl.gz` | `telemetry.yml` workflow (append-only) | ❌ machine-appended; never edit/reorder |
+| `telemetry/learnings.jsonl` | `learn` skill (append-only) | ❌ machine-appended; never edit/reorder |
 
 `build-structure` wraps every generated region in `<!-- BEGIN GENERATED: <artifact> ... -->` / `<!-- END GENERATED -->` markers and only rewrites inside them — keep hand-written content outside the markers. It is idempotent: a rerun with no content change must produce no diff (stable ordering).
 
@@ -73,9 +74,12 @@ These run natively as Claude Code slash commands (`.claude/commands/`) — thin 
 | `/publish` | Thin wrapper over the `publish-session` skill (encode-seed → review → commit → push). |
 | `/replant [--force\|subject]` | End this repo's growth generation (mark `mature`) and spawn the successor repo for the next concept in the lineage. Normally triggered by the lifecycle gate, not by hand. |
 | `/consolidate [--dry-run]` | Merge a completed 7-member lineage into one range-named repo and archive the members. Run from the newest member. |
-| `/distill [--force]` | One-time lineage meta-review on the frontier model (`policy.models.distill`): analyze all members, improve the cycle, emit the portable `seed-package/` bootstrap kit. Triggered by the lifecycle gate at `distill_at_members` (default 3). |
+| `/learn [--window N]` | Per-cycle improvement flywheel (`policy.models.learn`): mine the just-closed generation's telemetry for friction and embed the minimal fixes into the foundational prompts so future cycles run faster/cheaper. Records to `telemetry/learnings.jsonl`; runs off the growth critical path via `.github/workflows/learn.yml`. |
+| `/distill [--force]` | One-time lineage meta-review (`policy.models.distill`, default Opus 4.8): analyze all members, improve the cycle, emit the portable `seed-package/` bootstrap kit. Triggered by the lifecycle gate at `distill_at_members` (default 3). |
 
-Lower-level skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`, `sync-seed`, `publish-session`, `check-lifecycle`, `pollinate`) are usually invoked *by* the agents/prompts above rather than directly. The full architecture inventory is `seed.md` §3. `pollinate` keeps framework files convergent across the lineage in both directions via Claude-authored auto-merged PRs — foundational changes made anywhere reach every member repo; per-instance files (content, `seed.md`, `lifecycle.yml`) are never pollinated.
+Lower-level skills (`research`, `add-topic`, `build-structure`, `plan-roadmap`, `sync-seed`, `publish-session`, `check-lifecycle`, `pollinate`, `learn`) are usually invoked *by* the agents/prompts above rather than directly. The full architecture inventory is `seed.md` §3.
+
+**Three-speed learning architecture** — improvements flow through the lineage at three cadences: `pollinate` (mechanical, every tick) propagates framework changes that already exist; `learn` (Sonnet, every generation boundary, off the critical path) turns telemetry friction into embedded prompt edits; `distill` (Opus 4.8, once per lineage milestone) does the deep whole-lineage review → `seed-package/`. Foundational changes made anywhere reach every member repo; per-instance files (content, `seed.md`, `lifecycle.yml`) are never propagated. The append-only `telemetry/learnings.jsonl` ledger records every captured learning so none is re-derived.
 
 ## Claude Code integration (the `.claude/` layer)
 

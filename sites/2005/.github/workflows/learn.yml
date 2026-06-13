@@ -1,0 +1,110 @@
+# Learning flywheel — turn each closed generation's telemetry into embedded prompt edits.
+#
+# Fires after the telemetry collector records a run (so the ledger is current), OFF the
+# growth critical path — it never slows a tick. Gated to generation boundaries: it only
+# spends a model when the just-recorded run closed a generation (a replant/distillation),
+# so most fires are cheap no-ops. The /learn skill mines telemetry/evolution.jsonl.gz for
+# friction, embeds the minimal fixes into the .github/ prompt layer, records each in
+# telemetry/learnings.jsonl, and opens an auto-merged PR; pollinate fans them lineage-wide.
+#
+# Model: lifecycle.yml -> policy.models.learn (default claude-sonnet-4-6).
+
+name: learn
+
+on:
+  workflow_run:
+    workflows: ["telemetry"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: learn-flywheel
+  cancel-in-progress: false
+
+jobs:
+  learn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.LIFECYCLE_PAT || github.token }}
+
+      # Cheap gate: only the newest ledger record matters. A generation-closing
+      # run (replant/distillation) leaves its marker in the embedded result text.
+      - name: Gate to generation boundary
+        id: gate
+        run: |
+          model=$(grep -E '^[[:space:]]*learn:' lifecycle.yml | head -1 | sed -E 's/.*learn:[[:space:]]*"?([^"#]+)"?.*/\1/' | xargs)
+          echo "model=${model:-claude-sonnet-4-6}" >> "$GITHUB_OUTPUT"
+          boundary=false
+          if [ -f telemetry/evolution.jsonl.gz ]; then
+            rec=$(gunzip -c telemetry/evolution.jsonl.gz | tail -1)
+            if printf '%s' "$rec" | grep -qiE "Replant Summary|Generation closed|Distillation Report"; then
+              boundary=true
+            fi
+          fi
+          echo "boundary=$boundary" >> "$GITHUB_OUTPUT"
+          echo "Generation boundary: $boundary — learn model: ${model:-claude-sonnet-4-6}"
+
+      - name: Run the learning flywheel (API credits)
+        id: primary
+        if: steps.gate.outputs.boundary == 'true'
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        env:
+          LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Run the /learn skill: read telemetry/evolution.jsonl.gz for the
+            just-closed generation and telemetry/learnings.jsonl, mine for
+            friction (recurring re-derivation, wasted/no-op runs, redundant
+            work, cost/turn outliers, failures), embed <=3 minimal edits into
+            the canonical .github/ prompt layer that REMOVE work, record each
+            in telemetry/learnings.jsonl, and open an auto-merged PR for
+            safe-class edits. Follow .github/skills/learn/SKILL.md exactly.
+            Touch framework files + the learnings ledger only — never content,
+            seed.md, README.md, ROADMAP.md, or lifecycle.yml.
+          claude_args: >-
+            --model ${{ steps.gate.outputs.model }}
+            --max-turns 60
+            --allowedTools "Bash,Edit,Write,Read,Glob,Grep,TodoWrite,Skill"
+          show_full_output: true
+
+      - name: Detect primary failure
+        id: credits
+        if: steps.gate.outputs.boundary == 'true'
+        run: |
+          out=/home/runner/work/_temp/claude-execution-output.json
+          failed=false
+          if [ -f "$out" ] && jq -e '[.[] | select(.type=="result")] | last | .is_error == true' "$out" >/dev/null 2>&1; then
+            failed=true
+          fi
+          echo "exhausted=$failed" >> "$GITHUB_OUTPUT"
+          true
+
+      - name: Run the learning flywheel (Claude subscription fallback)
+        if: steps.gate.outputs.boundary == 'true' && (steps.primary.outcome == 'failure' || steps.credits.outputs.exhausted == 'true')
+        uses: anthropics/claude-code-action@v1
+        env:
+          LIFECYCLE_PAT: ${{ secrets.LIFECYCLE_PAT }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Run the /learn skill: read telemetry/evolution.jsonl.gz for the
+            just-closed generation and telemetry/learnings.jsonl, mine for
+            friction, embed <=3 minimal edits into the canonical .github/
+            prompt layer that REMOVE work, record each in
+            telemetry/learnings.jsonl, and open an auto-merged PR for
+            safe-class edits. Follow .github/skills/learn/SKILL.md exactly.
+            Touch framework files + the learnings ledger only.
+          claude_args: >-
+            --model ${{ steps.gate.outputs.model }}
+            --max-turns 60
+            --allowedTools "Bash,Edit,Write,Read,Glob,Grep,TodoWrite,Skill"
+          show_full_output: true
