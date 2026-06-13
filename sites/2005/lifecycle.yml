@@ -73,5 +73,10 @@ lifecycle:
         successor: "year-of-ai/2010"
       - subject: "the year 2010"
         repo: "year-of-ai/2010"
-        status: growing
+        status: mature
         spawned_from: "year-of-ai/2009"
+        successor: "year-of-ai/2011"
+      - subject: "the year 2011"
+        repo: "year-of-ai/2011"
+        status: growing
+        spawned_from: "year-of-ai/2010"
