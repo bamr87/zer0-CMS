@@ -6,7 +6,7 @@
 #
 # Publishing: GitHub Pages, "deploy from branch" (main, path /).
 # Site URL:   https://year-of-ai.github.io/2005/
-# Theme:      remote_theme year-of-ai/zer0-mistakes (no theme files vendored here).
+# Theme:      remote_theme year-of-ai/year-of-ai.github.io (no theme files vendored here).
 #
 # Content stays plain markdown in this repo. The GitHub Pages default plugins
 # (optional-front-matter, readme-index, default-layout, titles-from-headings,
@@ -24,7 +24,7 @@ repository: "year-of-ai/2005"
 
 url: "https://year-of-ai.github.io"
 baseurl: "/2005"
-remote_theme: "year-of-ai/zer0-mistakes"
+remote_theme: "year-of-ai/year-of-ai.github.io"
 
 markdown: kramdown
 kramdown:
