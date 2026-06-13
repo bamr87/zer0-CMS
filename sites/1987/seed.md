@@ -74,8 +74,8 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (16 rows across all five categories; all 16 rows link to dedicated files).
-- **Dedicated topic files (16):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (18 rows across all five categories; all 18 rows link to dedicated files).
+- **Dedicated topic files (18):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/iran-contra.md` — Iran-Contra affair congressional hearings (July 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
@@ -87,20 +87,22 @@ seed.
   - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `arts-culture/aretha-franklin-hof.md` — Aretha Franklin inducted into Rock and Roll Hall of Fame (January 21, 1987).
   - `arts-culture/sign-o-the-times.md` — Prince's *Sign 'O' the Times* double album (March 31, 1987).
+  - `arts-culture/michael-jackson-bad.md` — Michael Jackson's *Bad* album (August 31, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
   - `society-economics/prozac-fda-approval.md` — FDA approves Prozac (December 29, 1987).
   - `society-economics/act-up-founding.md` — ACT UP founding (March 12, 1987).
-  - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
   - `people/mathias-rust.md` — Mathias Rust flight to Red Square (May 28, 1987).
-- **Coverage:** History & Politics has 5 files; Science & Technology has 3 files; Arts & Culture has 3 files; Society & Economics has 3 files; People has 2 files. All categories have ≥2 dedicated files; all 16 README rows link to dedicated files.
+  - `people/klaus-barbie.md` — Klaus Barbie conviction for crimes against humanity (July 4, 1987).
+  - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
+- **Coverage:** History & Politics has 5 files; Science & Technology has 3 files; Arts & Culture has 4 files; Society & Economics has 3 files; People has 3 files. All categories have ≥3 dedicated files; all 18 README rows link to dedicated files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — 17-row chronological table including all 16 dedicated files; two new entries added in tick 8 (ACT UP founding Mar 12, *Sign 'O' the Times* Mar 31).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists 3 topics, Arts & Culture lists 3 topics, Society & Economics lists 3 topics, People lists 2 topics.
-- `INDEX.md` — master index grouping all 16 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 16 dedicated topic files.
+- `TIMELINE.md` — 19-row chronological table including all 18 dedicated files; two new entries added in tick 9 (Klaus Barbie Jul 4, Michael Jackson's *Bad* Aug 31).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists 3 topics, Arts & Culture lists 4 topics, Society & Economics lists 3 topics, People lists 3 topics.
+- `INDEX.md` — master index grouping all 18 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 18 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -350,3 +352,15 @@ Eighth autonomous growth tick via `/grow`. Planning prioritized filling the two 
 - **Record**: Moved tick 8 items to ROADMAP Done; refreshed Backlog (3rd People file, 4th Arts & Culture file, 4th Society & Economics, overdue /evolve); synced seed §4–5 (14→16 files).
 
 Coverage after this tick: **16 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has 3 files, Arts & Culture has **3 files**, Society & Economics has **3 files**, People has 2 files. README has 16 rows, all linked.
+
+### Tick 9 — 2026-06-13
+
+Ninth autonomous growth tick via `/grow`. Planning prioritized the two most under-represented categories: People (only 2 files) and Arts & Culture (3 files, lowest outside History & Politics). Items completed:
+
+- **Content**: Researched **Klaus Barbie's conviction for crimes against humanity** (July 4, 1987) via Encyclopædia Britannica and the United States Holocaust Memorial Museum encyclopedia. Created `people/klaus-barbie.md` — the **third file in People**. Key facts verified: Barbie (1913–1991) served as Gestapo chief in Lyon 1942–1944, earning the sobriquet "the Butcher of Lyon"; responsible for ~4,000 deaths and 7,500 deportations; ordered deportation of 44 Jewish children (aged 3–13) from the Izieu children's home to Auschwitz (April 6, 1944); torture and execution of Resistance leader Jean Moulin; after WWII worked for U.S. Army intelligence 1947–1951, then fled to Bolivia under alias "Klaus Altmann"; located by Nazi hunter Beate Klarsfeld in 1972; extradited to France February 1983; trial opened May 11, 1987 in Lyon; convicted July 4, 1987 of crimes against humanity (177 counts; defense by Jacques Vergès); sentenced to life imprisonment (first crimes-against-humanity conviction in French legal history); died in prison September 25, 1991. Added new README knowledge-table row.
+- **Content**: Researched **Michael Jackson's *Bad*** (released August 31, 1987) via Wikipedia and Billboard. Created `arts-culture/michael-jackson-bad.md` — the **fourth file in Arts & Culture**. Key facts verified: 7th studio album by Jackson; released August 31, 1987 on Epic Records; produced by Quincy Jones (final Jackson–Jones collaboration); recorded Westlake Recording Studios, Los Angeles, January 1985–July 1987; first album in history to produce five Billboard Hot 100 number-one singles ("I Just Can't Stop Loving You," "Bad," "The Way You Make Me Feel," "Man in the Mirror," "Dirty Diana"); Billboard 200 at #1 for six consecutive weeks; over 35 million copies sold worldwide; 11× Platinum (US); UK fastest-selling debut at time; Best-selling album of 1987 and 1988; Bad World Tour: 123 concerts, 15 countries, 4.4 million attendees, ~$125 million gross; 18-minute "Bad" short film directed by Martin Scorsese; Grammy for Best Engineered Recording — Non-Classical. Added new README knowledge-table row.
+- **Structure**: Refreshed TIMELINE.md (2 new entries inserted chronologically: Klaus Barbie Jul 4 and MJ *Bad* Aug 31; timeline grows from 17 to 19 rows); INDEX.md (2 new entries under People and Arts & Culture); `arts-culture/index.md` (Michael Jackson's *Bad* row added); `people/index.md` (Klaus Barbie row added; entries reordered chronologically). Both new files include marker-wrapped `## Related` blocks.
+- **Verify**: README now 18 rows (+2 new; all 18 link to dedicated files); no duplicate rows; all internal links resolve; both new files carry required frontmatter and ≥2 authoritative sources (Britannica + USHMM; Wikipedia + Billboard).
+- **Record**: Moved tick 9 items to ROADMAP Done; refreshed Backlog (4th Society & Economics, 5th People, overdue /evolve); synced seed §4–5 (16→18 files).
+
+Coverage after this tick: **18 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has 3 files, Arts & Culture has **4 files**, Society & Economics has 3 files, People has **3 files**. README has 18 rows, all linked.

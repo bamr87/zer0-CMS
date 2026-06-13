@@ -10,21 +10,23 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Tick 8 completed (2026-06-12). Cleared._
+_Tick 9 completed (2026-06-13). Cleared._
 
 _(empty)_
 
 ## Backlog
 _Prioritized queue. Top items are pulled into **Now** each tick._
 
-1. `content` — 3rd People file (e.g., Gary Hart withdrawal from 1988 presidential race; Klaus Barbie trial/sentencing July 4, 1987; or Desmond Tutu's anti-apartheid role in 1987).
-2. `content` — 4th Arts & Culture file (e.g., *RoboCop* released July 17, 1987; *Lethal Weapon*; or Michael Jackson's *Bad* album August 31, 1987).
-3. `content` — 4th Society & Economics file (e.g., 1987 World Series: Minnesota Twins vs. St. Louis Cardinals; stock market recovery through Q4 1987).
-4. `meta` — Run `/evolve` to audit the customization layer (overdue — now past tick 8).
+1. `content` — 4th Society & Economics file (e.g., 1987 World Series: Minnesota Twins vs. St. Louis Cardinals; stock market recovery through Q4 1987).
+2. `content` — 5th People file (e.g., Gary Hart withdrawal from 1988 presidential race; Desmond Tutu's anti-apartheid role in 1987).
+3. `meta` — Run `/evolve` to audit the customization layer (overdue — now past tick 8).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-13` — Klaus Barbie conviction (July 4, 1987) → `people/klaus-barbie.md` (content; People now 3 files).
+- `2026-06-13` — Michael Jackson's *Bad* (August 31, 1987) → `arts-culture/michael-jackson-bad.md` (content; Arts & Culture now 4 files).
+- `2026-06-13` — Refreshed TIMELINE.md (+2 entries), INDEX.md, `people/index.md`, `arts-culture/index.md`, and cross-refs in 2 new files (structure).
 - `2026-06-12` — *Sign 'O' the Times* (Prince, March 31, 1987) → `arts-culture/sign-o-the-times.md` (content; Arts & Culture now 3 files).
 - `2026-06-12` — ACT UP founding (March 12, 1987) → `society-economics/act-up-founding.md` (content; Society & Economics now 3 files).
 - `2026-06-12` — Refreshed TIMELINE.md (+2 entries), INDEX.md, `arts-culture/index.md`, `society-economics/index.md`, and cross-refs in 4 sibling files (structure).

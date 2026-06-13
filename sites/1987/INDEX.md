@@ -26,6 +26,7 @@ _Category index: [arts-culture/index.md](arts-culture/index.md)_
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame (January 21, 1987)](arts-culture/aretha-franklin-hof.md)
 - [Sign 'O' the Times (Prince, March 31, 1987)](arts-culture/sign-o-the-times.md)
 - [Full Metal Jacket (June 26, 1987)](arts-culture/full-metal-jacket.md)
+- [Michael Jackson's Bad (August 31, 1987)](arts-culture/michael-jackson-bad.md)
 
 ## Society & Economics
 _Category index: [society-economics/index.md](society-economics/index.md)_
@@ -37,6 +38,7 @@ _Category index: [society-economics/index.md](society-economics/index.md)_
 ## People
 _Category index: [people/index.md](people/index.md)_
 
-- [Rudolf Hess (death, August 17, 1987)](people/rudolf-hess.md)
 - [Mathias Rust — Flight to Red Square (May 28, 1987)](people/mathias-rust.md)
+- [Klaus Barbie — Convicted of Crimes Against Humanity (July 4, 1987)](people/klaus-barbie.md)
+- [Rudolf Hess (death, August 17, 1987)](people/rudolf-hess.md)
 <!-- END GENERATED: master-index -->

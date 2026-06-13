@@ -34,6 +34,8 @@
 | [Mathias Rust lands in Red Square](people/mathias-rust.md) | An 18-year-old West German amateur pilot flies a Cessna from Helsinki to Moscow's Red Square on May 28, humiliating Soviet air defenses and triggering a historic military purge. |
 | [*Sign 'O' the Times* released](arts-culture/sign-o-the-times.md) | Prince releases his acclaimed double album on March 31, widely considered his finest work and one of the greatest albums in popular music history. |
 | [ACT UP founded](society-economics/act-up-founding.md) | The AIDS Coalition to Unleash Power is established in New York City on March 12, launching a direct-action movement that transforms U.S. AIDS policy and drug approval processes. |
+| [Klaus Barbie convicted](people/klaus-barbie.md) | Former Lyon Gestapo chief is convicted on July 4 in France's first crimes-against-humanity prosecution, sentenced to life imprisonment for the deportation and murder of thousands. |
+| [Michael Jackson's *Bad* released](arts-culture/michael-jackson-bad.md) | Jackson's seventh studio album, released August 31, becomes the first album in history to generate five Billboard Hot 100 number-one singles, selling over 35 million copies worldwide. |
 
 ## Contributing
 
