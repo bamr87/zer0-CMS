@@ -1,6 +1,6 @@
 ---
 name: curator
-description: "Content specialist for this self-growing knowledge base. Use when researching, adding, or editing knowledge-base content within the repo's concept; adding events/people/works/discoveries; or bulk-filling coverage gaps across categories. Reads subject/taxonomy from seed.md. Sources via the research skill; creates files via add-topic."
+description: "Use when: researching, adding, or editing knowledge-base content for this repository; adding items (events, people, works, discoveries) within the repo's concept; bulk-filling coverage gaps across the concept's categories. Concept-agnostic — reads subject/taxonomy from seed.md. Delegates to the research and add-topic skills; does not push to GitHub directly."
 tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch, TodoWrite
 ---
 

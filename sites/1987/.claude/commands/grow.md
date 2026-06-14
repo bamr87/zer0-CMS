@@ -1,5 +1,5 @@
 ---
-description: "Run one autonomous growth tick — plan, generate content and structure, verify, sync the DNA, and publish to main. Delegates content to the Curator subagent."
+description: "Run one autonomous growth tick of this knowledge base: plan → generate content and structure → verify → sync the DNA → publish to main. Use when: progressively expanding the repo unattended; running on a schedule or under /loop; a single hands-off update sweep. Concept-agnostic — reads the concept from seed.md. Delegates content items to the Curator subagent."
 argument-hint: "[N items | category/topic targets] — optional; default 1–3"
 ---
 

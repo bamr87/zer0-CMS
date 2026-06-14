@@ -23,7 +23,7 @@ Research and update [README.md](../../README.md) using the `research` skill, bou
    `concept.source_strategy`; confirm the topic is within `concept.scope`).
 
 4. **Update the README**:
-   - Add a row to the `## Notable Events` table for each researched topic:
+   - Add a row to the table headed by `concept.conventions.knowledge_table` (from seed.md) for each researched topic:
      `| Item | One-sentence description ending with its significance |`
    - Do **not** duplicate existing rows. Preserve all existing content exactly.
 

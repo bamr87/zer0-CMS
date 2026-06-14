@@ -37,8 +37,9 @@ Use the dedicated-file template in
 `## Sources` (≥2).
 
 ### 6. Link from the README
-Open [README.md](../../README.md), find or add the topic's row in the `## Notable Events` table, and
-turn the item cell into a link to the new file. Preserve all other content exactly.
+Open [README.md](../../README.md), find or add the topic's row in the table headed by
+`concept.conventions.knowledge_table` (read from seed.md), and turn the item cell into a link to the
+new file. Preserve all other content exactly.
 
 ### 7. Report
 Summarize: the file created (path), top 3 facts found, and whether a README link was added/updated.

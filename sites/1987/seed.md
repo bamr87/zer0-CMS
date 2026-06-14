@@ -364,3 +364,38 @@ Ninth autonomous growth tick via `/grow`. Planning prioritized the two most unde
 - **Record**: Moved tick 9 items to ROADMAP Done; refreshed Backlog (4th Society & Economics, 5th People, overdue /evolve); synced seed §4–5 (16→18 files).
 
 Coverage after this tick: **18 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has 3 files, Arts & Culture has **4 files**, Society & Economics has 3 files, People has **3 files**. README has 18 rows, all linked.
+
+### Evolve Audit — 2026-06-14
+
+Ran one `/evolve` audit of the full customization layer (`.github/` agents, skills, prompts,
+instructions; `.claude/` adapter layer). Three FAIL items and three WARN items fixed:
+
+**FAIL — Concept-agnosticism violations (hardcoded `## Notable Events` heading):**
+
+1. **`.github/prompts/deep-dive.prompt.md` step 6** — hardcoded `` `## Notable Events` table ``
+   instead of reading the heading from `concept.conventions.knowledge_table`. Updated to reference
+   the concept convention: "the table headed by `concept.conventions.knowledge_table` (read from
+   seed.md)".
+2. **`.github/prompts/update-readme.prompt.md` step 4** — same hardcoded heading. Updated to
+   "the table headed by `concept.conventions.knowledge_table` (from seed.md)".
+3. **`.claude/commands/update-readme.md` step 4** — same hardcoded heading in the adapter.
+   Updated to match the canonical fix.
+
+**WARN — `.claude/` adapter description drift (missing "Use when:" pattern):**
+
+4. **`.claude/agents/architect.md` description** — started with "Autonomous orchestrator…" rather
+   than the "Use when:" pattern required by `agents.instructions.md`. Aligned to the canonical
+   `.github/agents/architect.agent.md` description, preserving the Claude Code note "Prefer the
+   /grow command".
+5. **`.claude/agents/curator.md` description** — started with "Content specialist…" before the
+   "Use when:" clause, and differed from canonical phrasing. Updated to "Use when: researching,
+   adding, or editing…" matching canonical structure while correctly omitting "publishing session
+   changes to GitHub" (the .claude/ Curator explicitly delegates that to the orchestrator).
+6. **`.claude/commands/grow.md` description** — lacked "Use when:" trigger clauses from the
+   canonical `grow.prompt.md`. Updated to include "Use when: progressively expanding the repo
+   unattended; running on a schedule or under /loop; a single hands-off update sweep."
+
+Files changed: `.github/prompts/deep-dive.prompt.md`, `.github/prompts/update-readme.prompt.md`,
+`.claude/commands/update-readme.md`, `.claude/agents/architect.md`, `.claude/agents/curator.md`,
+`.claude/commands/grow.md`.
+No files added or removed; seed.md sections 1–7 not regenerated (file inventory unchanged).

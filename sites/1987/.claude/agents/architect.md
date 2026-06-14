@@ -1,6 +1,6 @@
 ---
 name: architect
-description: "Autonomous orchestrator that runs one end-to-end growth tick of this self-growing knowledge base (plan → content + structure → verify → record → publish). Use for unattended/batch growth. Reads the concept from seed.md. Prefer the /grow command, which delegates content to the Curator subagent."
+description: "Use when: running one autonomous growth tick of this repository end-to-end without step-by-step confirmation; progressively growing content AND structure (indices, timeline, cross-refs); auto-filling coverage gaps and publishing to GitHub in a single unattended command; scheduled/batch updates. Concept-agnostic — reads the concept from seed.md. Prefer the /grow command, which delegates content to the Curator subagent."
 tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch, TodoWrite, Task
 ---
 
