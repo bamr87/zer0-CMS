@@ -31,6 +31,7 @@ The FDA approval of Prozac in 1987 transformed the treatment of depression and r
 
 - [ACT UP Founded (March 12, 1987)](act-up-founding.md) — another Society & Economics landmark of 1987, the founding of the AIDS direct-action movement that would also push for faster drug approvals.
 - [Black Monday (October 19, 1987)](black-monday.md) — the defining economic shock of 1987.
+- [1987 World Series (October 17–25, 1987)](world-series-1987.md) — another Society & Economics entry from October 1987.
 - [Sign 'O' the Times (Prince, March 31, 1987)](../arts-culture/sign-o-the-times.md) — Prince's album whose title track directly addressed the AIDS epidemic in the same year.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

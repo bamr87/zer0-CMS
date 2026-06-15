@@ -10,20 +10,23 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Tick 9 completed (2026-06-13). Cleared._
+_Tick 10 completed (2026-06-15). Cleared._
 
 _(empty)_
 
 ## Backlog
 _Prioritized queue. Top items are pulled into **Now** each tick._
 
-1. `content` — 4th Society & Economics file (e.g., 1987 World Series: Minnesota Twins vs. St. Louis Cardinals; stock market recovery through Q4 1987).
-2. `content` — 5th People file (e.g., Gary Hart withdrawal from 1988 presidential race; Desmond Tutu's anti-apartheid role in 1987).
-3. `meta` — Run `/evolve` to audit the customization layer (overdue — now past tick 8).
+1. `content` — 4th Science & Technology file (e.g., launch of Fox Broadcasting Company in 1987; Prozac's development at Eli Lilly; first genetically engineered crop approved).
+2. `content` — 5th Arts & Culture file (e.g., *RoboCop* or *Lethal Weapon* theatrical releases; U2's *The Joshua Tree* wins Grammy Album of the Year; *Beloved* by Toni Morrison published).
+3. `meta` — Run `/evolve` to audit the customization layer (overdue — last audit 2026-06-14, now past tick 10).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-15` — 1987 World Series (October 17–25, 1987) → `society-economics/world-series-1987.md` (content; Society & Economics now 4 files).
+- `2026-06-15` — Gary Hart withdrawal from 1988 presidential race (May 8, 1987) → `people/gary-hart.md` (content; People now 4 files).
+- `2026-06-15` — Refreshed TIMELINE.md (+2 entries), INDEX.md, `society-economics/index.md`, `people/index.md`, and cross-refs in 5 sibling files (structure).
 - `2026-06-13` — Klaus Barbie conviction (July 4, 1987) → `people/klaus-barbie.md` (content; People now 3 files).
 - `2026-06-13` — Michael Jackson's *Bad* (August 31, 1987) → `arts-culture/michael-jackson-bad.md` (content; Arts & Culture now 4 files).
 - `2026-06-13` — Refreshed TIMELINE.md (+2 entries), INDEX.md, `people/index.md`, `arts-culture/index.md`, and cross-refs in 2 new files (structure).

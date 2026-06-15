@@ -37,6 +37,7 @@ Rust's flight also captured the popular imagination in both East and West: an un
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [Gary Hart — Withdrawal from the 1988 Presidential Race (May 8, 1987)](gary-hart.md) — another May 1987 People entry in which a private act upended a major public institution.
 - [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — the arms-control breakthrough Reagan and Gorbachev signed six months after Rust's flight helped reshape Soviet military leadership.
 - ["Tear Down This Wall" speech (June 12, 1987)](../history-politics/reagan-berlin-speech.md) — another 1987 event at the Berlin frontier linking Reagan and Gorbachev.
 - [Rudolf Hess (death, August 17, 1987)](rudolf-hess.md) — another notable 1987 People entry.

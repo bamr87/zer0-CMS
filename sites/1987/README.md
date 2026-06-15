@@ -36,6 +36,8 @@
 | [ACT UP founded](society-economics/act-up-founding.md) | The AIDS Coalition to Unleash Power is established in New York City on March 12, launching a direct-action movement that transforms U.S. AIDS policy and drug approval processes. |
 | [Klaus Barbie convicted](people/klaus-barbie.md) | Former Lyon Gestapo chief is convicted on July 4 in France's first crimes-against-humanity prosecution, sentenced to life imprisonment for the deportation and murder of thousands. |
 | [Michael Jackson's *Bad* released](arts-culture/michael-jackson-bad.md) | Jackson's seventh studio album, released August 31, becomes the first album in history to generate five Billboard Hot 100 number-one singles, selling over 35 million copies worldwide. |
+| [Gary Hart suspends presidential campaign](people/gary-hart.md) | The leading Democratic frontrunner withdraws on May 8 after the Miami Herald reports a relationship with model Donna Rice, permanently reshaping political journalism. |
+| [1987 World Series](society-economics/world-series-1987.md) | The Minnesota Twins defeat the Cardinals 4–3 in the first World Series played entirely indoors; the home team wins all seven games, a unique feat never repeated. |
 
 ## Contributing
 

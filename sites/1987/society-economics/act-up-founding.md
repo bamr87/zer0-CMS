@@ -33,6 +33,7 @@ Over a sustained campaign, ACT UP also forced a change to the Centers for Diseas
 
 - [FDA Approves Prozac (December 29, 1987)](prozac-fda-approval.md) — another major 1987 development in U.S. health policy.
 - [Black Monday (October 19, 1987)](black-monday.md) — the defining economic shock of the same year.
+- [1987 World Series (October 17–25, 1987)](world-series-1987.md) — another Society & Economics landmark of October 1987.
 - [Sign 'O' the Times (Prince, 1987)](../arts-culture/sign-o-the-times.md) — Prince's album that addressed the AIDS crisis directly in its title track.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

@@ -37,6 +37,7 @@ Internationally, the trial reinforced the principle that there is no statute of 
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [Gary Hart — Withdrawal from the 1988 Presidential Race (May 8, 1987)](gary-hart.md) — another 1987 People entry involving political accountability and public scrutiny.
 - [Rudolf Hess (death, August 17, 1987)](rudolf-hess.md) — another prominent Nazi figure whose 1987 death closed a chapter of World War II accountability.
 - [Mathias Rust (flight to Red Square, May 28, 1987)](mathias-rust.md) — another major 1987 People entry involving Cold War-era confrontation.
 - [First Intifada (December 9, 1987)](../history-politics/first-intifada.md) — another 1987 event reshaping international understandings of justice and occupation.

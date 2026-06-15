@@ -31,6 +31,7 @@ His death also closed a direct human link to the senior leadership of Nazi Germa
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [Gary Hart — Withdrawal from the 1988 Presidential Race (May 8, 1987)](gary-hart.md) — another 1987 People entry in which personal conduct reshaped public life.
 - [Mathias Rust — Flight to Red Square (May 28, 1987)](mathias-rust.md) — another notable 1987 People entry connecting an individual to Cold War geopolitics.
 - [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — a contemporaneous milestone in the Cold War's final chapter, the geopolitical context surrounding Spandau Prison's four-power administration.
 - [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
