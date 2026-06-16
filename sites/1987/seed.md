@@ -74,18 +74,20 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (20 rows across all five categories; all 20 rows link to dedicated files).
-- **Dedicated topic files (20):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (22 rows across all five categories; all 22 rows link to dedicated files).
+- **Dedicated topic files (22):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/iran-contra.md` — Iran-Contra affair congressional hearings (July 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
   - `history-politics/montreal-protocol.md` — Montreal Protocol (September 16, 1987).
   - `history-politics/first-intifada.md` — First Intifada (December 9, 1987).
   - `science-technology/supernova-1987a.md` — Supernova 1987A (February 23, 1987).
+  - `science-technology/azt-fda-approval.md` — FDA approves AZT/zidovudine for AIDS treatment (March 20, 1987).
   - `science-technology/dna-fingerprinting.md` — DNA fingerprinting first criminal conviction (November 13, 1987).
   - `science-technology/windows-2.md` — Microsoft Windows 2.0 released (December 9, 1987).
-  - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `arts-culture/aretha-franklin-hof.md` — Aretha Franklin inducted into Rock and Roll Hall of Fame (January 21, 1987).
+  - `arts-culture/the-joshua-tree.md` — U2's *The Joshua Tree* double album (March 9, 1987).
+  - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `arts-culture/sign-o-the-times.md` — Prince's *Sign 'O' the Times* double album (March 31, 1987).
   - `arts-culture/michael-jackson-bad.md` — Michael Jackson's *Bad* album (August 31, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
@@ -96,15 +98,15 @@ seed.
   - `people/mathias-rust.md` — Mathias Rust flight to Red Square (May 28, 1987).
   - `people/klaus-barbie.md` — Klaus Barbie conviction for crimes against humanity (July 4, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
-- **Coverage:** History & Politics has 5 files; Science & Technology has 3 files; Arts & Culture has 4 files; Society & Economics has **4 files**; People has **4 files**. All categories have ≥3 dedicated files; all 20 README rows link to dedicated files.
+- **Coverage:** History & Politics has 5 files; Science & Technology has **4 files**; Arts & Culture has **5 files**; Society & Economics has 4 files; People has 4 files. All categories have ≥4 dedicated files; all 22 README rows link to dedicated files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — 21-row chronological table including all 20 dedicated files; two new entries added in tick 10 (Gary Hart May 8, 1987 World Series Oct 17).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists 3 topics, Arts & Culture lists 4 topics, Society & Economics lists **4 topics**, People lists **4 topics**.
-- `INDEX.md` — master index grouping all 20 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 20 dedicated topic files.
+- `TIMELINE.md` — 23-row chronological table including all 22 dedicated files; two new entries added in tick 11 (The Joshua Tree Mar 9, AZT FDA approval Mar 20).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists **4 topics**, Arts & Culture lists **5 topics**, Society & Economics lists 4 topics, People lists 4 topics.
+- `INDEX.md` — master index grouping all 22 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 22 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -413,3 +415,15 @@ Tenth autonomous growth tick via `/grow`. Planning prioritized the two most unde
 - **Record**: Moved tick 10 items to ROADMAP Done; refreshed Backlog (4th Science & Technology, 5th Arts & Culture, overdue /evolve); synced seed §4–5 (18→20 files).
 
 Coverage after this tick: **20 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has 3 files, Arts & Culture has 4 files, Society & Economics has **4 files**, People has **4 files**. README has 20 rows, all linked.
+
+### Tick 11 — 2026-06-16
+
+Eleventh autonomous growth tick via `/grow`. Planning prioritized filling the most under-represented category — Science & Technology (only 3 files) — and expanding Arts & Culture (4 files) with a second major music milestone. Items completed:
+
+- **Content**: Researched **FDA approval of AZT/zidovudine** (March 20, 1987) via Wikipedia (Zidovudine article) and Encyclopædia Britannica. Created `science-technology/azt-fda-approval.md` — the **fourth file in Science & Technology**. Key facts verified: originally synthesized 1964 by Jerome Horwitz at Wayne State University as a failed cancer drug; revived 1984–85 by Burroughs Wellcome (Janet Rideout, David Barry) and NCI (Samuel Broder, Hiroaki Mitsuya, Robert Yarchoan); Phase II trial of 282 patients halted early September 1986 (1 death vs. 19 in placebo group); NDA approved March 20, 1987 (brand name Retrovir) in <4-month FDA review under 1-AA priority — fastest antiretroviral approval at the time, 25 months from lab to market; NRTI mechanism; initial price ~$10,000/year sparked ACT UP protests; expanded to preventive use (1990) and pregnant women (1994); remains on WHO Essential Medicines List. Added new README knowledge-table row.
+- **Content**: Researched **U2's *The Joshua Tree*** (released March 9, 1987) via Wikipedia and Encyclopædia Britannica. Created `arts-culture/the-joshua-tree.md` — the **fifth file in Arts & Culture**. Key facts verified: Island Records, produced by Daniel Lanois and Brian Eno, recorded Windmill Lane Studios Dublin Jan 1986–Jan 1987; dedicated to Greg Carroll; UK fastest-selling album at time (235,000 copies week 1, platinum in 48 hours, #1 for 201 weeks); US Billboard 200 #1 for 9 consecutive weeks; first album to sell 1M CDs in US; two US #1 singles ("With or Without You," "I Still Haven't Found What I'm Looking For"); Grammy Album of the Year + Best Rock Performance (30th Grammy Awards, March 2, 1988 — U2's first Grammys); Joshua Tree Tour: 96 concerts, 11 countries, highest-grossing North American tour of 1987; *Time* cover April 27, 1987; 25M+ copies worldwide; Grammy Hall of Fame + US National Recording Registry 2014; Rolling Stone 500 Greatest #26 (2003 & 2020). Added new README knowledge-table row.
+- **Structure**: Refreshed TIMELINE.md (2 new entries inserted chronologically: *The Joshua Tree* Mar 9 and AZT Mar 20; timeline grows from 21 to 23 rows); INDEX.md (2 new entries under Science & Technology and Arts & Culture); `science-technology/index.md` (AZT row added); `arts-culture/index.md` (*The Joshua Tree* row added). Updated marker-wrapped `## Related` blocks in `act-up-founding.md` (AZT link added), `prozac-fda-approval.md` (AZT link added), `dna-fingerprinting.md` (AZT link added), `sign-o-the-times.md` (*The Joshua Tree* link added), `michael-jackson-bad.md` (*The Joshua Tree* Grammy link added). Both new files include marker-wrapped `## Related` blocks.
+- **Verify**: README now 22 rows (+2 new; all 22 link to dedicated files); no duplicate rows; all internal links resolve; both new files carry required frontmatter and ≥2 authoritative sources (Wikipedia + Britannica for both; Grammy.com for Joshua Tree).
+- **Record**: Moved tick 11 items to ROADMAP Done; refreshed Backlog (meta evolve audit, 5th S&T file, 6th A&C file, 5th People file); synced seed §4–5 (20→22 files).
+
+Coverage after this tick: **22 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has **4 files**, Arts & Culture has **5 files**, Society & Economics has 4 files, People has 4 files. README has 22 rows, all linked.

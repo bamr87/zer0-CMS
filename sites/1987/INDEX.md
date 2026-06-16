@@ -17,6 +17,7 @@ _Category index: [history-politics/index.md](history-politics/index.md)_
 _Category index: [science-technology/index.md](science-technology/index.md)_
 
 - [Supernova 1987A](science-technology/supernova-1987a.md)
+- [FDA Approves AZT for AIDS Treatment (March 20, 1987)](science-technology/azt-fda-approval.md)
 - [DNA Fingerprinting Enters the Courtroom (November 13, 1987)](science-technology/dna-fingerprinting.md)
 - [Microsoft Windows 2.0 (December 9, 1987)](science-technology/windows-2.md)
 
@@ -24,6 +25,7 @@ _Category index: [science-technology/index.md](science-technology/index.md)_
 _Category index: [arts-culture/index.md](arts-culture/index.md)_
 
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame (January 21, 1987)](arts-culture/aretha-franklin-hof.md)
+- [U2's The Joshua Tree (March 9, 1987)](arts-culture/the-joshua-tree.md)
 - [Sign 'O' the Times (Prince, March 31, 1987)](arts-culture/sign-o-the-times.md)
 - [Full Metal Jacket (June 26, 1987)](arts-culture/full-metal-jacket.md)
 - [Michael Jackson's Bad (August 31, 1987)](arts-culture/michael-jackson-bad.md)

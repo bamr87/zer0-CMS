@@ -10,20 +10,24 @@
 Forward plan for growing this knowledge base. Concept and current state live in [seed.md](seed.md).
 
 ## Now
-_Tick 10 completed (2026-06-15). Cleared._
+_Tick 11 completed (2026-06-16). Cleared._
 
 _(empty)_
 
 ## Backlog
 _Prioritized queue. Top items are pulled into **Now** each tick._
 
-1. `content` — 4th Science & Technology file (e.g., launch of Fox Broadcasting Company in 1987; Prozac's development at Eli Lilly; first genetically engineered crop approved).
-2. `content` — 5th Arts & Culture file (e.g., *RoboCop* or *Lethal Weapon* theatrical releases; U2's *The Joshua Tree* wins Grammy Album of the Year; *Beloved* by Toni Morrison published).
-3. `meta` — Run `/evolve` to audit the customization layer (overdue — last audit 2026-06-14, now past tick 10).
+1. `meta` — Run `/evolve` to audit the customization layer (overdue — last audit 2026-06-14, now past tick 11).
+2. `content` — 5th Science & Technology file (e.g., IBM PS/2 launch April 1987; Reagan-Gorbachev Washington Summit December 1987 context; first genetically engineered crop field trial approved by EPA 1987).
+3. `content` — 6th Arts & Culture file (e.g., *RoboCop* July 1987; *Lethal Weapon* March 1987; *Beloved* by Toni Morrison September 1987; *Predator* June 1987).
+4. `content` — 5th People file (e.g., Gorbachev's ascent and reform agenda; Desmond Tutu's 1987 anti-apartheid advocacy; Margaret Thatcher's third general election win June 1987).
 
 ## Done
 _Recently completed, newest first (with tick date)._
 
+- `2026-06-16` — FDA Approves AZT (March 20, 1987) → `science-technology/azt-fda-approval.md` (content; Science & Technology now 4 files).
+- `2026-06-16` — U2's *The Joshua Tree* (March 9, 1987) → `arts-culture/the-joshua-tree.md` (content; Arts & Culture now 5 files).
+- `2026-06-16` — Refreshed TIMELINE.md (+2 entries), INDEX.md, `science-technology/index.md`, `arts-culture/index.md`, and cross-refs in 4 sibling files (structure).
 - `2026-06-15` — 1987 World Series (October 17–25, 1987) → `society-economics/world-series-1987.md` (content; Society & Economics now 4 files).
 - `2026-06-15` — Gary Hart withdrawal from 1988 presidential race (May 8, 1987) → `people/gary-hart.md` (content; People now 4 files).
 - `2026-06-15` — Refreshed TIMELINE.md (+2 entries), INDEX.md, `society-economics/index.md`, `people/index.md`, and cross-refs in 5 sibling files (structure).

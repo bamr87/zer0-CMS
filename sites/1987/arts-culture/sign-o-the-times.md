@@ -33,6 +33,7 @@ The album's title track directly addressed the AIDS epidemic, gang violence, and
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [U2's *The Joshua Tree* (March 9, 1987)](the-joshua-tree.md) — released three weeks before *Sign 'O' the Times*; *The Joshua Tree* beat Prince's album for the 1988 Grammy Album of the Year.
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame](aretha-franklin-hof.md) — another landmark Arts & Culture moment of 1987.
 - [*Full Metal Jacket* (1987)](full-metal-jacket.md) — Stanley Kubrick's Vietnam War film, another major cultural release of the same year.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the defining economic shock of 1987.

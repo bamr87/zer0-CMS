@@ -38,6 +38,8 @@
 | [Michael Jackson's *Bad* released](arts-culture/michael-jackson-bad.md) | Jackson's seventh studio album, released August 31, becomes the first album in history to generate five Billboard Hot 100 number-one singles, selling over 35 million copies worldwide. |
 | [Gary Hart suspends presidential campaign](people/gary-hart.md) | The leading Democratic frontrunner withdraws on May 8 after the Miami Herald reports a relationship with model Donna Rice, permanently reshaping political journalism. |
 | [1987 World Series](society-economics/world-series-1987.md) | The Minnesota Twins defeat the Cardinals 4–3 in the first World Series played entirely indoors; the home team wins all seven games, a unique feat never repeated. |
+| [FDA approves AZT for AIDS treatment](science-technology/azt-fda-approval.md) | On March 20, the FDA approves zidovudine (AZT/Retrovir), the first antiretroviral drug for HIV/AIDS, in a record-fast 25-month development cycle, transforming a uniformly fatal diagnosis. |
+| [U2's *The Joshua Tree* released](arts-culture/the-joshua-tree.md) | U2 release their fifth studio album on March 9, becoming Britain's fastest-selling record and winning the 1988 Grammy Album of the Year, establishing the band as the world's biggest rock act. |
 
 ## Contributing
 

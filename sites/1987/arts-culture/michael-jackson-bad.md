@@ -37,6 +37,7 @@ The album also marks the peak of the three-album creative partnership between Ja
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [U2's *The Joshua Tree* (March 9, 1987)](the-joshua-tree.md) — *The Joshua Tree* won the 1988 Grammy Album of the Year, the award *Bad* was widely expected to contest.
 - [*Sign 'O' the Times* (Prince, March 31, 1987)](sign-o-the-times.md) — the other landmark pop album of 1987, released five months before *Bad*.
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame (January 21, 1987)](aretha-franklin-hof.md) — another major Arts & Culture milestone of 1987.
 - [*Full Metal Jacket* (June 26, 1987)](full-metal-jacket.md) — another defining cultural release of 1987.
