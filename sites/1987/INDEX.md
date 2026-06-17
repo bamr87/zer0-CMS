@@ -17,6 +17,7 @@ _Category index: [history-politics/index.md](history-politics/index.md)_
 _Category index: [science-technology/index.md](science-technology/index.md)_
 
 - [Supernova 1987A](science-technology/supernova-1987a.md)
+- [IBM PS/2 Launch (April 2, 1987)](science-technology/ibm-ps2.md)
 - [FDA Approves AZT for AIDS Treatment (March 20, 1987)](science-technology/azt-fda-approval.md)
 - [DNA Fingerprinting Enters the Courtroom (November 13, 1987)](science-technology/dna-fingerprinting.md)
 - [Microsoft Windows 2.0 (December 9, 1987)](science-technology/windows-2.md)
@@ -43,6 +44,7 @@ _Category index: [people/index.md](people/index.md)_
 
 - [Gary Hart — Withdrawal from the 1988 Presidential Race (May 8, 1987)](people/gary-hart.md)
 - [Mathias Rust — Flight to Red Square (May 28, 1987)](people/mathias-rust.md)
+- [Margaret Thatcher's Third General Election Victory (June 11, 1987)](people/margaret-thatcher.md)
 - [Klaus Barbie — Convicted of Crimes Against Humanity (July 4, 1987)](people/klaus-barbie.md)
 - [Rudolf Hess (death, August 17, 1987)](people/rudolf-hess.md)
 <!-- END GENERATED: master-index -->

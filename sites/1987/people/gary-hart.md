@@ -37,6 +37,7 @@ Hart's collapse also left the Democratic Party scrambling for a frontrunner and 
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [Margaret Thatcher's Third General Election Victory (June 11, 1987)](margaret-thatcher.md) — another 1987 political watershed reshaping Western democratic politics.
 - [Mathias Rust — Flight to Red Square (May 28, 1987)](mathias-rust.md) — another May 1987 People entry, where a private individual upended a superpower's defenses.
 - [Klaus Barbie — Convicted (July 4, 1987)](klaus-barbie.md) — another 1987 People entry involving political accountability.
 - [Rudolf Hess (death, August 17, 1987)](rudolf-hess.md) — another notable 1987 People entry.

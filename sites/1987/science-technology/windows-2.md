@@ -31,6 +31,7 @@ In the broader context of 1987, Windows 2.0's release reflected a pivotal transi
 <!-- BEGIN GENERATED: related — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [IBM PS/2 Launch (April 2, 1987)](ibm-ps2.md) — IBM's concurrent hardware push that reshaped the PC industry in the same year.
 - [DNA Fingerprinting in Criminal Court (November 1987)](dna-fingerprinting.md) — another landmark Science & Technology milestone of 1987.
 - [Supernova 1987A (February 23, 1987)](supernova-1987a.md) — a major scientific event of the same year.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the economic backdrop against which Windows 2.0 launched.

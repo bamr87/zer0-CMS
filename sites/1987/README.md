@@ -28,6 +28,8 @@
 | ["Tear down this wall" speech](history-politics/reagan-berlin-speech.md) | President Reagan delivers his famous challenge to Gorbachev at the Brandenburg Gate in West Berlin on June 12. |
 | [Aretha Franklin Hall of Fame](arts-culture/aretha-franklin-hof.md) | Aretha Franklin becomes the first woman inducted into the Rock and Roll Hall of Fame, at the January 21 ceremony in New York City. |
 | [*Full Metal Jacket* released](arts-culture/full-metal-jacket.md) | Stanley Kubrick's Vietnam War film premieres, joining *RoboCop* and *Lethal Weapon* in a landmark year for Hollywood. |
+| [IBM PS/2 launched](science-technology/ibm-ps2.md) | IBM introduces the Personal System/2 on April 2, standardizing VGA, PS/2 ports, and 3.5-inch floppies while its proprietary MCA bus triggers a clone-maker revolt that ends IBM's PC market dominance. |
+| [Margaret Thatcher wins third term](people/margaret-thatcher.md) | On June 11, Thatcher becomes the first British Prime Minister since 1820 to lead a party to three consecutive election victories, securing a 102-seat majority. |
 | [DNA fingerprinting in criminal court](science-technology/dna-fingerprinting.md) | DNA evidence is used for the first time to convict a criminal (Robert Melias in the UK, November 1987), opening a new era in forensic science. |
 | [Microsoft Windows 2.0 released](science-technology/windows-2.md) | Microsoft releases Windows 2.0, introducing overlapping windows and laying groundwork for the future Windows interface. |
 | [Rudolf Hess dies in Spandau](people/rudolf-hess.md) | Hitler's former deputy dies at 93 in Berlin's Spandau Prison on August 17, ending four-power Allied custody and the prison's demolition. |

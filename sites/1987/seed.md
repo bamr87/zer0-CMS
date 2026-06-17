@@ -74,14 +74,15 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (22 rows across all five categories; all 22 rows link to dedicated files).
-- **Dedicated topic files (22):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (24 rows across all five categories; all 24 rows link to dedicated files).
+- **Dedicated topic files (24):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/iran-contra.md` — Iran-Contra affair congressional hearings (July 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
   - `history-politics/montreal-protocol.md` — Montreal Protocol (September 16, 1987).
   - `history-politics/first-intifada.md` — First Intifada (December 9, 1987).
   - `science-technology/supernova-1987a.md` — Supernova 1987A (February 23, 1987).
+  - `science-technology/ibm-ps2.md` — IBM PS/2 launch (April 2, 1987).
   - `science-technology/azt-fda-approval.md` — FDA approves AZT/zidovudine for AIDS treatment (March 20, 1987).
   - `science-technology/dna-fingerprinting.md` — DNA fingerprinting first criminal conviction (November 13, 1987).
   - `science-technology/windows-2.md` — Microsoft Windows 2.0 released (December 9, 1987).
@@ -96,17 +97,18 @@ seed.
   - `society-economics/world-series-1987.md` — 1987 World Series, Minnesota Twins championship (October 17–25, 1987).
   - `people/gary-hart.md` — Gary Hart withdrawal from 1988 presidential race (May 8, 1987).
   - `people/mathias-rust.md` — Mathias Rust flight to Red Square (May 28, 1987).
+  - `people/margaret-thatcher.md` — Margaret Thatcher's third general election victory (June 11, 1987).
   - `people/klaus-barbie.md` — Klaus Barbie conviction for crimes against humanity (July 4, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
-- **Coverage:** History & Politics has 5 files; Science & Technology has **4 files**; Arts & Culture has **5 files**; Society & Economics has 4 files; People has 4 files. All categories have ≥4 dedicated files; all 22 README rows link to dedicated files.
+- **Coverage:** History & Politics has 5 files; Science & Technology has **5 files**; Arts & Culture has **5 files**; Society & Economics has 4 files; People has **5 files**. All categories have ≥4 dedicated files; all 24 README rows link to dedicated files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — 23-row chronological table including all 22 dedicated files; two new entries added in tick 11 (The Joshua Tree Mar 9, AZT FDA approval Mar 20).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists **4 topics**, Arts & Culture lists **5 topics**, Society & Economics lists 4 topics, People lists 4 topics.
-- `INDEX.md` — master index grouping all 22 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 22 dedicated topic files.
+- `TIMELINE.md` — 24-entry chronological table including all 24 dedicated files; two new entries added in tick 12 (IBM PS/2 Apr 2, Margaret Thatcher election Jun 11).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists **5 topics**, Arts & Culture lists **5 topics**, Society & Economics lists 4 topics, People lists **5 topics**.
+- `INDEX.md` — master index grouping all 24 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 24 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -427,3 +429,15 @@ Eleventh autonomous growth tick via `/grow`. Planning prioritized filling the mo
 - **Record**: Moved tick 11 items to ROADMAP Done; refreshed Backlog (meta evolve audit, 5th S&T file, 6th A&C file, 5th People file); synced seed §4–5 (20→22 files).
 
 Coverage after this tick: **22 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has **4 files**, Arts & Culture has **5 files**, Society & Economics has 4 files, People has 4 files. README has 22 rows, all linked.
+
+### Tick 12 — 2026-06-17
+
+Twelfth autonomous growth tick via `/grow`. Planning prioritized filling the two most under-represented categories — Science & Technology (4 files) and People (4 files) — both tied and both lower than History & Politics and Arts & Culture (5 each). Items completed:
+
+- **Content**: Researched the **IBM PS/2 launch** (April 2, 1987) via Wikipedia (IBM Personal System/2 article) and CEDMagic technology history archive. Created `science-technology/ibm-ps2.md` — the **fifth file in Science & Technology**. Key facts verified: IBM introduced 4 models on April 2, 1987 — Model 30 (8 MHz 8086, $1,695), Model 50 (10 MHz 80286), Model 60 (10 MHz 80286), and Model 80 (20 MHz 80386, $10,895); Model 25 all-in-one followed August 1987 at $2,595; OS/2 released simultaneously; five innovations standardized — MCA (32-bit proprietary bus, incompatible with ISA), VGA (640×480/16 colors or 320×200/256 colors; HD-15 VGA connector), PS/2 ports (6-pin mini-DIN for keyboard and mouse), 3.5-inch floppies (720 KB / 1.44 MB), 72-pin SIMMs; clone makers formed EISA consortium (9 manufacturers: Compaq, HP, AST, Epson, NEC, Olivetti, Tandy, Wyse, Zenith — September 1988) to maintain ISA compatibility; ~3 million units sold by September 1988 (primarily corporate); consumer market rejected PS/2 due to price and incompatibility; IBM ceded leadership to Compaq and Dell; VGA connector and PS/2 ports remained dominant for decades. Added new README knowledge-table row.
+- **Content**: Researched **Margaret Thatcher's third general election victory** (June 11, 1987) via Wikipedia (1987 United Kingdom general election) and Encyclopædia Britannica. Created `people/margaret-thatcher.md` — the **fifth file in People**. Key facts verified: Conservatives won 376 of 650 seats (42.2%, 13.76 million votes), majority of 102; Labour won 229 seats (30.8%, 10.03 million votes); SDP–Liberal Alliance won 22 seats (22.6%, 7.34 million votes); Thatcher became the first British PM since the Earl of Liverpool (1812–1827) to win three consecutive elections and the only PM to do so in the 20th century; Britannica calls her "the most renowned British political leader since Winston Churchill"; first Black MPs elected (Diane Abbott, Paul Boateng, Bernie Grant, Keith Vaz); third term produced the Community Charge (poll tax), increased hostility to European integration; Geoffrey Howe resignation November 1990 → Heseltine leadership challenge → Thatcher resigned November 28, 1990, succeeded by John Major. Added new README knowledge-table row.
+- **Structure**: Refreshed TIMELINE.md (2 new entries inserted chronologically: IBM PS/2 Apr 2 and Thatcher Jun 11; timeline grows from 22 to 24 entries); INDEX.md (2 new entries under Science & Technology and People); `science-technology/index.md` (IBM PS/2 row added); `people/index.md` (Thatcher row added, entries reordered chronologically). Updated marker-wrapped `## Related` blocks in `windows-2.md` (IBM PS/2 link added), `gary-hart.md` (Thatcher link added), `mathias-rust.md` (Thatcher link added). Both new files include marker-wrapped `## Related` blocks.
+- **Verify**: README now 24 rows (+2 new; all 24 link to dedicated files); no duplicate rows; all internal links resolve; both new files carry required frontmatter and ≥2 authoritative sources (Wikipedia + CEDMagic; Wikipedia + Britannica).
+- **Record**: Moved tick 12 items to ROADMAP Done; pruned Done to most recent 15 entries; refreshed Backlog (meta evolve audit now top priority, 6th A&C, 6th S&T, 6th People); synced seed §4–5 (22→24 files).
+
+Coverage after this tick: **24 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has **5 files**, Arts & Culture has **5 files**, Society & Economics has 4 files, People has **5 files**. README has 24 rows, all linked.
