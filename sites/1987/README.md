@@ -42,6 +42,8 @@
 | [1987 World Series](society-economics/world-series-1987.md) | The Minnesota Twins defeat the Cardinals 4–3 in the first World Series played entirely indoors; the home team wins all seven games, a unique feat never repeated. |
 | [FDA approves AZT for AIDS treatment](science-technology/azt-fda-approval.md) | On March 20, the FDA approves zidovudine (AZT/Retrovir), the first antiretroviral drug for HIV/AIDS, in a record-fast 25-month development cycle, transforming a uniformly fatal diagnosis. |
 | [U2's *The Joshua Tree* released](arts-culture/the-joshua-tree.md) | U2 release their fifth studio album on March 9, becoming Britain's fastest-selling record and winning the 1988 Grammy Album of the Year, establishing the band as the world's biggest rock act. |
+| [Fox Broadcasting Company launches primetime](society-economics/fox-broadcasting.md) | Rupert Murdoch's Fox debuts *Married...with Children* and *The Tracey Ullman Show* on April 5, becoming the first successful fourth U.S. broadcast network since 1956. |
+| [*Beloved* by Toni Morrison published](arts-culture/beloved.md) | Toni Morrison's novel about an escaped enslaved woman haunted by her murdered daughter is published on September 16, later winning the 1988 Pulitzer Prize and ranking among the greatest American novels. |
 
 ## Contributing
 

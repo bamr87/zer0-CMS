@@ -32,6 +32,7 @@ Over a sustained campaign, ACT UP also forced a change to the Centers for Diseas
 ## Related
 
 - [FDA Approves AZT (March 20, 1987)](../science-technology/azt-fda-approval.md) — the FDA approved the first AIDS drug eight days after ACT UP was founded; activists immediately targeted its $10,000/year price.
+- [Fox Broadcasting Company Primetime Launch (April 5, 1987)](fox-broadcasting.md) — another major media/society development of spring 1987, launching the fourth U.S. broadcast network.
 - [FDA Approves Prozac (December 29, 1987)](prozac-fda-approval.md) — another major 1987 development in U.S. health policy.
 - [Black Monday (October 19, 1987)](black-monday.md) — the defining economic shock of the same year.
 - [1987 World Series (October 17–25, 1987)](world-series-1987.md) — another Society & Economics landmark of October 1987.

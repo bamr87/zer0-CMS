@@ -74,8 +74,8 @@ seed.
 ## 4. Content Inventory
 
 - **Taxonomy:** History & Politics, Science & Technology, Arts & Culture, Society & Economics, People.
-- **Knowledge table:** `README.md` → `## Notable Events of 1987` (24 rows across all five categories; all 24 rows link to dedicated files).
-- **Dedicated topic files (24):**
+- **Knowledge table:** `README.md` → `## Notable Events of 1987` (26 rows across all five categories; all 26 rows link to dedicated files).
+- **Dedicated topic files (26):**
   - `history-politics/reagan-berlin-speech.md` — Reagan's "Tear Down This Wall" speech (June 12, 1987).
   - `history-politics/iran-contra.md` — Iran-Contra affair congressional hearings (July 1987).
   - `history-politics/inf-treaty.md` — INF Treaty signing (December 8, 1987).
@@ -91,24 +91,26 @@ seed.
   - `arts-culture/full-metal-jacket.md` — *Full Metal Jacket* (Kubrick, June 26, 1987).
   - `arts-culture/sign-o-the-times.md` — Prince's *Sign 'O' the Times* double album (March 31, 1987).
   - `arts-culture/michael-jackson-bad.md` — Michael Jackson's *Bad* album (August 31, 1987).
+  - `arts-culture/beloved.md` — Toni Morrison's *Beloved* published (September 16, 1987).
   - `society-economics/black-monday.md` — Black Monday stock market crash (October 19, 1987).
   - `society-economics/prozac-fda-approval.md` — FDA approves Prozac (December 29, 1987).
   - `society-economics/act-up-founding.md` — ACT UP founding (March 12, 1987).
   - `society-economics/world-series-1987.md` — 1987 World Series, Minnesota Twins championship (October 17–25, 1987).
+  - `society-economics/fox-broadcasting.md` — Fox Broadcasting Company primetime launch (April 5, 1987).
   - `people/gary-hart.md` — Gary Hart withdrawal from 1988 presidential race (May 8, 1987).
   - `people/mathias-rust.md` — Mathias Rust flight to Red Square (May 28, 1987).
   - `people/margaret-thatcher.md` — Margaret Thatcher's third general election victory (June 11, 1987).
   - `people/klaus-barbie.md` — Klaus Barbie conviction for crimes against humanity (July 4, 1987).
   - `people/rudolf-hess.md` — Rudolf Hess (death, August 17, 1987).
-- **Coverage:** History & Politics has 5 files; Science & Technology has **5 files**; Arts & Culture has **5 files**; Society & Economics has 4 files; People has **5 files**. All categories have ≥4 dedicated files; all 24 README rows link to dedicated files.
+- **Coverage:** History & Politics has 5 files; Science & Technology has 5 files; Arts & Culture has **6 files**; Society & Economics has **5 files**; People has 5 files. All categories have ≥5 dedicated files; all 26 README rows link to dedicated files.
 
 ## 5. Structure Inventory
 
 Generated artifacts (maintained by `build-structure`):
-- `TIMELINE.md` — 24-entry chronological table including all 24 dedicated files; two new entries added in tick 12 (IBM PS/2 Apr 2, Margaret Thatcher election Jun 11).
-- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists **5 topics**, Arts & Culture lists **5 topics**, Society & Economics lists 4 topics, People lists **5 topics**.
-- `INDEX.md` — master index grouping all 24 topic files by category, with pointers to category indices and the timeline.
-- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 24 dedicated topic files.
+- `TIMELINE.md` — 26-entry chronological table including all 26 dedicated files; two new entries added in tick 13 (Fox Broadcasting Apr 5, *Beloved* Sep 16).
+- Category index pages `<category-slug>/index.md` — generated for all five taxonomy entries; History & Politics lists 5 topics, Science & Technology lists 5 topics, Arts & Culture lists **6 topics**, Society & Economics lists **5 topics**, People lists 5 topics.
+- `INDEX.md` — master index grouping all 26 topic files by category, with pointers to category indices and the timeline.
+- Cross-reference `## Related` blocks — generated (marker-wrapped) inside all 26 dedicated topic files.
 
 ## 6. Growth Loop
 
@@ -441,3 +443,16 @@ Twelfth autonomous growth tick via `/grow`. Planning prioritized filling the two
 - **Record**: Moved tick 12 items to ROADMAP Done; pruned Done to most recent 15 entries; refreshed Backlog (meta evolve audit now top priority, 6th A&C, 6th S&T, 6th People); synced seed §4–5 (22→24 files).
 
 Coverage after this tick: **24 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has **5 files**, Arts & Culture has **5 files**, Society & Economics has 4 files, People has **5 files**. README has 24 rows, all linked.
+
+### Tick 13 — 2026-06-18
+
+Thirteenth autonomous growth tick via `/grow`. Planning identified Society & Economics (only 4 files) as the sole remaining coverage gap — all other categories had 5 files. Items completed:
+
+- **Content**: Researched **Fox Broadcasting Company's primetime launch** (April 5, 1987) via Wikipedia (Fox Broadcasting Company article) and Encyclopedia.com. Created `society-economics/fox-broadcasting.md` — the **fifth file in Society & Economics**, closing the last inter-category coverage gap. Key facts verified: Rupert Murdoch's News Corporation acquired 50% of 20th Century Fox in March 1985 for $255 million; in May 1985 acquired 6 Metromedia TV stations (New York, Los Angeles, Chicago, Washington D.C., Dallas, Houston) for ~$2.55 billion; Barry Diller hired as Chairman and CEO of Fox, Inc.; Jamie Kellner as network president; soft launch October 9, 1986 with *The Late Show Starring Joan Rivers*; primetime debut April 5, 1987 with *Married...with Children* and *The Tracey Ullman Show* (8–10 p.m. ET); *21 Jump Street* launched shortly after; *The Simpsons* introduced as animated shorts on The Tracey Ullman Show in April 1987; deliberately programmed below FCC "network" threshold for regulatory flexibility; 113 affiliates by mid-1987; advertisers: Bristol-Myers, General Foods, Johnson & Johnson; first successful fourth U.S. broadcast network since DuMont ended 1956. Added new README knowledge-table row.
+- **Content**: Researched **Toni Morrison's *Beloved*** (published September 16, 1987) via Wikipedia (Beloved novel article) and Encyclopædia Britannica. Created `arts-culture/beloved.md` — the **sixth file in Arts & Culture**. Key facts verified: Morrison's fifth novel, published September 16, 1987 by Alfred A. Knopf, 324 pages; based on the documented story of Margaret Garner (1856) — an enslaved woman who killed her two-year-old daughter rather than see her returned to slavery; Morrison discovered the story in 1974 while working on *The Black Book* anthology; set in post-Civil War Cincinnati (1873); main characters: Sethe (protagonist), Beloved (ghost/mysterious young woman), Paul D, Denver, Baby Suggs; employs stream-of-consciousness and fragmentary monologue; finalist for 1987 National Book Award (lost to Larry Heinemann's *Paco's Story*); 48 Black writers (including Maya Angelou, Angela Davis, Henry Louis Gates Jr.) published collective protest letter in *New York Times Book Review*, January 24, 1988; won 1988 Pulitzer Prize for Fiction; also won Melcher Book Award, Robert F. Kennedy Memorial Book Award, Anisfield-Wolf Award; 1998 film adaptation directed by Jonathan Demme, starring/produced by Oprah Winfrey; NYT 2006 survey ranked it best American fiction 1981–2006; 2026 Guardian poll ranked it 2nd greatest English-language novel ever; Morrison won Nobel Prize in Literature 1993 partly on the strength of this work. Added new README knowledge-table row.
+- **Structure**: Refreshed TIMELINE.md (2 new entries inserted chronologically: Fox Broadcasting Apr 5 and *Beloved* Sep 16 — both as distinct rows, *Beloved* placed before Montreal Protocol on the same Sep 16 date; timeline grows from 24 to 26 entries); INDEX.md (2 new entries under Society & Economics and Arts & Culture); `society-economics/index.md` (Fox Broadcasting row added); `arts-culture/index.md` (*Beloved* row added). Updated marker-wrapped `## Related` blocks in `michael-jackson-bad.md` (*Beloved* link added), `sign-o-the-times.md` (*Beloved* link added with thematic note on AIDS/social crisis engagement), `act-up-founding.md` (Fox Broadcasting link added).
+- **Meta** (`/evolve` audit): 0 FAIL items, 2 WARN items fixed. (1) `publish-session/SKILL.md` Step 2 — changed interactive user-confirmation requirement to proceed automatically in unattended/scheduled runs while still pausing in interactive sessions; also updated `.claude/skills/publish-session/SKILL.md` adapter to match. (2) `content.instructions.md` Knowledge Table section — removed hardcoded `## Notable Events` heading as primary reference; replaced with canonical reference to `concept.conventions.knowledge_table` from seed.md, with current value as example only.
+- **Verify**: README now 26 rows (+2 new; all 26 link to dedicated files); no duplicate rows; all internal links resolve; both new files carry required frontmatter and ≥2 authoritative sources (Wikipedia + Encyclopedia.com; Wikipedia + Britannica).
+- **Record**: Moved tick 13 items to ROADMAP Done; refreshed Backlog (6th S&T, 6th People, 6th S&E, 7th A&C; evolve next due ~tick 18); synced seed §4–5 (24→26 files).
+
+Coverage after this tick: **26 dedicated topic files** across all five categories. History & Politics has 5 files, Science & Technology has 5 files, Arts & Culture has **6 files**, Society & Economics has **5 files**, People has 5 files. README has 26 rows, all linked. All categories now have ≥5 dedicated files — first time all five are at parity at 5+.

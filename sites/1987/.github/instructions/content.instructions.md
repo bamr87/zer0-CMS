@@ -24,8 +24,10 @@ Each taxonomy entry has a `name` and a `slug` (used for folder names and frontma
 
 ## Knowledge Table
 
-- Lives under the `## Notable Events` heading in [README.md](../../README.md) (or the heading named
-  in `concept.conventions.knowledge_table`).
+- Lives under the heading named by `concept.conventions.knowledge_table` in
+  [seed.md](../../seed.md) — read that value from the concept; do not hardcode the heading.
+  For the current instance this is `## Notable Events of 1987`; a retargeted repo will have a
+  different heading.
 - Row format: `| <Item> | One-sentence description ending with its significance |`
 - Never duplicate an existing row. Check before inserting.
 - Keep descriptions factual, neutral, and under 25 words.

@@ -10,6 +10,7 @@ Films, music, literature, art, and cultural moments of 1987.
 | [Sign 'O' the Times (Prince)](sign-o-the-times.md) | Prince's double album released March 31, 1987, widely considered his finest work and one of the greatest albums in popular music history. |
 | [Full Metal Jacket](full-metal-jacket.md) | Stanley Kubrick's two-part Vietnam War film, released June 26, 1987, a landmark entry in the cinema of the Vietnam War. |
 | [Michael Jackson's Bad](michael-jackson-bad.md) | Jackson's seventh studio album, released August 31, 1987, becomes the first album in history to produce five Billboard Hot 100 number-one singles, selling over 35 million copies worldwide. |
+| [Toni Morrison's Beloved](beloved.md) | Morrison's fifth novel, published September 16, 1987, draws on the true story of Margaret Garner and wins the 1988 Pulitzer Prize for Fiction, later ranked the best American fiction from 1981–2006. |
 <!-- END GENERATED: category-index:arts-culture -->
 
 See also the [master index](../INDEX.md) and [timeline](../TIMELINE.md).

@@ -30,11 +30,13 @@ _Category index: [arts-culture/index.md](arts-culture/index.md)_
 - [Sign 'O' the Times (Prince, March 31, 1987)](arts-culture/sign-o-the-times.md)
 - [Full Metal Jacket (June 26, 1987)](arts-culture/full-metal-jacket.md)
 - [Michael Jackson's Bad (August 31, 1987)](arts-culture/michael-jackson-bad.md)
+- [Toni Morrison's Beloved Published (September 16, 1987)](arts-culture/beloved.md)
 
 ## Society & Economics
 _Category index: [society-economics/index.md](society-economics/index.md)_
 
 - [ACT UP Founded (March 12, 1987)](society-economics/act-up-founding.md)
+- [Fox Broadcasting Company Primetime Launch (April 5, 1987)](society-economics/fox-broadcasting.md)
 - [Black Monday (October 19, 1987)](society-economics/black-monday.md)
 - [1987 World Series (October 17–25, 1987)](society-economics/world-series-1987.md)
 - [FDA Approves Prozac (December 29, 1987)](society-economics/prozac-fda-approval.md)

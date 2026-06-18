@@ -33,7 +33,7 @@ If `seed.md` has already been updated this session, confirm with the user before
 
 ### Step 2 — Review Changes
 
-Run `git status` to list all modified, new, and deleted files. Present the list to the user grouped by type:
+Run `git status` to list all modified, new, and deleted files. Group them by type:
 
 | Change type | Files |
 |-------------|-------|
@@ -41,7 +41,9 @@ Run `git status` to list all modified, new, and deleted files. Present the list 
 | New (untracked) | e.g. `arts/castle-of-otranto.md` |
 | Deleted | (list any) |
 
-Ask the user to confirm before proceeding if any unexpected files appear (e.g. files outside the repo's known structure).
+**In interactive sessions**: if unexpected files appear (e.g. files outside the repo's known structure), pause and ask the user to confirm before continuing.
+
+**In unattended / scheduled runs** (invoked autonomously by the architect or grow pipeline): proceed without pausing. Log any unexpected files in the output so the user can review them after the fact.
 
 ### Step 3 — Stage Changes
 
