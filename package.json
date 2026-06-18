@@ -1,31 +1,16 @@
 {
-  "name": "vscode-front-matter-beta",
-  "displayName": "Front Matter CMS",
-  "description": "Front Matter is a CMS that runs within Visual Studio Code. It gives you the power and control of a full-blown CMS while also providing you the flexibility and speed of the static site generator of your choice like: Hugo, Jekyll, Docusaurus, NextJs, Gatsby, and many more...",
+  "name": "zer0-cms",
+  "displayName": "zer0-CMS",
+  "description": "zer0-CMS — an AI-augmented content CMS for VS Code. A fork of Front Matter CMS (by Elio Struyf, MIT), extended with content-health insight and embedded Claude Code agents for the IT-Journey / zer0-mistakes platform.",
   "icon": "assets/frontmatter-teal-128x128.png",
-  "version": "10.10.1",
-  "preview": false,
-  "publisher": "eliostruyf",
+  "version": "0.1.0",
+  "preview": true,
+  "publisher": "bamr87",
   "galleryBanner": {
     "color": "#0e131f",
     "theme": "dark"
   },
-  "badges": [
-    {
-      "description": "version",
-      "url": "https://img.shields.io/github/package-json/v/estruyf/vscode-front-matter?color=green&label=vscode-front-matter&style=flat-square",
-      "href": "https://github.com/estruyf/vscode-front-matter"
-    },
-    {
-      "description": "Buy me a coffee",
-      "url": "https://img.shields.io/badge/Buy%20me%20a%20coffee-€%203-blue?logo=buy-me-a-coffee&style=flat-square",
-      "href": "https://www.buymeacoffee.com/zMeFRy9"
-    }
-  ],
-  "sponsor": {
-    "url": "https://github.com/sponsors/estruyf"
-  },
-  "qna": "https://github.com/estruyf/vscode-front-matter/discussions",
+  "qna": "https://github.com/bamr87/zer0-CMS/discussions",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -41,14 +26,17 @@
     "Taxonomy"
   ],
   "license": "MIT",
-  "author": "Elio Struyf <elio@struyfconsulting.be> (https://www.eliostruyf.com)",
-  "homepage": "https://frontmatter.codes",
+  "author": "bamr87",
+  "contributors": [
+    "Elio Struyf <elio@struyfconsulting.be> (https://www.eliostruyf.com) — original author of Front Matter CMS"
+  ],
+  "homepage": "https://github.com/bamr87/zer0-CMS",
   "bugs": {
-    "url": "https://github.com/estruyf/vscode-front-matter/issues"
+    "url": "https://github.com/bamr87/zer0-CMS/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/estruyf/vscode-front-matter"
+    "url": "https://github.com/bamr87/zer0-CMS"
   },
   "activationEvents": [
     "workspaceContains:**/.frontmatter",

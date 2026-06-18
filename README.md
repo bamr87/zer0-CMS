@@ -1,3 +1,19 @@
+<!-- ───────────────────────────────────────────────────────────────────────
+  zer0-CMS — an AI-augmented fork of Front Matter CMS
+  ─────────────────────────────────────────────────────────────────────── -->
+
+# zer0-CMS
+
+> **zer0-CMS** is an AI-augmented content CMS for VS Code, built for the
+> **IT-Journey / zer0-mistakes** platform. It is a fork of
+> [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) by Elio Struyf
+> (MIT), adding content-health insight and embedded Claude Code agents.
+> See **[FORK.md](./FORK.md)** for attribution, what's added, and how to sync upstream.
+
+---
+
+_The original Front Matter documentation follows._
+
 <h1 align="center">
   <a href="https://frontmatter.codes">
     <img alt="Front Matter" src="https://frontmatter.codes/assets/frontmatter-social.png">
