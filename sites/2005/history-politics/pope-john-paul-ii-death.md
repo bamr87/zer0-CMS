@@ -33,4 +33,5 @@ John Paul II's papacy reshaped the modern Roman Catholic Church and the broader 
 - [January 2005 Iraqi Parliamentary Election](iraqi-elections-2005.md) — concurrent early-2005 event of global political weight.
 - [7/7 London Bombings](77-london-bombings.md) — another 2005 event that drew worldwide attention and mourning.
 - [Hurricane Katrina](../society-economics/hurricane-katrina.md) — major 2005 event marking a year of intense international news.
+- [Rosa Parks Dies](../people/rosa-parks-dies.md) — another 2005 death that prompted vast public mourning and a Capitol tribute.
 <!-- END GENERATED: crossrefs -->
