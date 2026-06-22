@@ -16,7 +16,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
-| Huygens lands on Titan | First landing in the outer solar system, January 14. |
+| [Huygens lands on Titan](science-technology/huygens-titan-landing.md) | First landing in the outer solar system, January 14. |
 | [YouTube founded](science-technology/youtube-founded.md) | Video-sharing platform registered February 14. |
 | [Kyoto Protocol enters force](science-technology/kyoto-protocol-enters-force.md) | International climate treaty took legal effect February 16. |
 | [Deep Impact mission](science-technology/deep-impact-mission.md) | First active excavation of a comet's interior, July 4. |
@@ -25,7 +25,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
-| *Star Wars* Episode III released | Completed the prequel trilogy, May 19. |
+| [*Star Wars* Episode III released](arts-culture/star-wars-episode-iii.md) | Completed the prequel trilogy, May 19. |
 | [*Brokeback Mountain* released](arts-culture/brokeback-mountain.md) | Watershed LGBTQ+ film, premiered December 9. |
 
 ## Society & Economics ([index](society-economics/index.md))

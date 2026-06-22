@@ -5,7 +5,7 @@ Category index for the **Science & Technology** topics within the [2005 Knowledg
 
 | Topic | Description |
 |-------|-------------|
-| Huygens lands on Titan | First landing in the outer solar system, January 14. |
+| [Huygens lands on Titan](huygens-titan-landing.md) | First landing in the outer solar system, January 14. |
 | [YouTube founded](youtube-founded.md) | Video-sharing platform registered February 14. |
 | [Kyoto Protocol enters force](kyoto-protocol-enters-force.md) | International climate treaty took legal effect February 16. |
 | [Deep Impact mission](deep-impact-mission.md) | First active excavation of a comet's interior, July 4. |
