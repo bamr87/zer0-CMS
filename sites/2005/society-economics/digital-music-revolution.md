@@ -68,5 +68,6 @@ The 2005 digital music revolution also set the stage for streaming, which would 
 ## Related
 
 - [Founding of YouTube](../science-technology/youtube-founded.md) — launched February 2005, transforming digital video distribution on the same wave that carried digital audio.
+- [Live 8 Concerts](../arts-culture/live-8-concerts.md) — July 2005 global music event whose audience reflected the same shift toward digital, networked media.
 - [Hurricane Katrina](hurricane-katrina.md) — August 2005 disaster that disrupted physical supply chains, including record distribution, across the Gulf Coast.
 <!-- END GENERATED: crossrefs -->

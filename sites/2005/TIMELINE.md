@@ -11,13 +11,15 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file](science-technology/kyoto-protocol-enters-force.md) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file](history-politics/pope-john-paul-ii-death.md) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file](arts-culture/star-wars-episode-iii.md) |
+| 2005-07-02 | Live 8 concerts | Arts & Culture | [file](arts-culture/live-8-concerts.md) |
 | 2005-07-04 | Deep Impact mission | Science & Technology | [file](science-technology/deep-impact-mission.md) |
 | 2005-07-07 | 7/7 London bombings | History & Politics | [file](history-politics/77-london-bombings.md) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file](society-economics/hurricane-katrina.md) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file](history-politics/angela-merkel-chancellor.md) |
+| 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file](society-economics/kashmir-earthquake-2005.md) |
 | 2005-10-24 | Rosa Parks dies | People | [file](people/rosa-parks-dies.md) |
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 13 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 15 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->

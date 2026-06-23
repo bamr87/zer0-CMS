@@ -26,6 +26,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | Topic | Description |
 |-------|-------------|
 | [*Star Wars* Episode III released](arts-culture/star-wars-episode-iii.md) | Completed the prequel trilogy, May 19. |
+| [Live 8 Concerts](arts-culture/live-8-concerts.md) | Ten simultaneous benefit concerts for African debt relief, July 2. |
 | [*Brokeback Mountain* released](arts-culture/brokeback-mountain.md) | Watershed LGBTQ+ film, premiered December 9. |
 
 ## Society & Economics ([index](society-economics/index.md))
@@ -33,6 +34,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | Topic | Description |
 |-------|-------------|
 | [Hurricane Katrina](society-economics/hurricane-katrina.md) | Devastating Category 3 storm struck August 29, ~1,800 deaths. |
+| [2005 Kashmir Earthquake](society-economics/kashmir-earthquake-2005.md) | Magnitude 7.6 quake killed ~87,000 in Pakistan-administered Kashmir, October 8. |
 | [iTunes Digital Music Revolution](society-economics/digital-music-revolution.md) | Digital music revenues tripled to $1.1 billion; iTunes took 80% of legal downloads. |
 
 ## People ([index](people/index.md))
