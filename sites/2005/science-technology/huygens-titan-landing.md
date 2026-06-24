@@ -60,4 +60,5 @@ The data gathered during the landing and the years of Cassini follow-up observat
 
 - [Deep Impact mission](deep-impact-mission.md) — another landmark 2005 space-science mission, demonstrating NASA's expanding capacity for direct experimental investigation of solar-system bodies.
 - [Kyoto Protocol enters force](kyoto-protocol-enters-force.md) — February 2005 international science-policy milestone, illustrating the global reach of scientific collaboration in the same period Huygens landed.
+- [Discovery of Eris announced](eris-discovery.md) — a later-2005 milestone in exploring the distant solar system, redefining the boundary of the planetary realm.
 <!-- END GENERATED: crossrefs -->

@@ -58,4 +58,5 @@ The event generated extraordinary public engagement: NASA live-streamed the impa
 
 - [Kyoto Protocol Enters Into Force](kyoto-protocol-enters-force.md) — another landmark 2005 science-and-policy milestone.
 - [Founding of YouTube](youtube-founded.md) — 2005 platform that broadened public access to science and news media.
+- [Discovery of Eris announced](eris-discovery.md) — a parallel 2005 planetary-science milestone, reshaping understanding of the outer solar system.
 <!-- END GENERATED: crossrefs -->

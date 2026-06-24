@@ -14,6 +14,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file](arts-culture/live-8-concerts.md) |
 | 2005-07-04 | Deep Impact mission | Science & Technology | [file](science-technology/deep-impact-mission.md) |
 | 2005-07-07 | 7/7 London bombings | History & Politics | [file](history-politics/77-london-bombings.md) |
+| 2005-07-29 | Discovery of Eris announced | Science & Technology | [file](science-technology/eris-discovery.md) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file](society-economics/hurricane-katrina.md) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file](history-politics/angela-merkel-chancellor.md) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file](society-economics/kashmir-earthquake-2005.md) |
@@ -21,5 +22,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 15 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 16 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
