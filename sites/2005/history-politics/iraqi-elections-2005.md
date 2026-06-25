@@ -30,6 +30,7 @@ The January 2005 election was a landmark in post-invasion Iraq, marking the coun
 <!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [Hariri assassination & Cedar Revolution](hariri-assassination-cedar-revolution.md) — a parallel 2005 turning point in the contested politics of the Middle East.
 - [7/7 London Bombings](77-london-bombings.md) — same year's intersection of terrorism and Western foreign policy.
 - [Death of Pope John Paul II](pope-john-paul-ii-death.md) — concurrent 2005 event of major international significance.
 - [Hurricane Katrina](../society-economics/hurricane-katrina.md) — another 2005 event shaping the George W. Bush administration's record.
