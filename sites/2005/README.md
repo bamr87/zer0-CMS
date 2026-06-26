@@ -28,6 +28,7 @@ This repository is both a knowledge base and a reusable framework. It expands au
 
 | Event | Description |
 |---|---|
+| [Condoleezza Rice becomes Secretary of State](people/condoleezza-rice-secretary-of-state.md) | Condoleezza Rice was confirmed as U.S. Secretary of State on January 26, becoming the first female African American in the position. |
 | [Iraqi Parliamentary Elections](history-politics/iraqi-elections-2005.md) | Iraq held its first multi-party legislative elections since 1953 on January 30, with ~60% turnout despite insurgent threats, forming a Shia-dominated transitional assembly. |
 | [Kyoto Protocol enters force](science-technology/kyoto-protocol-enters-force.md) | The international climate treaty took legal effect on February 16 for 141 signatory nations, establishing the first binding greenhouse-gas reduction targets. |
 | [Huygens lands on Titan](science-technology/huygens-titan-landing.md) | ESA's Huygens probe completed the first landing in the outer solar system on January 14, transmitting 350 images from Saturn's largest moon. |
@@ -38,10 +39,12 @@ This repository is both a knowledge base and a reusable framework. It expands au
 | [Live 8 concerts](arts-culture/live-8-concerts.md) | Bob Geldof and Midge Ure staged ten simultaneous benefit concerts on July 2 to press G8 leaders for African debt relief. |
 | [Deep Impact mission](science-technology/deep-impact-mission.md) | NASA's Deep Impact spacecraft deliberately collided with Comet Tempel 1 on July 4, marking the first active scientific excavation of a comet's interior. |
 | [7/7 London bombings](history-politics/77-london-bombings.md) | Four coordinated suicide bomb attacks struck London's transit network on July 7, killing 52 commuters and injuring over 700 — Britain's deadliest terrorist attack since Lockerbie. |
+| [Lance Armstrong wins seventh Tour de France](people/lance-armstrong-tour-de-france.md) | Lance Armstrong won a record seventh consecutive Tour de France on July 24, capping a comeback from cancer — all seven titles later stripped in 2012 for doping. |
 | [Discovery of Eris announced](science-technology/eris-discovery.md) | A Caltech team announced Eris (2003 UB313) on July 29, more massive than Pluto, triggering the redefinition of "planet" and Pluto's 2006 reclassification. |
 | [Hurricane Katrina](society-economics/hurricane-katrina.md) | Category 3 at landfall on August 29, Katrina's storm surge devastated New Orleans levees, killing ~1,800 people and causing an estimated $125 billion in damage. |
 | [Angela Merkel elected Chancellor](history-politics/angela-merkel-chancellor.md) | Germany elected Angela Merkel on September 18 in a closely fought contest, making her the country's first female Chancellor and leader of a grand coalition. |
 | [2005 Kashmir earthquake](society-economics/kashmir-earthquake-2005.md) | A magnitude 7.6 quake struck Pakistan-administered Kashmir on October 8, killing roughly 87,000 people and leaving over 3.5 million homeless. |
 | [Rosa Parks dies](people/rosa-parks-dies.md) | Civil rights icon Rosa Parks died on October 24 aged 92; her 1955 refusal to surrender her bus seat in Montgomery catalysed the modern U.S. civil rights movement. |
+| [*The Lion, the Witch and the Wardrobe* released](arts-culture/narnia-lion-witch-wardrobe.md) | Andrew Adamson's fantasy adaptation premiered December 9, grossing roughly $745 million worldwide and demonstrating commercial viability for literary fantasy films. |
 | [*Brokeback Mountain* released](arts-culture/brokeback-mountain.md) | Ang Lee's romantic drama premiered December 9, winning three Academy Awards including Best Director and becoming a watershed film for LGBTQ+ representation. |
 | [iTunes digital music sales triple](society-economics/digital-music-revolution.md) | Global digital music revenues jumped from $400 million to $1.1 billion in 2005, with Apple's iTunes capturing 80% of legal downloads and fundamentally transforming the music industry. |

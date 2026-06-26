@@ -29,6 +29,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 |-------|-------------|
 | [*Star Wars* Episode III released](arts-culture/star-wars-episode-iii.md) | Completed the prequel trilogy, May 19. |
 | [Live 8 Concerts](arts-culture/live-8-concerts.md) | Ten simultaneous benefit concerts for African debt relief, July 2. |
+| [*The Lion, the Witch and the Wardrobe* released](arts-culture/narnia-lion-witch-wardrobe.md) | Andrew Adamson's fantasy blockbuster premiered December 9; ~$745 million worldwide. |
 | [*Brokeback Mountain* released](arts-culture/brokeback-mountain.md) | Watershed LGBTQ+ film, premiered December 9. |
 
 ## Society & Economics ([index](society-economics/index.md))
@@ -43,6 +44,8 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
+| [Condoleezza Rice becomes Secretary of State](people/condoleezza-rice-secretary-of-state.md) | First African American woman U.S. Secretary of State, confirmed January 26. |
+| [Lance Armstrong wins seventh Tour de France](people/lance-armstrong-tour-de-france.md) | Record seventh consecutive Tour win July 24; titles later stripped for doping. |
 | [Rosa Parks dies](people/rosa-parks-dies.md) | Civil rights icon died October 24 aged 92. |
 
 <!-- END GENERATED: master-index -->
