@@ -68,4 +68,6 @@ The 2005 H5N1 escalation was a watershed in global pandemic preparedness. It tra
 - [Kyoto Protocol Enters Into Force](../science-technology/kyoto-protocol-enters-force.md) — related global policy response to environmental/health crisis in 2005.
 - [2005 Kashmir Earthquake](kashmir-earthquake-2005.md) — another 2005 natural disaster with major humanitarian impact.
 - [Hurricane Katrina](hurricane-katrina.md) — concurrent 2005 disaster that tested global emergency and public health response systems.
+- [World's first partial face transplant](../science-technology/first-face-transplant.md) — a fellow 2005 milestone in medicine, marking a year of notable advances in clinical science.
 <!-- END GENERATED: crossrefs -->
+

@@ -51,4 +51,5 @@ Beyond the nomenclature debate, Eris demonstrated the power of systematic wide-f
 
 - [Huygens lands on Titan](huygens-titan-landing.md) — a fellow 2005 milestone in outer-solar-system exploration, expanding direct knowledge of distant worlds.
 - [Deep Impact mission](deep-impact-mission.md) — another 2005 advance in planetary science, demonstrating direct investigation of solar-system bodies.
+- [World's first partial face transplant](first-face-transplant.md) — another 2005 scientific first that redefined the limits of its field.
 <!-- END GENERATED: crossrefs -->

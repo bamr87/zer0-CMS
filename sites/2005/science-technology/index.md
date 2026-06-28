@@ -10,5 +10,6 @@ Category index for the **Science & Technology** topics within the [2005 Knowledg
 | [Kyoto Protocol enters force](kyoto-protocol-enters-force.md) | International climate treaty took legal effect February 16. |
 | [Deep Impact mission](deep-impact-mission.md) | First active excavation of a comet's interior, July 4. |
 | [Discovery of Eris announced](eris-discovery.md) | Caltech announced a body more massive than Pluto, July 29. |
+| [World's first partial face transplant](first-face-transplant.md) | First human face transplant, performed in Amiens, France, November 27. |
 
 <!-- END GENERATED: category-index -->

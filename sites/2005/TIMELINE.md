@@ -23,9 +23,10 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file](history-politics/angela-merkel-chancellor.md) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file](society-economics/kashmir-earthquake-2005.md) |
 | 2005-10-24 | Rosa Parks dies | People | [file](people/rosa-parks-dies.md) |
+| 2005-11-27 | World's first partial face transplant | Science & Technology | [file](science-technology/first-face-transplant.md) |
 | 2005-12-09 | *The Lion, the Witch and the Wardrobe* released | Arts & Culture | [file](arts-culture/narnia-lion-witch-wardrobe.md) |
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 21 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 22 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->

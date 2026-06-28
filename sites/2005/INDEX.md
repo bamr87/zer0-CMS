@@ -22,6 +22,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [Kyoto Protocol enters force](science-technology/kyoto-protocol-enters-force.md) | International climate treaty took legal effect February 16. |
 | [Deep Impact mission](science-technology/deep-impact-mission.md) | First active excavation of a comet's interior, July 4. |
 | [Discovery of Eris announced](science-technology/eris-discovery.md) | Caltech announced a body more massive than Pluto, July 29 — triggered Pluto's reclassification. |
+| [World's first partial face transplant](science-technology/first-face-transplant.md) | First human face transplant, performed in Amiens, France, November 27. |
 
 ## Arts & Culture ([index](arts-culture/index.md))
 
