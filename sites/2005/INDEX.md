@@ -40,6 +40,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [H5N1 Avian Flu Escalation](society-economics/avian-flu-h5n1-2005.md) | H5N1 bird flu escalated from poultry to widespread human infection across Asia in 2005. |
 | [Hurricane Katrina](society-economics/hurricane-katrina.md) | Devastating Category 3 storm struck August 29, ~1,800 deaths. |
 | [2005 Kashmir Earthquake](society-economics/kashmir-earthquake-2005.md) | Magnitude 7.6 quake killed ~87,000 in Pakistan-administered Kashmir, October 8. |
+| [2005 French riots](society-economics/2005-french-riots.md) | Three weeks of suburban unrest from October 27; prompted a national state of emergency. |
 | [iTunes Digital Music Revolution](society-economics/digital-music-revolution.md) | Digital music revenues tripled to $1.1 billion; iTunes took 80% of legal downloads. |
 
 ## People ([index](people/index.md))

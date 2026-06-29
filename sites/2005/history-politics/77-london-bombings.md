@@ -33,4 +33,5 @@ The 7 July bombings were the first suicide attacks carried out in the United Kin
 - [Death of Pope John Paul II](pope-john-paul-ii-death.md) — another defining 2005 event covered by global media.
 - [Hurricane Katrina](../society-economics/hurricane-katrina.md) — comparable test of emergency response and civil resilience in 2005.
 - [Founding of YouTube](../science-technology/youtube-founded.md) — citizen camera-phone footage of the attacks marked the user-generated-media moment YouTube launched into.
+- [2005 French riots](../society-economics/2005-french-riots.md) — a later-2005 crisis in urban Western Europe that intensified debates over integration, marginalization, and security.
 <!-- END GENERATED: crossrefs -->

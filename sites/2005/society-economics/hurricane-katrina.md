@@ -64,4 +64,5 @@ Hurricane Katrina ranks among the deadliest and most destructive natural disaste
 - [Death of Pope John Paul II](../history-politics/pope-john-paul-ii-death.md) — concurrent 2005 event of major global significance.
 - [Founding of YouTube](../science-technology/youtube-founded.md) — newly launched platform that helped spread citizen footage of the disaster.
 - [Kyoto Protocol Enters Into Force](../science-technology/kyoto-protocol-enters-force.md) — 2005 climate milestone amid debate over warming and extreme weather.
+- [2005 French riots](2005-french-riots.md) — another 2005 emergency whose response exposed social inequality and stretched the powers of the state.
 <!-- END GENERATED: crossrefs -->
