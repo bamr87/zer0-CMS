@@ -49,3 +49,11 @@ The rise and fall of Armstrong's story shaped how sports media and anti-doping a
 - [Lance Armstrong – Britannica](https://www.britannica.com/biography/Lance-Armstrong)
 - [USADA report on Lance Armstrong (October 2012) – USADA.org](https://www.usada.org/target/athletes/reasoned-decision/)
 - [Tour de France official records – letour.fr](https://www.letour.fr/en/)
+
+<!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [Live 8 Concerts](../arts-culture/live-8-concerts.md) — a contemporaneous July 2005 global event.
+- [7/7 London bombings](../history-politics/77-london-bombings.md) — another defining July 2005 news event.
+- [Rosa Parks dies](rosa-parks-dies.md) — a fellow widely commemorated public figure of 2005.
+<!-- END GENERATED: crossrefs -->

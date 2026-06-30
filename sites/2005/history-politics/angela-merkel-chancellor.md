@@ -60,4 +60,5 @@ Merkel's chancellorship ultimately spanned 16 years (2005–2021), establishing 
 - [Iraqi Parliamentary Elections](iraqi-elections-2005.md) — January 2005 elections amid the Iraq War debates that shaped Germany's politics under Schröder.
 - [7/7 London Bombings](77-london-bombings.md) — July 2005 attacks during the campaign that heightened European counterterrorism attention.
 - [Death of Pope John Paul II](pope-john-paul-ii-death.md) — April 2005 passing of the Polish pope tied to the anti-communist movements Merkel lived through in East Germany.
+- [Ellen Johnson Sirleaf elected President of Liberia](../people/ellen-johnson-sirleaf-elected.md) — a parallel 2005 milestone in women's political leadership, weeks after Merkel's election.
 <!-- END GENERATED: crossrefs -->

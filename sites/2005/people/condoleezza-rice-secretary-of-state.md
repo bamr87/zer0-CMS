@@ -43,3 +43,11 @@ After leaving office, Rice returned to Stanford as a professor and senior fellow
 - [Condoleezza Rice – Britannica](https://www.britannica.com/biography/Condoleezza-Rice)
 - [Senate confirmation roll call, January 26, 2005 – U.S. Senate](https://www.senate.gov/legislative/LIS/roll_call_votes/vote1091/vote_109_1_00002.htm)
 - [Condoleezza Rice – Wikipedia](https://en.wikipedia.org/wiki/Condoleezza_Rice)
+
+<!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [Ellen Johnson Sirleaf elected President of Liberia](ellen-johnson-sirleaf-elected.md) — a fellow 2005 milestone for women's leadership at the top of national government.
+- [Angela Merkel elected Chancellor](../history-politics/angela-merkel-chancellor.md) — another woman reaching a head-of-government office in 2005.
+- [Iraqi Parliamentary Elections](../history-politics/iraqi-elections-2005.md) — a January 2005 event central to the foreign-policy agenda Rice directed.
+<!-- END GENERATED: crossrefs -->

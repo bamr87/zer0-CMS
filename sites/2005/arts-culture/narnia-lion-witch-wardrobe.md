@@ -40,3 +40,11 @@ The 2005 release also competed directly with other major prestige titles: it ent
 - [The Chronicles of Narnia: The Lion, the Witch and the Wardrobe – IMDb](https://www.imdb.com/title/tt0356566/)
 - [The Chronicles of Narnia: The Lion, the Witch and the Wardrobe – Rotten Tomatoes](https://www.rottentomatoes.com/m/the_chronicles_of_narnia_the_lion_the_witch_the_wardrobe)
 - [Box office results – Box Office Mojo](https://www.boxofficemojo.com/movies/?id=narnia.htm)
+
+<!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
+## Related
+
+- [*Brokeback Mountain* released](brokeback-mountain.md) — a fellow December 9, 2005 premiere and one of the year's defining films.
+- [*Star Wars* Episode III released](star-wars-episode-iii.md) — another 2005 franchise blockbuster among the year's top-grossing films.
+- [Live 8 Concerts](live-8-concerts.md) — a separate landmark of 2005 popular culture.
+<!-- END GENERATED: crossrefs -->

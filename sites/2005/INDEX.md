@@ -50,5 +50,6 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [Condoleezza Rice becomes Secretary of State](people/condoleezza-rice-secretary-of-state.md) | First African American woman U.S. Secretary of State, confirmed January 26. |
 | [Lance Armstrong wins seventh Tour de France](people/lance-armstrong-tour-de-france.md) | Record seventh consecutive Tour win July 24; titles later stripped for doping. |
 | [Rosa Parks dies](people/rosa-parks-dies.md) | Civil rights icon died October 24 aged 92. |
+| [Ellen Johnson Sirleaf elected President of Liberia](people/ellen-johnson-sirleaf-elected.md) | Africa's first elected female head of state, declared winner November 23. |
 
 <!-- END GENERATED: master-index -->
