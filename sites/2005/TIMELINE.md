@@ -14,6 +14,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file](history-politics/pope-john-paul-ii-death.md) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file](arts-culture/star-wars-episode-iii.md) |
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file](arts-culture/live-8-concerts.md) |
+| 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file](society-economics/same-sex-marriage-2005.md) |
 | 2005-07-04 | Deep Impact mission | Science & Technology | [file](science-technology/deep-impact-mission.md) |
 | 2005-07-07 | 7/7 London bombings | History & Politics | [file](history-politics/77-london-bombings.md) |
 | 2005-07-24 | Lance Armstrong wins seventh Tour de France | People | [file](people/lance-armstrong-tour-de-france.md) |
@@ -30,5 +31,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 24 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 25 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->

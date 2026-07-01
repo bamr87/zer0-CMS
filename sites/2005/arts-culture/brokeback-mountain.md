@@ -50,6 +50,7 @@ The film's loss to *Crash* at the 2006 Academy Awards sparked significant contro
 <!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [Spain and Canada legalize same-sex marriage](../society-economics/same-sex-marriage-2005.md) — the year's landmark legal advances for LGBTQ+ rights, of which this film was the cultural counterpart.
 - [Rosa Parks dies](../people/rosa-parks-dies.md) — another 2005 moment at the intersection of civil rights history and American cultural identity.
 - [Founding of YouTube](../science-technology/youtube-founded.md) — platform launched in 2005 that became a key site where the film's cultural impact was debated and documented.
 <!-- END GENERATED: crossrefs -->
