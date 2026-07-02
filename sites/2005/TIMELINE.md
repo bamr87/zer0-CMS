@@ -6,12 +6,14 @@ A chronological record of notable events of the year 2005, sourced from the know
 | Date | Event | Category | File |
 |------|-------|----------|------|
 | 2005-01-14 | Huygens lands on Titan | Science & Technology | [file](science-technology/huygens-titan-landing.md) |
+| 2005-01-20 | George W. Bush inaugurated for second term | History & Politics | [file](history-politics/george-w-bush-2005-agenda.md) |
 | 2005-01-26 | Condoleezza Rice becomes Secretary of State | People | [file](people/condoleezza-rice-secretary-of-state.md) |
 | 2005-01-30 | Iraqi Parliamentary Elections | History & Politics | [file](history-politics/iraqi-elections-2005.md) |
 | 2005-02-14 | YouTube founded | Science & Technology | [file](science-technology/youtube-founded.md) |
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file](history-politics/hariri-assassination-cedar-revolution.md) |
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file](science-technology/kyoto-protocol-enters-force.md) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file](history-politics/pope-john-paul-ii-death.md) |
+| 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file](history-politics/pope-benedict-xvi-2005.md) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file](arts-culture/star-wars-episode-iii.md) |
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file](arts-culture/live-8-concerts.md) |
 | 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file](society-economics/same-sex-marriage-2005.md) |
@@ -31,5 +33,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 25 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 27 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->

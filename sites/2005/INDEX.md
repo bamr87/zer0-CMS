@@ -7,9 +7,11 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
+| [George W. Bush's 2005 second-term agenda](history-politics/george-w-bush-2005-agenda.md) | Second-term agenda opened January 20; domestic plans collapsed after Katrina while Roberts and Alito remade the Supreme Court. |
 | [Iraqi Parliamentary Elections](history-politics/iraqi-elections-2005.md) | Iraq's first multi-party elections since 1953, January 30. |
 | [Hariri assassination & Cedar Revolution](history-politics/hariri-assassination-cedar-revolution.md) | Truck bomb killed former Lebanese PM February 14; sparked Syria's withdrawal. |
 | [Pope John Paul II dies](history-politics/pope-john-paul-ii-death.md) | 26-year papacy ended April 2; succeeded by Benedict XVI. |
+| [Pope Benedict XVI elected](history-politics/pope-benedict-xvi-2005.md) | Cardinal Ratzinger elected first German pope in ~950 years, April 19. |
 | [7/7 London bombings](history-politics/77-london-bombings.md) | Four coordinated suicide bomb attacks on London's transit, July 7. |
 | [Angela Merkel elected Chancellor](history-politics/angela-merkel-chancellor.md) | Germany's first female Chancellor, elected September 18. |
 
