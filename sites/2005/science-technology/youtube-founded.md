@@ -32,4 +32,5 @@ YouTube's founding marked a defining moment in the rise of user-generated conten
 - [7/7 London Bombings](../history-politics/77-london-bombings.md) — user-shot footage of the attacks typified the user-generated-media shift YouTube embodied.
 - [Hurricane Katrina](../society-economics/hurricane-katrina.md) — early example of citizen video spreading disaster news online.
 - [Deep Impact Collides with Comet Tempel 1](deep-impact-mission.md) — 2005 NASA event whose live footage reached a mass online audience.
+- [Xbox 360 launches](xbox-360-launch.md) — the November 2005 console that pushed gaming toward the same connected, download-driven media model.
 <!-- END GENERATED: crossrefs -->

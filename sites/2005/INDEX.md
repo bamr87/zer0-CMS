@@ -24,6 +24,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [Kyoto Protocol enters force](science-technology/kyoto-protocol-enters-force.md) | International climate treaty took legal effect February 16. |
 | [Deep Impact mission](science-technology/deep-impact-mission.md) | First active excavation of a comet's interior, July 4. |
 | [Discovery of Eris announced](science-technology/eris-discovery.md) | Caltech announced a body more massive than Pluto, July 29 — triggered Pluto's reclassification. |
+| [Xbox 360 launches](science-technology/xbox-360-launch.md) | Microsoft's Xbox 360 launched in North America November 22, opening the seventh console generation. |
 | [World's first partial face transplant](science-technology/first-face-transplant.md) | First human face transplant, performed in Amiens, France, November 27. |
 
 ## Arts & Culture ([index](arts-culture/index.md))
@@ -39,6 +40,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 
 | Topic | Description |
 |-------|-------------|
+| [Terri Schiavo dies](society-economics/terri-schiavo-case.md) | Right-to-die case ended March 31; drew Congress and the president into an end-of-life dispute. |
 | [Spain and Canada Legalize Same-Sex Marriage](society-economics/same-sex-marriage-2005.md) | Spain (July 3) and Canada (July 20) became the third and fourth countries to legalize same-sex marriage. |
 | [H5N1 Avian Flu Escalation](society-economics/avian-flu-h5n1-2005.md) | H5N1 bird flu escalated from poultry to widespread human infection across Asia in 2005. |
 | [Hurricane Katrina](society-economics/hurricane-katrina.md) | Devastating Category 3 storm struck August 29, ~1,800 deaths. |
@@ -51,6 +53,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | Topic | Description |
 |-------|-------------|
 | [Condoleezza Rice becomes Secretary of State](people/condoleezza-rice-secretary-of-state.md) | First African American woman U.S. Secretary of State, confirmed January 26. |
+| [Michael Jackson acquitted](people/michael-jackson-trial-verdict.md) | Acquitted June 13 of all fourteen charges after a five-month child-abuse trial. |
 | [Lance Armstrong wins seventh Tour de France](people/lance-armstrong-tour-de-france.md) | Record seventh consecutive Tour win July 24; titles later stripped for doping. |
 | [Rosa Parks dies](people/rosa-parks-dies.md) | Civil rights icon died October 24 aged 92. |
 | [Ellen Johnson Sirleaf elected President of Liberia](people/ellen-johnson-sirleaf-elected.md) | Africa's first elected female head of state, declared winner November 23. |

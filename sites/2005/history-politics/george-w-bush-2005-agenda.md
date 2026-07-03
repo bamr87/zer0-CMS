@@ -122,4 +122,5 @@ The year also marked the acceleration of a geopolitical realignment that would d
 - [January 2005 Iraqi Parliamentary Elections](iraqi-elections-2005.md) — a milestone in the Iraq strategy that dominated Bush's agenda.
 - [Condoleezza Rice becomes Secretary of State](../people/condoleezza-rice-secretary-of-state.md) — Bush's defining second-term foreign-policy appointment.
 - [Angela Merkel elected Chancellor](angela-merkel-chancellor.md) — the transatlantic realignment that accompanied Bush's later years.
+- [Terri Schiavo dies](../society-economics/terri-schiavo-case.md) — the March 2005 case in which Bush and Congress intervened, contributing to the second-term approval decline.
 <!-- END GENERATED: crossrefs -->

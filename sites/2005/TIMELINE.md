@@ -12,9 +12,11 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-02-14 | YouTube founded | Science & Technology | [file](science-technology/youtube-founded.md) |
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file](history-politics/hariri-assassination-cedar-revolution.md) |
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file](science-technology/kyoto-protocol-enters-force.md) |
+| 2005-03-31 | Terri Schiavo dies | Society & Economics | [file](society-economics/terri-schiavo-case.md) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file](history-politics/pope-john-paul-ii-death.md) |
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file](history-politics/pope-benedict-xvi-2005.md) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file](arts-culture/star-wars-episode-iii.md) |
+| 2005-06-13 | Michael Jackson acquitted | People | [file](people/michael-jackson-trial-verdict.md) |
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file](arts-culture/live-8-concerts.md) |
 | 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file](society-economics/same-sex-marriage-2005.md) |
 | 2005-07-04 | Deep Impact mission | Science & Technology | [file](science-technology/deep-impact-mission.md) |
@@ -27,11 +29,12 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file](society-economics/kashmir-earthquake-2005.md) |
 | 2005-10-24 | Rosa Parks dies | People | [file](people/rosa-parks-dies.md) |
 | 2005-10-27 | 2005 French riots | Society & Economics | [file](society-economics/2005-french-riots.md) |
+| 2005-11-22 | Xbox 360 launches | Science & Technology | [file](science-technology/xbox-360-launch.md) |
 | 2005-11-23 | Ellen Johnson Sirleaf elected President of Liberia | People | [file](people/ellen-johnson-sirleaf-elected.md) |
 | 2005-11-27 | World's first partial face transplant | Science & Technology | [file](science-technology/first-face-transplant.md) |
 | 2005-12-09 | *The Lion, the Witch and the Wardrobe* released | Arts & Culture | [file](arts-culture/narnia-lion-witch-wardrobe.md) |
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 27 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 30 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
