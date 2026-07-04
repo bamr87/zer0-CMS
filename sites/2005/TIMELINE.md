@@ -24,6 +24,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-07-24 | Lance Armstrong wins seventh Tour de France | People | [file](people/lance-armstrong-tour-de-france.md) |
 | 2005-07-29 | Discovery of Eris announced | Science & Technology | [file](science-technology/eris-discovery.md) |
 | 2005 (Jul-Oct) | H5N1 avian flu escalation | Society & Economics | [file](society-economics/avian-flu-h5n1-2005.md) |
+| 2005-08-15 | Israeli disengagement from the Gaza Strip | History & Politics | [file](history-politics/gaza-disengagement-2005.md) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file](society-economics/hurricane-katrina.md) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file](history-politics/angela-merkel-chancellor.md) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file](society-economics/kashmir-earthquake-2005.md) |
@@ -36,5 +37,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 30 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 31 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
