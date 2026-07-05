@@ -43,6 +43,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 |-------|-------------|
 | [Terri Schiavo dies](society-economics/terri-schiavo-case.md) | Right-to-die case ended March 31; drew Congress and the president into an end-of-life dispute. |
 | [Spain and Canada Legalize Same-Sex Marriage](society-economics/same-sex-marriage-2005.md) | Spain (July 3) and Canada (July 20) became the third and fourth countries to legalize same-sex marriage. |
+| [London Wins the 2012 Olympic Bid](society-economics/london-wins-2012-olympic-bid.md) | London beat Paris 54–50 in Singapore on July 6 to host the 2012 Summer Olympics — its third Games. |
 | [H5N1 Avian Flu Escalation](society-economics/avian-flu-h5n1-2005.md) | H5N1 bird flu escalated from poultry to widespread human infection across Asia in 2005. |
 | [Hurricane Katrina](society-economics/hurricane-katrina.md) | Devastating Category 3 storm struck August 29, ~1,800 deaths. |
 | [2005 Kashmir Earthquake](society-economics/kashmir-earthquake-2005.md) | Magnitude 7.6 quake killed ~87,000 in Pakistan-administered Kashmir, October 8. |

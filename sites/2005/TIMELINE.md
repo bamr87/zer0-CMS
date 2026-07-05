@@ -20,6 +20,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file](arts-culture/live-8-concerts.md) |
 | 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file](society-economics/same-sex-marriage-2005.md) |
 | 2005-07-04 | Deep Impact mission | Science & Technology | [file](science-technology/deep-impact-mission.md) |
+| 2005-07-06 | London wins the 2012 Olympic bid | Society & Economics | [file](society-economics/london-wins-2012-olympic-bid.md) |
 | 2005-07-07 | 7/7 London bombings | History & Politics | [file](history-politics/77-london-bombings.md) |
 | 2005-07-24 | Lance Armstrong wins seventh Tour de France | People | [file](people/lance-armstrong-tour-de-france.md) |
 | 2005-07-29 | Discovery of Eris announced | Science & Technology | [file](science-technology/eris-discovery.md) |
@@ -37,5 +38,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 31 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 32 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->

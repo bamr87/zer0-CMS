@@ -29,6 +29,7 @@ The 7 July bombings were the first suicide attacks carried out in the United Kin
 <!-- BEGIN GENERATED: crossrefs — maintained by build-structure; do not edit by hand -->
 ## Related
 
+- [London wins the 2012 Olympic bid](../society-economics/london-wins-2012-olympic-bid.md) — awarded the previous day, July 6; the attacks abruptly ended the national celebration.
 - [January 2005 Iraqi Parliamentary Election](iraqi-elections-2005.md) — concurrent flashpoint of 2005 geopolitics and insurgency.
 - [Death of Pope John Paul II](pope-john-paul-ii-death.md) — another defining 2005 event covered by global media.
 - [Hurricane Katrina](../society-economics/hurricane-katrina.md) — comparable test of emergency response and civil resilience in 2005.
