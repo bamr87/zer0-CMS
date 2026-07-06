@@ -1,0 +1,357 @@
+---
+lastmod: 2026-06-16T00:00:00.000Z
+title: AI Preview Image Generator for Jekyll Posts
+description: Generate social preview images automatically for Jekyll posts using OpenAI (GPT Image / DALL-E), Stability AI, or local placeholders, wired into the theme build pipeline.
+keywords: [preview image, dall-e, stability ai, open graph image, jekyll social images]
+preview: /images/previews/ai-preview-image-generator.png
+layout: default
+categories:
+    - docs
+    - features
+tags:
+    - ai
+    - preview
+    - images
+    - dall-e
+permalink: /docs/features/preview-image-generator/
+difficulty: intermediate
+estimated_reading_time: 15 minutes
+prerequisites:
+    - OpenAI API key (for DALL-E)
+    - Or Stability AI API key
+sidebar:
+    nav: docs
+mermaid: true
+type: doc
+aliases:
+  - /docs/features/preview-image-generator/
+---
+
+# AI Preview Image Generator
+
+Automatically generate preview images for your posts and pages using AI image generation services.
+
+## Overview
+
+The preview image generator provides:
+
+- **AI-Powered**: Uses OpenAI (GPT Image or DALL-E 3), Stability AI, or a local placeholder
+- **Jekyll Integration**: Liquid tags and filters
+- **Configurable Style**: Default retro pixel art aesthetic
+- **Batch Generation**: Process multiple posts at once (parallel workers)
+
+## How It Works
+
+```mermaid
+graph LR
+    A[Post without preview] --> B[Generate prompt from title/description]
+    B --> C{Provider}
+    C -->|OpenAI| D[GPT Image / DALL-E API]
+    C -->|Stability| E[Stability AI]
+    C -->|local| F[Local placeholder]
+    D --> G[Save image]
+    E --> G
+    F --> G
+    G --> H[Update front matter]
+```
+
+## Configuration
+
+### Basic Setup
+
+```yaml
+# _config.yml
+preview_images:
+  enabled: true
+  provider: openai  # openai, stability, local
+  auto_generate: false  # Generate during build
+```
+
+### Full Configuration
+
+```yaml
+preview_images:
+  enabled: true
+  provider: openai            # openai, stability, local
+  model: gpt-image-2          # gpt-image-2, dall-e-3, dall-e-2, stable-diffusion
+  size: 1536x1024             # GPT Image landscape; DALL-E 3 also supports 1792x1024
+  quality: auto               # auto for GPT Image; standard/hd for DALL-E 3
+  style: "retro pixel art, 8-bit video game aesthetic, vibrant colors"
+  style_modifiers: "pixelated, retro gaming style, CRT screen glow effect"
+  output_dir: assets/images/previews
+  assets_prefix: /assets
+  auto_prefix: true
+  auto_generate: false
+  collections:                # plugin default if omitted
+    - posts
+    - docs
+    - quickstart
+```
+
+The values above match the shipped `_config.yml`. `collections` is not set in
+the shipped config but defaults to `[posts, docs, quickstart]` in the plugin
+(`_plugins/preview_image_generator.rb`).
+
+### API Keys
+
+Set environment variables:
+
+```bash
+# OpenAI
+export OPENAI_API_KEY="sk-..."
+
+# Stability AI
+export STABILITY_API_KEY="sk-..."
+```
+
+## Usage
+
+### Manual Generation
+
+Run the generation script:
+
+```bash
+# Generate for all posts without previews
+./scripts/generate-preview-images.sh
+
+# Generate for specific post
+./scripts/generate-preview-images.sh --file pages/_posts/2025-01-25-my-post.md
+
+# Dry run (preview what would be generated)
+./scripts/generate-preview-images.sh --dry-run
+```
+
+### Liquid Tags
+
+```liquid
+{% raw %}<!-- Show count of missing previews -->
+{% preview_image_status %}
+
+<!-- Get preview image path -->
+{{ page | preview_image_path }}
+
+<!-- Check if page has preview -->
+{% if page | has_preview_image %}
+  <img src="{{ page.preview | relative_url }}" alt="Preview">
+{% endif %}{% endraw %}
+```
+
+### In Front Matter
+
+```yaml
+---
+title: "My Post Title"
+preview: /images/previews/ai-preview-image-generator.png
+---
+```
+
+## Providers
+
+### OpenAI (GPT Image / DALL-E 3)
+
+Best quality. The shipped default is the GPT Image model; DALL-E 3 is also
+supported:
+
+```yaml
+preview_images:
+  provider: openai
+  model: gpt-image-2    # default; or dall-e-3, dall-e-2
+  size: 1536x1024       # GPT Image landscape; DALL-E 3 also takes 1792x1024
+  quality: auto         # auto for GPT Image; standard/hd for DALL-E 3
+```
+
+### Stability AI
+
+Good alternative. Set `provider: stability` and supply `STABILITY_API_KEY`. The
+script calls the Stable Diffusion XL 1024 endpoint at 1024x1024 — there is no
+separate `engine`/`size` key to set for this provider:
+
+```yaml
+preview_images:
+  provider: stability
+  # Uses STABILITY_API_KEY; generates 1024x1024 via Stable Diffusion XL
+```
+
+### Local (placeholder)
+
+Free, no API needed. The `local` provider writes a `.txt` placeholder next to
+the target path instead of calling an image API — useful for development and
+dry runs:
+
+```yaml
+preview_images:
+  provider: local
+```
+
+## Style Customization
+
+### Default Style
+
+The default generates retro pixel art:
+
+```yaml
+style: "retro pixel art, 8-bit video game aesthetic, vibrant colors, nostalgic"
+style_modifiers: "pixelated, retro gaming style, CRT screen glow effect"
+```
+
+### Professional Style
+
+```yaml
+style: "professional, modern, clean, minimalist design"
+style_modifiers: "corporate, business, elegant, high quality"
+```
+
+### Artistic Style
+
+```yaml
+style: "watercolor painting, artistic, creative"
+style_modifiers: "hand-painted, artistic texture, vibrant colors"
+```
+
+### Custom Per-Post
+
+```yaml
+---
+title: "My Technical Post"
+preview_style: "technical diagram, blueprint style, clean lines"
+---
+```
+
+## Plugin Details
+
+### File Location
+
+```text
+_plugins/preview_image_generator.rb
+```
+
+### Available Methods
+
+```ruby
+# Check if document has preview
+PreviewImageGenerator.has_preview?(doc)
+
+# Get preview path
+PreviewImageGenerator.preview_path(doc)
+
+# Generate prompt from document
+PreviewImageGenerator.generate_prompt(doc)
+```
+
+### Liquid Filters
+
+| Filter | Description |
+|--------|-------------|
+| `preview_image_path` | Returns full preview image path |
+| `has_preview_image` | Returns true if preview exists |
+
+### Liquid Tags
+
+| Tag | Description |
+|-----|-------------|
+| `{% raw %}{% preview_image_status %}{% endraw %}` | Shows missing preview count |
+
+## Image Specifications
+
+### Recommended Sizes
+
+| Platform | Size | Aspect |
+|----------|------|--------|
+| Open Graph | 1200×630 | 1.91:1 |
+| Twitter | 1200×600 | 2:1 |
+| DALL-E 3 | 1792×1024 | 1.75:1 |
+
+### Output Directory
+
+Images saved to:
+
+```text
+assets/images/previews/
+├── post-slug-preview.png
+├── another-post-preview.png
+└── ...
+```
+
+## Automatic Generation
+
+### During Build
+
+Enable auto-generation (slow!):
+
+```yaml
+preview_images:
+  auto_generate: true
+```
+
+### GitHub Actions
+
+Add to CI workflow:
+
+```yaml
+- name: Generate preview images
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  run: ./scripts/generate-preview-images.sh
+```
+
+## Cost Considerations
+
+### OpenAI DALL-E 3
+
+- Standard quality: ~$0.04 per image
+- HD quality: ~$0.08 per image
+
+### Budget Tips
+
+1. Use placeholder during development
+2. Generate only for published posts
+3. Batch generate periodically
+4. Cache generated images
+
+## Troubleshooting
+
+### API Key Not Found
+
+```bash
+# Verify key is set
+echo $OPENAI_API_KEY
+
+# Set in current session
+export OPENAI_API_KEY="sk-..."
+```
+
+### Generation Failed
+
+1. Check API key validity
+2. Verify API quota
+3. Check network connection
+4. Review error logs
+
+### Wrong Image Path
+
+1. Check `assets_prefix` config
+2. Verify `output_dir` exists
+3. Check front matter path
+
+### Images Not Showing
+
+1. Verify file exists at path
+2. Check Jekyll build includes assets
+3. Clear browser cache
+4. Check relative URL helper
+
+## Related
+
+- [[_docs/seo/meta-tags|SEO Meta Tags]]
+- [OpenAI API Documentation](https://platform.openai.com/docs/guides/images)
+
+## Technical Reference
+
+For implementation details (multi-provider architecture, xAI Grok integration, generation workflow):
+
+- [Preview Image Generator → docs/implementation/preview-image-generator.md](https://github.com/bamr87/zer0-mistakes/blob/main/docs/implementation/preview-image-generator.md)
+
+## See also
+
+- [[_docs/features/index|Features]]
+- [[_docs/seo/index|SEO]]

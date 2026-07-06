@@ -1,0 +1,13 @@
+{
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "absolute",
+  "useMarkdownLinks": false,
+  "attachmentFolderPath": "assets",
+  "userIgnoreFilters": [
+    "_templates/",
+    "_notes/_templates/",
+    ".raw/",
+    ".backups/",
+    "CLAUDE.md"
+  ]
+}

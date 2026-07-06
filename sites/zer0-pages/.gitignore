@@ -1,0 +1,10 @@
+# Backup snapshots
+.backups/
+
+# Stray IDE/vault artifacts at repo root (real vault lives in pages/)
+/.obsidian/
+/mobile-toc.md
+/sidebar-navigation.md
+
+# System
+.DS_Store

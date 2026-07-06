@@ -1,0 +1,10 @@
+/* pages vault — color-code collections in the file explorer */
+.nav-folder-title[data-path="_posts"]      { --nav-item-color: #e0668a; }
+.nav-folder-title[data-path="_docs"]       { --nav-item-color: #52e0d2; }
+.nav-folder-title[data-path="_notes"]      { --nav-item-color: #4cb950; }
+.nav-folder-title[data-path="_notebooks"]  { --nav-item-color: #f2c14d; }
+.nav-folder-title[data-path="_quickstart"] { --nav-item-color: #f1a44f; }
+.nav-folder-title[data-path="_about"]      { --nav-item-color: #7d84c2; }
+.nav-folder-title[data-path="_moc"]        { --nav-item-color: #ffb733; font-weight: 600; }
+.nav-folder-title[data-path="wiki"]        { --nav-item-color: #9aa0aa; }
+.nav-folder-title[data-path="_moc"] .nav-folder-title-content::before { content: "🗺 "; }
