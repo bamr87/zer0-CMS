@@ -13,6 +13,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [Pope John Paul II dies](history-politics/pope-john-paul-ii-death.md) | 26-year papacy ended April 2; succeeded by Benedict XVI. |
 | [Pope Benedict XVI elected](history-politics/pope-benedict-xvi-2005.md) | Cardinal Ratzinger elected first German pope in ~950 years, April 19. |
 | [7/7 London bombings](history-politics/77-london-bombings.md) | Four coordinated suicide bomb attacks on London's transit, July 7. |
+| [Provisional IRA ends its armed campaign](history-politics/ira-ends-armed-campaign.md) | IRA ordered an end to its armed campaign July 28 and completed decommissioning by September. |
 | [Israeli Disengagement from the Gaza Strip](history-politics/gaza-disengagement-2005.md) | Israel evacuated all 21 Gaza settlements and 4 in the northern West Bank, August 15–23. |
 | [Angela Merkel elected Chancellor](history-politics/angela-merkel-chancellor.md) | Germany's first female Chancellor, elected September 18. |
 

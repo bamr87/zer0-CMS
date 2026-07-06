@@ -35,4 +35,5 @@ The 7 July bombings were the first suicide attacks carried out in the United Kin
 - [Hurricane Katrina](../society-economics/hurricane-katrina.md) — comparable test of emergency response and civil resilience in 2005.
 - [Founding of YouTube](../science-technology/youtube-founded.md) — citizen camera-phone footage of the attacks marked the user-generated-media moment YouTube launched into.
 - [2005 French riots](../society-economics/2005-french-riots.md) — a later-2005 crisis in urban Western Europe that intensified debates over integration, marginalization, and security.
+- [Provisional IRA ends its armed campaign](ira-ends-armed-campaign.md) — three weeks later, a decades-long campaign of political violence in the British Isles was formally brought to a close.
 <!-- END GENERATED: crossrefs -->
