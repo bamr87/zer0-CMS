@@ -74,8 +74,7 @@ Zer0-Mistakes organizes content in collections under `pages/`:
 
 - `_posts/` - Blog posts
 - `_docs/` - Documentation
-- `_quests/` - Tutorials and learning paths
-- `_about/` - About pages
+- `_notes/` - Cheatsheets and working notes
 
 ## Essential Commands
 

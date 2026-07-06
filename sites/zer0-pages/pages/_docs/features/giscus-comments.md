@@ -137,9 +137,9 @@ the include. To change a fixed attribute you must edit
 
 | Attribute | Source | Value |
 |-----------|--------|-------|
-| `data-repo` | Config | `{% raw %}{{ site.repository }}{% endraw %}` |
-| `data-repo-id` | Config | `{% raw %}{{ site.giscus.data-repo-id }}{% endraw %}` (required) |
-| `data-category-id` | Config | `{% raw %}{{ site.giscus.data-category-id }}{% endraw %}` (required) |
+| `data-repo` | Config | `{{ site.repository }}` |
+| `data-repo-id` | Config | `{{ site.giscus.data-repo-id }}` (required) |
+| `data-category-id` | Config | `{{ site.giscus.data-category-id }}` (required) |
 | `data-mapping` | Fixed in include | `pathname` |
 | `data-strict` | Fixed in include | `1` |
 | `data-reactions-enabled` | Fixed in include | `1` |

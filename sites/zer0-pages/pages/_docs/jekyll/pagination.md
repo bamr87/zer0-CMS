@@ -40,7 +40,7 @@ Pagination provides convenience for users navigating through content. This guide
 Create `_includes/pagination.html`:
 
 ```html
-{% raw %}<ul class="pager">
+<ul class="pager">
   {% if page.previous.url %}
     <li><a class="btn btn-outline-primary" href="{{page.previous.url}}">Previous</a></li>
   {% else %}
@@ -51,7 +51,7 @@ Create `_includes/pagination.html`:
   {% else %}
     <li class="next disable"><a class="btn btn-outline-primary disabled">Next</a></li>
   {% endif %}
-</ul>{% endraw %}
+</ul>
 ```
 
 ### Include in Your Layout
@@ -59,11 +59,11 @@ Create `_includes/pagination.html`:
 Add to your template (e.g., `_layouts/journals.html`):
 
 ```html
-{% raw %}{% include pagination.html %}
+{% include pagination.html %}
 <hr />
 <div class="post">{{ content }}</div>
 <hr />
-{% include pagination.html %}{% endraw %}
+{% include pagination.html %}
 ```
 
 ## Custom Sort Order
@@ -71,7 +71,7 @@ Add to your template (e.g., `_layouts/journals.html`):
 Sort by a custom field (like `index`) instead of date:
 
 ```html
-{% raw %}{% if page.collection %}
+{% if page.collection %}
   {% assign posts = site[page.collection] | sort: 'index' %}
   {% for links in posts %}
     {% if links.title == page.title %}
@@ -98,7 +98,7 @@ Sort by a custom field (like `index`) instead of date:
       <li class="next disable"><a class="btn btn-outline-primary disabled">Next</a></li>
     {% endif %}
   </ul>
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Keyboard Navigation
@@ -106,12 +106,12 @@ Sort by a custom field (like `index`) instead of date:
 Add keyboard shortcuts for arrow key navigation:
 
 ```html
-{% raw %}<script>
+<script>
 document.body.onkeyup = function(e){
   if (e.keyCode == '37') { window.location = '{{prevurl}}'; }
   if (e.keyCode == '39') { window.location = '{{nexturl}}'; }
 };
-</script>{% endraw %}
+</script>
 ```
 
 This allows users to press `←` and `→` arrow keys to navigate.
@@ -134,7 +134,7 @@ paginate_path: "/blog/page:num/"
 ### Template
 
 ```html
-{% raw %}{% for post in paginator.posts %}
+{% for post in paginator.posts %}
   <article>
     <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
     <p>{{ post.excerpt }}</p>
@@ -152,7 +152,7 @@ paginate_path: "/blog/page:num/"
   {% if paginator.next_page %}
     <a href="{{ paginator.next_page_path }}">Older →</a>
   {% endif %}
-</nav>{% endraw %}
+</nav>
 ```
 
 ## Styling

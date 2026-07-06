@@ -55,7 +55,7 @@ Visit your site in production and check Real-Time reports in GA4.
 
 ```html
 <!-- _includes/analytics/google-analytics.html -->
-{% raw %}{% if jekyll.environment == 'production' and site.google_analytics.tracking_id %}
+{% if jekyll.environment == 'production' and site.google_analytics.tracking_id %}
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics.tracking_id }}"></script>
 <script>
@@ -64,14 +64,14 @@ Visit your site in production and check Real-Time reports in GA4.
   gtag('js', new Date());
   gtag('config', '{{ site.google_analytics.tracking_id }}');
 </script>
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Loading in Layout
 
 ```html
 <!-- In _includes/core/head.html -->
-{% raw %}{% include analytics/google-analytics.html %}{% endraw %}
+{% include analytics/google-analytics.html %}
 ```
 
 ## Configuration Options
@@ -114,9 +114,9 @@ google_analytics:
 Or use environment check:
 
 ```liquid
-{% raw %}{% if jekyll.environment == 'production' %}
+{% if jekyll.environment == 'production' %}
   <!-- GA code -->
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Cookie Consent Integration
@@ -124,14 +124,14 @@ Or use environment check:
 ### With Consent Check
 
 ```javascript
-{% raw %}{% if site.google_analytics.require_consent %}
+{% if site.google_analytics.require_consent %}
 // Only load if consent given
 if (CookieConsent.hasConsent('analytics')) {
   gtag('config', '{{ site.google_analytics.tracking_id }}');
 }
 {% else %}
 gtag('config', '{{ site.google_analytics.tracking_id }}');
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Consent Mode v2
@@ -264,7 +264,6 @@ gtag('config', 'UA-XXXXXXX-X');
 - [[_docs/features/posthog-analytics|PostHog Analytics]]
 - [[_docs/analytics/google-tag-manager|Google Tag Manager]]
 - [[_docs/features/cookie-consent|Cookie Consent]]
-- [[privacy-policy|Privacy Policy]]
 
 ## See also
 

@@ -69,7 +69,7 @@ Generated at `/sitemap.xml`:
 Create `sitemap.xml` manually:
 
 ```liquid
-{% raw %}---
+---
 layout: null
 ---
 <?xml version="1.0" encoding="UTF-8"?>
@@ -84,7 +84,7 @@ layout: null
     </url>
     {% endunless %}
   {% endfor %}
-</urlset>{% endraw %}
+</urlset>
 ```
 
 ## JSON Search Index
@@ -108,7 +108,7 @@ layout: null
 ### Search Template
 
 ```liquid
-{% raw %}---
+---
 layout: null
 ---
 [
@@ -122,7 +122,7 @@ layout: null
     "tags": {{ page.tags | jsonify }}
   }{% unless forloop.last %},{% endunless %}
   {% endfor %}
-]{% endraw %}
+]
 ```
 
 ## robots.txt
@@ -140,7 +140,7 @@ Sitemap: https://yoursite.com/sitemap.xml
 ### Jekyll Template
 
 ```liquid
-{% raw %}---
+---
 layout: null
 permalink: /robots.txt
 ---
@@ -149,7 +149,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /private/
 
-Sitemap: {{ site.url }}/sitemap.xml{% endraw %}
+Sitemap: {{ site.url }}/sitemap.xml
 ```
 
 ## Excluding Pages
@@ -182,9 +182,9 @@ search: false
 ```
 
 ```liquid
-{% raw %}{% unless page.search == false %}
+{% unless page.search == false %}
   // Include in search index
-{% endunless %}{% endraw %}
+{% endunless %}
 ```
 
 ## Priority and Frequency

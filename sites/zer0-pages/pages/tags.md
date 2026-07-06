@@ -11,11 +11,11 @@ aliases:
 
 # Browse by Tag
 
-Explore content organized by topic. Each tag below groups the posts and notebooks that share it. Click any note to open it.
+Explore content organized by topic. Each tag below groups the posts that share it. Click any note to open it.
 
 ```dataview
 TABLE rows.file.link AS Notes
-FROM "_posts" OR "_notebooks"
+FROM "_posts"
 FLATTEN tags AS tag
 GROUP BY tag
 SORT tag ASC

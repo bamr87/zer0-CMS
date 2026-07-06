@@ -137,33 +137,6 @@ permalink: /notes/note-name/
 ---
 ```
 
-### Notebooks (`layout: notebook`)
-
-```yaml
----
-title: "Jupyter Notebook Title"
-description: "Notebook description"
-layout: notebook
-collection: notebooks
-date: 2026-01-31T10:00:00.000Z
-lastmod: 2026-01-31T10:00:00.000Z
-categories: [Notebooks, Data Science]
-tags: [python, pandas, jupyter]
-author: "Author Name"
-
-# Notebook-specific
-jupyter_metadata: true        # Show kernel info
-difficulty: intermediate
-
-# Engagement
-comments: true
-share: true
-related: true
-
-permalink: /notebooks/notebook-name/
----
-```
-
 ### Landing Pages (`layout: landing`)
 
 ```yaml
@@ -178,7 +151,7 @@ hero:
   title: "Hero Title"
   subtitle: "Hero subtitle text"
   cta_text: "Get Started"
-  cta_url: /quickstart/
+  cta_url: /docs/
   background: /assets/images/hero-bg.jpg
 
 # Features section

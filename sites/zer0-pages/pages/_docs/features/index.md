@@ -35,7 +35,7 @@ matter, a `_config.yml` setting, or "always on" (built into the theme).
 |---------|-------------|--------|
 | [Mermaid Diagrams](mermaid-diagrams/) | Flowcharts, sequence/class diagrams from text | `mermaid: true` |
 | [MathJax Math](mathjax-math/) | LaTeX-style equations, rendered in the browser | `mathjax: true` |
-| [Jupyter Notebooks](jupyter-notebooks/) | Publish `.ipynb` notebooks as pages | drop into `pages/_notebooks/` |
+| [Jupyter Notebooks](jupyter-notebooks/) | Publish `.ipynb` notebooks as pages | add a `notebooks` collection |
 | [Code Copy Button](code-copy/) | One-click copy on every code block | always on |
 | [AI Preview Images](preview-image-generator/) | Auto-generate social/OG images for posts | `_config.yml` |
 

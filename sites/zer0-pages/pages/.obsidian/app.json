@@ -8,6 +8,10 @@
     "_notes/_templates/",
     ".raw/",
     ".backups/",
-    "CLAUDE.md"
+    "CLAUDE.md",
+    "_layouts/",
+    "_includes/",
+    "_plugins/",
+    "assets/"
   ]
 }

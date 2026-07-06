@@ -139,5 +139,4 @@ export function initNavigation() {
 ## See also
 
 - [[_docs/customization/navigation|Navigation]]
-- [[JavaScript]]
 - [[_docs/features/index|Features]]

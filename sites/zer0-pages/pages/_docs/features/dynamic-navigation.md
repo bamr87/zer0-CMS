@@ -55,11 +55,11 @@ graph TD
 ### Navbar Logic (simplified)
 
 ```liquid
-{% raw %}{% if site.data.navigation.main %}
+{% if site.data.navigation.main %}
   {% include navigation/nav_list.html nav=site.data.navigation.main %}
 {% else %}
   {% include navigation/menu-collections.html %}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Configuring Static Navigation
@@ -85,9 +85,9 @@ Collections prefixed with `_` in the site config can be hidden by setting
 `menu-collections.html`:
 
 ```liquid
-{% raw %}{% unless collection.label == "notes" or collection.label == "quickstart" %}
+{% unless collection.label == "notes" or collection.label == "quickstart" %}
   ...
-{% endunless %}{% endraw %}
+{% endunless %}
 ```
 
 ## Sidebar Navigation

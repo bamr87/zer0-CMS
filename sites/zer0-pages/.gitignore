@@ -8,3 +8,11 @@
 
 # System
 .DS_Store
+
+_site/
+# Jekyll build output & cache
+/_site/
+pages/.jekyll-cache/
+
+# Playwright MCP artifacts
+.playwright-mcp/

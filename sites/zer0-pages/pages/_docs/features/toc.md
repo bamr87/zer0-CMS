@@ -42,7 +42,7 @@ The **On this page** panel on the right is the table of contents, built from the
 ### Include Template
 
 ```liquid
-{% raw %}{% include content/toc.html %}{% endraw %}
+{% include content/toc.html %}
 ```
 
 ### TOC Generation
@@ -50,16 +50,16 @@ The **On this page** panel on the right is the table of contents, built from the
 The `toc.html` include uses Kramdown's built-in TOC:
 
 ```liquid
-{% raw %}<nav id="TableOfContents" class="toc">
+<nav id="TableOfContents" class="toc">
   <h2 class="toc-title">On This Page</h2>
   {{ content | toc_only }}
-</nav>{% endraw %}
+</nav>
 ```
 
 Or manual extraction:
 
 ```liquid
-{% raw %}<nav id="TableOfContents">
+<nav id="TableOfContents">
   <ul class="toc-list">
     {% for heading in page.content | split: '<h' %}
       {% if heading contains 'id="' %}
@@ -72,7 +72,7 @@ Or manual extraction:
       {% endif %}
     {% endfor %}
   </ul>
-</nav>{% endraw %}
+</nav>
 ```
 
 ## Configuration
@@ -234,7 +234,7 @@ TOC appears in right sidebar:
 
 ```html
 <aside class="d-none d-lg-block">
-  {% raw %}{% include content/toc.html %}{% endraw %}
+  {% include content/toc.html %}
 </aside>
 ```
 
@@ -244,7 +244,7 @@ TOC in offcanvas (see [[_docs/features/mobile-toc|Mobile TOC]]):
 
 ```html
 <div class="offcanvas offcanvas-end d-lg-none" id="tocSidebar">
-  {% raw %}{% include content/toc.html %}{% endraw %}
+  {% include content/toc.html %}
 </div>
 ```
 

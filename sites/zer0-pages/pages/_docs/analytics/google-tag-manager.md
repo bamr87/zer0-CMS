@@ -64,7 +64,7 @@ The theme automatically includes GTM when configured.
 
 ```html
 <!-- _includes/analytics/google-tag-manager-head.html -->
-{% raw %}{% if jekyll.environment == 'production' and site.google_tag_manager.container_id %}
+{% if jekyll.environment == 'production' and site.google_tag_manager.container_id %}
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -72,29 +72,29 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','{{ site.google_tag_manager.container_id }}');</script>
 <!-- End Google Tag Manager -->
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Body Noscript
 
 ```html
 <!-- _includes/analytics/google-tag-manager-body.html -->
-{% raw %}{% if jekyll.environment == 'production' and site.google_tag_manager.container_id %}
+{% if jekyll.environment == 'production' and site.google_tag_manager.container_id %}
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ site.google_tag_manager.container_id }}"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Layout Integration
 
 ```html
 <head>
-  {% raw %}{% include analytics/google-tag-manager-head.html %}{% endraw %}
+  {% include analytics/google-tag-manager-head.html %}
 </head>
 <body>
-  {% raw %}{% include analytics/google-tag-manager-body.html %}{% endraw %}
+  {% include analytics/google-tag-manager-body.html %}
   <!-- content -->
 </body>
 ```

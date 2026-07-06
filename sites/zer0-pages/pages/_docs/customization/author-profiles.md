@@ -27,14 +27,10 @@ aliases:
 ---
 
 The theme ships a single, layered author system so every collection — posts,
-docs, notes, notebooks, quickstart, about, and any you add — presents authors
-consistently: a linked byline with an avatar, an "About the Author" bio card,
-and an **interactive** per-author profile page that aggregates everything
-they've written, with filter / search / sort controls.
-
-> **Want to contribute?** The [[_about/authors/guest|Guest author page]]
-> is a hands-on guide to writing your first article and earning your own author
-> profile — the workflow, front matter, and review process in one place.
+docs, notes, and any you add — presents authors consistently: a linked byline
+with an avatar, an "About the Author" bio card, and an **interactive**
+per-author profile page that aggregates everything they've written, with
+filter / search / sort controls.
 
 ## 1. Define authors in `_data/authors.yml`
 
@@ -116,16 +112,13 @@ These pages are created two ways:
 1. **Automatically** by `_plugins/author_pages_generator.rb` during a normal
    `jekyll build`. Opt a single author out with `profile: false`, or disable the
    generator entirely with `authors: { generate_pages: false }` in `_config.yml`.
-2. **As committed pages** in `pages/_about/authors/` (part of the `about`
-   collection; each carries an explicit `/authors/:key/` permalink). GitHub
-   Pages' classic builder runs in *safe mode* and does not load custom plugins,
-   so the pages for this site's authors are committed (just front matter —
-   `layout: author` and `author_key`) the same way `search.json` and the sitemap
-   are. The generator detects existing pages **and collection documents** and
-   skips them, so there are no duplicates.
+2. **As committed stub pages** with an explicit `/authors/:key/` permalink —
+   useful on GitHub Pages' classic builder, which runs in *safe mode* and does
+   not load custom plugins. The generator detects existing pages **and
+   collection documents** and skips them, so there are no duplicates. (This
+   site builds with custom plugins enabled and relies on the generator.)
 
-To add a profile for a new author on a safe-mode site, copy an existing stub
-into `pages/_about/authors/<key>.md`:
+To add a profile for a new author on a safe-mode site, commit a stub page:
 
 ```yaml
 ---

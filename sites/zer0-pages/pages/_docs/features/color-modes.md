@@ -26,7 +26,7 @@ aliases:
 
 The Zer0-Mistakes theme includes a color mode switcher supporting light, dark, and automatic system preference detection.
 
-The **Theme Preview** page (`/about/settings/theme-preview/`) is a live style guide for trying color modes and the nine skins against real Bootstrap components — typography, buttons, alerts, cards, forms, and more:
+The theme's demo site ships a **Theme Preview** page (not included in this slimmed site) — a live style guide for trying color modes and the nine skins against real Bootstrap components — typography, buttons, alerts, cards, forms, and more:
 
 ![Theme Preview page: a Mode toggle and a Skin selector (Air, Aqua, Dirt, Neon, Mint, Plum, Sunrise) above live component samples, with the current state shown as "Active: air, Mode: auto (light)"](/assets/images/docs/features/theme-preview.png)
 

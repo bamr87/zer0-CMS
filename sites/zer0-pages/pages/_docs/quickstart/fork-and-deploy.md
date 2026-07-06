@@ -139,5 +139,5 @@ custom domains and the GitHub Actions alternative.
 
 - Customize colors and layout with the
   [[_docs/getting-started/theme-guide|Theme Guide]].
-- Follow the [[_quickstart/index|step-by-step Quick Start series]] for machine and
+- See the [[_docs/getting-started/index|Getting Started overview]] for machine and
   Jekyll setup details.

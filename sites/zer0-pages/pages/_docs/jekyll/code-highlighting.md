@@ -147,7 +147,7 @@ Popular themes:
 ## Best Practices
 
 1. **Always specify language** — enables proper highlighting
-2. **Use fenced code blocks** — more readable than `{% raw %}{% highlight %}{% endraw %}` tags
+2. **Use fenced code blocks** — more readable than `{% highlight %}` tags
 3. **Keep code readable** — break long lines when possible
 4. **Match your theme** — choose highlighting that complements your site design
 

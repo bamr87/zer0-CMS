@@ -1,0 +1,31 @@
+# Local development server (Docker-first, per PRD §6.1).
+#
+#   docker compose up          # first run installs gems into a named volume
+#   open http://localhost:4000/zer0-pages/
+#
+# The site is served under /zer0-pages (same baseurl as production on
+# GitHub Pages) so links behave identically in both environments.
+# --force_polling is required because macOS file events don't propagate
+# into Linux bind mounts.
+services:
+  site:
+    image: ruby:3.3
+    working_dir: /srv/zer0-pages
+    command:
+      - bash
+      - -c
+      - >-
+        bundle install &&
+        bundle exec jekyll serve --host 0.0.0.0 --port 4000
+        --livereload --livereload-port 35729 --force_polling --trace
+    ports:
+      - "4000:4000"
+      - "35729:35729"
+    volumes:
+      - .:/srv/zer0-pages
+      - bundle-cache:/usr/local/bundle
+    environment:
+      JEKYLL_ENV: development
+
+volumes:
+  bundle-cache:

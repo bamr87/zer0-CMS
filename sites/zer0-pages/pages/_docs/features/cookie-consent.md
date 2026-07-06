@@ -268,7 +268,6 @@ categories:
 ## Related
 
 - [[_docs/features/posthog-analytics|PostHog Analytics]]
-- [[privacy-policy|Privacy Policy]]
 - [[_docs/analytics/google-analytics|Google Analytics]]
 
 ## See also

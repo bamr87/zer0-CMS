@@ -63,7 +63,7 @@ keyboard focus:
 ```html
 <!-- _layouts/root.html -->
 <div id="main-content">
-  {% raw %}{{ content }}{% endraw %}
+  {{ content }}
 </div>
 ```
 

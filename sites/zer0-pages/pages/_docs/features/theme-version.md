@@ -98,14 +98,14 @@ end
 The plugin exposes `site.theme_specs` (an array), not a single `site.theme_version` string. Pull the version for a named theme like this:
 
 ```liquid
-{% raw %}<!-- Display the version for this theme -->
+<!-- Display the version for this theme -->
 <span>v{{ site.theme_specs | where: "name", "jekyll-theme-zer0" | map: "version" | first }}</span>
 
 <!-- Conditional display -->
 {% assign zer0 = site.theme_specs | where: "name", "jekyll-theme-zer0" | first %}
 {% if zer0 %}
   Version: {{ zer0.version }} ({{ zer0.type }})
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 When the site runs in development mode (`theme: "jekyll-theme-zer0"`), `version` is the installed gem version. For a `remote_theme` site it is `"latest"`.
@@ -143,8 +143,8 @@ There is no `theme_version` or `show_theme_version` config key — render the
 value yourself from `site.theme_specs`:
 
 ```liquid
-{% raw %}{% assign zer0 = site.theme_specs | where: "name", "jekyll-theme-zer0" | first %}
-{% if zer0 %}v{{ zer0.version }}{% endif %}{% endraw %}
+{% assign zer0 = site.theme_specs | where: "name", "jekyll-theme-zer0" | first %}
+{% if zer0 %}v{{ zer0.version }}{% endif %}
 ```
 
 ## Customization
@@ -152,8 +152,8 @@ value yourself from `site.theme_specs`:
 ### Version Badge
 
 ```html
-{% raw %}{% assign zer0 = site.theme_specs | where: "name", "jekyll-theme-zer0" | first %}
-<span class="badge bg-primary">v{{ zer0.version }}</span>{% endraw %}
+{% assign zer0 = site.theme_specs | where: "name", "jekyll-theme-zer0" | first %}
+<span class="badge bg-primary">v{{ zer0.version }}</span>
 ```
 
 ### With Link to the Changelog
@@ -162,10 +162,10 @@ value yourself from `site.theme_specs`:
 than a local `/CHANGELOG/` URL:
 
 ```html
-{% raw %}{% assign zer0 = site.theme_specs | where: "name", "jekyll-theme-zer0" | first %}
+{% assign zer0 = site.theme_specs | where: "name", "jekyll-theme-zer0" | first %}
 <a href="https://github.com/bamr87/zer0-mistakes/blob/main/CHANGELOG.md" class="version-link">
   v{{ zer0.version }}
-</a>{% endraw %}
+</a>
 ```
 
 ## Development vs Production

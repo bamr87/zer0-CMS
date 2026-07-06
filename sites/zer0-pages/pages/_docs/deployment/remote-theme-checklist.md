@@ -65,7 +65,7 @@ shortest path through all of them.
 
 ### 1. Add `jekyll-include-cache` to your `plugins:`
 
-`_layouts/root.html` uses `{% raw %}{% include_cached %}{% endraw %}`. Without
+`_layouts/root.html` uses `{% include_cached %}`. Without
 the plugin, the first build dies on `Unknown tag 'include_cached'`.
 
 ```yaml

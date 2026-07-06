@@ -1,9 +1,8 @@
 ---
 title: Home
+layout: home
 type: page
 ---
-
-# Welcome
 
 This is the landing page for the vault. Start at the hub: [[_moc/Home|Home MOC]].
 

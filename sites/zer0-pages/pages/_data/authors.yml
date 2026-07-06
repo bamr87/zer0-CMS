@@ -1,0 +1,54 @@
+# Authors Data File (zer0-pages)
+# ==============================
+# Author profiles referenced by frontmatter `author: <key>` and by the theme
+# gem's author includes (author-card, author-bio, author-eeat, authors layout).
+# The theme falls back to `default` when a post's author key is unknown, and
+# `site.data.authors.default` is referenced directly by author-card.html.
+#
+# Field reference: see the zer0-mistakes theme's _data/authors.yml.
+
+default:
+  name: "zer0-pages"
+  bio: "The collective voice of the zer0-pages knowledge vault."
+  tagline: "Zero friction. Infinite possibilities."
+  github: "bamr87"
+  website: "https://bamr87.github.io/zer0-pages/"
+  role: "Vault"
+
+bamr87:
+  name: "Amr"
+  display_name: "Amr Abdel (bamr87)"
+  bio: "Builder of zer0-pages — an AI-powered knowledge vault authored with claude-obsidian and rendered by Jekyll with the zer0-mistakes theme."
+  tagline: "Zero friction. Infinite possibilities."
+  email: "amr.abdel@gmail.com"
+  avatar: "https://avatars.githubusercontent.com/u/10567847?v=4"
+  github: "bamr87"
+  twitter: "bamr87"
+  website: "https://bamr87.github.io"
+  role: "Creator & Maintainer"
+  expertise:
+    - "Jekyll & GitHub Pages"
+    - "Obsidian knowledge management"
+    - "AI-assisted authoring"
+
+# ── Legacy content bylines ───────────────────────────────────────────────
+# Slim entries for author keys that existing vault content references
+# (author: cassandra / vega / guest). Kept minimal; full persona blocks live
+# in the theme repo and are not needed here.
+
+cassandra:
+  name: "Cassandra"
+  bio: "AI author persona — cautionary tales from production incidents."
+  ai: true
+  github: "bamr87"
+
+vega:
+  name: "Vega"
+  bio: "AI author persona — data-driven deep dives and visualization."
+  ai: true
+  github: "bamr87"
+
+guest:
+  name: "Guest Author"
+  bio: "Credit for one-off and community contributions."
+  github: "bamr87"

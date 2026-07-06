@@ -224,45 +224,45 @@ collections:
 ### Filtering and Sorting
 
 ```liquid
-{% raw %}{% comment %} Filter posts by category {% endcomment %}
+{% comment %} Filter posts by category {% endcomment %}
 {% assign posts = site.posts | where: "categories", "Tutorial" %}
 
 {% comment %} Sort by date, newest first {% endcomment %}
 {% assign posts = site.posts | sort: "date" | reverse %}
 
 {% comment %} Limit results {% endcomment %}
-{% assign recent = site.posts | limit: 5 %}{% endraw %}
+{% assign recent = site.posts | limit: 5 %}
 ```
 
 ### Conditionals
 
 ```liquid
-{% raw %}{% if page.layout == 'journals' %}
+{% if page.layout == 'journals' %}
   <div class="post-meta">
     <time datetime="{{ page.date | date: '%Y-%m-%d' }}">
       {{ page.date | date: '%B %d, %Y' }}
     </time>
   </div>
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Loops
 
 ```liquid
-{% raw %}{% for post in site.posts limit:10 %}
+{% for post in site.posts limit:10 %}
   <article>
     <h2><a href="{{ post.url }}">{{ post.title }}</a></h2>
     <p>{{ post.excerpt | strip_html | truncate: 150 }}</p>
   </article>
-{% endfor %}{% endraw %}
+{% endfor %}
 ```
 
 ### Safe Defaults
 
 ```liquid
-{% raw %}{{ page.title | default: "Untitled" }}
+{{ page.title | default: "Untitled" }}
 {{ page.description | default: site.description }}
-{{ page.author | default: site.author.name }}{% endraw %}
+{{ page.author | default: site.author.name }}
 ```
 
 ---
@@ -305,8 +305,8 @@ def hello_world():
 Use the `link` tag for validated internal links:
 
 ```liquid
-{% raw %}[View Documentation]({% link pages/_docs/getting-started.md %})
-[Read Post]({% link pages/_posts/2026-01-24-my-post.md %}){% endraw %}
+[View Documentation]({% link pages/_docs/getting-started.md %})
+[Read Post]({% link pages/_posts/2026-01-24-my-post.md %})
 ```
 
 **Benefits:**
@@ -325,8 +325,8 @@ Open in new tab with `target="_blank"`:
 ### Relative URLs
 
 ```liquid
-{% raw %}<a href="{{ '/about/' | relative_url }}">About</a>
-<img src="{{ '/assets/images/logo.png' | relative_url }}" alt="Logo">{% endraw %}
+<a href="{{ '/about/' | relative_url }}">About</a>
+<img src="{{ '/assets/images/logo.png' | relative_url }}" alt="Logo">
 ```
 
 ---
@@ -341,14 +341,14 @@ Create custom layouts in `_layouts/`:
 ---
 layout: default
 ---
-{% raw %}<article class="custom-layout">
+<article class="custom-layout">
   <header>
     <h1>{{ page.title }}</h1>
   </header>
   <div class="content">
     {{ content }}
   </div>
-</article>{% endraw %}
+</article>
 ```
 
 ### Includes
@@ -356,16 +356,16 @@ layout: default
 Create reusable components in `_includes/`:
 
 ```html
-{% raw %}<!-- _includes/components/alert.html -->
+<!-- _includes/components/alert.html -->
 <div class="alert alert-{{ include.type | default: 'info' }}">
   {{ include.message }}
-</div>{% endraw %}
+</div>
 ```
 
 **Usage:**
 
 ```liquid
-{% raw %}{% include components/alert.html type="warning" message="Important notice!" %}{% endraw %}
+{% include components/alert.html type="warning" message="Important notice!" %}
 ```
 
 ### Styling

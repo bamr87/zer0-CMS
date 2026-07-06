@@ -1,0 +1,197 @@
+# zer0-pages — Jekyll configuration
+# The Obsidian vault at pages/ IS the Jekyll source. Obsidian constructs
+# (wikilinks, Dataview, callouts) are converted at build time by the bridge
+# plugins in pages/_plugins/. Content is never rendered with Liquid
+# (render_with_liquid: false default below) because many docs TEACH Liquid.
+#
+# Layouts/includes/assets come from the jekyll-theme-zer0 gem (the
+# zer0-mistakes theme). Jekyll does NOT load _data from theme gems, so all
+# theme data (navigation, ui-text, authors, ...) lives in pages/_data/.
+
+site_configured: true          # tells the theme this site has been personalised
+
+title: zer0-pages
+title_icon: "robot"            # Bootstrap Icons name shown next to the title
+subtitle: "knowledge vault"
+title_separator: "|"           # appears in the browser tab name
+tagline: "Zero friction. Infinite possibilities."
+description: "AI-powered knowledge vault, authored by claude-obsidian, rendered by Jekyll."
+url: "https://bamr87.github.io"
+baseurl: "/zer0-pages"
+locale: "en-US"                # ui-text.yml lookup key (site.data.ui-text[site.locale])
+
+# GitHub identity — admin-nav.html resolves {github_user}/{repository_name}
+# placeholders in external links; jekyll-seo-tag reads `repository`.
+github_user: bamr87
+repository_name: zer0-pages
+repository: bamr87/zer0-pages
+
+theme: jekyll-theme-zer0
+
+source: pages
+destination: _site
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+permalink: pretty
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+  # include_cached is used by the theme's root layout and footer includes.
+  - jekyll-include-cache
+
+## Identity ####################################################################
+
+logo: /assets/images/gravatar-small.png   # navbar branding image
+teaser: /assets/images/favicon_gpt_computer_retro.png   # fallback card/og image
+info_banner: /assets/images/info-banner-mountain-wizard.png   # intro hero fallback
+
+author:
+  name: Amr
+  github_username: bamr87
+  email: amr.abdel@gmail.com
+  bio: "Builder of zer0-pages — an AI-powered knowledge vault."
+  avatar: /assets/images/gravatar-small.png
+
+links:
+  - label: "GitHub"
+    icon: "bi-github"
+    url: "https://github.com/bamr87/zer0-pages"
+  - label: "Portfolio"
+    icon: "bi-link"
+    url: "https://bamr87.github.io/"
+
+powered_by:
+  - name: "Ruby"
+    version: "3.3"
+    url: "https://www.ruby-lang.org/"
+    icon: "bi-gem"
+  - name: "Jekyll"
+    version: "4.3"
+    url: "https://jekyllrb.com/"
+    icon: "bi-joystick"
+  - name: "claude-obsidian"
+    url: "https://github.com/bamr87/claude-obsidian"
+    icon: "bi-robot"
+
+## Theme behaviour #############################################################
+
+navigation:
+  unified_mobile_drawer: false
+
+# Left sidebar defaults — pages override via `sidebar:` frontmatter
+# (most vault docs set `sidebar: nav: docs` → pages/_data/navigation/docs.yml).
+sidebar:
+  title: "Browse"
+  icon: "bi-journal-bookmark"
+
+# Obsidian graph UI — js-cdn.html + graph includes in the theme gem read this
+# flag to load vendored cytoscape and /assets/data/wiki-index.json.
+obsidian:
+  enabled: true
+
+breadcrumbs: true
+words_per_minute: 200
+default_icon: "bi"             # Bootstrap Icons https://icons.getbootstrap.com/
+level: 'n00b'
+theme_skin: "air"              # see pages/_data/theme_skins.yml
+color_mode_default: auto       # dark | light | auto (follow OS preference)
+appearance_panel: true
+
+# Custom-CSS hook: the theme's head.html loads /assets/css/user-overrides.css
+# LAST (after main.css + inline tokens). Bridge-specific styles live there.
+user_overrides: true
+
+## Analytics / telemetry — all OFF #############################################
+
+google_analytics: null
+posthog:
+  enabled: false
+ai_chat:
+  enabled: false
+preview_images:
+  enabled: false
+content_statistics:
+  auto_generate: false         # pages/_data/content_statistics.yml stays a stub
+nanobar:
+  enabled: true                # page-load progress bar (no tracking; harmless)
+
+## Collections #################################################################
+
+# Collections live directly under pages/ (default collections_dir).
+# Frontmatter `permalink:` in individual files always wins over these patterns.
+collections:
+  docs:
+    output: true
+    permalink: "/docs/:path/"
+  notes:
+    output: true
+    permalink: "/notes/:path/"
+  moc:
+    output: true
+    permalink: "/moc/:path/"
+
+defaults:
+  # Everything: never run Liquid over content; fall back to the theme's base
+  # layout. Layout names resolve into the jekyll-theme-zer0 gem except the
+  # two local wrappers (post/tutorial) in pages/_layouts/.
+  - scope:
+      path: ""
+    values:
+      render_with_liquid: false
+      layout: default
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: article
+  - scope:
+      path: ""
+      type: docs
+    values:
+      layout: default
+  - scope:
+      path: ""
+      type: notes
+    values:
+      layout: note
+  - scope:
+      path: ""
+      type: moc
+    values:
+      layout: default
+  - scope:
+      path: "wiki"
+    values:
+      layout: default
+  # jekyll-sitemap/jekyll-feed synthesise these pages from Liquid templates;
+  # they must escape the global render_with_liquid: false or they ship raw
+  # Liquid. Higher-specificity path scopes placed AFTER the catch-all win.
+  - scope:
+      path: "sitemap.xml"
+    values:
+      render_with_liquid: true
+  - scope:
+      path: "feed.xml"
+    values:
+      render_with_liquid: true
+  - scope:
+      path: "robots.txt"
+    values:
+      render_with_liquid: true
+
+# _templates/ and .raw/ must never publish. .obsidian/ is a dotdir and is
+# auto-ignored by Jekyll.
+exclude:
+  - CLAUDE.md
+  - _templates
+  - _notes/_templates
+  - .raw
+  - vendor
+  - Gemfile
+  - Gemfile.lock

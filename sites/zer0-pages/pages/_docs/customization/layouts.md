@@ -130,7 +130,7 @@ To customize a theme layout:
 Show content based on layout or page variables:
 
 ```html
-{% raw %}{% if page.layout == 'journals' %}
+{% if page.layout == 'journals' %}
   <div class="post-meta">
     <time>{{ page.date | date: "%B %d, %Y" }}</time>
     <span class="author">{{ page.author }}</span>
@@ -139,7 +139,7 @@ Show content based on layout or page variables:
 
 {% if page.sidebar %}
   {% include navigation/sidebar.html %}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Including Components
@@ -147,10 +147,10 @@ Show content based on layout or page variables:
 Use includes for reusable parts:
 
 ```html
-{% raw %}{% include core/head.html %}
+{% include core/head.html %}
 {% include navigation/header.html %}
 {% include content/toc.html %}
-{% include core/footer.html %}{% endraw %}
+{% include core/footer.html %}
 ```
 
 ## Best Practices

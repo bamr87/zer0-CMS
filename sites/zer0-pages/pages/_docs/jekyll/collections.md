@@ -1,7 +1,7 @@
 ---
 lastmod: 2026-06-14T00:00:00.000Z
 title: Jekyll Collections
-description: Organized content collections for posts, docs, notebooks, and other content types with custom permalinks.
+description: Organized content collections for posts, docs, and notes with custom permalinks.
 preview: /images/previews/jekyll-collections.png
 layout: default
 categories:
@@ -30,11 +30,10 @@ The Zer0-Mistakes theme uses Jekyll collections to organize different content ty
 
 | Collection | Location | Permalink | Layout |
 |------------|----------|-----------|--------|
-| `posts` | `pages/_posts/` | `/posts/:year/:month/:day/:title/` | `journals` |
+| `posts` | `pages/_posts/` | pretty post permalinks (built-in collection) | `article` |
 | `docs` | `pages/_docs/` | `/docs/:path/` | `default` |
-| `notebooks` | `pages/_notebooks/` | `/notebooks/:basename/` | `notebook` |
-| `about` | `pages/_about/` | `/about/:title/` | `default` |
-| `quickstart` | `pages/_quickstart/` | `/quickstart/:title/` | `default` |
+| `notes` | `pages/_notes/` | `/notes/:path/` | `note` |
+| `moc` | `pages/_moc/` | `/moc/:path/` | `default` |
 
 ## Configuration
 
@@ -43,22 +42,18 @@ The Zer0-Mistakes theme uses Jekyll collections to organize different content ty
 ```yaml
 # _config.yml
 collections:
-  posts:
-    output: true
-    permalink: /posts/:year/:month/:day/:title/
   docs:
     output: true
     permalink: /docs/:path/
-  notebooks:
+  notes:
     output: true
-    permalink: /notebooks/:basename/
-  about:
+    permalink: /notes/:path/
+  moc:
     output: true
-    permalink: /about/:title/
-  quickstart:
-    output: true
-    permalink: /quickstart/:title/
+    permalink: /moc/:path/
 ```
+
+`posts` is Jekyll's built-in collection and needs no entry here.
 
 ### Collection Defaults
 
@@ -67,29 +62,24 @@ collections:
 defaults:
   # Posts
   - scope:
-      path: "pages/_posts"
+      path: ""
       type: posts
     values:
       layout: article
-      author: default
-      
+
   # Documentation
   - scope:
-      path: "pages/_docs"
+      path: ""
       type: docs
     values:
       layout: default
-      sidebar:
-        nav: docs
-        
-  # Notebooks
+
+  # Notes
   - scope:
-      path: "pages/_notebooks"
-      type: notebooks
+      path: ""
+      type: notes
     values:
-      layout: notebook
-      mathjax: true
-      toc: true
+      layout: note
 ```
 
 ## Creating Content
@@ -128,26 +118,24 @@ estimated_reading_time: 10 minutes
 Documentation content...
 ```
 
-### Notebooks
+### Notes
 
-Create in `pages/_notebooks/`:
+Create in `pages/_notes/`:
 
 ```yaml
 ---
-title: "Data Analysis Example"
-description: "Jupyter notebook demonstrating data analysis"
-kernel: python3
+title: "Git Commands Cheatsheet"
+description: "Quick reference for everyday git"
+type: note
 ---
 ```
-
-Or use `.ipynb` files with conversion script.
 
 ## Accessing Collections
 
 ### In Templates
 
 ```liquid
-{% raw %}<!-- Loop through all docs -->
+<!-- Loop through all docs -->
 {% for doc in site.docs %}
   <a href="{{ doc.url }}">{{ doc.title }}</a>
 {% endfor %}
@@ -156,15 +144,15 @@ Or use `.ipynb` files with conversion script.
 {% assign tutorials = site.docs | where: "category", "tutorials" %}
 
 <!-- Sort by date -->
-{% assign recent = site.posts | sort: "date" | reverse %}{% endraw %}
+{% assign recent = site.posts | sort: "date" | reverse %}
 ```
 
 ### Collection Properties
 
 ```liquid
-{% raw %}{{ site.docs.size }}         <!-- Number of docs -->
+{{ site.docs.size }}         <!-- Number of docs -->
 {{ site.docs.first.title }}  <!-- First doc title -->
-{{ site.posts.last.date }}   <!-- Last post date -->{% endraw %}
+{{ site.posts.last.date }}   <!-- Last post date -->
 ```
 
 ## Custom Collections
@@ -235,12 +223,10 @@ pages/_posts/
 ### By Topic
 
 ```text
-pages/_notebooks/
-├── data-science/
-│   ├── pandas-basics.ipynb
-│   └── visualization.ipynb
-└── machine-learning/
-    └── classification.ipynb
+pages/_notes/
+├── git-commands.md
+├── docker-commands.md
+└── jekyll-front-matter.md
 ```
 
 ## Permalinks
@@ -294,7 +280,7 @@ Welcome to the documentation...
 ### Collection Layout
 
 ```html
-{% raw %}<!-- _layouts/collection.html -->
+<!-- _layouts/collection.html -->
 ---
 layout: default
 ---
@@ -307,7 +293,7 @@ layout: default
     <h2><a href="{{ item.url }}">{{ item.title }}</a></h2>
     <p>{{ item.description }}</p>
   </article>
-{% endfor %}{% endraw %}
+{% endfor %}
 ```
 
 ## Best Practices

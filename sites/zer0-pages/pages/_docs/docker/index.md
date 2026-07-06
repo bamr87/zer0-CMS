@@ -15,7 +15,6 @@ estimated_reading_time: 5 minutes
 prerequisites:
     - Docker Desktop
 lastmod: 2026-06-14T00:00:00.000Z
-lastmod: 2026-06-14T00:00:00.000Z
 sidebar:
     nav: docs
 type: doc

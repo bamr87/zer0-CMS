@@ -110,7 +110,7 @@ author: "Different Author"
 ### SEO Include
 
 ```liquid
-{% raw %}<!-- _includes/content/seo.html -->
+<!-- _includes/content/seo.html -->
 {% assign seo_url = site.url | append: site.baseurl %}
 {% assign seo_title = page.title | default: site.title %}
 {% assign seo_description = page.description | default: site.description %}
@@ -130,15 +130,15 @@ author: "Different Author"
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ seo_title }}">
-<meta name="twitter:description" content="{{ seo_description }}">{% endraw %}
+<meta name="twitter:description" content="{{ seo_description }}">
 ```
 
 ### Loading in Head
 
 ```html
-{% raw %}<head>
+<head>
   {% include content/seo.html %}
-</head>{% endraw %}
+</head>
 ```
 
 ## Preview Images
@@ -168,7 +168,7 @@ image: "/assets/images/my-post-preview.png"
 ### Article Schema
 
 ```html
-{% raw %}<script type="application/ld+json">
+<script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Article",
@@ -186,13 +186,13 @@ image: "/assets/images/my-post-preview.png"
     "name": "{{ site.title }}"
   }
 }
-</script>{% endraw %}
+</script>
 ```
 
 ### Website Schema
 
 ```html
-{% raw %}<script type="application/ld+json">
+<script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -204,7 +204,7 @@ image: "/assets/images/my-post-preview.png"
     "query-input": "required name=search_term_string"
   }
 }
-</script>{% endraw %}
+</script>
 ```
 
 ## Best Practices

@@ -19,7 +19,6 @@ estimated_reading_time: 10 minutes
 prerequisites:
     - Ruby installed
 lastmod: 2026-06-14T00:00:00.000Z
-lastmod: 2025-12-20T22:15:46.034Z
 type: doc
 aliases:
   - /docs/ruby-101/

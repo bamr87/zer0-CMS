@@ -74,7 +74,7 @@ Jekyll generates `search.json`:
 ### Index Template
 
 ```liquid
-{% raw %}---
+---
 layout: null
 ---
 [
@@ -89,7 +89,7 @@ layout: null
     }{% unless forloop.last %},{% endunless %}
     {% endif %}
   {% endfor %}
-]{% endraw %}
+]
 ```
 
 ## Modal UI
@@ -209,9 +209,9 @@ search: false
 ```
 
 ```liquid
-{% raw %}{% unless page.search == false %}
+{% unless page.search == false %}
   // Include in index
-{% endunless %}{% endraw %}
+{% endunless %}
 ```
 
 ### Index Fields
@@ -219,7 +219,7 @@ search: false
 Control what's indexed:
 
 ```liquid
-{% raw %}"content": {{ page.content | strip_html | truncate: 1000 | jsonify }}{% endraw %}
+"content": {{ page.content | strip_html | truncate: 1000 | jsonify }}
 ```
 
 ## Styling

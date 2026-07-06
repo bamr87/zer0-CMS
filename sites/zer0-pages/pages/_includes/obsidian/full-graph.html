@@ -1,0 +1,179 @@
+{% comment %}
+  Local override of the theme's _includes/obsidian/full-graph.html
+  (jekyll-theme-zer0). Trimmed for zer0-pages:
+    - dropped the theme's H1/intro (the graph page supplies its own) and the
+      trailing "See also" wikilink list (those targets only exist in the
+      theme's own site);
+    - "How it's built" now credits the local bridge generator
+      (pages/_plugins/obsidian_graph_index.rb) instead of the theme's Liquid
+      template, which this site disables;
+    - legend reduced to the kept collections (posts/docs/notes/pages).
+  Toolbar, legend, tips, and the script-loading logic are the theme's.
+{% endcomment %}
+<style>
+  /* Scoped to the graph page so we don't leak into other docs. */
+  #obsidian-graph {
+    width: 100%;
+    height: 82vh;
+    min-height: 620px;
+    border: 1px solid rgba(var(--bs-border-color-rgb, 222, 226, 230), 0.55);
+    border-radius: var(--bs-border-radius-lg, .5rem);
+    background: rgba(var(--bs-body-bg-rgb, 255, 255, 255), 0.45);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, .03),
+      0 8px 24px rgba(0, 0, 0, .06),
+      inset 0 1px 0 rgba(255, 255, 255, .04);
+    position: relative;
+    overflow: hidden;
+  }
+  [data-bs-theme="dark"] #obsidian-graph {
+    background: rgba(var(--bs-body-bg-rgb, 33, 37, 41), 0.38);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, .12),
+      0 8px 28px rgba(0, 0, 0, .22),
+      inset 0 1px 0 rgba(255, 255, 255, .03);
+  }
+  #obsidian-graph-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .375rem;
+  }
+  #obsidian-graph-stats .badge {
+    font-size: .8125rem;
+    font-weight: 500;
+    padding: .35rem .6rem;
+  }
+  .obsidian-graph-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem .75rem;
+    align-items: center;
+    margin: .75rem 0;
+    padding: .625rem .75rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: var(--bs-border-radius, .375rem);
+  }
+  .obsidian-graph-toolbar .form-control {
+    max-width: 280px;
+    flex: 1 1 200px;
+  }
+  .obsidian-graph-toolbar .form-check {
+    margin-bottom: 0;
+  }
+  #obsidian-graph-status {
+    flex-basis: 100%;
+    font-size: .8125rem;
+    color: var(--bs-secondary-color, #6c757d);
+    min-height: 1.25rem;
+  }
+  .obsidian-graph-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .75rem;
+    font-size: .8125rem;
+  }
+  .obsidian-graph-legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .25rem .55rem;
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 999px;
+    color: var(--bs-body-color, #212529);
+  }
+  .obsidian-graph-legend .swatch {
+    display: inline-block;
+    width: .7rem;
+    height: .7rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .12);
+    opacity: 0.82;
+  }
+  .obsidian-graph-legend .swatch-broken {
+    border: 1.5px dashed #dc3545;
+    background: transparent !important;
+    box-shadow: none;
+  }
+  .obsidian-graph-tips {
+    margin-top: .75rem;
+    padding: .625rem .75rem;
+    font-size: .8125rem;
+    color: var(--bs-secondary-color, #6c757d);
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border-left: 3px solid var(--bs-primary, #0d6efd);
+    border-radius: .25rem;
+  }
+  .obsidian-graph-tips strong {
+    color: var(--bs-body-color, #212529);
+  }
+</style>
+
+<div id="obsidian-graph-stats" class="mb-2" aria-live="polite"></div>
+
+<div class="obsidian-graph-toolbar">
+  <input type="search"
+         class="form-control form-control-sm"
+         id="obsidian-graph-search"
+         placeholder="Filter nodes by title…"
+         aria-label="Filter graph nodes by title" />
+  <button type="button"
+          class="btn btn-outline-secondary btn-sm"
+          id="obsidian-graph-fit">
+    <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+    Reset view
+  </button>
+  <div class="form-check form-switch">
+    <input class="form-check-input"
+           type="checkbox"
+           role="switch"
+           id="obsidian-graph-orphans" />
+    <label class="form-check-label" for="obsidian-graph-orphans">
+      Show orphans
+    </label>
+  </div>
+  <span id="obsidian-graph-status" role="status"></span>
+</div>
+
+<div id="obsidian-graph" role="group" aria-label="Site knowledge graph"></div>
+
+<div class="obsidian-graph-legend" aria-label="Graph legend">
+  <span><span class="swatch" style="background:#0d6efd"></span>Posts</span>
+  <span><span class="swatch" style="background:#198754"></span>Docs</span>
+  <span><span class="swatch" style="background:#6f42c1"></span>Notes</span>
+  <span><span class="swatch" style="background:#6c757d"></span>Pages</span>
+  <span><span class="swatch swatch-broken"></span>Broken links</span>
+</div>
+
+<div class="obsidian-graph-tips">
+  <strong>Tips:</strong> click a node to open the page · ⌘/Ctrl-click to
+  open in a new tab · drag to reposition · scroll to zoom · hover to
+  highlight a node's neighborhood · type in the search box to filter.
+</div>
+
+## How it's built
+
+| Piece | File |
+| --- | --- |
+| Build-time index (nodes + outgoing edges) | [`assets/data/wiki-index.json`]({{ "/assets/data/wiki-index.json" | relative_url }}), generated by `pages/_plugins/obsidian_graph_index.rb` from the same fence-masked wikilink parser the bridge uses |
+| Renderer | `assets/js/obsidian-graph.js` (jekyll-theme-zer0 gem) |
+| Layout engine | [cytoscape.js](https://js.cytoscape.org/) (vendored in the theme gem under `assets/vendor/`, loaded only on this page) |
+
+Outgoing edges come from the same `[[…]]` syntax the bridge resolves —
+unresolved targets show up as dashed red nodes so you can find dangling
+links at a glance. The graph is regenerated every Jekyll build; nothing
+runs client-side except cytoscape's force layout.
+
+<!-- Cytoscape.js is vendored (no runtime CDN) and lazy-loaded by
+     obsidian-graph.js from window.OBSIDIAN_CONFIG.cytoscapeUrl, only on this
+     page, with an in-page recovery message if the fetch fails. -->
+{% if site.obsidian.enabled != false %}
+<!-- obsidian-graph.js falls back to <base>/assets/data/wiki-index.json, which
+     misses the project baseurl — pin the index URL explicitly. -->
+<script>window.OBSIDIAN_WIKI_INDEX_URL = {{ '/assets/data/wiki-index.json' | relative_url | jsonify }};</script>
+<script src="{{ '/assets/js/obsidian-graph.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
+{% endif %}

@@ -91,6 +91,8 @@ so renames don't break inbound links.
   to see exactly which Obsidian features render on the site.
 - Learn the [[_docs/obsidian/authoring-workflow|authoring workflow]]
   for the round-trip from Obsidian to published page.
+- Open the [[_docs/obsidian/graph|graph view]] to see how the vault's
+  docs, posts, and notes connect — dangling links show up as red nodes.
 - If something looks off, jump to
   [[_docs/obsidian/troubleshooting]].
 

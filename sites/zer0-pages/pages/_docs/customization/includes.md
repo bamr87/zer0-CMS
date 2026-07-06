@@ -45,21 +45,21 @@ _includes/
 ### Basic Usage
 
 ```liquid
-{% raw %}{% include navigation/navbar.html %}{% endraw %}
+{% include navigation/navbar.html %}
 ```
 
 ### With Parameters
 
 ```liquid
-{% raw %}{% include components/post-card.html post=post %}{% endraw %}
+{% include components/post-card.html post=post %}
 ```
 
 ### Conditional Include
 
 ```liquid
-{% raw %}{% if page.toc %}
+{% if page.toc %}
   {% include content/toc.html %}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Analytics Includes
@@ -74,7 +74,7 @@ _includes/
 ### Usage
 
 ```liquid
-{% raw %}{% include analytics/posthog.html %}{% endraw %}
+{% include analytics/posthog.html %}
 ```
 
 ## Component Includes
@@ -93,18 +93,18 @@ _includes/
 ### Post Card Example
 
 ```liquid
-{% raw %}{% for post in site.posts limit: 3 %}
+{% for post in site.posts limit: 3 %}
   {% include components/post-card.html post=post %}
-{% endfor %}{% endraw %}
+{% endfor %}
 ```
 
 ### Author Card
 
 ```liquid
-{% raw %}{% include components/author-card.html 
+{% include components/author-card.html 
    name=page.author 
    avatar="/assets/images/avatar.png" 
-%}{% endraw %}
+%}
 ```
 
 ## Content Includes
@@ -120,17 +120,17 @@ _includes/
 ### TOC Include
 
 ```liquid
-{% raw %}{% if page.toc != false %}
+{% if page.toc != false %}
   {% include content/toc.html %}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Comments Include
 
 ```liquid
-{% raw %}{% if page.comments != false and site.giscus.enabled %}
+{% if page.comments != false and site.giscus.enabled %}
   {% include content/giscus.html %}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Core Includes
@@ -145,7 +145,7 @@ _includes/
 ### Layout Usage
 
 ```html
-{% raw %}<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     {% include core/head.html %}
@@ -155,7 +155,7 @@ _includes/
     {{ content }}
     {% include core/footer.html %}
   </body>
-</html>{% endraw %}
+</html>
 ```
 
 ## Navigation Includes
@@ -184,7 +184,7 @@ sidebar:
 ```
 
 ```liquid
-{% raw %}{% include navigation/sidebar-left.html %}{% endraw %}
+{% include navigation/sidebar-left.html %}
 ```
 
 See [[_docs/features/sidebar-navigation|Sidebar Navigation]] for the full
@@ -200,7 +200,7 @@ mode and option reference.
 ### Usage
 
 ```liquid
-{% raw %}{% include landing/landing-install-cards.html %}{% endraw %}
+{% include landing/landing-install-cards.html %}
 ```
 
 ## Stats Includes
@@ -229,25 +229,25 @@ mode and option reference.
 ### With Parameters
 
 ```liquid
-{% raw %}{% include components/custom.html 
+{% include components/custom.html 
    title="My Title" 
    content="My content" 
-%}{% endraw %}
+%}
 ```
 
 ### With Default Values
 
 ```html
-{% raw %}{% assign title = include.title | default: "Default Title" %}
-<h3>{{ title }}</h3>{% endraw %}
+{% assign title = include.title | default: "Default Title" %}
+<h3>{{ title }}</h3>
 ```
 
 ### Conditional Content
 
 ```html
-{% raw %}{% if include.show_icon %}
+{% if include.show_icon %}
   <i class="bi bi-{{ include.icon }}"></i>
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Best Practices
@@ -257,23 +257,23 @@ mode and option reference.
 Add comments at the top of includes:
 
 ```html
-{% raw %}<!--
+<!--
   Include: post-card.html
   Parameters:
     - post (required): Post object
     - show_excerpt (optional): Show excerpt, default true
     - show_date (optional): Show date, default true
--->{% endraw %}
+-->
 ```
 
 ### Error Handling
 
 ```liquid
-{% raw %}{% if include.post %}
+{% if include.post %}
   <!-- render post card -->
 {% else %}
   <!-- error: post required -->
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Performance

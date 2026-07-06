@@ -11,13 +11,13 @@ aliases:
 
 # Browse by Category
 
-Explore content organized by category. Each category below lists the related articles from posts and notebooks. Click any note to open it.
+Explore content organized by category. Each category below lists the related posts. Click any note to open it.
 
 ## All Categories
 
 ```dataview
 TABLE rows.file.link AS Notes, length(rows) AS Count
-FROM "_posts" OR "_notebooks"
+FROM "_posts"
 FLATTEN categories AS category
 GROUP BY category
 SORT category ASC

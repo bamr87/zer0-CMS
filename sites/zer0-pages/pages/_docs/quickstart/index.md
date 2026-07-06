@@ -43,7 +43,6 @@ that matches how much you want to own.
 | --- | --- | --- |
 | [[_docs/quickstart/bare-minimum|Bare-Minimum Remote-Theme Starter]] | Trying the theme with the fewest files (`_config.yml`, `Gemfile`, `index.md`) | ~5 min |
 | [[_docs/quickstart/fork-and-deploy|Fork & Deploy to GitHub Pages]] | A real site you own and customize, deployed on GitHub Pages | ~15 min |
-| [[_quickstart/index|Step-by-step Quick Start series]] | Following along from machine setup through personalization | ~30 min |
 
 ## What you need first
 
@@ -54,7 +53,7 @@ All paths assume you have:
 - Optionally [Docker](https://www.docker.com/) for the recommended local development loop.
 
 If you have never built a Jekyll site before, the
-[[_quickstart/index|step-by-step Quick Start series]] walks through installing those
+[[_docs/getting-started/index|Getting Started overview]] covers installing those
 tools first.
 
 ## Two ways to consume the theme

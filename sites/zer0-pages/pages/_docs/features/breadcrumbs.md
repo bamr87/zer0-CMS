@@ -50,7 +50,7 @@ breadcrumbs: true
 ### Include Template
 
 ```liquid
-{% raw %}{% include navigation/breadcrumbs.html %}{% endraw %}
+{% include navigation/breadcrumbs.html %}
 ```
 
 ## Implementation
@@ -83,7 +83,7 @@ breadcrumbs: true
 ### Liquid Template
 
 ```liquid
-{% raw %}{% if page.url != "/" and site.breadcrumbs %}
+{% if page.url != "/" and site.breadcrumbs %}
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   <ol itemscope itemtype="https://schema.org/BreadcrumbList">
     <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
@@ -115,7 +115,7 @@ breadcrumbs: true
     {% endfor %}
   </ol>
 </nav>
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Styling
@@ -207,19 +207,19 @@ This markup enables breadcrumb display in Google search results.
 ### Posts Collection
 
 ```liquid
-{% raw %}{% if section == 'posts' %}
+{% if section == 'posts' %}
   / <a href="{{ '/posts/' | relative_url }}">Posts</a>
   / {{ page.title }}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### Docs Collection
 
 ```liquid
-{% raw %}{% elsif section == 'docs' %}
+{% elsif section == 'docs' %}
   / <a href="{{ '/docs/' | relative_url }}">Docs</a>
   / {{ page.title }}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Configuration

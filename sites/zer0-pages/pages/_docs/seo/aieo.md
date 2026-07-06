@@ -65,7 +65,7 @@ faq_items:
     answer: "Yes, MIT licensed."
 ```
 
-Add `{% raw %}{% include content/jsonld-faq.html %}{% endraw %}` to any layout or page to emit the FAQ structured data block.
+Add `{% include content/jsonld-faq.html %}` to any layout or page to emit the FAQ structured data block.
 
 ## E-E-A-T Signals
 
@@ -76,9 +76,9 @@ Google and AI crawlers reward content that demonstrates:
 - **Authoritativeness**: Backlinks, GitHub stars, version history
 - **Trustworthiness**: Privacy policy, ToS, HTTPS, contact page
 
-The theme ships standard supporting pages:
+Standard supporting pages worth shipping on a public site (the theme's demo site includes all four; this slimmed site omits them):
 
-| Page | Permalink |
+| Page | Typical permalink |
 |---|---|
 | Privacy Policy | `/privacy-policy/` |
 | Terms of Service | `/terms-of-service/` |
@@ -87,19 +87,11 @@ The theme ships standard supporting pages:
 
 ## FAQ Page
 
-```text
-pages/faq.md  →  /faq/
-```
+A FAQ page (e.g. `pages/faq.md` → `/faq/`) uses the `faq_items` frontmatter array and the `jsonld-faq.html` include to output both human-readable Q&A and machine-readable `FAQPage` JSON-LD in a single file.
 
-The FAQ page uses the `faq_items` frontmatter array and the `jsonld-faq.html` include to output both human-readable Q&A and machine-readable `FAQPage` JSON-LD in a single file.
+## Glossary Page
 
-## Glossary Collection
-
-```text
-pages/glossary.md  →  /glossary/
-```
-
-The glossary provides domain-specific definitions that help LLMs ground responses about zer0-mistakes in accurate, up-to-date vocabulary. Terms include Jekyll, Bootstrap, Liquid, Docker, Obsidian, and more.
+A glossary page (e.g. `pages/glossary.md` → `/glossary/`) provides domain-specific definitions that help LLMs ground responses in accurate, up-to-date vocabulary — terms like Jekyll, Bootstrap, Liquid, Docker, and Obsidian.
 
 ## SEO Include (`_includes/content/seo.html`)
 
@@ -137,11 +129,8 @@ schema_type: "SoftwareApplication"
 
 - [[_docs/seo/meta-tags|Meta Tags & SEO]]
 - [[_docs/seo/sitemap]]
-- [[faq|FAQ Page]]
-- [[glossary]]
 
 ## See also
 
 - [[_docs/seo/index|SEO]]
-- [[Structured Data]]
 - [[_docs/features/index|Features]]

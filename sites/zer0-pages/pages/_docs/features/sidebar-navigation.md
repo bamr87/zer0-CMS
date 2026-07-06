@@ -47,7 +47,7 @@ Key features:
 Site-wide navigation panel rendered by the default layout:
 
 ```liquid
-{% raw %}{% include navigation/sidebar-left.html %}{% endraw %}
+{% include navigation/sidebar-left.html %}
 ```
 
 The panel resolves its content through two shared includes — used by the
@@ -157,15 +157,15 @@ sidebar:
 ```
 
 Front-matter defaults remain the conventional way to assign modes per
-content path (this theme sets `nav: auto` for docs/about/quickstart and
-notes/notebooks in its own `_config.yml` `defaults:` block).
+content path (set `nav: auto` per collection in your `_config.yml`
+`defaults:` block).
 
 ### Right Sidebar (Table of Contents)
 
 Page-specific heading navigation:
 
 ```liquid
-{% raw %}{% include navigation/sidebar-right.html %}{% endraw %}
+{% include navigation/sidebar-right.html %}
 ```
 
 Features:
@@ -311,7 +311,7 @@ Bootstrap 5 offcanvas for mobile:
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
   </div>
   <div class="offcanvas-body">
-    {% raw %}{% include content/toc.html %}{% endraw %}
+    {% include content/toc.html %}
   </div>
 </div>
 ```

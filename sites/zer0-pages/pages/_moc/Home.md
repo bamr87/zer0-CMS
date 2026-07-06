@@ -9,22 +9,15 @@ This is the front door to the vault — a living map of everything inside. Start
 
 ## Collections
 
-- [[_moc/Quickstart|Quickstart]] — the fastest path from zero to running.
 - [[_moc/Docs|Docs]] — reference material, guides, and how-tos.
 - [[_moc/Posts|Posts]] — articles, essays, and dispatches.
-- [[_moc/Notebooks|Notebooks]] — runnable, exploratory notebooks.
 - [[_moc/Notes|Notes]] — shorter thoughts and working notes.
-- [[_moc/About|About]] — who and what this project is.
 
 ## Find Your Way
 
 - [[tags|Tags]] — browse everything by topic.
 - [[categories|Categories]] — browse by category.
 - [[archives|Archives]] — everything, ordered by date.
-- [[sitemap|Sitemap]] — the full lay of the land.
-- [[glossary|Glossary]] — terms and definitions.
-- [[roadmap|Roadmap]] — where things are headed.
-- [[faq|FAQ]] — answers to the common questions.
 
 ## Fresh Off the Press
 

@@ -124,7 +124,7 @@ Run the generation script:
 ### Liquid Tags
 
 ```liquid
-{% raw %}<!-- Show count of missing previews -->
+<!-- Show count of missing previews -->
 {% preview_image_status %}
 
 <!-- Get preview image path -->
@@ -133,7 +133,7 @@ Run the generation script:
 <!-- Check if page has preview -->
 {% if page | has_preview_image %}
   <img src="{{ page.preview | relative_url }}" alt="Preview">
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ### In Front Matter
@@ -249,7 +249,7 @@ PreviewImageGenerator.generate_prompt(doc)
 
 | Tag | Description |
 |-----|-------------|
-| `{% raw %}{% preview_image_status %}{% endraw %}` | Shows missing preview count |
+| `{% preview_image_status %}` | Shows missing preview count |
 
 ## Image Specifications
 

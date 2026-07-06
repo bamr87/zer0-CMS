@@ -28,7 +28,7 @@ The zer0-mistakes theme ships an `admin` layout and a set of dashboard partials 
 
 ![The Configuration Utility dashboard: summary cards for Site URL, Repository, Theme Skin, and Collections above a searchable, copyable config table, with the Administration sidebar on the left](/assets/images/docs/features/admin-dashboard.png)
 
-The built-in admin pages live under `/about/` — **Configuration** (`/about/config/`), **Statistics**, **Theme Customizer**, **Theme Preview**, **Navigation Editor**, **Collection Manager**, **Analytics Dashboard**, and **Environment & Build**. They read straight from `_config.yml` and Jekyll's site data, so there's nothing to wire up.
+The theme's demo site ships a suite of ready-made admin pages — **Configuration**, **Statistics**, **Theme Customizer**, **Theme Preview**, **Navigation Editor**, **Collection Manager**, **Analytics Dashboard**, and **Environment & Build**. This site's slimmed content set does not include them, but they read straight from `_config.yml` and Jekyll's site data, so any of them can be recreated with a single frontmatter block (see below).
 
 ## Admin Layout
 
@@ -75,7 +75,7 @@ It renders a vertical nav with links to all admin/settings pages.
 Use the `admin-tabs` component to split a single admin page into tabs:
 
 ```liquid
-{% raw %}{% include components/admin-tabs.html
+{% include components/admin-tabs.html
    id="config"
    tabs="view:View Config:bi-eye:true|edit:Edit & Export:bi-pencil-square:false|raw:Raw YAML:bi-file-earmark-code:false"
 %}
@@ -83,23 +83,23 @@ Use the `admin-tabs` component to split a single admin page into tabs:
   <div class="tab-pane fade show active" id="pane-view" role="tabpanel">
     <!-- your content -->
   </div>
-</div>{% endraw %}
+</div>
 ```
 
 Each tab definition is `id:label:icon:active`, pipe-separated.
 
 ## Built-In Admin Pages
 
-The theme ships several admin pages under `pages/_about/settings/`:
+The theme repo's demo site ships several admin pages (in its `about` collection) that make good starting points — this slimmed site does not publish them, but each is just frontmatter plus dashboard includes:
 
-| Page | Permalink | Purpose |
-|---|---|---|
-| `config.md` | `/about/settings/config/` | View and export `_config.yml` |
-| `theme.md` | `/about/settings/theme/` | Theme colours and Bootstrap overrides |
-| `navigation.md` | `/about/settings/navigation/` | Edit navigation data |
-| `analytics.md` | `/about/settings/analytics/` | Analytics provider settings |
-| `collections.md` | `/about/settings/collections/` | Collection configuration |
-| `environment.md` | `/about/settings/environment/` | Build environment info |
+| Page | Purpose |
+|---|---|
+| `config.md` | View and export `_config.yml` |
+| `theme.md` | Theme colours and Bootstrap overrides |
+| `navigation.md` | Edit navigation data |
+| `analytics.md` | Analytics provider settings |
+| `collections.md` | Collection configuration |
+| `environment.md` | Build environment info |
 
 ## Creating a Custom Admin Page
 

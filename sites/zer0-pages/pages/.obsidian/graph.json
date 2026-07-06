@@ -29,27 +29,6 @@
       }
     },
     {
-      "query": "path:_notebooks",
-      "color": {
-        "a": 1,
-        "rgb": 15910733
-      }
-    },
-    {
-      "query": "path:_quickstart",
-      "color": {
-        "a": 1,
-        "rgb": 15844367
-      }
-    },
-    {
-      "query": "path:_about",
-      "color": {
-        "a": 1,
-        "rgb": 8225218
-      }
-    },
-    {
       "query": "path:_moc",
       "color": {
         "a": 1,

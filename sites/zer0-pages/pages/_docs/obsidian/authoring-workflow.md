@@ -81,6 +81,10 @@ runs via:
 ./test/test_runner.sh --verbose
 ```
 
+Once the build is live, the [[_docs/obsidian/graph|graph view]] gives the
+same feedback visually: any wiki-link that no longer resolves renders as a
+dashed red node.
+
 ## Cross-machine vault sync
 
 Use **Obsidian Git** for the canonical sync — it pulls on open and

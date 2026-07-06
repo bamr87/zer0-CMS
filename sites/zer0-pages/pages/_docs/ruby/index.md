@@ -13,7 +13,6 @@ permalink: /docs/ruby/
 difficulty: beginner
 estimated_reading_time: 5 minutes
 prerequisites: []
-lastmod: 2025-12-20
 lastmod: 2025-12-20T22:15:46.090Z
 sidebar:
     nav: docs

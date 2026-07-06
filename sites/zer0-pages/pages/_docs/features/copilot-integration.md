@@ -113,13 +113,13 @@ When working on layouts:
 Copilot understands theme conventions:
 
 ```liquid
-{% raw %}{% comment %}
+{% comment %}
 Copilot suggests proper include patterns:
 {% include navigation/sidebar-left.html %}
 
 With correct parameters:
 {% include components/post-card.html post=post %}
-{% endcomment %}{% endraw %}
+{% endcomment %}
 ```
 
 ### Running Commands

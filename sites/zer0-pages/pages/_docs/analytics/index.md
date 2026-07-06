@@ -86,9 +86,9 @@ google_tag_manager:
 All analytics only load in production:
 
 ```liquid
-{% raw %}{% if jekyll.environment == 'production' %}
+{% if jekyll.environment == 'production' %}
   {% include analytics/posthog.html %}
-{% endif %}{% endraw %}
+{% endif %}
 ```
 
 ## Privacy Compliance
@@ -101,7 +101,6 @@ See [[_docs/features/cookie-consent|Cookie Consent]] for GDPR/CCPA compliant con
 - [[_docs/analytics/google-analytics|Google Analytics]]
 - [[_docs/analytics/google-tag-manager|Google Tag Manager]]
 - [[_docs/features/cookie-consent|Cookie Consent]]
-- [[privacy-policy|Privacy Policy]]
 
 ## See also
 
