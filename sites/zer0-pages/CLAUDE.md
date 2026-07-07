@@ -115,7 +115,12 @@ The site ships an interactive vault graph (theme feature, enabled end-to-end):
   Give each page a `permalink:` and mirror it in `aliases:` (aliases carry old/canonical
   URLs so wikilinks and historic links resolve). Collections also apply pattern
   permalinks (`/docs/:path/`, `/notes/:path/`) — an explicit `permalink:` in
-  frontmatter always wins.
+  frontmatter always wins. **`_posts/` is the exception**: it is Jekyll's built-in posts
+  collection, not a custom one, so it has no entry under `collections:` in `_config.yml`
+  and instead uses the sitewide `permalink: pretty` date-based scheme — individual post
+  files do not need an explicit `permalink:`/`aliases:` pair unless their URL needs to
+  diverge from that default (the seven `NNNN-01-01-index.md` category-index pages under
+  `_posts/<category>/` are the diverging case, and do carry explicit permalinks).
 - **Wikilinks** are fine and preferred: `[[path/from/vault-root|Display]]` —
   path-qualified from the vault root, no `.md` extension. The bridge resolves them to
   URLs; unresolved links render as a flagged `<span>` (and as red nodes in the graph).
