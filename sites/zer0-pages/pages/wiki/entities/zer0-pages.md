@@ -14,6 +14,7 @@ tags:
 status: seed
 related:
   - "[[wiki/entities/claude-obsidian]]"
+  - "[[wiki/entities/zer0-mistakes]]"
   - "[[wiki/concepts/jekyll-obsidian-dual-rendering]]"
   - "[[wiki/concepts/github-pages-deployment]]"
   - "[[wiki/concepts/ai-content-engine]]"
@@ -39,6 +40,7 @@ zer0-pages is the name of the GitHub repository this vault lives in (`github.com
 ## Connections
 
 - [[wiki/entities/claude-obsidian|claude-obsidian]] — the real engine doing the work the PRD assigns to Django + the React admin + the "AI Layer."
+- [[wiki/entities/zer0-mistakes|zer0-mistakes]] — the upstream theme repo zer0-pages consumes as `jekyll-theme-zer0`; the stated purpose of this whole vault, beyond showcasing that theme, is to act as a second brain feeding knowledge back into zer0-mistakes' development.
 - [[wiki/concepts/jekyll-obsidian-dual-rendering|Jekyll/Obsidian Dual-Rendering Architecture]] — the actual architecture of this repo, in place of the PRD's Django+Jekyll hybrid.
 - [[wiki/concepts/github-pages-deployment|GitHub Pages Deployment Model]] — the real, single deployment target.
 - [[wiki/concepts/ai-content-engine|AI Content Engine]] — the PRD's name for AI content generation; realized here through claude-obsidian's skills instead of a Django AI service.

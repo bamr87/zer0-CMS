@@ -22,10 +22,10 @@ Engine showcase content (published, cross-linked into this wiki):
 
 ## Wiki pages (generated)
 
-- **Sources** — `wiki/sources/` — one summary per ingested source document.
+- **Sources** — [[wiki/sources/_index|wiki/sources/]] — one summary per ingested source document.
   - [[wiki/sources/zer0-pages-prd|zer0-pages PRD]]
   - [[wiki/sources/wizard-topples-capitalist-dominance|Wizard Topples Capitalist Dominance Ingeniously]]
-- **Concepts** — `wiki/concepts/` — ideas, patterns, frameworks.
+- **Concepts** — [[wiki/concepts/_index|wiki/concepts/]] — ideas, patterns, frameworks.
   - [[wiki/concepts/ai-content-engine|AI Content Engine]]
   - [[wiki/concepts/jekyll-obsidian-dual-rendering|Jekyll/Obsidian Dual-Rendering Architecture]]
   - [[wiki/concepts/github-pages-deployment|GitHub Pages Deployment Model]]
@@ -36,8 +36,9 @@ Engine showcase content (published, cross-linked into this wiki):
   - [[wiki/concepts/ethical-engineering|Ethical Engineering]]
   - [[wiki/concepts/esg-investing|ESG Investing]]
   - [[wiki/concepts/stakeholder-capitalism|Stakeholder Capitalism]]
-- **Entities** — `wiki/entities/` — people, orgs, products, repos.
+- **Entities** — [[wiki/entities/_index|wiki/entities/]] — people, orgs, products, repos.
   - [[wiki/entities/zer0-pages|zer0-pages]]
+  - [[wiki/entities/zer0-mistakes|zer0-mistakes]]
   - [[wiki/entities/claude-obsidian|claude-obsidian]]
   - [[wiki/entities/fairlearn|Fairlearn]]
   - [[wiki/entities/sec-edgar|SEC EDGAR]]

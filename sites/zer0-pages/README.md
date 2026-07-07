@@ -15,6 +15,14 @@ The site's look and feel comes from the
 The vault is never polluted with Liquid templating. The published site never requires
 Obsidian. One body of content, two first-class consumers.
 
+Beyond showcasing the theme, zer0-pages' declared purpose is to act as a **second brain
+for [zer0-mistakes](https://github.com/bamr87/zer0-mistakes)** — a place where research,
+decisions, and usage knowledge about the theme accumulate and can feed back into its
+development, rather than living only in this repo's own showcase content. See
+[pages/wiki/entities/zer0-mistakes.md](pages/wiki/entities/zer0-mistakes.md) for the
+current state of that relationship (and an open gap: the deep technical knowledge still
+lives only in the zer0-mistakes repo itself, not yet ingested here).
+
 ## Architecture
 
 ```
@@ -90,9 +98,15 @@ conventions live in [pages/CLAUDE.md](pages/CLAUDE.md).
 
 ## Learn more
 
-- [PRD.md](PRD.md) — the product requirements document behind this design.
+- [PRD.md](PRD.md) — an early, aspirational product-requirements document; it describes
+  a Django+React CMS vision that predates and does not match the vault+bridge system
+  described above (see
+  [pages/wiki/sources/zer0-pages-prd.md](pages/wiki/sources/zer0-pages-prd.md) for the
+  reality check).
 - [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) — the Jekyll theme behind
-  the site's UI, published as the `jekyll-theme-zer0` gem. (Working on the theme
-  itself? See the "local theme development" tip in [CLAUDE.md](CLAUDE.md).)
+  the site's UI, published as the `jekyll-theme-zer0` gem, and the project this repo
+  exists to be a second brain for (see
+  [pages/wiki/entities/zer0-mistakes.md](pages/wiki/entities/zer0-mistakes.md)). Working
+  on the theme itself? See the "local theme development" tip in [CLAUDE.md](CLAUDE.md).
 - [claude-obsidian](https://github.com/AgriciDaniel/claude-obsidian) — the upstream
   knowledge-engine project (Karpathy's LLM Wiki pattern).

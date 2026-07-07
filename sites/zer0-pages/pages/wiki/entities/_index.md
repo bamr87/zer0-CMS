@@ -9,6 +9,7 @@ updated: 2026-07-06
 People, organizations, products, and repositories referenced across the wiki. Populated by `/wiki-ingest`.
 
 - [[wiki/entities/zer0-pages|zer0-pages]] — the repo/product name; PRD vision (Django+React AI-CMS) vs. actual implementation (Jekyll + Obsidian vault).
+- [[wiki/entities/zer0-mistakes|zer0-mistakes]] — the upstream Bootstrap 5 + Jekyll theme (`jekyll-theme-zer0` gem) this vault exists, in part, to be a second brain for.
 - [[wiki/entities/claude-obsidian|claude-obsidian]] — the Claude Code plugin/submodule that is the vault's real authoring/AI engine.
 
 Accountability-tooling entities (from [[wiki/sources/wizard-topples-capitalist-dominance|the wizard post]]):

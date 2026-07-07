@@ -1,12 +1,22 @@
 ---
 type: meta
 title: "Log"
-updated: 2026-07-05
+updated: 2026-07-06
 ---
 
 # Log
 
 Append-only. Newest entries on top.
+
+## 2026-07-06 — PR-prep cleanup: contract fixes + second-brain framing
+- Ran a 4-dimension audit (contract compliance, wiki integrity, repo hygiene, second-brain-for-zer0-mistakes alignment) before opening the first PR from this branch to `main`. Repo hygiene came back fully clean (0 findings). Full results: contract-compliance 3 findings, wiki-integrity 1 finding, second-brain-alignment 4 findings.
+- **Fixed** `pages/index.md` (added missing `description`, `permalink: /`, `aliases: [/]`) and `pages/posts.md` (added `permalink: /posts/`, `aliases: [/posts/]` — confirmed `/posts/` is the URL `_data/navigation/home.yml` and `main.yml` already expect, so this was a latent nav mismatch, not just a style gap).
+- **Clarified, did not backfill**, the `_posts/` collection: 31 of 38 post files lack explicit `permalink`/`aliases` (only the 7 category-index pages have them). Confirmed via `_config.yml` that `_posts` is Jekyll's native collection (no custom `collections:` entry, governed by sitewide `permalink: pretty`), so this is by-design, not a defect. Added one clarifying sentence to root `CLAUDE.md`'s Dual-compatibility rules instead of mass-editing 31 files.
+- **Fixed** 3 orphan wiki pages (`wiki/sources/_index.md`, `wiki/concepts/_index.md`, `wiki/entities/_index.md` had zero inbound wikilinks) by turning their backtick-quoted mentions in `wiki/index.md` into real `[[wikilinks]]`.
+- **Established second-brain-for-zer0-mistakes framing**, per the repo owner's explicit statement of that goal this session: created [[wiki/entities/zer0-mistakes|zer0-mistakes]] (the first entity page for the upstream theme repo itself — previously absent despite being central to the whole architecture), added a "second brain" purpose paragraph to `README.md` and `wiki/overview.md`, and cross-linked it from [[wiki/entities/zer0-pages|zer0-pages]]. Documented, on the new page itself, that the relationship is **declared but not yet built out**: no zer0-mistakes-internals knowledge has been ingested into this vault yet, only the existing surface-level `_docs/development/` consumer docs which explicitly defer to the zer0-mistakes repo's own `docs/` directory.
+- **Added a caveat** to `README.md`'s PRD.md link and a status-note callout at the top of `PRD.md` itself, both flagging it as an aspirational Django+React+PostgreSQL vision that predates and doesn't match the shipped vault+bridge system — closing the gap where that awareness existed only in the wiki (`wiki/sources/zer0-pages-prd.md`), not in the documents themselves.
+- Verified: unit tests 93/93 passing (`test_obsidian_bridge.rb` 74, `test_graph_index.rb` 19); full local `bundle exec jekyll build` not possible in this sandbox (system Ruby 2.6.10, theme requires >=3.2 — matches documented CI-only build capability, not a new gap).
+- Deferred (flagged, not actioned): actually ingesting zer0-mistakes' own `docs/` directory (architecture, release-automation internals) into this wiki — a real content-authoring project, out of scope for a cleanup pass. Left as an active thread below.
 
 ## 2026-07-06 — Ingested "Wizard Topples Capitalist Dominance"
 - Ingested `pages/_posts/2024-06-17-wizard-topples-capitalist-dominance-ingeniously.md` (satirical draft post, dated 2024-06-17) via `/wiki-ingest`. First non-PRD source, and first ingested from `_posts/` rather than `.raw/`.
