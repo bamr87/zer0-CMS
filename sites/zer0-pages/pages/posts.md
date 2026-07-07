@@ -6,6 +6,9 @@ keywords:
   primary: [blog posts, articles, tutorials]
   secondary: [jekyll, development, web]
 type: page
+permalink: /posts/
+aliases:
+  - /posts/
 ---
 
 # All Posts

@@ -13,6 +13,14 @@ combined_from:
 
 # zer0-pages - AI-Powered Content Management System
 
+> **Status note:** This PRD describes an aspirational vision from an earlier planning
+> pass (a Django + React + PostgreSQL + Redis CMS). It does not reflect the current
+> shipped system, which is a Jekyll site whose source is authored as an Obsidian vault
+> via the `claude-obsidian` plugin, with build-time bridge plugins converting Obsidian
+> syntax to HTML — no Django, React, or database component exists in this repository.
+> See [pages/wiki/sources/zer0-pages-prd.md](pages/wiki/sources/zer0-pages-prd.md) and
+> root [CLAUDE.md](CLAUDE.md) for what actually exists today.
+
 ## 1. Executive Summary
 
 **Product Name**: zer0-pages  
