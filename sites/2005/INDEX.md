@@ -26,6 +26,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [Kyoto Protocol enters force](science-technology/kyoto-protocol-enters-force.md) | International climate treaty took legal effect February 16. |
 | [Deep Impact mission](science-technology/deep-impact-mission.md) | First active excavation of a comet's interior, July 4. |
 | [Discovery of Eris announced](science-technology/eris-discovery.md) | Caltech announced a body more massive than Pluto, July 29 — triggered Pluto's reclassification. |
+| [Guitar Hero launches](science-technology/guitar-hero-launch.md) | Harmonix's rhythm game debuted on PlayStation 2 November 8 with a guitar controller, igniting the multi-billion-dollar music-game boom. |
 | [Xbox 360 launches](science-technology/xbox-360-launch.md) | Microsoft's Xbox 360 launched in North America November 22, opening the seventh console generation. |
 | [World's first partial face transplant](science-technology/first-face-transplant.md) | First human face transplant, performed in Amiens, France, November 27. |
 
@@ -35,6 +36,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 |-------|-------------|
 | [*Star Wars* Episode III released](arts-culture/star-wars-episode-iii.md) | Completed the prequel trilogy, May 19. |
 | [Live 8 Concerts](arts-culture/live-8-concerts.md) | Ten simultaneous benefit concerts for African debt relief, July 2. |
+| [The Colbert Report premieres](arts-culture/colbert-report-premiere.md) | Stephen Colbert's satirical news program debuted on Comedy Central October 17, coining "truthiness" — the 2005 Word of the Year. |
 | [*The Lion, the Witch and the Wardrobe* released](arts-culture/narnia-lion-witch-wardrobe.md) | Andrew Adamson's fantasy blockbuster premiered December 9; ~$745 million worldwide. |
 | [*Brokeback Mountain* released](arts-culture/brokeback-mountain.md) | Watershed LGBTQ+ film, premiered December 9. |
 
