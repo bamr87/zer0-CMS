@@ -8,6 +8,16 @@ updated: 2026-07-05
 
 Append-only. Newest entries on top.
 
+## 2026-07-06 — Ingested "Wizard Topples Capitalist Dominance"
+- Ingested `pages/_posts/2024-06-17-wizard-topples-capitalist-dominance-ingeniously.md` (satirical draft post, dated 2024-06-17) via `/wiki-ingest`. First non-PRD source, and first ingested from `_posts/` rather than `.raw/`.
+- Created source [[wiki/sources/wizard-topples-capitalist-dominance|Wizard Topples Capitalist Dominance Ingeniously]].
+- Created concepts [[wiki/concepts/radical-transparency|Radical Transparency]], [[wiki/concepts/algorithmic-accountability|Algorithmic Accountability]], [[wiki/concepts/impact-weighted-accounting|Impact-Weighted Accounting]], [[wiki/concepts/ethical-engineering|Ethical Engineering]], [[wiki/concepts/esg-investing|ESG Investing]], [[wiki/concepts/stakeholder-capitalism|Stakeholder Capitalism]].
+- Created entities [[wiki/entities/fairlearn|Fairlearn]], [[wiki/entities/sec-edgar|SEC EDGAR]], [[wiki/entities/gleif|GLEIF]], [[wiki/entities/hbs-impact-weighted-accounts|HBS Impact-Weighted Accounts Project]], [[wiki/entities/b-corp|B Corp]].
+- Updated `wiki/index.md`, `wiki/sources/_index.md`, `wiki/concepts/_index.md`, `wiki/entities/_index.md`, `wiki/hot.md`.
+- Editorial calls: kept the fictional wizard "Merlin Financialis" inside the source page (no entity); folded AIF360, OpenCorporates, dbt/Postgres/Parquet, ACM/IEEE, and EPIC into concept prose rather than spawning thin pages; merged the "transparency pipeline" architecture into the Radical Transparency concept.
+- Key insight: the satire is a wrapper — the extractable substance is a concrete, swappable accountability pipeline (public data → open ledger → audit engine → dashboard) plus real tools (EDGAR/Fairlearn/impact-weights.yml) and frameworks (ESG/B-Corp/HBS IWA); this cluster is thematically independent of the existing PRD-vs-reality wiki, with no contradictions.
+- No addresses assigned (DragonScale off — no `./scripts/allocate-address.sh` at CWD, `.vault-meta/` has only the lock-meta stub); solo pass, no wiki-lock (`flock` unavailable).
+
 ## 2026-07-05 — Authored engine-showcase content
 - Created post [[_posts/development/2026-07-05-inside-the-zer0-pages-engine|Inside the zer0-pages Engine: Obsidian In, GitHub Pages Out]] — end-to-end walkthrough of the pipeline: claude-obsidian skills author into the vault → `_plugins/` bridge converts wikilinks/Dataview/callouts → `jekyll-theme-zer0` themes → Actions deploys to Pages. Wikilinked to the four ingested concept pages, both entity pages, the PRD source page, and [[_docs/obsidian/graph|the graph view]].
 - Created note [[_notes/claude-obsidian-cheatsheet|claude-obsidian Cheatsheet]] — quick reference covering the skills (`/wiki-ingest`, `/wiki-query`, `/save`, `/wiki-lint`, `/autoresearch`), dual-compatibility rules, folder layout, and the publish flow. Wikilinked to [[wiki/index|the wiki index]], [[wiki/meta/conventions|conventions]], and the ingested wiki pages.

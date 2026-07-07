@@ -1,26 +1,26 @@
 ---
 type: meta
 title: "Hot Cache"
-updated: 2026-07-05
+updated: 2026-07-06
 ---
 
 # Recent Context
 
 ## Last Updated
-2026-07-05. Authored two published showcase pieces about the content engine itself: a development post and a reference note, both cross-linked into the wiki layer.
+2026-07-06. Ingested the satirical post [[wiki/sources/wizard-topples-capitalist-dominance|Wizard Topples Capitalist Dominance Ingeniously]] via `/wiki-ingest` — the **first source ingested that isn't the PRD**, and the first sourced from `_posts/` rather than `.raw/`. It spawned a whole accountability-and-ethics cluster in `wiki/`.
 
 ## Key Recent Facts
-- New post [[_posts/development/2026-07-05-inside-the-zer0-pages-engine|Inside the zer0-pages Engine]] documents the real pipeline end to end: [[wiki/entities/claude-obsidian|claude-obsidian]] skills author Markdown into the vault → `_plugins/` bridge converts wikilinks/callouts/Dataview at build time ([[wiki/concepts/jekyll-obsidian-dual-rendering|Jekyll/Obsidian Dual-Rendering Architecture]]) → `jekyll-theme-zer0` themes → push to `main` deploys via Actions ([[wiki/concepts/github-pages-deployment|GitHub Pages Deployment Model]]).
-- New note [[_notes/claude-obsidian-cheatsheet|claude-obsidian Cheatsheet]] is the quick reference for working here: the five skills (`/wiki-ingest`, `/wiki-query`, `/save`, `/wiki-lint`, `/autoresearch`), dual-compat rules (flat frontmatter, path-qualified wikilinks, no Liquid, no new Dataview outside `_moc/`), folder map, publish flow.
-- Both pieces link into the PRD-ingestion pages ([[wiki/sources/zer0-pages-prd|zer0-pages PRD]], [[wiki/concepts/ai-content-engine|AI Content Engine]], [[wiki/concepts/prd-machine|PRD Machine]], [[wiki/entities/zer0-pages|zer0-pages]]) and [[_docs/obsidian/graph|the graph view]], so the `wiki/` layer now has published backlinks from `_posts/` and `_notes/`.
-- Standing caveat from the PRD ingestion: the PRD's Django+React+PostgreSQL stack is aspirational; the shipped system is the vault + bridge + Actions pipeline described in the new post.
-- Content scope remains docs / posts / notes only — now 89 / 38 / 6 ([[_moc/Home]]).
+- The post is a **satire wrapper around a real payload**: a wizard-vs-capitalism fable whose second half ("The Wizard's Workshop") is a hands-on tutorial. The ingest deliberately extracted the real, reusable substance and left the fictional "Merlin Financialis" framing in the source page only (no entity page for the wizard).
+- New concepts (6): [[wiki/concepts/radical-transparency|Radical Transparency]] (carries the concrete public-data → ingest → open-ledger → audit-engine → dashboard pipeline + the SEC EDGAR ingest snippet), [[wiki/concepts/algorithmic-accountability|Algorithmic Accountability]] (fairness metrics via Fairlearn), [[wiki/concepts/impact-weighted-accounting|Impact-Weighted Accounting]] (declarative `impact-weights.yml` with negative weights for harm), [[wiki/concepts/ethical-engineering|Ethical Engineering]] (the post's thesis + practitioner checklist), [[wiki/concepts/esg-investing|ESG Investing]], and [[wiki/concepts/stakeholder-capitalism|Stakeholder Capitalism]].
+- New entities (5): [[wiki/entities/fairlearn|Fairlearn]], [[wiki/entities/sec-edgar|SEC EDGAR]], [[wiki/entities/gleif|GLEIF]], [[wiki/entities/hbs-impact-weighted-accounts|HBS Impact-Weighted Accounts Project]], [[wiki/entities/b-corp|B Corp]]. These are real-world referents that stand independent of the fable and will be reused by any future ESG/fintech/responsible-AI ingest.
+- This cluster is **thematically separate** from the pre-existing wiki (which is all about zer0-pages PRD-vs-reality). No contradictions with existing pages; the only tie-in is that the post is itself an artifact of the [[wiki/entities/zer0-pages|zer0-pages]] content engine.
+- Content scope unchanged — docs / posts / notes only, 89 / 38 / 6 ([[_moc/Home]]).
 
 ## Recent Changes
-- Created `_posts/development/2026-07-05-inside-the-zer0-pages-engine.md` and `_notes/claude-obsidian-cheatsheet.md`.
-- Updated `wiki/index.md` (counts + showcase links) and appended `wiki/log.md`.
+- Created `wiki/sources/wizard-topples-capitalist-dominance.md`; 6 concept pages; 5 entity pages (12 new pages total).
+- Updated `wiki/index.md`, `wiki/sources/_index.md`, `wiki/concepts/_index.md`, `wiki/entities/_index.md`, this hot cache, and appended `wiki/log.md`.
 
 ## Active Threads
 - `.raw/` still holds `README.md` un-ingested; drop further sources and say "ingest [filename]".
-- `scripts/wiki-lock.sh` remains inoperable here (`flock` missing) — solo passes only.
-- Next `/wiki-lint` pass should confirm the two new pieces' wikilinks resolve in the published graph.
+- `scripts/wiki-lock.sh` remains inoperable here (`flock` missing) — solo passes only; no addresses (DragonScale off in this vault).
+- Next `/wiki-lint` should confirm the new cluster's wikilinks resolve and that the source's backlink to [[_posts/2024-06-17-wizard-topples-capitalist-dominance-ingeniously|the published post]] renders in the graph.

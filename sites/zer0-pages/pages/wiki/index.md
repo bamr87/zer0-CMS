@@ -1,7 +1,7 @@
 ---
 type: meta
 title: "Wiki Index"
-updated: 2026-07-05
+updated: 2026-07-06
 ---
 
 # Wiki Index — master catalog
@@ -22,16 +22,28 @@ Engine showcase content (published, cross-linked into this wiki):
 
 ## Wiki pages (generated)
 
-- **Sources** — `wiki/sources/` — one summary per ingested `.raw/` document.
+- **Sources** — `wiki/sources/` — one summary per ingested source document.
   - [[wiki/sources/zer0-pages-prd|zer0-pages PRD]]
+  - [[wiki/sources/wizard-topples-capitalist-dominance|Wizard Topples Capitalist Dominance Ingeniously]]
 - **Concepts** — `wiki/concepts/` — ideas, patterns, frameworks.
   - [[wiki/concepts/ai-content-engine|AI Content Engine]]
   - [[wiki/concepts/jekyll-obsidian-dual-rendering|Jekyll/Obsidian Dual-Rendering Architecture]]
   - [[wiki/concepts/github-pages-deployment|GitHub Pages Deployment Model]]
   - [[wiki/concepts/prd-machine|PRD Machine]]
+  - [[wiki/concepts/radical-transparency|Radical Transparency]]
+  - [[wiki/concepts/algorithmic-accountability|Algorithmic Accountability]]
+  - [[wiki/concepts/impact-weighted-accounting|Impact-Weighted Accounting]]
+  - [[wiki/concepts/ethical-engineering|Ethical Engineering]]
+  - [[wiki/concepts/esg-investing|ESG Investing]]
+  - [[wiki/concepts/stakeholder-capitalism|Stakeholder Capitalism]]
 - **Entities** — `wiki/entities/` — people, orgs, products, repos.
   - [[wiki/entities/zer0-pages|zer0-pages]]
   - [[wiki/entities/claude-obsidian|claude-obsidian]]
+  - [[wiki/entities/fairlearn|Fairlearn]]
+  - [[wiki/entities/sec-edgar|SEC EDGAR]]
+  - [[wiki/entities/gleif|GLEIF]]
+  - [[wiki/entities/hbs-impact-weighted-accounts|HBS Impact-Weighted Accounts Project]]
+  - [[wiki/entities/b-corp|B Corp]]
 - **Meta** — `wiki/meta/` — dashboards, lint reports, conventions.
 
 See also: [[overview]] · [[hot]] · [[log]]
