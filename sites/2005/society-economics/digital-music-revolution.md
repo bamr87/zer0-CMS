@@ -1,6 +1,6 @@
 ---
 title: "iTunes Digital Music Revolution"
-date: 2005
+date: 2005-01-01
 category: "Society & Economics"
 ---
 

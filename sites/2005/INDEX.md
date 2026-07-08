@@ -16,6 +16,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [Provisional IRA ends its armed campaign](history-politics/ira-ends-armed-campaign.md) | IRA ordered an end to its armed campaign July 28 and completed decommissioning by September. |
 | [Israeli Disengagement from the Gaza Strip](history-politics/gaza-disengagement-2005.md) | Israel evacuated all 21 Gaza settlements and 4 in the northern West Bank, August 15–23. |
 | [Angela Merkel elected Chancellor](history-politics/angela-merkel-chancellor.md) | Germany's first female Chancellor, elected September 18. |
+| [Saddam Hussein's trial begins](history-politics/saddam-hussein-trial-begins.md) | Trial of the former Iraqi president over the 1982 al-Dujail killings opened before the Iraqi Special Tribunal, October 19. |
 
 ## Science & Technology ([index](science-technology/index.md))
 

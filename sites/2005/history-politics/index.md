@@ -14,5 +14,6 @@ Category index for the **History & Politics** topics within the [2005 Knowledge 
 | [Provisional IRA ends its armed campaign](ira-ends-armed-campaign.md) | IRA ordered an end to its armed campaign July 28 and completed decommissioning by September. |
 | [Israeli Disengagement from the Gaza Strip](gaza-disengagement-2005.md) | Israel evacuated all 21 Gaza settlements and 4 in the northern West Bank, August 15–23. |
 | [Angela Merkel elected Chancellor](angela-merkel-chancellor.md) | Germany's first female Chancellor, elected September 18. |
+| [Saddam Hussein's trial begins](saddam-hussein-trial-begins.md) | Trial of the former Iraqi president over the 1982 al-Dujail killings opened before the Iraqi Special Tribunal, October 19. |
 
 <!-- END GENERATED: category-index -->

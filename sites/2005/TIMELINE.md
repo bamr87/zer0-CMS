@@ -31,6 +31,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file](history-politics/angela-merkel-chancellor.md) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file](society-economics/kashmir-earthquake-2005.md) |
 | 2005-10-17 | The Colbert Report premieres | Arts & Culture | [file](arts-culture/colbert-report-premiere.md) |
+| 2005-10-19 | Saddam Hussein's trial begins | History & Politics | [file](history-politics/saddam-hussein-trial-begins.md) |
 | 2005-10-24 | Rosa Parks dies | People | [file](people/rosa-parks-dies.md) |
 | 2005-10-27 | 2005 French riots | Society & Economics | [file](society-economics/2005-french-riots.md) |
 | 2005-11-08 | Guitar Hero launches | Science & Technology | [file](science-technology/guitar-hero-launch.md) |
@@ -41,5 +42,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 35 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 36 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
