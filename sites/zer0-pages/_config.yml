@@ -138,8 +138,8 @@ collections:
 
 defaults:
   # Everything: never run Liquid over content; fall back to the theme's base
-  # layout. Layout names resolve into the jekyll-theme-zer0 gem except the
-  # two local wrappers (post/tutorial) in pages/_layouts/.
+  # layout. All layout names resolve into the jekyll-theme-zer0 gem — there
+  # is no local pages/_layouts/.
   - scope:
       path: ""
     values:

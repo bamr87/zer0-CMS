@@ -36,8 +36,8 @@ This is the pattern actually implemented in this repository: a single body of Ma
 - Content lives in exactly three Jekyll collections — `_docs/`, `_posts/`, `_notes/` — plus `_moc/` (Dataview-powered Maps of Content) and a handful of root index pages.
 - Authoring happens through [[wiki/entities/claude-obsidian|claude-obsidian]]'s skills (`/wiki-ingest`, `/save`, `/autoresearch`, `/wiki-query`) or directly in Obsidian; either way the same conventions apply (flat YAML frontmatter, path-qualified `[[wikilinks]]`, no Liquid in content).
 - At build time (CI, on push to `main`), Ruby plugins under `pages/_plugins/` are the **sole** Obsidian→HTML converter: they rewrite wikilinks/Dataview fences/callouts into standard HTML, and a companion plugin (`obsidian_graph_index.rb`) emits `/assets/data/wiki-index.json`, which the theme's Cytoscape-based graph UI consumes client-side at `/docs/obsidian/graph/`. Source Markdown files are never rewritten by the bridge.
-- Liquid is confined to `_layouts/`/`_includes/` (plus the one opt-in exception, `_docs/obsidian/graph.md`, which sets `render_with_liquid: true` for a single `{% include %}` line).
-- The site's UI (layouts, includes, Bootstrap 5) comes from the published `jekyll-theme-zer0` gem; this repo supplies only two local layout wrappers (`post`, `tutorial`) and its own `_data/` (Jekyll never loads `_data` from theme gems).
+- Liquid is confined to `_includes/` (plus the one opt-in exception, `_docs/obsidian/graph.md`, which sets `render_with_liquid: true` for a single `{% include %}` line). There is no local `_layouts/` — every layout name resolves into the theme gem.
+- The site's UI (layouts, includes, Bootstrap 5) comes from the published `jekyll-theme-zer0` gem; this repo supplies only two local include overrides (bug-fix forks of theme partials, filed upstream) and its own `_data/` (Jekyll never loads `_data` from theme gems).
 
 ## Why It Matters
 

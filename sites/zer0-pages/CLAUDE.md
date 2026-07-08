@@ -20,10 +20,10 @@ zer0-pages/
 │   ├── .obsidian/            vault config (ignores Jekyll machinery dirs)
 │   ├── _data/                THEME DATA — navigation/, ui-text, authors, ...
 │   │                         (Jekyll never loads _data from theme gems)
-│   ├── _layouts/             2 local wrappers over the theme's layouts:
-│   │                         post / tutorial (Liquid allowed HERE
-│   │                         and in _includes/ only)
-│   ├── _includes/            local include overrides (obsidian/full-graph.html)
+│   ├── _includes/            local include overrides — bug-fix forks of two
+│   │                         theme partials (Liquid allowed HERE only;
+│   │                         no local _layouts/, all layout names resolve
+│   │                         into the theme gem)
 │   ├── _plugins/             BRIDGE — converts Obsidian constructs at build time
 │   │                         + graph index generator (wiki-index.json)
 │   └── assets/               css/js/images — css/user-overrides.css is the
@@ -60,9 +60,26 @@ without updating this contract.
 
 The site's UI is the **zer0-mistakes** theme, consumed as the published gem
 `jekyll-theme-zer0` (~> 1.25). Layouts, includes, and vendored Bootstrap 5 come from
-the gem; the repo keeps only two local layouts in `pages/_layouts/` — `post.html` /
-`tutorial.html` (3-line wrappers over the theme's `article`). All other layout names
-(`default`, `article`, `note`, `section`, ...) resolve straight into the gem.
+the gem — the repo has **no local `_layouts/`**; every layout name (`default`,
+`article`, `note`, `section`, ...) resolves straight into the gem. The repo keeps
+exactly two local include overrides in `pages/_includes/`, each a deliberate fork of
+a theme partial to fix a bug still present upstream as of gem v1.26.0 (verified
+against `bamr87/zer0-mistakes` main):
+- `content/intro.html` — the gem double-applies the `relative_url` filter to
+  `preview_path`, double-prefixing the baseurl on project sites; this fork removes
+  the redundant filter. It also keeps the "Copilot Agent" prompt dropdown (driven by
+  `pages/_data/prompts.yml`) that gem v1.26.0 replaced with an unrelated page-feedback
+  widget this site doesn't enable.
+- `obsidian/full-graph.html` — the gem's `js-cdn.html` sets
+  `window.OBSIDIAN_CONFIG.wikiIndexUrl`, but `assets/js/obsidian-graph.js` actually
+  reads a *different* global, `window.OBSIDIAN_WIKI_INDEX_URL`; without this fork
+  setting that exact global, the graph's JSON fetch breaks under this site's
+  `/zer0-pages` baseurl. It also trims the legend/links to the collections this vault
+  actually has (no `notebooks`/`quickstart`).
+
+Both bugs are filed upstream — `bamr87/zer0-mistakes#293` (relative_url) and
+`bamr87/zer0-mistakes#294` (OBSIDIAN_WIKI_INDEX_URL) — once fixed and released,
+these forks can be retired in favor of the gem's own partials.
 
 - **Data files are ours to provide.** Jekyll never loads `_data` from theme gems, so
   every data file the theme reads lives in `pages/_data/`: site navigation in

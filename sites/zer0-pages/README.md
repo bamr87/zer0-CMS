@@ -46,9 +46,9 @@ lives only in the zer0-mistakes repo itself, not yet ingested here).
 - **`pages/`** — the Obsidian vault *and* the Jekyll source. Three content collections
   (`_docs/`, `_posts/`, `_notes/`), Maps of Content (`_moc/`), a growing `wiki/`
   knowledge base, plus the bridge plugins, the theme's data files (`_data/` —
-  navigation, UI text, authors; theme gems can't ship these), and two local layout
-  wrappers (`post`, `tutorial`). Everything else — layouts, includes, vendored
-  Bootstrap 5 — comes from the `jekyll-theme-zer0` gem (~> 1.25).
+  navigation, UI text, authors; theme gems can't ship these), and two local include
+  overrides that fix bugs still present in the theme gem. Everything else — layouts,
+  includes, vendored Bootstrap 5 — comes from the `jekyll-theme-zer0` gem (~> 1.25).
 - **`.github/workflows/pages.yml`** — builds and deploys on every push to `main`.
 
 ## Quickstart

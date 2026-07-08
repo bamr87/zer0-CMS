@@ -172,8 +172,10 @@ runs client-side except cytoscape's force layout.
      obsidian-graph.js from window.OBSIDIAN_CONFIG.cytoscapeUrl, only on this
      page, with an in-page recovery message if the fetch fails. -->
 {% if site.obsidian.enabled != false %}
-<!-- obsidian-graph.js falls back to <base>/assets/data/wiki-index.json, which
-     misses the project baseurl — pin the index URL explicitly. -->
+<!-- obsidian-graph.js reads window.OBSIDIAN_WIKI_INDEX_URL, but js-cdn.html only
+     sets window.OBSIDIAN_CONFIG.wikiIndexUrl (different global) — the fallback
+     then misses the project baseurl. Pin the index URL explicitly until fixed
+     upstream: bamr87/zer0-mistakes#294. -->
 <script>window.OBSIDIAN_WIKI_INDEX_URL = {{ '/assets/data/wiki-index.json' | relative_url | jsonify }};</script>
 <script src="{{ '/assets/js/obsidian-graph.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
 {% endif %}

@@ -14,7 +14,7 @@ This directory is **both** the content source for the *zer0-mistakes* Jekyll the
 - Documentation that *teaches* Liquid (e.g. `_docs/liquid/`, `_docs/jekyll/`) keeps its Liquid intact inside code fences — those are examples, not directives.
 - The vault was later **slimmed to three collections** — `_docs/`, `_posts/`, `_notes/` — everything else (quests, quickstart, about, notebooks, misc loose pages) was removed; see `wiki/log.md`.
 
-> **Jekyll note:** this vault **is** the Jekyll source (`../_config.yml` sets `source: pages`). Wikilinks, Dataview fences, and callouts are converted to HTML at build time by the bridge plugins in `_plugins/` — the **sole** Obsidian→HTML converter (the theme repo ships its own `obsidian_links.rb`, but plugins never load from theme gems and it resolves links by title, so copying it in would double-convert this vault's path-qualified links) — and source files are never rewritten. Content must stay **Liquid-free** (`render_with_liquid: false` is defaulted; `{% %}`/`{{ }}` would appear literally) — the one exception is `_docs/obsidian/graph.md`, which sets `render_with_liquid: true` for its single `{% include %}` line. Liquid otherwise lives only in `_layouts/` and `_includes/`; nearly all layouts come from the `jekyll-theme-zer0` gem, with `_layouts/` holding just the local `post`/`tutorial` wrappers. The pre-conversion Jekyll tree is backed up under `../.backups/pages-jekyll-*`. See the root `../CLAUDE.md` for the full dual-compatibility contract and theme details.
+> **Jekyll note:** this vault **is** the Jekyll source (`../_config.yml` sets `source: pages`). Wikilinks, Dataview fences, and callouts are converted to HTML at build time by the bridge plugins in `_plugins/` — the **sole** Obsidian→HTML converter (the theme repo ships its own `obsidian_links.rb`, but plugins never load from theme gems and it resolves links by title, so copying it in would double-convert this vault's path-qualified links) — and source files are never rewritten. Content must stay **Liquid-free** (`render_with_liquid: false` is defaulted; `{% %}`/`{{ }}` would appear literally) — the one exception is `_docs/obsidian/graph.md`, which sets `render_with_liquid: true` for its single `{% include %}` line. Liquid otherwise lives only in `_includes/`; there is **no local `_layouts/`** — every layout resolves into the `jekyll-theme-zer0` gem. The pre-conversion Jekyll tree is backed up under `../.backups/pages-jekyll-*`. See the root `../CLAUDE.md` for the full dual-compatibility contract and theme details.
 
 ## Vault structure
 
@@ -27,11 +27,12 @@ wiki/          claude-obsidian knowledge base (index, hot cache, log, overview)
 .obsidian/     vault config (graph colored by collection, Dataview + snippets enabled)
 _data/         theme data — navigation/, ui-text, authors, skins, ... (Jekyll never
                loads _data from theme gems, so the site supplies it here)
-_layouts/  _includes/  _plugins/  assets/    Jekyll render machinery (hidden from
-               Obsidian via app.json ignore filters; the only place Liquid is allowed).
-               Layouts/includes/Bootstrap come from the jekyll-theme-zer0 gem —
-               _layouts/ keeps only the post/tutorial wrappers,
-               _includes/obsidian/full-graph.html overrides the theme's graph include,
+_includes/  _plugins/  assets/    Jekyll render machinery (hidden from Obsidian via
+               app.json ignore filters; the only place Liquid is allowed). Layouts,
+               includes, and Bootstrap come from the jekyll-theme-zer0 gem — there is
+               no local _layouts/. _includes/ holds two bug-fix forks of theme
+               partials (content/intro.html, obsidian/full-graph.html — see root
+               CLAUDE.md for the upstream issues each works around),
                _plugins/ holds the bridge + the wiki-index.json graph generator, and
                assets/css/user-overrides.css is the theme's custom-CSS hook
 ```
