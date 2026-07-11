@@ -52,6 +52,6 @@ The assassination of Rafik Hariri was a turning point in modern Middle Eastern p
 ## Related
 
 - [Iraqi Parliamentary Elections](iraqi-elections-2005.md) — a parallel 2005 milestone in the contested politics of the Middle East.
-- [7/7 London bombings](77-london-bombings.md) — another 2005 event in which political violence reshaped national security debates.
+- [Tulip Revolution in Kyrgyzstan](tulip-revolution-kyrgyzstan.md) — another 2005 people-power movement in which mass protest toppled an entrenched government.
 - [Israeli Disengagement from the Gaza Strip](gaza-disengagement-2005.md) — a further 2005 turning point in the contested politics of the Middle East.
 <!-- END GENERATED: crossrefs -->

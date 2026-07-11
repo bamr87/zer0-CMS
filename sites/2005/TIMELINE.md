@@ -12,6 +12,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-02-14 | YouTube founded | Science & Technology | [file](science-technology/youtube-founded.md) |
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file](history-politics/hariri-assassination-cedar-revolution.md) |
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file](science-technology/kyoto-protocol-enters-force.md) |
+| 2005-03-24 | Tulip Revolution in Kyrgyzstan | History & Politics | [file](history-politics/tulip-revolution-kyrgyzstan.md) |
 | 2005-03-31 | Terri Schiavo dies | Society & Economics | [file](society-economics/terri-schiavo-case.md) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file](history-politics/pope-john-paul-ii-death.md) |
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file](history-politics/pope-benedict-xvi-2005.md) |
@@ -42,5 +43,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 36 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 37 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
