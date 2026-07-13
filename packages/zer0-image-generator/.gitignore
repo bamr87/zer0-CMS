@@ -1,0 +1,24 @@
+# Ruby
+*.gem
+.bundle/
+vendor/bundle/
+Gemfile.lock
+test/fixture-site/Gemfile.lock
+
+# Python
+__pycache__/
+*.pyc
+
+# Fixture-site run artifacts (CI generates, asserts, discards)
+test/fixture-site/assets/
+test/fixture-site/_site/
+test/fixture-site/.jekyll-cache/
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+*.log
