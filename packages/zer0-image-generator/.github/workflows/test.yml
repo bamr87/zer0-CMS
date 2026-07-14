@@ -39,6 +39,7 @@ jobs:
           for f in lib/zer0-image-generator.rb lib/zer0_image_generator/*.rb; do
             ruby -c "$f"
           done
+      - run: ruby test/test_command.rb
       - run: gem build zer0-image-generator.gemspec
       - name: Gem contains the engine + rasterizer helper
         run: |
@@ -68,6 +69,10 @@ jobs:
         run: bundle exec jekyll preview-images --list-missing
       - name: Dry run
         run: bundle exec jekyll preview-images --dry-run --verbose
+      - name: Dry run wrote nothing (flags really reached the engine)
+        run: |
+          test ! -e assets/images/previews
+          git diff --exit-code -- _posts _docs
       - name: Generate (local provider, real PNGs)
         run: bundle exec jekyll preview-images --collection all --verbose
       - name: Assert images exist and front matter was wired

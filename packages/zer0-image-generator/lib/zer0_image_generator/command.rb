@@ -72,7 +72,9 @@ module Zer0ImageGenerator
 
     def build_argv(options)
       SWITCHES.each_with_object([]) do |(flag, merc), argv|
-        value = options[merc.first.to_s]
+        # Mercenary keys the options hash by the symbol given to c.option.
+        value = options[merc.first]
+        value = options[merc.first.to_s] if value.nil?
         next if value.nil? || value == false
 
         if BOOLEANS.include?(flag)

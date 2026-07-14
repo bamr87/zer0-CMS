@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-07-14
+
+### Fixed
+
+- `jekyll preview-images` CLI flags were silently dropped: Mercenary keys the
+  options hash by the symbol given to `c.option`, but the argv translator
+  looked up the string form — so `--dry-run`, `--list-missing`,
+  `--provider`, etc. never reached the engine. Added a Ruby unit test for the
+  translation and a CI assertion that `--dry-run` writes nothing.
+
 ## [0.2.1] - 2026-07-13
 
 ### Fixed
