@@ -114,12 +114,22 @@ posthog:
   enabled: false
 ai_chat:
   enabled: false
-preview_images:
-  enabled: false
 content_statistics:
   auto_generate: false         # pages/_data/content_statistics.yml stays a stub
 nanobar:
   enabled: true                # page-load progress bar (no tracking; harmless)
+
+## Preview images ##############################################################
+
+# `bundle exec jekyll preview-images` (zer0-image-generator gem) generates AI
+# banner images into pages/assets/images/previews/ and writes `preview:` front
+# matter (/images/previews/… — the theme re-adds /assets at render time).
+# Jekyll's `source: pages` is honored automatically (gem >= 0.2). Rendering
+# needs OPENAI_API_KEY; `--provider local` generates key-free template banners.
+preview_images:
+  enabled: true
+  provider: openai
+  collections: [posts, docs, notes]   # content collections only — no MOC dashboards
 
 ## Collections #################################################################
 

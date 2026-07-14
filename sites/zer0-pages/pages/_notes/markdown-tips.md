@@ -1,6 +1,7 @@
 ---
 title: "Markdown Formatting Tips"
 description: "Advanced Markdown formatting tricks including tables, footnotes, task lists, and GitHub Flavored Markdown extensions"
+preview: /images/previews/markdown-formatting-tips.svg
 layout: note
 date: 2026-01-28T10:00:00.000Z
 lastmod: 2026-01-31T10:00:00.000Z

@@ -16,6 +16,9 @@ group :jekyll_plugins do
   gem "jekyll-feed"
   # {% include_cached %} — required by the theme's root layout and footer.
   gem "jekyll-include-cache"
+  # `jekyll preview-images` — AI preview/social banners, extracted from the
+  # zer0-mistakes theme (see `preview_images:` in _config.yml).
+  gem "zer0-image-generator", "~> 0.2"
 end
 
 # `jekyll serve` on Ruby >= 3.0 (webrick is no longer bundled with Ruby).

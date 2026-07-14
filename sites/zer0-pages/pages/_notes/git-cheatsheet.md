@@ -1,6 +1,7 @@
 ---
 title: "Git Commands Cheatsheet"
 description: "Quick reference for essential Git commands with practical examples for everyday version control workflows"
+preview: /images/previews/git-commands-cheatsheet.svg
 layout: note
 date: 2026-01-31T10:00:00.000Z
 lastmod: 2026-01-31T10:00:00.000Z

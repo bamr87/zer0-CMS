@@ -96,6 +96,20 @@ supported Dataview grammar for listings. Frontmatter carries `title`, `type`,
 Dataview grammar the bridge supports, lives in [CLAUDE.md](CLAUDE.md); vault-level
 conventions live in [pages/CLAUDE.md](pages/CLAUDE.md).
 
+## Preview images
+
+AI banner images come from the [zer0-image-generator](https://github.com/bamr87/zer0-image-generator)
+gem (a zer0-mistakes companion, installed via the Gemfile):
+
+```bash
+bundle exec jekyll preview-images --list-missing   # what needs a banner?
+bundle exec jekyll preview-images                  # generate + wire `preview:` front matter
+```
+
+Images land in `pages/assets/images/previews/` (the gem honors `source: pages`);
+config lives under `preview_images:` in `_config.yml`. Rendering uses OpenAI by
+default (`OPENAI_API_KEY`); `--provider local` needs no keys.
+
 ## Learn more
 
 - [PRD.md](PRD.md) — an early, aspirational product-requirements document; it describes
