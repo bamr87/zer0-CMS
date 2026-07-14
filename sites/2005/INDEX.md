@@ -26,6 +26,7 @@ A complete map of all content, organized by category. See also [TIMELINE.md](TIM
 | [Huygens lands on Titan](science-technology/huygens-titan-landing.md) | First landing in the outer solar system, January 14. |
 | [YouTube founded](science-technology/youtube-founded.md) | Video-sharing platform registered February 14. |
 | [Kyoto Protocol enters force](science-technology/kyoto-protocol-enters-force.md) | International climate treaty took legal effect February 16. |
+| [Airbus A380 makes its first flight](science-technology/airbus-a380-first-flight.md) | World's largest passenger airliner completed its maiden flight from Toulouse, April 27. |
 | [Deep Impact mission](science-technology/deep-impact-mission.md) | First active excavation of a comet's interior, July 4. |
 | [Discovery of Eris announced](science-technology/eris-discovery.md) | Caltech announced a body more massive than Pluto, July 29 — triggered Pluto's reclassification. |
 | [Guitar Hero launches](science-technology/guitar-hero-launch.md) | Harmonix's rhythm game debuted on PlayStation 2 November 8 with a guitar controller, igniting the multi-billion-dollar music-game boom. |

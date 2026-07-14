@@ -16,6 +16,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-03-31 | Terri Schiavo dies | Society & Economics | [file](society-economics/terri-schiavo-case.md) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file](history-politics/pope-john-paul-ii-death.md) |
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file](history-politics/pope-benedict-xvi-2005.md) |
+| 2005-04-27 | Airbus A380 makes its first flight | Science & Technology | [file](science-technology/airbus-a380-first-flight.md) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file](arts-culture/star-wars-episode-iii.md) |
 | 2005-06-13 | Michael Jackson acquitted | People | [file](people/michael-jackson-trial-verdict.md) |
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file](arts-culture/live-8-concerts.md) |
@@ -43,5 +44,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file](arts-culture/brokeback-mountain.md) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file](society-economics/digital-music-revolution.md) |
 
-> Generated from 37 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 38 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
