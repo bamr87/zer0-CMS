@@ -236,6 +236,27 @@ class TestUniversalKnobs(unittest.TestCase):
             self.assertEqual(
                 runner.collection_path("posts"), root / "content" / "site" / "_posts")
 
+    # -- source (Jekyll's own top-level key) -----------------------------------
+
+    def test_source_reroots_content(self):
+        root = Path("/site")
+        self.assertEqual(
+            pg.apply_source_root(root, {"source": "pages"}), root / "pages")
+
+    def test_source_absent_or_dot_keeps_root(self):
+        root = Path("/site")
+        self.assertEqual(pg.apply_source_root(root, {}), root)
+        self.assertEqual(pg.apply_source_root(root, {"source": ""}), root)
+        self.assertEqual(pg.apply_source_root(root, {"source": "."}), root)
+        self.assertEqual(pg.apply_source_root(root, {"source": None}), root)
+
+    def test_source_composes_with_collections_dir(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pg.apply_source_root(Path(tmp), {"source": "pages"})
+            runner = pg.Runner(make_settings(collections_dir=""), root)
+            self.assertEqual(
+                runner.collection_path("docs"), Path(tmp) / "pages" / "_docs")
+
     # -- front_matter_key ------------------------------------------------------
 
     def test_front_matter_key_from_config_and_cli(self):

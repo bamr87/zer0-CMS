@@ -547,6 +547,17 @@ def load_yaml_file(path: Path) -> Dict[str, Any]:
         return {}
 
 
+def apply_source_root(project_root: Path, config: Dict[str, Any]) -> Path:
+    """Honor Jekyll's top-level `source:` key: content (collections, assets,
+    _data) lives under <root>/<source> while _config.yml stays at the root —
+    e.g. zer0-pages sets `source: pages`. Disk-side only: URL-space values
+    (front-matter paths, assets_prefix) are unaffected."""
+    source = str(config.get("source") or "").strip().strip("/")
+    if source and source != ".":
+        return project_root / source
+    return project_root
+
+
 def read_config(project_root: Path) -> Dict[str, Any]:
     """The site's full _config.yml — resolve_settings extracts the
     `preview_images:` block plus the top-level Jekyll keys it honors
@@ -2359,6 +2370,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     project_root = find_project_root()
     site_config = read_config(project_root)
+    project_root = apply_source_root(project_root, site_config)
     settings = resolve_settings(args, site_config)
     VERBOSE = settings.verbose
 

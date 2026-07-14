@@ -100,6 +100,11 @@ preview_images:
 Priority per file: author overrides → CLI flags → environment variables →
 `_config.yml` → built-in defaults.
 
+Jekyll's own top-level `source:` key is honored automatically: on a site with
+`source: pages` (content, assets, and `_data` under `pages/`), every disk path
+above resolves inside `pages/` while front-matter values keep their site-URL
+form. No extra configuration needed.
+
 ### Recipe: standard Jekyll site with jekyll-seo-tag
 
 ```yaml
