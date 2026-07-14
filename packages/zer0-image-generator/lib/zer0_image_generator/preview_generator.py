@@ -2217,7 +2217,11 @@ class Runner:
         if settings.file:
             target = Path(settings.file)
             if not target.is_absolute():
+                # Source-relative first; then cwd-relative, so repo-root paths
+                # like pages/_notes/x.md still work on `source:` sites.
                 target = self.root / settings.file
+                if not target.is_file() and (Path.cwd() / settings.file).is_file():
+                    target = Path.cwd() / settings.file
             if not target.is_file():
                 error_exit(f"File not found: {settings.file}")
             self.process_file(target)
