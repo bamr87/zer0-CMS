@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator-v0.4.0...zer0-image-generator/v0.5.0) (2026-07-15)
+
+
+### Features
+
+* extract the AI preview-image engine from zer0-mistakes as a portable Jekyll plugin ([58190c9](https://github.com/bamr87/zer0-image-generator/commit/58190c996ccc93ae2bdfee7d3086196eb11ea297))
+* honor Jekyll's top-level `source:` key (zer0-pages layouts) ([baa34df](https://github.com/bamr87/zer0-image-generator/commit/baa34dfa36a836677684e1244dd87953d6f6746d))
+* low-effort Claude orchestration for faster generation ([f037fc9](https://github.com/bamr87/zer0-image-generator/commit/f037fc9f304da937b8575b0da5371f5fc7686189))
+* per-collection preview styles (collection_styles) ([0f14eeb](https://github.com/bamr87/zer0-image-generator/commit/0f14eeb9eda472e2c6540559f2aab32c97c8146b))
+
+
+### Bug Fixes
+
+* accept repo-root-relative --file paths on `source:` sites ([30d950d](https://github.com/bamr87/zer0-image-generator/commit/30d950d48f5245511e5790671e6b6cfd7af9b588))
+* forward Mercenary options to the engine (symbol hash keys) ([1e91fc6](https://github.com/bamr87/zer0-image-generator/commit/1e91fc6bcd10fff2e278b6c76c25d1cd0b00cf7f))
+
 ## [0.4.0] - 2026-07-15
 
 ### Added
