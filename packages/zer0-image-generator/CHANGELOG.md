@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-15
+
+### Added
+
+- `claude_effort` knob (default `low`): the Claude art-brief and vision-review
+  calls now send `output_config: {effort: ...}` — short creative tasks don't
+  need deep reasoning, and `low` substantially cuts per-image orchestration
+  latency. Configurable per site (`preview_images.claude_effort`); `''`
+  disables. Gracefully retries without the parameter on models that reject it.
+
+### Changed
+
+- README documents the batch-performance contract: one `--collection` run
+  parallelizes across files (`--parallel N`, default 4); per-file loops don't.
+
 ## [0.3.0] - 2026-07-14
 
 ### Added

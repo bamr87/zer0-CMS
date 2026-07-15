@@ -693,6 +693,47 @@ class TestAnthropicClient(unittest.TestCase):
         self.assertEqual(payload["thinking"], {"type": "adaptive"})
         self.assertEqual(payload["max_tokens"], pg.CLAUDE_MAX_TOKENS)
 
+    def test_effort_in_payload_and_default(self):
+        captured = {}
+
+        def fake_http_json(url, payload, headers, timeout=900):
+            captured["payload"] = payload
+            return {"stop_reason": "end_turn",
+                    "content": [{"type": "text", "text": "ok"}]}
+
+        client = self.client({"CLAUDE_CODE_OAUTH_TOKEN": "tok"})
+        with mock.patch.object(pg, "http_json", fake_http_json):
+            client.complete("s", "u", effort="low")
+        self.assertEqual(captured["payload"]["output_config"], {"effort": "low"})
+        with mock.patch.object(pg, "http_json", fake_http_json):
+            client.complete("s", "u")           # no effort → no output_config
+        self.assertNotIn("output_config", captured["payload"])
+        # engine default is "low"; empty string in config disables cleanly
+        self.assertEqual(pg.resolve_settings(parse([]), {}).claude_effort, "low")
+        settings = pg.resolve_settings(
+            parse([]), {"preview_images": {"claude_effort": ""}})
+        self.assertEqual(settings.claude_effort, "")
+
+    def test_effort_stripped_on_400(self):
+        calls = []
+
+        def fake_http_json(url, payload, headers, timeout=900):
+            calls.append(dict(payload))
+            if "output_config" in payload:
+                raise pg.HttpStatusError(
+                    400,
+                    b'{"error": {"message": "output_config is not supported"}}',
+                    url)
+            return {"stop_reason": "end_turn",
+                    "content": [{"type": "text", "text": "ok"}]}
+
+        client = self.client({"CLAUDE_CODE_OAUTH_TOKEN": "tok"})
+        with mock.patch.object(pg, "http_json", fake_http_json):
+            text = client.complete("s", "u", effort="low")
+        self.assertEqual(text, "ok")
+        self.assertEqual(len(calls), 2)
+        self.assertNotIn("output_config", calls[1])
+
     def test_refusal_raises(self):
         def fake_http_json(url, payload, headers, timeout=900):
             return {"stop_reason": "refusal", "stop_details": {"category": "cyber"},
@@ -850,14 +891,15 @@ class _FakeClaude:
     def available(self):
         return True
 
-    def complete(self, system_text, user_text, model=None, max_tokens=None):
+    def complete(self, system_text, user_text, model=None, max_tokens=None,
+                 effort=""):
         self.complete_calls.append((system_text, user_text, model))
         if self.raise_exc:
             raise self.raise_exc
         return self.text_reply or ""
 
     def complete_vision(self, system_text, user_text, image_path, model=None,
-                        max_tokens=None):
+                        max_tokens=None, effort=""):
         self.vision_calls.append((system_text, user_text, image_path, model))
         if self.raise_exc:
             raise self.raise_exc

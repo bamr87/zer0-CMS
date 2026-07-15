@@ -87,6 +87,9 @@ preview_images:
   output_dir: assets/images/previews
   prompt_engine: claude       # claude analyzes each article | template
   review_engine: claude       # claude vision-reviews each render | none
+  claude_effort: low          # output_config.effort for the brief/review calls
+                              # (low = fastest, right-sized for short briefs;
+                              #  high = deepest; '' sends no effort parameter)
   # --- portability knobs (the zer0-isms, now configurable) ---
   collections: [posts]        # list of collections, or 'auto' to discover
                               # them from Jekyll's own `collections:` map
@@ -129,6 +132,21 @@ preview_images:
   # collections_dir comes from the theme's own `collections_dir: pages`
   # front_matter_key/preview + /assets prefixing are already the defaults
 ```
+
+### Batch performance
+
+The engine parallelizes **within one invocation** (4 workers by default, `-j N`
+to change). For many files, one collection run beats a loop of single-file
+runs — the loop pays process startup per file and never engages the pool:
+
+```bash
+bundle exec jekyll preview-images --collection posts --parallel 6   # ✓ parallel
+for f in ...; do jekyll preview-images -f "$f"; done                # ✗ serial
+```
+
+Claude orchestration runs at `claude_effort: low` by default — right-sized for
+a short art brief and a render verdict. Raise it (or set `claude_model`) if you
+want deeper art direction at the cost of latency.
 
 ### Per-collection styles
 

@@ -128,6 +128,8 @@ DEFAULTS: Dict[str, Any] = {
     "prompt_engine": "claude",   # claude analyzes the article; falls back to template
     "review_engine": "claude",   # claude vision-reviews the render; `none` disables
     "claude_model": "",          # empty → DEFAULT_CLAUDE_MODEL
+    "claude_effort": "low",      # output_config.effort for brief/review calls
+                                 # (short creative tasks; "" sends no effort)
 }
 
 # Enhance mode (OpenAI /v1/images/edits — see OpenAIProvider.edit)
@@ -650,6 +652,7 @@ class Settings:
     prompt_engine: str = DEFAULTS["prompt_engine"]
     review_engine: str = DEFAULTS["review_engine"]
     claude_model: str = DEFAULTS["claude_model"]
+    claude_effort: str = DEFAULTS["claude_effort"]
 
     dry_run: bool = False
     verbose: bool = False
@@ -752,6 +755,7 @@ def resolve_settings(args: argparse.Namespace, config: Dict[str, Any]) -> Settin
         prompt_engine=pick(args.prompt_engine, "PROMPT_ENGINE", "prompt_engine"),
         review_engine=pick(args.review, "REVIEW_ENGINE", "review_engine"),
         claude_model=str(cfg("claude_model", "") or ""),
+        claude_effort=str(cfg("claude_effort", DEFAULTS["claude_effort"]) or ""),
         dry_run=args.dry_run or _env_flag("DRY_RUN"),
         verbose=args.verbose or _env_flag("VERBOSE"),
         force=args.force or _env_flag("FORCE"),
@@ -1120,6 +1124,7 @@ def claude_article_brief(client: "AnthropicClient", cf: ContentFile,
         text = client.complete(
             ART_DIRECTOR_SYSTEM, article,
             model=claude_model_for(settings), max_tokens=2048,
+            effort=settings.claude_effort,
         ).strip()
         if text:
             debug(f"Claude art-direction brief: {text[:300]}...")
@@ -1159,6 +1164,7 @@ def claude_review_image(client: "AnthropicClient", image_path: Path,
         text = client.complete_vision(
             REVIEWER_SYSTEM, context, image_path,
             model=claude_model_for(settings),
+            effort=settings.claude_effort,
         )
         data = _extract_json_object(text)
         if not data:
@@ -1496,6 +1502,7 @@ class AnthropicClient:
         user_text: str,
         model: str = DEFAULT_CLAUDE_MODEL,
         max_tokens: int = CLAUDE_MAX_TOKENS,
+        effort: str = "",
     ) -> str:
         """One Messages-API turn (or CLI run); returns concatenated text blocks.
 
@@ -1520,6 +1527,8 @@ class AnthropicClient:
             "system": system_blocks,
             "messages": [{"role": "user", "content": user_text}],
         }
+        if effort:
+            payload["output_config"] = {"effort": effort}
 
         def call(body: Dict[str, Any]) -> dict:
             return with_retries(
@@ -1530,7 +1539,12 @@ class AnthropicClient:
         try:
             data = call(payload)
         except HttpStatusError as exc:
-            if exc.status == 400 and "thinking" in exc.message().lower():
+            message = exc.message().lower() if exc.status == 400 else ""
+            if exc.status == 400 and ("output_config" in message or "effort" in message):
+                debug("Retrying without output_config parameter")
+                payload.pop("output_config", None)
+                data = call(payload)
+            elif exc.status == 400 and "thinking" in message:
                 debug("Retrying without thinking parameter")
                 payload.pop("thinking", None)
                 data = call(payload)
@@ -1564,6 +1578,7 @@ class AnthropicClient:
         image_path: Path,
         model: str = DEFAULT_CLAUDE_MODEL,
         max_tokens: int = 2048,
+        effort: str = "",
     ) -> str:
         """One vision turn over a local PNG (review stage). CLI mode passes the
         file path and lets `claude -p` read it; API modes embed base64."""
@@ -1595,10 +1610,25 @@ class AnthropicClient:
                 ],
             }],
         }
-        data = with_retries(
-            lambda: http_json(ANTHROPIC_API_URL, payload, self.headers(), timeout=900),
-            "Anthropic API (review)",
-        )
+        if effort:
+            payload["output_config"] = {"effort": effort}
+
+        def call(body: Dict[str, Any]) -> dict:
+            return with_retries(
+                lambda: http_json(ANTHROPIC_API_URL, body, self.headers(), timeout=900),
+                "Anthropic API (review)",
+            )
+
+        try:
+            data = call(payload)
+        except HttpStatusError as exc:
+            message = exc.message().lower() if exc.status == 400 else ""
+            if exc.status == 400 and ("output_config" in message or "effort" in message):
+                debug("Retrying review without output_config parameter")
+                payload.pop("output_config", None)
+                data = call(payload)
+            else:
+                raise
         if data.get("stop_reason") == "refusal":
             details = data.get("stop_details") or {}
             raise ClaudeRefusal(details.get("category") if isinstance(details, dict) else None)
