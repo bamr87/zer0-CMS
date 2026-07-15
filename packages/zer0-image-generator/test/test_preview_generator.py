@@ -142,7 +142,7 @@ class TestSettingsPrecedence(unittest.TestCase):
     def test_author_overrides_apply_on_top(self):
         settings = self.resolve([])
         overrides = {"style": "noir", "model": "dall-e-3", "size": "1024x1024"}
-        merged = pg.apply_author_overrides(settings, overrides)
+        merged = pg.apply_preview_overrides(settings, overrides)
         self.assertEqual(merged.style, "noir")
         self.assertEqual(merged.model, "dall-e-3")
         self.assertEqual(merged.size, "1024x1024")
@@ -194,6 +194,61 @@ class TestAuthorOverrides(unittest.TestCase):
         self.assertEqual(pg.author_preview_overrides(authors, {"name": "x"}), {})
         self.assertEqual(pg.author_preview_overrides(authors, None), {})
         self.assertEqual(pg.author_preview_overrides(authors, "missing"), {})
+
+
+class TestCollectionStyles(unittest.TestCase):
+    """Per-collection style/theme overrides (`collection_styles:`) — each
+    collection can render with its own visual identity."""
+
+    STYLES = {
+        "hacks": {"style": "circuit-board blueprint", "size": "1024x1024"},
+        "docs": {"style": "clean isometric diagram",
+                 "style_modifiers": "matte, technical"},
+        "posts": "not-a-dict",     # malformed block → ignored
+    }
+
+    def test_collection_of_derives_from_path(self):
+        self.assertEqual(pg.collection_of(Path("/site/pages/_docs/a.md")), "docs")
+        self.assertEqual(
+            pg.collection_of(Path("/site/pages/_posts/2026/b.md")), "posts")
+        self.assertEqual(pg.collection_of(Path("/site/index.md")), "")
+
+    def test_overrides_looked_up_by_collection(self):
+        self.assertEqual(
+            pg.collection_preview_overrides(self.STYLES, "hacks"),
+            {"style": "circuit-board blueprint", "size": "1024x1024"})
+        self.assertEqual(pg.collection_preview_overrides(self.STYLES, "posts"), {})
+        self.assertEqual(pg.collection_preview_overrides(self.STYLES, "news"), {})
+        self.assertEqual(pg.collection_preview_overrides(self.STYLES, ""), {})
+        self.assertEqual(pg.collection_preview_overrides("nope", "hacks"), {})
+
+    def test_unknown_keys_filtered(self):
+        styles = {"docs": {"style": "x", "output_dir": "evil", "enabled": False}}
+        self.assertEqual(
+            pg.collection_preview_overrides(styles, "docs"), {"style": "x"})
+
+    def test_resolve_settings_reads_map(self):
+        config = {"preview_images": {"collection_styles": self.STYLES}}
+        settings = pg.resolve_settings(parse([]), config)
+        self.assertEqual(settings.collection_styles, self.STYLES)
+        # non-map values are dropped, not crashed on
+        config = {"preview_images": {"collection_styles": ["hacks"]}}
+        self.assertEqual(pg.resolve_settings(parse([]), config).collection_styles, {})
+
+    def test_author_beats_collection_beats_global(self):
+        settings = pg.resolve_settings(parse([]), {"preview_images": {
+            "style": "global-style",
+            "collection_styles": {"docs": {"style": "docs-style",
+                                           "size": "1024x1024"}},
+        }})
+        collection = pg.collection_preview_overrides(
+            settings.collection_styles, "docs")
+        author = {"style": "author-style"}
+        merged = pg.apply_preview_overrides(settings, collection, author)
+        self.assertEqual(merged.style, "author-style")   # author wins style...
+        self.assertEqual(merged.size, "1024x1024")       # ...collection keeps size
+        no_author = pg.apply_preview_overrides(settings, collection, {})
+        self.assertEqual(no_author.style, "docs-style")
 
 
 class TestUniversalKnobs(unittest.TestCase):

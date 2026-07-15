@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-07-14
+
+### Added
+
+- Per-collection style/theme overrides: a `collection_styles:` map under
+  `preview_images:` lets each collection (`posts`, `docs`, `hacks`, …) carry
+  its own `style`, `style_modifiers`, `size`, `quality`, and `model` — so
+  field notes, docs, and hacks render with distinct visual identities. A
+  file's collection is derived from its `_<name>` directory; precedence is
+  author overrides → collection styles → CLI flags → env → config → defaults.
+
 ## [0.2.2] - 2026-07-14
 
 ### Fixed

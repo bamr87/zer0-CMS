@@ -93,12 +93,13 @@ preview_images:
   collections_dir: ''         # falls back to Jekyll's top-level collections_dir
   front_matter_key: preview   # key to read/write (jekyll-seo-tag sites: image)
   authors_file: _data/authors.yml  # per-author style overrides ('' disables)
+  collection_styles: {}       # per-collection style/theme overrides (below)
   assets_prefix: /assets      # written paths omit this prefix ...
   auto_prefix: true           # ... and it is re-added for existence checks
 ```
 
-Priority per file: author overrides → CLI flags → environment variables →
-`_config.yml` → built-in defaults.
+Priority per file: author overrides → collection styles → CLI flags →
+environment variables → `_config.yml` → built-in defaults.
 
 Jekyll's own top-level `source:` key is honored automatically: on a site with
 `source: pages` (content, assets, and `_data` under `pages/`), every disk path
@@ -127,6 +128,27 @@ preview_images:
   collections: [posts, docs, quickstart]
   # collections_dir comes from the theme's own `collections_dir: pages`
   # front_matter_key/preview + /assets prefixing are already the defaults
+```
+
+### Per-collection styles
+
+Give each collection its own visual identity — tutorials render differently
+from field notes, docs differently from reviews. Any of `style`,
+`style_modifiers`, `size`, `quality`, and `model` can be set per collection;
+everything else inherits the global config. A file's collection comes from its
+`_<name>` directory; author overrides still win over collection styles.
+
+```yaml
+preview_images:
+  style: "retro pixel art"          # global fallback
+  collection_styles:
+    posts:
+      style: "hand-inked editorial illustration, warm print tones"
+    docs:
+      style: "clean isometric technical diagram"
+      style_modifiers: "matte surfaces, labeled parts, blueprint accents"
+    hacks:
+      style: "circuit-board schematic, glowing traces"
 ```
 
 ### Per-author style overrides

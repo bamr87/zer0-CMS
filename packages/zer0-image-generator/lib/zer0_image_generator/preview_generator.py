@@ -17,6 +17,9 @@ knob with zer0-compatible defaults:
     author overrides    authors_file ("" disables)           _data/authors.yml
     collections         collections (list, or "auto" to      [posts]
                         discover from Jekyll's collections:)
+    collection styles   collection_styles (map of            {} (global style)
+                        collection → style/style_modifiers/
+                        size/quality/model overrides)
 
 Architecture — Claude ORCHESTRATES, an image model RENDERS:
 
@@ -573,6 +576,22 @@ def read_authors(project_root: Path, authors_file: str) -> Dict[str, Any]:
     return load_yaml_file(project_root / authors_file.strip().lstrip("/"))
 
 
+# Settings fields an override block (author preview: / collection_styles:)
+# may replace per file.
+OVERRIDE_KEYS = ("style", "style_modifiers", "size", "quality", "model")
+
+
+def _filter_override_block(block: Any) -> Dict[str, str]:
+    """Keep only the recognized override keys with non-empty values."""
+    if not isinstance(block, dict):
+        return {}
+    return {
+        key: str(value).strip()
+        for key, value in block.items()
+        if key in OVERRIDE_KEYS and value is not None and str(value).strip()
+    }
+
+
 def author_preview_overrides(authors: Dict[str, Any], author_key: Any) -> Dict[str, str]:
     """`preview:` override block for an author key (style/style_modifiers/size/
     quality/model). `author:` may be a list or mapping in some posts — only a
@@ -582,15 +601,27 @@ def author_preview_overrides(authors: Dict[str, Any], author_key: Any) -> Dict[s
     author = authors.get(author_key)
     if not isinstance(author, dict):
         return {}
-    preview = author.get("preview")
-    if not isinstance(preview, dict):
+    return _filter_override_block(author.get("preview"))
+
+
+def collection_of(path: Path) -> str:
+    """The file's collection, from the nearest `_<name>` ancestor directory
+    (Jekyll's collection layout) — '' for files outside any collection."""
+    for parent in Path(path).resolve().parents:
+        name = parent.name
+        if name.startswith("_") and len(name) > 1:
+            return name[1:]
+    return ""
+
+
+def collection_preview_overrides(
+    collection_styles: Dict[str, Any], collection: str
+) -> Dict[str, str]:
+    """`collection_styles:` override block for a collection — same keys as
+    author overrides, so each collection can carry its own visual theme."""
+    if not collection or not isinstance(collection_styles, dict):
         return {}
-    return {
-        key: str(value).strip()
-        for key, value in preview.items()
-        if key in ("style", "style_modifiers", "size", "quality", "model")
-        and value is not None and str(value).strip()
-    }
+    return _filter_override_block(collection_styles.get(collection))
 
 
 def _env_flag(name: str) -> bool:
@@ -613,6 +644,7 @@ class Settings:
     enabled: bool = True
     collections: List[str] = field(default_factory=lambda: list(DEFAULTS["collections"]))
     collections_dir: str = DEFAULTS["collections_dir"]
+    collection_styles: Dict[str, Any] = field(default_factory=dict)
     front_matter_key: str = DEFAULTS["front_matter_key"]
     authors_file: str = DEFAULTS["authors_file"]
     prompt_engine: str = DEFAULTS["prompt_engine"]
@@ -703,6 +735,10 @@ def resolve_settings(args: argparse.Namespace, config: Dict[str, Any]) -> Settin
         ),
         enabled=bool(cfg("enabled", True)),
         collections=[str(c) for c in collections],
+        collection_styles=(
+            cfg("collection_styles", {})
+            if isinstance(cfg("collection_styles", {}), dict) else {}
+        ),
         collections_dir=str(collections_dir or "").strip().strip("/"),
         front_matter_key=(
             args.front_matter_key
@@ -748,18 +784,36 @@ def resolve_settings(args: argparse.Namespace, config: Dict[str, Any]) -> Settin
     return settings
 
 
-def apply_author_overrides(settings: Settings, overrides: Dict[str, str]) -> Settings:
-    """Per-file settings copy with the author's preview block applied on top."""
-    if not overrides:
+def apply_preview_overrides(
+    settings: Settings, *override_blocks: Dict[str, str]
+) -> Settings:
+    """Per-file settings copy with override blocks applied in order — later
+    blocks win (pass collection styles first, author overrides on top)."""
+    merged: Dict[str, str] = {}
+    for block in override_blocks:
+        merged.update(block or {})
+    if not merged:
         return settings
     return replace(
         settings,
-        style=overrides.get("style", settings.style),
-        style_modifiers=overrides.get("style_modifiers", settings.style_modifiers),
-        size=overrides.get("size", settings.size),
-        quality=overrides.get("quality", settings.quality),
-        model=overrides.get("model", settings.model),
+        **{key: merged.get(key, getattr(settings, key)) for key in OVERRIDE_KEYS},
     )
+
+
+def file_preview_settings(settings: Settings, cf: "ContentFile",
+                          authors: Dict[str, Any]) -> Settings:
+    """The per-file settings: global → collection_styles[collection] →
+    author preview: block (most specific wins)."""
+    coll_overrides = collection_preview_overrides(
+        settings.collection_styles, collection_of(cf.path))
+    author_overrides = author_preview_overrides(authors, cf.author)
+    result = apply_preview_overrides(settings, coll_overrides, author_overrides)
+    if coll_overrides:
+        info(f"  ↳ Collection '{collection_of(cf.path)}' preview style applied")
+    if author_overrides:
+        info(f"  ↳ Author '{cf.author}' preview overrides applied "
+             f"({settings.authors_file})")
+    return result
 
 
 def model_family(model: str) -> Optional[str]:
@@ -2025,13 +2079,8 @@ class Runner:
             return
         out_base = self.root / settings.output_dir / slug
 
-        # Author overrides apply only once an image/prompt is actually built.
-        file_settings = apply_author_overrides(
-            settings, author_preview_overrides(self.authors, cf.author)
-        )
-        if file_settings is not settings:
-            info(f"  ↳ Author '{cf.author}' preview overrides applied "
-                 f"({settings.authors_file})")
+        # Style overrides apply only once an image/prompt is actually built.
+        file_settings = file_preview_settings(settings, cf, self.authors)
 
         # ---- Analyze: Claude reads the article and writes the art brief ----
         base_prompt = build_prompt(cf, file_settings)
@@ -2114,9 +2163,7 @@ class Runner:
             return
 
         info(f"Enhancing preview for: {cf.title}")
-        file_settings = apply_author_overrides(
-            settings, author_preview_overrides(self.authors, cf.author)
-        )
+        file_settings = file_preview_settings(settings, cf, self.authors)
         prompt = build_enhance_prompt(cf, file_settings)
         debug(f"Enhancement prompt: {prompt[:400]}...")
 
