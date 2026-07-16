@@ -41,5 +41,5 @@ Hart's collapse also left the Democratic Party scrambling for a frontrunner and 
 - [Mathias Rust — Flight to Red Square (May 28, 1987)](mathias-rust.md) — another May 1987 People entry, where a private individual upended a superpower's defenses.
 - [Klaus Barbie — Convicted (July 4, 1987)](klaus-barbie.md) — another 1987 People entry involving political accountability.
 - [Rudolf Hess (death, August 17, 1987)](rudolf-hess.md) — another notable 1987 People entry.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

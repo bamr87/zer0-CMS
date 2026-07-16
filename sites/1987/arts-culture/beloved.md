@@ -42,5 +42,5 @@ The novel's publication in 1987 arrived at a moment of renewed national reckonin
 - [*Sign 'O' the Times* (Prince, March 31, 1987)](sign-o-the-times.md) — another Arts & Culture landmark of 1987.
 - [Michael Jackson's *Bad* (August 31, 1987)](michael-jackson-bad.md) — another major cultural release of 1987.
 - [*Full Metal Jacket* (June 26, 1987)](full-metal-jacket.md) — another defining Arts & Culture release of 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

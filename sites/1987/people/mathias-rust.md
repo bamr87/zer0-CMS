@@ -42,5 +42,5 @@ Rust's flight also captured the popular imagination in both East and West: an un
 - [INF Treaty (December 8, 1987)](../history-politics/inf-treaty.md) — the arms-control breakthrough Reagan and Gorbachev signed six months after Rust's flight helped reshape Soviet military leadership.
 - ["Tear Down This Wall" speech (June 12, 1987)](../history-politics/reagan-berlin-speech.md) — another 1987 event at the Berlin frontier linking Reagan and Gorbachev.
 - [Rudolf Hess (death, August 17, 1987)](rudolf-hess.md) — another notable 1987 People entry.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

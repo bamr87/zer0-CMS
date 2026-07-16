@@ -12,4 +12,4 @@ Discoveries, inventions, and technological breakthroughs of 1987.
 | [Microsoft Windows 2.0 (December 9, 1987)](windows-2.md) | Microsoft's second graphical environment introduces overlapping windows, desktop icons, and a protected-mode Windows/386 variant, triggering the landmark Apple v. Microsoft "look and feel" lawsuit. |
 <!-- END GENERATED: category-index:science-technology -->
 
-See also the [master index](../INDEX.md) and [timeline](../TIMELINE.md).
+See also the [master index](../index.md) and [timeline](../TIMELINE.md).

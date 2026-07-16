@@ -13,4 +13,4 @@ Films, music, literature, art, and cultural moments of 1987.
 | [Toni Morrison's Beloved](beloved.md) | Morrison's fifth novel, published September 16, 1987, draws on the true story of Margaret Garner and wins the 1988 Pulitzer Prize for Fiction, later ranked the best American fiction from 1981–2006. |
 <!-- END GENERATED: category-index:arts-culture -->
 
-See also the [master index](../INDEX.md) and [timeline](../TIMELINE.md).
+See also the [master index](../index.md) and [timeline](../TIMELINE.md).

@@ -42,5 +42,5 @@ For the broader Middle East, the intifada confirmed that the Palestinian questio
 
 - [INF Treaty (December 8, 1987)](inf-treaty.md) — the other landmark December 1987 event, Reagan and Gorbachev's arms-control breakthrough.
 - [Montreal Protocol (September 16, 1987)](montreal-protocol.md) — another 1987 multilateral landmark.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

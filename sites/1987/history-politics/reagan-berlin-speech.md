@@ -25,7 +25,7 @@ The speech is regarded as one of Reagan's defining rhetorical moments and a key 
 - [INF Treaty (December 8, 1987)](inf-treaty.md) — Reagan and Gorbachev signed the INF Treaty just six months after the Brandenburg Gate speech, fulfilling the diplomatic pressure it symbolised.
 - [Iran-Contra Affair (1986–1987)](iran-contra.md) — the domestic scandal running in parallel with Reagan's Cold War diplomacy throughout 1987.
 - [Montreal Protocol (September 16, 1987)](montreal-protocol.md) — another landmark international agreement concluded in the same year, reflecting 1987's unusually productive multilateral diplomacy.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->
 
 ## Sources

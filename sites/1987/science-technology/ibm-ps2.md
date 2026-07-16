@@ -46,5 +46,5 @@ The enduring legacy of the PS/2 lies in its successful standards: VGA remained t
 - [Microsoft Windows 2.0 (December 9, 1987)](windows-2.md) — released the same year, Microsoft's GUI push ran alongside IBM's hardware push.
 - [DNA Fingerprinting in Criminal Court (November 1987)](dna-fingerprinting.md) — another landmark Science & Technology milestone of 1987.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the financial shock that shook markets the same year IBM launched the PS/2.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

@@ -12,4 +12,4 @@ Social movements, markets, sport, and everyday life in 1987.
 | [FDA Approves Prozac (December 29, 1987)](prozac-fda-approval.md) | The FDA approves fluoxetine (Prozac), the first SSRI antidepressant, launching a new era in psychiatric treatment worldwide. |
 <!-- END GENERATED: category-index:society-economics -->
 
-See also the [master index](../INDEX.md) and [timeline](../TIMELINE.md).
+See also the [master index](../index.md) and [timeline](../TIMELINE.md).

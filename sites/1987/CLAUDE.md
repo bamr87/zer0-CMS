@@ -28,7 +28,7 @@ Editing a generated file by hand gets silently overwritten on the next growth ti
 | `seed.md` §1–7 | `sync-seed` skill | ❌ generated |
 | `seed.md` §8 Evolution Log | `encode-seed` prompt (append) | append only |
 | `ROADMAP.md` | `plan-roadmap` skill | ❌ generated (reconciled each tick) |
-| `TIMELINE.md`, `INDEX.md`, `<category>/index.md`, `## Related` cross-refs | `build-structure` skill | ❌ generated |
+| `TIMELINE.md`, `index.md`, `<category>/index.md`, `## Related` cross-refs | `build-structure` skill | ❌ generated |
 | `README.md` knowledge table rows | `add-topic` / `curator` / `update-readme` | ✅ via skills |
 | `<category-slug>/<topic-slug>.md` topic files | `curator` / `deep-dive` | ✅ via skills |
 

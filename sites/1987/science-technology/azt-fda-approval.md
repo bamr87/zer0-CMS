@@ -47,5 +47,5 @@ Scientifically, AZT validated the NRTI class of antiretrovirals and established 
 - [Microsoft Windows 2.0 (December 9, 1987)](windows-2.md) — major technology milestone of the same year.
 - [ACT UP Founded (March 12, 1987)](../society-economics/act-up-founding.md) — AIDS activist organization founded eight days before AZT approval.
 - [FDA Approves Prozac (December 29, 1987)](../society-economics/prozac-fda-approval.md) — the other landmark FDA drug approval of 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

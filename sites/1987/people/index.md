@@ -12,4 +12,4 @@ Notable births, deaths, and figures of 1987.
 | [Rudolf Hess (death, August 17, 1987)](rudolf-hess.md) | Hitler's former deputy dies at 93 in Spandau Prison, ending four-power Allied custody and prompting the prison's demolition. |
 <!-- END GENERATED: category-index:people -->
 
-See also the [master index](../INDEX.md) and [timeline](../TIMELINE.md).
+See also the [master index](../index.md) and [timeline](../TIMELINE.md).

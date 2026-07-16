@@ -46,5 +46,5 @@ The album arrived at a specific cultural moment — the second Reagan term, the 
 - [Michael Jackson's *Bad* (August 31, 1987)](michael-jackson-bad.md) — *Bad* was the Grammy Album of the Year runner-up that *The Joshua Tree* defeated in 1988.
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame (January 21, 1987)](aretha-franklin-hof.md) — another major Arts & Culture milestone of 1987.
 - [*Full Metal Jacket* (June 26, 1987)](full-metal-jacket.md) — another defining cultural release of 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

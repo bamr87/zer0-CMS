@@ -29,7 +29,7 @@ Rewrite each section to match reality:
 4. **Content Inventory** — current taxonomy, README table row count, and the list of dedicated
    topic files that exist.
 5. **Structure Inventory** — which generated artifacts exist (category indices, `TIMELINE.md`,
-   `INDEX.md`/TOC, cross-refs) vs. not-yet-generated.
+   `index.md`/TOC, cross-refs) vs. not-yet-generated.
 6. **Growth Loop** — keep current (only change if the loop itself changed).
 7. **Rebuild Procedure** — keep current.
 

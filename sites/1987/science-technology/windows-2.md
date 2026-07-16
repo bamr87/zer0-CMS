@@ -35,5 +35,5 @@ In the broader context of 1987, Windows 2.0's release reflected a pivotal transi
 - [DNA Fingerprinting in Criminal Court (November 1987)](dna-fingerprinting.md) — another landmark Science & Technology milestone of 1987.
 - [Supernova 1987A (February 23, 1987)](supernova-1987a.md) — a major scientific event of the same year.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the economic backdrop against which Windows 2.0 launched.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

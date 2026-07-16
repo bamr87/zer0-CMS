@@ -23,7 +23,7 @@ Build/refresh the candidate list, each tagged `content | structure | meta`:
 - **content** — under-represented categories (`< 3` rows), notable table rows lacking a dedicated
   file, obvious in-scope items not yet covered.
 - **structure** — missing or stale generated artifacts (category indices, `TIMELINE.md`,
-  `INDEX.md`/TOC, cross-references).
+  `index.md`/TOC, cross-references).
 - **meta** — `evolve` audit if it's been ~5+ ticks since the last one.
 
 If the Backlog is nearly empty, generate new in-scope candidates from `concept.taxonomy`.

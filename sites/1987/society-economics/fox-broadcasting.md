@@ -43,5 +43,5 @@ Fox's launch also had structural consequences for the industry. The FCC's 1993 r
 - [ACT UP Founded (March 12, 1987)](act-up-founding.md) — another major Society & Economics landmark of 1987.
 - [1987 World Series (October 17–25, 1987)](world-series-1987.md) — another major Society & Economics event of 1987.
 - [FDA Approves Prozac (December 29, 1987)](prozac-fda-approval.md) — another Society & Economics milestone of 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

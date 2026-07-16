@@ -35,5 +35,5 @@ The treaty signaled a fundamental shift in US-Soviet relations and contributed d
 - [Iran-Contra Affair (1986–1987)](iran-contra.md) — the domestic scandal that shadowed Reagan's foreign-policy achievements in 1987.
 - [First Intifada (December 9, 1987)](first-intifada.md) — the other major December 1987 geopolitical event, as Palestinian uprising reshaped Middle East politics.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the other defining global event of late 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

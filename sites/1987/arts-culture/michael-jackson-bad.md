@@ -42,5 +42,5 @@ The album also marks the peak of the three-album creative partnership between Ja
 - [*Beloved* by Toni Morrison (September 16, 1987)](beloved.md) — another landmark 1987 cultural work that reshaped its medium, published two weeks after *Bad*'s release.
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame (January 21, 1987)](aretha-franklin-hof.md) — another major Arts & Culture milestone of 1987.
 - [*Full Metal Jacket* (June 26, 1987)](full-metal-jacket.md) — another defining cultural release of 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

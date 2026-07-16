@@ -12,4 +12,4 @@ World events, Cold War developments, treaties, and political turning points of 1
 | [First Intifada (December 9, 1987)](first-intifada.md) | A Palestinian uprising against Israeli occupation erupts in Gaza and the West Bank, launching a six-year struggle that reshapes Middle East politics and leads to the Oslo Accords. |
 <!-- END GENERATED: category-index:history-politics -->
 
-See also the [master index](../INDEX.md) and [timeline](../TIMELINE.md).
+See also the [master index](../index.md) and [timeline](../TIMELINE.md).

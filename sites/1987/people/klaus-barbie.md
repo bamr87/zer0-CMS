@@ -41,5 +41,5 @@ Internationally, the trial reinforced the principle that there is no statute of 
 - [Rudolf Hess (death, August 17, 1987)](rudolf-hess.md) — another prominent Nazi figure whose 1987 death closed a chapter of World War II accountability.
 - [Mathias Rust (flight to Red Square, May 28, 1987)](mathias-rust.md) — another major 1987 People entry involving Cold War-era confrontation.
 - [First Intifada (December 9, 1987)](../history-politics/first-intifada.md) — another 1987 event reshaping international understandings of justice and occupation.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

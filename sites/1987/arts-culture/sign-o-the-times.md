@@ -38,5 +38,5 @@ The album's title track directly addressed the AIDS epidemic, gang violence, and
 - [Aretha Franklin: First Woman in the Rock and Roll Hall of Fame](aretha-franklin-hof.md) — another landmark Arts & Culture moment of 1987.
 - [*Full Metal Jacket* (1987)](full-metal-jacket.md) — Stanley Kubrick's Vietnam War film, another major cultural release of the same year.
 - [Black Monday (October 19, 1987)](../society-economics/black-monday.md) — the defining economic shock of 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

@@ -38,5 +38,5 @@ The 1987 election also illustrated a structural tension in British democracy: th
 - [INF Treaty signed (December 8, 1987)](../history-politics/inf-treaty.md) — Thatcher's third term began as Reagan–Gorbachev nuclear talks reached their conclusion.
 - [Gary Hart — Withdrawal from the 1988 Presidential Race (May 8, 1987)](gary-hart.md) — another major 1987 political event reshaping Western democratic politics.
 - [Klaus Barbie — Convicted (July 4, 1987)](klaus-barbie.md) — another notable People entry from 1987.
-- [Index of 1987 topics](../INDEX.md) · [Timeline](../TIMELINE.md)
+- [Index of 1987 topics](../index.md) · [Timeline](../TIMELINE.md)
 <!-- END GENERATED: related -->

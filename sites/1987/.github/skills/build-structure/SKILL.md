@@ -32,9 +32,11 @@ Only if the `subject` is time-oriented (e.g. a year, era, or event sequence). Co
 from the README knowledge table and dedicated files, sort chronologically, and render
 `| Date | Item | Category | Link |`.
 
-### 3. Master index / TOC — `INDEX.md`
+### 3. Master index / TOC — `index.md`
 A map of all content grouped by `concept.taxonomy` category: every topic file linked, plus a pointer
-to each category index and to `TIMELINE.md`. (Alternatively maintain a generated TOC region inside
+to each category index and to `TIMELINE.md`. Filename is **lowercase `index.md`** so GitHub Pages'
+Jekyll build emits the site-root `index.html` — an uppercase `INDEX.md` renders to `INDEX.html` and
+leaves the repo's Pages root (`/`) a 404. (Alternatively maintain a generated TOC region inside
 README.md — pick one and be consistent.)
 
 ### 4. Cross-references
