@@ -3,9 +3,9 @@
 import re
 from typing import Optional
 
-from drsai.models.schemas import MeterScore, QualityScore
-from drsai.validation.scansion import validate_meter
+from drsai.models.schemas import QualityScore
 from drsai.validation.rhyme_checker import RhymeChecker
+from drsai.validation.scansion import validate_meter
 
 
 class QualityChecker:
@@ -13,11 +13,30 @@ class QualityChecker:
 
     # Keywords that suggest a moral/lesson
     MORAL_KEYWORDS = [
-        "moral", "lesson", "remember", "always", "never forget",
-        "so you see", "and that's why", "the truth is", "in the end",
-        "what we learn", "important", "matters most", "heart",
-        "kindness", "love", "friend", "together", "believe",
-        "try", "dream", "hope", "joy", "share", "care",
+        "moral",
+        "lesson",
+        "remember",
+        "always",
+        "never forget",
+        "so you see",
+        "and that's why",
+        "the truth is",
+        "in the end",
+        "what we learn",
+        "important",
+        "matters most",
+        "heart",
+        "kindness",
+        "love",
+        "friend",
+        "together",
+        "believe",
+        "try",
+        "dream",
+        "hope",
+        "joy",
+        "share",
+        "care",
     ]
 
     # Keywords suggesting invented/whimsical words
@@ -49,8 +68,14 @@ class QualityChecker:
             last_lines = " ".join(lines[-3:]).lower()
             # Look for concluding phrases
             concluding_phrases = [
-                "and so", "that's the", "you'll find", "remember this",
-                "never forget", "always be", "the end", "from this day",
+                "and so",
+                "that's the",
+                "you'll find",
+                "remember this",
+                "never forget",
+                "always be",
+                "the end",
+                "from this day",
             ]
             for phrase in concluding_phrases:
                 if phrase in last_lines:
@@ -130,5 +155,3 @@ class QualityChecker:
             suggestions.append("End with a clear moral or lesson.")
 
         return suggestions
-
-

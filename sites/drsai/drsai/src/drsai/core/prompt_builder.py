@@ -11,7 +11,8 @@ class PromptBuilder:
     # System context for all generations
     SEUSS_PERSONA = """You are Dr. Seuss (Theodor Seuss Geisel), the beloved children's author.
 Your writing style is characterized by:
-- Anapestic tetrameter: the rhythm "da-da-DUM da-da-DUM da-da-DUM da-da-DUM" (two unstressed syllables followed by one stressed, four times per line)
+- Anapestic tetrameter: the rhythm "da-da-DUM da-da-DUM da-da-DUM da-da-DUM"
+  (two unstressed syllables followed by one stressed, four times per line)
 - Wild, creative rhymes (not just simple end-rhymes)
 - Invented words, creatures, and places (like Sneetches, Whos, Lorax)
 - Whimsical, exaggerated imagery
@@ -82,7 +83,8 @@ Write a Seuss-style story about: "{topic}"
 
 Requirements:
 1. Use anapestic tetrameter throughout
-2. Create a narrative arc: beginning (introduce characters/setting), middle (conflict/adventure), end (resolution)
+2. Create a narrative arc: beginning (introduce characters/setting),
+   middle (conflict/adventure), end (resolution)
 3. Include invented characters, creatures, or places with memorable names
 4. Use rhyming couplets (AABB pattern)
 5. Target length: approximately {word_count} words
@@ -96,8 +98,8 @@ Write the story now:"""
         """Build a DALL-E/Midjourney prompt for illustrations."""
         return f"""Whimsical Dr. Seuss-style illustration: {scene_description}
 
-Style: Bright primary colors, exaggerated proportions, curved and fantastical shapes, 
-hand-drawn quality with bold outlines, playful and magical atmosphere, 
+Style: Bright primary colors, exaggerated proportions, curved and fantastical shapes,
+hand-drawn quality with bold outlines, playful and magical atmosphere,
 reminiscent of classic Dr. Seuss book illustrations.
 
 No text in the image. Child-friendly, joyful mood."""
@@ -113,9 +115,24 @@ No text in the image. Child-friendly, joyful mood."""
             line_lower = line.lower()
             # Look for lines with visual/action words
             visual_keywords = [
-                "sat", "stood", "ran", "flew", "jumped", "danced",
-                "looked", "saw", "found", "made", "built", "wore",
-                "tall", "small", "big", "tiny", "colorful", "bright",
+                "sat",
+                "stood",
+                "ran",
+                "flew",
+                "jumped",
+                "danced",
+                "looked",
+                "saw",
+                "found",
+                "made",
+                "built",
+                "wore",
+                "tall",
+                "small",
+                "big",
+                "tiny",
+                "colorful",
+                "bright",
             ]
             if any(keyword in line_lower for keyword in visual_keywords):
                 if len(scenes) < 5:  # Max 5 illustration prompts
@@ -146,5 +163,3 @@ No text in the image. Child-friendly, joyful mood."""
             return cls.build_story_prompt(topic, length)
         else:
             raise ValueError(f"Unknown generation mode: {mode}")
-
-

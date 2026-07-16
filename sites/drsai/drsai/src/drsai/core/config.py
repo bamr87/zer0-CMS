@@ -23,9 +23,7 @@ class Config(BaseModel):
     """DrSAI configuration."""
 
     # LLM Provider settings
-    llm_provider: LLMProvider = Field(
-        default=LLMProvider.OPENAI, description="LLM provider to use"
-    )
+    llm_provider: LLMProvider = Field(default=LLMProvider.OPENAI, description="LLM provider to use")
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
     anthropic_api_key: Optional[str] = Field(default=None, description="Anthropic API key")
     xai_api_key: Optional[str] = Field(default=None, description="xAI API key")
@@ -92,4 +90,3 @@ class Config(BaseModel):
 def get_config() -> Config:
     """Get cached configuration instance."""
     return Config.from_env()
-

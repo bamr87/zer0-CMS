@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 
-
 Mode = Literal["poem", "explain", "story"]
 
 
@@ -82,5 +81,3 @@ def validate_corpus_files_exist() -> None:
             missing.append(str(p))
     if missing:
         raise FileNotFoundError(f"Missing corpus files: {', '.join(missing)}")
-
-

@@ -15,5 +15,3 @@ __all__ = [
     "MeterScore",
     "QualityScore",
 ]
-
-

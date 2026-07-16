@@ -3,7 +3,7 @@
 from typing import Optional
 
 from drsai.commands.base import BaseCommand
-from drsai.core.config import Config, get_config
+from drsai.core.config import Config
 from drsai.core.llm_client import LLMClient
 from drsai.core.prompt_builder import PromptBuilder
 from drsai.models.schemas import (
@@ -11,8 +11,8 @@ from drsai.models.schemas import (
     GenerationRequest,
     GenerationResponse,
 )
-from drsai.validation.scansion import validate_meter
 from drsai.validation.quality_checker import QualityChecker
+from drsai.validation.scansion import validate_meter
 
 
 class GenerateCommand(BaseCommand):
@@ -98,7 +98,8 @@ class GenerateCommand(BaseCommand):
                 meter_score=best_score,
                 attempts=attempts,
                 warning=(
-                    f"Meter compliance ({best_score:.0%}) is below target ({self.config.meter_compliance_target:.0%}). "
+                    f"Meter compliance ({best_score:.0%}) is below target "
+                    f"({self.config.meter_compliance_target:.0%}). "
                     "Content may not have perfect Seuss rhythm."
                 ),
             )
@@ -110,8 +111,10 @@ class GenerateCommand(BaseCommand):
             meter_score=best_score,
             attempts=attempts,
             warning=(
-                f"⚠️ Meter compliance ({best_score:.0%}) is below minimum ({self.config.meter_compliance_minimum:.0%}). "
-                "Content rhythm may not match Dr. Seuss style. Try a simpler topic or shorter length."
+                f"⚠️ Meter compliance ({best_score:.0%}) is below minimum "
+                f"({self.config.meter_compliance_minimum:.0%}). "
+                "Content rhythm may not match Dr. Seuss style. "
+                "Try a simpler topic or shorter length."
             ),
         )
 
@@ -175,4 +178,3 @@ def generate(
         age=age,
         length=length,
     )
-

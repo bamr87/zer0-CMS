@@ -85,5 +85,3 @@ class TestModuleFunctions:
         result = check_rhyme("cat", "hat")
         assert result.word1 == "cat"
         assert result.word2 == "hat"
-
-

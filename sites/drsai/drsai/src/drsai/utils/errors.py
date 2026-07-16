@@ -51,5 +51,3 @@ class RateLimitError(DrSAIError):
     def __init__(self, message: str = "Rate limit exceeded", retry_after: int = 60):
         super().__init__(message, code="RATE_LIMITED")
         self.retry_after = retry_after
-
-

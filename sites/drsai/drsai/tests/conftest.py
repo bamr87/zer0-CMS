@@ -86,4 +86,3 @@ def sample_prose():
 It does not follow any particular meter.
 The sentences are just normal English.
 There is no rhyme scheme here at all."""
-

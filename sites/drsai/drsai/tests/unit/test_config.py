@@ -12,7 +12,7 @@ class TestConfig:
     def test_default_values(self):
         """Test default configuration values."""
         config = Config()
-        
+
         assert config.llm_provider == LLMProvider.OPENAI
         assert config.openai_model == "gpt-4o"
         assert config.max_tokens == 2000
@@ -29,7 +29,7 @@ class TestConfig:
             temperature=0.5,
             meter_compliance_target=0.95,
         )
-        
+
         assert config.llm_provider == LLMProvider.ANTHROPIC
         assert config.max_tokens == 1500
         assert config.temperature == 0.5
@@ -64,12 +64,12 @@ class TestConfig:
         monkeypatch.setenv("DRSAI_LLM_PROVIDER", "anthropic")
         monkeypatch.setenv("DRSAI_MAX_TOKENS", "1000")
         monkeypatch.setenv("DRSAI_TEMPERATURE", "0.5")
-        
+
         # Clear cache
         get_config.cache_clear()
-        
+
         config = Config.from_env()
-        
+
         assert config.llm_provider == LLMProvider.ANTHROPIC
         assert config.max_tokens == 1000
         assert config.temperature == 0.5
@@ -94,4 +94,3 @@ class TestLLMProvider:
         """Test invalid provider raises error."""
         with pytest.raises(ValueError):
             LLMProvider("invalid")
-

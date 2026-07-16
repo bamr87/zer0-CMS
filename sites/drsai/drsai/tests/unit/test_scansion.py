@@ -110,4 +110,3 @@ Another prose line here today."""
         # so compliance may be 0 or very low for non-perfect content
         assert 0 <= score.compliance <= 1.0
         assert score.total_lines == 4
-

@@ -27,7 +27,7 @@ class TestGenerateCommand:
             mode=GenerationMode.POEM,
             lines=32,
         )
-        
+
         assert response.content is not None
         assert len(response.content) > 0
         assert response.mode == GenerationMode.POEM
@@ -71,7 +71,7 @@ class TestGenerateCommand:
             mode=GenerationMode.EXPLAIN,
             age=8,
         )
-        
+
         assert response.content is not None
         assert response.mode == GenerationMode.EXPLAIN
 
@@ -83,7 +83,7 @@ class TestGenerateCommand:
             mode=GenerationMode.STORY,
             length="short",
         )
-        
+
         assert response.content is not None
         assert response.mode == GenerationMode.STORY
 
@@ -94,7 +94,7 @@ class TestGenerateCommand:
             topic="testing",
             mode=GenerationMode.POEM,
         )
-        
+
         assert response.quality is not None
         assert response.quality.meter_score is not None
 
@@ -105,7 +105,7 @@ class TestGenerateCommand:
             topic="adventure",
             mode=GenerationMode.POEM,
         )
-        
+
         assert response.illustration_prompts is not None
         # May or may not have prompts depending on content
 
@@ -129,7 +129,7 @@ class TestGenerateFunction:
             lines=24,
             config=mock_config,
         )
-        
+
         assert response.content is not None
         assert response.mode == GenerationMode.POEM
 
@@ -141,7 +141,7 @@ class TestGenerateFunction:
             age=6,
             config=mock_config,
         )
-        
+
         assert response.content is not None
         assert response.mode == GenerationMode.EXPLAIN
 
@@ -153,7 +153,6 @@ class TestGenerateFunction:
             length="long",
             config=mock_config,
         )
-        
+
         assert response.content is not None
         assert response.mode == GenerationMode.STORY
-

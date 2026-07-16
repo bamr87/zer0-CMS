@@ -39,7 +39,9 @@ class QualityScore(BaseModel):
 class GenerationRequest(BaseModel):
     """Request model for content generation."""
 
-    topic: str = Field(min_length=1, max_length=10000, description="Topic to generate content about")
+    topic: str = Field(
+        min_length=1, max_length=10000, description="Topic to generate content about"
+    )
     mode: GenerationMode = Field(default=GenerationMode.POEM, description="Generation mode")
     lines: int = Field(default=32, ge=16, le=48, description="Number of lines for poem mode")
     age: Optional[int] = Field(
@@ -72,4 +74,3 @@ class ErrorResponse(BaseModel):
     message: str = Field(description="Human-readable error message")
     code: Optional[str] = Field(default=None, description="Detailed error code")
     retry_after: Optional[int] = Field(default=None, description="Seconds to wait before retry")
-

@@ -41,7 +41,7 @@ class TestMeterScore:
             is_acceptable=True,
             is_degraded=False,
         )
-        
+
         assert score.compliance == 0.98
         assert score.total_lines == 10
         assert score.is_acceptable is True
@@ -50,14 +50,14 @@ class TestMeterScore:
         """Test compliance value bounds."""
         with pytest.raises(ValidationError):
             MeterScore(compliance=1.5, total_lines=10, compliant_lines=10)
-        
+
         with pytest.raises(ValidationError):
             MeterScore(compliance=-0.1, total_lines=10, compliant_lines=10)
 
     def test_default_values(self):
         """Test default values."""
         score = MeterScore(compliance=0.5, total_lines=10, compliant_lines=5)
-        
+
         assert score.violations == []
         assert score.is_acceptable is False
         assert score.is_degraded is False
@@ -73,7 +73,7 @@ class TestGenerationRequest:
             mode=GenerationMode.POEM,
             lines=24,
         )
-        
+
         assert request.topic == "recursion"
         assert request.mode == GenerationMode.POEM
         assert request.lines == 24
@@ -81,7 +81,7 @@ class TestGenerationRequest:
     def test_default_values(self):
         """Test default values."""
         request = GenerationRequest(topic="test")
-        
+
         assert request.mode == GenerationMode.POEM
         assert request.lines == 32
         assert request.age is None
@@ -101,7 +101,7 @@ class TestGenerationRequest:
         """Test lines value bounds."""
         with pytest.raises(ValidationError):
             GenerationRequest(topic="test", lines=15)
-        
+
         with pytest.raises(ValidationError):
             GenerationRequest(topic="test", lines=49)
 
@@ -116,7 +116,7 @@ class TestGenerationResponse:
             mode=GenerationMode.POEM,
             meter_score=0.98,
         )
-        
+
         assert response.content == "The cat in the hat..."
         assert response.mode == GenerationMode.POEM
         assert response.meter_score == 0.98
@@ -128,7 +128,7 @@ class TestGenerationResponse:
             mode=GenerationMode.POEM,
             meter_score=0.95,
         )
-        
+
         assert response.quality is None
         assert response.warning is None
         assert response.moral is None
@@ -143,6 +143,5 @@ class TestGenerationResponse:
             meter_score=0.95,
             warning="Meter compliance below target",
         )
-        
-        assert response.warning == "Meter compliance below target"
 
+        assert response.warning == "Meter compliance below target"

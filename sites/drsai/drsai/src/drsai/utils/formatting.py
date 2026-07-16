@@ -6,8 +6,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from drsai.models.schemas import GenerationResponse, QualityScore
-
+from drsai.models.schemas import GenerationResponse
 
 console = Console()
 
@@ -138,5 +137,3 @@ def print_validating() -> None:
 def print_success(message: str) -> None:
     """Print a success message."""
     console.print(f"✅ [green]{message}[/green]")
-
-

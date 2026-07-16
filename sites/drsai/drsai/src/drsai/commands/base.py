@@ -17,5 +17,3 @@ class BaseCommand(ABC):
     def execute(self, **kwargs) -> GenerationResponse:
         """Execute the command and return a response."""
         pass
-
-

@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from drsai.core.config import Config, LLMProvider, get_config
-from drsai.utils.errors import DrSAIError, GenerationError, ConfigurationError
+from drsai.utils.errors import ConfigurationError, DrSAIError, GenerationError
 
 
 class BaseLLMClient(ABC):
@@ -83,7 +83,9 @@ class OpenAIClient(BaseLLMClient):
             return content.strip()
         except Exception as e:
             if "timeout" in str(e).lower():
-                raise GenerationError(f"OpenAI request timed out after {self.config.timeout_seconds}s")
+                raise GenerationError(
+                    f"OpenAI request timed out after {self.config.timeout_seconds}s"
+                )
             raise GenerationError(f"OpenAI generation failed: {e}")
 
 
@@ -103,9 +105,7 @@ class AnthropicClient(BaseLLMClient):
                 api_key=config.anthropic_api_key, timeout=config.timeout_seconds
             )
         except ImportError:
-            raise ConfigurationError(
-                "Anthropic package not installed. Run: pip install anthropic"
-            )
+            raise ConfigurationError("Anthropic package not installed. Run: pip install anthropic")
 
     def generate(self, prompt: str, max_tokens: Optional[int] = None) -> str:
         """Generate content using Anthropic API."""
@@ -139,9 +139,7 @@ class XAIClient(BaseLLMClient):
     def __init__(self, config: Config):
         super().__init__(config)
         if not config.xai_api_key:
-            raise ConfigurationError(
-                "xAI API key not found. Set XAI_API_KEY environment variable."
-            )
+            raise ConfigurationError("xAI API key not found. Set XAI_API_KEY environment variable.")
         try:
             import openai
 
@@ -245,4 +243,3 @@ class LLMClient:
 def get_llm_client(config: Optional[Config] = None) -> LLMClient:
     """Get an LLM client instance."""
     return LLMClient(config)
-

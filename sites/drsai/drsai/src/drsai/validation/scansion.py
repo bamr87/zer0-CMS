@@ -14,7 +14,6 @@ from typing import Optional
 
 from drsai.models.schemas import MeterScore
 
-
 # Try to import nltk for syllable counting, fall back to simple heuristic
 try:
     import nltk
@@ -205,9 +204,7 @@ class ScansionEngine:
 
         return feet
 
-    def _check_anapestic_tetrameter(
-        self, pattern: str, feet: list[Foot]
-    ) -> tuple[bool, float]:
+    def _check_anapestic_tetrameter(self, pattern: str, feet: list[Foot]) -> tuple[bool, float]:
         """Check if a pattern matches anapestic tetrameter.
 
         Returns (is_valid, compliance_score).
@@ -308,4 +305,3 @@ def scan_line(line: str) -> LineAnalysis:
 def validate_meter(content: str) -> MeterScore:
     """Validate meter compliance for content."""
     return _get_engine().validate_content(content)
-

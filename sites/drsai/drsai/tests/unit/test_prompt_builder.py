@@ -12,7 +12,7 @@ class TestPromptBuilder:
     def test_build_poem_prompt(self):
         """Test building a poem prompt."""
         prompt = PromptBuilder.build_poem_prompt("recursion", lines=24)
-        
+
         assert "recursion" in prompt
         assert "24" in prompt
         assert "anapestic tetrameter" in prompt.lower()
@@ -22,14 +22,14 @@ class TestPromptBuilder:
         """Test poem prompt with custom line count."""
         prompt = PromptBuilder.build_poem_prompt("cats", lines=16)
         assert "16" in prompt
-        
+
         prompt = PromptBuilder.build_poem_prompt("cats", lines=48)
         assert "48" in prompt
 
     def test_build_explanation_prompt(self):
         """Test building an explanation prompt."""
         prompt = PromptBuilder.build_explanation_prompt("quantum computing")
-        
+
         assert "quantum computing" in prompt
         assert "anapestic tetrameter" in prompt.lower()
 
@@ -45,21 +45,21 @@ class TestPromptBuilder:
     def test_build_story_prompt_short(self):
         """Test building a short story prompt."""
         prompt = PromptBuilder.build_story_prompt("sharing", length="short")
-        
+
         assert "sharing" in prompt
         assert "500" in prompt
 
     def test_build_story_prompt_long(self):
         """Test building a long story prompt."""
         prompt = PromptBuilder.build_story_prompt("kindness", length="long")
-        
+
         assert "kindness" in prompt
         assert "800" in prompt
 
     def test_build_illustration_prompt(self):
         """Test building an illustration prompt."""
         prompt = PromptBuilder.build_illustration_prompt("A cat wearing a tall striped hat")
-        
+
         assert "Dr. Seuss" in prompt or "Seuss" in prompt
         assert "cat" in prompt.lower()
         assert "hat" in prompt.lower()
@@ -99,11 +99,9 @@ class TestPromptBuilder:
 He looked around at one and all.
 He jumped and danced with glee so bright,
 The children laughed with pure delight!"""
-        
+
         prompts = PromptBuilder.extract_illustration_scenes(content)
-        
+
         assert len(prompts) >= 1
         assert len(prompts) <= 5
         assert all("Dr. Seuss" in p or "Seuss" in p for p in prompts)
-
-

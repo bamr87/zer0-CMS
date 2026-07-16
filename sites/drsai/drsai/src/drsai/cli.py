@@ -9,15 +9,18 @@ from drsai import __version__
 from drsai.commands.generate import GenerateCommand
 from drsai.core.config import Config, LLMProvider
 from drsai.models.schemas import GenerationMode
-from drsai.utils.errors import DrSAIError, ConfigurationError
-from drsai.utils.formatting import print_response, print_error, print_generating
+from drsai.utils.errors import ConfigurationError, DrSAIError
+from drsai.utils.formatting import print_error, print_generating, print_response
 
 console = Console()
 
 # Main CLI app for generation - single command app
 app = typer.Typer(
     name="drsai",
-    help="🎩 DrSAI – Doctor Seuss Artificial Intelligence\n\nGenerate whimsical, rhyming content in the style of Dr. Seuss.",
+    help=(
+        "🎩 DrSAI – Doctor Seuss Artificial Intelligence\n\n"
+        "Generate whimsical, rhyming content in the style of Dr. Seuss."
+    ),
     add_completion=False,
     no_args_is_help=True,
 )
@@ -119,24 +122,28 @@ def generate(
         # Handle file input
         if file:
             from pathlib import Path
+
             file_path = Path(file)
             if not file_path.exists():
                 print_error(f"File not found: {file}", code="FILE_NOT_FOUND")
                 raise typer.Exit(1)
-            
+
             file_content = file_path.read_text()
-            
+
             # If topic is also provided, use it as additional instructions
             if topic:
                 topic = f"Based on this content:\n\n{file_content}\n\nInstructions: {topic}"
             else:
                 topic = f"Transform this content into Dr. Seuss style:\n\n{file_content}"
-            
+
             console.print(f"📄 [dim]Reading from: {file_path}[/dim]")
-        
+
         # Require either topic or file
         if not topic:
-            print_error("Please provide a topic or use --file to read from a file", code="MISSING_INPUT")
+            print_error(
+                "Please provide a topic or use --file to read from a file",
+                code="MISSING_INPUT",
+            )
             raise typer.Exit(1)
         # Validate mode
         try:
@@ -196,8 +203,9 @@ def generate(
         # Save to file if requested
         if output:
             from pathlib import Path
+
             output_path = Path(output)
-            
+
             # Build file content
             file_content = response.content
             if response.moral:
@@ -206,7 +214,7 @@ def generate(
                 file_content += "\n\n---\nIllustration Prompts:\n"
                 for i, prompt in enumerate(response.illustration_prompts, 1):
                     file_content += f"{i}. {prompt}\n"
-            
+
             output_path.write_text(file_content)
             console.print(f"\n💾 [green]Saved to: {output_path}[/green]")
 
@@ -256,7 +264,7 @@ def validate(
 
         drsai validate "The cat in the hat sat on a mat"
     """
-    from drsai.validation.scansion import validate_meter, scan_line
+    from drsai.validation.scansion import scan_line, validate_meter
 
     # Validate meter
     meter_score = validate_meter(text)

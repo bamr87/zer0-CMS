@@ -29,8 +29,22 @@ class RhymeChecker:
 
     # Common rhyme endings for fallback
     RHYME_ENDINGS = {
-        "at", "an", "ay", "ow", "ee", "oo", "ight", "ing", "tion",
-        "ness", "ment", "ful", "less", "ble", "tle", "dle",
+        "at",
+        "an",
+        "ay",
+        "ow",
+        "ee",
+        "oo",
+        "ight",
+        "ing",
+        "tion",
+        "ness",
+        "ment",
+        "ful",
+        "less",
+        "ble",
+        "tle",
+        "dle",
     }
 
     def __init__(self):
@@ -141,5 +155,3 @@ def check_rhyme(word1: str, word2: str) -> RhymeResult:
 def find_rhymes(lines: list[str]) -> list[tuple[str, str, int, int]]:
     """Find rhyming pairs in lines."""
     return _get_checker().find_rhyme_pairs(lines)
-
-

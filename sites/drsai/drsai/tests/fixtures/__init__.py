@@ -7,4 +7,3 @@ See README.md for details on adding new test cases.
 from .corpus_cases import CASES, CorpusCase
 
 __all__ = ["CASES", "CorpusCase"]
-
