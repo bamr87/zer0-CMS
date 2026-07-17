@@ -15,6 +15,8 @@ markdown: kramdown
 kramdown:
   input: GFM
 permalink: pretty
+teaser: /images/previews/default.svg
+og_image: /images/previews/default.svg
 # README.md becomes the site homepage via jekyll-readme-index.
 plugins:
   - jekyll-remote-theme
@@ -24,7 +26,6 @@ plugins:
   - jekyll-feed
   - jekyll-relative-links
   - jekyll-optional-front-matter
-  - jekyll-readme-index
   - jekyll-default-layout
   - jekyll-titles-from-headings
 optional_front_matter:
@@ -35,6 +36,16 @@ titles_from_headings:
   enabled: true
   strip_title: false
 defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: article
+      author_profile: false
+      read_time: true
+      share: true
+      comments: false
+      related: true
   - scope:
       path: ""
     values:
