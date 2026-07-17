@@ -6,8 +6,7 @@ category: "Arts & Culture"
 
 # Michael Jackson's *Bad*
 
-**Category**: Arts & Culture
-**Key figures**: Michael Jackson (artist, co-producer, songwriter), Quincy Jones (producer), Siedah Garrett (co-writer of "I Just Can't Stop Loving You"; featured vocalist), Martin Scorsese (director of the "Bad" short film), Walter Yetnikoff (Epic Records president)
+**Category**: Arts & Culture **Key figures**: Michael Jackson (artist, co-producer, songwriter), Quincy Jones (producer), Siedah Garrett (co-writer of "I Just Can't Stop Loving You"; featured vocalist), Martin Scorsese (director of the "Bad" short film), Walter Yetnikoff (Epic Records president)
 
 ## Summary
 

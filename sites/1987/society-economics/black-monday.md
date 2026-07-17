@@ -6,8 +6,7 @@ category: "Society & Economics"
 
 # Black Monday (October 19, 1987)
 
-**Category**: Society & Economics
-**Key figures**: Alan Greenspan (Federal Reserve Chairman), James Baker (US Treasury Secretary), Robert Shiller (economist), Ben Bernanke (economist)
+**Category**: Society & Economics **Key figures**: Alan Greenspan (Federal Reserve Chairman), James Baker (US Treasury Secretary), Robert Shiller (economist), Ben Bernanke (economist)
 
 ## Summary
 

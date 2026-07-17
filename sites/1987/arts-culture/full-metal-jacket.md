@@ -6,8 +6,7 @@ category: "Arts & Culture"
 
 # Full Metal Jacket
 
-**Category**: Arts & Culture
-**Key figures**: Stanley Kubrick (director, producer, co-writer), Matthew Modine (Pvt. "Joker" Davis), R. Lee Ermey (Gunnery Sgt. Hartman), Vincent D'Onofrio (Pvt. "Pyle" Lawrence), Michael Herr and Gustav Hasford (co-screenwriters)
+**Category**: Arts & Culture **Key figures**: Stanley Kubrick (director, producer, co-writer), Matthew Modine (Pvt. "Joker" Davis), R. Lee Ermey (Gunnery Sgt. Hartman), Vincent D'Onofrio (Pvt. "Pyle" Lawrence), Michael Herr and Gustav Hasford (co-screenwriters)
 
 ## Summary
 

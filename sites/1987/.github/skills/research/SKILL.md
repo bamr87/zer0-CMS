@@ -20,14 +20,11 @@ Given a topic within the repository's concept, this skill:
 
 ### Step 1 — Load the Concept
 
-Read `concept` from [seed.md](../../../seed.md). Note `subject`, `scope`, `source_strategy`, and the
-`taxonomy` categories. All research is bounded by these.
+Read `concept` from [seed.md](../../../seed.md). Note `subject`, `scope`, `source_strategy`, and the `taxonomy` categories. All research is bounded by these.
 
 ### Step 2 — Identify Sources
 
-Per `concept.source_strategy`, gather **at least two authoritative sources** (one encyclopedic such
-as Wikipedia/Britannica; one specialist where possible). Use a web search/fetch with a query like
-`"<topic> <subject> significance"`.
+Per `concept.source_strategy`, gather **at least two authoritative sources** (one encyclopedic such as Wikipedia/Britannica; one specialist where possible). Use a web search/fetch with a query like `"<topic> <subject> significance"`.
 
 ### Step 3 — Extract Key Facts
 
@@ -40,9 +37,7 @@ Capture:
 
 ### Step 4 — Format Output
 
-Return structured markdown — a knowledge-table row and/or the body of a dedicated file per
-[content.instructions.md](../../instructions/content.instructions.md). Do **not** write files; hand
-findings back to the caller (e.g. the add-topic skill).
+Return structured markdown — a knowledge-table row and/or the body of a dedicated file per [content.instructions.md](../../instructions/content.instructions.md). Do **not** write files; hand findings back to the caller (e.g. the add-topic skill).
 
 ### Step 5 — Verify
 

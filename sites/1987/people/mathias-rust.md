@@ -6,8 +6,7 @@ category: "People"
 
 # Mathias Rust — Flight to Red Square (May 28, 1987)
 
-**Category**: People
-**Key figures**: Mathias Rust (pilot), Mikhail Gorbachev (Soviet General Secretary), Marshal Sergei Sokolov (Soviet Defence Minister, dismissed), Chief Marshal Alexander Koldunov (Soviet Air Defence commander, dismissed)
+**Category**: People **Key figures**: Mathias Rust (pilot), Mikhail Gorbachev (Soviet General Secretary), Marshal Sergei Sokolov (Soviet Defence Minister, dismissed), Chief Marshal Alexander Koldunov (Soviet Air Defence commander, dismissed)
 
 ## Summary
 

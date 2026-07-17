@@ -6,8 +6,7 @@ category: "Society & Economics"
 
 # Fox Broadcasting Company Primetime Launch
 
-**Category**: Society & Economics
-**Key figures**: Rupert Murdoch (Chairman, News Corporation), Barry Diller (Chairman and CEO, Fox, Inc.), Jamie Kellner (network president), Joan Rivers (host, The Late Show, 1986–1987), Ed O'Neill, Katey Sagal (Married...with Children), Tracey Ullman (The Tracey Ullman Show)
+**Category**: Society & Economics **Key figures**: Rupert Murdoch (Chairman, News Corporation), Barry Diller (Chairman and CEO, Fox, Inc.), Jamie Kellner (network president), Joan Rivers (host, The Late Show, 1986–1987), Ed O'Neill, Katey Sagal (Married...with Children), Tracey Ullman (The Tracey Ullman Show)
 
 ## Summary
 

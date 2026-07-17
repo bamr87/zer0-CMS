@@ -6,8 +6,7 @@ category: "Science & Technology"
 
 # Microsoft Windows 2.0 (December 9, 1987)
 
-**Category**: Science & Technology
-**Key figures**: Bill Gates (Microsoft co-founder and CEO), Steve Ballmer (Microsoft executive), Steve Jobs (Apple CEO, plaintiff in subsequent lawsuit)
+**Category**: Science & Technology **Key figures**: Bill Gates (Microsoft co-founder and CEO), Steve Ballmer (Microsoft executive), Steve Jobs (Apple CEO, plaintiff in subsequent lawsuit)
 
 ## Summary
 

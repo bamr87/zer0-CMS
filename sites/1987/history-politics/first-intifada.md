@@ -6,8 +6,7 @@ category: "History & Politics"
 
 # First Intifada (December 1987)
 
-**Category**: History & Politics
-**Key figures**: Unified National Leadership of the Uprising (UNLU, PLO-affiliated coordination body), Yasser Arafat (PLO Chairman), Sheikh Ahmed Yassin (co-founder of Hamas), Yitzhak Rabin (Israeli Defence Minister)
+**Category**: History & Politics **Key figures**: Unified National Leadership of the Uprising (UNLU, PLO-affiliated coordination body), Yasser Arafat (PLO Chairman), Sheikh Ahmed Yassin (co-founder of Hamas), Yitzhak Rabin (Israeli Defence Minister)
 
 ## Summary
 

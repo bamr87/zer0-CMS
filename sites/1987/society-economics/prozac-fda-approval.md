@@ -6,8 +6,7 @@ category: "Society & Economics"
 
 # FDA Approves Prozac (Fluoxetine)
 
-**Category:** Society & Economics
-**Key figures:** Ray Fuller, Bryan Molloy, David T. Wong (Eli Lilly research team); Frank Young (FDA Commissioner, 1987)
+**Category:** Society & Economics **Key figures:** Ray Fuller, Bryan Molloy, David T. Wong (Eli Lilly research team); Frank Young (FDA Commissioner, 1987)
 
 ## Summary
 

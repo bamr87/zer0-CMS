@@ -1,9 +1,7 @@
 <!--
   ROADMAP.md — the forward plan (what to grow next). Maintained by the `plan-roadmap` skill on every
   `/grow` tick. Items are tagged: content | structure | meta. The architect picks from **Now** /
-  **Backlog**; completed items move to **Done**; newly discovered work lands in **Ideas**.
-  Hand-edits are allowed but will be reconciled on the next tick.
--->
+**Backlog**; completed items move to **Done**; newly discovered work lands in **Ideas**. Hand-edits are allowed but will be reconciled on the next tick. -->
 
 # Roadmap
 

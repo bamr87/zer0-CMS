@@ -6,8 +6,7 @@ category: "Society & Economics"
 
 # ACT UP Founding
 
-**Category**: Society & Economics
-**Key figures**: Larry Kramer (playwright, initiating organizer), Douglas Crimp (cultural theorist), Maria Maggenti, Gregg Bordowitz
+**Category**: Society & Economics **Key figures**: Larry Kramer (playwright, initiating organizer), Douglas Crimp (cultural theorist), Maria Maggenti, Gregg Bordowitz
 
 ## Summary
 

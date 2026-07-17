@@ -6,8 +6,7 @@ category: "History & Politics"
 
 # INF Treaty (December 8, 1987)
 
-**Category**: History & Politics
-**Key figures**: Ronald Reagan (US President), Mikhail Gorbachev (Soviet General Secretary), Paul Nitze (US negotiator), Margaret Thatcher (UK Prime Minister, key broker)
+**Category**: History & Politics **Key figures**: Ronald Reagan (US President), Mikhail Gorbachev (Soviet General Secretary), Paul Nitze (US negotiator), Margaret Thatcher (UK Prime Minister, key broker)
 
 ## Summary
 

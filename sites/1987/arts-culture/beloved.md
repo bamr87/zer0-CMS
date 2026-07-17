@@ -6,8 +6,7 @@ category: "Arts & Culture"
 
 # Toni Morrison's *Beloved*
 
-**Category**: Arts & Culture
-**Key figures**: Toni Morrison (author), Margaret Garner (historical basis), Jonathan Demme (director, 1998 film adaptation), Oprah Winfrey (producer and star, 1998 film adaptation)
+**Category**: Arts & Culture **Key figures**: Toni Morrison (author), Margaret Garner (historical basis), Jonathan Demme (director, 1998 film adaptation), Oprah Winfrey (producer and star, 1998 film adaptation)
 
 ## Summary
 

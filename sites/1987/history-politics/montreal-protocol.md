@@ -6,8 +6,7 @@ category: "History & Politics"
 
 # Montreal Protocol (September 16, 1987)
 
-**Category**: History & Politics
-**Key figures**: United Nations Environment Programme (UNEP), Mostafa Kamal Tolba (UNEP Executive Director)
+**Category**: History & Politics **Key figures**: United Nations Environment Programme (UNEP), Mostafa Kamal Tolba (UNEP Executive Director)
 
 ## Summary
 

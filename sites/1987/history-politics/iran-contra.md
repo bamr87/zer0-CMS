@@ -6,8 +6,7 @@ category: "History & Politics"
 
 # Iran-Contra Affair (1986–1987)
 
-**Category**: History & Politics
-**Key figures**: Ronald Reagan (President), Oliver North (NSC aide), John Poindexter (National Security Advisor), Robert McFarlane (former National Security Adviser), Caspar Weinberger (Defense Secretary), Fawn Hall (North's secretary), Lawrence Walsh (Independent Counsel)
+**Category**: History & Politics **Key figures**: Ronald Reagan (President), Oliver North (NSC aide), John Poindexter (National Security Advisor), Robert McFarlane (former National Security Adviser), Caspar Weinberger (Defense Secretary), Fawn Hall (North's secretary), Lawrence Walsh (Independent Counsel)
 
 ## Summary
 

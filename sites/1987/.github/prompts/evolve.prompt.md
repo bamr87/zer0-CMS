@@ -6,9 +6,7 @@ agent: agent
 tools: [read, search, edit, todo]
 ---
 
-Audit the current AI customization layer of this repository and implement the highest-impact
-improvements. First read the **Concept Definition** in [seed.md](../../seed.md) — the layer must
-remain concept-agnostic (reading the concept from seed.md), never hardcoding a specific subject.
+Audit the current AI customization layer of this repository and implement the highest-impact improvements. First read the **Concept Definition** in [seed.md](../../seed.md) — the layer must remain concept-agnostic (reading the concept from seed.md), never hardcoding a specific subject.
 
 ## Instructions
 

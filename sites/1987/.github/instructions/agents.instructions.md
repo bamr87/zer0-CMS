@@ -5,9 +5,7 @@ applyTo: ".github/agents/*.agent.md"
 
 # Agent Authoring Conventions
 
-Agents in this repo are **concept-agnostic**. They read the **Concept Definition** from
-[seed.md](../../seed.md) and operate on whatever `subject`/`taxonomy` it declares — never hardcode a
-specific subject (e.g. a particular year) into an agent.
+Agents in this repo are **concept-agnostic**. They read the **Concept Definition** from [seed.md](../../seed.md) and operate on whatever `subject`/`taxonomy` it declares — never hardcode a specific subject (e.g. a particular year) into an agent.
 
 ## Tool Selection
 
@@ -34,8 +32,7 @@ Every `.agent.md` body must include these sections in order:
 
 ## Delegation Pattern
 
-Orchestrator agents **must not** research, write, or publish content directly. They queue work and
-invoke the **curator** agent for content operations and **publish-session** for commits.
+Orchestrator agents **must not** research, write, or publish content directly. They queue work and invoke the **curator** agent for content operations and **publish-session** for commits.
 
 ```
 # Correct
@@ -47,9 +44,7 @@ Fetch a source and write the file directly.
 
 ## Scope Constraint
 
-Every agent operates within `concept.scope` from [seed.md](../../seed.md). Any agent that accepts
-user input must validate that the requested topic connects to the concept before proceeding. If it
-cannot be confirmed in-scope, skip it and note the reason in the summary.
+Every agent operates within `concept.scope` from [seed.md](../../seed.md). Any agent that accepts user input must validate that the requested topic connects to the concept before proceeding. If it cannot be confirmed in-scope, skip it and note the reason in the summary.
 
 ## Naming and Location
 

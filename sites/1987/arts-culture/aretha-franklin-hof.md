@@ -6,8 +6,7 @@ category: "Arts & Culture"
 
 # Aretha Franklin: First Woman in the Rock and Roll Hall of Fame
 
-**Category**: Arts & Culture
-**Key figures**: Aretha Franklin (inductee), Keith Richards (presenter), Cecil Franklin (brother; accepted award), Clive Davis (record executive; accepted award)
+**Category**: Arts & Culture **Key figures**: Aretha Franklin (inductee), Keith Richards (presenter), Cecil Franklin (brother; accepted award), Clive Davis (record executive; accepted award)
 
 ## Summary
 

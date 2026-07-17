@@ -22,8 +22,7 @@ At the end of a working session, this skill:
 
 ### Step 1 — Log the Session
 
-Run the **encode-seed** prompt to append a structured entry to the **Evolution Log** (section 8) of
-`seed.md`:
+Run the **encode-seed** prompt to append a structured entry to the **Evolution Log** (section 8) of `seed.md`:
 - Summarize what was researched, created, or updated this session
 - Include file names and tool calls used
 - Follow the existing entry format in the Evolution Log

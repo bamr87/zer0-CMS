@@ -6,8 +6,7 @@ category: "Science & Technology"
 
 # DNA Fingerprinting Enters the Courtroom
 
-**Category**: Science & Technology
-**Key figures**: Alec Jeffreys (inventor, University of Leicester), Robert Melias (first convict, UK), Tommie Lee Andrews (first US convict), Richard Buckland (first exoneree by DNA)
+**Category**: Science & Technology **Key figures**: Alec Jeffreys (inventor, University of Leicester), Robert Melias (first convict, UK), Tommie Lee Andrews (first US convict), Richard Buckland (first exoneree by DNA)
 
 ## Summary
 

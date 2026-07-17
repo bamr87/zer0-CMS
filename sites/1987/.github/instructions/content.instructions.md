@@ -5,15 +5,11 @@ applyTo: "**/*.md"
 
 # Content & Workflow Standards
 
-This repository grows a knowledge base around a single **concept**. Always read the **Concept
-Definition** block in [seed.md](../../seed.md) first — it defines the `subject`, `scope`,
-`taxonomy`, `source_strategy`, and `conventions` that every rule below references. Never hardcode a
-specific subject (e.g. a particular year) into content logic; derive it from the concept.
+This repository grows a knowledge base around a single **concept**. Always read the **Concept Definition** block in [seed.md](../../seed.md) first — it defines the `subject`, `scope`, `taxonomy`, `source_strategy`, and `conventions` that every rule below references. Never hardcode a specific subject (e.g. a particular year) into content logic; derive it from the concept.
 
 ## Categories
 
-All content belongs to exactly one category from `concept.taxonomy` in [seed.md](../../seed.md).
-Each taxonomy entry has a `name` and a `slug` (used for folder names and frontmatter).
+All content belongs to exactly one category from `concept.taxonomy` in [seed.md](../../seed.md). Each taxonomy entry has a `name` and a `slug` (used for folder names and frontmatter).
 
 ## Source Standards
 
@@ -25,9 +21,7 @@ Each taxonomy entry has a `name` and a `slug` (used for folder names and frontma
 ## Knowledge Table
 
 - Lives under the heading named by `concept.conventions.knowledge_table` in
-  [seed.md](../../seed.md) — read that value from the concept; do not hardcode the heading.
-  For the current instance this is `## Notable Events of 1987`; a retargeted repo will have a
-  different heading.
+[seed.md](../../seed.md) — read that value from the concept; do not hardcode the heading. For the current instance this is `## Notable Events of 1987`; a retargeted repo will have a different heading.
 - Row format: `| <Item> | One-sentence description ending with its significance |`
 - Never duplicate an existing row. Check before inserting.
 - Keep descriptions factual, neutral, and under 25 words.
@@ -35,8 +29,7 @@ Each taxonomy entry has a `name` and a `slug` (used for folder names and frontma
 
 ## Dedicated Topic Files
 
-Create a dedicated file when research yields **4+ distinct facts** or the topic has notable
-significance.
+Create a dedicated file when research yields **4+ distinct facts** or the topic has notable significance.
 
 - **Path:** `concept.conventions.file_path` → `<category-slug>/<topic-slug>.md`
   (slug = lowercase, hyphens, no special characters).

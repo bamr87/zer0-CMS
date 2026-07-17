@@ -1,7 +1,6 @@
 # Index — 1987
 
-Master index of all content in this knowledge base, grouped by category. See also the
-[timeline](TIMELINE.md) and the [README knowledge table](README.md#notable-events-of-1987).
+Master index of all content in this knowledge base, grouped by category. See also the [timeline](TIMELINE.md) and the [README knowledge table](README.md#notable-events-of-1987).
 
 <!-- BEGIN GENERATED: master-index — maintained by build-structure; do not edit by hand -->
 ## History & Politics

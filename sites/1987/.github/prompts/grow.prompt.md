@@ -6,11 +6,9 @@ agent: architect
 tools: [read, search, todo, agent]
 ---
 
-Run **one growth tick** by following the Architect's pipeline. Read the **Concept Definition** in
-[seed.md](../../seed.md) first — everything is parameterized by it.
+Run **one growth tick** by following the Architect's pipeline. Read the **Concept Definition** in [seed.md](../../seed.md) first — everything is parameterized by it.
 
-Delegate the full tick to the **Architect** agent
-([architect.agent.md](../agents/architect.agent.md)), which executes:
+Delegate the full tick to the **Architect** agent ([architect.agent.md](../agents/architect.agent.md)), which executes:
 
 1. **Orient** — read [seed.md](../../seed.md), [ROADMAP.md](../../ROADMAP.md),
    [README.md](../../README.md), and the repo tree.

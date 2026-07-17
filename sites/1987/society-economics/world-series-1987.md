@@ -6,8 +6,7 @@ category: "Society & Economics"
 
 # 1987 World Series
 
-**Category**: Society & Economics
-**Key figures**: Frank Viola (Twins pitcher, World Series MVP), Dan Gladden (Twins outfielder), Kent Hrbek (Twins first baseman), Kirby Puckett (Twins outfielder), Tom Kelly (Twins manager), Whitey Herzog (Cardinals manager)
+**Category**: Society & Economics **Key figures**: Frank Viola (Twins pitcher, World Series MVP), Dan Gladden (Twins outfielder), Kent Hrbek (Twins first baseman), Kirby Puckett (Twins outfielder), Tom Kelly (Twins manager), Whitey Herzog (Cardinals manager)
 
 ## Summary
 

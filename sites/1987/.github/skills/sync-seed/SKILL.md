@@ -6,9 +6,7 @@ argument-hint: 'No arguments. Run after content/structure changes to refresh the
 
 # Sync Seed
 
-`seed.md` is the repository's DNA and rebuild blueprint. This skill regenerates its **generated
-sections (1–7)** so they always reflect the real repo. The **Evolution Log (section 8)** is
-append-only and must never be regenerated or reordered here.
+`seed.md` is the repository's DNA and rebuild blueprint. This skill regenerates its **generated sections (1–7)** so they always reflect the real repo. The **Evolution Log (section 8)** is append-only and must never be regenerated or reordered here.
 
 ---
 

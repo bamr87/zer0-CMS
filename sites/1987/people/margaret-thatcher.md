@@ -6,8 +6,7 @@ category: "People"
 
 # Margaret Thatcher's Third General Election Victory (June 11, 1987)
 
-**Category**: People
-**Key figures**: Margaret Thatcher (Prime Minister, Conservative leader), Neil Kinnock (Labour leader), David Steel (Liberal leader), David Owen (SDP leader), Diane Abbott, Paul Boateng, Bernie Grant (first Black MPs elected)
+**Category**: People **Key figures**: Margaret Thatcher (Prime Minister, Conservative leader), Neil Kinnock (Labour leader), David Steel (Liberal leader), David Owen (SDP leader), Diane Abbott, Paul Boateng, Bernie Grant (first Black MPs elected)
 
 ## Summary
 

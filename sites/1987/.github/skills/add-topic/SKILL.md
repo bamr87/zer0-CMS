@@ -15,8 +15,7 @@ Given one or more topics within the repository's concept, this skill:
 4. Links everything from the README knowledge table
 5. Optionally logs the session to `seed.md`
 
-Always read the **Concept Definition** in [seed.md](../../../seed.md) first for `subject`, `scope`,
-`taxonomy`, and `conventions`.
+Always read the **Concept Definition** in [seed.md](../../../seed.md) first for `subject`, `scope`, `taxonomy`, and `conventions`.
 
 ---
 
@@ -34,9 +33,7 @@ Always read the **Concept Definition** in [seed.md](../../../seed.md) first for 
 
 ### Step 2 — Research Each Topic
 
-For each topic, follow the full [research](../research/SKILL.md) procedure: fetch ≥2 authoritative
-sources, extract identifier/people/what/significance/category, and confirm it falls within
-`concept.scope`. Skip and note any topic that can't be confirmed in-scope.
+For each topic, follow the full [research](../research/SKILL.md) procedure: fetch ≥2 authoritative sources, extract identifier/people/what/significance/category, and confirm it falls within `concept.scope`. Skip and note any topic that can't be confirmed in-scope.
 
 ### Step 3 — Choose Output Format
 
@@ -50,8 +47,7 @@ When in doubt, prefer the dedicated file.
 
 ### Step 4a — Add a Knowledge-Table Row
 
-Open [README.md](../../../README.md) and add a row under the heading named by
-`concept.conventions.knowledge_table` (read from [seed.md](../../../seed.md)):
+Open [README.md](../../../README.md) and add a row under the heading named by `concept.conventions.knowledge_table` (read from [seed.md](../../../seed.md)):
 `| Item | One-sentence description ending with its significance |`. Do not duplicate existing rows;
 preserve all other content.
 
@@ -60,8 +56,7 @@ preserve all other content.
 - **Path** (`concept.conventions.file_path`): `<category-slug>/<topic-slug>.md`
   (slug = lowercase, hyphens, no special characters).
 - **Create the file** using the template in
-  [content.instructions.md](../../instructions/content.instructions.md) (frontmatter `title`,
-  `date`, `category`; sections Summary, Significance, Sources).
+[content.instructions.md](../../instructions/content.instructions.md) (frontmatter `title`, `date`, `category`; sections Summary, Significance, Sources).
 - **Link from README**: turn the item's table cell into a link
   `| [Item](<slug>/<topic-slug>.md) | ... |`.
 
@@ -75,5 +70,4 @@ Output a summary table:
 
 ### Step 6 — Log to Seed (Optional)
 
-If asked to record the session, follow the [encode-seed](../../prompts/encode-seed.prompt.md) prompt
-to append an entry to the seed Evolution Log.
+If asked to record the session, follow the [encode-seed](../../prompts/encode-seed.prompt.md) prompt to append an entry to the seed Evolution Log.

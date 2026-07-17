@@ -6,8 +6,7 @@ agent: agent
 tools: [read, edit, web]
 ---
 
-Research and update [README.md](../../README.md) using the `research` skill, bounded by the repo's
-**Concept Definition** in [seed.md](../../seed.md).
+Research and update [README.md](../../README.md) using the `research` skill, bounded by the repo's **Concept Definition** in [seed.md](../../seed.md).
 
 ## Instructions
 

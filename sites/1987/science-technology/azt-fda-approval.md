@@ -6,8 +6,7 @@ category: "Science & Technology"
 
 # FDA Approves AZT for AIDS Treatment
 
-**Category**: Science & Technology
-**Key figures**: Jerome Horwitz (original synthesizer, Wayne State University), Samuel Broder, Hiroaki Mitsuya, Robert Yarchoan (NCI researchers), Janet Rideout (Burroughs Wellcome chemist), David Barry (Burroughs Wellcome research director)
+**Category**: Science & Technology **Key figures**: Jerome Horwitz (original synthesizer, Wayne State University), Samuel Broder, Hiroaki Mitsuya, Robert Yarchoan (NCI researchers), Janet Rideout (Burroughs Wellcome chemist), David Barry (Burroughs Wellcome research director)
 
 ## Summary
 

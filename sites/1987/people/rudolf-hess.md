@@ -6,8 +6,7 @@ category: "People"
 
 # Rudolf Hess (death, August 17, 1987)
 
-**Category**: People
-**Key figures**: Rudolf Hess, Adolf Hitler, Duke of Hamilton
+**Category**: People **Key figures**: Rudolf Hess, Adolf Hitler, Duke of Hamilton
 
 ## Summary
 

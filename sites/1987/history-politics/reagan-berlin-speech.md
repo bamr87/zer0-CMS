@@ -6,8 +6,7 @@ category: "History & Politics"
 
 # Reagan's "Tear Down This Wall" Speech
 
-**Category:** History & Politics
-**Key figures:** Ronald Reagan (U.S. President), Peter Robinson (speechwriter), Mikhail Gorbachev (Soviet General Secretary)
+**Category:** History & Politics **Key figures:** Ronald Reagan (U.S. President), Peter Robinson (speechwriter), Mikhail Gorbachev (Soviet General Secretary)
 
 ## Summary
 

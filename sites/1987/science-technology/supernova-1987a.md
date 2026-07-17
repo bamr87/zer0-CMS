@@ -6,8 +6,7 @@ category: "Science & Technology"
 
 # Supernova 1987A
 
-**Category**: Science & Technology
-**Key figures**: Ian Shelton (astronomer, Las Campanas Observatory), Oscar Duhalde (telescope operator), Albert Jones (amateur astronomer)
+**Category**: Science & Technology **Key figures**: Ian Shelton (astronomer, Las Campanas Observatory), Oscar Duhalde (telescope operator), Albert Jones (amateur astronomer)
 
 ## Summary
 

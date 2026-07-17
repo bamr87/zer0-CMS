@@ -6,8 +6,7 @@ category: "Arts & Culture"
 
 # U2's *The Joshua Tree*
 
-**Category**: Arts & Culture
-**Key figures**: Bono (vocals, lyrics), The Edge (guitar), Adam Clayton (bass), Larry Mullen Jr. (drums), Daniel Lanois (producer), Brian Eno (producer), Anton Corbijn (photographer, visual identity)
+**Category**: Arts & Culture **Key figures**: Bono (vocals, lyrics), The Edge (guitar), Adam Clayton (bass), Larry Mullen Jr. (drums), Daniel Lanois (producer), Brian Eno (producer), Anton Corbijn (photographer, visual identity)
 
 ## Summary
 

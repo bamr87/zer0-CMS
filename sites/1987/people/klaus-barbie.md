@@ -6,8 +6,7 @@ category: "People"
 
 # Klaus Barbie — Convicted of Crimes Against Humanity (July 4, 1987)
 
-**Category**: People
-**Key figures**: Klaus Barbie (defendant), Jacques Vergès (defense attorney), Beate Klarsfeld (Nazi hunter who located Barbie), Sabine Zlatin (founder of the Izieu children's home), Lea Feldblum (sole survivor of the Izieu deportation), Judge André Cerdini (presiding)
+**Category**: People **Key figures**: Klaus Barbie (defendant), Jacques Vergès (defense attorney), Beate Klarsfeld (Nazi hunter who located Barbie), Sabine Zlatin (founder of the Izieu children's home), Lea Feldblum (sole survivor of the Izieu deportation), Judge André Cerdini (presiding)
 
 ## Summary
 

@@ -6,8 +6,7 @@ category: "Arts & Culture"
 
 # Sign 'O' the Times
 
-**Category**: Arts & Culture
-**Key figures**: Prince (artist, sole producer), Wendy Melvoin, Lisa Coleman, Sheila E., Eric Leeds, Sheena Easton (featured vocalist)
+**Category**: Arts & Culture **Key figures**: Prince (artist, sole producer), Wendy Melvoin, Lisa Coleman, Sheila E., Eric Leeds, Sheena Easton (featured vocalist)
 
 ## Summary
 

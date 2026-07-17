@@ -6,9 +6,7 @@ argument-hint: 'Optional: which artifact to (re)build — indices | timeline | t
 
 # Build Structure
 
-Regenerates the repository's structural layer **from existing content**. Idempotent: running it
-twice with no content change produces no diff. Read the **Concept Definition** in
-[seed.md](../../../seed.md) first for `subject`, `taxonomy`, and `conventions`.
+Regenerates the repository's structural layer **from existing content**. Idempotent: running it twice with no content change produces no diff. Read the **Concept Definition** in [seed.md](../../../seed.md) first for `subject`, `taxonomy`, and `conventions`.
 
 Every generated file/region is wrapped in markers so regeneration only replaces generated content:
 
@@ -23,26 +21,17 @@ Every generated file/region is wrapped in markers so regeneration only replaces 
 ## Artifacts
 
 ### 1. Category index pages — `<category-slug>/index.md`
-For each entry in `concept.taxonomy`, create/update an index listing every topic file in that folder
-(link + the topic's one-line description from its frontmatter/summary). Skip folders with no topic
-files (or write a "no entries yet" stub).
+For each entry in `concept.taxonomy`, create/update an index listing every topic file in that folder (link + the topic's one-line description from its frontmatter/summary). Skip folders with no topic files (or write a "no entries yet" stub).
 
 ### 2. Timeline — `TIMELINE.md`
-Only if the `subject` is time-oriented (e.g. a year, era, or event sequence). Collect dated items
-from the README knowledge table and dedicated files, sort chronologically, and render
+Only if the `subject` is time-oriented (e.g. a year, era, or event sequence). Collect dated items from the README knowledge table and dedicated files, sort chronologically, and render
 `| Date | Item | Category | Link |`.
 
 ### 3. Master index / TOC — `index.md`
-A map of all content grouped by `concept.taxonomy` category: every topic file linked, plus a pointer
-to each category index and to `TIMELINE.md`. Filename is **lowercase `index.md`** so GitHub Pages'
-Jekyll build emits the site-root `index.html` — an uppercase `INDEX.md` renders to `INDEX.html` and
-leaves the repo's Pages root (`/`) a 404. (Alternatively maintain a generated TOC region inside
-README.md — pick one and be consistent.)
+A map of all content grouped by `concept.taxonomy` category: every topic file linked, plus a pointer to each category index and to `TIMELINE.md`. Filename is **lowercase `index.md`** so GitHub Pages' Jekyll build emits the site-root `index.html` — an uppercase `INDEX.md` renders to `INDEX.html` and leaves the repo's Pages root (`/`) a 404. (Alternatively maintain a generated TOC region inside README.md — pick one and be consistent.)
 
 ### 4. Cross-references
-For each dedicated topic file, add/refresh a `## Related` section linking 2–4 closely related topic
-files (same category or shared people/events). Maintain these inside the generated marker block so
-they don't clobber hand-written content.
+For each dedicated topic file, add/refresh a `## Related` section linking 2–4 closely related topic files (same category or shared people/events). Maintain these inside the generated marker block so they don't clobber hand-written content.
 
 ---
 

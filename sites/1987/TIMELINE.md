@@ -1,8 +1,6 @@
 # Timeline of 1987
 
-A chronological index of notable events from the year 1987. Each entry links to the corresponding
-section of the [README knowledge table](README.md#notable-events-of-1987) or a dedicated topic
-file where one exists.
+A chronological index of notable events from the year 1987. Each entry links to the corresponding section of the [README knowledge table](README.md#notable-events-of-1987) or a dedicated topic file where one exists.
 
 ---
 
@@ -39,5 +37,4 @@ file where one exists.
 
 ---
 
-_This file is maintained by the `build-structure` skill. Add new topic files in `<category-slug>/`
-and re-run the skill to refresh entries._
+_This file is maintained by the `build-structure` skill. Add new topic files in `<category-slug>/` and re-run the skill to refresh entries._

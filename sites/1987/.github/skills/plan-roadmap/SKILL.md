@@ -6,8 +6,7 @@ argument-hint: 'Optional: how many items to select (default 1–3), or a focus t
 
 # Plan Roadmap
 
-The planning brain of the growth loop. It reads current state, scores candidate work, selects the
-next items, and rewrites [ROADMAP.md](../../../ROADMAP.md).
+The planning brain of the growth loop. It reads current state, scores candidate work, selects the next items, and rewrites [ROADMAP.md](../../../ROADMAP.md).
 
 ---
 
@@ -29,9 +28,7 @@ Build/refresh the candidate list, each tagged `content | structure | meta`:
 If the Backlog is nearly empty, generate new in-scope candidates from `concept.taxonomy`.
 
 ### Step 3 — Score & Select
-Score each candidate by impact: fills a coverage gap > adds missing structure > enriches existing >
-nice-to-have. Respect any focus tag or count passed as an argument (default **1–3** items). Avoid
-selecting items that duplicate existing content.
+Score each candidate by impact: fills a coverage gap > adds missing structure > enriches existing > nice-to-have. Respect any focus tag or count passed as an argument (default **1–3** items). Avoid selecting items that duplicate existing content.
 
 ### Step 4 — Rewrite ROADMAP.md
 - Put the selected items under **Now**.

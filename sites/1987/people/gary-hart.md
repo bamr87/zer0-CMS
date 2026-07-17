@@ -6,8 +6,7 @@ category: "People"
 
 # Gary Hart — Withdrawal from the 1988 Presidential Race (May 8, 1987)
 
-**Category**: People
-**Key figures**: Gary Hart (Democratic candidate), Donna Rice (model and actress), Tom Fiedler (Miami Herald politics editor), Lee Hart (Gary Hart's wife), Michael Dukakis (eventual Democratic nominee)
+**Category**: People **Key figures**: Gary Hart (Democratic candidate), Donna Rice (model and actress), Tom Fiedler (Miami Herald politics editor), Lee Hart (Gary Hart's wife), Michael Dukakis (eventual Democratic nominee)
 
 ## Summary
 

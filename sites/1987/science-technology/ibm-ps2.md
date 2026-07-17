@@ -6,8 +6,7 @@ category: "Science & Technology"
 
 # IBM PS/2 Launch (April 2, 1987)
 
-**Category**: Science & Technology
-**Key figures**: IBM PC Company (developer), Bill Lowe (IBM executive who oversaw the original PC), Don Estridge (IBM PC architect, died 1985), Compaq and nine OEMs who formed the EISA consortium in response
+**Category**: Science & Technology **Key figures**: IBM PC Company (developer), Bill Lowe (IBM executive who oversaw the original PC), Don Estridge (IBM PC architect, died 1985), Compaq and nine OEMs who formed the EISA consortium in response
 
 ## Summary
 
