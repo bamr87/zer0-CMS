@@ -1,15 +1,10 @@
 # zer0-image-generator
 
-[![Test](https://github.com/bamr87/zer0-image-generator/actions/workflows/test.yml/badge.svg)](https://github.com/bamr87/zer0-image-generator/actions/workflows/test.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Test](https://github.com/bamr87/zer0-image-generator/actions/workflows/test.yml/badge.svg)](https://github.com/bamr87/zer0-image-generator/actions/workflows/test.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-AI preview/social images for **any Jekyll site** — Claude directs and reviews,
-an image model renders, and your front matter gets wired up automatically.
+AI preview/social images for **any Jekyll site** — Claude directs and reviews, an image model renders, and your front matter gets wired up automatically.
 
-Extracted from the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes)
-theme's consolidated engine and generalized: every theme-specific assumption
-is now a config knob with zer0-compatible defaults, so the theme and this
-plugin stay **separate but portable**.
+Extracted from the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme's consolidated engine and generalized: every theme-specific assumption is now a config knob with zer0-compatible defaults, so the theme and this plugin stay **separate but portable**.
 
 ## How it works
 
@@ -29,9 +24,7 @@ Each post/page without a preview goes through a three-stage pipeline:
 | gemini      | gemini-2.5-flash-image                     | `GEMINI_API_KEY`    |
 | local       | deterministic template SVG → PNG           | none (CI-safe)      |
 
-Claude never renders pixels (the Anthropic API has no image endpoint); without
-a Claude credential the analyze/review stages degrade gracefully to a template
-prompt and the renderer still runs.
+Claude never renders pixels (the Anthropic API has no image endpoint); without a Claude credential the analyze/review stages degrade gracefully to a template prompt and the renderer still runs.
 
 ## Install
 
@@ -44,8 +37,7 @@ group :jekyll_plugins do
 end
 ```
 
-Requires `python3` (3.9+) with PyYAML — the command checks and tells you if
-either is missing:
+Requires `python3` (3.9+) with PyYAML — the command checks and tells you if either is missing:
 
 ```bash
 python3 -m pip install pyyaml
@@ -61,8 +53,7 @@ bundle exec jekyll preview-images                  # generate them
 
 ### Standalone (no Ruby required)
 
-The engine is one dependency-light Python file. Copy it anywhere and run it
-from your site root:
+The engine is one dependency-light Python file. Copy it anywhere and run it from your site root:
 
 ```bash
 curl -o preview_generator.py \
@@ -72,8 +63,7 @@ python3 preview_generator.py --dry-run
 
 ## Configuration
 
-Everything lives under `preview_images:` in your `_config.yml`. Shown with
-defaults:
+Everything lives under `preview_images:` in your `_config.yml`. Shown with defaults:
 
 ```yaml
 preview_images:
@@ -101,13 +91,9 @@ preview_images:
   auto_prefix: true           # ... and it is re-added for existence checks
 ```
 
-Priority per file: author overrides → collection styles → CLI flags →
-environment variables → `_config.yml` → built-in defaults.
+Priority per file: author overrides → collection styles → CLI flags → environment variables → `_config.yml` → built-in defaults.
 
-Jekyll's own top-level `source:` key is honored automatically: on a site with
-`source: pages` (content, assets, and `_data` under `pages/`), every disk path
-above resolves inside `pages/` while front-matter values keep their site-URL
-form. No extra configuration needed.
+Jekyll's own top-level `source:` key is honored automatically: on a site with `source: pages` (content, assets, and `_data` under `pages/`), every disk path above resolves inside `pages/` while front-matter values keep their site-URL form. No extra configuration needed.
 
 ### Recipe: standard Jekyll site with jekyll-seo-tag
 
@@ -120,8 +106,7 @@ preview_images:
   authors_file: ''
 ```
 
-Generated front matter: `image: /assets/images/previews/my-post.png` — exactly
-what `jekyll-seo-tag` turns into `og:image`.
+Generated front matter: `image: /assets/images/previews/my-post.png` — exactly what `jekyll-seo-tag` turns into `og:image`.
 
 ### Recipe: zer0-mistakes theme
 
@@ -135,26 +120,18 @@ preview_images:
 
 ### Batch performance
 
-The engine parallelizes **within one invocation** (4 workers by default, `-j N`
-to change). For many files, one collection run beats a loop of single-file
-runs — the loop pays process startup per file and never engages the pool:
+The engine parallelizes **within one invocation** (4 workers by default, `-j N` to change). For many files, one collection run beats a loop of single-file runs — the loop pays process startup per file and never engages the pool:
 
 ```bash
 bundle exec jekyll preview-images --collection posts --parallel 6   # ✓ parallel
 for f in ...; do jekyll preview-images -f "$f"; done                # ✗ serial
 ```
 
-Claude orchestration runs at `claude_effort: low` by default — right-sized for
-a short art brief and a render verdict. Raise it (or set `claude_model`) if you
-want deeper art direction at the cost of latency.
+Claude orchestration runs at `claude_effort: low` by default — right-sized for a short art brief and a render verdict. Raise it (or set `claude_model`) if you want deeper art direction at the cost of latency.
 
 ### Per-collection styles
 
-Give each collection its own visual identity — tutorials render differently
-from field notes, docs differently from reviews. Any of `style`,
-`style_modifiers`, `size`, `quality`, and `model` can be set per collection;
-everything else inherits the global config. A file's collection comes from its
-`_<name>` directory; author overrides still win over collection styles.
+Give each collection its own visual identity — tutorials render differently from field notes, docs differently from reviews. Any of `style`, `style_modifiers`, `size`, `quality`, and `model` can be set per collection; everything else inherits the global config. A file's collection comes from its `_<name>` directory; author overrides still win over collection styles.
 
 ```yaml
 preview_images:
@@ -171,8 +148,7 @@ preview_images:
 
 ### Per-author style overrides
 
-If `authors_file` points at a YAML map, an author's `preview:` block overrides
-`style`, `style_modifiers`, `size`, `quality`, and `model` for their pages:
+If `authors_file` points at a YAML map, an author's `preview:` block overrides `style`, `style_modifiers`, `size`, `quality`, and `model` for their pages:
 
 ```yaml
 # _data/authors.yml
@@ -184,8 +160,7 @@ cassandra:
 
 ## Credentials
 
-The renderer needs its own key (default: `OPENAI_API_KEY`). Claude
-orchestration accepts any ONE of, in order — it is optional:
+The renderer needs its own key (default: `OPENAI_API_KEY`). Claude orchestration accepts any ONE of, in order — it is optional:
 
 ```bash
 export CLAUDE_CODE_OAUTH_TOKEN="..."   # 1. from `claude setup-token` (Pro/Max)
@@ -194,14 +169,11 @@ export ANTHROPIC_API_KEY="..."         # 3. console.anthropic.com
 # 4. nothing — a logged-in `claude` CLI is used automatically
 ```
 
-Keys are read from the environment or a git-ignored `.env` at the site root.
-On a Claude Pro/Max subscription the orchestration costs nothing extra; only
-the renderer bills per image.
+Keys are read from the environment or a git-ignored `.env` at the site root. On a Claude Pro/Max subscription the orchestration costs nothing extra; only the renderer bills per image.
 
 ## CLI reference
 
-`jekyll preview-images` exposes the engine's flags (Jekyll claims `-s/-d/-p`
-globally, so use long forms there; the Python CLI keeps all short flags):
+`jekyll preview-images` exposes the engine's flags (Jekyll claims `-s/-d/-p` globally, so use long forms there; the Python CLI keeps all short flags):
 
 ```text
 --dry-run --verbose --force --list-missing
@@ -214,9 +186,7 @@ globally, so use long forms there; the Python CLI keeps all short flags):
 --assets-prefix PREFIX  --no-auto-prefix            --batch N  --log-file FILE
 ```
 
-The `local` provider rasterizes its SVG via the first available of
-`rsvg-convert` (`brew install librsvg` / `apt install librsvg2-bin`),
-`inkscape`, ImageMagick, or a vendored Playwright helper.
+The `local` provider rasterizes its SVG via the first available of `rsvg-convert` (`brew install librsvg` / `apt install librsvg2-bin`), `inkscape`, ImageMagick, or a vendored Playwright helper.
 
 ## CI usage
 
@@ -228,17 +198,11 @@ The `local` provider rasterizes its SVG via the first available of
   run: bundle exec jekyll preview-images
 ```
 
-Generation is script-driven on demand — it is never part of `jekyll build`
-(builds stay fast, deterministic, and secret-free; GitHub Pages safe mode is
-irrelevant to it).
+Generation is script-driven on demand — it is never part of `jekyll build` (builds stay fast, deterministic, and secret-free; GitHub Pages safe mode is irrelevant to it).
 
 ## Relationship to zer0-mistakes
 
-The [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme renders
-`preview:` values with a pure-Liquid include (GitHub-Pages-safe, no plugin
-needed) and currently vendors this engine at `scripts/lib/preview_generator.py`.
-This repo is the portable home: the theme is expected to consume the gem (or
-curl the engine from here) in a follow-up, so there is exactly ONE engine.
+The [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme renders `preview:` values with a pure-Liquid include (GitHub-Pages-safe, no plugin needed) and currently vendors this engine at `scripts/lib/preview_generator.py`. This repo is the portable home: the theme is expected to consume the gem (or curl the engine from here) in a follow-up, so there is exactly ONE engine.
 
 ## Development
 
