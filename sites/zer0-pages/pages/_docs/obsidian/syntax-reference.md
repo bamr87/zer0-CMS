@@ -15,10 +15,7 @@ aliases:
 
 # Obsidian Syntax Reference
 
-Everything in this reference is handled by **either**
-`assets/js/obsidian-wiki-links.js` (client-side, default GH Pages build)
-**or** `_plugins/obsidian_links.rb` (server-side, opt-in for forks that
-build with vanilla Jekyll). Both produce equivalent HTML.
+Everything in this reference is handled by **either** `assets/js/obsidian-wiki-links.js` (client-side, default GH Pages build) **or** `_plugins/obsidian_links.rb` (server-side, opt-in for forks that build with vanilla Jekyll). Both produce equivalent HTML.
 
 ## Wiki-links
 
@@ -30,11 +27,7 @@ build with vanilla Jekyll). Both produce equivalent HTML.
 | `[[Page Title^block-id]]` | Block references degrade to a plain link to `Page Title`. |
 | `[[Missing Page]]` | `<span class="wiki-link wiki-link-broken">` — a non-navigating broken-link marker with a tooltip (a click can't scroll to the top). |
 
-Resolution is **case-insensitive** and tolerant of extra whitespace. Lookup
-keys include each document's `title`, file `basename`, and any entries in
-the `aliases:` frontmatter array. The first match wins; collisions are
-deterministic across builds because Liquid iterates collections in a
-stable order.
+Resolution is **case-insensitive** and tolerant of extra whitespace. Lookup keys include each document's `title`, file `basename`, and any entries in the `aliases:` frontmatter array. The first match wins; collisions are deterministic across builds because Liquid iterates collections in a stable order.
 
 ## Embeds
 
@@ -45,9 +38,7 @@ stable order.
 | `![[Note Title]]` | Bootstrap card containing the note's excerpt + a link back to the note |
 | `![[/absolute/path/img.svg]]` | Honors absolute paths verbatim |
 
-The default attachment folder is `assets/images/notes/`, matching the
-`attachmentFolderPath` set in `.obsidian/app.json` so Obsidian's
-"paste image" workflow drops files in the right place automatically.
+The default attachment folder is `assets/images/notes/`, matching the `attachmentFolderPath` set in `.obsidian/app.json` so Obsidian's "paste image" workflow drops files in the right place automatically.
 
 ## Callouts
 
@@ -56,8 +47,7 @@ The default attachment folder is `assets/images/notes/`, matching the
 > Body of the callout — supports **markdown**, lists, code, etc.
 ```
 
-Maps to `<div class="alert alert-… obsidian-callout obsidian-callout-…">`.
-Type → Bootstrap alert variant:
+Maps to `<div class="alert alert-… obsidian-callout obsidian-callout-…">`. Type → Bootstrap alert variant:
 
 | Obsidian type | Bootstrap variant | Icon |
 | --- | --- | --- |
@@ -67,16 +57,13 @@ Type → Bootstrap alert variant:
 | `failure`, `danger`, `error`, `bug` | `danger` | shield / bug |
 | `abstract`, `summary`, `tldr`, `example`, `quote`, `cite` | `secondary` | varies |
 
-Fold markers turn the callout into an **accessible disclosure**: the title
-becomes a keyboard-operable `<button aria-expanded>` with a chevron, and the
-body shows/hides on click (Enter/Space).
+Fold markers turn the callout into an **accessible disclosure**: the title becomes a keyboard-operable `<button aria-expanded>` with a chevron, and the body shows/hides on click (Enter/Space).
 
 - `> [!warning]+` — foldable, **expanded** by default.
 - `> [!warning]-` — foldable, **collapsed** by default (`data-collapsed="true"`
   and the body is `hidden` until toggled).
 
-A callout **without** a fold marker renders as a static heading (not a button).
-Unknown types fall back to the `note` variant, never silently dropped.
+A callout **without** a fold marker renders as a static heading (not a button). Unknown types fall back to the `note` variant, never silently dropped.
 
 ### Live example
 
@@ -94,19 +81,13 @@ A **collapsed** one (the `-` marker) starts closed — activate the title to rev
 
 ## Tags
 
-Inline tags like `#obsidian` or `#fixture/example` are linked to the
-existing tags index page. Hierarchical tags use forward slashes and
-preserve their path. Code spans (`` `#not-a-tag` ``) and fenced code
-blocks are skipped — the resolver explicitly excludes those nodes from
-the rewrite walk.
+Inline tags like `#obsidian` or `#fixture/example` are linked to the existing tags index page. Hierarchical tags use forward slashes and preserve their path. Code spans (`` `#not-a-tag` ``) and fenced code blocks are skipped — the resolver explicitly excludes those nodes from the rewrite walk.
 
-Frontmatter `tags:` arrays are unchanged; they continue to drive Jekyll's
-existing tag aggregation.
+Frontmatter `tags:` arrays are unchanged; they continue to drive Jekyll's existing tag aggregation.
 
 ## Frontmatter ↔ Properties
 
-Obsidian's **Properties** view shows the same YAML frontmatter Jekyll
-already parses. Special mappings:
+Obsidian's **Properties** view shows the same YAML frontmatter Jekyll already parses. Special mappings:
 
 | Obsidian key | Jekyll key | Behavior |
 | --- | --- | --- |
@@ -117,14 +98,9 @@ already parses. Special mappings:
 
 ## Backlinks panel
 
-Every page rendered with `layout: note` automatically gets an
-**Linked mentions** panel listing every page whose body links to it
-(either by markdown URL match or `[[…]]` wiki-link reference). Other
-layouts can opt in with `backlinks: true` in their frontmatter.
+Every page rendered with `layout: note` automatically gets an **Linked mentions** panel listing every page whose body links to it (either by markdown URL match or `[[…]]` wiki-link reference). Other layouts can opt in with `backlinks: true` in their frontmatter.
 
-The panel is a server-side Liquid include
-(`_includes/content/backlinks.html`) — no JavaScript required, fully
-indexable by search engines.
+The panel is a server-side Liquid include (`_includes/content/backlinks.html`) — no JavaScript required, fully indexable by search engines.
 
 ## What is _not_ (yet) supported
 
@@ -136,9 +112,7 @@ indexable by search engines.
 | Live block references (`^block-id`) | Degrades to plain link | Use heading anchors instead |
 | Interactive global graph view | Available at [[_docs/obsidian/graph|/docs/obsidian/graph/]] | Force-directed cytoscape view of every wiki-link |
 
-These are all candidates for a v2 follow-up. None of them break a build
-when present in source — they are simply hidden from the published site
-or rendered without the interactive layer.
+These are all candidates for a v2 follow-up. None of them break a build when present in source — they are simply hidden from the published site or rendered without the interactive layer.
 
 ## See also
 

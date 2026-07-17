@@ -31,9 +31,7 @@ aliases:
 
 # Quickstart Guides
 
-This hub points you at the fastest route from zero to a published
-Zer0-Mistakes site. Every guide below is self-contained — start with the one
-that matches how much you want to own.
+This hub points you at the fastest route from zero to a published Zer0-Mistakes site. Every guide below is self-contained — start with the one that matches how much you want to own.
 
 ![The Zer0-Mistakes theme home page rendered locally, showing the navbar and hero section](/assets/images/docs/quickstart/theme-home.png)
 
@@ -61,8 +59,7 @@ tools first.
 There are two supported models, and the guides above cover both:
 
 1. **Remote theme** — your repository keeps only your content and
-   configuration, and pulls layouts/includes/styles from
-   `bamr87/zer0-mistakes` at build time. Lowest maintenance; start with the
+configuration, and pulls layouts/includes/styles from `bamr87/zer0-mistakes` at build time. Lowest maintenance; start with the
    [[_docs/quickstart/bare-minimum|Bare-Minimum Starter]].
 2. **Fork** — you copy the whole theme into your repository so you can edit
    layouts and styles directly. Most control; follow

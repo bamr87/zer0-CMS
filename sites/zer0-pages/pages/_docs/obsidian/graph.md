@@ -18,12 +18,8 @@ aliases:
 
 # Graph View
 
-A live, force-directed map of this vault — every doc, post, note, and page
-becomes a node, and every `[[wiki-link]]` between them becomes an edge. It is
-the rendered-site equivalent of Obsidian's graph view, built at Jekyll build
-time by the bridge's wikilink parser (the same one described in the
+A live, force-directed map of this vault — every doc, post, note, and page becomes a node, and every `[[wiki-link]]` between them becomes an edge. It is the rendered-site equivalent of Obsidian's graph view, built at Jekyll build time by the bridge's wikilink parser (the same one described in the
 [[_docs/obsidian/syntax-reference|syntax reference]]) and drawn client-side
-with cytoscape. Dangling links appear as dashed red nodes: fix the link, not
-the graph.
+with cytoscape. Dangling links appear as dashed red nodes: fix the link, not the graph.
 
 {% include obsidian/full-graph.html %}

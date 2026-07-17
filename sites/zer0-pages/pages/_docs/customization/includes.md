@@ -175,8 +175,7 @@ _includes/
 
 ### Sidebar with Navigation
 
-The sidebar mode comes from the `sidebar.nav` front matter key (or a
-collection/site default), not an include parameter:
+The sidebar mode comes from the `sidebar.nav` front matter key (or a collection/site default), not an include parameter:
 
 ```yaml
 sidebar:

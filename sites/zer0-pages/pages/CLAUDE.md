@@ -2,8 +2,7 @@
 
 This directory is **both** the content source for the *zer0-mistakes* Jekyll theme (consumed as the published gem `jekyll-theme-zer0`, ~> 1.25) **and** an Obsidian vault, converted with the [claude-obsidian](../claude-obsidian) plugin (LLM Wiki pattern).
 
-**Vault path:** this directory (open it directly in Obsidian).
-**Plugin:** `../claude-obsidian` — skills `/wiki`, `/wiki-ingest`, `/wiki-query`, `/wiki-lint`, `/save`, `/autoresearch`, `/canvas`. These skills are **the** content-creation path for docs, posts, and notes.
+**Vault path:** this directory (open it directly in Obsidian). **Plugin:** `../claude-obsidian` — skills `/wiki`, `/wiki-ingest`, `/wiki-query`, `/wiki-lint`, `/save`, `/autoresearch`, `/canvas`. These skills are **the** content-creation path for docs, posts, and notes.
 
 ## What changed in the Obsidian conversion
 
@@ -37,8 +36,7 @@ _includes/  _plugins/  assets/    Jekyll render machinery (hidden from Obsidian 
                assets/css/user-overrides.css is the theme's custom-CSS hook
 ```
 
-Loose pages at the vault root are limited to the indexes: `index.md`, `posts.md`,
-`notes.md`, `archives.md`, `categories.md`, `tags.md`.
+Loose pages at the vault root are limited to the indexes: `index.md`, `posts.md`, `notes.md`, `archives.md`, `categories.md`, `tags.md`.
 
 ## Conventions
 
@@ -50,14 +48,7 @@ Loose pages at the vault root are limited to the indexes: `index.md`, `posts.md`
 
 ## Graph view (published site)
 
-The site renders an interactive vault graph at `/docs/obsidian/graph/`
-(`_docs/obsidian/graph.md`, which includes `obsidian/full-graph.html`). At build time
-`_plugins/obsidian_graph_index.rb` reuses the bridge's wikilink parser to emit
-`/assets/data/wiki-index.json` (nodes = docs/posts/notes, edges = wikilinks); the
-theme's Cytoscape UI (on by default; `../_config.yml` pins `obsidian: enabled: true`)
-fetches it client-side. Dead wikilinks appear as red "broken" nodes — fix the link,
-not the graph. The theme's `note` layout also shows a backlinks panel fed by the same
-JSON.
+The site renders an interactive vault graph at `/docs/obsidian/graph/` (`_docs/obsidian/graph.md`, which includes `obsidian/full-graph.html`). At build time `_plugins/obsidian_graph_index.rb` reuses the bridge's wikilink parser to emit `/assets/data/wiki-index.json` (nodes = docs/posts/notes, edges = wikilinks); the theme's Cytoscape UI (on by default; `../_config.yml` pins `obsidian: enabled: true`) fetches it client-side. Dead wikilinks appear as red "broken" nodes — fix the link, not the graph. The theme's `note` layout also shows a backlinks panel fed by the same JSON.
 
 ## Operations
 

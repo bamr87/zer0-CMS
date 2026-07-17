@@ -88,9 +88,7 @@ preview_images:
     - quickstart
 ```
 
-The values above match the shipped `_config.yml`. `collections` is not set in
-the shipped config but defaults to `[posts, docs, quickstart]` in the plugin
-(`_plugins/preview_image_generator.rb`).
+The values above match the shipped `_config.yml`. `collections` is not set in the shipped config but defaults to `[posts, docs, quickstart]` in the plugin (`_plugins/preview_image_generator.rb`).
 
 ### API Keys
 
@@ -149,8 +147,7 @@ preview: /images/previews/ai-preview-image-generator.png
 
 ### OpenAI (GPT Image / DALL-E 3)
 
-Best quality. The shipped default is the GPT Image model; DALL-E 3 is also
-supported:
+Best quality. The shipped default is the GPT Image model; DALL-E 3 is also supported:
 
 ```yaml
 preview_images:
@@ -162,9 +159,7 @@ preview_images:
 
 ### Stability AI
 
-Good alternative. Set `provider: stability` and supply `STABILITY_API_KEY`. The
-script calls the Stable Diffusion XL 1024 endpoint at 1024x1024 — there is no
-separate `engine`/`size` key to set for this provider:
+Good alternative. Set `provider: stability` and supply `STABILITY_API_KEY`. The script calls the Stable Diffusion XL 1024 endpoint at 1024x1024 — there is no separate `engine`/`size` key to set for this provider:
 
 ```yaml
 preview_images:
@@ -174,9 +169,7 @@ preview_images:
 
 ### Local (placeholder)
 
-Free, no API needed. The `local` provider writes a `.txt` placeholder next to
-the target path instead of calling an image API — useful for development and
-dry runs:
+Free, no API needed. The `local` provider writes a `.txt` placeholder next to the target path instead of calling an image API — useful for development and dry runs:
 
 ```yaml
 preview_images:
