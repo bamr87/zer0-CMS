@@ -44,5 +44,4 @@
 
 ## Usefull links
 
-https://code.visualstudio.com/api/language-extensions/syntax-highlight-guide#injection-grammars
-https://github.com/microsoft/vscode-textmate/blob/e8f439d613afa00674e83b3b3ae382fc774665e1/test-cases/themes/syntaxes/html.json
+https://code.visualstudio.com/api/language-extensions/syntax-highlight-guide#injection-grammars https://github.com/microsoft/vscode-textmate/blob/e8f439d613afa00674e83b3b3ae382fc774665e1/test-cases/themes/syntaxes/html.json
