@@ -6,8 +6,7 @@ tags: ["narrative", "corporate ethics", "identity", "globalization", "environmen
 
 ---
 
-**"The Impairment"** or **"Goodwill"** or **"The Valuation"**
-*(titles reflect financial terms with hidden emotional and ethical meanings)*
+**"The Impairment"** or **"Goodwill"** or **"The Valuation"** *(titles reflect financial terms with hidden emotional and ethical meanings)*
 
 ---
 
