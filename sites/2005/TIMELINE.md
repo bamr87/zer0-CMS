@@ -37,6 +37,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-08-15 | Israeli disengagement from the Gaza Strip | History & Politics | [file]({{ '/news/history-politics/gaza-disengagement-2005/' | relative_url }}) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file]({{ '/news/society-economics/hurricane-katrina/' | relative_url }}) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file]({{ '/news/history-politics/angela-merkel-chancellor/' | relative_url }}) |
+| 2005-09-29 | John Roberts confirmed as Chief Justice | History & Politics | [file]({{ '/news/history-politics/john-roberts-chief-justice/' | relative_url }}) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file]({{ '/news/society-economics/kashmir-earthquake-2005/' | relative_url }}) |
 | 2005-10-17 | The Colbert Report premieres | Arts & Culture | [file]({{ '/news/arts-culture/colbert-report-premiere/' | relative_url }}) |
 | 2005-10-19 | Saddam Hussein's trial begins | History & Politics | [file]({{ '/news/history-politics/saddam-hussein-trial-begins/' | relative_url }}) |
@@ -50,5 +51,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file]({{ '/news/arts-culture/brokeback-mountain/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 38 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 39 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->

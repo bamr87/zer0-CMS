@@ -38,7 +38,7 @@ Bush's most consequential domestic achievement in 2005 came through the federal 
 - **July 1**: Justice Sandra Day O'Connor announced her retirement, effective upon confirmation of a successor. O'Connor had been the Court's decisive swing vote for two decades.
 - **July 19**: Bush nominated federal appeals court judge John G. Roberts Jr. for O'Connor's seat on the Court.
 - **September 3**: Chief Justice William Rehnquist died, having served since 1972 (Chief Justice since 1986). Bush withdrew Roberts's nomination to the associate seat and re-nominated him as Chief Justice.
-- **September 29**: The Senate confirmed Roberts as the 17th Chief Justice of the United States by a vote of 78–22. At age 50, Roberts was the youngest person to assume the role since John Jay in 1789 and the first new Chief Justice in 19 years.
+- **September 29**: The Senate [confirmed Roberts as the 17th Chief Justice]({{ '/news/history-politics/john-roberts-chief-justice/' | relative_url }}) of the United States by a vote of 78–22. At age 50, Roberts was the youngest person to assume the role since John Marshall in 1801 and the first new Chief Justice in 19 years.
 - **October 3**: Bush nominated White House Counsel Harriet Miers for O'Connor's former seat. Conservatives objected that she lacked judicial experience and had no established constitutional philosophy; liberals questioned her qualifications.
 - **October 27**: Miers withdrew her nomination after 24 days, citing Senate demands for White House documents she and Bush argued were protected by executive privilege.
 - **October 31**: Bush nominated federal appeals court judge Samuel A. Alito Jr. Alito was confirmed January 31, 2006, by a vote of 58–42.
