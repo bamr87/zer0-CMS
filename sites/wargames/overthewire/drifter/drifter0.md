@@ -32,17 +32,11 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-Drifter can be accessed on drifter.labs.overthewire.org via SSH on port 2230. Level 0 listens
-on port 1111.
+Drifter can be accessed on drifter.labs.overthewire.org via SSH on port 2230. Level 0 listens on port 1111.
 
-Level0 is an extremely trivial, encrypted, remote syscall proxy. Your
-aim is to read the contents of a file called "drifter0.password" to get the
-password for user drifter0.
+Level0 is an extremely trivial, encrypted, remote syscall proxy. Your aim is to read the contents of a file called "drifter0.password" to get the password for user drifter0.
 
-Upon connection, it sets up an encrypted rc4 key (based on the
-connecting IP address / port), read()'s in 9 integers, and then decrypts
-them, and handles them off to syscall(). This allows the network client
-to execute arbitrary syscalls in a safe way.
+Upon connection, it sets up an encrypted rc4 key (based on the connecting IP address / port), read()'s in 9 integers, and then decrypts them, and handles them off to syscall(). This allows the network client to execute arbitrary syscalls in a safe way.
 
 To give you an idea of what's needed:
 
@@ -68,25 +62,15 @@ To give you an idea of what's needed:
 8.  [write()][] from the allocated buffer to the socket on the server
     (fd 4)
 
-Once all that is done, you will have the contents of the instructions
-file printed to your screen.
+Once all that is done, you will have the contents of the instructions file printed to your screen.
 
-Of course - this does not prevent you from using other mechanisms to
-access the server, such as using "shelldemo" from metasploit 2.x to
-examine the environment. In fact, using shelldemo is probably a good
-exercise as well.
+Of course - this does not prevent you from using other mechanisms to access the server, such as using "shelldemo" from metasploit 2.x to examine the environment. In fact, using shelldemo is probably a good exercise as well.
 
-In order to get the values for the parameters you need, you can use
-cross-references of linux code on the net, for example, to look up the
-value for \_\_NR\_read (linux read syscall()), we can use [this][] which
-will lead us to [http://lxr.linux.no][]. From there we can use the
-search facility to find the values we need, [such as:][]
+In order to get the values for the parameters you need, you can use cross-references of linux code on the net, for example, to look up the value for \_\_NR\_read (linux read syscall()), we can use [this][] which will lead us to [http://lxr.linux.no][]. From there we can use the search facility to find the values we need, [such as:][]
 
 \#define \_\_NR\_read 3
 
-If this level is too complicated / involved, please leave a comment.
-While it's complicated than adding several little endian integers
-together, I don't want the initial level to be overkill.
+If this level is too complicated / involved, please leave a comment. While it's complicated than adding several little endian integers together, I don't want the initial level to be overkill.
 
 The following sourcecode is located in /drifter/drifter0_src/ :
 

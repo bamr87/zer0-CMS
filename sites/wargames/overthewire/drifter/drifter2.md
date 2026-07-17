@@ -34,6 +34,4 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-Simple stack overflow, but with a side effect that affects debugging,
-and executing problems. Keep in mind that a straight execve() will not
-work, due to kernel issuing a breakpoint.
+Simple stack overflow, but with a side effect that affects debugging, and executing problems. Keep in mind that a straight execve() will not work, due to kernel issuing a breakpoint.

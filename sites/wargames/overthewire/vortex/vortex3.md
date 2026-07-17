@@ -40,14 +40,9 @@ author: bamr87
 
 A Stack Overflow with a Difference
 ----------------------------------
-This level is pretty straight forward. Just sit down and understand
-what the code is doing. Your shellcode will require a
-setuid(LEVEL4\_UID) since bash drops effective privileges. You could
-alternatively write a quick setuid(geteuid()) wrapper around bash.
+This level is pretty straight forward. Just sit down and understand what the code is doing. Your shellcode will require a setuid(LEVEL4\_UID) since bash drops effective privileges. You could alternatively write a quick setuid(geteuid()) wrapper around bash.
 
- **NOTE:** ctors/dtors might no longer be writable, although this
-level is compiled with *-Wl,-z,norelro*. Lookup some information
-about this e.g. [here][]
+**NOTE:** ctors/dtors might no longer be writable, although this level is compiled with *-Wl,-z,norelro*. Lookup some information about this e.g. [here][]
 
 Reading Material
 ----------------

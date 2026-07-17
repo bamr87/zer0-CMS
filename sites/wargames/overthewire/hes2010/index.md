@@ -35,8 +35,7 @@ author: bamr87
 [RELEASED] HES2010
 ==================
 
-This wargame was introduced at the [Hackito Ergo Sum (HES)][HES] 2010 conference in Paris and is centered around
-the **fictitious company dirty-underwear.com**
+This wargame was introduced at the [Hackito Ergo Sum (HES)][HES] 2010 conference in Paris and is centered around the **fictitious company dirty-underwear.com**
 
 The winners of this wargame at HES2010 were **CCCP and morla**.
 

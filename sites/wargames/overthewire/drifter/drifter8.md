@@ -32,5 +32,4 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-Phrack Search Daemon is running on the server. Good luck finding bugs
-without the GPLv2 source! Some custom shellcoding may be required.
+Phrack Search Daemon is running on the server. Good luck finding bugs without the GPLv2 source! Some custom shellcoding may be required.

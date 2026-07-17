@@ -45,8 +45,7 @@ semtex.labs.overthewire.org
 
 Receive data until the port is closed.
 
-Every second byte you receive is trash, ignore it.
-The other bytes are an executable that shows you the password.
+Every second byte you receive is trash, ignore it. The other bytes are an executable that shows you the password.
 
 Then login to [semtex1@semtex.labs.overthewire.org][] on port 2229
 

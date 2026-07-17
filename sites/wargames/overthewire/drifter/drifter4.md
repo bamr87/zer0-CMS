@@ -32,7 +32,6 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-Level 4 is a binary requiring some simple analysis / reverse
-engineering.
+Level 4 is a binary requiring some simple analysis / reverse engineering.
 
 Hint: Keep in mind about resource limits

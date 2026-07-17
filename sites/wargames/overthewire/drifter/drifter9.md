@@ -32,5 +32,4 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-Get ready to escalate those privileges. You'll have to work out a secret
-file format and attack some security oversights.
+Get ready to escalate those privileges. You'll have to work out a secret file format and attack some security oversights.

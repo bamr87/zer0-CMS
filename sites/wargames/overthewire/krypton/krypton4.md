@@ -38,22 +38,13 @@ Level Info
 ----------
 Good job!
 
-You more than likely used some form of FA and some common sense to
-solve that one.
+You more than likely used some form of FA and some common sense to solve that one.
 
-So far we have worked with simple substitution ciphers. They have
-also been 'monoalphabetic', meaning using a fixed key, and giving a
-one to one mapping of plaintext (P) to ciphertext (C). Another type
-of substitution cipher is referred to as 'polyalphabetic', where one
-character of P may map to many, or all, possible ciphertext
-characters.
+So far we have worked with simple substitution ciphers. They have also been 'monoalphabetic', meaning using a fixed key, and giving a one to one mapping of plaintext (P) to ciphertext (C). Another type of substitution cipher is referred to as 'polyalphabetic', where one character of P may map to many, or all, possible ciphertext characters.
 
-An example of a polyalphabetic cipher is called a Vigenère Cipher. It
-works like this:
+An example of a polyalphabetic cipher is called a Vigenère Cipher. It works like this:
 
-If we use the key(K) 'GOLD', and P = PROCEED MEETING AS AGREED, then
-"add" P to K, we get C. When adding, if we exceed 25, then we roll
-to 0 (modulo 26).
+If we use the key(K) 'GOLD', and P = PROCEED MEETING AS AGREED, then "add" P to K, we get C. When adding, if we exceed 25, then we roll to 0 (modulo 26).
 
     P P R O C E E D M E E T I N G A S A G R E E D\
     K G O L D G O L D G O L D G O L D G O L D G O\
@@ -68,12 +59,9 @@ So, we get a ciphertext of:
 
     VFZFK SOPKS ELTUL VGUCH KR
 
-This level is a Vigenère Cipher. You have intercepted two longer,
-english language messages (American English). You also have a key piece of information.
-You know the key length!
+This level is a Vigenère Cipher. You have intercepted two longer, english language messages (American English). You also have a key piece of information. You know the key length!
 
-For this exercise, the key length is 6. The password to level five
-is in the usual place, encrypted with the 6 letter key.
+For this exercise, the key length is 6. The password to level five is in the usual place, encrypted with the 6 letter key.
 
 Have fun!
 

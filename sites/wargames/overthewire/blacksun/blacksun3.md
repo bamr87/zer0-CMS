@@ -32,11 +32,9 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-Level3 is a blast from the past, with not much details and a sstriped
-binary!
+Level3 is a blast from the past, with not much details and a sstriped binary!
 
-Experiment around / partially disassemble level3, work out what it
-wants, and how to exploit it. Some bruteforcing may be required ;)
+Experiment around / partially disassemble level3, work out what it wants, and how to exploit it. Some bruteforcing may be required ;)
 
 ### Binary information
 

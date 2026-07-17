@@ -42,15 +42,9 @@ author: bamr87
 
 ICMP forging
 ------------
-Send a special ICMP packet to an unknown host. Add the correct
-payload to it, to make sure you can receive the password. Spoof your
-origin address and make semtex believe, the packet is really coming
-from some government server (\*.gov) Make sure this server you are
-sending from has a reverse DNS entry, otherwise you will not receive
-an answer.
+Send a special ICMP packet to an unknown host. Add the correct payload to it, to make sure you can receive the password. Spoof your origin address and make semtex believe, the packet is really coming from some government server (\*.gov) Make sure this server you are sending from has a reverse DNS entry, otherwise you will not receive an answer.
 
-You find more specific information in your home directory.
-** Note: You will have to use /semtex/semtexraw. Take a look at the source**
+You find more specific information in your home directory. ** Note: You will have to use /semtex/semtexraw. Take a look at the source**
 
 Reading Material
 ----------------

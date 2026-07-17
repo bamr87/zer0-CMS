@@ -38,7 +38,6 @@ author: bamr87
 
 BlackBox
 --------
-There is no information available for this level. Login to
-[vortex.labs.overthewire.org][] and check it out.
+There is no information available for this level. Login to [vortex.labs.overthewire.org][] and check it out.
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228

@@ -34,9 +34,7 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-Level2 is a test application from a [pop3 library][] that's pretty
-buggy. The idea is to write a pop3 server to trigger a vulnerability
-(pick any you like :p) in the code and get a shell.
+Level2 is a test application from a [pop3 library][] that's pretty buggy. The idea is to write a pop3 server to trigger a vulnerability (pick any you like :p) in the code and get a shell.
 
 **Notes**
 

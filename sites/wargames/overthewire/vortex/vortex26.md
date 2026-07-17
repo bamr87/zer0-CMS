@@ -43,9 +43,7 @@ author: bamr87
 Create your own challenges
 --------------------------
 
-This description is kept for historical reasons, but should not be followed.
-We are no longer expanding Vortex with new levels.
+This description is kept for historical reasons, but should not be followed. We are no longer expanding Vortex with new levels.
 
 
-Due to the overwhelming flood of new levels, vortex26 shall be to
-make a level, along with exploit, and email it to andrewg.
+Due to the overwhelming flood of new levels, vortex26 shall be to make a level, along with exploit, and email it to andrewg.

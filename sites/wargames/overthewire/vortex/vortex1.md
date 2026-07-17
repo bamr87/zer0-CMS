@@ -38,8 +38,7 @@ author: bamr87
 
 Canary Values
 -------------
-We are looking for a specific value in ptr. You may need to consider
-how bash handles EOF..
+We are looking for a specific value in ptr. You may need to consider how bash handles EOF..
 
 Reading Material
 ----------------

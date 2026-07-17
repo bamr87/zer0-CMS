@@ -39,12 +39,9 @@ Narnia
 
 ### We all have to start somewhere.
 
-Narnia is a wargame that has been rescued from the demise of
-**intruded.net**, previously hosted on narnia.intruded.net. **Big thanks
-to adc, morla and reth** for their help in resurrecting this game!
+Narnia is a wargame that has been rescued from the demise of **intruded.net**, previously hosted on narnia.intruded.net. **Big thanks to adc, morla and reth** for their help in resurrecting this game!
 
-What follows below is the original description of narnia, copied from
-intruded.net:
+What follows below is the original description of narnia, copied from intruded.net:
 
     Summary:
     Difficulty:     2/10
@@ -64,8 +61,7 @@ intruded.net:
     difficulty of the game is somewhere between Leviathan and Behemoth, but some of the
     levels could be quite tricky.
 
-Narnia's levels are called **narnia0, narnia1, ... etc.** and can be
-accessed on **narnia.labs.overthewire.org** through SSH on port 2226.
+Narnia's levels are called **narnia0, narnia1, ... etc.** and can be accessed on **narnia.labs.overthewire.org** through SSH on port 2226.
 
 To login to the first level use:
 

@@ -38,8 +38,7 @@ author: bamr87
 
 Deja vue
 --------
-/rdx/vl1b is vortex semtex1 with a slight modification to make
-things a little bit harder.
+/rdx/vl1b is vortex semtex1 with a slight modification to make things a little bit harder.
 
 Thanks to andrewg for inspiration.
 

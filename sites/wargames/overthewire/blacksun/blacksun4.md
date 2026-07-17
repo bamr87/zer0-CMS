@@ -32,8 +32,7 @@ author: bamr87
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
-level4 is an installation of Apache and PHP with an introduced heap
-vulnerability.
+level4 is an installation of Apache and PHP with an introduced heap vulnerability.
 
 The introduced vulnerability is as follows:
 
@@ -41,12 +40,9 @@ The introduced vulnerability is as follows:
 
 Thanks to orix for the introduced code snippet
 
-The document root is in /levels/level4/htdocs, you'll need to put your
-php code there and call it via the webserver on port 55555.
+The document root is in /levels/level4/htdocs, you'll need to put your php code there and call it via the webserver on port 55555.
 
-**Note:** that if you're executing a shell, it can't be /bin/sh or
-/bin/bash, oh, and the apache process can't access the /etc/pass
-directory :P
+**Note:** that if you're executing a shell, it can't be /bin/sh or /bin/bash, oh, and the apache process can't access the /etc/pass directory :P
 
 ### Binary information
 
