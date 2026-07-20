@@ -48,7 +48,7 @@ After completing its primary mission, the Deep Impact flyby spacecraft was repur
 
 Deep Impact transformed cometary science from passive observation to controlled experiment. The collision data provided the most detailed compositional snapshot of a comet's interior ever obtained, confirming comet nuclei as repositories of primordial solar-system material while also revealing unexpected complexity. The mission demonstrated precise small-body rendezvous navigation, directly informing planetary-defense research into deflecting Earth-threatening asteroids.
 
-The event generated extraordinary public engagement: NASA live-streamed the impact, observatories around the world held public viewing events, and amateur astronomers across several continents tracked the resulting brightening of the comet — an early instance of a space-science result followed in real time by a large global online audience.
+The event generated extraordinary public engagement: NASA live-streamed the impact, observatories around the world held public viewing events, and amateur astronomers across several continents tracked the resulting brightening of the comet — an early instance of a space-science result followed in real time by a large global online audience. The comet strike came in a pivotal year for American spaceflight that also saw the Space Shuttle [return to flight]({{ '/news/science-technology/sts-114-return-to-flight/' | relative_url }}) after the 2003 *Columbia* disaster.
 
 ## Sources
 
