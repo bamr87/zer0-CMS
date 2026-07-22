@@ -118,6 +118,24 @@ preview_images:
   # front_matter_key/preview + /assets prefixing are already the defaults
 ```
 
+### Recipe: children's book collections (drsai)
+
+The [drsai storybook platform](https://github.com/bamr87/drsai) publishes picture books through the zer0-mistakes `books` collection and uses this gem for each story's social/preview banner. Match the banner style to the book's illustration bible so cards and pages read as one book:
+
+```yaml
+preview_images:
+  provider: openai
+  collections: [books]
+  # each story's `preview` starts as its first illustration plate; this gem
+  # fills banners for pages that don't have one yet
+  style: >-
+    cozy warm digital watercolor storybook art, soft colored-pencil outlines,
+    rounded friendly shapes, sun-baked desert palette, gentle golden-hour light
+  style_modifiers: kid-friendly, never photorealistic, never dark or scary
+```
+
+Note the division of labor: this gem renders **one banner per page** keyed on front matter; the *in-story* illustration plates (several per story, tracked in each page's `illustrations:` list) are rendered by drsai's own `tools/generate_illustrations.py` against the same OpenAI credential.
+
 ### Batch performance
 
 The engine parallelizes **within one invocation** (4 workers by default, `-j N` to change). For many files, one collection run beats a loop of single-file runs — the loop pays process startup per file and never engages the pool:
