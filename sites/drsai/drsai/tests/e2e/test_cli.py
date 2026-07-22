@@ -1,5 +1,7 @@
 """End-to-end tests for the CLI."""
 
+import re
+
 import pytest
 from typer.testing import CliRunner
 
@@ -7,6 +9,19 @@ from drsai.cli import app
 from ..fixtures.corpus_cases import FAMILY_NEWSLETTER, NEWSLETTER_SEUSS
 
 runner = CliRunner()
+
+
+def _normalize(text: str) -> str:
+    """Make text comparable across rich Panel wrapping.
+
+    The CLI renders content inside a rich Panel that word-wraps at terminal
+    width and adds box-drawing chrome. Since the newsletter corpus moved to
+    one-paragraph-per-line markdown, its first "line" is far wider than any
+    terminal, so raw substring assertions can never match the rendered
+    output. Strip the box-drawing characters and collapse all whitespace so
+    assertions compare words in sequence instead of exact wrapping.
+    """
+    return " ".join(re.sub(r"[─-╿]", " ", text).split())
 
 
 class TestCLI:
@@ -115,7 +130,7 @@ class TestCLI:
 
         assert result.exit_code == 0
         assert "reading from" in result.stdout.lower()
-        assert expected_first_line in result.stdout
+        assert _normalize(expected_first_line) in _normalize(result.stdout)
 
     def test_invalid_mode(self):
         """Test invalid mode error."""

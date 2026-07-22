@@ -128,7 +128,7 @@ def generate(
                 print_error(f"File not found: {file}", code="FILE_NOT_FOUND")
                 raise typer.Exit(1)
 
-            file_content = file_path.read_text()
+            file_content = file_path.read_text(encoding="utf-8")
 
             # If topic is also provided, use it as additional instructions
             if topic:
