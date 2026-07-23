@@ -14,6 +14,13 @@ test/fixture-site/assets/
 test/fixture-site/_site/
 test/fixture-site/.jekyll-cache/
 
+# SVG authoring-loop scratch output (tools/svg/)
+.preview/
+.sweep/
+
+# FreeSVG local cache (rebuilds on demand; token.json holds a credential)
+tools/svg/library/cache/
+
 # Secrets / local env
 .env
 .env.*

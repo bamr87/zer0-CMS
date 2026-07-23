@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>Space-explorer emblem: stepped rocket arcing over a ringed planet</title>
+  <!-- tokens: ink #131b2c | mid #33658a | light #f2e9d8 | accent #e4573f -->
+  <defs>
+    <clipPath id="field">
+      <rect x="8" y="8" width="496" height="496" rx="42"/>
+    </clipPath>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="48" fill="#f2e9d8"/>
+  <rect x="8" y="8" width="496" height="496" rx="42" fill="#131b2c"/>
+  <g clip-path="url(#field)">
+    <!-- starfield: dense upper-left, thinning to lower-right; 3 opacity stops -->
+    <rect x="48" y="56" width="16" height="16" fill="#f2e9d8"/>
+    <rect x="112" y="40" width="8" height="8" fill="#f2e9d8" opacity="0.6"/>
+    <rect x="56" y="136" width="8" height="8" fill="#f2e9d8" opacity="0.6"/>
+    <rect x="136" y="96" width="8" height="8" fill="#f2e9d8" opacity="0.3"/>
+    <rect x="224" y="56" width="16" height="16" fill="#f2e9d8" opacity="0.6"/>
+    <rect x="312" y="104" width="8" height="8" fill="#f2e9d8" opacity="0.3"/>
+    <rect x="424" y="64" width="8" height="8" fill="#f2e9d8" opacity="0.3"/>
+    <rect x="64" y="288" width="8" height="8" fill="#f2e9d8" opacity="0.3"/>
+    <!-- ring pass 1: full band behind the disc -->
+    <rect x="176" y="320" width="288" height="32" fill="#33658a"/>
+    <!-- planet disc occludes the band's middle -->
+    <circle cx="320" cy="336" r="104" fill="#33658a"/>
+    <!-- ink gaps carve the occlusion read across the disc (invisible over space) -->
+    <rect x="208" y="312" width="224" height="8" fill="#131b2c"/>
+    <rect x="208" y="352" width="224" height="8" fill="#131b2c"/>
+    <!-- ring pass 2: near-side segment repainted in front of the disc -->
+    <rect x="208" y="320" width="224" height="32" fill="#33658a"/>
+    <!-- rocket+flame group: lifted up-left off the limb and banked -13deg about
+         the tail (248,248) so the flame tip (~262,212) clears the planet's top
+         edge (y=232) with open starfield between them — an arc, not a dive -->
+    <g transform="translate(-40,-56) rotate(-13 248 248)">
+      <!-- accent flame: the one symmetry break, kicking off-axis -->
+      <polygon points="248,200 288,232 296,280 248,248" fill="#e4573f"/>
+      <!-- rocket: cone nose, stepped hull, fins trailing past the tail -->
+      <polygon points="240,184 280,208 248,208" fill="#f2e9d8"/>
+      <polygon points="216,208 240,248 240,216" fill="#f2e9d8"/>
+      <rect x="200" y="168" width="32" height="32" fill="#f2e9d8"/>
+      <rect x="216" y="184" width="32" height="32" fill="#f2e9d8"/>
+      <polygon points="176,144 224,168 200,192" fill="#f2e9d8"/>
+      <circle cx="216" cy="184" r="12" fill="#131b2c"/>
+    </g>
+  </g>
+</svg>

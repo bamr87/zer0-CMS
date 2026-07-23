@@ -1,0 +1,882 @@
+{
+  "_comment": "Catalog of the SVG example library. Search by tags; every external entry carries provenance and license. See README.md for obligations.",
+  "entries": [
+    {
+      "file": "docs/samples/constellation.svg",
+      "title": "Constellation",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "night",
+        "stars",
+        "moon",
+        "organic-atmos",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 3.2
+    },
+    {
+      "file": "docs/samples/dawn-badge.svg",
+      "title": "Dawn badge",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "badge",
+        "flat-geometric",
+        "sun",
+        "water",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 2.4
+    },
+    {
+      "file": "docs/samples/flowfield-moss-5.svg",
+      "title": "Flow field (moss, seed 5)",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "generative",
+        "flowfield",
+        "organic-atmos",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 151.3
+    },
+    {
+      "file": "docs/samples/invaders-cyanic-3.svg",
+      "title": "Invader wave (cyanic, seed 3)",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "retro-pixel",
+        "game",
+        "invaders",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 32.4
+    },
+    {
+      "file": "docs/samples/invaders-magma-5.svg",
+      "title": "Invader wave (magma, seed 5)",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "retro-pixel",
+        "game",
+        "invaders",
+        "palette-variant",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 31.6
+    },
+    {
+      "file": "docs/samples/pixel-quest-dusk-7.svg",
+      "title": "Pixel quest (dusk, seed 7)",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "retro-pixel",
+        "game",
+        "platformer",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 23.4
+    },
+    {
+      "file": "docs/samples/ridgeline.svg",
+      "title": "Ridgeline banner",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "banner",
+        "organic-atmos",
+        "mountains",
+        "mist",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 2.0
+    },
+    {
+      "file": "tools/svg/library/external/bootstrap/bootstrap-controller.svg",
+      "title": "Controller",
+      "source_url": "https://raw.githubusercontent.com/twbs/icons/main/icons/controller.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/twbs/icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "gamepad",
+        "controller",
+        "gaming",
+        "mono",
+        "flat"
+      ],
+      "lint": "warnings: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 1.6
+    },
+    {
+      "file": "tools/svg/library/external/bootstrap/bootstrap-cpu.svg",
+      "title": "CPU",
+      "source_url": "https://raw.githubusercontent.com/twbs/icons/main/icons/cpu.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/twbs/icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "cpu",
+        "chip",
+        "hardware",
+        "mono",
+        "flat"
+      ],
+      "lint": "warnings: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.9
+    },
+    {
+      "file": "tools/svg/library/external/bootstrap/bootstrap-heart-pulse.svg",
+      "title": "Heart Pulse",
+      "source_url": "https://raw.githubusercontent.com/twbs/icons/main/icons/heart-pulse.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/twbs/icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "heart",
+        "pulse",
+        "health",
+        "mono",
+        "flat"
+      ],
+      "lint": "warnings: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.8
+    },
+    {
+      "file": "tools/svg/library/external/bootstrap/bootstrap-joystick.svg",
+      "title": "Joystick",
+      "source_url": "https://raw.githubusercontent.com/twbs/icons/main/icons/joystick.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/twbs/icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "joystick",
+        "gaming",
+        "arcade",
+        "mono",
+        "flat"
+      ],
+      "lint": "warnings: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.6
+    },
+    {
+      "file": "tools/svg/library/external/bootstrap/bootstrap-rocket-takeoff.svg",
+      "title": "Rocket Takeoff",
+      "source_url": "https://raw.githubusercontent.com/twbs/icons/main/icons/rocket-takeoff.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/twbs/icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "rocket",
+        "launch",
+        "space",
+        "mono",
+        "flat"
+      ],
+      "lint": "warnings: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 1.6
+    },
+    {
+      "file": "tools/svg/library/external/bootstrap/bootstrap-star-fill.svg",
+      "title": "Star Fill",
+      "source_url": "https://raw.githubusercontent.com/twbs/icons/main/icons/star-fill.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/twbs/icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "star",
+        "rating",
+        "filled",
+        "mono"
+      ],
+      "lint": "warnings: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.4
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-camera.svg",
+      "title": "Camera",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/camera.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "camera",
+        "photo",
+        "media"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.3
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-cloud-rain.svg",
+      "title": "Cloud Rain",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/cloud-rain.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "cloud",
+        "rain",
+        "weather"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.4
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-compass.svg",
+      "title": "Compass",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/compass.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "compass",
+        "navigation",
+        "direction"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.3
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-heart.svg",
+      "title": "Heart",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/heart.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "heart",
+        "love",
+        "favorite"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.3
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-moon.svg",
+      "title": "Moon",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/moon.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "moon",
+        "night",
+        "weather"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.2
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-star.svg",
+      "title": "Star",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/star.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "star",
+        "favorite",
+        "rating"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.3
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-sun.svg",
+      "title": "Sun",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/sun.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "sun",
+        "weather",
+        "light"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.6
+    },
+    {
+      "file": "tools/svg/library/external/feather/feather-zap.svg",
+      "title": "Zap",
+      "source_url": "https://raw.githubusercontent.com/feathericons/feather/master/icons/zap.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/feathericons/feather/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "lightning",
+        "zap",
+        "energy"
+      ],
+      "lint": "warn: no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.2
+    },
+    {
+      "file": "tools/svg/library/external/heroicons/heroicons-bolt.svg",
+      "title": "Bolt",
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/src/24/outline/bolt.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tailwindlabs/heroicons/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "bolt",
+        "lightning",
+        "outline",
+        "mono-line"
+      ],
+      "lint": "no <title>; missing role=\"img\" on root",
+      "size_kb": 0.3
+    },
+    {
+      "file": "tools/svg/library/external/heroicons/heroicons-fire.svg",
+      "title": "Fire",
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/src/24/outline/fire.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tailwindlabs/heroicons/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "fire",
+        "flame",
+        "outline",
+        "mono-line"
+      ],
+      "lint": "no <title>; missing role=\"img\" on root",
+      "size_kb": 0.9
+    },
+    {
+      "file": "tools/svg/library/external/heroicons/heroicons-moon.svg",
+      "title": "Moon",
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/src/24/outline/moon.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tailwindlabs/heroicons/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "moon",
+        "night",
+        "outline",
+        "mono-line"
+      ],
+      "lint": "no <title>; missing role=\"img\" on root",
+      "size_kb": 0.5
+    },
+    {
+      "file": "tools/svg/library/external/heroicons/heroicons-rocket-launch.svg",
+      "title": "Rocket Launch",
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/src/24/outline/rocket-launch.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tailwindlabs/heroicons/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "rocket",
+        "launch",
+        "outline",
+        "mono-line"
+      ],
+      "lint": "no <title>; missing role=\"img\" on root; path data 5+ decimal places",
+      "size_kb": 1.1
+    },
+    {
+      "file": "tools/svg/library/external/heroicons/heroicons-sparkles.svg",
+      "title": "Sparkles",
+      "source_url": "https://raw.githubusercontent.com/tailwindlabs/heroicons/master/src/24/outline/sparkles.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tailwindlabs/heroicons/blob/master/LICENSE",
+      "tags": [
+        "icon",
+        "sparkles",
+        "outline",
+        "mono-line",
+        "ui"
+      ],
+      "lint": "no <title>; missing role=\"img\" on root",
+      "size_kb": 1.3
+    },
+    {
+      "file": "tools/svg/library/external/lucide/lucide-gamepad-2.svg",
+      "title": "Gamepad 2",
+      "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/gamepad-2.svg",
+      "license": "ISC",
+      "license_url": "https://github.com/lucide-icons/lucide/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "gamepad",
+        "controller",
+        "gaming"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 0.7
+    },
+    {
+      "file": "tools/svg/library/external/lucide/lucide-ghost.svg",
+      "title": "Ghost",
+      "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/ghost.svg",
+      "license": "ISC",
+      "license_url": "https://github.com/lucide-icons/lucide/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "ghost",
+        "spooky",
+        "halloween"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 0.3
+    },
+    {
+      "file": "tools/svg/library/external/lucide/lucide-rocket.svg",
+      "title": "Rocket",
+      "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/rocket.svg",
+      "license": "ISC",
+      "license_url": "https://github.com/lucide-icons/lucide/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "rocket",
+        "space",
+        "launch"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 0.5
+    },
+    {
+      "file": "tools/svg/library/external/lucide/lucide-swords.svg",
+      "title": "Swords",
+      "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/swords.svg",
+      "license": "ISC",
+      "license_url": "https://github.com/lucide-icons/lucide/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "swords",
+        "combat",
+        "weapons"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 0.6
+    },
+    {
+      "file": "tools/svg/library/external/lucide/lucide-trophy.svg",
+      "title": "Trophy",
+      "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/trophy.svg",
+      "license": "ISC",
+      "license_url": "https://github.com/lucide-icons/lucide/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "mono-line",
+        "trophy",
+        "award",
+        "achievement"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 0.5
+    },
+    {
+      "file": "tools/svg/library/external/openmoji/openmoji-1F30C.svg",
+      "title": "Milky Way",
+      "source_url": "https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/svg/1F30C.svg",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://github.com/hfg-gmuend/openmoji/blob/master/LICENSE.txt",
+      "tags": [
+        "emoji",
+        "milky-way",
+        "galaxy",
+        "space",
+        "night",
+        "flat"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 6.1
+    },
+    {
+      "file": "tools/svg/library/external/openmoji/openmoji-1F3AE.svg",
+      "title": "Video Game",
+      "source_url": "https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/svg/1F3AE.svg",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://github.com/hfg-gmuend/openmoji/blob/master/LICENSE.txt",
+      "tags": [
+        "emoji",
+        "gamepad",
+        "video-game",
+        "controller",
+        "flat",
+        "openmoji"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 2.7
+    },
+    {
+      "file": "tools/svg/library/external/openmoji/openmoji-1F47E.svg",
+      "title": "Alien Monster",
+      "source_url": "https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/svg/1F47E.svg",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://github.com/hfg-gmuend/openmoji/blob/master/LICENSE.txt",
+      "tags": [
+        "emoji",
+        "alien",
+        "monster",
+        "pixel",
+        "flat",
+        "openmoji"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 3.7
+    },
+    {
+      "file": "tools/svg/library/external/openmoji/openmoji-1F680.svg",
+      "title": "Rocket",
+      "source_url": "https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/svg/1F680.svg",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://github.com/hfg-gmuend/openmoji/blob/master/LICENSE.txt",
+      "tags": [
+        "emoji",
+        "rocket",
+        "space",
+        "flat",
+        "openmoji"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 4.4
+    },
+    {
+      "file": "tools/svg/library/external/openmoji/openmoji-1F9E9.svg",
+      "title": "Puzzle Piece",
+      "source_url": "https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/svg/1F9E9.svg",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://github.com/hfg-gmuend/openmoji/blob/master/LICENSE.txt",
+      "tags": [
+        "emoji",
+        "puzzle",
+        "jigsaw",
+        "flat",
+        "openmoji"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 2.7
+    },
+    {
+      "file": "tools/svg/library/external/tabler/tabler-device-gamepad-2.svg",
+      "title": "Device Gamepad 2",
+      "source_url": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/device-gamepad-2.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tabler/tabler-icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "outline",
+        "mono-line",
+        "gamepad",
+        "gaming",
+        "controller"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.6
+    },
+    {
+      "file": "tools/svg/library/external/tabler/tabler-meteor.svg",
+      "title": "Meteor",
+      "source_url": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/meteor.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tabler/tabler-icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "outline",
+        "mono-line",
+        "meteor",
+        "space",
+        "astronomy"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.5
+    },
+    {
+      "file": "tools/svg/library/external/tabler/tabler-planet.svg",
+      "title": "Planet",
+      "source_url": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/planet.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tabler/tabler-icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "outline",
+        "mono-line",
+        "planet",
+        "space",
+        "astronomy"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.6
+    },
+    {
+      "file": "tools/svg/library/external/tabler/tabler-sword.svg",
+      "title": "Sword",
+      "source_url": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/sword.svg",
+      "license": "MIT",
+      "license_url": "https://github.com/tabler/tabler-icons/blob/main/LICENSE",
+      "tags": [
+        "icon",
+        "outline",
+        "mono-line",
+        "sword",
+        "weapon",
+        "fantasy"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.4
+    },
+    {
+      "file": "tools/svg/library/external/twemoji/twemoji-1f31f.svg",
+      "title": "Glowing Star",
+      "source_url": "https://raw.githubusercontent.com/jdecked/twemoji/main/assets/svg/1f31f.svg",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/jdecked/twemoji/blob/main/LICENSE-GRAPHICS",
+      "tags": [
+        "emoji",
+        "star",
+        "sparkle",
+        "glowing",
+        "flat"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 1.3
+    },
+    {
+      "file": "tools/svg/library/external/twemoji/twemoji-1f3ae.svg",
+      "title": "Video Game",
+      "source_url": "https://raw.githubusercontent.com/jdecked/twemoji/main/assets/svg/1f3ae.svg",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/jdecked/twemoji/blob/main/LICENSE-GRAPHICS",
+      "tags": [
+        "emoji",
+        "gamepad",
+        "controller",
+        "gaming",
+        "flat"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 1.3
+    },
+    {
+      "file": "tools/svg/library/external/twemoji/twemoji-1f47e.svg",
+      "title": "Alien Monster",
+      "source_url": "https://raw.githubusercontent.com/jdecked/twemoji/main/assets/svg/1f47e.svg",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/jdecked/twemoji/blob/main/LICENSE-GRAPHICS",
+      "tags": [
+        "emoji",
+        "alien",
+        "monster",
+        "pixel",
+        "flat"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.3
+    },
+    {
+      "file": "tools/svg/library/external/twemoji/twemoji-1f579.svg",
+      "title": "Joystick",
+      "source_url": "https://raw.githubusercontent.com/jdecked/twemoji/main/assets/svg/1f579.svg",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/jdecked/twemoji/blob/main/LICENSE-GRAPHICS",
+      "tags": [
+        "emoji",
+        "joystick",
+        "arcade",
+        "retro",
+        "flat"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.8
+    },
+    {
+      "file": "tools/svg/library/external/twemoji/twemoji-1f680.svg",
+      "title": "Rocket",
+      "source_url": "https://raw.githubusercontent.com/jdecked/twemoji/main/assets/svg/1f680.svg",
+      "license": "CC-BY-4.0",
+      "license_url": "https://github.com/jdecked/twemoji/blob/main/LICENSE-GRAPHICS",
+      "tags": [
+        "emoji",
+        "rocket",
+        "space",
+        "flat"
+      ],
+      "lint": "no <title> first child; missing role=\"img\" on root",
+      "size_kb": 0.7
+    },
+    {
+      "file": "tools/svg/library/external/wikimedia/wikimedia-cactus-illustration.svg",
+      "title": "Vector Cactus Illustration",
+      "source_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Vector_cactus_illustration_(4).svg",
+      "license": "CC0",
+      "license_url": "https://commons.wikimedia.org/wiki/File:Vector_cactus_illustration_(4).svg",
+      "tags": [
+        "cactus",
+        "plant",
+        "flat",
+        "illustration",
+        "simple"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 3
+    },
+    {
+      "file": "tools/svg/library/external/wikimedia/wikimedia-fox-silhouette-nih-bioart.svg",
+      "title": "Fox Silhouette (NIH BioArt 164)",
+      "source_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Fox_Silhouette_(NIH_BioArt_164_-_629959).svg",
+      "license": "Public domain",
+      "license_url": "https://commons.wikimedia.org/wiki/File:Fox_Silhouette_(NIH_BioArt_164_-_629959).svg",
+      "tags": [
+        "fox",
+        "silhouette",
+        "animal",
+        "mono",
+        "illustration"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 3.9
+    },
+    {
+      "file": "tools/svg/library/external/wikimedia/wikimedia-jumping-fish.svg",
+      "title": "Jumping Fish Clipart",
+      "source_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Jumping_fish_clipart.svg",
+      "license": "CC0",
+      "license_url": "https://commons.wikimedia.org/wiki/File:Jumping_fish_clipart.svg",
+      "tags": [
+        "fish",
+        "jumping",
+        "clipart",
+        "vintage",
+        "illustration"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\" on root",
+      "size_kb": 39.3
+    },
+    {
+      "file": "tools/svg/library/external/wikimedia/wikimedia-musical-instruments.svg",
+      "title": "Cartoonish Musical Instruments",
+      "source_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Cartoonish_illustration_of_musical_instruments_01.svg",
+      "license": "CC0",
+      "license_url": "https://commons.wikimedia.org/wiki/File:Cartoonish_illustration_of_musical_instruments_01.svg",
+      "tags": [
+        "music",
+        "instruments",
+        "cartoon",
+        "flat",
+        "illustration",
+        "complex"
+      ],
+      "lint": "warnings: no <title> as first child; missing role=\"img\"; high-precision path data (5+ decimals)",
+      "size_kb": 148.1
+    },
+    {
+      "file": "tools/svg/library/styles/refs/engraved-hatch.svg",
+      "title": "Style ref: engraved-hatch",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "style-ref",
+        "engraved-hatch",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 4.9
+    },
+    {
+      "file": "tools/svg/library/styles/refs/flat-geometric.svg",
+      "title": "Style ref: flat-geometric",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "style-ref",
+        "flat-geometric",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 1.7
+    },
+    {
+      "file": "tools/svg/library/styles/refs/isometric-tech.svg",
+      "title": "Style ref: isometric-tech",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "style-ref",
+        "isometric-tech",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 1.9
+    },
+    {
+      "file": "tools/svg/library/styles/refs/mono-line.svg",
+      "title": "Style ref: mono-line",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "style-ref",
+        "mono-line",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 0.9
+    },
+    {
+      "file": "tools/svg/library/styles/refs/organic-atmos.svg",
+      "title": "Style ref: organic-atmos",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "style-ref",
+        "organic-atmos",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 3.5
+    },
+    {
+      "file": "tools/svg/library/styles/refs/retro-pixel.svg",
+      "title": "Style ref: retro-pixel",
+      "source_url": "first-party (this repository)",
+      "license": "MIT",
+      "license_url": "https://github.com/bamr87/zer0-image-generator/blob/main/LICENSE",
+      "tags": [
+        "style-ref",
+        "retro-pixel",
+        "first-party"
+      ],
+      "lint": "clean",
+      "size_kb": 6.3
+    }
+  ]
+}

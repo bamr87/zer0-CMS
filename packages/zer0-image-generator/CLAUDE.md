@@ -23,6 +23,7 @@ Guidance for AI coding agents (Claude Code, Copilot, Cursor) working in **zer0-i
   directory, and update it after.
 - Don't suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`) or
   leave empty exception handlers.
+- SVG work (banner template, sanitizer, any `.svg`): use the authoring loop in `tools/svg/` — the PostToolUse hook lints + renders every `.svg` write; read the PNG before editing further. Playbook: `.claude/skills/svg-art`.
 
 ## Fleet context
 

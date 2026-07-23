@@ -225,12 +225,15 @@ The [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme renders `prev
 ## Development
 
 ```bash
-python3 test/test_preview_generator.py      # 98 unit tests, zero network
+python3 test/test_preview_generator.py      # 108 unit tests, zero network
+python3 test/test_freesvg.py                # FreeSVG client/cache tests, network mocked
 python3 -m py_compile lib/zer0_image_generator/preview_generator.py
 gem build zer0-image-generator.gemspec
 cd test/fixture-site && bundle install
 bundle exec jekyll preview-images --dry-run # integration fixture
 ```
+
+When touching SVG code (the local template, sanitizer, rasterizer chain), use the authoring loop in [tools/svg/](tools/svg/README.md): a PostToolUse hook lints and rasterizes every `.svg` write so the agent sees what it drew, `banner-seed.py` sweeps the engine's real template across seeds into a contact sheet, and the `svg-critic` subagent keeps render/critique churn out of the main context. The [showcase](docs/showcase/README.md) walks the whole pipeline with the intermediate images each piece iterated through.
 
 Conventional Commits drive releases via release-please. One concern per PR.
 

@@ -630,6 +630,9 @@ class TestSvgToolkit(unittest.TestCase):
         clean, notes = pg.sanitize_svg(svg_a)
         self.assertEqual(notes, [])  # our own template must need no scrubbing
         self.assertIn("<svg", clean)
+        # Accessibility floor (tools/svg/svg-check.py warns without these):
+        self.assertIn('role="img"', clean)
+        self.assertIn("Preview banner: my-post</title>", clean)
 
 
 class TestAnthropicClient(unittest.TestCase):

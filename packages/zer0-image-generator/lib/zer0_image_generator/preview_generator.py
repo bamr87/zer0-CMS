@@ -1295,8 +1295,11 @@ def render_local_svg(title: str, seed: int) -> str:
         return rng % max(bound, 1)
 
     w, h = SVG_WIDTH, SVG_HEIGHT
+    safe_title = title.replace("&", "&amp;").replace("<", "&lt;")
     parts = [
-        f'<svg xmlns="{SVG_NS}" viewBox="0 0 {w} {h}" width="{w}" height="{h}">',
+        f'<svg xmlns="{SVG_NS}" viewBox="0 0 {w} {h}" width="{w}" height="{h}" '
+        f'role="img">',
+        f'<title>Preview banner: {safe_title}</title>',
         f'<rect width="{w}" height="{h}" fill="{pal[0]}"/>',
     ]
     # Sky bands
