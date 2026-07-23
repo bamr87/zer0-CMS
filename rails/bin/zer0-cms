@@ -1,0 +1,129 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# zer0-cms — headless CLI for the ABC content engine.
+#
+#   bin/zer0-cms styles                       # list ABC art styles
+#   bin/zer0-cms themes                       # list bundled A–Z lexicons
+#   bin/zer0-cms new --theme "IT systems" \
+#        --art-style isometric-tech-toy --out ../drsai
+#   bin/zer0-cms new --theme "IT systems" --print   # preview, write nothing
+#
+# Pure stdlib — no bundler needed. The web wizard (Rails) drives the same
+# Zer0Cms::Abc::Wizard + JekyllExporter this CLI drives.
+
+require "optparse"
+require_relative "../lib/zer0_cms"
+
+module Zer0Cms
+  module CLI
+    module_function
+
+    def main(argv)
+      command = argv.shift
+      case command
+      when "styles" then styles
+      when "themes" then themes
+      when "new"    then new_book(argv)
+      when nil, "-h", "--help", "help" then usage
+      else
+        warn "unknown command: #{command}\n\n"
+        usage
+        1
+      end
+    end
+
+    def styles
+      pack = Abc::ArtStyles.default
+      puts "ABC art styles (id — name):"
+      pack.to_menu["styles"].each do |s|
+        puts "  #{s['id'].ljust(22)} #{s['name']}  [palette: #{s['default_palette']}]"
+        puts "      #{s['summary'].to_s.strip}"
+      end
+      puts "\nOptions: palette=#{ids(pack.palettes)} | background=#{ids(pack.backgrounds)} | " \
+           "mood=#{ids(pack.moods)}"
+      0
+    end
+
+    def themes
+      puts "Bundled A–Z lexicons (offline themes):"
+      Abc::Lexicon.available.each do |slug|
+        lex = Abc::Lexicon.for(slug.tr("_", " "))
+        puts "  #{slug.ljust(16)} #{lex.title} — #{lex.theme}"
+      rescue StandardError => e
+        puts "  #{slug.ljust(16)} (could not load: #{e.message})"
+      end
+      puts "\nAny other theme falls back to the Anthropic provider " \
+           "(needs ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN)."
+      0
+    end
+
+    def new_book(argv)
+      opts = { background: "plain", mood: "playful", provider: "auto", out: ".", write: true }
+      OptionParser.new do |o|
+        o.banner = "Usage: zer0-cms new --theme THEME [options]"
+        o.on("--theme THEME") { |v| opts[:theme] = v }
+        o.on("--slug SLUG") { |v| opts[:slug] = v }
+        o.on("--title TITLE") { |v| opts[:title] = v }
+        o.on("--subtitle SUBTITLE") { |v| opts[:subtitle] = v }
+        o.on("--art-style ID") { |v| opts[:art_style] = v }
+        o.on("--palette ID") { |v| opts[:palette] = v }
+        o.on("--background ID") { |v| opts[:background] = v }
+        o.on("--mood ID") { |v| opts[:mood] = v }
+        o.on("--audience AUDIENCE") { |v| opts[:audience] = v }
+        o.on("--provider NAME", "auto|deterministic|anthropic") { |v| opts[:provider] = v }
+        o.on("--out DIR", "target Jekyll site root (e.g. ../drsai)") { |v| opts[:out] = v }
+        o.on("--print", "print the book markdown, write nothing") { opts[:write] = false }
+      end.parse!(argv)
+
+      unless opts[:theme]
+        warn "error: --theme is required (see `zer0-cms themes`)"
+        return 1
+      end
+
+      wizard = Abc::Wizard.new(
+        theme: opts[:theme], slug: opts[:slug], title: opts[:title], subtitle: opts[:subtitle],
+        art_style: opts[:art_style], palette: opts[:palette],
+        background: opts[:background], mood: opts[:mood], audience: opts[:audience],
+        provider: opts[:provider]
+      )
+      spec = wizard.run
+      wizard.warnings.each { |w| warn "note: #{w}" }
+
+      exporter = Abc::JekyllExporter.new(spec, site_root: opts[:out])
+      if opts[:write]
+        result = exporter.export
+        puts "✓ wrote #{result.book_path}"
+        puts "✓ wrote #{result.spec_path}"
+        puts "  #{result.planned_images.length} illustration(s) to render:"
+        result.planned_images.first(3).each { |p| puts "    #{p}" }
+        puts "    …" if result.planned_images.length > 3
+        puts "\nNext: render the plates in drsai —"
+        puts "  python3 tools/generate_illustrations.py --book #{spec.slug} --dry-run"
+      else
+        puts exporter.render_markdown
+      end
+      0
+    end
+
+    def usage
+      puts <<~USAGE
+        zer0-cms — ABC content engine
+
+        Commands:
+          styles                 list the ABC illustration styles
+          themes                 list the bundled A–Z lexicons
+          new --theme THEME ...  generate a book and export it to a Jekyll site
+
+        Run `zer0-cms new --help` for all generation options.
+      USAGE
+      0
+    end
+
+    def ids(hash)
+      hash.keys.join(",")
+    end
+  end
+end
+
+exit(Zer0Cms::CLI.main(ARGV)) if $PROGRAM_NAME == __FILE__

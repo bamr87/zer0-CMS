@@ -1,0 +1,163 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ABC art-style catalog — the SOURCE OF TRUTH for children's ABC/alphabet books.
+#
+# This file is the canonical, machine-readable catalog of illustration styles
+# and knobs for the ABC book pipeline that spans the fleet:
+#
+#   zer0-CMS (Rails content engine + wizard)  ─ picks a style, composes prompts
+#   zer0-image-generator (THIS repo — plugin) ─ owns this catalog + renders art
+#   drsai (publishing app)                    ─ ships the prompts to render
+#   zer0-mistakes (theme)                     ─ maps each `id` to a CSS skin
+#
+# The `id` of every style is a stable contract: zer0-CMS writes it into book
+# front matter (`art_style:`), and the theme's `book-abc` layout adds a
+# `abc-style--<id>` class. Renaming an id is a breaking change across 4 repos.
+#
+# Vendored copy note: zer0-CMS carries a byte-identical copy under
+# rails/lib/zer0_cms/data/abc_art_styles.yml with a header pointing here. When
+# you change this file, re-sync that copy (see docs/abc-plugin.md).
+# ─────────────────────────────────────────────────────────────────────────────
+version: 1
+
+# The named illustration styles a book can choose. `prompt` is the reusable
+# style tag prepended to every per-letter render; keep it text-free so the
+# raster model never tries to spell (the big letter is HTML typography in the
+# theme, not baked into the art).
+styles:
+  - id: isometric-tech-toy
+    name: "Isometric Tech Toy"
+    summary: >-
+      Chunky rounded 3D toy-tech blocks in soft studio light — the default look
+      for STEM and IT-themed alphabets.
+    prompt: >-
+      cute isometric toy-technology illustration for a toddler picture book,
+      chunky rounded 3D shapes like soft plastic building blocks, friendly
+      pastel technology palette, gentle studio lighting, soft shadows, smooth
+      matte surfaces, simple and uncluttered
+    default_palette: cool-tech
+    default_lettering: rounded
+    best_for: [tech, stem, systems, computing]
+
+  - id: chalkboard-doodle
+    name: "Chalkboard Doodle"
+    summary: >-
+      Hand-drawn white-chalk doodles on a soft slate-green board with playful
+      primary accents — classroom-warm and friendly.
+    prompt: >-
+      hand-drawn white chalk doodle illustration on a soft slate-green
+      chalkboard, playful loose linework, small bright primary-colour chalk
+      accents, gentle smudges, warm and friendly classroom feel
+    default_palette: bright-primary
+    default_lettering: chalk
+    best_for: [school, learning, letters, words]
+
+  - id: soft-plush
+    name: "Soft Plush Toy"
+    summary: >-
+      Cuddly felt plush-toy 3D renders in nursery pastels — huggable and calm
+      for the very youngest readers.
+    prompt: >-
+      soft plush stuffed-toy 3D render for a baby board book, rounded felt and
+      fleece shapes, visible cozy stitching, nursery pastel palette, gentle
+      soft lighting, huggable and calm
+    default_palette: nursery-pastel
+    default_lettering: bubble
+    best_for: [nursery, baby, animals, feelings]
+
+  - id: crayon-primary
+    name: "Crayon Primary"
+    summary: >-
+      Bold waxy crayon strokes in bright primary colours on paper — the classic
+      first-drawing look.
+    prompt: >-
+      bold children's crayon drawing on white paper, thick waxy strokes with
+      visible texture, bright primary colours, simple confident shapes, joyful
+      hand-made feel
+    default_palette: bright-primary
+    default_lettering: slab
+    best_for: [toddler, first-words, play]
+
+  - id: paper-cutout
+    name: "Paper Cutout Collage"
+    summary: >-
+      Layered construction-paper shapes with soft drop shadows — tactile and
+      graphic.
+    prompt: >-
+      layered paper-cutout collage illustration, bright construction-paper
+      shapes with clean edges and soft drop shadows, flat matte colours, simple
+      graphic composition
+    default_palette: warm-earth
+    default_lettering: rounded
+    best_for: [shapes, crafts, nature]
+
+  - id: watercolor-storybook
+    name: "Watercolor Storybook"
+    summary: >-
+      Soft watercolour washes with gentle pencil outlines in a warm nursery
+      palette — the classic bedtime-book feel.
+    prompt: >-
+      soft watercolour storybook illustration, gentle colored-pencil outlines,
+      rounded friendly shapes, warm nursery palette, soft golden light, cozy
+      and never scary
+    default_palette: warm-earth
+    default_lettering: rounded
+    best_for: [bedtime, language, gentle]
+
+# ── Option catalogs (knobs the wizard exposes) ───────────────────────────────
+# Each option contributes a short fragment appended to the composed prompt.
+# A book may override a style's default_palette / default_lettering, and pick a
+# background + mood. Ids are contracts (theme + spec), fragments are tunable.
+options:
+  palettes:
+    - id: cool-tech
+      name: "Cool Tech"
+      fragment: "cool palette of sky blue, mint, soft violet and clean white"
+    - id: bright-primary
+      name: "Bright Primary"
+      fragment: "bright primary palette of red, blue, yellow and grass green"
+    - id: nursery-pastel
+      name: "Nursery Pastel"
+      fragment: "soft nursery pastels of blush, butter, mint and baby blue"
+    - id: warm-earth
+      name: "Warm Earth"
+      fragment: "warm earthy palette of terracotta, sand, sage and cream"
+
+  backgrounds:
+    - id: plain
+      name: "Plain"
+      fragment: "on a plain softly-vignetted single-colour background"
+    - id: scene
+      name: "Little Scene"
+      fragment: "in a simple uncluttered little scene with lots of empty space"
+    - id: pattern
+      name: "Soft Pattern"
+      fragment: "on a gentle repeating background pattern with plenty of breathing room"
+
+  lettering:
+    # Presentation hint for the THEME's big HTML letter (not the raster art).
+    - id: rounded
+      name: "Rounded"
+    - id: bubble
+      name: "Bubble"
+    - id: slab
+      name: "Slab"
+    - id: chalk
+      name: "Chalk"
+
+  moods:
+    - id: playful
+      name: "Playful"
+      fragment: "playful, cheerful and full of wonder"
+    - id: calm
+      name: "Calm"
+      fragment: "calm, gentle and soothing"
+    - id: bold
+      name: "Bold"
+      fragment: "bold, confident and full of energy"
+
+# Appended to every ABC render, whatever the style — the non-negotiable
+# "safe for toddlers, no garbled text" contract.
+safety_suffix: >-
+  Toddler picture-book board-book art, bright and simple, big friendly subject
+  centered with generous margins, thick clean outlines, absolutely no text,
+  words, letters or numbers anywhere in the image, wholesome and never scary.

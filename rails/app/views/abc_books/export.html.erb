@@ -1,0 +1,15 @@
+<h1>✅ Exported — <%= @spec.title %></h1>
+
+<div class="card">
+  <p>Wrote the book bundle into your drsai checkout:</p>
+  <ul>
+    <li><code><%= @result.book_path %></code></li>
+    <li><code><%= @result.spec_path %></code></li>
+  </ul>
+  <p><strong><%= @result.planned_images.length %></strong> illustration(s) still to render.</p>
+  <p class="muted">Render them from the drsai repo:</p>
+  <pre>python3 tools/generate_illustrations.py --book <%= @spec.slug %> --dry-run
+python3 tools/generate_illustrations.py --book <%= @spec.slug %></pre>
+</div>
+
+<p style="margin-top:1rem"><%= link_to "← Make another book", new_abc_book_path %></p>
