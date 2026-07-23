@@ -24,6 +24,8 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file]({{ '/news/history-politics/pope-benedict-xvi-2005/' | relative_url }}) |
 | 2005-04-27 | Airbus A380 makes its first flight | Science & Technology | [file]({{ '/news/science-technology/airbus-a380-first-flight/' | relative_url }}) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file]({{ '/news/arts-culture/star-wars-episode-iii/' | relative_url }}) |
+| 2005-05-22 | L'Enfant wins Palme d'Or at Cannes | Arts & Culture | [file]({{ '/news/arts-culture/lenfant-cannes-palme-dor/' | relative_url }}) |
+| 2005-06-06 | Coldplay releases X&Y | Arts & Culture | [file]({{ '/news/arts-culture/coldplay-x-y/' | relative_url }}) |
 | 2005-06-13 | Michael Jackson acquitted | People | [file]({{ '/news/people/michael-jackson-trial-verdict/' | relative_url }}) |
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file]({{ '/news/arts-culture/live-8-concerts/' | relative_url }}) |
 | 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file]({{ '/news/society-economics/same-sex-marriage-2005/' | relative_url }}) |
@@ -52,5 +54,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file]({{ '/news/arts-culture/brokeback-mountain/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 40 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 42 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
