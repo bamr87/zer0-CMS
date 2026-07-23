@@ -57,5 +57,5 @@ This wargame is from the community for the community. If you want to contribute,
 
 **Contact : [aton at packetdropped dot org][]**
 
-[contact us via chat]: /information/chat.html
+[contact us via chat]: https://overthewire.org/information/chat.html
 [aton at packetdropped dot org]: mailto:aton@packetdropped.org

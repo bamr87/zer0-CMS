@@ -65,8 +65,10 @@ collections:
 # Wargames content is plain Markdown at the repo root (index.md) and under
 # overthewire/** — not a Jekyll collection — so every page is type "pages".
 # The catch-all below gives them the theme's docs layout; the overthewire scope
-# adds the games sidebar (_data/navigation/wargames.yml). The homepage
-# (index.md) overrides these with `layout: home` in its own front matter.
+# turns on the theme's `nav: pages` sidebar, which auto-builds the games→levels
+# tree from the page URLs under /docs/wargames/ (no _data/navigation file). The
+# homepage (index.md) overrides these with `layout: home` in its own front
+# matter.
 defaults:
   - scope:
       path               : ""
@@ -78,7 +80,10 @@ defaults:
     values:
       layout             : "default"
       sidebar:
-        nav              : wargames
+        nav              : pages
+        base             : /docs/wargames/
+        order_by         : nav_order
+        title            : Wargames
 
 # ── Plugins ───────────────────────────────────────────────────────────────────
 plugins:

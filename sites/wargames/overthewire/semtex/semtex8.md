@@ -37,6 +37,8 @@ keywords:
 - cybersecurity
 - semtex
 author: bamr87
+nav_order: 8
+sidebar_label: "Level 8"
 ---
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 

@@ -68,5 +68,5 @@ Blacksun is aimed towards demonstrating and helping people better understand:
 A list of suggested reading material can be found [here][readingmaterial]
 
   [andrewg]: mailto:andrewg@felinemenace.org
-  [here]: /wargames/vortex/
-  [readingmaterial]: reading_material.html
+  [here]: /docs/wargames/vortex/
+  [readingmaterial]: https://overthewire.org/wargames/blacksun/reading_material.html

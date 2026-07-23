@@ -28,6 +28,8 @@ keywords:
 - overthewire
 - ctf
 - cybersecurity
+nav_order: 34
+sidebar_label: "Level 34"
 ---
 
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.

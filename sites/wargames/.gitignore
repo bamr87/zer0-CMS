@@ -29,3 +29,7 @@ Thumbs.db
 
 # Backup files
 *.backup.*
+
+# Python
+__pycache__/
+*.pyc

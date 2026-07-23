@@ -40,6 +40,8 @@ keywords:
 - overthewire
 - ctf
 - cybersecurity
+nav_order: 0
+sidebar_label: "Level 0"
 ---
 
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
@@ -58,7 +60,7 @@ Helpful Reading Material
 - [How to use SSH with a non-standard port on It's FOSS][]
 - [How to use SSH with ssh-keys on wikiHow][]
 
-[Level 1]: /wargames/bandit/bandit1.html
+[Level 1]: /docs/wargames/bandit/bandit1/
 [Secure Shell (SSH) on Wikipedia]: https://en.wikipedia.org/wiki/Secure_Shell
 [How to use SSH with a non-standard port on It's FOSS]: https://itsfoss.com/ssh-to-port/
 [How to use SSH with ssh-keys on wikiHow]: https://www.wikihow.com/Use-SSH

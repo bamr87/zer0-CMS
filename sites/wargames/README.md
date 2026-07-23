@@ -30,8 +30,22 @@ scripts/bin/install init /path/to/wargames --config /path/to/wargames/zer0.insta
 ### Content wiring
 
 - `index.md` → the homepage (`/`), using the theme's `home` layout.
-- `overthewire/**` → the challenge pages, served at their `permalink` (`/docs/wargames/…`) with the theme's `default` layout and the games sidebar (`_data/navigation/wargames.yml`). The `overthewire/index.md` is the games index at `/docs/wargames/`.
+- `overthewire/**` → the challenge pages, served at their `permalink` (`/docs/wargames/…`) with the theme's `default` layout and the auto games sidebar. The `overthewire/index.md` is the games index at `/docs/wargames/`.
 - `_config.yml` `defaults` attach layouts to the root-level content (there are no Jekyll collections), and `exclude` keeps tooling/docs out of the build.
+
+### Sidebar navigation
+
+The left sidebar is a two-level tree — one collapsible group per game, its individual levels as children — so every challenge page is reachable. There is **no navigation data file to maintain**: the `overthewire` scope in `_config.yml` turns on the zer0-mistakes theme's `nav: pages` mode, which builds the tree **automatically from the page URLs** under `/docs/wargames/`:
+
+```yaml
+sidebar:
+  nav: pages
+  base: /docs/wargames/    # root the tree here
+  order_by: nav_order      # sort each game's levels numerically
+  title: Wargames
+```
+
+Ordering and labels come from per-page front matter stamped by the content pipeline — each level page carries `nav_order` (its numeric suffix, so levels sort 0,1,2,…,10) and `sidebar_label` (`"Level N"`). The aggregator (`scripts/docs-aggregator/transform.py`) sets both on every sync, so the sidebar stays in step with the content with nothing to regenerate by hand. The theme marks the current page active and expands its game on load (server-side, no JavaScript).
 
 ### Local development
 
@@ -52,7 +66,7 @@ overthewire/             # Vendored OverTheWire challenge pages
   natas/                 #   Server-side web security
   narnia/ behemoth/ ...  #   Binary exploitation and beyond
 _config.yml              # Jekyll config (remote_theme, defaults, excludes)
-_data/navigation/        # Top navbar (main.yml) + games sidebar (wargames.yml)
+_data/navigation/        # Top navbar (main.yml) — the games sidebar is auto-built
 zer0.install.yml         # Installer config that scaffolds the framework
 scripts/docs-aggregator/ # Upstream content sync pipeline
 ```

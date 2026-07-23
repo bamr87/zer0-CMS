@@ -68,6 +68,25 @@ def extract_description(fm: Dict, body: str) -> str:
     return ""
 
 
+def level_nav(game: str, stem: str) -> Tuple[int, str]:
+    """Ordering + label for a wargames level page, for the theme's `nav: pages`
+    sidebar (sorts each game section by `nav_order`, labels links by
+    `sidebar_label`).
+
+    `<game><N>` (e.g. ``bandit5``) → (5, "Level 5") so the numeric-aware sort
+    yields 0,1,2,…,10 and the label drops the redundant game prefix.
+    Supplementary pages with no numeric suffix (e.g. ``reading_material``) sort
+    first with nav_order -1 and a humanized label.
+    """
+    m = re.match(rf"^{re.escape(game)}(\d+)$", stem, re.IGNORECASE)
+    if m:
+        n = int(m.group(1))
+        return n, f"Level {n}"
+    label = stem.replace("-", " ").replace("_", " ").strip()
+    label = label[:1].upper() + label[1:] if label else stem
+    return -1, label
+
+
 def build_jekyll_frontmatter(
     source_meta: Dict,
     existing_fm: Dict,
@@ -99,10 +118,6 @@ def build_jekyll_frontmatter(
     source_file_path = "/".join(rel_path.parts)
     source_url = f"{repo_url.rstrip('/')}/blob/{branch}/{source_file_path}"
 
-    # Wargames pages should use dynamic sidebar navigation instead of
-    # static YAML sidebar entries.
-    sidebar_nav = "auto" if category == "wargames" else "docs"
-
     fm: Dict[str, Any] = {
         "title": title,
         "description": description,
@@ -111,13 +126,26 @@ def build_jekyll_frontmatter(
         "lastmod": now,
         "categories": [category],
         "tags": list(dict.fromkeys(source_tags + existing_fm.get("tags", []))),
-        "sidebar": {"nav": sidebar_nav},
         "toc_sticky": True,
         "source_repo": repo_url,
         "source_url": source_url,
         "source_name": source_name,
         "license": source_meta.get("license", ""),
     }
+
+    if category == "wargames":
+        # The sidebar is config-driven: the overthewire scope in _config.yml
+        # turns on the theme's `nav: pages` mode, which auto-builds the
+        # games→levels tree from the page URLs — so we do NOT set a per-page
+        # `sidebar` here (a per-page nav would override the config). Each level
+        # page only carries the ordering metadata the tree sorts/labels by.
+        if slug != "index":
+            order, label = level_nav(rel_path.parent.name, slug)
+            fm["nav_order"] = order
+            fm["sidebar_label"] = label
+    else:
+        fm["sidebar"] = {"nav": "docs"}
+
     return fm
 
 
@@ -140,6 +168,26 @@ def rewrite_relative_links(body: str, repo_url: str, branch: str, content_base: 
         return f"[{text}]({gh_url})"
 
     return re.sub(r"\[([^\]]*)\]\(([^)]+)\)", _rewrite, body)
+
+
+def normalize_overthewire_links(body: str) -> str:
+    """Fix OverTheWire self-referential links to this site's permalinks.
+
+    Upstream serves challenge pages at ``/wargames/<game>/<page>.html``; here
+    they live at ``/docs/wargames/<game>/<page>/``. Reference-style links
+    (``[text]: /path``) are not matched by ``rewrite_relative_links`` (which
+    only handles inline ``[text](url)``), so they arrive verbatim and 404.
+    Also point the community chat link (which has no local page) back to
+    overthewire.org. The ``(?<!/docs)`` / ``(?<!overthewire\\.org)`` guards keep
+    the pass idempotent.
+    """
+    body = re.sub(r"(?<!/docs)/wargames/([a-z0-9]+)/([a-z0-9]+)\.html",
+                  r"/docs/wargames/\1/\2/", body)
+    body = re.sub(r"(?<!/docs)/wargames/([a-z0-9]+)/",
+                  r"/docs/wargames/\1/", body)
+    body = re.sub(r"(?<!overthewire\.org)/information/chat\.html",
+                  "https://overthewire.org/information/chat.html", body)
+    return body
 
 
 def strip_jekyll_includes(body: str) -> str:
@@ -185,6 +233,8 @@ def transform_file(
     content_base = source_meta.get("content_paths", [""])[0] if "content_paths" in source_meta else ""
     body = strip_jekyll_includes(body)
     body = rewrite_relative_links(body, source_meta["repo"], branch, content_base)
+    if source_meta.get("category") == "wargames" or source_meta.get("name") == "overthewire":
+        body = normalize_overthewire_links(body)
     body = add_source_attribution(body, source_meta)
 
     # Serialize
