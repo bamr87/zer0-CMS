@@ -1,0 +1,27 @@
+# Main navbar for the Wargames site.
+# Schema: title (required), url, icon (Bootstrap Icons), children[] (2 levels).
+
+- title: Home
+  icon: bi-house
+  url: /
+
+- title: Wargames
+  icon: bi-controller
+  url: /docs/wargames/
+  children:
+    - title: All games
+      url: /docs/wargames/
+    - title: Bandit — Linux basics
+      url: /docs/wargames/bandit/
+    - title: Natas — Web security
+      url: /docs/wargames/natas/
+    - title: Krypton — Cryptography
+      url: /docs/wargames/krypton/
+    - title: Leviathan — Reversing
+      url: /docs/wargames/leviathan/
+    - title: Narnia — Exploitation
+      url: /docs/wargames/narnia/
+
+- title: Source
+  icon: bi-github
+  url: https://github.com/bamr87/wargames

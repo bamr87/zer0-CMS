@@ -1,7 +1,8 @@
 ---
 title: Wargames — Security Challenges
 description: Curated security wargames from the OverTheWire community. Learn and practice security concepts through gamified challenges.
-permalink: /docs/wargames/
+layout: home
+permalink: /
 date: '2025-01-27T00:00:00.000Z'
 lastmod: '2026-04-07T02:46:45.000Z'
 categories:
@@ -27,7 +28,6 @@ keywords:
 - ctf
 - cybersecurity
 ---
-# Wargames — Security Challenges
 
 > **Source:** This section aggregates content from the [OverTheWire](https://overthewire.org/wargames/) community project ([MIT License](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original site to play the games live via SSH.
 
@@ -73,7 +73,7 @@ Each wargame consists of levels that must be completed in order. You connect via
 
 ## About This Content
 
-This documentation is automatically aggregated from the [OverTheWire-website repository](https://github.com/OverTheWireOrg/OverTheWire-website) using the IT-Journey docs aggregation pipeline. The content is transformed to fit the IT-Journey theme while preserving the original educational material.
+This documentation is automatically aggregated from the [OverTheWire-website repository](https://github.com/OverTheWireOrg/OverTheWire-website) using the docs aggregation pipeline in `scripts/docs-aggregator/`. The content is transformed to fit the zer0-mistakes theme while preserving the original educational material.
 
 To update this content, run:
 
@@ -81,4 +81,4 @@ To update this content, run:
 bash scripts/docs-aggregator/aggregate_docs.sh
 ```
 
-See the [aggregator documentation](/it-journey/scripts/docs-aggregator/README.md) for details.
+See the [aggregator documentation](https://github.com/bamr87/wargames/blob/main/scripts/docs-aggregator/README.md) for details.

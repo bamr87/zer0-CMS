@@ -1,0 +1,11 @@
+# Site Authors
+# Add your author information here
+
+default:
+  name: "bamr87"
+  bio: "Update this in _data/authors.yml"
+  avatar: "/assets/images/avatar-placeholder.png"
+  github: "bamr87"
+  twitter: ""
+  email: ""
+  role: "Site Owner"

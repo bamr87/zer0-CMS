@@ -1,0 +1,60 @@
+# Left-sidebar navigation for the OverTheWire wargames (used by pages under
+# overthewire/** via `sidebar: {nav: wargames}` in _config.yml).
+# Schema: title (required), url, icon, expanded, children[] (2 levels).
+
+- title: All games
+  icon: bi-controller
+  url: /docs/wargames/
+
+- title: Beginner
+  icon: bi-1-circle
+  expanded: true
+  children:
+    - title: Bandit
+      url: /docs/wargames/bandit/
+    - title: Leviathan
+      url: /docs/wargames/leviathan/
+    - title: Krypton
+      url: /docs/wargames/krypton/
+    - title: Natas
+      url: /docs/wargames/natas/
+
+- title: Intermediate
+  icon: bi-2-circle
+  children:
+    - title: Narnia
+      url: /docs/wargames/narnia/
+    - title: Behemoth
+      url: /docs/wargames/behemoth/
+    - title: Utumno
+      url: /docs/wargames/utumno/
+    - title: Maze
+      url: /docs/wargames/maze/
+
+- title: Advanced
+  icon: bi-3-circle
+  children:
+    - title: Vortex
+      url: /docs/wargames/vortex/
+    - title: Manpage
+      url: /docs/wargames/manpage/
+    - title: Semtex
+      url: /docs/wargames/semtex/
+    - title: Drifter
+      url: /docs/wargames/drifter/
+
+- title: More challenges
+  icon: bi-collection
+  children:
+    - title: Abraxas
+      url: /docs/wargames/abraxas/
+    - title: Blacksun
+      url: /docs/wargames/blacksun/
+    - title: Formulaone
+      url: /docs/wargames/formulaone/
+    - title: Kishi
+      url: /docs/wargames/kishi/
+    - title: Monxla
+      url: /docs/wargames/monxla/
+    - title: HES 2010
+      url: /docs/wargames/hes2010/
