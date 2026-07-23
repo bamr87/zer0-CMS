@@ -9,12 +9,11 @@
 site_configured          : true
 
 # ── Theme ────────────────────────────────────────────────────────────────────
-# Pinned to the commit that introduces the books collection (branch
-# claude/drsai-book-platform-consolidation-pbyml9 — jekyll-remote-theme 0.4.x
-# rejects @refs containing slashes, so the pin is the commit SHA).
-# TODO(release): once that zer0-mistakes PR merges to main, drop the pin
-# (bare "bamr87/zer0-mistakes" tracks main).
-remote_theme             : "bamr87/zer0-mistakes@1b521f64262c569d79084e17f4ca404092ad0228"
+# Tracks the theme's main branch, which ships the books collection
+# (zer0-mistakes PR #328). Pin a SHA/tag here only when consuming
+# unreleased theme work (jekyll-remote-theme 0.4.x rejects slashed
+# branch refs, so pins must be commit SHAs or tags).
+remote_theme             : "bamr87/zer0-mistakes"
 
 # ── GitHub / URLs ────────────────────────────────────────────────────────────
 github_user              : bamr87
