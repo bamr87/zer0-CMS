@@ -233,12 +233,7 @@ Generation is script-driven on demand — it is never part of `jekyll build` (bu
 
 ## ABC alphabet-book plugin
 
-Beyond one-banner-per-page previews, this gem is the **illustration plugin** for
-the fleet's children's-book pipeline: it owns the art-style catalog and composes
-one text-free plate per alphabet letter of a toddler ABC book. The
-[zer0-CMS](https://github.com/bamr87/zer0-CMS) Rails wizard picks an `art_style`
-and emits an *ABC Book Spec*; [drsai](https://github.com/bamr87/drsai) ships it
-into the `books` collection and renders each letter's prompt.
+Beyond one-banner-per-page previews, this gem is the **illustration plugin** for the fleet's children's-book pipeline: it owns the art-style catalog and composes one text-free plate per alphabet letter of a toddler ABC book. The [zer0-CMS](https://github.com/bamr87/zer0-CMS) Rails wizard picks an `art_style` and emits an *ABC Book Spec*; [drsai](https://github.com/bamr87/drsai) ships it into the `books` collection and renders each letter's prompt.
 
 ```ruby
 require "zer0_image_generator/abc"
@@ -248,9 +243,7 @@ Zer0ImageGenerator::Abc::StylePack.default.render_prompt(
   style: "isometric-tech-toy")
 ```
 
-The style catalog (`lib/zer0_image_generator/abc/art_styles.yml`) is the source
-of truth shared, by vendored copy, with zer0-CMS and the theme. See
-[docs/abc-plugin.md](docs/abc-plugin.md).
+The style catalog (`lib/zer0_image_generator/abc/art_styles.yml`) is the source of truth shared, by vendored copy, with zer0-CMS and the theme. See [docs/abc-plugin.md](docs/abc-plugin.md).
 
 ## Relationship to zer0-mistakes
 
