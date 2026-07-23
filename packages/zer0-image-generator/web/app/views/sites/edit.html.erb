@@ -1,0 +1,7 @@
+<% content_for :title, "Edit #{@site.name}" %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Edit<% end %>
+<div class="page-head">
+  <h1>Edit site</h1>
+  <%= button_to "Remove", @site, method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Remove #{@site.name}? Files on disk are left untouched." } } %>
+</div>
+<%= render "form", site: @site %>

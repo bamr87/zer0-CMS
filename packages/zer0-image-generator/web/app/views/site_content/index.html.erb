@@ -1,0 +1,35 @@
+<% content_for :title, "Content — #{@site.name}" %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Content<% end %>
+<% content_for :topbar_actions do %><%= link_to "＋ New run", new_site_run_path(@site), class: "btn primary" %><% end %>
+
+<div class="page-head"><h1>Content</h1></div>
+
+<% if @scan_error %>
+  <div class="flash alert"><%= @scan_error %></div>
+<% else %>
+  <div class="tab-row">
+    <%= link_to "All (#{@scan.total})", site_content_index_path(@site), class: @filter.blank? ? "active" : "" %>
+    <%= link_to "Missing (#{@scan.missing})", site_content_index_path(@site, filter: "missing"), class: @filter == "missing" ? "active" : "" %>
+    <%= link_to "Have preview (#{@scan.present})", site_content_index_path(@site, filter: "present"), class: @filter == "present" ? "active" : "" %>
+  </div>
+
+  <div class="card pad-0">
+    <table class="list">
+      <thead><tr><th>Title</th><th>Collection</th><th>Preview</th><th>Status</th></tr></thead>
+      <tbody>
+        <% @entries.each do |entry| %>
+          <tr>
+            <td><%= entry.title %><div class="faint mono" style="font-size:.76rem;"><%= entry.relative %></div></td>
+            <td class="mono faint"><%= entry.collection %></td>
+            <td class="mono faint" style="font-size:.8rem; word-break:break-all;"><%= entry.preview || "—" %></td>
+            <td>
+              <% if entry.exists %><span class="badge ok"><span class="dot"></span>ok</span>
+              <% elsif entry.preview %><span class="badge err"><span class="dot"></span>broken link</span>
+              <% else %><span class="badge warn"><span class="dot"></span>none</span><% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

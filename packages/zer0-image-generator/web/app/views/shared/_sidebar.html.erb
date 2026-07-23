@@ -1,0 +1,50 @@
+<nav class="sidebar">
+  <div class="brand">
+    <span class="glyph">0</span>
+    <span>zer0-images</span>
+  </div>
+
+  <% nav = ->(label, path, icon, active) {
+       classes = "#{active ? "active" : ""}"
+       link_to(path, class: classes) do
+         concat content_tag(:span, icon, class: "ico")
+         concat content_tag(:span, label)
+       end
+     } %>
+
+  <div class="nav-group">
+    <div class="nav">
+      <%= nav.("Dashboard", root_path, "◵", current_page?(root_path)) %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">Create</div>
+    <div class="nav">
+      <%= nav.("Image forge", compositions_path, "✧", controller_name.start_with?("composition")) %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">Previews</div>
+    <div class="nav">
+      <%= nav.("Sites", sites_path, "▤", controller_name == "sites" || controller_name.start_with?("site_")) %>
+      <%= nav.("Runs", runs_path, "▶", controller_name == "runs") %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">SVG</div>
+    <div class="nav">
+      <%= nav.("Studio", studio_root_path, "✦", controller_path.start_with?("studio")) %>
+      <%= nav.("Library", library_entries_path, "▦", controller_name == "library_entries") %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">Settings</div>
+    <div class="nav">
+      <%= nav.("Credentials", credentials_path, "⚿", controller_name == "credentials") %>
+    </div>
+  </div>
+</nav>

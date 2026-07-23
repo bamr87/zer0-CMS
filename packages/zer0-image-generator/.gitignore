@@ -29,3 +29,9 @@ tools/svg/library/cache/
 # OS / editors
 .DS_Store
 *.log
+
+# Image forge scratch output (composition versions)
+.forge/
+
+# Playwright MCP scratch output (console logs, snapshots, screenshots)
+.playwright-mcp/

@@ -1,0 +1,88 @@
+<% content_for :title, "New image" %>
+<% content_for :crumbs do %><%= link_to "Image forge", compositions_path %> / New<% end %>
+
+<div class="page-head">
+  <div>
+    <h1>Create an image</h1>
+    <div class="sub">Claude reads your brief and directs the art, a renderer produces it, and Claude reviews the result. You can then process any version further with OpenAI.</div>
+  </div>
+</div>
+
+<% unless @claude_available %>
+  <div class="flash alert">
+    No Claude credential is configured, so art direction and review will fall back to a template prompt.
+    Add a <%= link_to "Claude Code OAuth token", new_credential_path(provider: "claude_oauth") %> to enable it.
+  </div>
+<% end %>
+
+<%= form_with model: @composition do |f| %>
+  <% if @composition.errors.any? %>
+    <div class="flash alert"><ul style="margin:0;"><% @composition.errors.full_messages.each do |m| %><li><%= m %></li><% end %></ul></div>
+  <% end %>
+
+  <div class="grid cols-2" style="align-items:start;">
+    <div class="card">
+      <h2>Brief</h2>
+      <div class="field">
+        <%= f.label :title, "Title / subject" %>
+        <%= f.text_field :title, placeholder: "A quiet harbor at dawn" %>
+      </div>
+      <div class="field">
+        <%= f.label :brief, "What is this image about?" %>
+        <%= f.text_area :brief, rows: 6, placeholder: "Describe the scene, mood, and any must-have elements. Claude turns this into an art-direction prompt." %>
+        <div class="hint">The first line becomes the description; the whole text is the context Claude reads.</div>
+      </div>
+      <div class="field">
+        <%= f.label :style, "Art style" %>
+        <%= f.text_area :style, rows: 2 %>
+      </div>
+      <div class="field">
+        <%= f.label :style_modifiers, "Style modifiers (optional)" %>
+        <%= f.text_field :style_modifiers, placeholder: "cinematic lighting, high detail" %>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pipeline</h2>
+      <div class="field">
+        <%= f.label :provider, "Renderer" %>
+        <%= f.select :provider, Composition::RENDERERS.map { |p|
+              ok = p == "local" || @available_providers.include?(p)
+              ["#{p}#{ok ? "" : " (no key)"}", p]
+            }, selected: @composition.provider %>
+        <div class="hint"><span class="mono">local</span> is deterministic and free (no Claude — it's a template SVG). The others bill per image and support Claude art direction.</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <%= f.label :prompt_engine, "Art direction" %>
+          <%= f.select :prompt_engine, [["Claude writes the brief", "claude"], ["Template prompt", "template"]], selected: @composition.prompt_engine %>
+        </div>
+        <div class="field">
+          <%= f.label :review_engine, "Review" %>
+          <%= f.select :review_engine, [["Claude reviews the render", "claude"], ["No review", "none"]], selected: @composition.review_engine %>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><%= f.label :size %><%= f.text_field :size, placeholder: "1536x1024" %></div>
+        <div class="field"><%= f.label :quality %><%= f.text_field :quality, placeholder: "auto" %></div>
+      </div>
+      <div class="field">
+        <%= f.label :model, "Model (blank = provider default)" %>
+        <%= f.text_field :model %>
+      </div>
+
+      <div class="card" style="background:var(--bg-inset); box-shadow:none; margin-top:.5rem;">
+        <div style="font-size:.82rem;">
+          <div>Claude art direction: <strong><%= @claude_available ? "available" : "not configured" %></strong>
+            <% if @claude_available %><span class="faint">· <%= Credential.claude_source(ENV.to_h.merge(Credential.environment)) %></span><% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-top:1.2rem;">
+    <%= f.submit "Create image", class: "btn primary" %>
+    <%= link_to "Cancel", compositions_path, class: "btn" %>
+  </div>
+<% end %>

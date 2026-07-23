@@ -1,0 +1,5 @@
+<% if composition.log.present? %>
+  <%= render "compositions/log_chunk", text: composition.log %>
+<% else %>
+  <span class="ansi-dim">Waiting for the pipeline to start…</span>
+<% end %>

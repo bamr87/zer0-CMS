@@ -1,0 +1,75 @@
+<% content_for :title, "Dashboard" %>
+
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <div class="sub">AI preview banners and SVG artwork for your Jekyll sites — the <span class="mono">jekyll preview-images</span> engine, on the web.</div>
+  </div>
+  <div class="btn-row">
+    <%= link_to "＋ Register site", new_site_path, class: "btn primary" %>
+  </div>
+</div>
+
+<div class="grid cols-4" style="margin-bottom: 1.4rem;">
+  <div class="card stat"><span class="num"><%= @sites.size %></span><span class="lbl">Sites</span></div>
+  <div class="card stat"><span class="num"><%= @active_runs %></span><span class="lbl">Active runs</span></div>
+  <div class="card stat"><span class="num"><%= @studio_count %></span><span class="lbl">Studio renders</span></div>
+  <div class="card stat"><span class="num"><%= @library_count %></span><span class="lbl">Library pieces</span></div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Sites</h2>
+    <% if @sites.any? %>
+      <table class="list">
+        <tbody>
+          <% @sites.each do |site| %>
+            <tr>
+              <td><%= link_to site.name, site %></td>
+              <td class="mono faint"><%= site.path %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty">
+        <div class="big">▤</div>
+        No sites yet. <%= link_to "Register one", new_site_path %> to point the engine at a Jekyll site.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <h2>Recent runs</h2>
+    <% if @recent_runs.any? %>
+      <table class="list">
+        <tbody>
+          <% @recent_runs.each do |run| %>
+            <tr>
+              <td><%= link_to run.kind, run %></td>
+              <td><%= render "shared/run_status", run: run %></td>
+              <td class="faint nowrap"><%= time_ago_in_words(run.created_at) %> ago</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty"><div class="big">▶</div>No runs yet.</div>
+    <% end %>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 1.4rem;">
+  <div class="page-head" style="margin-bottom: .8rem;">
+    <h2 style="margin:0;">Provider credentials</h2>
+    <%= link_to "Manage", credentials_path, class: "btn sm" %>
+  </div>
+  <div class="btn-row">
+    <% Credential::PROVIDERS.each do |provider| %>
+      <span class="badge <%= @credentials.include?(provider) ? "ok" : "" %>">
+        <span class="dot"></span><%= provider %>
+      </span>
+    <% end %>
+  </div>
+  <p class="hint" style="margin-top:.8rem;">A renderer key is required to produce images; the <span class="mono">local</span> provider needs none. Anthropic is optional — it drives the analyze/review stages.</p>
+</div>

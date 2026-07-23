@@ -1,0 +1,25 @@
+<% content_for :title, @entry.title %>
+<% content_for :crumbs do %><%= link_to "Library", library_entries_path %> / <%= @entry.title %><% end %>
+
+<div class="page-head"><h1><%= @entry.title %></h1></div>
+
+<div class="grid cols-2" style="align-items:start;">
+  <div class="card">
+    <div class="preview-frame" style="min-height:300px;">
+      <% if @svg %><%== studio_scaled_svg(@svg) %><% else %><span class="faint">file not found on disk</span><% end %>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Provenance</h2>
+    <table class="list">
+      <tbody>
+        <tr><td class="dim">File</td><td class="mono" style="word-break:break-all;"><%= @entry.file %></td></tr>
+        <tr><td class="dim">Source</td><td class="mono" style="word-break:break-all;"><%= @entry.source_url %></td></tr>
+        <tr><td class="dim">License</td><td><%= @entry.license_url.present? ? link_to(@entry.license, @entry.license_url) : @entry.license %></td></tr>
+        <tr><td class="dim">Lint</td><td><span class="badge <%= @entry.lint_clean? ? "ok" : "warn" %>"><span class="dot"></span><%= @entry.lint %></span></td></tr>
+        <tr><td class="dim">Size</td><td class="mono"><%= @entry.size_kb %> KB</td></tr>
+        <tr><td class="dim">Tags</td><td><% @entry.tag_list.each do |t| %><%= link_to t, library_entries_path(tag: t), class: "badge", style: "margin:.1rem;" %><% end %></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

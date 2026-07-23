@@ -6,6 +6,19 @@ AI preview/social images for **any Jekyll site** — Claude directs and reviews,
 
 Extracted from the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme's consolidated engine and generalized: every theme-specific assumption is now a config knob with zer0-compatible defaults, so the theme and this plugin stay **separate but portable**.
 
+Three ways to drive it: the `jekyll preview-images` **Gem/CLI**, the standalone **Python engine**, and a **web app** ([web/](web/README.md)) — a Dockerized Rails control panel that runs a pure-Ruby port of the engine ([lib/zer0_image_generator/](lib/zer0_image_generator/), pinned byte-for-byte against the Python original), so all three share one behavior. In the browser you can:
+
+- register sites, edit their `preview_images:` config, and run generation with a
+  live-streaming log;
+- **forge a standalone image** — Claude directs the art (via a Claude Code OAuth
+token), a renderer produces it, Claude reviews it, and you can process any version further with OpenAI;
+- drive the `tools/svg/` generators from knob forms and browse the example
+  library.
+
+```bash
+SITES_DIR=/path/to/your/jekyll/sites docker compose up --build   # → localhost:3000
+```
+
 ## How it works
 
 Each post/page without a preview goes through a three-stage pipeline:

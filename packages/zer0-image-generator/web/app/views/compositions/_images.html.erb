@@ -1,0 +1,49 @@
+<% images = composition.images.ordered.to_a %>
+<% openai_ok = ENV.to_h.merge(Credential.environment)["OPENAI_API_KEY"].present? %>
+<% if images.any? %>
+  <div class="grid" style="gap:1.1rem;">
+    <% images.reverse_each do |image| %>
+      <div class="card pad-0" style="box-shadow:none; border-color:var(--border);">
+        <div class="preview-frame" style="min-height:180px;">
+          <% if image.exists? %>
+            <img src="<%= file_path(path: image.pathname.realpath.to_s.sub(%r{\A/}, "")) %>" alt="<%= image.stage_label %>" loading="lazy">
+          <% else %>
+            <span class="faint">file missing</span>
+          <% end %>
+        </div>
+        <div style="padding:.6rem .8rem;">
+          <div class="btn-row" style="justify-content:space-between;">
+            <span class="badge <%= image.stage == "enhanced" ? "ok" : (image.stage == "revision" ? "warn" : "") %>">
+              <span class="dot"></span><%= image.stage_label %>
+            </span>
+            <span class="faint mono" style="font-size:.76rem;">
+              <%= image.vendor %><%= " · claude-directed" if image.claude_directed? %>
+              <%= " · #{number_to_human_size(image.byte_size)}" if image.byte_size %>
+            </span>
+          </div>
+          <% if image.critique.present? %>
+            <p class="dim" style="font-size:.8rem; margin:.5rem 0 0;">📝 <%= image.critique %></p>
+          <% end %>
+          <div class="btn-row" style="margin-top:.6rem;">
+            <% if image.kind == "png" %>
+              <%= button_to "Process further with OpenAI", enhance_composition_image_path(image),
+                            class: "btn sm #{openai_ok ? "primary" : ""}",
+                            disabled: composition.working? || !openai_ok,
+                            title: openai_ok ? nil : "Add an OpenAI credential to enable" %>
+            <% end %>
+            <% if image.exists? %>
+              <%= link_to "Open", file_path(path: image.pathname.realpath.to_s.sub(%r{\A/}, "")), class: "btn sm", target: "_blank" %>
+            <% end %>
+          </div>
+          <% unless openai_ok %>
+            <div class="hint" style="margin-top:.3rem;">Add an <%= link_to "OpenAI key", new_credential_path(provider: "openai") %> to process further.</div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% elsif composition.working? %>
+  <div class="empty" style="padding:2rem;"><div class="big">✧</div>Working — the first version will appear here.</div>
+<% else %>
+  <div class="empty" style="padding:2rem;">No versions yet.</div>
+<% end %>

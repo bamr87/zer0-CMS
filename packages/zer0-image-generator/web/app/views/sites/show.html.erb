@@ -1,0 +1,77 @@
+<% content_for :title, @site.name %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= @site.name %><% end %>
+<% content_for :topbar_actions do %>
+  <%= link_to "Config", site_config_path(@site), class: "btn" %>
+  <%= button_to "Rescan", rescan_site_path(@site), class: "btn" %>
+  <%= link_to "＋ New run", new_site_run_path(@site), class: "btn primary" %>
+<% end %>
+
+<div class="page-head">
+  <div>
+    <h1><%= @site.name %></h1>
+    <div class="sub mono"><%= @site.path %><%= " · source: #{@site.source_subdir}" if @site.source_subdir.present? %></div>
+  </div>
+</div>
+
+<% if @scan_error %>
+  <div class="flash alert">Could not read this site: <%= @scan_error %></div>
+<% elsif @scan %>
+  <div class="grid cols-4" style="margin-bottom:1.3rem;">
+    <div class="card stat"><span class="num"><%= @scan.total %></span><span class="lbl">Content files</span></div>
+    <div class="card stat"><span class="num" style="color:var(--warn)"><%= @scan.missing %></span><span class="lbl">Missing preview</span></div>
+    <div class="card stat"><span class="num" style="color:var(--ok)"><%= @scan.present %></span><span class="lbl">Have preview</span></div>
+    <div class="card stat"><span class="num"><%= @scan.collections.size %></span><span class="lbl">Collections</span></div>
+  </div>
+
+  <div class="grid cols-2" style="align-items:start;">
+    <div class="card">
+      <div class="page-head" style="margin-bottom:.8rem;">
+        <h2 style="margin:0;">Content</h2>
+        <%= link_to "See all", site_content_index_path(@site), class: "btn sm" %>
+      </div>
+      <table class="list">
+        <tbody>
+          <% @scan.entries.first(8).each do |entry| %>
+            <tr>
+              <td>
+                <%= entry.title %>
+                <div class="faint mono" style="font-size:.76rem;"><%= entry.relative %></div>
+              </td>
+              <td class="right">
+                <% if entry.exists %><span class="badge ok"><span class="dot"></span>preview</span>
+                <% else %><span class="badge warn"><span class="dot"></span>missing</span><% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <% if @scan.total > 8 %><p class="hint" style="margin-top:.8rem;"><%= @scan.total - 8 %> more…</p><% end %>
+    </div>
+
+    <div class="card">
+      <div class="page-head" style="margin-bottom:.8rem;">
+        <h2 style="margin:0;">Recent runs</h2>
+        <%= link_to "All", site_runs_path(@site), class: "btn sm" %>
+      </div>
+      <% if @recent_runs.any? %>
+        <table class="list">
+          <tbody>
+            <% @recent_runs.each do |run| %>
+              <tr>
+                <td><%= link_to run.kind, run %></td>
+                <td><%= render "shared/run_status", run: run %></td>
+                <td class="faint nowrap right"><%= time_ago_in_words(run.created_at) %> ago</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div class="empty" style="padding:1.5rem;">No runs yet. <%= link_to "Start one", new_site_run_path(@site) %>.</div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<div class="btn-row" style="margin-top:1.3rem;">
+  <%= link_to "Edit site", edit_site_path(@site), class: "btn sm" %>
+</div>

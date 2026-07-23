@@ -1,0 +1,33 @@
+<% content_for :title, @site ? "Runs — #{@site.name}" : "All runs" %>
+<% content_for :crumbs do %>
+  <% if @site %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Runs<% else %>Runs<% end %>
+<% end %>
+<% if @site %>
+  <% content_for :topbar_actions do %><%= link_to "＋ New run", new_site_run_path(@site), class: "btn primary" %><% end %>
+<% end %>
+
+<div class="page-head"><h1><%= @site ? "#{@site.name} runs" : "All runs" %></h1></div>
+
+<% if @runs.any? %>
+  <div class="card pad-0">
+    <table class="list">
+      <thead><tr><th>#</th><th>Kind</th><th>Status</th><% unless @site %><th>Site</th><% end %><th>Stats</th><th>When</th></tr></thead>
+      <tbody>
+        <% @runs.each do |run| %>
+          <tr>
+            <td><%= link_to "##{run.id}", run %></td>
+            <td class="mono"><%= run.kind %></td>
+            <td><%= render "shared/run_status", run: run %></td>
+            <% unless @site %><td><%= run.site ? link_to(run.site.name, run.site) : "—" %></td><% end %>
+            <td class="faint mono" style="font-size:.82rem;">
+              <% if run.stats.present? %><%= run.stats.values_at("generated", "skipped", "errors").compact.join(" / ") %> <span class="faint">g/s/e</span><% end %>
+            </td>
+            <td class="faint nowrap"><%= time_ago_in_words(run.created_at) %> ago</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="empty"><div class="big">▶</div>No runs yet.</div>
+<% end %>

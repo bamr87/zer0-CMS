@@ -1,0 +1,38 @@
+<% content_for :title, "Library" %>
+<% content_for :topbar_actions do %>
+  <%= button_to "Sync from MANIFEST", sync_library_entries_path, class: "btn" %>
+<% end %>
+
+<div class="page-head">
+  <div><h1>Example library</h1><div class="sub">Curated SVGs with tracked provenance and licenses. Sourced pieces carry a source URL and license; first-party pieces are MIT.</div></div>
+</div>
+
+<% if @error %><div class="flash alert"><%= @error %></div><% end %>
+
+<% if @tags.any? %>
+  <div style="display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1.2rem;">
+    <%= link_to "all", library_entries_path, class: "badge #{params[:tag].blank? ? "ok" : ""}" %>
+    <% @tags.each do |tag, n| %>
+      <%= link_to "#{tag} (#{n})", library_entries_path(tag: tag), class: "badge #{params[:tag] == tag ? "ok" : ""}" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @entries.any? %>
+  <div class="grid cols-4">
+    <% @entries.each do |entry| %>
+      <%= link_to library_entry_path(entry), class: "card pad-0", style: "display:block; color:inherit; text-decoration:none;" do %>
+        <div class="preview-frame" style="min-height:120px; aspect-ratio:3/2;">
+          <% file = Rails.application.config.repo_root.join(entry.file) %>
+          <% if file.file? %><img src="<%= file_path(path: file.realpath.to_s.sub(%r{\A/}, "")) %>" loading="lazy" alt="<%= entry.title %>"><% else %><span class="faint">missing</span><% end %>
+        </div>
+        <div style="padding:.5rem .7rem;">
+          <div style="font-weight:600; font-size:.85rem;"><%= entry.title %></div>
+          <div class="faint mono" style="font-size:.72rem;"><%= entry.license %><%= entry.first_party? ? "" : " · sourced" %></div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="empty"><div class="big">▦</div>No library entries. <%= button_to "Sync from MANIFEST.json", sync_library_entries_path, class: "btn primary", form_class: "" %></div>
+<% end %>

@@ -1,0 +1,41 @@
+<% content_for :title, "FreeSVG sourcing" %>
+<% content_for :crumbs do %><%= link_to "Library", library_entries_path %> / FreeSVG<% end %>
+
+<div class="page-head">
+  <div><h1>FreeSVG.org</h1><div class="sub">Search the public-domain catalog, then promote keepers into the library with provenance. Results are cached, so repeat searches cost no API calls.</div></div>
+</div>
+
+<% unless @client_available %>
+  <div class="flash alert">The FreeSVG client isn't available in this build. Once the engine's sourcing module is present, search and promote will work here.</div>
+<% end %>
+
+<%= form_with url: freesvg_search_path, method: :get do %>
+  <div class="field-row" style="align-items:flex-end;">
+    <div class="field" style="margin-bottom:0;"><label>Search</label><%= search_field_tag :q, @query, placeholder: "rocket, mountain, circuit…" %></div>
+    <div><%= submit_tag "Search", class: "btn primary" %></div>
+  </div>
+<% end %>
+
+<% if @error %><div class="flash alert" style="margin-top:1rem;"><%= @error %></div><% end %>
+
+<% if @results&.any? %>
+  <div class="grid cols-4" style="margin-top:1.3rem;">
+    <% @results.each do |item| %>
+      <div class="card pad-0">
+        <div class="preview-frame" style="min-height:110px;">
+          <% if item["url"].present? %><img src="<%= item["url"] %>" loading="lazy" alt="<%= item["title"] %>"><% else %><span class="faint"><%= item["title"] %></span><% end %>
+        </div>
+        <div style="padding:.55rem .7rem;">
+          <div style="font-size:.82rem; font-weight:600;"><%= item["title"] %></div>
+          <%= form_with url: freesvg_promote_path, method: :post do %>
+            <input type="hidden" name="id" value="<%= item["id"] %>">
+            <input type="hidden" name="q" value="<%= @query %>">
+            <%= submit_tag "Promote", class: "btn sm", style: "margin-top:.4rem;" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% elsif @query.present? && @error.nil? %>
+  <div class="empty" style="margin-top:1.3rem;">No results for “<%= @query %>”.</div>
+<% end %>

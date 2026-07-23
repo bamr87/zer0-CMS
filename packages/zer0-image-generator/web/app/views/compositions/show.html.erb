@@ -1,0 +1,42 @@
+<% content_for :title, @composition.title %>
+<% content_for :crumbs do %><%= link_to "Image forge", compositions_path %> / <%= @composition.title %><% end %>
+
+<%# Live updates: header status, image versions, and the streaming log. %>
+<%= turbo_stream_from @composition %>
+
+<div id="composition-header"><%= render "compositions/header", composition: @composition %></div>
+
+<% unless @claude_available %>
+  <div class="flash alert" style="margin-top:1rem;">Claude art direction is off (no credential) — renders use the template prompt. <%= link_to "Add a Claude token", new_credential_path(provider: "claude_oauth") %>.</div>
+<% end %>
+
+<div class="grid cols-2" style="margin-top:1.3rem; align-items:start;">
+  <div>
+    <div class="card">
+      <h2>Versions</h2>
+      <div id="composition-images"><%= render "compositions/images", composition: @composition %></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Brief</h2>
+      <table class="list">
+        <tbody>
+          <tr><td class="dim">Renderer</td><td class="mono"><%= @composition.provider %></td></tr>
+          <tr><td class="dim">Art direction</td><td class="mono"><%= @composition.prompt_engine %></td></tr>
+          <tr><td class="dim">Review</td><td class="mono"><%= @composition.review_engine %></td></tr>
+          <% if @composition.style.present? %><tr><td class="dim">Style</td><td><%= @composition.style %></td></tr><% end %>
+        </tbody>
+      </table>
+      <% if @composition.brief.present? %>
+        <p class="dim" style="font-size:.88rem; margin-top:.8rem; white-space:pre-wrap;"><%= @composition.brief %></p>
+      <% end %>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <h2>Log</h2>
+      <div class="logbox" id="composition-log" data-controller="autoscroll"><%= render "compositions/log_body", composition: @composition %></div>
+    </div>
+  </div>
+</div>
