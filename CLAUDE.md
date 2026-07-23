@@ -2,14 +2,7 @@
 
 Guidance for AI coding agents (Claude Code, Copilot, Cursor) working in **zer0-CMS**.
 
-zer0-CMS has two halves. `src/` is the **VS Code extension** (an AI-augmented
-fork of Front Matter CMS) that *edits* content. `rails/` is the **content
-engine** — a Ruby on Rails app + stdlib-only Ruby library that *generates*
-content, starting with children's **ABC / alphabet books**: it writes the words,
-composes a text-free illustration prompt per letter (art styles shared with the
-`zer0-image-generator` plugin), and exports a Jekyll board book for **drsai** to
-publish. "Done" for an engine change means `ruby -Ilib test/zer0_cms/*.rb` passes
-and the wizard still emits a valid ABC Book Spec.
+zer0-CMS has two halves. `src/` is the **VS Code extension** (an AI-augmented fork of Front Matter CMS) that *edits* content. `rails/` is the **content engine** — a Ruby on Rails app + stdlib-only Ruby library that *generates* content, starting with children's **ABC / alphabet books**: it writes the words, composes a text-free illustration prompt per letter (art styles shared with the `zer0-image-generator` plugin), and exports a Jekyll board book for **drsai** to publish. "Done" for an engine change means `ruby -Ilib test/zer0_cms/*.rb` passes and the wizard still emits a valid ABC Book Spec.
 
 ## Stack & commands
 

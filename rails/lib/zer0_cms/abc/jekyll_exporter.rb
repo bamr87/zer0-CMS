@@ -93,11 +93,11 @@ module Zer0Cms
       end
 
       def body
-        <<~BODY
-          A first alphabet about **#{@spec.theme}** — one big friendly letter per
-          page, a word to say out loud, and a picture to point at. Read it top to
-          bottom, or jump to any letter.
-        BODY
+        # One physical line per paragraph — the fleet's markdown "oneline" lint
+        # (tools/unwrap-prose.py) requires it, so the generated page stays clean.
+        "A first alphabet about **#{@spec.theme}** — one big friendly letter per " \
+          "page, a word to say out loud, and a picture to point at. Read it top " \
+          "to bottom, or jump to any letter.\n"
       end
 
       def description
