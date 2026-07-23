@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator/v0.5.0...zer0-image-generator/v0.6.0) (2026-07-23)
+
+
+### Features
+
+* **svg:** adopt the svg-art-kit authoring loop (hook, lint, sweep, critic) ([#6](https://github.com/bamr87/zer0-image-generator/issues/6)) ([d45b28f](https://github.com/bamr87/zer0-image-generator/commit/d45b28f1a8192bc154f4f8c79f433769d4e95e12))
+
 ## [0.5.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator-v0.4.0...zer0-image-generator/v0.5.0) (2026-07-15)
 
 
