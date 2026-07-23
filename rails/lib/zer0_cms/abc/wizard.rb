@@ -52,6 +52,13 @@ module Zer0Cms
         style = resolved_art_style(plan)
         @styles.style(style) # raises early on an unknown style id
 
+        # Resolve the palette ONCE and thread it everywhere: the `palette:`
+        # metadata, the cover plate, and every letter plate must agree. (Passing
+        # the raw @palette — nil unless the caller set one — into the per-letter
+        # prompts would let them fall back to the style's own default and diverge
+        # from the palette the book advertises and its cover uses.)
+        palette = @palette || plan["default_palette"] || @styles.default_palette(style)
+
         spec = Spec.new(
           "series"           => @series,
           "slug"             => resolved_slug(plan),
@@ -61,13 +68,13 @@ module Zer0Cms
           "audience"         => @audience || plan["audience"] || "toddler",
           "language"         => @language,
           "art_style"        => style,
-          "palette"          => @palette || plan["default_palette"] || @styles.default_palette(style),
+          "palette"          => palette,
           "background"       => @background,
           "mood"             => @mood,
           "lettering"        => @lettering || @styles.default_lettering(style),
           "art_style_prompt" => @styles.style_prompt(style),
           "generator"        => generator_note(plan),
-          "alphabet"         => build_alphabet(plan, style)
+          "alphabet"         => build_alphabet(plan, style, palette)
         )
         spec.cover = build_cover(spec, style)
         spec.validate!
@@ -117,7 +124,7 @@ module Zer0Cms
 
       # -- assembly ------------------------------------------------------------
 
-      def build_alphabet(plan, style)
+      def build_alphabet(plan, style, palette)
         slug = resolved_slug(plan)
         ContentProvider::LETTERS.map do |letter|
           e = plan.fetch("letters").fetch(letter)
@@ -130,7 +137,7 @@ module Zer0Cms
             "alt"     => e["alt"] || "#{word}, illustrated for the letter #{letter}.",
             "prompt"  => @styles.render_prompt(
               letter: letter, word: word, subject: e.fetch("subject"),
-              style: style, palette: @palette, background: @background, mood: @mood
+              style: style, palette: palette, background: @background, mood: @mood
             ),
             "image"   => image_path(slug, letter, word),
             "status"  => "planned"

@@ -121,6 +121,23 @@ class TestWizard < Minitest::Test
     spec = Zer0Cms::Abc::Wizard.new(theme: "IT systems", provider: :auto).run
     assert_equal 26, spec.alphabet.length
   end
+
+  # Regression: the palette baked into every letter plate must equal the palette
+  # the book advertises (spec.palette) and the one its cover uses. With a blank
+  # palette, the plan/lexicon default (cool-tech for IT) must win over the chosen
+  # style's own default (warm-earth for watercolor-storybook) everywhere.
+  def test_palette_is_consistent_across_letters_cover_and_metadata
+    spec = Zer0Cms::Abc::Wizard.new(
+      theme: "IT systems", art_style: "watercolor-storybook", provider: :deterministic
+    ).run
+    assert_equal "cool-tech", spec.palette
+    spec.alphabet.each do |e|
+      assert_includes e["prompt"], "sky blue",
+                      "letter #{e['letter']} was not composed in the resolved palette"
+      refute_includes e["prompt"], "terracotta"
+    end
+    assert_includes spec.cover["prompt"], "sky blue"
+  end
 end
 
 class TestSpecValidation < Minitest::Test
