@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator/v0.6.0...zer0-image-generator/v0.7.0) (2026-07-24)
+
+
+### Features
+
+* **abc:** ABC alphabet-book illustration plugin ([b817ffd](https://github.com/bamr87/zer0-image-generator/commit/b817ffd83ef3728933cd4bd70b8a66cc16543599))
+* Dockerized Rails control panel + pure-Ruby engine port ([#8](https://github.com/bamr87/zer0-image-generator/issues/8)) ([a03ff9d](https://github.com/bamr87/zer0-image-generator/commit/a03ff9d0e37aee29c32e5e696d8cf04bfdeb2075))
+
 ## [0.6.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator/v0.5.0...zer0-image-generator/v0.6.0) (2026-07-23)
 
 
