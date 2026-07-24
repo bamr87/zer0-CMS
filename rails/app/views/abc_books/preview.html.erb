@@ -1,0 +1,10 @@
+<h1>👀 Preview — <%= @spec.title %></h1>
+<p class="muted"><%= @spec.subtitle %> · <%= @spec.alphabet.length %> letters ·
+  art style <code><%= @spec.art_style %></code> · nothing was written.</p>
+
+<p><%= link_to "← Back to the wizard", new_abc_book_path %></p>
+
+<pre><%= @markdown %></pre>
+
+<p class="muted">Happy with it? Go back and choose <strong>Export to drsai</strong>
+  to write <code>pages/_books/<%= @spec.slug %>/index.md</code>.</p>

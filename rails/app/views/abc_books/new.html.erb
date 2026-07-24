@@ -1,0 +1,55 @@
+<h1>📖 ABC Book Wizard</h1>
+<p class="muted">
+  Draft a toddler ABC book around any theme. The engine writes the words, composes
+  a text-free illustration prompt per letter in your chosen art style, and exports
+  a <strong>drsai</strong> board book ready to publish with the zer0-mistakes theme.
+</p>
+
+<%= form_with url: preview_abc_book_path, method: :post, local: true, class: "card" do |f| %>
+  <label for="theme">Theme</label>
+  <%= f.text_field :theme, value: "IT systems", list: "themes",
+        placeholder: "e.g. IT systems, the ocean, kindness" %>
+  <datalist id="themes">
+    <% @themes.each do |t| %><option value="<%= t.tr('_', ' ') %>"></option><% end %>
+  </datalist>
+  <p class="muted">Bundled themes generate offline; any other theme uses Claude
+    (needs <code>ANTHROPIC_API_KEY</code> or <code>CLAUDE_CODE_OAUTH_TOKEN</code>).</p>
+
+  <div class="row">
+    <div>
+      <label for="art_style">Art style</label>
+      <%= f.select :art_style, @styles["styles"].map { |s| [s["name"], s["id"]] } %>
+    </div>
+    <div>
+      <label for="palette">Palette</label>
+      <%= f.select :palette, [["(style default)", ""]] + @styles["palettes"].map { |p| [p["name"], p["id"]] } %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="background">Background</label>
+      <%= f.select :background, @styles["backgrounds"].map { |b| [b["name"], b["id"]] } %>
+    </div>
+    <div>
+      <label for="mood">Mood</label>
+      <%= f.select :mood, @styles["moods"].map { |m| [m["name"], m["id"]] } %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="slug">Slug <span class="muted">(optional)</span></label>
+      <%= f.text_field :slug, placeholder: "auto from the title" %>
+    </div>
+    <div>
+      <label for="audience">Audience</label>
+      <%= f.select :audience, [%w[Toddler toddler], %w[Preschool preschool], ["Early reader", "early-reader"]] %>
+    </div>
+  </div>
+
+  <p style="margin-top:1.2rem; display:flex; gap:.6rem;">
+    <%= f.submit "Preview book", class: "button" %>
+    <%= button_tag "Export to drsai", formaction: export_abc_book_path, class: "ghost" %>
+  </p>
+<% end %>

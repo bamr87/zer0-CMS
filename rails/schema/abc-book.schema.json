@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://bamr87.github.io/zer0-CMS/schema/abc-book.schema.json",
+  "title": "ABC Book Spec",
+  "description": "The interchange contract for a children's ABC / alphabet book. Produced by the zer0-CMS Rails content engine (the wizard), rendered by the zer0-image-generator plugin, and published by drsai into the zer0-mistakes `books` collection. Every field here maps onto book front matter the `book-abc` theme layout understands.",
+  "type": "object",
+  "required": ["spec_version", "series", "slug", "title", "audience", "art_style", "alphabet"],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": { "type": "integer", "const": 1 },
+    "series": {
+      "type": "string",
+      "description": "Book series / category slug. The ABC line is `abc-language`.",
+      "examples": ["abc-language"]
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "URL-safe book id; becomes pages/_books/<slug>/."
+    },
+    "title": { "type": "string" },
+    "subtitle": { "type": "string" },
+    "theme": {
+      "type": "string",
+      "description": "The subject the alphabet is built around, e.g. 'IT systems'."
+    },
+    "audience": {
+      "type": "string",
+      "enum": ["toddler", "preschool", "early-reader"],
+      "description": "Drives tone and page density. 'toddler' = board-book single-scroll."
+    },
+    "language": { "type": "string", "default": "en" },
+    "art_style": {
+      "type": "string",
+      "description": "An id from the shared art-style catalog (abc_art_styles.yml).",
+      "examples": ["isometric-tech-toy", "chalkboard-doodle", "soft-plush", "crayon-primary", "paper-cutout", "watercolor-storybook"]
+    },
+    "palette":    { "type": ["string", "null"], "description": "Palette option id; null = the style default." },
+    "background": { "type": "string", "default": "plain" },
+    "mood":       { "type": "string", "default": "playful" },
+    "lettering":  { "type": "string", "description": "Big-letter presentation hint for the theme." },
+    "art_style_prompt": {
+      "type": "string",
+      "description": "The reusable style tag applied to every plate (denormalised from the catalog for the publisher)."
+    },
+    "generator": {
+      "type": "string",
+      "description": "Human-readable provenance line for the book colophon."
+    },
+    "cover": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subject": { "type": "string" },
+        "prompt":  { "type": "string" },
+        "image":   { "type": "string" },
+        "alt":     { "type": "string" }
+      }
+    },
+    "alphabet": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 26,
+      "items": {
+        "type": "object",
+        "required": ["letter", "word", "subject", "tagline"],
+        "additionalProperties": false,
+        "properties": {
+          "letter":  { "type": "string", "pattern": "^[A-Z]$" },
+          "word":    { "type": "string", "description": "The concept the letter stands for, e.g. 'Automation'." },
+          "subject": { "type": "string", "description": "A concrete, drawable scene for the word." },
+          "tagline": { "type": "string", "description": "The read-aloud line, e.g. 'A is for Automation — robots that help do the work!'." },
+          "prompt":  { "type": "string", "description": "Composed, text-free raster prompt for the plate." },
+          "image":   { "type": "string", "description": "Declared output path (leading slash, site-relative)." },
+          "alt":     { "type": "string", "description": "Accessible alt text for the plate." },
+          "status":  { "type": "string", "enum": ["planned", "rendered"], "default": "planned" }
+        }
+      }
+    }
+  }
+}
