@@ -22,6 +22,7 @@ drsai/ (Python story engine) ─ new verse/stories            zer0-mistakes them
 | Piece | Where | Role |
 |---|---|---|
 | Story engine | [`drsai/`](./drsai/) | Python CLI generating Seuss-style verse/stories via OpenAI (Anthropic/xAI supported), with scansion + rhyme validation |
+| ABC content engine | [bamr87/zer0-CMS](https://github.com/bamr87/zer0-CMS) | Rails app + Ruby engine — the ABC wizard that drafts alphabet books (words + per-letter art prompts) and exports them here |
 | Book content | [bamr87/Dodge-and-Reena-Book](https://github.com/bamr87/Dodge-and-Reena-Book) | Canonical story text, the illustration style & character bible, chosen AI renders |
 | Importer | [`tools/import_dodge_and_reena.py`](./tools/import_dodge_and_reena.py) | Converts the content repo into the site's books collection; matches plates to scenes; idempotent (`--check` runs in CI) |
 | Illustrator | [`tools/generate_illustrations.py`](./tools/generate_illustrations.py) | Renders missing scenes/covers with the OpenAI Images API from front-matter prompts |
@@ -70,6 +71,23 @@ drsai generate "a lighthouse that is afraid of the dark" --mode story --prompts
 ```
 
 See [`drsai/README.md`](./drsai/README.md) for the story engine's full CLI, meter validation, and library usage. Planning documents for the platform live in [`PRD.md`](./PRD.md) and [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md).
+
+## ABC books — the "ABC & Language" series
+
+drsai also publishes toddler **ABC board books** — one big letter, one word, one picture per page. The words and per-letter illustration prompts are drafted by the **[zer0-CMS](https://github.com/bamr87/zer0-CMS) ABC wizard**, which exports straight into this repo. The first is [**The IT Alphabet: A is for Automation**](https://bamr87.github.io/drsai/books/it-alphabet/) — A is for Automation, B is for Backup … Z is for Zero Trust.
+
+```bash
+# In a sibling zer0-CMS checkout, draft a book and export it here:
+cd ../zer0-CMS/rails
+ruby bin/zer0-cms new --theme "IT systems" --slug it-alphabet \
+     --art-style isometric-tech-toy --out ../../drsai
+
+# Back in drsai: guard the page against its spec, then render the plates.
+python3 tools/import_abc_book.py --check                       # drift check (CI)
+python3 tools/generate_illustrations.py --book it-alphabet --dry-run
+```
+
+The wizard writes `pages/_books/<slug>/index.md` (`layout: book-abc`, an `alphabet:` list of {letter, word, tagline, image, prompt}) and the canonical spec sidecar `_data/abc_books/<slug>.json`. The [zer0-image-generator](https://github.com/bamr87/zer0-image-generator) plugin owns the shared art-style catalog; `generate_illustrations.py` renders each letter's text-free prompt to its declared image path. Series metadata lives in [`_data/series.yml`](./_data/series.yml).
 
 ## Repository layout
 

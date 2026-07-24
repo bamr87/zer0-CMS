@@ -8,6 +8,9 @@ not exist yet:
   - story pages: each `illustrations:` entry ({beat, title, prompt, image})
   - book index pages: `cover_prompts.front` / `cover_prompts.back` for a
     missing `cover_image` / `back_cover_image`
+  - ABC board books (`book-abc` layout): each `alphabet:` entry
+    ({letter, word, prompt, image}) plus the `cover_prompt` / `cover_image`.
+    These prompts are already fully expanded by the zer0-CMS ABC wizard.
 
 Prompt composition mirrors the book's illustration bible: when a book defines
 `illustration_style` and a scene prompt opens with the shorthand
@@ -54,6 +57,7 @@ STYLE_SHORTHAND = "Cozy illustration storybook:"
 
 PLATE_SIZE = "1536x1024"   # landscape story plates
 COVER_SIZE = "1024x1536"   # portrait covers
+ABC_PLATE_SIZE = "1024x1024"   # square ABC letter cards (big centered subject)
 
 
 @dataclass
@@ -102,6 +106,26 @@ def collect_jobs(repo: Path, only_book: str | None) -> list[Job]:
         if not book or (only_book and book != only_book):
             continue
         style = styles.get(book)
+
+        # ABC / alphabet board books carry an `alphabet:` list; each entry's
+        # prompt is already fully composed by the zer0-CMS wizard, so no style
+        # shorthand expansion applies. The single cover renders portrait.
+        if fm.get("alphabet"):
+            cover_prompt, cover_image = fm.get("cover_prompt"), fm.get("cover_image")
+            if cover_prompt and cover_image:
+                out = repo / cover_image.lstrip("/")
+                if not out.exists():
+                    jobs.append(Job(book, "cover", cover_prompt, out, COVER_SIZE))
+            for entry in fm.get("alphabet") or []:
+                prompt, image = entry.get("prompt"), entry.get("image")
+                if not prompt or not image:
+                    continue
+                out = repo / image.lstrip("/")
+                if out.exists():
+                    continue
+                label = f"{entry.get('letter', '?')} is for {entry.get('word', '')}".strip()
+                jobs.append(Job(book, label, prompt, out, ABC_PLATE_SIZE))
+            continue
 
         if fm.get("layout") == "book":
             covers = fm.get("cover_prompts") or {}
