@@ -30,6 +30,11 @@ require_relative "providers"
 require_relative "runner"
 require_relative "cli"
 
+# ABC / alphabet-book plugin — additive and self-contained (touches none of the
+# byte-identity engine above). Loaded here so the Rails web app and CLI can
+# compose per-letter prompts for the fleet's children's-book pipeline.
+require_relative "abc"
+
 # The parametric SVG generators are optional for a preview run but always wanted
 # by the studio, so load them here too.
 Dir[File.join(__dir__, "svg", "generators", "*.rb")].sort.each { |file| require file }

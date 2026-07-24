@@ -231,6 +231,20 @@ The `local` provider rasterizes its SVG via the first available of `rsvg-convert
 
 Generation is script-driven on demand — it is never part of `jekyll build` (builds stay fast, deterministic, and secret-free; GitHub Pages safe mode is irrelevant to it).
 
+## ABC alphabet-book plugin
+
+Beyond one-banner-per-page previews, this gem is the **illustration plugin** for the fleet's children's-book pipeline: it owns the art-style catalog and composes one text-free plate per alphabet letter of a toddler ABC book. The [zer0-CMS](https://github.com/bamr87/zer0-CMS) Rails wizard picks an `art_style` and emits an *ABC Book Spec*; [drsai](https://github.com/bamr87/drsai) ships it into the `books` collection and renders each letter's prompt.
+
+```ruby
+require "zer0_image_generator/abc"
+Zer0ImageGenerator::Abc::StylePack.default.render_prompt(
+  letter: "A", word: "Automation",
+  subject: "a friendly robot arm stacking soft blocks",
+  style: "isometric-tech-toy")
+```
+
+The style catalog (`lib/zer0_image_generator/abc/art_styles.yml`) is the source of truth shared, by vendored copy, with zer0-CMS and the theme. See [docs/abc-plugin.md](docs/abc-plugin.md).
+
 ## Relationship to zer0-mistakes
 
 The [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme renders `preview:` values with a pure-Liquid include (GitHub-Pages-safe, no plugin needed) and currently vendors this engine at `scripts/lib/preview_generator.py`. This repo is the portable home: the theme is expected to consume the gem (or curl the engine from here) in a follow-up, so there is exactly ONE engine.
