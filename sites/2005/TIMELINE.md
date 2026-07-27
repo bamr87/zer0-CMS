@@ -31,6 +31,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file]({{ '/news/society-economics/same-sex-marriage-2005/' | relative_url }}) |
 | 2005-07-04 | Deep Impact mission | Science & Technology | [file]({{ '/news/science-technology/deep-impact-mission/' | relative_url }}) |
 | 2005-07-06 | London wins the 2012 Olympic bid | Society & Economics | [file]({{ '/news/society-economics/london-wins-2012-olympic-bid/' | relative_url }}) |
+| 2005-07-06 | 31st G8 Summit at Gleneagles | History & Politics | [file]({{ '/news/history-politics/g8-gleneagles-summit/' | relative_url }}) |
 | 2005-07-07 | 7/7 London bombings | History & Politics | [file]({{ '/news/history-politics/77-london-bombings/' | relative_url }}) |
 | 2005-07-24 | Lance Armstrong wins seventh Tour de France | People | [file]({{ '/news/people/lance-armstrong-tour-de-france/' | relative_url }}) |
 | 2005-07-26 | Space Shuttle Discovery returns to flight (STS-114) | Science & Technology | [file]({{ '/news/science-technology/sts-114-return-to-flight/' | relative_url }}) |
@@ -54,5 +55,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file]({{ '/news/arts-culture/brokeback-mountain/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 42 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 43 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
