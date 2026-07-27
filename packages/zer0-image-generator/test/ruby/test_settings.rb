@@ -21,7 +21,7 @@ module SettingsTestHelpers
   # case on BOTH sides so a stray host var can't skew the differential.
   RESOLVE_ENV_KEYS = %w[
     AI_PROVIDER IMAGE_MODEL IMAGE_SIZE IMAGE_QUALITY IMAGE_STYLE
-    IMAGE_STYLE_MODIFIERS OUTPUT_DIR PROMPT_ENGINE REVIEW_ENGINE MAX_PARALLEL
+    IMAGE_STYLE_MODIFIERS OUTPUT_DIR PROMPT_ENGINE REVIEW_ENGINE IMAGE_RASTERIZER MAX_PARALLEL
     DRY_RUN VERBOSE FORCE LIST_ONLY ENHANCE ENHANCE_MODEL ENHANCE_QUALITY
     ENHANCE_FIDELITY ENHANCE_FORMAT
   ].freeze
@@ -141,6 +141,9 @@ class TestResolveSettingsDifferential < Minitest::Test
     "enabled_false" => [{}, { "preview_images" => { "enabled" => false } }, {}],
     "size_quality_env" => [{}, {}, { "IMAGE_SIZE" => "1024x1024", "IMAGE_QUALITY" => "high" }],
     "provider_explicit_via_env" => [{}, {}, { "AI_PROVIDER" => "gemini" }],
+    "rasterizer_config_svg_only" => [{}, { "preview_images" => { "rasterizer" => "none" } }, {}],
+    "rasterizer_env_beats_config" => [{}, { "preview_images" => { "rasterizer" => "none" } },
+                                     { "IMAGE_RASTERIZER" => "rsvg" }],
     "full_cli_surface" => [
       { provider: "stability", model: "sd3-large", style: "cli", output_dir: "out",
         prompt_engine: "template", review: "none", batch: 5, file: "x.md",
@@ -212,6 +215,21 @@ class TestSettingsPortedAssertions < Minitest::Test
 
   def test_review_engine_cli_overrides
     assert_equal "none", resolve({ review: "none" }, {}).review_engine
+  end
+
+  def test_rasterizer_defaults_to_auto
+    assert_equal "auto", resolve({}, {}).rasterizer
+  end
+
+  # A site declares SVG-only once in _config.yml, not per invocation.
+  def test_rasterizer_from_config_block
+    config = { "preview_images" => { "rasterizer" => "none" } }
+    assert_equal "none", resolve({}, config).rasterizer
+  end
+
+  def test_rasterizer_cli_beats_config
+    config = { "preview_images" => { "rasterizer" => "none" } }
+    assert_equal "magick", resolve({ rasterizer: "magick" }, config).rasterizer
   end
 
   def test_claude_effort_empty_string_disables

@@ -130,6 +130,10 @@ DEFAULTS: Dict[str, Any] = {
     "claude_model": "",          # empty → DEFAULT_CLAUDE_MODEL
     "claude_effort": "low",      # output_config.effort for brief/review calls
                                  # (short creative tasks; "" sends no effort)
+    "rasterizer": "auto",        # SVG→PNG tool for the SVG providers (local,
+                                 # claude): auto|rsvg|inkscape|magick|playwright
+                                 # |none. "none" is SVG-only mode — the vector
+                                 # banner IS the deliverable and no PNG is made.
 }
 
 # Enhance mode (OpenAI /v1/images/edits — see OpenAIProvider.edit)
@@ -782,7 +786,7 @@ def resolve_settings(args: argparse.Namespace, config: Dict[str, Any]) -> Settin
             args.enhance_format or os.environ.get("ENHANCE_FORMAT")
             or ENHANCE_DEFAULTS["format"]
         ),
-        rasterizer=args.rasterizer or "auto",
+        rasterizer=pick(args.rasterizer, "IMAGE_RASTERIZER", "rasterizer"),
         provider_explicit=args.provider is not None or bool(os.environ.get("AI_PROVIDER")),
     )
     return settings
@@ -1977,11 +1981,17 @@ class SvgProviderMixin:
         if tool:
             svg_path.unlink(missing_ok=True)
             return ImageResult(True, "png", png_path)
-        warn(
-            "No SVG rasterizer available — keeping the .svg preview. Social "
-            "og:image works best as PNG: install librsvg (`brew install librsvg`) "
-            "or Playwright (`npx playwright install chromium`)."
-        )
+        # `rasterizer: none` is a deliberate site policy (SVG-only), not a
+        # missing dependency — say so instead of nagging about librsvg.
+        if settings.rasterizer == "none":
+            info(f"SVG-only mode (rasterizer: none) — wrote {svg_path.name}")
+        else:
+            warn(
+                "No SVG rasterizer available — keeping the .svg preview. Social "
+                "og:image works best as PNG: install librsvg (`brew install librsvg`) "
+                "or Playwright (`npx playwright install chromium`), or set "
+                "`preview_images.rasterizer: none` to make SVG-only the intent."
+            )
         return ImageResult(True, "svg", svg_path)
 
 
@@ -2393,7 +2403,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
                              "may request one refined regeneration (default: claude)")
     parser.add_argument("--rasterizer",
                         choices=["auto", "rsvg", "inkscape", "magick", "playwright", "none"],
-                        help="SVG→PNG tool for claude/local providers (default: auto)")
+                        help="SVG→PNG tool for claude/local providers (default: "
+                             "auto; `none` keeps the .svg and writes no PNG)")
     parser.add_argument("--style", help="Override image style prompt")
     parser.add_argument("--assets-prefix", help="Assets prefix for path normalization")
     parser.add_argument("--no-auto-prefix", action="store_true",

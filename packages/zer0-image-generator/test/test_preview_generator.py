@@ -139,6 +139,28 @@ class TestSettingsPrecedence(unittest.TestCase):
             settings = pg.resolve_settings(parse(["--review", "none"]), {})
         self.assertEqual(settings.review_engine, "none")
 
+    def _resolve_rasterizer(self, argv, config, env=None):
+        with mock.patch.dict(os.environ, env or {}, clear=False):
+            if "IMAGE_RASTERIZER" not in (env or {}):
+                os.environ.pop("IMAGE_RASTERIZER", None)
+            return pg.resolve_settings(parse(argv), config).rasterizer
+
+    def test_rasterizer_defaults_to_auto(self):
+        self.assertEqual(self._resolve_rasterizer([], {}), "auto")
+
+    def test_rasterizer_from_config_block(self):
+        """A site declares SVG-only once in _config.yml, not per invocation."""
+        config = {"preview_images": {"rasterizer": "none"}}
+        self.assertEqual(self._resolve_rasterizer([], config), "none")
+
+    def test_rasterizer_cli_and_env_beat_config(self):
+        config = {"preview_images": {"rasterizer": "none"}}
+        self.assertEqual(
+            self._resolve_rasterizer([], config, env={"IMAGE_RASTERIZER": "rsvg"}), "rsvg")
+        self.assertEqual(
+            self._resolve_rasterizer(["--rasterizer", "magick"], config,
+                                     env={"IMAGE_RASTERIZER": "rsvg"}), "magick")
+
     def test_author_overrides_apply_on_top(self):
         settings = self.resolve([])
         overrides = {"style": "noir", "model": "dall-e-3", "size": "1024x1024"}

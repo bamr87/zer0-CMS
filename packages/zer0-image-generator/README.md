@@ -93,6 +93,9 @@ preview_images:
   claude_effort: low          # output_config.effort for the brief/review calls
                               # (low = fastest, right-sized for short briefs;
                               #  high = deepest; '' sends no effort parameter)
+  rasterizer: auto            # SVG→PNG tool for the SVG providers (local,
+                              # claude): auto | rsvg | inkscape | magick |
+                              # playwright | none. `none` = SVG-only (below).
   # --- portability knobs (the zer0-isms, now configurable) ---
   collections: [posts]        # list of collections, or 'auto' to discover
                               # them from Jekyll's own `collections:` map
@@ -218,6 +221,20 @@ Keys are read from the environment or a git-ignored `.env` at the site root. On 
 ```
 
 The `local` provider rasterizes its SVG via the first available of `rsvg-convert` (`brew install librsvg` / `apt install librsvg2-bin`), `inkscape`, ImageMagick, or a vendored Playwright helper.
+
+### SVG-only sites
+
+`rasterizer: none` makes the vector banner the deliverable: the SVG providers (`local`, `claude`) write the sanitized `.svg`, skip rasterization entirely, and stamp `preview: /assets/images/previews/<slug>.svg` into front matter. No PNG is produced and none is expected — the engine says "SVG-only mode" instead of nagging about a missing librsvg.
+
+```yaml
+preview_images:
+  provider: local             # the deterministic, key-free SVG renderer
+  rasterizer: none            # ... and keep its output as SVG
+```
+
+It is a site-level policy, so it belongs in `_config.yml` — every entry point (the `jekyll preview-images` CLI, a bare `python3 preview_generator.py`, the web app, CI) picks it up with no per-invocation flag. `--rasterizer` and `IMAGE_RASTERIZER` still override it for a one-off run.
+
+Banners land at roughly 10–15 KB each instead of 1–2 MB, they diff as text in review, and they scale to any viewport. The trade-off: some social-card scrapers still prefer a raster `og:image`, so keep `rasterizer: auto` if link-preview cards matter more than repository weight.
 
 ## CI usage
 

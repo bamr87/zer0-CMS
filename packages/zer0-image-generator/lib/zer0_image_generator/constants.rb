@@ -34,8 +34,12 @@ module Zer0ImageGenerator
     "prompt_engine" => "claude",       # claude analyzes the article; falls back to template
     "review_engine" => "claude",       # claude vision-reviews the render; `none` disables
     "claude_model" => "",              # empty → DEFAULT_CLAUDE_MODEL
-    "claude_effort" => "low"           # output_config.effort for brief/review calls
+    "claude_effort" => "low",          # output_config.effort for brief/review calls
                                        # (short creative tasks; "" sends no effort)
+    "rasterizer" => "auto"             # SVG→PNG tool for the SVG providers (local,
+                                       # claude): auto|rsvg|inkscape|magick|playwright
+                                       # |none. "none" is SVG-only mode — the vector
+                                       # banner IS the deliverable and no PNG is made.
   }.freeze
 
   # Enhance mode (OpenAI /v1/images/edits — see the OpenAI provider's `edit`).

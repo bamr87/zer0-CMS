@@ -297,7 +297,7 @@ module Zer0ImageGenerator
       enhance_quality: python_first_truthy(args.enhance_quality, ENV["ENHANCE_QUALITY"], ENHANCE_DEFAULTS["quality"]),
       enhance_fidelity: python_first_truthy(args.enhance_fidelity, ENV["ENHANCE_FIDELITY"], ENHANCE_DEFAULTS["fidelity"]),
       enhance_format: python_first_truthy(args.enhance_format, ENV["ENHANCE_FORMAT"], ENHANCE_DEFAULTS["format"]),
-      rasterizer: python_first_truthy(args.rasterizer, "auto"),
+      rasterizer: pick.call(args.rasterizer, "IMAGE_RASTERIZER", "rasterizer"),
       provider_explicit: !args.provider.nil? || python_bool(ENV["AI_PROVIDER"])
     )
   end

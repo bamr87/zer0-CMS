@@ -114,7 +114,8 @@ module Zer0ImageGenerator
              "Post-render review: claude inspects the image and may request one regeneration (default: claude)") do |v|
           args.review = choice!("--review", v, REVIEW_CHOICES)
         end
-        o.on("--rasterizer TOOL", "SVG→PNG tool for claude/local providers (default: auto)") do |v|
+        o.on("--rasterizer TOOL",
+             "SVG→PNG tool for claude/local providers (default: auto; `none` keeps the .svg and writes no PNG)") do |v|
           args.rasterizer = choice!("--rasterizer", v, RASTERIZER_CHOICES)
         end
         o.on("--style STYLE", "Override image style prompt") { |v| args.style = v }
