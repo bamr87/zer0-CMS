@@ -35,7 +35,10 @@ Each post/page without a preview goes through a three-stage pipeline:
 | xai         | grok-2-image                               | `XAI_API_KEY`       |
 | stability   | Stable Diffusion XL                        | `STABILITY_API_KEY` |
 | gemini      | gemini-2.5-flash-image                     | `GEMINI_API_KEY`    |
-| local       | content-aware deterministic SVG            | none (CI-safe)      |
+| local       | content-aware deterministic SVG per page   | none (CI-safe)      |
+| **claude**  | Claude AUTHORS the banner as SVG           | Claude credential   |
+| **default** | one shared SVG per collection/section      | none (the floor)    |
+| **auto**    | picks the best rung below                  | whatever is wired   |
 
 Claude never renders pixels (the Anthropic API has no image endpoint); without a Claude credential the analyze/review stages degrade gracefully to a template prompt and the renderer still runs.
 
@@ -219,6 +222,20 @@ Keys are read from the environment or a git-ignored `.env` at the site root. On 
 --collections-dir DIR   --front-matter-key KEY      --authors-file FILE
 --assets-prefix PREFIX  --no-auto-prefix            --batch N  --log-file FILE
 ```
+
+### `provider: auto` — the capability ladder
+
+Set `provider: auto` and the engine uses the best renderer the environment can actually reach:
+
+1. **A raster image API** (`OPENAI_API_KEY` / `XAI_API_KEY` / `STABILITY_API_KEY` / `GEMINI_API_KEY`). If a Claude credential is *also* present, `prompt_engine: claude` has Claude write the art brief that renderer works from, and vision-review the result — the full three-stage pipeline.
+2. **A Claude credential alone** → the `claude` provider, where Claude *authors* the banner as SVG. Claude cannot render pixels, but vector markup is the one image format a language model can emit directly, so this is genuine per-article art with no image-model spend. Output goes through the same sanitizer as every other SVG, so a model that emits a `<script>`, a remote `href`, or a raster `data:` payload gets it stripped rather than committed.
+3. **Nothing wired** → the `default` provider: **one shared banner per collection/section**.
+
+Why a shared default rather than per-page procedural art: with no credential anywhere, generating a distinct composition per page produces N near-identical images under N names — 91 flow fields differing only by palette read as one picture repeated, and cost 91 files to say so. The floor is honest about that instead. Pages never touched by an image model share one deliberate banner for their section, and the repo carries one file per section rather than one per page.
+
+Auto requires a real Claude *credential* (`CLAUDE_CODE_OAUTH_TOKEN` / `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_API_KEY`) to leave rung 3 — deliberately not the same test as `AnthropicClient.available()`, which also accepts a `claude` binary on `PATH`. An installed CLI is not proof of a working login, and promoting an unauthenticated machine off the default rung would fail every page at generation time instead of quietly shipping the shared banner. An explicit `--provider claude` still rides the CLI, because that is a human asserting it works.
+
+An explicitly configured provider is always honored as written; only `auto` walks the ladder.
 
 ### Content-aware local banners
 
