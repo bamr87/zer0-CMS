@@ -92,8 +92,15 @@ module Zer0ImageGenerator
     # Per-file copy of the RunContext with a fresh slug. This copy is the
     # thread-safety linchpin: the local provider derives its deterministic
     # seed from ctx.slug, so workers must never share one mutable slug.
-    def with_slug(ctx, slug)
-      ctx.with_slug(slug)
+    def with_slug(ctx, slug, article: nil)
+      ctx.with_slug(slug, article: article)
+    end
+
+    # The page context the local renderer derives its art from. Resolved
+    # through this seam like every other cross-slice symbol, so a Rails host or
+    # a test can inject its own without loading the settings slice.
+    def article_art_context(content_file, slug)
+      Zer0ImageGenerator.article_art_context(content_file, slug)
     end
 
     def new_run_context(project_root, env)
@@ -278,7 +285,8 @@ module Zer0ImageGenerator
       # provider derives its deterministic seed from it). The copy carries the
       # shared AnthropicClient reference, which is stateless after init and
       # therefore thread-safe.
-      file_ctx = @deps.with_slug(@ctx, slug)
+      file_ctx = @deps.with_slug(@ctx, slug,
+                                 article: @deps.article_art_context(cf, slug))
       # ---- Produce: the selected raster model renders the brief ----
       result = provider.generate(prompt, file_settings, out_base, file_ctx)
 

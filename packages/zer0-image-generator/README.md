@@ -35,7 +35,7 @@ Each post/page without a preview goes through a three-stage pipeline:
 | xai         | grok-2-image                               | `XAI_API_KEY`       |
 | stability   | Stable Diffusion XL                        | `STABILITY_API_KEY` |
 | gemini      | gemini-2.5-flash-image                     | `GEMINI_API_KEY`    |
-| local       | deterministic template SVG → PNG           | none (CI-safe)      |
+| local       | content-aware deterministic SVG            | none (CI-safe)      |
 
 Claude never renders pixels (the Anthropic API has no image endpoint); without a Claude credential the analyze/review stages degrade gracefully to a template prompt and the renderer still runs.
 
@@ -93,6 +93,9 @@ preview_images:
   claude_effort: low          # output_config.effort for the brief/review calls
                               # (low = fastest, right-sized for short briefs;
                               #  high = deepest; '' sends no effort parameter)
+  rasterizer: auto            # SVG→PNG tool for the SVG providers (local,
+                              # claude): auto | rsvg | inkscape | magick |
+                              # playwright | none. `none` = SVG-only (below).
   # --- portability knobs (the zer0-isms, now configurable) ---
   collections: [posts]        # list of collections, or 'auto' to discover
                               # them from Jekyll's own `collections:` map
@@ -217,7 +220,39 @@ Keys are read from the environment or a git-ignored `.env` at the site root. On 
 --assets-prefix PREFIX  --no-auto-prefix            --batch N  --log-file FILE
 ```
 
+### Content-aware local banners
+
+The `local` renderer does not draw one template in six colours. It reads the page's own context — its **section**, **tags**, **title**, **description** and **body** — and picks both the composition and the palette from it, so a shell hack and a narrative essay do not come out looking like siblings.
+
+| composition | reads as | selected by |
+| --- | --- | --- |
+| `circuit` | orthogonal traces, pads, vias, chips | `hacks`, shell/docker/git/ci vocabulary |
+| `pixelscene` | pixel-art side-scroller | `tools`, reviews, editors, games |
+| `flowfield` | streamlines through a noise field | `field-notes`, essays, AI/automation |
+| `lowpoly` | faceted gradient field | `docs`, guides, architecture, schemas |
+| `starfield` | constellations over layered ridges | security, secrets, audits, exploration |
+
+Fields are **weighted, not pooled**: a section name is a deliberate editorial choice and tags and titles are hand-written, so they carry most of the signal, while the long incidental body is capped. Matching is on whole words — a bare substring test fires `ci` inside "de**ci**sion" and drags an entire dev blog toward one look. With no keyword hit anywhere the seed picks, so every page still gets art.
+
+Determinism is unchanged and remains a hard contract: the same article renders the same bytes on both engines. The seed comes from the article's **content** rather than its filename, so retitling or re-tagging a piece re-rolls its art — and two posts whose filenames merely sort next to each other no longer come out kin.
+
+Every composition is authored at the banner frame (1536×1024), so the sanitizer's forced `viewBox` is a no-op rather than a squash, and each emits `role="img"` plus a `<title>`.
+
 The `local` provider rasterizes its SVG via the first available of `rsvg-convert` (`brew install librsvg` / `apt install librsvg2-bin`), `inkscape`, ImageMagick, or a vendored Playwright helper.
+
+### SVG-only sites
+
+`rasterizer: none` makes the vector banner the deliverable: the SVG providers (`local`, `claude`) write the sanitized `.svg`, skip rasterization entirely, and stamp `preview: /assets/images/previews/<slug>.svg` into front matter. No PNG is produced and none is expected — the engine says "SVG-only mode" instead of nagging about a missing librsvg.
+
+```yaml
+preview_images:
+  provider: local             # the deterministic, key-free SVG renderer
+  rasterizer: none            # ... and keep its output as SVG
+```
+
+It is a site-level policy, so it belongs in `_config.yml` — every entry point (the `jekyll preview-images` CLI, a bare `python3 preview_generator.py`, the web app, CI) picks it up with no per-invocation flag. `--rasterizer` and `IMAGE_RASTERIZER` still override it for a one-off run.
+
+Banners land at roughly 10–15 KB each instead of 1–2 MB, they diff as text in review, and they scale to any viewport. The trade-off: some social-card scrapers still prefer a raster `og:image`, so keep `rasterizer: auto` if link-preview cards matter more than repository weight.
 
 ## CI usage
 

@@ -37,6 +37,13 @@ class TestLocalRenderer < Minitest::Test
         "seeds_for": [pg.seed_for(s) for s in req["slugs"]],
         "palettes": [pg.palette_for(n) for n in req["seeds"]],
         "compositions": [pg.composition_for(n) for n in req["seeds"]],
+        "article_renders": [
+            pg.render_local_svg(a["slug"], pg.seed_for(a["slug"]), a)
+            for a in req.get("articles", [])
+        ],
+        "article_themes": [
+            list(pg.banner_theme_for(a)) for a in req.get("articles", [])
+        ],
     }
     json.dump(out, open(sys.argv[2], "w"))
   PYTHON
@@ -84,12 +91,49 @@ class TestLocalRenderer < Minitest::Test
     wide + edges
   end
 
+  # Articles spanning every composition, the tie-break fallback, and the
+  # substring trap ("decision"/"efficiency" must NOT read as the "ci" of a CLI
+  # post) — plus unicode and an empty-ish record.
+  def articles
+    [
+      { "slug" => "order-your-dockerfile", "section" => "hacks",
+        "categories" => "docker ci-cd", "title" => "Order your Dockerfile",
+        "description" => "layer cache", "body" => "docker build cache layers" },
+      { "slug" => "grep-the-honest-review", "section" => "tools",
+        "categories" => "search files", "title" => "grep: the honest review",
+        "description" => "a tool review", "body" => "editor plugin install" },
+      { "slug" => "two-posts-one-face", "section" => "field-notes",
+        "categories" => "ai automation", "title" => "The robot wrote a loop",
+        "description" => "a narrative", "body" => "agent automation process" },
+      { "slug" => "prove-it-moved", "section" => "docs",
+        "categories" => "reference", "title" => "Architecture overview",
+        "description" => "a guide", "body" => "system structure diagram" },
+      { "slug" => "threat-model", "section" => "posts",
+        "categories" => "security", "title" => "Threat model your rollback",
+        "description" => "risk", "body" => "token secret audit permission" },
+      # No keyword anywhere -> falls through to the seed-chosen composition.
+      { "slug" => "untagged", "section" => "", "categories" => "",
+        "title" => "A quiet piece", "description" => "",
+        "body" => "prose with nothing distinctive in it whatsoever" },
+      # The substring trap: these words contain 'ci' and 'ai' as SUBSTRINGS.
+      { "slug" => "decisions", "section" => "", "categories" => "",
+        "title" => "Decisions and efficiency in a specific domain",
+        "description" => "certain", "body" => "decision efficiency specific" },
+      { "slug" => "café-notes", "section" => "field-notes",
+        "categories" => "café", "title" => "Über naïve 日本語",
+        "description" => "unicode", "body" => "note essay story" },
+      { "slug" => "", "section" => "", "categories" => "", "title" => "",
+        "description" => "", "body" => "" },
+    ]
+  end
+
   def run_oracle(slug_list, seed_list)
     req = Tempfile.new(["req", ".json"])
     res = Tempfile.new(["res", ".json"])
     drv = Tempfile.new(["driver", ".py"])
     begin
-      req.write(JSON.generate(slugs: slug_list, seeds: seed_list))
+      req.write(JSON.generate(slugs: slug_list, seeds: seed_list,
+                              articles: articles))
       req.flush
       drv.write(PY_DRIVER)
       drv.flush
@@ -100,6 +144,70 @@ class TestLocalRenderer < Minitest::Test
     ensure
       [req, res, drv].each { |f| f.close; f.unlink }
     end
+  end
+
+  # The content-aware path: the article record, not just the slug, chooses the
+  # composition and palette — so this asserts BOTH engines pick the same theme
+  # and emit the same bytes for the same page.
+  def test_article_banners_byte_identical_and_themed
+    skip "python3 not available" unless python3?
+    oracle = run_oracle(["hello-world"], [])
+    py_renders = oracle["article_renders"]
+    py_themes = oracle["article_themes"]
+
+    diverged = []
+    articles.each_with_index do |article, i|
+      ruby_theme = LR.banner_theme_for(article)
+      assert_equal py_themes[i], ruby_theme,
+                   "banner_theme_for diverged for #{article["slug"].inspect}"
+      ruby_svg = LR.render_local_svg(article["slug"],
+                                     LR.seed_for(article["slug"]), article)
+      diverged << article["slug"] unless ruby_svg == py_renders[i]
+    end
+    assert_empty diverged, "article render diverged for: #{diverged.inspect}"
+
+    themes = articles.map { |a| LR.banner_theme_for(a) }
+    by_slug = articles.map { |a| a["slug"] }.zip(themes).to_h
+
+    # Section is the strongest signal, and each section gets its own look.
+    assert_equal "circuit",    by_slug["order-your-dockerfile"][0]
+    assert_equal "pixelscene", by_slug["grep-the-honest-review"][0]
+    assert_equal "flowfield",  by_slug["two-posts-one-face"][0]
+    assert_equal "lowpoly",    by_slug["prove-it-moved"][0]
+    assert_equal "starfield",  by_slug["threat-model"][0]
+
+    # Whole-word matching. 'decision'/'efficiency'/'specific' contain "ci" and
+    # 'certain' contains "ai", but none of them is a CLI or an AI post. Assert
+    # on the TOKENS rather than the chosen composition: with no keyword hits at
+    # all the article falls through to the seed, which is free to land on any
+    # composition including circuit — so the outcome alone cannot tell a
+    # substring bug apart from a legitimate fallback.
+    tokens = LR.banner_words("Decisions and efficiency in a specific certain domain")
+    %w[ci cd ai].each do |fragment|
+      refute_includes tokens, fragment,
+                      "#{fragment.inspect} must not be tokenized out of a longer word"
+    end
+    # And the converse: adding one real keyword DOES move the art.
+    quiet = articles.find { |a| a["slug"] == "untagged" }
+    assert_equal "circuit", LR.banner_theme_for(quiet.merge("section" => "hacks"))[0],
+                 "a real section keyword must decide the composition"
+
+    # All five compositions were actually rendered by the identity comparison.
+    assert_equal LR::BANNER_COMPOSITION_ORDER.sort,
+                 themes.map(&:first).uniq.sort - [],
+                 "fixtures must exercise every composition"
+  end
+
+  # Same article in, same bytes out; changed content, changed art.
+  def test_article_art_is_deterministic_and_content_sensitive
+    article = articles.first
+    first = LR.render_local_svg(article["slug"], 0, article)
+    assert_equal first, LR.render_local_svg(article["slug"], 0, article),
+                 "same article must render byte-identically"
+
+    retitled = article.merge("title" => "A completely different headline")
+    refute_equal first, LR.render_local_svg(article["slug"], 0, retitled),
+                 "retitling a piece must re-roll its art"
   end
 
   def test_render_local_svg_byte_identical_across_slugs
@@ -165,7 +273,15 @@ class TestLocalRenderer < Minitest::Test
   # `seed or 1` path directly) must not freeze the LCG into an all-zero banner.
   def test_zero_seed_uses_one
     svg = LR.render_local_svg("anything", 0)
-    refute_includes svg, 'cx="1216"', "zero seed should still advance the LCG"
     assert svg.start_with?("<svg ")
+    # A frozen LCG emits the SAME number over and over, so the tell is a
+    # collapsed coordinate set — not any one magic coordinate. (The old
+    # assertion pinned `cx="1216"`, an artifact of the retired skyline
+    # template; on the circuit grid that value is a legitimate 32px junction.)
+    coords = svg.scan(/(?:cx|x)="(\d+)"/).flatten.uniq
+    assert_operator coords.length, :>, 20,
+                    "zero seed should still advance the LCG, not repeat one value"
+    refute_equal svg, LR.render_local_svg("anything", 1),
+                 "a different seed must give different art"
   end
 end

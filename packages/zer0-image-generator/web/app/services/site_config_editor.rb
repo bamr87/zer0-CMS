@@ -15,7 +15,8 @@ class SiteConfigEditor
   # right control and the writer can coerce values back.
   STRING_KEYS = %w[provider model size quality style style_modifiers output_dir
                    assets_prefix front_matter_key authors_file collections_dir
-                   prompt_engine review_engine claude_model claude_effort].freeze
+                   prompt_engine review_engine claude_model claude_effort
+                   rasterizer].freeze
   BOOL_KEYS = %w[enabled auto_prefix].freeze
   # collections is a list or the literal "auto".
   LIST_KEYS = %w[collections].freeze

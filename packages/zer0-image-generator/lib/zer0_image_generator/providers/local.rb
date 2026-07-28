@@ -23,11 +23,18 @@ module Zer0ImageGenerator
         File.delete(svg_path.to_s) if File.exist?(svg_path.to_s)
         return ImageResult.new(true, "png", png_path)
       end
-      Logging.warn(
-        "No SVG rasterizer available — keeping the .svg preview. Social " \
-        "og:image works best as PNG: install librsvg (`brew install librsvg`) " \
-        "or Playwright (`npx playwright install chromium`)."
-      )
+      # `rasterizer: none` is a deliberate site policy (SVG-only), not a missing
+      # dependency — say so instead of nagging about librsvg.
+      if settings.rasterizer == "none"
+        Logging.info("SVG-only mode (rasterizer: none) — wrote #{File.basename(svg_path.to_s)}")
+      else
+        Logging.warn(
+          "No SVG rasterizer available — keeping the .svg preview. Social " \
+          "og:image works best as PNG: install librsvg (`brew install librsvg`) " \
+          "or Playwright (`npx playwright install chromium`), or set " \
+          "`preview_images.rasterizer: none` to make SVG-only the intent."
+        )
+      end
       ImageResult.new(true, "svg", svg_path)
     end
   end
@@ -59,7 +66,7 @@ module Zer0ImageGenerator
       # what render_local_svg titles the banner with.
       seed_key = ctx.slug.to_s.empty? ? stem_of(out_base) : ctx.slug
       seed = Svg::LocalRenderer.seed_for(seed_key)
-      svg_text = Svg::LocalRenderer.render_local_svg(ctx.slug, seed)
+      svg_text = Svg::LocalRenderer.render_local_svg(ctx.slug, seed, ctx.article)
       finish_svg(svg_text, out_base, settings, ctx)
     end
 

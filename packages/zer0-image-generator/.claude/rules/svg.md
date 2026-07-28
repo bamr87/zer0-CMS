@@ -22,8 +22,10 @@ paths:
 
 ## Engine-specific
 
-- `render_local_svg` must stay deterministic: same slug → byte-identical banner. All randomness goes through the seeded LCG (`nxt`); never call `random` or clock/time functions there.
-- The seed → palette/composition scheme is shared contract (`seed_for`, `palette_for`, `composition_for`). Changing it re-skins every existing local banner on regeneration — do it deliberately.
+- `render_local_svg` must stay deterministic: same ARTICLE → byte-identical banner, in Python and Ruby alike. All randomness goes through the seeded LCG (`banner_lcg`); never call `random` or clock/time functions there. Trig comes from the Taylor-built lookup tables, not `math`/`Math` — libm rounds the last bit differently across platforms and the Ruby port is pinned byte-for-byte.
+- Banner art is CONTENT-AWARE: `banner_theme_for` picks the composition and palette from the page's section/tags/title/body, and `banner_seed_for` hashes that content. Changing the keyword table, the field weights, or a composition re-skins existing banners on regeneration — do it deliberately.
+- Compositions are authored AT 1536×1024. One written for another aspect gets squashed by the forced `viewBox`, not rejected, so there is no error to catch — check the render.
+- The legacy `seed_for` / `palette_for` / `composition_for` trio is still shared contract: `composition_for` feeds the AI providers' prose art brief, and is unrelated to the local compositions above.
 
 ## Workflow
 

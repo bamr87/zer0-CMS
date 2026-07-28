@@ -33,6 +33,10 @@
         <div class="field"><label>Review engine</label>
           <%= f.select :review_engine, %w[claude none].map { |p| [p, p] }, selected: @values["review_engine"] %>
         </div>
+        <div class="field"><label>Rasterizer</label>
+          <%= f.select :rasterizer, %w[auto rsvg inkscape magick playwright none].map { |p| [p, p] }, selected: @values["rasterizer"] %>
+          <div class="hint">SVG&rarr;PNG tool for the local/claude renderers. <span class="mono">none</span> is SVG-only: the vector banner ships as-is and no PNG is written.</div>
+        </div>
         <div class="field-row">
           <div class="field"><label>Claude model (blank = default)</label><%= f.text_field :claude_model, value: @values["claude_model"] %></div>
           <div class="field"><label>Claude effort</label>

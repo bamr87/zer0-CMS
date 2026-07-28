@@ -57,21 +57,24 @@ module Fakes
   # Stand-in for RunContext. with_slug returns a COPY carrying the same claude
   # reference — the exact per-file copy the Runner relies on for thread safety.
   class Ctx
-    attr_reader :env, :slug, :project_root
+    attr_reader :env, :slug, :project_root, :article
 
-    def initialize(env: {}, claude: nil, slug: "", project_root: Pathname.new("."))
+    def initialize(env: {}, claude: nil, slug: "", project_root: Pathname.new("."),
+                   article: nil)
       @env = env
       @claude = claude || Object.new
       @slug = slug
       @project_root = project_root
+      @article = article
     end
 
     def claude
       @claude
     end
 
-    def with_slug(slug)
-      Ctx.new(env: @env, claude: @claude, slug: slug, project_root: @project_root)
+    def with_slug(slug, article: nil)
+      Ctx.new(env: @env, claude: @claude, slug: slug, project_root: @project_root,
+              article: article)
     end
   end
 
@@ -204,8 +207,15 @@ module Fakes
       EditUnsupported
     end
 
-    def with_slug(ctx, slug)
-      ctx.with_slug(slug)
+    def with_slug(ctx, slug, article: nil)
+      ctx.with_slug(slug, article: article)
+    end
+
+    # Minimal stand-in for the settings slice's article_art_context: the runner
+    # only needs a hash it can hand to the provider.
+    def article_art_context(content_file, slug)
+      { "slug" => slug, "section" => "", "title" => content_file.title.to_s,
+        "description" => "", "categories" => "", "body" => "" }
     end
 
     def post_generation_sleep
