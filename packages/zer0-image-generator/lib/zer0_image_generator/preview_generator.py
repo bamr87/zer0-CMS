@@ -2183,6 +2183,15 @@ class Provider:
     def default_model(self) -> str:
         raise NotImplementedError
 
+    def output_stem(self, slug: str, ctx: "RunContext") -> str:
+        """Filename stem this provider writes to, minus the extension.
+
+        Per-article by default. A provider that deliberately SHARES one image
+        across many pages (the collection default) overrides this so the runner
+        writes one file and stamps every page at it, instead of emitting N
+        near-identical copies under N names."""
+        return slug
+
     def generate(self, prompt: str, settings: Settings, out_base: Path,
                  ctx: "RunContext") -> ImageResult:
         raise NotImplementedError
@@ -2499,6 +2508,123 @@ class LocalProvider(Provider, SvgProviderMixin):
 
 # Renderers only — Claude is the orchestration layer (claude_article_brief /
 # claude_review_image) that sits in front of ANY of these, not a provider.
+
+class DefaultProvider(Provider, SvgProviderMixin):
+    """Key-free floor: ONE shared banner per collection/section.
+
+    The `local` provider draws a distinct procedural composition per article.
+    That is right when the art is meant to be per-article, but when there is no
+    AI credential anywhere it produces N near-identical images under N names —
+    91 flow fields that differ only by palette read as one picture repeated, and
+    cost 91 files to say so. This provider is honest about that instead: pages
+    that were never touched by an image model share a single deliberate banner
+    for their section, and the repo carries one file per section rather than one
+    per page.
+
+    Upgrade path: wire any renderer credential and `provider: auto` moves off
+    this rung automatically.
+    """
+
+    name = "default"
+
+    def is_configured(self, env: Dict[str, str]) -> bool:
+        return True
+
+    def missing_hint(self, env: Dict[str, str]) -> str:
+        return ""
+
+    def default_model(self) -> str:
+        return "collection-default-svg"
+
+    def group_of(self, ctx: "RunContext") -> str:
+        article = ctx.article or {}
+        return str(article.get("section") or "").strip() or "default"
+
+    def output_stem(self, slug: str, ctx: "RunContext") -> str:
+        # Every page in a section resolves to the same stem, so the runner
+        # writes it once and stamps every page of that section at it.
+        return f"section-{generate_filename(self.group_of(ctx)) or 'default'}"
+
+    def generate(self, prompt, settings, out_base, ctx) -> ImageResult:
+        group = self.group_of(ctx)
+        # Seeded by the SECTION, not the article: the whole point is that the
+        # image is shared, so it must not vary with whichever page happened to
+        # trigger the write.
+        seed = seed_for(group)
+        composition, palette = banner_theme_for(
+            {"slug": group, "section": group, "categories": group,
+             "title": group, "description": "", "body": ""})
+        svg_text = BANNER_COMPOSITIONS[composition](
+            seed, BANNER_PALETTES[palette], group)
+        return self.finish_svg(svg_text, out_base, settings, ctx)
+
+
+class ClaudeSvgProvider(Provider, SvgProviderMixin):
+    """Claude authors the banner as SVG, from the article.
+
+    Claude cannot render pixels — the Anthropic API has no image endpoint — but
+    it can WRITE vector markup, which is the one image format a language model
+    can emit directly. That makes it the rung between "no credential at all"
+    and "a raster image API": genuinely per-article art, no image-model spend.
+
+    The output goes through the same sanitizer as every other SVG, so a model
+    that emits a <script>, a remote href, or a raster data: payload gets it
+    stripped rather than committed.
+    """
+
+    name = "claude"
+
+    def is_configured(self, env: Dict[str, str]) -> bool:
+        return AnthropicClient(env).available()
+
+    def missing_hint(self, env: Dict[str, str]) -> str:
+        return CLAUDE_CREDENTIAL_HINT
+
+    def default_model(self) -> str:
+        return DEFAULT_CLAUDE_MODEL
+
+    def generate(self, prompt, settings, out_base, ctx) -> ImageResult:
+        article = ctx.article or {}
+        instruction = (
+            "Author a single SVG banner for this article. Reply with ONLY the "
+            f"SVG markup, no prose and no code fence.\n\n"
+            f"HARD REQUIREMENTS\n"
+            f'- Root: <svg xmlns="{SVG_NS}" viewBox="0 0 {SVG_WIDTH} {SVG_HEIGHT}" '
+            f'width="{SVG_WIDTH}" height="{SVG_HEIGHT}" role="img">\n'
+            "- A <title> as the FIRST child describing the image.\n"
+            "- Vector shapes only: no <script>, no <foreignObject>, no <image>, "
+            "no external href, no data: payloads, no <text> (fonts will not "
+            "resolve — convert lettering to paths or leave it out).\n"
+            "- Fill the whole frame. No large empty regions.\n"
+            "- Round coordinates to at most 2 decimals; stay under 200 KB.\n\n"
+            f"ART DIRECTION\n{prompt}\n\n"
+            f"ARTICLE\nTitle: {article.get('title', '')}\n"
+            f"Section: {article.get('section', '')}\n"
+            f"Tags: {article.get('categories', '')}\n"
+            f"Description: {article.get('description', '')}\n"
+        )
+        try:
+            reply = ctx.claude().complete(
+                "You are an SVG illustrator. You reply with SVG markup only.",
+                instruction,
+                model=claude_model_for(settings),
+                max_tokens=CLAUDE_MAX_TOKENS,
+                effort=settings.claude_effort,
+            )
+        except Exception as exc:  # noqa: BLE001 - any transport failure degrades
+            return ImageResult(False, error=f"claude SVG authoring failed: {exc}")
+        svg_text = _extract_svg(reply)
+        if not svg_text:
+            return ImageResult(False, error="claude returned no SVG markup")
+        return self.finish_svg(svg_text, out_base, settings, ctx)
+
+
+def _extract_svg(text: str) -> str:
+    """Pull the <svg>…</svg> out of a model reply, fence or no fence."""
+    match = re.search(r"<svg\b.*?</svg>", str(text or ""), re.S | re.I)
+    return match.group(0) if match else ""
+
+
 PROVIDERS: Dict[str, Provider] = {
     provider.name: provider
     for provider in (
@@ -2507,6 +2633,8 @@ PROVIDERS: Dict[str, Provider] = {
         StabilityProvider(),
         GeminiProvider(),
         LocalProvider(),
+        DefaultProvider(),
+        ClaudeSvgProvider(),
     )
 }
 
@@ -2596,7 +2724,15 @@ class Runner:
             warn(f"Cannot derive filename from title in {path}")
             self.stats.inc("errors")
             return
-        out_base = self.root / settings.output_dir / slug
+        # The provider chooses the filename stem: per-article for the real
+        # renderers, one shared file per collection for the key-free default.
+        provider_for_paths = PROVIDERS.get(settings.provider)
+        stem = slug
+        if provider_for_paths is not None:
+            stem = provider_for_paths.output_stem(
+                slug, replace(self.ctx, slug=slug,
+                              article=article_art_context(cf, slug))) or slug
+        out_base = self.root / settings.output_dir / stem
 
         # Style overrides apply only once an image/prompt is actually built.
         file_settings = file_preview_settings(settings, cf, self.authors)
@@ -2850,8 +2986,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
                         help="Process one collection by name, or 'all' for every "
                              "configured collection")
     parser.add_argument("-p", "--provider",
-                        choices=sorted(PROVIDERS.keys()),
-                        help="AI provider (default: claude, via _config.yml)")
+                        choices=sorted(list(PROVIDERS.keys()) + ["auto"]),
+                        help="Renderer, or `auto` to pick the best one the "
+                             "environment can reach (raster API > claude SVG > "
+                             "shared collection default)")
     parser.add_argument("--model", help="Override the image/SVG model for the provider")
     parser.add_argument("--output-dir",
                         help="Output directory for images (default: assets/images/previews)")
@@ -2913,6 +3051,60 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     return args
 
 
+# Renderers that produce raster art, best first. `auto` walks this list before
+# falling back to the SVG rungs.
+AUTO_RASTER_ORDER: List[str] = ["openai", "xai", "stability", "gemini"]
+
+# Env vars that constitute a real Claude credential. Deliberately NOT the same
+# test as AnthropicClient.available(), which also accepts a `claude` binary on
+# PATH: an installed CLI is not proof of a working login, and `auto` promoting
+# an unauthenticated machine off the default rung would fail every page at
+# generation time instead of quietly shipping the shared banner. An explicit
+# `--provider claude` still rides the CLI, because that is a human asserting it
+# works.
+CLAUDE_CREDENTIAL_ENV: Tuple[str, ...] = (
+    "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY",
+)
+
+
+def _claude_credential_wired(env: Dict[str, str]) -> bool:
+    return any(env.get(name) for name in CLAUDE_CREDENTIAL_ENV)
+
+
+def resolve_auto_provider(settings: Settings, env: Dict[str, str]) -> Settings:
+    """Pick the best renderer the environment can actually reach.
+
+    The ladder, best rung first:
+
+      1. a raster image API (OPENAI/XAI/STABILITY/GEMINI key) — and if a Claude
+         credential is ALSO present, `prompt_engine: claude` already has Claude
+         write the art brief that renderer works from, and review the result;
+      2. a Claude credential alone — Claude authors the banner as SVG, which is
+         the one image format a language model can emit directly;
+      3. nothing wired — one shared, deliberate banner per collection.
+
+    Only `provider: auto` goes through this. An explicit provider is honored as
+    written, so a site can always pin what it wants.
+    """
+    if settings.provider != "auto":
+        return settings
+
+    for name in AUTO_RASTER_ORDER:
+        provider = PROVIDERS.get(name)
+        if provider is not None and provider.is_configured(env):
+            claude = " (Claude writes the brief)" if _claude_credential_wired(env) else ""
+            info(f"provider: auto → {name}{claude}")
+            return replace(settings, provider=name)
+
+    if _claude_credential_wired(env):
+        info("provider: auto → claude (no raster image key; Claude authors the SVG)")
+        return replace(settings, provider="claude")
+
+    info("provider: auto → default (no image credential wired; "
+         "one shared banner per collection)")
+    return replace(settings, provider="default")
+
+
 def validate_credentials(settings: Settings, ctx: RunContext) -> None:
     """Credential checks are skipped for --list-missing/--dry-run (historical
     behavior), but an unknown provider name (from AI_PROVIDER / _config.yml —
@@ -2964,12 +3156,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     print_header("🎨 Preview Image Generator")
     ctx = RunContext(project_root=project_root, env=dict(os.environ))
+    settings = resolve_auto_provider(settings, ctx.env)
     validate_credentials(settings, ctx)
 
     # Claude orchestration (analyze/review) degrades gracefully: without a
     # Claude credential the run continues on template prompts, unreviewed.
     wants_claude = (
-        settings.provider != "local"
+        settings.provider not in ("local", "default")
         and "claude" in (settings.prompt_engine, settings.review_engine)
         and not (settings.dry_run or settings.list_only)
     )

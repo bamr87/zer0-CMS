@@ -669,6 +669,81 @@ class TestSvgToolkit(unittest.TestCase):
             self.assertIn("Preview banner: a-slug</title>", clean)
 
 
+class TestProviderLadder(unittest.TestCase):
+    """`provider: auto` picks the best renderer the environment can reach."""
+
+    def resolve(self, env):
+        return pg.resolve_auto_provider(pg.Settings(provider="auto"), env).provider
+
+    def test_nothing_wired_falls_to_the_shared_collection_default(self):
+        self.assertEqual(self.resolve({}), "default")
+
+    def test_claude_credential_alone_authors_svg(self):
+        for key in pg.CLAUDE_CREDENTIAL_ENV:
+            self.assertEqual(self.resolve({key: "x"}), "claude", key)
+
+    def test_raster_key_wins_over_claude(self):
+        self.assertEqual(
+            self.resolve({"ANTHROPIC_API_KEY": "x", "OPENAI_API_KEY": "x"}), "openai")
+
+    def test_raster_preference_order(self):
+        self.assertEqual(self.resolve({"GEMINI_API_KEY": "x"}), "gemini")
+        self.assertEqual(
+            self.resolve({"GEMINI_API_KEY": "x", "XAI_API_KEY": "x"}), "xai")
+
+    def test_an_installed_cli_is_not_a_credential(self):
+        """AnthropicClient accepts a `claude` binary on PATH, but auto must not:
+        an installed CLI is not proof of a working login, and promoting off the
+        default rung on that basis fails every page at generation time."""
+        with mock.patch.object(pg.shutil, "which", return_value="/usr/bin/claude"):
+            self.assertTrue(pg.AnthropicClient({}).available())
+            self.assertEqual(self.resolve({}), "default")
+
+    def test_explicit_provider_is_never_overridden(self):
+        pinned = pg.resolve_auto_provider(
+            pg.Settings(provider="local"), {"OPENAI_API_KEY": "x"})
+        self.assertEqual(pinned.provider, "local")
+
+
+class TestCollectionDefaultProvider(unittest.TestCase):
+    """The key-free floor shares ONE banner per section rather than emitting N
+    near-identical per-article images."""
+
+    def ctx(self, section):
+        return pg.RunContext(project_root=Path("."), env={},
+                             article={"section": section})
+
+    def test_every_page_in_a_section_shares_one_stem(self):
+        provider = pg.PROVIDERS["default"]
+        a = provider.output_stem("first-post", self.ctx("hacks"))
+        b = provider.output_stem("totally-different-post", self.ctx("hacks"))
+        self.assertEqual(a, b)
+        self.assertEqual(a, "section-hacks")
+
+    def test_sections_differ_from_each_other(self):
+        provider = pg.PROVIDERS["default"]
+        stems = {provider.output_stem("x", self.ctx(s))
+                 for s in ("hacks", "tools", "field-notes", "docs")}
+        self.assertEqual(len(stems), 4)
+
+    def test_sectionless_pages_get_one_shared_default(self):
+        provider = pg.PROVIDERS["default"]
+        self.assertEqual(provider.output_stem("x", self.ctx("")), "section-default")
+
+    def test_art_is_seeded_by_section_not_by_page(self):
+        """The image is shared, so it must not vary with whichever page
+        happened to trigger the write."""
+        provider = pg.PROVIDERS["default"]
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "section-hacks"
+            r1 = provider.generate("", make_settings(rasterizer="none"), out,
+                                   self.ctx("hacks"))
+            first = r1.path.read_text()
+            r2 = provider.generate("", make_settings(rasterizer="none"), out,
+                                   self.ctx("hacks"))
+            self.assertEqual(first, r2.path.read_text())
+
+
 class TestBannerArtDirection(unittest.TestCase):
     """The content -> art mapping. This is art direction, so the tests pin the
     editorial intent (a shell hack looks like a schematic) rather than bytes."""
@@ -888,7 +963,8 @@ class TestProviders(unittest.TestCase):
     def test_registry_contents(self):
         # Renderers only — Claude orchestrates and is deliberately NOT a provider.
         self.assertEqual(
-            sorted(pg.PROVIDERS), ["gemini", "local", "openai", "stability", "xai"]
+            sorted(pg.PROVIDERS),
+            ["claude", "default", "gemini", "local", "openai", "stability", "xai"]
         )
 
     def test_edit_unsupported_on_non_edit_providers(self):
