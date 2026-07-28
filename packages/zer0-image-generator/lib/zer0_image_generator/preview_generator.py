@@ -620,6 +620,33 @@ def collection_of(path: Path) -> str:
     return ""
 
 
+def section_of(path: Path) -> str:
+    """The file's section — the directory immediately INSIDE its collection
+    (`pages/_posts/hacks/x.md` -> 'hacks') — or '' when the collection holds
+    its files flat. Sites that fold several kinds of writing into one
+    collection carry the editorial distinction here, and it is the strongest
+    single signal for what a banner should look like."""
+    resolved = Path(path).resolve()
+    parts = resolved.parts
+    for i, name in enumerate(parts):
+        if name.startswith("_") and len(name) > 1:
+            # parts[i+1] is a directory only when something follows it.
+            return parts[i + 1] if i + 2 < len(parts) else ""
+    return ""
+
+
+def article_art_context(cf: "ContentFile", slug: str) -> Dict[str, str]:
+    """The page context the local renderer derives its art from."""
+    return {
+        "slug": slug,
+        "section": section_of(cf.path) or collection_of(cf.path),
+        "title": cf.title or "",
+        "description": cf.description or "",
+        "categories": cf.categories or "",
+        "body": cf.content or "",
+    }
+
+
 def collection_preview_overrides(
     collection_styles: Dict[str, Any], collection: str
 ) -> Dict[str, str]:
@@ -1284,79 +1311,523 @@ def sanitize_svg(svg_text: str) -> Tuple[str, List[str]]:
     return ET.tostring(root, encoding="unicode"), warnings
 
 
-def render_local_svg(title: str, seed: int) -> str:
-    """Deterministic retro-landscape SVG for the `local` provider (no network).
+# --- Content-aware banner art -----------------------------------------------
+# The `local` renderer used to draw ONE composition — a retro skyline under a
+# sun — re-coloured per slug. Every banner on a site therefore looked like
+# every other banner, and none of them had anything to do with what the article
+# said. These compositions replace it: the article's own context (its section,
+# tags, title and body) picks the composition AND the palette, so a shell hack
+# renders as a circuit schematic and a narrative essay as a flow field.
+#
+# Everything here is authored at the banner frame (SVG_WIDTH x SVG_HEIGHT) so
+# sanitize_svg's forced viewBox is a no-op rather than a squash, and every draw
+# goes through the seeded LCG — no clock, no `random`, no environment. Same
+# article in, same bytes out.
 
-    Shares the claude provider's seed → palette/composition scheme so the two
-    stay visually kin per slug."""
-    pal = palette_for(seed)
-    variant = (seed >> 8) % len(COMPOSITION_VARIANTS)
-    rng = seed or 1
+BANNER_PALETTES: Dict[str, List[str]] = {
+    # [bg, far, mid, near, accent, glow]
+    "neon": ["#0b0f17", "#171b2e", "#2b2a5e", "#d946ef", "#22d3ee", "#f5f3ff"],
+    "ember": ["#120b16", "#2d1b2e", "#5c2a4a", "#b3324b", "#f2542d", "#ffd166"],
+    "cyanic": ["#0b132b", "#1c2541", "#1c7293", "#5bc0be", "#9fd8d6", "#e8f1f2"],
+    "moss": ["#101a14", "#1b2f22", "#2f5d3f", "#6f9e6f", "#a3c9a8", "#e9edc9"],
+    "dusk": ["#1a1423", "#2c1f3d", "#5c3a72", "#a05fa8", "#f5a623", "#f7e8d3"],
+    "slate": ["#0d1117", "#161b22", "#26303d", "#4b6178", "#7ea6c9", "#dbe7f0"],
+}
+BANNER_PALETTE_ORDER: List[str] = ["neon", "ember", "cyanic", "moss", "dusk", "slate"]
+
+# Keyword -> composition. Scored against the article's section, tags, title and
+# body; the highest score wins, ties break on the content seed. Kept small and
+# legible on purpose — this is art direction, not a classifier.
+# Matched as WHOLE WORDS, so section names must appear in the form a section
+# directory actually uses ('hacks', not 'hack') alongside the topical terms.
+BANNER_KEYWORDS: List[Tuple[str, Tuple[str, ...]]] = [
+    ("circuit", ("hack", "hacks", "shell", "bash", "zsh", "cli", "terminal",
+                 "command", "script", "docker", "container", "pipeline",
+                 "deploy", "git", "kernel", "server", "network", "port",
+                 "cache", "sed", "awk", "grep", "ssh", "make", "compile")),
+    ("pixelscene", ("tool", "tools", "review", "reviews", "app", "editor",
+                    "game", "retro", "install", "cheatsheet", "productivity",
+                    "keyboard", "plugin", "extension", "terminal")),
+    ("starfield", ("security", "threat", "secret", "secrets", "token", "auth",
+                   "permission", "permissions", "audit", "risk", "attack",
+                   "privacy", "explore", "journey", "discover", "vulnerability",
+                   "credential", "sandbox")),
+    ("lowpoly", ("doc", "docs", "guide", "reference", "architecture", "design",
+                 "system", "structure", "schema", "diagram", "overview", "spec",
+                 "concept", "concepts", "glossary", "handbook")),
+    ("flowfield", ("note", "notes", "essay", "story", "ai", "agent", "agents",
+                   "robot", "automation", "loop", "flow", "process", "thought",
+                   "retrospective", "lesson", "lessons", "journal", "reflection")),
+]
+BANNER_COMPOSITION_ORDER: List[str] = [
+    "circuit", "flowfield", "lowpoly", "pixelscene", "starfield",
+]
+
+
+def _banner_lcg(seed: int):
+    """glibc LCG masked to 31 bits — the engine's long-standing determinism
+    seam, reused so banner art draws from the same stream shape as the rest."""
+    state = seed or 1
 
     def nxt(bound: int) -> int:
-        nonlocal rng
-        rng = (rng * 1103515245 + 12345) & 0x7FFFFFFF
-        return rng % max(bound, 1)
+        nonlocal state
+        state = (state * 1103515245 + 12345) & 0x7FFFFFFF
+        return state % max(bound, 1)
+    return nxt
 
+
+def _num(value: float, places: int = 1) -> str:
+    """Round for markup. Sub-pixel precision is invisible and triples size."""
+    text = f"{value:.{places}f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def _mix(a: str, b: str, t: float) -> str:
+    """Blend two #rrggbb strings. Integer output, so the bytes are identical
+    on every runtime regardless of float formatting."""
+    t = min(max(t, 0.0), 1.0)
+    out = "#"
+    for i in (1, 3, 5):
+        ca, cb = int(a[i:i + 2], 16), int(b[i:i + 2], 16)
+        out += f"{int(ca + (cb - ca) * t + 0.5):02x}"
+    return out
+
+
+# Trig by lookup table, built from a Taylor series rather than imported from
+# math: libm rounds the last bit differently across platforms and runtimes, and
+# the Ruby port is pinned byte-for-byte against this file. A 256-entry table is
+# 1.4 degrees of resolution — finer than a 1px step can express at this size.
+_BANNER_SIN: List[float] = []
+_BANNER_COS: List[float] = []
+
+
+def _build_banner_trig() -> None:
+    tau = 6.283185307179586
+    for i in range(256):
+        a = (i / 256.0) * tau
+        t = a - tau if a > 3.141592653589793 else a
+        _BANNER_SIN.append(
+            t - t ** 3 / 6 + t ** 5 / 120 - t ** 7 / 5040 + t ** 9 / 362880)
+        _BANNER_COS.append(
+            1 - t ** 2 / 2 + t ** 4 / 24 - t ** 6 / 720 + t ** 8 / 40320
+            - t ** 10 / 3628800)
+
+
+_build_banner_trig()
+
+
+def _bsin(angle: float) -> float:
+    return _BANNER_SIN[int(angle / 6.283185307179586 * 256) & 255]
+
+
+def _bcos(angle: float) -> float:
+    return _BANNER_COS[int(angle / 6.283185307179586 * 256) & 255]
+
+
+def _banner_noise(seed: int):
+    """Smoothed value noise on a 17x17 lattice, sampled in unit coordinates."""
+    nxt = _banner_lcg(seed ^ 0x9E3779B9)
+    grid = [[nxt(1000) / 1000.0 for _ in range(17)] for _ in range(17)]
+
+    def at(x: float, y: float) -> float:
+        gx, gy = x * 16.0, y * 16.0
+        x0, y0 = int(gx), int(gy)
+        fx, fy = gx - x0, gy - y0
+        x1, y1 = min(x0 + 1, 16), min(y0 + 1, 16)
+        # smoothstep, so the field has no directional creases
+        sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+        a = grid[y0][x0] * (1 - sx) + grid[y0][x1] * sx
+        b = grid[y1][x0] * (1 - sx) + grid[y1][x1] * sx
+        return a * (1 - sy) + b * sy
+    return at
+
+
+def _banner_frame(body: str, pal: List[str], title: str = "") -> str:
+    """Wrap a composition in the banner root. `role="img"` plus a `<title>` as
+    the FIRST child is the house rule (.claude/rules/svg.md) — without it a
+    screen reader announces an unlabeled graphic."""
+    label = (str(title) or "banner").replace("&", "&amp;") \
+        .replace("<", "&lt;").replace(">", "&gt;")
+    return (
+        f'<svg xmlns="{SVG_NS}" viewBox="0 0 {SVG_WIDTH} {SVG_HEIGHT}" '
+        f'width="{SVG_WIDTH}" height="{SVG_HEIGHT}" role="img">'
+        f'<title>Preview banner: {label}</title>'
+        f'<rect width="{SVG_WIDTH}" height="{SVG_HEIGHT}" fill="{pal[0]}" />'
+        f'{body}</svg>'
+    )
+
+
+def banner_flowfield(seed: int, pal: List[str], title: str = "") -> str:
+    """Streamlines advected through a noise field — organic and dense, with no
+    dead space anywhere in the frame."""
+    nxt = _banner_lcg(seed)
+    noise = _banner_noise(seed)
     w, h = SVG_WIDTH, SVG_HEIGHT
-    safe_title = title.replace("&", "&amp;").replace("<", "&lt;")
-    parts = [
-        f'<svg xmlns="{SVG_NS}" viewBox="0 0 {w} {h}" width="{w}" height="{h}" '
-        f'role="img">',
-        f'<title>Preview banner: {safe_title}</title>',
-        f'<rect width="{w}" height="{h}" fill="{pal[0]}"/>',
-    ]
-    # Sky bands
-    band_h = h // 8
-    for i in range(3):
-        parts.append(
-            f'<rect y="{i * band_h}" width="{w}" height="{band_h}" '
-            f'fill="{pal[1]}" opacity="0.{25 + i * 12}"/>'
-        )
-    # Celestial body with stepped "pixel" rings
-    cx, cy, radius = w - 320 - nxt(400), 240 + nxt(160), 130 + nxt(80)
-    for i, ring_color in enumerate([pal[5], pal[4]]):
-        parts.append(
-            f'<circle cx="{cx}" cy="{cy}" r="{radius - i * 26}" fill="{ring_color}"/>'
-        )
-    # Scanline stripes across the disk (clipped to the circle's chord width)
-    for i in range(3):
-        y = cy + 12 + i * 26
-        dy = abs(y + 5 - cy)
-        if dy >= radius:
+    inks = [pal[3], pal[4], pal[5], pal[2]]
+    out: List[str] = []
+    for _ in range(400):
+        x, y = nxt(w + 240) - 120, nxt(h + 240) - 120
+        pts = [(x, y)]
+        # Advance in SMALL steps so the curve stays faithful to the field, but
+        # record only every third one. Mapping the 0..1 noise onto a full turn
+        # (not two) keeps adjacent steps from flipping ~180 degrees, which is
+        # what would otherwise stutter the line into a zigzag.
+        for i in range(96):
+            angle = noise(min(max(x / w, 0.0), 1.0),
+                          min(max(y / h, 0.0), 1.0)) * 6.283185307179586
+            x += _bcos(angle) * 9
+            y += _bsin(angle) * 9
+            if not (-140 < x < w + 140 and -140 < y < h + 140):
+                break
+            if i % 3 == 2:
+                pts.append((x, y))
+        if len(pts) < 5:
             continue
-        half = int((radius * radius - dy * dy) ** 0.5)
-        parts.append(f'<rect x="{cx - half}" y="{y}" width="{half * 2}" height="10" fill="{pal[0]}"/>')
-    # Layered terrain: three silhouette ranges of blocky steps
-    for layer, color in enumerate([pal[2], pal[3], pal[1]]):
-        base = h - 120 - layer * 170
-        x = -40
-        points = [f"-40,{h}"]
-        while x < w + 80:
-            peak = base - nxt(300) - (2 - layer) * 70
-            width_step = 90 + nxt(150)
-            points.append(f"{x},{peak}")
-            points.append(f"{x + width_step},{peak}")
-            x += width_step
-        points.append(f"{w + 80},{h}")
-        parts.append(f'<polygon points="{" ".join(points)}" fill="{color}"/>')
-    # Variant flourish: grid floor for even variants, stars for odd
-    if variant % 2 == 0:
-        for i in range(1, 7):
-            y = h - i * (i * 8)
-            parts.append(f'<rect y="{y}" width="{w}" height="3" fill="{pal[4]}" opacity="0.35"/>')
+        ink = inks[nxt(len(inks))]
+        width = 0.5 + nxt(18) / 10.0
+        opacity = 0.16 + nxt(50) / 100.0
+        # Whole pixels: at these stroke widths a decimal is invisible and costs
+        # two bytes on each of ~12k coordinate pairs.
+        d = "M" + " L".join(f"{int(px)} {int(py)}" for px, py in pts)
+        out.append(f'<path d="{d}" fill="none" stroke="{ink}" '
+                   f'stroke-width="{_num(width)}" '
+                   f'stroke-opacity="{_num(opacity, 2)}" '
+                   f'stroke-linecap="round" />')
+    return _banner_frame("".join(out), pal, title)
+
+
+def banner_lowpoly(seed: int, pal: List[str], title: str = "") -> str:
+    """Faceted gradient field — calm and technical, fills the frame edge to
+    edge."""
+    nxt = _banner_lcg(seed)
+    noise = _banner_noise(seed)
+    w, h = SVG_WIDTH, SVG_HEIGHT
+    cols, rows = 22, 15
+    cw, ch = w / cols, h / rows
+    lattice = []
+    for r in range(rows + 1):
+        row = []
+        for c in range(cols + 1):
+            # Edge vertices stay pinned, or the border shows through.
+            jx = 0.0 if c in (0, cols) else (nxt(60) - 30) / 100.0 * cw
+            jy = 0.0 if r in (0, rows) else (nxt(60) - 30) / 100.0 * ch
+            row.append((c * cw + jx, r * ch + jy))
+        lattice.append(row)
+
+    # Ramp CONTINUOUSLY down the frame and let the noise only shade each facet
+    # slightly lighter or darker. Discrete colour stops band the field into
+    # hard stripes and an accent threshold scatters floating shards.
+    ramp = [pal[1], pal[2], pal[3], pal[4]]
+
+    def facet_color(t: float, n: float) -> str:
+        pos = min(max(t, 0.0), 0.999) * (len(ramp) - 1)
+        i = int(pos)
+        base = _mix(ramp[i], ramp[i + 1], pos - i)
+        if n > 0.5:
+            return _mix(base, pal[5], (n - 0.5) * 0.22)
+        return _mix(base, pal[0], (0.5 - n) * 0.30)
+
+    out: List[str] = []
+    for r in range(rows):
+        for c in range(cols):
+            a, b = lattice[r][c], lattice[r][c + 1]
+            d, e = lattice[r + 1][c], lattice[r + 1][c + 1]
+            for tri in ((a, b, d), (b, e, d)):
+                cx = (tri[0][0] + tri[1][0] + tri[2][0]) / 3
+                cy = (tri[0][1] + tri[1][1] + tri[2][1]) / 3
+                color = facet_color(cy / h, noise(cx / w, cy / h))
+                points = " ".join(f"{_num(px)},{_num(py)}" for px, py in tri)
+                # Stroke each facet in its own fill: float rounding otherwise
+                # leaves hairline seams that render as stray light lines.
+                out.append(f'<polygon points="{points}" fill="{color}" '
+                           f'stroke="{color}" stroke-width="1" />')
+    return _banner_frame("".join(out), pal, title)
+
+
+def banner_circuit(seed: int, pal: List[str], title: str = "") -> str:
+    """Orthogonal traces, pads, vias and chips — a schematic read for the
+    shell/infrastructure end of a site."""
+    nxt = _banner_lcg(seed)
+    w, h = SVG_WIDTH, SVG_HEIGHT
+    step = 32
+    out: List[str] = []
+
+    substrate = []
+    for x in range(0, w + 1, step * 2):
+        substrate.append(f"M{x} 0 L{x} {h}")
+    for y in range(0, h + 1, step * 2):
+        substrate.append(f"M0 {y} L{w} {y}")
+    out.append(f'<path d="{" ".join(substrate)}" stroke="{pal[1]}" '
+               f'stroke-width="1" fill="none" stroke-opacity="0.9" />')
+
+    junctions: List[Tuple[int, int]] = []
+    for _ in range(64):
+        # Snap to the grid so every trace is orthogonal by construction.
+        x = nxt(w // step) * step
+        y = nxt(h // step) * step
+        segments = [f"M{x} {y}"]
+        junctions.append((x, y))
+        for _ in range(3 + nxt(5)):
+            if nxt(2):
+                x = max(0, min(w, x + (nxt(11) - 5) * step))
+                segments.append(f"L{x} {y}")
+            else:
+                y = max(0, min(h, y + (nxt(9) - 4) * step))
+                segments.append(f"L{x} {y}")
+        junctions.append((x, y))
+        ink = pal[4] if nxt(3) else pal[3]
+        out.append(f'<path d="{" ".join(segments)}" fill="none" stroke="{ink}" '
+                   f'stroke-width="{2 + nxt(3)}" stroke-opacity="0.85" '
+                   f'stroke-linecap="square" stroke-linejoin="miter" />')
+
+    for (px, py) in junctions:
+        out.append(f'<circle cx="{px}" cy="{py}" r="7" fill="{pal[0]}" '
+                   f'stroke="{pal[4]}" stroke-width="3" />')
+
+    for _ in range(6):
+        x = nxt(w // step - 6) * step
+        y = nxt(h // step - 4) * step
+        cw, chh = (3 + nxt(3)) * step, (2 + nxt(2)) * step
+        out.append(f'<rect x="{x}" y="{y}" width="{cw}" height="{chh}" rx="6" '
+                   f'fill="{pal[2]}" stroke="{pal[5]}" stroke-width="2" />')
+        for leg in range(cw // step * 2):
+            out.append(f'<rect x="{x + 8 + leg * (step // 2)}" y="{y + chh}" '
+                       f'width="6" height="10" fill="{pal[5]}" />')
+    return _banner_frame("".join(out), pal, title)
+
+
+def banner_starfield(seed: int, pal: List[str], title: str = "") -> str:
+    """Constellations over layered ridges — the night-sky read."""
+    nxt = _banner_lcg(seed)
+    w, h = SVG_WIDTH, SVG_HEIGHT
+    horizon = int(h * 0.72)
+    out: List[str] = []
+
+    for _ in range(230):
+        x, y = nxt(w), nxt(horizon)
+        # Thin the field toward the horizon so the sky reads as deep.
+        if nxt(horizon) < y * 0.75:
+            continue
+        out.append(f'<circle cx="{x}" cy="{y}" r="{1 + nxt(3)}" fill="{pal[5]}" '
+                   f'fill-opacity="{_num(0.3 + nxt(70) / 100.0, 2)}" />')
+
+    for _ in range(4):
+        cx, cy = 120 + nxt(w - 240), 90 + nxt(horizon - 220)
+        nodes = [(cx, cy)]
+        for _ in range(3 + nxt(3)):
+            cx += nxt(220) - 90
+            cy += nxt(180) - 80
+            nodes.append((cx, cy))
+        d = "M" + " L".join(f"{nx} {ny}" for nx, ny in nodes)
+        out.append(f'<path d="{d}" fill="none" stroke="{pal[4]}" '
+                   f'stroke-width="2" stroke-opacity="0.55" />')
+        for (nx, ny) in nodes:
+            out.append(f'<circle cx="{nx}" cy="{ny}" r="5" fill="{pal[4]}" />')
+
+    mx, my = w - 260 - nxt(200), 150 + nxt(120)
+    out.append(f'<circle cx="{mx}" cy="{my}" r="86" fill="{pal[3]}" '
+               f'fill-opacity="0.18" />')
+    out.append(f'<circle cx="{mx}" cy="{my}" r="62" fill="{pal[5]}" />')
+    out.append(f'<circle cx="{mx + 26}" cy="{my - 16}" r="56" fill="{pal[0]}" />')
+
+    # Aerial perspective: the FARTHEST ridge is hazy and light, each nearer one
+    # steps darker. Every layer closes to the bottom of the frame, so the
+    # foreground is ridge mass rather than a flat band of background.
+    for layer in range(4):
+        top = horizon - 40 + layer * 58
+        points = [f"0,{h}"]
+        x, y = 0, float(top)
+        while x <= w:
+            points.append(f"{x},{_num(y)}")
+            x += 40 + nxt(80)
+            y = top + nxt(56) - 24
+        points.append(f"{w},{_num(float(top))}")
+        points.append(f"{w},{h}")
+        out.append(f'<polygon points="{" ".join(points)}" '
+                   f'fill="{_mix(pal[3], pal[0], layer / 3.0)}" />')
+    return _banner_frame("".join(out), pal, title)
+
+
+def banner_pixelscene(seed: int, pal: List[str], title: str = "") -> str:
+    """Pixel-art side-scroller on a strict integer grid, run-length merged."""
+    nxt = _banner_lcg(seed)
+    px = 16
+    cols, rows = SVG_WIDTH // px, SVG_HEIGHT // px
+    cells: List[List[Optional[str]]] = [[None] * cols for _ in range(rows)]
+
+    def put(cx: int, cy: int, color: str) -> None:
+        if 0 <= cx < cols and 0 <= cy < rows:
+            cells[cy][cx] = color
+
+    def block(cx: int, cy: int, bw: int, bh: int, color: str) -> None:
+        for yy in range(cy, cy + bh):
+            for xx in range(cx, cx + bw):
+                put(xx, yy, color)
+
+    ground = rows - 12
+    for _ in range(150):
+        sx, sy = nxt(cols), nxt(ground - 4)
+        if nxt(ground) > sy:
+            put(sx, sy, pal[5] if nxt(4) else pal[3])
+
+    sun_x, sun_y = cols - 20 + nxt(8), 6 + nxt(5)
+    for yy in range(-4, 5):
+        for xx in range(-4, 5):
+            d2 = xx * xx + yy * yy
+            if d2 <= 16:
+                put(sun_x + xx, sun_y + yy, pal[4])
+            elif d2 <= 25:
+                put(sun_x + xx, sun_y + yy, pal[3])
+
+    # `surface` is the row the ground starts at; fill from there to the bottom
+    # so the land is solid mass rather than a one-cell scribble.
+    surface = ground
+    for cx in range(cols):
+        if nxt(4) == 0:
+            surface = max(ground - 5, min(rows - 4, surface + nxt(3) - 1))
+        block(cx, surface, 1, rows - surface, pal[2])
+        put(cx, surface, pal[3])
+        if nxt(7) == 0:
+            put(cx, surface + 2 + nxt(4), pal[1])
+
+    for _ in range(5):
+        span = 5 + nxt(8)
+        bx, by = nxt(max(cols - span, 1)), ground - 9 - nxt(16)
+        for i in range(span):
+            put(bx + i, by, pal[3])
+            put(bx + i, by + 1, pal[1])
+
+    # The hero: 6x9 cells with a dark keyline, so it reads off any ground
+    # colour and stays the only glow-coloured figure in frame.
+    hx, hy = 10 + nxt(14), ground - 10
+    block(hx - 1, hy - 1, 8, 11, pal[0])
+    block(hx + 1, hy, 4, 2, pal[4])
+    block(hx + 1, hy + 2, 4, 1, pal[1])
+    block(hx, hy + 3, 6, 4, pal[5])
+    block(hx + 2, hy + 4, 2, 2, pal[3])
+    block(hx, hy + 7, 2, 3, pal[5])
+    block(hx + 4, hy + 7, 2, 3, pal[5])
+    block(hx + 6, hy + 1, 1, 6, pal[4])
+
+    # Merge horizontal runs of one colour into single rects: a 96x64 scene
+    # stays a few KB instead of six thousand one-cell rects.
+    out: List[str] = []
+    for y in range(rows):
+        x = 0
+        while x < cols:
+            color = cells[y][x]
+            if color is None:
+                x += 1
+                continue
+            run = 1
+            while x + run < cols and cells[y][x + run] == color:
+                run += 1
+            out.append(f'<rect x="{x * px}" y="{y * px}" width="{run * px}" '
+                       f'height="{px}" fill="{color}" />')
+            x += run
+    body = f'<g shape-rendering="crispEdges">{"".join(out)}</g>'
+    veil = "".join(f'<rect y="{y}" width="{SVG_WIDTH}" height="2" />'
+                   for y in range(0, SVG_HEIGHT, 6))
+    body += f'<g fill="{pal[0]}" fill-opacity="0.22">{veil}</g>'
+    return _banner_frame(body, pal, title)
+
+
+BANNER_COMPOSITIONS = {
+    "circuit": banner_circuit,
+    "flowfield": banner_flowfield,
+    "lowpoly": banner_lowpoly,
+    "pixelscene": banner_pixelscene,
+    "starfield": banner_starfield,
+}
+
+
+_BANNER_WORD = re.compile(r"[a-z0-9]+")
+
+
+def _banner_words(text: str) -> List[str]:
+    """Whole words, lowercased. Substring matching is not good enough here:
+    a bare `"ci" in text` fires on 'decision', 'specific' and 'efficiency',
+    which is enough to drag every article on a dev blog toward one look."""
+    return _BANNER_WORD.findall(str(text or "").lower())
+
+
+def banner_signature(article: Dict[str, str]) -> str:
+    """The text the art is derived from. Title and tags carry the topic; the
+    section carries the editorial intent; a slice of the body keeps two posts
+    with near-identical titles from colliding."""
+    return " ".join([
+        article.get("section", ""),
+        article.get("categories", ""),
+        article.get("title", ""),
+        article.get("description", ""),
+        article.get("body", "")[:600],
+    ]).lower()
+
+
+def banner_seed_for(article: Dict[str, str]) -> int:
+    """Seed from the article's CONTENT, not just its filename — so retitling or
+    re-tagging a piece re-rolls its art, and two posts that merely sort next to
+    each other don't come out kin."""
+    key = banner_signature(article) + "|" + article.get("slug", "")
+    return zlib.crc32(key.encode("utf-8"))
+
+
+def banner_theme_for(article: Dict[str, str]) -> Tuple[str, str]:
+    """(composition, palette) for an article. Keyword hits decide; the seed only
+    breaks ties and picks the palette, so the mapping is legible to a human
+    reading the config rather than an opaque hash.
+
+    The fields are weighted, not pooled. A section name is a deliberate
+    editorial choice and the tags and title are hand-written, so they carry
+    most of the signal; the body is long, incidental, and full of words the
+    author never chose, so each of its hits counts once and the whole field is
+    capped. Pooling them all equally lets a 3,000-word article's stray
+    vocabulary outvote its own title."""
+    fields = (
+        (article.get("section", ""), 6),
+        (article.get("categories", ""), 3),
+        (article.get("title", ""), 3),
+        (article.get("description", ""), 2),
+        (article.get("body", "")[:4000], 1),
+    )
+    scored = [(set(_banner_words(text)), weight) for text, weight in fields]
+    seed = banner_seed_for(article)
+
+    best_name, best_score = "", 0
+    for name, keywords in BANNER_KEYWORDS:
+        wanted = set(keywords)
+        score = 0
+        for words, weight in scored:
+            hits = len(wanted & words)
+            # Cap the body's contribution: presence, not word count, is what
+            # the low-weight field is evidence of.
+            score += min(hits, 4) * weight if weight == 1 else hits * weight
+        # Strictly greater, so ties fall to the earlier (more specific) entry.
+        if score > best_score:
+            best_name, best_score = name, score
+    if not best_name:
+        best_name = BANNER_COMPOSITION_ORDER[seed % len(BANNER_COMPOSITION_ORDER)]
+
+    palette = BANNER_PALETTE_ORDER[(seed >> 8) % len(BANNER_PALETTE_ORDER)]
+    return best_name, palette
+
+
+def render_local_svg(title: str, seed: int,
+                     article: Optional[Dict[str, str]] = None) -> str:
+    """Deterministic banner for the `local` provider (no network).
+
+    `article` carries the page's context (slug, section, title, tags, body); it
+    selects the composition and palette. Without it — a caller that only has a
+    slug — the art still renders, just chosen from the seed alone."""
+    if article:
+        composition, palette = banner_theme_for(article)
+        art_seed = banner_seed_for(article)
     else:
-        for _ in range(40):
-            sx, sy = nxt(w), nxt(h // 2)
-            size = 3 + nxt(5)
-            parts.append(f'<rect x="{sx}" y="{sy}" width="{size}" height="{size}" fill="{pal[4]}"/>')
-    # CRT scanline veil + vignette bars
-    for y in range(0, h, 8):
-        parts.append(f'<rect y="{y}" width="{w}" height="1" fill="#000" opacity="0.10"/>')
-    parts.append(f'<rect width="{w}" height="26" fill="#000" opacity="0.35"/>')
-    parts.append(f'<rect y="{h - 26}" width="{w}" height="26" fill="#000" opacity="0.35"/>')
-    parts.append("</svg>")
-    return "".join(parts)
+        composition = BANNER_COMPOSITION_ORDER[seed % len(BANNER_COMPOSITION_ORDER)]
+        palette = BANNER_PALETTE_ORDER[(seed >> 8) % len(BANNER_PALETTE_ORDER)]
+        art_seed = seed
+    return BANNER_COMPOSITIONS[composition](
+        art_seed, BANNER_PALETTES[palette], title)
 
 
 # =============================================================================
@@ -1731,6 +2202,11 @@ class RunContext:
     env: Dict[str, str]
     anthropic: Optional[AnthropicClient] = None
     slug: str = ""
+    # The page's own context (slug/section/title/categories/description/body),
+    # set per file by the runner. The local renderer derives BOTH composition
+    # and palette from it, which is what makes a banner about its article
+    # instead of about its filename.
+    article: Optional[Dict[str, str]] = None
 
     def claude(self) -> AnthropicClient:
         if self.anthropic is None:
@@ -2009,7 +2485,7 @@ class LocalProvider(Provider, SvgProviderMixin):
 
     def generate(self, prompt, settings, out_base, ctx) -> ImageResult:
         seed = seed_for(ctx.slug or out_base.stem)
-        svg_text = render_local_svg(ctx.slug, seed)
+        svg_text = render_local_svg(ctx.slug, seed, ctx.article)
         return self.finish_svg(svg_text, out_base, settings, ctx)
 
     def edit(self, image_path, prompt, settings, ctx, out_path=None) -> ImageResult:
@@ -2154,7 +2630,8 @@ class Runner:
         # local provider derives its deterministic seed from it). The copy
         # carries the shared AnthropicClient reference, which is stateless
         # after init and therefore thread-safe.
-        file_ctx = replace(self.ctx, slug=slug)
+        file_ctx = replace(self.ctx, slug=slug,
+                           article=article_art_context(cf, slug))
         # ---- Produce: the selected raster model renders the brief ----
         result = provider.generate(prompt, file_settings, out_base, file_ctx)
 

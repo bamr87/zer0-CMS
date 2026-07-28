@@ -66,7 +66,7 @@ module Zer0ImageGenerator
       # what render_local_svg titles the banner with.
       seed_key = ctx.slug.to_s.empty? ? stem_of(out_base) : ctx.slug
       seed = Svg::LocalRenderer.seed_for(seed_key)
-      svg_text = Svg::LocalRenderer.render_local_svg(ctx.slug, seed)
+      svg_text = Svg::LocalRenderer.render_local_svg(ctx.slug, seed, ctx.article)
       finish_svg(svg_text, out_base, settings, ctx)
     end
 

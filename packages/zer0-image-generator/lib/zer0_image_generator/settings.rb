@@ -184,6 +184,34 @@ module Zer0ImageGenerator
     ""
   end
 
+  # The file's section — the directory immediately INSIDE its collection
+  # (`pages/_posts/hacks/x.md` -> 'hacks') — or "" when the collection holds its
+  # files flat. Sites that fold several kinds of writing into one collection
+  # carry the editorial distinction here, and it is the strongest single signal
+  # for what a banner should look like.
+  def section_of(path)
+    parts = Pathname.new(path.to_s).expand_path.to_s.split(File::SEPARATOR)
+    parts.each_with_index do |name, i|
+      next unless name.start_with?("_") && name.length > 1
+
+      # parts[i + 1] is a directory only when something follows it.
+      return i + 2 < parts.length ? parts[i + 1] : ""
+    end
+    ""
+  end
+
+  # The page context the local renderer derives its art from.
+  def article_art_context(content_file, slug)
+    {
+      "slug" => slug,
+      "section" => (s = section_of(content_file.path)).empty? ? collection_of(content_file.path) : s,
+      "title" => content_file.title.to_s,
+      "description" => content_file.description.to_s,
+      "categories" => content_file.categories.to_s,
+      "body" => content_file.content.to_s,
+    }
+  end
+
   # `collection_styles:` override block for a collection — same keys as author
   # overrides, so each collection can carry its own visual theme.
   def collection_preview_overrides(collection_styles, collection)

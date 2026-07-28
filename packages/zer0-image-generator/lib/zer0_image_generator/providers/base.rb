@@ -113,13 +113,18 @@ module Zer0ImageGenerator
   # cross-contaminate concurrent renders.
   class RunContext
     attr_reader :project_root, :env
-    attr_accessor :anthropic, :slug
+    attr_accessor :anthropic, :slug, :article
 
-    def initialize(project_root:, env:, anthropic: nil, slug: "")
+    def initialize(project_root:, env:, anthropic: nil, slug: "", article: nil)
       @project_root = project_root
       @env = env
       @anthropic = anthropic
       @slug = slug
+      # The page's own context (slug/section/title/categories/description/body),
+      # set per file by the runner. The local renderer derives BOTH composition
+      # and palette from it, which is what makes a banner about its article
+      # instead of about its filename.
+      @article = article
     end
 
     def claude
@@ -132,9 +137,9 @@ module Zer0ImageGenerator
     # purpose: env is read-only and the AnthropicClient is stateless after init,
     # so sharing them across workers is thread-safe; only the slug is per-file
     # and therefore must not be shared.
-    def with_slug(slug)
+    def with_slug(slug, article: nil)
       RunContext.new(project_root: @project_root, env: @env,
-                     anthropic: @anthropic, slug: slug)
+                     anthropic: @anthropic, slug: slug, article: article)
     end
   end
 end

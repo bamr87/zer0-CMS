@@ -35,7 +35,7 @@ Each post/page without a preview goes through a three-stage pipeline:
 | xai         | grok-2-image                               | `XAI_API_KEY`       |
 | stability   | Stable Diffusion XL                        | `STABILITY_API_KEY` |
 | gemini      | gemini-2.5-flash-image                     | `GEMINI_API_KEY`    |
-| local       | deterministic template SVG → PNG           | none (CI-safe)      |
+| local       | content-aware deterministic SVG            | none (CI-safe)      |
 
 Claude never renders pixels (the Anthropic API has no image endpoint); without a Claude credential the analyze/review stages degrade gracefully to a template prompt and the renderer still runs.
 
@@ -219,6 +219,24 @@ Keys are read from the environment or a git-ignored `.env` at the site root. On 
 --collections-dir DIR   --front-matter-key KEY      --authors-file FILE
 --assets-prefix PREFIX  --no-auto-prefix            --batch N  --log-file FILE
 ```
+
+### Content-aware local banners
+
+The `local` renderer does not draw one template in six colours. It reads the page's own context — its **section**, **tags**, **title**, **description** and **body** — and picks both the composition and the palette from it, so a shell hack and a narrative essay do not come out looking like siblings.
+
+| composition | reads as | selected by |
+| --- | --- | --- |
+| `circuit` | orthogonal traces, pads, vias, chips | `hacks`, shell/docker/git/ci vocabulary |
+| `pixelscene` | pixel-art side-scroller | `tools`, reviews, editors, games |
+| `flowfield` | streamlines through a noise field | `field-notes`, essays, AI/automation |
+| `lowpoly` | faceted gradient field | `docs`, guides, architecture, schemas |
+| `starfield` | constellations over layered ridges | security, secrets, audits, exploration |
+
+Fields are **weighted, not pooled**: a section name is a deliberate editorial choice and tags and titles are hand-written, so they carry most of the signal, while the long incidental body is capped. Matching is on whole words — a bare substring test fires `ci` inside "de**ci**sion" and drags an entire dev blog toward one look. With no keyword hit anywhere the seed picks, so every page still gets art.
+
+Determinism is unchanged and remains a hard contract: the same article renders the same bytes on both engines. The seed comes from the article's **content** rather than its filename, so retitling or re-tagging a piece re-rolls its art — and two posts whose filenames merely sort next to each other no longer come out kin.
+
+Every composition is authored at the banner frame (1536×1024), so the sanitizer's forced `viewBox` is a no-op rather than a squash, and each emits `role="img"` plus a `<title>`.
 
 The `local` provider rasterizes its SVG via the first available of `rsvg-convert` (`brew install librsvg` / `apt install librsvg2-bin`), `inkscape`, ImageMagick, or a vendored Playwright helper.
 

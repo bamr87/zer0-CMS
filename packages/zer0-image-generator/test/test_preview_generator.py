@@ -656,6 +656,72 @@ class TestSvgToolkit(unittest.TestCase):
         self.assertIn('role="img"', clean)
         self.assertIn("Preview banner: my-post</title>", clean)
 
+    def test_every_composition_renders_clean_at_banner_size(self):
+        """All five must survive the sanitizer untouched and fill the frame —
+        a composition authored at the wrong aspect gets squashed by the forced
+        viewBox rather than rejected, so size is the thing to assert."""
+        for name, render in pg.BANNER_COMPOSITIONS.items():
+            svg = render(4242, pg.BANNER_PALETTES["neon"], "a-slug")
+            clean, notes = pg.sanitize_svg(svg)
+            self.assertEqual(notes, [], f"{name} needed scrubbing")
+            self.assertIn(f'viewBox="0 0 {pg.SVG_WIDTH} {pg.SVG_HEIGHT}"', clean)
+            self.assertIn('role="img"', clean)
+            self.assertIn("Preview banner: a-slug</title>", clean)
+
+
+class TestBannerArtDirection(unittest.TestCase):
+    """The content -> art mapping. This is art direction, so the tests pin the
+    editorial intent (a shell hack looks like a schematic) rather than bytes."""
+
+    def article(self, **over):
+        base = {"slug": "a-post", "section": "", "categories": "", "title": "",
+                "description": "", "body": ""}
+        base.update(over)
+        return base
+
+    def test_section_decides_the_composition(self):
+        for section, expected in (("hacks", "circuit"), ("tools", "pixelscene"),
+                                  ("docs", "lowpoly"), ("field-notes", "flowfield")):
+            composition, _ = pg.banner_theme_for(self.article(section=section))
+            self.assertEqual(composition, expected, f"section {section}")
+
+    def test_tags_and_title_decide_when_there_is_no_section(self):
+        composition, _ = pg.banner_theme_for(
+            self.article(categories="security token", title="Audit your secrets"))
+        self.assertEqual(composition, "starfield")
+
+    def test_whole_word_matching_only(self):
+        """'decision' contains 'ci' and 'certain' contains 'ai'. Substring
+        matching let those drag a whole dev blog toward one composition."""
+        words = pg._banner_words("Decisions and efficiency, a specific certain case")
+        for fragment in ("ci", "cd", "ai"):
+            self.assertNotIn(fragment, words)
+
+    def test_body_cannot_outvote_the_section(self):
+        """A long body full of incidental vocabulary must not overrule the
+        section the author deliberately filed the piece under."""
+        composition, _ = pg.banner_theme_for(self.article(
+            section="tools", title="An honest review",
+            body=" ".join(["docker shell git deploy kernel server"] * 200)))
+        self.assertEqual(composition, "pixelscene")
+
+    def test_no_keywords_falls_back_to_the_seed(self):
+        composition, palette = pg.banner_theme_for(
+            self.article(title="A quiet piece", body="prose and nothing else"))
+        self.assertIn(composition, pg.BANNER_COMPOSITION_ORDER)
+        self.assertIn(palette, pg.BANNER_PALETTES)
+
+    def test_same_article_same_bytes_changed_article_new_art(self):
+        article = self.article(section="hacks", title="Order your Dockerfile")
+        first = pg.render_local_svg("a-post", 0, article)
+        self.assertEqual(first, pg.render_local_svg("a-post", 0, article))
+        retitled = dict(article, title="A completely different headline")
+        self.assertNotEqual(first, pg.render_local_svg("a-post", 0, retitled))
+
+    def test_section_of_reads_the_directory_inside_the_collection(self):
+        self.assertEqual(pg.section_of(Path("/s/pages/_posts/hacks/x.md")), "hacks")
+        self.assertEqual(pg.section_of(Path("/s/pages/_docs/x.md")), "")
+
 
 class TestAnthropicClient(unittest.TestCase):
     def client(self, env):
