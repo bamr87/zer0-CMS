@@ -2,6 +2,7 @@
 title: The Year 2005 — Knowledge Index
 permalink: "/knowledge-index/"
 description: The full 2005 knowledge table — every notable event, linked to its article.
+preview: /images/previews/the-year-2005-knowledge-index.svg
 ---
 
 # The Year 2005
@@ -56,6 +57,7 @@ This repository is both a knowledge base and a reusable framework. It expands au
 | [London wins the 2012 Olympic bid]({{ '/news/society-economics/london-wins-2012-olympic-bid/' | relative_url }}) | London beat Paris 54–50 in the IOC's final ballot in Singapore on July 6, becoming the first city to host the modern Summer Olympics three times. |
 | [31st G8 Summit at Gleneagles]({{ '/news/history-politics/g8-gleneagles-summit/' | relative_url }}) | At Gleneagles on July 6–8, G8 leaders pledged $50 billion in new annual aid and cancelled $40 billion in debt for 18 of the poorest nations. |
 | [7/7 London bombings]({{ '/news/history-politics/77-london-bombings/' | relative_url }}) | Four coordinated suicide bomb attacks struck London's transit network on July 7, killing 52 commuters and injuring over 700 — Britain's deadliest terrorist attack since Lockerbie. |
+| [Harry Potter and the Half-Blood Prince released]({{ '/news/arts-culture/harry-potter-half-blood-prince/' | relative_url }}) | J.K. Rowling's sixth novel sold 9 million copies in its first 24 hours on July 16, becoming one of the fastest-selling books ever. |
 | [Lance Armstrong wins seventh Tour de France]({{ '/news/people/lance-armstrong-tour-de-france/' | relative_url }}) | Lance Armstrong won a record seventh consecutive Tour de France on July 24, capping a comeback from cancer — all seven titles later stripped in 2012 for doping. |
 | [Space Shuttle Discovery returns to flight]({{ '/news/science-technology/sts-114-return-to-flight/' | relative_url }}) | Discovery launched July 26 on STS-114, NASA's first crewed flight since the 2003 Columbia disaster; renewed foam shedding grounded the fleet again. |
 | [Provisional IRA ends its armed campaign]({{ '/news/history-politics/ira-ends-armed-campaign/' | relative_url }}) | The IRA ordered an end to its armed campaign on July 28 and disarmed by September, a landmark in the Northern Ireland peace process. |
@@ -76,4 +78,5 @@ This repository is both a knowledge base and a reusable framework. It expands au
 | [World's first partial face transplant]({{ '/news/science-technology/first-face-transplant/' | relative_url }}) | Surgeons in Amiens, France, performed the first human face transplant on November 27, grafting a donor's nose, lips, and chin onto Isabelle Dinoire. |
 | [*The Lion, the Witch and the Wardrobe* released]({{ '/news/arts-culture/narnia-lion-witch-wardrobe/' | relative_url }}) | Andrew Adamson's fantasy adaptation premiered December 9, grossing roughly $745 million worldwide and demonstrating commercial viability for literary fantasy films. |
 | [*Brokeback Mountain* released]({{ '/news/arts-culture/brokeback-mountain/' | relative_url }}) | Ang Lee's romantic drama premiered December 9, winning three Academy Awards including Best Director and becoming a watershed film for LGBTQ+ representation. |
+| [Dover Trial rejects Intelligent Design]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) | On December 20, a federal judge ruled Intelligent Design is not science and barred it from public-school classrooms — the first such U.S. precedent. |
 | [iTunes digital music sales triple]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) | Global digital music revenues jumped from $400 million to $1.1 billion in 2005, with Apple's iTunes capturing 80% of legal downloads and fundamentally transforming the music industry. |
