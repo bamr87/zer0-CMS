@@ -1,0 +1,20 @@
+{
+  "/pages/posts/corp/caf\u00e9-m\u00e9tier/": {
+    "posted_at": "2026-07-30T17:29:20Z",
+    "source_file": "pages/_posts/corp/2026-07-30-caf\u00e9-m\u00e9tier.md",
+    "target": "jekyll",
+    "type": "article",
+    "urn": "jekyll:pages/_posts/corp/2026-07-30-caf\u00e9-m\u00e9tier.md"
+  },
+  "/pages/posts/tech/mcp-for-the-back-office/": {
+    "posted_at": "2026-07-06T08:00:00Z",
+    "source_file": "pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md",
+    "target": "jekyll",
+    "type": "article",
+    "urn": "jekyll:pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md"
+  },
+  "_meta": {
+    "generated_by": "zer0-cms",
+    "schema": 1
+  }
+}

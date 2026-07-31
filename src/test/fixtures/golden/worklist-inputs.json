@@ -1,0 +1,143 @@
+{
+  "records": [
+    {
+      "path": "pages/_posts/corp/a.md",
+      "collection": "corp",
+      "title": "A",
+      "health": 90,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/corp/b.md",
+      "collection": "corp",
+      "title": "B",
+      "health": 85,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/corp/g.md",
+      "collection": "corp",
+      "title": "G",
+      "health": 70,
+      "freshness": "aging",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/tech/c.md",
+      "collection": "tech",
+      "title": "C",
+      "health": 95,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/tech/c2.md",
+      "collection": "tech",
+      "title": "C2",
+      "health": 88,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/tech/d.md",
+      "collection": "tech",
+      "title": "D",
+      "health": -1,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/muses/e.md",
+      "collection": "muses",
+      "title": "E",
+      "health": 80,
+      "freshness": "stale",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/muses/f.md",
+      "collection": "muses",
+      "title": "F",
+      "health": 75,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/solo/x.md",
+      "collection": "solo",
+      "title": "X",
+      "health": 77,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": false
+    },
+    {
+      "path": "pages/_posts/muses/h.md",
+      "collection": "muses",
+      "title": "H",
+      "health": 88,
+      "freshness": "fresh",
+      "draft": true,
+      "structural": false
+    },
+    {
+      "path": "pages/index.md",
+      "collection": "",
+      "title": "Home",
+      "health": 93,
+      "freshness": "fresh",
+      "draft": false,
+      "structural": true
+    }
+  ],
+  "performance": {
+    "pages/_posts/corp/a.md": {
+      "impressions": 1000,
+      "engagements": 30
+    },
+    "pages/_posts/corp/b.md": {
+      "impressions": 1000,
+      "engagements": 25
+    },
+    "pages/_posts/tech/c.md": {
+      "impressions": 12000,
+      "engagements": 700
+    },
+    "pages/_posts/tech/c2.md": {
+      "impressions": 345,
+      "engagements": 226
+    },
+    "pages/_posts/muses/e.md": {
+      "impressions": 2000,
+      "engagements": 15
+    },
+    "pages/_posts/muses/f.md": {
+      "impressions": 1000,
+      "engagements": 15
+    },
+    "pages/_posts/solo/x.md": {
+      "impressions": 99999,
+      "engagements": 5
+    }
+  },
+  "published": [
+    "pages/_posts/corp/a.md",
+    "pages/_posts/corp/b.md",
+    "pages/_posts/muses/e.md",
+    "pages/_posts/muses/f.md",
+    "pages/_posts/solo/x.md",
+    "pages/_posts/tech/c.md",
+    "pages/_posts/tech/c2.md"
+  ],
+  "date": "2026-07-30"
+}

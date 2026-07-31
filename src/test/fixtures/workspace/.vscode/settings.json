@@ -1,0 +1,9 @@
+// The settings layer of decision D2. Every key here must WIN over the same key
+// in zer0.json — `publishAllow` is deliberately the opposite of the file's, so
+// a merge that collapsed the layers would fail loudly rather than quietly.
+{
+  "zer0Cms.governance.publishAllow": false,
+  "zer0Cms.governance.bannedPatternsFile": "guard/banned-patterns.json",
+  "zer0Cms.agent.enabled": false,
+  "zer0Cms.logging.level": "verbose"
+}

@@ -21,3 +21,9 @@ eslint.config.mjs
 .env
 *.vsix
 test-runner.js
+
+# Agent guidance and per-directory notes are for contributors, not users.
+# The root README is the marketplace description and must stay.
+CLAUDE.md
+media/README.md
+

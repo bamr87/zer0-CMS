@@ -1,0 +1,4 @@
+[
+  { "name": "fixture-ban", "pattern": "\\bparadigm shift\\b", "flags": "i" },
+  { "name": "fixture-ban-stateful", "pattern": "\\bmoving forward\\b", "flags": "gi" }
+]

@@ -1,0 +1,78 @@
+# The two halves of this repository, each gated on its own terms.
+#
+# `extension` type-checks, lints, bundles and then runs the suite against a real
+# VS Code — which is why every test step is wrapped in `xvfb-run`. `vscode-test`
+# downloads and launches the editor, and on a headless runner that dies with
+# "Missing X server or $DISPLAY" followed by a SIGSEGV. It is the single most
+# commonly missed piece of a VS Code extension pipeline.
+#
+# `engine` runs the ABC content engine's tests. The library under `rails/lib` is
+# stdlib-only by design, so there is deliberately no `bundle install` here: the
+# Gemfile exists for the optional Rails wizard, and needing it to run the tests
+# would be the regression this job catches.
+name: extension
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extension-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  extension:
+    name: Build, lint and test the VS Code extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npm run check-types
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Bundle
+        run: npm run compile
+
+      # Real VS Code, real extension host, no display on the runner.
+      - name: Test
+        run: xvfb-run -a npm test
+
+      # `--no-dependencies` is honest here rather than a shortcut: the extension
+      # ships zero runtime dependencies and everything else is bundled by
+      # esbuild, so there is no node_modules tree to fold into the vsix.
+      - name: Package
+        run: npx @vscode/vsce package --no-dependencies
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: "*.vsix"
+          if-no-files-found: error
+
+  engine:
+    name: ABC content engine tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Engine tests
+        run: ruby -Ilib test/zer0_cms/test_abc_engine.rb
+        working-directory: rails
