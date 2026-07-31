@@ -1,33 +1,34 @@
-# PR Details
+# Pull request
 
-<!--- Provide a general summary of your changes in the Title above -->
+## What this changes
 
-## Description
+<!-- What does this do, and what does it look like from the outside? -->
 
-<!--- Describe your changes in detail -->
+## Why
 
-## Related Issue
+<!-- The problem it solves. Link an issue if there is one — not required. -->
 
-<!--- This project only accepts pull requests related to open issues -->
-<!--- If suggesting a new feature or change, please discuss it in an issue first -->
-<!--- If fixing a bug, there should be an issue describing it with steps to reproduce -->
-<!--- Please link to the issue here: -->
+## How it was tested
 
-## Motivation and Context
+<!--
+  What you actually ran, and what it told you. `npm run compile` and
+  `npm test` at minimum for extension changes; for `rails/`,
+  `ruby -Ilib test/zer0_cms/test_abc_engine.rb`.
+  If you skipped something, say so.
+-->
 
-<!--- Why is this change required? What problem does it solve? -->
+## Checklist
 
-## How Has This Been Tested
+- [ ] `npm run compile` passes (type-check + lint + all five bundles)
+- [ ] `npm test` passes
+- [ ] `src/core/` and `src/mcp/` still import no `vscode`
+- [ ] No `innerHTML` added under `src/webview/`
+- [ ] Every gate is still re-checked host-side — no new check that lives only in a webview
+- [ ] The nearest `README.md` is updated (README-First, README-Last)
 
-<!--- Please describe in detail how you tested your changes. -->
-<!--- Include details of your testing environment, and the tests you ran to -->
-<!--- see how your change affects other areas of the code, etc. -->
+## Type of change
 
-## Types of changes
-
-<!--- What types of changes does your code introduce? Put an `x` in all the boxes that apply: -->
-
-- [ ] Docs change / refactoring / dependency upgrade
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
+- [ ] Docs / refactor / dependency
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
