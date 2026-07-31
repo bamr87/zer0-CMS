@@ -405,6 +405,35 @@ suite('fields: filling a new document in', () => {
     );
   });
 
+  test('a `{{fm.date|format}}` round-trip does not lose a day west of UTC', async () => {
+    // `parseDate` was called with no zone and `formatDate` with the configured
+    // one: `2026-07-31` became UTC midnight and rendered as a New York wall
+    // clock, i.e. 2026-07-30. It reaches `createSlug` and the file-name prefix,
+    // so a new file was named for the wrong day. The default zone of UTC hid it.
+    const cfg = fixtureConfig({ date: { timezone: 'America/New_York', format: 'yyyy-MM-dd' } });
+    assert.equal(cfg.date.timezone, 'America/New_York');
+    assert.equal(
+      await processPlaceholders("{{fm.date|format:'yyyy-MM-dd'}}", {
+        cfg,
+        data: { date: '2026-07-31' },
+      }),
+      '2026-07-31',
+    );
+
+    // Every day of a year, in a zone with a DST transition in it.
+    const tokyo = fixtureConfig({ date: { timezone: 'Asia/Tokyo', format: 'yyyy-MM-dd' } });
+    for (const zoned of [cfg, tokyo]) {
+      for (let day = 0; day < 365; day++) {
+        const iso = new Date(Date.UTC(2026, 0, 1 + day)).toISOString().slice(0, 10);
+        assert.equal(
+          await processPlaceholders("{{fm.date|format:'yyyy-MM-dd'}}", { cfg: zoned, data: { date: iso } }),
+          iso,
+          `${zoned.date.timezone} ${iso}`,
+        );
+      }
+    }
+  });
+
   test('createSlug follows the content type’s template; decorateSlug wraps it', () => {
     const cfg = fixtureConfig();
     const post = cfg.contentTypes.find((ct) => ct.name === 'post');

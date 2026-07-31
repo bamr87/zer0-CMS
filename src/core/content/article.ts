@@ -30,7 +30,15 @@ import * as path from 'node:path';
 
 import { formatDate } from '../shared/dates';
 import type { ContentType, Field, Zer0Config } from '../shared/types';
-import { asString, splitFrontMatter, type FmBlock, type FmValue, type FrontMatter } from './frontmatter';
+import {
+  asString,
+  ownValue,
+  setOwn,
+  splitFrontMatter,
+  type FmBlock,
+  type FmValue,
+  type FrontMatter,
+} from './frontmatter';
 import {
   applyChanges,
   serializeFrontMatter,
@@ -87,8 +95,26 @@ export async function readArticle(filePath: string): Promise<Article> {
  * Apply `changes` to the article's front matter and write the file.
  *
  * Line surgery first (`updateFrontMatterKeys`), so only the changed keys' lines
- * move; a full re-serialization is the documented fallback for the cases it
- * declines — a nested path that is not in the file, or a TOML/JSON block.
+ * move. A full re-serialization is the fallback, and it is deliberately **not**
+ * available for an existing YAML block.
+ *
+ * Re-emitting rebuilds the block out of what the parser understood, and
+ * `frontmatter.ts` documents a list of YAML it does not understand: anchors and
+ * aliases, tags, comments, plain scalars wrapped onto a second line. Those
+ * survive on disk only because surgery never re-emits them. Falling back for a
+ * YAML block turned "a construct we cannot read is a construct we cannot
+ * corrupt" into its opposite — a file with `defaults: &series` came back with
+ * the anchored mapping's contents deleted and `defaults` set to the literal
+ * string `"&series"`, for the sake of an edit to an unrelated key.
+ *
+ * So: TOML and JSON blocks re-emit (their dialects carry no comments in any
+ * file this CMS writes, and that trade is documented in `serialize.ts`), a file
+ * with *no* block gets one built from scratch, and a YAML block that surgery
+ * declines throws. The only thing surgery still declines is a nested path whose
+ * parent holds a scalar or a sequence — which `applyChanges` refuses to apply
+ * too, so the re-emit never even made the requested edit. Refusing loudly is
+ * the honest answer; silently rewriting the file around a change we did not
+ * make is not.
  */
 export async function writeArticle(
   article: Article,
@@ -103,7 +129,17 @@ export async function writeArticle(
   const opts = serializeOptions(cfg, format);
 
   const surgical =
-    article.block === null ? null : updateFrontMatterKeys(article.block.raw, changes, opts);
+    article.block === null
+      ? null
+      : updateFrontMatterKeys(article.block.raw, changes, opts, article.block.eol);
+  if (surgical === null && article.block !== null && article.block.format === 'yaml') {
+    throw new Error(
+      `cannot write ${path.basename(article.filePath)}: ` +
+        `${changes.map((c) => c.key).join(', ')} sits under a key that holds a scalar or a ` +
+        'sequence, and rewriting the block to make room would discard front matter this ' +
+        'parser cannot read back. Edit the file directly.',
+    );
+  }
   const nextRaw = surgical ?? serializeFrontMatter(applyChanges(article.data, changes), opts);
 
   const hadBom = article.raw.startsWith(BOM);
@@ -131,7 +167,7 @@ function isPlainObject(value: unknown): value is FrontMatter {
 function cloneMap(value: FrontMatter): FrontMatter {
   const out: FrontMatter = {};
   for (const [key, item] of Object.entries(value)) {
-    out[key] = cloneValue(item);
+    setOwn(out, key, cloneValue(item));
   }
   return out;
 }
@@ -169,23 +205,23 @@ export function setFieldValue(data: FrontMatter, path: readonly string[], value:
     return [{ key: path.join('.'), value }];
   }
 
-  const existing = data[head];
+  const existing = ownValue(data, head);
   const container: FrontMatter = isPlainObject(existing) ? cloneMap(existing) : {};
   let node = container;
   const inner = path.slice(1);
   for (const segment of inner.slice(0, -1)) {
-    const next = node[segment];
+    const next = ownValue(node, segment);
     if (isPlainObject(next)) {
       node = next;
       continue;
     }
     const created: FrontMatter = {};
-    node[segment] = created;
+    setOwn(node, segment, created);
     node = created;
   }
   const leaf = inner[inner.length - 1];
   if (leaf !== undefined) {
-    node[leaf] = value;
+    setOwn(node, leaf, value);
   }
   return [{ key: head, value: container }];
 }
@@ -216,7 +252,7 @@ function valueAt(data: FrontMatter, path: readonly string[]): FmValue | undefine
     if (!isPlainObject(node)) {
       return undefined;
     }
-    node = node[segment];
+    node = ownValue(node, segment);
   }
   return node;
 }

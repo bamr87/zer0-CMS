@@ -83,6 +83,7 @@ import {
   resolveContentType,
   seoInsights,
   setFieldValue,
+  setOwn,
   shareEntries,
   sourceOf,
   stampModified,
@@ -216,7 +217,9 @@ function toFmValue(value: unknown): FmValue {
   }
   const out: { [key: string]: FmValue } = {};
   for (const [key, item] of Object.entries(record)) {
-    out[key] = toFmValue(item);
+    // The webview supplies these keys, so `out[key] =` would let a forged
+    // `__proto__` reshape the object on its way into the front-matter writer.
+    setOwn(out, key, toFmValue(item));
   }
   return out;
 }
@@ -1272,6 +1275,7 @@ function panelHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${token}'; script-src 'nonce-${token}'; font-src ${webview.cspSource}; img-src ${webview.cspSource} data: https:;">
 <title>zer0-CMS metadata</title>
+<link nonce="${token}" rel="stylesheet" href="${asset('dist', 'media', 'codicon.css')}">
 <link nonce="${token}" rel="stylesheet" href="${asset('media', 'tokens.css')}">
 <link nonce="${token}" rel="stylesheet" href="${asset('media', 'base.css')}">
 <link nonce="${token}" rel="stylesheet" href="${asset('media', 'panel.css')}">

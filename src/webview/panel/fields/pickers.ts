@@ -606,10 +606,11 @@ export const contentRelationshipField: FieldFactory = (ctx) => {
 
   shell.setLoading('Fetching possible values...');
   void ctx.msg
+    // `contentType`, not `type`: that is the key panelProvider's searchContent
+    // handler reads. Sending `type` meant the filter silently never applied and
+    // the picker offered every indexed page regardless of the declared type.
     .request<unknown>('searchContent', {
-      type: field.contentTypeName ?? null,
-      sameLocale: field.sameContentLocale ?? true,
-      activePath: ctx.state.filePath,
+      contentType: field.contentTypeName ?? '',
     })
     .then((value) => {
       if (disposed) {

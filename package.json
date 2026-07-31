@@ -565,7 +565,7 @@
         "zer0Cms.content.preserveCasing": {
           "type": "boolean",
           "default": false,
-          "description": "Keep the original casing when generating a slug."
+          "description": "Keep the original casing in generated filenames and in an explicitly supplied publish slug. A slug derived from a title is always lowercased."
         },
         "zer0Cms.content.defaultFileType": {
           "type": "string",
@@ -647,7 +647,7 @@
         "zer0Cms.governance.bannedPatternsFile": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Optional workspace-relative JSON file of extra brand-guard patterns: `[{\"name\", \"pattern\", \"flags\"?, \"level\"?}]`."
+          "markdownDescription": "Optional workspace-relative JSON file of extra brand-guard patterns: `[{\"name\", \"pattern\", \"flags\"?}]`. Every workspace pattern is reported as an error."
         },
         "zer0Cms.governance.target": {
           "type": "string",
@@ -751,6 +751,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.1",
     "@types/vscode": "^1.101.0",
+    "@vscode/codicons": "^0.0.36",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",

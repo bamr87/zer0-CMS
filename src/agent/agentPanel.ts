@@ -397,6 +397,7 @@ function agentHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
   const token = nonce();
   const asset = (...parts: string[]): vscode.Uri =>
     webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...parts));
+  const codicons = asset('dist', 'media', 'codicon.css');
   const tokens = asset('media', 'tokens.css');
   const base = asset('media', 'base.css');
   const panel = asset('media', 'panel.css');
@@ -409,6 +410,7 @@ function agentHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${token}'; script-src 'nonce-${token}'; font-src ${webview.cspSource}; img-src ${webview.cspSource} data:;">
 <title>zer0-CMS agent</title>
+<link nonce="${token}" rel="stylesheet" href="${codicons.toString()}">
 <link nonce="${token}" rel="stylesheet" href="${tokens.toString()}">
 <link nonce="${token}" rel="stylesheet" href="${base.toString()}">
 <link nonce="${token}" rel="stylesheet" href="${panel.toString()}">

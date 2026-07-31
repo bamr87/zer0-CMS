@@ -55,6 +55,7 @@ import {
   publishPreview,
   publishedPathsFromLedger,
   readArticle,
+  readJsonc,
   relPath,
   renderWorklist,
   resolveConfig,
@@ -111,7 +112,11 @@ export async function loadServerConfig(
   const configFile = (env[CONFIG_ENV_VAR] ?? '').trim() || DEFAULT_CONFIG_FILE;
   let file: unknown;
   try {
-    file = JSON.parse(await fs.readFile(path.resolve(root, configFile), 'utf8')) as unknown;
+    // readJsonc, not JSON.parse: the manifest maps `zer0.json` to the `jsonc`
+    // language and the extension reads it the same way, so a config with a
+    // comment in it is legal. Parsing it strictly here would send the server
+    // silently back to defaults on a file the editor reads fine.
+    file = readJsonc<unknown>(await fs.readFile(path.resolve(root, configFile), 'utf8'));
   } catch {
     // No config file yet, or an unparseable one. Both mean "use the defaults";
     // `zer0_status` reports which of the two it was, so the model can say so.

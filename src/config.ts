@@ -200,6 +200,30 @@ export function settingsSnapshot(scope?: vscode.ConfigurationScope): Zer0Setting
   };
 }
 
+/**
+ * `zer0Cms.governance.publishAllow` **as a human set it**, or `undefined`.
+ *
+ * The merged value (`currentConfig().governance.publishAllow`) is the right one
+ * for every in-editor gate: a project that says `publishAllow: true` in its
+ * `zer0.json` is a project whose owner typed that, and the panel's publish
+ * button is behind a modal a person has to answer.
+ *
+ * Arming the bundled MCP server is different. `ZER0_CMS_MCP_ALLOW_PUBLISH` is
+ * the gate `src/mcp/tools.ts` describes as the one a `zer0.json` cannot reach,
+ * and on the other side of it `zer0_publish`'s second gate is `confirm: true`
+ * — a value the model supplies to itself. If the flag could be turned on by a
+ * file, cloning a repository and opening it in an editor with an agent
+ * connected would be enough to publish, with no human act anywhere in the
+ * chain. So this reads the settings layer only: user, workspace or folder
+ * scope, which are the three places a person, not a repository, writes.
+ */
+export function settingsPublishAllow(scope?: vscode.ConfigurationScope): boolean | undefined {
+  return explicit<boolean>(
+    vscode.workspace.getConfiguration(CONFIG_SECTION, scope),
+    'governance.publishAllow',
+  );
+}
+
 /** Write a single setting. Used by the dashboard's settings page. */
 export function updateSetting(
   id: string,

@@ -33,7 +33,13 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { readArticle, type Article } from '../content/article';
-import { asBool, asString, type FmValue, type FrontMatter } from '../content/frontmatter';
+import {
+  asBool,
+  asString,
+  splitFrontMatter,
+  type FmValue,
+  type FrontMatter,
+} from '../content/frontmatter';
 import { serializeFrontMatter, serializeOptions, stitch } from '../content/serialize';
 import { createSlug } from '../content/slug';
 import { absPath, relPath, requireContentFolders, requireLedgerPath } from '../shared/config';
@@ -619,10 +625,51 @@ function errnoCode(error: unknown): string | undefined {
 }
 
 /**
+ * Everything in an artifact except the moment it was built.
+ *
+ * `build` stamps `date` from `new Date()`, so the same publish retried a minute
+ * later produces different bytes for identical content. Every other key, and
+ * the body, are functions of the draft alone — which is what makes this a
+ * usable answer to "did I already write this exact page?".
+ */
+/** Whether the file already at `rel` is the artifact we were about to write. */
+async function sameArtifactOnDisk(
+  cfg: Zer0Config,
+  rel: string,
+  identity: string,
+): Promise<boolean> {
+  try {
+    return artifactIdentity(await fs.readFile(absPath(cfg, rel), 'utf8')) === identity;
+  } catch {
+    // The name is taken by something we cannot read — a directory, or a file
+    // whose permissions say no. "Not ours" is the safe answer: the caller bumps
+    // to the next name instead of assuming a match it could not verify.
+    return false;
+  }
+}
+
+function artifactIdentity(text: string): string {
+  const { block, body } = splitFrontMatter(text);
+  const keys = Object.entries(block?.data ?? {})
+    .filter(([key]) => key !== 'date')
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return JSON.stringify([keys, body.trim()]);
+}
+
+/**
  * The built-in target: an approved draft becomes a content file plus a ledger
  * record. `build` renders the bytes; `send` writes them **exclusively** —
  * `wx` fails rather than overwriting, and the destination bumps to `-2`, `-3`
  * on collision. Publishing must never silently replace somebody's page.
+ *
+ * **The `-2` bump is for a different page that wants the same name, and only
+ * that.** Writing the file and recording the ledger entry are two steps, and a
+ * crash — or a read-only `.zer0/` — between them leaves an artifact on disk
+ * that no ledger key mentions. The next attempt passes every gate, reaches
+ * `wx`, gets `EEXIST` and used to bump: two live pages for one canonical URL,
+ * with the ledger naming the `-2` file under the URL the `-1` file is served
+ * at. So an existing file whose content is this artifact's is *adopted* — the
+ * publish is completed by recording it, not duplicated.
  */
 export const jekyllTarget: PublishTarget = {
   id: 'jekyll',
@@ -675,6 +722,7 @@ export const jekyllTarget: PublishTarget = {
     const ext = path.extname(intended);
     const stem = intended.slice(0, intended.length - ext.length);
     const warnings: string[] = [];
+    const identity = artifactIdentity(artifact.contents);
 
     for (let n = 1; ; n += 1) {
       const rel = n === 1 ? intended : `${stem}-${n}${ext}`;
@@ -689,6 +737,17 @@ export const jekyllTarget: PublishTarget = {
       } catch (error) {
         if (errnoCode(error) !== 'EEXIST') {
           throw error;
+        }
+        if (await sameArtifactOnDisk(cfg, rel, identity)) {
+          // An earlier attempt wrote this exact page and did not get as far as
+          // the ledger. Adopt it and let the caller record it, rather than
+          // shipping a second copy of the same canonical URL.
+          warnings.push(
+            `warning: ${rel} was already on disk with this exact content but had no ledger ` +
+              'record — an interrupted publish. Recording it instead of writing a second copy.',
+          );
+          deps.log?.(`adopted the existing ${rel}`);
+          return { urn: `jekyll:${rel}`, warnings };
         }
         if (n > 50) {
           throw new Error(`cannot find a free filename for ${intended}`);

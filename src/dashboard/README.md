@@ -32,7 +32,7 @@ Everything else — which tab is open, which sort order, which rows are ticked �
 
 The webview supplies a draft path and nothing else. The blockers rendered under a disabled Publish button come from `buildReview()` and are **advisory**: the ones that decide are computed again, later, in a different process boundary.
 
-Deleting and renaming are not governed actions — nothing is written to the ledger and no gate applies — so they are implemented here directly, against `workspace.fs`, with `useTrash: true`. The webview confirms before posting the intent; the host does not ask a second time, because deleting to the desktop trash is recoverable and two modals for one click is not a safety feature.
+Deleting and renaming are not governed actions — nothing is written to the ledger and no gate applies — so they are implemented here directly, against `workspace.fs`, with `useTrash: true`. Both still re-derive their target host-side through `contentTargetPath()`: the path a message names has to be a file the page index holds, so a forged `{"paths":["/home/me/.ssh/id_rsa"]}` resolves to nothing. And both ask host-side before acting. The webview's own `alert()` is a dialog the code that wants the deletion also controls, which makes it a courtesy rather than a gate; the rule that the webview is never the gate has no exception for the one privileged filesystem action on this surface.
 
 ## The intent whitelist
 

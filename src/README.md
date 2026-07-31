@@ -66,6 +66,8 @@ Title length, description length and keyword density are **advice**, and advice 
 
 `provideMcpServerDefinitions` is called eagerly and may be cached, so it returns a definition with an **empty `env`** — command, argv, cwd, version, nothing else. `resolveMcpServerDefinition` runs once, at server start, and is the only place the publish flag and any secret are read.
 
+The publish flag comes from the **settings** layer, not from the merged configuration. `zer0.json` ships with the repository, and past `ZER0_CMS_MCP_ALLOW_PUBLISH` the only remaining gate on `zer0_publish` is `confirm: true` — a value the model supplies to itself. A cloned repo whose `zer0.json` said `publishAllow: true` would otherwise arm an agent to publish with no human act anywhere in the chain. The in-editor gates keep reading the merged value: they are behind a modal a person answers.
+
 When publishing is off, `ZER0_CMS_MCP_ALLOW_PUBLISH` is set to `null`, which the API defines as *remove this variable from the child's environment*. Not `"0"` (a string something might later read as present) and not merely omitted (which would let an inherited `ZER0_CMS_MCP_ALLOW_PUBLISH=1` in the extension host's own environment leak through). No secret ever appears in a static definition, a setting, `.vscode/mcp.json`, or a log line — the log records that a value was injected, never the value.
 
 ---

@@ -51,7 +51,7 @@ Dashboard: 16px horizontal gutter (20px on list rows), 24px content top padding,
 
 ## Icons
 
-Codicons only, rendered as `<i class="codicon codicon-{name}">` by `icon()` in `dom.ts`. The extension ships **no SVG files and no webfont of its own**; the codicon stylesheet and font are copied from VS Code at build time.
+Codicons only, rendered as `<i class="codicon codicon-{name}">` by `icon()` in `dom.ts`. The extension draws **no SVG icons of its own**; `codicon.css` and `codicon.ttf` are copied out of the `@vscode/codicons` devDependency into `dist/media/` by the `copy-media` plugin in `esbuild.js`, and a missing file there is a build error rather than a warning. A webview does not get codicons for free — without them every `icon()` call site renders an empty element and every icon-only control becomes an invisible box, which is a failure that looks exactly like a working build. All three shells link `dist/media/codicon.css` **before** `tokens.css`, and the three sizing rules in `base.css` are written as `.codicon[class*='codicon-']` so they outrank `codicon.css`'s own `font` shorthand.
 
 ## Adding a rule
 

@@ -17,6 +17,12 @@
  * cached definition, never in a setting, never in `.vscode/mcp.json`, and never
  * in a log line — the log records that a value was injected, not the value.
  *
+ * The publish flag comes from the **settings** layer, never from `zer0.json`.
+ * `zer0.json` ships with the repository; the environment variable it would set
+ * is the one thing `src/mcp/tools.ts` promises a `zer0.json` cannot reach, and
+ * the only gate past it is `confirm: true`, which an agent supplies to itself.
+ * See `publishAllowed()`.
+ *
  * The publish flag has one more property worth stating: when publishing is off,
  * `ZER0_CMS_MCP_ALLOW_PUBLISH` is set to `null`, which the API defines as
  * *remove this variable from the child's environment*. Not `"0"` — a string
@@ -28,7 +34,13 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-import { configFileName, CONFIG_SECTION, currentConfig, workspaceFolder } from './config';
+import {
+  configFileName,
+  CONFIG_SECTION,
+  currentConfig,
+  settingsPublishAllow,
+  workspaceFolder,
+} from './config';
 import { describeError, log } from './logger';
 import { notifyError, notifyInfo } from './uiState';
 
@@ -70,15 +82,39 @@ function extensionVersion(context: vscode.ExtensionContext): string {
 }
 
 /**
- * Whether an MCP client may publish. Both switches must be on: `governance.
- * enabled` (the feature) and `governance.publishAllow` (the master switch). The
- * value is the fully merged one — VS Code settings over `zer0.json` over the
- * default of `false` — so the MCP gate and the panel's gate cannot disagree
- * about what the workspace said.
+ * Whether an MCP client may publish. Two switches, read from two layers on
+ * purpose.
+ *
+ * `governance.enabled` is the feature, and the fully merged value answers it: a
+ * `zer0.json` that turns governance *off* is a restriction, and honouring a
+ * restriction from the project file is always safe.
+ *
+ * `governance.publishAllow` is read from the **settings layer only** —
+ * `settingsPublishAllow()`, not `currentConfig()`. `zer0.json` is a file in the
+ * repository. Reading the merged value here meant that cloning a repo whose
+ * `zer0.json` said `{"governance":{"publishAllow":true}}` armed
+ * `ZER0_CMS_MCP_ALLOW_PUBLISH` on the bundled server, and the only remaining
+ * gate on `zer0_publish` is `confirm: true` — which an agent passes to itself.
+ * A file that arrives with the source tree is not a human turning publishing
+ * on, and this is the gate `src/mcp/tools.ts` documents as the one a `zer0.json`
+ * cannot reach. The in-editor gates keep using the merged value: they are
+ * behind a modal that a person answers.
  */
-function publishAllowed(): boolean {
-  const governance = currentConfig().governance;
-  return governance.enabled && governance.publishAllow;
+export function mcpPublishAllowed(): boolean {
+  if (!currentConfig().governance.enabled) {
+    return false;
+  }
+  if (settingsPublishAllow() === true) {
+    return true;
+  }
+  if (currentConfig().governance.publishAllow) {
+    log.info(
+      `${configFileName()} enables governance.publishAllow, but the MCP server's publish flag ` +
+        'comes from the "zer0Cms.governance.publishAllow" setting only — a file in the ' +
+        'repository cannot arm an agent to publish. Set it in your settings to allow it.',
+    );
+  }
+  return false;
 }
 
 export function registerMcpProvider(context: vscode.ExtensionContext): void {
@@ -109,7 +145,7 @@ export function registerMcpProvider(context: vscode.ExtensionContext): void {
 
     resolveMcpServerDefinition: async (server) => {
       // Start time. Secrets may be read *here* and nowhere else.
-      const allow = publishAllowed();
+      const allow = mcpPublishAllowed();
       const apiKey = await context.secrets.get(SECRET_KEYS.anthropicApiKey);
       server.env = {
         // Which project file the server should read, relative to its cwd.

@@ -30,14 +30,19 @@
  * the path reading, decided by looking at the block's own top-level keys — so a
  * file with `image.alt: x` keeps working. Path segments address mappings only;
  * there is no index syntax for reaching inside a sequence. A change whose
- * parent path does not exist in the block returns `null` (fall back to a full
- * emit, which will create the nesting).
+ * parent path does not exist is *grown* — surgery inserts the missing nesting
+ * under the deepest ancestor it can find, rather than handing the whole block
+ * to a re-emit that would drop every comment in it. The one remaining `null`
+ * for a YAML block is a parent that holds a scalar or a sequence, which no
+ * writer can turn into a mapping without discarding what is there.
  */
 
 import type { Zer0Config } from '../shared/types';
 import {
   isYamlSequenceItem,
+  ownValue,
   parseYamlKeyLine,
+  setOwn,
   type FmBlock,
   type FmFormat,
   type FmValue,
@@ -100,7 +105,7 @@ function cloneValue(value: FmValue): FmValue {
   if (isPlainObject(value)) {
     const out: FrontMatter = {};
     for (const [key, item] of Object.entries(value)) {
-      out[key] = cloneValue(item);
+      setOwn(out, key, cloneValue(item));
     }
     return out;
   }
@@ -137,14 +142,17 @@ export function applyChanges(data: FrontMatter, changes: readonly KeyChange[]): 
     let node = out;
     let reachable = true;
     for (const segment of path.slice(0, -1)) {
-      const next = node[segment];
+      // `ownValue`/`setOwn`, never `node[segment]`: a change keyed
+      // `__proto__.publishAllow` would otherwise walk into `Object.prototype`
+      // and write a key every object in the process can see.
+      const next = ownValue(node, segment);
       if (isPlainObject(next)) {
         node = next;
         continue;
       }
       if (next === undefined || next === null || next === '') {
         const created: FrontMatter = {};
-        node[segment] = created;
+        setOwn(node, segment, created);
         node = created;
         continue;
       }
@@ -159,7 +167,7 @@ export function applyChanges(data: FrontMatter, changes: readonly KeyChange[]): 
     if (change.value === undefined) {
       delete node[leaf];
     } else {
-      node[leaf] = change.value;
+      setOwn(node, leaf, change.value);
     }
   }
   return out;
@@ -176,14 +184,18 @@ export function applyCommaSeparatedFields(data: FrontMatter, fields: readonly st
   }
   const out: FrontMatter = { ...data };
   for (const field of fields) {
-    const value = out[field];
+    const value = ownValue(out, field);
     if (typeof value !== 'string') {
       continue;
     }
-    out[field] = value
-      .split(',')
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0);
+    setOwn(
+      out,
+      field,
+      value
+        .split(',')
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0),
+    );
   }
   return out;
 }
@@ -446,11 +458,18 @@ function emitToml(data: FrontMatter, opts: SerializeOptions, prefix: readonly st
 // Line surgery
 // ---------------------------------------------------------------------------
 
-/** A block under edit. `lines` may carry trailing CRs; joining on `\n`
- *  reproduces the original bytes exactly. */
+/**
+ * A block under edit.
+ *
+ * `lines` never carry their line endings: they are stripped on the way in and
+ * re-added, uniformly, by `eol` on the way out. Carrying them per line is what
+ * produced blocks with a CR on some lines and not others — `raw` has its last
+ * newline removed, so its final line never had one to carry, and any key
+ * inserted after it inherited that.
+ */
 interface Doc {
   lines: string[];
-  crlf: boolean;
+  eol: '\n' | '\r\n';
 }
 
 interface LineInfo {
@@ -469,8 +488,7 @@ interface KeyRange {
 }
 
 function analyze(doc: Doc, index: number): LineInfo {
-  const raw = doc.lines[index] ?? '';
-  const text = raw.endsWith('\r') ? raw.slice(0, -1) : raw;
+  const text = doc.lines[index] ?? '';
   let indent = 0;
   while (indent < text.length) {
     const ch = text.charAt(indent);
@@ -481,10 +499,6 @@ function analyze(doc: Doc, index: number): LineInfo {
   }
   const content = text.slice(indent);
   return { indent, content, blank: content.length === 0, comment: content.startsWith('#') };
-}
-
-function withCrlf(doc: Doc, lines: readonly string[]): string[] {
-  return doc.crlf ? lines.map((line) => `${line}\r`) : [...lines];
 }
 
 /**
@@ -574,31 +588,48 @@ function descentOf(doc: Doc, range: KeyRange): Descent {
   return { kind: 'empty' };
 }
 
-function locate(doc: Doc, path: readonly string[]): KeyRange | null {
+/**
+ * **Every** range the leaf of `path` occupies, in file order.
+ *
+ * Duplicate keys are legal YAML and the parser resolves them last-wins, so
+ * setting a key rewrites the last range — but *deleting* one has to remove all
+ * of them. Removing only the last resurrects the earlier value, which for
+ * `draft: true` / `draft: false` means clearing the field flips it back to
+ * `true` instead of clearing it. Parent segments still resolve last-wins,
+ * matching the parser.
+ */
+function locateAll(doc: Doc, path: readonly string[]): KeyRange[] {
   let from = 0;
   let to = doc.lines.length - 1;
   let indent = 0;
-  for (let depth = 0; depth < path.length; depth++) {
+  for (let depth = 0; depth < path.length - 1; depth++) {
     const segment = path[depth];
     if (segment === undefined) {
-      return null;
+      return [];
     }
     const match = pick(scanKeys(doc, from, to, indent), segment);
     if (match === null) {
-      return null;
-    }
-    if (depth === path.length - 1) {
-      return match;
+      return [];
     }
     const descent = descentOf(doc, match);
     if (descent.kind !== 'mapping') {
-      return null;
+      return [];
     }
     from = match.start + 1;
     to = match.end;
     indent = descent.indent;
   }
-  return null;
+  const leaf = path[path.length - 1];
+  if (leaf === undefined) {
+    return [];
+  }
+  return scanKeys(doc, from, to, indent).filter((range) => range.key === leaf);
+}
+
+/** The range the parser would read: the last one. */
+function locate(doc: Doc, path: readonly string[]): KeyRange | null {
+  const found = locateAll(doc, path);
+  return found[found.length - 1] ?? null;
 }
 
 /** Insert after the last line that carries content, so a new key lands before
@@ -614,6 +645,22 @@ function insertionPoint(doc: Doc, from: number, to: number): number {
   return at;
 }
 
+/** `['b','c']` + `v` → `{ b: { c: v } }`. Computed keys, so a segment spelled
+ *  `__proto__` becomes an own key rather than a prototype swap. */
+function nest(segments: readonly string[], value: FmValue): FmValue {
+  let out = value;
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const segment = segments[i];
+    if (segment === undefined) {
+      continue;
+    }
+    const wrapper: FrontMatter = {};
+    setOwn(wrapper, segment, out);
+    out = wrapper;
+  }
+  return out;
+}
+
 function applyOne(doc: Doc, change: KeyChange, opts: SerializeOptions): boolean {
   const topLevel = scanKeys(doc, 0, doc.lines.length - 1, 0);
   const literal = pick(topLevel, change.key) !== null;
@@ -623,40 +670,66 @@ function applyOne(doc: Doc, change: KeyChange, opts: SerializeOptions): boolean 
     return false;
   }
 
-  const target = locate(doc, path);
-
   if (change.value === undefined) {
-    if (target !== null) {
-      doc.lines.splice(target.start, target.end - target.start + 1);
+    // Back to front, so each splice leaves the earlier indices valid.
+    const doomed = locateAll(doc, path);
+    for (let i = doomed.length - 1; i >= 0; i--) {
+      const range = doomed[i];
+      if (range !== undefined) {
+        doc.lines.splice(range.start, range.end - range.start + 1);
+      }
     }
     // Deleting a key that is not there is a success, not a fallback trigger.
     return true;
   }
 
+  const target = locate(doc, path);
   if (target !== null) {
-    const replacement = withCrlf(doc, emitKeyLines(leaf, change.value, opts, target.indent));
+    const replacement = emitKeyLines(leaf, change.value, opts, target.indent);
     doc.lines.splice(target.start, target.end - target.start + 1, ...replacement);
     return true;
   }
 
   if (path.length === 1) {
     const at = insertionPoint(doc, 0, doc.lines.length - 1);
-    doc.lines.splice(at, 0, ...withCrlf(doc, emitKeyLines(leaf, change.value, opts, 0)));
+    doc.lines.splice(at, 0, ...emitKeyLines(leaf, change.value, opts, 0));
     return true;
   }
 
-  const parent = locate(doc, path.slice(0, -1));
-  if (parent === null) {
-    return false; // unlocatable nested change → the caller re-serialises
+  // The leaf is not in the block. Find the deepest ancestor that *is* and grow
+  // the missing nesting under it. Declining here and letting the caller
+  // re-serialise the whole block was the old answer, and it deleted every
+  // comment, anchor and wrapped scalar the parser could not read — for the
+  // ordinary case of typing an SEO title into a file that has no `seo:` key.
+  let depth = path.length - 1;
+  let anchor: KeyRange | null = null;
+  while (depth > 0) {
+    anchor = locate(doc, path.slice(0, depth));
+    if (anchor !== null) {
+      break;
+    }
+    depth--;
   }
-  const descent = descentOf(doc, parent);
+  const value = nest(path.slice(depth + 1), change.value);
+  const head = path[depth];
+  if (head === undefined) {
+    return false;
+  }
+
+  if (anchor === null) {
+    const at = insertionPoint(doc, 0, doc.lines.length - 1);
+    doc.lines.splice(at, 0, ...emitKeyLines(head, value, opts, 0));
+    return true;
+  }
+
+  const descent = descentOf(doc, anchor);
   if (descent.kind === 'blocked') {
     return false; // the parent holds a scalar, a sequence, or something unreadable
   }
-  const indent = descent.kind === 'mapping' ? descent.indent : parent.indent + opts.indent;
+  const indent = descent.kind === 'mapping' ? descent.indent : anchor.indent + opts.indent;
   const at =
-    descent.kind === 'mapping' ? insertionPoint(doc, parent.start + 1, parent.end) : parent.start + 1;
-  doc.lines.splice(at, 0, ...withCrlf(doc, emitKeyLines(leaf, change.value, opts, indent)));
+    descent.kind === 'mapping' ? insertionPoint(doc, anchor.start + 1, anchor.end) : anchor.start + 1;
+  doc.lines.splice(at, 0, ...emitKeyLines(head, value, opts, indent));
   return true;
 }
 
@@ -664,15 +737,22 @@ function applyOne(doc: Doc, change: KeyChange, opts: SerializeOptions): boolean 
  * Rewrite only the lines belonging to `changes`. Every other byte of `raw` is
  * carried through unchanged.
  *
- * Returns `null` when a change cannot be placed — an unlocatable nested path,
- * or a non-YAML block, both of which the caller resolves by re-serialising with
- * `serializeFrontMatter`. An empty change set returns `raw` unchanged, which is
- * what makes an edit-free save byte-identical.
+ * `eol` is the block's line ending, which the caller reads off `FmBlock.eol`.
+ * It is a parameter and not a detection because `raw` has its final newline
+ * removed: a one-line CRLF block contains no `\r\n` to find, and guessing `\n`
+ * there rewrites every line ending in the file.
+ *
+ * Returns `null` when a change cannot be placed — a non-YAML block, or a nested
+ * path whose parent holds a scalar. `writeArticle` is the caller and treats the
+ * two differently; see the note there before making a `null` mean anything new.
+ * An empty change set returns `raw` unchanged, which is what makes an edit-free
+ * save byte-identical.
  */
 export function updateFrontMatterKeys(
   raw: string,
   changes: readonly KeyChange[],
   opts: SerializeOptions,
+  eol?: '\n' | '\r\n',
 ): string | null {
   if (changes.length === 0) {
     return raw;
@@ -685,8 +765,8 @@ export function updateFrontMatterKeys(
   }
 
   const doc: Doc = {
-    lines: raw.length === 0 ? [] : raw.split('\n'),
-    crlf: raw.includes('\r\n'),
+    lines: raw.length === 0 ? [] : raw.split('\n').map(stripCr),
+    eol: eol ?? (raw.includes('\r\n') ? '\r\n' : '\n'),
   };
 
   for (const change of changes) {
@@ -694,18 +774,33 @@ export function updateFrontMatterKeys(
       return null;
     }
   }
-  return doc.lines.join('\n');
+  return doc.lines.join(doc.eol);
+}
+
+function stripCr(line: string): string {
+  return line.endsWith('\r') ? line.slice(0, -1) : line;
 }
 
 // ---------------------------------------------------------------------------
 // Putting a file back together
 // ---------------------------------------------------------------------------
 
+/**
+ * One source of truth for the line ending, in this order:
+ *
+ *   1. the block's own `eol`, when there is a block — the file already told us,
+ *   2. the text being written, then the body, when we are *adding* front matter
+ *      to a file that had none.
+ *
+ * Consulting the body while a block exists is what let a pure-LF front-matter
+ * block acquire CRLF fences because somebody pasted a Windows code block into
+ * the prose underneath it.
+ */
 function detectEol(block: FmBlock | null, newRaw: string, body: string): string {
-  if (newRaw.includes('\r\n') || body.includes('\r\n') || (block?.raw.includes('\r\n') ?? false)) {
-    return '\r\n';
+  if (block !== null) {
+    return block.eol;
   }
-  return '\n';
+  return newRaw.includes('\r\n') || body.includes('\r\n') ? '\r\n' : '\n';
 }
 
 /**

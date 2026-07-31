@@ -31,7 +31,6 @@ import {
   type FieldChoice,
   type FieldGroup,
   type FieldType,
-  type LogLevel,
   type NumberOptions,
   type PanelSectionId,
   type Placeholder,
@@ -588,7 +587,6 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
   const fileValidation = asRecord(json.validation) ?? {};
   const filePanel = asRecord(json.panel) ?? {};
   const fileDashboard = asRecord(json.dashboard) ?? {};
-  const fileLogging = asRecord(json.logging) ?? {};
 
   const cfg: Zer0Config = {
     workspaceRoot: root,
@@ -874,11 +872,12 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
       ),
     },
     logging: {
-      level: pick(
-        settings.logging?.level,
-        asEnum<LogLevel>(fileLogging.level, ['error', 'warn', 'info', 'verbose']),
-        defaults.logging.level,
-      ),
+      // Two layers, not three, and deliberately so: how loud your output
+      // channel is is a preference belonging to whoever is reading it, not
+      // something a checked-in repository gets to decide for every contributor.
+      // `src/logger.ts` reads the VS Code setting directly for the same reason,
+      // and `zer0.json` has no `logging` key for this to disagree with.
+      level: pick(settings.logging?.level, undefined, defaults.logging.level),
     },
   };
 

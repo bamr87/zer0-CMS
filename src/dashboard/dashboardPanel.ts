@@ -39,10 +39,11 @@
  *
  * There is no media database, no snippet store, no taxonomy migrator and no
  * project switcher. Deleting a file goes to the OS trash and renaming goes
- * through `workspace.fs`; both are recoverable, both are confirmed in the
- * webview before the intent is even posted, and neither touches the ledger.
- * The governed actions are the only privileged ones, and they are not
- * implemented here.
+ * through `workspace.fs`; neither touches the ledger. Both re-derive their
+ * target against the page index and both ask host-side before they act — a
+ * webview's own `alert()` is a dialog the code that wants the deletion also
+ * controls, so it is a courtesy, not a gate. The governed actions are the only
+ * privileged ones, and they are not implemented here.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -79,7 +80,7 @@ import { currentConfig, hasProjectConfig, onConfigChange, readConfigFileJson, up
 import { draftPathFrom, type GovernanceActions } from '../commands/governance';
 import type { Zer0Shell } from '../extension';
 import { describeError, log } from '../logger';
-import { reportError } from '../uiState';
+import { confirm, reportError } from '../uiState';
 import type { Snapshot } from '../store';
 import {
   COMMAND_IDS,
@@ -212,6 +213,34 @@ function readString(source: unknown, key: string): string | undefined {
 function readStringList(source: unknown, key: string): string[] {
   const value = asRecord(source)?.[key];
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+/**
+ * The absolute path of a webview-named content file, or `undefined`.
+ *
+ * A message from a webview is an *intent and a target*, never an authority.
+ * The target is re-derived here against the page index: the file has to be one
+ * this workspace actually indexes as content. That makes an absolute path from
+ * a forged message worth exactly as much as a relative one — both have to name
+ * something in the index, and `/home/me/.ssh/id_rsa` never will.
+ *
+ * A folderless window has no index and therefore no answer, which also stops a
+ * relative path resolving against the extension host's own working directory.
+ *
+ * Exported for `extension.test.ts`; nothing else may call it.
+ */
+export function contentTargetPath(
+  workspaceRoot: string,
+  pages: readonly PageEntry[],
+  target: string,
+): string | undefined {
+  if (workspaceRoot === '' || target === '') {
+    return undefined;
+  }
+  const normalized = path.normalize(
+    path.isAbsolute(target) ? target : path.resolve(workspaceRoot, target),
+  );
+  return pages.some((page) => path.normalize(page.filePath) === normalized) ? normalized : undefined;
 }
 
 /** `tags` → `Tags`. Used for custom filter and grouping labels. */
@@ -710,22 +739,52 @@ export class DashboardPanel implements vscode.Disposable {
   /**
    * Delete the named files to the OS trash.
    *
-   * The webview has already shown the confirmation Front Matter's `ActionsBar`
-   * showed, and `useTrash` makes this recoverable from the desktop, so there is
-   * no second modal here. This is not a governed action: nothing is written to
-   * the ledger and no gate applies.
+   * Two things happen here that used to happen only in the webview, which is
+   * the wrong place for either. The **targets** are re-derived against the page
+   * index (`resolveContentTarget`), so a forged `{paths:['/home/me/.ssh/id_rsa']}`
+   * names nothing and deletes nothing — the old code resolved any absolute path
+   * straight into `workspace.fs.delete`. And the **confirmation** is a host-side
+   * modal, because `alert()` inside a webview is a dialog the code that asked
+   * for the deletion also controls; `renameFile` on the next method always
+   * prompted host-side, and the asymmetry was an oversight, not a policy.
    */
   private async deleteFiles(args: unknown): Promise<void> {
     const cfg = currentConfig();
     const single = readString(args, 'path');
     const many = readStringList(args, 'paths');
-    const targets = single === undefined ? many : [single, ...many];
+    const requested = single === undefined ? many : [single, ...many];
+    if (requested.length === 0) {
+      return;
+    }
+
+    const { pages } = await this.shell.store.current();
+    const targets: string[] = [];
+    for (const target of requested) {
+      const filePath = contentTargetPath(cfg.workspaceRoot, pages, target);
+      if (filePath === undefined) {
+        log.warn(`dashboard webview: refused to delete "${target}" — not an indexed content file`);
+        continue;
+      }
+      targets.push(filePath);
+    }
     if (targets.length === 0) {
       return;
     }
+
+    const names = targets.map((filePath) => relPath(cfg, filePath));
+    const ok = await confirm(
+      targets.length === 1
+        ? `Delete ${names[0] ?? ''}?`
+        : `Delete ${targets.length} files?`,
+      'Delete',
+      `${names.join('\n')}\n\nThey go to the trash, so this is recoverable from your desktop.`,
+    );
+    if (!ok) {
+      return;
+    }
+
     let removed = 0;
-    for (const target of targets) {
-      const filePath = path.isAbsolute(target) ? target : path.resolve(cfg.workspaceRoot, target);
+    for (const filePath of targets) {
       try {
         await vscode.workspace.fs.delete(vscode.Uri.file(filePath), {
           recursive: false,
@@ -750,7 +809,14 @@ export class DashboardPanel implements vscode.Disposable {
     if (target === undefined || target === '') {
       return;
     }
-    const filePath = path.isAbsolute(target) ? target : path.resolve(cfg.workspaceRoot, target);
+    // Same confinement as `deleteFiles`: the webview names a target, the host
+    // decides whether that target is a content file it is willing to touch.
+    const { pages } = await this.shell.store.current();
+    const filePath = contentTargetPath(cfg.workspaceRoot, pages, target);
+    if (filePath === undefined) {
+      log.warn(`dashboard webview: refused to rename "${target}" — not an indexed content file`);
+      return;
+    }
     const current = path.basename(filePath);
     const answer = await vscode.window.showInputBox({
       title: 'Rename content',
@@ -1414,6 +1480,7 @@ function dashboardHtml(
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${token}'; script-src 'nonce-${token}'; font-src ${webview.cspSource}; img-src ${webview.cspSource} data: https:;">
 <title>zer0-CMS Dashboard</title>
+<link nonce="${token}" rel="stylesheet" href="${asset('dist', 'media', 'codicon.css')}">
 <link nonce="${token}" rel="stylesheet" href="${asset('media', 'tokens.css')}">
 <link nonce="${token}" rel="stylesheet" href="${asset('media', 'base.css')}">
 <link nonce="${token}" rel="stylesheet" href="${asset('media', 'dashboard.css')}">

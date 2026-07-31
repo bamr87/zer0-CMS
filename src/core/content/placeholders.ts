@@ -62,7 +62,7 @@ import {
   type LogSink,
   type Zer0Config,
 } from '../shared/types';
-import type { FmValue, FrontMatter } from './frontmatter';
+import { ownValue, type FmValue, type FrontMatter } from './frontmatter';
 import { createSlug } from './slug';
 
 /**
@@ -202,7 +202,7 @@ export function processFmPlaceholders(value: string, data: FrontMatter, cfg: Zer
 
   return value.replace(FM_TOKEN_RE, (match, rawKey: string, rawFormat?: string) => {
     const key = rawKey.trim();
-    let found: FmValue | undefined = data[key];
+    let found: FmValue | undefined = ownValue(data, key);
 
     if (found === undefined && key.includes('.')) {
       let node: FmValue | undefined = data;
@@ -215,7 +215,8 @@ export function processFmPlaceholders(value: string, data: FrontMatter, cfg: Zer
           node = undefined;
           break;
         }
-        node = node[segment];
+        // Own keys only: `{{fm.__proto__.x}}` must not reach `Object.prototype`.
+        node = ownValue(node, segment);
       }
       found = node;
     }
@@ -234,7 +235,14 @@ export function processFmPlaceholders(value: string, data: FrontMatter, cfg: Zer
     if (pattern.startsWith("'") && pattern.endsWith("'") && pattern.length > 1) {
       pattern = pattern.slice(1, -1);
     }
-    const parsed = parseDate(rendered, pattern || undefined);
+    // The same zone on both halves, or the round trip loses a day. A
+    // zone-less `2026-07-31` parsed without one is UTC midnight; rendering
+    // that as an `America/New_York` wall clock is 2026-07-30. Every zone west
+    // of Greenwich hits it, and the resulting date reaches the slug and the
+    // file-name prefix (`slug.ts`, `contentType.ts`), so a new file is named
+    // for the wrong day. The panel's datetime field already pairs them —
+    // `webview/panel/fields/inputs.ts`.
+    const parsed = parseDate(rendered, pattern || undefined, cfg.date.timezone);
     if (parsed === null || !pattern) {
       return rendered;
     }

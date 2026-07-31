@@ -16,7 +16,7 @@ The first release of zer0-CMS as its own extension. Everything before this point
 - **Idempotency ledger** — keyed by canonical URL, byte-compatible with the Python publishing lane, so a repo and its CI never double-publish.
 - **Distribution lanes** — what to write next, derived from the `.cms/` contract and the ledger, exportable as a worklist.
 - **`.cms/` contract** — per-file health, freshness and the mechanical/substantive issue lanes when the content engine has run; an honest filesystem scan when it hasn't.
-- **Bundled MCP server** — eight tools for Copilot agent mode and any MCP client. Publishing is double-gated: an environment flag *and* an explicit per-call confirmation.
+- **Bundled MCP server** — eight tools for Copilot agent mode and any MCP client. Publishing is double-gated: an environment flag *and* an explicit per-call confirmation. The editor sets that flag only when `zer0Cms.governance.publishAllow` is set in your own settings — a `zer0.json` arriving with a cloned repository can enable publishing for the in-editor gates, which sit behind a modal, but never for an agent.
 - **Optional AI agent** — the `cms-curator` skill through the Claude Agent SDK, with an approve/deny gate on every mutating tool. Off by default.
 
 ### 🎨 Enhancements
@@ -24,4 +24,4 @@ The first release of zer0-CMS as its own extension. Everything before this point
 - Zero runtime dependencies. The agent SDK is an optional dependency, dynamically imported, and never required to use the CMS.
 - `src/core` and `src/mcp` cannot import `vscode` — enforced by eslint and by the MCP bundle's build.
 - Front matter is edited by line surgery, so comments and formatting survive an edit.
-- Every publish gate is re-checked host-side, in the same function the command palette calls. A webview is UI, never the gate.
+- Every publish gate is re-checked host-side, in the same function the command palette calls. A webview is UI, never the gate — including for deleting and renaming, where the host re-derives the target against the page index and asks before it acts.

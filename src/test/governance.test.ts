@@ -44,8 +44,11 @@ import {
   isPublished,
   loadLedger,
   publishedSourceFiles,
+  readMeta,
   record,
+  saveLedger,
   shareEntries,
+  writeMeta,
 } from '../core/governance/ledger';
 import {
   buildPreview,
@@ -348,9 +351,69 @@ suite('governance: the draft queue', () => {
       await markStatus(file, 'published');
       assert.equal(
         fs.readFileSync(file, 'utf8'),
-        '---\nstatus: published\ntype: article\ntitle: T\n---\n\nBody\n',
+        '---\ntype: article\ntitle: T\nstatus: published\n---\n\nBody\n',
         'silently doing nothing would leave the queue claiming the draft is still pending',
       );
+      assert.equal((await readDraft(file)).status, 'published', 'and it reads back');
+    } finally {
+      remove(dir);
+    }
+  });
+
+  test('markStatus never touches a `status:` line outside the front matter', async () => {
+    const dir = scratch();
+    try {
+      // No `status` key in the block (`readDraft` defaults it to `pending`) and
+      // a sentence in the body that starts with the same six characters. The
+      // old scan took the first line in the *file* whose trimmed form began
+      // `status:`, rewrote that sentence, and left the draft reading `pending`
+      // forever — so the queue re-offered a draft that had already published.
+      const file = path.join(dir, 'body-line.md');
+      const body = 'We report status: ok every morning.\n';
+      fs.writeFileSync(file, `---\ntype: article\n---\n\n${body}`, 'utf8');
+      await markStatus(file, 'published');
+
+      const written = fs.readFileSync(file, 'utf8');
+      assert.ok(written.endsWith(`\n\n${body}`), 'the body is byte-identical');
+      assert.equal(written, `---\ntype: article\nstatus: published\n---\n\n${body}`);
+      assert.equal((await readDraft(file)).status, 'published');
+    } finally {
+      remove(dir);
+    }
+  });
+
+  test('markStatus sets the top-level key, not an indented one in another mapping', async () => {
+    const dir = scratch();
+    try {
+      // `  status: needs-copy-edit` is the first line whose *trimmed* form
+      // starts with `status:`. Rewriting it produced a valueless `review:`, a
+      // stray top-level `status:` and the real one still below — approval
+      // reported success every time and publishing stayed blocked forever.
+      const file = path.join(dir, 'nested.md');
+      const source =
+        '---\ntype: article\nreview:\n  status: needs-copy-edit\nstatus: pending\n---\n\nBody\n';
+      fs.writeFileSync(file, source, 'utf8');
+      await markStatus(file, 'approved');
+
+      assert.equal(
+        fs.readFileSync(file, 'utf8'),
+        '---\ntype: article\nreview:\n  status: needs-copy-edit\nstatus: approved\n---\n\nBody\n',
+      );
+      const draft = await readDraft(file);
+      assert.equal(draft.status, 'approved', 'the key the reader reads is the key the writer wrote');
+      assert.deepEqual(draft.meta.review, { status: 'needs-copy-edit' }, 'the other mapping is intact');
+    } finally {
+      remove(dir);
+    }
+  });
+
+  test('markStatus keeps a CRLF draft in CRLF', async () => {
+    const dir = scratch();
+    try {
+      const file = path.join(dir, 'crlf.md');
+      fs.writeFileSync(file, '---\r\nstatus: pending\r\n---\r\n\r\nBody\r\n', 'utf8');
+      await markStatus(file, 'approved');
+      assert.equal(fs.readFileSync(file, 'utf8'), '---\r\nstatus: approved\r\n---\r\n\r\nBody\r\n');
     } finally {
       remove(dir);
     }
@@ -409,6 +472,42 @@ suite('governance: the ledger', () => {
       );
       assert.equal(await isPublished(file, '/pages/posts/corp/café/'), true);
       assert.equal(await isPublished(file, '/pages/posts/corp/other/'), false);
+    } finally {
+      remove(dir);
+    }
+  });
+
+  test('concurrent record/writeMeta cycles do not lose an entry', async () => {
+    const dir = scratch();
+    try {
+      const file = path.join(dir, 'ledger.json');
+      await saveLedger(file, {
+        'https://site/a': { urn: 'jekyll:a', posted_at: '2026-01-01T00:00:00Z', type: 'article' },
+      });
+
+      // Both cycles are read → mutate → write over the *whole* file. The atomic
+      // write makes each one complete; it cannot make them serializable, and
+      // two interleaved dropped a key outright. A lost key means the URL is not
+      // "already published", so the next attempt ships a second copy.
+      await Promise.all([
+        record(file, 'https://site/b', 'jekyll:b'),
+        record(file, 'https://site/c', 'jekyll:c'),
+        writeMeta(file, { last_run: '2026-07-31T00:00:00Z' }),
+        record(file, 'https://site/d', 'jekyll:d'),
+      ]);
+
+      const ledger = await loadLedger(file);
+      assert.deepEqual(Object.keys(ledger).sort(), [
+        '_meta',
+        'https://site/a',
+        'https://site/b',
+        'https://site/c',
+        'https://site/d',
+      ]);
+      for (const url of ['https://site/b', 'https://site/c', 'https://site/d']) {
+        assert.equal(await isPublished(file, url), true, `${url} survived`);
+      }
+      assert.equal((await readMeta(file)).last_run, '2026-07-31T00:00:00Z');
     } finally {
       remove(dir);
     }
@@ -727,5 +826,99 @@ suite('governance: preview is read-only', () => {
       3,
       'the corp folder still holds exactly its three fixture files',
     );
+  });
+});
+
+suite('governance: a publish interrupted before the ledger does not duplicate', () => {
+  /** A throwaway copy of the fixture workspace, so publishing may actually write. */
+  function sandbox(): { root: string; cfg: Zer0Config } {
+    const root = path.join(scratch(), 'ws');
+    fs.cpSync(WORKSPACE, root, { recursive: true });
+    return {
+      root,
+      cfg: resolveConfig(root, readJsonc<unknown>(fs.readFileSync(path.join(root, 'zer0.json'), 'utf8'))),
+    };
+  }
+
+  const publish = async (cfg: Zer0Config, root: string): ReturnType<typeof publishPreview> => {
+    const draft = await readDraft(path.join(root, '.zer0/drafts/approved-note.md'));
+    return publishPreview(
+      cfg,
+      await buildPreview(cfg, previewRequestFromDraft(draft)),
+      targetFor(cfg),
+      { draft },
+    );
+  };
+
+  /** Everything under `pages/_posts/corp`, which is where this draft lands. */
+  const postFiles = (root: string): string[] =>
+    fs.readdirSync(path.join(root, 'pages/_posts/corp')).sort();
+
+  const forgetLedgerEntry = (root: string, url: string): void => {
+    const file = path.join(root, '.zer0/ledger.json');
+    const ledger = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown>;
+    delete ledger[url];
+    fs.writeFileSync(file, `${JSON.stringify(ledger, null, 2)}\n`, 'utf8');
+  };
+
+  const URL = '/pages/posts/tech/mcp-for-the-back-office/';
+
+  test('the retry adopts the artifact it already wrote instead of writing a -2', async () => {
+    const { root, cfg } = sandbox();
+    try {
+      const before = postFiles(root);
+      const first = await publish(cfg, root);
+      assert.ok(first.urn?.startsWith('jekyll:'), `published: ${JSON.stringify(first)}`);
+      const written = postFiles(root).filter((name) => !before.includes(name));
+      assert.equal(written.length, 1, 'exactly one new page');
+
+      // With the ledger intact, the URL is simply skipped.
+      const second = await publish(cfg, root);
+      assert.match(second.skipped ?? '', /already published as/);
+
+      // Now the failure the ledger cannot see: the file landed, the record did
+      // not. `wx` gets EEXIST on the retry — and used to bump to `-2`, leaving
+      // two live pages for one canonical URL and a ledger key naming the wrong
+      // one. Editing the date proves the comparison ignores the build stamp.
+      forgetLedgerEntry(root, URL);
+      const artifact = path.join(root, 'pages/_posts/corp', written[0] ?? '');
+      fs.writeFileSync(
+        artifact,
+        fs.readFileSync(artifact, 'utf8').replace(/^date: .*$/m, 'date: 1999-01-01'),
+        'utf8',
+      );
+
+      const third = await publish(cfg, root);
+      assert.equal(third.urn, first.urn, 'the same artifact, adopted rather than duplicated');
+      assert.deepEqual(postFiles(root), [...before, written[0]].sort(), 'no -2 file appeared');
+      assert.ok(
+        third.warnings.some((w) => w.includes('interrupted publish')),
+        `the drift is reported, not silent: ${JSON.stringify(third.warnings)}`,
+      );
+      assert.equal(await isPublished(path.join(root, '.zer0/ledger.json'), URL), true);
+    } finally {
+      remove(path.dirname(root));
+    }
+  });
+
+  test('a genuinely different page with the same name still bumps to -2', async () => {
+    const { root, cfg } = sandbox();
+    try {
+      const before = postFiles(root);
+      const first = await publish(cfg, root);
+      const written = postFiles(root).filter((name) => !before.includes(name));
+      assert.equal(written.length, 1);
+
+      forgetLedgerEntry(root, URL);
+      const artifact = path.join(root, 'pages/_posts/corp', written[0] ?? '');
+      fs.writeFileSync(`${artifact}`, `${fs.readFileSync(artifact, 'utf8')}\nSomebody else's words.\n`, 'utf8');
+
+      const second = await publish(cfg, root);
+      assert.notEqual(second.urn, first.urn);
+      assert.ok(second.urn?.includes('-2.md'), `bumped: ${second.urn ?? ''}`);
+      assert.ok(second.warnings.some((w) => w.includes('already existed')));
+    } finally {
+      remove(path.dirname(root));
+    }
   });
 });

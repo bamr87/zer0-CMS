@@ -391,19 +391,36 @@ body {
   line-height: 64px;
 }
 
+/**
+ * `selectionBox()` emits this class in all three layouts, so its *default* has
+ * to be a visible, in-flow control. Only the grid card overlays it on the
+ * thumbnail and hides it until the card is hovered; the list row and the tree
+ * node put it in a column of its own, where a hidden box means those views have
+ * no way to select a single item at all.
+ */
 .z-card__select {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.z-card .z-card__select {
   position: absolute;
   top: var(--z-sp-2);
   left: var(--z-sp-2);
   z-index: 1;
-  visibility: hidden;
   box-shadow: 0 0 3px var(--z-border-active);
+  /* `opacity`, not `visibility`: a `visibility: hidden` input is removed from
+     the focus order, so the `:focus-within` rule below could never fire and the
+     card was unselectable by keyboard. */
+  opacity: 0;
+  transition: opacity var(--z-dur) ease-in-out;
 }
 
 .z-card:hover .z-card__select,
-.z-card__select:focus-within,
+.z-card:focus-within .z-card__select,
 .z-card.is-selected .z-card__select {
-  visibility: visible;
+  opacity: 1;
 }
 
 .z-card__body {

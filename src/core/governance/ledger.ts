@@ -11,6 +11,12 @@
  * why they are atomic (a half-written ledger is a double publish waiting to
  * happen).
  *
+ * Atomic writes are not the same as serializable updates, though: `record` and
+ * `writeMeta` each read the whole file, change one key and write it back, and
+ * two of those interleaved lose a key outright — which for the ledger means the
+ * URL republishes. See `mutate` below for what closes that inside this process
+ * and what it can only converge on across processes.
+ *
  * Keys beginning with `_` are metadata, not shares. `_meta` is the only one
  * this codebase writes today; the prefix convention means a future lane can
  * add its own without breaking anyone's iteration — provided everyone
@@ -61,7 +67,15 @@ export async function loadLedger(ledgerPath: string): Promise<Ledger> {
   const out: Ledger = {};
   for (const [key, value] of Object.entries(raw)) {
     if (isPlainObject(value)) {
-      out[key] = value as Ledger[string];
+      // `defineProperty`, not `out[key] =`: a ledger carrying a `__proto__` key
+      // would otherwise reach the accessor on `Object.prototype` and reshape
+      // the object instead of recording an entry.
+      Object.defineProperty(out, key, {
+        value: value as Ledger[string],
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
     }
   }
   return out;
@@ -78,6 +92,71 @@ export async function saveLedger(ledgerPath: string, data: Ledger): Promise<void
     ledgerPath,
     `${pyJsonDump(data, { indent: 2, sortKeys: true, ensureAscii: true })}\n`,
   );
+}
+
+// ---------------------------------------------------------------------------
+// Serializing the read-modify-write cycles
+// ---------------------------------------------------------------------------
+
+/**
+ * One promise chain per ledger file, so the read → mutate → write cycles below
+ * never interleave *inside this process*.
+ *
+ * `atomicWriteFile` makes each write complete; it cannot make a cycle
+ * serializable. Two `record()` calls that start together both read the same
+ * ledger, both add their own key to that snapshot, and the second write
+ * replaces the first — the first URL vanishes from the ledger even though its
+ * artifact shipped, and the next publish of it sails past the `alreadyPublished`
+ * gate and ships a duplicate. The extension, the panel and the dashboard all
+ * run in one extension host, so this queue covers every lane that shares it.
+ *
+ * It does **not** cover the other processes named in the header — the bundled
+ * MCP server and the Python CI job. Nothing in one process can lock a file
+ * against another one that does not look for the lock, and inventing a lock
+ * protocol the Python lane does not implement would be theatre. What covers
+ * that case is the verify-and-retry in `mutate` below: after writing, the file
+ * is read back, and a cycle whose key did not survive runs again on top of
+ * whatever landed instead. Convergent rather than exclusive, which is the
+ * strongest honest guarantee for a file with no lease.
+ */
+const inFlight = new Map<string, Promise<unknown>>();
+
+const MAX_ATTEMPTS = 4;
+
+async function mutate<T>(
+  ledgerPath: string,
+  apply: (data: Ledger) => T,
+  survived: (data: Ledger, result: T) => boolean,
+): Promise<T> {
+  const run = async (): Promise<T> => {
+    let last: T | undefined;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const data = await loadLedger(ledgerPath);
+      const result = apply(data);
+      last = result;
+      await saveLedger(ledgerPath, data);
+      if (survived(await loadLedger(ledgerPath), result)) {
+        return result;
+      }
+      // Another process wrote between our write and our read-back, and its
+      // snapshot did not contain our change. Re-apply on top of theirs.
+    }
+    // `last` is assigned on the first iteration; `MAX_ATTEMPTS` is >= 1.
+    return last as T;
+  };
+
+  // Chain onto whatever is already queued for this file, and keep the chain
+  // alive across a rejection so one failure does not wedge the queue.
+  const previous = inFlight.get(ledgerPath) ?? Promise.resolve();
+  const next = previous.then(run, run);
+  inFlight.set(
+    ledgerPath,
+    next.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return next;
 }
 
 export async function getEntry(ledgerPath: string, url: string): Promise<Ledger[string] | undefined> {
@@ -105,7 +184,6 @@ export async function record(
   urn: string,
   opts: { sourceFile?: string; kind?: string; target?: string } = {},
 ): Promise<LedgerEntry> {
-  const data = await loadLedger(ledgerPath);
   const entry: LedgerEntry = {
     urn,
     posted_at: utcStamp(),
@@ -117,9 +195,19 @@ export async function record(
   if (opts.target) {
     entry.target = opts.target;
   }
-  data[url] = { ...entry };
-  await saveLedger(ledgerPath, data);
-  return entry;
+  return mutate(
+    ledgerPath,
+    (data) => {
+      Object.defineProperty(data, url, {
+        value: { ...entry },
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+      return entry;
+    },
+    (data) => data[url]?.urn === urn,
+  );
 }
 
 /**
@@ -167,10 +255,26 @@ export async function readMeta(ledgerPath: string): Promise<Record<string, unkno
   return meta === undefined ? {} : { ...meta };
 }
 
-/** Merge `patch` into the `_meta` block, leaving every share untouched. */
+/**
+ * Merge `patch` into the `_meta` block, leaving every share untouched.
+ *
+ * Same queue as `record`: this is a read-modify-write over the whole file, and
+ * an unsynchronised one dropped whichever share a concurrent `record` had just
+ * added.
+ */
 export async function writeMeta(ledgerPath: string, patch: Record<string, unknown>): Promise<void> {
-  const data = await loadLedger(ledgerPath);
-  const meta = { ...(data[TOKEN_KEY] ?? {}), ...patch };
-  data[TOKEN_KEY] = meta as Ledger[string];
-  await saveLedger(ledgerPath, data);
+  const keys = Object.keys(patch);
+  await mutate(
+    ledgerPath,
+    (data) => {
+      data[TOKEN_KEY] = { ...(data[TOKEN_KEY] ?? {}), ...patch } as Ledger[string];
+      return undefined;
+    },
+    (data) => {
+      const meta = data[TOKEN_KEY];
+      return (
+        meta !== undefined && keys.every((key) => Object.prototype.hasOwnProperty.call(meta, key))
+      );
+    },
+  );
 }

@@ -353,7 +353,11 @@ export async function doPublish(shell: Zer0Shell, draftPath: string): Promise<bo
   }
 
   shell.log.info(`published ${outcome.urn ?? '(no urn)'} <- ${relPath(ctx.cfg, draftPath)}`);
-  const answer = await notifyInfo(`published ${outcome.urn ?? ''}`.trim(), 'Open artifact');
+  // A warning here means the artifact did not land where the plan said — a name
+  // collision bumped it, or an interrupted publish was adopted. That is exactly
+  // the kind of drift a log line alone lets someone miss.
+  const note = outcome.warnings.length === 0 ? '' : ` — ${outcome.warnings.join(' ')}`;
+  const answer = await notifyInfo(`${`published ${outcome.urn ?? ''}`.trim()}${note}`, 'Open artifact');
   if (answer === 'Open artifact' && preview.plan !== undefined) {
     await openInEditor(absPath(ctx.cfg, preview.plan.destination));
   }

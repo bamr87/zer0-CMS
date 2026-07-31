@@ -51,7 +51,20 @@
  * In every one of those cases the *raw text is untouched on disk*: nothing in
  * this file writes, and `serialize.ts` rewrites only the lines of keys the user
  * actually changed. A construct we cannot read is a construct we cannot
- * corrupt.
+ * corrupt. `article.writeArticle` is what upholds the second half of that
+ * sentence: it refuses to rewrite a YAML block wholesale, precisely because a
+ * full re-emit rebuilds it from what the parser understood.
+ *
+ * ## `__proto__` is data, not a prototype
+ *
+ * Every mapping this file builds is populated through `setOwn` and read through
+ * `ownValue`, never through `node[key]`. `node['__proto__']` on a plain object
+ * is `Object.prototype` — it passes every "is this a nested mapping?" test — so
+ * a block containing `[__proto__]` or `__proto__.x = 1` would otherwise have
+ * let a file in a repository write a key onto the prototype every object in the
+ * extension host shares, including the one the publish gate reads. A key
+ * literally spelled `__proto__` is kept as an ordinary own key instead: nothing
+ * is dropped, and nothing escapes the object it was written to.
  *
  * ## Scalar coercion
  *
@@ -82,6 +95,16 @@ export interface FmBlock {
   format: FmFormat;
   /** The block body with the fences excluded and no trailing newline. */
   raw: string;
+  /**
+   * The line ending this block is written with — **the** answer, not a guess.
+   *
+   * `raw` cannot answer it: it has the trailing newline removed, so a
+   * single-line CRLF block (`---\r\nstatus: draft\r\n---\r\n`) leaves `raw`
+   * with no `\r\n` in it at all. Deriving the policy from `raw` in one place
+   * and from the document body in another is how a file ends up with fences in
+   * CRLF and its interior in LF. Everything that rewrites the block reads this.
+   */
+  eol: '\n' | '\r\n';
   /** Character offset of the opening fence (past a BOM, if any). */
   start: number;
   /** Character offset just past the closing fence and its newline. */
@@ -140,6 +163,11 @@ function lineBounds(text: string, from: number): { end: number; next: number } {
   return { end: newline, next: newline + 1 };
 }
 
+/** The line ending of the line whose `\n` sits at `end` (`end` may be EOF). */
+function eolAt(text: string, end: number): '\n' | '\r\n' {
+  return end > 0 && text.charAt(end - 1) === '\r' ? '\r\n' : '\n';
+}
+
 function dropTrailingNewline(value: string): string {
   if (value.endsWith('\r\n')) {
     return value.slice(0, -2);
@@ -171,6 +199,9 @@ function splitFencedBlock(
       const block: FmBlock = {
         format,
         raw,
+        // The opening fence's own line ending: the first one in the file, and
+        // the only one that is present however short the block is.
+        eol: eolAt(text, opening.end),
         start: offset,
         end: line.next,
         data: parseFrontMatterBlock(raw, format),
@@ -193,12 +224,22 @@ function splitJsonBlock(text: string, offset: number): { block: FmBlock | null; 
   }
   const raw = text.slice(offset, close + 1);
   let end = close + 1;
-  if (text.startsWith('\r\n', end)) {
+  const crlf = text.startsWith('\r\n', end);
+  if (crlf) {
     end += 2;
   } else if (text.charAt(end) === '\n') {
     end += 1;
   }
-  const block: FmBlock = { format: 'json', raw, start: offset, end, data: parseFrontMatterBlock(raw, 'json') };
+  const block: FmBlock = {
+    format: 'json',
+    raw,
+    // A one-line JSON block has no interior newline, so the one that closes it
+    // is the only evidence of the file's style.
+    eol: raw.includes('\r\n') || crlf ? '\r\n' : '\n',
+    start: offset,
+    end,
+    data: parseFrontMatterBlock(raw, 'json'),
+  };
   return { block, body: text.slice(end) };
 }
 
@@ -257,9 +298,53 @@ function isPlainObject(value: unknown): value is Record<string, FmValue> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+// ---------------------------------------------------------------------------
+// Prototype-safe property access
+// ---------------------------------------------------------------------------
+
+/**
+ * Read a child mapping value **without** ever seeing an inherited one.
+ *
+ * `node['__proto__']` on a plain object is `Object.prototype`, and it passes
+ * every "is this a nested mapping?" test there is. A parser that descends into
+ * it is writing into the prototype every object in the extension host shares —
+ * which is how a front-matter block in a repository could have turned
+ * `governance.publishAllow` on for the whole process. Reading own properties
+ * only makes `__proto__` (and `constructor`, and `toString`) ordinary absent
+ * keys.
+ */
+export function ownValue(node: FrontMatter, key: string): FmValue | undefined {
+  return Object.prototype.hasOwnProperty.call(node, key) ? node[key] : undefined;
+}
+
+/**
+ * Assign a key **without** invoking an inherited setter.
+ *
+ * `node['__proto__'] = x` calls the accessor on `Object.prototype` and swaps
+ * the object's prototype instead of storing a key. `defineProperty` always
+ * creates an own data property, so a document whose front matter really does
+ * name a key `__proto__` keeps it as data — nothing is dropped and nothing
+ * escapes the object it was written to.
+ */
+export function setOwn(node: FrontMatter, key: string, value: FmValue): void {
+  Object.defineProperty(node, key, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+}
+
 function parseJsonBlock(raw: string): FrontMatter {
   const parsed: unknown = JSON.parse(raw);
-  return isPlainObject(parsed) ? { ...parsed } : {};
+  if (!isPlainObject(parsed)) {
+    return {};
+  }
+  const out: FrontMatter = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    setOwn(out, key, value);
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -516,7 +601,7 @@ function parseFlowValue(text: string): FmValue {
     }
     for (const part of splitFlow(inner)) {
       const pair = splitFlowPair(part);
-      map[pair.key] = pair.rest === null ? null : parseFlowValue(pair.rest);
+      setOwn(map, pair.key, pair.rest === null ? null : parseFlowValue(pair.rest));
     }
     return map;
   }
@@ -715,7 +800,7 @@ function parseMapping(lines: YamlLine[], cur: Cursor, indent: number): FrontMatt
       break;
     }
     cur.i++;
-    map[pair.key] = readValue(lines, cur, line.indent, pair.rest);
+    setOwn(map, pair.key, readValue(lines, cur, line.indent, pair.rest));
   }
   return map;
 }
@@ -840,7 +925,12 @@ export function parseYamlSubset(raw: string): FrontMatter {
   const data: FrontMatter = {};
   while (cur.i < lines.length) {
     const before = cur.i;
-    Object.assign(data, parseMapping(lines, cur, 0));
+    // Not `Object.assign`: it copies through [[Set]], so a source key named
+    // `__proto__` would reach the accessor on `Object.prototype` instead of
+    // becoming a key on `data`.
+    for (const [key, value] of Object.entries(parseMapping(lines, cur, 0))) {
+      setOwn(data, key, value);
+    }
     if (cur.i === before) {
       // parseMapping refused this line (a root-level sequence item, a `...`
       // document end, a complex key). Step over it and keep reading.
@@ -906,7 +996,7 @@ export function parseTomlFlat(raw: string): FrontMatter {
       const joined = chunk.join('\n');
       const end = joined.indexOf('"""');
       const container = path.length > 1 ? descend(table, path.slice(0, -1)) : table;
-      container[leaf] = end < 0 ? joined : joined.slice(0, end);
+      setOwn(container, leaf, end < 0 ? joined : joined.slice(0, end));
       continue;
     }
 
@@ -917,7 +1007,7 @@ export function parseTomlFlat(raw: string): FrontMatter {
     }
 
     const container = path.length > 1 ? descend(table, path.slice(0, -1)) : table;
-    container[leaf] = parseFlowValue(stripComment(text));
+    setOwn(container, leaf, parseFlowValue(stripComment(text)));
   }
   return root;
 }
@@ -976,17 +1066,23 @@ function splitTomlKey(name: string): string[] {
   return parts.filter((part) => part.length > 0);
 }
 
-/** Walk (creating as needed) to the nested map at `path`. */
+/**
+ * Walk (creating as needed) to the nested map at `path`.
+ *
+ * Every step goes through `ownValue`/`setOwn`, so `[__proto__]` and
+ * `[a.constructor]` build ordinary nested tables instead of handing back
+ * `Object.prototype` and writing into it.
+ */
 function descend(root: FrontMatter, path: readonly string[]): FrontMatter {
   let node = root;
   for (const segment of path) {
-    const existing = node[segment];
+    const existing = ownValue(node, segment);
     if (isPlainObject(existing)) {
       node = existing;
       continue;
     }
     const created: FrontMatter = {};
-    node[segment] = created;
+    setOwn(node, segment, created);
     node = created;
   }
   return node;

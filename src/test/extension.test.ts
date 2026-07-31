@@ -26,7 +26,10 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { currentConfig, hasProjectConfig } from '../config';
+import { currentConfig, hasProjectConfig, settingsPublishAllow } from '../config';
+import type { PageEntry } from '../core';
+import { contentTargetPath } from '../dashboard/dashboardPanel';
+import { mcpPublishAllowed } from '../mcpRegistration';
 import { emptySnapshot, type Snapshot } from '../store';
 import { ALL_CONTEXT_KEYS, CONTEXT_KEYS, UiState, type ContextKey } from '../uiState';
 
@@ -423,6 +426,189 @@ function runFolderlessWindow(): Promise<{ code: number | null; output: string }>
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// The gates a forged webview message and a checked-in file must not open
+// ---------------------------------------------------------------------------
+
+suite('extension: a file in the repository cannot arm the MCP publish flag', function () {
+  this.timeout(60000);
+
+  const settingsFile = (): string => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(folder, 'the fixture workspace is open');
+    return path.join(folder.uri.fsPath, '.vscode', 'settings.json');
+  };
+
+  test('zer0.json says true, nobody set the setting, and the server stays read-only', async () => {
+    const file = settingsFile();
+    const before = fs.readFileSync(file, 'utf8');
+    const section = (): vscode.WorkspaceConfiguration =>
+      vscode.workspace.getConfiguration('zer0Cms');
+    try {
+      // The fixture's `zer0.json` sets `governance.publishAllow: true` and its
+      // `.vscode/settings.json` sets the setting to false. Remove the setting
+      // and the merge — correctly — lets the file's `true` through.
+      await section().update(
+        'governance.publishAllow',
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      assert.equal(settingsPublishAllow(), undefined, 'no human set it');
+      assert.equal(
+        currentConfig().governance.publishAllow,
+        true,
+        'the in-editor gates still read the merged value, and zer0.json wins there',
+      );
+      assert.equal(
+        mcpPublishAllowed(),
+        false,
+        'but ZER0_CMS_MCP_ALLOW_PUBLISH is the gate a zer0.json must not reach: past it, ' +
+          "zer0_publish's only other gate is `confirm: true`, which an agent supplies to itself",
+      );
+
+      await section().update('governance.publishAllow', true, vscode.ConfigurationTarget.Workspace);
+      assert.equal(mcpPublishAllowed(), true, 'a setting a person wrote does arm it');
+
+      await section().update('governance.publishAllow', false, vscode.ConfigurationTarget.Workspace);
+      assert.equal(mcpPublishAllowed(), false);
+    } finally {
+      await section().update('governance.publishAllow', false, vscode.ConfigurationTarget.Workspace);
+      // Restore the fixture byte for byte — it carries a comment explaining why
+      // it disagrees with `zer0.json`, and `update()` reformats around it.
+      fs.writeFileSync(file, before, 'utf8');
+    }
+  });
+});
+
+suite('extension: the dashboard re-derives its own delete target', function () {
+  this.timeout(60000);
+
+  const pages: PageEntry[] = [
+    { filePath: path.join('/ws', 'pages', '_posts', 'a.md') } as PageEntry,
+    { filePath: path.join('/ws', 'pages', '_posts', 'b.md') } as PageEntry,
+  ];
+
+  test('an absolute path outside the index names nothing', () => {
+    for (const forged of ['/home/me/.ssh/id_rsa', '/etc/hosts', '../../etc/passwd', '']) {
+      assert.equal(
+        contentTargetPath('/ws', pages, forged),
+        undefined,
+        `"${forged}" must not resolve to something deletable`,
+      );
+    }
+  });
+
+  test('an indexed file resolves, by absolute path and by workspace-relative path', () => {
+    const target = path.join('/ws', 'pages', '_posts', 'a.md');
+    assert.equal(contentTargetPath('/ws', pages, target), target);
+    assert.equal(contentTargetPath('/ws', pages, 'pages/_posts/a.md'), target);
+    assert.equal(contentTargetPath('/ws', pages, 'pages/_posts/c.md'), undefined);
+  });
+
+  test('a folderless window resolves nothing at all', () => {
+    // Otherwise a relative target resolves against the extension host's cwd.
+    assert.equal(contentTargetPath('', pages, 'pages/_posts/a.md'), undefined);
+    assert.equal(contentTargetPath('', pages, path.join('/ws', 'pages', '_posts', 'a.md')), undefined);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Webview assets — a missing icon font looks exactly like a working build
+// ---------------------------------------------------------------------------
+
+suite('extension: the webviews ship the icon font they render with', () => {
+  test('the build copies the codicon stylesheet and webfont into dist/media', () => {
+    const dir = path.join(REPO_ROOT, 'dist', 'media');
+    const css = fs.readFileSync(path.join(dir, 'codicon.css'), 'utf8');
+    assert.ok(css.includes('@font-face'), 'the stylesheet declares the face');
+    assert.ok(css.includes('codicon.ttf'), 'and points at the file next to it');
+    assert.ok(fs.statSync(path.join(dir, 'codicon.ttf')).size > 1000, 'the font itself is there');
+
+    // Every name `icon()` is called with has to exist in the font, or that call
+    // site renders an empty element and its control becomes a blank box.
+    const used = new Set<string>();
+    const webview = path.join(REPO_ROOT, 'src', 'webview');
+    const walk = (dir2: string): void => {
+      for (const entry of fs.readdirSync(dir2, { withFileTypes: true })) {
+        const full = path.join(dir2, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (entry.name.endsWith('.ts')) {
+          for (const match of fs.readFileSync(full, 'utf8').matchAll(/\bicon\('([a-z0-9-]+)'/g)) {
+            const name = match[1];
+            if (name !== undefined) {
+              used.add(name);
+            }
+          }
+        }
+      }
+    };
+    walk(webview);
+    assert.ok(used.size >= 20, `expected the webviews to use icons, found ${used.size}`);
+    for (const name of [...used].sort()) {
+      assert.ok(css.includes(`.codicon-${name}:before`), `codicon-${name} is not in the font`);
+    }
+  });
+
+  test('all three webview shells link it', () => {
+    for (const shell of [
+      path.join('src', 'panel', 'panelProvider.ts'),
+      path.join('src', 'dashboard', 'dashboardPanel.ts'),
+      path.join('src', 'agent', 'agentPanel.ts'),
+    ]) {
+      const source = fs.readFileSync(path.join(REPO_ROOT, shell), 'utf8');
+      assert.ok(
+        /'dist',\s*'media',\s*'codicon\.css'/.test(source),
+        `${shell} does not link the codicon stylesheet — its icons would render as empty elements`,
+      );
+    }
+  });
+
+  test('base.css beats codicon.css on the three sizing rules', () => {
+    // `codicon.css` sizes `.codicon[class*='codicon-']` with the `font`
+    // shorthand, which resets font-size and is (0,2,0). A bare `.codicon` here
+    // loses on specificity whatever the link order is.
+    const css = fs.readFileSync(path.join(REPO_ROOT, 'media', 'base.css'), 'utf8');
+    for (const selector of [
+      ".codicon[class*='codicon-'] {",
+      ".codicon[class*='codicon-'].z-icon-md {",
+      ".codicon[class*='codicon-'].z-icon-lg {",
+    ]) {
+      assert.ok(css.includes(selector), `base.css is missing "${selector}"`);
+    }
+  });
+
+  test('the per-item selection box is only hidden inside a grid card', () => {
+    // `selectionBox()` emits `.z-card__select` in all three layouts. Hiding it
+    // unconditionally left List and Structure with no way to select one row.
+    // Comments are stripped first: the rules below *explain* why they do not
+    // say `visibility: hidden`, and a naive scan would match the explanation.
+    const css = fs
+      .readFileSync(path.join(REPO_ROOT, 'media', 'dashboard.css'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+    /** The declarations of the first rule whose selector list is exactly `selector`. */
+    const ruleBody = (selector: string): string => {
+      const at = css.indexOf(`\n${selector} {`);
+      assert.notEqual(at, -1, `dashboard.css has no "${selector}" rule`);
+      const open = css.indexOf('{', at);
+      return css.slice(open + 1, css.indexOf('}', open));
+    };
+
+    assert.ok(
+      !/visibility:\s*hidden/.test(ruleBody('.z-card__select')),
+      'the shared rule must not hide the control — the list row and the tree node use it too',
+    );
+    assert.ok(
+      !/visibility:\s*hidden/.test(ruleBody('.z-card .z-card__select')),
+      'and the card overlay uses opacity, so the input stays in the focus order for :focus-within',
+    );
+    assert.ok(
+      /opacity:\s*0/.test(ruleBody('.z-card .z-card__select')),
+      'the grid card still hides its box until hover',
+    );
+  });
+});
 
 suite('extension: a folderless window', function () {
   // A second editor has to boot, which is slower than anything else here.

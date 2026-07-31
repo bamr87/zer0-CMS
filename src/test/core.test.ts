@@ -10,9 +10,10 @@
 
 import { strict as assert } from 'node:assert';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { parseArticle } from '../core/content/article';
+import { parseArticle, readArticle, setFieldValue, writeArticle } from '../core/content/article';
 import {
   asBool,
   asList,
@@ -35,6 +36,7 @@ import {
   seoInsights,
 } from '../core/content/seo';
 import {
+  applyChanges,
   serializeFrontMatter,
   serializeOptions,
   stitch,
@@ -280,6 +282,67 @@ suite('core: front matter — three dialects, one shape', () => {
   });
 });
 
+suite('core: front matter is data, never a prototype', () => {
+  const polluted = (): unknown => ({} as Record<string, unknown>).publishAllow;
+
+  test('a TOML `[__proto__]` table does not reach Object.prototype', () => {
+    // `descend()` walked into `node['__proto__']`, which on a plain object is
+    // `Object.prototype` and passes every "is this a nested mapping?" test.
+    // Assigning through it set a key every object in the extension host could
+    // see — including the `{}` that `resolveConfig` reads `governance` off,
+    // which flipped `publishAllow` from false to true.
+    const { block } = splitFrontMatter('+++\ntitle = "Hello"\n[__proto__]\npublishAllow = true\n+++\nBody\n');
+    assert.ok(block !== null);
+    assert.equal(polluted(), undefined, 'Object.prototype is untouched');
+    assert.deepEqual(block.data.__proto__, { publishAllow: true }, 'and the key is kept as data');
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(block.data, '__proto__'),
+      true,
+      'as an own property, not a prototype swap',
+    );
+  });
+
+  test('the other two spellings of the same walk are closed too', () => {
+    const dotted = splitFrontMatter('+++\n__proto__.publishAllow = true\n+++\n').block;
+    assert.ok(dotted !== null);
+    assert.equal(polluted(), undefined);
+
+    const nested = splitFrontMatter('+++\n[a.__proto__]\npublishAllow = true\n+++\n').block;
+    assert.ok(nested !== null);
+    assert.equal(polluted(), undefined);
+
+    const yaml = parseYamlSubset('__proto__:\n  publishAllow: true\n');
+    assert.equal(polluted(), undefined);
+    assert.deepEqual(yaml.__proto__, { publishAllow: true });
+
+    const json = splitFrontMatter('{"__proto__": {"publishAllow": true}}\nBody\n').block;
+    assert.ok(json !== null);
+    assert.equal(polluted(), undefined);
+  });
+
+  test('a `__proto__` KeyChange cannot escape the object it addresses', () => {
+    const out = applyChanges({ title: 'x' }, [{ key: '__proto__.publishAllow', value: true }]);
+    assert.equal(polluted(), undefined);
+    assert.deepEqual(out.__proto__, { publishAllow: true });
+
+    const emitted = updateFrontMatterKeys(
+      'title: x',
+      [{ key: '__proto__.publishAllow', value: true }],
+      serializeOptions(fixtureConfig(), 'yaml'),
+    );
+    assert.equal(polluted(), undefined);
+    assert.equal(emitted, 'title: x\n__proto__:\n  publishAllow: true');
+  });
+
+  test('the publish gate is unreachable through a content file', () => {
+    // The end of the chain the pollution reached: a `zer0.json` with no
+    // `governance` section at all inherited the polluted `true`.
+    splitFrontMatter('+++\n[__proto__]\npublishAllow = true\n+++\n');
+    const cfg = resolveConfig('/tmp/ws', { contentFolders: [] }, {});
+    assert.equal(cfg.governance.publishAllow, false, 'the default, not an inherited true');
+  });
+});
+
 suite('core: line surgery preserves what it did not touch (D7)', () => {
   const source = (): { raw: string; blockRaw: string; body: string } => {
     const raw = fixture('pages/_posts/corp/2026-07-12-house-style.md');
@@ -367,18 +430,182 @@ suite('core: line surgery preserves what it did not touch (D7)', () => {
     }
   });
 
-  test('an unlocatable nested path answers null rather than guessing', () => {
+  test('a nested path whose parent is missing grows the nesting in place', () => {
     const cfg = fixtureConfig();
     const opts = serializeOptions(cfg, 'yaml');
     const { blockRaw } = source();
-    // The fixture block has no `seo:` map, so `seo.title` has no parent.
-    assert.equal(updateFrontMatterKeys(blockRaw, [{ key: 'seo.title', value: 'X' }], opts), null);
 
-    // With the parent present the same change is placed surgically.
-    const withParent = 'title: T\nseo:\n  noindex: false\n';
-    const next = updateFrontMatterKeys(withParent, [{ key: 'seo.title', value: 'X' }], opts);
+    // The fixture block has no `seo:` map. Answering `null` here handed the
+    // whole block to a full re-emit, which rebuilds it from what the parser
+    // understood — deleting every comment in it for the sake of one new key.
+    const next = updateFrontMatterKeys(blockRaw, [{ key: 'seo.title', value: 'X' }], opts);
     assert.ok(next !== null);
-    assert.deepEqual(parseYamlSubset(next).seo, { noindex: false, title: 'X' });
+    assert.ok(next.startsWith(blockRaw), 'every pre-existing byte is carried through unchanged');
+    assert.equal(next.slice(blockRaw.length), '\nseo:\n  title: X');
+    assert.deepEqual(parseYamlSubset(next).seo, { title: 'X' });
+
+    // With the parent present the same change is placed inside it.
+    const withParent = 'title: T\nseo:\n  noindex: false\n';
+    const inside = updateFrontMatterKeys(withParent, [{ key: 'seo.title', value: 'X' }], opts);
+    assert.ok(inside !== null);
+    assert.deepEqual(parseYamlSubset(inside).seo, { noindex: false, title: 'X' });
+
+    // A parent holding a scalar is the one shape no writer can place a child
+    // in. That is the remaining `null`, and `writeArticle` turns it into a
+    // refusal rather than a rewrite — see the article suite.
+    assert.equal(
+      updateFrontMatterKeys('title: T\nseo: a string\n', [{ key: 'seo.title', value: 'X' }], opts),
+      null,
+    );
+  });
+
+  test('deleting a duplicated key removes every occurrence, not just the last', () => {
+    const opts = serializeOptions(fixtureConfig(), 'yaml');
+    // The parser resolves duplicates last-wins, so this block reads
+    // `{draft: false}`. Splicing out only the last range resurrected the
+    // earlier one: clearing the field returned a published page to draft.
+    const raw = 'draft: true\ntitle: x\ndraft: false';
+    assert.equal(parseYamlSubset(raw).draft, false);
+
+    const next = updateFrontMatterKeys(raw, [{ key: 'draft', value: undefined }], opts);
+    assert.equal(next, 'title: x');
+    assert.equal('draft' in parseYamlSubset(next ?? ''), false, 'the field is cleared, not flipped');
+
+    // Setting is unaffected: it rewrites the range the parser reads.
+    assert.equal(
+      updateFrontMatterKeys(raw, [{ key: 'draft', value: true }], opts),
+      'draft: true\ntitle: x\ndraft: true',
+    );
+  });
+
+  test('the block’s own line ending is the only one that decides the block’s', () => {
+    const opts = serializeOptions(fixtureConfig(), 'yaml');
+
+    // A one-line CRLF block: `raw` has had its trailing `\r\n` removed, so
+    // there is no CRLF left in it to detect. Guessing LF rewrote every line
+    // ending in the file on the first metadata save.
+    const crlf = splitFrontMatter('---\r\nstatus: draft\r\n---\r\nBody\r\n');
+    assert.ok(crlf.block !== null);
+    assert.equal(crlf.block.eol, '\r\n');
+    assert.equal(crlf.block.raw.includes('\r\n'), false, 'nothing in `raw` could have said so');
+    const flipped = updateFrontMatterKeys(
+      crlf.block.raw,
+      [{ key: 'status', value: 'published' }],
+      opts,
+      crlf.block.eol,
+    );
+    assert.ok(flipped !== null);
+    assert.equal(
+      stitch(crlf.block, flipped, crlf.body, 'yaml'),
+      '---\r\nstatus: published\r\n---\r\nBody\r\n',
+    );
+
+    // And the reverse: CRLF *in the body* must not put CRs on the fences of a
+    // pure-LF front-matter block.
+    const mixed = splitFrontMatter('---\ntitle: x\nstatus: draft\n---\n\n```\nwindows\r\nline\r\n```\n');
+    assert.ok(mixed.block !== null);
+    assert.equal(mixed.block.eol, '\n');
+    const kept = updateFrontMatterKeys(
+      mixed.block.raw,
+      [{ key: 'status', value: 'published' }],
+      opts,
+      mixed.block.eol,
+    );
+    assert.ok(kept !== null);
+    const rebuilt = stitch(mixed.block, kept, mixed.body, 'yaml');
+    assert.equal(rebuilt.slice(0, rebuilt.indexOf('```')).includes('\r'), false);
+    assert.ok(rebuilt.includes('windows\r\nline\r\n'), 'the body keeps its own endings');
+  });
+
+  test('inserting a key into a CRLF block does not leave one line without a CR', () => {
+    const opts = serializeOptions(fixtureConfig(), 'yaml');
+    const { block } = splitFrontMatter('---\r\na: 1\r\nb: 2\r\n---\r\n');
+    assert.ok(block !== null);
+    const next = updateFrontMatterKeys(block.raw, [{ key: 'c', value: 4 }], opts, block.eol);
+    assert.equal(next, 'a: 1\r\nb: 2\r\nc: 4');
+  });
+});
+
+suite('core: writeArticle never rebuilds a YAML block from the parse', () => {
+  const scratch = (): string => fs.mkdtempSync(path.join(os.tmpdir(), 'zer0-cms-article-'));
+
+  /**
+   * The exact shape from the audit: an anchored mapping (which the parser reads
+   * as the literal string `"&series"`, dropping its two children), a comment,
+   * and a plain scalar wrapped onto a second line (which the parser truncates).
+   * All three survive on disk only because surgery never re-emits them.
+   */
+  const LOSSY =
+    '---\n' +
+    '# Shared defaults for this series\n' +
+    'defaults: &series\n' +
+    '  layout: post\n' +
+    '  author: Amr\n' +
+    'description: a long description that the author\n' +
+    '  wrapped onto a second line\n' +
+    'title: Real post\n' +
+    '---\n' +
+    '\nBody\n';
+
+  test('editing a nested key in a file full of unreadable YAML keeps every byte of it', async () => {
+    const dir = scratch();
+    try {
+      const file = path.join(dir, 'post.md');
+      fs.writeFileSync(file, LOSSY, 'utf8');
+
+      const article = await readArticle(file);
+      assert.equal(article.data.defaults, '&series', 'the parser really cannot read this');
+      assert.equal(article.data.layout, undefined);
+
+      // What the panel sends when someone types an SEO title.
+      await writeArticle(article, setFieldValue(article.data, ['seo', 'title'], 'X'), fixtureConfig());
+
+      const written = fs.readFileSync(file, 'utf8');
+      for (const line of ['# Shared defaults for this series', 'defaults: &series', '  layout: post', '  author: Amr', '  wrapped onto a second line']) {
+        assert.ok(written.includes(line), `"${line}" survived`);
+      }
+      assert.ok(written.includes('seo:\n  title: X'), 'and the edit landed');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('a change that cannot be placed is refused, not written around', async () => {
+    const dir = scratch();
+    try {
+      const file = path.join(dir, 'blocked.md');
+      const source = '---\n# keep me\nseo: a plain string\n---\n\nBody\n';
+      fs.writeFileSync(file, source, 'utf8');
+
+      const article = await readArticle(file);
+      await assert.rejects(
+        writeArticle(article, [{ key: 'seo.title', value: 'X' }], fixtureConfig()),
+        /scalar or a sequence/,
+        'the old fallback rewrote the whole block without even making this change',
+      );
+      assert.equal(fs.readFileSync(file, 'utf8'), source, 'the file is untouched');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('a file with no front matter still gets a block, and TOML still re-emits', async () => {
+    const dir = scratch();
+    try {
+      const bare = path.join(dir, 'bare.md');
+      fs.writeFileSync(bare, 'Just prose.\n', 'utf8');
+      const article = await readArticle(bare);
+      await writeArticle(article, [{ key: 'title', value: 'T' }], fixtureConfig());
+      assert.equal(fs.readFileSync(bare, 'utf8'), '---\ntitle: T\n---\nJust prose.\n');
+
+      const toml = path.join(dir, 'toml.md');
+      fs.writeFileSync(toml, '+++\ntitle = "T"\n+++\n\nBody\n', 'utf8');
+      const tomlArticle = await readArticle(toml);
+      await writeArticle(tomlArticle, [{ key: 'title', value: 'U' }], fixtureConfig());
+      assert.ok(fs.readFileSync(toml, 'utf8').includes('title = "U"'));
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

@@ -37,7 +37,23 @@ const problemMatcherPlugin = {
   },
 };
 
-/** Copies the stylesheets the webviews load through `asWebviewUri`. */
+/**
+ * Codicon assets, copied out of the `@vscode/codicons` devDependency.
+ *
+ * `codicon.css` carries the `@font-face` and the 576 `content:` rules; the
+ * `.ttf` is the glyphs. Both land in `dist/media/`, which is a
+ * `localResourceRoot` for all three webviews, and the stylesheet's relative
+ * `url("./codicon.ttf?…")` resolves next to it.
+ *
+ * Missing files are a **build error**, not a warning. A webview does not get
+ * codicons for free — without these, every `icon()` in `src/webview` renders an
+ * empty element and every icon-only control becomes an invisible box, which is
+ * a failure that looks exactly like a working build.
+ */
+const CODICON_FILES = ['codicon.css', 'codicon.ttf'];
+const CODICON_DIR = path.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist');
+
+/** Copies the stylesheets and the icon font the webviews load through `asWebviewUri`. */
 const copyMediaPlugin = {
   name: 'copy-media',
   setup(build) {
@@ -49,6 +65,15 @@ const copyMediaPlugin = {
         if (file.endsWith('.css')) {
           fs.copyFileSync(path.join(src, file), path.join(dest, file));
         }
+      }
+      for (const file of CODICON_FILES) {
+        const from = path.join(CODICON_DIR, file);
+        if (!fs.existsSync(from)) {
+          throw new Error(
+            `esbuild: ${from} is missing. The webviews need @vscode/codicons — run 'npm install'.`,
+          );
+        }
+        fs.copyFileSync(from, path.join(dest, file));
       }
     });
   },

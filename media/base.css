@@ -156,10 +156,14 @@ button:disabled {
 }
 
 /* Icon-only affordance: no chrome until hovered or focused. */
+/* A 24px minimum on both axes: an icon-only control must stay a target even if
+   its glyph fails to load, and 4px of padding around nothing is not one. */
 .z-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
   padding: var(--z-sp-1);
   color: var(--z-tab-inactive);
   border-radius: var(--z-radius);
@@ -269,18 +273,24 @@ input[type='checkbox']:checked::after {
 
 /* ── icons and utilities ───────────────────────────────────────────────── */
 
-.codicon {
+/**
+ * The three sizing rules match `codicon.css`'s own `.codicon[class*='codicon-']`
+ * selector on purpose. That rule uses the `font` **shorthand**, which resets
+ * `font-size` to 16px, and it is (0,2,0) — a bare `.codicon` here would lose to
+ * it on specificity no matter which stylesheet is linked first.
+ */
+.codicon[class*='codicon-'] {
   font-size: var(--z-icon-sm);
   line-height: var(--z-icon-sm);
   flex-shrink: 0;
 }
 
-.z-icon-md {
+.codicon[class*='codicon-'].z-icon-md {
   font-size: var(--z-icon-md);
   line-height: var(--z-icon-md);
 }
 
-.z-icon-lg {
+.codicon[class*='codicon-'].z-icon-lg {
   font-size: var(--z-icon-lg);
   line-height: var(--z-icon-lg);
 }
@@ -495,10 +505,15 @@ input[type='checkbox']:checked::after {
   flex-shrink: 0;
 }
 
+/* The card-actions trigger's only visible child is an icon, so it needs the
+   same guaranteed hit area as `.z-icon-btn`; it had none at all. */
 .z-menu__trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--z-sp-1);
+  min-width: 24px;
+  min-height: 24px;
   color: var(--z-link);
 }
 

@@ -66,7 +66,7 @@ Everything about the *project* — content folders, content types and their fiel
 ```jsonc
 {
   "contentFolders": [
-    { "title": "Posts", "path": "[[workspace]]/pages/_posts", "contentType": "post" }
+    { "title": "Posts", "path": "[[workspace]]/pages/_posts", "contentTypes": ["post"] }
   ],
   "contentTypes": [
     {
@@ -82,8 +82,8 @@ Everything about the *project* — content folders, content types and their fiel
     }
   ],
   "taxonomy": { "tags": [], "categories": [] },
-  "seo": { "title": 60, "description": 160, "slug": 75, "content": 250 },
-  "slugTemplate": "{{title}}"
+  "seo": { "titleLength": 60, "descriptionLength": 160, "slugLength": 75, "contentLength": 1760 },
+  "slug": { "template": "{{title}}" }
 }
 ```
 

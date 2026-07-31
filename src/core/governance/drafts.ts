@@ -26,7 +26,14 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { asBool, asString, splitFrontMatter, type FrontMatter } from '../content/frontmatter';
-import { quoteScalar } from '../content/serialize';
+import {
+  DEFAULT_SERIALIZE_OPTIONS,
+  quoteScalar,
+  serializeFrontMatter,
+  stitch,
+  updateFrontMatterKeys,
+  type SerializeOptions,
+} from '../content/serialize';
 
 export const STATUS_PENDING = 'pending';
 export const STATUS_APPROVED = 'approved';
@@ -233,12 +240,53 @@ export async function writeDraft(dir: string, draft: NewDraft): Promise<string> 
 }
 
 /**
- * Flip the `status:` line in place, preserving every other byte of the file.
+ * The text of `source` with its **front matter's** `status` key set to `status`.
  *
- * Exactly one line changes: the first whose trimmed, lowercased form starts
- * with `status:`. A draft that carries no status line at all gets one inserted
- * directly after the opening fence — silently doing nothing would leave the
- * queue claiming a draft is still pending after a successful publish.
+ * The key is located by the same machinery that reads it — `splitFrontMatter`
+ * to find the block, then line surgery inside it — so "what approve rewrote"
+ * and "what `readDraft` reports" cannot disagree. The earlier version scanned
+ * the whole file for the first line whose *trimmed* form began with `status:`,
+ * which matched two things it had no business touching:
+ *
+ *   - a line in the draft **body**. A draft with no `status` key in its front
+ *     matter (`readDraft` defaults it to `pending`, and `listQueue` accepts any
+ *     `.md` with front matter) and the words `status: ok` somewhere in its
+ *     prose had that sentence rewritten by publishing — and still read back as
+ *     `pending`, so the queue re-offered it forever.
+ *   - an **indented** key in another mapping (`review:` / `  status: …`),
+ *     which left the file with a valueless `review:`, a new top-level
+ *     `status:` and the original one still below it. On a workspace with
+ *     `acceptStatuses: ["approved"]` that made approval a no-op that always
+ *     claimed success.
+ *
+ * Exported so the transformation is testable without a filesystem.
+ */
+export function withStatus(source: string, status: string): string {
+  const value = status.trim();
+  const { block, body } = splitFrontMatter(source);
+
+  if (block === null) {
+    // No front matter to hold a status: give the file a block rather than write
+    // a `status:` line into the body, where nothing would ever read it.
+    return `---\nstatus: ${value}\n---\n\n${source}`;
+  }
+
+  const opts: SerializeOptions = { ...DEFAULT_SERIALIZE_OPTIONS, format: block.format };
+  const raw =
+    updateFrontMatterKeys(block.raw, [{ key: 'status', value }], opts, block.eol) ??
+    // TOML and JSON blocks have no line surgery; they re-emit wholesale, which
+    // is the documented trade for those dialects. Drafts this CMS writes are
+    // always YAML, so this is the hand-authored-exotic-draft path.
+    serializeFrontMatter({ ...block.data, status: value }, opts);
+  return source.slice(0, block.start) + stitch(block, raw, body, block.format);
+}
+
+/**
+ * Flip the `status:` key in place, preserving every other byte of the file.
+ *
+ * A draft that carries no status key at all gets one — silently doing nothing
+ * would leave the queue claiming a draft is still pending after a successful
+ * publish.
  *
  * Not an atomic write: this is a file a human may have open in an editor, and
  * replacing its inode detaches editors and watchers from it (see
@@ -246,30 +294,9 @@ export async function writeDraft(dir: string, draft: NewDraft): Promise<string> 
  */
 export async function markStatus(filePath: string, status: string): Promise<void> {
   const text = await fs.readFile(filePath, 'utf8');
-  const lines = text.split(/\r\n|\r|\n/);
-  const next = `status: ${status.trim()}`;
-
-  const out: string[] = [];
-  let replaced = false;
-  for (const line of lines) {
-    if (!replaced && line.trim().toLowerCase().startsWith('status:')) {
-      out.push(next);
-      replaced = true;
-    } else {
-      out.push(line);
-    }
+  const next = withStatus(text, status);
+  if (next === text) {
+    return;
   }
-
-  if (!replaced) {
-    const fence = out.findIndex((line) => line.trim() === '---');
-    if (fence === -1) {
-      // No front matter to hold a status: prepend a block rather than write a
-      // `status:` line into the body, where nothing would ever read it.
-      out.unshift('---', next, '---', '');
-    } else {
-      out.splice(fence + 1, 0, next);
-    }
-  }
-
-  await fs.writeFile(filePath, `${out.join('\n').replace(/\n*$/, '')}\n`, 'utf8');
+  await fs.writeFile(filePath, next, 'utf8');
 }
