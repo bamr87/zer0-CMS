@@ -11,11 +11,7 @@
 ## How it was tested
 
 <!--
-  What you actually ran, and what it told you. `npm run compile` and
-  `npm test` at minimum for extension changes; for `rails/`,
-  `ruby -Ilib test/zer0_cms/test_abc_engine.rb`.
-  If you skipped something, say so.
--->
+What you actually ran, and what it told you. `npm run compile` and `npm test` at minimum for extension changes; for `rails/`, `ruby -Ilib test/zer0_cms/test_abc_engine.rb`. If you skipped something, say so. -->
 
 ## Checklist
 

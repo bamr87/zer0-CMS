@@ -1,7 +1,6 @@
 # `src/core` — the pure layer
 
-Everything zer0-CMS knows how to *do*, with nothing that knows it is running
-inside an editor.
+Everything zer0-CMS knows how to *do*, with nothing that knows it is running inside an editor.
 
 ## The one rule
 
@@ -9,17 +8,11 @@ inside an editor.
 
 - `eslint.config.mjs` block 2 (`no-restricted-imports`) fails the lint, and
 - `esbuild.js` builds `src/mcp/server.ts` with an **empty** `external` list, so
-  a stray `vscode` import anywhere in this graph becomes a *build* error rather
-  than a crash inside somebody's MCP client.
+a stray `vscode` import anywhere in this graph becomes a *build* error rather than a crash inside somebody's MCP client.
 
-If a core function needs the editor, it takes what it needs as a parameter — a
-path, a `LogSink`, a callback — and the shell supplies it. That is what makes
-this layer unit-testable with plain `node`, reusable from the bundled MCP
-server, and runnable from a script.
+If a core function needs the editor, it takes what it needs as a parameter — a path, a `LogSink`, a callback — and the shell supplies it. That is what makes this layer unit-testable with plain `node`, reusable from the bundled MCP server, and runnable from a script.
 
-The second rule follows from the first: **zero runtime dependencies**. YAML
-subset parsing, globbing, date formatting, JSON-with-comments and Python-parity
-JSON output are all hand-rolled here against the Node standard library.
+The second rule follows from the first: **zero runtime dependencies**. YAML subset parsing, globbing, date formatting, JSON-with-comments and Python-parity JSON output are all hand-rolled here against the Node standard library.
 
 ## Layout
 
@@ -34,20 +27,11 @@ JSON output are all hand-rolled here against the Node standard library.
 
 ## Where a type lives
 
-Cross-cutting domain types are declared **once**, in `shared/types.ts`:
-`Zer0Config`, `Field`, `ContentType`, `ContentFolder`, `FieldGroup`,
-`PageEntry`, `ContentRecord`, `CmsIssue`, `PerfStats`, `Severity`, `Lane`,
-`Freshness`, `LogSink`.
+Cross-cutting domain types are declared **once**, in `shared/types.ts`: `Zer0Config`, `Field`, `ContentType`, `ContentFolder`, `FieldGroup`, `PageEntry`, `ContentRecord`, `CmsIssue`, `PerfStats`, `Severity`, `Lane`, `Freshness`, `LogSink`.
 
-Types owned by a single module stay with that module and are re-exported by the
-barrel: `FmValue`/`FrontMatter` (`content/frontmatter.ts`), `DraftFile`
-(`governance/drafts.ts`), `GuardFinding` (`governance/guard.ts`),
-`LedgerEntry`/`Ledger` (`governance/ledger.ts`), `Blocker`
-(`governance/approval.ts`), `Contract` (`contract/contract.ts`).
+Types owned by a single module stay with that module and are re-exported by the barrel: `FmValue`/`FrontMatter` (`content/frontmatter.ts`), `DraftFile` (`governance/drafts.ts`), `GuardFinding` (`governance/guard.ts`), `LedgerEntry`/`Ledger` (`governance/ledger.ts`), `Blocker` (`governance/approval.ts`), `Contract` (`contract/contract.ts`).
 
-Declaring the same name in two modules makes `export *` ambiguous and breaks
-the barrel for everyone — so import a type from where it lives, never redeclare
-it locally.
+Declaring the same name in two modules makes `export *` ambiguous and breaks the barrel for everyone — so import a type from where it lives, never redeclare it locally.
 
 ## Testing
 

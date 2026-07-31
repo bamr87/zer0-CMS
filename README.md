@@ -5,8 +5,7 @@
 </p>
 
 <p align="center">
-  A lightweight CMS for your markdown repo, inside VS Code.<br>
-  Edit front matter as real controls, browse your content in a dashboard, and publish through a gate a human has to walk through.
+A lightweight CMS for your markdown repo, inside VS Code.<br> Edit front matter as real controls, browse your content in a dashboard, and publish through a gate a human has to walk through.
 </p>
 
 <p align="center">
@@ -24,8 +23,7 @@ zer0-CMS turns a repository of markdown into something you can actually operate:
 - **SEO insights** measured against thresholds you set,
 - and a **governed publishing path** — draft → brand guard → human approval → publish → ledger — where nothing goes out because a script decided it should.
 
-It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it.
-The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
+It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## The two halves of this repo
 
@@ -59,9 +57,7 @@ Four rules hold this together:
 4. Open a markdown file — the panel fills in.
 5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
 
-Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type.
-Everything about *your machine* lives in VS Code settings under `zer0Cms.*`.
-That split is why there are 34 settings here instead of 89.
+Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 34 settings here instead of 89.
 
 ## Configuration
 

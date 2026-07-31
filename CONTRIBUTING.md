@@ -54,5 +54,4 @@ These are enforced by the build, so you will find out quickly, but knowing them 
 
 ## Reporting things
 
-Bugs and feature requests: <https://github.com/bamr87/zer0-CMS/issues>.
-A small reproduction — a `zer0.json` and one content file — is worth more than a long description.
+Bugs and feature requests: <https://github.com/bamr87/zer0-CMS/issues>. A small reproduction — a `zer0.json` and one content file — is worth more than a long description.
