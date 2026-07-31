@@ -14,10 +14,11 @@
  *   1. **Dates stay strings.** Nothing in this file constructs a `Date`.
  *      Round-tripping `2026-07-31` through a JS `Date` is how a CMS silently
  *      rewrites every date in a repository to a timezone-shifted timestamp.
- *   2. **The dialect comes from the file, not from a setting.** `detectFormat`
- *      looks at the leading characters (`---`, `+++`, `{`). A workspace whose
- *      `zer0Cms.frontMatter.format` says `yaml` still reads its one TOML file
- *      correctly; the setting only decides what *new* blocks look like.
+ *   2. **The dialect comes from the file, not from configuration.**
+ *      `detectFormat` looks at the leading characters (`---`, `+++`, `{`). A
+ *      workspace whose `zer0.json` says `frontMatter.format: "yaml"` still
+ *      reads its one TOML file correctly; that key only decides what *new*
+ *      blocks look like. It is a `zer0.json` key, not a VS Code setting.
  *
  * ## The YAML subset — what is supported
  *

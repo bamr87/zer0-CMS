@@ -741,7 +741,7 @@
     "lint": "eslint src",
     "compile-tests": "tsc -p . --outDir out",
     "pretest": "npm run compile-tests && npm run compile",
-    "test": "vscode-test"
+    "test": "node test-runner.js"
   },
   "dependencies": {},
   "optionalDependencies": {

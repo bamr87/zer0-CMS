@@ -1085,6 +1085,8 @@ function seoState(
   return {
     titleField: cfg.seo.titleField,
     descriptionField: cfg.seo.descriptionField,
+    titleLength: cfg.seo.titleLength,
+    descriptionLength: cfg.seo.descriptionLength,
     hasTitle: asString(data[cfg.seo.titleField]).trim() !== '',
     hasDescription: asString(data[cfg.seo.descriptionField]).trim() !== '',
     rows: seoInsights(cfg, data, contentType, details),

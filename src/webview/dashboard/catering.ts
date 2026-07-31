@@ -39,9 +39,15 @@ import type {
 export const MIN_OBSERVATIONS = 2;
 
 /**
- * The italic empty states, mirrored from `core/catering/worklist.ts` with the
- * markdown emphasis underscores stripped. The host supplies these in
- * `CateringState.emptyStates`; these are what renders if it sent a blank.
+ * The italic empty states, mirrored from `LANE_EMPTY_STATES` in
+ * `core/catering/worklist.ts` with the markdown emphasis underscores stripped.
+ *
+ * That module imports `../contract/contract`, which imports `node:fs`, so this
+ * bundle cannot reach it — this is the only copy of these sentences that is
+ * not the export. (`src/dashboard/dashboardPanel.ts` imports the real one and
+ * ships it in `CateringState.emptyStates`, which is what normally renders;
+ * these are the fallback for a host that sent a blank.) Edit a sentence in
+ * `worklist.ts` and edit it here in the same commit.
  */
 export const EMPTY_STATES = {
   undistributed: 'Everything publishable has been distributed.',

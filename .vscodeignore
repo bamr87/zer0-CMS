@@ -20,3 +20,4 @@ eslint.config.mjs
 .gitignore
 .env
 *.vsix
+test-runner.js

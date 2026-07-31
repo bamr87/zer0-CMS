@@ -28,7 +28,14 @@ import {
 import { publishedSourceFiles, type Ledger } from '../governance/ledger';
 import type { ContentRecord, PerfStats } from '../shared/types';
 
-/** Below this many observations a per-topic average is noise, not a signal. */
+/**
+ * Below this many observations a per-topic average is noise, not a signal.
+ *
+ * `src/webview/dashboard/catering.ts` declares its own copy — this module
+ * imports `../contract/contract`, which imports `node:fs`, so a browser bundle
+ * cannot reach it. The number is quoted inside two lane sentences, so a change
+ * here is a change to both copies and to the golden worklist fixture.
+ */
 export const MIN_OBSERVATIONS = 2;
 
 /** How many rows each lane may contribute to a worklist. */
@@ -55,6 +62,9 @@ export interface CateringPlan {
  * Python's built-in `round()` and of `{:.2%}` formatting. JavaScript's
  * `Math.round` rounds half *up*, which diverges on exactly the values a
  * percentage table is full of.
+ *
+ * Twins: this and `rateOf` below are restated in
+ * `src/webview/dashboard/catering.ts`, which cannot import this module.
  */
 export function roundHalfEven(x: number, digits: number): number {
   const scale = Math.pow(10, digits);

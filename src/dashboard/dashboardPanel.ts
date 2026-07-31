@@ -50,7 +50,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import {
-  MIN_OBSERVATIONS,
+  LANE_EMPTY_STATES,
   asString,
   buildPreview,
   canonicalUrl,
@@ -189,27 +189,6 @@ const SORT_OPTIONS: readonly SortOption[] = [
 ];
 
 const SORT_IDS: ReadonlySet<string> = new Set<string>(SORT_OPTIONS.map((option) => option.id));
-
-/**
- * The four italic empty-state sentences, byte-identical to the ones
- * `core/catering/worklist.ts` writes into the generated file.
- *
- * They are duplicated rather than imported because `renderWorklist` builds them
- * inline; if that function's prose changes, these four strings change with it.
- * The screen and the file saying different things about the same empty lane is
- * the bug this constant exists to make obvious.
- */
-const LANE_EMPTY = {
-  undistributed: 'Everything publishable has been distributed.',
-  provenNoEvidence:
-    'No audience data yet. Topic rankings need published posts with statistics read back; ' +
-    'until then this lane is empty rather than guessed.',
-  provenThin:
-    `Not enough observations yet — a topic needs ${MIN_OBSERVATIONS} posts before its average ` +
-    'means anything.',
-  quiet: 'Nothing to report.',
-  refresh: 'Nothing published has gone stale.',
-} as const;
 
 type Handler = (args: unknown) => void;
 
@@ -1052,8 +1031,9 @@ function folderViews(cfg: Zer0Config): FolderView[] {
  *
  * `PageEntry.draft` already has the configured `invert` applied to booleans and
  * keeps a `choice` field's raw status word, so this is the whole rule. The
- * webview holds an identical copy in `contents.ts` — it cannot import from the
- * host — and the two must agree or a tab will show a count it does not fill.
+ * webview holds an identical copy in `src/webview/dashboard/contents.ts` — it
+ * cannot import from the host — and the two must agree or a tab will show a
+ * count it does not fill.
  */
 function draftStateOf(page: PageEntry, now: number): string {
   if (typeof page.draft === 'string') {
@@ -1215,11 +1195,19 @@ function buildCatering(snapshot: Snapshot, lastWorklist: string | null): Caterin
     proven: plan.proven,
     quiet: plan.quiet,
     refresh: plan.refresh,
+    // The sentences come straight from `core/catering/worklist.ts`, the module
+    // that also writes them into `.cms/distribution/worklists/<date>.md`. One
+    // definition, so the screen and the generated file cannot disagree about
+    // the same empty lane. `src/webview/dashboard/catering.ts` keeps a mirror
+    // of them as its fallback — it is in the browser bundle and cannot reach
+    // this module — so edit both together.
     emptyStates: {
-      undistributed: LANE_EMPTY.undistributed,
-      proven: hasEvidence(plan) ? LANE_EMPTY.provenThin : LANE_EMPTY.provenNoEvidence,
-      quiet: LANE_EMPTY.quiet,
-      refresh: LANE_EMPTY.refresh,
+      undistributed: LANE_EMPTY_STATES.undistributed,
+      proven: hasEvidence(plan)
+        ? LANE_EMPTY_STATES.provenThin
+        : LANE_EMPTY_STATES.provenNoEvidence,
+      quiet: LANE_EMPTY_STATES.quiet,
+      refresh: LANE_EMPTY_STATES.refresh,
     },
     lastWorklist,
   };

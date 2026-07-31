@@ -68,8 +68,8 @@ Two of them feed back into the snapshot: `Contents:Sorting` becomes `contents.de
 
 - **No image previews on content cards.** The webview's `localResourceRoots`
 are `media/` and `dist/` and nothing else (PLAN §4.4), so a workspace image has no loadable URI. Widening the roots to the whole repository to put a thumbnail on a card is not a trade worth making; `contents.ts` renders `<img>` only for `https:`/`data:` references and the markdown glyph otherwise.
-- **The four lane empty-state sentences are duplicated** from
-`core/catering/worklist.ts`, where they are built inline rather than exported. `LANE_EMPTY` carries the same strings byte-for-byte and picks between lane B's two variants with the real `hasEvidence(plan)`. If that function's prose changes, this constant changes with it — the screen and the generated file disagreeing about the same empty lane is exactly the bug the constant exists to make obvious.
+- **The lane empty-state sentences are imported, not copied.**
+`LANE_EMPTY_STATES` comes from `core/catering/worklist.ts`, the module that also writes those sentences into `.cms/distribution/worklists/<date>.md`; `buildCatering` picks between lane B's two variants with the real `hasEvidence(plan)`. This host is Node, so it can reach that module — the screen and the generated file are two renderings of one definition and cannot disagree. The dashboard bundle keeps a fallback copy (`EMPTY_STATES` in `src/webview/dashboard/catering.ts`) because a browser cannot import `node:fs`; that one is a mirror and is commented as such.
 - **`customSorting` and `grouping` are read from `zer0.json` directly**
 (`customDashboardConfig()`), not from `Zer0Config`. They are a dashboard nicety rather than part of the content model, so `resolveConfig` has no field for them. Entries are coerced defensively and a `customSorting` id follows
   Front Matter's `<field>-<asc|desc>` convention, which is how the webview

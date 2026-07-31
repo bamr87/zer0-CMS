@@ -69,10 +69,6 @@ import { fileField, previewImageField } from './media';
  */
 export const FAULTY_PLACEHOLDER = '<failed to process>';
 
-/** Front Matter's SEO budgets, used when the insights table cannot supply one. */
-export const DEFAULT_TITLE_LIMIT = 60;
-export const DEFAULT_DESCRIPTION_LIMIT = 160;
-
 /**
  * The codicon drawn to the left of each field label. Types with no entry
  * (`fields`, `fieldCollection`, `divider`, `heading`) render a bare label, as
@@ -185,33 +181,29 @@ export function packList(field: Field, values: string[]): FmValue {
 /**
  * The character budget shown under a text control, or `-1` for "no limit".
  *
- * Only the two SEO fields have one. `SeoState` carries no explicit lengths, so
- * the budget is read out of the matching insights row's `recommendation`
- * (`"60 chars"`, produced by `core/content/seo.ts`) and falls back to Front
- * Matter's 60/160 defaults when SEO reported no row for the field.
+ * The webview twin of `core/content/fields.ts#limitFor` — same three rules, one
+ * reading `SeoState` and one reading `Zer0Config`. Change either and change the
+ * other: SEO off is no budget, a threshold of `0` or less is the author
+ * switching that check off (`-1`, not "zero characters"), and only the two
+ * configured SEO fields have a budget at all.
+ *
+ * `SeoState.titleLength` / `descriptionLength` carry the numbers straight from
+ * `zer0.json`, so nothing here parses a budget back out of an insights row's
+ * `recommendation` text. That also means an empty title still gets a counter —
+ * `seoInsights` omits the row for an empty field, but the budget is unchanged.
  */
 export function limitForField(field: Field, state: PanelState): number {
   const seo = state.seo;
   if (seo === null || !state.settings.seoEnabled) {
     return -1;
   }
-  const isTitle = field.name === seo.titleField;
-  const isDescription = field.name === seo.descriptionField;
-  if (!isTitle && !isDescription) {
-    return -1;
+  if (field.name === seo.titleField) {
+    return seo.titleLength > 0 ? seo.titleLength : -1;
   }
-  const label = labelOf(field);
-  for (const row of seo.rows) {
-    const recommendation = row.recommendation;
-    if (row.label !== label || recommendation === undefined || !recommendation.endsWith('chars')) {
-      continue;
-    }
-    const parsed = Number.parseInt(recommendation, 10);
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed;
-    }
+  if (field.name === seo.descriptionField) {
+    return seo.descriptionLength > 0 ? seo.descriptionLength : -1;
   }
-  return isTitle ? DEFAULT_TITLE_LIMIT : DEFAULT_DESCRIPTION_LIMIT;
+  return -1;
 }
 
 /** The message an unknown thrown value carries, without ever stringifying `{}`. */

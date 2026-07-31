@@ -33,9 +33,9 @@ Everything above is called by `commands/`, `views/`, `panel/`, `dashboard/` and 
 
 ### 1. `currentConfig()` is not cached, and `explicit()` is why the three layers work
 
-Every one of the 34 contributed settings declares a default in `package.json`, so `getConfiguration('zer0Cms').get('governance.publishAllow')` returns `false` even for a user who has never opened the settings UI. If the settings layer were built from `get()`, it would always have a value, and `zer0.json` could never win for any key that also has a setting — three layers collapsing into one. `config.ts` therefore reads through `inspect()` and keeps only the values a human actually set (folder → workspace → global scope).
+Every one of the 35 contributed settings declares a default in `package.json`, so `getConfiguration('zer0Cms').get('governance.publishAllow')` returns `false` even for a user who has never opened the settings UI. If the settings layer were built from `get()`, it would always have a value, and `zer0.json` could never win for any key that also has a setting — three layers collapsing into one. `config.ts` therefore reads through `inspect()` and keeps only the values a human actually set (folder → workspace → global scope).
 
-Nothing is cached. `currentConfig()` re-reads the settings and re-parses `zer0.json` on every call. That is what makes "flip `zer0Cms.governance. publishAllow` and the next publish gate sees it" true without a window reload.
+Nothing is cached. `currentConfig()` re-reads the settings and re-parses `zer0.json` on every call. That is what makes "flip `zer0Cms.governance.publishAllow` and the next publish gate sees it" true without a window reload.
 
 ### 2. The store coalesces, debounces, and re-arms
 

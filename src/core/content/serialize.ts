@@ -220,9 +220,19 @@ function needsQuotes(value: string): boolean {
   return needsStructuralQuotes(value) || RESERVED_RE.test(value) || NUMBER_LIKE_RE.test(value);
 }
 
-function quote(value: string): string {
+/**
+ * A double-quoted YAML scalar.
+ *
+ * Backslashes escape FIRST, then quotes — the other order double-escapes the
+ * backslash it just introduced, and a value ending in `\` then closes its own
+ * string and swallows the rest of the block. Exported so nothing else in the
+ * codebase hand-rolls a second, subtly different version of this.
+ */
+export function quoteScalar(value: string): string {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }
+
+const quote = quoteScalar;
 
 function emitString(value: string, opts: SerializeOptions): string {
   return opts.quoteStringValues || needsQuotes(value) ? quote(value) : value;

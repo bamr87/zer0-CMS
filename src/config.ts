@@ -9,7 +9,7 @@
  *
  * The subtlety that makes those three layers real is `inspect()`. A plain
  * `getConfiguration('zer0Cms').get('governance.publishAllow')` never returns
- * `undefined`: every one of our 34 settings declares a default in
+ * `undefined`: every one of our 35 settings declares a default in
  * `package.json`, so `get()` hands back that default for keys the user has
  * never touched — and a settings layer that always has a value would silently
  * outrank `zer0.json` for every key it names. `explicit()` below reads only the
@@ -122,11 +122,11 @@ function explicitSections(config: vscode.WorkspaceConfiguration): PanelSectionId
 /**
  * Every `zer0Cms.*` setting, shaped as the core's settings layer.
  *
- * Only the 34 ids that `package.json` contributes appear here. The project
+ * Only the 35 ids that `package.json` contributes appear here. The project
  * *schema* — content folders, content types, field groups, taxonomy,
  * placeholders, SEO thresholds, the slug template, the front-matter dialect —
  * has no settings at all and is read exclusively from `zer0.json`. That split
- * is why 89 upstream settings became 34.
+ * is why 89 upstream settings became 35.
  */
 export function settingsSnapshot(scope?: vscode.ConfigurationScope): Zer0Settings {
   const c = vscode.workspace.getConfiguration(CONFIG_SECTION, scope);

@@ -41,11 +41,19 @@ import { commandButton, panelSection } from './chrome';
 /**
  * Where a long post is visually truncated. Mirrors `FOLD` in
  * `src/core/governance/guard.ts` — the core module cannot be imported here
- * because it reads the filesystem, and a browser bundle must not.
+ * because it reads the filesystem, and a browser bundle must not. The
+ * dashboard's `src/webview/dashboard/governance.ts` holds the third copy;
+ * all three move together.
  */
 export const FOLD = 140;
 
-/** The dashed rule drawn across the commentary at the fold. */
+/**
+ * The dashed rule drawn across the commentary at the fold.
+ *
+ * Byte-identical to `FOLD_LABEL` in `src/webview/dashboard/governance.ts`.
+ * Deliberately names no vendor: decision D8 generalises publish away from any
+ * single network, so the sentence says "feeds".
+ */
 const FOLD_LABEL = `… see more (feeds fold around ${FOLD} characters)`;
 
 // ---------------------------------------------------------------------------

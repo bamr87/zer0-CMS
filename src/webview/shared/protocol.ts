@@ -266,6 +266,15 @@ export interface KeywordInfoView {
 export interface SeoState {
   titleField: string;
   descriptionField: string;
+  /**
+   * The character budgets from `zer0.json`'s `seo.titleLength` and
+   * `seo.descriptionLength`, verbatim. `0` or less means the author switched
+   * that check off — the panel shows no counter rather than a budget of zero.
+   * They travel as numbers so `limitForField` never has to parse one back out
+   * of a `rows[].recommendation` string.
+   */
+  titleLength: number;
+  descriptionLength: number;
   hasTitle: boolean;
   hasDescription: boolean;
   rows: SeoRowView[];

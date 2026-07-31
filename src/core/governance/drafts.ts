@@ -26,6 +26,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { asBool, asString, splitFrontMatter, type FrontMatter } from '../content/frontmatter';
+import { quoteScalar } from '../content/serialize';
 
 export const STATUS_PENDING = 'pending';
 export const STATUS_APPROVED = 'approved';
@@ -220,7 +221,10 @@ export async function writeDraft(dir: string, draft: NewDraft): Promise<string> 
 
   const lines = ['---'];
   for (const [key, value] of Object.entries(meta)) {
-    lines.push(QUOTED_KEYS.has(key) ? `${key}: "${value.replace(/"/g, '\\"')}"` : `${key}: ${value}`);
+    // quoteScalar, not a local escape: it handles backslashes as well as
+    // quotes. A title ending in `\` would otherwise emit `"…\"`, whose closing
+    // quote reads as escaped — the string runs on and eats the rest of the block.
+    lines.push(QUOTED_KEYS.has(key) ? `${key}: ${quoteScalar(value)}` : `${key}: ${value}`);
   }
   lines.push('---');
 

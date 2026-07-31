@@ -91,16 +91,41 @@ const EMPHASIS_RE = /[*~]+/g;
  * tags (an autolink looks like a tag).
  */
 function toPlainText(line: string): string {
-  return line
-    .replace(INLINE_CODE_RE, ' ')
-    .replace(IMAGE_RE, ' ')
-    .replace(LINK_RE, '$2')
-    .replace(REF_LINK_RE, '$1')
-    .replace(AUTOLINK_RE, '$1')
-    .replace(HTML_TAG_RE, '')
+  return stripTags(
+    line
+      .replace(INLINE_CODE_RE, ' ')
+      .replace(IMAGE_RE, ' ')
+      .replace(LINK_RE, '$2')
+      .replace(REF_LINK_RE, '$1')
+      .replace(AUTOLINK_RE, '$1'),
+  )
     .replace(EMPHASIS_RE, '')
     .replace(/\\([\\`*_{}[\]()#+\-.!])/g, '$1')
     .trim();
+}
+
+/**
+ * Remove HTML tags, repeatedly, until the text stops changing.
+ *
+ * One pass is not enough: removing the inner match of `<<div>div>` leaves
+ * `<div>`, a tag that was not there before the pass and would survive it. The
+ * text this produces becomes an SEO description, which a site templates into a
+ * `<meta>` tag — so "mostly stripped" is not good enough, and a single
+ * `.replace()` here was a real hole rather than a theoretical one.
+ *
+ * The loop terminates because every iteration that changes the string removes
+ * at least two characters; the bound is belt-and-braces for a pathological line.
+ */
+function stripTags(text: string): string {
+  let out = text;
+  for (let i = 0; i < 100; i += 1) {
+    const next = out.replace(HTML_TAG_RE, '');
+    if (next === out) {
+      return out;
+    }
+    out = next;
+  }
+  return out;
 }
 
 /**
@@ -339,8 +364,10 @@ function findFieldNamed(fields: readonly Field[], name: string): Field | undefin
  * Two FM rules are load-bearing and easy to lose:
  *
  *  1. **A threshold of `<= 0` suppresses its row.** That is how a workspace
- *     switches off a check — setting `zer0Cms.seo.titleLength` to `0` means
- *     "do not tell me about title length", not "titles must be empty".
+ *     switches off a check — setting `seo.titleLength` in `zer0.json` to `0`
+ *     means "do not tell me about title length", not "titles must be empty".
+ *     The thresholds are `zer0.json` keys; VS Code contributes only the
+ *     `zer0Cms.seo.enabled` toggle.
  *  2. **Article length is never validated.** It is a target with no `isValid`,
  *     so it renders as an em dash rather than a pass or a fail. A 1,200-word
  *     article is not wrong; it is shorter than the goal.
@@ -435,7 +462,14 @@ export const KEYWORD_CHECK_NAMES: readonly string[] = [
 /** Every `KeywordInfo.total`. Six checks, no more, no fewer. */
 export const KEYWORD_CHECK_TOTAL = 6;
 
-/** The band the panel paints green. Below is thin, above reads as stuffing. */
+/**
+ * The band the panel paints green. Below is thin, above reads as stuffing.
+ *
+ * `src/webview/panel/seo.ts` declares its own copy — this module reaches
+ * `node:fs` through its imports and cannot be bundled for a browser. Move one
+ * bound and move the other, or the panel will paint a density green that the
+ * core reports as unhealthy.
+ */
 export const DENSITY_MIN = 0.75;
 export const DENSITY_MAX = 1.5;
 

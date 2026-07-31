@@ -57,7 +57,7 @@ Four rules hold this together:
 4. Open a markdown file — the panel fills in.
 5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
 
-Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 34 settings here instead of 89.
+Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 35 settings here instead of 89.
 
 ## Configuration
 

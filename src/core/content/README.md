@@ -5,12 +5,12 @@ Ten files that know what a content file *is*: how to read its front matter, how 
 | File | Exports | Owner |
 |---|---|---|
 | `frontmatter.ts` | `FmValue`, `FrontMatter`, `FmFormat`, `FmBlock`, `detectFormat`, `splitFrontMatter`, `parseFrontMatterBlock`, `parseYamlSubset`, `parseTomlFlat`, `parseYamlKeyLine`, `isYamlSequenceItem`, `asString`, `asList`, `asBool` | WP03 |
-| `serialize.ts` | `SerializeOptions`, `DEFAULT_SERIALIZE_OPTIONS`, `serializeOptions`, `KeyChange`, `applyChanges`, `applyCommaSeparatedFields`, `updateFrontMatterKeys`, `serializeFrontMatter`, `stitch` | WP03 |
+| `serialize.ts` | `SerializeOptions`, `DEFAULT_SERIALIZE_OPTIONS`, `serializeOptions`, `KeyChange`, `applyChanges`, `applyCommaSeparatedFields`, `updateFrontMatterKeys`, `serializeFrontMatter`, `quoteScalar`, `stitch` | WP03 |
 | `article.ts` | `Article`, `parseArticle`, `readArticle`, `writeArticle`, `setFieldValue`, `stampModified`, `isSupported`, `CONVENTIONAL_MODIFIED_KEYS` | WP03 |
 | `fields.ts` | `inlineFieldCollections`, `evaluateWhen`, `visibleFields`, `emptyValueFor`, `isEmpty`, `validateFields`, `FieldViolation`, `labelOf`, `limitFor`, `findField` | WP04 |
-| `contentType.ts` | `DEFAULT_CONTENT_TYPE`, `DEFAULT_CONTENT_TYPE_NAME`, `CONTENT_TYPE_FIELD`, `getContentTypes`, `contentTypeByName`, `resolveContentType`, `processFields`, `createContent`, `renderContentFile`, `sanitizeFileName`, `generateContentTypeFrom`, `missingFields` | WP04 |
+| `contentType.ts` | `DEFAULT_CONTENT_TYPE`, `DEFAULT_CONTENT_TYPE_NAME`, `CONTENT_TYPE_FIELD`, `getContentTypes`, `contentTypeByName`, `resolveContentType`, `processFields`, `CreateContentRequest`, `CreateContentResult`, `createContent`, `renderContentFile`, `sanitizeFileName`, `generateContentTypeFrom`, `missingFields` | WP04 |
 | `folders.ts` | `resolveFolders`, `folderForFile`, `filePrefixFor` | WP04 |
-| `placeholders.ts` | `processPlaceholders`, `hasPlaceholder`, `PlaceholderContext`, `FAULTY_PLACEHOLDER`, and the synchronous token processors (`processTimePlaceholders`, `processDatePlaceholders`, `processFmPlaceholders`, `processArticlePlaceholders`, `processPathPlaceholders`, `processFilePrefixIndex`, `processCustomPlaceholders`) | WP04 |
+| `placeholders.ts` | `processPlaceholders`, `hasPlaceholder`, `PlaceholderContext`, `FAULTY_PLACEHOLDER`, `PLACEHOLDER_SCRIPT_TIMEOUT_MS`, and the synchronous token processors (`processTimePlaceholders`, `processDatePlaceholders`, `processFmPlaceholders`, `processArticlePlaceholders`, `processPathPlaceholders`, `processFilePrefixIndex`, `processCustomPlaceholders`) | WP04 |
 | `slug.ts` | `createSlug`, `decorateSlug`, `alignedFilePath` | WP04 |
 | `pageIndex.ts` | `IndexCache`, `buildIndex`, `pageToRecord`, `searchPages`, `emptyIndexCache`, `asIndexCache` | WP05 |
 | `seo.ts` | `ArticleDetails`, `getArticleDetails`, `emptyArticleDetails`, `stripShortcodes`, `SeoRow`, `seoInsights`, `KeywordCheck`, `KeywordInfo`, `keywordAnalysis`, `keywordDensity`, `keywordsOf`, `isHealthyDensity`, `KEYWORD_CHECK_NAMES`, `KEYWORD_CHECK_TOTAL`, `DENSITY_MIN`, `DENSITY_MAX`, `WORDS_PER_MINUTE` | WP05 |
@@ -23,7 +23,7 @@ Ten files that know what a content file *is*: how to read its front matter, how 
 
 **Dates stay strings.** Nothing in `frontmatter.ts` or `serialize.ts` constructs a `Date`. Round-tripping `2026-07-31` through a JS `Date` is how a CMS quietly rewrites every date in a repository to a timezone-shifted timestamp, and it is the single most common way a front-matter library corrupts a site. `stampModified` formats a `Date` *into* a string and never reads one back out.
 
-**The dialect belongs to the file, not to the setting.** `zer0Cms.frontMatter.format` decides what *new* blocks look like. An existing TOML file stays TOML. `serializeOptions(cfg, format)` takes the detected format explicitly for exactly this reason; passing only `cfg` means "I am creating this block".
+**The dialect belongs to the file, not to the configuration.** `zer0.json`'s `frontMatter.format` decides what *new* blocks look like. (There is no VS Code setting for it — the project schema lives in `zer0.json` alone; see `src/config.ts`.) An existing TOML file stays TOML. `serializeOptions(cfg, format)` takes the detected format explicitly for exactly this reason; passing only `cfg` means "I am creating this block".
 
 **Line surgery is the default write path (decision D7).** `updateFrontMatterKeys` rewrites only the lines of the keys named in its `KeyChange[]`. Comments, blank lines, key order, quoting style and indentation quirks of every *other* key survive because they are never re-emitted. Flipping `status: pending` to `status: approved` is a one-line diff, always — the property BASH-CMS's `markStatus` had for one key, generalised to every field edit. A key's range stops before the blank lines and comments that separate it from the next key, which is what makes "untouched lines are byte-identical" literally true.
 

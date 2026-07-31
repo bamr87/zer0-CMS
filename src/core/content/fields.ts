@@ -28,6 +28,25 @@
  * (`minimum`, `maximum`, `exlusiveMinimum` (sic), `exclusiveMaximum`) are not
  * in `WhenOperator` at all — an unimplemented operator that silently evaluates
  * to "visible" is a config that lies to its author.
+ *
+ * ## Four helpers here have a webview twin
+ *
+ * This module imports `./placeholders`, which imports `node:child_process` and
+ * `node:fs/promises`, so no part of it can be bundled for a browser. The panel
+ * therefore restates the four pure helpers it needs, each with a comment
+ * pointing back here:
+ *
+ * | Here | Twin |
+ * |---|---|
+ * | `labelOf` | `src/webview/panel/fields/index.ts#labelOf` |
+ * | `isEmpty` | `src/webview/panel/fields/index.ts#isEmpty` |
+ * | `limitFor` | `src/webview/panel/fields/index.ts#limitForField` |
+ * | `evaluateWhen` | `src/webview/panel/fields/groups.ts#fieldIsVisible` |
+ *
+ * They are kept in step by review, not by the type system. Change one, change
+ * its twin in the same commit — a panel that disagrees with the diagnostics
+ * collection about whether a required field is filled in is worse than either
+ * answer on its own.
  */
 
 import { humanize } from '../shared/text';
@@ -206,6 +225,8 @@ function evaluate(
  * Should this field be shown (and, during creation, written)? `all` is the
  * sibling set the `fieldRef` is resolved against; pass the content type's
  * fields, or the nested set when evaluating inside a `fields` group.
+ *
+ * Twin: `src/webview/panel/fields/groups.ts#fieldIsVisible`.
  */
 export function evaluateWhen(field: Field, data: FrontMatter, all: readonly Field[] = []): boolean {
   return evaluate(field, data, all, new Set([field.name]));
@@ -272,6 +293,8 @@ export function emptyValueFor(field: Field, cfg: Zer0Config): FmValue {
  * Does this field hold no usable value? `false` and `0` are values, not
  * emptiness — only a missing key, a blank string, an empty list or object, and
  * the `<failed to process>` placeholder sentinel count.
+ *
+ * Twin: `src/webview/panel/fields/index.ts#isEmpty`.
  */
 export function isEmpty(field: Field, value: FmValue | undefined): boolean {
   if (PRESENTATION_TYPES.has(field.type) || field.type === 'fieldCollection') {
@@ -296,7 +319,11 @@ export function isEmpty(field: Field, value: FmValue | undefined): boolean {
 // Labels, limits, validation
 // ---------------------------------------------------------------------------
 
-/** The label a UI shows: the configured `title`, else a readable form of `name`. */
+/**
+ * The label a UI shows: the configured `title`, else a readable form of `name`.
+ *
+ * Twin: `src/webview/panel/fields/index.ts#labelOf`.
+ */
 export function labelOf(field: Field): string {
   const title = field.title;
   if (title !== undefined && title.trim() !== '') {
@@ -310,7 +337,11 @@ export function labelOf(field: Field): string {
  *
  * Only the two SEO fields have one, and only while SEO is enabled: a threshold
  * of `0` or less means the author switched that check off, which is `-1` here
- * rather than "a limit of zero characters".
+ * rather than "a limit of zero characters". The thresholds are `zer0.json`
+ * keys (`seo.titleLength`, `seo.descriptionLength`), not VS Code settings.
+ *
+ * Twin: `src/webview/panel/fields/index.ts#limitForField`, which applies the
+ * same three rules to the `SeoState` the host sent instead of to `Zer0Config`.
  */
 export function limitFor(field: Field, cfg: Zer0Config): number {
   if (!cfg.seo.enabled) {

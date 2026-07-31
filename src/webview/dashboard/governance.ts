@@ -42,12 +42,20 @@ import type {
 /**
  * Where a long post is visually truncated. Mirrors `FOLD` in
  * `src/core/governance/guard.ts`; that module reads the filesystem, so a
- * browser bundle cannot import it. If one moves, move the other.
+ * browser bundle cannot import it. If one moves, move the other — and the
+ * third copy, in `src/webview/panel/governance.ts`, moves with them.
  */
 export const FOLD = 140;
 
-/** The dashed rule drawn across the commentary at the fold. */
-export const FOLD_LABEL = `… see more (LinkedIn folds around ${FOLD} characters)`;
+/**
+ * The dashed rule drawn across the commentary at the fold.
+ *
+ * Byte-identical to `FOLD_LABEL` in `src/webview/panel/governance.ts`: the two
+ * surfaces describe one rule, and a reader who sees both must not be told two
+ * different things. No vendor is named — decision D8 generalises publish away
+ * from any single network, so the sentence says "feeds", not "LinkedIn".
+ */
+export const FOLD_LABEL = `… see more (feeds fold around ${FOLD} characters)`;
 
 /** Lifecycle order, matching `DRAFT_STATUSES` in `core/governance/drafts.ts`. */
 const GROUPS: ReadonlyArray<{ id: string; label: string }> = [

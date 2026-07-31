@@ -96,7 +96,7 @@
     },
     "seo": {
       "type": "object",
-      "description": "SEO thresholds. Any length set to -1 hides that row from the panel.",
+      "description": "SEO thresholds. Any length set to 0 or less hides that row from the panel and its counter from the metadata fields.",
       "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean", "default": true },

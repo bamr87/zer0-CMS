@@ -14,10 +14,47 @@
  *
  * If you need to change the wording, change it in the Python lane, regenerate
  * the golden fixture, and copy it here — not the other way round.
+ *
+ * ## The prose has one mirror, and it is deliberate
+ *
+ * `src/webview/dashboard/catering.ts` restates the lane hints (`HINTS`), the
+ * empty states (`EMPTY_STATES`) and both number formatters (`formatThousands`,
+ * `formatPercent`) because this module imports `../contract/contract`, which
+ * imports `node:fs`: a browser bundle cannot reach it at all. Everything
+ * host-side imports `LANE_EMPTY_STATES` from here instead of copying it, so the
+ * screen and the generated file cannot drift. If you edit a sentence or a
+ * formatter in this file, edit its twin in `catering.ts` in the same commit —
+ * a lane that reads `1 234` on screen and `1,234` in the file is the bug the
+ * hand-rolled formatters exist to prevent.
  */
 
 import { writeWorklist, type Contract } from '../contract/contract';
 import { MIN_OBSERVATIONS, hasEvidence, rateOf, type CateringPlan } from './catering';
+
+/**
+ * The five italic empty-state sentences, without their markdown underscores.
+ *
+ * `renderWorklist` wraps each one in `_…_`; `src/dashboard/dashboardPanel.ts`
+ * sends them to the dashboard as `CateringState.emptyStates`. One definition,
+ * two renderings — the screen and `.cms/distribution/worklists/<date>.md` say
+ * the same thing about an empty lane because they read the same string.
+ *
+ * Changing any of these changes the golden fixture. Regenerate it from the
+ * Python lane; never hand-edit one to match a change made here.
+ */
+export const LANE_EMPTY_STATES = {
+  undistributed: 'Everything publishable has been distributed.',
+  /** Lane B when no post has statistics read back yet. */
+  provenNoEvidence:
+    'No audience data yet. Topic rankings need published posts with statistics read back; ' +
+    'until then this lane is empty rather than guessed.',
+  /** Lane B when there is data but no topic clears the observation floor. */
+  provenThin:
+    `Not enough observations yet — a topic needs ${MIN_OBSERVATIONS} posts before its average ` +
+    'means anything.',
+  quiet: 'Nothing to report.',
+  refresh: 'Nothing published has gone stale.',
+} as const;
 
 /** Python's `{:,}` thousands separator. Deterministic — no locale involved. */
 export function formatThousands(n: number): string {
@@ -67,17 +104,13 @@ export function renderWorklist(plan: CateringPlan, date: string): string {
       );
     });
   } else {
-    lines.push('_Everything publishable has been distributed._');
+    lines.push(`_${LANE_EMPTY_STATES.undistributed}_`);
   }
   lines.push('');
 
   lines.push('## Lane B — Write more of what landed', '');
   if (!hasEvidence(plan)) {
-    lines.push(
-      '_No audience data yet. Topic rankings need published posts with statistics ' +
-        'read back; until then this lane is empty rather than guessed._',
-      '',
-    );
+    lines.push(`_${LANE_EMPTY_STATES.provenNoEvidence}_`, '');
   } else if (plan.proven.length) {
     lines.push(
       'Topics at or above the median engagement rate, each with at least ' +
@@ -94,11 +127,7 @@ export function renderWorklist(plan: CateringPlan, date: string): string {
     }
     lines.push('');
   } else {
-    lines.push(
-      `_Not enough observations yet — a topic needs ${MIN_OBSERVATIONS} posts before ` +
-        'its average means anything._',
-      '',
-    );
+    lines.push(`_${LANE_EMPTY_STATES.provenThin}_`, '');
   }
 
   lines.push('## Lane C — Say the quiet part', '');
@@ -118,7 +147,7 @@ export function renderWorklist(plan: CateringPlan, date: string): string {
       );
     }
   } else {
-    lines.push('_Nothing to report._');
+    lines.push(`_${LANE_EMPTY_STATES.quiet}_`);
   }
   lines.push('');
 
@@ -135,7 +164,7 @@ export function renderWorklist(plan: CateringPlan, date: string): string {
       lines.push(`| ${healthCell(record.health)} | ${record.freshness} | \`${record.path}\` |`);
     }
   } else {
-    lines.push('_Nothing published has gone stale._');
+    lines.push(`_${LANE_EMPTY_STATES.refresh}_`);
   }
   lines.push('');
 

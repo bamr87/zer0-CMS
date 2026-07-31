@@ -25,7 +25,15 @@ import { readJsonc } from '../shared/jsonio';
 import { absPath } from '../shared/config';
 import type { Zer0Config } from '../shared/types';
 
-/** Where a long post is visually truncated; the hook has to land before it. */
+/**
+ * Where a long post is visually truncated; the hook has to land before it.
+ *
+ * Two browser copies exist because this module imports `node:fs/promises` and
+ * cannot be bundled for a webview: `src/webview/panel/governance.ts` and
+ * `src/webview/dashboard/governance.ts` each declare their own `FOLD`. Change
+ * this number and change both, or the two surfaces will draw the fold line in
+ * a different place from the one the guard reports.
+ */
 export const FOLD = 140;
 
 /** Hard ceiling on a single piece of commentary. */

@@ -65,8 +65,15 @@ import {
 import type { FmValue, FrontMatter } from './frontmatter';
 import { createSlug } from './slug';
 
-/** What a placeholder resolves to when its script fails. FM's sentinel, kept
- *  because `isEmpty` treats it as empty and the panel renders it as "unset". */
+/**
+ * What a placeholder resolves to when its script fails. FM's sentinel, kept
+ * because `isEmpty` treats it as empty and the panel renders it as "unset".
+ *
+ * Twin: `src/webview/panel/fields/index.ts#FAULTY_PLACEHOLDER`. This module
+ * imports `node:child_process`, so the panel bundle cannot reach the constant
+ * and restates the literal. Both are the same string or the panel shows
+ * `<failed to process>` to an author as if it were text they typed.
+ */
 export const FAULTY_PLACEHOLDER = '<failed to process>';
 
 /** Milliseconds a placeholder script may run before it is killed. */
