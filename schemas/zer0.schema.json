@@ -1,0 +1,540 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/zer0.schema.json",
+  "title": "zer0-CMS project configuration",
+  "description": "The project half of zer0-CMS configuration: content folders, content types, field groups, taxonomy, placeholders and the front-matter dialect. User preferences live in VS Code settings under zer0Cms.* and override anything named here.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL of this schema. Optional — VS Code associates it via the extension's jsonValidation contribution."
+    },
+    "contentFolders": {
+      "type": "array",
+      "description": "Folders that hold editable content. Paths may use the [[workspace]] token, * wildcards and {{date|...}} placeholders.",
+      "items": { "$ref": "#/definitions/contentFolder" }
+    },
+    "contentTypes": {
+      "type": "array",
+      "description": "The field schemas the metadata panel renders. The first entry named \"default\" is used for files no other type claims.",
+      "items": { "$ref": "#/definitions/contentType" }
+    },
+    "fieldGroups": {
+      "type": "array",
+      "description": "Reusable field sets, spliced in wherever a fieldCollection field names their id.",
+      "items": { "$ref": "#/definitions/fieldGroup" }
+    },
+    "taxonomy": {
+      "type": "object",
+      "description": "Known values for the tags, categories and custom taxonomy field types.",
+      "additionalProperties": false,
+      "properties": {
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "categories": { "type": "array", "items": { "type": "string" } },
+        "custom": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/customTaxonomy" }
+        }
+      }
+    },
+    "draftField": {
+      "type": "object",
+      "description": "Which front-matter key marks a draft, and how its value is read.",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "default": "draft" },
+        "type": { "type": "string", "enum": ["boolean", "choice"], "default": "boolean" },
+        "choices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed values when type is \"choice\", e.g. [\"draft\", \"in progress\", \"published\"]."
+        },
+        "invert": {
+          "type": "boolean",
+          "description": "Set when the field marks published rather than draft (e.g. a \"published\" boolean)."
+        }
+      }
+    },
+    "frontMatter": {
+      "type": "object",
+      "description": "How front matter is written back. Reading auto-detects the format from the fence.",
+      "additionalProperties": false,
+      "properties": {
+        "format": { "type": "string", "enum": ["yaml", "toml", "json"], "default": "yaml" },
+        "indentArrays": { "type": "boolean", "default": true },
+        "quoteStringValues": { "type": "boolean", "default": false },
+        "commaSeparatedFields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Keys written on one line as \"a, b, c\" instead of a block sequence."
+        }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "defaultFileType": { "type": "string", "default": "md" },
+        "supportedFileTypes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["md", "mdx", "markdown"]
+        },
+        "publicFolder": {
+          "type": "string",
+          "description": "Folder served at the site root; media paths are stored relative to it."
+        },
+        "filePrefix": {
+          "type": "string",
+          "description": "Default filename prefix template, e.g. \"{{date|yyyy-MM-dd}}\". A content folder or content type may override it."
+        },
+        "preserveCasing": { "type": "boolean", "default": false },
+        "autoUpdateModifiedDate": { "type": "boolean", "default": false }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "description": "SEO thresholds. Any length set to 0 or less hides that row from the panel and its counter from the metadata fields.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "titleField": { "type": "string", "default": "title" },
+        "titleLength": { "type": "number", "default": 60 },
+        "descriptionField": { "type": "string", "default": "description" },
+        "descriptionLength": { "type": "number", "default": 160 },
+        "slugLength": { "type": "number", "default": 75 },
+        "contentLength": {
+          "type": "number",
+          "default": 1760,
+          "description": "Recommended article length in words. Reported, never validated."
+        }
+      }
+    },
+    "slug": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stopWords": {
+          "description": "Words dropped when a title becomes a slug. \"minimal\" (default) drops only articles, conjunctions and common prepositions. \"smart\" is Front Matter's ~570-word list — pick it only to keep minting the same permalinks an existing FM site already has, because it also deletes words a title needs (back, new, without, vs). \"none\" keeps every word. An array replaces the list outright.",
+          "default": "minimal",
+          "oneOf": [
+            { "type": "string", "enum": ["minimal", "smart", "none"] },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "template": {
+          "type": ["string", "null"],
+          "description": "Token chain: {{title}}, {{seoTitle}}, {{fileName}}, {{sluggedFileName}}. null slugifies the title.",
+          "default": null
+        },
+        "prefix": { "type": "string" },
+        "suffix": { "type": "string" },
+        "alignFilename": {
+          "type": "boolean",
+          "default": false,
+          "description": "Rename the file to match the generated slug."
+        }
+      }
+    },
+    "placeholders": {
+      "type": "array",
+      "description": "Custom {{id}} tokens usable in field defaults, file prefixes and slug templates.",
+      "items": { "$ref": "#/definitions/placeholder" }
+    },
+    "snippets": {
+      "type": "object",
+      "description": "Reusable content snippets, keyed by id. Reserved: the schema accepts them so existing files validate, but the extension does not insert snippets — content types carry field defaults and placeholders instead.",
+      "additionalProperties": { "$ref": "#/definitions/snippet" }
+    },
+    "date": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": "string",
+          "default": "yyyy-MM-dd",
+          "description": "Token pattern: yyyy yy MMMM MMM MM M dd d EEEE EEE HH H hh h mm m ss s SSS aaa a XXX. Text in single quotes is literal."
+        },
+        "timezone": {
+          "type": "string",
+          "default": "UTC",
+          "description": "IANA time zone id, e.g. UTC or America/New_York."
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "description": "The governed publishing path: draft, brand guard, approval, publish, ledger.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "draftsFolder": { "type": "string", "default": ".zer0/drafts" },
+        "ledgerPath": { "type": "string", "default": ".zer0/ledger.json" },
+        "acceptStatuses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["pending", "approved"]
+        },
+        "publishAllow": {
+          "type": "boolean",
+          "default": false,
+          "description": "Master switch. When off, publishing is blocked in the panel, the dashboard, the command palette and the bundled MCP server."
+        },
+        "bannedPatternsFile": {
+          "type": "string",
+          "description": "Workspace file adding brand-guard patterns. A load failure degrades to \"no extra rules\", never to an error."
+        },
+        "target": { "type": "string", "default": "jekyll" }
+      }
+    },
+    "cms": {
+      "type": "object",
+      "description": "Where the .cms/ contract lives and how to run the Python content engine.",
+      "additionalProperties": false,
+      "properties": {
+        "root": { "type": "string", "default": ".cms" },
+        "python": { "type": "string", "default": "python3" },
+        "engineScript": { "type": "string", "default": "scripts/cms/cms.py" },
+        "normalizerScript": {
+          "type": "string",
+          "default": "scripts/content/normalize-frontmatter.py"
+        },
+        "contentDirs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["pages/"]
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "description": "The optional AI layer. Disabled by default; requires the optional @anthropic-ai/claude-agent-sdk package.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "model": { "type": "string", "default": "claude-opus-5" },
+        "maxTurns": { "type": "number", "default": 40 },
+        "permissionMode": {
+          "type": "string",
+          "enum": ["default", "acceptEdits", "plan"],
+          "default": "default"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Report required-field and schema violations as diagnostics inside the front-matter block."
+        }
+      }
+    },
+    "panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "openOnSupportedFile": { "type": "boolean", "default": false },
+        "freeformTaxonomy": { "type": "boolean", "default": true },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["governance", "metadata", "seo", "actions", "recent", "settings", "other"]
+          }
+        }
+      }
+    },
+    "dashboard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "openOnStartup": { "type": "boolean", "default": false },
+        "defaultView": { "type": "string", "enum": ["grid", "list", "structure"], "default": "grid" },
+        "defaultSorting": {
+          "type": "string",
+          "enum": [
+            "LastModifiedDesc",
+            "LastModifiedAsc",
+            "FileNameAsc",
+            "FileNameDesc",
+            "PublishedDesc",
+            "PublishedAsc"
+          ],
+          "default": "LastModifiedDesc"
+        },
+        "pageSize": { "type": "number", "minimum": 0, "maximum": 52, "default": 16 },
+        "cardFields": {
+          "type": "object",
+          "additionalProperties": { "type": "boolean" },
+          "default": { "state": true, "date": true }
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "fieldType": {
+      "type": "string",
+      "description": "One of the 18 supported field types.",
+      "enum": [
+        "string",
+        "number",
+        "boolean",
+        "datetime",
+        "image",
+        "file",
+        "choice",
+        "tags",
+        "categories",
+        "taxonomy",
+        "draft",
+        "list",
+        "slug",
+        "fields",
+        "fieldCollection",
+        "divider",
+        "heading",
+        "contentRelationship"
+      ]
+    },
+
+    "whenClause": {
+      "type": "object",
+      "description": "Show this field only when another field satisfies the comparison.",
+      "additionalProperties": false,
+      "required": ["fieldRef", "operator"],
+      "properties": {
+        "fieldRef": { "type": "string" },
+        "operator": {
+          "type": "string",
+          "enum": [
+            "eq",
+            "neq",
+            "contains",
+            "notContains",
+            "startsWith",
+            "endsWith",
+            "gt",
+            "gte",
+            "lt",
+            "lte"
+          ]
+        },
+        "value": {},
+        "caseSensitive": { "type": "boolean", "default": true }
+      }
+    },
+
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string", "description": "The front-matter key this field edits." },
+        "type": { "$ref": "#/definitions/fieldType" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "default": {
+          "description": "Placeholder tokens are processed on creation.",
+          "anyOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "required": { "type": "boolean" },
+        "hidden": { "type": "boolean" },
+        "editable": { "type": "boolean" },
+        "when": { "$ref": "#/definitions/whenClause" },
+
+        "single": { "type": "boolean", "description": "string: single-line input." },
+        "encodeEmoji": { "type": "boolean", "description": "string: write emoji as \\uXXXX." },
+        "numberOptions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "isDecimal": { "type": "boolean" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" }
+          }
+        },
+        "isPublishDate": { "type": "boolean", "description": "datetime: the publish date." },
+        "isModifiedDate": { "type": "boolean", "description": "datetime: stamped on save." },
+        "dateFormat": { "type": "string", "description": "datetime: token pattern override." },
+        "multiple": {
+          "type": "boolean",
+          "description": "image | file | choice | list | contentRelationship: allow several values."
+        },
+        "isPreviewImage": { "type": "boolean", "description": "image: the page's hero image." },
+        "fileExtensions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "file: the extensions the picker accepts."
+        },
+        "choices": {
+          "type": "array",
+          "description": "choice: bare values or { id, title } pairs.",
+          "items": {
+            "anyOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id"],
+                "properties": { "id": { "type": "string" }, "title": { "type": "string" } }
+              }
+            ]
+          }
+        },
+        "taxonomyId": {
+          "type": "string",
+          "description": "taxonomy: id of a taxonomy.custom[] entry."
+        },
+        "taxonomyLimit": { "type": "number" },
+        "singleValueAsString": {
+          "type": "boolean",
+          "description": "Write a lone value as a string instead of a one-item list."
+        },
+        "fields": {
+          "type": "array",
+          "description": "fields: the nested field set.",
+          "items": { "$ref": "#/definitions/field" }
+        },
+        "fieldGroup": {
+          "type": "string",
+          "description": "fieldCollection: id of a fieldGroups[] entry, inlined at load time."
+        },
+        "contentTypeName": {
+          "type": "string",
+          "description": "contentRelationship: the referenced content type."
+        },
+        "contentTypeValue": { "type": "string", "enum": ["path", "slug"] },
+        "sameContentLocale": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "file" } }, "required": ["type"] },
+          "then": { "required": ["fileExtensions"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "fieldCollection" } }, "required": ["type"] },
+          "then": { "required": ["fieldGroup"] }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "contentRelationship" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["contentTypeName"] }
+        }
+      ]
+    },
+
+    "fieldGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fields"],
+      "properties": {
+        "id": { "type": "string" },
+        "labelField": {
+          "type": "string",
+          "description": "Field whose value labels each entry in the UI."
+        },
+        "fields": { "type": "array", "items": { "$ref": "#/definitions/field" } }
+      }
+    },
+
+    "contentType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "fields"],
+      "properties": {
+        "name": { "type": "string" },
+        "fields": { "type": "array", "items": { "$ref": "#/definitions/field" } },
+        "fileType": { "type": "string", "description": "Extension for new files, e.g. \"md\"." },
+        "slugTemplate": {
+          "type": ["string", "null"],
+          "description": "Overrides slug.template for this type; null disables slug generation."
+        },
+        "pageBundle": {
+          "type": "boolean",
+          "description": "Create <slug>/index.md instead of <slug>.md."
+        },
+        "defaultFileName": { "type": "string" },
+        "template": { "type": "string", "description": "Workspace file used as the body seed." },
+        "filePrefix": { "type": ["string", "null"] },
+        "clearEmpty": {
+          "type": "boolean",
+          "description": "Drop keys whose value is empty when writing."
+        }
+      }
+    },
+
+    "contentFolder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "title": { "type": "string" },
+        "path": {
+          "type": "string",
+          "description": "Supports [[workspace]], * wildcards and {{date|...}} placeholders."
+        },
+        "contentTypes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Content types offered when creating here. Omit to allow all."
+        },
+        "excludeSubdir": { "type": "boolean" },
+        "excludePaths": { "type": "array", "items": { "type": "string" } },
+        "disableCreation": { "type": "boolean" },
+        "filePrefix": { "type": ["string", "null"] }
+      }
+    },
+
+    "customTaxonomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "placeholder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "description": "Used as {{id}}." },
+        "value": { "type": "string" },
+        "script": { "type": "string", "description": "Workspace-relative script path." },
+        "command": {
+          "type": "string",
+          "description": "Interpreter for script, e.g. node, bash, python3."
+        }
+      }
+    },
+
+    "snippet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "body": {
+          "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+        },
+        "fields": { "type": "array", "items": { "$ref": "#/definitions/field" } }
+      }
+    }
+  }
+}

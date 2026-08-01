@@ -1,0 +1,935 @@
+/**
+ * panel.css — the sidebar surface: `zer0Cms.panel`.
+ *
+ * Dresses the ten rows of PLAN §3.1 (developer bar, initialize action,
+ * governance, metadata, SEO, actions, recently modified, global settings,
+ * other actions, the empty state) and all eighteen field controls.
+ *
+ * The metrics are Front Matter's, deliberately: `1rem 1.25rem` section
+ * padding, 22px file rows with bleeding hover, `.25rem` radii on controls,
+ * `2px` on pills, `3px` on badges, 26px line-height on the secondary
+ * link-buttons. Reproducing the interaction design was the point of the
+ * rewrite; only the implementation was thrown away.
+ *
+ * Class names carry both vocabularies. `.z-*` is the new kernel from
+ * `components.ts`; `.metadata_field__*`, `.article__tags__*`, `.file_list__*`
+ * and `.ext_link_block` are kept so panel code can be read straight against the
+ * recon that produced these rules.
+ *
+ * No VS Code theme variable may be named in this file. See `tokens.css`.
+ */
+
+body {
+  background-color: var(--z-bg-sidebar);
+  color: var(--z-fg-sidebar);
+}
+
+/* ── shell ─────────────────────────────────────────────────────────────── */
+
+#app,
+.z-panel {
+  height: 100%;
+}
+
+.z-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 0;
+  padding-bottom: 4px;
+}
+
+.developer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--z-sp-4);
+  padding: 5px 15px;
+  background: var(--z-debug-bg);
+}
+
+.developer__bar a {
+  color: var(--z-debug-fg);
+  padding: 0 var(--z-sp-2);
+}
+
+.developer__bar a:hover {
+  background: var(--z-status-hover);
+  text-decoration: none;
+}
+
+.initialize_actions,
+.ext_settings {
+  padding: var(--z-gutter) var(--z-gutter-lg);
+}
+
+.base__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--z-gutter) var(--z-gutter-lg);
+  font-size: 1.25rem;
+  opacity: 0.8;
+  color: var(--z-fg-sidebar);
+  text-align: center;
+}
+
+/* ── collapsible sections ──────────────────────────────────────────────── */
+
+.z-collapsible {
+  border-bottom: 1px solid var(--z-border);
+}
+
+.z-collapsible__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--z-sp-1);
+  width: 100%;
+  padding: var(--z-pad-y) var(--z-gutter-lg);
+  text-align: left;
+  color: var(--z-fg-sidebar-title);
+}
+
+.z-collapsible__trigger:hover {
+  background: var(--z-bg-hover);
+}
+
+.z-collapsible__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  flex: 1;
+}
+
+.z-collapsible__chevron {
+  transition: transform var(--z-dur) ease-in-out;
+}
+
+.z-collapsible.is-closed .z-collapsible__chevron {
+  transform: rotate(-90deg);
+}
+
+.z-collapsible.is-closed .collapsible__body {
+  display: none;
+}
+
+.section,
+.collapsible__body {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.collapsible__body {
+  padding: var(--z-gutter) var(--z-gutter-lg);
+  overflow-y: auto;
+}
+
+/* Vertical rhythm inside the action stacks, as Front Matter had it. */
+.article__actions > * + *,
+.other_actions > * + *,
+.base__actions > * + *,
+.governance__block > * + * {
+  margin-top: var(--z-gutter);
+}
+
+/* ── secondary link buttons (Other actions) ────────────────────────────── */
+
+.ext_link_block {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.ext_link_block button,
+.ext_link_block a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0 14px;
+  line-height: 26px;
+  color: var(--z-btn2-fg);
+  background-color: var(--z-btn2-bg);
+  border: 1px solid var(--z-btn-border);
+  border-radius: var(--z-radius);
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+}
+
+.ext_link_block button span,
+.ext_link_block a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ext_link_block button:hover,
+.ext_link_block a:hover {
+  background-color: var(--z-btn2-hover);
+  color: var(--z-btn2-fg);
+  text-decoration: none;
+}
+
+.ext_link_block button.active {
+  color: var(--z-btn-fg);
+  background: var(--z-btn-bg);
+}
+
+.ext_link_block button.active:hover {
+  background: var(--z-btn-hover);
+}
+
+/* Bare buttons inside the panel's action stacks are full-width primaries. */
+.article__actions .z-btn,
+.base__actions .z-btn,
+.initialize_actions .z-btn,
+.governance__actions .z-btn {
+  width: 100%;
+}
+
+/* ── governance section (new) ──────────────────────────────────────────── */
+
+.governance__status {
+  display: flex;
+  align-items: center;
+  gap: var(--z-sp-2);
+}
+
+.z-pill {
+  display: inline-block;
+  padding: 2px 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  border-radius: var(--z-radius-badge);
+  color: var(--z-fg-badge);
+  background: var(--z-bg-badge);
+}
+
+.z-pill--pending {
+  color: var(--z-status-warn-fg);
+  background: var(--z-status-warn-bg);
+}
+
+.z-pill--approved {
+  color: var(--z-btn-fg);
+  background: var(--z-btn-bg);
+}
+
+.z-pill--published {
+  color: var(--z-fg-badge);
+  background: var(--z-bg-badge);
+}
+
+.governance__findings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.governance__finding {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--z-sp-2);
+  padding: var(--z-sp-1) 0;
+}
+
+.governance__finding--error {
+  color: var(--z-fg-error);
+}
+
+.governance__finding--warning {
+  color: var(--z-fg-warning);
+}
+
+/* The fold rule: guard `info` findings are drawn as this marker, not listed. */
+.governance__fold {
+  margin: var(--z-sp-2) 0;
+  padding-top: var(--z-sp-1);
+  border-top: 1px dashed var(--z-border-active);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--z-fg-muted);
+}
+
+.governance__ledger {
+  font-size: 0.9rem;
+  color: var(--z-fg-muted);
+}
+
+.governance__blocked {
+  padding: var(--z-sp-2);
+  font-size: 0.9rem;
+  color: var(--z-fg-warning);
+  background: var(--z-warn-bg);
+  border-left: 2px solid var(--z-warn-border);
+}
+
+/* ── metadata: shared field chrome ─────────────────────────────────────── */
+
+.metadata_field {
+  position: relative;
+  margin-bottom: var(--z-gutter);
+}
+
+.metadata_fields > * + * {
+  margin-top: 1.5rem;
+}
+
+.field__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: var(--z-sp-2);
+}
+
+.metadata_field__label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--z-fg);
+}
+
+.metadata_field__label_parent {
+  justify-content: center;
+}
+
+.metadata_field__required__asterix {
+  margin-left: 0.25rem;
+  color: var(--z-error-border);
+}
+
+.metadata_field__required__message {
+  padding-top: 0.5rem;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--z-error-border);
+}
+
+.metadata_field__description {
+  padding-top: 0.5rem;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.75;
+  color: var(--z-fg-header);
+}
+
+.metadata_field__title__action {
+  display: inline-flex;
+  align-items: center;
+  color: var(--z-fg-muted);
+}
+
+.metadata_field__title__action:hover {
+  color: var(--z-link-hover);
+}
+
+/* Loading overlay: blurs the control it covers rather than replacing it, so
+   the field does not jump while a placeholder or an action resolves. */
+.metadata_field__loading {
+  position: absolute;
+  inset: 0 auto 0 -1.25rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% + 2.5rem);
+  padding: 0 var(--z-gutter-lg);
+  color: var(--z-btn2-fg);
+  background: var(--z-btn2-bg);
+  backdrop-filter: blur(15px);
+}
+
+.metadata_field__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--z-sp-2);
+  color: var(--z-fg-error);
+}
+
+/* ── field: string, number, slug ───────────────────────────────────────── */
+
+.metadata_field__input,
+.metadata_field__textarea,
+.metadata_field__number {
+  border: 1px solid var(--z-info-border);
+}
+
+.metadata_field.is-warning .metadata_field__input,
+.metadata_field.is-warning .metadata_field__textarea {
+  border-color: var(--z-warn-border);
+}
+
+.metadata_field.required .metadata_field__input,
+.metadata_field.required .metadata_field__textarea,
+.metadata_field.required .metadata_field__number,
+.metadata_field.required .metadata_field__choice__toggle,
+.metadata_field.required .metadata_field__slug__input {
+  border-color: var(--z-error-border);
+}
+
+.metadata_field__limit {
+  padding-top: 0.5rem;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--z-warn-border);
+}
+
+.metadata_field__slug {
+  position: relative;
+}
+
+.metadata_field__slug__input {
+  padding-right: 2.5rem;
+}
+
+.metadata_field__slug__button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 var(--z-sp-2);
+  color: var(--z-btn2-fg);
+  background: var(--z-btn2-bg);
+  border-radius: 0 var(--z-radius) var(--z-radius) 0;
+}
+
+.metadata_field__slug__button_update {
+  color: var(--z-btn-fg);
+  background: var(--z-btn-bg);
+}
+
+/* ── field: datetime ───────────────────────────────────────────────────── */
+
+.metadata_field__datetime {
+  display: flex;
+  align-items: center;
+  gap: var(--z-gutter);
+  justify-content: space-between;
+}
+
+.metadata_field__datetime input {
+  border: 1px solid var(--z-info-border);
+}
+
+.metadata_field__datetime > button {
+  width: auto;
+  padding: var(--z-pad-y) var(--z-gutter);
+  color: var(--z-btn2-fg);
+  background-color: var(--z-btn2-bg);
+  border-radius: var(--z-radius);
+}
+
+.metadata_field__datetime > button:hover {
+  background-color: var(--z-btn2-hover);
+}
+
+/* ── field: choice + content relationship dropdowns ────────────────────── */
+
+.metadata_field__choice__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--z-pad-y) var(--z-pad-x);
+  color: var(--z-dropdown-fg);
+  background: var(--z-bg-dropdown);
+  border: 1px solid var(--z-info-border);
+  border-radius: var(--z-radius);
+}
+
+.field_dropdown {
+  position: absolute;
+  z-index: var(--z-layer-menu);
+  width: 100%;
+  max-height: 200px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--z-dropdown-fg);
+  background-color: var(--z-bg-dropdown);
+  border: 1px solid var(--z-dropdown-border);
+  box-shadow: 0 2px 8px var(--z-shadow);
+}
+
+.field_dropdown.closed {
+  display: none;
+}
+
+/* Flipped above the input when the list would overflow the section body. */
+.field_dropdown.above {
+  bottom: calc(100% - 5px);
+}
+
+.field_dropdown li {
+  padding: var(--z-pad-y) var(--z-pad-x);
+  cursor: pointer;
+}
+
+.field_dropdown li:active {
+  color: var(--z-btn-fg);
+  background-color: var(--z-btn-bg);
+}
+
+.field_dropdown li[aria-selected='true'] {
+  color: var(--z-btn-fg);
+  background-color: var(--z-btn-hover);
+}
+
+.field_dropdown li[aria-disabled='true'] {
+  display: none;
+}
+
+.field_dropdown__hint {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+/* ── field: tags / categories / taxonomy ───────────────────────────────── */
+
+.article__tags {
+  position: relative;
+  margin-bottom: var(--z-gutter);
+}
+
+.article__tags__input {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  outline: 1px solid var(--z-info-border);
+  outline-offset: -1px;
+  border-radius: var(--z-radius);
+}
+
+.article__tags__input.required {
+  outline-color: var(--z-error-border);
+}
+
+.article__tags__input input {
+  border: none;
+  outline: none;
+}
+
+.article__tags__input__button {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--z-sp-2);
+  color: var(--z-btn2-fg);
+  background: var(--z-btn2-bg);
+  border-left: 1px solid var(--z-info-border);
+}
+
+.article__tags__input.required .article__tags__input__button {
+  border-left-color: var(--z-error-border);
+}
+
+.article__tags__dropbox {
+  width: calc(100% - 2.5rem);
+}
+
+.article__tags__dropbox.open {
+  width: 100%;
+  border: 1px solid var(--z-focus);
+}
+
+.article__tags__items {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: var(--z-gutter);
+}
+
+.article__tags h3 {
+  display: flex;
+  align-items: center;
+}
+
+/* ── field: list ───────────────────────────────────────────────────────── */
+
+.list_field {
+  padding: 0.5rem var(--z-gutter);
+  border: 1px dashed var(--z-btn2-bg);
+  border-radius: var(--z-radius);
+}
+
+.list_field__buttons {
+  display: flex;
+  gap: var(--z-sp-2);
+  margin-top: var(--z-sp-2);
+}
+
+.list_field__list {
+  margin: var(--z-sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list_field__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--z-sp-2);
+  padding: 2px 0;
+}
+
+.list_field__list li:nth-child(2n) {
+  background: var(--z-translucent);
+}
+
+.list_field.required input {
+  border-color: var(--z-error-border);
+}
+
+/* ── field: image and file drop zones ──────────────────────────────────── */
+
+.metadata_field__preview_image__button,
+.metadata_field__file__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1.5rem;
+  color: var(--z-btn-fg);
+  background: transparent;
+  border: 1px dashed var(--z-btn-solid);
+  border-radius: var(--z-radius);
+  filter: brightness(85%);
+  transition: filter var(--z-dur) ease-in-out, background-color var(--z-dur) ease-in-out;
+}
+
+.metadata_field__preview_image__button:hover,
+.metadata_field__file__button:hover {
+  background: var(--z-translucent);
+  filter: brightness(100%);
+}
+
+.metadata_field__preview_image__button .codicon,
+.metadata_field__file__button .codicon {
+  font-size: 3rem;
+  line-height: 3rem;
+}
+
+.metadata_field__file__button.not_empty {
+  flex-direction: row;
+  justify-content: flex-start;
+  padding: 0.5rem var(--z-gutter);
+}
+
+.metadata_field__file__button.not_empty .codicon {
+  font-size: var(--z-icon-sm);
+  line-height: var(--z-icon-sm);
+}
+
+.metadata_field.required .metadata_field__preview_image__button,
+.metadata_field.required .metadata_field__file__button {
+  border-color: var(--z-error-border);
+}
+
+.metadata_field__preview_image__preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: var(--z-translucent);
+  border-radius: var(--z-radius);
+  overflow: hidden;
+}
+
+.metadata_field__preview_image__preview img {
+  max-height: 16rem;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.metadata_field__preview_image__remove {
+  width: 100%;
+  padding: var(--z-pad-y);
+  color: var(--z-error-fg);
+  background: var(--z-error-bg);
+}
+
+.metadata_field__multiple_images {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--z-gutter);
+}
+
+.metadata_field__image_fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 120px;
+  color: var(--z-fg-error);
+  background: var(--z-btn2-hover);
+}
+
+.metadata_field__image_fallback .codicon {
+  font-size: 4rem;
+  line-height: 4rem;
+}
+
+/* File rows hide their delete affordance until the row is hovered. */
+.metadata_field__file__list {
+  margin: var(--z-sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metadata_field__file__list__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2px 0.25rem;
+}
+
+.metadata_field__file__list__item:nth-child(2n) {
+  background: var(--z-translucent);
+}
+
+.metadata_field__file__list__item:hover {
+  background: var(--z-bg-hover);
+}
+
+.metadata_field__file__list__item span {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.metadata_field__file__list__item .z-icon-btn {
+  visibility: hidden;
+}
+
+.metadata_field__file__list__item:hover .z-icon-btn,
+.metadata_field__file__list__item:focus-within .z-icon-btn {
+  visibility: visible;
+}
+
+/* ── field: groups, divider, heading ───────────────────────────────────── */
+
+.metadata_field__box {
+  padding: 0.5rem var(--z-gutter);
+  background: var(--z-translucent);
+  border: 1px dashed var(--z-btn2-bg);
+  border-radius: var(--z-radius);
+}
+
+.metadata_field__divider {
+  height: 1px;
+  margin: var(--z-gutter) 2.5rem;
+  background: var(--z-btn2-bg);
+}
+
+.metadata_field__heading {
+  margin: var(--z-gutter) 0;
+}
+
+.metadata_field__heading h3 {
+  font-weight: 600;
+}
+
+/* ── content-type validator hint ───────────────────────────────────────── */
+
+.metadata__hint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--z-sp-2);
+  padding: var(--z-sp-2);
+  color: var(--z-fg-warning);
+  background: var(--z-warn-bg);
+  border-left: 2px solid var(--z-warn-border);
+}
+
+.metadata__error {
+  color: var(--z-fg-error);
+}
+
+/* ── SEO status ────────────────────────────────────────────────────────── */
+
+.seo__status__empty {
+  opacity: 0.8;
+}
+
+.seo__insights,
+.seo__keywords {
+  margin-top: var(--z-sp-2);
+}
+
+.seo__insights h4,
+.seo__keywords h4 {
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.seo__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-indent: 0;
+}
+
+.seo__table th {
+  height: 24px;
+  padding: var(--z-sp-2);
+  text-align: left;
+  font-weight: 700;
+  cursor: default;
+  background: var(--z-bg-table-head);
+}
+
+.seo__table tr {
+  border-bottom: 1px solid var(--z-border-group);
+}
+
+.seo__table tr:nth-child(2n) {
+  background: var(--z-bg-zebra);
+}
+
+.seo__table td {
+  height: 24px;
+  padding: 0 var(--z-sp-2);
+  vertical-align: middle;
+  border-right: 1px solid var(--z-border-group);
+}
+
+.seo__table td:last-child {
+  border-right: none;
+}
+
+.seo__table__label {
+  text-transform: capitalize;
+}
+
+.seo__table__value {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.seo__keyword__checks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.seo__keyword__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.seo__keyword__check.valid {
+  color: var(--z-ok);
+}
+
+.seo__keyword__check.warning {
+  color: var(--z-warn);
+}
+
+/* The keyword picker keeps its chrome hidden until it is focused. */
+.seo__keywords__picker .article__tags__input {
+  outline: none;
+}
+
+.seo__keywords__picker .article__tags__input:focus-within {
+  outline: 1px solid var(--z-focus);
+  outline-offset: -1px;
+}
+
+/* ── recently modified ─────────────────────────────────────────────────── */
+
+.file_list label {
+  display: block;
+  padding-bottom: 2px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--z-fg-sidebar);
+}
+
+.file_list__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file_list__items__item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  height: var(--z-row-h);
+  line-height: var(--z-row-h);
+  /* Negative side margins so the hover highlight bleeds to the panel edge. */
+  margin: 0 calc(-1 * var(--z-gutter-lg));
+  padding: 0 var(--z-gutter-lg);
+  color: var(--z-fg-sidebar);
+  cursor: pointer;
+}
+
+.file_list__items__item:hover {
+  color: var(--z-fg-hover);
+  background-color: var(--z-bg-hover);
+}
+
+.file_list__items__item .codicon {
+  font-size: var(--z-icon-md);
+  line-height: var(--z-icon-md);
+}
+
+.file_list__items__item span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ── global settings ───────────────────────────────────────────────────── */
+
+.base__action label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: var(--z-sp-1);
+}
+
+.base__action input:not([type='checkbox']) {
+  width: 100%;
+}
+
+.base__action__row {
+  display: flex;
+  align-items: center;
+  gap: var(--z-sp-2);
+}
+
+/* ── high contrast ─────────────────────────────────────────────────────── */
+
+body.vscode-high-contrast .metadata_field__box,
+body.vscode-high-contrast-light .metadata_field__box,
+body.vscode-high-contrast .metadata_field__preview_image__preview,
+body.vscode-high-contrast-light .metadata_field__preview_image__preview {
+  background: transparent;
+  border: 1px solid var(--z-border);
+}
+
+body.vscode-high-contrast .file_list__items__item:hover,
+body.vscode-high-contrast-light .file_list__items__item:hover {
+  outline: 1px dashed var(--z-focus);
+  outline-offset: -1px;
+}
+
+body.vscode-high-contrast .seo__table tr:nth-child(2n),
+body.vscode-high-contrast-light .seo__table tr:nth-child(2n) {
+  background: transparent;
+}

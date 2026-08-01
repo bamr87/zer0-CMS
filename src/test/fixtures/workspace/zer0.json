@@ -1,0 +1,171 @@
+{
+  "$schema": "../../../../schemas/zer0.schema.json",
+  "contentFolders": [
+    {
+      "title": "Corporate posts",
+      "path": "[[workspace]]/pages/_posts/corp",
+      "contentTypes": ["post"]
+    },
+    {
+      "title": "Tech notes",
+      "path": "[[workspace]]/pages/_posts/tech",
+      "contentTypes": ["post", "note"],
+      "excludePaths": ["**/drafts/**"]
+    }
+  ],
+  "contentTypes": [
+    {
+      "name": "post",
+      "fileType": "md",
+      "slugTemplate": "{{title}}",
+      "clearEmpty": true,
+      "fields": [
+        { "name": "title", "type": "string", "title": "Title", "single": true, "required": true },
+        { "name": "description", "type": "string", "title": "Description", "required": true },
+        { "name": "slug", "type": "slug", "title": "Slug" },
+        { "name": "date", "type": "datetime", "title": "Publishing date", "isPublishDate": true },
+        {
+          "name": "lastmod",
+          "type": "datetime",
+          "title": "Last modified",
+          "isModifiedDate": true
+        },
+        { "name": "draft", "type": "draft", "title": "Draft" },
+        { "name": "tags", "type": "tags", "title": "Tags" },
+        { "name": "categories", "type": "categories", "title": "Categories" },
+        { "name": "topic", "type": "taxonomy", "title": "Topic", "taxonomyId": "topic" },
+        {
+          "name": "preview",
+          "type": "image",
+          "title": "Preview image",
+          "isPreviewImage": true
+        },
+        {
+          "name": "attachment",
+          "type": "file",
+          "title": "Attachment",
+          "fileExtensions": ["pdf", "csv"]
+        },
+        {
+          "name": "audience",
+          "type": "choice",
+          "title": "Audience",
+          "choices": ["practitioners", "executives", { "id": "internal", "title": "Internal only" }]
+        },
+        { "name": "keywords", "type": "list", "title": "Keywords" },
+        { "name": "weight", "type": "number", "title": "Weight", "numberOptions": { "min": 0, "max": 100 } },
+        { "name": "featured", "type": "boolean", "title": "Featured" },
+        {
+          "name": "campaign",
+          "type": "string",
+          "title": "Campaign",
+          "single": true,
+          "when": { "fieldRef": "featured", "operator": "eq", "value": true }
+        },
+        { "name": "divider1", "type": "divider" },
+        { "name": "relatedHeading", "type": "heading", "title": "Relationships" },
+        {
+          "name": "related",
+          "type": "contentRelationship",
+          "title": "Related post",
+          "contentTypeName": "post",
+          "contentTypeValue": "slug"
+        },
+        {
+          "name": "seo",
+          "type": "fields",
+          "title": "SEO overrides",
+          "fields": [
+            { "name": "title", "type": "string", "title": "SEO title", "single": true },
+            { "name": "noindex", "type": "boolean", "title": "No index" }
+          ]
+        },
+        { "name": "author", "type": "fieldCollection", "fieldGroup": "authorBlock" }
+      ]
+    },
+    {
+      "name": "note",
+      "fileType": "md",
+      "slugTemplate": null,
+      "fields": [
+        { "name": "title", "type": "string", "title": "Title", "single": true, "required": true },
+        { "name": "description", "type": "string", "title": "Description" },
+        { "name": "draft", "type": "draft", "title": "Draft" },
+        { "name": "tags", "type": "tags", "title": "Tags" }
+      ]
+    }
+  ],
+  "fieldGroups": [
+    {
+      "id": "authorBlock",
+      "labelField": "name",
+      "fields": [
+        { "name": "authorName", "type": "string", "title": "Author", "single": true },
+        { "name": "authorEmail", "type": "string", "title": "Author email", "single": true }
+      ]
+    }
+  ],
+  "taxonomy": {
+    "tags": ["governance", "mcp", "jekyll", "publishing"],
+    "categories": ["corp", "tech"],
+    "custom": [{ "id": "topic", "options": ["operations", "engineering", "strategy"] }]
+  },
+  "draftField": { "name": "draft", "type": "boolean" },
+  "frontMatter": {
+    "format": "yaml",
+    "indentArrays": true,
+    "quoteStringValues": false,
+    "commaSeparatedFields": ["keywords"]
+  },
+  "content": {
+    "defaultFileType": "md",
+    "supportedFileTypes": ["md", "markdown"],
+    "publicFolder": "assets",
+    "filePrefix": "{{date|yyyy-MM-dd}}",
+    "preserveCasing": false,
+    "autoUpdateModifiedDate": true
+  },
+  "seo": {
+    "enabled": true,
+    "titleField": "title",
+    "titleLength": 60,
+    "descriptionField": "description",
+    "descriptionLength": 160,
+    "slugLength": 75,
+    "contentLength": 1760
+  },
+  "slug": { "template": null, "prefix": "", "suffix": "", "alignFilename": false },
+  "placeholders": [{ "id": "siteName", "value": "zer0 fixture site" }],
+  "date": { "format": "yyyy-MM-dd", "timezone": "UTC" },
+  "governance": {
+    "enabled": true,
+    "draftsFolder": ".zer0/drafts",
+    "ledgerPath": ".zer0/ledger.json",
+    "acceptStatuses": ["pending", "approved"],
+    "publishAllow": true,
+    "bannedPatternsFile": "guard/banned-patterns.json",
+    "target": "jekyll"
+  },
+  "cms": {
+    "root": ".cms",
+    "python": "python3",
+    "engineScript": "scripts/cms/cms.py",
+    "normalizerScript": "scripts/content/normalize-frontmatter.py",
+    "contentDirs": ["pages/"]
+  },
+  "agent": { "enabled": false, "model": "claude-opus-5", "maxTurns": 40, "permissionMode": "default" },
+  "validation": { "enabled": true },
+  "panel": {
+    "openOnSupportedFile": false,
+    "freeformTaxonomy": true,
+    "sections": ["governance", "metadata", "seo", "actions", "recent", "other"]
+  },
+  "dashboard": {
+    "openOnStartup": false,
+    "defaultView": "grid",
+    "defaultSorting": "LastModifiedDesc",
+    "pageSize": 16,
+    "cardFields": { "state": true, "date": true }
+  },
+  "logging": { "level": "info" }
+}

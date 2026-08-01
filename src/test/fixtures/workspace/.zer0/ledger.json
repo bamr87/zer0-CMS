@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "generated_by": "zer0-cms fixture",
+    "schema": 1
+  },
+  "/pages/posts/corp/governed-publishing/": {
+    "posted_at": "2026-07-09T09:14:00Z",
+    "source_file": "pages/_posts/corp/2026-07-08-governed-publishing.md",
+    "target": "jekyll",
+    "type": "article",
+    "urn": "jekyll:pages/_posts/corp/2026-07-08-governed-publishing.md"
+  },
+  "/pages/posts/corp/half-written/": {
+    "posted_at": "2026-07-10T11:02:00Z",
+    "type": "article"
+  }
+}

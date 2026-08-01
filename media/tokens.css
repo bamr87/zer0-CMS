@@ -1,0 +1,162 @@
+/**
+ * tokens.css — the only file in zer0-CMS that knows VS Code's variable names.
+ *
+ * Two layers. Everything a component stylesheet references is a `--z-*` token;
+ * every `--z-*` token is either an alias for a `--vscode-*` theme colour or one
+ * of six values JavaScript has to derive (an alpha wash, a darkened border, a
+ * theme-flipped translucent surface). Nothing else in `media/` or
+ * `src/webview/` may name a `--vscode-*` variable — CI greps for it.
+ *
+ * That indirection is the single change that makes a vanilla rewrite
+ * maintainable where the Tailwind original was not: retheming a control means
+ * editing one line here, not hunting ~400 `bg-[var(--vscode-…)]` literals.
+ *
+ * Two conventions worth knowing:
+ *   - `var(--vscode-contrastBorder, …)` is how high-contrast themes get their
+ *     mandatory hairlines. `contrastBorder` is only defined in HC themes, so
+ *     the fallback is the normal-theme colour and no `body.vscode-high-contrast`
+ *     selector is needed for borders.
+ *   - The derived block at the bottom holds *fallbacks*. `updateDerivedTokens()`
+ *     in `src/webview/shared/dom.ts` overwrites those six on load and on every
+ *     `document.body` attribute mutation, reading the resolved `--z-*` sources
+ *     above rather than the `--vscode-*` originals.
+ */
+
+:root {
+  /* ── typography ──────────────────────────────────────────────────────── */
+  --z-font: var(--vscode-font-family);
+  --z-font-size: var(--vscode-font-size);
+  --z-font-weight: var(--vscode-font-weight);
+  --z-mono: var(--vscode-editor-font-family);
+  --z-mono-size: var(--vscode-editor-font-size);
+
+  /* ── surfaces ────────────────────────────────────────────────────────── */
+  --z-bg: var(--vscode-editor-background);
+  --z-bg-sidebar: var(--vscode-sideBar-background);
+  --z-bg-panel: var(--vscode-panel-background);
+  --z-bg-input: var(--vscode-input-background);
+  --z-bg-dropdown: var(--vscode-dropdown-background);
+  --z-bg-hover: var(--vscode-list-hoverBackground);
+  --z-bg-selected: var(--vscode-list-activeSelectionBackground);
+  --z-bg-zebra: var(--vscode-keybindingTable-rowsBackground);
+  --z-bg-table-head: var(--vscode-keybindingTable-headerBackground);
+  --z-bg-widget: var(--vscode-editorHoverWidget-background);
+  --z-bg-badge: var(--vscode-badge-background);
+  --z-fg-badge: var(--vscode-badge-foreground);
+
+  /* ── text ────────────────────────────────────────────────────────────── */
+  --z-fg: var(--vscode-editor-foreground);
+  --z-fg-muted: var(--vscode-editorHint-foreground);
+  --z-fg-description: var(--vscode-descriptionForeground);
+  --z-fg-sidebar: var(--vscode-sideBar-foreground);
+  --z-fg-sidebar-title: var(--vscode-sideBarTitle-foreground);
+  --z-fg-selected: var(--vscode-list-activeSelectionForeground);
+  --z-fg-hover: var(--vscode-list-hoverForeground);
+  --z-fg-disabled: var(--vscode-disabledForeground);
+  --z-fg-header: var(--vscode-settings-headerForeground);
+  --z-link: var(--vscode-textLink-foreground);
+  --z-link-hover: var(--vscode-textLink-activeForeground);
+  --z-tab-active: var(--vscode-tab-activeForeground);
+  --z-tab-inactive: var(--vscode-tab-inactiveForeground);
+  --z-title-active: var(--vscode-titleBar-activeForeground);
+  --z-title-inactive: var(--vscode-titleBar-inactiveForeground);
+
+  /* ── controls ────────────────────────────────────────────────────────── */
+  --z-btn-bg: var(--vscode-button-background);
+  --z-btn-fg: var(--vscode-button-foreground);
+  --z-btn-hover: var(--vscode-button-hoverBackground);
+  --z-btn-border: var(--vscode-button-border, transparent);
+  --z-btn2-bg: var(--vscode-button-secondaryBackground);
+  --z-btn2-fg: var(--vscode-button-secondaryForeground);
+  --z-btn2-hover: var(--vscode-button-secondaryHoverBackground);
+  --z-input-fg: var(--vscode-input-foreground);
+  --z-input-border: var(--vscode-input-border, transparent);
+  --z-input-placeholder: var(--vscode-input-placeholderForeground);
+  --z-dropdown-fg: var(--vscode-dropdown-foreground);
+  --z-dropdown-border: var(--vscode-dropdown-border);
+  --z-scrollbar: var(--vscode-scrollbarSlider-background);
+  --z-scrollbar-hover: var(--vscode-scrollbarSlider-hoverBackground);
+  --z-scrollbar-active: var(--vscode-scrollbarSlider-activeBackground);
+
+  /* ── validation ──────────────────────────────────────────────────────── */
+  --z-border: var(--vscode-contrastBorder, var(--vscode-panel-border));
+  --z-border-group: var(--vscode-contrastBorder, var(--vscode-editorGroup-border));
+  --z-focus: var(--vscode-focusBorder);
+  --z-info-border: var(--vscode-inputValidation-infoBorder);
+  --z-info-bg: var(--vscode-inputValidation-infoBackground);
+  --z-warn-border: var(--vscode-inputValidation-warningBorder);
+  --z-error-border: var(--vscode-inputValidation-errorBorder);
+  --z-error-bg: var(--vscode-inputValidation-errorBackground);
+  --z-error-fg: var(--vscode-inputValidation-errorForeground);
+  --z-fg-error: var(--vscode-errorForeground);
+  --z-fg-warning: var(--vscode-editorWarning-foreground);
+
+  /* ── semantics ───────────────────────────────────────────────────────── */
+  --z-ok: var(--vscode-charts-green);
+  --z-warn: var(--vscode-notificationsWarningIcon-foreground);
+  --z-danger: var(--vscode-statusBarItem-errorBackground);
+  --z-danger-fg: var(--vscode-statusBarItem-errorForeground);
+  --z-status-warn-bg: var(--vscode-statusBarItem-warningBackground);
+  --z-status-warn-fg: var(--vscode-statusBarItem-warningForeground);
+  --z-status-hover: var(--vscode-statusBarItem-hoverBackground);
+  --z-debug-bg: var(--vscode-statusBar-debuggingBackground);
+  --z-debug-fg: var(--vscode-statusBar-debuggingForeground);
+  --z-accent: var(--vscode-activityBarBadge-background);
+  --z-symbol-folder: var(--vscode-symbolIcon-folderForeground);
+  --z-symbol-file: var(--vscode-symbolIcon-fileForeground);
+  --z-shadow: var(--vscode-widget-shadow);
+
+  /* ── geometry — one place, not scattered rem literals ────────────────── */
+  --z-radius: 0.25rem;
+  --z-radius-pill: 2px;
+  --z-radius-badge: 3px;
+  --z-radius-round: 9999px;
+  --z-gutter: 1rem;
+  --z-gutter-lg: 1.25rem;
+  --z-row-h: 22px;
+  --z-card-img-h: 144px;
+  --z-media-img-h: 192px;
+  --z-icon-sm: 16px;
+  --z-icon-md: 20px;
+  --z-icon-lg: 24px;
+  --z-pad-y: 6px;
+  --z-pad-x: 4px;
+  --z-dur: 100ms;
+  --z-dur-slide: 500ms;
+
+  /* spacing scale — the dashboard's 4/8/12/16/24/32 rhythm */
+  --z-sp-1: 4px;
+  --z-sp-2: 8px;
+  --z-sp-3: 12px;
+  --z-sp-4: 16px;
+  --z-sp-6: 24px;
+  --z-sp-8: 32px;
+
+  /* stacking — header under menus under dialogs */
+  --z-layer-header: 20;
+  --z-layer-menu: 50;
+  --z-layer-modal: 60;
+}
+
+/**
+ * Derived tokens. These five plus `--z-btn-solid` are recomputed by
+ * `updateDerivedTokens()`; the values here are the pre-script fallbacks so a
+ * first paint never shows a broken colour.
+ */
+:root {
+  --z-ok-bg: rgba(0, 0, 0, 0);
+  --z-warn-bg: rgba(0, 0, 0, 0);
+  --z-border-active: var(--vscode-panel-border);
+  --z-overlay: var(--vscode-editor-background);
+  --z-translucent: rgba(255, 255, 255, 0.1);
+  --z-btn-solid: var(--vscode-button-background);
+}
+
+/* Static fallbacks for the theme-flipped surface, in case scripting is delayed. */
+body.vscode-light {
+  --z-translucent: rgba(0, 0, 0, 0.1);
+}
+
+body.vscode-high-contrast-light {
+  --z-translucent: rgba(0, 0, 0, 0.1);
+}

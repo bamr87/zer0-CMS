@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-07-30T06:00:00Z",
+  "total_files": 6,
+  "scored_files": 6,
+  "actionable_files": 2,
+  "avg_health": 81.33,
+  "avg_health_actionable": 61.0,
+  "total_mechanical_issues": 2,
+  "total_substantive_issues": 1,
+  "total_errors": 1,
+  "read_only_files": 0,
+  "by_collection": {
+    "corp": {
+      "count": 3,
+      "scored": 3,
+      "mechanical": 2,
+      "substantive": 1,
+      "errors": 1,
+      "avg_health": 71.67
+    },
+    "tech": {
+      "count": 2,
+      "scored": 2,
+      "mechanical": 0,
+      "substantive": 0,
+      "errors": 0,
+      "avg_health": 91.5
+    },
+    "": {
+      "count": 1,
+      "scored": 1,
+      "mechanical": 0,
+      "substantive": 0,
+      "errors": 0,
+      "avg_health": 90.0
+    }
+  },
+  "freshness_distribution": { "fresh": 4, "aging": 1, "stale": 1 },
+  "health_buckets": { "excellent": 3, "good": 2, "poor": 1 }
+}

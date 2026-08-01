@@ -1,267 +1,153 @@
-<!-- ───────────────────────────────────────────────────────────────────────
-zer0-CMS — an AI-augmented fork of Front Matter CMS ─────────────────────────────────────────────────────────────────────── -->
+<h1 align="center">zer0-CMS</h1>
 
-# zer0-CMS
+<p align="center">
+  <img src="media/zer0-cms-128.png" width="96" alt="">
+</p>
 
-> **zer0-CMS** is an AI-augmented content CMS for VS Code, built for the
-> **IT-Journey / zer0-mistakes** platform. It is a fork of
-> [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) by Elio Struyf
-> (MIT), adding content-health insight and embedded Claude Code agents.
-> See **[FORK.md](./FORK.md)** for attribution, what's added, and how to sync upstream.
+<p align="center">
+A lightweight CMS for your markdown repo, inside VS Code.<br> Edit front matter as real controls, browse your content in a dashboard, and publish through a gate a human has to walk through.
+</p>
+
+<p align="center">
+  <em>Zero runtime dependencies. One esbuild bundle. No framework.</em>
+</p>
 
 ---
 
-_The original Front Matter documentation follows._
+## What it is
+
+zer0-CMS turns a repository of markdown into something you can actually operate:
+
+- a **metadata panel** that renders the active file's front matter as typed controls instead of raw YAML,
+- a **dashboard** that lists every piece of content with search, filters and sorting,
+- **SEO insights** measured against thresholds you set,
+- and a **governed publishing path** — draft → brand guard → human approval → publish → ledger — where nothing goes out because a script decided it should.
 
-<h1 align="center">
-  <a href="https://frontmatter.codes">
-    <img alt="Front Matter" src="https://frontmatter.codes/assets/frontmatter-social.png">
-  </a>
-</h1>
+It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-<h2 align="center">Front Matter - A Headless CMS for Visual Studio Code</h2>
+## The two halves of this repo
 
-> **📢 2026 Open Source Priorities Update**
-> 
-> I love working with and creating open source products, but after careful
-> evaluation and working with a coach, I've decided to focus my efforts on
-> creating a better revenue stream. As open-source isn't providing me a
-> sustainable income, I need to focus my time and effort more strategically on
-> how to make my work sustainable.
-> 
-> **Front Matter CMS will continue to be maintained** as I use it daily.
-> However, major changes will only happen if there's a personal reason, a
-> company commitment, or significant community support. Feature requests may
-> take longer to be addressed.
-> 
-> I'm shifting focus to open source projects that I can learn from or that have
-> different outcomes, like **Demo Time**, which I use when presenting at
-> conferences. If you or your company would like to sponsor my work on Front
-> Matter CMS or other projects, I'd love to discuss how we can collaborate to
-> make it even better!
-> 
-> This is not about Front Matter CMS going away, but rather about managing
-> expectations around feature development timelines.
+| Path | What it is |
+|---|---|
+| `src/` | The **VS Code extension** — this README. |
+| `rails/` | The **ABC content engine** — a stdlib-only Ruby library + optional Rails wizard that writes children's alphabet books and exports them as a Jekyll board book. Separate product, separate README: [`rails/README.md`](rails/README.md). |
+
+## How publishing works
 
-<p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=eliostruyf.vscode-front-matter" title="Check it out on the Visual Studio Marketplace">
-    <img src="https://vscode-marketplace-badge.vercel.app/api/badge/version/eliostruyf.vscode-front-matter" alt="Visual Studio Marketplace" style="display: inline-block" />
-  </a>
+```
+Content ──▶ Draft ──────▶ Guard ──────▶ Approve ──────▶ Publish ──▶ Ledger
+   │        status:        length,       status:          the        keyed by
+ .cms/      pending        bans,         approved         target     canonical
+ or a scan                 filler        a person,                   URL
+                                         in the file
+```
 
-  <img src="https://vscode-marketplace-badge.vercel.app/api/badge/installs/eliostruyf.vscode-front-matter" alt="Number of installs"  style="display: inline-block;margin-left:10px" />
+Four rules hold this together:
 
-  <img src="https://vscode-marketplace-badge.vercel.app/api/badge/rating/eliostruyf.vscode-front-matter" alt="Ratings" style="display: inline-block;margin-left:10px" />
+1. **Approval is a human decision recorded in the file.** A draft's `status:` line is the record. There is no unattended path to published.
+2. **The webview is UI, never the gate.** Buttons post an intent and a target — never a payload, never an override. Every gate is re-checked host-side, in the same function the command palette calls.
+3. **The ledger is keyed by canonical URL**, so this extension and a CI lane can share one queue without double-publishing. It is byte-compatible with the Python lane's `json.dump` output, so the file never churns in git.
+4. **Publishing is off by default.** Until you enable `zer0Cms.governance.publishAllow`, every path — commands, panel, dashboard, MCP — is preview and draft only.
 
-  <a href="https://github.com/sponsors/estruyf" title="Become a sponsor" style="margin-left:10px">
-    <img src="https://img.shields.io/github/sponsors/estruyf?color=%23CE2E7C&logo=github&style=flat" alt="Sponsor the project" style="display: inline-block" />
-  </a>
-</p>
+## Getting started
 
-<h2 align="center">
-  <a href="https://frontmatter.codes" title="Documentation @ frontmatter.codes">
-    Check out the extension documentation at frontmatter.codes
-  </a>
-</h2>
+1. Install the extension and open your content repo.
+2. Run **zer0-CMS: Initialize project** to write a `zer0.json`.
+3. Register a content folder (right-click a folder → *Register content folder*, or add it to `zer0.json`).
+4. Open a markdown file — the panel fills in.
+5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
 
-## ❓ What is Front Matter?
+Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 35 settings here instead of 89.
 
-Front Matter is a CMS that runs within Visual Studio Code. It gives you the power and control of a full-blown CMS while also providing you the flexibility and speed of the static site generator of your choice. Jump right into editing and creating content with Front Matter and be able to preview it straight in VS Code.
+## Configuration
 
-The extension supports various static-site generators and frameworks like Hugo, Jekyll, Hexo, NextJs, Gatsby, and more.
+`zer0.json`:
 
-A couple of our extension highlights that hopefully get you interested in giving Front Matter a try:
+```jsonc
+{
+  "contentFolders": [
+    { "title": "Posts", "path": "[[workspace]]/pages/_posts", "contentTypes": ["post"] }
+  ],
+  "contentTypes": [
+    {
+      "name": "post",
+      "fields": [
+        { "name": "title",       "type": "string",   "required": true },
+        { "name": "description", "type": "string",   "required": true },
+        { "name": "date",        "type": "datetime", "default": "{{now}}" },
+        { "name": "tags",        "type": "tags" },
+        { "name": "categories",  "type": "categories" },
+        { "name": "preview",     "type": "image" }
+      ]
+    }
+  ],
+  "taxonomy": { "tags": [], "categories": [] },
+  "seo": { "titleLength": 60, "descriptionLength": 160, "slugLength": 75, "contentLength": 1760 },
+  "slug": { "template": "{{title}}" }
+}
+```
 
-- Content, data, and media management
-  - Search, filter, sort, etc. all your content
-  - Create new content
-  - Supporting tools to edit content and media
-- Preview your site/content straight in Visual Studio Code
-- SEO checks for title, description, and keywords
-- Extensibility
-  - As we know, we cannot support all use cases. We provide a way to extend the
-    functionality of the extension to your needs
-- and many more features ...
+The settings that matter most:
 
-> Missing something? Let us know by opening an issue on the
-> [GitHub repository](https://github.com/estruyf/vscode-front-matter/issues/new/choose)
+| Setting | Default | Purpose |
+|---|---|---|
+| `zer0Cms.governance.publishAllow` | `false` | The master gate |
+| `zer0Cms.governance.acceptStatuses` | `pending, approved` | Set to `approved` only to force the approval step |
+| `zer0Cms.governance.draftsFolder` | `.zer0/drafts` | The queue |
+| `zer0Cms.governance.ledgerPath` | `.zer0/ledger.json` | The shared ledger |
+| `zer0Cms.governance.bannedPatternsFile` | — | Extra brand-guard patterns |
+| `zer0Cms.cms.root` | `.cms` | Where the content engine's contract lives |
+| `zer0Cms.agent.enabled` | `false` | The optional AI layer |
 
-<p align="center">
-  <img src="https://frontmatter.codes/assets/marketplace/v6.0.0/content-preview.png" alt="Site preview" style="display: inline-block" />
-</p>
+Full reference: [`docs/CONFIG.md`](docs/CONFIG.md).
 
-> If you see something missing in your article creation flow, please feel free
-> to reach out.
+## The `.cms/` contract
 
-**Version 10**
+If your repo runs a content engine that emits `.cms/index/content-index.json`, zer0-CMS reads it: per-file **health**, **freshness**, and the **mechanical / substantive** issue lanes, plus the distribution worklists it writes back to `.cms/distribution/`.
 
-In version 10, we introduced the new i18n/multilingual support for your content. You can now manage your content in multiple languages, more information can be found in the [multilingual](https://frontmatter.codes/docs/content-creation/multilingual) section of our documentation.
+If your repo has no `.cms/`, that is a normal state, not an error — the extension falls back to an honest filesystem scan and simply reports less.
 
-![Multilingual support](https://beta.frontmatter.codes/releases/v10.0.0/multilingual-content.png)
+## MCP server
 
-**Version 9**
+The extension registers a bundled MCP server with VS Code 1.101+, so Copilot agent mode (or any MCP client pointed at `dist/mcp-server.js`) gets eight tools:
 
-The extension is now available in multiple languages: English, German, and Japanese. Want to add your language? Check out the [localization the extension](https://frontmatter.codes/docs/contributing#translating-the-extension).
+| Tool | Safe? |
+|---|---|
+| `zer0_status` · `zer0_list_content` · `zer0_get_content` · `zer0_preview` · `zer0_contract` | read-only |
+| `zer0_draft` · `zer0_worklist` | writes a draft or a worklist for a human |
+| `zer0_publish` | **off by default** — needs `ZER0_CMS_MCP_ALLOW_PUBLISH=1` in the server env *and* `confirm: true` per call |
 
-**Version 8**
+The preferred path is `zer0_draft`: the model writes, the person approves.
 
-The taxonomy dashboard got introduced on which you can manage your tags, categories, and custom taxonomy.
+## The optional AI agent
 
-![Taxonomy dashboard](https://frontmatter.codes/assets/marketplace/v8.1.0/taxonomy-dashboard.png)
+Off unless you turn it on. With `zer0Cms.agent.enabled` and the `@anthropic-ai/claude-agent-sdk` optional dependency installed, zer0-CMS can run a content-curation agent whose every mutating tool call goes through an approve/deny card showing the diff. Read-only tools run without asking; nothing else does.
 
-**Version 7**
+## Architecture
 
-Snippets support for Front Matter has been added!
+```
+src/core/      pure Node. No `vscode` import — enforced by eslint and by the build.
+src/mcp/       the standalone MCP server. Bundles with nothing external.
+src/webview/   vanilla TS + CSS. No React, no Tailwind, no innerHTML.
+src/           the thin vscode shell: extension.ts, commands, views, providers.
+```
 
-![Snippets dashboard](https://frontmatter.codes/assets/marketplace/v7.0.0/snippets-dashboard.png)
+The `src/core` boundary is load-bearing, not stylistic: it is why the same publish gate runs identically from a command, a webview and an MCP client, and why the core is testable without an extension host.
 
-**Version 6**
+More: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-In this version, we introduced the new data files/folders dashboard. You can find more information about the release in our [v6.0.0 release notes](https://frontmatter.codes/updates/v6.0.0).
+## Development
 
-<p align="center">
-  <img src="https://frontmatter.codes/assets/marketplace/v6.0.0/data-dashboard.png" alt="Data dashboard" style="display: inline-block" />
-</p>
+```bash
+npm install
+npm run compile          # type-check + lint + all five bundles
+npm run watch            # esbuild + tsc in watch mode, then F5
+npm test                 # unit + golden + MCP stdio + integration
+npx @vscode/vsce package # build the .vsix
+```
 
-> Data files/folders are pieces of content that do not belong to any markdown
-> content, but live on their own. Most of the time, these data files are used to
-> store additional information about your project/blog/website that will be used
-> to render the content.
+`npm run compile` failing with `Could not resolve "vscode"` means something in `src/core` or `src/mcp` imported the VS Code API. That is the layering gate doing its job.
 
-**Version 5**
+## License
 
-The new media dashboard redesign got introduced + support for setting metadata on media files [v5.0.0 release notes](https://frontmatter.codes/updates/v5.0.0).
-
-<p align="center">
-  <img src="https://frontmatter.codes/assets/marketplace/v5.9.0/media-dashboard.png" alt="Data dashboard" style="display: inline-block" />
-</p>
-
-**Version 4**
-
-Support for Team level settings, content-types, and image support. Get to know more at: [v4.0.0 release notes](https://frontmatter.codes/updates/v4_0_0).
-
-**Version 3**
-
-In version v3 we introduced the welcome and dashboard webview. The welcome view allows to get you started using the extension, and the dashboard allows you to manage all your markdown pages in one place. This makes it easy to search, filter, sort, and more.
-
-**Version 2**
-
-In version v2 we released the re-designed sidebar panel with improved SEO support. This extension makes it the only extension to manage your Markdown pages for your static sites in Visual Studio Code.
-
-<p align="center" style="margin-top: 2rem;">
-  <a href="https://www.producthunt.com/posts/front-matter?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-front-matter" target="_blank">
-    <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.png?post_id=309033&theme=dark" alt="Front Matter - Managing your static sites straight from within VS Code | Product Hunt" style="width: 250px; height: 40px;" />
-  </a>
-</p>
-
-## ⚙️ Installation
-
-You can get the extension via:
-
-- The VS Code marketplace:
-  [VS Code Marketplace - Front Matter](https://marketplace.visualstudio.com/items?itemName=eliostruyf.vscode-front-matter).
-- The extension CLI: `ext install eliostruyf.vscode-front-matter`
-- Or by clicking on the following link: <a href="" title="open extension in VS
-Code" data-vscode="vscode:extension/eliostruyf.vscode-front-matter">open extension in VS Code</a>
-
-> **Info**: The docs can be found on
-> [frontmatter.codes](https://frontmatter.codes).
-
-### 🧪 Beta version
-
-If you have the courage to test out the beta features, we made available a beta version as well. You can install this via:
-
-- Uninstall the main Front Matter version
-- Install the beta version
-  - VS Code marketplace:
-    [VS Code Marketplace - Front Matter BETA](https://marketplace.visualstudio.com/items?itemName=eliostruyf.vscode-front-matter-beta).
-  - The extension CLI: `ext install eliostruyf.vscode-front-matter-beta`
-  - Or by clicking on the following link: <a href="" title="open extension in VS
-    Code"
-    data-vscode="vscode:extension/eliostruyf.vscode-front-matter-beta">open
-    extension in VS Code</a>
-
-> **Info**: The BETA docs can be found on
-> [beta.frontmatter.codes](https://beta.frontmatter.codes).
-
-## 📖 Documentation
-
-All documentation can be found on [frontmatter.codes](https://frontmatter.codes).
-
-Documentation repository: [GitHub - Front Matter DOCs](https://github.com/FrontMatter/web-documentation-nextjs)
-
-## 💪 Contributing
-
-Pull requests are welcome. Please open an issue first to discuss what you would like to change, or which problem you would like to fix. This makes it easier for us to follow-up and plan for future releases.
-
-You can always help us improve the extension in varous ways like:
-
-- Testing out the extension and providing feedback
-- Reporting issues and bugs
-- Suggesting new features
-- Fixing an issue
-- Updating documentation
-- UI improvements
-- Tutorials
-- etc.
-
-Eager to start contributing? Great 🤩, you can contribute to the following projects:
-
-- [Extension](https://github.com/estruyf/vscode-front-matter)
-- [Documentation](https://github.com/FrontMatter/web-documentation-nextjs)
-- [Sample Projects](https://github.com/FrontMatter/project-samples)
-
-## 👀 Show the work you are using Front Matter
-
-Are you using Front Matter and are you interested in showing for which websites you use it? You can show your work by opening a [showcase issue](https://github.com/estruyf/vscode-front-matter/issues/new?assignees=&labels=&template=showcase.md&title=Showcase%3A+).
-
-You can open showcase issues for the following things:
-
-- Show the website for which you use Front Matter;
-- Share an article/video/webcast/... that explains how you use Front Matter;
-- Got something else to share? Open an issue and we can see where it fits on our
-  website.
-
-## 👉 Contributors 🤘
-
-<p align="center">
-  <a href="https://github.com/estruyf/vscode-front-matter/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=estruyf/vscode-front-matter" alt="Front Matter contributors" />
-  </a>
-</p>
-
-## 💚 Backers & Sponsors 👇 🤘
-
-<p align="center">
-  <img src="https://api.frontmatter.codes/img-sponsors" alt="Front Matter sponsors" />
-</p>
-
-<br />
-
-<p align="center" title="Powered by Netlify">
-  <a href="https://www.netlify.com?utm_source=vscode-frontmatter&utm_campaign=oss">
-    <img src="https://frontmatter.codes/assets/sponsors/netlify-dark.png" alt="Deploys by Netlify" height="51px" />
-   </a>
-</p>
-
-## 📊 Telemetry
-
-The Front Matter CMS extension only uses telemetry on application crashes. The extension respects the `telemetry.enableTelemetry` setting which you can learn more about in the [Visual Studio Code FAQ](https://aka.ms/vscode-remote/telemetry).
-
-For crash reports in the webviews, we make use of Sentry to help us understand what went wrong. This data is only used to fix issues and improve the extension. You can find more information about the Sentry implementation in the following files:
-
-- [Sentry config](https://github.com/estruyf/vscode-front-matter/blob/63e296d62f11be73ac86d9e823084247952a7ddc/src/utils/sentryInit.ts)
-
-> The user ip address is not collected.
-
-## 🔑 License
-
-[MIT](./LICENSE)
-
-<br />
-<br />
-
-<p align="center">
-  <a href="https://visitorbadge.io">
-    <img src="https://api.visitorbadge.io/api/VisitorHit?user=estruyf&repo=vscode-front-matter&countColor=%23F05450&labelColor=%230E131F" height="25px" alt="Front Matter visitors" />
-  </a>
-</p>
+[MIT](LICENSE). Portions © 2019 Elio Struyf (Front Matter CMS) — see [ATTRIBUTION.md](ATTRIBUTION.md).

@@ -1,60 +1,12 @@
-// Place your settings in this file to overwrite default and user settings.
 {
-  "commitHelper.messages": [
-    {
-      "type": "👨‍💻 apps",
-      "values": ["#search", "#profile"]
-    },
-    {
-      "type": "⚙️ tasks",
-      "values": ["#build", "#deploy", "#skip"]
-    }
-  ],
   "files.exclude": {
-    "out": false // set this to true to hide the "out" folder with the compiled JS files
+    "out": false,
+    "dist": false
   },
   "search.exclude": {
-    "out": true // set this to false to include "out" folder in search results
+    "out": true,
+    "dist": true
   },
-  // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
   "typescript.tsc.autoDetect": "off",
-  "squarl.groups": [
-    {
-      "id": "dashboard",
-      "name": "Dashboard"
-    },
-    {
-      "id": "panel",
-      "name": "Panel"
-    }
-  ],
-  "squarl.bookmarks": [
-    {
-      "name": "App.tsx",
-      "path": "src/dashboardWebView/components/App.tsx",
-      "description": "Start of dashboard",
-      "type": "file",
-      "groupId": "dashboard"
-    },
-    {
-      "name": "ViewPanel.tsx",
-      "path": "src/panelWebView/ViewPanel.tsx",
-      "description": "Start of panel",
-      "type": "file",
-      "groupId": "panel"
-    },
-    {
-      "name": "styles.css",
-      "path": "src/panelWebView/styles.css",
-      "description": "Panel styles",
-      "type": "file",
-      "groupId": "panel"
-    },
-    {
-      "name": "settings.ts",
-      "path": "src/constants/settings.ts",
-      "description": "Settings names",
-      "type": "file"
-    }
-  ]
+  "typescript.tsdk": "node_modules/typescript/lib"
 }
