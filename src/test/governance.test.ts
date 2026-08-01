@@ -55,6 +55,7 @@ import {
   canonicalUrl,
   previewRequestFromDraft,
   publishPreview,
+  resolveSource,
   targetFor,
 } from '../core/governance/publish';
 import {
@@ -731,6 +732,46 @@ suite('governance: the contract (D9)', () => {
       shares: 0,
       engagements: 0,
     });
+  });
+});
+
+suite('governance: resolving a source page by reference', () => {
+  /**
+   * `resolveSource` matches a caller's `ref` against the content folders three
+   * ways, the loosest being "these two slugify the same". Under Front Matter's
+   * stop-word list that comparison collapsed so much of a title that distinct
+   * references met in the middle: `mcp-for-the-back-office-what-it-actually-
+   * does` and `mcp-for-the-back-office` both slugified to `mcp-office`, so
+   * asking an MCP client for a page that does not exist returned a *different
+   * page*, and a draft built from it would have been published under the wrong
+   * source. This is the correctness half of the stop-word change; the URL
+   * damage in `core.test.ts` is the cosmetic half.
+   */
+  test('a longer, different reference does not collide with a real page', async () => {
+    const cfg = fixtureConfig();
+    const real = 'mcp-for-the-back-office';
+
+    const found = await resolveSource(cfg, real);
+    assert.ok(found !== undefined, 'the real stem still resolves');
+    assert.equal(found.relPath, 'pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md');
+
+    for (const other of [
+      `${real}-what-it-actually-does`,
+      `${real}-and-what-it-does-not-do`,
+      'the-back-office',
+    ]) {
+      assert.equal(
+        await resolveSource(cfg, other),
+        undefined,
+        `"${other}" is not that page and must not resolve to it`,
+      );
+    }
+
+    // The two loss-free paths are untouched by any of this.
+    const byFullPath = await resolveSource(cfg, 'pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md');
+    assert.equal(byFullPath?.relPath, found.relPath, 'an exact path still wins');
+    const byDatedStem = await resolveSource(cfg, '2026-07-06-mcp-for-the-back-office');
+    assert.equal(byDatedStem?.relPath, found.relPath, 'so does the stem with its date prefix');
   });
 });
 

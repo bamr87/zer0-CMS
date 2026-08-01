@@ -42,6 +42,7 @@ import {
   buildPreview,
   byPath,
   condenseNormalizerOutput,
+  countLabel,
   distributable,
   engineConfigFor,
   healthBucket,
@@ -438,7 +439,7 @@ async function toolGetContent(cfg: Zer0Config, args: ToolArgs): Promise<string> 
       `collection  : ${record.collection || '(none)'}`,
       `health      : ${record.health >= 0 ? `${record.health} (${healthBucket(record.health)})` : 'unscored'}`,
       `freshness   : ${record.freshness}`,
-      `words       : ${record.wordCount}`,
+      `words       : ${countLabel(record.wordCount, 'uncounted')}`,
       `editable    : ${isEditable(record)}`,
     );
     const mechanical = issuesByLane(record, 'mechanical');
@@ -517,7 +518,7 @@ async function toolDraft(cfg: Zer0Config, args: ToolArgs): Promise<string> {
   const stem =
     argString(args, 'slug') ||
     (ref === '' ? '' : path.basename(ref).replace(/\.[^./]+$/, '').replace(/^\d{4}-\d{2}-\d{2}-/, '')) ||
-    slugify(title) ||
+    slugify(title, cfg.slug.stopWords) ||
     (isUpdate ? 'update' : 'article');
 
   let dest: string;

@@ -11,7 +11,7 @@ Eight files with no domain knowledge and no dependencies. Everything else in the
 | `timestamp.ts` | `utcStamp`, `utcDate` | Second precision, no milliseconds — a byte contract. |
 | `dates.ts` | `formatDate`, `parseDate`, `normalizePattern`, `timezoneOffset` | date-fns token subset via `Intl`. |
 | `glob.ts` | `compileGlob`, `globMatches`, `walkGlobs`, `SKIP_DIRS` | Single-pass translation, static base, sorted output. |
-| `text.ts` | `slugify`, `removePunctuation`, `transliterate`, `encodeEmoji`, `truncate`, `escapeHtml`, `CHAR_MAP`, `STOP_WORDS` | Slug pipeline ported from Front Matter CMS. |
+| `text.ts` | `slugify`, `removePunctuation`, `removeStopWords`, `transliterate`, `encodeEmoji`, `truncate`, `escapeHtml`, `CHAR_MAP`, `STOP_WORDS`, `MINIMAL_STOP_WORDS`, `NO_STOP_WORDS`, `STOP_WORD_PRESETS` | Slug pipeline ported from Front Matter CMS. |
 
 ## Contracts worth knowing before you change anything
 
@@ -27,7 +27,9 @@ Eight files with no domain knowledge and no dependencies. Everything else in the
 
 **`compileGlob`** — one left-to-right pass. Cascading string replaces (`**` then `*`) rewrite the fragments emitted by earlier steps, which is the classic way to get `pages/**/*.md` subtly wrong. `walkGlobs` starts at each pattern's static base, skips `SKIP_DIRS` and hidden directories below the base, and returns sorted workspace-relative POSIX paths.
 
-**`slugify`** — Front Matter's exact pipeline (remove punctuation → lowercase → drop stop words → join with `-` → transliterate), because changing it would silently change every future permalink of a site that already used FM. The only addition is a final collapse of repeated and edge dashes.
+**`slugify`** — Front Matter's pipeline (remove punctuation → lowercase → drop stop words → join with `-` → transliterate), plus a final collapse of repeated and edge dashes.
+
+**Which words it drops is configuration, and the default is no longer FM's.** FM used the SMART information-retrieval stop-word list, which is built for matching documents rather than for naming them: it contains `back`, `new`, `value`, `use`, `way`, `thing`, `vs` and `without`. Run over a real 72-post site, 31% of titles lost a word that carried meaning — `"MCP for the back office"` became `mcp-office`, and `"… without losing data"` became `…-losing-data`, which is not a shorter URL but the opposite claim. So `MINIMAL_STOP_WORDS` (the closed class of English function words) is the default, and `STOP_WORDS` is one setting away — `"slug": {"stopWords": "smart"}` — for a repository whose permalinks FM already minted. `slugify` takes the set as a parameter because this module is the bottom of the stack and cannot see `Zer0Config`; `createSlug` and `publish` pass `cfg.slug.stopWords`.
 
 ## Tests
 

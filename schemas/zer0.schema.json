@@ -116,6 +116,14 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "stopWords": {
+          "description": "Words dropped when a title becomes a slug. \"minimal\" (default) drops only articles, conjunctions and common prepositions. \"smart\" is Front Matter's ~570-word list — pick it only to keep minting the same permalinks an existing FM site already has, because it also deletes words a title needs (back, new, without, vs). \"none\" keeps every word. An array replaces the list outright.",
+          "default": "minimal",
+          "oneOf": [
+            { "type": "string", "enum": ["minimal", "smart", "none"] },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
         "template": {
           "type": ["string", "null"],
           "description": "Token chain: {{title}}, {{seoTitle}}, {{fileName}}, {{sluggedFileName}}. null slugifies the title.",

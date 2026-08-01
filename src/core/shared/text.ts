@@ -7,9 +7,21 @@
  * it. They are data, not logic: grouped here by their replacement to keep 266
  * mappings readable.
  *
- * `slugify` reproduces FM's pipeline exactly — remove punctuation, lowercase,
- * drop stop words, join with `-`, transliterate — because changing it would
- * silently change every future permalink of an existing site.
+ * `slugify` keeps FM's pipeline — remove punctuation, lowercase, drop stop
+ * words, join with `-`, transliterate — but *which* words it drops is now a
+ * project setting rather than a constant. FM's list is the SMART information-
+ * retrieval stop-word list, built for matching documents, and it deletes words
+ * a title needs: `back`, `new`, `value`, `use`, `way`, `thing`, `second`,
+ * `vs`, and — worst — `without`. Measured over a real 72-post site, 31% of
+ * titles lost a word that carried meaning:
+ *
+ *     "MCP for the back office"                  → mcp-office
+ *     "From prompts to pipelines: AI in VS Code" → prompts-pipelines-ai-code
+ *     "… to QAD Enterprise without losing data"  → …-enterprise-losing-data
+ *
+ * The last one is not a shorter URL, it is the opposite claim. So `MINIMAL`
+ * is the default and `SMART` is one setting away for a repository whose
+ * permalinks were already minted by Front Matter. See `SlugConfig.stopWords`.
  */
 
 /** Transliteration source, grouped by replacement. */
@@ -276,7 +288,35 @@ wish with within without wonder won't would wouldn't x y yes yet you you'd you'l
 yours yourself yourselves you've z zero
 `;
 
+/**
+ * Front Matter's list, unchanged. Kept so a repository whose permalinks were
+ * minted by FM can go on minting the same ones: `"slug": {"stopWords":
+ * "smart"}`.
+ */
 export const STOP_WORDS: ReadonlySet<string> = new Set(STOP_WORD_SOURCE.trim().split(/\s+/));
+
+/**
+ * The default: the closed class of English function words that carry no
+ * meaning of their own — articles, coordinating conjunctions, and the
+ * prepositions common enough to be noise in a URL.
+ *
+ * Every word here is one whose removal a reader would not notice. `without`
+ * is deliberately absent even though `with` is present: it negates, and a
+ * slug that drops a negation states the opposite of its title.
+ */
+export const MINIMAL_STOP_WORDS: ReadonlySet<string> = new Set(
+  'a an the and or of to in on for with at by from'.split(' '),
+);
+
+/** No removal at all — every word survives into the slug. */
+export const NO_STOP_WORDS: ReadonlySet<string> = new Set<string>();
+
+/** The named lists `slug.stopWords` accepts, besides a literal array. */
+export const STOP_WORD_PRESETS: Readonly<Record<string, ReadonlySet<string>>> = {
+  smart: STOP_WORDS,
+  minimal: MINIMAL_STOP_WORDS,
+  none: NO_STOP_WORDS,
+};
 
 /**
  * Replace punctuation with spaces and collapse runs of whitespace.
@@ -290,8 +330,11 @@ export function removePunctuation(value: string): string {
 }
 
 /** Drop stop words, comparing case-insensitively. */
-export function removeStopWords(words: readonly string[]): string[] {
-  return words.filter((word) => word !== '' && !STOP_WORDS.has(word.toLowerCase()));
+export function removeStopWords(
+  words: readonly string[],
+  stopWords: ReadonlySet<string> = MINIMAL_STOP_WORDS,
+): string[] {
+  return words.filter((word) => word !== '' && !stopWords.has(word.toLowerCase()));
 }
 
 /** Map accented and non-Latin characters onto their ASCII stand-ins. */
@@ -306,16 +349,21 @@ export function transliterate(value: string): string {
 /**
  * `"The Quick, Brown Fox"` → `"quick-brown-fox"`.
  *
+ * `stopWords` defaults to `MINIMAL_STOP_WORDS` rather than taking the value
+ * from a config object, because this module is the bottom of the stack and
+ * knows nothing about `Zer0Config`. Callers that have one pass
+ * `cfg.slug.stopWords`; `createSlug` and `publish` both do.
+ *
  * The trailing collapse of repeated and edge dashes is the one addition to
  * FM's pipeline: it only fires on input where FM produced `--` or a leading
  * `-`, which was never a slug anybody wanted.
  */
-export function slugify(value: string): string {
+export function slugify(value: string, stopWords: ReadonlySet<string> = MINIMAL_STOP_WORDS): string {
   const clean = removePunctuation(value).trim();
   if (!clean) {
     return '';
   }
-  const words = removeStopWords(clean.toLowerCase().split(/\s/));
+  const words = removeStopWords(clean.toLowerCase().split(/\s/), stopWords);
   return transliterate(words.join('-'))
     .replace(/-{2,}/g, '-')
     .replace(/^-+|-+$/g, '');

@@ -37,6 +37,7 @@ import { pyJsonDump } from '../shared/jsonio';
 import { utcStamp } from '../shared/timestamp';
 import {
   NOOP_LOG,
+  UNKNOWN_COUNT,
   type CmsIssue,
   type ContentRecord,
   type Freshness,
@@ -213,8 +214,10 @@ function coerceRecord(raw: Record<string, unknown>): ContentRecord {
     title: asText(pick(raw, 'title')),
     descriptionLen: asInt(pick(raw, 'description_len', 'descriptionLen'), 0),
     titleLen: asInt(pick(raw, 'title_len', 'titleLen'), 0),
-    wordCount: asInt(pick(raw, 'word_count', 'wordCount'), 0),
-    headingCount: asInt(pick(raw, 'heading_count', 'headingCount'), 0),
+    // An index that omits these did not measure them; `health` has always
+    // defaulted this way and these two now agree with it.
+    wordCount: asInt(pick(raw, 'word_count', 'wordCount'), UNKNOWN_COUNT),
+    headingCount: asInt(pick(raw, 'heading_count', 'headingCount'), UNKNOWN_COUNT),
     health: asInt(pick(raw, 'health'), -1),
     freshness: asMember(pick(raw, 'freshness'), FRESHNESS_VALUES, 'unknown'),
     draft: asBoolOrNull(pick(raw, 'draft')),

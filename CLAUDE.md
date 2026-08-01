@@ -1,44 +1,79 @@
 # CLAUDE.md
 
-Guidance for AI coding agents (Claude Code, Copilot, Cursor) working in **zer0-CMS**.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. It applies to any AI coding agent working in **zer0-CMS** (Claude Code, Copilot, Cursor).
 
 zer0-CMS has two halves. `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content: a metadata panel over the active file's front matter, a content dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → idempotency ledger). It was once a fork of Front Matter CMS and keeps that interaction design on purpose, but shares no code with it; see `ATTRIBUTION.md`. `rails/` is the **content engine** — a Ruby on Rails app + stdlib-only Ruby library that *generates* content, starting with children's **ABC / alphabet books**: it writes the words, composes a text-free illustration prompt per letter (art styles shared with the `zer0-image-generator` plugin), and exports a Jekyll board book for **drsai** to publish. "Done" for an engine change means `ruby -Ilib test/zer0_cms/*.rb` passes and the wizard still emits a valid ABC Book Spec.
 
 ## Stack & commands
 
 ```bash
-# ── ABC content engine (rails/) — stdlib-only, no bundler needed ──
-cd rails
-ruby bin/zer0-cms styles                        # list ABC art styles
-ruby bin/zer0-cms themes                         # list bundled A–Z lexicons
-ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai   # draft + export a book
-ruby -Ilib test/zer0_cms/test_abc_engine.rb      # engine tests (zero network)
-bundle install && bin/rails server               # optional web wizard → :3000
-
 # ── VS Code extension (src/) — vanilla TypeScript, esbuild, no framework ──
 npm install
-npm run compile      # type-check + lint + all five bundles
+npm run compile      # check-types + lint + all five bundles
 npm run watch        # then F5 in VS Code to launch the Extension Host
-npm test             # unit + golden + MCP stdio + integration
+npm test             # pretest (tsc → out/, then compile) + unit, golden, MCP stdio, integration
+npm run check-types  # tsc --noEmit on its own
+npm run lint         # eslint src on its own
+
+# Fast inner loop — the four pure-Node suites under plain Mocha, no VS Code download:
+npx tsc -p . --outDir out
+npx mocha --ui tdd out/test/{core,fields,governance,golden}.test.js
+npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or one test
+
+# ── ABC content engine (rails/) — stdlib-only, no bundler needed ──
+cd rails
+ruby bin/zer0-cms styles                         # list ABC art styles
+ruby bin/zer0-cms themes                         # list bundled A–Z lexicons
+ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai   # draft + export a book
+ruby bin/zer0-cms new --theme "the ocean" --print              # preview, write nothing
+ruby -Ilib test/zer0_cms/test_abc_engine.rb      # engine tests (zero network)
+bundle install && bin/rails server                # optional web wizard → :3000
+
+python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-line CI gate
 ```
+
+`extension.test.ts` needs a real extension host and `mcp.test.ts` needs `dist/mcp-server.js`, so neither runs on the plain-Mocha path. On headless Linux `npm test` shells out to `xvfb-run` itself (`test-runner.js`); `ZER0_CMS_NO_XVFB=1` forces the plain path.
 
 ## Extension architecture — the rules the build enforces
 
-- **`src/core/` and `src/mcp/` must not import `vscode`.** They are pure Node. eslint blocks it, and the MCP bundle (which marks nothing external) turns a stray import into a build error. If core needs the editor, take it as a parameter.
-- **Zero runtime dependencies.** `dependencies` is empty and stays empty. `@anthropic-ai/claude-agent-sdk` is the one exception: optional, dynamically imported, off by default.
+- **`src/core/` and `src/mcp/` must not import `vscode`.** They are pure Node. eslint blocks it, and the MCP bundle (which marks nothing external) turns a stray import into a build error. If core needs the editor, take it as a parameter or an injected callback. `npm run compile` failing with `Could not resolve "vscode"` *is* this gate firing.
+- **`src/webview/` must not import `vscode`, `commands/` or `views/`** — it runs in a browser context and talks to the host over `postMessage` only.
+- **Zero runtime dependencies.** `dependencies` is empty and stays empty. `@anthropic-ai/claude-agent-sdk` is the one exception: optional, dynamically imported, off by default. YAML-subset parsing, globbing, date formatting, JSONC and Python-parity JSON output are all hand-rolled in `src/core/shared/`.
 - **No `innerHTML` in `src/webview/`.** Build DOM with `el()`, assign text with `textContent`.
-- **The webview is UI, never the gate.** Buttons post an intent and a target — never a payload or an override. Every gate is re-checked host-side in the same function the command palette calls.
-- Golden fixtures under `src/test/fixtures/golden/` are generated by the Python publishing lane. Regenerate them; never hand-edit one to make a test pass.
+- **The webview is UI, never the gate.** Buttons post an intent and a target — never a payload or an override. Every gate is re-checked host-side in the same function the command palette calls. A disabled button is a courtesy to the person, not a control.
+- Golden fixtures under `src/test/fixtures/golden/` are generated by the Python publishing lane (`generate.py`). Regenerate them; never hand-edit one to make a test pass.
+- Import core through the barrel (`../core`), not from individual files. Cross-cutting types are declared once in `src/core/shared/types.ts` — redeclaring a name makes `export *` ambiguous and breaks the barrel for everyone.
+
+### The five bundles (`esbuild.js`)
+
+`dist/extension.js` (node; `vscode` + agent SDK external) · `dist/mcp-server.js` (node; **nothing** external — the layering gate) · `dist/panel.js` · `dist/dashboard.js` · `dist/agent.js` (browser, iife). `media/*.css` and the codicon font are copied into `dist/media/` at build time; a missing codicon file is a deliberate build error, because without it every icon renders empty and the build still looks green.
+
+### Invariants that are easy to break
+
+- **Configuration is three layers** (VS Code settings → `zer0.json` → `package.json` defaults), and `src/config.ts` reads settings through `inspect()` rather than `get()` on purpose: every setting has a default, so `get()` always returns a value and `zer0.json` could never win. Keep only what a human actually set. Nothing is cached — `currentConfig()` re-reads on every call, which is why flipping `publishAllow` takes effect without a window reload.
+- **Front matter is edited by line surgery.** `updateFrontMatterKeys()` rewrites only the lines belonging to changed keys, so untouched lines come out byte-identical and comments and hand-formatting survive. Dates stay strings end to end — round-tripping through a JS `Date` is how a CMS silently shifts published timestamps by a timezone.
+- **The ledger is keyed by canonical URL** and written byte-compatible with Python's `json.dump` (`sort_keys`, `ensure_ascii`, indent 2, trailing newline). That is what lets this extension and the CI lane share one queue without double-publishing, and what keeps the file from churning in git.
+- **`.cms/` absence is a normal state, not an error.** With no contract, the page index supplies the same `ContentRecord` shape with `health: -1` and `freshness: 'unknown'`. Report less; never invent a health score.
+- **MCP registration is two-phase.** `provideMcpServerDefinitions` may be cached, so it returns an empty `env`; `resolveMcpServerDefinition` runs at server start and is the only place the publish flag or a secret is read — and it reads the **settings** layer, not the merged config, because a cloned repo's `zer0.json` must not be able to arm an agent to publish. When publishing is off the env var is set to `null` (remove it), not `"0"` and not merely omitted.
+- **Context keys: eight, and every one gates something.** Grep `package.json` for a key before adding one; `uiState.ts` mirrors each in memory and only calls `setContext` on a change.
+
+### Adding a command
+
+Declare it in `package.json` under `contributes.commands` (with any `when` clause in `contributes.menus`), implement it in the matching `src/commands/*.ts` taking the `Zer0Shell`, and do **not** add a registration to `extension.ts` — the module registers itself. Any action that writes, publishes or approves must route through a function the command palette also calls, and that function must re-read state from disk and re-run `evaluateGates()` before acting.
+
+## Engine architecture (`rails/`)
+
+`lib/` is stdlib-only and gem-free by design — CI runs its tests with no `bundle install`, so a gem under `lib/` is exactly the regression that job catches. Rails-only code stays in `app/`. The wizard pipeline is theme → plan → art direction → per-letter → cover → validated `Spec` (`lib/zer0_cms/abc/`), written out by `jekyll_exporter.rb`. Bundled themes generate offline and deterministically; any other theme falls back to Claude and needs `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`. `lib/zer0_cms/data/abc_art_styles.yml` is a **byte-identical vendored copy** from `zer0-image-generator` — re-sync it rather than edit it; each style `id` is a cross-repo contract. Never hand-edit a generated book in drsai; re-run the wizard.
 
 ## Conventions
 
 - Conventional Commits: `type(scope): description` (`feat`/`fix`/`docs`/`refactor`/`test`/`chore`/`ci`).
 - Default branch is `main` — branch from it and open a PR; never push to it directly.
-- README-First, README-Last: read the nearest `README.md` before changing a
-  directory, and update it after.
-- Don't suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`) or
-  leave empty exception handlers.
+- README-First, README-Last: read the nearest `README.md` before changing a directory, and update it after. The dense ones are `src/README.md`, `src/core/README.md`, `src/test/README.md` and `docs/ARCHITECTURE.md`.
+- One paragraph per line in markdown — CI enforces it (`tools/unwrap-prose.py`).
+- Every source file opens with a short block comment saying what it is and why it exists.
+- Don't suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`) or leave empty exception handlers — eslint errors on all four.
 
 ## Fleet context
 
-This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents.
+This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents. `.github/workflows/ci.yml` and `markdown-oneline.yml` are thin hub-seeded callers — don't edit their logic; `extension.yml` is this repo's own and gates both halves.

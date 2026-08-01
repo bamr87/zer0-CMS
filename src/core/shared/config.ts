@@ -38,6 +38,7 @@ import {
   type WhenOperator,
   type Zer0Config,
 } from './types';
+import { MINIMAL_STOP_WORDS, STOP_WORD_PRESETS } from './text';
 
 /** The token that stands for the workspace root inside configured paths. */
 export const WORKSPACE_PLACEHOLDER = '[[workspace]]';
@@ -97,7 +98,13 @@ export function defaultConfig(root: string): Zer0Config {
       slugLength: 75,
       contentLength: 1760,
     },
-    slug: { template: null, prefix: '', suffix: '', alignFilename: false },
+    slug: {
+      template: null,
+      prefix: '',
+      suffix: '',
+      alignFilename: false,
+      stopWords: MINIMAL_STOP_WORDS,
+    },
     placeholders: [],
     date: { format: 'yyyy-MM-dd', timezone: 'UTC' },
     governance: {
@@ -491,6 +498,33 @@ function coercePlaceholders(value: unknown): Placeholder[] | undefined {
   return out;
 }
 
+/**
+ * `slug.stopWords`: a preset name, or the literal list to use instead.
+ *
+ * An unrecognised string is *not* silently treated as "none" — it returns
+ * `undefined` so the default preset wins. A typo like `"mininal"` should leave
+ * slugs alone, not quietly switch a site to keeping every word in its URLs.
+ * An empty array is meaningful and honoured: it means "drop nothing".
+ */
+function coerceStopWords(value: unknown): ReadonlySet<string> | undefined {
+  const name = asString(value);
+  if (name !== undefined) {
+    return STOP_WORD_PRESETS[name.trim().toLowerCase()];
+  }
+  const raw = asArray(value);
+  if (!raw) {
+    return undefined;
+  }
+  const words = new Set<string>();
+  for (const entry of raw) {
+    const word = asString(entry)?.trim().toLowerCase();
+    if (word) {
+      words.add(word);
+    }
+  }
+  return words;
+}
+
 function coerceCustomTaxonomy(value: unknown): CustomTaxonomy[] | undefined {
   const raw = asArray(value);
   if (!raw) {
@@ -731,6 +765,7 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
         asBoolean(fileSlug.alignFilename),
         defaults.slug.alignFilename,
       ),
+      stopWords: coerceStopWords(fileSlug.stopWords) ?? defaults.slug.stopWords,
     },
     placeholders: pick(
       settings.placeholders,

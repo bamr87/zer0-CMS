@@ -36,6 +36,7 @@ import { parseDate } from '../shared/dates';
 import { compileGlob, globMatches, SKIP_DIRS, toPosix, type CompiledGlob } from '../shared/glob';
 import {
   NOOP_LOG,
+  UNKNOWN_COUNT,
   type ContentFolder,
   type ContentRecord,
   type ContentType,
@@ -515,8 +516,11 @@ function lastTouched(page: PageEntry, lastmod: string | null): number {
  * title", which is the strongest claim this data supports.
  *
  * `details` is optional and only affects `wordCount` / `headingCount`; without
- * it they are `0`, since the scan does not read bodies. Pass the result of
- * `getArticleDetails` when the caller already has one.
+ * it they are `-1`, the same "nobody measured this" sentinel `health` uses,
+ * since the scan reads front matter and never bodies. `0` would be a claim —
+ * the tree would draw "0 words" under every article in a repository with no
+ * engine — and this function does not make claims it cannot support. Pass the
+ * result of `getArticleDetails` when the caller already has one.
  */
 export function pageToRecord(cfg: Zer0Config, page: PageEntry, details?: ArticleDetails): ContentRecord {
   const lastmod = conventionalLastmod(page);
@@ -529,8 +533,8 @@ export function pageToRecord(cfg: Zer0Config, page: PageEntry, details?: Article
     title: page.title,
     descriptionLen: page.description.length,
     titleLen: page.title.length,
-    wordCount: details?.wordCount ?? 0,
-    headingCount: details?.headings ?? 0,
+    wordCount: details?.wordCount ?? UNKNOWN_COUNT,
+    headingCount: details?.headings ?? UNKNOWN_COUNT,
     health: -1,
     freshness: 'unknown',
     draft: draftFlag(page.draft),

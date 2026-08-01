@@ -83,7 +83,7 @@ If none exists, the configured name is where **zer0-CMS: Initialize project** wi
 Three things about the file's dialect are worth knowing before you decide to comment it:
 
 - `package.json` associates `zer0.json` with the `jsonc` language, and the extension parses it with a JSONC reader — comments and trailing commas are tolerated.
-- The **bundled MCP server parses it with `JSON.parse`**. A comment there is a parse failure, which the server treats as "no config", falling back to the built-in defaults without complaint.
+- The **bundled MCP server reads it the same way**, through the same `readJsonc`. The two lanes agree, so a config the editor accepts is a config the server accepts; a file that fails to parse in either is treated as "no config", falling back to the built-in defaults without complaint.
 - Any command that writes the file — **Register content folder**, **Generate content type from file**, **Add missing fields**, and adding a freeform tag or category from the panel — rewrites it with `JSON.stringify(json, null, 2)`. **Comments do not survive that.**
 
 `configFile` itself has no `zer0.json` key: it names the file, so it cannot live inside it. (The resolver would read a `configFile` key from the file layer, but the extension always pins that slot to the file it actually loaded, and the JSON schema rejects the key outright.)
@@ -390,6 +390,30 @@ Thresholds, not rules: SEO here reports, it never blocks a save or a publish.
 | `prefix` | `""` | Prepended to the slug when it is written into front matter. |
 | `suffix` | `""` | Appended likewise. |
 | `alignFilename` | `false` | Rename the file to match the generated slug. |
+| `stopWords` | `"minimal"` | Which words a title loses on its way to a slug. `"minimal"`, `"smart"`, `"none"`, or a literal array that replaces the list outright. |
+
+#### `slug.stopWords`
+
+| Value | Drops |
+|---|---|
+| `"minimal"` *(default)* | `a an the and or of to in on for with at by from` — the closed class of function words, and nothing else. |
+| `"smart"` | Front Matter's ~570-word SMART list, verbatim. |
+| `"none"` | Nothing. Every word survives into the slug. |
+| `["…"]` | Exactly the words you list, case-folded and trimmed. `[]` is legal and means the same as `"none"`. |
+
+**Pick `"smart"` only to keep minting the URLs a Front Matter site already has.** That list was built for matching documents, not naming them, and it deletes words a title needs — `back`, `new`, `value`, `use`, `way`, `thing`, `vs`, and `without`:
+
+| Title | `"smart"` | `"minimal"` |
+|---|---|---|
+| MCP for the back office | `mcp-office` | `mcp-back-office` |
+| From prompts to pipelines: agentic AI in VS Code | `prompts-pipelines-agentic-ai-code` | `prompts-pipelines-agentic-ai-vs-code` |
+| Migrating to QAD without losing data | `migrating-qad-losing-data` | `migrating-qad-without-losing-data` |
+
+The third row is the reason the default changed: it is not a shorter URL, it is the opposite claim. Measured across a real 72-post site, `"smart"` cost a meaningful word in 31% of titles.
+
+An unrecognised name (`"mininal"`) or a value of the wrong type falls back to the **default**, not to `"none"` — a typo should leave a site's permalinks alone rather than quietly re-slug every future page.
+
+This only affects slugs *generated* from a title. A slug you write yourself is never stop-worded; it is transliterated and punctuation-collapsed and otherwise left as you typed it.
 
 Note the shape: the workspace-level key is **`slug.template`**; `slugTemplate` is the per-content-type override (§3.2), and a content type's `null` means "inherit", not "disable at the workspace level".
 
@@ -398,7 +422,7 @@ A template is matched against four tokens in an **else-if chain** — the first 
 | Token | Value |
 |---|---|
 | `{{title}}` | the title lowercased with spaces turned into dashes — punctuation kept |
-| `{{seoTitle}}` | the full slugify pipeline: transliterated, punctuation and English stop words dropped |
+| `{{seoTitle}}` | the full slugify pipeline: transliterated, punctuation dropped, and the words `slug.stopWords` names dropped |
 | `{{fileName}}` | the file's basename without its extension |
 | `{{sluggedFileName}}` / `{{slugifiedFileName}}` | that basename, slugified |
 

@@ -264,6 +264,14 @@ export interface SlugConfig {
   suffix: string;
   /** Rename the file to match the generated slug. */
   alignFilename: boolean;
+  /**
+   * Words dropped when a title becomes a slug, already resolved from the
+   * `"smart"` / `"minimal"` / `"none"` preset or the literal array in
+   * `zer0.json`. A `Set`, not a list, because it is only ever asked "is this
+   * word in you"; it never crosses `postMessage` and is not part of the page
+   * index fingerprint, so nothing needs it to be JSON.
+   */
+  stopWords: ReadonlySet<string>;
 }
 
 /** A `{{id}}` token resolved from a static value, a script, or a command. */
@@ -444,6 +452,34 @@ export interface CmsIssue {
 }
 
 /**
+ * "Nobody measured this" — the sentinel `health`, `wordCount` and
+ * `headingCount` all share.
+ *
+ * It is negative rather than `null` so the fields stay plain numbers that sort
+ * and compare without a type guard at every use, and `-1` rather than `0`
+ * because `0` is a legitimate measurement: an article really can have no
+ * headings. It lives here, beside `ContentRecord`, rather than in
+ * `contract/contract.ts` where the rest of the record vocabulary sits, because
+ * `pageIndex` needs it too and those two modules already import each other.
+ */
+export const UNKNOWN_COUNT = -1;
+
+/** Is this a real measurement, or the `UNKNOWN_COUNT` stand-in? */
+export function isMeasured(value: number): boolean {
+  return Number.isFinite(value) && value >= 0;
+}
+
+/**
+ * Render a possibly-unmeasured count for a human.
+ *
+ * Every surface that prints `wordCount` or `headingCount` goes through this,
+ * so "we did not count" never reaches a person disguised as "we counted zero".
+ */
+export function countLabel(value: number, unknown = 'unknown'): string {
+  return isMeasured(value) ? String(value) : unknown;
+}
+
+/**
  * One page as the engine sees it. Produced by `.cms/index/content-index.json`
  * when the contract is present, and by `pageIndex.pageToRecord` when it is not
  * — in which case `health` is `-1` and `freshness` is `unknown`, and the
@@ -455,7 +491,14 @@ export interface ContentRecord {
   title: string;
   descriptionLen: number;
   titleLen: number;
+  /**
+   * Words in the body, or `-1` when nobody counted them — the same sentinel
+   * `health` uses, and for the same reason. A filesystem scan does not read
+   * bodies, and reporting `0` there would state that a 2,000-word article is
+   * empty. Render it with `countLabel`, never raw.
+   */
   wordCount: number;
+  /** Headings in the body, or `-1` when unknown. See `wordCount`. */
   headingCount: number;
   /** 0–100, or `-1` when unknown. */
   health: number;

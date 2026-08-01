@@ -64,20 +64,20 @@ export function createSlug(
 
   const template = ct?.slugTemplate ?? cfg.slug.template;
   if (typeof template !== 'string' || template.trim() === '') {
-    return slugify(title);
+    return slugify(title, cfg.slug.stopWords);
   }
 
   let out = template;
   if (out.includes('{{title}}')) {
     out = out.split('{{title}}').join(title.toLowerCase().replace(/\s/g, '-'));
   } else if (out.includes('{{seoTitle}}')) {
-    out = out.split('{{seoTitle}}').join(slugify(title));
+    out = out.split('{{seoTitle}}').join(slugify(title, cfg.slug.stopWords));
   } else if (out.includes('{{fileName}}')) {
     out = out.split('{{fileName}}').join(baseName(filePath));
   } else if (out.includes('{{sluggedFileName}}')) {
-    out = out.split('{{sluggedFileName}}').join(slugify(baseName(filePath)));
+    out = out.split('{{sluggedFileName}}').join(slugify(baseName(filePath), cfg.slug.stopWords));
   } else if (out.includes('{{slugifiedFileName}}')) {
-    out = out.split('{{slugifiedFileName}}').join(slugify(baseName(filePath)));
+    out = out.split('{{slugifiedFileName}}').join(slugify(baseName(filePath), cfg.slug.stopWords));
   }
 
   out = processTimePlaceholders(out, cfg);

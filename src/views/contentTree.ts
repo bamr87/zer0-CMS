@@ -28,7 +28,7 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-import { healthBucket, type ContentRecord } from '../core';
+import { countLabel, healthBucket, type ContentRecord } from '../core';
 import type { WorkspaceStore } from '../store';
 
 /** Health scores read as colour long before they read as numbers. */
@@ -82,7 +82,7 @@ export class ContentTreeItem extends vscode.TreeItem {
         `**${record.title || record.path}**`,
         '',
         `- \`${record.path}\``,
-        `- ${healthCell(record.health)} · ${record.freshness} · ${record.wordCount} words`,
+        `- ${healthCell(record.health)} · ${record.freshness} · ${countLabel(record.wordCount, 'uncounted')} words`,
         `- ${issues === 0 ? 'no issues' : `${issues} issue${issues === 1 ? '' : 's'}`}`,
         `- ${posted ? 'already published' : 'never published'}`,
       ].join('\n'),

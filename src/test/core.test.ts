@@ -50,8 +50,15 @@ import { formatDate, parseDate } from '../core/shared/dates';
 import { compileGlob, globMatches, toPosix } from '../core/shared/glob';
 import { pyJsonDump, readJsonc } from '../core/shared/jsonio';
 import { utcStamp } from '../core/shared/timestamp';
-import { slugify, transliterate, truncate } from '../core/shared/text';
-import type { Zer0Config } from '../core/shared/types';
+import {
+  MINIMAL_STOP_WORDS,
+  NO_STOP_WORDS,
+  STOP_WORDS,
+  slugify,
+  transliterate,
+  truncate,
+} from '../core/shared/text';
+import { UNKNOWN_COUNT, countLabel, isMeasured, type Zer0Config } from '../core/shared/types';
 
 // ---------------------------------------------------------------------------
 // Fixture access. `__dirname` is `out/test`; the fixtures stay in `src/test`.
@@ -620,12 +627,72 @@ suite('core: shared primitives', () => {
     assert.equal(toPosix(path.join('a', 'b', 'c.md')), 'a/b/c.md');
   });
 
-  test('slugify drops FM’s stop words and transliterates', () => {
-    assert.equal(slugify('The Big Thing'), 'big', '"the" and "thing" are stop words');
-    assert.equal(slugify('Zero-CMS'), 'cms', 'FM’s list contains "zero" — inherited, deliberate');
+  test('slugify drops only function words by default, and transliterates', () => {
+    assert.equal(slugify('The Big Thing'), 'big-thing', '"the" goes, "thing" is a word');
+    assert.equal(slugify('Zero-CMS'), 'zero-cms', 'nothing meaningful is dropped');
     assert.equal(slugify('Café Métier'), 'cafe-metier');
     assert.equal(transliterate('Café métier'), 'Cafe metier');
     assert.equal(truncate('abcdefghij', 5), 'abcd…');
+  });
+
+  /**
+   * The three cases that made `minimal` the default. Every one of these is a
+   * real title from a site this extension was run against, and under FM's list
+   * every one of them loses a word it cannot afford to lose — the third does
+   * not merely shorten the URL, it reverses the claim.
+   */
+  test('slugify presets: minimal keeps the words a title needs, smart is FM verbatim', () => {
+    const cases: ReadonlyArray<readonly [string, string, string]> = [
+      ['MCP for the back office', 'mcp-back-office', 'mcp-office'],
+      [
+        'From prompts to pipelines: agentic AI in VS Code',
+        'prompts-pipelines-agentic-ai-vs-code',
+        'prompts-pipelines-agentic-ai-code',
+      ],
+      [
+        'Migrating to QAD without losing data',
+        'migrating-qad-without-losing-data',
+        'migrating-qad-losing-data',
+      ],
+    ];
+    for (const [title, minimal, smart] of cases) {
+      assert.equal(slugify(title, MINIMAL_STOP_WORDS), minimal, `minimal: ${title}`);
+      assert.equal(slugify(title, STOP_WORDS), smart, `smart: ${title}`);
+      assert.equal(slugify(title), minimal, `minimal is the default: ${title}`);
+    }
+
+    assert.equal(
+      slugify('MCP for the back office', NO_STOP_WORDS),
+      'mcp-for-the-back-office',
+      '"none" keeps every word',
+    );
+    assert.equal(
+      slugify('MCP for the back office', new Set(['mcp'])),
+      'for-the-back-office',
+      'a literal list replaces the preset outright',
+    );
+    assert.equal(slugify('The And Of', STOP_WORDS), '', 'all-stop-words still yields the empty slug');
+  });
+
+  test('slug.stopWords resolves presets, and a typo falls back to the default', () => {
+    const preset = (value: unknown) => resolveConfig('/w', { slug: { stopWords: value } }).slug.stopWords;
+
+    assert.ok(preset('smart').has('back'), '"smart" is FM’s list');
+    assert.ok(!preset('minimal').has('back'), '"minimal" keeps "back"');
+    assert.equal(preset('none').size, 0, '"none" drops nothing');
+    assert.equal(preset('  SMART  ').size, STOP_WORDS.size, 'the name is trimmed and case-folded');
+
+    assert.deepEqual([...preset(['Foo', ' BAR '])], ['foo', 'bar'], 'a literal list is normalised');
+    assert.equal(preset([]).size, 0, 'an empty array is honoured — it means "drop nothing"');
+
+    // A typo must not silently change every future permalink of the site.
+    assert.equal(preset('mininal').size, MINIMAL_STOP_WORDS.size, 'an unknown name keeps the default');
+    assert.equal(preset(42).size, MINIMAL_STOP_WORDS.size, 'so does a value of the wrong type');
+    assert.equal(
+      resolveConfig('/w', {}).slug.stopWords,
+      MINIMAL_STOP_WORDS,
+      'and so does saying nothing at all',
+    );
   });
 
   test('formatDate/parseDate round-trip on both sides of a DST boundary', () => {
@@ -737,6 +804,37 @@ suite('core: the page index', () => {
     assert.equal(record.path, 'pages/_posts/corp/2026-07-08-governed-publishing.md');
     assert.equal(record.date, '2026-07-08');
     assert.equal(record.lastmod, '2026-07-09');
+  });
+
+  /**
+   * A scan reads front matter and never bodies, so it has no word count. It
+   * used to say `0`, which is not "we did not look" — it is "this article is
+   * empty", and it reached the content tree and the MCP `zer0_get_content`
+   * answer as a fact about a two-thousand-word page.
+   */
+  test('an uncounted body reports UNKNOWN_COUNT, never a confident zero', async () => {
+    const cfg = fixtureConfig(workspaceSettings());
+    const { pages } = await buildIndex(cfg);
+    const page = pages[0];
+    assert.ok(page !== undefined);
+
+    const scanned = pageToRecord(cfg, page);
+    assert.equal(scanned.wordCount, UNKNOWN_COUNT, 'the same sentinel health uses');
+    assert.equal(scanned.headingCount, UNKNOWN_COUNT);
+    assert.equal(isMeasured(scanned.wordCount), false);
+    assert.equal(countLabel(scanned.wordCount), 'unknown');
+    assert.equal(countLabel(scanned.wordCount, 'uncounted'), 'uncounted');
+
+    // Hand it the details and the same record reports the real numbers.
+    const details = getArticleDetails(fixture(scanned.path));
+    const counted = pageToRecord(cfg, page, details);
+    assert.ok(counted.wordCount > 0, 'a body that was read is reported');
+    assert.equal(isMeasured(counted.wordCount), true);
+    assert.equal(countLabel(counted.wordCount), String(details.wordCount));
+
+    // Zero is still a legitimate measurement and must not read as unknown.
+    assert.equal(countLabel(0), '0');
+    assert.equal(isMeasured(0), true);
   });
 });
 

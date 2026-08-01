@@ -447,7 +447,7 @@ suite('fields: filling a new document in', () => {
     );
     assert.equal(
       createSlug(cfg, 'Some Title', note),
-      'title',
+      'some-title',
       'slugTemplate: null means "no opinion" — it inherits the workspace template, here `slugify`',
     );
     assert.equal(createSlug(cfg, '', post), '', 'no title, no slug');

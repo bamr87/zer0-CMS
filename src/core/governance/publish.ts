@@ -278,12 +278,12 @@ export async function resolveSource(cfg: Zer0Config, ref: string): Promise<Sourc
     }
   }
   const wantedPosix = toPosix(wanted).replace(/^\.?\//, '');
-  const wantedSlug = slugify(fileSlug(wantedPosix));
+  const wantedSlug = slugify(fileSlug(wantedPosix), cfg.slug.stopWords);
   for (const candidate of await walkGlobs(cfg.workspaceRoot, globs)) {
     const matches =
       candidate === wantedPosix ||
       candidate.endsWith(`/${wantedPosix}`) ||
-      (wantedSlug !== '' && slugify(fileSlug(candidate)) === wantedSlug);
+      (wantedSlug !== '' && slugify(fileSlug(candidate), cfg.slug.stopWords) === wantedSlug);
     if (matches) {
       return readSource(cfg, absPath(cfg, candidate));
     }
@@ -535,10 +535,10 @@ export async function buildPreview(cfg: Zer0Config, req: PreviewRequest): Promis
 /**
  * Make a string safe to use as a filename stem — and nothing else.
  *
- * `slugify` drops English stop words, which is right for turning a *title*
- * into a slug and catastrophic for a slug somebody already chose: `hello`
- * slugifies to the empty string. An explicit slug is a decision, so it is only
- * transliterated and punctuation-collapsed here.
+ * `slugify` drops stop words, which is right for turning a *title* into a slug
+ * and wrong for a slug somebody already chose — under the `smart` preset a
+ * hand-written `the-value-of-x` would come back as `x`. An explicit slug is a
+ * decision, so it is only transliterated and punctuation-collapsed here.
  */
 function sanitizeSlug(cfg: Zer0Config, value: string): string {
   const cleaned = transliterate(value.trim())
@@ -562,7 +562,7 @@ function slugFor(
   const generated = createSlug(cfg, title, undefined, sourceRel).trim();
   return (
     generated ||
-    slugify(title) ||
+    slugify(title, cfg.slug.stopWords) ||
     sanitizeSlug(cfg, title) ||
     `post-${formatDate(now, 'yyyy-MM-dd', cfg.date.timezone)}`
   );
