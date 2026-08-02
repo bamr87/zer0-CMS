@@ -12,6 +12,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 
 | Date | Event | Category | File |
 |------|-------|----------|------|
+| 2005-01-09 | Mahmoud Abbas elected President of the Palestinian Authority | People | [file]({{ '/news/people/mahmoud-abbas-elected-pa-president/' | relative_url }}) |
 | 2005-01-14 | Huygens lands on Titan | Science & Technology | [file]({{ '/news/science-technology/huygens-titan-landing/' | relative_url }}) |
 | 2005-01-20 | George W. Bush inaugurated for second term | History & Politics | [file]({{ '/news/history-politics/george-w-bush-2005-agenda/' | relative_url }}) |
 | 2005-01-26 | Condoleezza Rice becomes Secretary of State | People | [file]({{ '/news/people/condoleezza-rice-secretary-of-state/' | relative_url }}) |
@@ -28,6 +29,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-05-22 | L'Enfant wins Palme d'Or at Cannes | Arts & Culture | [file]({{ '/news/arts-culture/lenfant-cannes-palme-dor/' | relative_url }}) |
 | 2005-06-06 | Coldplay releases X&Y | Arts & Culture | [file]({{ '/news/arts-culture/coldplay-x-y/' | relative_url }}) |
 | 2005-06-13 | Michael Jackson acquitted | People | [file]({{ '/news/people/michael-jackson-trial-verdict/' | relative_url }}) |
+| 2005-06-27 | MGM v. Grokster decided | Science & Technology | [file]({{ '/news/science-technology/grokster-decision-p2p-liability/' | relative_url }}) |
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file]({{ '/news/arts-culture/live-8-concerts/' | relative_url }}) |
 | 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file]({{ '/news/society-economics/same-sex-marriage-2005/' | relative_url }}) |
 | 2005-07-04 | Deep Impact mission | Science & Technology | [file]({{ '/news/science-technology/deep-impact-mission/' | relative_url }}) |
@@ -43,6 +45,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-08-15 | Israeli disengagement from the Gaza Strip | History & Politics | [file]({{ '/news/history-politics/gaza-disengagement-2005/' | relative_url }}) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file]({{ '/news/society-economics/hurricane-katrina/' | relative_url }}) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file]({{ '/news/history-politics/angela-merkel-chancellor/' | relative_url }}) |
+| 2005-09-24 | Hurricane Rita | Society & Economics | [file]({{ '/news/society-economics/hurricane-rita-2005/' | relative_url }}) |
 | 2005-09-29 | John Roberts confirmed as Chief Justice | History & Politics | [file]({{ '/news/history-politics/john-roberts-chief-justice/' | relative_url }}) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file]({{ '/news/society-economics/kashmir-earthquake-2005/' | relative_url }}) |
 | 2005-10-17 | The Colbert Report premieres | Arts & Culture | [file]({{ '/news/arts-culture/colbert-report-premiere/' | relative_url }}) |
@@ -58,5 +61,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-20 | Dover Trial rejects Intelligent Design | Science & Technology | [file]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 45 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 48 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
