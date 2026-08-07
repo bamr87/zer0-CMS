@@ -5,8 +5,8 @@ subtitle: The perpetual encyclopedia of irony
 description: >
   Expectation, reversed. Recursively. A self-growing catalog of irony —
   past, present, and pending — tended by machine, curated by hand.
-url: ""
-baseurl: ""
+url: "https://bamr87.github.io"
+baseurl: "/irony-works"
 
 plugins:
   - jekyll-remote-theme

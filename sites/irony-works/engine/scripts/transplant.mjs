@@ -3,7 +3,12 @@
 // Converts [[wikilinks]] to permalinks; writes vault/* into _entries/.
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { createRequire } from "node:module";
 import { root, slugify } from "./lib.mjs";
+
+// Links must carry the site's baseurl — a project page serves under /irony-works/.
+const yaml = createRequire(import.meta.url)("js-yaml");
+const base = (yaml.load(readFileSync(root("_config.yml"), "utf8")).baseurl ?? "").replace(/\/$/, "");
 
 const OUT = root("_entries");
 mkdirSync(OUT, { recursive: true });
@@ -30,7 +35,7 @@ for (const n of notes) {
 // Pass 2 — rewrite wikilinks and emit.
 const link = (target, label) => {
   const slug = index.get(target.trim().toLowerCase()) ?? slugify(target);
-  return `[${label ?? target}](/entries/${slug}/)`;
+  return `[${label ?? target}](${base}/entries/${slug}/)`;
 };
 for (const n of notes) {
   const out = n.src
