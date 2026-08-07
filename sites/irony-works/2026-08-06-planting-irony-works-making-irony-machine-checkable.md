@@ -1,5 +1,5 @@
 ---
-title: "Planting Ironicon: Making Irony Machine-Checkable"
+title: "Planting Irony Works: Making Irony Machine-Checkable"
 description: "Design notes from building a self-growing Obsidian encyclopedia of irony — schema-first AI curation, adversarial gates, and PRs as natural selection."
 date: 2026-08-06
 draft: true
