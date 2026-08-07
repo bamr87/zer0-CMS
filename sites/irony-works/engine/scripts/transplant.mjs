@@ -32,15 +32,18 @@ for (const n of notes) {
   n.src = src; n.slug = slug;
 }
 
-// Pass 2 — rewrite wikilinks and emit.
+// Pass 2 — rewrite wikilinks and emit. Jekyll downcases :name in permalinks,
+// so links must too. Home is transplanted to the site root.
 const link = (target, label) => {
   const slug = index.get(target.trim().toLowerCase()) ?? slugify(target);
-  return `[${label ?? target}](${base}/entries/${slug}/)`;
+  const href = slug === "Home" ? `${base}/` : `${base}/entries/${slug.toLowerCase()}/`;
+  return `[${label ?? target}](${href})`;
 };
 for (const n of notes) {
-  const out = n.src
+  let out = n.src
     .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, t, l) => link(t, l))
     .replace(/\[\[([^\]]+)\]\]/g, (_, t) => link(t));
+  if (n.slug === "Home") out = out.replace("---\n", "---\npermalink: /\n");
   writeFileSync(join(OUT, `${n.slug}.md`), out, "utf8");
 }
 console.log(`Transplanted ${notes.length} notes → _entries/`);
