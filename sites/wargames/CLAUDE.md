@@ -10,9 +10,14 @@ Wargames is a **content-only Jekyll site**: a vendored markdown mirror of the [O
 # install dependencies:  bundle install
 # run the dev server:     bundle exec jekyll serve     # http://localhost:4000/wargames/
 # build:                  bundle exec jekyll build
-# re-sync content:        ./scripts/docs-aggregator/aggregate_docs.sh
+# re-sync content:        pip install -r scripts/docs-aggregator/requirements.txt && ./scripts/docs-aggregator/aggregate_docs.sh
 # lint:                   python3 tools/unwrap-prose.py --check
+# tests:                  none — content-only repo; the CI gates below are the whole safety net
 ```
+
+There is no test suite. CI is three workflows: `ci.yml` (thin caller of the hub's shared `standard-ci.yml` — don't edit the logic here), `markdown-oneline.yml` (the same `unwrap-prose.py --check`, with `SCHEMA.md`/`CHANGELOG.md` excluded), and `jekyll-gh-pages.yml` (push to `main` → Bundler build → publish `_site/` to the `gh-pages` branch).
+
+Re-sync gotcha: `aggregate_docs.sh` still stages its output under `pages/_docs/wargames/` (its it-journey-era layout; upstream is cloned into `work/`) — it does **not** rewrite `overthewire/**` in place, so diff and move the refreshed pages over after a run.
 
 ## Site wiring
 
