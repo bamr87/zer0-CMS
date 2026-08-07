@@ -16,7 +16,13 @@ ruby test/test_command.rb
 # the web app:
 cd web && bin/rails test                # models, services, requests, jobs
 SITES_DIR=.. docker compose up --build  # run the app → localhost:3000
+# end-to-end smoke harness (drives the real CLI against the fixture site):
+.claude/skills/run-zer0-image-generator/smoke.sh
+# build the gem:
+gem build zer0-image-generator.gemspec
 ```
+
+macOS gotcha: the system Ruby 2.6 can `gem build` but **cannot run the CLI or the smoke harness** — put Homebrew Ruby first with `export PATH="/opt/homebrew/opt/ruby/bin:$PATH"`. The deep run guide is the `run-zer0-image-generator` skill (`.claude/skills/run-zer0-image-generator/`).
 
 ## The pure-Ruby port (`lib/zer0_image_generator/*.rb`)
 
