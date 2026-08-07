@@ -1,0 +1,51 @@
+# The germination cycle: scout → alanis gate → scribe → nursery + compost.
+# Survivors arrive as a pull request; merging is the selection pressure.
+name: Germinate
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "Candidates this cycle (defaults to engine/seed.config.yml batch)"
+        required: false
+        default: "3"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  germinate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install engine dependency
+        run: npm i js-yaml --no-save
+
+      - name: Run the cycle
+        id: cycle
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node engine/scripts/germinate.mjs ${{ github.event.inputs.count }}
+
+      - name: Open nursery pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: germination/cycle-${{ github.run_number }}
+          add-paths: |
+            vault/nursery/**
+            vault/compost/the-merely-unfortunate.md
+          commit-message: "Germination cycle ${{ github.run_number }}: ${{ steps.cycle.outputs.domain }}"
+          title: "🌱 Germination cycle ${{ github.run_number }} — ${{ steps.cycle.outputs.domain }}"
+          body: |
+            ${{ steps.cycle.outputs.report }}
+
+            ---
+            The machine proposes; the reader disposes. Merge = promote toward canon, close = compost.

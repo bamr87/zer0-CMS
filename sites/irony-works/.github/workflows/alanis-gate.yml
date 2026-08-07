@@ -1,0 +1,49 @@
+# Advisory PR check: scores changed vault entries against the gate rubric.
+# The gate scores; humans merge. This workflow never blocks.
+name: Alanis Gate
+
+on:
+  pull_request:
+    paths:
+      - "vault/**/*.md"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Collect changed entries
+        id: changed
+        run: |
+          files=$(git diff --name-only --diff-filter=AM origin/${{ github.base_ref }}...HEAD -- \
+            'vault/**/*.md' ':!vault/templates/**' ':!vault/compost/**' | tr '\n' ' ')
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+
+      - name: Install engine dependency
+        if: steps.changed.outputs.files != ''
+        run: npm i js-yaml --no-save
+
+      - name: Score against the rubric
+        if: steps.changed.outputs.files != ''
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node engine/scripts/gate.mjs ${{ steps.changed.outputs.files }} | tee report.md
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment the report
+        if: steps.changed.outputs.files != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file report.md

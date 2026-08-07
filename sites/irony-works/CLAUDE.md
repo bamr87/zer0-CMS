@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**Irony Works** (formerly "Ironicon") — a self-growing encyclopedia of irony, in two halves:
+**Irony Works** — a self-growing encyclopedia of irony, in two halves:
 
 - `vault/` — an Obsidian vault of Markdown entries; the source of truth for all content
 - `engine/` — a Node.js pipeline (five prompts, three scripts) that drafts new entries via the Claude API
 
-The vault publishes as a Jekyll site through the `bamr87/zer0-mistakes` remote theme. `ironicon-README.md` and `2026-08-06-planting-ironicon-*.md` at the root are historical snapshots from before the rebrand — leave them as they are.
+The vault publishes as a Jekyll site through the `bamr87/zer0-mistakes` remote theme. `2026-08-06-planting-irony-works-*.md` at the root is a draft design-notes post documenting the founding session (excluded from the site). The project's pre-rebrand state ("Ironicon") is preserved in the founding commit.
 
 ## Commands
 
@@ -50,6 +50,8 @@ node engine/scripts/transplant.mjs
 - Rejected candidates are logged in compost, never deleted; history occasionally files an appeal.
 - `vault/mirrors/` documents this repository's own ironies — self-exemption would fail the vault's own gate.
 
-## Current state (2026-08)
+## Workflows
 
-Not yet a git repository. The README references GitHub Actions workflows (`.github/workflows/germinate.yml`, the gate PR check, Pages publishing) that do not exist in this copy — they need to be recreated before the germination cycle can run on a schedule.
+- `.github/workflows/germinate.yml` — weekly cron (Mon 06:00 UTC) + manual dispatch with a `count` input; runs the engine and opens a PR from `vault/nursery/` changes. Needs the `ANTHROPIC_API_KEY` repo secret.
+- `.github/workflows/alanis-gate.yml` — advisory PR check on `vault/**` changes; scores changed entries (excluding templates and compost) and posts the report as a PR comment and step summary. Never blocks — the gate scores, humans merge.
+- `.github/workflows/publish.yml` — on push to main: transplant → Jekyll build (github-pages image bundles `jekyll-remote-theme`) → deploy to GitHub Pages.
