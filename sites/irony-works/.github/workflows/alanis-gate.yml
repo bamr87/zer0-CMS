@@ -30,13 +30,16 @@ jobs:
             'vault/**/*.md' ':!vault/templates/**' ':!vault/compost/**' | tr '\n' ' ')
           echo "files=$files" >> "$GITHUB_OUTPUT"
 
-      - name: Install engine dependency
+      - name: Install engine dependencies
         if: steps.changed.outputs.files != ''
-        run: npm i js-yaml --no-save
+        run: |
+          npm i js-yaml --no-save
+          npm i -g @anthropic-ai/claude-code
 
       - name: Score against the rubric
         if: steps.changed.outputs.files != ''
         env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node engine/scripts/gate.mjs ${{ steps.changed.outputs.files }} | tee report.md

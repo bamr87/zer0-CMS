@@ -19,12 +19,13 @@ There is no package.json, test suite, or linter. Scripts are plain Node ESM with
 npm i js-yaml --no-save    # lib.mjs loads it via createRequire
 
 # Full germination cycle: scout → alanis gate → scribe → nursery/compost
-ANTHROPIC_API_KEY=... node engine/scripts/germinate.mjs [batch]
+# (uses the local claude CLI's OAuth by default; ANTHROPIC_API_KEY only as fallback)
+node engine/scripts/germinate.mjs [batch]
 
 # Score specific entry files against the gate (the PR check)
-ANTHROPIC_API_KEY=... node engine/scripts/gate.mjs vault/nursery/some-entry.md
+node engine/scripts/gate.mjs vault/nursery/some-entry.md
 
-# Convert vault → _entries/ Jekyll collection (wikilinks → permalinks); no API key needed
+# Convert vault → _entries/ Jekyll collection (wikilinks → permalinks); no credentials needed
 node engine/scripts/transplant.mjs
 ```
 
@@ -38,7 +39,7 @@ node engine/scripts/transplant.mjs
 
 **Guardrails are enforced, not advisory.** `assertWritable()` in `engine/scripts/lib.mjs` restricts engine writes to exactly `vault/nursery/` and the compost ledger (`seed.config.yml → guardrails.writable`). The engine never modifies canon entries, its own prompts, workflows, or config; any automation you add must write through `writeVaultFile()`/`appendCompost()` so the whitelist applies. Edits made at the direct request of the human maintainer are a different channel — that's the "human hand" the governance requires.
 
-**Harness swap point:** `harness()` in `lib.mjs` calls the Anthropic Messages API directly (model from `seed.config.yml`). Setting `harness.provider: lifehacker` hits a deliberate stub marked `// HARNESS ADAPTER` for routing through lifehacker.dev instead. Prompts are the contract; keep them wire-agnostic.
+**Harness swap point:** `harness()` in `lib.mjs` defaults to running prompts through the Claude Code CLI (`claude -p`), which authenticates via OAuth — keychain locally, `CLAUDE_CODE_OAUTH_TOKEN` in CI (`claude setup-token` generates one). If the CLI is missing or errors, it falls back to the Anthropic Messages API with `ANTHROPIC_API_KEY`; `harness.provider: anthropic` forces API-only. `harness.provider: lifehacker` hits a deliberate stub marked `// HARNESS ADAPTER` for routing through lifehacker.dev instead. Prompts are the contract; keep them wire-agnostic.
 
 **Publishing:** `transplant.mjs` indexes every note's `title:` frontmatter (regex-matched — every note needs one), rewrites `[[wikilinks]]` (resolved case-insensitively by title or filename slug) into `/entries/<slug>/` permalinks, and emits everything except `vault/templates/` into `_entries/`. Jekyll builds that collection with the remote theme; `vault/`, `engine/`, and the root docs are excluded from the site.
 
@@ -52,6 +53,6 @@ node engine/scripts/transplant.mjs
 
 ## Workflows
 
-- `.github/workflows/germinate.yml` — weekly cron (Mon 06:00 UTC) + manual dispatch with a `count` input; runs the engine and opens a PR from `vault/nursery/` changes. Needs the `ANTHROPIC_API_KEY` repo secret.
+- `.github/workflows/germinate.yml` — weekly cron (Mon 06:00 UTC) + manual dispatch with a `count` input; runs the engine and opens a PR from `vault/nursery/` changes. Needs the `CLAUDE_CODE_OAUTH_TOKEN` repo secret (or `ANTHROPIC_API_KEY` as fallback).
 - `.github/workflows/alanis-gate.yml` — advisory PR check on `vault/**` changes; scores changed entries (excluding templates and compost) and posts the report as a PR comment and step summary. Never blocks — the gate scores, humans merge.
 - `.github/workflows/publish.yml` — on push to main: transplant → Jekyll build (github-pages image bundles `jekyll-remote-theme`) → deploy to GitHub Pages.

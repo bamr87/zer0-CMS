@@ -18,9 +18,12 @@ gate:
   compost: vault/compost/the-merely-unfortunate.md
 
 harness:
-  provider: anthropic     # swap point: set to "lifehacker" to route via lifehacker.dev
+  provider: claude-code   # default: Claude Code CLI OAuth (keychain locally,
+                          # CLAUDE_CODE_OAUTH_TOKEN in CI), falling back to
+                          # ANTHROPIC_API_KEY. "anthropic" = API key only;
+                          # "lifehacker" = route via lifehacker.dev (stub)
   model: claude-sonnet-4-6
-  max_tokens: 4000
+  max_tokens: 4000        # applies to the API fallback; the CLI budgets itself
   # lifehacker.dev harness adapter — fill in when routing through it:
   # endpoint: https://lifehacker.dev/api/v1/complete
   # auth_env: LIFEHACKER_API_KEY

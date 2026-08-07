@@ -26,12 +26,15 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install engine dependency
-        run: npm i js-yaml --no-save
+      - name: Install engine dependencies
+        run: |
+          npm i js-yaml --no-save
+          npm i -g @anthropic-ai/claude-code
 
       - name: Run the cycle
         id: cycle
         env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node engine/scripts/germinate.mjs ${{ github.event.inputs.count }}
 

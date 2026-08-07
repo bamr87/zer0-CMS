@@ -88,7 +88,7 @@ Open `vault/` as an Obsidian vault. The graph view is the arboretum: forms are t
 ## Quickstart
 
 1. **Clone and open.** Point Obsidian at `vault/`. Start at [[Home]].
-2. **Add the key.** Repo → Settings → Secrets → `ANTHROPIC_API_KEY`. The engine defaults to `claude-sonnet-4-6` via the [Claude API](https://docs.claude.com/en/api/overview); swap the harness block in `engine/seed.config.yml` to route through lifehacker.dev instead.
+2. **Add credentials.** Preferred: run `claude setup-token` and save the result as the `CLAUDE_CODE_OAUTH_TOKEN` repo secret — the engine rides the Claude Code CLI on your subscription. Fallback: an `ANTHROPIC_API_KEY` secret for the metered [Claude API](https://docs.claude.com/en/api/overview). Locally, an authenticated Claude Code install needs no setup at all. The harness block in `engine/seed.config.yml` is the swap point (lifehacker.dev adapter stubbed).
 3. **Enable Actions + Pages.** Germination runs weekly (or on dispatch, with a `count` input). Publishing builds the vault through zer0-mistakes on every push to `main`.
 4. **Merge what deserves to live.** That's the whole job.
 
