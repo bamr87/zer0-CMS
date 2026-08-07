@@ -1,0 +1,33 @@
+# Irony Works — published through zer0-mistakes
+remote_theme: bamr87/zer0-mistakes
+title: Irony Works
+subtitle: The perpetual encyclopedia of irony
+description: >
+  Expectation, reversed. Recursively. A self-growing catalog of irony —
+  past, present, and pending — tended by machine, curated by hand.
+url: ""
+baseurl: ""
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+  - jekyll-feed
+
+collections:
+  entries:
+    output: true
+    permalink: /:collection/:name/
+
+defaults:
+  - scope: { path: "", type: "entries" }
+    values: { layout: default }
+
+# transplant.mjs writes the converted vault here
+exclude:
+  - engine
+  - vault
+  - README.md
+  - CONTRIBUTING.md
+  - CLAUDE.md
+  - ironicon-README.md
+  - 2026-08-06-planting-ironicon-making-irony-machine-checkable.md

@@ -1,0 +1,34 @@
+# Irony Works germination parameters
+vault: ./vault
+
+cadence: weekly          # documented; actual schedule lives in the workflow cron
+batch: 3                 # candidates per cycle
+
+# Scout rotation — one domain per cycle, round-robin by run number
+domains:
+  - history-of-science
+  - literature-and-language
+  - technology-and-automation
+  - politics-and-power
+  - commerce-and-institutions
+  - the-vault-itself      # recursive pass: new mirrors, stale links, matured futures
+
+gate:
+  threshold: 7            # of 10 — see engine/prompts/alanis-gate.md
+  compost: vault/compost/the-merely-unfortunate.md
+
+harness:
+  provider: anthropic     # swap point: set to "lifehacker" to route via lifehacker.dev
+  model: claude-sonnet-4-6
+  max_tokens: 4000
+  # lifehacker.dev harness adapter — fill in when routing through it:
+  # endpoint: https://lifehacker.dev/api/v1/complete
+  # auth_env: LIFEHACKER_API_KEY
+
+guardrails:
+  writable:               # the engine's entire filesystem, enforced in lib.mjs
+    - vault/nursery/
+    - vault/compost/the-merely-unfortunate.md
+  immutable_reason: >
+    Canon is promoted by human merge only. An engine that can rewrite its own
+    rules eventually files itself under mirrors/.
