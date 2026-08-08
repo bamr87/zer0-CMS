@@ -27,8 +27,6 @@ defaults:
 exclude:
   - engine
   - vault
-  - wiki
-  - .vault-meta
   - README.md
   - CONTRIBUTING.md
   - CLAUDE.md
