@@ -26,6 +26,16 @@ founder: "Amr Abdel-Motaleb"
 author: "Irony Works"
 email: ""
 
+# Brand assets. The mark is a broken ring: the expectation, and where it reverses.
+logo: /assets/images/logo.svg
+og_image: /assets/images/og-banner.svg
+teaser: /assets/images/og-banner.svg
+favicon:
+  ico: /favicon.ico
+  svg: /assets/images/logo.svg
+  png: /assets/images/logo.svg
+  apple_touch: /assets/images/logo.svg
+
 plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
