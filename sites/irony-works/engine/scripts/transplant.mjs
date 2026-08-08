@@ -84,16 +84,23 @@ const clip = (s, n = 155) => (s.length <= n ? s : s.slice(0, s.lastIndexOf(" ", 
 
 // Reduce Markdown to plain prose for the description: drop callouts, quotes and
 // headings, unwrap [text](url) to text, then strip emphasis markers only —
-// never a bare hyphen, which lives inside slugs and prose alike.
-const plainProse = (md) =>
-  oneLine(
-    md
-      .replace(/^\s*>.*$/gm, "")
-      .replace(/^\s*#{1,6}\s.*$/gm, "")
-      .replace(/```[\s\S]*?```/g, "")
-      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-      .replace(/[*_`]/g, "")
-  );
+// never a bare hyphen, which lives inside slugs and prose alike. Stops at the
+// first paragraph, so a description never runs the opening line into the link
+// list that follows it.
+const firstParagraph = (md) => {
+  const cleaned = md
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/^\s*>.*$/gm, "")
+    .replace(/^\s*#{1,6}\s.*$/gm, "");
+  for (const chunk of cleaned.split(/\n\s*\n/)) {
+    const text = oneLine(
+      chunk.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[*_`]/g, "")
+    );
+    // Skip list-ish or link-dump chunks; we want a sentence.
+    if (text.length > 25 && !/^[-·*|]/.test(text)) return text;
+  }
+  return "";
+};
 
 // ---------- pass 2: rewrite and emit ----------
 let count = 0;
@@ -117,7 +124,7 @@ for (const n of notes) {
   // Search engines and the theme's cards both want a description; the
   // expectation is the best one-line summary an entry already contains.
   if (!fm.description) {
-    const summary = oneLine(fm.expectation) || plainProse(body);
+    const summary = oneLine(fm.expectation) || firstParagraph(body);
     if (summary) fm.description = clip(summary);
   }
 
