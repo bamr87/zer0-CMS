@@ -20,19 +20,20 @@ for (const dir of ["forms", "works", "figures", "instances", "mirrors", "futures
 console.log(`Cycle ${cycle} · domain: ${domain} · batch: ${batch}\n`);
 
 const candidates = parseJSON(
-  await harness(prompt("scout"), `DOMAIN: ${domain}\nBATCH: ${batch}\nEXISTING:\n${existing.join("\n")}`)
+  await harness(prompt("scout"), `DOMAIN: ${domain}\nBATCH: ${batch}\nEXISTING:\n${existing.join("\n")}`, "scout")
 );
 
 const summary = [];
 for (const c of candidates.slice(0, batch)) {
   const verdictRaw = await harness(
     prompt("alanis-gate"),
-    `Candidate:\n${JSON.stringify(c, null, 2)}\nThreshold: ${cfg.gate.threshold}`
+    `Candidate:\n${JSON.stringify(c, null, 2)}\nThreshold: ${cfg.gate.threshold}`,
+    "alanis-gate"
   );
   const v = parseJSON(verdictRaw);
 
   if (v.score >= cfg.gate.threshold && v.verdict === "PASS") {
-    let entry = await harness(prompt("scribe"), `Candidate:\n${JSON.stringify(c, null, 2)}\nGate: ${JSON.stringify(v)}\nEXISTING titles for Rhymes-with links:\n${existing.join("\n")}\nToday: ${today()}`);
+    let entry = await harness(prompt("scribe"), `Candidate:\n${JSON.stringify(c, null, 2)}\nGate: ${JSON.stringify(v)}\nEXISTING titles for Rhymes-with links:\n${existing.join("\n")}\nToday: ${today()}`, "scribe");
     entry = entry.replace(/^```(markdown)?\n?|```$/g, "");
     const rel = `vault/nursery/${slugify(c.title)}.md`;
     writeVaultFile(rel, entry);

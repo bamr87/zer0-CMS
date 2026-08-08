@@ -1,6 +1,12 @@
 # OS
 .DS_Store
 
+# Credentials — never commit. CLAUDE_CODE_OAUTH_TOKEN lives here locally;
+# in CI it comes from the repo secret of the same name.
+.env
+.env.*
+!.env.example
+
 # Build artifacts — transplant.mjs output and Jekyll
 _entries/
 _site/

@@ -30,4 +30,6 @@ exclude:
   - README.md
   - CONTRIBUTING.md
   - CLAUDE.md
+  - AUTOPILOT.md
+  - AI_USAGE.md
   - 2026-08-06-planting-irony-works-making-irony-machine-checkable.md

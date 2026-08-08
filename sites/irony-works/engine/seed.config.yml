@@ -18,20 +18,27 @@ gate:
   compost: vault/compost/the-merely-unfortunate.md
 
 harness:
-  provider: claude-code   # default: Claude Code CLI OAuth (keychain locally,
-                          # CLAUDE_CODE_OAUTH_TOKEN in CI), falling back to
-                          # ANTHROPIC_API_KEY. "anthropic" = API key only;
-                          # "lifehacker" = route via lifehacker.dev (stub)
+  provider: claude-code   # Claude Code CLI on OAuth (keychain locally,
+                          # CLAUDE_CODE_OAUTH_TOKEN in CI) — the same harness
+                          # lifehacker.dev runs on. Falls back to
+                          # ANTHROPIC_API_KEY. "anthropic" = API key only.
+                          # There is no lifehacker.dev completion endpoint;
+                          # "the lifehacker harness" IS this one.
   model: claude-sonnet-4-6
   max_tokens: 4000        # applies to the API fallback; the CLI budgets itself
-  # lifehacker.dev harness adapter — fill in when routing through it:
-  # endpoint: https://lifehacker.dev/api/v1/complete
-  # auth_env: LIFEHACKER_API_KEY
+
+metering:                 # the meter, mirroring lifehacker.dev's AI_USAGE.md
+  ledger: _data/ai_usage/ # one JSON file per run; rolled up by usage-ledger.mjs
+  prices:                 # list price per million tokens, for API-equivalent
+                          # accounting on the metered-key path only. OAuth calls
+                          # report their own cost and are $0 marginal spend.
+    default: { input: 3, output: 15 }
 
 guardrails:
   writable:               # the engine's entire filesystem, enforced in lib.mjs
     - vault/nursery/
     - vault/compost/the-merely-unfortunate.md
+    - _data/ai_usage/     # telemetry only: token/cost records, never content
   immutable_reason: >
     Canon is promoted by human merge only. An engine that can rewrite its own
     rules eventually files itself under mirrors/.

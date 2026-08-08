@@ -19,6 +19,11 @@ permissions:
 jobs:
   germinate:
     runs-on: ubuntu-latest
+    # The scheduled run idles until a human flips the switch:
+    #   gh variable set GERMINATE_ENABLED --body true
+    # A manual dispatch always runs. The bot token cannot set repo variables,
+    # so the loop can never enable itself.
+    if: github.event_name == 'workflow_dispatch' || vars.GERMINATE_ENABLED == 'true'
     steps:
       - uses: actions/checkout@v7
 
@@ -38,6 +43,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node engine/scripts/germinate.mjs ${{ github.event.inputs.count }}
 
+      - name: Roll up AI usage
+        if: always()
+        run: node engine/scripts/usage-ledger.mjs
+
       - name: Open nursery pull request
         uses: peter-evans/create-pull-request@v8
         with:
@@ -45,6 +54,8 @@ jobs:
           add-paths: |
             vault/nursery/**
             vault/compost/the-merely-unfortunate.md
+            _data/ai_usage/**
+            AI_USAGE.md
           commit-message: "Germination cycle ${{ github.run_number }}: ${{ steps.cycle.outputs.domain }}"
           title: "🌱 Germination cycle ${{ github.run_number }} — ${{ steps.cycle.outputs.domain }}"
           body: |

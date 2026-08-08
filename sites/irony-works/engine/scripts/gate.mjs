@@ -11,7 +11,7 @@ const rows = ["| Entry | Score | Verdict | Reason |", "|---|---|---|---|"];
 for (const f of files) {
   try {
     const v = parseJSON(await harness(prompt("alanis-gate"),
-      `Candidate entry (full file, score the frontmatter expectation/reversal against the body):\n\n${readFileSync(f, "utf8")}\nThreshold: ${cfg.gate.threshold}`));
+      `Candidate entry (full file, score the frontmatter expectation/reversal against the body):\n\n${readFileSync(f, "utf8")}\nThreshold: ${cfg.gate.threshold}`, "alanis-gate-pr"));
     rows.push(`| \`${f}\` | ${v.score}/10 | ${v.verdict} | ${v.reason} |`);
   } catch (e) {
     rows.push(`| \`${f}\` | — | UNGATED | ${String(e.message).slice(0, 120)} |`);
