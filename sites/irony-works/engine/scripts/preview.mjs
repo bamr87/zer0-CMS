@@ -92,5 +92,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     for (const f of readdirSync(full).filter((f) => f.endsWith(".md"))) slugs.push(f.replace(/\.md$/, ""));
   }
   for (const s of slugs) writeFileSync(`${OUT}/${s.toLowerCase()}.svg`, previewSVG(s), "utf8");
-  console.log(`Rendered ${slugs.length} preview images → assets/images/previews/`);
+  // Textless fallback for pages that aren't vault notes (browse index, 404).
+  // The OG banner carries wordmark text and must never sit behind a page title.
+  writeFileSync(`${OUT}/default.svg`, previewSVG("irony-works"), "utf8");
+  console.log(`Rendered ${slugs.length + 1} preview images → assets/images/previews/`);
 }

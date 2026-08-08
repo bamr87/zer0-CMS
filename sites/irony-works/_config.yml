@@ -30,7 +30,9 @@ email: ""
 logo: /assets/images/logo.svg
 og_image: /assets/images/og-banner.svg
 teaser: /assets/images/og-banner.svg
-info_banner: /assets/images/og-banner.svg   # hero fallback for pages without `preview`
+# Hero fallback for pages without `preview`. Must be textless — the theme
+# overlays the page title on it, and the OG banner's wordmark collides.
+info_banner: /assets/images/previews/default.svg
 favicon:
   ico: /favicon.ico
   svg: /assets/images/logo.svg
