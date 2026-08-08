@@ -30,6 +30,7 @@ email: ""
 logo: /assets/images/logo.svg
 og_image: /assets/images/og-banner.svg
 teaser: /assets/images/og-banner.svg
+info_banner: /assets/images/og-banner.svg   # hero fallback for pages without `preview`
 favicon:
   ico: /favicon.ico
   svg: /assets/images/logo.svg

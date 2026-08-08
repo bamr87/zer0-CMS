@@ -108,6 +108,10 @@ for (const n of notes) {
   // `planted` is the vault's word for a publication date.
   if (!fm.date && fm.planted) fm.date = fm.planted;
 
+  // The theme's hero reads `preview`; without it the banner renders as a grey
+  // slab. preview.mjs renders one deterministic plate per slug.
+  if (!fm.preview) fm.preview = `/assets/images/previews/${n.slug.toLowerCase()}.svg`;
+
   const out = `---\n${yaml.dump(fm, { lineWidth: 100, noRefs: true }).trimEnd()}\n---\n\n${body.trimStart()}`;
   writeFileSync(join(OUT, `${n.slug}.md`), out, "utf8");
   count++;

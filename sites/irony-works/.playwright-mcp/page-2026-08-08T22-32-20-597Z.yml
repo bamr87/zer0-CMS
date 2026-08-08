@@ -1,0 +1,167 @@
+- generic [active] [ref=f2e1]:
+  - link "Skip to main content" [ref=f2e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f2e3]:
+    - navigation "Primary navigation" [ref=f2e5]:
+      - generic [ref=f2e6]:
+        - generic [ref=f2e7]:
+          - text: 
+          - link "Home - Irony Works" [ref=f2e8] [cursor=pointer]:
+            - /url: /irony-works/
+            - img "Irony Works logo" [ref=f2e9]
+        - link "Irony Works — Home" [ref=f2e11] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f2e12]: Irony Works
+        - link "The perpetual encyclopedia of irony — Irony Works home" [ref=f2e14] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f2e15]: The perpetual encyclopedia of irony
+      - generic "Main Navigation" [ref=f2e16]:
+        - list [ref=f2e19]:
+          - text: 
+          - listitem [ref=f2e20]:
+            - link "Entries" [ref=f2e21] [cursor=pointer]:
+              - /url: /irony-works/entries/
+          - text:  
+      - group "Utility controls" [ref=f2e22]:
+        - button "Open search" [ref=f2e23] [cursor=pointer]:
+          - generic [ref=f2e24]: 
+        - button "Open settings" [ref=f2e25] [cursor=pointer]:
+          - generic [ref=f2e26]: 
+        - text: 
+  - text:   
+  - main [ref=f2e27]:
+    - generic [ref=f2e29]:
+      - generic [ref=f2e31]:
+        - generic [ref=f2e32]:
+          - heading "The Kodak Moment" [level=1] [ref=f2e33]
+          - paragraph [ref=f2e34]: The company synonymous with photography — holder of the phrase for a memory worth keeping — would own whatever photography became.
+        - generic [ref=f2e35]:
+          - list "Page metadata" [ref=f2e36]:
+            - listitem [ref=f2e37]:
+              - generic [ref=f2e38]: 
+            - listitem [ref=f2e39]:
+              - generic [ref=f2e40]: 
+              - time [ref=f2e41]: Published Aug 06, 2026
+            - listitem [ref=f2e42]:
+              - generic [ref=f2e43]: 
+              - link "Entries" [ref=f2e44] [cursor=pointer]:
+                - /url: /irony-works/entries/
+            - listitem [ref=f2e45]:
+              - generic [ref=f2e46]: 
+              - link "View source" [ref=f2e47] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//_entries/the-kodak-moment.md
+          - generic [ref=f2e48]:
+            - paragraph [ref=f2e49]:
+              - generic [ref=f2e50]: 
+              - text: "Estimated reading time: 1 minute"
+            - generic [ref=f2e51]:
+              - generic [ref=f2e52]:
+                - button "Share" [ref=f2e53] [cursor=pointer]:
+                  - generic [ref=f2e54]: 
+                - text:    
+              - link "Edit on GitHub" [ref=f2e56] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//_entries/the-kodak-moment.md
+                - generic [ref=f2e57]: 
+      - generic "Table of Contents" [ref=f2e60]:
+        - text: 
+        - navigation "Table of Contents" [ref=f2e62]:
+          - generic [ref=f2e63]:
+            - strong [ref=f2e64]:
+              - generic [ref=f2e65]: 
+              - text: On this page
+            - button "Hide table of contents" [expanded] [ref=f2e66] [cursor=pointer]:
+              - generic [ref=f2e67]: 
+          - list [ref=f2e69]:
+            - listitem [ref=f2e70]:
+              - link "Threads" [ref=f2e71] [cursor=pointer]:
+                - /url: "#threads"
+      - generic [ref=f2e72]:
+        - paragraph [ref=f2e73]: Steve Sasson’s 1975 prototype — eight pounds, a cassette tape, twenty-three seconds per image — was, by his telling, received by management as a curiosity best kept quiet, since Kodak’s margins lived in film and paper. The company even understood the future well enough to forecast it internally; it simply could not act against its own revenue. Thirty-seven years later the drawer opened from the outside.
+        - paragraph [ref=f2e74]:
+          - text: This is the vault’s cleanest specimen of institutional
+          - link "Situational Irony" [ref=f2e75] [cursor=pointer]:
+            - /url: /irony-works/entries/situational/
+          - text: irony because the reversal was
+          - strong [ref=f2e76]: self-authored twice
+          - text: ": Kodak invented its disruptor, and then Kodak’s defense against the disruptor — burying it — guaranteed others would commercialize it first. The phrase “Kodak moment,” coined to mean a scene worth preserving, now denotes the instant an incumbent meets the future it invented. The language itself performed the reversal."
+        - heading "Threads" [level=2] [ref=f2e77]
+        - list [ref=f2e78]:
+          - listitem [ref=f2e79]:
+            - text: "Forms:"
+            - link "Situational Irony" [ref=f2e80] [cursor=pointer]:
+              - /url: /irony-works/entries/situational/
+            - text: ·
+            - link "Historical Irony" [ref=f2e81] [cursor=pointer]:
+              - /url: /irony-works/entries/historical/
+          - listitem [ref=f2e82]:
+            - text: "Rhymes with:"
+            - link "Ozymandias" [ref=f2e83] [cursor=pointer]:
+              - /url: /irony-works/entries/ozymandias/
+            - text: (the brand outliving its meaning),
+            - link "The Bainbridge Clause" [ref=f2e84] [cursor=pointer]:
+              - /url: /irony-works/entries/the-bainbridge-clause/
+  - contentinfo [ref=f2e85]:
+    - generic [ref=f2e86]:
+      - paragraph [ref=f2e87]: © 2026 Irony Works
+      - generic [ref=f2e88]:
+        - generic [ref=f2e89]: "Powered by:"
+        - list "Powered by:" [ref=f2e90]:
+          - listitem [ref=f2e91]:
+            - link "View theme information and system details" [ref=f2e92] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f2e93]: 
+              - generic [ref=f2e94]: Info
+    - generic [ref=f2e96]:
+      - generic [ref=f2e97]:
+        - generic [ref=f2e98]:
+          - heading "Irony Works" [level=2] [ref=f2e99]
+          - paragraph [ref=f2e100]:
+            - link:
+              - /url: "mailto:"
+        - generic [ref=f2e101]:
+          - heading "Quick Links" [level=2] [ref=f2e102]
+          - list "Footer quick links" [ref=f2e103]:
+            - listitem [ref=f2e104]:
+              - link "Home" [ref=f2e105] [cursor=pointer]:
+                - /url: /irony-works/
+            - listitem [ref=f2e106]:
+              - link "Sitemap (XML)" [ref=f2e107] [cursor=pointer]:
+                - /url: /irony-works/sitemap.xml
+        - generic [ref=f2e108]:
+          - heading "Follow Us" [level=2] [ref=f2e109]
+          - list "Social links" [ref=f2e110]:
+            - listitem [ref=f2e111]:
+              - link "Feed" [ref=f2e112] [cursor=pointer]:
+                - /url: /irony-works/feed.xml
+                - generic [ref=f2e113]: 
+      - generic [ref=f2e115]:
+        - form "Newsletter signup" [ref=f2e117]:
+          - generic [ref=f2e118]:
+            - generic [ref=f2e119]: Email
+            - textbox "Email" [disabled] [ref=f2e120]:
+              - /placeholder: Enter your email
+          - generic [ref=f2e121]:
+            - button "Subscribe" [disabled]
+          - paragraph [ref=f2e123]: Newsletter is a placeholder until you connect a provider.
+        - list [ref=f2e125]:
+          - listitem [ref=f2e126]:
+            - link "Cookie Preferences" [ref=f2e127] [cursor=pointer]:
+              - /url: "#"
+      - paragraph [ref=f2e129]: © 2026 Irony Works. All Rights Reserved.
+    - text: 
+  - text: 
+  - button "Open local graph" [ref=f2e131] [cursor=pointer]:
+    - generic [ref=f2e132]: 
+  - generic [ref=f2e135]:
+    - generic [ref=f2e136]:
+      - paragraph [ref=f2e137]:
+        - generic [ref=f2e138]: 
+        - text: We value your privacy
+      - paragraph [ref=f2e139]: This website uses cookies and similar technologies to enhance your browsing experience, analyze traffic, and provide personalized content.
+    - generic [ref=f2e141]:
+      - button " Manage Cookies" [ref=f2e142] [cursor=pointer]:
+        - generic [ref=f2e143]: 
+        - text: Manage Cookies
+      - button "Reject All" [ref=f2e144] [cursor=pointer]
+      - button "Accept All" [ref=f2e145] [cursor=pointer]
+  - text:     

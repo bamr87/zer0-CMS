@@ -27,9 +27,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Transplant vault → _entries/
+      - name: Render previews + transplant vault → _entries/
         run: |
           npm i js-yaml --no-save
+          node engine/scripts/preview.mjs
           node engine/scripts/transplant.mjs
 
       - uses: actions/configure-pages@v6

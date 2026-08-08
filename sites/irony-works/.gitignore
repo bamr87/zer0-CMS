@@ -19,3 +19,6 @@ package.json
 
 # Obsidian per-user workspace state
 vault/.obsidian/workspace*
+
+# Generated at publish time by engine/scripts/preview.mjs
+assets/images/previews/
