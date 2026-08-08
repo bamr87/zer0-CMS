@@ -69,10 +69,25 @@ function claudeCodeAvailable() {
   try { execFileSync("claude", ["--version"], { stdio: "ignore" }); return true; } catch { return false; }
 }
 
+// `claude -p` runs the full agent, tools and all. Told to "output a Markdown
+// file" it will try to WRITE one, then stall — a real cycle returned
+// "Waiting for permission to write the file. The draft is ready…" in place of an
+// entry. Disabling tools outright is worse: the model then emits raw
+// <function_calls> markup as text. So the wire declares itself, and the five
+// prompts stay wire-agnostic.
+const WIRE_PREAMBLE = [
+  "You are running as a text-completion harness, not an interactive agent.",
+  "Do not use tools. Do not read or write files. Never ask for permission or confirmation.",
+  "Your entire reply is consumed programmatically. Return only what the instructions below",
+  "ask for — no preamble, no commentary, no tool-call syntax, no offers to proceed.",
+].join(" ");
+
 function harnessClaudeCode(system, user, h, label) {
   const raw = execFileSync(
     "claude",
-    ["-p", "--model", h.model ?? "claude-sonnet-4-6", "--append-system-prompt", system, "--output-format", "json"],
+    ["-p", "--model", h.model ?? "claude-sonnet-4-6",
+     "--append-system-prompt", `${WIRE_PREAMBLE}\n\n${system}`,
+     "--output-format", "json"],
     { input: user, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }
   );
   const r = JSON.parse(raw);
