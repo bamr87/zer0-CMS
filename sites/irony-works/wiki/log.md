@@ -18,6 +18,21 @@ Append-only. Newest entries at the top.
 
 ---
 
+## [2026-08-08] autoresearch | Obsidian CLI Headless Viability
+
+- Topic selection: DragonScale Mechanism 4 unavailable (`scripts/boundary-score.py` absent → BOUNDARY_MODE=0); fell through to user choice, offered from the prior session's filed open questions
+- Rounds: 3 (broad sweep, primary-source verification, licensing-claim check)
+- Searches: 6 WebSearch · Fetches: 3 WebFetch + 6 GitHub API reads (2 issues, 2 issue-comment threads, 3 repos)
+- Pages created: [[obsidian-cli-official-page]], [[obsidian-official-headless-stance]], [[obsidianless-project]], [[obsidian-headless]], [[Headless Agent Automation]]
+- Synthesis: [[Research: Obsidian CLI Headless Viability (2026-08)]]
+- Pages updated: [[Obsidian CLI]] (corrected a false claim), [[Transport Selection]] (environment qualifier added), [[Research: Claude + Obsidian Ecosystem Refresh (2026-08)]] (open question struck through as resolved)
+- Key finding: the Obsidian CLI is a remote control over a display-keyed IPC socket, not a library — every command needs the running desktop app, and Obsidian states headless CLI is explicitly unsupported
+- Correction filed: [[Obsidian CLI]] previously claimed the CLI needs "no running Obsidian instance for many operations". False. Corrected in place with a visible `[!warning]` rather than a silent edit
+- Consequence for this repo: filesystem is the only viable CI transport; `germinate.yml` and `alanis-gate.yml` run headless on ubuntu-latest and would fail at the IPC socket
+- Open questions filed: 4 (Catalyst status, macOS IPC behavior, roadmap for a real headless CLI, missing license on obsidian-headless)
+
+---
+
 ## [2026-08-08] autoresearch | Claude + Obsidian Ecosystem Refresh
 
 - Vault scaffolded this session (first operation in this vault)

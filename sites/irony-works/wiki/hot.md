@@ -10,6 +10,7 @@ status: evergreen
 related:
   - "[[index]]"
   - "[[log]]"
+  - "[[Research: Obsidian CLI Headless Viability (2026-08)]]"
   - "[[Research: Claude + Obsidian Ecosystem Refresh (2026-08)]]"
 ---
 
@@ -19,24 +20,25 @@ Navigation: [[index]] | [[log]] | [[overview]]
 
 ## Last Updated
 
-2026-08-08: Vault scaffolded and first autoresearch run completed — **Claude + Obsidian ecosystem refresh**. 2 rounds, 5 searches, 4 fetches, 3 GitHub API reads. 11 pages + synthesis filed.
+2026-08-08: Second autoresearch run — **Obsidian CLI headless viability**, the open question the first run flagged as highest-leverage. 3 rounds, 6 searches, 3 fetches, 6 GitHub API reads. 5 new pages + synthesis; 3 existing pages updated. **Question resolved.**
 
 ## Key Recent Facts
 
-- **First-party absorption is the story.** Obsidian ships the CLI agents call (introduced 1.12, standalone binary 1.12.7 on 2026-03-23) *and* kepano's skills teaching agents its formats. Third-party integrations differentiated only by vault access are being commoditized.
-- **What survives**: live editor context (cursor, selection — a CLI structurally cannot know this) and synthesis (link graphs, contradiction tracking). Not file access.
-- **`kepano/obsidian-skills`: 44,450★ but last pushed 2026-06-08** — two months stale while Bases shipped changes in 1.13.2 and 1.13.4. Popularity decoupled from maintenance.
-- **ACP ≠ MCP rivalry.** ACP is the editor↔agent outer layer, MCP the agent↔tools inner layer; ACP re-uses MCP JSON where it can. Obsidian is listed as an ACP-supported editor.
-- **Three secondary-source claims corrected against primary APIs/docs** — see the Contradictions section of the synthesis.
+- **The Obsidian CLI cannot run headless. Every command requires the running desktop app.** It is a remote control, not a library: it finds Obsidian through an **IPC socket keyed to the display**, so without `DISPLAY` it reports "unable to find Obsidian."
+- **Obsidian refuses to support it.** A maintainer closed a docs request with "Headless Obsidian CLI is not something we *officially* support"; a separate AI-agent headless question was closed with "not the right place to ask." The gap is deliberate.
+- **Xvfb works but is unfit for CI**: needs `--disable-gpu --disable-software-rasterizer`, `DISPLAY=:99`, and manual `SingletonLock` cleanup after any ungraceful shutdown — an OOM-killed run poisons the next one. The reference implementation (`obsidianless`) was created and abandoned the same day, 11 stars.
+- **[[obsidian-headless]] is a different product** — official, actively maintained (212★), but Sync/Publish only, with none of the CLI's note commands. It ships **no license file**.
+- **Licensing gate**: the CLI is early-access behind a Catalyst license ($25 one-time), separate from Sync (medium-high confidence).
+- **A false claim was corrected**, not overwritten: [[Obsidian CLI]] had said the CLI needs "no running Obsidian instance for many operations." Struck with a visible `[!warning]`.
 
 ## Recent Changes
 
-- Created: 4 source pages, 4 entity pages, 3 concept pages, 1 synthesis, plus index/log/hot/overview
-- Vault location: `wiki/` inside the irony-works repo; excluded from the Jekyll site build so research never publishes to bamr87.github.io/irony-works
-- Transport: filesystem (Obsidian CLI not installed on this machine)
+- Created: [[obsidian-cli-official-page]], [[obsidian-official-headless-stance]], [[obsidianless-project]], [[obsidian-headless]], [[Headless Agent Automation]], [[Research: Obsidian CLI Headless Viability (2026-08)]]
+- Updated: [[Obsidian CLI]], [[Transport Selection]], [[Research: Claude + Obsidian Ecosystem Refresh (2026-08)]]
+- Vault: 19 pages, all wikilinks resolving, excluded from the Jekyll build
 
 ## Active Threads
 
-- Open question with the most leverage: **does the Obsidian CLI need the GUI running for non-GUI commands?** That decides headless-CI viability — convenience vs automation substrate.
-- Unfetched leads for a next pass: Agentic Copilot and Agent Client plugins (catalogued from search summaries only); which Obsidian plugin actually implements ACP.
-- This vault is new — 12 pages, no orphan/lint history yet.
+- **Direct consequence for this repo**: `germinate.yml` and `alanis-gate.yml` run headless on `ubuntu-latest`. Filesystem is the only viable CI transport; never wire the Obsidian CLI into those workflows.
+- Remaining leads: has the CLI left Catalyst early access? Does macOS need a `DISPLAY` equivalent? Why does the official headless repo ship unlicensed?
+- Still unfetched from run 1: Agentic Copilot and Agent Client primary sources; which plugin implements ACP for Obsidian.

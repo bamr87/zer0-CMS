@@ -39,8 +39,24 @@ Activation is opt-in: Settings → General → "Command line interface", then OS
 
 Obsidian documents agent automation as an intended use case, naming "agentic coding tools" that use developer commands to test and debug plugins (Source: [[obsidian-cli-documentation]]). The vendor is not tolerating agents; it is courting them.
 
-This compresses the value of the third-party integration layer. Every MCP server that exists to expose vault CRUD now overlaps a first-party surface that needs no plugin and no running Obsidian instance for many operations. The differentiated ground moves up-stack, to synthesis and knowledge structure — what [[Agent Bridge Plugins]] cannot supply by being a better pipe.
+This compresses the value of the third-party integration layer. Every MCP server that exists to expose vault CRUD now overlaps a first-party surface that needs no plugin. The differentiated ground moves up-stack, to synthesis and knowledge structure — what [[Agent Bridge Plugins]] cannot supply by being a better pipe.
+
+> [!warning] Corrected 2026-08-08. This section previously claimed the CLI needs "no running Obsidian instance for many operations." That is false: every command requires the running app. The compression argument survives — a plugin-free first-party surface still commoditizes access-only integrations — but only on the desktop, not in automation.
+
+## Deployment Envelope — Resolved 2026-08-08
+
+**The CLI requires the Obsidian desktop app to be running, for every command.** It is a remote control for a running process, locating Obsidian through an IPC socket keyed to the display (Source: [[obsidian-official-headless-stance]]). "Note that the Obsidian app must be running" (Source: [[obsidian-cli-official-page]]).
+
+Consequences:
+
+- **Headless CI is out.** Not a configuration problem — an architectural one. See [[Headless Agent Automation]].
+- Obsidian explicitly declines to support or document the Xvfb workaround.
+- The vendor's headless story is [[obsidian-headless]], a separate Sync/Publish client with none of these commands.
+- The CLI is early-access, gated behind a Catalyst license ($25 one-time) as of the sources read.
+
+Full analysis: [[Research: Obsidian CLI Headless Viability (2026-08)]].
 
 ## Open Questions
 
-- Does the CLI require the Obsidian GUI process to be running for all commands, or only for GUI-dependent ones (screenshot, DOM inspection)? Not established by the sources read.
+- Does macOS discover the IPC socket without a `DISPLAY` equivalent? All primary evidence is Linux-specific.
+- Has the CLI graduated from Catalyst early access to stable?

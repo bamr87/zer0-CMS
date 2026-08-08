@@ -69,7 +69,7 @@ The Claude + Obsidian integration layer is being absorbed by first-party tooling
 
 ## Open Questions
 
-- Does the Obsidian CLI need the GUI process running for non-GUI commands? This decides whether it works headless in CI — the difference between a convenience and an automation substrate.
+- ~~Does the Obsidian CLI need the GUI process running for non-GUI commands?~~ **Resolved 2026-08-08: yes, for every command — it is a remote control over a display-keyed IPC socket, and headless CLI is explicitly unsupported.** See [[Research: Obsidian CLI Headless Viability (2026-08)]].
 - Is `kepano/obsidian-skills`'s two-month push gap completion or drift? Specifically, does its Bases skill still match post-1.13.2 syntax?
 - Which Obsidian plugin actually provides ACP support, and is it current? Obsidian's listing on Zed's page was not traced to a specific implementation.
 - The "50+ ACP integrations" figure rests on a single vendor page for a Zed-originated protocol. No independent registry audit was performed.
