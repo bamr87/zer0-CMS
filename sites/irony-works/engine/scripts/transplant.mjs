@@ -54,13 +54,29 @@ for (const n of notes) {
 const isHome = (n) => n.slug === "Home";
 const hrefFor = (slug) => (slug === "Home" ? `${base}/` : `${base}/entries/${slug.toLowerCase()}/`);
 
+// Folder names are legitimate link targets in Obsidian ([[mirrors]]) but have no
+// note of their own; they resolve to their section of the browse page.
+const folders = new Set(
+  notes.map((n) => n.dir).filter(Boolean).map((d) => d.toLowerCase())
+);
+
+const dead = [];
+
 // A bare [[target]] used to render as its raw slug ("the-kodak-moment"). Label it
 // with the target's real title instead; explicit [[target|label]] always wins.
-const link = (target, label) => {
+const link = (target, label, from) => {
   const key = target.trim().toLowerCase();
-  const slug = index.get(key) ?? slugify(target);
-  const text = label ?? bySlug.get(slug)?.title ?? target;
-  return `[${text}](${hrefFor(slug)})`;
+
+  if (folders.has(key)) return `[${label ?? target}](${base}/entries/#${key})`;
+
+  const slug = index.get(key);
+  if (!slug) {
+    // Never ship a 404. Degrade to plain text and report it — a broken wikilink
+    // is a promise the vault must keep or delete, and silence lets it ship.
+    dead.push({ target, from });
+    return label ?? target;
+  }
+  return `[${label ?? bySlug.get(slug)?.title ?? target}](${hrefFor(slug)})`;
 };
 
 const oneLine = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
@@ -83,8 +99,8 @@ const plainProse = (md) =>
 let count = 0;
 for (const n of notes) {
   let body = n.body
-    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, t, l) => link(t, l))
-    .replace(/\[\[([^\]]+)\]\]/g, (_, t) => link(t));
+    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, t, l) => link(t, l, n.slug))
+    .replace(/\[\[([^\]]+)\]\]/g, (_, t) => link(t, null, n.slug));
 
   // The layout already prints the title as the page H1 — drop the body's leading
   // H1 so entries don't render the same heading twice.
@@ -117,3 +133,9 @@ for (const n of notes) {
   count++;
 }
 console.log(`Transplanted ${count} notes → _entries/`);
+
+if (dead.length) {
+  console.error(`\n⚠️  ${dead.length} unresolved wikilink(s) — rendered as plain text, not links:`);
+  for (const d of dead) console.error(`   [[${d.target}]] in ${d.from}`);
+  console.error("   Keep the promise (add the note) or delete the link.");
+}
