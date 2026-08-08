@@ -136,7 +136,31 @@ export async function harness(system, user, label = "unlabeled") {
 }
 
 // ---------- helpers ----------
-export const parseJSON = (text) => JSON.parse(text.replace(/```json|```/g, "").trim());
+// Extract the first balanced JSON value from model output. The gate prompt asks
+// for a structural check *before* the verdict, so the model reasonably narrates
+// step zero and then emits JSON — stripping fences alone is not enough. Scans
+// for the first { or [ and returns the balanced span, ignoring braces in strings.
+export const parseJSON = (text) => {
+  const t = String(text).replace(/```json|```/g, "");
+  const start = t.search(/[{[]/);
+  if (start === -1) throw new Error(`no JSON in model output: ${t.slice(0, 200)}`);
+  const open = t[start];
+  const close = open === "{" ? "}" : "]";
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === open) depth++;
+    else if (ch === close && --depth === 0) return JSON.parse(t.slice(start, i + 1));
+  }
+  throw new Error(`unbalanced JSON in model output: ${t.slice(start, start + 200)}`);
+};
 export const slugify = (s) =>
   s.toLowerCase().replace(/['".:,!?()]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 export const today = () => new Date().toISOString().slice(0, 10);
