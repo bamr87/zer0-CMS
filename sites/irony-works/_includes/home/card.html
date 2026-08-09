@@ -25,7 +25,9 @@
     </p>
   </div>
   <div class="card-footer bg-transparent border-0 text-body-secondary small d-flex gap-2 flex-wrap">
-    {%- if it.alanis %}<span title="Alanis Gate score"><i class="bi bi-funnel me-1"></i>{{ it.alanis | truncate: 12, "" }}</span>{% endif -%}
+    {%- comment -%} alanis reads like "8/10 (as legend)" — show the score, not a
+      mid-word truncation. The full value stays in the tooltip. {%- endcomment -%}
+    {%- if it.alanis %}<span title="Alanis Gate: {{ it.alanis }}"><i class="bi bi-funnel me-1"></i>{{ it.alanis | split: " " | first }}</span>{% endif -%}
     {%- if it.veracity %}<span title="How well the evidence holds"><i class="bi bi-shield-check me-1"></i>{{ it.veracity }}</span>{% endif -%}
     {%- unless it.alanis or it.veracity %}{% if it.date %}<span><i class="bi bi-calendar3 me-1"></i>{{ it.date | date: "%b %-d, %Y" }}</span>{% endif %}{% endunless -%}
   </div>
