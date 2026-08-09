@@ -18,7 +18,7 @@ status: petrified
 - **Instances** — [[thomas-midgley-jr]] · [[nobels-obituary]] · [[the-streisand-effect]] · [[the-kodak-moment]] · [[the-captcha-toll]] · [[curies-notebooks]]
 
 ## The Reflections
-- **Mirrors** (this machine's own ironies) — [[the-unfeeling-curator]] · [[zero-mistakes]] · [[the-borges-condition]] · [[the-bainbridge-clause]]
+- **Mirrors** (this machine's own ironies) — [[the-unfeeling-curator]] · [[zero-mistakes]] · [[the-borges-condition]] · [[the-bainbridge-clause]] · [[alanis-gate]]
 - **Futures** (open positions) — [[the-comprehensiveness-wager]]
 
 ## The Understory
@@ -26,4 +26,4 @@ status: petrified
 - `nursery/` — drafts awaiting the gate and your judgment
 
 ---
-*How to read the graph: forms are red, works green, instances orange, mirrors violet, futures gold, compost brown. A healthy vault is dense at the trunk and reaching at the edges.*
+*How to read the graph: forms red, works green, figures blue, instances orange, mirrors violet, futures gold, nursery pale green, compost brown — configured in `.obsidian/graph.json`, so the legend and the colours cannot drift apart. A healthy vault is dense at the trunk and reaching at the edges.*

@@ -1,0 +1,42 @@
+---
+layout: default
+---
+{%- comment -%}
+  Section listing. Consumed by the eight branch pages (forms, works, figures,
+  instances, mirrors, futures, nursery, compost), each of which sets `section`
+  in its frontmatter. Renders every entry filed under that branch with the two
+  fields that define it: expectation and reversal.
+{%- endcomment -%}
+
+{{ content }}
+
+{%- assign items = site.entries | where: "section", page.section | sort: "title" -%}
+
+{%- if items.size == 0 -%}
+<p class="text-muted"><em>Nothing filed here yet.</em></p>
+{%- else -%}
+<p class="text-muted small">{{ items.size }} entr{% if items.size == 1 %}y{% else %}ies{% endif %}.</p>
+
+<div class="list-group mb-4">
+  {%- for e in items -%}
+  <a class="list-group-item list-group-item-action" href="{{ e.url | relative_url }}">
+    <div class="d-flex w-100 justify-content-between align-items-start">
+      <h2 class="h6 mb-1">{{ e.title }}</h2>
+      <small class="text-nowrap ms-2">
+        {%- if e.alanis %}<span class="badge bg-light text-dark">{{ e.alanis }}</span>{% endif -%}
+        {%- if e.veracity %}<span class="badge bg-light text-dark">{{ e.veracity }}</span>{% endif -%}
+        {%- if e.status %}<span class="badge bg-light text-dark">{{ e.status }}</span>{% endif -%}
+      </small>
+    </div>
+    {%- if e.expectation %}<p class="mb-1 small"><strong>Expectation:</strong> {{ e.expectation | strip_newlines | truncate: 180 }}</p>{% endif -%}
+    {%- if e.reversal %}<p class="mb-0 small text-muted"><strong>Reversal:</strong> {{ e.reversal | strip_newlines | truncate: 180 }}</p>{% endif -%}
+  </a>
+  {%- endfor -%}
+</div>
+{%- endif -%}
+
+<hr>
+<p class="small">
+  <a href="{{ '/entries/' | relative_url }}">← All entries</a> ·
+  <a href="{{ '/how-it-grows/' | relative_url }}">How the vault grows</a>
+</p>

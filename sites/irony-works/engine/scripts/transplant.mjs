@@ -51,8 +51,11 @@ for (const n of notes) {
 }
 
 // ---------- helpers ----------
+// The vault's Home note is its index — the Obsidian entry point. It is *not*
+// the site's landing page; index.md owns `/`. Home publishes as an entry so
+// both audiences get the front door they expect.
 const isHome = (n) => n.slug === "Home";
-const hrefFor = (slug) => (slug === "Home" ? `${base}/` : `${base}/entries/${slug.toLowerCase()}/`);
+const hrefFor = (slug) => `${base}/entries/${slug.toLowerCase()}/`;
 
 // Folder names are legitimate link targets in Obsidian ([[mirrors]]) but have no
 // note of their own; they resolve to their section of the browse page.
@@ -114,9 +117,10 @@ for (const n of notes) {
   body = body.replace(/^\s*#\s+.+?\r?\n+/, "");
 
   const fm = { ...n.data };
-  fm.title = isHome(n) ? "Irony Works" : n.title;
+  fm.title = isHome(n) ? "The Vault Index" : n.title;
   fm.layout = fm.layout ?? "default";
-  if (isHome(n)) fm.permalink = "/";
+  // `slug` lets pages address a specific entry (the landing page's featured list).
+  fm.slug = n.slug.toLowerCase();
 
   // Section drives the browse page's grouping.
   fm.section = n.dir || "root";

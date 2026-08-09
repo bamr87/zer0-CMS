@@ -5,8 +5,72 @@
   "showAttachments": false,
   "hideUnresolved": false,
   "showOrphans": true,
-  "collapse-color-groups": true,
-  "colorGroups": [],
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "path:forms/",
+      "color": {
+        "a": 1,
+        "rgb": 15026253
+      }
+    },
+    {
+      "query": "path:works/",
+      "color": {
+        "a": 1,
+        "rgb": 4630360
+      }
+    },
+    {
+      "query": "path:figures/",
+      "color": {
+        "a": 1,
+        "rgb": 37119
+      }
+    },
+    {
+      "query": "path:instances/",
+      "color": {
+        "a": 1,
+        "rgb": 16214805
+      }
+    },
+    {
+      "query": "path:mirrors/",
+      "color": {
+        "a": 1,
+        "rgb": 9326278
+      }
+    },
+    {
+      "query": "path:futures/",
+      "color": {
+        "a": 1,
+        "rgb": 16757284
+      }
+    },
+    {
+      "query": "path:nursery/",
+      "color": {
+        "a": 1,
+        "rgb": 8046415
+      }
+    },
+    {
+      "query": "path:compost/",
+      "color": {
+        "a": 1,
+        "rgb": 9132587
+      }
+    },
+    {
+      "query": "path:templates/",
+      "color": {
+        "a": 1,
+        "rgb": 7041664
+      }
+    }
+  ],
   "collapse-display": true,
   "showArrow": false,
   "textFadeMultiplier": 0,
