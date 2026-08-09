@@ -17,6 +17,10 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
+  # Required by the remote theme: _layouts/root.html renders
+  # {% include_cached %}, which only exists once this plugin is registered.
+  # Without it every build dies on "Unknown tag 'include_cached'".
+  - jekyll-include-cache
 
 # When false (or unset with placeholder title), the welcome layout
 # shows the setup wizard. Flip to `true` once you've personalised
