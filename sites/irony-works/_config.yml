@@ -22,6 +22,10 @@ repository: [*github_user, "/", *repository_name]
 branch: "main"
 locale: "en-US"
 
+# Base class for icon elements. The theme emits `<i class="{{ site.default_icon }} bi-x">`;
+# without it Bootstrap Icons lose their font-family and render as tofu.
+default_icon: "bi"
+
 founder: "Amr Abdel-Motaleb"
 author: "Irony Works"
 email: ""
