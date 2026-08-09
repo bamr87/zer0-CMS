@@ -3,7 +3,6 @@
 # to a page that did not exist. This is the real structure of the vault.
 - title: Browse
   url: /entries/
-  icon: bi-collection
   children:
     - title: Forms — the taxonomy
       url: /forms/
@@ -26,12 +25,9 @@
 
 - title: The Gate
   url: /entries/alanis-gate/
-  icon: bi-door-closed
 
 - title: How it grows
   url: /how-it-grows/
-  icon: bi-diagram-3
 
 - title: Vault index
   url: /entries/home/
-  icon: bi-signpost-split
