@@ -53,6 +53,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-10-24 | Rosa Parks dies | People | [file]({{ '/news/people/rosa-parks-dies/' | relative_url }}) |
 | 2005-10-24 | Hurricane Wilma | Society & Economics | [file]({{ '/news/society-economics/hurricane-wilma-2005/' | relative_url }}) |
 | 2005-10-27 | 2005 French riots | Society & Economics | [file]({{ '/news/society-economics/2005-french-riots/' | relative_url }}) |
+| 2005-10-31 | Sony BMG rootkit scandal exposed | Science & Technology | [file]({{ '/news/science-technology/sony-bmg-rootkit-scandal/' | relative_url }}) |
 | 2005-11-08 | Guitar Hero launches | Science & Technology | [file]({{ '/news/science-technology/guitar-hero-launch/' | relative_url }}) |
 | 2005-11-22 | Xbox 360 launches | Science & Technology | [file]({{ '/news/science-technology/xbox-360-launch/' | relative_url }}) |
 | 2005-11-23 | Ellen Johnson Sirleaf elected President of Liberia | People | [file]({{ '/news/people/ellen-johnson-sirleaf-elected/' | relative_url }}) |
@@ -62,5 +63,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-20 | Dover Trial rejects Intelligent Design | Science & Technology | [file]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 49 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 50 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
