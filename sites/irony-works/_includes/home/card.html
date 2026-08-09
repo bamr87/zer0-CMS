@@ -14,7 +14,7 @@
 <div class="card h-100 border-0 shadow-sm overflow-hidden">
   {% include home/cover.html section=it.section height=include.cover_height preview=it.preview alt=it.title %}
   <div class="card-body">
-    <span class="badge mb-2" style="background-color: {{ meta.color | default: '#6b7280' }};">
+    <span class="badge sec-badge sec-{{ it.section }} mb-2">
       <i class="bi {{ meta.icon | default: 'bi-dot' }} me-1"></i>{{ meta.label | default: it.section }}
     </span>
     <h3 class="h6 card-title mb-2">

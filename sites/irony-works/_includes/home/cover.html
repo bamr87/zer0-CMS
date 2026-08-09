@@ -24,8 +24,8 @@
        style="background-image: url('{{ _src | relative_url }}'); background-size: cover; background-position: center; min-height: {{ _h }};"
        role="img" aria-label="{{ include.alt | default: 'Entry artwork' | escape }}"></div>
 {%- else -%}
-  <div class="news-cover d-flex align-items-center justify-content-center {{ include.class }}"
-       style="background: linear-gradient(135deg, {{ _color }} 0%, #1b1b1f 100%); min-height: {{ _h }};"
+  <div class="news-cover sec-wash sec-{{ include.section }} d-flex align-items-center justify-content-center {{ include.class }}"
+       style="min-height: {{ _h }};"
        role="img" aria-label="{{ include.alt | default: 'Entry artwork' | escape }}">
     <i class="bi {{ _meta.icon | default: 'bi-dot' }} fs-2 text-white opacity-50"></i>
   </div>

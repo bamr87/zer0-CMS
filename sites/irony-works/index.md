@@ -138,7 +138,7 @@ reversal: &gt;
       <div class="col">
         <a href="{{ m.url | relative_url }}" class="card text-center h-100 text-decoration-none border-0 shadow-sm">
           <div class="card-body py-4">
-            <i class="bi {{ m.icon }} fs-3 d-block mb-2" style="color: {{ m.color }};"></i>
+            <i class="bi {{ m.icon }} fs-3 d-block mb-2 sec-ink sec-{{ key }}"></i>
             <h3 class="h6 card-title mb-1">{{ m.label }}</h3>
             <small class="text-body-secondary d-block">{{ n }} entr{% if n == 1 %}y{% else %}ies{% endif %}</small>
             <small class="text-body-secondary d-block mt-1" style="font-size:.75rem;">{{ m.blurb }}</small>
@@ -189,7 +189,7 @@ reversal: &gt;
   <section class="mb-5 pb-4 border-bottom">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="h4 mb-0">
-        <i class="bi {{ m.icon }} me-2" style="color: {{ m.color }};"></i>{{ m.label }}
+        <i class="bi {{ m.icon }} me-2 sec-ink sec-{{ key }}"></i>{{ m.label }}
         <small class="text-body-secondary fw-normal ms-2" style="font-size:.9rem;">{{ m.blurb }}</small>
       </h2>
       <a href="{{ m.url | relative_url }}" class="btn btn-outline-secondary btn-sm text-nowrap">View all <i class="bi bi-arrow-right ms-1"></i></a>
@@ -217,7 +217,7 @@ reversal: &gt;
             <div class="col-4">{% include home/cover.html section=it.section height='110px' class='h-100' preview=it.preview alt=it.title %}</div>
             <div class="col-8">
               <div class="card-body py-2 px-3">
-                <span class="badge mb-1" style="background-color: {{ m.color | default: '#6b7280' }};">{{ m.label | default: it.section }}</span>
+                <span class="badge sec-badge sec-{{ it.section }} mb-1">{{ m.label | default: it.section }}</span>
                 <h3 class="h6 card-title mb-1">
                   <a href="{{ it.url | relative_url }}" class="text-decoration-none text-body-emphasis stretched-link">{{ it.title | truncate: 48 }}</a>
                 </h3>
@@ -238,7 +238,7 @@ reversal: &gt;
       <div class="card h-100 border-0 shadow-sm">
         <div class="card-body">
           <h2 class="h5 card-title">
-            <i class="bi bi-flower1 me-2" style="color: {{ site.data.sections.nursery.color }};"></i>In the nursery
+            <i class="bi bi-flower1 me-2 sec-ink sec-nursery"></i>In the nursery
           </h2>
           <p class="text-body-secondary small">
             {{ site.entries | where: "section", "nursery" | size }} draft(s) have passed the gate and await a human merge.
@@ -259,7 +259,7 @@ reversal: &gt;
       <div class="card h-100 border-0 shadow-sm">
         <div class="card-body">
           <h2 class="h5 card-title">
-            <i class="bi bi-recycle me-2" style="color: {{ site.data.sections.compost.color }};"></i>What the gate threw out
+            <i class="bi bi-recycle me-2 sec-ink sec-compost"></i>What the gate threw out
           </h2>
           <p class="text-body-secondary small">
             Rejected candidates are never deleted. Each is logged with a verdict —
