@@ -33,9 +33,15 @@ description: >
 {%- assign pick_main = site.entries | where: "slug", "ozymandias" | first -%}
 {%- assign pick_slugs = "oscar-wilde|the-streisand-effect|thomas-midgley-jr|nobels-obituary" | split: "|" -%}
 
+{%- comment -%}
+  The theme's `home` layout is bare — `<div class="home">{{ content }}</div>`
+  with no Bootstrap container — so this page supplies its own gutters.
+{%- endcomment -%}
+<div class="container py-4">
+
 <!-- ============================= MASTHEAD ============================= -->
-<div class="container-fluid bg-dark text-white py-3 mb-4 rounded-4">
-  <div class="container">
+<div class="bg-dark text-white py-3 px-4 mb-4 rounded-4">
+  <div>
     <div class="row align-items-center g-2">
       <div class="col-md-5">
         <h1 class="h4 mb-0" style="font-family: ui-monospace, Menlo, monospace;">
@@ -293,3 +299,6 @@ reversal: &gt;
     </div>
   </div>
 </section>
+
+</div><!-- /.container -->
+
