@@ -1,0 +1,32 @@
+{%- comment -%}
+  home/card.html — one magazine card for a vault entry.
+
+  The teaser is the entry's `reversal`, not a generic excerpt: the reversal is
+  the payload of an irony, and showing it is the whole reason someone clicks.
+  Falls back to `description` for taxonomy pages that carry no reversal.
+
+  Params:
+    item         : an entry object
+    cover_height : CSS min-height for the cover (default 150px)
+{%- endcomment -%}
+{%- assign it = include.item -%}
+{%- assign meta = site.data.sections[it.section] -%}
+<div class="card h-100 border-0 shadow-sm overflow-hidden">
+  {% include home/cover.html section=it.section height=include.cover_height preview=it.preview alt=it.title %}
+  <div class="card-body">
+    <span class="badge mb-2" style="background-color: {{ meta.color | default: '#6b7280' }};">
+      <i class="bi {{ meta.icon | default: 'bi-dot' }} me-1"></i>{{ meta.label | default: it.section }}
+    </span>
+    <h3 class="h6 card-title mb-2">
+      <a href="{{ it.url | relative_url }}" class="text-decoration-none text-body-emphasis stretched-link">{{ it.title | truncate: 60 }}</a>
+    </h3>
+    <p class="card-text small text-body-secondary mb-0">
+      {{ it.reversal | default: it.description | strip_newlines | strip_html | truncate: 120 }}
+    </p>
+  </div>
+  <div class="card-footer bg-transparent border-0 text-body-secondary small d-flex gap-2 flex-wrap">
+    {%- if it.alanis %}<span title="Alanis Gate score"><i class="bi bi-funnel me-1"></i>{{ it.alanis | truncate: 12, "" }}</span>{% endif -%}
+    {%- if it.veracity %}<span title="How well the evidence holds"><i class="bi bi-shield-check me-1"></i>{{ it.veracity }}</span>{% endif -%}
+    {%- unless it.alanis or it.veracity %}{% if it.date %}<span><i class="bi bi-calendar3 me-1"></i>{{ it.date | date: "%b %-d, %Y" }}</span>{% endif %}{% endunless -%}
+  </div>
+</div>
