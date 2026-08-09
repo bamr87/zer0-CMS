@@ -1,8 +1,14 @@
 # Primary navigation. The theme falls back to auto-generating this from
 # collections when the file is absent — which produced a single "Entries" link
 # to a page that did not exist. This is the real structure of the vault.
-- title: Browse
+#
+# NOTE: the desktop navbar is icon-only by design; the `title` becomes the
+# tooltip and the accessible name, and the full text shows in the mobile
+# offcanvas drawer. An entry without `icon` renders as nothing on desktop, so
+# every item here must carry one.
+- title: Browse the vault
   url: /entries/
+  icon: bi-collection
   children:
     - title: Forms — the taxonomy
       url: /forms/
@@ -23,11 +29,14 @@
     - title: All entries
       url: /entries/
 
-- title: The Gate
+- title: The Alanis Gate — how entries are scored
   url: /entries/alanis-gate/
+  icon: bi-funnel
 
 - title: How it grows
   url: /how-it-grows/
+  icon: bi-diagram-3
 
 - title: Vault index
   url: /entries/home/
+  icon: bi-map
