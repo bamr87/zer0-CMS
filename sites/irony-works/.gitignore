@@ -22,3 +22,6 @@ vault/.obsidian/workspace*
 
 # Generated at publish time by engine/scripts/preview.mjs
 assets/images/previews/
+
+# Playwright MCP scratch output from UI review sessions
+.playwright-mcp/
