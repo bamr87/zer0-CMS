@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: home
 title: Irony Works
 hide_title: true
+rss_subscribe: false
 permalink: /
 preview: /assets/images/previews/default.svg
 description: >
