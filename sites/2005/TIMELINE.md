@@ -21,6 +21,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file]({{ '/news/history-politics/hariri-assassination-cedar-revolution/' | relative_url }}) |
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file]({{ '/news/science-technology/kyoto-protocol-enters-force/' | relative_url }}) |
 | 2005-03-24 | Tulip Revolution in Kyrgyzstan | History & Politics | [file]({{ '/news/history-politics/tulip-revolution-kyrgyzstan/' | relative_url }}) |
+| 2005-03-24 | PlayStation Portable (PSP) launches in North America | Science & Technology | [file]({{ '/news/science-technology/psp-launch/' | relative_url }}) |
 | 2005-03-31 | Terri Schiavo dies | Society & Economics | [file]({{ '/news/society-economics/terri-schiavo-case/' | relative_url }}) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file]({{ '/news/history-politics/pope-john-paul-ii-death/' | relative_url }}) |
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file]({{ '/news/history-politics/pope-benedict-xvi-2005/' | relative_url }}) |
@@ -42,12 +43,14 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-07-28 | Provisional IRA ends its armed campaign | History & Politics | [file]({{ '/news/history-politics/ira-ends-armed-campaign/' | relative_url }}) |
 | 2005-07-29 | Discovery of Eris announced | Science & Technology | [file]({{ '/news/science-technology/eris-discovery/' | relative_url }}) |
 | 2005 (Jul-Oct) | H5N1 avian flu escalation | Society & Economics | [file]({{ '/news/society-economics/avian-flu-h5n1-2005/' | relative_url }}) |
+| 2005-08-06 | Camp Casey anti-war protest | History & Politics | [file]({{ '/news/history-politics/camp-casey-protest/' | relative_url }}) |
 | 2005-08-15 | Israeli disengagement from the Gaza Strip | History & Politics | [file]({{ '/news/history-politics/gaza-disengagement-2005/' | relative_url }}) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file]({{ '/news/society-economics/hurricane-katrina/' | relative_url }}) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file]({{ '/news/history-politics/angela-merkel-chancellor/' | relative_url }}) |
 | 2005-09-24 | Hurricane Rita | Society & Economics | [file]({{ '/news/society-economics/hurricane-rita-2005/' | relative_url }}) |
 | 2005-09-29 | John Roberts confirmed as Chief Justice | History & Politics | [file]({{ '/news/history-politics/john-roberts-chief-justice/' | relative_url }}) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file]({{ '/news/society-economics/kashmir-earthquake-2005/' | relative_url }}) |
+| 2005-10-12 | Shenzhou 6 crewed spaceflight mission | Science & Technology | [file]({{ '/news/science-technology/shenzhou-6-mission/' | relative_url }}) |
 | 2005-10-17 | The Colbert Report premieres | Arts & Culture | [file]({{ '/news/arts-culture/colbert-report-premiere/' | relative_url }}) |
 | 2005-10-19 | Saddam Hussein's trial begins | History & Politics | [file]({{ '/news/history-politics/saddam-hussein-trial-begins/' | relative_url }}) |
 | 2005-10-24 | Rosa Parks dies | People | [file]({{ '/news/people/rosa-parks-dies/' | relative_url }}) |
@@ -63,5 +66,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-20 | Dover Trial rejects Intelligent Design | Science & Technology | [file]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 50 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 53 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
