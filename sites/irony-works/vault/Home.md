@@ -15,10 +15,10 @@ status: petrified
 ## The Branches
 - **Works** — [[oedipus-rex]] · [[a-modest-proposal]] · [[the-gift-of-the-magi]] · [[ozymandias]] · [[ironies-of-automation]]
 - **Figures** — [[socrates]] · [[oscar-wilde]]
-- **Instances** — [[thomas-midgley-jr]] · [[nobels-obituary]] · [[the-streisand-effect]] · [[the-kodak-moment]] · [[the-captcha-toll]] · [[curies-notebooks]]
+- **Instances** — [[thomas-midgley-jr]] · [[nobels-obituary]] · [[the-streisand-effect]] · [[the-kodak-moment]] · [[the-captcha-toll]] · [[curies-notebooks]] · [[the-licenser-returns]] · [[is-that-normal]]
 
 ## The Reflections
-- **Mirrors** (this machine's own ironies) — [[the-unfeeling-curator]] · [[zero-mistakes]] · [[the-borges-condition]] · [[the-bainbridge-clause]] · [[alanis-gate]]
+- **Mirrors** (this machine's own ironies) — [[the-unfeeling-curator]] · [[zero-mistakes]] · [[the-borges-condition]] · [[the-bainbridge-clause]] · [[alanis-gate]] · [[be-free-doing-so]]
 - **Futures** (open positions) — [[the-comprehensiveness-wager]]
 
 ## The Understory
