@@ -17,9 +17,11 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-01-20 | George W. Bush inaugurated for second term | History & Politics | [file]({{ '/news/history-politics/george-w-bush-2005-agenda/' | relative_url }}) |
 | 2005-01-26 | Condoleezza Rice becomes Secretary of State | People | [file]({{ '/news/people/condoleezza-rice-secretary-of-state/' | relative_url }}) |
 | 2005-01-30 | Iraqi Parliamentary Elections | History & Politics | [file]({{ '/news/history-politics/iraqi-elections-2005/' | relative_url }}) |
+| 2005-02-08 | Google Maps launches | Science & Technology | [file]({{ '/news/science-technology/google-maps-launch/' | relative_url }}) |
 | 2005-02-14 | YouTube founded | Science & Technology | [file]({{ '/news/science-technology/youtube-founded/' | relative_url }}) |
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file]({{ '/news/history-politics/hariri-assassination-cedar-revolution/' | relative_url }}) |
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file]({{ '/news/science-technology/kyoto-protocol-enters-force/' | relative_url }}) |
+| 2005-03-18 | English Wikipedia passes half a million articles | Science & Technology | [file]({{ '/news/science-technology/wikipedia-500000-articles/' | relative_url }}) |
 | 2005-03-24 | Tulip Revolution in Kyrgyzstan | History & Politics | [file]({{ '/news/history-politics/tulip-revolution-kyrgyzstan/' | relative_url }}) |
 | 2005-03-24 | PlayStation Portable (PSP) launches in North America | Science & Technology | [file]({{ '/news/science-technology/psp-launch/' | relative_url }}) |
 | 2005-03-31 | Terri Schiavo dies | Society & Economics | [file]({{ '/news/society-economics/terri-schiavo-case/' | relative_url }}) |
@@ -57,6 +59,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-10-24 | Hurricane Wilma | Society & Economics | [file]({{ '/news/society-economics/hurricane-wilma-2005/' | relative_url }}) |
 | 2005-10-27 | 2005 French riots | Society & Economics | [file]({{ '/news/society-economics/2005-french-riots/' | relative_url }}) |
 | 2005-10-31 | Sony BMG rootkit scandal exposed | Science & Technology | [file]({{ '/news/science-technology/sony-bmg-rootkit-scandal/' | relative_url }}) |
+| 2005-10-31 | Samuel Alito nominated to the Supreme Court | History & Politics | [file]({{ '/news/history-politics/samuel-alito-supreme-court-nomination/' | relative_url }}) |
 | 2005-11-08 | Guitar Hero launches | Science & Technology | [file]({{ '/news/science-technology/guitar-hero-launch/' | relative_url }}) |
 | 2005-11-22 | Xbox 360 launches | Science & Technology | [file]({{ '/news/science-technology/xbox-360-launch/' | relative_url }}) |
 | 2005-11-23 | Ellen Johnson Sirleaf elected President of Liberia | People | [file]({{ '/news/people/ellen-johnson-sirleaf-elected/' | relative_url }}) |
@@ -66,5 +69,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-20 | Dover Trial rejects Intelligent Design | Science & Technology | [file]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 53 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 56 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
