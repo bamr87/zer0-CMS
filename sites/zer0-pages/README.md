@@ -29,7 +29,7 @@ Beyond showcasing the theme, zer0-pages' declared purpose is to act as a **secon
 - **`claude-obsidian/`** — git submodule; the content engine. Its skills read sources,
   synthesize knowledge, and file structured notes into the vault.
 - **`pages/`** — the Obsidian vault *and* the Jekyll source. Three content collections
-(`_docs/`, `_posts/`, `_notes/`), Maps of Content (`_moc/`), a growing `wiki/` knowledge base, plus the bridge plugins, the theme's data files (`_data/` — navigation, UI text, authors; theme gems can't ship these), and two local include overrides that fix bugs still present in the theme gem. Everything else — layouts, includes, vendored Bootstrap 5 — comes from the `jekyll-theme-zer0` gem (~> 1.25).
+(`_docs/`, `_posts/`, `_notes/`), Maps of Content (`_moc/`), a growing `wiki/` knowledge base, plus the bridge plugins, the theme's data files (`_data/` — navigation, UI text, authors; theme gems can't ship these), and two local include overrides kept for site-specific reasons (see `.theme-overrides.yml`), not for theme bugs — both bugs they were originally cut for shipped fixed in v1.26.0. Everything else — layouts, includes, vendored Bootstrap 5 — comes from the `jekyll-theme-zer0` gem, which the Gemfile deliberately leaves unconstrained so the site tracks the latest theme (`Gemfile.lock` is what pins a build).
 - **`.github/workflows/pages.yml`** — builds and deploys on every push to `main`.
 
 ## Quickstart

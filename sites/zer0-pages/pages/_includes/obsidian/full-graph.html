@@ -1,14 +1,29 @@
 {% comment %}
-  Local override of the theme's _includes/obsidian/full-graph.html
-  (jekyll-theme-zer0). Trimmed for zer0-pages:
+  LOCAL FORK of the theme's _includes/obsidian/full-graph.html
+  (jekyll-theme-zer0). Declared in ../../../.theme-overrides.yml.
+
+  Site-specific edits, still valid:
     - dropped the theme's H1/intro (the graph page supplies its own) and the
-      trailing "See also" wikilink list (those targets only exist in the
-      theme's own site);
-    - "How it's built" now credits the local bridge generator
+      trailing "See also" wikilink list (those five targets exist only in the
+      theme's own site — kept here they would render as broken wikilinks);
+    - "How it's built" credits the local bridge generator
       (pages/_plugins/obsidian_graph_index.rb) instead of the theme's Liquid
-      template, which this site disables;
+      template, which this site overrides;
     - legend reduced to the kept collections (posts/docs/notes/pages).
-  Toolbar, legend, tips, and the script-loading logic are the theme's.
+
+  This fork is ALSO FROZEN at a pre-v1.26 snapshot of the theme's graph page.
+  An older version of this comment claimed "toolbar, legend, tips, and the
+  script-loading logic are the theme's" — that is no longer true. The theme has
+  since redesigned the page: a collapsible "Graph settings" panel (Filters /
+  Display / Forces accordion), per-collection toggles with counts that double as
+  the legend, an unresolved-links switch, node-size / link-thickness /
+  label-fade sliders, repulsion / link-distance sliders with animated re-layout,
+  a vertical zoom-in/out/fit/fullscreen button group, a hover preview card,
+  `tag:` and `path:` search operators, and localStorage-persisted settings. None
+  of that is below; the markup here is a flat toolbar, a static legend, and a
+  scoped <style> block (the theme styles all of this from
+  _sass/core/_obsidian.scss). Re-syncing against the theme means porting the
+  three site-specific edits above onto the theme's current copy — not a delete.
 {% endcomment %}
 <style>
   /* Scoped to the graph page so we don't leak into other docs. */
@@ -172,10 +187,15 @@ runs client-side except cytoscape's force layout.
      obsidian-graph.js from window.OBSIDIAN_CONFIG.cytoscapeUrl, only on this
      page, with an in-page recovery message if the fetch fails. -->
 {% if site.obsidian.enabled != false %}
-<!-- obsidian-graph.js reads window.OBSIDIAN_WIKI_INDEX_URL, but js-cdn.html only
-     sets window.OBSIDIAN_CONFIG.wikiIndexUrl (different global) — the fallback
-     then misses the project baseurl. Pin the index URL explicitly until fixed
-     upstream: bamr87/zer0-mistakes#294. -->
+<!-- Explicit index URL. This was the workaround for
+     bamr87/zer0-mistakes#294 (obsidian-graph.js read only the legacy
+     window.OBSIDIAN_WIKI_INDEX_URL global, which js-cdn.html never set, so its
+     fallback dropped the project baseurl and 404'd). #294 was FIXED in theme
+     v1.26.0 — the renderer now reads window.OBSIDIAN_CONFIG.wikiIndexUrl first
+     and falls back to this legacy global — so on 1.26.0+ this line is
+     redundant. It is kept because it is harmless (it sets the same
+     baseurl-correct URL the theme would compute) and because the Gemfile floor
+     is still `~> 1.25`, where it is load-bearing. -->
 <script>window.OBSIDIAN_WIKI_INDEX_URL = {{ '/assets/data/wiki-index.json' | relative_url | jsonify }};</script>
 <script src="{{ '/assets/js/obsidian-graph.js' | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
 {% endif %}

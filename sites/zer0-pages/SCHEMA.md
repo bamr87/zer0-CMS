@@ -11,7 +11,7 @@ coverage: listed
 
 | entry | kind | purpose | rules |
 |---|---|---|---|
-| `.github/` | dir | GitHub Actions workflows — Pages build/deploy (`pages.yml`) and the SCHEMA.md lint gate (`schema-check.yml`) | terminal |
+| `.github/` | dir | GitHub Actions workflows — Pages build/deploy (`pages.yml`), the shared-CI caller (`ci.yml`), the SCHEMA.md lint gate (`schema-check.yml`), the one-paragraph-per-line gate (`markdown-oneline.yml`), and the `@claude` mention handler (`claude.yml`) | terminal |
 | `claude-obsidian/` | dir | Git submodule of the external claude-obsidian content engine (AgriciDaniel/claude-obsidian) — consumed, never edited here | terminal |
 | `pages/` | dir | The Obsidian vault and Jekyll source — all content collections, wiki, data files, bridge plugins, and assets | |
 | `tests/` | dir | Stdlib-only Ruby unit tests for the Obsidian bridge plugin cores | |
@@ -24,6 +24,7 @@ coverage: listed
 | `PRD.md` | file | Product requirements document — goals, architecture decisions, and roadmap for zer0-pages | |
 | `README.md` | file | Project overview — author/build/serve architecture, quickstart, authoring workflow | |
 | `_config.yml` | file | Jekyll configuration — `source: pages`, theme, collections, bridge and preview-image settings | |
+| `.theme-overrides.yml` | file | Declares the theme partials this site intentionally forks, with the reason each is kept — read by the theme repo's `scripts/bin/audit-consumer` | |
 | `docker-compose.yml` | file | Docker-first local dev server (serves at localhost:4000/zer0-pages/) | |
 
 ## Placement

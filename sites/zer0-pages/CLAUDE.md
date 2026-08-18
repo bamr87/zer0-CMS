@@ -27,9 +27,16 @@ zer0-pages/
 │   └── assets/               css/js/images — css/user-overrides.css is the
 │                             theme's custom-CSS hook (loaded after theme CSS)
 ├── _config.yml               Jekyll config (source: pages, destination: _site)
-├── Gemfile                   Jekyll 4 + jekyll-theme-zer0 (~> 1.25) + plugins
+├── .theme-overrides.yml      declares the two intentional theme-partial forks
+│                             (read by the theme's scripts/bin/audit-consumer)
+├── Gemfile                   Jekyll 4 + jekyll-theme-zer0 (unconstrained) + plugins
 ├── tests/                    unit tests for the bridge + graph index (minitest)
-├── .github/workflows/        pages.yml — build + deploy to GitHub Pages
+├── .github/workflows/        pages.yml       build + deploy to GitHub Pages
+│                             ci.yml          thin caller of the shared
+│                                             bamr87/bamr87 standard-ci.yml
+│                             schema-check.yml  SCHEMA.md pyramid lint
+│                             markdown-oneline.yml  one-paragraph-per-line gate
+│                             claude.yml      @claude mention handler
 └── PRD.md                    product requirements (vision)
 ```
 
@@ -46,13 +53,14 @@ wikilinks, callouts, and Dataview fences to HTML during the build (source files 
 
 ## Theme
 
-The site's UI is the **zer0-mistakes** theme, consumed as the published gem `jekyll-theme-zer0` (~> 1.25). Layouts, includes, and vendored Bootstrap 5 come from the gem — the repo has **no local `_layouts/`**; every layout name (`default`, `article`, `note`, `section`, ...) resolves straight into the gem. The repo keeps exactly two local include overrides in `pages/_includes/`, each a deliberate fork of a theme partial to fix a bug still present upstream as of gem v1.26.0 (verified against `bamr87/zer0-mistakes` main):
-- `content/intro.html` — the gem double-applies the `relative_url` filter to
-`preview_path`, double-prefixing the baseurl on project sites; this fork removes the redundant filter. It also keeps the "Copilot Agent" prompt dropdown (driven by `pages/_data/prompts.yml`) that gem v1.26.0 replaced with an unrelated page-feedback widget this site doesn't enable.
-- `obsidian/full-graph.html` — the gem's `js-cdn.html` sets
-`window.OBSIDIAN_CONFIG.wikiIndexUrl`, but `assets/js/obsidian-graph.js` actually reads a *different* global, `window.OBSIDIAN_WIKI_INDEX_URL`; without this fork setting that exact global, the graph's JSON fetch breaks under this site's `/zer0-pages` baseurl. It also trims the legend/links to the collections this vault actually has (no `notebooks`/`quickstart`).
+The site's UI is the **zer0-mistakes** theme, consumed as the published gem `jekyll-theme-zer0`. The Gemfile carries **no version constraint** — fleet policy is that every site tracks the latest theme, so a theme fix arrives on the next `bundle update jekyll-theme-zer0` rather than waiting on a bump PR. `Gemfile.lock` is committed and currently resolves **1.28.0**; the lock, not a constraint, is what makes a build reproducible. The trade is explicit: an upstream regression arrives as soon as you update, so theme bugs go **upstream** rather than getting pinned around. Layouts, includes, and vendored Bootstrap 5 come from the gem — the repo has **no local `_layouts/`**; every layout name (`default`, `article`, `note`, `section`, ...) resolves straight into the gem. The repo keeps exactly two local include overrides in `pages/_includes/`, declared in `.theme-overrides.yml` at the repo root so the theme's `scripts/bin/audit-consumer` classifies them as intentional rather than drift.
 
-Both bugs are filed upstream — `bamr87/zer0-mistakes#293` (relative_url) and `bamr87/zer0-mistakes#294` (OBSIDIAN_WIKI_INDEX_URL) — once fixed and released, these forks can be retired in favor of the gem's own partials.
+**Both of the bugs these forks were originally cut for are fixed upstream.** `bamr87/zer0-mistakes#293` (double `relative_url` on `preview_path`) and `#294` (`OBSIDIAN_WIKI_INDEX_URL` global-name mismatch) both shipped in theme **v1.26.0** (2026-07-07) — see that release's entries in the theme's `CHANGELOG.md`. An earlier version of this section claimed the opposite (that both were "still present upstream as of gem v1.26.0"); that was backwards. The forks are still kept, but for the reasons below — not for those two bugs.
+
+- `content/intro.html` — the `preview_path` / `relative_url` logic in this fork is now **byte-identical** to the theme's, so it carries no baseurl fix any more (#293 is fixed; a build against 1.28.0 renders the hero banner as `url('/zer0-pages/assets/…')`, a single baseurl segment). What the fork still does differently: (a) it keeps the **"Copilot Agent" prompt dropdown** driven by `pages/_data/prompts.yml`, which the theme replaced with its page-feedback "Improve" widget — and that widget is gated on `site.page_feedback.enabled`, which this site does not set, so taking the theme's copy would leave the intro with no prompt/report button at all; (b) it predates the theme's **i18n integration** — no `{%- include core/i18n.html -%}`, no `ui.*` lookups — so every label in the fork is hard-coded English while the theme's copy is translatable.
+- `obsidian/full-graph.html` — the `#294` workaround (pinning `window.OBSIDIAN_WIKI_INDEX_URL` explicitly) is **redundant** against 1.26.0+, whose `assets/js/obsidian-graph.js` reads `window.OBSIDIAN_CONFIG.wikiIndexUrl` first and only falls back to the legacy global. It is harmless (it sets the same baseurl-correct URL the fallback would use) and is left in place. The real reason this fork still exists is that it is **frozen at a pre-1.26 snapshot of the theme's graph page**: the theme has since redesigned that page entirely — a collapsible "Graph settings" panel (Filters / Display / Forces accordion), per-collection toggles with counts that double as the legend, an unresolved-links switch, node-size / link-thickness / label-fade sliders, repulsion / link-distance sliders with animated re-layout, a vertical zoom-in/out/fit/fullscreen button group, a hover preview card, `tag:` and `path:` search operators, and localStorage-persisted settings. The fork has none of it: just a flat toolbar (search + Reset view + orphans switch), a static legend, and its own scoped `<style>` block (the theme styles this from `_sass/core/_obsidian.scss`). It also drops the theme's H1/intro and its "See also" wikilinks — which point at theme-only pages that do not exist in this vault — and credits the local `pages/_plugins/obsidian_graph_index.rb` in "How it's built".
+
+**Retiring either fork is a real change, not a cleanup.** Dropping `content/intro.html` trades the Copilot dropdown for a button this site has disabled; dropping `obsidian/full-graph.html` gains the redesigned graph UI but re-introduces five broken wikilinks and a "How it's built" table that credits the theme's Liquid template instead of this repo's generator. Do neither without building and eyeballing the rendered pages.
 
 - **Data files are ours to provide.** Jekyll never loads `_data` from theme gems, so
 every data file the theme reads lives in `pages/_data/`: site navigation in `pages/_data/navigation/*.yml`, plus `ui-text.yml`, `authors.yml`, `theme_skins.yml`, `theme_backgrounds.yml`, and structured stubs for `content_statistics.yml` / `features.yml`.
@@ -61,7 +69,7 @@ every data file the theme reads lives in `pages/_data/`: site navigation in `pag
 - **The theme repo's own `obsidian_links.rb` is intentionally NOT used**: plugins
 never load from theme gems, and it resolves wikilinks by title while this vault's links are path-qualified — copying it in would double-convert. The bridge in `pages/_plugins/` is the sole Obsidian→HTML converter.
 - **Local theme development** (tip): to hack on the theme, temporarily point the
-Gemfile at the local checkout — `gem "jekyll-theme-zer0", path: "../github/zer0-mistakes"` — but the *committed* Gemfile MUST reference the published gem.
+Gemfile at the local checkout — `gem "jekyll-theme-zer0", path: "../github/zer0-mistakes"` — but the *committed* Gemfile MUST reference the published gem, unconstrained. Never re-add a version constraint to dodge an upstream bug; fix it in `bamr87/zer0-mistakes` and pick up the release.
 
 ## Obsidian graph UI
 
@@ -108,8 +116,16 @@ back to a plain link list) — authoritative spec: the header comment of `pages/
   - Graph index: `ruby -Ipages/_plugins tests/test_graph_index.rb`
 - **Local site build** (needs bundler + Jekyll 4):
   `bundle install && bundle exec jekyll build`
-- **CI**: `.github/workflows/pages.yml` builds on ruby 3.3 and deploys on every push to
-`main` touching `pages/**`, `_config.yml`, `Gemfile*`, or the workflow itself. Deployment requires the one-time GitHub Pages setting described under [Content flow](#content-flow) (Source: GitHub Actions).
+- **CI** — five workflows, only two of which build the site:
+  - `pages.yml` — builds on ruby 3.3 (`JEKYLL_ENV: production`, `actions/configure-pages`)
+and deploys to GitHub Pages. Triggers: **push to `main`** touching `pages/**`, `_config.yml`, `Gemfile*`, or the workflow itself, plus `workflow_dispatch`. **There is no `pull_request` trigger**, so the exact production build-and-deploy path is never exercised before merge. Deployment requires the one-time GitHub Pages setting described under [Content flow](#content-flow) (Source: GitHub Actions).
+  - `ci.yml` — runs on **`pull_request`** and push to `main`; a thin caller of the shared
+`bamr87/bamr87/.github/workflows/standard-ci.yml@main`. That reusable workflow auto-detects the stack, and because this repo has a `Gemfile`, no Rakefile `test` task, and no `spec/`, it falls through to `bundle exec jekyll build` — so a PR that breaks the themed build **is** caught. Two caveats: the gate's logic lives in another repo and floats on `@main` (it can change without a commit here), and it builds without `JEKYLL_ENV: production` and without `actions/configure-pages`, so it is not a byte-for-byte rehearsal of the deploy build.
+  - `schema-check.yml` — `python3 tools/schema_lint.py check .` on PRs, pushes to `main`,
+    and dispatch. Errors gate; warnings only log.
+  - `markdown-oneline.yml` — `tools/unwrap-prose.py --check` on `**/*.md` in PRs and
+    pushes to `main` (`SCHEMA.md` / `CHANGELOG.md` excluded). Fix with `--write`.
+  - `claude.yml` — `@claude` mention handler for issues and PR comments; not a gate.
 
 ## More detail
 

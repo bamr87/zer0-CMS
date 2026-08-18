@@ -29,9 +29,10 @@ _data/         theme data — navigation/, ui-text, authors, skins, ... (Jekyll 
 _includes/  _plugins/  assets/    Jekyll render machinery (hidden from Obsidian via
                app.json ignore filters; the only place Liquid is allowed). Layouts,
                includes, and Bootstrap come from the jekyll-theme-zer0 gem — there is
-               no local _layouts/. _includes/ holds two bug-fix forks of theme
-               partials (content/intro.html, obsidian/full-graph.html — see root
-               CLAUDE.md for the upstream issues each works around),
+               no local _layouts/. _includes/ holds two deliberate forks of theme
+               partials (content/intro.html, obsidian/full-graph.html — declared
+               in ../.theme-overrides.yml; see root CLAUDE.md for why each is
+               kept — neither is a bug workaround any more),
                _plugins/ holds the bridge + the wiki-index.json graph generator, and
                assets/css/user-overrides.css is the theme's custom-CSS hook
 ```

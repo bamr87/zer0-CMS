@@ -4,11 +4,15 @@ source "https://rubygems.org"
 
 gem "jekyll", "~> 4.3"
 
-# zer0-mistakes theme, consumed as the published gem. For local theme
-# development you may temporarily use:
+# zer0-mistakes theme, consumed as the published gem. Deliberately UNCONSTRAINED:
+# every site in the fleet tracks the latest theme, so a theme fix reaches this
+# site on the next `bundle update` instead of waiting on a bump PR. Gemfile.lock
+# is committed, so builds stay reproducible — the lock, not a version
+# constraint, is what pins production. For local theme development you may
+# temporarily use:
 #   gem "jekyll-theme-zer0", path: "../github/zer0-mistakes"
 # but the committed Gemfile must reference the published gem.
-gem "jekyll-theme-zer0", "~> 1.25"
+gem "jekyll-theme-zer0"
 
 group :jekyll_plugins do
   gem "jekyll-seo-tag"

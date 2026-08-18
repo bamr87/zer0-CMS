@@ -2,6 +2,22 @@
   file: _includes/content/intro.html
   description: Enhanced intro section with share, edit, and Copilot agent session buttons
   path: _includes/content/intro.html
+
+  LOCAL FORK of the jekyll-theme-zer0 partial of the same path. Declared in
+  ../../../.theme-overrides.yml. Why it is kept (as of theme v1.28.0):
+
+    - It keeps the "Copilot Agent" prompt dropdown (driven by _data/prompts.yml).
+      The theme replaced that with its page-feedback "Improve" button, which is
+      gated on `site.page_feedback.enabled` — a key this site does not set, so
+      taking the theme's copy would leave the intro with no prompt/report button.
+    - It predates the theme's i18n integration: it does not include
+      core/i18n.html and uses no `ui.*` default lookups, so every label here is
+      hard-coded English while the theme's copy is translatable.
+
+  NOT kept for the baseurl bug any more. bamr87/zer0-mistakes#293 (preview_path
+  double-`relative_url`) was FIXED upstream in theme v1.26.0, and the
+  preview_path block below is now byte-identical to the theme's copy.
+
   features:
     - Responsive share dropdown with multiple social platforms
     - Edit on GitHub quick link
@@ -131,10 +147,10 @@
   {% assign intro_read_mins = 1 %}
 {% endif %}
 
-{%- comment -%} Local override of the theme include: preview_path is already
-    relative_url'ed where it is assigned above, so applying the filter again
-    here double-prefixes the baseurl on project sites (baseurl != ""). One-line
-    fix; filed upstream as bamr87/zer0-mistakes#293. {%- endcomment -%}
+{%- comment -%} preview_path is relative_url'ed exactly once, where it is
+    assigned above — same as the theme's copy since v1.26.0 fixed
+    bamr87/zer0-mistakes#293. Do not add a second `| relative_url` here: that
+    is what used to double-prefix the baseurl on project sites. {%- endcomment -%}
 <div class="bd-intro" style="
   background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ preview_path }}') no-repeat center center / cover;">
 
