@@ -50,16 +50,11 @@ highlighter              : rouge
 pages_dir                : pages
 
 # ── Collections ───────────────────────────────────────────────────────────────
-collections:
-  posts:
-    output               : true
-    permalink            : /posts/:title/
-  docs:
-    output               : true
-    permalink            : /docs/:path/
-  about:
-    output               : true
-    permalink            : /about/:path/
+# Deliberately none. This is a content-only site: every page is plain Markdown
+# at the repo root (index.md) or under overthewire/**, so Jekyll treats them all
+# as type "pages". The installer's default posts/docs/about collections were
+# removed — the matching _posts/, _docs/, and _about/ directories have never
+# existed here, so the block only ever declared permalinks nothing could use.
 
 # ── Default Front Matter ─────────────────────────────────────────────────────
 # Wargames content is plain Markdown at the repo root (index.md) and under

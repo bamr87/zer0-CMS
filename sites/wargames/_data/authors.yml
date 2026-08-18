@@ -1,10 +1,14 @@
 # Site Authors
-# Add your author information here
+# The theme reads this for bylines and author cards.
+#
+# `avatar` is deliberately omitted: the theme's
+# _includes/components/author-avatar-url.html falls back to
+# https://github.com/<github handle>.png when no avatar is set, and this repo
+# has no assets/ directory to serve a local image from.
 
 default:
   name: "bamr87"
-  bio: "Update this in _data/authors.yml"
-  avatar: "/assets/images/avatar-placeholder.png"
+  bio: "Amr Abdel-Motaleb — maintainer of this OverTheWire challenge mirror and of the zer0-mistakes Jekyll theme it is built on."
   github: "bamr87"
   twitter: ""
   email: ""
