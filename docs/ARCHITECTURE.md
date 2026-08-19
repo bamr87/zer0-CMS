@@ -104,7 +104,7 @@ Two properties matter:
 
 Two separate, independently-disableable surfaces:
 
-- **The MCP server** (`src/mcp/`) — eight tools for any MCP client. The doctrine-preferred path is `zer0_draft`: the model writes a draft, a person approves it. `zer0_publish` needs an environment flag *and* a per-call confirmation.
+- **The MCP server** (`src/mcp/`) — eleven tools for any MCP client. The doctrine-preferred path is `zer0_draft`: the model writes a draft, a person approves it. `zer0_publish` needs an environment flag *and* a per-call confirmation.
 - **The agent** (`src/agent/`) — the Claude Agent SDK, loaded through a dynamic import so it is never bundled, gated on a setting that defaults to off, and absent from the dependency tree unless you ask for it. Read-only tools run freely; every mutating tool goes through an approve/deny card showing the diff.
 
 Neither is required to use the CMS, and neither can publish without walking through the same gate a human command does.

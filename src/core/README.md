@@ -23,6 +23,9 @@ The second rule follows from the first: **zero runtime dependencies**. YAML subs
 | `governance/` | The governed queue: drafts, the brand guard, the ledger, the approval gates, publishing. |
 | `catering/` | Distribution planning: the four lanes and the worklist renderer. |
 | `contract/` | The `.cms/` file bus: loader, fallback projection, and the Python engine driver. |
+| `analytics/` | The read surface, and the join that turns a platform's statistics into `performance.json`. |
+| `portfolio/` | The published track record: volume, cadence, streak, collections. |
+| `media/` | Resolving the preview image a page already has, or emitting the generator's brief. |
 | `index.ts` | The barrel. Import from `../core`, not from individual files, outside of core itself. |
 
 ## Where a type lives

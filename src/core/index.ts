@@ -48,3 +48,8 @@ export * from './catering/catering';
 export * from './catering/worklist';
 export * from './contract/contract';
 export * from './contract/engine';
+
+// --- the feedback loop ------------------------------------------------------
+export * from './analytics/analytics';
+export * from './portfolio/portfolio';
+export * from './media/media';
