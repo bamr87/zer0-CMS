@@ -17,6 +17,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-01-20 | George W. Bush inaugurated for second term | History & Politics | [file]({{ '/news/history-politics/george-w-bush-2005-agenda/' | relative_url }}) |
 | 2005-01-26 | Condoleezza Rice becomes Secretary of State | People | [file]({{ '/news/people/condoleezza-rice-secretary-of-state/' | relative_url }}) |
 | 2005-01-30 | Iraqi Parliamentary Elections | History & Politics | [file]({{ '/news/history-politics/iraqi-elections-2005/' | relative_url }}) |
+| 2005-02-06 | Super Bowl XXXIX | Society & Economics | [file]({{ '/news/society-economics/super-bowl-xxxix/' | relative_url }}) |
 | 2005-02-08 | Google Maps launches | Science & Technology | [file]({{ '/news/science-technology/google-maps-launch/' | relative_url }}) |
 | 2005-02-14 | YouTube founded | Science & Technology | [file]({{ '/news/science-technology/youtube-founded/' | relative_url }}) |
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file]({{ '/news/history-politics/hariri-assassination-cedar-revolution/' | relative_url }}) |
@@ -47,6 +48,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005 (Jul-Oct) | H5N1 avian flu escalation | Society & Economics | [file]({{ '/news/society-economics/avian-flu-h5n1-2005/' | relative_url }}) |
 | 2005-08-06 | Camp Casey anti-war protest | History & Politics | [file]({{ '/news/history-politics/camp-casey-protest/' | relative_url }}) |
 | 2005-08-15 | Israeli disengagement from the Gaza Strip | History & Politics | [file]({{ '/news/history-politics/gaza-disengagement-2005/' | relative_url }}) |
+| 2005-08-22 | Blu-ray and HD-DVD format war begins | Science & Technology | [file]({{ '/news/science-technology/bluray-hddvd-format-war/' | relative_url }}) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file]({{ '/news/society-economics/hurricane-katrina/' | relative_url }}) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file]({{ '/news/history-politics/angela-merkel-chancellor/' | relative_url }}) |
 | 2005-09-24 | Hurricane Rita | Society & Economics | [file]({{ '/news/society-economics/hurricane-rita-2005/' | relative_url }}) |
@@ -69,5 +71,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-20 | Dover Trial rejects Intelligent Design | Science & Technology | [file]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 56 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 58 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
