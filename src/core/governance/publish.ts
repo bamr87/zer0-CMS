@@ -291,9 +291,16 @@ export async function resolveSource(cfg: Zer0Config, ref: string): Promise<Sourc
   return undefined;
 }
 
-const THUMBNAIL_KEYS = ['image', 'preview', 'thumbnail', 'cover', 'featured_image', 'banner'];
+/**
+ * Front-matter keys that may carry a page's social image, in priority order.
+ *
+ * Exported so `core/media` resolves an image the same way publishing does. A
+ * second copy would mean a page that looks covered in the media report and
+ * publishes without a thumbnail.
+ */
+export const THUMBNAIL_KEYS = ['image', 'preview', 'thumbnail', 'cover', 'featured_image', 'banner'];
 
-function previewImageValue(data: FrontMatter): string {
+export function previewImageValue(data: FrontMatter): string {
   for (const key of THUMBNAIL_KEYS) {
     const value = data[key];
     if (typeof value === 'string' && value.trim() !== '') {

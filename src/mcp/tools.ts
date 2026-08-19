@@ -39,6 +39,7 @@ import {
   ENGINE_COMMANDS,
   absPath,
   buildCatering,
+  buildPortfolio,
   buildPreview,
   byPath,
   condenseNormalizerOutput,
@@ -52,12 +53,18 @@ import {
   listQueue,
   loadContractOrScan,
   loadLedger,
+  ingestPerformance,
   loadPerformance,
+  mediaCoverage,
   publishPreview,
   publishedPathsFromLedger,
+  renderCoverage,
+  renderPortfolio,
   readArticle,
   readJsonc,
   relPath,
+  unwrapStats,
+  writePerformance,
   renderWorklist,
   resolveConfig,
   resolveSource,
@@ -653,7 +660,92 @@ async function toolWorklist(cfg: Zer0Config, args: ToolArgs): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
-// 8. zer0_contract
+// 8. zer0_ingest — the step that closes the loop
+// ---------------------------------------------------------------------------
+
+/**
+ * Join a platform's statistics onto content paths and store them.
+ *
+ * Without this the catering lane can render a worklist but only from a file
+ * somebody typed by hand, so Lanes B–D stayed empty in practice. There is no
+ * fetch here on purpose: the statistics arrive as a file the operator exported,
+ * which keeps the credential out of the pure layer and makes the input
+ * something a human has looked at.
+ */
+async function toolIngest(cfg: Zer0Config, args: ToolArgs): Promise<string> {
+  const from = argString(args, 'path');
+  if (from === '') {
+    return "error: 'path' is required — a JSON file of statistics keyed by post id";
+  }
+  const write = argBoolDefaultTrue(args, 'write');
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(await fs.readFile(absPath(cfg, from), 'utf8'));
+  } catch (error) {
+    return `error: cannot read ${from} — ${reason(error)}`;
+  }
+
+  const stats = unwrapStats(raw);
+  if (Object.keys(stats).length === 0) {
+    return `error: ${from} carries no statistics (expected an object keyed by post id, or {"posts": {...}})`;
+  }
+
+  const contract = await loadContractOrScan(cfg);
+  const ledger = await loadLedger(absPath(cfg, cfg.governance.ledgerPath));
+  const existing = await loadPerformance(contract);
+  const result = ingestPerformance(ledger, stats, existing);
+
+  const lines = [
+    `ingested: ${result.matched.length} of ${Object.keys(stats).length} post(s) ` +
+      `onto content paths (${Object.keys(result.performance).length} page(s) now carry data)`,
+  ];
+  if (result.unmatched.length > 0) {
+    lines.push(
+      `unmatched: ${result.unmatched.length} post id(s) have no ledger entry, so there is ` +
+        'no page to attribute them to — ' +
+        result.unmatched.slice(0, 5).join(', '),
+    );
+  }
+  if (write) {
+    try {
+      lines.push(`wrote: ${relPath(cfg, await writePerformance(contract, result.performance))}`);
+      lines.push('next: zer0_worklist');
+    } catch (error) {
+      return `error: cannot write the performance file — ${reason(error)}`;
+    }
+  } else {
+    lines.push('(not written — pass write=true to save it under .cms/distribution/)');
+  }
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------------------
+// 9. zer0_portfolio
+// ---------------------------------------------------------------------------
+
+async function toolPortfolio(cfg: Zer0Config, _args: ToolArgs): Promise<string> {
+  const contract = await loadContractOrScan(cfg);
+  const ledger = await loadLedger(absPath(cfg, cfg.governance.ledgerPath));
+  return renderPortfolio(buildPortfolio(ledger, contract));
+}
+
+// ---------------------------------------------------------------------------
+// 10. zer0_media
+// ---------------------------------------------------------------------------
+
+async function toolMedia(cfg: Zer0Config, args: ToolArgs): Promise<string> {
+  const limit = argCount(args, 'limit', 50, 1, 500);
+  const contract = await loadContractOrScan(cfg);
+  const records = distributable(contract).slice(0, limit);
+  if (records.length === 0) {
+    return 'media: no distributable content to check.';
+  }
+  return renderCoverage(await mediaCoverage(contract.root, records));
+}
+
+// ---------------------------------------------------------------------------
+// 11. zer0_contract
 // ---------------------------------------------------------------------------
 
 /** The engine's own subcommands, plus the two normalizer modes. */
@@ -847,6 +939,48 @@ export const TOOLS: readonly ToolDef[] = [
       },
     },
     handler: toolWorklist,
+  },
+  {
+    name: 'zer0_ingest',
+    description:
+      'Join a platform export of post statistics onto content paths through the ledger and ' +
+      'store them in .cms/distribution/performance.json — the input the catering worklist ' +
+      "ranks on. Aggregate counts only; nothing about who engaged is read or kept.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description:
+            'JSON file of statistics keyed by post id, either bare or wrapped in "posts"',
+        },
+        write: { type: 'boolean', description: 'write the file (default true)' },
+      },
+      required: ['path'],
+    },
+    handler: toolIngest,
+  },
+  {
+    name: 'zer0_portfolio',
+    description:
+      'The published track record: how much, how often, the streak, and which collections ' +
+      'it came from. Computed from the ledger, so it is meaningful before any statistics exist.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: toolPortfolio,
+  },
+  {
+    name: 'zer0_media',
+    description:
+      'Which distributable pages have a preview image and which do not, with the ' +
+      'zer0-image-generator command for each gap. Reuses what the site already produced; ' +
+      'generates nothing.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'pages to check (default 50, max 500)' },
+      },
+    },
+    handler: toolMedia,
   },
   {
     name: 'zer0_contract',

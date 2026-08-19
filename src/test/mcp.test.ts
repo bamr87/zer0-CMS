@@ -34,7 +34,7 @@ const WORKSPACE = path.join(REPO_ROOT, 'src', 'test', 'fixtures', 'workspace');
 
 const PUBLISH_ENV_VAR = 'ZER0_CMS_MCP_ALLOW_PUBLISH';
 
-/** The eight tools, in the order `tools/list` must report them. */
+/** The eleven tools, in the order `tools/list` must report them. */
 const EXPECTED_TOOLS = [
   'zer0_status',
   'zer0_list_content',
@@ -43,6 +43,9 @@ const EXPECTED_TOOLS = [
   'zer0_draft',
   'zer0_publish',
   'zer0_worklist',
+  'zer0_ingest',
+  'zer0_portfolio',
+  'zer0_media',
   'zer0_contract',
 ];
 
@@ -274,7 +277,7 @@ suite('mcp: a scripted stdio session against the shipped server', function () {
     assert.strictEqual(byId(session, 1)?.result?.protocolVersion, '2025-03-26');
   });
 
-  test('tools/list reports exactly the eight tools, in order', () => {
+  test('tools/list reports exactly the eleven tools, in order', () => {
     const tools = byId(session, 2)?.result?.tools ?? [];
     assert.deepStrictEqual(
       tools.map((tool) => tool.name),

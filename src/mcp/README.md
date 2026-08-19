@@ -1,6 +1,6 @@
 # `src/mcp` — the bundled MCP server
 
-Two files that expose the CMS as eight tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
+Two files that expose the CMS as eleven tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
 
 | File | Exports | Owner |
 |---|---|---|
@@ -16,9 +16,11 @@ ZER0_CMS_MCP_ALLOW_PUBLISH=1 node dist/mcp-server.js   # publishing armed
 
 Inside VS Code the extension registers it through `vscode.lm.registerMcpServerDefinitionProvider` (`src/mcpRegistration.ts`), but standing it up by hand — Claude Code, a `.vscode/mcp.json` entry, a shell — is a supported way to run it, and the integration test spawns exactly this file.
 
-## The eight tools, in order
+## The eleven tools, in order
 
 The order in `TOOLS` is the order the test pins, and it is a safety ladder.
+
+Tools 8–10 are the feedback loop, and they sit *after* `zer0_publish` because that is the order the work happens in: publish, read back what happened, decide what is next. `zer0_ingest` is the only one of the three that writes, and it writes aggregates into `.cms/`, never content.
 
 | # | Tool | Writes | Notes |
 |---|---|---|---|
@@ -29,7 +31,10 @@ The order in `TOOLS` is the order the test pins, and it is a safety ladder.
 | 5 | `zer0_draft` | one queue file | The doctrine-preferred path: the AI drafts, the human approves. Always `status: pending`. |
 | 6 | `zer0_publish` | content + ledger | **Double-gated.** Off by default. |
 | 7 | `zer0_worklist` | `.cms/distribution/worklists/` | The four catering lanes. |
-| 8 | `zer0_contract` | only with `normalize-apply` | Runs the repository's own engine. |
+| 8 | `zer0_ingest` | `.cms/distribution/performance.json` | Joins a platform's statistics onto content paths through the ledger — the input the worklist ranks on. Aggregate counts only. |
+| 9 | `zer0_portfolio` | — | The published track record. Reads the ledger, so it works before any statistics exist. |
+| 10 | `zer0_media` | — | Which pages have a preview image, and the generator command for each that does not. |
+| 11 | `zer0_contract` | only with `normalize-apply` | Runs the repository's own engine. |
 
 ## Contracts worth knowing before you change anything
 

@@ -36,18 +36,25 @@ It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front
 
 ```
 Content ──▶ Draft ──────▶ Guard ──────▶ Approve ──────▶ Publish ──▶ Ledger
-   │        status:        length,       status:          the        keyed by
- .cms/      pending        bans,         approved         target     canonical
- or a scan                 filler        a person,                   URL
-                                         in the file
+   ▲        status:        length,       status:          the        keyed by
+   │        pending        bans,         approved         target     canonical
+   │                       filler        a person,                   URL
+   │                                     in the file                    │
+   │                                                                    ▼
+ .cms/ ◀──── Worklist ◀──── Catering ◀──── Performance ◀──── Statistics
+             what to        four lanes     aggregate,        the author's
+             write next                    per page          own posts
 ```
 
-Four rules hold this together:
+The loop closes on the bottom row. The ledger says which post came from which page, so statistics keyed by a post id become statistics keyed by *content* — and the catering lanes can rank subjects rather than guess at them. Everything on that row is aggregate: counts attached to content the author published, never anything about who engaged.
+
+Five rules hold this together:
 
 1. **Approval is a human decision recorded in the file.** A draft's `status:` line is the record. There is no unattended path to published.
 2. **The webview is UI, never the gate.** Buttons post an intent and a target — never a payload, never an override. Every gate is re-checked host-side, in the same function the command palette calls.
 3. **The ledger is keyed by canonical URL**, so this extension and a CI lane can share one queue without double-publishing. It is byte-compatible with the Python lane's `json.dump` output, so the file never churns in git.
-4. **Publishing is off by default.** Until you enable `zer0Cms.governance.publishAllow`, every path — commands, panel, dashboard, MCP — is preview and draft only.
+4. **What comes back is aggregate, and only about your own content.** The read surface is declared as data in `core/analytics`, and a test fails the build if a call in it would return another person's data. Nothing is derived about a reader anywhere in the loop.
+5. **Publishing is off by default.** Until you enable `zer0Cms.governance.publishAllow`, every path — commands, panel, dashboard, MCP — is preview and draft only.
 
 ## Getting started
 
