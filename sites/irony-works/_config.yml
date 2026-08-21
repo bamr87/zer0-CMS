@@ -68,4 +68,5 @@ exclude:
   - CLAUDE.md
   - AUTOPILOT.md
   - AI_USAGE.md
+  - fleet.manifest.yml
   - 2026-08-06-planting-irony-works-making-irony-machine-checkable.md
