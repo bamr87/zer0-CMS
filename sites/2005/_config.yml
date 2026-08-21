@@ -17,6 +17,20 @@ kramdown:
 permalink: pretty
 teaser: /images/previews/default.svg
 og_image: /images/previews/default.svg
+
+# Masthead brand mark. Unset, the theme's header renders an <img> with an
+# empty src, which relative_url resolves to the baseurl itself — a broken
+# image on every page.
+logo: /assets/images/favicon.svg
+
+# Browser identity. The theme's core/favicon.html always emits the `ico`
+# link and assumes the site carries a favicon at its root; remote_theme
+# ships only _layouts/_includes/_sass/assets, so the theme's own never
+# arrives. Assets minted by the hub's scripts/generate-favicon.rb.
+favicon:
+  ico: /favicon.ico
+  svg: /assets/images/favicon.svg
+
 # README.md becomes the site homepage via jekyll-readme-index.
 plugins:
   - jekyll-remote-theme
@@ -41,6 +55,11 @@ defaults:
       type: posts
     values:
       layout: article
+      # The article layout renders the top-of-page hero from page.preview
+      # only for featured/breaking posts unless a post opts in. Every
+      # article here carries a preview, so opt the collection in; the
+      # layout still guards on page.preview.
+      show_hero: true
       author_profile: false
       read_time: true
       share: true
