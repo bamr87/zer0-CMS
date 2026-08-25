@@ -27,6 +27,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-03-24 | PlayStation Portable (PSP) launches in North America | Science & Technology | [file]({{ '/news/science-technology/psp-launch/' | relative_url }}) |
 | 2005-03-31 | Terri Schiavo dies | Society & Economics | [file]({{ '/news/society-economics/terri-schiavo-case/' | relative_url }}) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file]({{ '/news/history-politics/pope-john-paul-ii-death/' | relative_url }}) |
+| 2005-04-09 | Prince Charles and Camilla Parker Bowles wedding | History & Politics | [file]({{ '/news/history-politics/prince-charles-camilla-wedding/' | relative_url }}) |
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file]({{ '/news/history-politics/pope-benedict-xvi-2005/' | relative_url }}) |
 | 2005-04-27 | Airbus A380 makes its first flight | Science & Technology | [file]({{ '/news/science-technology/airbus-a380-first-flight/' | relative_url }}) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file]({{ '/news/arts-culture/star-wars-episode-iii/' | relative_url }}) |
@@ -71,7 +72,8 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file]({{ '/news/arts-culture/brokeback-mountain/' | relative_url }}) |
 | 2005-12-15 | Hwang Woo-suk stem cell fraud exposed | Science & Technology | [file]({{ '/news/science-technology/hwang-woo-suk-stem-cell-fraud/' | relative_url }}) |
 | 2005-12-20 | Dover Trial rejects Intelligent Design | Science & Technology | [file]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) |
+| 2005-12-23 | Lech Kaczyński elected President of Poland | History & Politics | [file]({{ '/news/history-politics/lech-kaczynski-elected-president-poland/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 60 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 62 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
