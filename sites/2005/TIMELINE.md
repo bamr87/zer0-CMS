@@ -35,6 +35,8 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-05-31 | W. Mark Felt revealed as "Deep Throat" | People | [file]({{ '/news/people/deep-throat-revealed/' | relative_url }}) |
 | 2005-06-06 | Coldplay releases X&Y | Arts & Culture | [file]({{ '/news/arts-culture/coldplay-x-y/' | relative_url }}) |
 | 2005-06-13 | Michael Jackson acquitted | People | [file]({{ '/news/people/michael-jackson-trial-verdict/' | relative_url }}) |
+| 2005-06-15 | Batman Begins reboots the superhero film | Arts & Culture | [file]({{ '/news/arts-culture/batman-begins/' | relative_url }}) |
+| 2005-06-24 | Mahmoud Ahmadinejad elected President of Iran | History & Politics | [file]({{ '/news/history-politics/ahmadinejad-elected-president-iran/' | relative_url }}) |
 | 2005-06-27 | MGM v. Grokster decided | Science & Technology | [file]({{ '/news/science-technology/grokster-decision-p2p-liability/' | relative_url }}) |
 | 2005-07-02 | Live 8 concerts | Arts & Culture | [file]({{ '/news/arts-culture/live-8-concerts/' | relative_url }}) |
 | 2005-07-03 | Spain and Canada legalize same-sex marriage | Society & Economics | [file]({{ '/news/society-economics/same-sex-marriage-2005/' | relative_url }}) |
@@ -75,5 +77,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-23 | Lech Kaczyński elected President of Poland | History & Politics | [file]({{ '/news/history-politics/lech-kaczynski-elected-president-poland/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 62 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 64 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
