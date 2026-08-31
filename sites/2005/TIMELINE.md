@@ -30,6 +30,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-04-09 | Prince Charles and Camilla Parker Bowles wedding | History & Politics | [file]({{ '/news/history-politics/prince-charles-camilla-wedding/' | relative_url }}) |
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file]({{ '/news/history-politics/pope-benedict-xvi-2005/' | relative_url }}) |
 | 2005-04-27 | Airbus A380 makes its first flight | Science & Technology | [file]({{ '/news/science-technology/airbus-a380-first-flight/' | relative_url }}) |
+| 2005-05-05 | Tony Blair wins a third term in the UK general election | History & Politics | [file]({{ '/news/history-politics/uk-general-election-2005/' | relative_url }}) |
 | 2005-05-19 | *Star Wars* Episode III released | Arts & Culture | [file]({{ '/news/arts-culture/star-wars-episode-iii/' | relative_url }}) |
 | 2005-05-22 | L'Enfant wins Palme d'Or at Cannes | Arts & Culture | [file]({{ '/news/arts-culture/lenfant-cannes-palme-dor/' | relative_url }}) |
 | 2005-05-31 | W. Mark Felt revealed as "Deep Throat" | People | [file]({{ '/news/people/deep-throat-revealed/' | relative_url }}) |
@@ -77,5 +78,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-23 | Lech Kaczyński elected President of Poland | History & Politics | [file]({{ '/news/history-politics/lech-kaczynski-elected-president-poland/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 64 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 65 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
