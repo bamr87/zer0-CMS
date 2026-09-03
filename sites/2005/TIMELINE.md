@@ -74,9 +74,10 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-09 | *The Lion, the Witch and the Wardrobe* released | Arts & Culture | [file]({{ '/news/arts-culture/narnia-lion-witch-wardrobe/' | relative_url }}) |
 | 2005-12-09 | *Brokeback Mountain* released | Arts & Culture | [file]({{ '/news/arts-culture/brokeback-mountain/' | relative_url }}) |
 | 2005-12-15 | Hwang Woo-suk stem cell fraud exposed | Science & Technology | [file]({{ '/news/science-technology/hwang-woo-suk-stem-cell-fraud/' | relative_url }}) |
+| 2005-12-18 | Evo Morales elected President of Bolivia | People | [file]({{ '/news/people/evo-morales-elected-president-bolivia/' | relative_url }}) |
 | 2005-12-20 | Dover Trial rejects Intelligent Design | Science & Technology | [file]({{ '/news/science-technology/dover-intelligent-design-trial/' | relative_url }}) |
 | 2005-12-23 | Lech Kaczyński elected President of Poland | History & Politics | [file]({{ '/news/history-politics/lech-kaczynski-elected-president-poland/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 65 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 66 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
