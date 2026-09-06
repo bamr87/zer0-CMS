@@ -22,11 +22,14 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-02-14 | YouTube founded | Science & Technology | [file]({{ '/news/science-technology/youtube-founded/' | relative_url }}) |
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file]({{ '/news/history-politics/hariri-assassination-cedar-revolution/' | relative_url }}) |
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file]({{ '/news/science-technology/kyoto-protocol-enters-force/' | relative_url }}) |
+| 2005-03-17 | Congressional hearings on steroids in baseball | Society & Economics | [file]({{ '/news/society-economics/baseball-steroid-hearings/' | relative_url }}) |
 | 2005-03-18 | English Wikipedia passes half a million articles | Science & Technology | [file]({{ '/news/science-technology/wikipedia-500000-articles/' | relative_url }}) |
 | 2005-03-24 | Tulip Revolution in Kyrgyzstan | History & Politics | [file]({{ '/news/history-politics/tulip-revolution-kyrgyzstan/' | relative_url }}) |
 | 2005-03-24 | PlayStation Portable (PSP) launches in North America | Science & Technology | [file]({{ '/news/science-technology/psp-launch/' | relative_url }}) |
+| 2005-03-24 | The Office (US) premieres | Arts & Culture | [file]({{ '/news/arts-culture/the-office-us-premiere/' | relative_url }}) |
 | 2005-03-31 | Terri Schiavo dies | Society & Economics | [file]({{ '/news/society-economics/terri-schiavo-case/' | relative_url }}) |
 | 2005-04-02 | Pope John Paul II dies | History & Politics | [file]({{ '/news/history-politics/pope-john-paul-ii-death/' | relative_url }}) |
+| 2005-04-02 | Australian cricket dominance and the 2005 Ashes | Society & Economics | [file]({{ '/news/society-economics/cricket-world-cup-2005/' | relative_url }}) |
 | 2005-04-09 | Prince Charles and Camilla Parker Bowles wedding | History & Politics | [file]({{ '/news/history-politics/prince-charles-camilla-wedding/' | relative_url }}) |
 | 2005-04-19 | Pope Benedict XVI elected | History & Politics | [file]({{ '/news/history-politics/pope-benedict-xvi-2005/' | relative_url }}) |
 | 2005-04-27 | Airbus A380 makes its first flight | Science & Technology | [file]({{ '/news/science-technology/airbus-a380-first-flight/' | relative_url }}) |
