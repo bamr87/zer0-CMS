@@ -41,17 +41,28 @@ Z = Zer0ImageGenerator
 # surfacing is tested against production behavior.
 module FakeHttp
   class << self
-    attr_accessor :calls, :next_response, :error_to_raise, :downloads
+    attr_accessor :calls, :next_response, :error_to_raise, :downloads, :script
 
     def reset!
       @calls = []
       @next_response = nil
       @error_to_raise = nil
       @downloads = []
+      @script = nil
     end
 
     def last
       @calls.last
+    end
+
+    # A scripted sequence (exceptions and/or response hashes, one per call)
+    # wins over the single canned response, so a test can make the first
+    # attempt fail and the second succeed — the xAI OAuth -> API-key fallback.
+    def deliver
+      entry = @script && !@script.empty? ? @script.shift : (@error_to_raise || @next_response)
+      raise entry if entry.is_a?(Exception)
+
+      entry
     end
   end
 end
@@ -66,17 +77,13 @@ end
 Z::Http.define_singleton_method(:json) do |url, payload, headers, timeout:|
   FakeHttp.calls << { kind: :json, url: url, payload: payload,
                       headers: headers, timeout: timeout }
-  raise FakeHttp.error_to_raise if FakeHttp.error_to_raise
-
-  FakeHttp.next_response
+  FakeHttp.deliver
 end
 
 Z::Http.define_singleton_method(:multipart) do |url, fields, files, headers, timeout:|
   FakeHttp.calls << { kind: :multipart, url: url, fields: fields, files: files,
                       headers: headers, timeout: timeout }
-  raise FakeHttp.error_to_raise if FakeHttp.error_to_raise
-
-  FakeHttp.next_response
+  FakeHttp.deliver
 end
 
 Z::Http.define_singleton_method(:download_to) do |url, dest, **_opts|
@@ -332,11 +339,30 @@ class TestXAIProvider < Minitest::Test
     Z::PROVIDERS["xai"]
   end
 
+  # Every env in this class carries HOME so credential-file discovery stays
+  # inside the tmpdir — a real ~/.grok/auth.json on the machine running the
+  # suite must never change what these assert.
+  def env(**overrides)
+    { "HOME" => @tmp }.merge(overrides.transform_keys(&:to_s))
+  end
+
+  # Write a Grok OAuth credentials file at the default location under HOME.
+  def write_credentials_file(payload, rel = ".grok/auth.json")
+    path = File.join(@tmp, rel)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, JSON.dump(payload))
+    path
+  end
+
+  def ok_response
+    { "data" => [{ "b64_json" => b64("GROK") }] }
+  end
+
   def test_generate_request_shape_and_prompt_cap
     long_prompt = "x" * 1500
-    FakeHttp.next_response = { "data" => [{ "b64_json" => b64("GROK") }] }
+    FakeHttp.next_response = ok_response
     result = provider.generate(long_prompt, Z::Settings.new(model: ""),
-                               @out_base, ctx("XAI_API_KEY" => "xai-key"))
+                               @out_base, ctx(env("XAI_API_KEY" => "xai-key")))
 
     call = FakeHttp.last
     assert_equal "https://api.x.ai/v1/images/generations", call[:url]
@@ -354,7 +380,7 @@ class TestXAIProvider < Minitest::Test
   def test_generate_error_prefix
     FakeHttp.error_to_raise = status_error(500, "upstream down")
     result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
-                               ctx("XAI_API_KEY" => "k"))
+                               ctx(env("XAI_API_KEY" => "k")))
     refute result.ok
     assert_equal "xAI API error: upstream down", result.error
   end
@@ -364,6 +390,185 @@ class TestXAIProvider < Minitest::Test
       provider.edit(Pathname.new("x.png"), "p", Z::Settings.new, ctx({}))
     end
     assert_equal "xai", err.provider
+  end
+
+  # -- OAuth -----------------------------------------------------------------
+
+  def test_oauth_token_is_preferred_over_the_api_key
+    FakeHttp.next_response = ok_response
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                               ctx(env("XAI_OAUTH_TOKEN" => "oauth-tok",
+                                       "XAI_API_KEY" => "xai-key")))
+
+    assert result.ok
+    assert_equal 1, FakeHttp.calls.length
+    assert_equal({ "Authorization" => "Bearer oauth-tok" }, FakeHttp.last[:headers])
+  end
+
+  def test_grok_oauth_token_alias
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                      ctx(env("GROK_OAUTH_TOKEN" => "grok-tok")))
+    assert_equal({ "Authorization" => "Bearer grok-tok" }, FakeHttp.last[:headers])
+  end
+
+  def test_rejected_oauth_token_falls_back_to_the_api_key
+    FakeHttp.script = [status_error(401, "invalid token"), ok_response]
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                               ctx(env("XAI_OAUTH_TOKEN" => "stale",
+                                       "XAI_API_KEY" => "xai-key")))
+
+    assert result.ok, "the API key should have rendered after the OAuth rejection"
+    assert_equal 2, FakeHttp.calls.length
+    assert_equal({ "Authorization" => "Bearer stale" }, FakeHttp.calls[0][:headers])
+    assert_equal({ "Authorization" => "Bearer xai-key" }, FakeHttp.calls[1][:headers])
+    assert_equal "GROK", File.binread(result.path.to_s)
+  end
+
+  def test_forbidden_oauth_token_also_falls_back
+    FakeHttp.script = [status_error(403, "forbidden"), ok_response]
+    assert provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                             ctx(env("XAI_OAUTH_TOKEN" => "t",
+                                     "XAI_API_KEY" => "k"))).ok
+    assert_equal 2, FakeHttp.calls.length
+  end
+
+  def test_rejected_oauth_token_without_an_api_key_surfaces_the_error
+    FakeHttp.error_to_raise = status_error(401, "invalid token")
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                               ctx(env("XAI_OAUTH_TOKEN" => "stale")))
+
+    refute result.ok
+    assert_equal "xAI API error: invalid token", result.error
+    assert_equal 1, FakeHttp.calls.length
+  end
+
+  def test_non_auth_failures_never_burn_the_fallback
+    # A 500 is the endpoint failing, not the credential — swapping tokens would
+    # only double the load on an already-struggling API.
+    FakeHttp.error_to_raise = status_error(500, "upstream down")
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                               ctx(env("XAI_OAUTH_TOKEN" => "t", "XAI_API_KEY" => "k")))
+
+    refute result.ok
+    assert_equal "xAI API error: upstream down", result.error
+    assert_equal 1, FakeHttp.calls.length
+  end
+
+  def test_oauth_credentials_file_is_read_when_no_token_env_is_set
+    write_credentials_file("access_token" => "file-tok",
+                           "expires_at" => Time.now.to_i + 3600)
+    FakeHttp.next_response = ok_response
+    assert provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                             ctx(env)).ok
+    assert_equal({ "Authorization" => "Bearer file-tok" }, FakeHttp.last[:headers])
+  end
+
+  def test_nested_and_millisecond_expiry_shapes_are_accepted
+    write_credentials_file("xai" => { "access_token" => "nested-tok",
+                                      "expires_at" => (Time.now.to_i + 3600) * 1000 })
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+    assert_equal({ "Authorization" => "Bearer nested-tok" }, FakeHttp.last[:headers])
+  end
+
+  def test_expired_file_token_is_treated_as_absent
+    write_credentials_file("access_token" => "expired-tok",
+                           "expires_at" => Time.now.to_i - 10)
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                      ctx(env("XAI_API_KEY" => "xai-key")))
+
+    # No wasted request on a token we already know is dead.
+    assert_equal 1, FakeHttp.calls.length
+    assert_equal({ "Authorization" => "Bearer xai-key" }, FakeHttp.last[:headers])
+  end
+
+  def test_expires_in_needs_an_issue_time_to_mean_anything
+    # Lifetime alone cannot date a token, so the engine keeps it rather than
+    # guessing it is stale.
+    write_credentials_file("access_token" => "lifetime-only", "expires_in" => 3600)
+    assert_equal "Grok OAuth token (#{File.join(@tmp, '.grok/auth.json')})",
+                 provider.auth_description(env)
+
+    write_credentials_file("access_token" => "aged",
+                           "expires_in" => 3600,
+                           "created_at" => "2020-01-01T00:00:00Z")
+    assert_nil provider.auth_description(env)
+  end
+
+  def test_credentials_file_env_override_wins_outright
+    write_credentials_file({ "access_token" => "default-location" })
+    explicit = File.join(@tmp, "elsewhere", "grok.json")
+    FileUtils.mkdir_p(File.dirname(explicit))
+    File.write(explicit, JSON.dump("access_token" => "explicit-location"))
+
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                      ctx(env("GROK_OAUTH_CREDENTIALS" => explicit)))
+    assert_equal({ "Authorization" => "Bearer explicit-location" },
+                 FakeHttp.last[:headers])
+
+    # A configured-but-missing path must not silently fall back to ~/.grok.
+    assert_nil provider.auth_description(
+      env("GROK_OAUTH_CREDENTIALS" => File.join(@tmp, "nope.json"))
+    )
+  end
+
+  def test_unreadable_credentials_file_is_skipped_not_fatal
+    write_credentials_file("not json at all")               # a bare JSON string
+    assert_nil provider.auth_description(env)
+    File.write(File.join(@tmp, ".grok/auth.json"), "{{{ broken")
+    assert_nil provider.auth_description(env)
+    write_credentials_file("refresh_token" => "no access token here")
+    assert_nil provider.auth_description(env)
+  end
+
+  def test_xai_auth_pins_one_rung
+    pinned_key = env("XAI_AUTH" => "api_key", "XAI_OAUTH_TOKEN" => "t",
+                     "XAI_API_KEY" => "k")
+    assert_equal "XAI_API_KEY (xAI API key)", provider.auth_description(pinned_key)
+
+    pinned_oauth = env("XAI_AUTH" => "oauth", "XAI_OAUTH_TOKEN" => "t",
+                       "XAI_API_KEY" => "k")
+    assert_equal "XAI_OAUTH_TOKEN (Grok OAuth token)",
+                 provider.auth_description(pinned_oauth)
+    refute provider.is_configured(env("XAI_AUTH" => "oauth", "XAI_API_KEY" => "k"))
+
+    # An unknown value is not a hard error; it degrades to the default ladder.
+    assert_equal "XAI_OAUTH_TOKEN (Grok OAuth token), falling back to " \
+                 "XAI_API_KEY (xAI API key)",
+                 provider.auth_description(env("XAI_AUTH" => "nonsense",
+                                               "XAI_OAUTH_TOKEN" => "t",
+                                               "XAI_API_KEY" => "k"))
+  end
+
+  def test_base_url_override
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                      ctx(env("XAI_BASE_URL" => "https://gateway.test/v1/",
+                              "XAI_OAUTH_TOKEN" => "t")))
+    assert_equal "https://gateway.test/v1/images/generations", FakeHttp.last[:url]
+  end
+
+  def test_is_configured_and_missing_hint
+    refute provider.is_configured(env)
+    assert provider.is_configured(env("XAI_API_KEY" => "k"))
+    assert provider.is_configured(env("XAI_OAUTH_TOKEN" => "t"))
+    write_credentials_file("access_token" => "file-tok")
+    assert provider.is_configured(env)
+
+    hint = provider.missing_hint(env)
+    assert_includes hint, "XAI_OAUTH_TOKEN"
+    assert_includes hint, "XAI_API_KEY"
+    assert_includes hint, "~/.grok/auth.json"
+  end
+
+  def test_generate_without_any_credential_reports_the_hint
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+    refute result.ok
+    assert_equal Z::XAIAuth::MISSING_HINT, result.error
+    assert_empty FakeHttp.calls
   end
 end
 

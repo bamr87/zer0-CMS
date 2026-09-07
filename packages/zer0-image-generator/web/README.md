@@ -25,7 +25,7 @@ SITES_DIR=/path/to/your/jekyll/sites docker compose up --build
 # → http://localhost:3000
 ```
 
-`SITES_DIR` is bind-mounted into the container at `/sites`; register a site using its **container** path (e.g. `/sites/my-blog`). Provider keys can be set in the UI (encrypted at rest) or exported into the container's environment — including `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) for Claude art direction and `OPENAI_API_KEY` for rendering and the enhance/further-process step. The `local` provider needs no keys and is fully deterministic.
+`SITES_DIR` is bind-mounted into the container at `/sites`; register a site using its **container** path (e.g. `/sites/my-blog`). Provider keys can be set in the UI (encrypted at rest) or exported into the container's environment — including `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) for Claude art direction and `OPENAI_API_KEY` for rendering and the enhance/further-process step. The xAI renderer takes either a Grok OAuth token (`XAI_OAUTH_TOKEN`, or the **xai_oauth** slot in the UI) or `XAI_API_KEY`, and falls back from the first to the second when a token is expired or rejected. The `local` provider needs no keys and is fully deterministic.
 
 Without Docker:
 
@@ -48,7 +48,7 @@ Requires a rasterizer for the `local` provider and studio PNGs — the Docker im
 | Site scan / config | [app/services/site_scanner.rb](app/services/site_scanner.rb), [app/services/site_config_editor.rb](app/services/site_config_editor.rb) (surgically rewrites just the `preview_images:` block) |
 | SVG studio | [app/services/studio_catalog.rb](app/services/studio_catalog.rb) (knob metadata), [app/services/studio_renderer.rb](app/services/studio_renderer.rb) (maps forms → generators), [app/jobs/sweep_job.rb](app/jobs/sweep_job.rb) |
 | Library / sourcing | [app/services/library_sync.rb](app/services/library_sync.rb), [app/services/freesvg_source.rb](app/services/freesvg_source.rb) |
-| Credentials | [app/models/credential.rb](app/models/credential.rb) — encrypted; renderer keys + the Claude credential chain (OAuth token → auth token → API key) |
+| Credentials | [app/models/credential.rb](app/models/credential.rb) — encrypted; renderer keys, the xAI ladder (Grok OAuth token → API key) and the Claude credential chain (OAuth token → auth token → API key) |
 
 ## Data model
 

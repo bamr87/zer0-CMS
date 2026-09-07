@@ -7,9 +7,11 @@ Zero network: every provider/API test monkeypatches the module's HTTP layer.
 """
 
 import argparse
+import json
 import os
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -672,8 +674,16 @@ class TestSvgToolkit(unittest.TestCase):
 class TestProviderLadder(unittest.TestCase):
     """`provider: auto` picks the best renderer the environment can reach."""
 
+    def setUp(self):
+        self._tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmpdir.cleanup)
+
     def resolve(self, env):
-        return pg.resolve_auto_provider(pg.Settings(provider="auto"), env).provider
+        # HOME points at an empty tmpdir so a real Grok OAuth credentials file
+        # on the machine running the suite cannot promote the xAI rung.
+        settings = pg.resolve_auto_provider(
+            pg.Settings(provider="auto"), {"HOME": self._tmpdir.name, **env})
+        return settings.provider
 
     def test_nothing_wired_falls_to_the_shared_collection_default(self):
         self.assertEqual(self.resolve({}), "default")
@@ -1043,6 +1053,231 @@ class TestProviders(unittest.TestCase):
                     "p", make_settings(), out_base, self.ctx({"GEMINI_API_KEY": "g"}, tmp))
             self.assertTrue(result.ok)
             self.assertEqual(result.path.read_bytes(), b"img")
+
+
+class TestXAIAuth(unittest.TestCase):
+    """The xAI credential ladder: a Grok OAuth token first, XAI_API_KEY as the
+    fallback — including the runtime retry when the OAuth token is rejected."""
+
+    def setUp(self):
+        self._tmpdir = tempfile.TemporaryDirectory()
+        self.tmp = Path(self._tmpdir.name)
+        self.addCleanup(self._tmpdir.cleanup)
+
+    # Every env carries HOME so credential-file discovery stays inside the
+    # tmpdir — a real ~/.grok/auth.json on the machine running the suite must
+    # never change what these assert.
+    def env(self, **overrides):
+        env = {"HOME": str(self.tmp)}
+        env.update(overrides)
+        return env
+
+    def ctx(self, env):
+        return pg.RunContext(project_root=self.tmp, env=env, slug="test-post")
+
+    def write_credentials_file(self, payload, rel=".grok/auth.json"):
+        path = self.tmp / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    def generate(self, env, responses):
+        """Run one generate() against a scripted response sequence. Entries are
+        either exceptions to raise or dicts to return, one per HTTP call."""
+        calls = []
+        script = list(responses)
+
+        def fake_json(url, payload, headers, timeout=900):
+            calls.append({"url": url, "payload": payload, "headers": headers})
+            entry = script.pop(0)
+            if isinstance(entry, Exception):
+                raise entry
+            return entry
+
+        out_base = self.tmp / "slug"
+        with mock.patch.object(pg, "http_json", fake_json), \
+                mock.patch.object(pg, "with_retries", lambda fn, what: fn()):
+            result = pg.PROVIDERS["xai"].generate(
+                "prompt", make_settings(model=""), out_base, self.ctx(env))
+        return result, calls
+
+    @staticmethod
+    def status_error(status, message):
+        return pg.HttpStatusError(
+            status, json.dumps({"error": {"message": message}}).encode(),
+            "https://api.x.ai/v1/images/generations")
+
+    @staticmethod
+    def ok_response():
+        return {"data": [{"b64_json": "R1JPSw=="}]}  # "GROK"
+
+    def test_oauth_token_is_preferred_over_the_api_key(self):
+        result, calls = self.generate(
+            self.env(XAI_OAUTH_TOKEN="oauth-tok", XAI_API_KEY="xai-key"),
+            [self.ok_response()])
+        self.assertTrue(result.ok)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer oauth-tok"})
+        self.assertEqual(calls[0]["url"], "https://api.x.ai/v1/images/generations")
+        self.assertEqual(result.path.read_bytes(), b"GROK")
+
+    def test_grok_oauth_token_alias(self):
+        _, calls = self.generate(self.env(GROK_OAUTH_TOKEN="grok-tok"),
+                                 [self.ok_response()])
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer grok-tok"})
+
+    def test_api_key_alone_keeps_the_historical_request_shape(self):
+        result, calls = self.generate(self.env(XAI_API_KEY="xai-key"),
+                                      [self.ok_response()])
+        self.assertTrue(result.ok)
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer xai-key"})
+        self.assertEqual(calls[0]["payload"]["model"], "grok-2-image")
+        self.assertEqual(calls[0]["payload"]["n"], 1)
+
+    def test_rejected_oauth_token_falls_back_to_the_api_key(self):
+        result, calls = self.generate(
+            self.env(XAI_OAUTH_TOKEN="stale", XAI_API_KEY="xai-key"),
+            [self.status_error(401, "invalid token"), self.ok_response()])
+        self.assertTrue(result.ok, "the API key should render after the rejection")
+        self.assertEqual([c["headers"]["Authorization"] for c in calls],
+                         ["Bearer stale", "Bearer xai-key"])
+
+    def test_forbidden_oauth_token_also_falls_back(self):
+        result, calls = self.generate(
+            self.env(XAI_OAUTH_TOKEN="t", XAI_API_KEY="k"),
+            [self.status_error(403, "forbidden"), self.ok_response()])
+        self.assertTrue(result.ok)
+        self.assertEqual(len(calls), 2)
+
+    def test_rejected_oauth_token_without_an_api_key_surfaces_the_error(self):
+        result, calls = self.generate(self.env(XAI_OAUTH_TOKEN="stale"),
+                                      [self.status_error(401, "invalid token")])
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error, "xAI API error: invalid token")
+        self.assertEqual(len(calls), 1)
+
+    def test_non_auth_failures_never_burn_the_fallback(self):
+        # A 500 is the endpoint failing, not the credential — swapping tokens
+        # would only double the load on an already-struggling API.
+        result, calls = self.generate(
+            self.env(XAI_OAUTH_TOKEN="t", XAI_API_KEY="k"),
+            [self.status_error(500, "upstream down")])
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error, "xAI API error: upstream down")
+        self.assertEqual(len(calls), 1)
+
+    def test_prompt_cap_is_unchanged(self):
+        calls = []
+
+        def fake_json(url, payload, headers, timeout=900):
+            calls.append(payload)
+            return self.ok_response()
+
+        with mock.patch.object(pg, "http_json", fake_json):
+            pg.PROVIDERS["xai"].generate("x" * 1500, make_settings(model=""),
+                                         self.tmp / "slug",
+                                         self.ctx(self.env(XAI_API_KEY="k")))
+        self.assertEqual(calls[0]["prompt"], "x" * 1000)
+
+    def test_oauth_credentials_file_is_read_when_no_token_env_is_set(self):
+        self.write_credentials_file({"access_token": "file-tok",
+                                     "expires_at": time.time() + 3600})
+        _, calls = self.generate(self.env(), [self.ok_response()])
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer file-tok"})
+
+    def test_nested_and_millisecond_expiry_shapes_are_accepted(self):
+        self.write_credentials_file(
+            {"xai": {"access_token": "nested-tok",
+                     "expires_at": int((time.time() + 3600) * 1000)}})
+        _, calls = self.generate(self.env(), [self.ok_response()])
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer nested-tok"})
+
+    def test_expired_file_token_is_treated_as_absent(self):
+        self.write_credentials_file({"access_token": "expired-tok",
+                                     "expires_at": time.time() - 10})
+        # No wasted request on a token we already know is dead.
+        _, calls = self.generate(self.env(XAI_API_KEY="xai-key"),
+                                 [self.ok_response()])
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer xai-key"})
+
+    def test_expires_in_needs_an_issue_time_to_mean_anything(self):
+        path = self.write_credentials_file({"access_token": "lifetime-only",
+                                            "expires_in": 3600})
+        self.assertEqual(pg.xai_auth_describe(self.env()),
+                         f"Grok OAuth token ({path})")
+        self.write_credentials_file({"access_token": "aged", "expires_in": 3600,
+                                     "created_at": "2020-01-01T00:00:00Z"})
+        self.assertIsNone(pg.xai_auth_describe(self.env()))
+
+    def test_credentials_file_env_override_wins_outright(self):
+        self.write_credentials_file({"access_token": "default-location"})
+        explicit = self.tmp / "elsewhere" / "grok.json"
+        explicit.parent.mkdir(parents=True, exist_ok=True)
+        explicit.write_text(json.dumps({"access_token": "explicit-location"}),
+                            encoding="utf-8")
+        _, calls = self.generate(self.env(GROK_OAUTH_CREDENTIALS=str(explicit)),
+                                 [self.ok_response()])
+        self.assertEqual(calls[0]["headers"],
+                         {"Authorization": "Bearer explicit-location"})
+        # A configured-but-missing path must not silently fall back to ~/.grok.
+        self.assertIsNone(pg.xai_auth_describe(
+            self.env(GROK_OAUTH_CREDENTIALS=str(self.tmp / "nope.json"))))
+
+    def test_unreadable_credentials_file_is_skipped_not_fatal(self):
+        self.write_credentials_file("not json at all")   # a bare JSON string
+        self.assertIsNone(pg.xai_auth_describe(self.env()))
+        (self.tmp / ".grok" / "auth.json").write_text("{{{ broken", encoding="utf-8")
+        self.assertIsNone(pg.xai_auth_describe(self.env()))
+        self.write_credentials_file({"refresh_token": "no access token here"})
+        self.assertIsNone(pg.xai_auth_describe(self.env()))
+
+    def test_xai_auth_pins_one_rung(self):
+        both = dict(XAI_OAUTH_TOKEN="t", XAI_API_KEY="k")
+        self.assertEqual(
+            pg.xai_auth_describe(self.env(XAI_AUTH="api_key", **both)),
+            "XAI_API_KEY (xAI API key)")
+        self.assertEqual(
+            pg.xai_auth_describe(self.env(XAI_AUTH="oauth", **both)),
+            "XAI_OAUTH_TOKEN (Grok OAuth token)")
+        self.assertFalse(pg.PROVIDERS["xai"].is_configured(
+            self.env(XAI_AUTH="oauth", XAI_API_KEY="k")))
+        # An unknown value is not a hard error; it degrades to the default ladder.
+        self.assertEqual(
+            pg.xai_auth_describe(self.env(XAI_AUTH="nonsense", **both)),
+            "XAI_OAUTH_TOKEN (Grok OAuth token), falling back to "
+            "XAI_API_KEY (xAI API key)")
+
+    def test_base_url_override(self):
+        _, calls = self.generate(
+            self.env(XAI_BASE_URL="https://gateway.test/v1/", XAI_OAUTH_TOKEN="t"),
+            [self.ok_response()])
+        self.assertEqual(calls[0]["url"], "https://gateway.test/v1/images/generations")
+
+    def test_is_configured_and_missing_hint(self):
+        provider = pg.PROVIDERS["xai"]
+        self.assertFalse(provider.is_configured(self.env()))
+        self.assertTrue(provider.is_configured(self.env(XAI_API_KEY="k")))
+        self.assertTrue(provider.is_configured(self.env(XAI_OAUTH_TOKEN="t")))
+        self.write_credentials_file({"access_token": "file-tok"})
+        self.assertTrue(provider.is_configured(self.env()))
+
+        hint = provider.missing_hint(self.env())
+        for expected in ("XAI_OAUTH_TOKEN", "XAI_API_KEY", "~/.grok/auth.json"):
+            self.assertIn(expected, hint)
+
+    def test_generate_without_any_credential_reports_the_hint(self):
+        result, calls = self.generate(self.env(), [])
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error, pg.XAI_MISSING_HINT)
+        self.assertEqual(calls, [])
+
+    def test_auto_provider_promotes_xai_on_an_oauth_token_alone(self):
+        # resolve_auto_provider asks each renderer whether it is configured, so
+        # an OAuth-only machine reaches the xAI rung with no XAI_API_KEY set.
+        settings = pg.resolve_auto_provider(make_settings(provider="auto"),
+                                            self.env(XAI_OAUTH_TOKEN="t"))
+        self.assertEqual(settings.provider, "xai")
 
 
 class _FakeClaude:

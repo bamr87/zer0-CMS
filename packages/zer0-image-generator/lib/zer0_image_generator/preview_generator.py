@@ -88,6 +88,7 @@ import zlib
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, replace
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -2183,6 +2184,12 @@ class Provider:
     def default_model(self) -> str:
         raise NotImplementedError
 
+    def auth_description(self, env: Dict[str, str]) -> Optional[str]:
+        """One line naming the credential this run will authenticate with, for
+        the config banner. None (the default) means "there is nothing
+        interesting to say" — a provider with exactly one possible credential."""
+        return None
+
     def output_stem(self, slug: str, ctx: "RunContext") -> str:
         """Filename stem this provider writes to, minus the extension.
 
@@ -2324,40 +2331,319 @@ class OpenAIProvider(Provider):
             return ImageResult(False, error=str(exc))
 
 
+# --- xAI (Grok) credentials --------------------------------------------------
+#
+# api.x.ai takes a plain `Authorization: Bearer <value>` for BOTH kinds of
+# credential, so the only thing that varies between a Grok OAuth access token
+# and a console API key is where the value comes from and what we tell the human
+# when it is rejected.
+#
+# Deliberately NOT implemented: minting or refreshing an OAuth token. xAI does
+# not publish its device-code/PKCE endpoints or a public client id, and the
+# credentials file belongs to whichever login tool wrote it — inventing a token
+# endpoint, or writing back into another tool's store, would be guesswork. The
+# engine CONSUMES a token that a Grok login already produced, treats an expired
+# one as absent, and falls back to the API key.
+XAI_API_BASE = "https://api.x.ai/v1"
+
+# OAuth access token straight from the environment. XAI_ first (it matches the
+# vendor's own XAI_* naming), GROK_ accepted because that is what the
+# consumer-facing login is called.
+XAI_OAUTH_TOKEN_ENV: Tuple[str, ...] = ("XAI_OAUTH_TOKEN", "GROK_OAUTH_TOKEN")
+
+# Explicit path to a credentials file written by a Grok OAuth login.
+XAI_CREDENTIALS_FILE_ENV: Tuple[str, ...] = (
+    "XAI_OAUTH_CREDENTIALS", "GROK_OAUTH_CREDENTIALS",
+)
+
+XAI_API_KEY_ENV = "XAI_API_KEY"
+
+# Where a Grok login drops its token when no path is configured. Relative to the
+# home directory so a test (and a container) can point HOME elsewhere.
+XAI_DEFAULT_CREDENTIALS_FILES: Tuple[str, ...] = (
+    ".grok/auth.json", ".config/grok/auth.json", ".xai/auth.json",
+)
+
+# Credential files nest the token differently per tool; look at the top level
+# first, then inside the usual containers.
+XAI_NESTED_KEYS: Tuple[str, ...] = ("xai", "grok", "oauth", "tokens", "credentials")
+
+# Treat a token that expires within the minute as already gone — a run can
+# easily outlive that, and the API key fallback is cheaper than a mid-run 401 on
+# every remaining page.
+XAI_EXPIRY_LEEWAY = 60.0
+
+# Which rung(s) to try, as an env knob. `auto` (the default) is OAuth first with
+# the API key as the fallback; the other two pin one rung.
+XAI_AUTH_MODE_ENV = "XAI_AUTH"
+XAI_AUTH_MODES: Tuple[str, ...] = ("auto", "oauth", "api_key")
+
+XAI_MISSING_HINT = (
+    "The xAI provider needs a Grok OAuth token or an xAI API key — any ONE of:\n"
+    "  1. XAI_OAUTH_TOKEN (or GROK_OAUTH_TOKEN) — an OAuth access token from a\n"
+    "     Grok login (SuperGrok / X Premium+)\n"
+    "  2. a Grok OAuth credentials file — ~/.grok/auth.json by default, or the\n"
+    "     path in XAI_OAUTH_CREDENTIALS / GROK_OAUTH_CREDENTIALS\n"
+    "  3. XAI_API_KEY — a key from console.x.ai (also the automatic fallback\n"
+    "     when an OAuth token is expired or rejected)\n"
+    "Pin one rung with XAI_AUTH=oauth|api_key; the default tries OAuth first."
+)
+
+
+@dataclass
+class XAICredential:
+    """One resolved way to authenticate against api.x.ai."""
+    mode: str    # "oauth" | "api_key" — which rung of the chain this is
+    token: str
+    source: str  # human label for logs and fallback warnings
+
+    def headers(self) -> Dict[str, str]:
+        return {"Authorization": f"Bearer {self.token}"}
+
+
+def xai_auth_mode(env: Dict[str, str]) -> str:
+    raw = (env.get(XAI_AUTH_MODE_ENV) or "").strip().lower()
+    if not raw:
+        return "auto"
+    if raw in XAI_AUTH_MODES:
+        return raw
+    debug(f"{XAI_AUTH_MODE_ENV}={raw} is not one of "
+          f"{'|'.join(XAI_AUTH_MODES)}; using auto")
+    return "auto"
+
+
+def xai_credential_chain(env: Dict[str, str]) -> List[XAICredential]:
+    """The credentials to try, best rung first. Empty = provider unconfigured."""
+    mode = xai_auth_mode(env)
+    chain: List[XAICredential] = []
+    if mode != "api_key":
+        chain.extend(_xai_oauth_credentials(env))
+    if mode != "oauth":
+        api_key = _xai_api_key_credential(env)
+        if api_key is not None:
+            chain.append(api_key)
+    return chain
+
+
+def xai_auth_describe(env: Dict[str, str]) -> Optional[str]:
+    """One-line summary of how this run will authenticate (None when it cannot)."""
+    chain = xai_credential_chain(env)
+    if not chain:
+        return None
+    if len(chain) > 1:
+        return f"{chain[0].source}, falling back to {chain[1].source}"
+    return chain[0].source
+
+
+def xai_base_url(env: Dict[str, str]) -> str:
+    """Base for the images endpoint. XAI_BASE_URL is xAI's own override and is
+    honored here so an OAuth surface on a different host stays reachable."""
+    configured = env.get("XAI_BASE_URL") or ""
+    return configured.rstrip("/") if configured else XAI_API_BASE
+
+
+def _xai_oauth_credentials(env: Dict[str, str]) -> List[XAICredential]:
+    for name in XAI_OAUTH_TOKEN_ENV:
+        value = env.get(name)
+        if value:
+            return [XAICredential("oauth", value, f"{name} (Grok OAuth token)")]
+    for path in _xai_credential_files(env):
+        credential = _xai_file_credential(path)
+        if credential is not None:
+            return [credential]
+    return []
+
+
+def _xai_api_key_credential(env: Dict[str, str]) -> Optional[XAICredential]:
+    value = env.get(XAI_API_KEY_ENV)
+    if not value:
+        return None
+    return XAICredential("api_key", value, f"{XAI_API_KEY_ENV} (xAI API key)")
+
+
+def _xai_credential_files(env: Dict[str, str]) -> List[str]:
+    """Candidate credential-file paths: an explicit override wins outright, so a
+    configured-but-missing path never silently reads someone else's token."""
+    for name in XAI_CREDENTIALS_FILE_ENV:
+        value = env.get(name)
+        if value:
+            return [value]
+    home = _xai_home_dir(env)
+    if not home:
+        return []
+    return [os.path.join(home, rel) for rel in XAI_DEFAULT_CREDENTIALS_FILES]
+
+
+def _xai_home_dir(env: Dict[str, str]) -> Optional[str]:
+    """The env snapshot is the source of truth (tests and containers set HOME);
+    the process's own home is only the last resort."""
+    for name in ("HOME", "USERPROFILE"):
+        value = env.get(name)
+        if value:
+            return value
+    home = os.path.expanduser("~")
+    # expanduser returns "~" unchanged when it cannot resolve a home directory.
+    return home if home and home != "~" else None
+
+
+def _xai_file_credential(path: str) -> Optional[XAICredential]:
+    """Read one credentials file. Anything unreadable, unparseable, tokenless or
+    expired is "no credential here" — the chain moves on to the next rung."""
+    if not os.path.isfile(path):
+        return None
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        debug(f"xAI OAuth: {path} is not valid JSON ({exc}); ignoring")
+        return None
+    except OSError as exc:
+        debug(f"xAI OAuth: cannot read {path} ({exc}); ignoring")
+        return None
+    if not isinstance(data, dict):
+        debug(f"xAI OAuth: {path} is not a JSON object; ignoring")
+        return None
+    node = _xai_token_node(data)
+    if node is None:
+        debug(f"xAI OAuth: no access_token in {path}; ignoring")
+        return None
+    if _xai_expired(node):
+        debug(f"xAI OAuth: the token in {path} has expired; re-run your Grok login")
+        return None
+    return XAICredential("oauth", str(node["access_token"]),
+                         f"Grok OAuth token ({path})")
+
+
+def _xai_token_node(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """The dict actually holding `access_token`: the document itself, or one of
+    the containers a login tool nests it under."""
+    if _xai_token_string(data.get("access_token")):
+        return data
+    for key in XAI_NESTED_KEYS:
+        nested = data.get(key)
+        if isinstance(nested, dict) and _xai_token_string(nested.get("access_token")):
+            return nested
+    return None
+
+
+def _xai_token_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def _xai_expired(node: Dict[str, Any], now: Optional[float] = None) -> bool:
+    expires_at = _xai_absolute_expiry(node)
+    if expires_at is None:
+        return False
+    return expires_at <= (time.time() if now is None else now) + XAI_EXPIRY_LEEWAY
+
+
+def _xai_absolute_expiry(node: Dict[str, Any]) -> Optional[float]:
+    """Absolute expiry in epoch seconds, or None when the file records none."""
+    for key in ("expires_at", "expiry", "expiration", "expires"):
+        value = _xai_epoch_seconds(node.get(key))
+        if value is not None:
+            return value
+    # `expires_in` is relative and only means something next to an issue time.
+    lifetime = _xai_number(node.get("expires_in"))
+    if lifetime is None:
+        return None
+    for key in ("created_at", "obtained_at", "issued_at", "issued"):
+        issued = _xai_epoch_seconds(node.get(key))
+        if issued is not None:
+            return issued + lifetime
+    return None
+
+
+def _xai_epoch_seconds(raw: Any) -> Optional[float]:
+    """Accepts epoch seconds, epoch milliseconds, or an ISO-8601 timestamp."""
+    value = _xai_number(raw)
+    if value is not None:
+        # 1e11 seconds is the year 5138; anything past it is milliseconds.
+        return value / 1000.0 if value > 1e11 else value
+    if not isinstance(raw, str) or not raw:
+        return None
+    text = raw[:-1] + "+00:00" if raw.endswith("Z") else raw
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
+
+
+def _xai_number(raw: Any) -> Optional[float]:
+    # bool is an int subclass; a JSON true/false is not a timestamp.
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    if not isinstance(raw, str) or not raw:
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
 class XAIProvider(Provider):
+    """xAI (Grok) images/generations.
+
+    Two ways in, tried in order: a Grok OAuth access token, then the
+    XAI_API_KEY. Both are Bearer credentials on the same endpoint, so the
+    fallback is genuinely a retry with a different token — an OAuth token that
+    has gone stale between runs costs one rejected request and then rides the
+    API key instead of failing the page."""
     name = "xai"
 
+    # Statuses that mean "this credential is no good" rather than "this request
+    # is no good" — the only ones worth re-trying on the next rung.
+    AUTH_FAILURE_STATUSES = (401, 403)
+
+    # xAI caps the prompt; the original engine slices the first 1000 chars.
+    PROMPT_LIMIT = 1000
+
     def is_configured(self, env: Dict[str, str]) -> bool:
-        return bool(env.get("XAI_API_KEY"))
+        return bool(xai_credential_chain(env))
 
     def missing_hint(self, env: Dict[str, str]) -> str:
-        return "XAI_API_KEY environment variable is required for the xAI provider"
+        return XAI_MISSING_HINT
+
+    def auth_description(self, env: Dict[str, str]) -> Optional[str]:
+        return xai_auth_describe(env)
 
     def default_model(self) -> str:
         return "grok-2-image"
 
     def generate(self, prompt, settings, out_base, ctx) -> ImageResult:
+        chain = xai_credential_chain(ctx.env)
+        if not chain:
+            return ImageResult(False, error=XAI_MISSING_HINT)
         model = effective_model(settings, self)
         out_path = out_base.with_suffix(".png")
-        payload = {"model": model, "prompt": prompt[:1000], "n": 1}  # 1024-char cap
-        try:
-            data = with_retries(
-                lambda: http_json(
-                    "https://api.x.ai/v1/images/generations",
-                    payload,
-                    {"Authorization": f"Bearer {ctx.env['XAI_API_KEY']}"},
-                    timeout=900,
-                ),
-                "xAI API",
-            )
-            entries = data.get("data") or []
-            if not entries or not _write_image_payload(entries[0], out_path):
-                return ImageResult(False, error="No image data in xAI response")
-            return ImageResult(True, "png", out_path)
-        except HttpStatusError as exc:
-            return ImageResult(False, error=f"xAI API error: {exc.message()}")
-        except Exception as exc:
-            return ImageResult(False, error=str(exc))
+        payload = {"model": model, "prompt": prompt[:self.PROMPT_LIMIT], "n": 1}
+        url = f"{xai_base_url(ctx.env)}/images/generations"
+        for index, credential in enumerate(chain):
+            debug(f"xAI generate: model={model} auth={credential.source}")
+            try:
+                data = with_retries(
+                    lambda: http_json(url, payload, credential.headers(), timeout=900),
+                    "xAI API",
+                )
+                entries = data.get("data") or []
+                if not entries or not _write_image_payload(entries[0], out_path):
+                    return ImageResult(False, error="No image data in xAI response")
+                return ImageResult(True, "png", out_path)
+            except HttpStatusError as exc:
+                fallback = chain[index + 1] if index + 1 < len(chain) else None
+                if exc.status in self.AUTH_FAILURE_STATUSES and fallback is not None:
+                    warn(f"xAI rejected the {credential.source} (HTTP {exc.status}) — "
+                         f"retrying with {fallback.source}")
+                    continue
+                return ImageResult(False, error=f"xAI API error: {exc.message()}")
+            except Exception as exc:
+                return ImageResult(False, error=str(exc))
+        # Unreachable: the last rung has no fallback and always returns above.
+        return ImageResult(False, error="No usable xAI credential")
 
 
 class StabilityProvider(Provider):
@@ -3120,6 +3406,11 @@ def validate_credentials(settings: Settings, ctx: RunContext) -> None:
         return
     if not provider.is_configured(ctx.env):
         error_exit(provider.missing_hint(ctx.env))
+    # Providers with more than one way in (xAI: OAuth token, then API key) say
+    # which one this run picked, so a silent fallback is never a surprise.
+    description = provider.auth_description(ctx.env)
+    if description:
+        info(f"{provider.name} auth: {description}")
 
 
 def main(argv: Optional[List[str]] = None) -> int:

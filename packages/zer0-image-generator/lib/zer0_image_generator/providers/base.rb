@@ -77,6 +77,13 @@ module Zer0ImageGenerator
       raise NotImplementedError
     end
 
+    # One line naming the credential this run will authenticate with, for the
+    # config banner. nil (the default) means "there is nothing interesting to
+    # say" — a provider with exactly one possible credential.
+    def auth_description(_env)
+      nil
+    end
+
     def generate(_prompt, _settings, _out_base, _ctx)
       raise NotImplementedError
     end

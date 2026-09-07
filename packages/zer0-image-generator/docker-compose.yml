@@ -52,6 +52,7 @@ services:
       # instead of the encrypted credential store.
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       XAI_API_KEY: ${XAI_API_KEY:-}
+      XAI_OAUTH_TOKEN: ${XAI_OAUTH_TOKEN:-}
       STABILITY_API_KEY: ${STABILITY_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

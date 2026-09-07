@@ -192,6 +192,12 @@ module Zer0ImageGenerator
         return
       end
       logger.error_exit(provider.missing_hint(ctx.env)) unless provider.is_configured(ctx.env)
+      # Providers with more than one way in (xAI: OAuth token, then API key) say
+      # which one this run picked, so a silent fallback is never a surprise.
+      if provider.respond_to?(:auth_description)
+        description = provider.auth_description(ctx.env)
+        logger.info("#{provider.name} auth: #{description}") if description
+      end
     end
 
     # Full run. Returns the process exit code (0/1). Usage errors and

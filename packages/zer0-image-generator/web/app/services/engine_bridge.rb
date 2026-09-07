@@ -76,14 +76,13 @@ module EngineBridge
     Zer0ImageGenerator::PROVIDERS.keys
   end
 
-  # Which providers can actually run given the current environment: `local`
-  # always can; the rest need their key present.
+  # Which providers can actually run given the current environment. The ENGINE
+  # owns that question — xAI, for one, is reachable through a Grok OAuth token
+  # (env var or credentials file) as well as its API key — so ask each provider
+  # instead of mapping a provider to one env var here. `local` needs nothing and
+  # answers true on its own.
   def self.available_providers(env = ENV)
-    provider_names.select do |name|
-      next true if name == "local"
-
-      var = Credential::ENV_VARS[name]
-      var && env[var].present?
-    end
+    load!
+    Zer0ImageGenerator::PROVIDERS.select { |_name, provider| provider.is_configured(env) }.keys
   end
 end

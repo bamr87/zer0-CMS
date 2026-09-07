@@ -58,6 +58,8 @@ The `local` provider is deterministic and free. For actual AI banners, run from 
 
 ```bash
 OPENAI_API_KEY=... bundle exec jekyll preview-images --provider openai -f <file.md>
+# xAI takes a Grok OAuth token as well as a key, OAuth first, key as the fallback:
+XAI_OAUTH_TOKEN=... bundle exec jekyll preview-images --provider xai -f <file.md>
 ```
 
 Claude orchestration (art brief + vision review) engages automatically when any of `CLAUDE_CODE_OAUTH_TOKEN` / `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_API_KEY` or a logged-in `claude` CLI is present, and degrades to template prompts without one. Batches: use ONE `--collection <name>` invocation (4 parallel workers, `--parallel N` to change) — a per-file `-f` loop is serial and pays process startup per file.

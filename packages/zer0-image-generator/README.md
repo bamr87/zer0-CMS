@@ -32,7 +32,7 @@ Each post/page without a preview goes through a three-stage pipeline:
 | provider    | renderer                                   | credential          |
 | ----------- | ------------------------------------------ | ------------------- |
 | **openai** (default) | gpt-image-2 / dall-e-3 (+ `--enhance`) | `OPENAI_API_KEY`    |
-| xai         | grok-2-image                               | `XAI_API_KEY`       |
+| xai         | grok-2-image                               | Grok OAuth token or `XAI_API_KEY` |
 | stability   | Stable Diffusion XL                        | `STABILITY_API_KEY` |
 | gemini      | gemini-2.5-flash-image                     | `GEMINI_API_KEY`    |
 | local       | content-aware deterministic SVG per page   | none (CI-safe)      |
@@ -208,6 +208,31 @@ export ANTHROPIC_API_KEY="..."         # 3. console.anthropic.com
 
 Keys are read from the environment or a git-ignored `.env` at the site root. On a Claude Pro/Max subscription the orchestration costs nothing extra; only the renderer bills per image.
 
+### Grok OAuth (xAI renderer)
+
+`--provider xai` accepts a **Grok OAuth access token** as well as an API key, and tries them in that order — so a SuperGrok / X Premium+ login can render banners without a console.x.ai key:
+
+```bash
+export XAI_OAUTH_TOKEN="..."           # 1. an OAuth access token (GROK_OAUTH_TOKEN also works)
+#    …or a credentials file from a Grok login — ~/.grok/auth.json by default,
+#    or set XAI_OAUTH_CREDENTIALS / GROK_OAUTH_CREDENTIALS to point elsewhere
+export XAI_API_KEY="..."               # 2. console.x.ai — and the automatic fallback
+```
+
+Both are `Authorization: Bearer` credentials on the same endpoint, which is what makes the fallback real rather than cosmetic: **if the OAuth token is expired or the API rejects it (401/403) and an `XAI_API_KEY` is present, the same request is retried with the key** and the page still renders. A token whose recorded expiry has already passed is skipped without spending a request at all. Other failures (a 500, a bad prompt) are *not* credential problems, so they never burn the fallback.
+
+The engine only ever *reads* a token — it does not mint or refresh one, and never writes to the credentials file, because xAI publishes neither a device-code endpoint nor a public client id. Re-run your Grok login when a token expires.
+
+| variable | effect |
+| --- | --- |
+| `XAI_OAUTH_TOKEN` / `GROK_OAUTH_TOKEN` | OAuth access token, tried first |
+| `XAI_OAUTH_CREDENTIALS` / `GROK_OAUTH_CREDENTIALS` | explicit path to a Grok credentials JSON (wins outright over `~/.grok/auth.json`) |
+| `XAI_API_KEY` | API key — the fallback rung |
+| `XAI_AUTH` | `auto` (default), `oauth` or `api_key` — pin one rung |
+| `XAI_BASE_URL` | override `https://api.x.ai/v1` |
+
+The run's config banner names the credential it picked (`xai auth: XAI_OAUTH_TOKEN (Grok OAuth token), falling back to XAI_API_KEY (xAI API key)`), and a fallback mid-run is logged as a warning — a silent swap would hide a token that has quietly stopped working.
+
 ## CLI reference
 
 `jekyll preview-images` exposes the engine's flags (Jekyll claims `-s/-d/-p` globally, so use long forms there; the Python CLI keeps all short flags):
@@ -227,7 +252,7 @@ Keys are read from the environment or a git-ignored `.env` at the site root. On 
 
 Set `provider: auto` and the engine uses the best renderer the environment can actually reach:
 
-1. **A raster image API** (`OPENAI_API_KEY` / `XAI_API_KEY` / `STABILITY_API_KEY` / `GEMINI_API_KEY`). If a Claude credential is *also* present, `prompt_engine: claude` has Claude write the art brief that renderer works from, and vision-review the result — the full three-stage pipeline.
+1. **A raster image API** (`OPENAI_API_KEY` / `XAI_API_KEY` or a Grok OAuth token / `STABILITY_API_KEY` / `GEMINI_API_KEY`). If a Claude credential is *also* present, `prompt_engine: claude` has Claude write the art brief that renderer works from, and vision-review the result — the full three-stage pipeline.
 2. **A Claude credential alone** → the `claude` provider, where Claude *authors* the banner as SVG. Claude cannot render pixels, but vector markup is the one image format a language model can emit directly, so this is genuine per-article art with no image-model spend. Output goes through the same sanitizer as every other SVG, so a model that emits a `<script>`, a remote `href`, or a raster `data:` payload gets it stripped rather than committed.
 3. **Nothing wired** → the `default` provider: **one shared banner per collection/section**.
 
