@@ -1,0 +1,14 @@
+# Main navigation — rendered by the theme navbar.
+# title, url and an optional Bootstrap icon class; nest `children:` for dropdowns.
+- title: "Home"
+  url: "/"
+  icon: "bi-house"
+- title: "Posts"
+  url: "/posts/"
+  icon: "bi-journal-text"
+- title: "Recipes"
+  url: "/recipes/"
+  icon: "bi-egg-fried"
+- title: "About"
+  url: "/about/"
+  icon: "bi-info-circle"
