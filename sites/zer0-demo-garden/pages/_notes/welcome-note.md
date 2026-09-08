@@ -1,8 +1,8 @@
 ---
 title: "Welcome Note"
 description: "The first note in the Marginalia garden."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T01:00:11.000Z
+lastmod: 2026-09-08T01:00:11.000Z
 tags: [meta, welcome]
 ---
 

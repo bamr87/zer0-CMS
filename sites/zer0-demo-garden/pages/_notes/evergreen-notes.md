@@ -1,8 +1,8 @@
 ---
 title: "Evergreen notes"
 description: "Notes written to be revised forever, rather than published once and left."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T01:00:11.000Z
+lastmod: 2026-09-08T01:00:11.000Z
 tags: ["note-taking", "core"]
 ---
 An evergreen note is written to be edited. That single decision changes how you write it.

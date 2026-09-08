@@ -1,8 +1,8 @@
 ---
 title: "Posts and notes do different jobs"
 description: "Keep both: posts announce, notes accumulate."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T01:00:11.000Z
+lastmod: 2026-09-08T01:00:11.000Z
 tags: ["writing"]
 ---
 Choosing between a blog and a garden is a false choice; they answer different questions.

@@ -1,8 +1,8 @@
 ---
 title: "Notes should be atomic"
 description: "One idea per note, because linking is only useful at the resolution of ideas."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T01:00:11.000Z
+lastmod: 2026-09-08T01:00:11.000Z
 tags: ["note-taking", "core"]
 ---
 One note, one idea. Not one note per source, per session, or per topic.

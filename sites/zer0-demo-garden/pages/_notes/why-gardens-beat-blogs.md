@@ -1,8 +1,8 @@
 ---
 title: "Why gardens beat blogs"
 description: "Reverse chronology is a terrible way to organise ideas that do not expire."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T01:00:11.000Z
+lastmod: 2026-09-08T01:00:11.000Z
 tags: ["writing", "core"]
 ---
 Reverse chronology answers one question — what is new? — and organises everything else badly.

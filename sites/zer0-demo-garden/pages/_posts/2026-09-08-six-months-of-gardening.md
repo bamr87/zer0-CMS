@@ -1,8 +1,8 @@
 ---
 title: "Six months of gardening in public"
 description: "What changed after moving from a blog to a set of interlinked notes: fewer posts, more revisiting, and one surprise."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T01:00:11.000Z
+lastmod: 2026-09-08T01:00:11.000Z
 author: "Iris Vance"
 categories: ["meta"]
 tags: ["gardening", "writing"]
