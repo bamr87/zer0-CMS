@@ -77,3 +77,7 @@ Declare it in `package.json` under `contributes.commands` (with any `when` claus
 ## Fleet context
 
 This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents. `.github/workflows/ci.yml` and `markdown-oneline.yml` are thin hub-seeded callers — don't edit their logic; `extension.yml` is this repo's own and gates both halves.
+
+## Standard deviations
+
+None recorded.
