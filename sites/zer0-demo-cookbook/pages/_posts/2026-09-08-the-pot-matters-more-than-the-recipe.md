@@ -1,8 +1,8 @@
 ---
 title: "The pot matters more than the recipe"
 description: "Why a heavy lid and a narrow base do more for a braise than any ingredient substitution."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T00:59:24.000Z
+lastmod: 2026-09-08T00:59:24.000Z
 author: "Nour Haddad"
 categories: ["equipment"]
 tags: ["equipment", "braising"]

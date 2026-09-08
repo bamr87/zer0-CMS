@@ -1,8 +1,8 @@
 ---
 title: "What braising actually does"
 description: "Connective tissue, gelatine, and why three hours at 150°C beats ninety minutes at 200°C."
-date: 2026-09-08T09:00:00.000Z
-lastmod: 2026-09-08T09:00:00.000Z
+date: 2026-09-08T00:59:24.000Z
+lastmod: 2026-09-08T00:59:24.000Z
 author: "Nour Haddad"
 categories: ["technique"]
 tags: ["braising", "science"]
