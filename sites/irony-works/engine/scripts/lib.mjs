@@ -1,4 +1,4 @@
-// Irony Works engine library — harness, config, guardrails.
+// Irony Works engine library — harness, config, guardrails, genera.
 import { readFileSync, appendFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,10 +23,27 @@ export function writeVaultFile(relPath, content) {
   mkdirSync(dirname(root(relPath)), { recursive: true });
   writeFileSync(root(relPath), content, "utf8");
 }
-export function appendCompost(row) {
-  const rel = cfg.gate.compost;
+export function appendCompost(row, rel = genusOf("irony").gate.compost) {
   assertWritable(rel);
   appendFileSync(root(rel), row.endsWith("\n") ? row : row + "\n", "utf8");
+}
+
+// ---------- genera: two schemas, one pipeline ----------
+// A genus is a template, a prompt set (scout, scribe, gate), and a gate with its
+// own threshold and compost ledger. Ironies and paradoxes share the nursery, the
+// guardrails, and the human merge; everything else is looked up here.
+export function genusOf(name = "irony") {
+  const g = cfg.genera?.[name];
+  if (!g) throw new Error(`unknown genus "${name}" — see engine/seed.config.yml → genera`);
+  return { name, ...g };
+}
+// A rotation entry is a bare irony domain ("history-of-science") or a
+// genus-qualified one ("paradox:logic-and-self-reference").
+export function parseDomain(spec) {
+  const [head, ...rest] = String(spec).split(":");
+  return rest.length
+    ? { genus: genusOf(head), domain: rest.join(":") }
+    : { genus: genusOf("irony"), domain: head };
 }
 
 // ---------- prompts ----------

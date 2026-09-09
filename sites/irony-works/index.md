@@ -51,7 +51,7 @@ description: >
       </div>
       <div class="col-md-7">
         <nav class="nav nav-pills justify-content-md-end flex-wrap">
-          {%- assign bar = "instances|works|figures|mirrors|futures|nursery" | split: "|" -%}
+          {%- assign bar = "instances|paradoxes|works|figures|mirrors|futures|nursery" | split: "|" -%}
           {%- for key in bar -%}
             {%- assign m = site.data.sections[key] -%}
             <a class="nav-link text-white-50 px-2 py-1" href="{{ m.url | relative_url }}">
@@ -102,11 +102,18 @@ description: >
         Rain on a wedding day is weather. A meteorologist rained out of her own wedding is closer.
         A meteorologist rained out of the wedding she scheduled <strong>using her own forecast</strong> — that's an entry.
       </p>
-      <p class="mb-0 text-body-secondary">
+      <p class="mb-2 text-body-secondary">
         Irony is not a mood. It is an <strong>expectation</strong> and a <strong>reversal</strong> that comments on it.
         Because that structure is mechanical, it can be required: every entry states both as frontmatter fields.
         A candidate that cannot fill both is not irony — it is merely unfortunate, and it goes to the
         <a href="{{ '/compost/' | relative_url }}">compost</a> with a verdict.
+      </p>
+      <p class="mb-0 text-body-secondary">
+        The vault's second genus runs the same discipline on reasoning. A
+        <a href="{{ '/paradoxes/' | relative_url }}">paradox</a> states <strong>premises</strong> a reader accepts,
+        an <strong>inference</strong> the reader cannot fault, a <strong>conclusion</strong> the reader refuses, and the
+        <strong>collision</strong> that makes it unacceptable — scored at the
+        <a href="{{ '/entries/epimenides-gate/' | relative_url }}">Epimenides Gate</a>.
       </p>
     </div>
     <div class="col-lg-5">
@@ -130,8 +137,8 @@ reversal: &gt;
     <h2 class="h4 mb-0"><i class="bi bi-signpost-split text-secondary me-2"></i>The branches</h2>
     <a href="{{ '/entries/' | relative_url }}" class="btn btn-outline-secondary btn-sm">All entries <i class="bi bi-arrow-right ms-1"></i></a>
   </div>
-  <div class="row row-cols-2 row-cols-md-4 g-3">
-    {%- assign branches = "forms|works|figures|instances|mirrors|futures|nursery|compost" | split: "|" -%}
+  <div class="row row-cols-2 row-cols-md-3 g-3">
+    {%- assign branches = "forms|works|figures|instances|paradoxes|mirrors|futures|nursery|compost" | split: "|" -%}
     {% for key in branches %}
       {%- assign m = site.data.sections[key] -%}
       {%- assign n = site.entries | where: "section", key | size -%}
@@ -181,7 +188,7 @@ reversal: &gt;
 {% endif %}
 
 <!-- ============================= BY BRANCH ============================= -->
-{%- assign feeds = "instances|works|mirrors" | split: "|" -%}
+{%- assign feeds = "instances|paradoxes|works|mirrors" | split: "|" -%}
 {% for key in feeds %}
   {%- assign m = site.data.sections[key] -%}
   {%- assign items = site.entries | where: "section", key -%}
@@ -259,7 +266,7 @@ reversal: &gt;
       <div class="card h-100 border-0 shadow-sm">
         <div class="card-body">
           <h2 class="h5 card-title">
-            <i class="bi bi-recycle me-2 sec-ink sec-compost"></i>What the gate threw out
+            <i class="bi bi-recycle me-2 sec-ink sec-compost"></i>What the gates threw out
           </h2>
           <p class="text-body-secondary small">
             Rejected candidates are never deleted. Each is logged with a verdict —
@@ -268,8 +275,10 @@ reversal: &gt;
             definition teaches as much as the definition, and history occasionally files an appeal.
           </p>
           <p class="text-body-secondary small mb-3">
-            The gate's inaugural session composted the entire tracklist of the song it is named after.
-            The song itself is canon.
+            The Alanis Gate's inaugural session composted the entire tracklist of the song it is named after;
+            the song itself is canon. The Epimenides Gate's inaugural session composted the sentence it is
+            named after — a Cretan on Cretans — as a transparent fallacy; the sentence's descendant, the Liar,
+            is canon. Paradox rejects go to a second ledger with their own verdicts.
           </p>
           <a href="{{ '/compost/' | relative_url }}" class="btn btn-sm btn-outline-secondary me-1">Read the ledger <i class="bi bi-arrow-right ms-1"></i></a>
           <a href="{{ '/entries/alanis-gate/' | relative_url }}" class="btn btn-sm btn-outline-secondary">The gate <i class="bi bi-arrow-right ms-1"></i></a>

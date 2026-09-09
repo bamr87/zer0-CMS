@@ -4,7 +4,7 @@
 
 > Expectation, reversed. Recursively.
 
-**Irony Works** is a self-growing Obsidian vault that catalogs irony in all its forms — past, present, and pending — tended by an AI engine and published to the web with the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme. It is a seed, not a site: clone it, plant it, and the germination cycle takes over.
+**Irony Works** is a self-growing Obsidian vault that catalogs irony in all its forms — past, present, and pending — and, since its second genus was planted, paradoxes old, new, debated, and hypothetical; tended by an AI engine and published to the web with the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme. It is a seed, not a site: clone it, plant it, and the germination cycle takes over.
 
 An encyclopedia of irony compiled by a machine that cannot be embarrassed is either the death of the form or its final proof. This repository exists to find out.
 
@@ -59,9 +59,9 @@ The `veracity` field exists because the better an irony, the harder it must be v
                                 futures/ as they mature
 ```
 
-A scheduled **germination cycle** (`.github/workflows/germinate.yml`) runs the engine: the Scout proposes candidates from a rotating domain list, the Scribe drafts them against the templates, the Alanis Gate scores them, and survivors arrive as a pull request into `vault/nursery/`. Merging is the selection pressure. Nothing enters canon without a human hand — the machine proposes, the reader disposes.
+A scheduled **germination cycle** (`.github/workflows/germinate.yml`) runs the engine: the Scout proposes candidates from a rotating domain list, the Scribe drafts them against the templates, the Alanis Gate scores them, and survivors arrive as a pull request into `vault/nursery/`. Merging is the selection pressure. Nothing enters canon without a human hand — the machine proposes, the reader disposes. The rotation interleaves the two genera: a bare domain (`history-of-science`) grows ironies through the Alanis Gate; a `paradox:` family (`paradox:time-and-physics`) grows paradoxes through the Epimenides Gate.
 
-Rejected candidates are not deleted. They are logged in the compost ledger with their verdict (`MERELY-UNFORTUNATE`, `COINCIDENCE`, `HYPOCRISY`, `BAD-LUCK`), because the negative space of irony is itself instructive.
+Rejected candidates are not deleted. They are logged in the compost ledger with their verdict (`MERELY-UNFORTUNATE`, `COINCIDENCE`, `HYPOCRISY`, `BAD-LUCK`), because the negative space of irony is itself instructive. Rejected paradoxes have a ledger and a verdict list of their own.
 
 ## The Alanis Gate
 
@@ -69,18 +69,51 @@ Quality control is named for the most famous failure of the genre: a 1996 hit si
 
 The song itself passes the gate. Its scenarios do not.
 
+## The Second Genus: Paradoxes
+
+Irony is an expectation and a reversal that comments on it. A **paradox** is the same discipline turned on reasoning: premises a reader accepts, an inference the reader cannot fault, and a conclusion the reader refuses. Every entry in `vault/paradoxes/` states all four as frontmatter — the three *apparently*s of Sainsbury's definition, plus the wall the conclusion hits:
+
+```yaml
+---
+title: The Liar
+type: paradox
+kind: antinomy                  # veridical | falsidical | antinomy — Quine's three ways
+standing: contested             # resolved | contested | open
+era: ancient
+posed: "4th century BCE — Eubulides of Miletus, per Diogenes Laërtius II.108"
+premises:
+  - "A sentence is true if and only if what it says is the case."
+  - "'This sentence is false' says of itself that it is false."
+  - "Every sentence is either true or false."
+inference: >
+  If it is true, it is false; if it is false, it is true.
+conclusion: >
+  The sentence is true if and only if it is false.
+collision: >
+  Logic itself.
+fault: >
+  Unlocated: Tarski's hierarchy, Kripke's gaps, and Priest's gluts each pay differently.
+epimenides: 10/10               # gate score, threshold 7
+---
+```
+
+The `collision` field predicts the `kind`: a conclusion that collides with an intuition is probably true (veridical); with a fact, false (falsidical); with logic itself, an antinomy, and a principle has to go. The mandate — paradoxes **old, new, debated, and hypothetical** — is encoded as fields rather than folders, because the Liar is old *and* debated and Newcomb's problem is new, debated, *and* hypothetical: `era` and `posed` carry age, `standing` carries the debate, and a `hypothesis` field, present only when the paradox rides on a counterfactual, carries the rest.
+
+Paradox candidates face their own adversary, the **Epimenides Gate** ([engine/prompts/paradox/epimenides-gate.md](engine/prompts/paradox/epimenides-gate.md)), named for the most famous paradox in the world, which is not one — a Cretan's claim that all Cretans are liars is merely false, and its strengthened descendant is the deepest antinomy in logic. Five axes: plausibility, validity, collision, cost, and specificity; threshold 7. Rejects go to a second ledger, [The Merely Puzzling](vault/compost/the-merely-puzzling.md), with the verdicts `MERELY-SURPRISING`, `EQUIVOCATION`, `TRANSPARENT-FALLACY`, `DILEMMA`, `ANOMALY`, or `NOT-EVEN-WRONG`. The full framework is [The Anatomy of a Paradox](vault/the-anatomy-of-a-paradox.md); the three ways have notes of their own on the trunk, beside the forms of irony.
+
 ## The Vault
 
 | Folder | Contents |
 |---|---|
-| `vault/forms/` | The taxonomy — one note per form of irony (verbal, situational, dramatic, Socratic, cosmic, structural, historical, meta/post) |
+| `vault/forms/` | The taxonomy — one note per form of irony (verbal, situational, dramatic, Socratic, cosmic, structural, historical, meta/post) and one per way of paradox (veridical, falsidical, antinomy) |
 | `vault/works/` | Annotated works: the canon of ironic literature, Sophocles to Bainbridge |
 | `vault/figures/` | The ironists themselves |
 | `vault/instances/` | Documented ironies of history and the present |
+| `vault/paradoxes/` | The second genus — paradoxes old, new, debated, and hypothetical, each stating premises, inference, conclusion, and collision |
 | `vault/mirrors/` | The Hall of Mirrors — this machine's own ironies |
 | `vault/futures/` | Open positions: expectations on record, reversals pending |
 | `vault/nursery/` | AI drafts awaiting review |
-| `vault/compost/` | The Merely Unfortunate — rejected with verdicts |
+| `vault/compost/` | The Merely Unfortunate and The Merely Puzzling — rejected ironies and paradoxes, with verdicts |
 | `vault/templates/` | Obsidian templates enforcing the schema |
 
 Open `vault/` as an Obsidian vault. The graph view is the arboretum: forms are the trunk, everything else branches by wikilink.
@@ -94,7 +127,7 @@ Open `vault/` as an Obsidian vault. The graph view is the arboretum: forms are t
 
 ## Governance (hard guardrails)
 
-The engine may write **only** to `vault/nursery/` and the compost ledger. It may never modify canon entries, its own prompts, the workflows, or this file. Promotion, pruning of canon, and rule changes are human-only. These constraints are enforced in the scripts by path whitelist, not by politeness.
+The engine may write **only** to `vault/nursery/` and the two compost ledgers. It may never modify canon entries, its own prompts, the workflows, or this file. Promotion, pruning of canon, and rule changes are human-only. These constraints are enforced in the scripts by path whitelist, not by politeness.
 
 ## Publishing
 

@@ -1,5 +1,7 @@
-# Advisory PR check: scores changed vault entries against the gate rubric.
-# The gate scores; humans merge. This workflow never blocks.
+# Advisory PR check: scores changed vault entries against the rubric of their
+# genus — the Alanis Gate for ironies, the Epimenides Gate for paradoxes
+# (type: paradox). Notes with no schema fields to score are reported UNGATED.
+# The gates score; humans merge. This workflow never blocks.
 name: Alanis Gate
 
 on:

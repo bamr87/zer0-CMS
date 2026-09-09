@@ -36,6 +36,13 @@
       }
     },
     {
+      "query": "path:paradoxes/",
+      "color": {
+        "a": 1,
+        "rgb": 1222036
+      }
+    },
+    {
       "query": "path:mirrors/",
       "color": {
         "a": 1,

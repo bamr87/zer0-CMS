@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**Irony Works** — a self-growing encyclopedia of irony, in two halves:
+**Irony Works** — a self-growing encyclopedia of irony and, since September 2026, of paradox (two genera, one pipeline), in two halves:
 
 - `vault/` — an Obsidian vault of Markdown entries; the source of truth for all content
-- `engine/` — a Node.js pipeline (five prompts, three scripts) that drafts new entries via the Claude API
+- `engine/` — a Node.js pipeline (five irony prompts, three paradox prompts, three scripts) that drafts new entries via the Claude API
 
 The vault publishes as a Jekyll site through the `bamr87/zer0-mistakes` remote theme, with a thin **theme layer** of five local files over it (see [Theme layer](#theme-layer)). `2026-08-06-planting-irony-works-*.md` at the root is a draft design-notes post documenting the founding session (excluded from the site). The project's pre-rebrand state ("Ironicon") is preserved in the founding commit.
 
@@ -22,22 +22,24 @@ npm i js-yaml --no-save    # lib.mjs loads it via createRequire
 # (uses the local claude CLI's OAuth by default; ANTHROPIC_API_KEY only as fallback)
 node engine/scripts/germinate.mjs [batch]
 
-# Score specific entry files against the gate (the PR check)
-node engine/scripts/gate.mjs vault/nursery/some-entry.md
+# Score entry files against the gate of their genus (the PR check); routes by `type:` frontmatter
+node engine/scripts/gate.mjs vault/nursery/some-entry.md vault/paradoxes/the-liar.md
 
 # Convert vault → _entries/ Jekyll collection (wikilinks → permalinks); no credentials needed
 node engine/scripts/transplant.mjs
 ```
 
-`germinate.mjs` picks its domain by `GITHUB_RUN_NUMBER % domains.length` (unset locally, cycle 0 → first domain). All tunables — model, batch size, gate threshold, domain rotation, writable paths — live in `engine/seed.config.yml`.
+`germinate.mjs` picks its rotation slot by `GITHUB_RUN_NUMBER % domains.length` (unset locally, cycle 0 → first entry). A rotation entry is a bare irony domain or a `paradox:`-prefixed family; `GERMINATE_DOMAIN=paradox:time-and-physics` overrides the slot for one run. All tunables — model, batch size, per-genus template, prompts, gate threshold and ledger (`genera:`), domain rotation, writable paths — live in `engine/seed.config.yml`.
 
 ## Architecture
 
 **The schema is the classifier.** Irony is defined structurally, not in prose: every entry must state `expectation` and `reversal` as frontmatter fields. If a candidate can't fill both, it isn't irony and goes to compost. Entries also carry `status` (seed → sapling → canon → petrified), `veracity` (attested | contested | legend | speculative), and `alanis` (gate score, threshold 7/10). `vault/templates/` defines the exact shape; the Scribe prompt requires conformance to `entry.md`.
 
-**Pipeline** (`engine/scripts/germinate.mjs`): the Scout prompt proposes candidates for the cycle's domain → the Alanis Gate (`engine/prompts/alanis-gate.md`) scores each 0–10 on five axes (reversal, commentary, inevitability, specificity, non-substitutability) → passes are drafted by the Scribe into `vault/nursery/`; failures are appended as rows to the ledger in `vault/compost/the-merely-unfortunate.md` with a verdict (MERELY-UNFORTUNATE, BAD-LUCK, COINCIDENCE, HYPOCRISY, NOT-EVEN-WRONG). Merging the nursery PR is the only path to canon — the machine proposes, the human disposes.
+**Two genera, one pipeline.** Paradoxes (`type: paradox`, filed in `vault/paradoxes/` or as mirrors) state `premises`, `inference`, `conclusion`, and `collision`; the collision predicts Quine's `kind` (veridical | falsidical | antinomy), `standing` (resolved | contested | open) records the debate, and a `hypothesis` field, present only when the paradox rides on a counterfactual, marks it hypothetical — that is how "old, new, debated, hypothetical" is encoded as fields rather than folders. `vault/templates/paradox.md` is the shape; `vault/the-anatomy-of-a-paradox.md` is the framework the prompts assume; the three ways have form-style notes in `vault/forms/`. The genus has its own prompts under `engine/prompts/paradox/` and its own adversary, the Epimenides Gate (axes: plausibility, validity, collision, cost, specificity; verdicts MERELY-SURPRISING, EQUIVOCATION, TRANSPARENT-FALLACY, DILEMMA, ANOMALY, NOT-EVEN-WRONG), whose rejects go to `vault/compost/the-merely-puzzling.md`. Its score field is `epimenides:`, not `alanis:`. `seed.config.yml → genera` declares template, prompts, threshold, and ledger per genus; `genusOf()` / `parseDomain()` in `lib.mjs` resolve them.
 
-**Guardrails are enforced, not advisory.** `assertWritable()` in `engine/scripts/lib.mjs` restricts engine writes to exactly `vault/nursery/` and the compost ledger (`seed.config.yml → guardrails.writable`). The engine never modifies canon entries, its own prompts, workflows, or config; any automation you add must write through `writeVaultFile()`/`appendCompost()` so the whitelist applies. Edits made at the direct request of the human maintainer are a different channel — that's the "human hand" the governance requires.
+**Pipeline** (`engine/scripts/germinate.mjs`): the genus's Scout proposes candidates for the cycle's domain → the genus's gate (`engine/prompts/alanis-gate.md` for ironies, scoring reversal, commentary, inevitability, specificity, non-substitutability; `engine/prompts/paradox/epimenides-gate.md` for paradoxes) scores each 0–10 on five axes → passes are drafted by the genus's Scribe into `vault/nursery/`; failures are appended as rows to the genus's ledger with a verdict. Merging the nursery PR is the only path to canon — the machine proposes, the human disposes.
+
+**Guardrails are enforced, not advisory.** `assertWritable()` in `engine/scripts/lib.mjs` restricts engine writes to exactly `vault/nursery/` and the two compost ledgers (`seed.config.yml → guardrails.writable`). The engine never modifies canon entries, its own prompts, workflows, or config; any automation you add must write through `writeVaultFile()`/`appendCompost(row, ledger)` so the whitelist applies. Edits made at the direct request of the human maintainer are a different channel — that's the "human hand" the governance requires.
 
 **Harness swap point:** `harness()` in `lib.mjs` defaults to running prompts through the Claude Code CLI (`claude -p`), which authenticates via OAuth — keychain locally, `CLAUDE_CODE_OAUTH_TOKEN` in CI (`claude setup-token` generates one). If the CLI is missing or errors, it falls back to the Anthropic Messages API with `ANTHROPIC_API_KEY`; `harness.provider: anthropic` forces API-only. `harness.provider: lifehacker` hits a deliberate stub marked `// HARNESS ADAPTER` for routing through lifehacker.dev instead. Prompts are the contract; keep them wire-agnostic.
 
@@ -49,10 +51,10 @@ The site is a `remote_theme` consumer of `bamr87/zer0-mistakes`, unpinned. Five 
 
 | File | Kind | Why it exists |
 |---|---|---|
-| `_layouts/section.html` | override (43 lines vs the theme's ~618) | The theme's `section` layout is a news/magazine view built entirely on `site.posts`, tags, and categories. This site has **zero posts** — its content is the custom `entries` collection — so the theme's version renders nothing. Ours filters `site.entries | where: "section", page.section` and shows each entry's `expectation` / `reversal` / `alanis` / `veracity` / `status`. Consumed by the eight branch pages: `forms`, `works`, `figures`, `instances`, `mirrors`, `futures`, `nursery`, `compost`. |
+| `_layouts/section.html` | override (~55 lines vs the theme's ~618) | The theme's `section` layout is a news/magazine view built entirely on `site.posts`, tags, and categories. This site has **zero posts** — its content is the custom `entries` collection — so the theme's version renders nothing. Ours filters `site.entries | where: "section", page.section` and shows an irony's `expectation` / `reversal` or a paradox's `premises` / `conclusion`, with the gate score, `kind`, `standing`, `veracity`, `status`. Consumed by the nine branch pages: `forms`, `works`, `figures`, `instances`, `paradoxes`, `mirrors`, `futures`, `nursery`, `compost`. |
 | `_includes/components/cookie-consent.html` | override (deliberately empty) | The theme's banner claims the site "analyzes traffic" and "provides personalized content" via cookies. This site sets no analytics and no cookies, so the banner would be a false statement occupying a third of the mobile viewport. **If analytics are ever added, delete this file** — the theme's banner returns on its own, and it should. |
 | `_includes/custom/head.html` | override (extension point) | The theme ships this file as an intentionally **empty stub** whose own header comment tells consumers to shadow it. Ours adds one `<link>` to `/assets/css/sections.css` — the branch palette Jekyll generates at build time from `_data/sections.yml`. This is the hook working as designed, not drift. |
-| `_includes/home/card.html` | ours (shadows nothing) | Magazine card for `index.md`; teases with the entry's `reversal`, not a generic excerpt. |
+| `_includes/home/card.html` | ours (shadows nothing) | Magazine card for `index.md`; teases with the entry's payload — an irony's `reversal`, a paradox's `conclusion` — not a generic excerpt. |
 | `_includes/home/cover.html` | ours (shadows nothing) | Cover art for that card, falling back to a branch-coloured gradient. |
 
 The theme has no `_includes/home/` directory at all, so the last two are net-new — **not** overrides, and deliberately absent from `.theme-overrides.yml`.
@@ -66,6 +68,7 @@ The theme has no `_includes/home/` directory at all, so the last two are net-new
 ## Content conventions
 
 - One entry per file, kebab-case filename; the filename is the permalink slug.
+- One genus per entry. A paradox carries `type: paradox` and the four paradox fields, never `expectation`/`reversal` beside them; it crosses the aisle with `Rhymes with:`. Never sharpen a paradox past its canonical formulation (Epimenides is not the Liar); where the kind is contested, pick one and say who disagrees.
 - Wikilink generously, but only to targets that exist — a broken wikilink is a promise the vault must keep or delete.
 - Prefer one verified irony to five plausible ones. Thin sources → downgrade `veracity` and say so in the body; never sharpen a story past its evidence.
 - Rejected candidates are logged in compost, never deleted; history occasionally files an appeal.
@@ -73,8 +76,8 @@ The theme has no `_includes/home/` directory at all, so the last two are net-new
 
 ## Workflows
 
-- `.github/workflows/germinate.yml` — weekly cron (Mon 06:00 UTC) + manual dispatch with a `count` input; runs the engine and opens a PR from `vault/nursery/` changes. Needs the `CLAUDE_CODE_OAUTH_TOKEN` repo secret (or `ANTHROPIC_API_KEY` as fallback).
-- `.github/workflows/alanis-gate.yml` — advisory PR check on `vault/**` changes; scores changed entries (excluding templates and compost) and posts the report as a PR comment and step summary. Never blocks — the gate scores, humans merge.
+- `.github/workflows/germinate.yml` — weekly cron (Mon 06:00 UTC) + manual dispatch with `count` and `domain` inputs (`domain: paradox:time-and-physics` targets a genus for one run); runs the engine and opens a PR from `vault/nursery/` changes. Needs the `CLAUDE_CODE_OAUTH_TOKEN` repo secret (or `ANTHROPIC_API_KEY` as fallback).
+- `.github/workflows/alanis-gate.yml` — advisory PR check on `vault/**` changes; scores changed entries (excluding templates and compost) against the gate of their `type:` — Alanis for ironies, Epimenides for paradoxes; notes with neither `expectation` nor `premises` are reported UNGATED — and posts the report as a PR comment and step summary. Never blocks — the gates score, humans merge.
 - `.github/workflows/publish.yml` — on push to main: transplant → Jekyll build (github-pages image bundles `jekyll-remote-theme`) → deploy to GitHub Pages.
 
 ## Fleet context

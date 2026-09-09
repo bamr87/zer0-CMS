@@ -19,11 +19,14 @@ Prompts run through the **Claude Code CLI on OAuth** — keychain locally, `CLAU
 
 | File | Purpose |
 |---|---|
-| `engine/seed.config.yml` | Every tunable: model, batch size, gate threshold, domain rotation, writable paths, price table. |
+| `engine/seed.config.yml` | Every tunable: model, batch size, per-genus template, prompts, gate threshold and ledger (`genera:`), the domain rotation (bare = irony, `paradox:` = paradox), writable paths, price table. |
 | `engine/prompts/*.md` | The five roles — scout, alanis-gate, scribe, linker, gardener. Prompts are the contract; keep them wire-agnostic. |
+| `engine/prompts/paradox/*.md` | The paradox genus — scout, scribe, epimenides-gate. Same contract, second schema. |
 | `vault/templates/entry.md` | The schema. `expectation` + `reversal` are the load-bearing fields — they are what make irony machine-checkable. |
+| `vault/templates/paradox.md` | The paradox schema. `premises` + `inference` + `conclusion` + `collision`, with `kind`, `standing`, and `hypothesis`; the framework is `vault/the-anatomy-of-a-paradox.md`. |
 | `.claude/skills/grow-irony-works/SKILL.md` | The instructions the robot follows in assisted mode. |
-| `vault/compost/the-merely-unfortunate.md` | The "no" pile, with verdicts. Never deleted; history files appeals. |
+| `vault/compost/the-merely-unfortunate.md` | The irony "no" pile, with verdicts. Never deleted; history files appeals. |
+| `vault/compost/the-merely-puzzling.md` | The paradox "no" pile, with its own verdicts. |
 | `_data/ai_usage/` + `AI_USAGE.md` | The meter: tokens and API-equivalent cost per call, per prompt, per workflow. |
 
 ## Running a cycle (assisted mode — preferred)
@@ -65,7 +68,7 @@ The germinate cycle, the Alanis Gate and the publish lane can be watched and dri
 
 ## Guardrails (do not remove)
 
-- **The engine writes to `vault/nursery/`, the compost ledger, and `_data/ai_usage/`. Nothing else.**
+- **The engine writes to `vault/nursery/`, the two compost ledgers, and `_data/ai_usage/`. Nothing else.**
 Enforced by `assertWritable()` in `lib.mjs`, not by politeness. Canon, prompts, workflows, and config are human-only.
 - **No direct pushes to `main`.** The robot works on branches and opens PRs.
 - **No self-merge.** A human merges — that is the whole governance model.
@@ -82,7 +85,7 @@ If you loosen any of these, say so in `vault/mirrors/` in the same change — a 
 | Memory | File | Written by | Read by |
 |---|---|---|---|
 | Canon | `vault/` | humans merging PRs | the scout, as the dedupe list |
-| Rejections | `vault/compost/the-merely-unfortunate.md` | the gate | future scouts, and appeals |
+| Rejections | `vault/compost/the-merely-unfortunate.md` (ironies), `vault/compost/the-merely-puzzling.md` (paradoxes) | the gates | future scouts, and appeals |
 | Open positions | `vault/futures/` | humans and the gardener | the gardener, as futures mature |
 | Self-critique | `vault/mirrors/` | humans and the gardener | anyone checking the vault against itself |
 | Cost | `_data/ai_usage/` → `AI_USAGE.md` | every harness call | the operator, deciding what a cycle is worth |

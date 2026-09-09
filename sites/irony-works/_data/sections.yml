@@ -25,6 +25,12 @@ instances:
   color: "#f76b15"
   url: /instances/
   blurb: The specimens — history and the present, dated and sourced.
+paradoxes:
+  label: Paradoxes
+  icon: bi-infinity
+  color: "#12a594"
+  url: /paradoxes/
+  blurb: Premises accepted, conclusions refused — old, new, debated, hypothetical.
 mirrors:
   label: Mirrors
   icon: bi-arrow-repeat
@@ -48,7 +54,7 @@ compost:
   icon: bi-recycle
   color: "#8b5a2b"
   url: /compost/
-  blurb: The merely unfortunate, kept with their verdicts.
+  blurb: The merely unfortunate and the merely puzzling, kept with their verdicts.
 root:
   label: Vault
   icon: bi-signpost-split
