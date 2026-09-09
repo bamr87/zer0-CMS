@@ -15,9 +15,9 @@ npm test             # pretest (tsc → out/, then compile) + unit, golden, MCP 
 npm run check-types  # tsc --noEmit on its own
 npm run lint         # eslint src on its own
 
-# Fast inner loop — the four pure-Node suites under plain Mocha, no VS Code download:
+# Fast inner loop — the six pure-Node suites under plain Mocha, no VS Code download:
 npx tsc -p . --outDir out
-npx mocha --ui tdd out/test/{core,fields,governance,golden}.test.js
+npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet}.test.js
 npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or one test
 
 # ── ABC content engine (rails/) — stdlib-only, no bundler needed ──
@@ -55,7 +55,8 @@ python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-lin
 - **The ledger is keyed by canonical URL** and written byte-compatible with Python's `json.dump` (`sort_keys`, `ensure_ascii`, indent 2, trailing newline). That is what lets this extension and the CI lane share one queue without double-publishing, and what keeps the file from churning in git.
 - **`.cms/` absence is a normal state, not an error.** With no contract, the page index supplies the same `ContentRecord` shape with `health: -1` and `freshness: 'unknown'`. Report less; never invent a health score.
 - **MCP registration is two-phase.** `provideMcpServerDefinitions` may be cached, so it returns an empty `env`; `resolveMcpServerDefinition` runs at server start and is the only place the publish flag or a secret is read — and it reads the **settings** layer, not the merged config, because a cloned repo's `zer0.json` must not be able to arm an agent to publish. When publishing is off the env var is set to `null` (remove it), not `"0"` and not merely omitted.
-- **Context keys: eight, and every one gates something.** Grep `package.json` for a key before adding one; `uiState.ts` mirrors each in memory and only calls `setContext` on a change.
+- **Context keys: nine, and every one gates something.** Grep `package.json` for a key before adding one; `uiState.ts` mirrors each in memory and only calls `setContext` on a change.
+- **The Fleet console: the webview sends `{lane}` and nothing else; the host re-reads the manifest and derives the value.** `doToggleSwitch`/`doDispatchLane` (`src/commands/fleet.ts`) re-read `fleet.manifest.yml` from disk, re-run `evaluateFleetGates()` and derive a toggle's new value from the variable as GitHub reports it, never from a message. The master gate `zer0Cms.fleet.dispatchAllow` is read from the settings layer only (`settingsFleetDispatchAllow()`); `zer0.json` cannot arm it. Network happens only from an explicit user action, through the `fetch` injected into `core/fleet/github.ts`, never at activation (decision D11) — and every call is in `FLEET_PLAN` or the client refuses it. The MCP server's `zer0_fleet_status` reads the local manifest and nothing else.
 
 ### Adding a command
 

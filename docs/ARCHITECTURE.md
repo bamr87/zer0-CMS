@@ -20,6 +20,7 @@ zer0-CMS is a VS Code extension with a hard internal boundary. This document exp
 ┌───────────────┴──────────────────────────────────────────────┐
 │ src/core/               pure Node. No `vscode`, ever.        │
 │   shared/  content/  governance/  catering/  contract/       │
+│   analytics/  portfolio/  media/  fleet/                     │
 └───────────────▲──────────────────────────────────────────────┘
                 │
 ┌───────────────┴──────────────────────────────────────────────┐
@@ -100,11 +101,23 @@ Two properties matter:
 
 `activate()` does no network I/O, no telemetry, and no auth check. In a folderless window it installs zero watchers and returns. The store keeps one snapshot for all four tree views and both webviews, with refreshes coalesced through a single in-flight promise so a burst of file events costs one rebuild.
 
+## The Fleet console
+
+The first surface in the extension that talks to another system. It reads this repository's `fleet.manifest.yml` (spec `fleet/v1`, from bamr87/wtd's `docs/FLEET-SPEC.md`): the AI lanes, each with its harness, its workflow file, its triggers, its `*_ENABLED` repository-variable switch, the tokens it spends and the guardrails it declares. The dashboard's Fleet tab draws that table and, from GitHub, two more columns — the switch's current value and the workflow's newest run — and offers two verbs: flip the switch, or dispatch the lane once.
+
+**What it reads, declared before it is read.** `core/fleet/github.ts` lists every call as data — three `GET`s (a variable, a workflow's newest run, the default branch) and three writes (`PATCH`/`POST` a variable, `POST` a dispatch) — and `fleetSurfaceIsRepoScopedOnly` is a test that every path sits under the repository's own `/actions/` and never names a person. The client refuses a request outside that plan before opening a socket, and the suite intercepts `fetch` to prove it from the outside. No secret is ever read: the manifest names tokens, the console shows names.
+
+**The gates.** `evaluateFleetGates(mode, input)` is `governance/approval.ts` with a different vocabulary and the same properties: pure, a fixed and tested blocker order (`noWorkspace, dispatchDisabled, noCredential, manifestAbsent, laneUnknown, laneHasNoSwitch, laneNotDispatchable, guardrailViolation`), and a master gate nothing overrides. That gate is `zer0Cms.fleet.enabled` **and** `zer0Cms.fleet.dispatchAllow`, and the second is read from the VS Code settings layer alone — a `zer0.json` or a manifest arriving with a cloned repository cannot arm it, for the reason the MCP publish flag cannot be armed by a file. `guardrailViolation` refuses a lane whose own manifest admits to merging or writing to the default branch. Both privileged actions (`doToggleSwitch`, `doDispatchLane` in `src/commands/fleet.ts`) re-read the configuration, re-read the manifest from disk, re-run the gate and ask modally — naming the repository, the lane, the variable and the value — inside the same function the palette calls. The webview sends `{lane}` and nothing else; a toggle's new value is derived host-side from the variable as fetched a moment earlier, never from a message.
+
+**Decision D11.** The activation promise above stands. The relaxation is exactly this: network happens only from an explicit user action — the Refresh button, a toggle, a dispatch, or opening the Fleet tab (a passive read that never prompts for sign-in) — through a `fetch` the shell injects into the core's client, and never at activation. The credential is `vscode.authentication.getSession('github', …)`, obtained lazily inside the action and asked for per request; the extension stores no token. The bundled MCP server keeps its side of the rule absolutely: `zer0_fleet_status` reads the local manifest and reports the switch state as unknown, because that process never opens a socket.
+
+Slice 1 is one repository and two verbs. A multi-repo roster, the facts and audit engines, and any MCP write tool come from the hub's `@bamr87/fleet-engines` package in slice 2.
+
 ## Where the AI lives
 
 Two separate, independently-disableable surfaces:
 
-- **The MCP server** (`src/mcp/`) — eleven tools for any MCP client. The doctrine-preferred path is `zer0_draft`: the model writes a draft, a person approves it. `zer0_publish` needs an environment flag *and* a per-call confirmation.
+- **The MCP server** (`src/mcp/`) — twelve tools for any MCP client. The doctrine-preferred path is `zer0_draft`: the model writes a draft, a person approves it. `zer0_publish` needs an environment flag *and* a per-call confirmation.
 - **The agent** (`src/agent/`) — the Claude Agent SDK, loaded through a dynamic import so it is never bundled, gated on a setting that defaults to off, and absent from the dependency tree unless you ask for it. Read-only tools run freely; every mutating tool goes through an approve/deny card showing the diff.
 
 Neither is required to use the CMS, and neither can publish without walking through the same gate a human command does.

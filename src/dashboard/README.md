@@ -7,7 +7,7 @@ src/dashboard/dashboardPanel.ts     ← you are here: state builder + intent rou
         │  postMessage({type:'state', state})
         ▼
 dist/dashboard.js  ←  src/webview/dashboard/{main,header,contents,structure}.ts
-                                            {governance,catering,settings,welcome}.ts
+                                            {governance,catering,fleet,settings,welcome}.ts
         │  postMessage({type:'command', id, args})
         ▼
 src/commands/**  ← the same functions the command palette calls
@@ -19,7 +19,7 @@ src/commands/**  ← the same functions the command palette calls
 |---|---|---|
 | 1 | Building one full `DashboardState` snapshot per post | `buildState()` and the `build*` projections |
 | 2 | The closed intent whitelist (`Record<CommandId, Handler>`) | `dispatch()` |
-| 3 | Routing the two governed intents into the injected `GovernanceActions` | `runGovernance()` |
+| 3 | Routing the two governed intents into the injected `GovernanceActions`, and the two fleet intents into the injected `FleetActions` | `runGovernance()`, `runFleet()` |
 | 4 | Round-tripping the durable UI preferences through `workspaceState` | `UI_STATE_KEYS`, `writeUiState()` |
 | 5 | Three request ops: `searchContent`, `guardText`, `previewDraft` | `handleRequest()` |
 | 6 | The CSP'd page shell with a per-render nonce | `dashboardHtml()` |
@@ -31,6 +31,8 @@ Everything else — which tab is open, which sort order, which rows are ticked �
 `draft.approve` and `draft.publish` do **not** go through `vscode.commands.executeCommand`. They call the `GovernanceActions` injected by `extension.ts`, which are the very `doApprove`/`doPublish` closures `src/commands/governance.ts` registers for the palette. Those re-read the draft from disk, re-run the brand guard, re-evaluate `evaluatePublishGates()` and ask modally before writing a byte.
 
 The webview supplies a draft path and nothing else. The blockers rendered under a disabled Publish button come from `buildReview()` and are **advisory**: the ones that decide are computed again, later, in a different process boundary.
+
+`fleet.toggleSwitch` and `fleet.dispatchLane` are the same shape. They call the `FleetActions` injected by `extension.ts` — `doToggleSwitch`/`doDispatchLane` from `src/commands/fleet.ts` — which re-read `fleet.manifest.yml`, re-run `evaluateFleetGates()`, obtain the GitHub session lazily and ask modally. The webview supplies a lane id and nothing else; the toggle's new value is derived host-side from the variable as fetched inside the action. `buildFleet()` re-reads the manifest on every snapshot (one small file) but never touches the network: the switch and run columns come from the last live read, which only a person's act refreshes — `fleet.refresh` (interactive; may prompt to sign in) or a `Route` write of `fleet` (passive; never prompts). Without a read the columns say `unknown`, and the note above the table says why.
 
 Deleting and renaming are not governed actions — nothing is written to the ledger and no gate applies — so they are implemented here directly, against `workspace.fs`, with `useTrash: true`. Both still re-derive their target host-side through `contentTargetPath()`: the path a message names has to be a file the page index holds, so a forged `{"paths":["/home/me/.ssh/id_rsa"]}` resolves to nothing. And both ask host-side before acting. The webview's own `alert()` is a dialog the code that wants the deletion also controls, which makes it a courtesy rather than a gate; the rule that the webview is never the gate has no exception for the one privileged filesystem action on this surface.
 

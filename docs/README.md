@@ -5,7 +5,7 @@ Two documents live here, and they answer different questions. Everything shorter
 | Document | Answers |
 |---|---|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, and what the ledger guarantees. |
-| [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 35 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
+| [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 38 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
 
 ## The rule these two follow
 

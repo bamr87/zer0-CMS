@@ -1,6 +1,6 @@
 # `src/mcp` — the bundled MCP server
 
-Two files that expose the CMS as eleven tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
+Two files that expose the CMS as twelve tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
 
 | File | Exports | Owner |
 |---|---|---|
@@ -16,7 +16,7 @@ ZER0_CMS_MCP_ALLOW_PUBLISH=1 node dist/mcp-server.js   # publishing armed
 
 Inside VS Code the extension registers it through `vscode.lm.registerMcpServerDefinitionProvider` (`src/mcpRegistration.ts`), but standing it up by hand — Claude Code, a `.vscode/mcp.json` entry, a shell — is a supported way to run it, and the integration test spawns exactly this file.
 
-## The eleven tools, in order
+## The twelve tools, in order
 
 The order in `TOOLS` is the order the test pins, and it is a safety ladder.
 
@@ -35,6 +35,7 @@ Tools 8–10 are the feedback loop, and they sit *after* `zer0_publish` because 
 | 9 | `zer0_portfolio` | — | The published track record. Reads the ledger, so it works before any statistics exist. |
 | 10 | `zer0_media` | — | Which pages have a preview image, and the generator command for each that does not. |
 | 11 | `zer0_contract` | only with `normalize-apply` | Runs the repository's own engine. |
+| 12 | `zer0_fleet_status` | — | This repository's AI lanes as its local `fleet.manifest.yml` declares them. Reads the file only — **no network from this process** — so the switch state is reported as unknown; the dashboard reads it, behind a person's sign-in. |
 
 ## Contracts worth knowing before you change anything
 
@@ -62,4 +63,4 @@ Tools 8–10 are the feedback loop, and they sit *after* `zer0_publish` because 
 
 ## Tests
 
-`src/test/mcp.test.ts` spawns `dist/mcp-server.js` — the **shipped bundle**, not the sources — with an environment scrubbed of every `ZER0_*` and `ANTHROPIC_*` variable, and asserts: every stdout line parses as JSON, the banner is on stderr, the protocol version is echoed, exactly these eight tool names in this order, `zer0_preview` returns the artifact with `isError: false`, a raw garbage line does not kill the loop (`ping` still answers `{}` afterwards), `zer0_publish` while disabled returns `isError: true` starting with `publishing is disabled`, and an unknown method yields `-32601`.
+`src/test/mcp.test.ts` spawns `dist/mcp-server.js` — the **shipped bundle**, not the sources — with an environment scrubbed of every `ZER0_*` and `ANTHROPIC_*` variable, and asserts: every stdout line parses as JSON, the banner is on stderr, the protocol version is echoed, exactly these twelve tool names in this order, `zer0_preview` returns the artifact with `isError: false`, a raw garbage line does not kill the loop (`ping` still answers `{}` afterwards), `zer0_publish` while disabled returns `isError: true` starting with `publishing is disabled`, and an unknown method yields `-32601`.

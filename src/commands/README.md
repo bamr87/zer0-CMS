@@ -1,6 +1,6 @@
 # `src/commands/` — the command layer
 
-Thirty-four commands, six files, and one rule that matters more than the other thirty-three: **`governance.ts` holds the only gate.**
+Thirty-eight commands, seven files, and one rule that matters more than the other thirty-seven: **`governance.ts` and `fleet.ts` hold the only gates.**
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -16,7 +16,8 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `governance.ts` | `draft.new`, `draft.review`, `draft.approve`, `draft.publish`, `draft.guard`, `draft.preview` | 676 |
 | `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 262 |
 | `agent.ts` | `agent.open`, `agent.start`, `agent.stop`, `mcp.writeWorkspaceConfig` | 169 |
-| `index.ts` | barrel + `ALL_COMMAND_IDS` | 113 |
+| `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane` | 574 |
+| `index.ts` | barrel + `ALL_COMMAND_IDS` | 128 |
 
 `dashboard` and `dashboard.close` are registered by `extension.ts`, beside the panel object they operate on. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
 
@@ -58,6 +59,12 @@ who has read the guard findings may overrule them, and the MCP lane and CI need 
 in the core, and no surface offers a way around it. A workspace that has not set `zer0Cms.governance.publishAllow` cannot publish, full stop.
 
 The draft's status is flipped **after** the target reports success. A target failure must never leave a queue file claiming it published. A *ledger skip* — the URL was already recorded — still flips it, because the artifact genuinely is out there; that matches the CI lane, and the two have to agree.
+
+### The same gate, for the fleet
+
+`doToggleSwitch` and `doDispatchLane` in `fleet.ts` are the second pair, and they follow the diagram above line for line: `currentConfig()` uncached (with `zer0Cms.fleet.dispatchAllow` read from the settings layer alone through `settingsFleetDispatchAllow()`), `readFleetManifest()` from disk, `evaluateFleetGates()`, then `confirm()` naming the repository, the lane, the variable and the value. The dashboard's Fleet tab posts `{type:'command', id:'fleet.toggleSwitch', args:{lane}}` — a lane id and nothing else. A toggle's new value is `nextSwitchValue()` of the variable as GitHub reports it inside the action; `unknown` has no next value, so a failed read refuses rather than guesses.
+
+**Decision D11** lives in this file's header. `extension.ts` still does no network and no auth on activation; the GitHub session is obtained lazily inside the action, every request goes through the `fetch` injected into `core/fleet/github.ts` (and is checked against `FLEET_PLAN` before it is sent), and no token is stored — the client asks VS Code for the session per request. Opening the tab is a passive read that never prompts; `fleet.refresh` is the interactive one.
 
 ---
 

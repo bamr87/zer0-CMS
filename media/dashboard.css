@@ -1152,3 +1152,123 @@ body.vscode-high-contrast .z-chip,
 body.vscode-high-contrast-light .z-chip {
   border: 1px solid var(--z-border);
 }
+
+/* ── fleet ─────────────────────────────────────────────────────────────── */
+
+.z-fleet__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--z-sp-4);
+  margin-bottom: var(--z-sp-4);
+}
+
+.z-fleet__heading {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.z-fleet__status {
+  display: flex;
+  flex: 0 1 360px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--z-sp-2);
+  text-align: right;
+}
+
+.z-fleet__note {
+  font-size: 12px;
+  color: var(--z-fg-muted);
+}
+
+.z-fleet__note--warn {
+  color: var(--z-fg-warning);
+}
+
+.z-fleet__table td {
+  vertical-align: top;
+}
+
+.z-fleet__lane {
+  min-width: 180px;
+}
+
+.z-fleet__description {
+  margin-top: var(--z-sp-1);
+  font-size: 12px;
+  color: var(--z-fg-description);
+}
+
+.z-fleet__file,
+.z-fleet__var {
+  display: inline-block;
+  margin-top: var(--z-sp-1);
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-fg-muted);
+}
+
+.z-fleet__triggers {
+  min-width: 160px;
+}
+
+.z-fleet__guardrails {
+  margin-top: var(--z-sp-1);
+  font-size: 12px;
+  color: var(--z-fg-muted);
+}
+
+.z-fleet__switch {
+  white-space: nowrap;
+}
+
+.z-fleet__switch .z-status {
+  margin-left: var(--z-sp-1);
+}
+
+/* Unknown and ungated render as an em dash, never as a value. */
+.z-fleet__unknown {
+  color: var(--z-fg-muted);
+}
+
+.z-fleet__link {
+  padding: 0;
+  font: inherit;
+  color: var(--z-link);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.z-fleet__link:hover {
+  color: var(--z-link-hover);
+  text-decoration: underline;
+}
+
+.z-fleet__run--ok {
+  color: var(--z-ok);
+}
+
+.z-fleet__run--bad {
+  color: var(--z-fg-error);
+}
+
+.z-fleet__actions {
+  min-width: 200px;
+}
+
+.z-fleet__actions .z-review__actions {
+  margin: 0;
+}
+
+.z-fleet__blockers {
+  margin-top: var(--z-sp-1);
+  font-size: 12px;
+  color: var(--z-fg-warning);
+}
+
+.z-fleet__tokens {
+  margin-top: var(--z-sp-6);
+}

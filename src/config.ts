@@ -9,7 +9,7 @@
  *
  * The subtlety that makes those three layers real is `inspect()`. A plain
  * `getConfiguration('zer0Cms').get('governance.publishAllow')` never returns
- * `undefined`: every one of our 35 settings declares a default in
+ * `undefined`: every one of our 38 settings declares a default in
  * `package.json`, so `get()` hands back that default for keys the user has
  * never touched — and a settings layer that always has a value would silently
  * outrank `zer0.json` for every key it names. `explicit()` below reads only the
@@ -122,11 +122,11 @@ function explicitSections(config: vscode.WorkspaceConfiguration): PanelSectionId
 /**
  * Every `zer0Cms.*` setting, shaped as the core's settings layer.
  *
- * Only the 35 ids that `package.json` contributes appear here. The project
+ * Only the 38 ids that `package.json` contributes appear here. The project
  * *schema* — content folders, content types, field groups, taxonomy,
  * placeholders, SEO thresholds, the slug template, the front-matter dialect —
  * has no settings at all and is read exclusively from `zer0.json`. That split
- * is why 89 upstream settings became 35.
+ * is why 89 upstream settings became 38.
  */
 export function settingsSnapshot(scope?: vscode.ConfigurationScope): Zer0Settings {
   const c = vscode.workspace.getConfiguration(CONFIG_SECTION, scope);
@@ -196,6 +196,12 @@ export function settingsSnapshot(scope?: vscode.ConfigurationScope): Zer0Setting
         'plan',
       ]),
     },
+    fleet: {
+      enabled: explicit<boolean>(c, 'fleet.enabled'),
+      manifestPath: explicit<string>(c, 'fleet.manifestPath'),
+      // `fleet.dispatchAllow` is deliberately not here: it never enters the
+      // merged configuration. See `settingsFleetDispatchAllow`.
+    },
     logging: { level: explicitEnum<LogLevel>(c, 'logging.level', ['error', 'warn', 'info', 'verbose']) },
   };
 }
@@ -221,6 +227,25 @@ export function settingsPublishAllow(scope?: vscode.ConfigurationScope): boolean
   return explicit<boolean>(
     vscode.workspace.getConfiguration(CONFIG_SECTION, scope),
     'governance.publishAllow',
+  );
+}
+
+/**
+ * `zer0Cms.fleet.dispatchAllow` **as a human set it**, else `false`.
+ *
+ * The master gate for the Fleet console's two privileged actions — flipping a
+ * lane's `*_ENABLED` variable and dispatching a lane — and the one fleet key
+ * with no `zer0.json` twin and no place in `Zer0Config`. The reasoning is
+ * `settingsPublishAllow`'s: on the other side of this gate is a write to
+ * another system that a cloned repository must not be able to authorise. A
+ * `fleet.manifest.yml` and a `zer0.json` both arrive with the clone; only the
+ * three settings scopes are written by the person sitting at the editor.
+ * `evaluateFleetGates` reads this value and nothing overrides it.
+ */
+export function settingsFleetDispatchAllow(scope?: vscode.ConfigurationScope): boolean {
+  return (
+    explicit<boolean>(vscode.workspace.getConfiguration(CONFIG_SECTION, scope), 'fleet.dispatchAllow') ===
+    true
   );
 }
 

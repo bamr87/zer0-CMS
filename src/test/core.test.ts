@@ -227,6 +227,54 @@ suite('core: front matter — three dialects, one shape', () => {
     assert.equal(asString(undefined, 'fallback'), 'fallback');
   });
 
+  test('YAML: a plain scalar folds its more-indented continuation lines', () => {
+    // The shape `wtd fleet adopt` writes: a `summary:` wrapped at 80 columns.
+    const data = parseYamlSubset(
+      [
+        'summary: A self-growing encyclopedia of irony — the germinate engine scouts candidates,',
+        '  scores them at the Alanis Gate, and drafts passes into vault/nursery/ for a human to merge.',
+        'after: next',
+        'paragraphs: first line',
+        '  still first',
+        '',
+        '  second paragraph # with a comment',
+        'nested:',
+        '  inner: wraps onto',
+        '    a deeper line',
+        '  sibling: 1',
+        'items:',
+        '- one that',
+        '  wraps',
+        '- two',
+        'stops: at a',
+        '  looks: like a key',
+        'number: 42',
+        '  and text',
+      ].join('\n'),
+    );
+    assert.equal(
+      data.summary,
+      'A self-growing encyclopedia of irony — the germinate engine scouts candidates, ' +
+        'scores them at the Alanis Gate, and drafts passes into vault/nursery/ for a human to merge.',
+      'a line break inside a plain scalar folds to one space',
+    );
+    assert.equal(data.after, 'next', 'the key after the wrapped value is still read');
+    assert.equal(
+      data.paragraphs,
+      'first line still first\nsecond paragraph',
+      'a blank line folds to a newline and a trailing comment is stripped',
+    );
+    assert.deepEqual(data.nested, { inner: 'wraps onto a deeper line', sibling: 1 });
+    assert.deepEqual(data.items, ['one that wraps', 'two'], 'sequence items fold the same way');
+    assert.equal(
+      data.stops,
+      'at a',
+      'a more-indented line that reads as a key ends the scalar and is skipped, as before',
+    );
+    assert.equal(data.number, '42 and text', 'a value that wraps is prose, never coerced');
+    assert.equal(parseYamlSubset('n: 42\n').n, 42, 'a single-line value still coerces');
+  });
+
   test('TOML front matter parses from the fixture', () => {
     const raw = fixture('pages/_posts/tech/2026-07-20-toml-dialect.md');
     assert.equal(detectFormat(raw), 'toml');

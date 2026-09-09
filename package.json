@@ -272,6 +272,28 @@
         "command": "zer0Cms.mcp.writeWorkspaceConfig",
         "title": "Write .vscode/mcp.json",
         "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.fleet.open",
+        "title": "Open Fleet console",
+        "category": "zer0-CMS",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "zer0Cms.fleet.refresh",
+        "title": "Refresh fleet status",
+        "category": "zer0-CMS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "zer0Cms.fleet.toggleSwitch",
+        "title": "Toggle a lane's switch",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.fleet.dispatchLane",
+        "title": "Dispatch a lane once",
+        "category": "zer0-CMS"
       }
     ],
     "menus": {
@@ -339,6 +361,22 @@
         {
           "command": "zer0Cms.agent.stop",
           "when": "zer0Cms:agent:running"
+        },
+        {
+          "command": "zer0Cms.fleet.open",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.refresh",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.toggleSwitch",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.dispatchLane",
+          "when": "zer0Cms:fleet:enabled"
         }
       ],
       "editor/title": [
@@ -710,6 +748,21 @@
           ],
           "default": "default",
           "description": "Agent permission mode. 'default' routes every mutating tool through an approve/deny gate."
+        },
+        "zer0Cms.fleet.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml` (spec `fleet/v1`). Read-only until `#zer0Cms.fleet.dispatchAllow#` is also set."
+        },
+        "zer0Cms.fleet.manifestPath": {
+          "type": "string",
+          "default": "fleet.manifest.yml",
+          "description": "Workspace-relative path of the fleet manifest."
+        },
+        "zer0Cms.fleet.dispatchAllow": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Master switch for the two privileged fleet actions — flipping a lane's `*_ENABLED` variable and dispatching a lane once. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every action still asks for confirmation."
         },
         "zer0Cms.logging.level": {
           "type": "string",

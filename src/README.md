@@ -21,7 +21,7 @@ Three layers, and the boundary between them is enforced by the build rather than
 | `config.ts` | The only translator between VS Code settings + `zer0.json` and the core's `Zer0Config`. |
 | `logger.ts` | An `OutputChannel` wearing the core's `LogSink` face. |
 | `store.ts` | `WorkspaceStore` — one `Snapshot` that all four trees and both webviews read. |
-| `uiState.ts` | The eight context keys, the status bar item, the notification helpers. |
+| `uiState.ts` | The nine context keys, the status bar item, the notification helpers. |
 | `diagnostics.ts` | Required-field diagnostics, drawn inside the front-matter block. |
 | `mcpRegistration.ts` | The two-phase MCP server definition provider, plus the `.vscode/mcp.json` fallback. |
 
@@ -33,7 +33,7 @@ Everything above is called by `commands/`, `views/`, `panel/`, `dashboard/` and 
 
 ### 1. `currentConfig()` is not cached, and `explicit()` is why the three layers work
 
-Every one of the 35 contributed settings declares a default in `package.json`, so `getConfiguration('zer0Cms').get('governance.publishAllow')` returns `false` even for a user who has never opened the settings UI. If the settings layer were built from `get()`, it would always have a value, and `zer0.json` could never win for any key that also has a setting — three layers collapsing into one. `config.ts` therefore reads through `inspect()` and keeps only the values a human actually set (folder → workspace → global scope).
+Every one of the 38 contributed settings declares a default in `package.json`, so `getConfiguration('zer0Cms').get('governance.publishAllow')` returns `false` even for a user who has never opened the settings UI. If the settings layer were built from `get()`, it would always have a value, and `zer0.json` could never win for any key that also has a setting — three layers collapsing into one. `config.ts` therefore reads through `inspect()` and keeps only the values a human actually set (folder → workspace → global scope).
 
 Nothing is cached. `currentConfig()` re-reads the settings and re-parses `zer0.json` on every call. That is what makes "flip `zer0Cms.governance.publishAllow` and the next publish gate sees it" true without a window reload.
 
@@ -50,9 +50,9 @@ or a workspace-folder change. Content folders are configuration, so a config cha
 - A folderless window installs **zero** watchers and makes **zero** filesystem
   calls; `emptySnapshot()` is a real, renderable `Snapshot`.
 
-### 3. Context keys: eight, and every one gates something
+### 3. Context keys: nine, and every one gates something
 
-`zer0Cms:enabled`, `:file:isValid`, `:dashboard:open`, `:governance:enabled`, `:contract:present`, `:agent:enabled`, `:agent:running`, `:folder:registered`.
+`zer0Cms:enabled`, `:file:isValid`, `:dashboard:open`, `:governance:enabled`, `:contract:present`, `:agent:enabled`, `:agent:running`, `:folder:registered`, `:fleet:enabled`.
 
 Upstream shipped fourteen, of which five were dead — including the one gating its *initialize project* command, which made that command unreachable in exactly the workspace that needed it. The rule: grep `package.json` for the key before adding one. `uiState.ts` mirrors each key in memory and only calls `setContext` when the value changes, so the active-editor listener can run on every keystroke without flooding the command bus.
 
@@ -84,3 +84,5 @@ The only two commands `extension.ts` registers itself are `zer0Cms.dashboard` an
 ## Adding a privileged action
 
 Re-read decision D5 first. Any action that writes, publishes or approves must route through a function the command palette also calls, and that function must re-read state from disk and re-run `evaluateGates()` before acting. A check performed in a webview is decoration.
+
+The Fleet console (`commands/fleet.ts`) is the worked example for an action that reaches another system: the same four steps, `evaluateFleetGates()` in place of `evaluateGates()`, and decision D11 on top — the credential is obtained lazily inside the action, the network goes through a `fetch` injected into `core/fleet`, and nothing runs at activation.

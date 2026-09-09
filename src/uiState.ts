@@ -2,7 +2,7 @@
  * The bits of UI that are not a view: context keys, the status bar item, and
  * the handful of notification helpers every command uses.
  *
- * **Eight context keys, and every one of them gates something in
+ * **Nine context keys, and every one of them gates something in
  * `package.json`.** Upstream shipped fourteen, five of which were dead — one
  * of them (`frontMatterCanInit`) gating the *initialize* command that a fresh
  * workspace needs, which is why that command was unreachable. The rule here is
@@ -39,6 +39,7 @@ import type { Snapshot } from './store';
  * | `zer0Cms:agent:enabled` | `agent.start` in the palette |
  * | `zer0Cms:agent:running` | `agent.stop` in the palette |
  * | `zer0Cms:folder:registered` | register vs unregister in the explorer context menu |
+ * | `zer0Cms:fleet:enabled` | the four `fleet.*` commands in the palette |
  */
 export const CONTEXT_KEYS = {
   enabled: 'zer0Cms:enabled',
@@ -49,11 +50,12 @@ export const CONTEXT_KEYS = {
   agentEnabled: 'zer0Cms:agent:enabled',
   agentRunning: 'zer0Cms:agent:running',
   folderRegistered: 'zer0Cms:folder:registered',
+  fleetEnabled: 'zer0Cms:fleet:enabled',
 } as const;
 
 export type ContextKey = (typeof CONTEXT_KEYS)[keyof typeof CONTEXT_KEYS];
 
-/** All eight, for the "activation sets every key" test. */
+/** All nine, for the "activation sets every key" test. */
 export const ALL_CONTEXT_KEYS: readonly ContextKey[] = Object.values(CONTEXT_KEYS);
 
 // ---------------------------------------------------------------------------
@@ -159,7 +161,7 @@ export class UiState implements vscode.Disposable {
   }
 
   /**
-   * Write all eight keys from what is knowable without touching the disk.
+   * Write all nine keys from what is knowable without touching the disk.
    * Called once during activation so no `when` clause is ever evaluated
    * against an unset key, and again whenever the configuration changes.
    */
@@ -167,7 +169,8 @@ export class UiState implements vscode.Disposable {
     this.set(CONTEXT_KEYS.enabled, projectConfigPresent && cfg.workspaceRoot !== '');
     this.set(CONTEXT_KEYS.governanceEnabled, cfg.governance.enabled);
     this.set(CONTEXT_KEYS.agentEnabled, cfg.agent.enabled);
-    // These four have no answer yet at activation; an explicit `false` is a
+    this.set(CONTEXT_KEYS.fleetEnabled, cfg.fleet.enabled);
+    // These five have no answer yet at activation; an explicit `false` is a
     // better starting point than an unset key, which reads as `false` anyway
     // but cannot be distinguished from "we forgot".
     for (const key of [
@@ -188,6 +191,7 @@ export class UiState implements vscode.Disposable {
     this.set(CONTEXT_KEYS.contractPresent, snapshot.contract.present);
     this.set(CONTEXT_KEYS.governanceEnabled, snapshot.cfg.governance.enabled);
     this.set(CONTEXT_KEYS.agentEnabled, snapshot.cfg.agent.enabled);
+    this.set(CONTEXT_KEYS.fleetEnabled, snapshot.cfg.fleet.enabled);
     this.updateStatusBar(snapshot);
   }
 

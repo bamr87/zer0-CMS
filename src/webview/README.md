@@ -5,7 +5,7 @@ Three bundles, no framework: `dist/panel.js`, `dist/dashboard.js` and `dist/agen
 ```
 shared/      the kernel every surface uses     (this work package)
 panel/       the sidebar sections + 18 fields
-dashboard/   the five routes
+dashboard/   the six routes
 agent/       the transcript and approval cards
 ```
 
