@@ -31,7 +31,7 @@ fault: >
 planted: 2026-09-09
 tended: 2026-09-09
 gardener: claude
-epimenides: 8/10
+epimenides: 9/10
 sources:
   - Eric M. Jones, "'Where is everybody?' An account of Fermi's question", Los Alamos report LA-10311-MS (1985), with letters from Edward Teller, Herbert York, and Emil Konopinski
   - Michael H. Hart, "An Explanation for the Absence of Extraterrestrials on Earth", Quarterly Journal of the Royal Astronomical Society 16 (1975): 128–135

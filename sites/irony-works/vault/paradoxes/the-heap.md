@@ -28,7 +28,7 @@ fault: >
 planted: 2026-09-09
 tended: 2026-09-09
 gardener: claude
-epimenides: 9/10
+epimenides: 10/10
 sources:
   - Diogenes Laërtius, Lives of Eminent Philosophers II.108 — the attribution to Eubulides
   - Michael Dummett, "Wang's Paradox", Synthese 30 (1975): 301–324

@@ -37,7 +37,7 @@ fault: >
 planted: 2026-09-09
 tended: 2026-09-09
 gardener: claude
-epimenides: 8/10
+epimenides: 9/10
 sources:
   - Letters to Amazing Stories, 1927–1928, and Hugo Gernsback's 1929 editorial "The Question of Time-Traveling"
   - René Barjavel, Le Voyageur imprudent (1943)

@@ -26,7 +26,7 @@ fault: >
 planted: 2026-09-09
 tended: 2026-09-09
 gardener: claude
-epimenides: 8/10
+epimenides: 9/10
 sources:
   - engine/seed.config.yml — genera.paradox.gate.threshold
   - engine/prompts/paradox/epimenides-gate.md

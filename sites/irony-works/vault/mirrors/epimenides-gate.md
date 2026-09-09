@@ -16,7 +16,7 @@ reversal: >
 planted: 2026-09-09
 tended: 2026-09-09
 gardener: claude
-alanis: 8/10
+alanis: 10/10
 sources:
   - Callimachus, Hymn to Zeus, line 8 — "Cretans are always liars," quoting Epimenides; Titus 1:12–13, where Paul cites the line and adds that the testimony is true
   - A. N. Prior, "Epimenides the Cretan", Journal of Symbolic Logic 23 (1958): 261–266

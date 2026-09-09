@@ -36,7 +36,7 @@ fault: >
 planted: 2026-09-09
 tended: 2026-09-09
 gardener: claude
-epimenides: 9/10
+epimenides: 10/10
 sources:
   - Robert Nozick, "Newcomb's Problem and Two Principles of Choice", in N. Rescher (ed.), Essays in Honor of Carl G. Hempel (Reidel, 1969)
   - Martin Gardner, "Mathematical Games", Scientific American, July 1973, with the readers' verdict in the March 1974 column
