@@ -76,3 +76,12 @@ The theme has no `_includes/home/` directory at all, so the last two are net-new
 - `.github/workflows/germinate.yml` — weekly cron (Mon 06:00 UTC) + manual dispatch with a `count` input; runs the engine and opens a PR from `vault/nursery/` changes. Needs the `CLAUDE_CODE_OAUTH_TOKEN` repo secret (or `ANTHROPIC_API_KEY` as fallback).
 - `.github/workflows/alanis-gate.yml` — advisory PR check on `vault/**` changes; scores changed entries (excluding templates and compost) and posts the report as a PR comment and step summary. Never blocks — the gate scores, humans merge.
 - `.github/workflows/publish.yml` — on push to main: transplant → Jekyll build (github-pages image bundles `jekyll-remote-theme`) → deploy to GitHub Pages.
+
+## Fleet context
+
+This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents.
+
+## Standard deviations
+
+- **No `package.json`, test suite, or linter — by design.** Already documented under [Commands](#commands): the engine is plain Node ESM with `js-yaml` installed ad hoc (`npm i js-yaml --no-save`), and the schema-as-classifier plus the Alanis Gate are the quality controls. Do not scaffold a package manifest or a test runner to satisfy a fleet baseline check; the deviation is deliberate.
+- **No local preview stack — by design.** See [Theme layer → Local preview](#theme-layer): no `Gemfile`, no `docker-compose.yml`; `publish.yml` is the only build. Adding one is a maintainer decision.

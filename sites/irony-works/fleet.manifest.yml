@@ -39,9 +39,19 @@ lanes:
   - CLAUDE_CODE_OAUTH_TOKEN
   guardrails:
     never_merges: true
+    # Mirrors engine/seed.config.yml -> guardrails.writable, enforced by assertWritable() in lib.mjs.
     writable_paths:
     - vault/nursery/
     - vault/compost/the-merely-unfortunate.md
+    - _data/ai_usage/
+  # Mirrors engine/seed.config.yml -> metering; OAuth calls are $0 marginal, prices apply to the API-key fallback only.
+  metering:
+    ledger: _data/ai_usage/
+    rollup: AI_USAGE.md
+    prices:
+      default:
+        input: 3
+        output: 15
 tokens:
 - name: ANTHROPIC_API_KEY
   scope: fleet

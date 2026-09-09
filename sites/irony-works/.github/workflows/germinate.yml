@@ -16,6 +16,11 @@ permissions:
   contents: write
   pull-requests: write
 
+# Two scheduled/dispatched cycles must never race on the nursery PR: queue, never cancel a writer.
+concurrency:
+  group: germinate
+  cancel-in-progress: false
+
 jobs:
   germinate:
     runs-on: ubuntu-latest

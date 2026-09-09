@@ -11,6 +11,11 @@ permissions:
   contents: read
   pull-requests: write
 
+# Read-only PR check: a superseded run for the same PR may be cancelled.
+concurrency:
+  group: alanis-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gate:
     runs-on: ubuntu-latest
