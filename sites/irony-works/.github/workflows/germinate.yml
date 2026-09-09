@@ -1,5 +1,7 @@
-# The germination cycle: scout → alanis gate → scribe → nursery + compost.
+# The germination cycle: scout → gate → scribe → nursery + compost.
 # Survivors arrive as a pull request; merging is the selection pressure.
+# Two genera share the cycle: a bare rotation entry grows ironies through the
+# Alanis Gate; a `paradox:` family grows paradoxes through the Epimenides Gate.
 name: Germinate
 
 on:
@@ -11,6 +13,10 @@ on:
         description: "Candidates this cycle (defaults to engine/seed.config.yml batch)"
         required: false
         default: "3"
+      domain:
+        description: "Rotation entry to grow, e.g. paradox:time-and-physics (defaults to the run number's slot)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -46,6 +52,7 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GERMINATE_DOMAIN: ${{ github.event.inputs.domain }}
         run: node engine/scripts/germinate.mjs ${{ github.event.inputs.count }}
 
       - name: Roll up AI usage
@@ -59,6 +66,7 @@ jobs:
           add-paths: |
             vault/nursery/**
             vault/compost/the-merely-unfortunate.md
+            vault/compost/the-merely-puzzling.md
             _data/ai_usage/**
             AI_USAGE.md
           commit-message: "Germination cycle ${{ github.run_number }}: ${{ steps.cycle.outputs.domain }}"

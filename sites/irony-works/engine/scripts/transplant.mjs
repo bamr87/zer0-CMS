@@ -126,9 +126,10 @@ for (const n of notes) {
   fm.section = n.dir || "root";
 
   // Search engines and the theme's cards both want a description; the
-  // expectation is the best one-line summary an entry already contains.
+  // expectation is the best one-line summary an irony already contains, and
+  // the conclusion is a paradox's.
   if (!fm.description) {
-    const summary = oneLine(fm.expectation) || firstParagraph(body);
+    const summary = oneLine(fm.expectation) || oneLine(fm.conclusion) || firstParagraph(body);
     if (summary) fm.description = clip(summary);
   }
 

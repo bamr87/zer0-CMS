@@ -43,13 +43,30 @@ story to match the telling.
 deduplicating, chasing orphans, and revisiting
 [futures]({{ '/futures/' | relative_url }}) as they mature.
 
-## What the gate throws away
+## The second genus
 
-The rejects are kept. Every failed candidate is logged in the
+[Paradoxes]({{ '/paradoxes/' | relative_url }}) run the same pipeline with
+their own schema and their own adversary. A paradox entry states
+**premises**, an **inference**, a **conclusion**, and the **collision** that
+makes the conclusion unacceptable — an intuition, a fact, or logic itself —
+and the collision predicts Quine's kind: veridical, falsidical, or antinomy.
+The [Epimenides Gate]({{ '/entries/epimenides-gate/' | relative_url }}) scores
+plausibility, validity, collision, cost, and specificity, threshold seven, and
+is named for the most famous paradox in the world, which is not one. The
+rotation interleaves the genera: a bare domain grows ironies, a `paradox:`
+family grows paradoxes, and the same nursery holds both until a human merges.
+The framework is written up as
+[The Anatomy of a Paradox]({{ '/entries/the-anatomy-of-a-paradox/' | relative_url }}).
+
+## What the gates throw away
+
+The rejects are kept. Every failed irony is logged in the
 [compost ledger]({{ '/compost/' | relative_url }}) with its verdict:
 `MERELY-UNFORTUNATE`, `BAD-LUCK`, `COINCIDENCE`, `HYPOCRISY`, or
-`NOT-EVEN-WRONG`. The negative space of a definition teaches as much as the
-definition — and history occasionally files an appeal.
+`NOT-EVEN-WRONG`; every failed paradox in a second ledger with its own:
+`MERELY-SURPRISING`, `EQUIVOCATION`, `TRANSPARENT-FALLACY`, `DILEMMA`,
+`ANOMALY`, or `NOT-EVEN-WRONG`. The negative space of a definition teaches
+as much as the definition — and history occasionally files an appeal.
 
 ## Veracity, because good stories lie
 
@@ -61,8 +78,8 @@ uncertainty as first-class metadata rather than quietly inheriting it.
 
 ## The guardrails are code, not etiquette
 
-The engine may write to exactly two places: the
-[nursery]({{ '/nursery/' | relative_url }}) and the compost ledger. It cannot
+The engine may write to exactly three places: the
+[nursery]({{ '/nursery/' | relative_url }}) and the two compost ledgers. It cannot
 modify canon, its own prompts, the workflows, or the configuration — the
 restriction is a path whitelist enforced by a function that throws, not a
 sentence in a prompt asking nicely.

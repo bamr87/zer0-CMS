@@ -5,14 +5,15 @@
 spec_version: fleet/v1
 repo: bamr87/irony-works
 provenance: derived
-summary: A self-growing encyclopedia of irony — the germinate engine scouts candidates,
-  scores them at the Alanis Gate, and drafts passes into vault/nursery/ for a human to merge.
+summary: A self-growing encyclopedia of irony and paradox — the germinate engine scouts candidates,
+  scores them at the Alanis Gate (ironies) or the Epimenides Gate (paradoxes), and drafts passes
+  into vault/nursery/ for a human to merge.
 lanes:
 - id: alanis-gate
   kind: other
   harness: claude-cli
   implementation: .github/workflows/alanis-gate.yml
-  description: Alanis Gate
+  description: Alanis Gate (ironies) and Epimenides Gate (paradoxes) — advisory PR check, routed by entry type
   triggers:
   - kind: event
     events:
@@ -43,6 +44,7 @@ lanes:
     writable_paths:
     - vault/nursery/
     - vault/compost/the-merely-unfortunate.md
+    - vault/compost/the-merely-puzzling.md
     - _data/ai_usage/
   # Mirrors engine/seed.config.yml -> metering; OAuth calls are $0 marginal, prices apply to the API-key fallback only.
   metering:

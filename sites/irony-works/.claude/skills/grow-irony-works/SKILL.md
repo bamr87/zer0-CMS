@@ -2,10 +2,12 @@
 name: grow-irony-works
 description: >
   Run one germination cycle for Irony Works: scout candidate ironies for a
-  domain, verify them against real sources, score them at the Alanis Gate,
-  draft the passes into vault/nursery/, log the failures to compost, and open
-  a pull request. Triggers on: "/grow-irony-works", "do a germination run",
-  "germinate", "grow the vault", "plant the next entries", "run a cycle".
+  domain (or paradoxes for a paradox: family), verify them against real
+  sources, score them at the Alanis Gate (or the Epimenides Gate), draft the
+  passes into vault/nursery/, log the failures to compost, and open a pull
+  request. Triggers on: "/grow-irony-works", "do a germination run",
+  "germinate", "grow the vault", "plant the next entries", "run a cycle",
+  "grow paradoxes", "plant a paradox".
 allowed-tools: Read Write Edit Glob Grep Bash WebFetch WebSearch
 ---
 
@@ -37,10 +39,33 @@ Rotation lives in `seed.config.yml → domains`, selected by cycle number:
 git log --oneline --grep="Germination cycle" | head -5   # what has already run
 ```
 
-Take the next domain in rotation unless the human names one. When the domain is
+Take the next entry in rotation unless the human names one. When the domain is
 `the-vault-itself`, you are writing `mirrors/` entries about this repository —
 hold yourself to the same gate, because self-exemption is the failure the
 Hall of Mirrors exists to catch.
+
+## Two genera
+
+The rotation mixes two schemas. A bare entry (`history-of-science`) grows
+ironies with the prompts and gate this skill describes. A `paradox:` entry
+(`paradox:logic-and-self-reference`) grows paradoxes: same cycle, same
+guardrails, different contract —
+
+- prompts: `engine/prompts/paradox/scout.md`, `scribe.md`, `epimenides-gate.md`
+- template: `vault/templates/paradox.md` — premises, inference, conclusion,
+  collision; kind (veridical | falsidical | antinomy), standing (resolved |
+  contested | open), a `hypothesis` key only when the paradox rides on one, fault
+- framework: `vault/the-anatomy-of-a-paradox.md` — read it before drafting
+- ledger: `vault/compost/the-merely-puzzling.md`, verdicts MERELY-SURPRISING ·
+  EQUIVOCATION · TRANSPARENT-FALLACY · DILEMMA · ANOMALY · NOT-EVEN-WRONG
+- score field: `epimenides:`, not `alanis:`; merged entries go to `vault/paradoxes/`
+
+Verify the canonical formulation and the first attribution, not just the
+story: the gate scores specificity against the literature, and a paradox
+sharpened past its formulation (Epimenides presented as the Liar) fails on
+that axis. Range across the four provenances — old, new, debated,
+hypothetical — and when the family allows, include one that rides on a
+stated counterfactual.
 
 ## The cycle
 
@@ -110,7 +135,8 @@ lack of evidence). Then **stop**.
 
 ## Guardrails (do not remove)
 
-- **Write only** to `vault/nursery/` and `vault/compost/the-merely-unfortunate.md`.
+- **Write only** to `vault/nursery/` and the two compost ledgers,
+  `vault/compost/the-merely-unfortunate.md` and `vault/compost/the-merely-puzzling.md`.
   Never canon, prompts, workflows, or config. The whitelist is enforced in
   `engine/scripts/lib.mjs`; treat it as a value, not a fence.
 - **No direct pushes to `main`.** Work on a branch, open a PR.

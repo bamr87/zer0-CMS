@@ -26,14 +26,15 @@
 overrides:
   - path: "_layouts/section.html"
     reason: >-
-      From-scratch rewrite (43 lines vs the theme's ~618). The theme's section
+      From-scratch rewrite (~55 lines vs the theme's ~618). The theme's section
       layout is a news/magazine view built entirely on site.posts, tags, and
       categories — a data model this site does not have: it has zero posts, and
       all content lives in the custom `entries` collection that transplant.mjs
       writes. Ours filters `site.entries | where: "section", page.section` and
-      renders the vault's own fields (expectation, reversal, alanis, veracity,
-      status) for the eight branch pages (forms, works, figures, instances,
-      mirrors, futures, nursery, compost).
+      renders the vault's own fields — expectation and reversal for ironies,
+      premises and conclusion for paradoxes, plus the gate score, kind,
+      standing, veracity, and status — for the nine branch pages (forms, works,
+      figures, instances, paradoxes, mirrors, futures, nursery, compost).
     upstream: >-
       Not upstreamable as-is — it is specific to this site's collection and
       frontmatter schema. Permanent by design.

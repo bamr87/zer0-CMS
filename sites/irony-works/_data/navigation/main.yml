@@ -18,6 +18,8 @@
       url: /figures/
     - title: Instances
       url: /instances/
+    - title: Paradoxes — the second genus
+      url: /paradoxes/
     - title: Mirrors — our own ironies
       url: /mirrors/
     - title: Futures — reversals pending
@@ -29,9 +31,13 @@
     - title: All entries
       url: /entries/
 
-- title: The Alanis Gate — how entries are scored
+- title: The Alanis Gate — how ironies are scored
   url: /entries/alanis-gate/
   icon: bi-funnel
+
+- title: The Epimenides Gate — how paradoxes are scored
+  url: /entries/epimenides-gate/
+  icon: bi-infinity
 
 - title: How it grows
   url: /how-it-grows/
