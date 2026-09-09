@@ -15,6 +15,8 @@
  *   - `Blocker` / `BlockerKind`     → core/governance/approval.ts
  *   - `Contract` / `CmsSummary`     → core/contract/contract.ts
  *   - `FmValue` / `FrontMatter`     → core/content/frontmatter.ts
+ *   - `FleetBlocker` / `FleetLaneState` → core/fleet/fleet.ts
+ *   - `FleetCall` / `FleetClient`   → core/fleet/github.ts
  * They are re-exported alongside these by `core/index.ts`, so a duplicate
  * declaration here would make the barrel ambiguous. Import them from their
  * module, not from this file.
@@ -374,6 +376,19 @@ export interface DashboardConfig {
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'verbose';
 
+/**
+ * The Fleet console — this repository's AI lanes, read from its
+ * `fleet.manifest.yml`. `dispatchAllow`, the master gate for the two
+ * privileged actions, is deliberately NOT here: it is read from the VS Code
+ * settings layer alone (`settingsFleetDispatchAllow()` in `src/config.ts`),
+ * so a `zer0.json` arriving with a cloned repository can never arm it.
+ */
+export interface FleetConfig {
+  enabled: boolean;
+  /** Workspace-relative path of the manifest. */
+  manifestPath: string;
+}
+
 export interface LoggingConfig {
   level: LogLevel;
 }
@@ -404,6 +419,7 @@ export interface Zer0Config {
   validation: ValidationConfig;
   panel: PanelConfig;
   dashboard: DashboardConfig;
+  fleet: FleetConfig;
   logging: LoggingConfig;
 }
 
@@ -551,4 +567,82 @@ export interface PageEntry {
   previewImage: string;
   /** The full front matter, for fields the projection above does not name. */
   data: Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
+// Fleet — `fleet.manifest.yml`, spec `fleet/v1` (bamr87/wtd docs/FLEET-SPEC.md)
+// ---------------------------------------------------------------------------
+
+/** How a lane runs its model. Anything the spec does not name coerces to `none`. */
+export type FleetHarness = 'claude-code-action' | 'claude-cli' | 'wtd-fleet' | 'engine' | 'none';
+
+export const FLEET_HARNESSES: readonly FleetHarness[] = [
+  'claude-code-action',
+  'claude-cli',
+  'wtd-fleet',
+  'engine',
+  'none',
+];
+
+export type FleetTriggerKind = 'schedule' | 'dispatch' | 'event';
+
+export const FLEET_TRIGGER_KINDS: readonly FleetTriggerKind[] = ['schedule', 'dispatch', 'event'];
+
+export type FleetProvenance = 'declared' | 'derived' | 'unknown';
+
+export interface FleetTrigger {
+  kind: FleetTriggerKind;
+  /** `schedule` only. */
+  cron: string | null;
+  /** `event` only: the GitHub event names. */
+  events: string[];
+}
+
+/**
+ * What the manifest promises about a lane's blast radius. `null` means the
+ * manifest did not say — which is an honest answer, and a different one from
+ * `false`.
+ */
+export interface FleetGuardrails {
+  neverMerges: boolean | null;
+  opensPullRequests: boolean | null;
+  writesDirectlyToDefaultBranch: boolean | null;
+  writablePaths: string[];
+}
+
+export interface FleetLane {
+  id: string;
+  /** Free vocabulary in the spec (`content`, `other`, …); `other` when absent. */
+  kind: string;
+  harness: FleetHarness;
+  /** The workflow file, e.g. `.github/workflows/germinate.yml`. */
+  implementation: string;
+  description: string;
+  triggers: FleetTrigger[];
+  /** The `*_ENABLED` repository variable that gates the lane; `null` = ungated. */
+  switch: string | null;
+  usesTokens: string[];
+  guardrails: FleetGuardrails;
+}
+
+export interface FleetToken {
+  name: string;
+  scope: string;
+  required: boolean;
+  purpose: string;
+  usedBy: string[];
+}
+
+export interface FleetManifest {
+  specVersion: string;
+  /** `owner/name`. */
+  repo: string;
+  provenance: FleetProvenance;
+  summary: string;
+  lanes: FleetLane[];
+  tokens: FleetToken[];
+  /** Free-form; the console reports it, it does not interpret it. */
+  metering: Record<string, unknown>;
+  agents: string[];
+  skills: string[];
 }

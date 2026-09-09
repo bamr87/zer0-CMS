@@ -53,3 +53,8 @@ export * from './contract/engine';
 export * from './analytics/analytics';
 export * from './portfolio/portfolio';
 export * from './media/media';
+
+// --- the fleet console ------------------------------------------------------
+export * from './fleet/manifest';
+export * from './fleet/fleet';
+export * from './fleet/github';

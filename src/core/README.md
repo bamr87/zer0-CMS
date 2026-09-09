@@ -26,13 +26,14 @@ The second rule follows from the first: **zero runtime dependencies**. YAML subs
 | `analytics/` | The read surface, and the join that turns a platform's statistics into `performance.json`. |
 | `portfolio/` | The published track record: volume, cadence, streak, collections. |
 | `media/` | Resolving the preview image a page already has, or emitting the generator's brief. |
+| `fleet/` | The Fleet console's pure half: `fleet.manifest.yml` → typed lanes, the switch/dispatch gate, and the GitHub surface declared as data over an injected `fetch`. See `fleet/README.md`. |
 | `index.ts` | The barrel. Import from `../core`, not from individual files, outside of core itself. |
 
 ## Where a type lives
 
-Cross-cutting domain types are declared **once**, in `shared/types.ts`: `Zer0Config`, `Field`, `ContentType`, `ContentFolder`, `FieldGroup`, `PageEntry`, `ContentRecord`, `CmsIssue`, `PerfStats`, `Severity`, `Lane`, `Freshness`, `LogSink`.
+Cross-cutting domain types are declared **once**, in `shared/types.ts`: `Zer0Config`, `Field`, `ContentType`, `ContentFolder`, `FieldGroup`, `PageEntry`, `ContentRecord`, `CmsIssue`, `PerfStats`, `Severity`, `Lane`, `Freshness`, `LogSink`, and the fleet vocabulary `FleetManifest`, `FleetLane`, `FleetTrigger`, `FleetGuardrails`, `FleetToken`, `FleetConfig`.
 
-Types owned by a single module stay with that module and are re-exported by the barrel: `FmValue`/`FrontMatter` (`content/frontmatter.ts`), `DraftFile` (`governance/drafts.ts`), `GuardFinding` (`governance/guard.ts`), `LedgerEntry`/`Ledger` (`governance/ledger.ts`), `Blocker` (`governance/approval.ts`), `Contract` (`contract/contract.ts`).
+Types owned by a single module stay with that module and are re-exported by the barrel: `FmValue`/`FrontMatter` (`content/frontmatter.ts`), `DraftFile` (`governance/drafts.ts`), `GuardFinding` (`governance/guard.ts`), `LedgerEntry`/`Ledger` (`governance/ledger.ts`), `Blocker` (`governance/approval.ts`), `Contract` (`contract/contract.ts`), `FleetBlocker`/`FleetLaneState` (`fleet/fleet.ts`), `FleetCall`/`FleetClient` (`fleet/github.ts`).
 
 Declaring the same name in two modules makes `export *` ambiguous and breaks the barrel for everyone — so import a type from where it lives, never redeclare it locally.
 
@@ -41,7 +42,7 @@ Declaring the same name in two modules makes `export *` ambiguous and breaks the
 Core tests run outside the extension host:
 
 ```bash
-npm run compile-tests && node --test out/test/core.test.js   # or: npm test
+npx tsc -p . --outDir out && npx mocha --ui tdd out/test/{core,fields,governance,golden,fleet}.test.js   # or: npm test
 ```
 
 If a test needs `vscode`, it belongs in `extension.test.ts`, not here.

@@ -137,6 +137,7 @@ export function defaultConfig(root: string): Zer0Config {
       pageSize: 16,
       cardFields: { state: true, date: true },
     },
+    fleet: { enabled: false, manifestPath: 'fleet.manifest.yml' },
     logging: { level: 'info' },
   };
 }
@@ -621,6 +622,7 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
   const fileValidation = asRecord(json.validation) ?? {};
   const filePanel = asRecord(json.panel) ?? {};
   const fileDashboard = asRecord(json.dashboard) ?? {};
+  const fileFleet = asRecord(json.fleet) ?? {};
 
   const cfg: Zer0Config = {
     workspaceRoot: root,
@@ -904,6 +906,14 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
         settings.dashboard?.cardFields,
         coerceBooleanMap(fileDashboard.cardFields),
         defaults.dashboard.cardFields,
+      ),
+    },
+    fleet: {
+      enabled: pick(settings.fleet?.enabled, asBoolean(fileFleet.enabled), defaults.fleet.enabled),
+      manifestPath: pick(
+        settings.fleet?.manifestPath,
+        asString(fileFleet.manifestPath),
+        defaults.fleet.manifestPath,
       ),
     },
     logging: {

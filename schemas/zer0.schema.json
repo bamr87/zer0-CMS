@@ -223,6 +223,15 @@
         }
       }
     },
+    "fleet": {
+      "type": "object",
+      "description": "The Fleet console: this repository's AI lanes, read from its fleet.manifest.yml. The master gate for switch and dispatch actions (zer0Cms.fleet.dispatchAllow) is a VS Code setting only and cannot be set here.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "manifestPath": { "type": "string", "default": "fleet.manifest.yml" }
+      }
+    },
     "validation": {
       "type": "object",
       "additionalProperties": false,
