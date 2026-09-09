@@ -1,5 +1,5 @@
 /**
- * The eight MCP tools, and the governance baked into their shapes.
+ * The twelve MCP tools, and the governance baked into their shapes.
  *
  * Every handler has the same signature — `(cfg, args) => Promise<string>` —
  * and returns **prose**, not structured data, including for its failures.
@@ -25,6 +25,10 @@
  *     7  `zer0_worklist` writes only under `.cms/distribution/`.
  *     8  `zer0_contract` runs the repository's own engine; read-only unless
  *        the caller explicitly asks for `normalize-apply`.
+ *    12  `zer0_fleet_status` reads the local `fleet.manifest.yml` and nothing
+ *        else — no network from this process, ever. The switch state lives in
+ *        the repository's Actions variables and only the dashboard reads it,
+ *        behind a person's sign-in; this tool says so rather than guess.
  *
  * Nothing in this file may import `vscode` (decision D1) — the MCP bundle
  * marks nothing external, so a stray editor import is a build error rather
@@ -44,6 +48,8 @@ import {
   byPath,
   condenseNormalizerOutput,
   countLabel,
+  describeGuardrails,
+  describeTriggers,
   distributable,
   engineConfigFor,
   healthBucket,
@@ -61,6 +67,7 @@ import {
   renderCoverage,
   renderPortfolio,
   readArticle,
+  readFleetManifest,
   readJsonc,
   relPath,
   unwrapStats,
@@ -808,6 +815,63 @@ async function toolContract(cfg: Zer0Config, args: ToolArgs): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// 12. zer0_fleet_status
+// ---------------------------------------------------------------------------
+
+/**
+ * The lanes this repository's manifest declares, as prose. Local file only:
+ * the MCP server never opens a socket, so the one thing it cannot report —
+ * whether each `*_ENABLED` variable is set — is stated as unknown, with the
+ * place that does know named.
+ */
+async function toolFleetStatus(cfg: Zer0Config, _args: ToolArgs): Promise<string> {
+  const manifestPath = absPath(cfg, cfg.fleet.manifestPath);
+  const parsed = await readFleetManifest(manifestPath);
+  if (parsed.manifest === null) {
+    return `not found: ${cfg.fleet.manifestPath} — ${parsed.reason}`;
+  }
+  const manifest = parsed.manifest;
+  const lines = [
+    `fleet: ${manifest.repo} (${manifest.specVersion}, provenance ${manifest.provenance})`,
+    manifest.summary === '' ? '' : `  ${manifest.summary}`,
+    `  manifest: ${cfg.fleet.manifestPath}`,
+    `  console: ${cfg.fleet.enabled ? 'enabled' : 'disabled'} in this workspace`,
+    '',
+    `lanes (${manifest.lanes.length}):`,
+  ];
+  for (const lane of manifest.lanes) {
+    lines.push(`  ${lane.id} — ${lane.description}`);
+    lines.push(`    kind ${lane.kind} · harness ${lane.harness} · ${lane.implementation || '(no workflow)'}`);
+    lines.push(`    triggers: ${describeTriggers(lane.triggers)}`);
+    lines.push(
+      lane.switch === null
+        ? '    switch: none (ungated)'
+        : `    switch: ${lane.switch} — state unknown from here; the dashboard reads it`,
+    );
+    lines.push(`    tokens: ${lane.usesTokens.length === 0 ? '(none declared)' : lane.usesTokens.join(', ')}`);
+    lines.push(`    guardrails: ${describeGuardrails(lane.guardrails)}`);
+  }
+  if (manifest.tokens.length > 0) {
+    lines.push('', `tokens (${manifest.tokens.length}), names only:`);
+    for (const token of manifest.tokens) {
+      lines.push(
+        `  ${token.name} — ${token.required ? 'required' : 'optional'}, scope ${token.scope || '(unspecified)'}` +
+          (token.purpose === '' ? '' : `: ${token.purpose}`),
+      );
+    }
+  }
+  if (manifest.agents.length > 0 || manifest.skills.length > 0) {
+    lines.push('', `agents: ${manifest.agents.join(', ') || '(none)'}`, `skills: ${manifest.skills.join(', ') || '(none)'}`);
+  }
+  lines.push(
+    '',
+    'switch state unknown from here — the dashboard reads it. This tool reads the local',
+    'manifest only; it makes no network calls and cannot flip a switch or dispatch a lane.',
+  );
+  return lines.filter((line, index) => !(line === '' && index === 1)).join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // The registry — order is the contract the MCP test pins
 // ---------------------------------------------------------------------------
 
@@ -999,6 +1063,16 @@ export const TOOLS: readonly ToolDef[] = [
       },
     },
     handler: toolContract,
+  },
+  {
+    name: 'zer0_fleet_status',
+    description:
+      "This repository's AI fleet as its local fleet.manifest.yml declares it: each lane's " +
+      'id, kind, harness, workflow, triggers, switch variable, tokens and guardrails. Reads ' +
+      'the file only — no network — so switch state is reported as unknown; the dashboard ' +
+      'reads it behind a sign-in. Read-only.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: toolFleetStatus,
   },
 ];
 

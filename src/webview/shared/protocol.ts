@@ -40,7 +40,7 @@ export type { ContentRecord, DashboardView, Field, Freshness, PageEntry, PanelSe
 // ---------------------------------------------------------------------------
 
 /**
- * Every intent a webview button may name. The first 34 are the palette
+ * Every intent a webview button may name. The first 38 are the palette
  * commands (`zer0Cms.<id>`) verbatim; the trailing group are host operations
  * that exist only for a surface (settings writes, file operations, the agent
  * approval reply) and are registered as handlers rather than as commands.
@@ -89,6 +89,11 @@ export type CommandId =
   | 'agent.start'
   | 'agent.stop'
   | 'mcp.writeWorkspaceConfig'
+  // fleet
+  | 'fleet.open'
+  | 'fleet.refresh'
+  | 'fleet.toggleSwitch'
+  | 'fleet.dispatchLane'
   // surface-only handlers
   | 'openLink'
   | 'openProject'
@@ -137,6 +142,10 @@ export const COMMAND_IDS: readonly CommandId[] = [
   'agent.start',
   'agent.stop',
   'mcp.writeWorkspaceConfig',
+  'fleet.open',
+  'fleet.refresh',
+  'fleet.toggleSwitch',
+  'fleet.dispatchLane',
   'openLink',
   'openProject',
   'revealFile',
@@ -371,7 +380,7 @@ export interface PanelState {
 // Dashboard view model
 // ---------------------------------------------------------------------------
 
-export type DashboardRoute = 'contents' | 'drafts' | 'catering' | 'settings' | 'welcome';
+export type DashboardRoute = 'contents' | 'drafts' | 'catering' | 'fleet' | 'settings' | 'welcome';
 
 export interface DashboardTab {
   id: DashboardRoute;
@@ -467,6 +476,60 @@ export interface CateringState {
   lastWorklist: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Fleet view model
+// ---------------------------------------------------------------------------
+
+/** Structurally `core/fleet/fleet.ts`'s `FleetRun`. */
+export interface FleetRunView {
+  status: string;
+  conclusion: string | null;
+  url: string;
+  updatedAt: string;
+}
+
+/** One manifest lane plus what the repository last said about it. */
+export interface FleetLaneView {
+  id: string;
+  kind: string;
+  harness: string;
+  implementation: string;
+  description: string;
+  /** `describeTriggers()` — one line. */
+  triggers: string;
+  /** The `*_ENABLED` variable, or `null` when the lane is ungated. */
+  switch: string | null;
+  /** `core/fleet/fleet.ts`'s `FleetSwitchValue`, widened to string. */
+  switchValue: string;
+  usesTokens: string[];
+  /** `describeGuardrails()` — one line. */
+  guardrails: string;
+  lastRun: FleetRunView | null;
+  /** Advisory. The host re-evaluates in `doToggleSwitch` / `doDispatchLane`. */
+  toggleBlockers: BlockerView[];
+  dispatchBlockers: BlockerView[];
+}
+
+export interface FleetState {
+  /** `zer0Cms.fleet.enabled`. */
+  enabled: boolean;
+  /** `zer0Cms.fleet.dispatchAllow`, from the settings layer. Advisory here. */
+  dispatchAllow: boolean;
+  /** Workspace-relative path the host read. */
+  manifestPath: string;
+  /** `null` when the manifest is absent or refused; `reason` says why. */
+  repo: string | null;
+  summary: string;
+  provenance: string;
+  reason: string | null;
+  lanes: FleetLaneView[];
+  tokens: Array<{ name: string; scope: string; required: boolean; purpose: string; usedBy: string[] }>;
+  /** ISO stamp of the last live read, or `null` when the switches are unknown. */
+  fetchedAt: string | null;
+  /** Why the live columns are what they are — "not signed in", a partial failure, … */
+  note: string | null;
+}
+
 export interface SettingItem {
   key: string;
   label: string;
@@ -505,6 +568,8 @@ export interface DashboardState {
   contents: ContentsState;
   drafts: DraftsState;
   catering: CateringState | null;
+  /** `null` when `zer0Cms.fleet.enabled` is off; the tab is absent too. */
+  fleet: FleetState | null;
   settings: SettingsState;
   welcome: WelcomeState;
   version: string;

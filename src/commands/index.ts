@@ -1,9 +1,10 @@
 /**
  * The command layer's barrel, plus the manifest that keeps it honest.
  *
- * `activate()` calls the six `register*` functions below in a fixed order —
+ * `activate()` calls the seven `register*` functions below in a fixed order —
  * governance first, because it returns the `GovernanceActions` that both
- * webview hosts are built around (decision D5).
+ * webview hosts are built around (decision D5), and fleet beside it, because
+ * it returns the `FleetActions` the dashboard's Fleet tab is built around.
  *
  * ### `ALL_COMMAND_IDS` is a cross-check, not a source of truth
  *
@@ -62,9 +63,18 @@ export {
   type AgentHost,
 } from './agent';
 
+export {
+  doDispatchLane,
+  doToggleSwitch,
+  laneIdFrom,
+  registerFleetCommands,
+  type FleetActions,
+  type FleetLive,
+} from './fleet';
+
 /**
  * Every id `package.json` contributes, without the `zer0Cms.` prefix, grouped
- * the way the manifest groups them. Thirty-four.
+ * the way the manifest groups them. Thirty-eight.
  */
 export const ALL_COMMAND_IDS: readonly string[] = [
   // project — src/commands/project.ts (+ dashboard pair in src/extension.ts)
@@ -107,6 +117,11 @@ export const ALL_COMMAND_IDS: readonly string[] = [
   'agent.start',
   'agent.stop',
   'mcp.writeWorkspaceConfig',
+  // fleet — src/commands/fleet.ts
+  'fleet.open',
+  'fleet.refresh',
+  'fleet.toggleSwitch',
+  'fleet.dispatchLane',
 ];
 
 /** The fully qualified ids, for comparing against `getCommands()`. */

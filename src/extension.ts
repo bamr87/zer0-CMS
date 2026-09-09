@@ -36,6 +36,7 @@
  * export function registerGovernanceCommands(shell: Zer0Shell): GovernanceActions;
  * export function registerContractCommands(shell: Zer0Shell): void;
  * export function registerAgentCommands(shell: Zer0Shell): void;
+ * export function registerFleetCommands(shell: Zer0Shell): FleetActions;
  *
  * // src/views/*.ts   — each a vscode.TreeDataProvider built from the store
  * export class DraftsTreeProvider    { constructor(store: WorkspaceStore); … }
@@ -51,7 +52,7 @@
  *
  * // src/dashboard/dashboardPanel.ts
  * export class DashboardPanel implements vscode.Disposable {
- *   constructor(shell: Zer0Shell, governance: GovernanceActions);
+ *   constructor(shell: Zer0Shell, governance: GovernanceActions, fleet: FleetActions);
  *   open(route?: string): void;
  *   close(): void;
  * }
@@ -61,6 +62,9 @@
  * two functions that are the single authoritative gate (decision D5): the panel
  * and the dashboard are handed the *same* `approve`/`publish` the command
  * palette calls, so a webview button cannot reach a shorter path.
+ * `FleetActions` (`src/commands/fleet.ts`) is the same idea for the Fleet tab,
+ * and it is where promise 1 above is relaxed — decision D11: network happens
+ * only from an explicit user action, through an injected `fetch`, never here.
  */
 
 import * as vscode from 'vscode';
@@ -76,6 +80,7 @@ import { registerAgentCommands } from './commands/agent';
 import { registerContentCommands } from './commands/content';
 import { registerContentTypeCommands } from './commands/contentType';
 import { registerContractCommands } from './commands/contract';
+import { registerFleetCommands, type FleetActions } from './commands/fleet';
 import { registerGovernanceCommands, type GovernanceActions } from './commands/governance';
 import { registerProjectCommands } from './commands/project';
 import { DashboardPanel } from './dashboard/dashboardPanel';
@@ -151,6 +156,10 @@ export function activate(context: vscode.ExtensionContext): void {
   registerContentTypeCommands(shell);
   registerContractCommands(shell);
   registerAgentCommands(shell);
+  // Fleet returns the toggle/dispatch pair the dashboard's Fleet tab is built
+  // around, for the same reason governance does. Registration only: nothing
+  // here reads a credential or opens a socket (D11).
+  const fleet: FleetActions = registerFleetCommands(shell);
 
   // --- 7. The metadata panel ----------------------------------------------
   context.subscriptions.push(
@@ -163,7 +172,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // --- 8. The dashboard ----------------------------------------------------
   // Constructed, not shown: the panel is created on first `open()`.
-  const dashboard = new DashboardPanel(shell, governance);
+  const dashboard = new DashboardPanel(shell, governance, fleet);
   context.subscriptions.push(
     dashboard,
     vscode.commands.registerCommand('zer0Cms.dashboard', () => dashboard.open()),

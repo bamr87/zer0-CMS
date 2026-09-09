@@ -60,7 +60,7 @@ export const MCP_SERVER_RELATIVE_PATH = 'dist/mcp-server.js';
  * Keys in `context.secrets`. Nothing else in this extension may read them, and
  * nothing at all may write them to disk, a setting or the output channel.
  *
- * `anthropicApiKey` is optional everywhere: the eight MCP tools never call a
+ * `anthropicApiKey` is optional everywhere: the twelve MCP tools never call a
  * model, and the agent layer falls back to the ambient environment. It exists
  * so that a user who prefers SecretStorage over a shell profile has one, and so
  * the two-phase contract above has something real to protect.

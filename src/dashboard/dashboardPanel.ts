@@ -19,14 +19,18 @@
  * callable that is not a handler. An id failing either check is logged and
  * dropped.
  *
- * **3. Decision D5, at the two places it matters.** `draft.approve` and
+ * **3. Decision D5, at the four places it matters.** `draft.approve` and
  * `draft.publish` route into the injected `GovernanceActions` — the same
  * `doApprove`/`doPublish` that `src/commands/governance.ts` registers for the
  * command palette, which re-read the draft from disk, re-run the brand guard,
  * re-evaluate `evaluatePublishGates()` and ask modally before writing a byte.
- * The webview supplies a draft path and nothing else. The blockers rendered
- * under a disabled button here are advisory; the ones that decide are computed
- * again, later, somewhere else.
+ * The webview supplies a draft path and nothing else. `fleet.toggleSwitch` and
+ * `fleet.dispatchLane` route the same way into the injected `FleetActions`
+ * (`src/commands/fleet.ts`), which re-read `fleet.manifest.yml`, re-run
+ * `evaluateFleetGates()`, obtain the credential lazily and ask modally; the
+ * webview supplies a lane id and nothing else. The blockers rendered under a
+ * disabled button here are advisory; the ones that decide are computed again,
+ * later, somewhere else.
  *
  * **4. Durable UI state.** Four preferences must survive the webview being
  * disposed — the sort order, the layout, the route and the selected draft — so
@@ -52,22 +56,30 @@ import * as vscode from 'vscode';
 
 import {
   LANE_EMPTY_STATES,
+  absPath,
   asString,
+  buildLaneStates,
   buildPreview,
   canonicalUrl,
   commentaryOf,
+  describeGuardrails,
+  describeTriggers,
   distributionDir,
   guardWithWorkspace,
   evaluateApproveGates,
+  evaluateFleetGates,
   evaluatePublishGates,
   hasEvidence,
   previewRequestFromDraft,
   readDraft,
+  readFleetManifest,
   relPath,
   searchPages,
   shareEntries,
   sourceOf,
   type CateringPlan,
+  type FleetGateInput,
+  type FleetLaneState,
   type ContentFolder,
   type DashboardView,
   type DraftFile,
@@ -76,7 +88,15 @@ import {
   type PageEntry,
   type Zer0Config,
 } from '../core';
-import { currentConfig, hasProjectConfig, onConfigChange, readConfigFileJson, updateSetting } from '../config';
+import {
+  currentConfig,
+  hasProjectConfig,
+  onConfigChange,
+  readConfigFileJson,
+  settingsFleetDispatchAllow,
+  updateSetting,
+} from '../config';
+import { laneIdFrom, type FleetActions, type FleetLive } from '../commands/fleet';
 import { draftPathFrom, type GovernanceActions } from '../commands/governance';
 import type { Zer0Shell } from '../extension';
 import { describeError, log } from '../logger';
@@ -94,6 +114,8 @@ import {
   type DraftSummary,
   type DraftsState,
   type FilterDimension,
+  type FleetLaneView,
+  type FleetState,
   type FolderView,
   type GroupOption,
   type GuardFindingView,
@@ -125,11 +147,15 @@ const DEVELOPER_COMMAND_URIS: readonly string[] = [
   'workbench.action.webview.openDeveloperTools',
 ];
 
-/** The five routes, in tab order. `catering` is dropped without a contract. */
+/**
+ * The six routes, in tab order. `catering` is dropped without a contract and
+ * `fleet` is dropped while `zer0Cms.fleet.enabled` is off.
+ */
 const TABS: readonly DashboardTab[] = [
   { id: 'contents', label: 'Contents', icon: 'files' },
   { id: 'drafts', label: 'Drafts', icon: 'checklist' },
   { id: 'catering', label: 'Distribution', icon: 'graph' },
+  { id: 'fleet', label: 'Fleet', icon: 'server-process' },
   { id: 'settings', label: 'Settings', icon: 'settings-gear' },
   { id: 'welcome', label: 'Welcome', icon: 'rocket' },
 ];
@@ -260,6 +286,7 @@ export class DashboardPanel implements vscode.Disposable {
   constructor(
     private readonly shell: Zer0Shell,
     private readonly governance: GovernanceActions,
+    private readonly fleet: FleetActions,
   ) {
     this.handlers = {
       // --- project ---------------------------------------------------------
@@ -305,6 +332,17 @@ export class DashboardPanel implements vscode.Disposable {
       'contract.normalizeApply': () => this.run('contract.normalizeApply'),
       // --- agent -----------------------------------------------------------
       'agent.open': () => this.run('agent.open'),
+      // --- fleet: the gate, injected -----------------------------------------
+      'fleet.open': () => this.run('fleet.open'),
+      'fleet.refresh': () => {
+        void this.refreshFleet(true);
+      },
+      'fleet.toggleSwitch': (args) => {
+        void this.runFleet('toggleSwitch', args);
+      },
+      'fleet.dispatchLane': (args) => {
+        void this.runFleet('dispatchLane', args);
+      },
       // --- surface-only ----------------------------------------------------
       openLink: (args) => {
         this.openLink(readString(args, 'url'));
@@ -574,6 +612,45 @@ export class DashboardPanel implements vscode.Disposable {
     this.schedule();
   }
 
+  /**
+   * The fleet intents. Like the governance ones they do **not** go through
+   * `executeCommand`: the injected actions are `doToggleSwitch`/`doDispatchLane`
+   * themselves. The message names a lane; the host derives everything else.
+   */
+  private async runFleet(action: 'toggleSwitch' | 'dispatchLane', args: unknown): Promise<void> {
+    const laneId = laneIdFrom(args);
+    if (laneId === undefined) {
+      log.warn(`dashboard webview: "fleet.${action}" arrived without a lane id`);
+      return;
+    }
+    try {
+      if (action === 'toggleSwitch') {
+        await this.fleet.toggleSwitch(laneId);
+      } else {
+        await this.fleet.dispatchLane(laneId);
+      }
+    } catch (error) {
+      reportError(error, `fleet.${action}`);
+    }
+    this.schedule();
+  }
+
+  /**
+   * Read the switches and newest runs — the only network this panel ever
+   * causes, and only from a person's act: the Refresh button (`interactive`,
+   * may prompt to sign in) or opening the Fleet tab (passive, never prompts).
+   * A snapshot rebuild never triggers it; `buildFleet` renders whatever the
+   * last read left behind.
+   */
+  private async refreshFleet(interactive: boolean): Promise<void> {
+    try {
+      await this.fleet.refresh(interactive);
+    } catch (error) {
+      reportError(error, 'fleet.refresh');
+    }
+    this.schedule();
+  }
+
   // -------------------------------------------------------------------------
   // The request channel
   // -------------------------------------------------------------------------
@@ -663,6 +740,12 @@ export class DashboardPanel implements vscode.Disposable {
     // built here rather than in the webview — so this one key needs a re-post.
     if (key === 'Drafts:Selected') {
       this.schedule();
+    }
+    // Opening the Fleet tab is the passive read: with a session already on
+    // hand it fills the switch and run columns; without one it prompts for
+    // nothing and the tab says the values are unknown.
+    if (key === 'Route' && value === 'fleet') {
+      void this.refreshFleet(false);
     }
   }
 
@@ -858,6 +941,7 @@ export class DashboardPanel implements vscode.Disposable {
     const custom = customDashboardConfig();
 
     const drafts = await this.buildDrafts(cfg, snapshot);
+    const fleet = cfg.fleet.enabled ? await this.buildFleet(cfg) : null;
 
     return {
       kind: 'dashboard',
@@ -867,10 +951,15 @@ export class DashboardPanel implements vscode.Disposable {
       // to show, and a "seen it" flag would only hide that.
       showWelcome: !initialized,
       developer: this.shell.context.extensionMode !== vscode.ExtensionMode.Production,
-      tabs: TABS.filter((tab) => tab.id !== 'catering' || snapshot.contract.present),
+      tabs: TABS.filter(
+        (tab) =>
+          (tab.id !== 'catering' || snapshot.contract.present) &&
+          (tab.id !== 'fleet' || cfg.fleet.enabled),
+      ),
       contents: this.buildContents(cfg, snapshot, folders, custom),
       drafts,
       catering: buildCatering(snapshot, await this.lastWorklist(snapshot)),
+      fleet,
       settings: buildSettings(cfg, folders),
       welcome: buildWelcome(cfg, initialized, folders),
       version: extensionVersion(this.shell.context),
@@ -997,6 +1086,80 @@ export class DashboardPanel implements vscode.Disposable {
   }
 
   /** The newest generated worklist, for the Distribution view's footer line. */
+  /**
+   * The Fleet projection. The manifest is re-read from disk on every snapshot
+   * (it is one small file, and a stale lane table is a lie); the switch and
+   * run columns come from the last live read, which only a person's act
+   * refreshes. The blockers are advisory — `evaluateFleetGates` runs again,
+   * against freshly read inputs, inside the actions that decide.
+   */
+  private async buildFleet(cfg: Zer0Config): Promise<FleetState> {
+    const parsed = await readFleetManifest(absPath(cfg, cfg.fleet.manifestPath));
+    const dispatchAllow = settingsFleetDispatchAllow();
+    const live = this.fleet.live();
+    const base: FleetState = {
+      enabled: cfg.fleet.enabled,
+      dispatchAllow,
+      manifestPath: cfg.fleet.manifestPath,
+      repo: null,
+      summary: '',
+      provenance: 'unknown',
+      reason: null,
+      lanes: [],
+      tokens: [],
+      fetchedAt: null,
+      note: null,
+    };
+    if (parsed.manifest === null) {
+      return { ...base, reason: parsed.reason };
+    }
+    const manifest = parsed.manifest;
+    const current = live !== undefined && live.repo === manifest.repo ? live : undefined;
+    const gate = (laneId: string): FleetGateInput => ({
+      workspaceRoot: cfg.workspaceRoot,
+      enabled: cfg.fleet.enabled,
+      dispatchAllow,
+      // Advisory only. A live read having succeeded is the proof a session
+      // exists; the actions obtain the real one and evaluate again.
+      hasCredential: current !== undefined,
+      manifest,
+      laneId,
+    });
+    const lanes = buildLaneStates(manifest, current?.switches, current?.runs).map(
+      (state: FleetLaneState): FleetLaneView => ({
+        id: state.lane.id,
+        kind: state.lane.kind,
+        harness: state.lane.harness,
+        implementation: state.lane.implementation,
+        description: state.lane.description,
+        triggers: describeTriggers(state.lane.triggers),
+        switch: state.lane.switch,
+        switchValue: state.switchValue,
+        usesTokens: state.lane.usesTokens,
+        guardrails: describeGuardrails(state.lane.guardrails),
+        lastRun: state.lastRun ?? null,
+        toggleBlockers: evaluateFleetGates('toggle', gate(state.lane.id)),
+        dispatchBlockers: evaluateFleetGates('dispatch', gate(state.lane.id)),
+      }),
+    );
+    return {
+      ...base,
+      repo: manifest.repo,
+      summary: manifest.summary,
+      provenance: manifest.provenance,
+      lanes,
+      tokens: manifest.tokens.map((t) => ({
+        name: t.name,
+        scope: t.scope,
+        required: t.required,
+        purpose: t.purpose,
+        usedBy: t.usedBy,
+      })),
+      fetchedAt: current?.fetchedAt ?? null,
+      note: fleetNote(current, live),
+    };
+  }
+
   private async lastWorklist(snapshot: Snapshot): Promise<string | null> {
     if (!snapshot.contract.present) {
       return null;
@@ -1021,6 +1184,16 @@ export class DashboardPanel implements vscode.Disposable {
 // ---------------------------------------------------------------------------
 // Projections
 // ---------------------------------------------------------------------------
+
+/** The sentence above the lane table explaining the live columns. */
+function fleetNote(current: FleetLive | undefined, live: FleetLive | undefined): string | null {
+  if (current === undefined) {
+    return live === undefined
+      ? 'Switch values are unknown: no GitHub session has been used yet. Refresh signs in and reads them.'
+      : 'Switch values are unknown: the last read was for a different repository. Refresh to read this one.';
+  }
+  return current.note ?? null;
+}
 
 function samePath(a: string, b: string): boolean {
   return path.resolve(a) === path.resolve(b);
@@ -1460,7 +1633,7 @@ function nonce(): string {
  * arrives over `postMessage` and is written with `textContent` through `el()`.
  * That is what makes `default-src 'none'` a guarantee rather than a decoration.
  *
- * The single templated value is `data-route`, and it is one of five literals
+ * The single templated value is `data-route`, and it is one of six literals
  * from a closed set validated before it gets here — the boot route, which the
  * webview reads once so that reopening the dashboard lands where you left it.
  */

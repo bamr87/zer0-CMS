@@ -18,7 +18,8 @@
  *      serve it and `contents` when it is not. The Distribution tab is absent
  *      from `state.tabs` when the `.cms/` contract is not present, so a
  *      persisted `catering` route degrades to Contents rather than to a blank
- *      page.
+ *      page. The Fleet tab is absent the same way when `zer0Cms.fleet.enabled`
+ *      is off.
  *
  * ### Two kinds of state, kept apart on purpose
  *
@@ -57,6 +58,7 @@ import { mountSections, staleOn, type Section } from '../shared/state';
 import { renderContents } from './contents';
 import { renderHeader } from './header';
 import { render as renderCatering } from './catering';
+import { render as renderFleet } from './fleet';
 import { render as renderDrafts } from './governance';
 import { render as renderSettings } from './settings';
 import { render as renderWelcome } from './welcome';
@@ -73,6 +75,7 @@ const ROUTES: ReadonlySet<string> = new Set<string>([
   'contents',
   'drafts',
   'catering',
+  'fleet',
   'settings',
   'welcome',
 ]);
@@ -345,6 +348,9 @@ function boot(): void {
           return;
         case 'catering':
           renderCatering(host, ctx.state);
+          return;
+        case 'fleet':
+          renderFleet(host, ctx.state);
           return;
         case 'settings':
           renderSettings(host, ctx.state);

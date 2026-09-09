@@ -36,7 +36,7 @@ import { ALL_CONTEXT_KEYS, CONTEXT_KEYS, UiState, type ContextKey } from '../uiS
 const EXTENSION_ID = 'bamr87.zer0-cms';
 const REPO_ROOT = path.resolve(__dirname, '../..');
 
-/** All 34 command ids from PLAN §5.1, in contribution order. */
+/** All 38 command ids — PLAN §5.1's 34 plus the four fleet commands — in contribution order. */
 const ALL_COMMANDS: readonly string[] = [
   'zer0Cms.init',
   'zer0Cms.dashboard',
@@ -72,6 +72,10 @@ const ALL_COMMANDS: readonly string[] = [
   'zer0Cms.agent.start',
   'zer0Cms.agent.stop',
   'zer0Cms.mcp.writeWorkspaceConfig',
+  'zer0Cms.fleet.open',
+  'zer0Cms.fleet.refresh',
+  'zer0Cms.fleet.toggleSwitch',
+  'zer0Cms.fleet.dispatchLane',
 ];
 
 /** The four trees, plus the webview view, all in the `zer0-cms` container. */
@@ -139,13 +143,13 @@ suite('extension: activation and contributions', function () {
     assert.strictEqual(hasProjectConfig(), true, 'the fixture workspace has a zer0.json');
   });
 
-  test('all 34 contributed commands are registered', () => {
-    assert.strictEqual(ALL_COMMANDS.length, 34, 'the expected list itself is 34 long');
+  test('all 38 contributed commands are registered', () => {
+    assert.strictEqual(ALL_COMMANDS.length, 38, 'the expected list itself is 38 long');
     const missing = ALL_COMMANDS.filter((command) => !commands.includes(command));
     assert.deepStrictEqual(missing, [], 'contributed but never registered');
   });
 
-  test('package.json contributes exactly those 34 and nothing else', () => {
+  test('package.json contributes exactly those 38 and nothing else', () => {
     // Catches both directions: a command registered but never contributed is
     // invisible in the palette, and a command contributed but dropped from the
     // list above would otherwise slip past the test that precedes this one.
@@ -238,6 +242,7 @@ suite('extension: the context keys the when-clauses depend on', function () {
       'zer0Cms:dashboard:open',
       'zer0Cms:enabled',
       'zer0Cms:file:isValid',
+      'zer0Cms:fleet:enabled',
       'zer0Cms:folder:registered',
       'zer0Cms:governance:enabled',
     ]);
@@ -260,7 +265,7 @@ suite('extension: the context keys the when-clauses depend on', function () {
     );
   });
 
-  test('applyConfig seeds all eight keys and follows the project config', () => {
+  test('applyConfig seeds all nine keys and follows the project config', () => {
     const cfg = currentConfig();
     ui.applyConfig(cfg, true);
     for (const key of ALL_CONTEXT_KEYS) {
@@ -269,6 +274,7 @@ suite('extension: the context keys the when-clauses depend on', function () {
     assert.strictEqual(ui.get(CONTEXT_KEYS.enabled), true, 'a workspace with a zer0.json is enabled');
     assert.strictEqual(ui.get(CONTEXT_KEYS.governanceEnabled), cfg.governance.enabled);
     assert.strictEqual(ui.get(CONTEXT_KEYS.agentEnabled), cfg.agent.enabled);
+    assert.strictEqual(ui.get(CONTEXT_KEYS.fleetEnabled), cfg.fleet.enabled);
 
     ui.applyConfig(cfg, false);
     assert.strictEqual(ui.get(CONTEXT_KEYS.enabled), false, 'no zer0.json means not enabled');
