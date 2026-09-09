@@ -58,11 +58,14 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-08-15 | Israeli disengagement from the Gaza Strip | History & Politics | [file]({{ '/news/history-politics/gaza-disengagement-2005/' | relative_url }}) |
 | 2005-08-22 | Blu-ray and HD-DVD format war begins | Science & Technology | [file]({{ '/news/science-technology/bluray-hddvd-format-war/' | relative_url }}) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file]({{ '/news/society-economics/hurricane-katrina/' | relative_url }}) |
+| 2005-08-30 | Kanye West releases *Late Registration* | Arts & Culture | [file]({{ '/news/arts-culture/kanye-west-late-registration/' | relative_url }}) |
 | 2005-09-18 | Angela Merkel elected Chancellor | History & Politics | [file]({{ '/news/history-politics/angela-merkel-chancellor/' | relative_url }}) |
+| 2005-09-23 | Motorola RAZR V3 launches in North America | Science & Technology | [file]({{ '/news/science-technology/motorola-razr-launch/' | relative_url }}) |
 | 2005-09-24 | Hurricane Rita | Society & Economics | [file]({{ '/news/society-economics/hurricane-rita-2005/' | relative_url }}) |
 | 2005-09-29 | John Roberts confirmed as Chief Justice | History & Politics | [file]({{ '/news/history-politics/john-roberts-chief-justice/' | relative_url }}) |
 | 2005-10-08 | 2005 Kashmir earthquake | Society & Economics | [file]({{ '/news/society-economics/kashmir-earthquake-2005/' | relative_url }}) |
 | 2005-10-12 | Shenzhou 6 crewed spaceflight mission | Science & Technology | [file]({{ '/news/science-technology/shenzhou-6-mission/' | relative_url }}) |
+| 2005-10-12 | Apple releases the iPod Nano | Science & Technology | [file]({{ '/news/science-technology/ipod-nano-launch/' | relative_url }}) |
 | 2005-10-17 | The Colbert Report premieres | Arts & Culture | [file]({{ '/news/arts-culture/colbert-report-premiere/' | relative_url }}) |
 | 2005-10-19 | Saddam Hussein's trial begins | History & Politics | [file]({{ '/news/history-politics/saddam-hussein-trial-begins/' | relative_url }}) |
 | 2005-10-24 | Rosa Parks dies | People | [file]({{ '/news/people/rosa-parks-dies/' | relative_url }}) |
@@ -82,5 +85,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-23 | Lech Kaczyński elected President of Poland | History & Politics | [file]({{ '/news/history-politics/lech-kaczynski-elected-president-poland/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 66 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 72 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
