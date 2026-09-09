@@ -1,12 +1,43 @@
+// zer0-CMS · .vscode/settings.json — fleet-vscode/v1 · 2026-09-09. Convention + vocabulary: .vscode/README.md.
+// Repo-scoped settings only. Personal editor preferences belong in the fleet workspace file.
 {
   "files.exclude": {
-    "out": false,
-    "dist": false
+    "**/node_modules": true,
+    "**/.vscode-test": true
   },
   "search.exclude": {
-    "out": true,
-    "dist": true
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/out": true
   },
+  "[typescript]": {
+    "editor.tabSize": 2
+  },
+  "[javascript]": {
+    "editor.tabSize": 2
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+  },
+  "cSpell.words": [
+    "bamr",
+    "zer0",
+    "endcapture",
+    "endraw",
+    "frontmatter",
+    "Jamstack",
+    "lastmod",
+    "livereload",
+    "markdownify",
+    "wikilinks",
+    "rubygems",
+    "gemspec",
+    "webrick",
+    "posthog"
+  ],
   "typescript.tsc.autoDetect": "off",
   "typescript.tsdk": "node_modules/typescript/lib"
 }
