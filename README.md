@@ -64,7 +64,7 @@ Five rules hold this together:
 4. Open a markdown file — the panel fills in.
 5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
 
-Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 35 settings here instead of 89.
+Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 38 settings here instead of 89.
 
 ## Configuration
 
@@ -105,6 +105,8 @@ The settings that matter most:
 | `zer0Cms.governance.bannedPatternsFile` | — | Extra brand-guard patterns |
 | `zer0Cms.cms.root` | `.cms` | Where the content engine's contract lives |
 | `zer0Cms.agent.enabled` | `false` | The optional AI layer |
+| `zer0Cms.fleet.enabled` | `false` | The Fleet console (read-only) |
+| `zer0Cms.fleet.dispatchAllow` | `false` | Lets the console flip a lane's switch or dispatch it — your settings only |
 
 Full reference: [`docs/CONFIG.md`](docs/CONFIG.md).
 
@@ -114,14 +116,18 @@ If your repo runs a content engine that emits `.cms/index/content-index.json`, z
 
 If your repo has no `.cms/`, that is a normal state, not an error — the extension falls back to an honest filesystem scan and simply reports less.
 
+## Fleet
+
+If the repository carries a `fleet.manifest.yml` (spec `fleet/v1`, written by `wtd fleet adopt`), the dashboard grows a **Fleet** tab once `zer0Cms.fleet.enabled` is on: every AI lane with its harness, workflow, triggers, guardrails and `*_ENABLED` switch, plus — after a GitHub sign-in you answer — the switch's current value and the lane's newest run. Two buttons: flip the switch, dispatch the lane once. Both are off until `zer0Cms.fleet.dispatchAllow` is set in *your* settings, both re-read the manifest and re-run the gate host-side, and both ask first, naming the repository, the lane, the variable and the value. The webview sends a lane id and nothing else. Nothing about the fleet runs at activation; the extension stores no token.
+
 ## MCP server
 
-The extension registers a bundled MCP server with VS Code 1.101+, so Copilot agent mode (or any MCP client pointed at `dist/mcp-server.js`) gets eight tools:
+The extension registers a bundled MCP server with VS Code 1.101+, so Copilot agent mode (or any MCP client pointed at `dist/mcp-server.js`) gets twelve tools:
 
 | Tool | Safe? |
 |---|---|
-| `zer0_status` · `zer0_list_content` · `zer0_get_content` · `zer0_preview` · `zer0_contract` | read-only |
-| `zer0_draft` · `zer0_worklist` | writes a draft or a worklist for a human |
+| `zer0_status` · `zer0_list_content` · `zer0_get_content` · `zer0_preview` · `zer0_portfolio` · `zer0_media` · `zer0_contract` · `zer0_fleet_status` | read-only (`zer0_fleet_status` reads the local manifest only — no network) |
+| `zer0_draft` · `zer0_worklist` · `zer0_ingest` | writes a draft, a worklist, or aggregate statistics under `.cms/` for a human |
 | `zer0_publish` | **off by default** — needs `ZER0_CMS_MCP_ALLOW_PUBLISH=1` in the server env *and* `confirm: true` per call |
 
 The preferred path is `zer0_draft`: the model writes, the person approves.

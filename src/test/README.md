@@ -1,6 +1,6 @@
 # `src/test/` — the test suite
 
-Six files, three execution contexts, one command: `npm test`. The runner is `@vscode/test-cli` driving Mocha's **tdd** interface (`suite` / `test`) over the plain `tsc` output in `out/test/`, configured by `.vscode-test.mjs` at the repository root. `npm run pretest` compiles that output, builds the five esbuild bundles and runs eslint first, so a green `npm test` means the tests, the types, the lint gate and the shipped artifacts all agree.
+Eight files, three execution contexts, one command: `npm test`. The runner is `@vscode/test-cli` driving Mocha's **tdd** interface (`suite` / `test`) over the plain `tsc` output in `out/test/`, configured by `.vscode-test.mjs` at the repository root. `npm run pretest` compiles that output, builds the five esbuild bundles and runs eslint first, so a green `npm test` means the tests, the types, the lint gate and the shipped artifacts all agree.
 
 | File | Runs in | Covers |
 |---|---|---|
@@ -8,6 +8,8 @@ Six files, three execution contexts, one command: `npm test`. The runner is `@vs
 | `fields.test.ts` | plain Node | All 18 field types, the ten `when` operators, field-group inlining, required-field validation, SEO limit derivation, `processFields`, placeholders and slugs. |
 | `governance.test.ts` | plain Node | The brand guard, the draft queue, the ledger, every publish gate in isolation and in order, the `.cms/` contract, and the read-only preview. |
 | `golden.test.ts` | plain Node | Cross-lane byte contracts against fixtures written by Python. |
+| `loop.test.ts` | plain Node | The feedback loop: the analytics join and its read-surface boundary, the portfolio, and media coverage. |
+| `fleet.test.ts` | plain Node | The Fleet console's pure half: the verbatim irony-works manifest (wrapped summary whole), a malformed manifest coercing without throwing, the blocker order in both modes, the repo-scoped-only surface guard, and every request the client makes landing in the declared plan — with a `fetch` that records and answers. |
 | `mcp.test.ts` | child process | Spawns the bundled `dist/mcp-server.js` over stdio with a scrubbed environment. |
 | `extension.test.ts` | extension host | Activation, the contributed commands, the context keys, and the fixture workspace's live settings. |
 
@@ -22,6 +24,8 @@ Six files, three execution contexts, one command: `npm test`. The runner is `@vs
 `.vscode-test.mjs` opens this directory as the workspace folder, so it is both the input to the pure-Node tests and the live workspace the extension-host tests activate against.
 
 `zer0.json` declares two content folders (`pages/_posts/corp`, `pages/_posts/tech`) and two content types. The `post` type exercises **every one of the 18 field types** — `fields.test.ts` asserts that, so adding a type without adding a fixture field fails the suite rather than going untested. `.vscode/settings.json` sets `zer0Cms.governance.publishAllow` to `false` while `zer0.json` sets it to `true`: the layers disagree on purpose, and the merge that collapsed them would fail loudly.
+
+`fleet.manifest.yml` is bamr87/irony-works's manifest, copied verbatim: a `fleet/v1` document with a wrapped `summary:`, an ungated event lane and a gated scheduled-plus-dispatch lane. It is the input to `fleet.test.ts` and, with `zer0Cms.fleet.enabled` off by default, inert for the extension-host tests.
 
 Seven markdown files cover the shapes the parser has to survive: YAML front matter, TOML (`+++`), Hugo-style JSON (a bare object), a file dense with comments and blank lines that pins the byte-preservation property of line surgery, a draft, and a `README.md` with no front matter at all that must be skipped and remembered rather than re-read.
 
@@ -44,11 +48,11 @@ When a golden test fails, the fix is either a real bug in our serializer or a re
 
 ## Running a subset
 
-`npm test` runs everything. During development the four pure-Node files also run under plain Mocha, which is much faster and needs no VS Code download:
+`npm test` runs everything. During development the six pure-Node files also run under plain Mocha, which is much faster and needs no VS Code download:
 
 ```bash
 npx tsc -p . --outDir out
-npx mocha --ui tdd out/test/{core,fields,governance,golden}.test.js
+npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet}.test.js
 ```
 
 `extension.test.ts` needs the extension host and `mcp.test.ts` needs `dist/mcp-server.js`, so neither is in that list. On a headless Linux box `npm test` shells out to `xvfb-run` for you (see `test-runner.js`); set `ZER0_CMS_NO_XVFB=1` to force the plain path.

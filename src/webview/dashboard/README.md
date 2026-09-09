@@ -1,6 +1,6 @@
 # `src/webview/dashboard` — the editor-tab surface
 
-Five routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
+Six routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
 
 ```
 main.ts        boot, gate order, route table, the section reconciler
@@ -9,11 +9,12 @@ contents.ts    grid / list cards, the item menu, bulk selection
 structure.ts   the folder-tree browser
 governance.ts  the Drafts route — queue + review pane
 catering.ts    the Catering route — four distribution lanes
+fleet.ts       the Fleet route — this repository's AI lanes, two gated buttons
 settings.ts    the Settings route — General + Content folders
 welcome.ts     the Welcome route — four onboarding steps
 ```
 
-The last four export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
+The last five export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
 
 **Gate order on boot** (PLAN §3.2): `settings === null` → spinner;
 `showWelcome || !initialized || contentFolders.length === 0` → Welcome; else
@@ -74,6 +75,14 @@ Approve is enabled only for a `pending` draft and relabels to `Approved` once th
 This screen and `.cms/distribution/worklists/<date>-catering.md` are two renderings of one `CateringPlan`, so they use the same sentences and the same arithmetic. The empty states arrive in `CateringState.emptyStates`, which the host builds by importing `LANE_EMPTY_STATES` from `core/catering/worklist.ts` — the module that also writes them into the generated file, so there is exactly one definition behind both. `EMPTY_STATES` here is the fallback for a host that sent a blank, and it is the only copy of those sentences that is not the export: this bundle cannot reach `worklist.ts`, which imports `contract.ts`, which imports `node:fs`. Lane headings and hints, and `formatThousands` / `formatPercent` / `roundHalfEven` — Python's half-to-even rounding included — are re-derived here for the same reason. Each copy carries a comment naming its twin; edit both in one commit.
 
 A health of `-1` means "the engine never scored this page". It renders as an em dash (`.z-lane__unknown`), exactly as the worklist's `healthCell` writes it, and never as `-1`. **Generate worklist** posts `catering.worklist`; the host rebuilds the plan from disk and writes the file, so this screen's numbers are never the input to it. An absent `.cms/` is a normal state (D9) and renders as an empty state offering **Run CMS engine**.
+
+## Fleet (`fleet.ts`)
+
+One table: lane · kind · harness · triggers and guardrails · switch · last run · two buttons, over `FleetState`, which the host builds from `fleet.manifest.yml` and its last live read of GitHub. The tab is absent from `state.tabs` while `zer0Cms.fleet.enabled` is off, so a persisted `fleet` route degrades to Contents.
+
+**Switch on / Switch off** and **Dispatch** post `{ type:'command', id, args:{ lane } }` — a lane id and nothing else. Not the new value (the host derives it from the variable it fetches inside the action), not a ref, not a `force`. The blockers under a disabled button are the host's advisory `evaluateFleetGates()` in the gate's own order, verbatim, for the reason the Drafts route keeps the publish gate's order: re-sorting here would make this screen and the confirmation modal disagree about the same lane.
+
+The switch pill has four honest states — `true`, `false`, `unset` (the API said 404) and `unknown` (nobody has asked: no credential, or the tab was opened without one) — and an ungated lane draws a dash. `unknown` borrows the "draft" red because it is the one state that is not an answer; the note above the table says so and **Refresh** posts `fleet.refresh`, the only intent on this screen that may prompt to sign in. Token rows show names only: the console never reads a secret.
 
 ## Settings (`settings.ts`)
 

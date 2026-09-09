@@ -2,7 +2,7 @@
 
 zer0-CMS is configured from two surfaces that resolve into one value object.
 
-`zer0.json` describes the **project**: where content lives, what shape it has, what a slug looks like, which thresholds SEO is measured against. It is committed, it is read by the extension *and* by the bundled MCP server, and it is the same for everyone who clones the repo. VS Code settings under `zer0Cms.*` describe **your preferences on this machine**: whether the panel opens by itself, how big a dashboard page is, where your Python lives, whether publishing is allowed at all. There are 35 of them, and none of them describe the project.
+`zer0.json` describes the **project**: where content lives, what shape it has, what a slug looks like, which thresholds SEO is measured against. It is committed, it is read by the extension *and* by the bundled MCP server, and it is the same for everyone who clones the repo. VS Code settings under `zer0Cms.*` describe **your preferences on this machine**: whether the panel opens by itself, how big a dashboard page is, where your Python lives, whether publishing is allowed at all. There are 38 of them, and none of them describe the project.
 
 Everything below is checked against the code as it is: the settings against `package.json`, the `zer0.json` keys against `schemas/zer0.schema.json`, and the behaviour against `src/core/shared/config.ts` (the resolver) and `src/config.ts` (the only VS Code translator).
 
@@ -22,7 +22,7 @@ Everything below is checked against the code as it is: the settings against `pac
 
 This is the subtlety that makes three layers real rather than two.
 
-Every one of the 35 settings declares a `default` in `package.json`. So `vscode.workspace.getConfiguration('zer0Cms').get('governance.publishAllow')` **never** returns `undefined` — it returns `false` for a workspace that has never heard of the setting. A settings layer built that way would always have a value for every key, and would therefore silently outrank `zer0.json` everywhere.
+Every one of the 38 settings declares a `default` in `package.json`. So `vscode.workspace.getConfiguration('zer0Cms').get('governance.publishAllow')` **never** returns `undefined` — it returns `false` for a workspace that has never heard of the setting. A settings layer built that way would always have a value for every key, and would therefore silently outrank `zer0.json` everywhere.
 
 `src/config.ts` reads the settings layer with `inspect()` instead:
 
@@ -54,7 +54,7 @@ Take `governance.publishAllow`, the master publish gate.
 
 The `Resolved` column is what every gate inside the editor reads. It is **not** what arms the bundled MCP server: that reads the settings column alone, so row 2 gives an editor that can publish and an agent that cannot. See §6.
 
-The same three-layer walk applies to all 35 settings, and only to them. `contentFolders`, `contentTypes`, `fieldGroups`, `taxonomy`, `draftField`, `frontMatter`, `content.filePrefix`, `slug`, `placeholders`, and the six `seo` keys other than `enabled` have no settings twin at all — they are layer 2 or layer 3, never layer 1.
+The same three-layer walk applies to all 38 settings, and only to them. One setting, `zer0Cms.fleet.dispatchAllow`, is settings-only by design and never enters the merged value at all (§3.20). `contentFolders`, `contentTypes`, `fieldGroups`, `taxonomy`, `draftField`, `frontMatter`, `content.filePrefix`, `slug`, `placeholders`, and the six `seo` keys other than `enabled` have no settings twin at all — they are layer 2 or layer 3, never layer 1.
 
 ### 1.3 Three merge rules that surprise people
 
@@ -121,6 +121,7 @@ A minimal starting point. **Initialize project** writes the same two keys and no
 | `validation` | `enabled` | required-field diagnostics |
 | `panel` | all 3 keys | which panel sections exist, in what order |
 | `dashboard` | all 5 keys | the dashboard's initial state |
+| `fleet` | `enabled`, `manifestPath` | the Fleet console — **`dispatchAllow` is settings-only, §3.20** |
 | `logging` | `level` | output-channel verbosity — **but see §3.19** |
 
 ---
@@ -553,6 +554,18 @@ The optional AI layer. Off unless you turn it on, and it needs the optional `@an
 
 **Set this one in VS Code settings.** The logger reads `zer0Cms.logging.level` directly rather than the resolved configuration, so a `logging.level` in `zer0.json` is parsed, validated and then never consulted by the output channel. An unrecognised value degrades to `info` — a typo in the setting must not silence the log line that would tell you about the typo.
 
+### 3.20 `fleet`
+
+The Fleet console: a dashboard tab that reads this repository's `fleet.manifest.yml` (spec `fleet/v1`) and, behind a GitHub sign-in a person answers, the `*_ENABLED` switch and newest run of each lane.
+
+| Property | Default | VS Code twin | Meaning |
+|---|---|---|---|
+| `enabled` | `false` | `zer0Cms.fleet.enabled` | Show the Fleet tab and the four `fleet.*` commands. Read-only on its own. |
+| `manifestPath` | `"fleet.manifest.yml"` | `zer0Cms.fleet.manifestPath` | Workspace-relative path of the manifest. |
+| — | `false` | **`zer0Cms.fleet.dispatchAllow`** | The master gate for the two privileged actions: flipping a lane's switch and dispatching a lane once. **Settings-only.** |
+
+`dispatchAllow` has no `zer0.json` key, is rejected by the schema, and is not a member of `Zer0Config`: `settingsFleetDispatchAllow()` in `src/config.ts` reads it from the settings layer alone and hands it to `evaluateFleetGates`, which nothing overrides. The reasoning is the MCP publish flag's (§6): on the other side of this gate is a write to another system, and a `zer0.json` or a `fleet.manifest.yml` both arrive with a cloned repository. Only the three settings scopes are written by the person at the editor. With it off the tab still renders — the manifest, and the live columns once you press Refresh — but Switch and Dispatch stay disabled everywhere, including the command palette, and say why.
+
 ---
 
 ## 4. Placeholder tokens
@@ -668,6 +681,14 @@ All 35, exactly as `package.json` contributes them. None of these describe the p
 | `zer0Cms.agent.maxTurns` | `40` | Maximum agent turns per run (minimum 1). |
 | `zer0Cms.agent.permissionMode` | `"default"` | `default`, `acceptEdits` or `plan`. `default` routes every mutating tool through an approve/deny gate. |
 
+### Fleet
+
+| Setting | Default | What it does |
+|---|---|---|
+| `zer0Cms.fleet.enabled` | `false` | Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml`. Read-only until `dispatchAllow` is also set. |
+| `zer0Cms.fleet.manifestPath` | `"fleet.manifest.yml"` | Workspace-relative path of the fleet manifest. |
+| `zer0Cms.fleet.dispatchAllow` | `false` | Master switch for flipping a lane's `*_ENABLED` variable and dispatching a lane. Read from **your settings only** — a `zer0.json` cannot arm it (§3.20). Every action still asks for confirmation. |
+
 ### Logging
 
 | Setting | Default | What it does |
@@ -695,7 +716,7 @@ Ask who else needs the answer.
 
 **Put it in *both* when you want a project default a person can override.** This is what the layering is for: `zer0.json` sets `"governance": {"acceptStatuses": ["approved"]}` as the project's stance, and someone working through a backlog locally can relax it in their own settings without committing anything. It works in the other direction too — a project can ship `"dashboard": {"defaultView": "structure"}` and anyone who prefers the grid overrides it for themselves.
 
-**Two keys are settings-only in practice.** `zer0Cms.configFile` names the file, so it cannot live in it. `logging.level` is read straight from the settings by the output channel (§3.19).
+**Three keys are settings-only.** `zer0Cms.configFile` names the file, so it cannot live in it. `logging.level` is read straight from the settings by the output channel (§3.19). `zer0Cms.fleet.dispatchAllow` is settings-only by design, not by accident: it arms a write to another system, so it is read from the layer a repository cannot ship (§3.20).
 
 **Two things belong in neither.** The MCP server's publish gate is an environment variable, `ZER0_CMS_MCP_ALLOW_PUBLISH=1`, plus `confirm: true` on the call. Inside that process the resolved `governance.publishAllow` is pinned to the variable, whatever `zer0.json` says — so a config file claiming `true` cannot let a hand-run server publish, and the core gate and the MCP gate cannot disagree. When VS Code launches the server it passes the flag exactly when `governance.enabled` is on (that one is read from the merged configuration, because a `zer0.json` turning governance *off* is a restriction and honouring a restriction from the project file is always safe) **and** `zer0Cms.governance.publishAllow` is set to `true` in the **settings** layer — user, workspace or folder scope. A `zer0.json` cannot arm it. That is the one place where the file layer deliberately loses: past this variable, `zer0_publish`'s only other gate is `confirm: true`, which a model supplies to itself, so a repository that ships `{"governance":{"publishAllow":true}}` would otherwise be enough to publish with no human act in the chain. The in-editor gates keep reading the merged value; they are behind a modal. The flag is re-resolved every time the server starts. `ZER0_CMS_CONFIG` names the config file for that process, the way `zer0Cms.configFile` does for the editor. And the Claude credential the optional agent needs lives in VS Code's secret storage — never in a setting, never in `zer0.json`.
 
