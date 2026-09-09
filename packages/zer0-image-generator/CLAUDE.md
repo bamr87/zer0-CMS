@@ -47,3 +47,7 @@ the same `Runner` the CLI drives, through the single seam `web/app/services/engi
 ## Fleet context
 
 This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents.
+
+## Standard deviations
+
+- `UPS-REPO-02` — tests live under `test/` (Ruby-gem convention, grandfathered).
