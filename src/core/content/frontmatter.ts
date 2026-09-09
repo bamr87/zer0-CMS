@@ -30,6 +30,10 @@
  *   nested, with quoted commas handled correctly.
  * - Block scalars: `|`, `>`, all chomping indicators (`-`, `+`) and an explicit
  *   indentation indicator (`|2`).
+ * - Multi-line plain scalars: a value continued on more-indented lines is
+ *   folded the way YAML folds it — one space per line break, a newline per
+ *   blank line — so a wrapped `summary:` reads as one sentence. A continuation
+ *   line that looks like a key or a sequence item ends the scalar instead.
  * - `#` comments (at line start and after a value), blank lines, CRLF, a BOM.
  * - Duplicate keys: last one wins.
  * - Quoted-string escapes: `\\ \" \/ \n \r \t \b \f` in double quotes and `''`
@@ -45,7 +49,7 @@
  * | Multi-document (`---` inside, `...`) | Unreachable — the second `---` closes the block. A `...` line is skipped. |
  * | Complex keys (`? key` / `: value`) | The lines are skipped; the key is absent from the result. |
  * | Multi-line flow collections | The value is the literal first line; the continuation lines are skipped. |
- * | Multi-line plain scalars (a value continued on an indented line) | Only the first line is read; the continuation lines are skipped. |
+ * | Multi-line quoted scalars (a `"…"` or `'…'` that closes on a later line) | The value is the literal first line; the continuation lines are skipped. |
  * | Sequences at the document root | Skipped — front matter must be a mapping. |
  *
  * In every one of those cases the *raw text is untouched on disk*: nothing in
@@ -778,7 +782,61 @@ function readValue(lines: YamlLine[], cur: Cursor, parentIndent: number, rest: s
   if (text.startsWith('[') || text.startsWith('{')) {
     return parseFlowValue(text);
   }
-  return parseScalar(text);
+  if (text.startsWith('"') || text.startsWith("'")) {
+    return parseScalar(text);
+  }
+  return readPlainScalar(lines, cur, parentIndent, text);
+}
+
+/**
+ * A plain scalar and the continuation lines that belong to it.
+ *
+ * YAML lets a plain value wrap onto lines indented deeper than its key, and
+ * folds them: a line break becomes one space, a blank line becomes a newline.
+ * A continuation line is any more-indented, non-comment line that does not
+ * itself read as a key or a sequence item — those two are structure, and were
+ * skipped by `parseMapping` before this existed, so they still are. Trailing
+ * blank lines are left for whatever follows.
+ *
+ * A single-line value goes through `parseScalar` exactly as before, so nothing
+ * that parsed previously parses differently. A folded value is always a
+ * string: a number or boolean that wraps onto a second line is prose.
+ */
+function readPlainScalar(lines: YamlLine[], cur: Cursor, parentIndent: number, first: string): FmValue {
+  const collected: string[] = [first];
+  let pendingBlanks = 0;
+  let end = cur.i;
+  for (let i = cur.i; i < lines.length; i++) {
+    const line = lines[i];
+    if (line === undefined) {
+      break;
+    }
+    if (line.blank) {
+      pendingBlanks++;
+      continue;
+    }
+    if (line.comment || line.indent <= parentIndent) {
+      break;
+    }
+    if (isYamlSequenceItem(line.content) || parseYamlKeyLine(line.content) !== null) {
+      break;
+    }
+    const piece = stripComment(line.content);
+    if (piece.length === 0) {
+      break;
+    }
+    for (let n = 0; n < pendingBlanks; n++) {
+      collected.push('');
+    }
+    pendingBlanks = 0;
+    collected.push(piece);
+    end = i + 1;
+  }
+  if (collected.length === 1) {
+    return parseScalar(first);
+  }
+  cur.i = end;
+  return foldLines(collected);
 }
 
 function parseMapping(lines: YamlLine[], cur: Cursor, indent: number): FrontMatter {
