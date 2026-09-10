@@ -1,3 +1,4 @@
+import type { StoreView } from '../sites';
 /**
  * The **Content** view — distributable content, best health first.
  *
@@ -29,7 +30,6 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { countLabel, healthBucket, type ContentRecord } from '../core';
-import type { WorkspaceStore } from '../store';
 
 /** Health scores read as colour long before they read as numbers. */
 const HEALTH_COLOURS: Record<ReturnType<typeof healthBucket>, string | undefined> = {
@@ -108,7 +108,7 @@ export class ContentTreeProvider
 
   private readonly subscription: vscode.Disposable;
 
-  constructor(private readonly store: WorkspaceStore) {
+  constructor(private readonly store: StoreView) {
     this.subscription = store.onDidChange(() => this.emitter.fire());
   }
 

@@ -1,6 +1,6 @@
 # `src/commands/` — the command layer
 
-Forty-one commands, eight files, and one rule that matters more than the other forty: **`governance.ts`, `fleet.ts` and `audit.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
+Forty-five commands, nine files, and one rule that matters more than the other forty-four: **`governance.ts`, `fleet.ts` and `audit.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -15,10 +15,11 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `contentType.ts` | `contentType.generate`, `contentType.addMissingFields`, `contentType.set` | 253 |
 | `governance.ts` | `draft.new`, `draft.review`, `draft.approve`, `draft.publish`, `draft.guard`, `draft.preview` | 676 |
 | `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 320 |
-| `agent.ts` | `agent.open`, `agent.start`, `agent.stop`, `mcp.writeWorkspaceConfig` | 194 |
+| `agent.ts` | `agent.open`, `agent.start`, `agent.runAsRole`, `agent.stop`, `mcp.writeWorkspaceConfig` | 532 |
 | `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane` | 574 |
 | `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 761 |
-| `index.ts` | barrel + `ALL_COMMAND_IDS` | 128 |
+| `site.ts` | `site.pick`, `site.setActive`, `site.preview` | 236 |
+| `index.ts` | barrel + `ALL_COMMAND_IDS` | 136 |
 
 `dashboard` and `dashboard.close` are registered by `extension.ts`, beside the panel object they operate on. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
 
@@ -81,9 +82,17 @@ Both sides of the diff are **virtual**. Diffing the proposal against the `file:`
 
 ---
 
+## `agent.runAsRole` — the repository's own roles, with a human in front of them
+
+The fleet's CI lanes run as a role: `--agent grow-lifehacker`, resolved against `.claude/agents/grow-lifehacker.md`. `agent.runAsRole` offers that same list — read from the open folder, never from a list this extension carries — and starts the SDK with that agent, its model and its tools. The differentiator versus a lane is deliberately **the human gate**, not a second runner: same role, same model, and every mutating call still on the approval card.
+
+The same QuickPick offers **"Copy the CI equivalent"**, which renders the run as either a `scripts/ai/run.sh` invocation or the `with:` block of a caller of the hub's reusable `ai-lane.yml`, so a run that works in the editor can move into a workflow without being re-derived. It emits only what the resolved profile actually knows — `lane`, `switch` and `prompt` stay placeholders, because filling them would be this console writing a workflow field it derived rather than read.
+
+Three helpers in this file are the shell half of `src/core/harness/`, which is pure and takes its I/O as a parameter: `workspaceHarnessIo(root)` (the injected filesystem), `agentMcpServer(shell, configFile)` (how to spawn the bundled MCP server as a child of a run, with an `env` carrying only which project file to read), and `resolveProfileFor(...)` (reads the repository's agents, skills and `_data/ai.yml`, then hands them to `resolveHarnessProfile`, which decides). `readRepoSlug(root)` reads `.git/config` — a file, not a socket — so a metered editor run carries the same `owner/name` a lane's ledger row does.
+
 ## Trust is re-checked inside the function
 
-Five paths in this extension can start a process (decision D13), and all five are now reachable from this directory: the content engine and the front-matter normalizer in `contract.ts`, a `placeholders[].script` through `content.ts`, the AI agent through `agent.ts`, and the site's own verification command through `audit.ts`. Every one re-asks `workspaceTrusted()` **inside the handler**. A `when` clause on a menu entry is a hint to the menu system; `capabilities.untrustedWorkspaces` drops only the *workspace-scoped* value of a restricted setting, so a `true` in somebody's user settings still arrives in a folder they just cloned; and the `zer0Cms:workspace:trusted` context key is a mirror that is only as fresh as the last time somebody set it. None of those is a gate.
+Five paths in this extension can start a process (decision D13), and all five are now reachable from this directory (`site.preview` is a sixth *surface* but not a sixth vector — it starts a `vscode.Task`, which the person sees and owns): the content engine and the front-matter normalizer in `contract.ts`, a `placeholders[].script` through `content.ts`, the AI agent through `agent.ts`, and the site's own verification command through `audit.ts`. Every one re-asks `workspaceTrusted()` **inside the handler**. A `when` clause on a menu entry is a hint to the menu system; `capabilities.untrustedWorkspaces` drops only the *workspace-scoped* value of a restricted setting, so a `true` in somebody's user settings still arrives in a folder they just cloned; and the `zer0Cms:workspace:trusted` context key is a mirror that is only as fresh as the last time somebody set it. None of those is a gate.
 
 - **`contract.ts`** — `requireTrust()` runs beside `requireWorkspace()` in all
 three spawning handlers, and offers `workbench.trust.manage`. The core refuses a second time inside `runEngine`/`runNormalizer*`, as a value (`code: 1`, the reason on `stderr`), because "nothing rejects" is that module's older promise. Two checks on purpose: this one so a person reads a sentence, that one so no caller anywhere can spawn by forgetting. `engineFor(cfg)` is where trust and the interpreter's provenance are attached — `engineLayer()` over the settings snapshot's `cms` group and `zer0.json`'s, so the output channel can say whether the command about to run was named by a human or arrived with the clone.
@@ -129,11 +138,28 @@ Both `set*` functions return a `Disposable` that unhooks only if the registratio
 
 ---
 
-## Command arguments arrive in four shapes
+## Command arguments arrive in four shapes — and name a site
 
 The same command is invoked from the palette (no argument), the explorer context menu (a `Uri`), a tree row (a `TreeItem` subclass), and a webview (a string, or `{draftPath}`). `toFilePath(cfg, arg)` in `project.ts` and `draftPathFrom(cfg, arg)` in `governance.ts` are the two coercions; every handler starts with one of them and falls back to a `showQuickPick`.
 
 A webview's string may be **workspace-relative** — it renders relative paths, so it names them that way — which is why the coercion takes a `Zer0Config`.
+
+### `siteTarget(arg)` — the multi-root half, and why it exists
+
+A command invoked on a file must act on **that file's** site, not on whichever one the console is pointed at. Approve a draft in one repository while the active site is another and the gate would read the wrong banned-patterns file, the wrong ledger and the wrong publish target — and every one of those would look like it worked.
+
+`siteTarget(arg)` in `project.ts` is that resolution, in two passes:
+
+1. `toFilePath(currentConfig(), arg)` resolves the argument. A `Uri` or an
+absolute path passes through; a **relative** string resolves against the active site, which is right by construction — a webview names the paths of the site it is showing.
+2. The owning folder of that absolute path decides the configuration
+(`siteConfigFor`). A second `currentConfig()` is paid for only when the file is in a different folder from the active one; a file outside every open folder falls back to the active site, exactly as before multi-root.
+
+Where a command already has the path, `siteConfigFor(filePath)` is the same second half on its own — that is what `collectGateContext` and `doGuard` in `governance.ts` call.
+
+Commands with **no** file argument act on the active site, and the ones that write in bulk say which site that is: `contract.normalizeApply`'s modal names the folder, because "Rewrite front matter across the configured content directories?" in a twelve-folder window is a dialog nobody can safely answer.
+
+`site.ts`'s own three commands take a site **id** and look it up in `SiteRegistry` — never a path they then trust. `site.preview` runs the detected platform's `commands.serve` through `vscode.tasks` rather than spawning: `node:child_process` is fenced out of this directory by eslint, and a task is something a person can see in the terminal panel and stop from it. It refuses in words for an untrusted workspace, a virtual folder, and a platform whose profile declares no serve command.
 
 ---
 

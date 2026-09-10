@@ -328,7 +328,16 @@ export interface CmsEngineConfig {
   verifyCommand: string;
 }
 
-export type AgentPermissionMode = 'default' | 'acceptEdits' | 'plan';
+/**
+ * The two modes this extension will run an agent in.
+ *
+ * `acceptEdits` is deliberately absent. It was measured against the Agent SDK:
+ * with that mode a `Write` landed on disk and `canUseTool` — the approval card,
+ * the single gate decision D10 rests on — was never called at all. A mode that
+ * silently disarms the only gate is not a preference, so it is not offered, and
+ * a `zer0.json` naming it is clamped to `default` rather than honoured.
+ */
+export type AgentPermissionMode = 'default' | 'plan';
 
 export interface AgentConfig {
   enabled: boolean;

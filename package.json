@@ -96,6 +96,11 @@
     "views": {
       "zer0-cms": [
         {
+          "id": "zer0Cms.sites",
+          "name": "Sites",
+          "when": "zer0Cms:sites:multi"
+        },
+        {
           "id": "zer0Cms.panel",
           "name": "Metadata",
           "type": "webview"
@@ -351,6 +356,28 @@
         "command": "zer0Cms.audit.verify",
         "title": "Verify the site",
         "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.site.pick",
+        "title": "Switch site",
+        "category": "zer0-CMS",
+        "icon": "$(book)"
+      },
+      {
+        "command": "zer0Cms.site.setActive",
+        "title": "Set the active site",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.site.preview",
+        "title": "Preview the site",
+        "category": "zer0-CMS",
+        "icon": "$(play)"
+      },
+      {
+        "command": "zer0Cms.agent.runAsRole",
+        "title": "Run the agent as a fleet role",
+        "category": "zer0-CMS"
       }
     ],
     "menus": {
@@ -458,6 +485,22 @@
         {
           "command": "zer0Cms.audit.fix",
           "when": "false"
+        },
+        {
+          "command": "zer0Cms.site.pick",
+          "when": "zer0Cms:sites:multi"
+        },
+        {
+          "command": "zer0Cms.site.setActive",
+          "when": "false"
+        },
+        {
+          "command": "zer0Cms.site.preview",
+          "when": "zer0Cms:enabled && zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.agent.runAsRole",
+          "when": "zer0Cms:agent:enabled && zer0Cms:workspace:trusted"
         }
       ],
       "editor/title": [
@@ -902,9 +945,9 @@
           },
           "zer0Cms.agent.model": {
             "type": "string",
-            "default": "claude-opus-5",
+            "default": "",
             "scope": "window",
-            "description": "Model the AI agent runs on."
+            "description": "Model the agent runs on. Empty inherits: the repository's own AI configuration answers, so an editor run and the same role in CI agree about the model instead of quietly differing."
           },
           "zer0Cms.agent.maxTurns": {
             "type": "number",
@@ -917,12 +960,11 @@
             "type": "string",
             "enum": [
               "default",
-              "acceptEdits",
               "plan"
             ],
             "default": "default",
             "scope": "window",
-            "description": "Agent permission mode. 'default' routes every mutating tool through an approve/deny gate."
+            "description": "`default` routes every mutating tool through an approve/deny card; `plan` lets the agent plan without acting. `acceptEdits` was removed: it was measured to bypass the card outright — an edit landed with the gate never consulted — and a mode that silently disarms the only gate is not a preference."
           }
         }
       },

@@ -45,6 +45,22 @@
  * `provideMcpServerDefinitions` returns `[]`, because a registered server would
  * inherit this extension's whole reach over the folder — the trust decision has
  * to happen before an agent is offered the tools, not inside each one.
+ *
+ * **One server per site, and the two phases survive it.** A multi-root window
+ * holds many repositories, and a single server rooted in folder zero could only
+ * ever answer for one of them — so the provider returns one definition per
+ * *configured* folder (plus the active one, whether or not it carries a project
+ * config, which is what keeps a fresh single-folder workspace working exactly
+ * as it always did). Each definition names its own `cwd` and carries the folder
+ * in its label, and each still carries an **empty `env`**.
+ *
+ * `resolveMcpServerDefinition` then resolves the folder back *from the server's
+ * own `cwd`* and reads every flag scoped to it. That is what makes
+ * `zer0Cms.governance.publishAllow` — a `resource`-scoped setting — mean what
+ * it says: arming publishing for the one repository you operate does not arm it
+ * for the other eleven folders that happen to be open in the same window. The
+ * rule is unchanged in every other respect: settings layer only, trusted
+ * workspaces only, read at start time and nowhere else.
  */
 
 import * as path from 'node:path';
@@ -54,6 +70,7 @@ import {
   configFileName,
   CONFIG_SECTION,
   currentConfig,
+  hasProjectConfig,
   settingsPublishAllow,
   settingsSnapshot,
   workspaceFolder,
@@ -118,16 +135,16 @@ function extensionVersion(context: vscode.ExtensionContext): string {
  * cannot reach. The in-editor gates keep using the merged value: they are
  * behind a modal that a person answers.
  */
-export function mcpPublishAllowed(): boolean {
-  if (!currentConfig().governance.enabled) {
+export function mcpPublishAllowed(scope?: vscode.ConfigurationScope): boolean {
+  if (!currentConfig(scope).governance.enabled) {
     return false;
   }
-  if (settingsPublishAllow() === true) {
+  if (settingsPublishAllow(scope) === true) {
     return true;
   }
-  if (currentConfig().governance.publishAllow) {
+  if (currentConfig(scope).governance.publishAllow) {
     log.info(
-      `${configFileName()} enables governance.publishAllow, but the MCP server's publish flag ` +
+      `${configFileName(scope)} enables governance.publishAllow, but the MCP server's publish flag ` +
         'comes from the "zer0Cms.governance.publishAllow" setting only — a file in the ' +
         'repository cannot arm an agent to publish. Set it in your settings to allow it.',
     );
@@ -159,58 +176,136 @@ export function mcpExecAllowed(): boolean {
  * its normal layers — behind `ZER0_CMS_MCP_ALLOW_EXEC`, which is the gate that
  * decides whether anything runs at all.
  */
-export function mcpPythonPath(): string | undefined {
+export function mcpPythonPath(scope?: vscode.ConfigurationScope): string | undefined {
   if (!workspaceTrusted()) {
     return undefined;
   }
-  const python = settingsSnapshot().cms?.python?.trim();
+  const python = settingsSnapshot(scope).cms?.python?.trim();
   return python === undefined || python === '' ? undefined : python;
 }
 
-export function registerMcpProvider(context: vscode.ExtensionContext): void {
+/**
+ * The folders that get their own server, in workspace order.
+ *
+ * Every folder that carries a project config, plus the active site whether or
+ * not it does. The second half is what keeps a fresh, unconfigured, one-folder
+ * workspace working exactly as it did before multi-root: `zer0.json` has always
+ * been optional (decision D9), and refusing a server because a folder has not
+ * been initialised yet would be a regression dressed up as a filter.
+ *
+ * The first half is what makes a twelve-folder window usable: six of this
+ * fleet's folders are sites this extension knows about and six are not, and
+ * offering a server for all twelve would bury the ones that matter.
+ */
+export function mcpFolders(): vscode.WorkspaceFolder[] {
+  const folders = vscode.workspace.workspaceFolders ?? [];
+  const active = workspaceFolder();
+  const chosen = folders.filter(
+    (folder) => hasProjectConfig(folder) || folder.uri.toString() === active?.uri.toString(),
+  );
+  return chosen.length > 0 ? chosen : active === undefined ? [] : [active];
+}
+
+/**
+ * The definitions this window offers — phase one, and nothing but data.
+ *
+ * Extracted from the provider so it can be called from a test without an
+ * `ExtensionContext`: "two folders, two servers, two different `cwd`s" is the
+ * whole of the multi-root MCP contract, and it should not need an extension
+ * host object to ask about. The provider is a one-line call to this.
+ *
+ * Every definition carries `env: {}`. That is the two-phase rule, and it does
+ * not bend for multi-root: no flag, no secret and no per-folder decision is
+ * read here, because whatever this returns may be cached and shown.
+ */
+export function mcpServerDefinitions(
+  serverPath: string,
+  version: string,
+): vscode.McpStdioServerDefinition[] {
+  if (!vscode.workspace.isTrusted) {
+    // No server, rather than a server that refuses each tool one at a time.
+    // Whatever this returns may be cached and shown, so "offered but inert"
+    // would be a menu entry promising something the folder is not allowed to
+    // do; `onDidGrantWorkspaceTrust` re-fires and the real list appears the
+    // moment the person says yes.
+    log.info('MCP server not offered: this workspace is not trusted');
+    return [];
+  }
+  const folders = mcpFolders();
+  if (folders.length === 0) {
+    // The server reads the workspace it is rooted in. Without one there is
+    // nothing to serve, and offering a server that would answer every tool
+    // with "no workspace" is worse than offering none.
+    return [];
+  }
+  const many = (vscode.workspace.workspaceFolders ?? []).length > 1;
+  return folders.map((folder) => {
+    const server = new vscode.McpStdioServerDefinition(
+      // The folder is in the label only when there is more than one, so a
+      // single-root window's server keeps the name it has always had.
+      many ? `${MCP_SERVER_LABEL} · ${folder.name}` : MCP_SERVER_LABEL,
+      // The editor's own Node.js: no assumption about what is on PATH.
+      process.execPath,
+      [serverPath],
+      {}, // ← empty on purpose. See the header.
+      version,
+    );
+    server.cwd = folder.uri;
+    return server;
+  });
+}
+
+/** The configuration scope a server definition speaks for: its own `cwd`. */
+function scopeOf(server: vscode.McpStdioServerDefinition): vscode.ConfigurationScope | undefined {
+  if (server.cwd === undefined) {
+    return undefined;
+  }
+  return vscode.workspace.getWorkspaceFolder(server.cwd) ?? server.cwd;
+}
+
+/**
+ * @param onSitesChanged fires when the site registry changes — a folder opened
+ *   or closed, or the active site moved. Both can change *which* folders get a
+ *   server (`mcpFolders()` includes the active one whether or not it is
+ *   configured), so the editor is asked to re-enumerate. It is optional so a
+ *   shell with no registry — and every existing call site — still compiles.
+ */
+export function registerMcpProvider(
+  context: vscode.ExtensionContext,
+  onSitesChanged?: vscode.Event<void>,
+): void {
   const didChange = new vscode.EventEmitter<void>();
+
+  /** The folder set the editor was last told about, so a no-op change is one. */
+  let lastFolders = mcpFolders()
+    .map((folder) => folder.uri.toString())
+    .join('\u0000');
 
   const provider: vscode.McpServerDefinitionProvider<vscode.McpStdioServerDefinition> = {
     onDidChangeMcpServerDefinitions: didChange.event,
 
-    provideMcpServerDefinitions: () => {
-      if (!vscode.workspace.isTrusted) {
-        // No server, rather than a server that refuses each tool one at a time.
-        // Whatever this returns may be cached and shown, so "offered but inert"
-        // would be a menu entry promising something the folder is not allowed
-        // to do; `onDidGrantWorkspaceTrust` below re-fires and the real list
-        // appears the moment the person says yes.
-        log.info('MCP server not offered: this workspace is not trusted');
-        return [];
-      }
-      const folder = workspaceFolder();
-      if (folder === undefined) {
-        // The server reads the workspace it is rooted in. Without one there is
-        // nothing to serve, and offering a server that would answer every tool
-        // with "no workspace" is worse than offering none.
-        return [];
-      }
-      const server = new vscode.McpStdioServerDefinition(
-        MCP_SERVER_LABEL,
-        // The editor's own Node.js: no assumption about what is on PATH.
-        process.execPath,
-        [context.asAbsolutePath(MCP_SERVER_RELATIVE_PATH)],
-        {}, // ← empty on purpose. See the header.
+    provideMcpServerDefinitions: () =>
+      mcpServerDefinitions(
+        context.asAbsolutePath(MCP_SERVER_RELATIVE_PATH),
         extensionVersion(context),
-      );
-      server.cwd = folder.uri;
-      return [server];
-    },
+      ),
 
     resolveMcpServerDefinition: async (server) => {
       // Start time. Secrets may be read *here* and nowhere else.
-      const allow = mcpPublishAllowed();
+      //
+      // The scope is the server's **own** `cwd` — the folder this definition
+      // was created for, not whichever site happens to be active when the
+      // editor decides to start it. Resolving it any other way would mean a
+      // server rooted in folder B being armed by folder A's settings, which is
+      // exactly the confusion a `resource`-scoped gate exists to prevent.
+      const scope = scopeOf(server);
+      const allow = mcpPublishAllowed(scope);
       const exec = mcpExecAllowed();
-      const python = mcpPythonPath();
+      const python = mcpPythonPath(scope);
       const apiKey = await context.secrets.get(SECRET_KEYS.anthropicApiKey);
       server.env = {
         // Which project file the server should read, relative to its cwd.
-        ZER0_CMS_CONFIG: configFileName(),
+        ZER0_CMS_CONFIG: configFileName(scope),
         // `null` = remove the variable from the child environment entirely.
         ZER0_CMS_MCP_ALLOW_PUBLISH: allow ? '1' : null,
         ZER0_CMS_MCP_ALLOW_EXEC: exec ? '1' : null,
@@ -218,10 +313,11 @@ export function registerMcpProvider(context: vscode.ExtensionContext): void {
         ANTHROPIC_API_KEY: apiKey ?? null,
       };
       log.info(
-        `MCP server starting — publish ${allow ? 'ENABLED' : 'disabled'}, ` +
+        `MCP server starting for ${server.cwd?.fsPath ?? '(no cwd)'} — ` +
+          `publish ${allow ? 'ENABLED' : 'disabled'}, ` +
           `exec ${exec ? 'ENABLED' : 'disabled'}, ` +
           `interpreter ${python === undefined ? 'from the project layers' : 'pinned from settings'}, ` +
-          `config ${configFileName()}, api key ${apiKey === undefined ? 'absent' : 'injected'}`,
+          `config ${configFileName(scope)}, api key ${apiKey === undefined ? 'absent' : 'injected'}`,
       );
       return server;
     },
@@ -254,6 +350,25 @@ export function registerMcpProvider(context: vscode.ExtensionContext): void {
     // without a window reload, so there is no matching "revoked" event.
     vscode.workspace.onDidGrantWorkspaceTrust(() => didChange.fire()),
     vscode.workspace.onDidChangeWorkspaceFolders(() => didChange.fire()),
+    // The registry fires for a folder change, an active-site change **and**
+    // every site's rebuild, which is far more often than the server list
+    // actually changes — so this compares the list before asking the editor to
+    // re-enumerate. A dozen watcher-driven rebuilds a minute must not become a
+    // dozen MCP re-enumerations.
+    ...(onSitesChanged === undefined
+      ? []
+      : [
+          onSitesChanged(() => {
+            const next = mcpFolders()
+              .map((folder) => folder.uri.toString())
+              .join('\u0000');
+            if (next === lastFolders) {
+              return;
+            }
+            lastFolders = next;
+            didChange.fire();
+          }),
+        ]),
     vscode.lm.registerMcpServerDefinitionProvider(MCP_PROVIDER_ID, provider),
   );
 }

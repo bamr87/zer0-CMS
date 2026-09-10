@@ -127,6 +127,13 @@ export interface WorkspaceStoreOptions {
   /** `context.workspaceState`. Omit it and the page index rebuilds each time. */
   state?: vscode.Memento;
   log?: LogSink;
+  /**
+   * The folder this store is about. One store per site in a multi-root window:
+   * its configuration, its watchers and its cache key all follow this folder
+   * rather than whichever one happens to be first. Omit it and the store reads
+   * the active site, which is the single-root answer and stays correct.
+   */
+  folder?: vscode.WorkspaceFolder;
 }
 
 /**
@@ -218,6 +225,7 @@ export class WorkspaceStore implements vscode.Disposable {
 
   private readonly log: LogSink;
   private readonly state: vscode.Memento | undefined;
+  private readonly folder: vscode.WorkspaceFolder | undefined;
   private readonly subscriptions: vscode.Disposable[] = [];
   private watchers: vscode.FileSystemWatcher[] = [];
 
@@ -229,6 +237,7 @@ export class WorkspaceStore implements vscode.Disposable {
   constructor(options: WorkspaceStoreOptions = {}) {
     this.log = options.log ?? sharedLog;
     this.state = options.state;
+    this.folder = options.folder;
 
     this.subscriptions.push(
       onConfigChange(() => {
@@ -328,7 +337,7 @@ export class WorkspaceStore implements vscode.Disposable {
 
   private async rebuild(): Promise<Snapshot> {
     const started = Date.now();
-    const cfg = currentConfig();
+    const cfg = currentConfig(this.folder);
 
     if (cfg.workspaceRoot === '') {
       // Folderless window. Not an error state — just one with no disk.
@@ -458,7 +467,7 @@ export class WorkspaceStore implements vscode.Disposable {
     }
     this.watchers = [];
 
-    const root = workspaceRoot();
+    const root = workspaceRoot(this.folder);
     if (root === undefined) {
       // The folderless-window guarantee: zero watchers, zero file-system reads.
       return;
@@ -466,7 +475,7 @@ export class WorkspaceStore implements vscode.Disposable {
 
     let cfg: Zer0Config;
     try {
-      cfg = currentConfig();
+      cfg = currentConfig(this.folder);
     } catch (error) {
       this.log.warn(`watchers not installed: ${describeError(error)}`);
       return;

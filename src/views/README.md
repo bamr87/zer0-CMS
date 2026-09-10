@@ -1,19 +1,20 @@
-# `src/views/` — the four tree views
+# `src/views/` — the five tree views
 
 | File | View id | Shown when | Levels |
 |---|---|---|---|
+| `sitesTree.ts` | `zer0Cms.sites` | `zer0Cms:sites:multi` | one |
 | `draftsTree.ts` | `zer0Cms.drafts` | `zer0Cms:governance:enabled` | one |
 | `contentTree.ts` | `zer0Cms.content` | always | one |
 | `cateringTree.ts` | `zer0Cms.catering` | `zer0Cms:contract:present` | **two** |
 | `publishedTree.ts` | `zer0Cms.published` | `zer0Cms:governance:enabled` | one |
 
-All four live in the `zer0-cms` activity-bar container, below the metadata panel webview.
+`sitesTree` is first in the `zer0-cms` activity-bar container, above the metadata panel webview; the other four sit below it.
 
 ---
 
 ## The one rule: no tree reads the filesystem
 
-Every provider renders `store.current()` and nothing else. Not `fs`, not `workspace.findFiles`, not a cache of its own.
+Every provider renders `store.current()` — or, for Sites, `SiteRegistry.views()` — and nothing else. Not `fs`, not `workspace.findFiles`, not a cache of its own.
 
 That is not a style preference. Four trees, the metadata panel and the dashboard all need the same answers — what pages exist, what is in the queue, what the ledger says was published, what the `.cms/` contract holds. Six independent derivations would mean six scans per keystroke and, worse, six chances to disagree with each other: a Publish button enabled in the panel and a row missing from the tree, both "correct" against different reads of the same directory.
 
@@ -27,6 +28,7 @@ VS Code decides which context-menu items a row gets by matching `when: "viewItem
 
 | Tree | `contextValue` | What `package.json` puts on it |
 |---|---|---|
+| Sites | `site` / `site-active` | nothing yet — the row's own command sets the active site |
 | Drafts | `` `draft-${status}` `` | `/^draft-/` → Review (inline), Guard, Preview |
 | | `draft-pending` | + Approve (inline) |
 | | `` /^draft-(pending\|approved)$/ `` | + Publish (inline) |
@@ -48,6 +50,16 @@ The Content view distinguishes content the ledger has already seen (via `snapsho
 ---
 
 ## Per-tree notes
+
+### Sites — the only tree about the window rather than about a site
+
+Four of these trees render the **active** site's content. This one renders the window: one row per open workspace folder, with its platform, whether it carries a project config, and how much content it holds. It exists because eleven of this fleet's twelve open folders used to have no representation anywhere in the extension — "the active site" was a phrase with no user interface behind it.
+
+It is hidden entirely below two folders (`when: zer0Cms:sites:multi`), because a tree that can only ever hold one row is a tree worth not drawing.
+
+It is also the only provider that does not read `WorkspaceStore` directly. `SiteRegistry.views()` is the same projection the dashboard's Sites tab draws, so the tree and the tab cannot disagree about which site is active or how many pages it holds. A site whose store has never built a snapshot renders **`not scanned yet`**, never `0 pages`: constructing a store per folder must not become a scan per folder at activation, and an unexamined site and an empty one are different facts.
+
+Clicking a row runs `zer0Cms.site.setActive` with `{site: '<id>'}` — an id and nothing else. The command validates it against the registry, which is the only thing that knows which folders are open.
 
 ### Drafts — sorted for a reviewer, not for a filesystem
 

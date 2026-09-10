@@ -126,6 +126,10 @@ export const ALL_COMMAND_IDS: readonly string[] = [
   'audit.open',
   'audit.fix',
   'audit.verify',
+  'site.pick',
+  'site.setActive',
+  'site.preview',
+  'agent.runAsRole',
 ];
 
 /** The fully qualified ids, for comparing against `getCommands()`. */

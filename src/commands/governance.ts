@@ -12,10 +12,14 @@
  * Every privileged action here does the same four things, in this order, before
  * a single byte is written:
  *
- *   1. **Re-read the configuration.** `currentConfig()` is uncached, so a
- *      `publishAllow` that was flipped thirty seconds ago is honoured without a
- *      window reload — and a stale in-memory copy can never authorise a publish
- *      the settings no longer allow.
+ *   1. **Re-read the configuration — of the draft's own site.** `currentConfig()`
+ *      is uncached, so a `publishAllow` that was flipped thirty seconds ago is
+ *      honoured without a window reload, and a stale in-memory copy can never
+ *      authorise a publish the settings no longer allow. In a multi-root window
+ *      it is `siteConfigFor(draftPath)` rather than `currentConfig()`: the
+ *      banned-patterns file, the ledger and the publish target all belong to
+ *      the repository the draft is in, not to whichever site the console
+ *      happens to be pointed at.
  *   2. **Re-read the draft from disk.** Not from `store.current()`, not from
  *      the webview's copy. The file may have been edited, approved by a
  *      colleague, or rewritten by a script since the snapshot was taken.
@@ -81,7 +85,14 @@ import { currentConfig } from '../config';
 import type { Zer0Shell } from '../extension';
 import { describeError } from '../logger';
 import { confirm, notifyError, notifyInfo, notifyWarning } from '../uiState';
-import { activeFilePath, openInEditor, register, showReport, toFilePath } from './project';
+import {
+  activeFilePath,
+  openInEditor,
+  register,
+  showReport,
+  siteConfigFor,
+  toFilePath,
+} from './project';
 
 /**
  * The two functions the webview hosts are handed.
@@ -135,7 +146,13 @@ interface GateContext {
  * behind the first.
  */
 async function collectGateContext(draftPath: string): Promise<GateContext> {
-  const cfg = currentConfig();
+  // **This draft's site**, not the active one. Everything below reads from
+  // `cfg`: the banned-patterns file the guard runs, the ledger the idempotency
+  // key is looked up in, the publish target the artifact is built for. Approve
+  // a draft in one repository while the console is pointed at another and all
+  // three would come from the wrong place — and every one of them would look
+  // like it worked.
+  const cfg = siteConfigFor(draftPath);
   const draft = await readDraft(draftPath);
 
   let preview: Preview | undefined;
@@ -373,6 +390,9 @@ export async function doPublish(shell: Zer0Shell, draftPath: string): Promise<bo
  * a `Uri`, a bare path, or the webview's `{ draftPath }`.
  */
 export function draftPathFrom(cfg: Zer0Config, arg: unknown): string | undefined {
+  // `cfg` resolves a *relative* path only — a webview names the paths of the
+  // site it is showing, which is the active one. Once the path is absolute,
+  // `siteConfigFor` decides whose gate runs; see `collectGateContext`.
   if (typeof arg === 'object' && arg !== null) {
     const record = arg as { draft?: { path?: unknown }; draftPath?: unknown };
     if (typeof record.draftPath === 'string' && record.draftPath.trim() !== '') {
@@ -439,6 +459,8 @@ async function resolveContentRef(shell: Zer0Shell, arg: unknown): Promise<string
   if (direct !== undefined) {
     return direct;
   }
+  // Everything below falls back to the active site's snapshot and its picker,
+  // which is right: with no argument there is no other site to mean.
 
   const snapshot = await shell.store.current();
   const candidates: ContentRecord[] = snapshot.distributable;
@@ -552,8 +574,7 @@ export function registerGovernanceCommands(shell: Zer0Shell): GovernanceActions 
 
   // --- New draft from content ----------------------------------------------
   register(shell, 'draft.new', async (arg: unknown) => {
-    const cfg = currentConfig();
-    if (cfg.workspaceRoot === '') {
+    if (currentConfig().workspaceRoot === '') {
       await notifyWarning('open a folder before drafting.');
       return;
     }
@@ -563,6 +584,10 @@ export function registerGovernanceCommands(shell: Zer0Shell): GovernanceActions 
       return;
     }
 
+    // The draft is written into the queue of the site the *source page* lives
+    // in. A draft about site B's article sitting in site A's `drafts/` would
+    // publish through A's target, to A's ledger.
+    const cfg = siteConfigFor(source);
     const article = await readArticle(source);
     const details = getArticleDetails(article.body);
     const title = asString(article.data[cfg.seo.titleField]).trim();
@@ -648,7 +673,8 @@ async function doReview(shell: Zer0Shell, draftPath: string): Promise<void> {
 
 /** Run the brand guard and say what it found. Reads; never writes. */
 async function doGuard(shell: Zer0Shell, draftPath: string): Promise<void> {
-  const cfg = currentConfig();
+  // The guard's word list belongs to the draft's own repository.
+  const cfg = siteConfigFor(draftPath);
   const draft = await readDraft(draftPath);
   const guard = await guardWithWorkspace(cfg, commentaryOf(draft));
 

@@ -488,6 +488,7 @@ export interface DashboardTab {
  * The ids are a subset of `DASHBOARD_ROUTES`, in the same relative order.
  */
 export const DASHBOARD_TABS: readonly DashboardTab[] = [
+  { id: 'sites', label: 'Sites', icon: 'book' },
   { id: 'contents', label: 'Contents', icon: 'files' },
   { id: 'drafts', label: 'Drafts', icon: 'checklist' },
   { id: 'audit', label: 'Audit', icon: 'report' },

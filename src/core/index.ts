@@ -39,6 +39,16 @@ export * from './content/seo';
 export * from './content/audit';
 export * from './content/schema';
 
+// --- the AI harness (decisions D10 and D14) ----------------------------------
+// One vocabulary for the agent that runs in this editor and the lanes that run
+// in CI: the repository's own model configuration, its `.claude/agents` roles
+// and its skills, resolved into a profile that projects to either.
+export * from './harness/agents';
+export * from './harness/skills';
+export * from './harness/aiConfig';
+export * from './harness/profile';
+export * from './harness/metering';
+
 // --- the site's platform (decision D12) --------------------------------------
 // What a Jekyll site, an MkDocs site and a Hugo site each mean by "content
 // root", "draft", "the date", "the URL" and "the directory to ignore" — as

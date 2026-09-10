@@ -1,12 +1,13 @@
 # `src/webview/dashboard` — the editor-tab surface
 
-Seven served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
+Eight served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
 
-Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and seven are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
+Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and eight are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
 
 ```
 main.ts        boot, gate order, route table, the section reconciler
-header.ts      tab bar, toolbars, filters, sorting, grouping, pagination
+header.ts      tab bar, the site switcher, toolbars, filters, sorting, grouping, pagination
+sites.ts       the Sites route — one row per open folder, and which one is active
 contents.ts    grid / list cards, the item menu, bulk selection
 structure.ts   the folder-tree browser
 governance.ts  the Drafts route — queue + review pane
@@ -17,7 +18,7 @@ settings.ts    the Settings route — General + Content folders
 welcome.ts     the Welcome route — four onboarding steps
 ```
 
-The last six export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
+The last seven export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
 
 **Gate order on boot** (PLAN §3.2): `settings === null` → spinner;
 `showWelcome || !initialized || contentFolders.length === 0` → Welcome; else
@@ -39,6 +40,8 @@ Every other route may register **one** toolbar row of its own through `setRouteT
 
 Three behaviours here are contracts, not preferences: **sorting is disabled while a search query is active** (the host returns hits in relevance order and a sort would discard the ranking, so the control greys rather than silently ignoring you); **pagination is hidden while grouping is active and in Structure view**; and **View and Rename are enabled at exactly one selection** — not zero, not two — while Delete works on any non-empty selection and always confirms first.
 
+The action cluster also carries the **site switcher** in a multi-root window — a `menuButton` of the open folders, with the active one checked. It sits in the chrome rather than inside the Sites tab because "which repository am I about to publish into?" is a question every tab needs answered. Selecting an entry posts `site.setActive {site: '<id>'}`: an id, which the host validates against `SiteRegistry` because a list can go stale between a render and a click. Below two folders the switcher is absent entirely.
+
 There is no separate developer bar. `.developer__bar` is styled only in `panel.css`, which this bundle does not load, and inline `style` attributes are blocked by the CSP. The two `command:` URIs moved into the tab bar's right-hand action cluster, still gated on `state.developer` and still the only two the host's `enableCommandUris` allow-list contains.
 
 ## Contents (`contents.ts`, `structure.ts`)
@@ -52,6 +55,16 @@ There is no separate developer bar. `.developer__bar` is styled only in `panel.c
 The item menu is View / Rename / Reveal in file explorer / Delete. Pin, Move to folder, Smart rename, Open on website and custom actions are all on PLAN §3.2's drop list. Delete confirms once, in the webview, and then goes to the OS trash host-side — it is not a governed action, there is no ledger record, and two modals per click is not a safety feature.
 
 `structure.ts` draws the same pages arranged as they sit on disk, with a Home/Back/breadcrumb toolbar that scopes the tree. **Indentation is content, not style:** under `style-src <cspSource> 'nonce-…'` an inline `style` attribute is blocked — a nonce cannot apply to an attribute — so `style="padding-left:40px"` would silently do nothing. Depth is a `z-tree__indent` span of non-breaking spaces, and a future stylesheet can give that class a width and take over cleanly. **Create content names a folder, not a path to write:** the button posts `createContentInFolder` with a workspace-relative directory and the host resolves it, picks the type, applies the prefix chain and decides the filename.
+
+## Sites (`sites.ts`)
+
+One row per open workspace folder: its platform (with the zer0-mistakes *overlay* beside Jekyll rather than instead of it — decision D12), whether it carries a project config, its registered content roots, its page and draft counts, whether it carries a fleet manifest, and two buttons.
+
+Two things on this screen are load-bearing.
+
+**Counts are honest about not knowing.** Constructing a `WorkspaceStore` per folder must not become a scan per folder at activation, so a site that has never been read renders `—` and a `not scanned` detection source, never `0 pages`. An unexamined site and an empty one are different facts, and rendering both as zero is how a console starts lying quietly.
+
+**Both buttons post an id.** `Make active` and `Preview` send `{site: '<id>'}` and nothing else — not a path, not a config, not "and also trust it". Their disabled states (`already active`; `this workspace is not trusted`; `a vscode-vfs folder has no local process to start`) are the same sentences `src/commands/site.ts` uses when it refuses, and the ones there are the decision (decision D5).
 
 ## The two rules, on this surface
 

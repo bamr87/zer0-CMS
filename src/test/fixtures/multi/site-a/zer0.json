@@ -1,0 +1,22 @@
+{
+  "contentFolders": [
+    { "title": "Posts", "path": "[[workspace]]/pages/_posts", "contentTypes": ["post"] }
+  ],
+  "contentTypes": [
+    {
+      "name": "post",
+      "fileType": "md",
+      "fields": [
+        { "name": "title", "type": "string", "title": "Title", "single": true, "required": true },
+        { "name": "description", "type": "string", "title": "Description" },
+        { "name": "date", "type": "datetime", "title": "Publishing date", "isPublishDate": true }
+      ]
+    }
+  ],
+  "governance": {
+    "enabled": true,
+    "draftsFolder": ".zer0/drafts",
+    "ledgerPath": ".zer0/ledger.json"
+  },
+  "content": { "defaultFileType": "md", "supportedFileTypes": ["md", "markdown"] }
+}

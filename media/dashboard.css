@@ -1289,3 +1289,71 @@ body.vscode-high-contrast-light .z-chip {
 .z-fleet__tokens {
   margin-top: var(--z-sp-6);
 }
+
+/* ---------------------------------------------------------------------------
+   Sites — one row per open workspace folder (PR3)
+
+   The table reuses `.z-table` and the promoted widgets wholesale; everything
+   below is the handful of cells that need to say something the kernel does
+   not. Colours come from `media/tokens.css` and nowhere else.
+   --------------------------------------------------------------------------- */
+
+.z-sites__summary {
+  margin-bottom: var(--z-sp-4);
+}
+
+.z-sites__name {
+  display: inline-flex;
+  gap: var(--z-sp-2);
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* The active site is the one thing on this screen worth a weight change. */
+.z-sites__label.is-active {
+  font-weight: 600;
+  color: var(--z-fg-header);
+}
+
+.z-sites__platform {
+  display: inline-flex;
+  gap: var(--z-sp-1);
+  align-items: center;
+  white-space: nowrap;
+}
+
+.z-sites__overlay {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-fg-description);
+}
+
+.z-sites__roots {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-fg-description);
+}
+
+/* "Nobody has looked yet" renders as an em dash, never as a zero. */
+.z-sites__unknown {
+  color: var(--z-fg-muted);
+}
+
+/* One column of gated buttons per row: each carries its own blocker sentence,
+   so they stack rather than sitting side by side with the notes underneath. */
+.z-sites__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--z-sp-2);
+  min-width: 160px;
+}
+
+.z-sites__note {
+  margin-top: var(--z-sp-4);
+  color: var(--z-fg-description);
+}
+
+/* The switcher sits in the tab bar's action strip, left of the icon buttons. */
+.z-tabbar__actions .z-menu {
+  margin-right: var(--z-sp-2);
+}

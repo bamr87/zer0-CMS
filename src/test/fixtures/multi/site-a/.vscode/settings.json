@@ -1,0 +1,6 @@
+// Folder scope, in a multi-root window: this is the `resource` scope of a
+// `resource`-scoped setting, and the multiroot suite asserts that it arms
+// site-a's MCP server and leaves site-b's disarmed.
+{
+  "zer0Cms.governance.publishAllow": true
+}
