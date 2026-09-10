@@ -102,6 +102,13 @@ import {
   fixTargetFrom,
   type AuditActions,
 } from '../commands/audit';
+import {
+  harnessStateFrom,
+  LANE_UI_STATE_KEYS,
+  specIdFrom,
+  workflowsStateFrom,
+  type HarnessActions,
+} from '../commands/harness';
 import { type SiteActions } from '../commands/site';
 import { laneIdFrom, type FleetActions, type FleetLive } from '../commands/fleet';
 import { draftPathFrom, type GovernanceActions } from '../commands/governance';
@@ -185,6 +192,10 @@ const UI_STATE_KEYS: Readonly<Record<string, string>> = {
   SelectedFolder: 'zer0Cms:SelectedFolder',
   Route: 'zer0Cms:Dashboard:Route',
   'Drafts:Selected': 'zer0Cms:Dashboard:Drafts:Selected',
+  // The staged lane description. It lives in workspace state rather than in a
+  // message because a scaffold must not trust a payload: the host reads back
+  // what it persisted, and a form whose id no longer matches is refused.
+  ...LANE_UI_STATE_KEYS,
 };
 
 /**
@@ -296,6 +307,7 @@ export class DashboardPanel implements vscode.Disposable {
     private readonly fleet: FleetActions,
     private readonly audit: AuditActions,
     private readonly site: SiteActions,
+    private readonly harness: HarnessActions,
   ) {
     this.handlers = {
       // --- project ---------------------------------------------------------
@@ -389,6 +401,28 @@ export class DashboardPanel implements vscode.Disposable {
       },
       'site.preview': (args) => {
         void this.site.preview(args);
+      },
+      // --- the harness and the lane catalogue --------------------------------
+      // `lane.scaffold` writes files. The webview sends a spec id and nothing
+      // else; `doScaffoldLane` re-reads the inventory and the manifest from
+      // disk, re-runs the scaffold gate, refuses on its own preflight, and
+      // names every file in a modal before a byte is written (D5).
+      'harness.open': () => this.run('harness.open'),
+      'workflows.open': () => this.run('workflows.open'),
+      'lane.scaffold': (args) => {
+        const id = specIdFrom(args);
+        if (id === undefined) {
+          this.shell.log.warn('lane.scaffold: the message named no lane.');
+          return;
+        }
+        void this.harness.scaffold(id).then(
+          (wrote) => {
+            if (wrote) {
+              this.schedule();
+            }
+          },
+          (error: unknown) => this.shell.log.warn(`lane scaffold: ${describeError(error)}`),
+        );
       },
       // --- surface-only ----------------------------------------------------
       openLink: (args) => {
@@ -751,6 +785,15 @@ export class DashboardPanel implements vscode.Disposable {
           url: preview.url ?? null,
         };
       }
+      case 'lanePreview': {
+        // Read-only: it renders exactly what a write would produce, through the
+        // same planner, so the diff a person approves is the diff that lands.
+        const id = specIdFrom(payload);
+        if (id === undefined) {
+          throw new Error('lanePreview needs a lane to preview.');
+        }
+        return await this.harness.preview(id);
+      }
       case 'auditDryRun': {
         // Read-only on purpose: it renders what a fix *would* write so the
         // person sees the diff before anything is decided. The write lives in
@@ -803,6 +846,12 @@ export class DashboardPanel implements vscode.Disposable {
     // nothing and the tab says the values are unknown.
     if (key === 'Route' && value === 'fleet') {
       void this.refreshFleet(false);
+    }
+    if (key.startsWith('Lane:')) {
+      // Without this the value never comes back in a snapshot, the staged form
+      // never reconciles, and Preview stays disabled forever — the same reason
+      // `Drafts:Selected` re-posts.
+      this.schedule();
     }
     if (key === 'Route' && value === 'sites') {
       // Opening the tab is the explicit act that makes reading the other
@@ -1009,6 +1058,13 @@ export class DashboardPanel implements vscode.Disposable {
     const drafts = await this.buildDrafts(cfg, snapshot);
     const fleet = cfg.fleet.enabled ? await this.buildFleet(cfg) : null;
 
+    // The inventory is read once and used twice: the Harness tab describes what
+    // exists, the Workflows tab turns the same lanes into passports and offers
+    // the form that would add one.
+    const inventory = await this.harness.inventory();
+    const harnessState = inventory === null ? null : harnessStateFrom(inventory, null);
+    const workflowsState = cfg.fleet.enabled ? await workflowsStateFrom(this.shell) : null;
+
     return {
       kind: 'dashboard',
       initialized,
@@ -1021,6 +1077,13 @@ export class DashboardPanel implements vscode.Disposable {
         (tab) =>
           (tab.id !== 'catering' || snapshot.contract.present) &&
           (tab.id !== 'fleet' || cfg.fleet.enabled) &&
+          // Writing a lane is a fleet action, so the catalogue follows the
+          // fleet console's own switch — the same condition its `when` clause
+          // uses, so the tab and the palette agree.
+          (tab.id !== 'workflows' || cfg.fleet.enabled) &&
+          // The harness needs only a folder: describing what a repository's AI
+          // machinery is has nothing to do with whether the console may act.
+          (tab.id !== 'harness' || folders.length > 0) &&
           // Nothing registered and nothing derived means nothing to audit, and
           // an Audit tab over zero files would report a clean site rather than
           // an unexamined one — which is the lie D9 exists to prevent.
@@ -1031,6 +1094,12 @@ export class DashboardPanel implements vscode.Disposable {
       // never have been scanned and saying "0 pages" about an unscanned site
       // would be a claim rather than an absence (D9).
       sites: await this.shell.sites.sitesState(),
+      // What this repository's AI machinery is, and what a new lane would be.
+      // Both read from disk on demand rather than from the snapshot: an
+      // inventory is a join across seven kinds of file, and holding a stale one
+      // in a snapshot is how a console reports a lane that no longer exists.
+      harness: harnessState,
+      workflows: workflowsState,
       contents: this.buildContents(cfg, snapshot, folders, custom),
       drafts,
       // The store already ran the audit over the index it built, so this is a

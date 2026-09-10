@@ -59,7 +59,9 @@ import { mountSections, staleOn, type Section } from '../shared/state';
 import { renderContents } from './contents';
 import { renderHeader } from './header';
 import { render as renderAudit } from './audit';
+import { render as renderHarness } from './harness';
 import { render as renderSites } from './sites';
+import { render as renderWorkflows } from './workflows';
 import { render as renderCatering } from './catering';
 import { render as renderFleet } from './fleet';
 import { render as renderDrafts } from './governance';
@@ -113,10 +115,10 @@ const RENDERERS: Record<DashboardRoute, RouteRenderer> = {
   audit: (host, ctx) => renderAudit(host, ctx.state),
   catering: (host, ctx) => renderCatering(host, ctx.state),
   fleet: (host, ctx) => renderFleet(host, ctx.state),
+  harness: (host, ctx) => renderHarness(host, ctx.state),
+  workflows: (host, ctx) => renderWorkflows(host, ctx.state),
   settings: (host, ctx) => renderSettings(host, ctx.state),
   welcome: (host, ctx) => renderWelcome(host, ctx.state),
-  harness: renderNotAvailable,
-  workflows: renderNotAvailable,
   monitor: renderNotAvailable,
 };
 

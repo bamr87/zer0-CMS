@@ -275,6 +275,102 @@ suite('fleet: the gate — fixed order, master gate first', () => {
     };
   }
 
+  function scaffolding(overrides: Partial<FleetGateInput> = {}): FleetGateInput {
+    return {
+      ...open(),
+      scaffoldAllow: true,
+      laneId: 'content-review',
+      scaffold: {
+        laneId: 'content-review',
+        workflowPath: '.github/workflows/content-review.yml',
+        workflowExists: false,
+        switchName: 'CONTENT_REVIEW_ENABLED',
+        switchTaken: false,
+        notExpressibleReasons: [],
+      },
+      ...overrides,
+    };
+  }
+
+  test('scaffolding runs its own checks, because four of the others are wrong for it', () => {
+    // Writing a lane's files needs no GitHub credential, and a repository with
+    // no manifest is precisely where a first lane gets written. Running the
+    // dispatch list here would refuse every one of those on grounds that do not
+    // apply — so scaffold has its own list rather than the same one with
+    // exceptions bolted on.
+    assert.deepEqual(
+      evaluateFleetGates('scaffold', scaffolding({ hasCredential: false, manifest: null })),
+      [],
+      'no credential and no manifest are both fine when writing a first lane',
+    );
+  });
+
+  test('the scaffold blockers fire in their own fixed order', () => {
+    const blockers = evaluateFleetGates(
+      'scaffold',
+      scaffolding({
+        workspaceRoot: '',
+        enabled: false,
+        scaffoldAllow: false,
+        laneId: 'germinate',
+        scaffold: {
+          laneId: 'germinate', // already in the fixture manifest
+          workflowPath: '.github/workflows/germinate.yml',
+          workflowExists: true,
+          switchName: 'GERMINATE_ENABLED',
+          switchTaken: true,
+          notExpressibleReasons: ['needs a dynamic matrix'],
+        },
+      }),
+    );
+    assert.deepEqual(
+      blockers.map((b) => b.kind),
+      [
+        'noWorkspace',
+        'dispatchDisabled',
+        'scaffoldDisabled',
+        'laneExists',
+        'workflowFileExists',
+        'switchNameTaken',
+        'notExpressible',
+      ],
+    );
+  });
+
+  test('scaffoldAllow is the scaffold master gate, and dispatchAllow does not stand in for it', () => {
+    // Writing a workflow into a repository and running one that is already
+    // there are different powers, so one switch must not arm the other.
+    const armedToDispatch = evaluateFleetGates(
+      'scaffold',
+      scaffolding({ scaffoldAllow: false, dispatchAllow: true }),
+    );
+    assert.deepEqual(armedToDispatch.map((b) => b.kind), ['scaffoldDisabled']);
+
+    const armedToScaffold = evaluateFleetGates(
+      'scaffold',
+      scaffolding({ scaffoldAllow: true, dispatchAllow: false }),
+    );
+    assert.deepEqual(armedToScaffold, [], 'dispatchAllow is not a scaffold gate in either direction');
+  });
+
+  test('a lane that cannot be expressed says why, rather than being approximated', () => {
+    const blockers = evaluateFleetGates(
+      'scaffold',
+      scaffolding({
+        scaffold: {
+          laneId: 'content-factory',
+          workflowPath: '.github/workflows/content-factory.yml',
+          workflowExists: false,
+          switchName: 'CONTENT_FACTORY_ENABLED',
+          switchTaken: false,
+          notExpressibleReasons: ['needs a per-item matrix', 'checks out a second repository'],
+        },
+      }),
+    );
+    assert.deepEqual(blockers.map((b) => b.kind), ['notExpressible']);
+    assert.match(blockers[0]?.message ?? '', /per-item matrix; checks out a second repository/);
+  });
+
   test('a gated, dispatchable lane with everything in place has no blockers', () => {
     assert.deepEqual(evaluateFleetGates('toggle', open()), []);
     assert.deepEqual(evaluateFleetGates('dispatch', open()), []);

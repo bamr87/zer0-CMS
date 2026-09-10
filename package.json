@@ -378,6 +378,23 @@
         "command": "zer0Cms.agent.runAsRole",
         "title": "Run the agent as a fleet role",
         "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.harness.open",
+        "title": "Open the AI harness",
+        "category": "zer0-CMS",
+        "icon": "$(circuit-board)"
+      },
+      {
+        "command": "zer0Cms.workflows.open",
+        "title": "Open the lane catalogue",
+        "category": "zer0-CMS",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "zer0Cms.lane.scaffold",
+        "title": "Scaffold an AI lane",
+        "category": "zer0-CMS"
       }
     ],
     "menus": {
@@ -501,6 +518,18 @@
         {
           "command": "zer0Cms.agent.runAsRole",
           "when": "zer0Cms:agent:enabled && zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.harness.open",
+          "when": "zer0Cms:enabled"
+        },
+        {
+          "command": "zer0Cms.workflows.open",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.lane.scaffold",
+          "when": "zer0Cms:fleet:enabled && zer0Cms:workspace:trusted"
         }
       ],
       "editor/title": [

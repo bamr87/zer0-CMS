@@ -43,7 +43,11 @@ import {
 
 import { FIELD_TYPES } from '../core/shared/types';
 import { renderContents } from '../webview/dashboard/contents';
+import { render as renderAudit } from '../webview/dashboard/audit';
 import { render as renderCatering } from '../webview/dashboard/catering';
+import { render as renderHarness } from '../webview/dashboard/harness';
+import { render as renderSites } from '../webview/dashboard/sites';
+import { render as renderWorkflows } from '../webview/dashboard/workflows';
 import { render as renderFleet } from '../webview/dashboard/fleet';
 import { render as renderDrafts } from '../webview/dashboard/governance';
 import { render as renderSettings } from '../webview/dashboard/settings';
@@ -224,14 +228,14 @@ function bySnapshot(render: (host: HTMLElement, state: DashboardState) => void):
 }
 
 const RENDERERS: Record<DashboardRoute, Renderer> = {
-  sites: notAvailable('sites'),
+  sites: bySnapshot(renderSites),
   contents: renderContents,
   drafts: bySnapshot(renderDrafts),
-  audit: notAvailable('audit'),
+  audit: bySnapshot(renderAudit),
   catering: bySnapshot(renderCatering),
   fleet: bySnapshot(renderFleet),
-  harness: notAvailable('harness'),
-  workflows: notAvailable('workflows'),
+  harness: bySnapshot(renderHarness),
+  workflows: bySnapshot(renderWorkflows),
   monitor: notAvailable('monitor'),
   settings: bySnapshot(renderSettings),
   welcome: bySnapshot(renderWelcome),
@@ -290,8 +294,8 @@ suite('webview', () => {
     renderDrafts(drafts.el, state);
     assert.match(text(drafts.node), /The draft queue is empty\./);
 
-    // The five routes later PRs fill say so, rather than rendering a blank tab.
-    for (const route of ['sites', 'audit', 'harness', 'workflows', 'monitor'] as const) {
+    // The route a later slice fills says so, rather than rendering a blank tab.
+    for (const route of ['monitor'] as const) {
       const mount = host();
       RENDERERS[route](mount.el, ctx);
       assert.match(

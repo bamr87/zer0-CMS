@@ -61,6 +61,9 @@ const problemMatcherPlugin = {
  * transitive surprises. Adding a name to the MCP target's allow-list is not a
  * build tweak; it is a change to the layering rule in CLAUDE.md.
  */
+/** Node's own list of builtins, so the gate does not have to keep its own. */
+const BUILTINS = new Set(require('node:module').builtinModules);
+
 function bareImportGate(allow) {
   const allowed = new Set(allow);
   return {
@@ -73,6 +76,14 @@ function bareImportGate(allow) {
         }
         const spec = args.path;
         if (spec.startsWith('.') || spec.startsWith('node:') || path.isAbsolute(spec)) {
+          return null;
+        }
+        // A Node builtin is a builtin however it is spelled. The `node:` prefix
+        // is the modern form, but plenty of published code still writes
+        // `process`, `buffer` or `path` bare — `yaml` does — and refusing those
+        // would make the gate a lint against other people's style rather than a
+        // guard on what gets bundled. `builtinModules` is Node's own list.
+        if (BUILTINS.has(spec)) {
           return null;
         }
         // `@scope/name/sub` and `name/sub` both belong to their package.

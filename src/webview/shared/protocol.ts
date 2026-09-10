@@ -494,6 +494,8 @@ export const DASHBOARD_TABS: readonly DashboardTab[] = [
   { id: 'audit', label: 'Audit', icon: 'report' },
   { id: 'catering', label: 'Distribution', icon: 'graph' },
   { id: 'fleet', label: 'Fleet', icon: 'server-process' },
+  { id: 'harness', label: 'Harness', icon: 'circuit-board' },
+  { id: 'workflows', label: 'Workflows', icon: 'run-all' },
   { id: 'settings', label: 'Settings', icon: 'settings-gear' },
   { id: 'welcome', label: 'Welcome', icon: 'rocket' },
 ];

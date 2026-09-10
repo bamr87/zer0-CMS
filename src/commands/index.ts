@@ -56,6 +56,17 @@ export {
 
 export { registerContractCommands } from './contract';
 export { registerAuditCommands, type AuditActions } from './audit';
+export {
+  doScaffoldLane,
+  harnessStateFrom,
+  lanePreview,
+  LANE_UI_STATE_KEYS,
+  registerHarnessCommands,
+  specIdFrom,
+  workflowsStateFrom,
+  type HarnessActions,
+  type LanePreviewReply,
+} from './harness';
 
 export {
   agentHostInstalled,
@@ -130,6 +141,9 @@ export const ALL_COMMAND_IDS: readonly string[] = [
   'site.setActive',
   'site.preview',
   'agent.runAsRole',
+  'harness.open',
+  'workflows.open',
+  'lane.scaffold',
 ];
 
 /** The fully qualified ids, for comparing against `getCommands()`. */

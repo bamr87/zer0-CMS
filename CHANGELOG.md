@@ -4,6 +4,26 @@ All notable changes to zer0-CMS are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### 🧭 The harness, inventoried
+
+An agent file, a skill, a workflow, a manifest lane, a kill switch, a token and a line in a spend ledger are seven files describing **one lane**, and holding that join in your head was the only way to see it. The **Harness** tab reads them and reports the joins — and, more usefully, where they disagree: an agent a workflow names that does not exist, a skill nothing references, a lane with no workflow, a workflow with no lane, a switch the manifest claims that no workflow reads.
+
+The rules were tuned against the real fleet rather than fixtures, and five of them were wrong on the first pass. Each guard now names the case that taught it: a metering line's `--agent` flag is a ledger role, not an agent reference; `<x> subagent` names an agent, not a skill; a comment *about* a token trap is not the trap. The strongest evidence they are right now: over lifehacker.dev the inventory reports twelve token-chain findings, and they are **byte-identical to the twelve workflows that repository's own token lint hand-maintains as migrating debt** — a list a person curated, rediscovered from scratch.
+
+A lane reader ports what `wtd fleet adopt` does, so the console and that tool agree about what a workflow *is*: **45 of 45 lanes across five repositories match** on every parity field. It is used only to agree — a derived lane is never written over a committed manifest, and a disagreement is reported as drift.
+
+### 🛠 Lanes you can write
+
+Describe a lane — what it should do, when, as whom — and get the files that make it real: a workflow calling the fleet's shared runner, an agent, a skill stub, and a manifest entry. Not a wizard that hides its output: a plan you read, a diff you review, and files you commit yourself.
+
+**It refuses more than it writes, and that is the point.** Modelled on lifehacker's own `content-review` lane, the generator classifies it **bespoke** and produces nothing — because expressing it as a shared-runner caller would silently drop the `github.event.action != 'synchronize'` loop-breaker, re-creating an infinite retrigger loop that fleet has already had to fix once. A lane it cannot express honestly comes back with reasons a person can act on, not a shrug.
+
+House rules are enforced rather than documented: the kit stamp is line 1; a cron is never on the hour (every lane in a fleet firing at `:00` queues behind the rest of GitHub); a token is never `secrets.X || github.token` (that degrades to a token which cannot open a pull request, silently, mid-run); every generated lane carries its `*_ENABLED` switch; and nothing ever targets a `factory--*.yml`.
+
+**Writing the files never arms the lane.** The variable that turns it on is named in the modal and deliberately not created — writing a file somebody reviews and arming a loop to run are different powers, and the console holds only the first.
+
+Three MCP tools join the set (sixteen): `zer0_harness_inventory` and `zer0_lane_preview` are read-only; `zer0_lane_scaffold` is double-gated by an environment flag *and* a per-call confirmation, exactly as publishing is.
+
 ### 🗂 Many sites, one window
 
 A window can hold more than one site. The fleet's own workspace holds twelve folders — seven of them Jekyll sites this extension can detect, audit and publish — and until now eleven of them were invisible, because everything resolved the first folder.

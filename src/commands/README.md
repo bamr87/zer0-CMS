@@ -1,6 +1,6 @@
 # `src/commands/` — the command layer
 
-Forty-five commands, nine files, and one rule that matters more than the other forty-four: **`governance.ts`, `fleet.ts` and `audit.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
+Forty-eight commands, ten files, and one rule that matters more than the other forty-seven: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -19,6 +19,7 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane` | 574 |
 | `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 761 |
 | `site.ts` | `site.pick`, `site.setActive`, `site.preview` | 236 |
+| `harness.ts` | `harness.open`, `workflows.open`, `lane.scaffold` | 1251 |
 | `index.ts` | barrel + `ALL_COMMAND_IDS` | 136 |
 
 `dashboard` and `dashboard.close` are registered by `extension.ts`, beside the panel object they operate on. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
@@ -74,6 +75,23 @@ Both sides of the diff are **virtual**. Diffing the proposal against the `file:`
 
 `scanSite` also fills in `contentFolders` through `withPlatformDefaults` when the workspace registered none — that is what lets the audit read a sister site's 382 pages the first time it is opened rather than the zero folders it declared — and the `cfg` it returns, folders and all, is the one the fix is computed against.
 
+### The same gate, for writing a lane
+
+`doScaffoldLane` in `harness.ts` is the fourth pair's single half, and it is the strictest of the four because what it writes is a **workflow file**: a lane that, once its variable exists, spends tokens on a schedule with nobody watching. The webview posts `{type:'command', id:'lane.scaffold', args:{spec:'<lane id>'}}` — a lane id, never the rendered files and never the plan the screen just drew — and the host then, in this order: re-reads the configuration with `currentConfig()`, with the master gate `zer0Cms.fleet.scaffoldAllow` read from the settings layer alone through `settingsFleetScaffoldAllow()` (which re-asks Workspace Trust itself, so an untrusted folder refuses without a fifth trust check in this file); re-reads the harness inventory **and** the manifest from disk; re-reads the lane's description from the whitelisted UI state the host itself persisted, never from the message; plans **once** with `planScaffold`, passing `selfAudit` — this is the only place in the extension that does, because the engines seam is admitted to `dist/extension.js` alone; re-runs `evaluateFleetGates('scaffold', …)` over `scaffoldGateFacts` and refuses in the blockers' own words; and only then asks, modally.
+
+Two things about that modal are the point of the whole command.
+
+1. **It lists every file it would write**, with its byte count, and says that
+none of them exists. Nothing is summarised into "3 files".
+2. **It names the `*_ENABLED` variable it is NOT creating**, last and on its
+own. Writing a file somebody then commits and reviews is one power; arming a lane to run is another, and bundling them is how a person ends up with a live loop they only meant to draft. `doScaffoldLane` holds only the first, and `switchToCreateLater` is a note in the plan rather than an action anywhere.
+
+Two gates, because there are two questions. `evaluateFleetGates('scaffold', …)` answers *may this console write here* — the master switch, a lane id the manifest already declares, a file already at that path, a variable another lane claims, a lane the generators refuse. `preflightLaneSpec` and the engines' rulebook (both folded into `plan.audit`) answer *is this a lane worth writing* — a missing kill switch, a cron on the hour, a `secrets.X || …` presence chain. An `error`- or `fail`-severity finding refuses the write and names itself. That second half is enforced in the command rather than in the gate on purpose: the gate's blocker order is a pinned contract other surfaces render, and a house rule arriving as a sixth scaffold blocker would renumber it.
+
+The write itself is exclusive (`flag: 'wx'`), one file at a time, with the manifest last — a failure never leaves a manifest declaring a lane whose file is absent — and every path is checked to resolve inside the workspace root and never to be a `factory--*.yml`, which is GitFactory's compiled output and not this console's to own. **There is no `force` here.** The MCP tool has one, for the reason `publishPreview` does; nothing reachable from a keystroke passes it.
+
+`harnessStateFrom`, `lanePassportsFrom`, `workflowsStateFrom` and `lanePreview` are the read-only half — the two dashboard slices and the `lanePreview` request — and they live beside the gate for the reason `auditStateFrom` does: the profile's runner line and the lane passports' expressibility verdict are derivations, and a second copy of either would be a second answer to the same question.
+
 ### The same gate, for the fleet
 
 `doToggleSwitch` and `doDispatchLane` in `fleet.ts` are the second pair, and they follow the diagram above line for line: `currentConfig()` uncached (with `zer0Cms.fleet.dispatchAllow` read from the settings layer alone through `settingsFleetDispatchAllow()`), `readFleetManifest()` from disk, `evaluateFleetGates()`, then `confirm()` naming the repository, the lane, the variable and the value. The dashboard's Fleet tab posts `{type:'command', id:'fleet.toggleSwitch', args:{lane}}` — a lane id and nothing else. A toggle's new value is `nextSwitchValue()` of the variable as GitHub reports it inside the action; `unknown` has no next value, so a failed read refuses rather than guesses.
@@ -89,6 +107,12 @@ The fleet's CI lanes run as a role: `--agent grow-lifehacker`, resolved against 
 The same QuickPick offers **"Copy the CI equivalent"**, which renders the run as either a `scripts/ai/run.sh` invocation or the `with:` block of a caller of the hub's reusable `ai-lane.yml`, so a run that works in the editor can move into a workflow without being re-derived. It emits only what the resolved profile actually knows — `lane`, `switch` and `prompt` stay placeholders, because filling them would be this console writing a workflow field it derived rather than read.
 
 Three helpers in this file are the shell half of `src/core/harness/`, which is pure and takes its I/O as a parameter: `workspaceHarnessIo(root)` (the injected filesystem), `agentMcpServer(shell, configFile)` (how to spawn the bundled MCP server as a child of a run, with an `env` carrying only which project file to read), and `resolveProfileFor(...)` (reads the repository's agents, skills and `_data/ai.yml`, then hands them to `resolveHarnessProfile`, which decides). `readRepoSlug(root)` reads `.git/config` — a file, not a socket — so a metered editor run carries the same `owner/name` a lane's ledger row does.
+
+## The lane form: fourteen keys the host owns
+
+`LANE_FIELDS` in `harness.ts` is the fourteen things a person fills in to describe a lane — id, kind, verb, description, agent, skill, switch, cron, prompt, tools, result file, dispatch-bypasses-switch, timeout and model. Everything else in a `LaneSpec` is *derived*: the project name from the manifest's repository, the platform from detection (decision D12), the runtime `setup-*` from the resolved profile's own serve/build command, the permissions pair, and the system prompt. A form with forty rows is a form nobody fills in, and half a lane spec is a consequence of the other half.
+
+Those values are a **draft, not a setting**, so they travel through `setUiState` rather than `updateSetting`: `LANE_UI_STATE_KEYS` maps each protocol key to its workspace-state id, the dashboard host merges that table into its own `UI_STATE_KEYS` whitelist, and `WorkflowsState.form` offers exactly those keys back — so the webview can only ever hand back a key the host itself named. `doScaffoldLane` then re-reads them from workspace state rather than from the message that triggered it, which is what makes "the message carries a lane id and nothing else" true rather than aspirational. When the id in the staged form and the id in the message disagree, it refuses and says so: the person edited the form after clicking, and acting on either answer would be acting on something nobody asked for.
 
 ## Trust is re-checked inside the function
 
