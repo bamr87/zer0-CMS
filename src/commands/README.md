@@ -1,6 +1,6 @@
 # `src/commands/` — the command layer
 
-Forty-eight commands, ten files, and one rule that matters more than the other forty-seven: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
+Fifty-four commands, ten files, and one rule that matters more than the other fifty-three: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -16,7 +16,7 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `governance.ts` | `draft.new`, `draft.review`, `draft.approve`, `draft.publish`, `draft.guard`, `draft.preview` | 676 |
 | `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 320 |
 | `agent.ts` | `agent.open`, `agent.start`, `agent.runAsRole`, `agent.stop`, `mcp.writeWorkspaceConfig` | 532 |
-| `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane` | 574 |
+| `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane`, `fleet.rerunLastFailure`, `fleet.cancelNewest`, `fleet.toggleWorkflowFile`, `fleet.openInGitFactory`, `fleet.importHubRoster`, `monitor.open` | 1896 |
 | `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 761 |
 | `site.ts` | `site.pick`, `site.setActive`, `site.preview` | 236 |
 | `harness.ts` | `harness.open`, `workflows.open`, `lane.scaffold` | 1251 |
@@ -94,9 +94,29 @@ The write itself is exclusive (`flag: 'wx'`), one file at a time, with the manif
 
 ### The same gate, for the fleet
 
-`doToggleSwitch` and `doDispatchLane` in `fleet.ts` are the second pair, and they follow the diagram above line for line: `currentConfig()` uncached (with `zer0Cms.fleet.dispatchAllow` read from the settings layer alone through `settingsFleetDispatchAllow()`), `readFleetManifest()` from disk, `evaluateFleetGates()`, then `confirm()` naming the repository, the lane, the variable and the value. The dashboard's Fleet tab posts `{type:'command', id:'fleet.toggleSwitch', args:{lane}}` — a lane id and nothing else. A toggle's new value is `nextSwitchValue()` of the variable as GitHub reports it inside the action; `unknown` has no next value, so a failed read refuses rather than guesses.
+`fleet.ts` holds **five** privileged verbs, and every one follows the diagram above line for line: `currentConfig()` uncached (with `zer0Cms.fleet.dispatchAllow` read from the settings layer alone through `settingsFleetDispatchAllow()`, **for the target repository's own folder**, because the setting is `resource`-scoped and arming one site must arm one site), `readFleetManifest()` from disk, `evaluateFleetGates()` for that verb's own mode, then `confirm()` naming the repository, the lane and exactly what is about to happen.
 
-**Decision D11** lives in this file's header. `extension.ts` still does no network and no auth on activation; the GitHub session is obtained lazily inside the action, every request goes through the `fetch` injected into `core/fleet/github.ts` (and is checked against `FLEET_PLAN` before it is sent), and no token is stored — the client asks VS Code for the session per request. Opening the tab is a passive read that never prompts; `fleet.refresh` is the interactive one.
+The dashboard posts `{type:'command', id:'fleet.<verb>', args:{repo, lane}}` — a repository slug and a lane id and nothing else. **Both are targets, neither is a value.** `repo` selects which roster row was clicked and is resolved against a roster the host builds itself from folders this window has open; a slug naming nothing this window has a checkout of is refused outright, because step 2 of the gate is "re-read the manifest from disk" and there is no disk to read.
+
+| Verb | Where the value comes from | What the modal says it does |
+|---|---|---|
+| `doToggleSwitch` | `nextSwitchValue()` of the variable as GitHub reports it inside the action | ON means the lane runs on its schedule spending its tokens; OFF means scheduled runs skip and `workflow_dispatch` still bypasses it. `unknown` has no next value, so a failed read refuses rather than guesses |
+| `doDispatchLane` | the default branch, read inside the action | queues exactly one run; merges nothing — the lane opens a pull request for a person, or it does nothing |
+| `doRerunLastFailure` | the newest `completed` non-`success` run in the bounded page **the last Refresh read**, joined to this lane host-side | re-running queues a **new attempt**; the original attempt stays on the record with its logs, and nothing is overwritten or deleted |
+| `doCancelNewest` | the newest run in that same page whose status is not `completed` | cancelling stops what is in flight and leaves the run recorded as **cancelled** — not removed, and not failed; work it had already done stays done |
+| `doToggleWorkflowFile` | the registered workflow `listWorkflows()` returned for this lane, and its direction from that state | disabling registers the workflow `disabled_manually` and **does not touch the file** — which is why it is not an edit, and why a person who wants the lane gone still has to delete the file and commit that |
+
+A run id is never in a message. A webview that wanted to re-run something else would have to change what Refresh read, which is a different program.
+
+**One Refresh is four calls, per repository, never per lane.** `readLive` asks for every Actions variable (which answers every lane's switch *and* the three merge-policy variables in one reply), every registered workflow with its state, one bounded page of recent runs, and one bounded page of open pull requests — then joins all four to the manifest's lanes locally. Slice 1 asked per lane and cost 2N; lifehacker's seventeen lanes and fourteen gated switches made that thirty-one requests for one screen. Each of the four fails on its own: a 403 on the variables leaves every switch `unknown` and names the failure in a note, and does not blank the runs beside it. Cost, the audit grade and the drift rows are read from the **checkout on disk** and add no calls at all.
+
+A rostered repository this window has no folder for costs **five**: `refreshRemote` reads its manifest with the declared contents call (whose own `returns` sentence names a manifest as one of the three things it is for) and then makes the same four. What it comes back without is the grade, the drift and the cost — all three are functions of files in a checkout, and fetching them would be one request per workflow file — so they stay `null`, the Monitor renders them unknown, and the row's note says why. No privileged verb is offered on such a row, because step 2 of every gate is "re-read the manifest from disk". Reading is safe; acting on a manifest nobody can re-read is not.
+
+**The roster comes from three places, and the precedence is about what can be read without a socket.** Every open folder carrying a readable manifest (`workspace`), plus `zer0Cms.fleet.roster` read from the settings layer alone (`settings`, so a cloned `zer0.json` cannot add a repository), plus — only after an explicit `fleet.importHubRoster` — the hub's own `_data/projects.yml` (`hub`). `mergeFleetRoster` keeps the record that has a local root, because that one is readable now, offline, at whatever commit is checked out.
+
+`fleet.openInGitFactory` builds the deep link with `gitFactoryLink` and hands it to `openExternal`: **building a URL opens no socket; the browser does.** `fleet.importHubRoster` is the only thing here that reaches a repository nobody named, which is exactly why it is a command a person invokes rather than something a tab open does.
+
+**Decision D11** lives in this file's header. `extension.ts` still does no network and no auth on activation; there is no timer, no watcher and no poll anywhere in this file. The GitHub session is obtained lazily inside the action, every request goes through the `fetch` injected into `core/fleet/github.ts` (and is checked against `FLEET_PLAN` before it is sent), and no token is stored — the client asks VS Code for the session per request. Opening the Fleet tab is a passive read that never prompts; opening the Monitor tab reads **nothing at all**, because a tab that fanned out four calls per repository on open would be exactly the ambient traffic D11 forbids. Refresh is per repository, from the row a person clicked.
 
 ---
 

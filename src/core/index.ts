@@ -97,6 +97,11 @@ export * from './fleet/adapters';
 export * from './fleet/registry';
 export * from './fleet/handoff';
 export * from './fleet/inspect';
+export * from './fleet/roster';
+export * from './fleet/pulls';
+export * from './fleet/cost';
+export * from './fleet/policy';
+export * from './fleet/client';
 
 // --- the module that is deliberately NOT here -------------------------------
 //
