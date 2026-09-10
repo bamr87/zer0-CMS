@@ -4,6 +4,28 @@ All notable changes to zer0-CMS are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### 🌍 Every site, not just this one
+
+zer0-CMS now knows what kind of site it is looking at. Jekyll, MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback are **profiles** — content roots, front-matter dialect and keys, the draft convention, date keys and formats, the slug and permalink rules, the directories a build writes and the command that serves the site locally — resolved once from marker files, with an explicit `platform.id` in `zer0.json` always winning. Everything platform-specific that used to be hard-coded in the core now comes from one of them.
+
+zer0-mistakes is an **overlay on Jekyll**, never a sibling identity: a site using that theme is a Jekyll site with extra conventions, and modelling it as its own platform would have meant restating every Jekyll rule to keep it true.
+
+Three things this immediately fixed, each found by pointing the code at real repositories rather than fixtures:
+
+- **The theme overlay matched one site out of six.** The probe looked for the literal `remote_theme: bamr87/zer0-mistakes`, and five of the six sites in this fleet write it aligned and quoted — `remote_theme             : "bamr87/zer0-mistakes"`. A detector that only recognises tidy files is a detector for fixtures. Probes now read past spacing, quoting and case.
+- **A site whose `collections_dir` carries a YAML anchor was invisible.** it-journey.dev writes `collections_dir: &collections_dir pages`, and treating that as unresolvable meant **none** of its 409 content files were seen. An anchor is a *label on* a value — the value is right there, and reading it is not a guess. An alias, which points at a value defined elsewhere, still reports as unknown rather than being invented.
+- **Jekyll's loose pages were not content.** Deriving only the declared collections left fourteen of lifehacker.dev's 383 files unseen. Jekyll builds every markdown file under the source directory, and a CMS that cannot see a page cannot report a problem with it. Coverage on the two largest sites in the fleet went from 368/383 and 0/409 to **383/383 and 408/409** — the one remaining file has no front matter and is skipped on purpose.
+
+Publishing follows the platform too. `PublishTarget` was an open interface with exactly one implementation and a registry that **threw** for anything else, so a detected MkDocs site would have crashed the publish preview. One factory now serves every file-writing platform, with the same exclusive-write and adopt-a-retry semantics Jekyll always had. `governance.target` defaults to empty, meaning *follow the platform* — so naming one is a real choice rather than an indistinguishable default, and Jekyll sites publish exactly as they did.
+
+### 🔍 The front-matter audit
+
+Every page checked against its content type, its site's own schema and its platform's conventions — thirteen rules using **lifehacker.dev's own rule id strings**, so a finding raised in the editor and one filed by that site's CI are the same finding rather than two. It reads the schema the site already has (`frontmatter_schema.yml`, a `.cms/` contract, `zer0.json`, or the platform's defaults) instead of asking you to restate it, and every report names which one answered — because "required" means something different in each case.
+
+A finding that a script can honestly fix offers a fix; the rest say why not. `title: ''` is not a repair, and neither is `draft: true`. Applying one re-reads the file, re-runs the rule against what is actually on disk now, shows the real diff in a diff editor and asks — in that order, so a fix for a finding you have since edited away cannot land. The parser also grew a **warnings channel**: a file using YAML anchors, aliases, merge keys or multi-line flow collections is reported as unreadable rather than audited on a misreading, and fix-it refuses it outright.
+
+Available as an Audit tab, three commands, and a read-only `zer0_audit` MCP tool (thirteen now). Over lifehacker.dev's 382 real posts it reports **zero errors and two warnings**, both genuine over-long descriptions — the rules were tuned against a real corpus, and one that fired ten times on correct files was fixed rather than shipped.
+
 ### 🧱 Foundations
 
 This release turns zer0-CMS from a CMS for *this* repository into the foundation of one that can operate a fleet of them. Nothing here is a new feature you can point at; it is the floor the next four slices stand on — platform profiles, a site-wide front-matter audit, a multi-root site registry, a harness inventory with lane generation, and the fleet console's second slice. Two long-standing bugs fall out of it, and one promise the documentation had been making for a year becomes true.

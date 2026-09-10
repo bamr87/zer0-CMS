@@ -1,11 +1,11 @@
 # `src/mcp` — the bundled MCP server
 
-Three files that expose the CMS as twelve tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
+Three files that expose the CMS as thirteen tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
 
 | File | Exports | Owner |
 |---|---|---|
 | `server.ts` | `SERVER_NAME`, `SERVER_VERSION`, `runServer` | WP07 |
-| `tools.ts` | `PUBLISH_ENV_VAR`, `EXEC_ENV_VAR`, `PYTHON_ENV_VAR`, `CONFIG_ENV_VAR`, `CONTENT_FIELDS`, `ToolArgs`, `ToolSchema`, `ToolDef`, `TOOLS`, `TOOLS_BY_NAME`, `ERROR_PREFIXES`, `isErrorText`, `publishEnabled`, `execEnabled`, `loadServerConfig` | WP07, WP1.3 |
+| `tools.ts` | `PUBLISH_ENV_VAR`, `EXEC_ENV_VAR`, `PYTHON_ENV_VAR`, `CONFIG_ENV_VAR`, `CONTENT_FIELDS`, `ToolArgs`, `ToolSchema`, `ToolDef`, `TOOLS`, `TOOLS_BY_NAME`, `ERROR_PREFIXES`, `isErrorText`, `publishEnabled`, `execEnabled`, `loadServerConfig` | WP07, WP1.3, WP2.5 |
 | `cache.ts` | `loadContractCached`, `clearIndexCaches`, `cachedRootCount` | WP1.3 |
 
 ## Running it
@@ -29,7 +29,7 @@ None of them is ever `"0"`: `src/mcpRegistration.ts` sets a variable to `null`, 
 
 Inside VS Code the extension registers it through `vscode.lm.registerMcpServerDefinitionProvider` (`src/mcpRegistration.ts`), but standing it up by hand — Claude Code, a `.vscode/mcp.json` entry, a shell — is a supported way to run it, and the integration test spawns exactly this file.
 
-## The twelve tools, in order
+## The thirteen tools, in order
 
 The order in `TOOLS` is the order the test pins, and it is a safety ladder.
 
@@ -49,6 +49,7 @@ Tools 8–10 are the feedback loop, and they sit *after* `zer0_publish` because 
 | 10 | `zer0_media` | — | Which pages have a preview image, and the generator command for each that does not. |
 | 11 | `zer0_contract` | only with `normalize-apply` | Runs the repository's own engine. **Gated on `ZER0_CMS_MCP_ALLOW_EXEC`** — see below. |
 | 12 | `zer0_fleet_status` | — | This repository's AI lanes as its local `fleet.manifest.yml` declares them. Reads the file only — **no network from this process** — so the switch state is reported as unknown; the dashboard reads it, behind a person's sign-in. |
+| 13 | `zer0_audit` | — | Every page's front matter against the site's own schema, grouped by rule, with the change set that would repair each fixable finding **described and never applied**. |
 
 ## Contracts worth knowing before you change anything
 
@@ -76,10 +77,18 @@ Tools 8–10 are the feedback loop, and they sit *after* `zer0_publish` because 
 
 **A tool that throws never kills the server.** The exception is caught in `callTool` and returned as `{ content: [{ type: 'text', text: 'tool error: …' }], isError: true }`. The next call still works. Error codes: `-32601` unknown method, `-32602` unknown tool, `-32603` an exception escaping `handle` (only when the message had an id).
 
+**`zer0_audit` describes a fix and never applies one.** It is the read-only half of a pair: this tool says what is missing, malformed or duplicated and what change set `fixFor` would propose; the *editor's* `audit.fix` is the half that writes, and it re-reads the configuration, re-reads the site from disk, re-runs `auditPage`, renders a diff and asks a person before it does (decision D5). Nothing in this handler opens a file for writing, spawns anything or touches the network — the change sets it prints are computed by reading the article and are discarded with the answer.
+
+**`zer0_audit` fills in the content folders it was not given.** A sister site that has never been opened in the editor has no `zer0.json` and therefore no `contentFolders`, and a scan over zero folders would honestly report zero findings about 382 files. So the handler detects the platform and applies `withPlatformDefaults`, which fills the *gap* only: a workspace that registered its own folders keeps every one of them. Measured against lifehacker.dev: 382 files, 0 errors, 2 warnings, about 120 ms including the second pass that reads every block for line numbers.
+
+**`zer0_audit` says which schema answered, in words.** "Required" means something different when `frontmatter_schema.yml` said so, when the `.cms/` contract said so, and when nothing said so and the platform profile's own defaults filled in. A model reading `missing-key: layout` needs to know which of those it is looking at before it decides how much authority the finding carries, so the tool prints the source and a sentence about it rather than leaving the distinction to be inferred.
+
+**It is the only tool that does not go through `src/mcp/cache.ts`.** The audit needs `PageEntry` values, not the `ContentRecord` projection `loadContractOrScan` returns, so it calls `buildIndex` itself with no cache — one full walk per call. That is a deliberate trade for a tool nobody calls in a loop; if it ever becomes hot, the fix is a second entry point in `cache.ts`, not a cache in this file.
+
 **`zer0_get_content` whitelists front-matter keys.** `CONTENT_FIELDS` is an allow-list, not a block-list, for the same reason the LinkedIn port whitelisted its response fields: front matter is arbitrary user data and "everything except the keys we thought of" is not a boundary. Keys outside the list are reported by name only — the model learns they exist without learning their values.
 
 **`initialize` echoes the client's protocol version** when it is one of `2024-11-05`, `2025-03-26`, `2025-06-18`; otherwise ours (`2025-06-18`) wins.
 
 ## Tests
 
-`src/test/mcp.test.ts` spawns `dist/mcp-server.js` — the **shipped bundle**, not the sources — with an environment scrubbed of every `ZER0_*` and `ANTHROPIC_*` variable, and asserts: every stdout line parses as JSON, the banner is on stderr, the protocol version is echoed, exactly these twelve tool names in this order, `zer0_preview` returns the artifact with `isError: false`, a raw garbage line does not kill the loop (`ping` still answers `{}` afterwards), `zer0_publish` while disabled returns `isError: true` starting with `publishing is disabled`, and an unknown method yields `-32601`.
+`src/test/mcp.test.ts` spawns `dist/mcp-server.js` — the **shipped bundle**, not the sources — with an environment scrubbed of every `ZER0_*` and `ANTHROPIC_*` variable, and asserts: every stdout line parses as JSON, the banner is on stderr, the protocol version is echoed, exactly these thirteen tool names in this order, `zer0_preview` returns the artifact with `isError: false`, a raw garbage line does not kill the loop (`ping` still answers `{}` afterwards), `zer0_publish` while disabled returns `isError: true` starting with `publishing is disabled`, and an unknown method yields `-32601`.

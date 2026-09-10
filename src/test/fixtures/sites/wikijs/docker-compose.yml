@@ -1,0 +1,9 @@
+services:
+  wiki:
+    image: requarks/wiki:2
+    environment:
+      DB_TYPE: postgres
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docs:/wiki/content:ro

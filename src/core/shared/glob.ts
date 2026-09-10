@@ -21,7 +21,17 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
-/** Directories never worth walking into for content. */
+/**
+ * Directories never worth walking into for content.
+ *
+ * The list is the platform-agnostic half plus Jekyll's `_site`, which is what
+ * it has always been. Decision D12 moved the *platform's* share of this
+ * question into `PlatformProfile.outputDirs`, and `skipDirsFor(profile, base)`
+ * in `core/platform/permalink.ts` composes the two — so a Hugo site skips
+ * `public/` and an Astro site skips `dist/` without this constant learning
+ * either name. Pass the composed set to `walkGlobs`; this remains the default
+ * for every caller that has not resolved a platform yet.
+ */
 export const SKIP_DIRS: ReadonlySet<string> = new Set([
   'node_modules',
   '.git',
@@ -87,7 +97,12 @@ export function globMatches(relPath: string, globs: readonly CompiledGlob[]): bo
   return globs.some((g) => g.re.test(candidate));
 }
 
-async function walk(root: string, dir: string, out: string[]): Promise<void> {
+async function walk(
+  root: string,
+  dir: string,
+  out: string[],
+  skip: ReadonlySet<string>,
+): Promise<void> {
   let entries;
   try {
     entries = await fs.readdir(dir, { withFileTypes: true });
@@ -102,10 +117,10 @@ async function walk(root: string, dir: string, out: string[]): Promise<void> {
     if (entry.isDirectory()) {
       // Hidden directories below the base are skipped; a base that *is* hidden
       // (`.zer0/drafts`) still works, because the walk starts inside it.
-      if (SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) {
+      if (skip.has(entry.name) || entry.name.startsWith('.')) {
         continue;
       }
-      await walk(root, full, out);
+      await walk(root, full, out, skip);
     } else if (entry.isFile()) {
       out.push(toPosix(path.relative(root, full)));
     }
@@ -115,14 +130,28 @@ async function walk(root: string, dir: string, out: string[]): Promise<void> {
 /**
  * All files under `root` matching any of `globs`, as workspace-relative POSIX
  * paths, deduplicated and sorted.
+ *
+ * `skip` is the set of directory names the walk refuses to descend into. It is
+ * a parameter rather than a constant so a caller that knows the platform can
+ * pass `skipDirsFor(profile, SKIP_DIRS)` and keep the generator's build output
+ * out of the results; omitting it keeps the historical behaviour exactly.
  */
-export async function walkGlobs(root: string, globs: string[]): Promise<string[]> {
+export async function walkGlobs(
+  root: string,
+  globs: string[],
+  skip: ReadonlySet<string> = SKIP_DIRS,
+): Promise<string[]> {
   const compiled = globs.map(compileGlob);
   const bases = [...new Set(compiled.map((c) => c.base))];
 
   const candidates: string[] = [];
   for (const base of bases) {
-    await walk(root, base === '.' ? root : path.join(root, base.split('/').join(path.sep)), candidates);
+    await walk(
+      root,
+      base === '.' ? root : path.join(root, base.split('/').join(path.sep)),
+      candidates,
+      skip,
+    );
   }
 
   const matched = new Set<string>();

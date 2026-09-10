@@ -36,6 +36,14 @@ export * from './content/slug';
 export * from './content/article';
 export * from './content/pageIndex';
 export * from './content/seo';
+export * from './content/audit';
+export * from './content/schema';
+
+// --- the site's platform (decision D12) --------------------------------------
+// What a Jekyll site, an MkDocs site and a Hugo site each mean by "content
+// root", "draft", "the date", "the URL" and "the directory to ignore" — as
+// data, resolved once, so nothing below has to ask again.
+export * from './platform/index';
 
 // --- governance -------------------------------------------------------------
 export * from './governance/drafts';
@@ -43,6 +51,7 @@ export * from './governance/guard';
 export * from './governance/ledger';
 export * from './governance/approval';
 export * from './governance/publish';
+export * from './governance/fileTarget';
 
 // --- catering and the `.cms/` contract --------------------------------------
 export * from './catering/catering';

@@ -33,6 +33,8 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { skipDirsFor } from '../platform/permalink';
+import { JEKYLL_PROFILE } from '../platform/profiles/jekyll';
 import { relPath as toRelPath } from '../shared/config';
 import { parseDate } from '../shared/dates';
 import { compileGlob, globMatches, SKIP_DIRS, toPosix, type CompiledGlob } from '../shared/glob';
@@ -40,14 +42,15 @@ import {
   NOOP_LOG,
   UNKNOWN_COUNT,
   type ContentFolder,
+  type CmsIssue,
   type ContentRecord,
   type ContentType,
   type Field,
   type LogSink,
   type PageEntry,
+  type PlatformProfile,
   type Zer0Config,
 } from '../shared/types';
-import { CONVENTIONAL_MODIFIED_KEYS } from './article';
 import { resolveContentType } from './contentType';
 import { resolveFolders } from './folders';
 import { asBool, asList, asString, splitFrontMatter, type FmValue, type FrontMatter } from './frontmatter';
@@ -69,7 +72,7 @@ import { applyCommaSeparatedFields } from './serialize';
  * run parses zero files" would be false in any real repository.
  */
 export interface IndexCache {
-  version: 1;
+  version: 2;
   entries: Record<string, { mtime: number; page: PageEntry }>;
   /** Absolute path → mtime of files that hold no front matter. */
   skipped?: Record<string, number>;
@@ -77,7 +80,13 @@ export interface IndexCache {
   fingerprint?: string;
 }
 
-const CACHE_VERSION = 1;
+/**
+ * Bumped to 2 when the fingerprint learned about the site's platform: a v1
+ * entry was built by code that could not tell a Jekyll site from an MkDocs one,
+ * so its slugs, dates and draft flags are not answers this version would give.
+ * A stale cache must cost a rescan, never a wrong page list.
+ */
+const CACHE_VERSION = 2;
 
 export function emptyIndexCache(): IndexCache {
   return { version: CACHE_VERSION, entries: {}, skipped: {}, fingerprint: '' };
@@ -85,8 +94,8 @@ export function emptyIndexCache(): IndexCache {
 
 /**
  * Validate something that came back from `workspaceState` (or a JSON file).
- * Anything that is not a v1 cache is treated as no cache at all — a bad cache
- * must cost a rescan, never a crash or a wrong page list.
+ * Anything that is not a current-version cache is treated as no cache at all —
+ * a bad cache must cost a rescan, never a crash or a wrong page list.
  */
 export function asIndexCache(value: unknown): IndexCache | undefined {
   if (typeof value !== 'object' || value === null) {
@@ -116,6 +125,12 @@ function fingerprintOf(cfg: Zer0Config): string {
     csv: cfg.frontMatter.commaSeparatedFields,
     types: cfg.contentTypes.map((ct) => ct.name),
     files: cfg.content.supportedFileTypes,
+    // The platform decides how a filename's date is read, which key means
+    // draft, and what a page's URL will be — so two platforms produce different
+    // pages from identical bytes, and a cache built under one cannot answer for
+    // the other. `id` and `overlay` only: `overrides` is already reflected in
+    // whichever of the fields above it changed.
+    platform: `${cfg.platform.id}/${cfg.platform.overlay ?? ''}`,
   });
 }
 
@@ -146,6 +161,7 @@ async function walkFolder(
   recurse: boolean,
   extensions: ReadonlySet<string>,
   out: string[],
+  skip: ReadonlySet<string>,
 ): Promise<void> {
   let entries;
   try {
@@ -159,10 +175,10 @@ async function walkFolder(
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (!recurse || SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) {
+      if (!recurse || skip.has(entry.name) || entry.name.startsWith('.')) {
         continue;
       }
-      await walkFolder(full, recurse, extensions, out);
+      await walkFolder(full, recurse, extensions, out, skip);
     } else if (entry.isFile() && extensions.has(path.extname(entry.name).toLowerCase())) {
       out.push(full);
     }
@@ -187,8 +203,10 @@ async function collectCandidates(
   cfg: Zer0Config,
   folders: readonly ContentFolder[],
   log: LogSink,
+  profile: PlatformProfile,
 ): Promise<Candidate[]> {
   const extensions = extensionSet(cfg);
+  const skip = skipDirsFor(profile, SKIP_DIRS);
   const byPath = new Map<string, Candidate>();
 
   for (const folder of folders) {
@@ -198,7 +216,7 @@ async function collectCandidates(
     const excludes = excludesOf(folder);
     const folderRoot = toPosix(folder.path).replace(/\/+$/, '');
     const files: string[] = [];
-    await walkFolder(folder.path, folder.excludeSubdir !== true, extensions, files);
+    await walkFolder(folder.path, folder.excludeSubdir !== true, extensions, files, skip);
 
     for (const filePath of files) {
       const posix = toPosix(filePath);
@@ -224,27 +242,21 @@ async function collectCandidates(
 // Projecting a file into a PageEntry
 // ---------------------------------------------------------------------------
 
-const FILENAME_DATE_RE = /^(\d{4}-\d{2}-\d{2})-/;
-
-/** Filename stem with a date prefix and the extension removed. */
-function fileSlug(relPosix: string): string {
-  const base = relPosix.split('/').pop() ?? '';
-  return base.replace(/\.[^./]+$/, '').replace(FILENAME_DATE_RE, '');
-}
-
 /**
- * Keys a site conventionally uses for its card image, in preference order.
- * Only consulted when no field is marked `isPreviewImage` — an explicit
- * declaration in the content type always wins.
+ * Filename stem with the platform's date prefix and the extension removed.
+ *
+ * The pattern is the profile's (`frontMatter.filenameDate`) rather than a
+ * constant here, because "digits at the front of a filename" means a
+ * publication date on Jekyll, a sidebar position on Docusaurus, and nothing at
+ * all on Hugo. `JEKYLL_PROFILE` carries the exact expression this module used
+ * to declare, so the Jekyll answer is unchanged.
  */
-const THUMBNAIL_KEYS: readonly string[] = [
-  'image',
-  'preview',
-  'thumbnail',
-  'cover',
-  'featured_image',
-  'banner',
-];
+function fileSlug(profile: PlatformProfile, relPosix: string): string {
+  const base = relPosix.split('/').pop() ?? '';
+  const stem = base.replace(/\.[^./]+$/, '');
+  const re = profile.frontMatter.filenameDate;
+  return re === null ? stem : stem.replace(re, '');
+}
 
 /** The first field marked `isPreviewImage`, at any nesting depth. */
 function previewField(fields: readonly Field[]): Field | undefined {
@@ -274,7 +286,17 @@ function imagePath(value: FmValue | undefined): string {
   return '';
 }
 
-function previewImageOf(data: FrontMatter, ct: ContentType): string {
+/**
+ * The page's card image.
+ *
+ * A field marked `isPreviewImage` in the content type always wins; failing
+ * that, the platform's conventional keys are tried in the profile's order. The
+ * order is load-bearing rather than cosmetic: a zer0-mistakes site writes
+ * `preview:` and may also carry an `image:` inherited from an imported
+ * article, and reading `image:` first would show the wrong picture on every
+ * card.
+ */
+function previewImageOf(profile: PlatformProfile, data: FrontMatter, ct: ContentType): string {
   const declared = previewField(ct.fields);
   if (declared !== undefined) {
     const value = imagePath(data[declared.name]);
@@ -282,7 +304,7 @@ function previewImageOf(data: FrontMatter, ct: ContentType): string {
       return value;
     }
   }
-  for (const key of THUMBNAIL_KEYS) {
+  for (const key of profile.frontMatter.thumbnailKeys) {
     const value = imagePath(data[key]);
     if (value !== '') {
       return value;
@@ -305,15 +327,25 @@ function draftValue(cfg: Zer0Config, data: FrontMatter): boolean | string {
   return cfg.draftField.invert === true ? !flag : flag;
 }
 
-/** The publish date as written, preferring front matter over the filename. */
-function dateValue(data: FrontMatter, relPosix: string): string | null {
-  const written = asString(data.date).trim();
-  if (written !== '') {
-    return written;
+/**
+ * The publish date **as written**, preferring front matter over the filename.
+ *
+ * Which key holds it is the platform's business — `date` on Jekyll, `pubDate`
+ * on an Astro blog, `dateCreated` on a Wiki.js export — so the profile supplies
+ * the list and the first key present wins. The value is returned as the string
+ * it was written as; parsing it into a `Date` here is how a CMS shifts a whole
+ * repository by a timezone.
+ */
+function dateValue(profile: PlatformProfile, data: FrontMatter, relPosix: string): string | null {
+  for (const key of profile.frontMatter.dateKeys.publish) {
+    const written = asString(data[key]).trim();
+    if (written !== '') {
+      return written;
+    }
   }
   const base = relPosix.split('/').pop() ?? '';
-  const match = FILENAME_DATE_RE.exec(base);
-  return match?.[1] ?? null;
+  const re = profile.frontMatter.filenameDate;
+  return re === null ? null : (re.exec(base)?.[1] ?? null);
 }
 
 function toPageEntry(
@@ -321,9 +353,10 @@ function toPageEntry(
   candidate: Candidate,
   data: FrontMatter,
   modified: number,
+  profile: PlatformProfile,
 ): PageEntry {
-  const ct = resolveContentType(cfg, data, candidate.filePath);
-  const date = dateValue(data, candidate.relPath);
+  const ct = resolveContentType(cfg, data, candidate.filePath, profile);
+  const date = dateValue(profile, data, candidate.relPath);
   const published = date === null ? null : parseDate(date);
   // `seo.titleField` first, then the conventional `title`: a workspace that
   // points SEO at `seoTitle` still has pages whose *name* is `title`, and a
@@ -338,14 +371,14 @@ function toPageEntry(
     contentType: ct.name,
     title,
     description,
-    slug: asString(data.slug).trim() || fileSlug(candidate.relPath),
+    slug: asString(data[profile.frontMatter.slugKey]).trim() || fileSlug(profile, candidate.relPath),
     date,
     modified,
     published: published === null ? null : published.getTime(),
     draft: draftValue(cfg, data),
     tags: asList(data.tags),
     categories: asList(data.categories),
-    previewImage: previewImageOf(data, ct),
+    previewImage: previewImageOf(profile, data, ct),
     data: { ...data },
   };
 }
@@ -398,6 +431,7 @@ async function scanCandidate(
   cfg: Zer0Config,
   candidate: Candidate,
   usable: IndexCache | undefined,
+  profile: PlatformProfile,
 ): Promise<ScanResult> {
   let modified: number;
   try {
@@ -431,7 +465,11 @@ async function scanCandidate(
   }
 
   const data = applyCommaSeparatedFields(block.data, cfg.frontMatter.commaSeparatedFields);
-  return { kind: 'parsed', mtime: modified, page: toPageEntry(cfg, candidate, data, modified) };
+  return {
+    kind: 'parsed',
+    mtime: modified,
+    page: toPageEntry(cfg, candidate, data, modified, profile),
+  };
 }
 
 /**
@@ -444,6 +482,7 @@ async function scanCandidates(
   cfg: Zer0Config,
   candidates: readonly Candidate[],
   usable: IndexCache | undefined,
+  profile: PlatformProfile,
 ): Promise<(ScanResult | undefined)[]> {
   const results: (ScanResult | undefined)[] = new Array(candidates.length).fill(undefined);
   let cursor = 0;
@@ -456,7 +495,7 @@ async function scanCandidates(
       if (candidate === undefined) {
         return;
       }
-      results[index] = await scanCandidate(cfg, candidate, usable);
+      results[index] = await scanCandidate(cfg, candidate, usable, profile);
     }
   };
 
@@ -488,11 +527,19 @@ function countKeys(map: Record<string, unknown> | undefined): number {
  * not exist and a file whose front matter will not parse are all just absent
  * from the result, with a line in the log — the panel and the dashboard render
  * during someone's mid-edit keystroke, and an exception is not an answer.
+ *
+ * `profile` is the resolved platform (decision D12): it decides which
+ * directories are build output rather than content, which front-matter key
+ * holds the publication date, what a date in a filename means, and which key
+ * carries the card image. It defaults to `JEKYLL_PROFILE`, whose values are the
+ * literals this module used to hold, so a caller that has not resolved a
+ * platform gets exactly the index it got before.
  */
 export async function buildIndex(
   cfg: Zer0Config,
   prev?: IndexCache,
   log: LogSink = NOOP_LOG,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): Promise<{ pages: PageEntry[]; cache: IndexCache; changed: boolean }> {
   const started = Date.now();
   const fingerprint = fingerprintOf(cfg);
@@ -501,9 +548,9 @@ export async function buildIndex(
     log.verbose('page index: configuration changed, cache discarded');
   }
 
-  const folders = await resolveFolders(cfg);
-  const candidates = await collectCandidates(cfg, folders, log);
-  const results = await scanCandidates(cfg, candidates, usable);
+  const folders = await resolveFolders(cfg, profile);
+  const candidates = await collectCandidates(cfg, folders, log, profile);
+  const results = await scanCandidates(cfg, candidates, usable, profile);
 
   const entries: IndexCache['entries'] = {};
   const skipped: Record<string, number> = {};
@@ -574,7 +621,6 @@ export async function buildIndex(
 const DAY_MS = 86_400_000;
 
 /** Files whose job is structure, not prose. Excluded from distribution. */
-const STRUCTURAL_STEMS: ReadonlySet<string> = new Set(['index', '_index', 'readme']);
 
 function boolField(value: unknown): boolean {
   return value === true;
@@ -673,8 +719,14 @@ function lastTouched(page: PageEntry, lastmod: string | null): number {
  * engine — and this function does not make claims it cannot support. Pass the
  * result of `getArticleDetails` when the caller already has one.
  */
-export function pageToRecord(cfg: Zer0Config, page: PageEntry, details?: ArticleDetails): ContentRecord {
-  const lastmod = conventionalLastmod(page);
+export function pageToRecord(
+  cfg: Zer0Config,
+  page: PageEntry,
+  details?: ArticleDetails,
+  profile: PlatformProfile = JEKYLL_PROFILE,
+  issues: readonly CmsIssue[] = [],
+): ContentRecord {
+  const lastmod = conventionalLastmod(page, profile);
   const age = Math.max(0, Math.floor((Date.now() - lastTouched(page, lastmod)) / DAY_MS));
   const stem = (page.relPath.split('/').pop() ?? '').replace(/\.[^./]+$/, '').toLowerCase();
 
@@ -690,7 +742,7 @@ export function pageToRecord(cfg: Zer0Config, page: PageEntry, details?: Article
     freshness: 'unknown',
     draft: draftFlag(page.draft),
     generated: boolField(page.data.generated),
-    structural: STRUCTURAL_STEMS.has(stem),
+    structural: profile.frontMatter.structuralStems.includes(stem),
     readOnly: boolField(page.data.readOnly) || boolField(page.data.read_only),
     isNotebook: page.relPath.toLowerCase().endsWith('.ipynb'),
     // Every PageEntry comes from a file whose front-matter block parsed; that
@@ -700,13 +752,19 @@ export function pageToRecord(cfg: Zer0Config, page: PageEntry, details?: Article
     lastmod,
     ageDays: age,
     brokenLinks: 0,
-    issues: [],
+    issues: [...issues],
   };
 }
 
-/** The first of the conventional modified-date keys the page actually carries. */
-function conventionalLastmod(page: PageEntry): string | null {
-  for (const key of CONVENTIONAL_MODIFIED_KEYS) {
+/**
+ * The first of the platform's modified-date keys the page actually carries.
+ *
+ * `JEKYLL_PROFILE.frontMatter.dateKeys.modified` is `CONVENTIONAL_MODIFIED_KEYS`
+ * from `article.ts`, in the same order — the two lists are the same list, and
+ * the profile is where the platform's copy of it now lives.
+ */
+function conventionalLastmod(page: PageEntry, profile: PlatformProfile): string | null {
+  for (const key of profile.frontMatter.dateKeys.modified) {
     const value = stringField(page.data[key]).trim();
     if (value !== '') {
       return value;

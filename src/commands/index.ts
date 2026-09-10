@@ -55,6 +55,7 @@ export {
 } from './governance';
 
 export { registerContractCommands } from './contract';
+export { registerAuditCommands, type AuditActions } from './audit';
 
 export {
   agentHostInstalled,
@@ -122,6 +123,9 @@ export const ALL_COMMAND_IDS: readonly string[] = [
   'fleet.refresh',
   'fleet.toggleSwitch',
   'fleet.dispatchLane',
+  'audit.open',
+  'audit.fix',
+  'audit.verify',
 ];
 
 /** The fully qualified ids, for comparing against `getCommands()`. */

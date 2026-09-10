@@ -1,0 +1,12 @@
+# `use_directory_urls` is deliberately absent: MkDocs' own default is `true`,
+# and the profile has to know the default while `SiteConfigFacts` records that
+# the file itself did not say.
+site_name: Fixture docs
+site_description: A MkDocs site with a base path in its site_url.
+site_url: https://bamr87.github.io/README/
+docs_dir: docs
+theme:
+  name: material
+plugins:
+  - search
+  - blog

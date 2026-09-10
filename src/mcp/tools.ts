@@ -1,5 +1,5 @@
 /**
- * The twelve MCP tools, and the governance baked into their shapes.
+ * The thirteen MCP tools, and the governance baked into their shapes.
  *
  * Every handler has the same signature — `(cfg, args) => Promise<string>` —
  * and returns **prose**, not structured data, including for its failures.
@@ -32,6 +32,11 @@
  *        else — no network from this process, ever. The switch state lives in
  *        the repository's Actions variables and only the dashboard reads it,
  *        behind a person's sign-in; this tool says so rather than guess.
+ *    13  `zer0_audit` reads every page's front matter and reports what is
+ *        missing, malformed or duplicated. It *describes* the change set that
+ *        would repair each fixable finding and applies none of them: the tool
+ *        that writes is the editor's `audit.fix`, which re-reads the file,
+ *        re-runs the rule, renders a diff and asks a person (decision D5).
  *
  * ### The two environment variables that are not the publish flag
  *
@@ -54,10 +59,13 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import {
+  AUDIT_RULE_SPECS,
   DEFAULT_CONFIG_FILE,
   ENGINE_COMMANDS,
   absPath,
+  auditSite,
   buildCatering,
+  buildIndex,
   buildPortfolio,
   buildPreview,
   byPath,
@@ -65,8 +73,10 @@ import {
   countLabel,
   describeGuardrails,
   describeTriggers,
+  detectPlatform,
   distributable,
   engineConfigFor,
+  fixFor,
   healthBucket,
   isDistributable,
   isEditable,
@@ -83,27 +93,38 @@ import {
   readArticle,
   readFleetManifest,
   readJsonc,
+  readSiteSchema,
   relPath,
   unwrapStats,
   writePerformance,
   renderWorklist,
   resolveConfig,
+  resolveContentType,
   resolveSource,
   runEngine,
   runNormalizerApply,
   runNormalizerPreview,
   shareEntries,
   slugify,
+  splitFrontMatter,
   targetFor,
   utcDate,
+  withPlatformDefaults,
   writeDraft,
   writeWorklist,
   type Article,
+  type AuditIssue,
   type ContentRecord,
+  type FmBlock,
   type GuardFinding,
+  type KeyChange,
+  type PageEntry,
+  type PlatformIo,
+  type PlatformProfile,
   type Preview,
   type PreviewRequest,
   type PublishOutcome,
+  type SiteSchema,
   type Zer0Config,
 } from '../core';
 import { loadContractCached } from './cache';
@@ -953,6 +974,224 @@ async function toolFleetStatus(cfg: Zer0Config, _args: ToolArgs): Promise<string
 }
 
 // ---------------------------------------------------------------------------
+// 13. zer0_audit
+// ---------------------------------------------------------------------------
+
+/** How many files the audit reads at once when it re-reads blocks for lines. */
+const AUDIT_READ_CONCURRENCY = 8;
+
+/** The severities a caller may narrow to. Anything else is a refusal. */
+const AUDIT_SEVERITIES: readonly string[] = ['error', 'warning', 'info'];
+
+/** Detection and schema ingestion both read relative paths under the root. */
+function auditIo(root: string): PlatformIo {
+  return {
+    exists: async (rel) => {
+      try {
+        await fs.access(path.resolve(root, rel));
+        return true;
+      } catch {
+        // Missing or unreadable: either way this marker is not evidence.
+        return false;
+      }
+    },
+    read: async (rel) => {
+      try {
+        return await fs.readFile(path.resolve(root, rel), 'utf8');
+      } catch {
+        return undefined;
+      }
+    },
+  };
+}
+
+/** Read every page's raw block, bounded, so findings can carry line numbers. */
+async function auditBlocks(pages: readonly PageEntry[]): Promise<Map<string, FmBlock>> {
+  const blocks = new Map<string, FmBlock>();
+  let cursor = 0;
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const index = cursor;
+      cursor += 1;
+      const page = pages[index];
+      if (page === undefined) {
+        return;
+      }
+      try {
+        const { block } = splitFrontMatter(await fs.readFile(page.filePath, 'utf8'));
+        if (block !== null) {
+          blocks.set(page.relPath, block);
+        }
+      } catch {
+        // Gone since the index was built. The projection still answers every
+        // rule that does not need a line number (decision D9).
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(AUDIT_READ_CONCURRENCY, Math.max(pages.length, 1)) }, () =>
+      worker(),
+    ),
+  );
+  return blocks;
+}
+
+/** One `KeyChange`, as the sentence a model should read before proposing it. */
+function changeLine(change: KeyChange): string {
+  if (change.value === undefined) {
+    return `remove ${change.key}`;
+  }
+  return `set ${change.key} = ${
+    typeof change.value === 'string' ? change.value : JSON.stringify(change.value)
+  }`;
+}
+
+/**
+ * The change set that would repair one finding, described and never applied.
+ *
+ * The article is read here, inside the tool, so the proposal is derived from
+ * the bytes on disk at the moment of the call rather than from the index's
+ * projection. It is still only a description: nothing in this file writes a
+ * content file, and the editor's own `audit.fix` re-derives all of this from
+ * scratch before it shows anybody a diff.
+ */
+async function proposedFix(
+  cfg: Zer0Config,
+  profile: PlatformProfile,
+  issue: AuditIssue,
+  now: Date,
+): Promise<string> {
+  let article: Article;
+  try {
+    article = await readArticle(absPath(cfg, issue.path));
+  } catch {
+    return '      fix: the file could not be re-read, so no change is proposed';
+  }
+  const ct = resolveContentType(cfg, article.data, article.filePath);
+  const changes = fixFor(issue, cfg, profile, ct, article, now);
+  if (changes === null) {
+    return '      fix: none that is honest — this needs a person to decide the value';
+  }
+  return `      fix (NOT applied): ${changes.map(changeLine).join('; ')}`;
+}
+
+async function toolAudit(base: Zer0Config, args: ToolArgs): Promise<string> {
+  if (base.workspaceRoot === '') {
+    return 'error: no workspace root — start the server in the folder you want audited';
+  }
+
+  const severity = argString(args, 'severity').toLowerCase();
+  if (severity !== '' && !AUDIT_SEVERITIES.includes(severity)) {
+    return `refused: severity must be one of ${AUDIT_SEVERITIES.join(', ')}`;
+  }
+  const rule = argString(args, 'rule');
+  const prefix = argString(args, 'path').replace(/^\.\//, '');
+  const withFixes = argBoolDefaultTrue(args, 'fixes');
+  const limit = argCount(args, 'limit', 40, 1, 500);
+
+  const io = auditIo(base.workspaceRoot);
+  const platform = await detectPlatform(base.workspaceRoot, io, base.platform);
+  const profile = platform.profile;
+  // A repository that never registered a content folder still has content:
+  // the resolved profile's roots fill the gap, exactly as the editor's own
+  // audit does, so a sister site answers on the first call.
+  const cfg = withPlatformDefaults(base, platform);
+
+  const { pages, cache } = await buildIndex(cfg, undefined, undefined, profile);
+  const blocks = await auditBlocks(pages);
+  const schema: SiteSchema = await readSiteSchema(cfg.workspaceRoot, profile, io.read);
+  const skipped = Object.keys(cache.skipped ?? {}).map((filePath) => relPath(cfg, filePath));
+  const now = new Date();
+  const audit = auditSite(cfg, profile, pages, skipped, schema, now, undefined, blocks);
+
+  const matched = audit.issues.filter(
+    (issue) =>
+      (severity === '' || issue.severity === severity) &&
+      (rule === '' || issue.rule === rule || issue.kind === rule) &&
+      (prefix === '' || issue.path === prefix || issue.path.startsWith(`${prefix}/`)),
+  );
+
+  const lines: string[] = [
+    `audit      : ${cfg.workspaceRoot}`,
+    `platform   : ${profile.id}${profile.overlay === null ? '' : ` + ${profile.overlay}`} (${platform.source})`,
+    `schema     : ${schema.source}${schema.path === null ? '' : ` (${schema.path})`}`,
+    `scanned    : ${audit.scanned} file(s), ${audit.skipped.length} skipped as generated or vendored`,
+    `findings   : ${audit.counts.error} error(s), ${audit.counts.warning} warning(s), ${audit.counts.info} note(s)`,
+    `generated  : ${audit.generatedAt}`,
+  ];
+
+  // What "required" means depends entirely on which of these answered, so the
+  // tool says it in words rather than leaving a model to infer authority.
+  lines.push(
+    '',
+    schema.source === 'profile-default' || schema.source === 'none'
+      ? 'This site declares no front-matter schema, so "required" here is the platform ' +
+          "profile's own default, not a rule the repository wrote down."
+      : `"required" here is what ${schema.source} declares; the platform profile fills the gaps.`,
+  );
+
+  if (audit.issues.length === 0) {
+    lines.push('', 'No findings. Every page this site registers parses and carries what it must.');
+    return lines.join('\n');
+  }
+
+  lines.push('', `by rule (${Object.keys(audit.byRule).length}):`);
+  for (const [name, count] of Object.entries(audit.byRule).sort(
+    ([leftId, left], [rightId, right]) => right - left || leftId.localeCompare(rightId),
+  )) {
+    const spec = AUDIT_RULE_SPECS[name as AuditIssue['rule']];
+    lines.push(
+      `  ${String(count).padStart(4)}  ${name}${spec === undefined ? '' : ` — ${spec.severity}, ${spec.what}`}`,
+    );
+  }
+
+  if (matched.length === 0) {
+    lines.push('', 'No finding matches that filter.');
+    return lines.join('\n');
+  }
+
+  const shown = matched.slice(0, limit);
+  lines.push(
+    '',
+    `findings (${shown.length} of ${matched.length}${matched.length === audit.issues.length ? '' : ` matched, ${audit.issues.length} total`}), grouped by rule:`,
+  );
+
+  const grouped = new Map<string, AuditIssue[]>();
+  for (const issue of shown) {
+    const bucket = grouped.get(issue.rule);
+    if (bucket === undefined) {
+      grouped.set(issue.rule, [issue]);
+    } else {
+      bucket.push(issue);
+    }
+  }
+
+  for (const [name, group] of grouped) {
+    const spec = AUDIT_RULE_SPECS[name as AuditIssue['rule']];
+    lines.push('', `  ${name} (${group.length})${spec === undefined ? '' : ` — ${spec.what}`}`);
+    for (const issue of group) {
+      lines.push(
+        `    ${issue.path}${issue.line === null ? '' : `:${issue.line}`} [${issue.severity}/${issue.lane}] ${issue.message}`,
+      );
+      if (issue.suggestion !== null) {
+        lines.push(`      suggestion: ${issue.suggestion}`);
+      }
+      if (withFixes && issue.fixable) {
+        lines.push(await proposedFix(cfg, profile, issue, now));
+      }
+    }
+  }
+
+  lines.push(
+    '',
+    'This tool wrote nothing and opened no socket. Every "fix" above is a proposal;',
+    "applying one is the editor's audit.fix, which re-reads the file, re-runs the rule,",
+    'shows a diff and asks a person.',
+  );
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // The registry — order is the contract the MCP test pins
 // ---------------------------------------------------------------------------
 
@@ -1154,6 +1393,38 @@ export const TOOLS: readonly ToolDef[] = [
       'reads it behind a sign-in. Read-only.',
     inputSchema: { type: 'object', properties: {} },
     handler: toolFleetStatus,
+  },
+  {
+    name: 'zer0_audit',
+    description:
+      "Audit every page's front matter against the site's own schema — or, when it declares " +
+      "none, the platform profile's defaults — and report the findings grouped by rule, with " +
+      'the change set that would repair each fixable one DESCRIBED but never applied. ' +
+      'Read-only: writes nothing, spawns nothing, no network.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        rule: {
+          type: 'string',
+          description: 'restrict to one rule id, e.g. "missing-key" or "missing-key:date"',
+        },
+        severity: {
+          type: 'string',
+          enum: [...AUDIT_SEVERITIES],
+          description: 'restrict to one severity',
+        },
+        path: {
+          type: 'string',
+          description: 'restrict to one workspace-relative file or directory prefix',
+        },
+        fixes: {
+          type: 'boolean',
+          description: 'describe the proposed change set for fixable findings (default true)',
+        },
+        limit: { type: 'integer', minimum: 1, maximum: 500, description: 'default 40' },
+      },
+    },
+    handler: toolAudit,
   },
 ];
 

@@ -1,6 +1,6 @@
 # `src/core/governance` — the governed queue
 
-Five files that decide what gets published, and record what did. Pure Node — see `../README.md` for the layering rule.
+Six files that decide what gets published, and record what did. Pure Node — see `../README.md` for the layering rule.
 
 | File | Exports | Owner |
 |---|---|---|
@@ -9,6 +9,7 @@ Five files that decide what gets published, and record what did. Pure Node — s
 | `ledger.ts` | `TOKEN_KEY`, `LedgerEntry`, `Ledger`, `loadLedger`, `saveLedger`, `getEntry`, `isPublished`, `record`, `shareEntries`, `publishedSourceFiles`, `readMeta`, `writeMeta` | WP06 |
 | `approval.ts` | `BlockerKind`, `Blocker`, `GateInput`, `evaluateGates`, `evaluateApproveGates`, `evaluatePublishGates`, `hasBlocker`, `blockerSummary` | WP06 |
 | `publish.ts` | `PreviewRequest`, `Preview`, `PublishPlan`, `PublishOutcome`, `PublishTarget`, `PublishDeps`, `buildPreview`, `previewRequestFromDraft`, `publishPreview`, `canonicalUrl`, `resolveSource`, `destinationFolder`, `jekyllTarget`, `targetById`, `targetFor`, `registerTarget`, `listTargets` | WP06 |
+| `fileTarget.ts` | `PlatformArtifact`, `platformFileTarget`, `targetIdFor`, `platformDestination`, `platformFrontMatter`, `contentRootFor`, `datePrefixRuleFor`, `filenameDateRe`, `artifactIdentity`, `writeArtifactExclusively` | WP2.2 |
 
 ## The lifecycle, in one paragraph
 
@@ -59,6 +60,16 @@ A workspace `governance.bannedPatternsFile` is an *addition*. Every failure load
 
 A text update has **no canonical URL on purpose**: dedupe needs a stable identity and free text has none, so updates are never ledgered. Articles are.
 
+## One target per platform, built from the profile (D8 + D12)
+
+`fileTarget.ts` holds one factory, not five copy-pasted targets: `platformFileTarget(profile)` returns the `PublishTarget` for whichever platform the profile describes — id and urn `<platform>:<rel>`, `build` pure, `send` an exclusive `wx` write. Everything that differs between MkDocs, Hugo, Docusaurus, Astro and Wiki.js is read out of the profile: the content root, whether the filename carries a date (`filename.datePrefix`), the front-matter dialect, the publish date key and its format, the draft convention, the thumbnail key. Adding a sixth platform is a table entry in `core/platform`, never a sixth target here.
+
+**Nothing throws for a platform the extension itself detected.** That is what `targetFor(cfg, profile?)` exists to guarantee, in three steps: an explicit `governance.target` goes through `targetById` and still throws for a typo — a person's mistake in their own config is theirs to hear about; otherwise a *registered* target whose id matches `profile.governanceTarget`, which is how Jekyll and its zer0-mistakes overlay keep resolving to exactly the `jekyllTarget` object they always did; otherwise `platformFileTarget(profile)`, built on the fly. With no profile the answer is Jekyll, exactly as before. One wrinkle is worth knowing: `resolveConfig` defaults `governance.target` to `'jekyll'`, so a site that never named a target is indistinguishable from one that wrote `"target": "jekyll"` — reading that default as an override would pin every MkDocs workspace to the Jekyll target, so it is discarded (and only ever discarded) when a non-Jekyll profile is on the table.
+
+**The `wx` write is one function, shared.** `writeArtifactExclusively` carries the `-2`/`-3` collision chain and the adopt-on-identical rule for both `jekyllTarget` and every platform target, because "the same semantics" only stays true of code that is literally the same. `artifactIdentity` ignores the profile's publish date keys — the only part of an artifact that is a function of *when* rather than *what*.
+
+The filename is the one place a platform overrules the configuration. `filePrefixFor` honours a content root's `datePrefix: 'forbidden'` however `content.filePrefix` is written, because MkDocs, Hugo and Astro serve the filename as the slug and a date in it becomes a date in the URL; `'required'` adds one even when nothing configured it; `'optional'` — and a folder no content root claims — leaves the configured answer alone. When the target has to correct a destination the plan handed it, it says so as a warning rather than renaming in silence. `canonicalUrl` is deliberately **not** platform-aware: it is the ledger key, and a key that changes shape when detection improves is the one thing a ledger must never do.
+
 ## Tests
 
-`src/test/governance.test.ts` pins the guard's rule counts and message shapes, the filler dedup and the deliberate double-report, `listQueue` skipping a zero-key `README.md`, `writeDraft`'s collision chain and its always-`pending` status, `markStatus`'s one-line diff, the ledger's missing/corrupt/`_`-key behaviour, every `BlockerKind` in isolation and in order, and `publishPreview`'s skip-versus-block split. `src/test/golden.test.ts` holds the cross-lane byte contract for the ledger and for `markStatus`.
+`src/test/governance.test.ts` pins the guard's rule counts and message shapes, the filler dedup and the deliberate double-report, `listQueue` skipping a zero-key `README.md`, `writeDraft`'s collision chain and its always-`pending` status, `markStatus`'s one-line diff, the ledger's missing/corrupt/`_`-key behaviour, every `BlockerKind` in isolation and in order, and `publishPreview`'s skip-versus-block split. Five more cover the platform targets: every one's `build` writes nothing and calls nothing (tree snapshot plus a throwing `fetch`), a platform `send` urns as `<platform>:<rel>` and adopts an interrupted retry, `targetFor` never throws for any of the seven detected platforms, an explicit unknown `governance.target` still does, and the Jekyll urn and destination are byte-for-byte what they were. `src/test/golden.test.ts` holds the cross-lane byte contract for the ledger and for `markStatus`.

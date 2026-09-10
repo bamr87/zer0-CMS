@@ -14,13 +14,18 @@
  * The resolution chain has five steps, in this order:
  *
  *   1. the file's own `type` key, when it names a registered type;
+ *  1b. the *platform's* own type key, when the profile names one and the file
+ *      carries it — `fmContentType` on a zer0-mistakes site, `type` on Hugo;
  *   2. the content folder that owns the file, when it binds exactly one type;
  *   3. the sole registered type, when the workspace declares exactly one;
  *   4. the type named `default`;
  *   5. `DEFAULT_CONTENT_TYPE`, synthesized here.
  *
  * Step 1 is `type`, not FM's `fmContentType`: the branded key is gone with the
- * fork, and `type` is the key Jekyll, Hugo and Astro sites already carry.
+ * fork, and `type` is the key Jekyll, Hugo and Astro sites already carry. Step
+ * 1b is what lets a site keep its own vocabulary without giving up step 1 —
+ * `JEKYLL_PROFILE` names no extra key, so a bare Jekyll site never reaches it
+ * and its answers are unchanged (decision D12).
  *
  * `DEFAULT_CONTENT_TYPE` resolves an inconsistency in the upstream fork, where
  * `constants/ContentType.ts` gave the draft field `type: 'draft'` and
@@ -32,6 +37,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { JEKYLL_PROFILE } from '../platform/profiles/jekyll';
 import { absPath } from '../shared/config';
 import { encodeEmoji, humanize } from '../shared/text';
 import {
@@ -39,6 +45,7 @@ import {
   type ContentType,
   type Field,
   type LogSink,
+  type PlatformProfile,
   type Zer0Config,
 } from '../shared/types';
 import { readArticle } from './article';
@@ -98,11 +105,12 @@ export function contentTypeByName(cfg: Zer0Config, name: string): ContentType | 
   return getContentTypes(cfg).find((ct) => ct.name === name);
 }
 
-/** The content type governing this file — the five-step chain in the header. */
+/** The content type governing this file — the chain in the module header. */
 export function resolveContentType(
   cfg: Zer0Config,
   data: FrontMatter,
   filePath: string,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): ContentType {
   const types = getContentTypes(cfg);
 
@@ -112,6 +120,18 @@ export function resolveContentType(
     const named = types.find((ct) => ct.name === declared);
     if (named !== undefined) {
       return named;
+    }
+  }
+
+  // 1b. The platform's own key, when it has one and it is not the same key.
+  const platformKey = profile.frontMatter.typeKey;
+  if (platformKey !== null && platformKey !== CONTENT_TYPE_FIELD) {
+    const stated = data[platformKey];
+    if (typeof stated === 'string') {
+      const named = types.find((ct) => ct.name === stated);
+      if (named !== undefined) {
+        return named;
+      }
     }
   }
 
@@ -358,11 +378,16 @@ async function exists(target: string): Promise<boolean> {
  * The prefix chain is `content.filePrefix` → the folder's `filePrefix` → the
  * content type's `filePrefix`, and the winner is then placeholder-expanded, so
  * `{{date|yyyy-MM-dd}}` and `{{filePrefix.index}}` both work in any of them.
+ * The platform gets a veto at the end of that chain and nowhere else: on a
+ * generator that reads dates from front matter and treats filename digits as
+ * part of the URL, `filePrefixFor` drops the prefix rather than renaming the
+ * page nobody asked to move.
  */
 export async function createContent(
   cfg: Zer0Config,
   req: CreateContentRequest,
   log: LogSink = NOOP_LOG,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): Promise<CreateContentResult> {
   const ct = contentTypeByName(cfg, req.contentType);
   if (ct === undefined) {
@@ -388,7 +413,7 @@ export async function createContent(
   const titleField = ct.fields.find((field) => field.name === cfg.seo.titleField);
   const titleValue = titleField?.encodeEmoji === true ? encodeEmoji(title) : title;
 
-  const prefix = await processPlaceholders(filePrefixFor(cfg, folder, ct), {
+  const prefix = await processPlaceholders(filePrefixFor(cfg, folder, ct, profile), {
     cfg,
     contentType: ct,
     title: titleValue,

@@ -77,6 +77,9 @@ const ALL_COMMANDS: readonly string[] = [
   'zer0Cms.fleet.refresh',
   'zer0Cms.fleet.toggleSwitch',
   'zer0Cms.fleet.dispatchLane',
+  'zer0Cms.audit.open',
+  'zer0Cms.audit.fix',
+  'zer0Cms.audit.verify',
 ];
 
 /** The four trees, plus the webview view, all in the `zer0-cms` container. */
@@ -170,12 +173,12 @@ suite('extension: activation and contributions', function () {
   });
 
   test('all 38 contributed commands are registered', () => {
-    assert.strictEqual(ALL_COMMANDS.length, 38, 'the expected list itself is 38 long');
+    assert.strictEqual(ALL_COMMANDS.length, 41, 'the expected list itself is 41 long');
     const missing = ALL_COMMANDS.filter((command) => !commands.includes(command));
     assert.deepStrictEqual(missing, [], 'contributed but never registered');
   });
 
-  test('package.json contributes exactly those 38 and nothing else', () => {
+  test('package.json contributes exactly those 41 and nothing else', () => {
     // Catches both directions: a command registered but never contributed is
     // invisible in the palette, and a command contributed but dropped from the
     // list above would otherwise slip past the test that precedes this one.

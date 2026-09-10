@@ -22,7 +22,13 @@ import {
   parseYamlSubset,
   splitFrontMatter,
 } from '../core/content/frontmatter';
-import { buildIndex, pageToRecord, slimPage } from '../core/content/pageIndex';
+import {
+  asIndexCache,
+  buildIndex,
+  emptyIndexCache,
+  pageToRecord,
+  slimPage,
+} from '../core/content/pageIndex';
 import {
   DENSITY_MAX,
   DENSITY_MIN,
@@ -899,6 +905,18 @@ suite('core: the page index', () => {
    * of them reusing every page. `false` has to mean "I have nothing new to
    * store", and it has to be *false* only then.
    */
+  test('a cache from before the platform existed is refused, not trusted', () => {
+    // Version 2 is not bookkeeping. A v1 entry was built by code that could not
+    // tell a Jekyll site from an MkDocs one, so its slug, its date and its
+    // draft flag are not answers this version would give. Reusing one would
+    // show a person a page list computed under the wrong rules, which is worse
+    // than rescanning.
+    const current = emptyIndexCache();
+    assert.equal(current.version, 2);
+    assert.notEqual(asIndexCache(current), undefined, 'a current cache is usable');
+    assert.equal(asIndexCache({ ...current, version: 1 }), undefined, 'a v1 cache must be refused');
+  });
+
   test('changed is false over an unchanged tree, and true once an mtime has moved', async () => {
     const cfg = fixtureConfig(workspaceSettings());
     const cold = await buildIndex(cfg);
@@ -1251,5 +1269,85 @@ suite('core: the execution gate (D13)', () => {
       configFile: 'cms.json',
     });
     assert.equal(named.configFile, 'cms.json', 'the settings layer still names it');
+  });
+});
+
+suite("core: the parser's warnings channel — what it had to guess at (WP2.3)", () => {
+  /** The block for a body, with the fences added. Never throws, by contract. */
+  function block(body: string, fence = '---'): { warnings: string[]; data: Record<string, unknown> } {
+    const { block: parsed } = splitFrontMatter(`${fence}\n${body}\n${fence}\nbody\n`);
+    assert.ok(parsed !== null, 'the parser still returns a block — it never throws');
+    return { warnings: parsed.warnings, data: parsed.data };
+  }
+
+  test('a clean block warns about nothing, which is the normal state', () => {
+    const clean = block(
+      [
+        'title: Hello',
+        'tags: [a, b]',
+        'nested:',
+        '  key: value',
+        'folded: >',
+        '  prose with & and * and [an unclosed bracket',
+        '  and a second line',
+        'list:',
+        '  - a & b',
+        '  - "quoted, with a comma"',
+      ].join('\n'),
+    );
+    assert.deepEqual(clean.warnings, [], `an ampersand in prose is an ampersand: ${clean.warnings.join(' | ')}`);
+    assert.equal(clean.data.title, 'Hello');
+  });
+
+  test('anchors and aliases are named, each on its own line', () => {
+    const anchored = block(['defaults: &series', '  layout: post', 'title: x'].join('\n'));
+    assert.equal(anchored.warnings.length, 1);
+    assert.match(anchored.warnings[0] ?? '', /^line 1: a YAML anchor \(`&series`\)/);
+    assert.equal(anchored.data.defaults, '&series', 'and the value really is the literal text');
+
+    const aliased = block(['title: x', 'meta: *series'].join('\n'));
+    assert.equal(aliased.warnings.length, 1);
+    assert.match(aliased.warnings[0] ?? '', /^line 2: a YAML alias \(`\*series`\)/);
+
+    // `*emphasis*` is markdown, not an alias, and must not be reported as one.
+    assert.deepEqual(block('title: a *bold* claim about 5 > 3').warnings, []);
+  });
+
+  test('merge keys and tags are named', () => {
+    const merged = block(['title: x', '<<: *defaults'].join('\n'));
+    assert.equal(merged.warnings.length, 1, 'the merge subsumes the alias on the same line');
+    assert.match(merged.warnings[0] ?? '', /^line 2: a YAML merge key \(`<<`\)/);
+
+    const tagged = block(['count: !!str 5', 'thing: !Custom {a: 1}'].join('\n'));
+    assert.equal(tagged.warnings.length, 2);
+    assert.match(tagged.warnings[0] ?? '', /^line 1: a YAML tag \(`!!str`\)/);
+    assert.match(tagged.warnings[1] ?? '', /^line 2: a YAML tag \(`!Custom`\)/);
+  });
+
+  test('a value truncated to its first line says so — quoted or flow', () => {
+    const quoted = block(['title: "one', '  two"', 'date: 2026-01-01'].join('\n'));
+    assert.equal(quoted.warnings.length, 1);
+    assert.match(quoted.warnings[0] ?? '', /^line 1: a quoted scalar that closes on a later line/);
+    assert.equal(quoted.data.title, '"one', 'which is exactly what the caller could not otherwise tell');
+
+    const flow = block(['tags: [a,', '  b]'].join('\n'));
+    assert.equal(flow.warnings.length, 1);
+    assert.match(flow.warnings[0] ?? '', /^line 1: a flow collection that closes on a later line/);
+  });
+
+  test('an undecoded escape, and the two TOML constructs', () => {
+    const escaped = block('title: "caf\\u00e9"');
+    assert.equal(escaped.warnings.length, 1);
+    assert.match(escaped.warnings[0] ?? '', /^line 1: a `\\u` escape is not decoded/);
+    assert.deepEqual(block('title: "a \\n b \\" c"').warnings, [], 'the eight escapes we do decode are silent');
+
+    const toml = block(
+      ['title = "x"', "note = '''", 'over two lines', "'''", '[[items]]', 'name = "a"'].join('\n'),
+      '+++',
+    );
+    assert.equal(toml.warnings.length, 2);
+    assert.match(toml.warnings[0] ?? '', /^line 2: a TOML multi-line literal string/);
+    assert.match(toml.warnings[1] ?? '', /^line 5: a TOML array-of-tables \(`\[\[items\]\]`\)/);
+    assert.deepEqual(block(['title = "x"', '[meta]', 'a = 1'].join('\n'), '+++').warnings, []);
   });
 });

@@ -96,6 +96,12 @@ import {
   settingsFleetDispatchAllow,
   updateSetting,
 } from '../config';
+import {
+  auditDryRun,
+  auditStateFrom,
+  fixTargetFrom,
+  type AuditActions,
+} from '../commands/audit';
 import { laneIdFrom, type FleetActions, type FleetLive } from '../commands/fleet';
 import { draftPathFrom, type GovernanceActions } from '../commands/governance';
 import type { Zer0Shell } from '../extension';
@@ -287,6 +293,7 @@ export class DashboardPanel implements vscode.Disposable {
     private readonly shell: Zer0Shell,
     private readonly governance: GovernanceActions,
     private readonly fleet: FleetActions,
+    private readonly audit: AuditActions,
   ) {
     this.handlers = {
       // --- project ---------------------------------------------------------
@@ -342,6 +349,30 @@ export class DashboardPanel implements vscode.Disposable {
       },
       'fleet.dispatchLane': (args) => {
         void this.runFleet('dispatchLane', args);
+      },
+      // --- the front-matter audit -------------------------------------------
+      // The webview sends `{path, kind}` and nothing else. `doFixIssue` re-reads
+      // the file, re-runs the rule against it, and refuses when the finding is
+      // no longer there — applying a fix for a finding that has since been
+      // edited away is exactly what that ordering prevents (D5).
+      'audit.open': () => this.run('audit.open'),
+      'audit.fix': (args) => {
+        const target = fixTargetFrom(args);
+        if (target === undefined) {
+          this.shell.log.warn('audit fix: the message carried no file and rule.');
+          return;
+        }
+        void this.audit.fix(target).then(
+          (applied) => {
+            if (applied) {
+              void this.shell.store.refresh();
+            }
+          },
+          (error: unknown) => this.shell.log.warn(`audit fix: ${describeError(error)}`),
+        );
+      },
+      'audit.verify': () => {
+        void this.audit.verify();
       },
       // --- surface-only ----------------------------------------------------
       openLink: (args) => {
@@ -704,6 +735,16 @@ export class DashboardPanel implements vscode.Disposable {
           url: preview.url ?? null,
         };
       }
+      case 'auditDryRun': {
+        // Read-only on purpose: it renders what a fix *would* write so the
+        // person sees the diff before anything is decided. The write lives in
+        // `audit.fix`, behind a modal, in the same function the palette calls.
+        const target = fixTargetFrom(payload);
+        if (target === undefined) {
+          throw new Error('auditDryRun needs a file and a rule.');
+        }
+        return await auditDryRun(this.shell, target);
+      }
       default:
         // The remaining five ops are the panel's field widgets asking for a
         // slug, a picker or a placeholder. Nothing on this surface sends them.
@@ -954,10 +995,26 @@ export class DashboardPanel implements vscode.Disposable {
       tabs: TABS.filter(
         (tab) =>
           (tab.id !== 'catering' || snapshot.contract.present) &&
-          (tab.id !== 'fleet' || cfg.fleet.enabled),
+          (tab.id !== 'fleet' || cfg.fleet.enabled) &&
+          // Nothing registered and nothing derived means nothing to audit, and
+          // an Audit tab over zero files would report a clean site rather than
+          // an unexamined one — which is the lie D9 exists to prevent.
+          (tab.id !== 'audit' || folders.length > 0),
       ),
       contents: this.buildContents(cfg, snapshot, folders, custom),
       drafts,
+      // The store already ran the audit over the index it built, so this is a
+      // projection rather than a second scan. `auditStateFrom` owns the two
+      // derivations — the collection a finding belongs to, and how `scanned`
+      // rides alongside the severity counts — so the host and the Audit
+      // command cannot drift about either.
+      audit: auditStateFrom({
+        audit: snapshot.audit,
+        pages: snapshot.pages,
+        schema: snapshot.schema,
+        verifyCommand: cfg.cms.verifyCommand,
+        ran: snapshot.audit.generatedAt !== '',
+      }),
       catering: buildCatering(snapshot, await this.lastWorklist(snapshot)),
       fleet,
       settings: buildSettings(cfg, folders),

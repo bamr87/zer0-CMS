@@ -1,6 +1,6 @@
 # `src/commands/` — the command layer
 
-Thirty-eight commands, seven files, and one rule that matters more than the other thirty-seven: **`governance.ts` and `fleet.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below.
+Forty-one commands, eight files, and one rule that matters more than the other forty: **`governance.ts`, `fleet.ts` and `audit.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -17,6 +17,7 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 320 |
 | `agent.ts` | `agent.open`, `agent.start`, `agent.stop`, `mcp.writeWorkspaceConfig` | 194 |
 | `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane` | 574 |
+| `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 761 |
 | `index.ts` | barrel + `ALL_COMMAND_IDS` | 128 |
 
 `dashboard` and `dashboard.close` are registered by `extension.ts`, beside the panel object they operate on. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
@@ -60,6 +61,18 @@ in the core, and no surface offers a way around it. A workspace that has not set
 
 The draft's status is flipped **after** the target reports success. A target failure must never leave a queue file claiming it published. A *ledger skip* — the URL was already recorded — still flips it, because the artifact genuinely is out there; that matches the CI lane, and the two have to agree.
 
+### The same gate, for the audit's fix-it
+
+`doFixIssue` in `audit.ts` is the third pair's single half, and it is the strictest of the three because it rewrites a file in the repository rather than a queue file or a remote variable. The webview posts `{type:'command', id:'audit.fix', args:{path, kind}}` — a file and a rule id, never a change set — and the host then, in this order: re-reads the configuration with `currentConfig()`; re-reads the **whole site** from disk through `scanSite`, which re-detects the platform, rebuilds the page index and re-reads every block; re-runs `auditPage` for that one file and looks the finding up **again** by `kind`; asks `fixFor` for the change set; renders it through `dryRunFix`; opens the two sides in a real diff editor over the `zer0cms-audit:` `TextDocumentContentProvider` this module registers; asks modally, naming the file, the rule and the change; and only then calls `writeArticle`.
+
+The re-lookup in step three is the point of the whole ordering. A `kind` that no longer fires means the file changed under the person between the scan and the click, and applying `missing-key:date` to a file that has since acquired a date would write a second, wrong one. It refuses, in words, and says why. `fixFor` returning `null` — every rule for which no mechanical repair is honest — is the same kind of refusal, and so is every case `dryRunFix` declines: TOML and JSON front matter, a nested path under a scalar, and any block the parser could not read.
+
+Both sides of the diff are **virtual**. Diffing the proposal against the `file:` URI would compare it with whatever an unsaved editor buffer happens to hold, and the bytes this flow read from disk are the bytes it is proposing to rewrite; showing anything else would be showing a diff of a different question.
+
+`auditDryRun(shell, target)` is the read-only half of the same derivation — the `auditDryRun` request the Audit tab's "Preview the fix" button makes — and both it and `doFixIssue` go through one `deriveFix`, because a preview computed by a different code path from the write it previews is a preview of a different question. `auditStateFrom` / `auditStateFromScan` build the `AuditState` slice the dashboard renders: they live here rather than in `dashboardPanel.ts` because two things in that slice are derivations rather than copies — the collection per finding (the last segment of its page's registered folder, mirroring the private `collectionNameOf` in `core/content/audit.ts`) and the `scanned` count folded in beside the three severities — and a second copy of either would be a second answer to the same question.
+
+`scanSite` also fills in `contentFolders` through `withPlatformDefaults` when the workspace registered none — that is what lets the audit read a sister site's 382 pages the first time it is opened rather than the zero folders it declared — and the `cfg` it returns, folders and all, is the one the fix is computed against.
+
 ### The same gate, for the fleet
 
 `doToggleSwitch` and `doDispatchLane` in `fleet.ts` are the second pair, and they follow the diagram above line for line: `currentConfig()` uncached (with `zer0Cms.fleet.dispatchAllow` read from the settings layer alone through `settingsFleetDispatchAllow()`), `readFleetManifest()` from disk, `evaluateFleetGates()`, then `confirm()` naming the repository, the lane, the variable and the value. The dashboard's Fleet tab posts `{type:'command', id:'fleet.toggleSwitch', args:{lane}}` — a lane id and nothing else. A toggle's new value is `nextSwitchValue()` of the variable as GitHub reports it inside the action; `unknown` has no next value, so a failed read refuses rather than guesses.
@@ -70,7 +83,7 @@ The draft's status is flipped **after** the target reports success. A target fai
 
 ## Trust is re-checked inside the function
 
-Five paths in this extension can start a process (decision D13), and three of them are reachable from this directory: the content engine and the front-matter normalizer in `contract.ts`, a `placeholders[].script` through `content.ts`, and the AI agent through `agent.ts`. Every one re-asks `workspaceTrusted()` **inside the handler**. A `when` clause on a menu entry is a hint to the menu system; `capabilities.untrustedWorkspaces` drops only the *workspace-scoped* value of a restricted setting, so a `true` in somebody's user settings still arrives in a folder they just cloned; and the `zer0Cms:workspace:trusted` context key is a mirror that is only as fresh as the last time somebody set it. None of those is a gate.
+Five paths in this extension can start a process (decision D13), and all five are now reachable from this directory: the content engine and the front-matter normalizer in `contract.ts`, a `placeholders[].script` through `content.ts`, the AI agent through `agent.ts`, and the site's own verification command through `audit.ts`. Every one re-asks `workspaceTrusted()` **inside the handler**. A `when` clause on a menu entry is a hint to the menu system; `capabilities.untrustedWorkspaces` drops only the *workspace-scoped* value of a restricted setting, so a `true` in somebody's user settings still arrives in a folder they just cloned; and the `zer0Cms:workspace:trusted` context key is a mirror that is only as fresh as the last time somebody set it. None of those is a gate.
 
 - **`contract.ts`** — `requireTrust()` runs beside `requireWorkspace()` in all
 three spawning handlers, and offers `workbench.trust.manage`. The core refuses a second time inside `runEngine`/`runNormalizer*`, as a value (`code: 1`, the reason on `stderr`), because "nothing rejects" is that module's older promise. Two checks on purpose: this one so a person reads a sentence, that one so no caller anywhere can spawn by forgetting. `engineFor(cfg)` is where trust and the interpreter's provenance are attached — `engineLayer()` over the settings snapshot's `cms` group and `zer0.json`'s, so the output channel can say whether the command about to run was named by a human or arrived with the clone.
@@ -78,8 +91,8 @@ three spawning handlers, and offers `workbench.trust.manage`. The core refuses a
 callback with `setPlaceholderTrust(workspaceTrusted)` at activation, because `src/core` cannot import `vscode` and its built-in default refuses. `createInto` then re-asks: creation still proceeds — editing front matter is allowed in an untrusted workspace — but when any placeholder names a script the person is told, before the file is written, that those tokens will come out as `<failed to process>`.
 - **`agent.ts`** — `readyHost()` checks trust *before* `agent.enabled`, because
 an untrusted folder is not a settings problem and offering "Enable it" would be the wrong sentence. `AgentPanel.start()` checks again, since the panel's composer reaches `start()` without passing through a command.
-
-The verify command is the fourth vector and has no handler here yet. When it gets one, it must call `runVerifyCommand` in `src/core/contract/engine.ts` rather than spawning: `node:child_process` is fenced by eslint to that file and `src/core/content/placeholders.ts`, which is what keeps the gate un-routable-around.
+- **`audit.ts`** — `doVerify` is the fifth vector's handler. It re-asks
+`workspaceTrusted()` before it even splits the argv, offers `workbench.trust.manage`, and then calls `runVerifyCommand` in `src/core/contract/engine.ts` rather than spawning: `node:child_process` is fenced by eslint to that file and `src/core/content/placeholders.ts`, which is what keeps the gate un-routable-around. The core refuses a second time inside the runner, as a value. An **unset** `zer0Cms.cms.verifyCommand` is a normal state rather than an error — most sites have no single verification entry point — and it is reported as the sentence that names the setting. `audit.fix` is deliberately *not* trust-gated: editing front matter is what decision D13 explicitly still allows in an untrusted workspace.
 
 ---
 
