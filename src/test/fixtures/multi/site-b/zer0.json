@@ -1,0 +1,21 @@
+{
+  "contentFolders": [
+    { "title": "Docs", "path": "[[workspace]]/docs", "contentTypes": ["page"] }
+  ],
+  "contentTypes": [
+    {
+      "name": "page",
+      "fileType": "md",
+      "fields": [
+        { "name": "title", "type": "string", "title": "Title", "single": true, "required": true }
+      ]
+    }
+  ],
+  "governance": {
+    "enabled": true,
+    "publishAllow": true,
+    "draftsFolder": ".zer0/drafts",
+    "ledgerPath": ".zer0/ledger.json"
+  },
+  "content": { "defaultFileType": "md", "supportedFileTypes": ["md", "markdown"] }
+}

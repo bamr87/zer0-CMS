@@ -1,0 +1,48 @@
+# =============================================================================
+# ai.yml — the ONE place AI is configured for the whole repo
+# -----------------------------------------------------------------------------
+# Everything that calls a model — every workflow agent step — goes through the
+# fleet's claude-run action (bamr87/bamr87/.github/actions/claude-run@main,
+# consumed by reference; its run.sh reads this file from the consumer tree).
+# Primary path is Claude Code (the `claude` CLI / agent, authenticated by
+# CLAUDE_CODE_OAUTH_TOKEN); if it is unavailable or fails, the runner falls back
+# to the Claude API (scripts/ai/api_call.rb, stdlib HTTP, no gem). Change the
+# model or budget here and it changes everywhere. The action + runner are the
+# shared `ai-runner` kit, held once in the hub — see scripts/ai/README.md.
+#
+# Auth is NOT set here (a token is a secret, never committed): provide EITHER
+# CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`; subscription auth, the
+# preferred CI credential) OR ANTHROPIC_API_KEY in the environment. The runner
+# prefers the OAuth token for the Claude Code path; the API fallback can only
+# use ANTHROPIC_API_KEY.
+#
+# Mirrors lifehacker.dev's _data/ai.yml so the two sibling sites share one
+# agentic convention.
+# =============================================================================
+provider: anthropic
+
+# The model Claude Code uses (claude -p --model) AND the default for the API
+# fallback. Default to the most capable model; switch to a cheaper one
+# (claude-sonnet-5 / claude-haiku-4-5) here, once, if cost matters.
+#
+# EXCEPTION — the quest loop routes its own models: quest-perfection /
+# quest-fix / quest-walkthrough / quest-video pin every stage (preflight probe,
+# execute-engine walks, walker/fixer agents) to ONE Sonnet-class model via the
+# QUEST_AI_MODEL repo variable (default claude-sonnet-5), passed as
+# AI_MODEL (the kit's canonical env name) to run.sh for the agent steps. Rationale in quest-perfection.yml's
+# gate: the loop is high-volume sandboxed tool use — Sonnet-tier work — and on
+# subscription (OAuth) auth an Opus default burns the shared rate window ~2.5×
+# faster for no measurement benefit. This global default still governs the
+# content fleet (content-factory, cms loop, forge, …).
+model: claude-opus-4-8
+
+# The model the API fallback uses when it differs from the primary.
+# Defaults to `model` when unset.
+fallback_model: claude-opus-4-8
+
+# Per-call output ceiling for the API fallback.
+max_tokens: 8000
+
+# Claude API wire details (rarely changed).
+api_version: "2023-06-01"
+api_base: https://api.anthropic.com

@@ -524,11 +524,15 @@ The optional AI layer. Off unless you turn it on, and it needs the optional `@an
 | Property | Default | VS Code twin |
 |---|---|---|
 | `enabled` | `false` | `zer0Cms.agent.enabled` |
-| `model` | `"claude-opus-5"` | `zer0Cms.agent.model` |
+| `model` | `""` (inherit) | `zer0Cms.agent.model` |
 | `maxTurns` | `40` | `zer0Cms.agent.maxTurns` |
 | `permissionMode` | `"default"` | `zer0Cms.agent.permissionMode` |
 
-`permissionMode` is `default`, `acceptEdits` or `plan`. The settings layer validates it against those three; the `zer0.json` layer accepts any string and hands it to the SDK, which is deliberate — an unknown mode degrades to the SDK's own handling rather than a type error. `default` routes every mutating tool call through an approve/deny card showing the diff.
+`permissionMode` is `default` or `plan`, and both layers clamp anything else to `default` — a repository must not be able to hand the SDK a mode of its own choosing.
+
+**`acceptEdits` used to be a third option and is gone.** It was measured against the SDK rather than assumed: with that mode a `Write` landed on disk and `canUseTool` — the approval card, the single gate the whole agent design rests on (decision D10) — was never called at all. A mode that silently disarms the only gate is not a preference, so it is not offered, and a settings file or `zer0.json` that still names it is clamped rather than honoured. `plan` remains, because planning without acting needs no gate.
+
+**`model` is empty by default, meaning inherit.** The precedence is the CI runner's own: this setting, then `zer0.json`, then the site's `_data/ai.yml` (see `zer0Cms.cms.aiConfigPath`), then a built-in fallback — so a repository with its own model configuration gets the same model at the desk that it gets in a workflow, and the panel shows which layer answered.
 
 ### 3.18 `validation`, `panel`, `dashboard`
 
@@ -713,9 +717,9 @@ Most are `resource`-scoped, so a multi-root workspace can answer them per folder
 | Setting | Default | What it does |
 |---|---|---|
 | `zer0Cms.agent.enabled` | `false` | Enable the optional AI agent. Requires the `@anthropic-ai/claude-agent-sdk` optional dependency and a Claude credential. |
-| `zer0Cms.agent.model` | `"claude-opus-5"` | Model the agent runs on. |
+| `zer0Cms.agent.model` | `""` | Model the agent runs on. Empty inherits the repository's own AI configuration, so an editor run and the same role in CI agree. |
 | `zer0Cms.agent.maxTurns` | `40` | Maximum agent turns per run (minimum 1). |
-| `zer0Cms.agent.permissionMode` | `"default"` | `default`, `acceptEdits` or `plan`. `default` routes every mutating tool through an approve/deny gate. |
+| `zer0Cms.agent.permissionMode` | `"default"` | `default` or `plan`. `default` routes every mutating tool through an approve/deny gate. |
 
 ### Fleet
 

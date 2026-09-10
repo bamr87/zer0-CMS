@@ -1,0 +1,9 @@
+{
+  "folders": [
+    { "path": "multi/site-a", "name": "site-a" },
+    { "path": "multi/site-b", "name": "site-b" }
+  ],
+  "settings": {
+    "zer0Cms.logging.level": "verbose"
+  }
+}

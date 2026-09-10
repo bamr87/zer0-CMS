@@ -95,7 +95,7 @@ import type { AuditIssueView, AuditState } from '../webview/shared/protocol';
 import type { Zer0Shell } from '../extension';
 import { describeError } from '../logger';
 import { confirm, notifyError, notifyInfo, notifyWarning } from '../uiState';
-import { register, toFilePath } from './project';
+import { register, siteTarget, toFilePath } from './project';
 
 /** The workspace-state key the dashboard boots its route from. */
 const ROUTE_STATE_KEY = 'zer0Cms:Dashboard:Route';
@@ -546,8 +546,18 @@ export async function deriveFix(
   shell: Zer0Shell,
   target: { path: string; kind: string },
 ): Promise<FixDerivation> {
-  // 1 — the configuration, uncached.
-  const base = currentConfig();
+  // 1 — the configuration, uncached, and **for the site that owns the file**.
+  //     The Audit tab renders the active site's findings and names them by a
+  //     workspace-relative path, so an argument from there resolves to the
+  //     active site anyway; an absolute path arriving from a palette pick or
+  //     another site's tree row resolves to its own. A fix computed against
+  //     the wrong site's schema would propose keys this file's own contract
+  //     never asked for.
+  const resolved = siteTarget(target.path);
+  if (resolved === undefined) {
+    return { refused: `"${target.path}" is not a path in this workspace` };
+  }
+  const base = resolved.cfg;
   if (base.workspaceRoot === '') {
     return { refused: 'there is no open folder to audit' };
   }

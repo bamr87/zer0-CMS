@@ -1,3 +1,4 @@
+import type { StoreView } from '../sites';
 /**
  * The **Distribution** view — the four catering lanes, and the only two-level
  * tree in the extension.
@@ -41,7 +42,6 @@ import {
   type ContentRecord,
   type TopicSignal,
 } from '../core';
-import type { WorkspaceStore } from '../store';
 
 export type LaneId = 'A' | 'B' | 'C' | 'D';
 
@@ -179,7 +179,7 @@ export class CateringTreeProvider
 
   private readonly subscription: vscode.Disposable;
 
-  constructor(private readonly store: WorkspaceStore) {
+  constructor(private readonly store: StoreView) {
     this.subscription = store.onDidChange(() => this.emitter.fire());
   }
 

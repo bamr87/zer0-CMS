@@ -4,6 +4,32 @@ All notable changes to zer0-CMS are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### 🗂 Many sites, one window
+
+A window can hold more than one site. The fleet's own workspace holds twelve folders — seven of them Jekyll sites this extension can detect, audit and publish — and until now eleven of them were invisible, because everything resolved the first folder.
+
+The unit is still one folder: one configuration, one snapshot, one cache key, one MCP server. Multi-root is composition above that rather than a second model threaded through it. A **site registry** holds one store per folder, and a **Sites** tree and dashboard tab show what is in the window: each folder's platform, whether it is configured, its content roots, its counts, whether it carries a fleet manifest.
+
+**Which site a command acts on is decided by the command, not by the window.** A command invoked on a file acts on *that file's* site — registering a folder edits that folder's `zer0.json`, a draft goes into its own site's queue, diagnostics validate against the owning site's content types. Only a command with no argument falls back to the active site, resolved as: an explicit pick that still exists, then the folder owning the active editor, then the first folder. That rule is a pure function with tests, because a rule like this quietly acquires a fourth case.
+
+The panel's persisted state is namespaced per site, so two sites no longer overwrite each other's collapsed sections. The MCP provider offers one server per configured site rather than one per window — on the twelve-folder workspace that is two or three servers, not twelve. `zer0Cms.site.preview` runs the detected platform's own serve command through a VS Code task and offers the preview URL when it is ready.
+
+### 🤝 One harness vocabulary
+
+The agent in this editor and the AI lanes in CI shared nothing. The editor did not read the repository's model configuration, did not know its `.claude/agents` roles, did not attach this extension's own MCP server, and defaulted to a model the fleet does not use — so "run this as the content role" was possible in a workflow and impossible at the desk, and the two disagreed about the model without anyone noticing.
+
+A **harness profile** now resolves a repository's roles, skills and model once, in the CI runner's own precedence — a setting, then `zer0.json`, then the site's `_data/ai.yml`, then a built-in fallback — and projects to either an editor run or the equivalent CI invocation. `zer0Cms.agent.runAsRole` picks a role from the repository's own agents and runs it under the approval card; **Copy the CI equivalent** hands you the `run.sh` line or the workflow `with:` block for that role. On lifehacker.dev the editor now resolves the same model that repository's own lanes use, instead of a different one.
+
+The extension's own MCP server is attached to an agent run, with its eight read-only tools auto-allowed and its five writers on the card. The publish and scaffold flags are explicitly deleted from the child environment: an editor run must not inherit whatever armed something else.
+
+### 🔒 A gate that was not holding
+
+**`permissionMode: 'acceptEdits'` bypassed the approval card entirely, and this extension offered it as a setting.** Measured against the Agent SDK rather than assumed: with that mode a `Write` landed on disk and `canUseTool` — the single gate the whole agent design rests on (decision D10) — was never called at all.
+
+It is gone from the manifest, removed from the type, and clamped at both configuration layers, so a settings file or a `zer0.json` that still names it falls through to `default` rather than disarming the gate. `plan` remains, because planning without acting needs no gate. Two related things were measured and are worth writing down: a repository-committed `permissions.allow` rule does *not* bypass the card, and a repository-committed escalating default mode is dropped by the CLI's own trust filter.
+
+Loading a repository's `.claude/settings.json` into an editor run is off unless the workspace is trusted **and** you opt in for that run — those files can declare hooks, which are command lines running under your credential.
+
 ### 🌍 Every site, not just this one
 
 zer0-CMS now knows what kind of site it is looking at. Jekyll, MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback are **profiles** — content roots, front-matter dialect and keys, the draft convention, date keys and formats, the slug and permalink rules, the directories a build writes and the command that serves the site locally — resolved once from marker files, with an explicit `platform.id` in `zer0.json` always winning. Everything platform-specific that used to be hard-coded in the core now comes from one of them.

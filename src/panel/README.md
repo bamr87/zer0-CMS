@@ -28,6 +28,8 @@ Everything the panel draws arrives as one full `PanelState` snapshot (decision D
 
 Nothing is cached between posts. `currentConfig()` is uncached by design, so a setting flipped thirty seconds ago is honoured without a window reload.
 
+**And it is scoped to the file, not to the active site.** `fileConfig()` is `currentConfig(vscode.Uri.file(this.activeFile))` — the configuration of the repository the open file lives in. In a multi-root window those are routinely different folders, and a panel that read the active site's schema would show a file the required keys of somebody else's contract, and then write them. With no file open there is nothing to scope by and the active site is the honest answer: that is the view the panel shows when nothing is selected.
+
 Posts are debounced (80 ms) and coalesced: a save, a store refresh and a configuration change landing together produce one snapshot, not three.
 
 ### 2. The intent whitelist
@@ -56,6 +58,14 @@ The webview supplies a draft path and nothing else. The blockers rendered under 
 The panel's own governance evaluation is deliberately cheaper than `collectGateContext`: it runs the brand guard but does **not** build a publish preview, because a preview resolves the source page and renders the artifact the target would write — right to do once when somebody presses Publish, wrong to do on every change of active editor. The consequence is bounded and named in the code: the panel can omit the `previewFailed` blocker, and it only knows about `requiredFieldMissing` when the draft's source is the file on screen.
 
 ### 4. The panel bridge
+
+### Persisted UI state is per site, and whitelisted
+
+The webview's `setUiState` messages are collapse decisions: `collapse_<section>` while a file is open and `collapse_base_<section>` on the no-file view. Two things happen to them before they reach `workspaceState`.
+
+They are **checked against a shape** (`isPanelUiKey`) — a whitelist, like the dashboard's `UI_STATE_KEYS` table, because a webview may name a key and the host decides which names are real. A shape rather than an enumeration so a new section does not silently lose its memory, but still bounded in alphabet and length so the key cannot become one of the webview's choosing.
+
+They are then **namespaced by site**: `zer0Cms:Panel:<hash>:<key>` in a multi-root window, where `<hash>` is twelve hex characters of the folder path — for the reason `indexCacheKeyFor` gives, a basename is not unique and a full path is somebody's home directory sitting in a Memento key. `workspaceState` is per *window*, and a multi-root window is one window holding twelve repositories — two sites' panels writing `collapse_metadata` meant the second one opened silently overwrote the first, so "closed in the docs repo, open in the site repo" was not expressible. A single-folder window keeps the unprefixed key it already holds; nothing is migrated, because this is a collapse state and one section starting open once costs less than a migration nobody can verify.
 
 `zer0Cms.collapseSections`, `focusTags` and `focusCategories` are commands whose whole effect is inside the webview. `setPanelBridge(this)` (from `src/commands/content.ts`) registers `collapseAll()` and `focus(target)`, and the registration is disposed with the view — so a command invoked after the panel is closed logs rather than posting into a dead webview. The dependency points panel → commands, never the reverse.
 

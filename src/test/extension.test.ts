@@ -80,10 +80,15 @@ const ALL_COMMANDS: readonly string[] = [
   'zer0Cms.audit.open',
   'zer0Cms.audit.fix',
   'zer0Cms.audit.verify',
+  'zer0Cms.site.pick',
+  'zer0Cms.site.setActive',
+  'zer0Cms.site.preview',
+  'zer0Cms.agent.runAsRole',
 ];
 
 /** The four trees, plus the webview view, all in the `zer0-cms` container. */
 const TREE_VIEWS: readonly string[] = [
+  'zer0Cms.sites',
   'zer0Cms.drafts',
   'zer0Cms.content',
   'zer0Cms.catering',
@@ -173,12 +178,12 @@ suite('extension: activation and contributions', function () {
   });
 
   test('all 38 contributed commands are registered', () => {
-    assert.strictEqual(ALL_COMMANDS.length, 41, 'the expected list itself is 41 long');
+    assert.strictEqual(ALL_COMMANDS.length, 45, 'the expected list itself is 45 long');
     const missing = ALL_COMMANDS.filter((command) => !commands.includes(command));
     assert.deepStrictEqual(missing, [], 'contributed but never registered');
   });
 
-  test('package.json contributes exactly those 41 and nothing else', () => {
+  test('package.json contributes exactly those 45 and nothing else', () => {
     // Catches both directions: a command registered but never contributed is
     // invisible in the palette, and a command contributed but dropped from the
     // list above would otherwise slip past the test that precedes this one.
@@ -386,6 +391,7 @@ suite('extension: the context keys the when-clauses depend on', function () {
       'zer0Cms:fleet:enabled',
       'zer0Cms:folder:registered',
       'zer0Cms:governance:enabled',
+      'zer0Cms:sites:multi',
       'zer0Cms:workspace:trusted',
     ]);
     const used = new Set<string>();
@@ -407,7 +413,7 @@ suite('extension: the context keys the when-clauses depend on', function () {
     );
   });
 
-  test('applyConfig seeds all nine keys and follows the project config', () => {
+  test('applyConfig seeds every context key and follows the project config', () => {
     const cfg = currentConfig();
     ui.applyConfig(cfg, true);
     for (const key of ALL_CONTEXT_KEYS) {

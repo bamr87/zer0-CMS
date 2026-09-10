@@ -55,6 +55,7 @@ import type { Zer0Settings } from '../core/shared/config';
 import { EXEC_VECTORS, evaluateExecGate, insideWorkspace } from '../core/shared/trust';
 import { formatDate, parseDate } from '../core/shared/dates';
 import { compileGlob, globMatches, toPosix } from '../core/shared/glob';
+import { resolveActiveSite } from '../siteRule';
 import { pyJsonDump, readJsonc } from '../core/shared/jsonio';
 import { utcStamp } from '../core/shared/timestamp';
 import {
@@ -905,6 +906,22 @@ suite('core: the page index', () => {
    * of them reusing every page. `false` has to mean "I have nothing new to
    * store", and it has to be *false* only then.
    */
+  test('the agent model is inherited by default, and a card-skipping mode cannot be configured', () => {
+    // Two halves of one decision. The model default is empty so a repository's
+    // own AI configuration answers — an editor run and the same role in CI
+    // agreed about nothing before this, and disagreeing about the model is the
+    // kind of difference nobody notices until a bill arrives.
+    const cfg = resolveConfig('/site', {}, {});
+    assert.equal(cfg.agent.model, '', 'the built-in default must mean "inherit"');
+
+    // And `acceptEdits` was measured to bypass `canUseTool` outright: the edit
+    // landed with the approval card never consulted. It is gone from the
+    // manifest, and a `zer0.json` naming it is clamped rather than honoured —
+    // a file in the repository must not be able to disarm the only gate.
+    const sneaky = resolveConfig('/site', { agent: { permissionMode: 'acceptEdits' } }, {});
+    assert.equal(sneaky.agent.permissionMode, 'default');
+  });
+
   test('a cache from before the platform existed is refused, not trusted', () => {
     // Version 2 is not bookkeeping. A v1 entry was built by code that could not
     // tell a Jekyll site from an MkDocs one, so its slug, its date and its
@@ -1245,13 +1262,17 @@ suite('core: the execution gate (D13)', () => {
     assert.equal(escaped?.reason, 'outside-workspace');
   });
 
-  test('agent.permissionMode from zer0.json is clamped to the three-value enum', () => {
+  test('agent.permissionMode from zer0.json is clamped to the two modes that keep the gate', () => {
     // `asString` used to hand whatever the file said straight to the SDK.
-    for (const mode of ['default', 'acceptEdits', 'plan']) {
+    for (const mode of ['default', 'plan']) {
       const cfg = resolveConfig(WORKSPACE, { agent: { permissionMode: mode } }, {});
       assert.equal(cfg.agent.permissionMode, mode, 'a legal value survives the file layer');
     }
-    for (const mode of ['dontAsk', 'auto', 'bypassPermissions', '', 42]) {
+    // `acceptEdits` is in this list rather than the one above because it was
+    // measured to bypass `canUseTool` entirely: the edit landed and the
+    // approval card was never called. A repository naming it must not disarm
+    // the only gate the agent has (D10).
+    for (const mode of ['acceptEdits', 'dontAsk', 'auto', 'bypassPermissions', '', 42]) {
       const cfg = resolveConfig(WORKSPACE, { agent: { permissionMode: mode } }, {});
       assert.equal(
         cfg.agent.permissionMode,
@@ -1349,5 +1370,52 @@ suite("core: the parser's warnings channel — what it had to guess at (WP2.3)",
     assert.match(toml.warnings[0] ?? '', /^line 2: a TOML multi-line literal string/);
     assert.match(toml.warnings[1] ?? '', /^line 5: a TOML array-of-tables \(`\[\[items\]\]`\)/);
     assert.deepEqual(block(['title = "x"', '[meta]', 'a = 1'].join('\n'), '+++').warnings, []);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The active-site rule (src/siteRule.ts)
+// ---------------------------------------------------------------------------
+
+/**
+ * `resolveActiveSite` is the whole of "which of the open folders is the console
+ * pointed at?", and it lives alone in `src/siteRule.ts` precisely so it can be
+ * asked that question here — in the fast suite, with no extension host. The
+ * registry that uses it needs `vscode.EventEmitter`, `vscode.workspace` and a
+ * `WorkspaceStore` per folder; the rule needs three strings.
+ *
+ * The fourth case below is the one that would otherwise be found in the field:
+ * a person picks a site, closes that folder, and the id they picked is now a
+ * name for nothing. It has to fall through, not blank the console.
+ */
+suite('sites: the active-site rule', () => {
+  const folders = ['file:///a', 'file:///b', 'file:///c'];
+
+  test('an explicit pick wins over the active editor and over folder zero', () => {
+    assert.equal(resolveActiveSite(folders, 'file:///c', 'file:///b'), 'file:///c');
+    assert.equal(resolveActiveSite(folders, 'file:///b', undefined), 'file:///b');
+  });
+
+  test('with no pick, the folder owning the active editor wins', () => {
+    assert.equal(resolveActiveSite(folders, undefined, 'file:///c'), 'file:///c');
+  });
+
+  test('with neither, the first folder — the answer this extension always gave', () => {
+    assert.equal(resolveActiveSite(folders, undefined, undefined), 'file:///a');
+    assert.equal(
+      resolveActiveSite(folders, undefined, 'file:///elsewhere'),
+      'file:///a',
+      'an editor outside every open folder names no site',
+    );
+    assert.equal(resolveActiveSite([], 'file:///a', 'file:///b'), undefined, 'a folderless window');
+  });
+
+  test('an explicit id that no longer exists falls through to the next rule', () => {
+    assert.equal(
+      resolveActiveSite(folders, 'file:///closed', 'file:///b'),
+      'file:///b',
+      'the closed pick must not win, and must not blank the console either',
+    );
+    assert.equal(resolveActiveSite(folders, 'file:///closed', undefined), 'file:///a');
   });
 });

@@ -102,6 +102,7 @@ import {
   fixTargetFrom,
   type AuditActions,
 } from '../commands/audit';
+import { type SiteActions } from '../commands/site';
 import { laneIdFrom, type FleetActions, type FleetLive } from '../commands/fleet';
 import { draftPathFrom, type GovernanceActions } from '../commands/governance';
 import type { Zer0Shell } from '../extension';
@@ -294,6 +295,7 @@ export class DashboardPanel implements vscode.Disposable {
     private readonly governance: GovernanceActions,
     private readonly fleet: FleetActions,
     private readonly audit: AuditActions,
+    private readonly site: SiteActions,
   ) {
     this.handlers = {
       // --- project ---------------------------------------------------------
@@ -373,6 +375,20 @@ export class DashboardPanel implements vscode.Disposable {
       },
       'audit.verify': () => {
         void this.audit.verify();
+      },
+      // --- sites -------------------------------------------------------------
+      // The webview names a site id; the host validates it against its own
+      // registry and routes through the same function the palette calls (D5).
+      'site.pick': () => {
+        // No id: the palette's own picker, which is the only place a person
+        // chooses from a list rather than clicking a row.
+        void vscode.commands.executeCommand('zer0Cms.site.pick');
+      },
+      'site.setActive': (args) => {
+        this.site.setActive(args);
+      },
+      'site.preview': (args) => {
+        void this.site.preview(args);
       },
       // --- surface-only ----------------------------------------------------
       openLink: (args) => {
@@ -788,6 +804,15 @@ export class DashboardPanel implements vscode.Disposable {
     if (key === 'Route' && value === 'fleet') {
       void this.refreshFleet(false);
     }
+    if (key === 'Route' && value === 'sites') {
+      // Opening the tab is the explicit act that makes reading the other
+      // folders worth it: every row wants that folder's configuration and,
+      // for one never scanned, a platform probe. Nothing here opens a socket.
+      void this.shell.sites.refreshAll().then(
+        () => this.schedule(),
+        (error: unknown) => this.shell.log.warn(`sites refresh: ${describeError(error)}`),
+      );
+    }
   }
 
   /**
@@ -1001,6 +1026,11 @@ export class DashboardPanel implements vscode.Disposable {
           // an unexamined one — which is the lie D9 exists to prevent.
           (tab.id !== 'audit' || folders.length > 0),
       ),
+      // Every open folder, with what is known about each. Resolved from the
+      // registry rather than the snapshot, because eleven of the twelve may
+      // never have been scanned and saying "0 pages" about an unscanned site
+      // would be a claim rather than an absence (D9).
+      sites: await this.shell.sites.sitesState(),
       contents: this.buildContents(cfg, snapshot, folders, custom),
       drafts,
       // The store already ran the audit over the index it built, so this is a

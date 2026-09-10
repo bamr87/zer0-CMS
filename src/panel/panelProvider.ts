@@ -54,7 +54,7 @@
  * webview's `Messenger.request` shows the message in the control that asked.
  */
 
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
@@ -100,7 +100,14 @@ import {
   type PageEntry,
   type Zer0Config,
 } from '../core';
-import { currentConfig, hasProjectConfig, onConfigChange, updateConfigFileJson, updateSetting } from '../config';
+import {
+  currentConfig,
+  hasProjectConfig,
+  onConfigChange,
+  updateConfigFileJson,
+  updateSetting,
+  workspaceFolder,
+} from '../config';
 import { setPanelBridge, type PanelBridge } from '../commands/content';
 import { draftPathFrom, type GovernanceActions } from '../commands/governance';
 import type { Zer0Shell } from '../extension';
@@ -242,6 +249,24 @@ function unreadableFrontMatter(article: Article): boolean {
     .some((line) => line.trim() !== '' && !line.trimStart().startsWith('#'));
 }
 
+/**
+ * The panel's own persisted keys, as a shape rather than a list.
+ *
+ * `chrome.ts` builds them: `collapse_<section>` while a file is open and
+ * `collapse_base_<section>` on the no-file view, one pair per section id in
+ * `PANEL_SECTION_IDS` plus `other_actions`. A shape check rather than an
+ * enumeration is deliberate — a new section must not silently lose its collapse
+ * memory because somebody forgot a table over here — but it is still a
+ * whitelist: nothing outside `collapse_` reaches `workspaceState`, and the id
+ * is bounded in both alphabet and length so it cannot become a key of its own
+ * choosing.
+ */
+const PANEL_UI_KEY = /^collapse_(base_)?[A-Za-z0-9_-]{1,64}$/;
+
+export function isPanelUiKey(key: string): boolean {
+  return PANEL_UI_KEY.test(key);
+}
+
 export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, vscode.Disposable {
   static readonly viewType = 'zer0Cms.panel';
 
@@ -338,7 +363,7 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
 
     const editor = vscode.window.activeTextEditor;
     this.activeFile =
-      editor !== undefined && isEditableDocument(currentConfig(), editor.document)
+      editor !== undefined && isEditableDocument(currentConfig(editor.document.uri), editor.document)
         ? editor.document.uri.fsPath
         : null;
 
@@ -401,7 +426,9 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
    * opened is a different, much ruder, feature.
    */
   private onEditorChanged(editor: vscode.TextEditor | undefined): void {
-    const cfg = currentConfig();
+    // Scoped to the document being switched *to*: whether a file is editable
+    // is a question about its own site's supported types and content folders.
+    const cfg = editor === undefined ? currentConfig() : currentConfig(editor.document.uri);
     const next =
       editor !== undefined && isEditableDocument(cfg, editor.document)
         ? editor.document.uri.fsPath
@@ -484,12 +511,73 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
         void this.reply(msg.requestId, msg.op, msg.payload);
         return;
       case 'setUiState':
-        void this.shell.context.workspaceState.update(`zer0Cms:Panel:${msg.key}`, msg.value);
+        void this.persistUiState(msg.key, msg.value);
         return;
       default:
         log.verbose('panel webview: ignored an unrecognised message');
         return;
     }
+  }
+
+  /**
+   * Remember one collapse decision, **for this site**, if the key is one we
+   * recognise.
+   *
+   * Two changes from the one-line `workspaceState.update` this replaces, and
+   * they fix two different things.
+   *
+   * *The site prefix.* `workspaceState` is per **window**, and a multi-root
+   * window is one window holding twelve repositories. Two sites' panels writing
+   * `zer0Cms:Panel:collapse_metadata` meant the second one to be opened
+   * silently overwrote the first's answer — so "I keep Metadata closed in the
+   * docs repo and open in the site repo" was not expressible. The key now
+   * carries the site id, and the legacy unprefixed form is left alone rather
+   * than migrated: it is a collapse state, and the cost of it starting open
+   * once is smaller than the cost of a migration nobody can verify.
+   *
+   * *The whitelist.* A webview may name a key, so the host decides which names
+   * are real — the same rule the dashboard's `UI_STATE_KEYS` table follows.
+   * Without one, a compromised or simply buggy webview could write arbitrary
+   * entries into the extension's own workspace state.
+   */
+  private async persistUiState(key: string, value: string): Promise<void> {
+    if (!isPanelUiKey(key)) {
+      log.warn(`panel webview: refused to persist the ui key "${key}"`);
+      return;
+    }
+    const site = this.siteKeyPart();
+    try {
+      await this.shell.context.workspaceState.update(`zer0Cms:Panel:${site}${key}`, value);
+    } catch (error) {
+      log.verbose(`panel: could not persist ${key} (${describeError(error)})`);
+    }
+  }
+
+  /**
+   * The site segment of a persisted panel key, or `''` in a single-root window.
+   *
+   * Empty for one folder so the keys a workspace already holds keep working
+   * unchanged — the overwhelmingly common case gains a namespace it does not
+   * need and loses its memory in exchange for nothing.
+   *
+   * A short hash of the folder path rather than `folder.name`, for the reason
+   * `indexCacheKeyFor` gives: a basename is not unique (two folders called
+   * `docs` in one window would share a memory), and a full path is somebody's
+   * home directory sitting in a Memento key.
+   */
+  private siteKeyPart(): string {
+    const folders = vscode.workspace.workspaceFolders ?? [];
+    if (folders.length < 2) {
+      return '';
+    }
+    const folder =
+      this.activeFile === null
+        ? workspaceFolder()
+        : (vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.activeFile)) ?? workspaceFolder());
+    if (folder === undefined) {
+      return '';
+    }
+    return `${createHash('sha1').update(folder.uri.fsPath).digest('hex').slice(0, 12)}:`;
   }
 
   /**
@@ -617,7 +705,7 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
     if (filePath === null || segments.length === 0) {
       return;
     }
-    const cfg = currentConfig();
+    const cfg = currentConfig(vscode.Uri.file(filePath));
     this.progress('field', segments, 'Saving…');
     try {
       const document = vscode.workspace.textDocuments.find(
@@ -740,7 +828,7 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
   }
 
   private async handleRequest(op: RequestOp, payload: unknown): Promise<unknown> {
-    const cfg = currentConfig();
+    const cfg = this.fileConfig();
     switch (op) {
       case 'generateSlug': {
         const filePath = this.activeFile;
@@ -839,7 +927,7 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
     siteRooted: boolean;
     filters?: Record<string, string[]>;
   }): Promise<string[]> {
-    const cfg = currentConfig();
+    const cfg = this.fileConfig();
     const documentPath = this.activeFile;
     const root = cfg.content.publicFolder.trim();
     const defaultUri =
@@ -900,8 +988,27 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
     }
   }
 
+  /**
+   * The configuration of **the site the panel's file lives in**.
+   *
+   * The panel is a view of one file, so every read it makes belongs to that
+   * file's repository: its content types, its taxonomy, its SEO thresholds, its
+   * public folder. In a multi-root window the file in the editor and the active
+   * site are routinely different folders, and a panel that read the active
+   * site's schema would show required keys the open file's own contract never
+   * asked for — and write them.
+   *
+   * With no file open there is nothing to scope by, and the active site is the
+   * honest answer: that is the view the panel shows when nothing is selected.
+   */
+  private fileConfig(): Zer0Config {
+    return this.activeFile === null
+      ? currentConfig()
+      : currentConfig(vscode.Uri.file(this.activeFile));
+  }
+
   private async buildState(): Promise<PanelState> {
-    const cfg = currentConfig();
+    const cfg = this.fileConfig();
     const snapshot = await this.shell.store.current();
     const filePath = this.activeFile;
 

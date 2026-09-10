@@ -135,7 +135,7 @@ export function defaultConfig(root: string): Zer0Config {
       aiConfigPath: '_data/ai.yml',
       verifyCommand: '',
     },
-    agent: { enabled: false, model: 'claude-opus-5', maxTurns: 40, permissionMode: 'default' },
+    agent: { enabled: false, model: '', maxTurns: 40, permissionMode: 'default' },
     validation: { enabled: true },
     panel: {
       openOnSupportedFile: false,
@@ -911,11 +911,10 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
       // repository must not be able to reach into.
       permissionMode: pick(
         settings.agent?.permissionMode,
-        asEnum<AgentPermissionMode>(fileAgent.permissionMode, [
-          'default',
-          'acceptEdits',
-          'plan',
-        ]),
+        // `acceptEdits` is not in this list on purpose: it bypasses the
+        // approval card entirely (measured), so a file naming it falls through
+        // to the default rather than disarming the gate.
+        asEnum<AgentPermissionMode>(fileAgent.permissionMode, ['default', 'plan']),
         defaults.agent.permissionMode,
       ),
     },

@@ -70,7 +70,7 @@ import {
   type ParsedFleetManifest,
   type Zer0Config,
 } from '../core';
-import { currentConfig, settingsFleetDispatchAllow } from '../config';
+import { currentConfig, settingsFleetDispatchAllow, workspaceFolder } from '../config';
 import type { Zer0Shell } from '../extension';
 import { describeError } from '../logger';
 import { confirm, notifyError, notifyInfo, notifyWarning } from '../uiState';
@@ -180,10 +180,21 @@ interface GateContext {
   dispatchAllow: boolean;
 }
 
+/**
+ * Everything the fleet gate depends on, for the **active site**.
+ *
+ * `fleet.manifest.yml` is a property of one repository, and so is the master
+ * gate: `zer0Cms.fleet.dispatchAllow` is `resource`-scoped, so a person can arm
+ * dispatch for the one repository they operate and leave the other eleven
+ * folders in the window disarmed. Reading it unscoped would have made a single
+ * `true` anywhere arm every site at once — which is the opposite of what a
+ * per-resource setting is for.
+ */
 async function collectGateContext(): Promise<GateContext> {
-  const cfg = currentConfig();
+  const folder = workspaceFolder();
+  const cfg = currentConfig(folder);
   const parsed = await readFleetManifest(absPath(cfg, cfg.fleet.manifestPath));
-  return { cfg, parsed, dispatchAllow: settingsFleetDispatchAllow() === true };
+  return { cfg, parsed, dispatchAllow: settingsFleetDispatchAllow(folder) === true };
 }
 
 function gateInput(ctx: GateContext, laneId: string, hasCredential: boolean): FleetGateInput {
@@ -457,7 +468,7 @@ async function readLive(shell: Zer0Shell, manifest: FleetManifest): Promise<Flee
 }
 
 async function doRefresh(shell: Zer0Shell, live: LiveCache, interactive: boolean): Promise<void> {
-  const cfg = currentConfig();
+  const cfg = currentConfig(workspaceFolder());
   if (cfg.workspaceRoot === '' || !cfg.fleet.enabled) {
     if (interactive) {
       await notifyWarning('the fleet console is disabled (set "zer0Cms.fleet.enabled" to true).');
@@ -499,7 +510,7 @@ async function doRefresh(shell: Zer0Shell, live: LiveCache, interactive: boolean
 // ---------------------------------------------------------------------------
 
 async function pickLane(filter: (lane: FleetLane) => boolean, placeHolder: string): Promise<string | undefined> {
-  const cfg = currentConfig();
+  const cfg = currentConfig(workspaceFolder());
   const parsed = await readFleetManifest(absPath(cfg, cfg.fleet.manifestPath));
   if (parsed.manifest === null) {
     await notifyWarning(`no fleet manifest (${parsed.reason}).`);
