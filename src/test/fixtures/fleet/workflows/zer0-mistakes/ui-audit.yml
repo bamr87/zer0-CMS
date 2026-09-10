@@ -1,0 +1,307 @@
+# ==============================================================================
+# Weekly AI UI/UX Audit
+# ==============================================================================
+# The agentic review loop for the theme's user-facing surface, in two tiers
+# (mirroring ai-content-review.yml's shape):
+#
+#   1. Deterministic sweep (no tokens): serve the site, walk the critical
+#      routes at mobile/tablet/desktop, capture screenshots + axe + console
+#      errors + overflow + broken internal links → test/ui-audit/output/.
+#   2. Claude Code ui-auditor agent (only when a Claude credential is set —
+#      CLAUDE_CODE_OAUTH_TOKEN preferred, ANTHROPIC_API_KEY as fallback):
+#      reads the sweep output and the component contract
+#      (docs/architecture/ui-components.md) and writes a prioritized findings
+#      report. The agent is read-only — it never edits files or posts.
+#
+# Findings land in ONE sticky issue (labeled source:ui-audit) that the issue
+# autopilot / /repo-audit triages into the backlog, feeding /issue-plan →
+# /issue-implement (theme-ui / a11y-fixer lanes) → evidence-gated fix PRs.
+# That closes the loop: audit → issue → plan → fix → verify, humans reviewing
+# at the PR boundary.
+# ==============================================================================
+
+name: UI/UX Audit
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+on:
+  schedule:
+    # Weekly, Monday morning UTC
+    - cron: '23 7 * * 1'
+  workflow_dispatch:
+
+env:
+  PAGES_REPO_NWO: ${{ vars.PAGES_REPO_NWO || github.repository }}
+
+jobs:
+  ui-audit:
+    name: Sweep + agent review
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check AI availability
+        id: ai-gate
+        env:
+          OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$OAUTH" ] || [ -n "$KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY set — sweep runs, agent tier skipped."
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ./.github/actions/setup-ruby
+        with:
+          ruby-version: '3.3'
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # NOTE: no `--detach`. Detaching disables Jekyll's watch thread, and the
+      # LiveReload reactor rides that thread — while `_config_dev.yml` still
+      # makes Jekyll inject `livereload.js` into every page. The script then
+      # points at a port nothing is listening on, `load` never fires, and every
+      # `page.goto(..., waitUntil: 'load')` times out. That silently produced
+      # zero screenshots for six consecutive weeks (#321). `curl -sf` cannot
+      # catch it: it fetches the HTML and never requests a subresource.
+      # Background the process instead, exactly as test/test_playwright.sh:69-74
+      # does — the ~30 Playwright specs it drives use `waitUntil: 'load'` and
+      # pass. Keep these two invocations in step.
+      - name: Serve Jekyll
+        run: |
+          mkdir -p test/visual-results
+          bundle exec jekyll serve \
+            --config _config.yml,_config_dev.yml \
+            --host 127.0.0.1 --port 4000 \
+            >test/visual-results/jekyll.log 2>&1 &
+          pid=$!
+          echo "JEKYLL_PID=$pid" >> "$GITHUB_ENV"
+          ready=false
+          for _ in $(seq 1 90); do
+            if curl -sf http://127.0.0.1:4000/ >/dev/null 2>&1; then
+              ready=true; break
+            fi
+            # Fail fast if the server died rather than waiting out all 90s.
+            if ! kill -0 "$pid" 2>/dev/null; then break; fi
+            sleep 1
+          done
+          if [ "$ready" != "true" ]; then
+            echo "::error::Jekyll did not become ready. Last 50 log lines:"
+            tail -n 50 test/visual-results/jekyll.log || true
+            exit 1
+          fi
+
+      - name: Run deterministic sweep
+        env:
+          BASE_URL: http://127.0.0.1:4000
+        run: node test/ui-audit/sweep.mjs
+
+      - name: Stop Jekyll
+        if: always()
+        run: |
+          if [ -n "${JEKYLL_PID:-}" ] && kill -0 "$JEKYLL_PID" 2>/dev/null; then
+            kill "$JEKYLL_PID" 2>/dev/null || true
+            for _ in $(seq 1 10); do
+              kill -0 "$JEKYLL_PID" 2>/dev/null || break
+              sleep 1
+            done
+            kill -9 "$JEKYLL_PID" 2>/dev/null || true
+          fi
+          echo "Jekyll stopped."
+
+      # `always()`: when the sweep hit its capture floor and exited non-zero, the
+      # output it DID write is the whole diagnostic. Uploading only on success is
+      # how a broken harness leaves nothing to debug it with.
+      - name: Upload sweep artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-audit-sweep
+          path: test/ui-audit/output/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Install Claude Code CLI
+        if: steps.ai-gate.outputs.enabled == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run ui-auditor agent (headless, read-only)
+        if: steps.ai-gate.outputs.enabled == 'true'
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set +e
+          # House convention: OAuth wins when both are set — drop the API key
+          # entirely so an empty-string secret never triggers empty-key auth.
+          if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+            unset ANTHROPIC_API_KEY
+          fi
+          read -r -d '' PROMPT <<'EOF'
+          Use the ui-auditor subagent to review the UI/UX sweep in
+          test/ui-audit/output/ against docs/architecture/ui-components.md.
+          Output ONLY the final Markdown findings report to stdout. Do not
+          modify any files.
+          EOF
+          claude -p "$PROMPT" \
+            --model claude-sonnet-4-6 \
+            --max-turns 40 \
+            --allowedTools "Task,Read,Grep,Glob" \
+            --output-format text \
+            > /tmp/ui-audit-agent.md 2> /tmp/ui-audit-err.log
+          status=$?
+          echo "claude exit status: $status"
+          tail -n 30 /tmp/ui-audit-err.log || true
+          if [ ! -s /tmp/ui-audit-agent.md ]; then
+            echo "_Agent tier produced no output (exit ${status}) — see run logs._" \
+              > /tmp/ui-audit-agent.md
+          fi
+
+      # `always()`: a capture failure is exactly the run whose explanation has to
+      # reach a human. Without it the sweep's non-zero exit would abort the job
+      # here and the sticky issue would keep showing the LAST successful audit.
+      - name: File or update the audit issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # A run that captured nothing has no findings to report — it has a
+          # broken harness. Filing that as "UI/UX audit findings" is what made
+          # six weeks of total failure look like six weeks of UI problems (#321),
+          # so the two states get visibly different bodies. The TITLE is left
+          # alone deliberately: it is the sticky key, and forking it would strand
+          # the existing thread.
+          CAPTURED=$(node -e '
+            const r = require("./test/ui-audit/output/report.json");
+            console.log((r.capture && r.capture.captured) ?? 0);' 2>/dev/null || echo 0)
+          TOTAL=$(node -e '
+            const r = require("./test/ui-audit/output/report.json");
+            console.log((r.capture && r.capture.attempted) ?? 0);' 2>/dev/null || echo 0)
+          # Only file when something was actually flagged. FINDINGS (something
+          # is wrong with the page) and HARNESS errors (we failed to look) are
+          # counted separately: folding them together is why a library misuse
+          # that blacked out four measurements was headlined as "21 flagged"
+          # UI problems (#468). The sweep computes both; the fallbacks keep this
+          # step working against a report.json written by an older sweep.
+          FLAGGED=$(node -e '
+            const r = require("./test/ui-audit/output/report.json");
+            if (typeof r.flagged === "number") { console.log(r.flagged); process.exit(0); }
+            const n = r.broken_links.length + r.routes.filter(x =>
+              (x.status && x.status >= 400) ||
+              (x.overflow && x.overflow.page_wider_than_viewport) ||
+              (x.axe_violations && x.axe_violations.length) ||
+              (x.console_errors && x.console_errors.length)).length;
+            console.log(n);' 2>/dev/null || echo 0)
+          HARNESS_ERRORS=$(node -e '
+            const r = require("./test/ui-audit/output/report.json");
+            if (typeof r.harness_errors === "number") { console.log(r.harness_errors); process.exit(0); }
+            console.log(r.routes.filter(x => x.error || x.errors).length);' 2>/dev/null || echo 0)
+          BLACKED_OUT=$(node -e '
+            const r = require("./test/ui-audit/output/report.json");
+            console.log(((r.harness && r.harness.blacked_out) || []).join(", "));' 2>/dev/null || echo "")
+          # The agent's verdict line says CLEAN when it found nothing.
+          AGENT_CLEAN=true
+          if [ -s /tmp/ui-audit-agent.md ] && ! grep -qi "CLEAN" /tmp/ui-audit-agent.md; then
+            AGENT_CLEAN=false
+          fi
+          echo "flagged=$FLAGGED harness_errors=$HARNESS_ERRORS agent_clean=$AGENT_CLEAN"
+          # A harness error is not a finding, but it IS a reason to file: it
+          # means the audit could not look. Staying silent about it is how six
+          # weeks of blindness passed for six clean weeks.
+          if [ "$FLAGGED" = "0" ] && [ "$HARNESS_ERRORS" = "0" ] && [ "$AGENT_CLEAN" = "true" ]; then
+            echo "Nothing flagged — no issue filed."
+            exit 0
+          fi
+
+          TITLE="UI/UX audit findings"
+          MARKER="<!-- ui-audit-sticky -->"
+          {
+            echo "$MARKER"
+            if [ "$CAPTURED" = "0" ]; then
+              echo "> [!CAUTION]"
+              echo "> **The audit captured nothing — these are not UI/UX findings.**"
+              echo "> 0 of $TOTAL route×viewport passes produced a screenshot, so every"
+              echo "> entry below is a capture failure, not something wrong with the page."
+              echo "> Fix the harness first; the sweep's results are void until it is green."
+              echo
+              echo "Harness failure ($(date -u +%F)). Run: $RUN_URL"
+            else
+              echo "Weekly UI/UX audit results ($(date -u +%F)). Run: $RUN_URL"
+              echo
+              echo "Captured **$CAPTURED of $TOTAL** route×viewport passes;"
+              echo "**$FLAGGED** UI finding(s); **$HARNESS_ERRORS** pass(es) with a harness error."
+              if [ -n "$BLACKED_OUT" ]; then
+                echo
+                echo "> [!CAUTION]"
+                echo "> **$BLACKED_OUT failed on EVERY route.** Those measurements are"
+                echo "> ABSENT, not clean, and any \"0 violations\" below is the absence"
+                echo "> speaking. Fix the harness before triaging the findings."
+              fi
+            fi
+            echo
+            echo "## Deterministic sweep"
+            cat test/ui-audit/output/report.md
+            echo
+            if [ -s /tmp/ui-audit-agent.md ]; then
+              echo "## Agent review"
+              cat /tmp/ui-audit-agent.md
+            fi
+            echo
+            echo "_Screenshots are in the run's ui-audit-sweep artifact._"
+            echo "_Triage via /repo-audit; route fixes to theme-ui / a11y-fixer._"
+          } > /tmp/ui-audit-issue.md
+
+          existing=$(gh issue list --state open --search "\"$TITLE\" in:title" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file /tmp/ui-audit-issue.md
+            echo "Updated audit issue #$existing"
+          else
+            new_url=$(gh issue create --title "$TITLE" --body-file /tmp/ui-audit-issue.md)
+            echo "Created audit issue: $new_url"
+            num="${new_url##*/}"
+            gh issue edit "$num" --add-label "source:ui-audit" 2>/dev/null || true
+            gh issue edit "$num" --add-label "area:ui" 2>/dev/null || true
+          fi
+
+      # LAST, and `always()`: an audit that captured nothing is a broken harness,
+      # and the job must go RED so it is not another green week. This runs after
+      # the artifact upload and the sticky update so both still happen — a
+      # capture failure is precisely the run whose evidence and explanation are
+      # worth keeping. `sweep.mjs` enforces the same floor on its own exit code
+      # (so `node test/ui-audit/sweep.mjs` is honest outside CI too); this step
+      # asserts it independently against the files actually on disk, because the
+      # bug this fixes was six weeks of exit-0 with an empty screens/ directory.
+      - name: Assert the sweep captured evidence
+        if: always()
+        run: |
+          shots=$(find test/ui-audit/output/screens -name '*.png' 2>/dev/null | wc -l)
+          echo "screenshots captured: $shots"
+          if [ "$shots" -eq 0 ]; then
+            echo "::error::UI audit captured 0 screenshots — the harness failed, not the UI."
+            echo "Last 50 lines of the Jekyll log:"
+            tail -n 50 test/visual-results/jekyll.log 2>/dev/null || echo "(no jekyll log)"
+            exit 1
+          fi

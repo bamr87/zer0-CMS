@@ -1,0 +1,154 @@
+# Weekly content review.
+#
+# Every Thursday, Claude adopts the content-curator charter
+# (.claude/agents/content-curator.md) and moves the site's content forward by
+# ONE unit: it reviews the corpus (starting from scripts/content_inventory.py)
+# and opens a pull request that either EXPANDS an existing article with more
+# relevant, current information, or WRITES a new article that fills a real gap.
+# It never pushes to main.
+#
+# This complements the content gardener (which only drafts brand-new posts):
+# the curator reviews everything and chooses between depth and breadth. See
+# docs/automation.md.
+#
+# Auth (Settings → Secrets and variables → Actions), OAuth preferred:
+#   1. CLAUDE_CODE_OAUTH_TOKEN — from `claude setup-token` (Claude Pro/Max). Default.
+#   2. ANTHROPIC_API_KEY — workspace API key. Fallback.
+# With neither set the workflow skips gracefully with a notice instead of failing.
+#
+# Optional: CONTENT_REVIEW_GITHUB_TOKEN — a fine-grained PAT (Contents + Pull
+# requests read/write) so the curator's PRs trigger the normal build checks.
+
+name: Content review (weekly)
+
+on:
+  schedule:
+    - cron: '37 14 * * 4' # Thursdays 14:37 UTC (~7–8 AM Denver)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Force a mode this run: expand | new | auto (default lets the curator choose).'
+        required: false
+        default: 'auto'
+      focus:
+        description: 'Optional section or page to focus on (e.g. "services", "posts/tech", "pages/_services/cloud.md"). Blank = whole corpus.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: content-review
+  cancel-in-progress: false
+
+jobs:
+  review:
+    name: Review the corpus and improve one thing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check for an Anthropic credential
+        id: gate
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CONTENT_LOOP_ENABLED: ${{ vars.CONTENT_LOOP_ENABLED }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          # When the content loop is on, its daily cadence covers this schedule —
+          # stand down so topics aren't doubled. A manual run still works.
+          if [ "$EVENT" = "schedule" ] && [ "$CONTENT_LOOP_ENABLED" = "true" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::The content loop is enabled (CONTENT_LOOP_ENABLED=true) and covers this schedule — the weekly content review idles. Run it manually (workflow_dispatch) for an extra piece. See docs/content-loop.md."
+          elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Anthropic credential set — skipping the weekly content review. Add CLAUDE_CODE_OAUTH_TOKEN (preferred) or ANTHROPIC_API_KEY under Settings → Secrets and variables → Actions to activate it."
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Deterministic content inventory (the review's starting shortlist)
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          echo "### Content inventory — focus shortlist" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python3 scripts/content_inventory.py --focus | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Review and improve one thing
+        if: steps.gate.outputs.ready == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          # OAuth token preferred; the action uses it over the API key when both
+          # are provided. API key is the fallback for API-billed runs.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.CONTENT_REVIEW_GITHUB_TOKEN || github.token }}
+          prompt: |
+            You are the CONTENT CURATOR for bashconsultants.com. Your full charter
+            is `.claude/agents/content-curator.md` — read it first, then execute
+            your weekly run. You move the content forward by exactly ONE unit and
+            open a pull request; you never push to main.
+
+            This run's directives (ignore if blank/auto):
+            - Forced mode: "${{ inputs.mode }}"  (expand | new | auto)
+            - Focus: "${{ inputs.focus }}"
+
+            Step 1 — survey deterministically first:
+              python3 scripts/content_inventory.py --focus
+              python3 scripts/content_inventory.py
+            Apply judgment: case studies and landing pages are concise by design,
+            not automatic expansion targets. Also skim `git log --oneline -20` for
+            the section that changed most recently.
+
+            Step 2 — read the standards named in your charter
+            (content-style + brand instructions, the page-type rules, and the
+            section voice in _data/taxonomy.yml).
+
+            Step 3 — choose ONE mode (honor the forced mode above if set):
+            • EXPAND an existing high-value page that is genuinely thin or stale —
+              add substantive, accurate section(s), refresh moved facts/tool
+              versions, bump `lastmod` to today (get it with `date -u +%Y-%m-%d`).
+              Do not rewrite what's good; do not pad.
+            • CREATE one new article for the section it best fits, following
+              article-write.prompt.md, with complete lint-passing frontmatter and a
+              `preview:` path (image need not exist yet). Use today's date for
+              `date`/`lastmod` (T12:00:00.000Z).
+            Either way: >=1 internal link and >=1 external PRIMARY-source link
+            (vendor docs or a regulator, never a blog) that resolves; zero banned
+            phrases; every acronym expanded on first use; exactly one CTA; no
+            invented metrics/clients/certifications; enact-don't-announce.
+
+            Step 4 — gate it: run `python3 scripts/content_lint.py` and fix every
+            issue in your file.
+
+            Step 5 — open the PR (never push to main):
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git checkout -b content/weekly-<expand-or-new>-<slug>
+              commit the single changed/added file, push, and `gh pr create` against
+              main titled `content(<section>): <expand|add> — <subject>`. The body
+              states the mode and why (cite the inventory), lists what changed, and
+              for a new post includes the reviewer's preview-image checklist.
+
+            Step 6 — print a one-paragraph summary and the PR URL.
+          # The charter is a six-step run (inventory, read the standards, choose a
+          # mode, write, lint, open the PR), so the turn count scales with the
+          # corpus. At 40 it began tripping *after* the work was done: the
+          # 2026-08-27 run used 42 turns and the 2026-09-03 run 43, each landing
+          # its PR (#40, #44 — both merged) seconds before the action failed the
+          # job on the ceiling alone. `timeout-minutes: 30` is the real cost guard
+          # here; these runs finish in ~4.5m.
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(python3 scripts/content_inventory.py:*),Bash(python3 scripts/content_lint.py:*),Bash(date:*),Bash(ls:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr list:*)"

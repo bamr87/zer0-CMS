@@ -1,6 +1,8 @@
 # `src/webview/dashboard` — the editor-tab surface
 
-Six routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
+Six served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
+
+Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and six are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
 
 ```
 main.ts        boot, gate order, route table, the section reconciler
@@ -30,7 +32,9 @@ Two kinds of state, kept apart deliberately. Everything about *the workspace* �
 
 ## Chrome (`header.ts`)
 
-One tab bar for every route, plus — on Contents only — the five-row toolbar stack: create/refresh/search, the draft-state tabs with view switcher, filters and grouping and sorting, pagination, and the selection actions. The other four routes get the tab bar and nothing else, because a sort control above a draft queue is a control that does nothing.
+One tab bar for every route, plus — on Contents only — the five-row toolbar stack: create/refresh/search, the draft-state tabs with view switcher, filters and grouping and sorting, pagination, and the selection actions. A sort control above a draft queue is a control that does nothing, so no other route gets Contents' stack.
+
+Every other route may register **one** toolbar row of its own through `setRouteToolbar(route, ctx => node | null)`, called at module scope by the route that owns it. Audit, Workflows and Monitor each have filters, and they are not Contents' filters. `header.ts` never learns what is in a route's toolbar and never imports a route — the alternative is a cycle the moment a route wants a shared control back. A route that registers nothing gets the bare tab bar, exactly as before, and `contents` is not registerable because its five persisted keys (`sorting`, `grouping`, `page`, `view`) are read here.
 
 Three behaviours here are contracts, not preferences: **sorting is disabled while a search query is active** (the host returns hits in relevance order and a sort would discard the ranking, so the control greys rather than silently ignoring you); **pagination is hidden while grouping is active and in Structure view**; and **View and Rename are enabled at exactly one selection** — not zero, not two — while Delete works on any non-empty selection and always confirms first.
 
@@ -80,9 +84,9 @@ A health of `-1` means "the engine never scored this page". It renders as an em 
 
 One table: lane · kind · harness · triggers and guardrails · switch · last run · two buttons, over `FleetState`, which the host builds from `fleet.manifest.yml` and its last live read of GitHub. The tab is absent from `state.tabs` while `zer0Cms.fleet.enabled` is off, so a persisted `fleet` route degrades to Contents.
 
-**Switch on / Switch off** and **Dispatch** post `{ type:'command', id, args:{ lane } }` — a lane id and nothing else. Not the new value (the host derives it from the variable it fetches inside the action), not a ref, not a `force`. The blockers under a disabled button are the host's advisory `evaluateFleetGates()` in the gate's own order, verbatim, for the reason the Drafts route keeps the publish gate's order: re-sorting here would make this screen and the confirmation modal disagree about the same lane.
+**Switch on / Switch off** and **Dispatch** are `gatedButton`s posting `{ type:'command', id, args:{ lane } }` — a lane id and nothing else. Not the new value (the host derives it from the variable it fetches inside the action), not a ref, not a `force`. The blockers under a disabled button are the host's advisory `evaluateFleetGates()` in the gate's own order, verbatim, for the reason the Drafts route keeps the publish gate's order: re-sorting here would make this screen and the confirmation modal disagree about the same lane.
 
-The switch pill has four honest states — `true`, `false`, `unset` (the API said 404) and `unknown` (nobody has asked: no credential, or the tab was opened without one) — and an ungated lane draws a dash. `unknown` borrows the "draft" red because it is the one state that is not an answer; the note above the table says so and **Refresh** posts `fleet.refresh`, the only intent on this screen that may prompt to sign in. Token rows show names only: the console never reads a secret.
+The switch pill has four honest states — `true`, `false`, `unset` (the API said 404) and `unknown` (nobody has asked: no credential, or the tab was opened without one) — and an ungated lane draws a dash. `true` is `warn` amber because an armed lane is one that will spend tokens on its own; `unknown` is the `statusPill` variant that is not an answer, and it renders unfilled and dashed rather than as another grey badge. That distinction is enforced in the shared component now rather than remembered here, because five more tabs have to make it. **Refresh** posts `fleet.refresh`, the only intent on this screen that may prompt to sign in. Token rows show names only: the console never reads a secret.
 
 ## Settings (`settings.ts`)
 
@@ -117,4 +121,8 @@ The host may refine any of them by sending `WelcomeState.steps`; an entry whose 
 
 ## Styling
 
-Every class emitted here is dressed by `media/dashboard.css` (and `media/base.css` for the kernel widgets). The dashboard bundle does **not** load `media/panel.css`, so the panel's `.z-pill--*` status variants are not available: draft status uses `.z-status` with `--scheduled` for `pending` and `--draft` for an unrecognised status. Only `media/tokens.css` may name a VS Code theme variable.
+Every class emitted here is dressed by `media/dashboard.css` (and `media/base.css` for the kernel widgets — `.z-status`, `.z-table*` and `.z-emptystate` live there now, because the shared components build them and the panel bundle has to be able to render one). The dashboard bundle does **not** load `media/panel.css`, so the panel's `.z-pill--*` status variants are not available.
+
+Status goes through `statusPill` rather than a hand-written class: `ok | warn | danger | neutral | unknown`, where `unknown` renders unfilled, dashed and italic. That is the one variant that carries a rule — a cell nobody has asked about must not look like a cell whose answer happens to be "no". The legacy `--scheduled` / `--draft` selectors are still in `base.css` as aliases of `--warn` / `--danger`, because `contents.ts` and `structure.ts` still emit them.
+
+Only `media/tokens.css` may name a VS Code theme variable, and `src/test/styling.test.ts` greps for violations. It also fails the build if `el()` grows a `style` prop back: the strict CSP drops an inline style attribute silently, so the idiom does nothing and looks like it works.

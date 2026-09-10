@@ -30,7 +30,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
-import { buildIndex, pageToRecord } from '../content/pageIndex';
+import { buildIndex, pageToRecord, type IndexCache } from '../content/pageIndex';
 import { atomicWriteFile } from '../shared/atomic';
 import { absPath } from '../shared/config';
 import { pyJsonDump } from '../shared/jsonio';
@@ -512,23 +512,48 @@ export async function loadContract(
 }
 
 /**
+ * A `Contract` plus the page-index cache the fallback scan left behind.
+ *
+ * Additive on purpose: every existing caller reads `Contract` fields and is
+ * untouched by the extra one. A caller that keeps the cache and hands it back
+ * next time turns the second scan into a stat-per-file walk instead of a full
+ * re-parse — which is the whole reason the MCP server, a process that answers
+ * many tool calls against one repository, is given somewhere to put it.
+ */
+export interface ContractScan extends Contract {
+  /**
+   * The cache to keep for next time: the one the scan built, or the one that
+   * was passed in when `.cms/` answered and no scan ran. `undefined` when there
+   * was nothing to build and nothing was passed.
+   */
+  cache: IndexCache | undefined;
+}
+
+/**
  * The contract, or the filesystem standing in for it (decision D9).
  *
  * When `.cms/` is missing, the page index supplies the same `ContentRecord`
  * shape with `health: -1` and `freshness: 'unknown'`. `present` stays `false`
  * — the records are real, the engine's judgement is not.
+ *
+ * `cache` is optional in both directions: pass one to make the scan warm, keep
+ * the one that comes back to make the next one warm too. A caller that ignores
+ * it gets exactly today's behaviour, a cold scan every time.
  */
 export async function loadContractOrScan(
   cfg: Zer0Config,
   log: LogSink = NOOP_LOG,
-): Promise<Contract> {
-  const contract = await loadContract(cfg.workspaceRoot, { dir: absPath(cfg, cfg.cms.root) });
+  cache?: IndexCache,
+): Promise<ContractScan> {
+  const loaded = await loadContract(cfg.workspaceRoot, { dir: absPath(cfg, cfg.cms.root) });
+  const contract: ContractScan = { ...loaded, cache };
   if (contract.present) {
     return contract;
   }
   try {
-    const { pages } = await buildIndex(cfg);
-    contract.records = pages.map((page) => pageToRecord(cfg, page));
+    const scan = await buildIndex(cfg, cache, log);
+    contract.records = scan.pages.map((page) => pageToRecord(cfg, page));
+    contract.cache = scan.cache;
   } catch (error) {
     // A scan failure degrades to "no records", never to a thrown promise: the
     // dashboard and the MCP server both call this on every refresh, and an

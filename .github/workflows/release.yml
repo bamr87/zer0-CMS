@@ -1,0 +1,119 @@
+# Release: Conventional Commits in, a tagged GitHub Release and a published
+# extension out.
+#
+# Two halves, deliberately split.
+#
+# `release` is a thin caller of the fleet's shared release-please workflow
+# (bamr87/.github). It opens and maintains a release PR that bumps
+# `package.json` + `.release-please-manifest.json` and rewrites CHANGELOG.md;
+# merging that PR is what tags `vX.Y.Z` and creates the GitHub Release. The
+# shared workflow also re-locks `package-lock.json` on the release PR branch,
+# which is why the committed lockfile stays honest and `npm ci` below works at
+# the tag. Nothing here bumps a version by hand — see `docs/RELEASING.md`.
+#
+# `marketplace` is this repository's own, because a VS Code extension is not an
+# npm package: `package.json` is `"private": true` precisely so nothing ever
+# routes it to `npm publish`, and the hub's generic publish workflow has no vsix
+# path. It packages the extension at the tag, attaches the vsix to the GitHub
+# Release (credential-free distribution — any fleet machine can then
+# `code --install-extension zer0-cms-<version>.vsix`), and only then tries the
+# two registries.
+#
+# Both registry steps SKIP with a `::notice::` when their token is absent
+# instead of failing the run. The Marketplace publisher and the Open VSX
+# namespace do not exist yet; a release that cannot reach a registry must still
+# produce a tag, a changelog and a downloadable vsix.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Never cancel a release in progress: a half-run release-please leaves a tag
+# without its release, or a release without its vsix.
+concurrency:
+  group: release-please-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    uses: bamr87/.github/.github/workflows/release-please.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    secrets: inherit
+
+  marketplace:
+    name: Package the vsix and publish it
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.release.outputs.tag_name }}
+      VSIX: zer0-cms-${{ needs.release.outputs.version }}.vsix
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.tag_name }}
+
+      # 22 matches `.nvmrc`, the extension host's own Node, and the floor the
+      # bundled engines package declares.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # `--no-dependencies` is honest rather than a shortcut: the extension
+      # ships zero runtime dependencies and everything else is bundled by
+      # esbuild, so there is no node_modules tree to fold into the vsix.
+      # `vsce package` runs `vscode:prepublish`, so this type-checks, lints and
+      # bundles in production mode before it writes anything.
+      - name: Package
+        run: npx @vscode/vsce package --no-dependencies -o "$VSIX"
+
+      # The packaged file list is a reviewed artefact. If the tag's contents
+      # disagree with it, stop before anything is distributed.
+      - name: Verify the packaged file list
+        run: |
+          npx @vscode/vsce ls --no-dependencies | LC_ALL=C sort > /tmp/vsix-actual.txt
+          diff -u .vsix-manifest.txt /tmp/vsix-actual.txt
+
+      # Attach the vsix to the Release first. This is the distribution path
+      # that needs no marketplace account and no token beyond GITHUB_TOKEN.
+      - name: Attach the vsix to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh release upload "$TAG" "$VSIX" --repo "$REPO" --clobber
+
+      # `secrets` is not available in a step-level `if:`, so the presence check
+      # happens in the shell — which is also where a readable ::notice:: fits.
+      - name: Publish to the Visual Studio Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "${VSCE_PAT:-}" ]; then
+            echo "::notice title=Marketplace publish skipped::VSCE_PAT is not set. The vsix for $TAG is attached to the GitHub Release; see docs/RELEASING.md to provision the token."
+            exit 0
+          fi
+          npx @vscode/vsce publish --packagePath "$VSIX"
+
+      # `--yes` only here: `@vscode/vsce` is a devDependency and resolves out of
+      # node_modules, but `ovsx` is fetched on the fly and must not be able to
+      # stop on a prompt.
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "${OVSX_PAT:-}" ]; then
+            echo "::notice title=Open VSX publish skipped::OVSX_PAT is not set. The vsix for $TAG is attached to the GitHub Release; see docs/RELEASING.md to provision the token."
+            exit 0
+          fi
+          npx --yes ovsx publish "$VSIX" -p "$OVSX_PAT"

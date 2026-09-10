@@ -1,0 +1,10 @@
+scalar: plain
+needsQuotes: "yes: really"
+empty: ""
+nested:
+  list:
+    - a
+    - b
+  flag: true
+  count: 3
+  nothing: null

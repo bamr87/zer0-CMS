@@ -43,8 +43,29 @@ import type { ToolArgs } from './tools';
 
 type ToolsModule = typeof import('./tools');
 
+/**
+ * The extension's version, substituted by esbuild at build time.
+ *
+ * It is a `define` rather than an `import` of `package.json` for two reasons.
+ * The MCP bundle marks nothing external, so a JSON import would be inlined into
+ * the layering gate's blast radius; and `dist/mcp-server.js` is a single file
+ * with no `package.json` beside it at runtime, so there is nothing to read.
+ * Declaring it here keeps one version string in one place — `package.json`,
+ * which release-please owns — instead of a literal that quietly rots.
+ *
+ * The `typeof` guard is not defensive noise: `src/test/mcp.test.ts` runs the
+ * plain `tsc` output under `out/` directly, to inject a throwing stub into the
+ * tool table and prove that a handler bug is a flagged result rather than a
+ * dead server. Nothing defines the constant there, so an unguarded reference
+ * is a `ReferenceError` at module load — the server would die before reading
+ * its first frame, and the suite that exists to prove it does not die would be
+ * the thing that killed it.
+ */
+declare const __ZER0_CMS_VERSION__: string | undefined;
+
 export const SERVER_NAME = 'zer0-cms';
-export const SERVER_VERSION = '0.1.0';
+export const SERVER_VERSION =
+  typeof __ZER0_CMS_VERSION__ === 'string' ? __ZER0_CMS_VERSION__ : '0.0.0-dev';
 
 /** Echoed back when the client asks for one of these; otherwise ours wins. */
 const SUPPORTED_PROTOCOLS: ReadonlySet<string> = new Set([
@@ -54,12 +75,25 @@ const SUPPORTED_PROTOCOLS: ReadonlySet<string> = new Set([
 ]);
 const DEFAULT_PROTOCOL = '2025-06-18';
 
+/**
+ * Told to the client at `initialize`. It names the three CLASSES of tool rather
+ * than listing them or counting them: the list grows every release, and a
+ * sentence that says "six tools" while `tools/list` returns twelve teaches a
+ * model to distrust the sentence. The classes are the part that never moves.
+ */
 const INSTRUCTIONS =
-  'Tools for a governed content repository. Reads and previews are always safe: ' +
-  'zer0_status, zer0_list_content, zer0_get_content and zer0_preview never write. ' +
-  'zer0_draft stages a pending draft for a human to approve — prefer it. ' +
-  'zer0_publish writes real content and is off unless the server environment opts ' +
-  'in and the call passes confirm=true.';
+  'Tools for a governed content repository, in three classes. ' +
+  'READ: everything that reports on the repository, plus zer0_preview, which ' +
+  'renders the exact artifact a publish would write without writing it. Safe to ' +
+  'call freely. Some read tools can also record their own derived output under ' +
+  'the .cms/ contract; each says so, and each takes write=false to stay silent. ' +
+  'DRAFT: zer0_draft stages a pending draft for a human to review and approve. ' +
+  'This is the doctrine-preferred path — the AI drafts, the human approves. ' +
+  'PUBLISH: zer0_publish writes real content and records it in the idempotency ' +
+  'ledger. It is off unless the server environment opts in, and it additionally ' +
+  'requires confirm=true on the call. ' +
+  'Call tools/list for the current set; that list is authoritative, this text is ' +
+  'only the shape of it.';
 
 // ---------------------------------------------------------------------------
 // JSON-RPC framing

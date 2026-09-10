@@ -24,8 +24,10 @@
  * registered folders and richer page model.
  *
  * Pure Node: no `vscode`, no npm, no editor state. The shell owns the cache's
- * storage (`zer0Cms:Pages:Cache` in `workspaceState`); this module only builds
- * and consumes it.
+ * storage (`INDEX_CACHE_KEY` in `workspaceState`); this module only builds and
+ * consumes it — and `changed` tells it when that write is worth making, because
+ * a rebuild that reused every page has nothing new to store and the cache for a
+ * real site is megabytes.
  */
 
 import * as fs from 'node:fs/promises';
@@ -353,12 +355,134 @@ function toPageEntry(
 // ---------------------------------------------------------------------------
 
 /**
+ * How many candidates are stat-ed and read at once.
+ *
+ * A cold scan of a real site is I/O bound and almost entirely idle: 382 files
+ * one at a time is 382 round trips through the event loop waiting on the disk.
+ * Eight is the width where the wall clock stops improving on a laptop SSD and
+ * before the process starts holding hundreds of file descriptors open on a
+ * workspace somebody opened by accident.
+ *
+ * The warm path keeps its shape: a cached candidate still costs exactly one
+ * `stat` and zero reads, which is already the floor — the pool changes when
+ * those stats are issued, never how many. It gets a little faster for free and
+ * cannot get slower, because there is no work here to add.
+ */
+const SCAN_CONCURRENCY = 8;
+
+/**
+ * What one candidate turned out to be. Deliberately a value rather than a
+ * mutation: the workers run out of order, so every decision is recorded against
+ * the candidate's index and folded back in order afterwards. That is what keeps
+ * `pages[]` sorted by path and keeps a reused `PageEntry` identical by identity.
+ */
+type ScanResult =
+  /** Vanished between the walk and the stat. It is not content any more. */
+  | { kind: 'gone' }
+  /** The cache still holds it: the very same `PageEntry` object comes back. */
+  | { kind: 'reused'; entry: { mtime: number; page: PageEntry } }
+  /** Known to hold no front matter, at that same mtime. Not re-read. */
+  | { kind: 'skipped-cached'; mtime: number }
+  /** Read failed — not indexed, not remembered, reported in the log. */
+  | { kind: 'unreadable' }
+  /** Read, and it holds no front matter: remembered so it is not read again. */
+  | { kind: 'skipped-parsed'; mtime: number }
+  | { kind: 'parsed'; mtime: number; page: PageEntry };
+
+/**
+ * Resolve one candidate. Nothing here throws and nothing here logs: the log
+ * belongs to the sequential fold, so its lines stay in candidate order however
+ * the workers interleave.
+ */
+async function scanCandidate(
+  cfg: Zer0Config,
+  candidate: Candidate,
+  usable: IndexCache | undefined,
+): Promise<ScanResult> {
+  let modified: number;
+  try {
+    modified = (await fs.stat(candidate.filePath)).mtimeMs;
+  } catch {
+    return { kind: 'gone' };
+  }
+
+  const cached = usable?.entries[candidate.filePath];
+  if (cached !== undefined && cached.mtime === modified) {
+    // Reused by identity on purpose: it is the cheapest correct answer, and it
+    // is how a test proves nothing was re-parsed.
+    return { kind: 'reused', entry: cached };
+  }
+
+  if (usable?.skipped?.[candidate.filePath] === modified) {
+    return { kind: 'skipped-cached', mtime: modified };
+  }
+
+  let text: string;
+  try {
+    text = await fs.readFile(candidate.filePath, 'utf8');
+  } catch {
+    return { kind: 'unreadable' };
+  }
+
+  const { block } = splitFrontMatter(text);
+  if (block === null) {
+    // No front matter is not a failure; it means "this file is not a page".
+    return { kind: 'skipped-parsed', mtime: modified };
+  }
+
+  const data = applyCommaSeparatedFields(block.data, cfg.frontMatter.commaSeparatedFields);
+  return { kind: 'parsed', mtime: modified, page: toPageEntry(cfg, candidate, data, modified) };
+}
+
+/**
+ * Every candidate resolved, at most `SCAN_CONCURRENCY` at a time, into an array
+ * parallel to `candidates` — **by index, never by completion order**. A worker
+ * pool over a shared cursor rather than chunked batches, so one slow file does
+ * not stall the seven fast ones behind it.
+ */
+async function scanCandidates(
+  cfg: Zer0Config,
+  candidates: readonly Candidate[],
+  usable: IndexCache | undefined,
+): Promise<(ScanResult | undefined)[]> {
+  const results: (ScanResult | undefined)[] = new Array(candidates.length).fill(undefined);
+  let cursor = 0;
+
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const index = cursor;
+      cursor += 1;
+      const candidate = candidates[index];
+      if (candidate === undefined) {
+        return;
+      }
+      results[index] = await scanCandidate(cfg, candidate, usable);
+    }
+  };
+
+  const width = Math.min(SCAN_CONCURRENCY, candidates.length);
+  await Promise.all(Array.from({ length: width }, () => worker()));
+  return results;
+}
+
+/** How many own keys a cache map holds; `undefined` counts as none. */
+function countKeys(map: Record<string, unknown> | undefined): number {
+  return map === undefined ? 0 : Object.keys(map).length;
+}
+
+/**
  * Scan every registered content folder into pages, reusing `prev` for files
  * whose mtime has not moved.
  *
  * The returned cache is built fresh rather than mutated: a file that was
  * deleted, renamed or excluded since the last run simply does not appear in it,
  * so the cache can never grow into a graveyard of pages that no longer exist.
+ *
+ * `changed` reports whether that cache says anything the passed-in one did not:
+ * `false` means every candidate was reused and the candidate set is identical,
+ * which is the shell's cue to skip persisting it. The cache for a real site is
+ * megabytes, and writing the same megabytes back into `workspaceState` on every
+ * file save is a cost nobody asked for.
  *
  * Nothing here throws for a bad file. An unreadable file, a folder that does
  * not exist and a file whose front matter will not parse are all just absent
@@ -369,7 +493,7 @@ export async function buildIndex(
   cfg: Zer0Config,
   prev?: IndexCache,
   log: LogSink = NOOP_LOG,
-): Promise<{ pages: PageEntry[]; cache: IndexCache }> {
+): Promise<{ pages: PageEntry[]; cache: IndexCache; changed: boolean }> {
   const started = Date.now();
   const fingerprint = fingerprintOf(cfg);
   const usable = prev !== undefined && (prev.fingerprint ?? fingerprint) === fingerprint ? prev : undefined;
@@ -379,6 +503,7 @@ export async function buildIndex(
 
   const folders = await resolveFolders(cfg);
   const candidates = await collectCandidates(cfg, folders, log);
+  const results = await scanCandidates(cfg, candidates, usable);
 
   const entries: IndexCache['entries'] = {};
   const skipped: Record<string, number> = {};
@@ -387,60 +512,59 @@ export async function buildIndex(
   let reused = 0;
   let ignored = 0;
 
-  for (const candidate of candidates) {
-    let modified: number;
-    try {
-      modified = (await fs.stat(candidate.filePath)).mtimeMs;
-    } catch {
-      // Vanished between the walk and the stat. It is not content any more.
+  // The fold is sequential and in candidate order, which is what makes the
+  // concurrency above invisible: same page order, same objects, same log lines.
+  for (let index = 0; index < candidates.length; index += 1) {
+    const candidate = candidates[index];
+    const result = results[index];
+    if (candidate === undefined || result === undefined) {
       continue;
     }
 
-    const cached = usable?.entries[candidate.filePath];
-    if (cached !== undefined && cached.mtime === modified) {
-      // Reused by identity on purpose: it is the cheapest correct answer, and
-      // it is how a test proves nothing was re-parsed.
-      entries[candidate.filePath] = cached;
-      pages.push(cached.page);
-      reused += 1;
-      continue;
+    switch (result.kind) {
+      case 'gone':
+        break;
+      case 'reused':
+        entries[candidate.filePath] = result.entry;
+        pages.push(result.entry.page);
+        reused += 1;
+        break;
+      case 'skipped-cached':
+        skipped[candidate.filePath] = result.mtime;
+        ignored += 1;
+        break;
+      case 'unreadable':
+        log.verbose(`page index: cannot read ${candidate.relPath}`);
+        break;
+      case 'skipped-parsed':
+        parsed += 1;
+        skipped[candidate.filePath] = result.mtime;
+        ignored += 1;
+        break;
+      case 'parsed':
+        parsed += 1;
+        entries[candidate.filePath] = { mtime: result.mtime, page: result.page };
+        pages.push(result.page);
+        break;
     }
-
-    if (usable?.skipped?.[candidate.filePath] === modified) {
-      skipped[candidate.filePath] = modified;
-      ignored += 1;
-      continue;
-    }
-
-    let text: string;
-    try {
-      text = await fs.readFile(candidate.filePath, 'utf8');
-    } catch {
-      log.verbose(`page index: cannot read ${candidate.relPath}`);
-      continue;
-    }
-
-    parsed += 1;
-    const { block } = splitFrontMatter(text);
-    if (block === null) {
-      // No front matter is not a failure; it means "this file is not a page".
-      skipped[candidate.filePath] = modified;
-      ignored += 1;
-      continue;
-    }
-
-    const data = applyCommaSeparatedFields(block.data, cfg.frontMatter.commaSeparatedFields);
-    const page = toPageEntry(cfg, candidate, data, modified);
-    entries[candidate.filePath] = { mtime: modified, page };
-    pages.push(page);
   }
+
+  // Nothing was read, so every entry and every skip in the new cache came out
+  // of the old one by reuse — the two are equal exactly when they are the same
+  // size. A file that was deleted (or excluded, or renamed) shrinks one of the
+  // two maps and is the only other way this cache differs from its input.
+  const changed =
+    usable === undefined ||
+    parsed > 0 ||
+    countKeys(entries) !== countKeys(usable.entries) ||
+    countKeys(skipped) !== countKeys(usable.skipped);
 
   log.verbose(
     `page index: pages=${pages.length} parsed=${parsed} cached=${reused} skipped=${ignored} ` +
       `folders=${folders.length} ms=${Date.now() - started}`,
   );
 
-  return { pages, cache: { version: CACHE_VERSION, entries, skipped, fingerprint } };
+  return { pages, cache: { version: CACHE_VERSION, entries, skipped, fingerprint }, changed };
 }
 
 // ---------------------------------------------------------------------------
@@ -460,15 +584,42 @@ function stringField(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
+/** The first path segment below `folderRel`: `_posts/corp/x.md` → `corp`. */
+function firstSegmentWithin(relPath: string, folderRel: string): string {
+  const within =
+    folderRel !== '' && relPath.startsWith(`${folderRel}/`)
+      ? relPath.slice(folderRel.length + 1)
+      : relPath;
+  const slash = within.indexOf('/');
+  return slash === -1 ? '' : within.slice(0, slash);
+}
+
 /** The folder-relative first segment, BASH-CMS style: `_posts/corp/x.md` → `corp`. */
 function collectionOf(cfg: Zer0Config, page: PageEntry): string {
   const folder = page.folder === '' ? '' : toRelPath(cfg, page.folder).replace(/\/+$/, '');
-  const within =
-    folder !== '' && page.relPath.startsWith(`${folder}/`)
-      ? page.relPath.slice(folder.length + 1)
-      : page.relPath;
-  const slash = within.indexOf('/');
-  return slash === -1 ? '' : within.slice(0, slash);
+  return firstSegmentWithin(page.relPath, folder);
+}
+
+/**
+ * The same answer as `collectionOf`, without a `Zer0Config` to strip the
+ * workspace root with. `page.folder` is absolute and `page.relPath` is
+ * workspace-relative, so the *longest suffix of the folder that prefixes the
+ * relative path* is the folder's own relative spelling — which is exactly what
+ * `toRelPath` would have produced. A page whose folder does not prefix its path
+ * falls back to the first segment of the path, the same as `collectionOf` does.
+ */
+function collectionWithoutConfig(page: PageEntry): string {
+  const segments = toPosix(page.folder)
+    .replace(/\/+$/, '')
+    .split('/')
+    .filter((segment) => segment !== '');
+  for (let start = 0; start < segments.length; start += 1) {
+    const folderRel = segments.slice(start).join('/');
+    if (page.relPath.startsWith(`${folderRel}/`)) {
+      return firstSegmentWithin(page.relPath, folderRel);
+    }
+  }
+  return firstSegmentWithin(page.relPath, '');
 }
 
 /**
@@ -562,6 +713,53 @@ function conventionalLastmod(page: PageEntry): string | null {
     }
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// The wire projection
+// ---------------------------------------------------------------------------
+
+/**
+ * The eight fields a list, a tree or a search result actually renders.
+ *
+ * Declared here only until `src/core/shared/types.ts` carries it: it is a
+ * cross-cutting type, and the integration work package moves it there.
+ */
+export interface PageSummary {
+  /** Workspace-relative POSIX path — the identity a view sorts and shows. */
+  relPath: string;
+  /** Absolute path, for the command that opens the file. */
+  path: string;
+  title: string;
+  slug: string;
+  date: string | null;
+  /** The draft flag as configured; a `choice` field keeps its status word. */
+  draft: boolean | string;
+  collection: string;
+  /** File mtime in epoch milliseconds. */
+  modified: number;
+}
+
+/**
+ * A `PageEntry` minus its front matter.
+ *
+ * `PageEntry.data` is the *whole* front-matter block, which is right for the
+ * panel (it edits arbitrary fields) and wrong for every surface that only draws
+ * a row: a search reply over a real site carries about 1.2 MB of front matter
+ * nothing on the other side reads. This is the shape that crosses the wire
+ * instead. Dates stay strings, exactly as they were written.
+ */
+export function slimPage(page: PageEntry): PageSummary {
+  return {
+    relPath: page.relPath,
+    path: page.filePath,
+    title: page.title,
+    slug: page.slug,
+    date: page.date,
+    draft: page.draft,
+    collection: collectionWithoutConfig(page),
+    modified: page.modified,
+  };
 }
 
 // ---------------------------------------------------------------------------

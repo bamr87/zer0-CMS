@@ -272,7 +272,7 @@ export function fieldShell(ctx: FieldContext, options: FieldShellOptions = {}): 
   const root = el('div', {
     class: options.rootClass ? `metadata_field ${options.rootClass}` : 'metadata_field',
   });
-  const actions = el('div', { class: 'field__title__actions', style: 'display:flex;gap:0.75rem' });
+  const actions = el('div', { class: 'field__title__actions z-row z-row--wide' });
   const control = el('div', { class: 'metadata_field__control' });
   const messageHost = el('div', { class: 'metadata_field__message' });
   const errorHost = el('div', { class: 'metadata_field__error_host' });
@@ -291,9 +291,9 @@ export function fieldShell(ctx: FieldContext, options: FieldShellOptions = {}): 
               : 'metadata_field__label',
           },
           iconName ? icon(iconName) : null,
-          el('span', { style: 'line-height:16px' }, label),
+          el('span', { class: 'z-label__text' }, label),
           options.labelSuffix
-            ? el('span', { style: 'font-weight:lighter' }, options.labelSuffix)
+            ? el('span', { class: 'z-label__suffix' }, options.labelSuffix)
             : null,
           required ? el('span', { class: 'metadata_field__required__asterix' }, '*') : null,
         ),
@@ -392,12 +392,13 @@ const noop = (): void => undefined;
 /**
  * A widget that renders nothing and does nothing. Used by the presentation
  * types, whose node carries no value, and by a `fieldCollection` that resolved
- * to nothing. The default node is `display:none` so it cannot open a gap in the
- * `.metadata_fields` stack.
+ * to nothing. The default node carries `.z-hidden` so it cannot open a gap in
+ * the `.metadata_fields` stack — a class, not an inline `style`, because the
+ * strict CSP drops an inline style attribute silently.
  */
 export function emptyWidget(node?: HTMLElement): FieldWidget {
   return {
-    el: node ?? el('div', { class: 'metadata_field__void', style: 'display:none' }),
+    el: node ?? el('div', { class: 'metadata_field__void z-hidden' }),
     setValue: noop,
     setLoading: noop,
     setError: noop,

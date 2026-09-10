@@ -1,14 +1,22 @@
+# Where the "New issue" chooser sends people before they open an issue.
+#
+# These links used to point at Front Matter CMS — its docs site, its changelog
+# and its author's sponsor page. zer0-CMS shares no code with Front Matter since
+# 0.1.0, and sending its users to another project's sponsor button is neither
+# honest nor useful. Credit for the interaction design this extension inherited
+# lives in ATTRIBUTION.md, which is where a credit link belongs.
+#
+# Note: issues are currently disabled on bamr87/zer0-CMS, so these templates are
+# staged rather than live. They are kept correct so that turning issues on is a
+# repository setting and not a documentation project.
 blank_issues_enabled: false
 contact_links:
   - name: Documentation
-    url: https://frontmatter.codes/docs
-    about: See our documentation.
+    url: https://github.com/bamr87/zer0-CMS/tree/main/docs
+    about: Configuration, architecture and the release process.
   - name: Changelog
-    url: https://frontmatter.codes/updates
-    about: See our changelog.
-  - name: Front Matter website
-    url: https://frontmatter.codes
-    about: Our website.
-  - name: Support Front Matter
-    url: https://github.com/sponsors/estruyf
-    about: Support Front Matter development.
+    url: https://github.com/bamr87/zer0-CMS/blob/main/CHANGELOG.md
+    about: What changed, release by release.
+  - name: Attribution
+    url: https://github.com/bamr87/zer0-CMS/blob/main/ATTRIBUTION.md
+    about: What this project owes to Front Matter CMS, and where that project lives.

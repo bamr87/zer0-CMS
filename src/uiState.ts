@@ -2,7 +2,7 @@
  * The bits of UI that are not a view: context keys, the status bar item, and
  * the handful of notification helpers every command uses.
  *
- * **Nine context keys, and every one of them gates something in
+ * **Ten context keys, and every one of them gates something in
  * `package.json`.** Upstream shipped fourteen, five of which were dead — one
  * of them (`frontMatterCanInit`) gating the *initialize* command that a fresh
  * workspace needs, which is why that command was unreachable. The rule here is
@@ -17,6 +17,7 @@
 
 import * as vscode from 'vscode';
 
+import { workspaceTrusted } from './config';
 import {
   folderForFile,
   isSupported,
@@ -40,6 +41,14 @@ import type { Snapshot } from './store';
  * | `zer0Cms:agent:running` | `agent.stop` in the palette |
  * | `zer0Cms:folder:registered` | register vs unregister in the explorer context menu |
  * | `zer0Cms:fleet:enabled` | the four `fleet.*` commands in the palette |
+ * | `zer0Cms:workspace:trusted` | every menu entry that would start a process |
+ *
+ * The tenth is a **courtesy, not a gate** (decision D13). It hides the engine,
+ * normalizer and agent entries in an untrusted folder so nobody clicks a thing
+ * that is going to refuse — but the refusal lives inside the function, which
+ * re-asks `workspaceTrusted()` rather than reading this mirror. A context key
+ * is only as fresh as the last time somebody remembered to set it; a gate that
+ * trusts one is a gate with a stale answer in it.
  */
 export const CONTEXT_KEYS = {
   enabled: 'zer0Cms:enabled',
@@ -51,11 +60,12 @@ export const CONTEXT_KEYS = {
   agentRunning: 'zer0Cms:agent:running',
   folderRegistered: 'zer0Cms:folder:registered',
   fleetEnabled: 'zer0Cms:fleet:enabled',
+  workspaceTrusted: 'zer0Cms:workspace:trusted',
 } as const;
 
 export type ContextKey = (typeof CONTEXT_KEYS)[keyof typeof CONTEXT_KEYS];
 
-/** All nine, for the "activation sets every key" test. */
+/** All ten, for the "activation sets every key" test. */
 export const ALL_CONTEXT_KEYS: readonly ContextKey[] = Object.values(CONTEXT_KEYS);
 
 // ---------------------------------------------------------------------------
@@ -161,7 +171,7 @@ export class UiState implements vscode.Disposable {
   }
 
   /**
-   * Write all nine keys from what is knowable without touching the disk.
+   * Write all ten keys from what is knowable without touching the disk.
    * Called once during activation so no `when` clause is ever evaluated
    * against an unset key, and again whenever the configuration changes.
    */
@@ -170,6 +180,7 @@ export class UiState implements vscode.Disposable {
     this.set(CONTEXT_KEYS.governanceEnabled, cfg.governance.enabled);
     this.set(CONTEXT_KEYS.agentEnabled, cfg.agent.enabled);
     this.set(CONTEXT_KEYS.fleetEnabled, cfg.fleet.enabled);
+    this.set(CONTEXT_KEYS.workspaceTrusted, workspaceTrusted());
     // These five have no answer yet at activation; an explicit `false` is a
     // better starting point than an unset key, which reads as `false` anyway
     // but cannot be distinguished from "we forgot".
@@ -205,6 +216,16 @@ export class UiState implements vscode.Disposable {
 
   setDashboardOpen(open: boolean): void {
     this.set(CONTEXT_KEYS.dashboardOpen, open);
+  }
+
+  /**
+   * Set from `onDidGrantWorkspaceTrust`, which fires without a configuration
+   * change and so would otherwise leave the key saying `false` in a folder the
+   * user has just trusted. There is no revoke event: VS Code reloads the window
+   * instead, and activation writes the key again from scratch.
+   */
+  setWorkspaceTrusted(trusted: boolean): void {
+    this.set(CONTEXT_KEYS.workspaceTrusted, trusted);
   }
 
   setAgentRunning(running: boolean): void {

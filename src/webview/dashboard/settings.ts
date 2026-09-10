@@ -15,23 +15,29 @@
  *
  * ### Edits are staged, not streamed
  *
- * Each control writes into a module-level `pending` map and **Save** flushes
- * it, which is what makes "Save is disabled until something changed" a fact
- * about the data rather than a flag somebody has to remember to set. `pending`
- * survives a state snapshot on purpose — a half-typed page size must not be
- * erased by an unrelated refresh — and an entry clears itself the moment the
- * host reports the value it was asking for. So a refused write visibly stays
- * dirty instead of quietly pretending it landed.
+ * Each control writes into a staged map and **Save** flushes it, which is what
+ * makes "Save is disabled until something changed" a fact about the data rather
+ * than a flag somebody has to remember to set. The map survives a state
+ * snapshot on purpose — a half-typed page size must not be erased by an
+ * unrelated refresh — and an entry clears itself the moment the host reports
+ * the value it was asking for. So a refused write visibly stays dirty instead
+ * of quietly pretending it landed.
+ *
+ * That whole pattern now lives in `shared/form.ts` as `stagedForm`, **keyed by
+ * a form id**. It used to be a `pending` map at this module's scope, which was
+ * correct for exactly as long as there was one form on the screen; PR3's site
+ * profile and PR4's lane scaffolder are the second and third users, and two
+ * module-scoped maps under one key is not a bug anybody finds by reading.
  */
 
-import { menuButton, toggle } from '../shared/components';
+import { menuButton } from '../shared/components';
 import { clear, el, icon } from '../shared/dom';
+import { stagedForm, resetStagedForm } from '../shared/form';
 import { getMessenger } from '../shared/messenger';
 import type {
   CommandId,
   DashboardState,
   FolderView,
-  SettingItem,
   SettingsState,
 } from '../shared/protocol';
 
@@ -42,133 +48,11 @@ import type {
  */
 export const FOLDER_CONTENT_TYPES_KEY = 'contentFolder.contentTypes';
 
-type SettingValue = string | number | boolean;
-
-/** Staged edits, keyed by `SettingItem.key`. Cleared as the host confirms. */
-const pending = new Map<string, SettingValue>();
-
-interface Mount {
-  host: HTMLElement;
-  state: DashboardState;
-}
-
-let mounted: Mount | null = null;
+/** The staged-edit bucket this route owns. One form, one id. */
+export const GENERAL_FORM_KEY = 'settings.general';
 
 function post(id: CommandId, args?: unknown): void {
   getMessenger().command(id, args);
-}
-
-/** Repaint from the last snapshot — used by Cancel, which drops staged edits. */
-function repaint(): void {
-  if (mounted !== null) {
-    render(mounted.host, mounted.state);
-  }
-}
-
-/**
- * Drop staged edits the host has caught up with, and edits whose key is no
- * longer offered. What remains is exactly "changes not yet on disk".
- */
-function reconcile(items: readonly SettingItem[]): void {
-  const offered = new Map(items.map((item) => [item.key, item.value] as const));
-  for (const key of [...pending.keys()]) {
-    if (!offered.has(key) || Object.is(offered.get(key), pending.get(key))) {
-      pending.delete(key);
-    }
-  }
-}
-
-function currentValue(item: SettingItem): SettingValue {
-  const staged = pending.get(item.key);
-  return staged === undefined ? item.value : staged;
-}
-
-// ---------------------------------------------------------------------------
-// Rows
-// ---------------------------------------------------------------------------
-
-function stage(key: string, value: SettingValue, original: SettingValue, onDirty: () => void): void {
-  if (Object.is(value, original)) {
-    pending.delete(key);
-  } else {
-    pending.set(key, value);
-  }
-  onDirty();
-}
-
-function control(item: SettingItem, onDirty: () => void): HTMLElement {
-  const value = currentValue(item);
-
-  if (item.kind === 'boolean') {
-    return toggle({
-      checked: value === true,
-      onChange(checked) {
-        stage(item.key, checked, item.value, onDirty);
-      },
-    }).el;
-  }
-
-  if (item.kind === 'choice') {
-    const select = el('select', {
-      attrs: { 'aria-label': item.label },
-      on: {
-        change: (event) => {
-          const target = event.target;
-          if (target instanceof HTMLSelectElement) {
-            stage(item.key, target.value, item.value, onDirty);
-          }
-        },
-      },
-    });
-    for (const choice of item.choices ?? []) {
-      select.appendChild(
-        el('option', { value: choice, selected: choice === String(value) }, choice),
-      );
-    }
-    // A value the host offers no choice for is still the truth about the
-    // configuration; showing it beats silently selecting the first option.
-    if (!(item.choices ?? []).includes(String(value))) {
-      select.insertBefore(
-        el('option', { value: String(value), selected: true }, String(value)),
-        select.firstChild,
-      );
-    }
-    return select;
-  }
-
-  const input = el('input', {
-    class: 'z-field__input',
-    type: item.kind === 'number' ? 'number' : 'text',
-    value: String(value),
-    attrs: { 'aria-label': item.label },
-    on: {
-      input: (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) {
-          return;
-        }
-        if (item.kind === 'number') {
-          const parsed = Number(target.value);
-          stage(item.key, Number.isFinite(parsed) ? parsed : 0, item.value, onDirty);
-        } else {
-          stage(item.key, target.value, item.value, onDirty);
-        }
-      },
-    },
-  });
-  return el('div', { class: 'z-field' }, input);
-}
-
-function settingRow(item: SettingItem, onDirty: () => void): HTMLElement {
-  const label = el(
-    'div',
-    {},
-    el('label', {}, item.label),
-    item.description === undefined
-      ? null
-      : el('p', { class: 'z-settings__description' }, item.description),
-  );
-  return el('div', { class: 'z-settings__row' }, label, control(item, onDirty));
 }
 
 // ---------------------------------------------------------------------------
@@ -176,54 +60,24 @@ function settingRow(item: SettingItem, onDirty: () => void): HTMLElement {
 // ---------------------------------------------------------------------------
 
 function generalSection(settings: SettingsState): HTMLElement {
-  const section = el('section', { class: 'z-settings__section' }, el('h2', {}, 'General'));
-
-  const save = el(
-    'button',
-    {
-      class: 'z-btn',
-      type: 'button',
-      disabled: pending.size === 0,
-      title: 'Write the changed settings',
-      onclick: () => {
+  return el(
+    'section',
+    { class: 'z-settings__section' },
+    el('h2', {}, 'General'),
+    stagedForm({
+      key: GENERAL_FORM_KEY,
+      items: settings.general,
+      emptyMessage: 'No settings to configure.',
+      onSave(changes) {
         // One intent per changed key. The host owns which keys exist and
         // re-reads its own configuration afterwards; nothing here assumes the
-        // write succeeded — `reconcile()` decides that on the next snapshot.
-        for (const [key, value] of pending) {
-          post('updateSetting', { key, value });
+        // write succeeded — the next snapshot decides that.
+        for (const change of changes) {
+          post('updateSetting', { key: change.key, value: change.value });
         }
       },
-    },
-    'Save',
+    }).el,
   );
-  const cancel = el(
-    'button',
-    {
-      class: 'z-btn z-btn--secondary',
-      type: 'button',
-      title: 'Discard the changes that have not been saved',
-      onclick: () => {
-        pending.clear();
-        repaint();
-      },
-    },
-    'Cancel',
-  );
-
-  const onDirty = (): void => {
-    save.disabled = pending.size === 0;
-  };
-
-  if (settings.general.length === 0) {
-    section.appendChild(el('p', { class: 'z-empty' }, 'No settings to configure.'));
-    return section;
-  }
-
-  for (const item of settings.general) {
-    section.appendChild(settingRow(item, onDirty));
-  }
-  section.appendChild(el('div', { class: 'z-settings__buttons' }, cancel, save));
-  return section;
 }
 
 // ---------------------------------------------------------------------------
@@ -336,8 +190,6 @@ function foldersSection(settings: SettingsState): HTMLElement {
 // ---------------------------------------------------------------------------
 
 export function render(host: HTMLElement, state: DashboardState): void {
-  mounted = { host, state };
-  reconcile(state.settings.general);
   clear(host);
   host.appendChild(
     el(
@@ -349,7 +201,7 @@ export function render(host: HTMLElement, state: DashboardState): void {
   );
 }
 
-/** Test seam: forget every staged edit. */
+/** Test seam: forget every staged edit on this route's form. */
 export function resetPending(): void {
-  pending.clear();
+  resetStagedForm(GENERAL_FORM_KEY);
 }

@@ -31,6 +31,7 @@ import type { PageEntry } from '../core';
 import { contentTargetPath } from '../dashboard/dashboardPanel';
 import { mcpPublishAllowed } from '../mcpRegistration';
 import { emptySnapshot, type Snapshot } from '../store';
+import { SETTING_IDS } from '../config';
 import { ALL_CONTEXT_KEYS, CONTEXT_KEYS, UiState, type ContextKey } from '../uiState';
 
 const EXTENSION_ID = 'bamr87.zer0-cms';
@@ -87,12 +88,37 @@ const TREE_VIEWS: readonly string[] = [
 ];
 const PANEL_VIEW = 'zer0Cms.panel';
 
+interface ConfigurationSection {
+  title?: string;
+  order?: number;
+  properties: Record<string, { scope?: string; default?: unknown }>;
+}
+
 interface PackageJson {
+  private?: boolean;
+  extensionKind?: string[];
+  capabilities?: {
+    untrustedWorkspaces?: { supported?: string; description?: string; restrictedConfigurations?: string[] };
+    virtualWorkspaces?: { supported?: string; description?: string };
+  };
   contributes: {
     commands: Array<{ command: string; title: string }>;
     views: Record<string, Array<{ id: string; type?: string }>>;
     viewsContainers: Record<string, Array<{ id: string }>>;
+    configuration: ConfigurationSection | ConfigurationSection[];
   };
+}
+
+/**
+ * Every contributed setting id, in contribution order, whatever shape
+ * `contributes.configuration` is in. It is an array of titled sections today;
+ * it was one object before, and VS Code accepts both — so the reader accepts
+ * both rather than pinning the tests to a presentation choice.
+ */
+function contributedSettingIds(pkg: PackageJson): string[] {
+  const config = pkg.contributes.configuration;
+  const sections = Array.isArray(config) ? config : [config];
+  return sections.flatMap((section) => Object.keys(section.properties ?? {}));
 }
 
 function readPackageJson(): PackageJson {
@@ -210,6 +236,118 @@ suite('extension: activation and contributions', function () {
  * written. The instance is restored to the live values and disposed in
  * `suiteTeardown` so the workbench is not left holding test state.
  */
+/**
+ * The contribution surface is this extension's public API, and every count in
+ * it is asserted rather than described — a number in prose rots, a number in a
+ * test cannot. These four cover the surface PR1 changed: the settings, the
+ * shape they are grouped in, and the two capability declarations that decide
+ * what runs in a workspace nobody has trusted.
+ */
+/**
+ * The agent panel installs itself as the agent host in its constructor, and
+ * `src/extension.ts` is the only place that constructs it. Nothing did, for the
+ * whole of 0.1.0: every `zer0Cms.agent.*` command ended at "not available in
+ * this window" while `src/agent/README.md` documented wiring that did not
+ * exist. This is the assertion that would have caught it.
+ *
+ * It reads the shipped bundle rather than calling `agentHostInstalled()`,
+ * because the running extension is `dist/extension.js` while this suite is
+ * `out/test/extension.test.js` — two module instances, two copies of the
+ * module-level host, and a runtime check would therefore always read the
+ * empty one and pass for the wrong reason. Asserting on the bundle is a
+ * smaller claim, honestly stated: the wiring is present in what ships.
+ */
+suite('extension: the agent panel is actually wired', function () {
+  this.timeout(60000);
+
+  test('the shipped bundle constructs the agent panel and installs it as the host', () => {
+    const bundle = fs.readFileSync(path.join(REPO_ROOT, 'dist', 'extension.js'), 'utf8');
+    assert.ok(bundle.includes('setAgentHost'), 'nothing in the bundle installs an agent host');
+    assert.ok(
+      /new\s+\w*AgentPanel\w*\(/.test(bundle),
+      'the bundle never constructs an AgentPanel, so setAgentHost is unreachable',
+    );
+  });
+
+  test('activation reaches the end with the panel constructed', async () => {
+    // The panel is built at step 8 of `activate()`. If its constructor threw —
+    // the realistic failure for a class that registers itself — activation
+    // would not complete and this command would not exist.
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(commands.includes('zer0Cms.agent.open'), 'activation did not finish');
+  });
+});
+
+suite('extension: the contribution surface', function () {
+  this.timeout(60000);
+
+  test('the manifest contributes exactly the settings src/config.ts declares', () => {
+    const contributed = contributedSettingIds(readPackageJson());
+    assert.strictEqual(contributed.length, 44, 'the manifest should contribute 44 settings');
+    assert.deepStrictEqual(
+      contributed,
+      [...SETTING_IDS],
+      'SETTING_IDS and contributes.configuration disagree — in content or in order',
+    );
+  });
+
+  test('the settings are grouped into eleven titled, ordered sections', () => {
+    const config = readPackageJson().contributes.configuration;
+    assert.ok(Array.isArray(config), 'configuration should be an array of sections');
+    assert.strictEqual(config.length, 11);
+    for (const section of config) {
+      assert.ok(
+        typeof section.title === 'string' && section.title.length > 0,
+        'every section needs a title, or the Settings UI shows one flat list',
+      );
+      assert.strictEqual(typeof section.order, 'number', `section ${String(section.title)} has no order`);
+    }
+    // Duplicated ids across sections would make the merged surface a lie.
+    const ids = contributedSettingIds(readPackageJson());
+    assert.strictEqual(new Set(ids).size, ids.length, 'a setting id appears in two sections');
+  });
+
+  test('every setting that arms a write or names something to run is restricted in an untrusted workspace', () => {
+    const pkg = readPackageJson();
+    const untrusted = pkg.capabilities?.untrustedWorkspaces;
+    assert.strictEqual(untrusted?.supported, 'limited');
+    assert.ok(
+      (untrusted.description ?? '').length > 0,
+      'VS Code shows this description in the trust dialog; an empty one tells a person nothing',
+    );
+    const restricted = new Set(untrusted.restrictedConfigurations ?? []);
+    // Anything that decides what to execute, where to write, or whether a gate
+    // is armed. A repository ships its own `.vscode/settings.json`, so these
+    // must not take effect until a person has trusted the folder (D13).
+    for (const id of [
+      'zer0Cms.cms.pythonPath',
+      'zer0Cms.cms.engineScript',
+      'zer0Cms.cms.normalizerScript',
+      'zer0Cms.cms.verifyCommand',
+      'zer0Cms.governance.publishAllow',
+      'zer0Cms.fleet.dispatchAllow',
+      'zer0Cms.fleet.scaffoldAllow',
+      'zer0Cms.agent.enabled',
+    ]) {
+      assert.ok(restricted.has(id), `${id} can arm or aim an execution and is not restricted`);
+    }
+    for (const id of restricted) {
+      assert.ok(SETTING_IDS.includes(id), `${id} is restricted but is not a setting this extension contributes`);
+    }
+  });
+
+  test('the extension declares where it must run, and never publishes to npm', () => {
+    const pkg = readPackageJson();
+    // It spawns processes against workspace files, so it must run where the
+    // files are — not in a UI-side extension host.
+    assert.deepStrictEqual(pkg.extensionKind, ['workspace']);
+    assert.strictEqual(pkg.capabilities?.virtualWorkspaces?.supported, 'limited');
+    // An extension manifest routed to `npm publish` by a shared release
+    // pipeline is a mistake that is hard to undo; `private` makes it impossible.
+    assert.strictEqual(pkg.private, true);
+  });
+});
+
 suite('extension: the context keys the when-clauses depend on', function () {
   this.timeout(60000);
 
@@ -245,6 +383,7 @@ suite('extension: the context keys the when-clauses depend on', function () {
       'zer0Cms:fleet:enabled',
       'zer0Cms:folder:registered',
       'zer0Cms:governance:enabled',
+      'zer0Cms:workspace:trusted',
     ]);
     const used = new Set<string>();
     for (const clause of collectWhenClauses(readPackageJson().contributes)) {

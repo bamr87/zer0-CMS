@@ -83,6 +83,7 @@ import { registerContractCommands } from './commands/contract';
 import { registerFleetCommands, type FleetActions } from './commands/fleet';
 import { registerGovernanceCommands, type GovernanceActions } from './commands/governance';
 import { registerProjectCommands } from './commands/project';
+import { AgentPanel } from './agent/agentPanel';
 import { DashboardPanel } from './dashboard/dashboardPanel';
 import { PanelProvider } from './panel/panelProvider';
 import { CateringTreeProvider } from './views/cateringTree';
@@ -170,7 +171,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
   );
 
-  // --- 8. The dashboard ----------------------------------------------------
+  // --- 8. The dashboard and the agent panel --------------------------------
   // Constructed, not shown: the panel is created on first `open()`.
   const dashboard = new DashboardPanel(shell, governance, fleet);
   context.subscriptions.push(
@@ -178,6 +179,15 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('zer0Cms.dashboard', () => dashboard.open()),
     vscode.commands.registerCommand('zer0Cms.dashboard.close', () => dashboard.close()),
   );
+
+  // The agent panel installs itself as the agent host in its constructor, which
+  // is the whole reason this line exists: without it `setAgentHost` was never
+  // called, and every `zer0Cms.agent.*` command ended at "not available in this
+  // window" while `src/agent/README.md` documented wiring that did not exist.
+  // Constructing it is cheap and honest — the Claude Agent SDK is still only
+  // imported when a run actually starts, so this costs nothing at activation
+  // and nothing at all when `zer0Cms.agent.enabled` is off.
+  context.subscriptions.push(new AgentPanel(shell));
 
   // --- 9. MCP --------------------------------------------------------------
   // Registration only. The server process is not started here, and no secret
@@ -207,6 +217,15 @@ export function activate(context: vscode.ExtensionContext): void {
     // Opening a folder in a previously folderless window must light everything
     // up without a reload.
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      ui.applyConfig(currentConfig(), hasProjectConfig());
+    }),
+    // Trust is granted once and never revoked in a running window (VS Code
+    // reloads to withdraw it), so this fires at most once — but when it does,
+    // five execution vectors and the MCP registration all change their answer
+    // (D13). The context key is a courtesy for `when` clauses; every gate still
+    // re-asks `workspaceTrusted()` inside the function that spawns.
+    vscode.workspace.onDidGrantWorkspaceTrust(() => {
+      ui.setWorkspaceTrusted(true);
       ui.applyConfig(currentConfig(), hasProjectConfig());
     }),
   );

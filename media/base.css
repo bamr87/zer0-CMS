@@ -692,6 +692,480 @@ input[type='checkbox']:checked::after {
   animation: z-spin 1.5s linear infinite;
 }
 
+/* ── layout utilities ──────────────────────────────────────────────────── */
+
+/**
+ * The eleven inline `style:` attributes `el()` used to carry, as classes.
+ *
+ * Every shell serves `default-src 'none'` with `style-src <cspSource>
+ * 'nonce-…'`, and a nonce cannot apply to an attribute — so all eleven were
+ * silently dropped by the browser and had been doing nothing since the day they
+ * were written. `src/test/styling.test.ts` fails the build if the prop returns.
+ */
+.z-hidden {
+  display: none;
+}
+
+.z-center {
+  text-align: center;
+}
+
+/* "Clear value" in a picker: present, offered, not one of the real choices. */
+.z-dim {
+  opacity: 0.8;
+}
+
+/* The positioning context an absolutely-placed dropdown list needs. */
+.z-anchor {
+  position: relative;
+}
+
+.z-row {
+  display: flex;
+  align-items: center;
+  gap: var(--z-sp-2);
+}
+
+.z-row--tight {
+  gap: var(--z-sp-1);
+}
+
+.z-row--wide {
+  gap: var(--z-sp-3);
+}
+
+.z-inset {
+  padding: var(--z-sp-1);
+}
+
+/* A field label's text sits on the icon's baseline grid, not the font's. */
+.z-label__text {
+  line-height: 16px;
+}
+
+.z-label__suffix {
+  font-weight: lighter;
+}
+
+/* ── status pill ───────────────────────────────────────────────────────── */
+
+/**
+ * Five honest states, and `unknown` is the one that is not an answer.
+ *
+ * `neutral` is the ordinary filled badge — a value that happens to be quiet.
+ * `unknown` is unfilled, dashed and italic, because nobody asked: no
+ * credential, no read, no scan. A grey pill that looks like every other grey
+ * pill quietly claims the question was answered.
+ */
+.z-status {
+  display: inline-block;
+  padding: 2px 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  border-radius: var(--z-radius);
+  color: var(--z-fg-badge);
+  background: var(--z-bg-badge);
+}
+
+.z-status--neutral {
+  color: var(--z-fg-badge);
+  background: var(--z-bg-badge);
+}
+
+.z-status--ok {
+  color: var(--z-fg-badge);
+  background: var(--z-ok);
+}
+
+.z-status--warn,
+.z-status--scheduled {
+  color: var(--z-status-warn-fg);
+  background: var(--z-status-warn-bg);
+}
+
+.z-status--danger,
+.z-status--draft {
+  color: var(--z-danger-fg);
+  background: var(--z-danger);
+}
+
+.z-status--unknown {
+  padding: 1px 3px;
+  font-style: italic;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--z-fg-muted);
+  background: transparent;
+  border: 1px dashed var(--z-border-active);
+}
+
+/* ── tables ────────────────────────────────────────────────────────────── */
+
+/* Wide content scrolls in its own box. A page body that scrolls sideways
+   takes the tab bar and the toolbar with it. */
+.z-table__scroll {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.z-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-indent: 0;
+}
+
+.z-table th {
+  height: 24px;
+  padding: var(--z-sp-2);
+  font-weight: 700;
+  text-align: left;
+  cursor: default;
+  background: var(--z-bg-table-head);
+  border-bottom: 1px solid var(--z-border-group);
+}
+
+.z-table td {
+  padding: var(--z-sp-1) var(--z-sp-2);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--z-border-group);
+}
+
+.z-table tbody tr:nth-child(2n) {
+  background: var(--z-bg-zebra);
+}
+
+/* Figures in a column have to line up, or the eye cannot compare them. */
+.z-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.z-table th.z-table__num {
+  text-align: right;
+}
+
+/* ── empty state ───────────────────────────────────────────────────────── */
+
+.z-emptystate {
+  max-width: 576px;
+  margin: var(--z-sp-8) auto;
+  text-align: center;
+}
+
+.z-emptystate .codicon {
+  display: block;
+  margin: 0 auto var(--z-sp-8);
+  font-size: 128px;
+  line-height: 128px;
+  opacity: 0.9;
+}
+
+.z-emptystate p {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.z-emptystate__actions {
+  justify-content: center;
+  margin-top: var(--z-sp-4);
+}
+
+/* ── gated button and its blocker note ─────────────────────────────────── */
+
+.z-gated {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--z-sp-1);
+}
+
+/**
+ * The gate's own sentence, in the gate's own order. Advisory, always: the host
+ * re-reads state from disk and re-runs the check before it acts.
+ */
+.z-blockers {
+  font-size: 12px;
+  color: var(--z-fg-warning);
+}
+
+/* ── key/value list ────────────────────────────────────────────────────── */
+
+.z-kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--z-sp-1) var(--z-sp-3);
+  margin: 0;
+}
+
+.z-kv__key {
+  font-size: 12px;
+  color: var(--z-fg-muted);
+}
+
+.z-kv__value {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ── staged form ───────────────────────────────────────────────────────── */
+
+.z-form {
+  display: block;
+}
+
+.z-form__hint {
+  margin-top: var(--z-sp-1);
+  font-size: 12px;
+  color: var(--z-fg-muted);
+}
+
+/* A path or a secret's name is a token, not prose: monospaced, never
+   autocorrected, never capitalised by a helpful keyboard. */
+.z-field__input--mono {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+}
+
+/* ── agent transcript and diff ─────────────────────────────────────────── */
+
+/**
+ * Moved out of the `<style>` block in `src/agent/agentPanel.ts`, where forty
+ * rules were being re-served with a fresh nonce on every render for no reason
+ * other than that they had nowhere else to live. They are kernel widgets now:
+ * `diffView()` in `shared/components.ts` emits `.z-agent__diff`, so a lane
+ * scaffold preview and an agent approval card show a diff the same way.
+ *
+ * The body rule is scoped to the agent shell rather than written bare, because
+ * this stylesheet is loaded by all three webviews and only one of them is a
+ * full-height column.
+ */
+body:has(> #z-agent) {
+  display: flex;
+}
+
+#z-agent {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+}
+
+#z-agent > .z-section {
+  flex: 0 0 auto;
+}
+
+#z-agent > .z-section[data-section='transcript'] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.z-agent__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--z-sp-2);
+  padding: var(--z-sp-2) var(--z-gutter);
+  border-bottom: 1px solid var(--z-border);
+}
+
+.z-agent__bar h1 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--z-fg-header);
+}
+
+.z-agent__spacer {
+  flex: 1 1 auto;
+}
+
+.z-agent__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--z-sp-1);
+  padding: 0 var(--z-sp-2);
+  border-radius: var(--z-radius-round);
+  background: var(--z-bg-badge);
+  color: var(--z-fg-badge);
+  font-size: 0.85rem;
+}
+
+.z-agent__status.is-running {
+  background: var(--z-accent);
+}
+
+.z-agent__notice {
+  padding: var(--z-sp-2) var(--z-gutter);
+  color: var(--z-fg-warning);
+  background: var(--z-warn-bg);
+  border-bottom: 1px solid var(--z-border);
+}
+
+.z-agent__log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--z-sp-2);
+  padding: var(--z-gutter) var(--z-gutter-lg);
+}
+
+.z-agent__line {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: var(--z-sp-2);
+  border-left: 2px solid transparent;
+  padding-left: var(--z-sp-2);
+}
+
+.z-agent__gutter {
+  color: var(--z-fg-muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.z-agent__role {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.z-agent__text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+}
+
+.z-agent__line--user {
+  border-left-color: var(--z-accent);
+}
+
+.z-agent__line--assistant {
+  border-left-color: var(--z-border-active);
+}
+
+.z-agent__line--tool .z-agent__text {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-fg-description);
+}
+
+.z-agent__line--system .z-agent__text {
+  color: var(--z-fg-muted);
+  font-style: italic;
+}
+
+.z-agent__line--result {
+  border-left-color: var(--z-ok);
+}
+
+.z-agent__line--error {
+  border-left-color: var(--z-error-border);
+}
+
+.z-agent__line--error .z-agent__text {
+  color: var(--z-fg-error);
+}
+
+.z-agent__card {
+  margin: 0 var(--z-gutter-lg) var(--z-gutter);
+  border: 1px solid var(--z-warn-border);
+  border-radius: var(--z-radius);
+  overflow: hidden;
+}
+
+.z-agent__card__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--z-sp-2);
+  padding: var(--z-sp-2) var(--z-sp-3);
+  background: var(--z-warn-bg);
+}
+
+.z-agent__card__tool {
+  font-weight: 600;
+}
+
+.z-agent__card__summary {
+  color: var(--z-fg-description);
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  overflow-wrap: anywhere;
+}
+
+/* The diff pane. One `<span>` per line; the line's first character picks its
+   class and nothing else, which is what makes an agent-proposed diff safe to
+   render. `diffView()` and `agent/main.ts`'s `diffPane()` both emit this. */
+.z-agent__diff {
+  max-height: 40vh;
+  overflow: auto;
+  margin: 0;
+  padding: var(--z-sp-2) var(--z-sp-3);
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  background: var(--z-bg-input);
+}
+
+.z-agent__diff span {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.z-agent__diff .is-add {
+  color: var(--z-ok);
+}
+
+.z-agent__diff .is-del {
+  color: var(--z-fg-error);
+}
+
+.z-agent__diff .is-meta {
+  color: var(--z-fg-muted);
+}
+
+.z-agent__card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--z-sp-2);
+  padding: var(--z-sp-2) var(--z-sp-3);
+  border-top: 1px solid var(--z-border);
+}
+
+.z-agent__composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--z-sp-2);
+  padding: var(--z-sp-3) var(--z-gutter-lg);
+  border-top: 1px solid var(--z-border);
+}
+
+.z-agent__composer textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 4.5rem;
+  padding: var(--z-sp-2);
+  color: var(--z-input-fg);
+  background: var(--z-bg-input);
+  border: 1px solid var(--z-input-border);
+  border-radius: var(--z-radius);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.z-agent__composer__row {
+  display: flex;
+  align-items: center;
+  gap: var(--z-sp-2);
+}
+
+.z-agent__hint {
+  color: var(--z-fg-muted);
+  font-size: 0.85rem;
+}
+
 /* ── high contrast ─────────────────────────────────────────────────────── */
 
 /**
@@ -719,6 +1193,23 @@ body.vscode-high-contrast .z-menu__item:hover:not(:disabled),
 body.vscode-high-contrast-light .z-menu__item:hover:not(:disabled) {
   outline: 1px dashed var(--z-focus);
   outline-offset: -1px;
+}
+
+body.vscode-high-contrast .z-status,
+body.vscode-high-contrast-light .z-status {
+  border: 1px solid var(--z-border);
+}
+
+/* HC themes flatten backgrounds, so the zebra stripe carries no information
+   and the dashed `unknown` outline is the only thing keeping it distinct. */
+body.vscode-high-contrast .z-table tbody tr:nth-child(2n),
+body.vscode-high-contrast-light .z-table tbody tr:nth-child(2n) {
+  background: transparent;
+}
+
+body.vscode-high-contrast .z-status--unknown,
+body.vscode-high-contrast-light .z-status--unknown {
+  border-style: dashed;
 }
 
 @media (prefers-reduced-motion: reduce) {

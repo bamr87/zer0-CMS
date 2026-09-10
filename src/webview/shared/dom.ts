@@ -8,6 +8,15 @@
  * or a guard message into HTML. An eslint rule bans `innerHTML`, `outerHTML`
  * and `insertAdjacentHTML` across `src/webview/**` so the property stays gone.
  *
+ * **There is no `style` prop, and there must never be one again.** Every shell
+ * serves `default-src 'none'` with `style-src <cspSource> 'nonce-…'`, and a
+ * nonce cannot apply to an attribute — so an inline `style` is dropped by the
+ * browser with no console error and no visible failure. `el()` carried one for
+ * eleven call sites that each silently did nothing; they are classes now, and
+ * `src/test/styling.test.ts` fails the build if the prop comes back. If you
+ * need a value CSS cannot know, put a class on the node and a rule in
+ * `media/`; if you need a *colour*, it belongs in `media/tokens.css` first.
+ *
  * The colour helpers exist because six design tokens cannot be expressed as a
  * plain `var()` alias — an alpha wash, a darkened border, a theme-flipped
  * translucent surface. They read the *already resolved* `--z-*` tokens rather
@@ -30,8 +39,6 @@ export type ElProps<K extends keyof HTMLElementTagNameMap> = Partial<
   dataset?: Record<string, string>;
   /** Attributes with no matching DOM property (`aria-*`, `role`, `for`…). */
   attrs?: Record<string, string | number | boolean | null | undefined>;
-  /** Inline style, as a CSS declaration string. */
-  style?: string;
   /** Event listeners keyed by event name, e.g. `{ click: fn }`. */
   on?: Record<string, EventListener>;
 };
@@ -78,8 +85,6 @@ export function el<K extends keyof HTMLElementTagNameMap>(
       }
       if (key === 'class') {
         node.className = String(value);
-      } else if (key === 'style') {
-        node.setAttribute('style', String(value));
       } else if (key === 'dataset') {
         for (const [name, item] of Object.entries(value as Record<string, string>)) {
           node.dataset[name] = item;

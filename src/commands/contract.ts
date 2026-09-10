@@ -18,6 +18,16 @@
  * that says, in words, that it rewrites files — because it does, in bulk,
  * across every directory in `cms.contentDirs`.
  *
+ * **Trust is re-checked inside the function.** The engine and the normalizer
+ * are two of the five execution vectors (decision D13), so `requireTrust()`
+ * runs beside `requireWorkspace()` in every handler that spawns — not only in
+ * a `when` clause, which is a hint to the menu system and nothing more. The
+ * gate is re-asserted a second time inside `runEngine`/`runNormalizer*`, which
+ * refuse as a value (`code: 1` and a note on stderr) because this module's
+ * contract is that nothing rejects. Two checks, on purpose: this one so the
+ * person gets a dialog naming Workspace Trust, that one so no caller anywhere
+ * can spawn by forgetting.
+ *
  * **The worklist comes from the same renderer as the tree.**
  * `writeCateringWorklist` is `renderWorklist` plus a write, so the file on disk
  * and the Distribution view can never disagree. With no `.cms/` there is
@@ -31,6 +41,7 @@ import {
   ENGINE_COMMANDS,
   condenseNormalizerOutput,
   engineConfigFor,
+  engineLayer,
   relPath,
   renderWorklist,
   runEngine,
@@ -39,10 +50,11 @@ import {
   utcDate,
   writeCateringWorklist,
   type EngineCommand,
+  type EngineConfig,
   type EngineResult,
   type Zer0Config,
 } from '../core';
-import { currentConfig } from '../config';
+import { currentConfig, readConfigFileJson, settingsSnapshot, workspaceTrusted } from '../config';
 import type { Zer0Shell } from '../extension';
 import { confirm, notifyError, notifyInfo, notifyWarning } from '../uiState';
 import { openInEditor, register, showReport } from './project';
@@ -97,11 +109,57 @@ async function requireWorkspace(cfg: Zer0Config): Promise<boolean> {
   return false;
 }
 
+/**
+ * `true` when this window may start a process at all.
+ *
+ * Re-read here rather than taken from `zer0Cms:workspace:trusted`: a context
+ * key is written at activation and by an event, and a gate that trusts a
+ * mirror is a gate that is only as fresh as the last time somebody remembered
+ * to refresh it. `workspaceTrusted()` asks `vscode.workspace.isTrusted` in the
+ * same breath as the spawn.
+ */
+async function requireTrust(what: string): Promise<boolean> {
+  if (workspaceTrusted()) {
+    return true;
+  }
+  const answer = await notifyWarning(
+    `this workspace is not trusted, so ${what} will not run. It executes scripts named by ` +
+      'this repository, which is exactly what Workspace Trust exists to decide.',
+    'Manage trust',
+  );
+  if (answer === 'Manage trust') {
+    await vscode.commands.executeCommand('workbench.trust.manage');
+  }
+  return false;
+}
+
+/**
+ * The subprocess projection of the current configuration, with trust and the
+ * provenance of the interpreter attached.
+ *
+ * `engineLayer` reads the two raw layers — the settings snapshot's `cms` group
+ * and `zer0.json`'s — so the output channel can say whether the command about
+ * to run was named by a person or arrived with the clone.
+ */
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function engineFor(cfg: Zer0Config): EngineConfig {
+  const fileCms = readConfigFileJson().cms;
+  return engineConfigFor(cfg, {
+    trusted: workspaceTrusted(),
+    layer: engineLayer(settingsSnapshot().cms, asRecord(fileCms)),
+  });
+}
+
 export function registerContractCommands(shell: Zer0Shell): void {
   // --- Run the engine ------------------------------------------------------
   register(shell, 'contract.run', async (arg: unknown) => {
     const cfg = currentConfig();
-    if (!(await requireWorkspace(cfg))) {
+    if (!(await requireWorkspace(cfg)) || !(await requireTrust('the CMS engine'))) {
       return;
     }
 
@@ -121,7 +179,7 @@ export function registerContractCommands(shell: Zer0Shell): void {
 
     const result = await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Notification, title: `zer0-CMS: cms ${command}…` },
-      () => runEngine(engineConfigFor(cfg), command),
+      () => runEngine(engineFor(cfg), command, shell.log),
     );
     logResult(shell, `cms ${command}`, result);
 
@@ -148,13 +206,13 @@ export function registerContractCommands(shell: Zer0Shell): void {
   // --- Normalize front matter (preview) ------------------------------------
   register(shell, 'contract.normalizePreview', async () => {
     const cfg = currentConfig();
-    if (!(await requireWorkspace(cfg))) {
+    if (!(await requireWorkspace(cfg)) || !(await requireTrust('the front-matter normalizer'))) {
       return;
     }
 
     const result = await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Notification, title: 'zer0-CMS: normalizing (dry run)…' },
-      () => runNormalizerPreview(engineConfigFor(cfg)),
+      () => runNormalizerPreview(engineFor(cfg), shell.log),
     );
     logResult(shell, 'normalize --dry-run', result);
 
@@ -187,7 +245,7 @@ export function registerContractCommands(shell: Zer0Shell): void {
   // --- Normalize front matter (apply) --------------------------------------
   register(shell, 'contract.normalizeApply', async () => {
     const cfg = currentConfig();
-    if (!(await requireWorkspace(cfg))) {
+    if (!(await requireWorkspace(cfg)) || !(await requireTrust('the front-matter normalizer'))) {
       return;
     }
 
@@ -209,7 +267,7 @@ export function registerContractCommands(shell: Zer0Shell): void {
 
     const result = await vscode.window.withProgress(
       { location: vscode.ProgressLocation.Notification, title: 'zer0-CMS: normalizing…' },
-      () => runNormalizerApply(engineConfigFor(cfg)),
+      () => runNormalizerApply(engineFor(cfg), shell.log),
     );
     logResult(shell, 'normalize --apply', result);
     await shell.store.refresh();

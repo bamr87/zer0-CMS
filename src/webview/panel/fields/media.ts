@@ -97,7 +97,7 @@ export const previewImageField: FieldFactory = (ctx) => {
       }
     });
     box.appendChild(image);
-    box.appendChild(el('span', { class: 'z-muted', style: 'padding:0.25rem' }, path));
+    box.appendChild(el('span', { class: 'z-muted z-inset' }, path));
     box.appendChild(
       el(
         'button',

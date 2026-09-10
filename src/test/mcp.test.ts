@@ -64,6 +64,7 @@ interface RpcResponse {
   id?: number;
   result?: ToolResult & {
     protocolVersion?: string;
+    serverInfo?: { name?: string; version?: string };
     tools?: Array<{ name: string; description?: string; inputSchema?: unknown }>;
   };
   error?: { code: number; message: string };
@@ -276,6 +277,26 @@ suite('mcp: a scripted stdio session against the shipped server', function () {
 
   test('initialize echoes the protocol version the client asked for', () => {
     assert.strictEqual(byId(session, 1)?.result?.protocolVersion, '2025-03-26');
+  });
+
+  test('the server reports the extension\'s own version, not a second hard-coded one', () => {
+    // `SERVER_VERSION` used to be a literal that nobody remembered to bump, so
+    // an MCP client was told 0.1.0 forever. It is an esbuild `define` now, fed
+    // from the manifest — this asserts the two cannot drift again.
+    const pkg = JSON.parse(
+      fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'),
+    ) as { version: string };
+    assert.strictEqual(byId(session, 1)?.result?.serverInfo?.version, pkg.version);
+  });
+
+  test('the bundle carries no third-party package, and no agent SDK', () => {
+    // The MCP bundle's allow-list is empty: it is the layering gate, and it now
+    // guards every package rather than only `vscode`. A leak here means the
+    // server has stopped being standalone.
+    const bundle = fs.readFileSync(path.join(REPO_ROOT, 'dist', 'mcp-server.js'), 'utf8');
+    for (const marker of ['@bamr87/fleet-engines', '@anthropic-ai/claude-agent-sdk']) {
+      assert.ok(!bundle.includes(marker), `${marker} reached the MCP bundle`);
+    }
   });
 
   test('tools/list reports exactly the twelve tools, in order', () => {

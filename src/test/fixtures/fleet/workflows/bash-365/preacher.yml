@@ -1,0 +1,138 @@
+# The preacher — weekly "do we practice what we preach" enforcement.
+#
+# Every Saturday, Claude adopts the preacher charter (.claude/agents/preacher.md)
+# and either (A) opens ONE findings PR enumerating doctrine violations (Issues
+# are disabled on this repository, so issues are not an available channel), or
+# (B) if the repo is clean, mechanizes one recurring AI-review burden into a
+# deterministic check in scripts/doctrine_check.py and opens a PR. It never
+# pushes to main.
+#
+# See docs/the-preacher.md for the full canon and how it works.
+#
+# Auth (Settings → Secrets and variables → Actions), OAuth preferred:
+#   1. CLAUDE_CODE_OAUTH_TOKEN — from `claude setup-token` (Claude Pro/Max). Default.
+#   2. ANTHROPIC_API_KEY — workspace API key. Fallback.
+# With neither set the workflow skips gracefully with a notice instead of failing.
+#
+# Optional: PREACHER_GITHUB_TOKEN — a fine-grained PAT with Contents +
+# Pull requests read/write on this repo. PRs opened with the default
+# GITHUB_TOKEN cannot trigger other workflows; set this if you want the preacher's
+# PRs to kick off the normal build checks automatically.
+
+name: Preacher (weekly doctrine)
+
+on:
+  schedule:
+    - cron: '42 14 * * 6' # Saturdays 14:42 UTC (~7–8 AM Denver)
+  workflow_dispatch:
+    inputs:
+      focus:
+        description: 'Optional lens to emphasize this run (e.g. "DRY", "deterministic-first", "brand"). Blank = full canon.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: preacher
+  cancel-in-progress: false
+
+jobs:
+  preach:
+    name: Enforce the doctrine, or lower the cost of enforcing it
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check for an Anthropic credential
+        id: gate
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Anthropic credential set — skipping the weekly preacher. Add CLAUDE_CODE_OAUTH_TOKEN (preferred) or ANTHROPIC_API_KEY under Settings → Secrets and variables → Actions to activate it."
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Run the deterministic gates (ground truth for the review)
+        if: steps.gate.outputs.ready == 'true'
+        id: gates
+        run: |
+          echo "### Deterministic gate output" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python3 scripts/doctrine_check.py --warn-only | tee -a "$GITHUB_STEP_SUMMARY" || true
+          python3 scripts/content_lint.py --warn-only  | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preach — enforce, or mechanize
+        if: steps.gate.outputs.ready == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          # OAuth token preferred; the action uses it over the API key when both
+          # are provided. API key is the fallback for API-billed runs.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.PREACHER_GITHUB_TOKEN || github.token }}
+          prompt: |
+            You are THE PREACHER for the bashconsultants repository. Your charter
+            is `.claude/agents/preacher.md` and the full canon + procedure is in
+            `docs/the-preacher.md`. Read BOTH first, then execute your weekly run.
+            You never push to main — you open ONE pull request (or comment on the
+            existing preacher PR). Issues are DISABLED on this repository: never
+            call `gh issue` anything; it will fail.
+
+            Optional focus for this run (ignore if blank): "${{ inputs.focus }}"
+
+            Step 1 — deterministic gates are ground truth (already run in CI, but
+            re-run to read the findings yourself):
+              python3 scripts/doctrine_check.py
+              python3 scripts/content_lint.py --warn-only
+
+            Step 2 — judgment pass: read the recent diff (git log/diff against the
+            previous tag or ~2 weeks) and the canon files named in your charter, and
+            look ONLY for drift the gates cannot catch (DRY beyond contact info, KIS/
+            MVP over-engineering, deterministic-first violations, COLAB lock-in, brand/
+            voice/claims drift, stale docs, dead code). Be high-precision: every
+            finding needs a file:line and the specific principle it breaks. When
+            unsure, drop it — or note it as a mechanization candidate.
+
+            Step 3 — choose ONE mode:
+            • VIOLATIONS FOUND (from gates or judgment): report them through ONE
+              findings PR (Issues are disabled here). If an open PR whose title
+              starts with "Preacher:" already exists (`gh pr list --search "Preacher:"`),
+              add the new findings as a comment with `gh pr comment` instead of
+              opening a duplicate. Otherwise: write the findings to
+              `docs/preacher-findings.md`, commit it to a new branch
+              `chore/preacher-violations-<YYYY-MM-DD>`, and open a PR against main
+              with `gh pr create`, titled exactly:
+                Preacher: <N> doctrine violation(s) — week of <YYYY-MM-DD>
+              (use `date -u +%Y-%m-%d`), with the same findings in the PR body.
+              Group findings by principle, most severe first, each with `path:line`
+              and the fix. A human triages: fix the violations and close (or merge
+              to keep the record). End with a "Mechanization candidate" note if any
+              violation class could become a deterministic check.
+            • CLEAN (no violations): this is the important path. Mechanize the single
+              highest-value recurring AI-review burden into a NEW `@check(...)` in
+              `scripts/doctrine_check.py`, WITH a self-test fixture, keeping it
+              high-precision (no false positives). Run `python3 scripts/doctrine_check.py --self-test`
+              to prove it. Update `docs/the-preacher.md` and `scripts/README.md`.
+              Then commit to a new branch `chore/preacher-mechanize-<slug>` and open a
+              PR against main with `gh pr create`, whose body names the judgment this
+              check retires and why it is safe.
+
+            Step 4 — print a short summary: gate results, the mode you chose, and the
+            PR URL.
+          claude_args: |
+            --max-turns 40
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(python3 scripts/doctrine_check.py:*),Bash(python3 scripts/content_lint.py:*),Bash(date:*),Bash(ls:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh pr comment:*)"

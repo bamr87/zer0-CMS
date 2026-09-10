@@ -23,6 +23,7 @@ export * from './shared/timestamp';
 export * from './shared/dates';
 export * from './shared/glob';
 export * from './shared/text';
+export * from './shared/trust';
 
 // --- content model ----------------------------------------------------------
 export * from './content/frontmatter';
@@ -58,3 +59,18 @@ export * from './media/media';
 export * from './fleet/manifest';
 export * from './fleet/fleet';
 export * from './fleet/github';
+
+export * from './fleet/adapters';
+export * from './fleet/registry';
+export * from './fleet/handoff';
+export * from './fleet/inspect';
+
+// --- the module that is deliberately NOT here -------------------------------
+//
+// `./fleet/engines` is NEVER exported from this file, and that is a rule rather
+// than an oversight (decision D-A / D14). It is the single import seam for the bundled
+// `@bamr87/fleet-engines` package, and the barrel is what `src/mcp` imports
+// through — a star export there would drag the package into `dist/mcp-server.js`,
+// where `external: []` and the bare-import gate exist precisely to keep it out.
+// `adapters.ts` is barrel-safe because it imports the package's *types* only,
+// and `import type` is erased before anything is bundled.

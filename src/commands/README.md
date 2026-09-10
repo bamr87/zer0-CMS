@@ -1,6 +1,6 @@
 # `src/commands/` — the command layer
 
-Thirty-eight commands, seven files, and one rule that matters more than the other thirty-seven: **`governance.ts` and `fleet.ts` hold the only gates.**
+Thirty-eight commands, seven files, and one rule that matters more than the other thirty-seven: **`governance.ts` and `fleet.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -11,11 +11,11 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | File | Commands | LOC |
 |---|---|---|
 | `project.ts` | `init`, `refresh`, `cache.clear`, `showOutput`, `openFile`, `registerFolder`, `unregisterFolder` | 369 |
-| `content.ts` | `createContent`, `createContentInFolder`, `generateSlug`, `setLastModified`, `insertImage`, `collapseSections`, `focusTags`, `focusCategories` | 488 |
+| `content.ts` | `createContent`, `createContentInFolder`, `generateSlug`, `setLastModified`, `insertImage`, `collapseSections`, `focusTags`, `focusCategories` | 523 |
 | `contentType.ts` | `contentType.generate`, `contentType.addMissingFields`, `contentType.set` | 253 |
 | `governance.ts` | `draft.new`, `draft.review`, `draft.approve`, `draft.publish`, `draft.guard`, `draft.preview` | 676 |
-| `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 262 |
-| `agent.ts` | `agent.open`, `agent.start`, `agent.stop`, `mcp.writeWorkspaceConfig` | 169 |
+| `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 320 |
+| `agent.ts` | `agent.open`, `agent.start`, `agent.stop`, `mcp.writeWorkspaceConfig` | 194 |
 | `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane` | 574 |
 | `index.ts` | barrel + `ALL_COMMAND_IDS` | 128 |
 
@@ -68,6 +68,21 @@ The draft's status is flipped **after** the target reports success. A target fai
 
 ---
 
+## Trust is re-checked inside the function
+
+Five paths in this extension can start a process (decision D13), and three of them are reachable from this directory: the content engine and the front-matter normalizer in `contract.ts`, a `placeholders[].script` through `content.ts`, and the AI agent through `agent.ts`. Every one re-asks `workspaceTrusted()` **inside the handler**. A `when` clause on a menu entry is a hint to the menu system; `capabilities.untrustedWorkspaces` drops only the *workspace-scoped* value of a restricted setting, so a `true` in somebody's user settings still arrives in a folder they just cloned; and the `zer0Cms:workspace:trusted` context key is a mirror that is only as fresh as the last time somebody set it. None of those is a gate.
+
+- **`contract.ts`** — `requireTrust()` runs beside `requireWorkspace()` in all
+three spawning handlers, and offers `workbench.trust.manage`. The core refuses a second time inside `runEngine`/`runNormalizer*`, as a value (`code: 1`, the reason on `stderr`), because "nothing rejects" is that module's older promise. Two checks on purpose: this one so a person reads a sentence, that one so no caller anywhere can spawn by forgetting. `engineFor(cfg)` is where trust and the interpreter's provenance are attached — `engineLayer()` over the settings snapshot's `cms` group and `zer0.json`'s, so the output channel can say whether the command about to run was named by a human or arrived with the clone.
+- **`content.ts`** — `registerContentCommands` installs the core's trust
+callback with `setPlaceholderTrust(workspaceTrusted)` at activation, because `src/core` cannot import `vscode` and its built-in default refuses. `createInto` then re-asks: creation still proceeds — editing front matter is allowed in an untrusted workspace — but when any placeholder names a script the person is told, before the file is written, that those tokens will come out as `<failed to process>`.
+- **`agent.ts`** — `readyHost()` checks trust *before* `agent.enabled`, because
+an untrusted folder is not a settings problem and offering "Enable it" would be the wrong sentence. `AgentPanel.start()` checks again, since the panel's composer reaches `start()` without passing through a command.
+
+The verify command is the fourth vector and has no handler here yet. When it gets one, it must call `runVerifyCommand` in `src/core/contract/engine.ts` rather than spawning: `node:child_process` is fenced by eslint to that file and `src/core/content/placeholders.ts`, which is what keeps the gate un-routable-around.
+
+---
+
 ## Two bridges: how commands reach a webview
 
 Three commands (`collapseSections`, `focusTags`, `focusCategories`) and three more (`agent.open` / `.start` / `.stop`) have their entire effect inside a webview that owns its own lifecycle. The host cannot do those things itself; it can only post a message to a view that may not exist yet.
@@ -90,8 +105,10 @@ this.disposables.push(
 // src/agent/agentPanel.ts — in the constructor
 import { setAgentHost } from '../commands/agent';
 
-this.disposables.push(setAgentHost(this));   // open() / start(prompt?) / stop() / running
+this.registered.push(setAgentHost(this));   // open() / start(prompt?) / stop() / running
 ```
+
+The agent panel keeps that registration in a list of its own rather than in the one `teardown()` empties when the webview closes: a closed panel must not uninstall the host that `agent.open` uses to reopen it. Until the constructor did this at all, nothing in `src/` ever installed a host and all four `zer0Cms.agent.*` commands ended at "the AI agent panel is not available in this window".
 
 Both `set*` functions return a `Disposable` that unhooks only if the registration is still the current one, so a panel disposed after a replacement registered cannot unhook the replacement.
 
@@ -129,7 +146,7 @@ Upstream's equivalent was gated on a context key that only got set once a projec
 
 ### The engine is optional and never rejects
 
-`.cms/` absent is a normal state (decision D9). `runEngine` returns a code instead of throwing, and exit code `2` means "the normalizer found work", not "something broke". `contract.normalizePreview` writes nothing; the `--apply` variant is a separate command behind a modal that uses the word "rewrites", because it does, in bulk.
+`.cms/` absent is a normal state (decision D9). `runEngine` returns a code instead of throwing, and exit code `2` means "the normalizer found work", not "something broke". A refusal from the trust gate reads the same way — `code: 1` with the reason on `stderr` — and a run that hangs is killed after ten minutes. `contract.normalizePreview` writes nothing; the `--apply` variant is a separate command behind a modal that uses the word "rewrites", because it does, in bulk.
 
 ### Reports are untitled documents
 

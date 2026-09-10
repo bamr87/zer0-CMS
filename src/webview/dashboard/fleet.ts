@@ -17,6 +17,9 @@
  * means nobody has asked — there is no credential, or the tab was opened
  * without one — and the note above the table says so rather than letting a
  * grey pill imply an answer. An ungated lane (`switch: null`) draws a dash.
+ * That distinction now lives in `statusPill`'s `unknown` variant rather than in
+ * this file, because five more tabs have to make it and three copies of "what
+ * does a grey cell mean" is how two screens end up disagreeing about one lane.
  *
  * The blocker notes under a disabled button come from the host's advisory
  * `evaluateFleetGates()` and are rendered in the gate's own order, verbatim,
@@ -24,7 +27,14 @@
  * make this screen and the confirmation modal disagree about the same lane.
  */
 
-import { clear, el, icon } from '../shared/dom';
+import {
+  dataTable,
+  emptyState,
+  gatedButton,
+  statusPill,
+  type StatusVariant,
+} from '../shared/components';
+import { clear, el, icon, type Child } from '../shared/dom';
 import { getMessenger } from '../shared/messenger';
 import type {
   BlockerView,
@@ -44,28 +54,32 @@ function post(id: CommandId, args?: unknown): void {
 // ---------------------------------------------------------------------------
 
 /**
- * The switch pill. `true` borrows the "scheduled" amber because an armed lane
- * is one that will spend tokens on its own; `unknown` borrows the "draft" red
- * because it is the one state that is not an answer.
+ * The switch pill. `true` is `warn` amber because an armed lane is one that
+ * will spend tokens on its own; `unknown` is the variant that is not an answer.
  */
-function switchCell(lane: FleetLaneView): HTMLElement {
+function switchVariant(value: string): StatusVariant {
+  if (value === 'true') {
+    return 'warn';
+  }
+  return value === 'unknown' ? 'unknown' : 'neutral';
+}
+
+function switchCell(lane: FleetLaneView): Child {
   if (lane.switch === null) {
-    return el('td', { class: 'z-fleet__switch' }, el('span', { class: 'z-fleet__unknown', title: 'ungated — this lane has no *_ENABLED switch' }, '—'));
+    return el('span', { class: 'z-fleet__unknown', title: 'ungated — this lane has no *_ENABLED switch' }, '—');
   }
   const value = lane.switchValue;
-  const variant =
-    value === 'true' ? ' z-status--scheduled' : value === 'unknown' ? ' z-status--draft' : '';
   return el(
-    'td',
+    'span',
     { class: 'z-fleet__switch' },
     el('code', { class: 'z-fleet__var' }, lane.switch),
-    el('span', { class: `z-status${variant}`, title: `${lane.switch} = ${value}` }, value),
+    statusPill({ variant: switchVariant(value), text: value, title: `${lane.switch} = ${value}` }),
   );
 }
 
-function runCell(run: FleetRunView | null): HTMLElement {
+function runCell(run: FleetRunView | null): Child {
   if (run === null) {
-    return el('td', {}, el('span', { class: 'z-fleet__unknown' }, 'no run on record'));
+    return el('span', { class: 'z-fleet__unknown' }, 'no run on record');
   }
   const label = run.conclusion === null ? run.status : `${run.status} · ${run.conclusion}`;
   const variant =
@@ -76,11 +90,9 @@ function runCell(run: FleetRunView | null): HTMLElement {
         : '';
   const stamp = el('span', { class: 'z-date' }, run.updatedAt);
   if (run.url === '') {
-    return el('td', {}, el('span', { class: `z-fleet__run${variant}` }, label), ' ', stamp);
+    return [el('span', { class: `z-fleet__run${variant}` }, label), ' ', stamp];
   }
-  return el(
-    'td',
-    {},
+  return [
     el(
       'button',
       {
@@ -95,68 +107,56 @@ function runCell(run: FleetRunView | null): HTMLElement {
     ),
     ' ',
     stamp,
-  );
+  ];
 }
 
-function blockerNote(verb: string, blockers: readonly BlockerView[]): HTMLElement | null {
-  if (blockers.length === 0) {
-    return null;
-  }
+/** Toggle and Dispatch, each a courtesy over the host's advisory gate (D5). */
+function actionsCell(lane: FleetLaneView): Child {
+  const toggleLabel = lane.switchValue === 'true' ? 'Switch off' : 'Switch on';
+  const button = (label: string, id: CommandId, blockers: readonly BlockerView[]): HTMLElement =>
+    gatedButton({
+      label,
+      id,
+      // A lane id, and nothing else. See the module comment.
+      args: { lane: lane.id },
+      blockers,
+      // `Switch off disabled: …` is not a sentence; the verb the gate refuses
+      // is the toggle, whatever the button happens to be offering right now.
+      verb: id === 'fleet.toggleSwitch' ? 'Toggle' : label,
+      title: `${label} "${lane.id}" — the host will ask first`,
+      secondary: true,
+    });
   return el(
     'div',
-    { class: 'z-fleet__blockers' },
-    `${verb} disabled: ${blockers.map((b) => b.message).join('; ')}.`,
-  );
-}
-
-function actionButton(label: string, id: CommandId, laneId: string, blockers: readonly BlockerView[]): HTMLElement {
-  return el(
-    'button',
-    {
-      class: 'z-btn z-btn--secondary',
-      type: 'button',
-      disabled: blockers.length > 0,
-      title: blockers.length === 0 ? `${label} "${laneId}" — the host will ask first` : blockers.map((b) => b.message).join('; '),
-      onclick: () => {
-        // A lane id, and nothing else. See the module comment.
-        post(id, { lane: laneId });
-      },
-    },
-    label,
-  );
-}
-
-function actionsCell(lane: FleetLaneView): HTMLElement {
-  const toggleLabel = lane.switchValue === 'true' ? 'Switch off' : 'Switch on';
-  return el(
-    'td',
     { class: 'z-fleet__actions' },
+    button(toggleLabel, 'fleet.toggleSwitch', lane.toggleBlockers),
+    button('Dispatch', 'fleet.dispatchLane', lane.dispatchBlockers),
+  );
+}
+
+const LANE_COLUMNS = [
+  'Lane',
+  'Kind',
+  'Harness',
+  'Triggers · guardrails',
+  'Switch',
+  'Last run',
+  'Actions',
+] as const;
+
+function laneRow(lane: FleetLaneView): Child[] {
+  return [
     el(
       'div',
-      { class: 'z-review__actions' },
-      actionButton(toggleLabel, 'fleet.toggleSwitch', lane.id, lane.toggleBlockers),
-      actionButton('Dispatch', 'fleet.dispatchLane', lane.id, lane.dispatchBlockers),
-    ),
-    blockerNote('Toggle', lane.toggleBlockers),
-    blockerNote('Dispatch', lane.dispatchBlockers),
-  );
-}
-
-function laneRow(lane: FleetLaneView): HTMLElement {
-  return el(
-    'tr',
-    {},
-    el(
-      'td',
       { class: 'z-fleet__lane' },
       el('strong', {}, lane.id),
       el('div', { class: 'z-fleet__description' }, lane.description),
       el('code', { class: 'z-fleet__file', title: lane.implementation }, lane.implementation || '(no workflow)'),
     ),
-    el('td', {}, lane.kind),
-    el('td', {}, el('code', {}, lane.harness)),
+    lane.kind,
+    el('code', {}, lane.harness),
     el(
-      'td',
+      'div',
       { class: 'z-fleet__triggers' },
       lane.triggers,
       el('div', { class: 'z-fleet__guardrails', title: 'guardrails, as the manifest declares them' }, lane.guardrails),
@@ -164,21 +164,7 @@ function laneRow(lane: FleetLaneView): HTMLElement {
     switchCell(lane),
     runCell(lane.lastRun),
     actionsCell(lane),
-  );
-}
-
-function headRow(): HTMLElement {
-  return el(
-    'thead',
-    {},
-    el(
-      'tr',
-      {},
-      ...['Lane', 'Kind', 'Harness', 'Triggers · guardrails', 'Switch', 'Last run', 'Actions'].map((label) =>
-        el('th', { scope: 'col' }, label),
-      ),
-    ),
-  );
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -238,35 +224,22 @@ function tokens(fleet: FleetState): HTMLElement | null {
   if (fleet.tokens.length === 0) {
     return null;
   }
-  const body = el('tbody', {});
-  for (const token of fleet.tokens) {
-    body.appendChild(
-      el(
-        'tr',
-        {},
-        el('td', {}, el('code', {}, token.name)),
-        el('td', {}, token.scope),
-        el('td', {}, token.required ? 'required' : 'optional'),
-        el('td', {}, token.purpose),
-        el('td', {}, token.usedBy.join(', ')),
-      ),
-    );
-  }
   return el(
     'section',
     { class: 'z-lane z-fleet__tokens' },
     el('div', { class: 'z-lane__title' }, icon('key'), 'Tokens'),
     el('div', { class: 'z-lane__hint' }, 'Declared by the manifest. Names only — no value is ever read by this console.'),
-    el(
-      'div',
-      { class: 'z-table__scroll' },
-      el(
-        'table',
-        { class: 'z-table' },
-        el('thead', {}, el('tr', {}, ...['Name', 'Scope', 'Required', 'Purpose', 'Used by'].map((h) => el('th', { scope: 'col' }, h)))),
-        body,
-      ),
-    ),
+    dataTable({
+      columns: ['Name', 'Scope', 'Required', 'Purpose', 'Used by'],
+      label: 'Tokens the manifest declares',
+      rows: fleet.tokens.map((token) => [
+        el('code', {}, token.name),
+        token.scope,
+        token.required ? 'required' : 'optional',
+        token.purpose,
+        token.usedBy.join(', '),
+      ]),
+    }),
   );
 }
 
@@ -276,44 +249,39 @@ export function render(host: HTMLElement, state: DashboardState): void {
 
   if (fleet === null || !fleet.enabled) {
     host.appendChild(
-      el(
-        'div',
-        { class: 'z-emptystate' },
-        icon('server-process'),
-        el('p', {}, 'The Fleet console is off.'),
-        el('p', { class: 'z-muted' }, 'Set "zer0Cms.fleet.enabled" to true to read this repository\'s lanes.'),
-      ),
+      emptyState({
+        icon: 'server-process',
+        message: 'The Fleet console is off.',
+        hint: 'Set "zer0Cms.fleet.enabled" to true to read this repository\'s lanes.',
+      }),
     );
     return;
   }
 
   if (fleet.repo === null) {
     host.appendChild(
-      el(
-        'div',
-        { class: 'z-emptystate' },
-        icon('server-process'),
-        el('p', {}, 'No fleet manifest.'),
-        el('p', { class: 'z-muted' }, `${fleet.manifestPath}: ${fleet.reason ?? 'not found'}.`),
-        el('p', { class: 'z-muted' }, 'Run "wtd fleet adopt" in the repository to write one, or point "zer0Cms.fleet.manifestPath" at it.'),
-      ),
+      emptyState({
+        icon: 'server-process',
+        message: 'No fleet manifest.',
+        hint: `${fleet.manifestPath}: ${fleet.reason ?? 'not found'}. Run "wtd fleet adopt" in the repository to write one, or point "zer0Cms.fleet.manifestPath" at it.`,
+      }),
     );
     return;
   }
 
   host.appendChild(toolbar(fleet));
 
-  const body = el('tbody', {});
-  for (const lane of fleet.lanes) {
-    body.appendChild(laneRow(lane));
-  }
   host.appendChild(
     el(
       'section',
       { class: 'z-lane z-fleet' },
-      fleet.lanes.length === 0
-        ? el('p', { class: 'z-lane__empty' }, 'The manifest declares no lanes.')
-        : el('div', { class: 'z-table__scroll' }, el('table', { class: 'z-table z-fleet__table' }, headRow(), body)),
+      dataTable({
+        columns: [...LANE_COLUMNS],
+        className: 'z-fleet__table',
+        label: 'Fleet lanes',
+        rows: fleet.lanes.map(laneRow),
+        empty: 'The manifest declares no lanes.',
+      }),
     ),
   );
 

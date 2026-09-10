@@ -1,4 +1,4 @@
-# The two halves of this repository, each gated on its own terms.
+# The VS Code extension half of this repository, gated on its own terms.
 #
 # `extension` type-checks, lints, bundles and then runs the suite against a real
 # VS Code — which is why every test step is wrapped in `xvfb-run`. `vscode-test`
@@ -6,16 +6,20 @@
 # "Missing X server or $DISPLAY" followed by a SIGSEGV. It is the single most
 # commonly missed piece of a VS Code extension pipeline.
 #
-# `engine` runs the ABC content engine's tests. The library under `rails/lib` is
-# stdlib-only by design, so there is deliberately no `bundle install` here: the
-# Gemfile exists for the optional Rails wizard, and needing it to run the tests
-# would be the regression this job catches.
+# The ABC generator's Ruby tests used to live here as a second job. They moved
+# to `abc-engine.yml` so a TypeScript pull request no longer boots a Ruby
+# toolchain it does not use — hence the `paths-ignore` below. `main` is not
+# branch-protected, so a skipped run here is not a required check left pending.
 name: extension
 
 on:
   pull_request:
+    paths-ignore:
+      - "rails/**"
   push:
     branches: [main]
+    paths-ignore:
+      - "rails/**"
 
 permissions:
   contents: read
@@ -28,12 +32,17 @@ jobs:
   extension:
     name: Build, lint and test the VS Code extension
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
 
+      # 22, not 20: the extension host runs Node 22.15, `.nvmrc` says 22, and
+      # the bundled engines package declares `engines.node >= 22` — its
+      # CJS-bundled static import needs `require(esm)`, which is Node >= 22.12.
       - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -51,28 +60,30 @@ jobs:
       - name: Test
         run: xvfb-run -a npm test
 
+      # Every documented `zer0Cms.*` setting must exist in the manifest, and
+      # every contributed setting must be documented. Stdlib Python, no install.
+      - name: Check the settings documentation
+        run: python3 tools/check-config-docs.py
+
       # `--no-dependencies` is honest here rather than a shortcut: the extension
       # ships zero runtime dependencies and everything else is bundled by
       # esbuild, so there is no node_modules tree to fold into the vsix.
       - name: Package
         run: npx @vscode/vsce package --no-dependencies
 
+      # What ends up inside the vsix is a reviewed artefact, not a side effect
+      # of whatever `.vscodeignore` happens to say today. A packaging change is
+      # a diff a person reads; regenerate with:
+      #   npx @vscode/vsce ls --no-dependencies | LC_ALL=C sort > .vsix-manifest.txt
+      - name: Verify the packaged file list
+        run: |
+          npx @vscode/vsce ls --no-dependencies | LC_ALL=C sort > /tmp/vsix-actual.txt
+          diff -u .vsix-manifest.txt /tmp/vsix-actual.txt
+
+      # The version string no longer identifies a build — release-please owns it
+      # and it only moves on a release — so the artifact is named by commit.
       - uses: actions/upload-artifact@v7
         with:
-          name: vsix
+          name: zer0-cms-${{ github.sha }}
           path: "*.vsix"
           if-no-files-found: error
-
-  engine:
-    name: ABC content engine tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-
-      - name: Engine tests
-        run: ruby -Ilib test/zer0_cms/test_abc_engine.rb
-        working-directory: rails

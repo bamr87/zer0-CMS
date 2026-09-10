@@ -21,6 +21,17 @@
  * If nothing has registered, the commands say so instead of throwing. An agent
  * that is switched off must be *quiet*, not broken.
  *
+ * ### Trust is the outer gate, and it is checked here
+ *
+ * The agent is the fifth execution vector (decision D13): it runs tools that
+ * edit files and shell out, inside the user's repository. So `readyHost()`
+ * asks `workspaceTrusted()` **before** it asks whether the feature is enabled —
+ * an untrusted folder is not a settings problem a person can fix by flipping a
+ * switch, and offering "Enable it" there would be the wrong sentence. The check
+ * is inside the function rather than only in the `when` clause, and
+ * `AgentPanel.start()` asks a second time, because the webview's composer can
+ * reach `start()` without passing through a command at all.
+ *
  * ### `mcp.writeWorkspaceConfig` writes no secrets
  *
  * It is here because it is the other "wire an AI client up to this repository"
@@ -31,7 +42,7 @@
 
 import * as vscode from 'vscode';
 
-import { currentConfig } from '../config';
+import { currentConfig, workspaceTrusted } from '../config';
 import type { Zer0Shell } from '../extension';
 import { configureWorkspaceMcpJson } from '../mcpRegistration';
 import { notifyInfo, notifyWarning } from '../uiState';
@@ -79,11 +90,25 @@ export function agentHostInstalled(): boolean {
 /**
  * The gate every agent command runs first.
  *
- * Two distinct "no"s, with two distinct messages, because they need two
- * different actions from the user: the setting is off (offer to turn it on),
- * or the agent layer is not wired into this window (nothing to offer, say so).
+ * Three distinct "no"s, with three distinct messages, because they need three
+ * different actions from the user: the workspace is not trusted (manage trust),
+ * the setting is off (offer to turn it on), or the agent layer is not wired
+ * into this window (nothing to offer, say so). Trust is first because it is the
+ * outer gate — with it off, the other two are not the reason nothing happens.
  */
 async function readyHost(shell: Zer0Shell): Promise<AgentHost | undefined> {
+  if (!workspaceTrusted()) {
+    const answer = await notifyWarning(
+      'the AI agent does not run in an untrusted workspace. It edits files and runs commands ' +
+        'inside this repository, which is the decision Workspace Trust exists to make.',
+      'Manage trust',
+    );
+    if (answer === 'Manage trust') {
+      await vscode.commands.executeCommand('workbench.trust.manage');
+    }
+    shell.log.warn('agent command refused: the workspace is not trusted');
+    return undefined;
+  }
   if (!currentConfig().agent.enabled) {
     const answer = await notifyInfo(
       'the AI agent is disabled. Enable "zer0Cms.agent.enabled" to use it.',
