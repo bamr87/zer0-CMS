@@ -15,10 +15,10 @@ npm test             # pretest (tsc → out/, then compile) + unit, golden, MCP 
 npm run check-types  # tsc --noEmit on its own
 npm run lint         # eslint src on its own
 
-# Fast inner loop — the thirteen pure-Node suites under plain Mocha, no VS Code download.
+# Fast inner loop — the fourteen pure-Node suites under plain Mocha, no VS Code download.
 # Needs Node >= 22.12: the engines seam is an ESM package reached through require(esm).
 npx tsc -p . --outDir out
-npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet,engines,routes,webview,styling,platform,audit,harness}.test.js
+npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet,engines,routes,webview,styling,platform,audit,harness,lanes}.test.js
 npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or one test
 
 # ── ABC generator (rails/) — stdlib-only, no bundler needed ──
@@ -55,6 +55,7 @@ python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-lin
 - **Configuration is three layers** (VS Code settings → `zer0.json` → `package.json` defaults), and `src/config.ts` reads settings through `inspect()` rather than `get()` on purpose: every setting has a default, so `get()` always returns a value and `zer0.json` could never win. Keep only what a human actually set. Nothing is cached — `currentConfig()` re-reads on every call, which is why flipping `publishAllow` takes effect without a window reload.
 - **Front matter is edited by line surgery.** `updateFrontMatterKeys()` rewrites only the lines belonging to changed keys, so untouched lines come out byte-identical and comments and hand-formatting survive. Dates stay strings end to end — round-tripping through a JS `Date` is how a CMS silently shifts published timestamps by a timezone.
 - **The ledger is keyed by canonical URL** and written byte-compatible with Python's `json.dump` (`sort_keys`, `ensure_ascii`, indent 2, trailing newline). That is what lets this extension and the CI lane share one queue without double-publishing, and what keeps the file from churning in git.
+- **A generated lane is files, never an armed loop.** Scaffolding writes a workflow, an agent, a skill stub and a manifest entry for a person to review and commit — and deliberately does **not** create the lane's `*_ENABLED` repository variable, because writing a file somebody reads and arming a loop to run are different powers. Nothing generated may omit its kill switch, weaken a guardrail, or target a `factory--*.yml` (GitFactory compiles those; this console does not own them). A lane the generator cannot express honestly is refused with reasons — `classifyExpressibility` returning `bespoke` is a feature, not a gap.
 - **A window holds many sites, and a command acts on the one it was given.** `Zer0Shell.store` is the *active* site's store; a command invoked on a file resolves that file's folder and reads its configuration instead. `workspaceFolders[0]` is never the answer — `src/config.ts` resolves the active folder through a resolver the registry installs. One `WorkspaceStore` per folder; never a second store on a folder that already has one, or its watchers, scans and cache writes all double.
 - **The platform is a profile, and Jekyll's answers are pinned.** Nothing platform-specific may be hard-coded outside `src/core/platform/profiles/`. `src/test/fixtures/golden/platform/` records what the pre-profile code computed for the fixture pages; regenerate it with its own `generate.mjs` and read the diff — a byte change there is a behaviour change and needs a reason, not a re-baseline.
 - **`.cms/` absence is a normal state, not an error.** With no contract, the page index supplies the same `ContentRecord` shape with `health: -1` and `freshness: 'unknown'`. Report less; never invent a health score.

@@ -122,13 +122,14 @@ If the repository carries a `fleet.manifest.yml` (spec `fleet/v1`, written by `w
 
 ## MCP server
 
-The extension registers a bundled MCP server with VS Code 1.101+, so Copilot agent mode (or any MCP client pointed at `dist/mcp-server.js`) gets thirteen tools:
+The extension registers a bundled MCP server with VS Code 1.101+, so Copilot agent mode (or any MCP client pointed at `dist/mcp-server.js`) gets sixteen tools:
 
 | Tool | Safe? |
 |---|---|
-| `zer0_status` · `zer0_list_content` · `zer0_get_content` · `zer0_preview` · `zer0_portfolio` · `zer0_media` · `zer0_contract` · `zer0_fleet_status` · `zer0_audit` | read-only (`zer0_fleet_status` and `zer0_audit` read local files only — no network) |
+| `zer0_status` · `zer0_list_content` · `zer0_get_content` · `zer0_preview` · `zer0_portfolio` · `zer0_media` · `zer0_contract` · `zer0_fleet_status` · `zer0_audit` · `zer0_harness_inventory` · `zer0_lane_preview` | read-only — the last four read local files only, and never open a socket |
 | `zer0_draft` · `zer0_worklist` · `zer0_ingest` | writes a draft, a worklist, or aggregate statistics under `.cms/` for a human |
 | `zer0_publish` | **off by default** — needs `ZER0_CMS_MCP_ALLOW_PUBLISH=1` in the server env *and* `confirm: true` per call |
+| `zer0_lane_scaffold` | **off by default** — needs `ZER0_CMS_MCP_ALLOW_SCAFFOLD=1` *and* `confirm: true`. Writes a lane's files; never creates the variable that arms it |
 
 The preferred path is `zer0_draft`: the model writes, the person approves.
 

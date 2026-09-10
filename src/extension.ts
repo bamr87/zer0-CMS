@@ -79,6 +79,7 @@ import { UiState } from './uiState';
 
 import { registerAgentCommands } from './commands/agent';
 import { registerAuditCommands, type AuditActions } from './commands/audit';
+import { registerHarnessCommands, type HarnessActions } from './commands/harness';
 import { registerContentCommands } from './commands/content';
 import { registerContentTypeCommands } from './commands/contentType';
 import { registerContractCommands } from './commands/contract';
@@ -212,6 +213,10 @@ export function activate(context: vscode.ExtensionContext): void {
   // Switching, previewing and picking a site: the same injected-actions shape,
   // so the dashboard's switcher goes through the function the palette calls.
   const site: SiteActions = registerSiteCommands(shell, sites);
+  // The harness inventory, the lane preview, and the one write that puts a
+  // lane's files on disk — behind the same injected-actions shape, so the
+  // dashboard's Write button goes through the function the palette calls.
+  const harness: HarnessActions = registerHarnessCommands(shell);
 
   // --- 7. The metadata panel ----------------------------------------------
   context.subscriptions.push(
@@ -224,7 +229,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // --- 8. The dashboard and the agent panel --------------------------------
   // Constructed, not shown: the panel is created on first `open()`.
-  const dashboard = new DashboardPanel(shell, governance, fleet, audit, site);
+  const dashboard = new DashboardPanel(shell, governance, fleet, audit, site, harness);
   context.subscriptions.push(
     dashboard,
     vscode.commands.registerCommand('zer0Cms.dashboard', () => dashboard.open()),

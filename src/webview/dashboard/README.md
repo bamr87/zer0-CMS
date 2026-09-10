@@ -1,8 +1,8 @@
 # `src/webview/dashboard` — the editor-tab surface
 
-Eight served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
+Ten served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
 
-Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and eight are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
+Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and ten are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
 
 ```
 main.ts        boot, gate order, route table, the section reconciler
@@ -14,11 +14,13 @@ governance.ts  the Drafts route — queue + review pane
 audit.ts       the Audit route — findings list + detail pane, and the fix-it
 catering.ts    the Catering route — four distribution lanes
 fleet.ts       the Fleet route — this repository's AI lanes, two gated buttons
+harness.ts     the Harness route — agents, skills, workflows, the join, the disagreements
+workflows.ts   the Workflows route — lane passports, the lane form, the write preview
 settings.ts    the Settings route — General + Content folders
 welcome.ts     the Welcome route — four onboarding steps
 ```
 
-The last seven export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
+The last nine export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
 
 **Gate order on boot** (PLAN §3.2): `settings === null` → spinner;
 `showWelcome || !initialized || contentFolders.length === 0` → Welcome; else
@@ -36,7 +38,7 @@ Two kinds of state, kept apart deliberately. Everything about *the workspace* �
 
 One tab bar for every route, plus — on Contents only — the five-row toolbar stack: create/refresh/search, the draft-state tabs with view switcher, filters and grouping and sorting, pagination, and the selection actions. A sort control above a draft queue is a control that does nothing, so no other route gets Contents' stack.
 
-Every other route may register **one** toolbar row of its own through `setRouteToolbar(route, ctx => node | null)`, called at module scope by the route that owns it. Workflows and Monitor each have filters, and they are not Contents' filters. Audit registers nothing: its three filters narrow *the list in its own left pane*, so they live beside that list rather than in the chrome above the tab bar, and its view-local state is module-private rather than shared with `DashboardUi.filters` — a severity filter and a folder filter have no business in the same map. `header.ts` never learns what is in a route's toolbar and never imports a route — the alternative is a cycle the moment a route wants a shared control back. A route that registers nothing gets the bare tab bar, exactly as before, and `contents` is not registerable because its five persisted keys (`sorting`, `grouping`, `page`, `view`) are read here.
+Every other route may register **one** toolbar row of its own through `setRouteToolbar(route, ctx => node | null)`, called at module scope by the route that owns it. Monitor has filters, and they are not Contents' filters. Audit and Workflows register nothing — Audit because its three filters narrow *the list in its own left pane*, so they live beside that list rather than in the chrome above the tab bar, and its view-local state is module-private rather than shared with `DashboardUi.filters` (a severity filter and a folder filter have no business in the same map); Workflows because a catalogue of seventeen lanes is one table that fits, and a filter bar over it would be chrome with nothing to narrow. `header.ts` never learns what is in a route's toolbar and never imports a route — the alternative is a cycle the moment a route wants a shared control back. A route that registers nothing gets the bare tab bar, exactly as before, and `contents` is not registerable because its five persisted keys (`sorting`, `grouping`, `page`, `view`) are read here.
 
 Three behaviours here are contracts, not preferences: **sorting is disabled while a search query is active** (the host returns hits in relevance order and a sort would discard the ranking, so the control greys rather than silently ignoring you); **pagination is hidden while grouping is active and in Structure view**; and **View and Rename are enabled at exactly one selection** — not zero, not two — while Delete works on any non-empty selection and always confirms first.
 
@@ -119,6 +121,32 @@ One table: lane · kind · harness · triggers and guardrails · switch · last 
 **Switch on / Switch off** and **Dispatch** are `gatedButton`s posting `{ type:'command', id, args:{ lane } }` — a lane id and nothing else. Not the new value (the host derives it from the variable it fetches inside the action), not a ref, not a `force`. The blockers under a disabled button are the host's advisory `evaluateFleetGates()` in the gate's own order, verbatim, for the reason the Drafts route keeps the publish gate's order: re-sorting here would make this screen and the confirmation modal disagree about the same lane.
 
 The switch pill has four honest states — `true`, `false`, `unset` (the API said 404) and `unknown` (nobody has asked: no credential, or the tab was opened without one) — and an ungated lane draws a dash. `true` is `warn` amber because an armed lane is one that will spend tokens on its own; `unknown` is the `statusPill` variant that is not an answer, and it renders unfilled and dashed rather than as another grey badge. That distinction is enforced in the shared component now rather than remembered here, because five more tabs have to make it. **Refresh** posts `fleet.refresh`, the only intent on this screen that may prompt to sign in. Token rows show names only: the console never reads a secret.
+
+## Harness (`harness.ts`)
+
+A summary strip and five tables, all over the promoted `dataTable`: the roles under `.claude/agents/`, the routines under `.claude/skills/`, every workflow with the shape of the runner it reaches a model through, the join (workflow → lane → role → routine → switch → tokens → spend), and the disagreements. It answers one question — **what will run, as whom, spending what** — which no single file in a repository answers on its own.
+
+Three claims this screen is allowed to make, and one it is not.
+
+**Tokens are names.** The manifest declares which credentials a lane spends, the join's token column repeats those names, and no surface in this bundle can reach a value. The column says so in its own header, because a reader who has to guess whether a console holds their secrets will assume the worse answer.
+
+**The resolved profile says which layer answered for the model.** "The model" silently differing between the editor and CI is the confusion the whole harness slice exists to end, so `modelSource` renders as a sentence beside the model — *from your own settings*, *from this repository's zer0.json*, *inherited from the repository's own `_data/ai.yml`*, *the built-in default*. `MODEL_SOURCE_PROSE` here is the twin of `describeSource` in `src/core/harness/profile.ts`; this bundle cannot import core, so the sentence is written twice. Edit both in one commit. The last row of that list is the same `toRunnerInvocation` projection `agent.runAsRole`'s "Copy the CI equivalent" hands you, so the desk and the lane cannot disagree about what a run is.
+
+**An absent number is an em dash.** A repository with no usage ledger is *unmetered*, and unmetered is not free — `.z-harness__unknown` renders that, never a `0`, exactly as the Catering lanes render an unscored page (decision D9). It may **not** show a health grade or a total anybody could mistake for money: `unit` (`api-equivalent-usd`) travels with every figure and is drawn beside it.
+
+Read-only, entirely: the only intents on this route are `revealFile` and, from the empty state, `harness.open`.
+
+## Workflows (`workflows.ts`)
+
+Three parts: the lane catalogue as read-only **passports**, a `stagedForm` for describing a lane that does not exist yet, and a preview of exactly what writing it would do.
+
+**The catalogue offers no buttons, and that is decision D-I.** This console operates lanes inside the editor; it does not rewrite an arbitrary workflow's attributes in place. A passport therefore says everything needed to *understand* a lane — its file, its runner shape, the variable that stops it, whether a manual run bypasses that variable, its schedule, the credentials it spends by name, the file its assertion reads — and the last column answers "could this console have written this again?" For a `bespoke` lane the reasons are drawn as readable prose in the cell rather than hidden in a tooltip, because **refusing well is the feature**: "needs a dynamic matrix" is something a person can act on and a bare "unsupported" is not. lifehacker's content-review lane is the case worth remembering — approximating it would silently drop a loop-breaker guard that repository had to add after a workflow retriggered itself forever.
+
+**The form's values are a draft, not a setting**, so Save posts one `{type:'setUiState', key, value}` per changed row instead of `updateSetting`. The rows come from `WorkflowsState.form`, which the *host* built, so this screen can only ever hand back a key the host itself offered — the Settings route's contract, applied to a different kind of value.
+
+**Preview is computed from what the host has, not from what is on the screen.** An unsaved edit therefore disables Preview and says that in the blocker sentence, rather than planning a lane nobody described; the check runs again at click time, because typing does not repaint and the disabled state can be one keystroke stale. The reply is drawn through `diffView` — the same component and the same `media/base.css` rules the agent's approval card uses, so a generated file and a proposed edit look identical — one file expanded at a time, with the whole of a new file rendered as additions.
+
+**The switch this action does not create is drawn twice, on purpose.** Once in the plan's Kill switch row and once beside the Write button: *writing files a person reviews and arming a loop to run are different powers*. `.z-workflows__notcreated` is the only emphasis on the screen and it is spent there. Write is a `gatedButton` posting `{spec:'<lane id>'}` — a lane id, never the plan — and its blockers are the host's `evaluateFleetGates('scaffold', …)` verbatim and in the gate's own order, plus two this view owns: no plan has been drawn yet, and the plan that was drawn is one this console refuses to generate.
 
 ## Settings (`settings.ts`)
 

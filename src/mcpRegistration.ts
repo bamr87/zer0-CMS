@@ -32,14 +32,19 @@
  * would let an inherited `ZER0_CMS_MCP_ALLOW_PUBLISH=1` in the extension host's
  * own environment leak through into a server that is not allowed to publish.
  *
- * **Two more variables follow the same pattern exactly** (decision D13).
+ * **Three more variables follow the same pattern exactly** (decision D13).
  * `ZER0_CMS_MCP_ALLOW_EXEC` carries Workspace Trust across the process
  * boundary: the server cannot ask `vscode` anything, so `zer0_contract` — the
  * one tool that starts a process — refuses unless it was told, and it is told
- * only in a trusted workspace. `ZER0_CMS_PYTHON` pins the *interpreter* to the
- * settings layer, because choosing which binary runs is not a decision a
- * `zer0.json` that arrived with a clone gets to make. Both are `null` when they
- * do not apply, and both are read at resolve time and nowhere else.
+ * only in a trusted workspace. `ZER0_CMS_MCP_ALLOW_SCAFFOLD` is the publish
+ * flag pointed at the working tree: on the other side of it is a *workflow
+ * file* written into the repository, so it comes from
+ * `zer0Cms.fleet.scaffoldAllow` in the settings layer alone and only in a
+ * trusted workspace, and `zer0_lane_scaffold` still needs `confirm: true` per
+ * call on top of it. `ZER0_CMS_PYTHON` pins the *interpreter* to the settings
+ * layer, because choosing which binary runs is not a decision a `zer0.json`
+ * that arrived with a clone gets to make. All three are `null` when they do not
+ * apply, and all three are read at resolve time and nowhere else.
  *
  * **And in an untrusted workspace there is no server at all.**
  * `provideMcpServerDefinitions` returns `[]`, because a registered server would
@@ -71,6 +76,7 @@ import {
   CONFIG_SECTION,
   currentConfig,
   hasProjectConfig,
+  settingsFleetScaffoldAllow,
   settingsPublishAllow,
   settingsSnapshot,
   workspaceFolder,
@@ -95,7 +101,7 @@ export const MCP_SERVER_RELATIVE_PATH = 'dist/mcp-server.js';
  * Keys in `context.secrets`. Nothing else in this extension may read them, and
  * nothing at all may write them to disk, a setting or the output channel.
  *
- * `anthropicApiKey` is optional everywhere: the twelve MCP tools never call a
+ * `anthropicApiKey` is optional everywhere: the sixteen MCP tools never call a
  * model, and the agent layer falls back to the ambient environment. It exists
  * so that a user who prefers SecretStorage over a shell profile has one, and so
  * the two-phase contract above has something real to protect.
@@ -164,6 +170,37 @@ export function mcpPublishAllowed(scope?: vscode.ConfigurationScope): boolean {
  */
 export function mcpExecAllowed(): boolean {
   return workspaceTrusted();
+}
+
+/**
+ * Whether the bundled server may write a lane's files — `zer0_lane_scaffold`'s
+ * gate, and the third of the three flags that follow the publish flag's rule.
+ *
+ * `settingsFleetScaffoldAllow()` reads the **settings** layer alone and re-asks
+ * Workspace Trust itself, so both halves of the rule are already in one place:
+ * a `zer0.json` arriving with a clone cannot arm the thing that writes the
+ * repository's next workflow, and an untrusted folder arms nothing at all. The
+ * scope is the server's own `cwd`, exactly as the publish flag's is — arming
+ * lane generation for the one repository you are building out must not arm it
+ * for the other eleven folders in the window.
+ *
+ * `fleet.enabled` is checked from the **merged** configuration, exactly as
+ * `mcpPublishAllowed` checks `governance.enabled`: that one is the feature, and
+ * honouring a `zer0.json` that turns a feature *off* is always safe. The
+ * consequence is worth stating, because the server relies on it — this single
+ * injected bit is the answer to both questions, so `zer0_lane_scaffold` does not
+ * have to re-ask either one across a process boundary it cannot see over.
+ *
+ * Note what this deliberately is **not**: `zer0Cms.fleet.dispatchAllow`.
+ * Running a lane that is already in a repository and writing a new lane into
+ * one are different powers, and one switch for both would mean a person who
+ * armed a toggle had also armed a generator.
+ */
+export function mcpScaffoldAllowed(scope?: vscode.ConfigurationScope): boolean {
+  if (!currentConfig(scope).fleet.enabled) {
+    return false;
+  }
+  return settingsFleetScaffoldAllow(scope) === true;
 }
 
 /**
@@ -301,6 +338,7 @@ export function registerMcpProvider(
       const scope = scopeOf(server);
       const allow = mcpPublishAllowed(scope);
       const exec = mcpExecAllowed();
+      const scaffold = mcpScaffoldAllowed(scope);
       const python = mcpPythonPath(scope);
       const apiKey = await context.secrets.get(SECRET_KEYS.anthropicApiKey);
       server.env = {
@@ -309,6 +347,7 @@ export function registerMcpProvider(
         // `null` = remove the variable from the child environment entirely.
         ZER0_CMS_MCP_ALLOW_PUBLISH: allow ? '1' : null,
         ZER0_CMS_MCP_ALLOW_EXEC: exec ? '1' : null,
+        ZER0_CMS_MCP_ALLOW_SCAFFOLD: scaffold ? '1' : null,
         ZER0_CMS_PYTHON: python ?? null,
         ANTHROPIC_API_KEY: apiKey ?? null,
       };
@@ -316,6 +355,7 @@ export function registerMcpProvider(
         `MCP server starting for ${server.cwd?.fsPath ?? '(no cwd)'} — ` +
           `publish ${allow ? 'ENABLED' : 'disabled'}, ` +
           `exec ${exec ? 'ENABLED' : 'disabled'}, ` +
+          `scaffold ${scaffold ? 'ENABLED' : 'disabled'}, ` +
           `interpreter ${python === undefined ? 'from the project layers' : 'pinned from settings'}, ` +
           `config ${configFileName(scope)}, api key ${apiKey === undefined ? 'absent' : 'injected'}`,
       );

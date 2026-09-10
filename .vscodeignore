@@ -48,3 +48,4 @@ fleet.manifest.yml
 # The root README is the marketplace description and must stay.
 CLAUDE.md
 media/README.md
+media/templates/README.md

@@ -1357,3 +1357,263 @@ body.vscode-high-contrast-light .z-chip {
 .z-tabbar__actions .z-menu {
   margin-right: var(--z-sp-2);
 }
+
+/* ---------------------------------------------------------------------------
+   Harness — what this repository's AI machinery is (PR4)
+
+   Five tables and a summary strip, all of them over the promoted `.z-table`
+   kernel. Everything below is the handful of cells that have to say something
+   the kernel does not: a path you can reveal, a list of tool names, and the one
+   cell that means "nobody measured this". Colours come from `media/tokens.css`
+   and nowhere else.
+   --------------------------------------------------------------------------- */
+
+.z-harness__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--z-sp-4);
+  margin-bottom: var(--z-sp-6);
+  padding-bottom: var(--z-sp-4);
+  border-bottom: 1px solid var(--z-border);
+}
+
+.z-harness__heading {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.z-harness__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--z-sp-2);
+}
+
+/* Provenance runs inline: two short labelled facts, not a form. */
+.z-harness__provenance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--z-sp-1) var(--z-sp-4);
+  margin: 0;
+  font-size: 12px;
+}
+
+.z-harness__provenance .z-kv__key {
+  color: var(--z-fg-muted);
+}
+
+.z-harness__section {
+  margin-bottom: var(--z-sp-6);
+}
+
+.z-harness__table {
+  font-size: 12px;
+}
+
+.z-harness__table td {
+  vertical-align: top;
+}
+
+.z-harness__name {
+  min-width: 180px;
+}
+
+.z-harness__description {
+  margin-top: var(--z-sp-1);
+  color: var(--z-fg-description);
+}
+
+/* Tool names, trigger phrases, cron expressions: lists that must not reflow
+   into prose, but must be allowed to wrap inside their own cell. */
+.z-harness__tools {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-fg-description);
+  overflow-wrap: anywhere;
+}
+
+.z-harness__switches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--z-sp-1);
+}
+
+/* "Nobody has looked yet" renders as an em dash or a sentence, never a zero. */
+.z-harness__unknown {
+  color: var(--z-fg-muted);
+}
+
+.z-harness__warn {
+  margin-top: var(--z-sp-1);
+  color: var(--z-fg-warning);
+}
+
+/* A workspace-relative path, as a link that reveals the file. */
+.z-harness__path {
+  display: inline-block;
+  padding: 0;
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-link);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  overflow-wrap: anywhere;
+}
+
+.z-harness__path:hover {
+  color: var(--z-link-hover);
+  text-decoration: underline;
+}
+
+/* The CI invocation. Long, and worth reading whole rather than truncated. */
+.z-harness__runner {
+  display: block;
+  padding: var(--z-sp-2);
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background-color: var(--z-bg-input);
+  border-radius: var(--z-radius);
+}
+
+.z-harness__findings td {
+  vertical-align: top;
+}
+
+/* ---------------------------------------------------------------------------
+   Workflows — the lane catalogue, and the form for one that does not exist yet
+   (PR4)
+
+   Three parts: a read-only passport table, a staged form over `.z-form`, and a
+   plan whose files expand into `diffView`'s pre block (styled in base.css, so
+   the approval card and this preview look identical). The one thing this
+   stylesheet is load-bearing for is `--notcreated`: the sentence about the
+   variable this console does NOT create has to be the sentence a person's eye
+   lands on.
+   --------------------------------------------------------------------------- */
+
+.z-workflows {
+  margin-bottom: var(--z-sp-6);
+}
+
+.z-workflows__table {
+  font-size: 12px;
+}
+
+.z-workflows__table td {
+  vertical-align: top;
+}
+
+.z-workflows__lane {
+  min-width: 180px;
+}
+
+.z-workflows__path {
+  display: block;
+  margin-top: var(--z-sp-1);
+  padding: 0;
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-link);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  overflow-wrap: anywhere;
+}
+
+.z-workflows__path:hover {
+  color: var(--z-link-hover);
+  text-decoration: underline;
+}
+
+.z-workflows__tokens {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-fg-description);
+  overflow-wrap: anywhere;
+}
+
+.z-workflows__unknown {
+  color: var(--z-fg-muted);
+}
+
+.z-workflows__shape {
+  min-width: 220px;
+}
+
+/* The reasons a lane is bespoke are the useful half of the verdict, so they are
+   readable prose in the cell rather than a tooltip nobody opens. */
+.z-workflows__reasons {
+  margin: var(--z-sp-1) 0 0;
+  padding-left: var(--z-sp-4);
+  color: var(--z-fg-description);
+}
+
+.z-workflows__reasons li + li {
+  margin-top: var(--z-sp-1);
+}
+
+.z-workflows__describe,
+.z-workflows__plan,
+.z-workflows__write {
+  margin-bottom: var(--z-sp-6);
+}
+
+.z-workflows__form {
+  margin-top: var(--z-sp-2);
+}
+
+.z-workflows__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--z-sp-2);
+  margin-top: var(--z-sp-4);
+  align-items: flex-start;
+}
+
+.z-workflows__fileblock {
+  margin-top: var(--z-sp-4);
+}
+
+/* The disclosure row for one file: chevron, path, "new file", line count. */
+.z-workflows__file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--z-sp-2);
+  width: 100%;
+  padding: var(--z-pad-y) var(--z-pad-x);
+  font: inherit;
+  color: var(--z-fg);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--z-radius);
+}
+
+.z-workflows__file:hover {
+  background-color: var(--z-bg-hover);
+  color: var(--z-fg-hover);
+}
+
+.z-workflows__refused {
+  color: var(--z-fg-error);
+}
+
+.z-workflows__switchnote {
+  padding: var(--z-sp-2) var(--z-sp-3);
+  border-left: 2px solid var(--z-warn-border);
+  background-color: var(--z-bg-input);
+}
+
+/* The only emphasis on this screen, and it is spent on the power this action
+   does not hold: writing a file is not arming a loop. */
+.z-workflows__notcreated {
+  color: var(--z-fg-warning);
+}

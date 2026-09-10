@@ -48,6 +48,20 @@ export * from './harness/skills';
 export * from './harness/aiConfig';
 export * from './harness/profile';
 export * from './harness/metering';
+export * from './harness/workflows';
+export * from './harness/derive';
+export * from './harness/joins';
+export * from './harness/inventory';
+export * from './harness/ledger';
+export * from './harness/lanes';
+export * from './harness/render';
+export * from './harness/emitYaml';
+export * from './harness/manifestWrite';
+export * from './harness/preflight';
+// `./harness/selfAudit` is deliberately NOT here: it is the one module in this
+// directory that imports the engines seam, and the MCP bundle reaches every
+// module the barrel names. A lane can be planned and rendered without it; only
+// the editor host audits what it is about to write.
 
 // --- the site's platform (decision D12) --------------------------------------
 // What a Jekyll site, an MkDocs site and a Hugo site each mean by "content
