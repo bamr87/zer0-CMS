@@ -75,7 +75,7 @@ function insights(seo: SeoState): HTMLElement {
     'section',
     { class: 'seo__insights' },
     el('h4', {}, 'Insights'),
-    el('div', { style: 'overflow-x: auto;' }, table),
+    el('div', { class: 'z-table__scroll' }, table),
   );
 }
 
@@ -168,7 +168,7 @@ function keywordsTable(seo: SeoState): HTMLElement | null {
     'section',
     { class: 'seo__keywords' },
     el('h4', {}, 'Keywords'),
-    el('div', { style: 'overflow-x: auto;' }, table),
+    el('div', { class: 'z-table__scroll' }, table),
     seo.wordCount > 0
       ? el(
           'p',

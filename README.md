@@ -30,7 +30,7 @@ It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front
 | Path | What it is |
 |---|---|
 | `src/` | The **VS Code extension** — this README. |
-| `rails/` | The **ABC content engine** — a stdlib-only Ruby library + optional Rails wizard that writes children's alphabet books and exports them as a Jekyll board book. Separate product, separate README: [`rails/README.md`](rails/README.md). |
+| `rails/` | The **ABC generator** — a stdlib-only Ruby library + optional Rails wizard that writes children's alphabet books and exports them as a Jekyll board book. A separate product with its own README and its own CI workflow: [`rails/README.md`](rails/README.md). ("Content engine" means the `.cms/` contract engine in `src/core/contract/`; these are different things.) |
 
 ## How publishing works
 
@@ -64,7 +64,7 @@ Five rules hold this together:
 4. Open a markdown file — the panel fills in.
 5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
 
-Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 38 settings here instead of 89.
+Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 44 settings here instead of 89, and why most of them are folder-scoped so one window can hold several sites.
 
 ## Configuration
 

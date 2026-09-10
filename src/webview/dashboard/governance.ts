@@ -27,6 +27,11 @@
  *    draft.
  */
 
+import {
+  blockerNote as sharedBlockerNote,
+  emptyState as sharedEmptyState,
+  statusPill,
+} from '../shared/components';
 import { clear, el, icon } from '../shared/dom';
 import { getMessenger } from '../shared/messenger';
 import type {
@@ -78,20 +83,21 @@ function statusOf(draft: DraftSummary): string {
 }
 
 /**
- * The status badge.
+ * The status badge, over the shared `statusPill`.
  *
- * `pending` borrows the "scheduled" amber because it is the one status that
- * asks something of the reader; an unrecognised status borrows the "draft" red
- * because it means the queue holds a file nobody's lifecycle knows about. The
- * dashboard bundle does not load `panel.css`, so the panel's `.z-pill--*`
- * variants are deliberately not used here.
+ * `pending` is `warn` amber because it is the one status that asks something of
+ * the reader; an unrecognised status is `danger` because it means the queue
+ * holds a file nobody's lifecycle knows about. An empty status is the one case
+ * that is not an answer at all, so it draws the `unknown` variant rather than
+ * an ordinary grey badge that would read as "fine".
  */
 function statusBadge(status: string): HTMLElement {
-  const normalized = status === '' ? 'unknown' : status;
-  const known = normalized === 'pending' || normalized === 'approved' || normalized === 'published';
-  const variant =
-    normalized === 'pending' ? ' z-status--scheduled' : known ? '' : ' z-status--draft';
-  return el('span', { class: `z-status${variant}` }, normalized);
+  if (status === '') {
+    return statusPill({ variant: 'unknown', text: 'unknown', title: 'the draft names no status' });
+  }
+  const known = status === 'pending' || status === 'approved' || status === 'published';
+  const variant = status === 'pending' ? 'warn' : known ? 'neutral' : 'danger';
+  return statusPill({ variant, text: status });
 }
 
 /** `counts` is a fixed four-key record; a switch keeps the access checked. */
@@ -276,16 +282,9 @@ export function findingsList(guard: readonly GuardFindingView[]): HTMLElement {
   return list;
 }
 
-/** `Publish disabled: a; b.` — the gate's own summary, in its UI frame. */
+/** `Publish disabled: a; b.` — the gate's own summary, in this pane's frame. */
 export function blockerNote(label: string, blockers: readonly BlockerView[]): HTMLElement | null {
-  if (blockers.length === 0) {
-    return null;
-  }
-  return el(
-    'p',
-    { class: 'z-review__blockers' },
-    `${label} disabled: ${blockers.map((blocker) => blocker.message).join('; ')}.`,
-  );
+  return sharedBlockerNote(label, blockers, 'z-blockers z-review__blockers');
 }
 
 function ledgerNote(review: ReviewState): HTMLElement | null {
@@ -398,14 +397,8 @@ function reviewPane(review: ReviewState): HTMLElement {
 // The route
 // ---------------------------------------------------------------------------
 
-function emptyState(message: string, hint: string): HTMLElement {
-  return el(
-    'div',
-    { class: 'z-emptystate' },
-    icon('inbox'),
-    el('p', {}, message),
-    el('p', { class: 'z-muted' }, hint),
-  );
+function emptyState(message: string, hint: string, ...actions: HTMLElement[]): HTMLElement {
+  return sharedEmptyState({ icon: 'inbox', message, hint, actions });
 }
 
 export function render(host: HTMLElement, state: DashboardState): void {
@@ -423,14 +416,13 @@ export function render(host: HTMLElement, state: DashboardState): void {
   }
 
   if (drafts.drafts.length === 0) {
-    const empty = emptyState(
-      'The draft queue is empty.',
-      'A draft is a markdown file in the queue folder: front matter, a status, and the text that publishes.',
+    host.appendChild(
+      emptyState(
+        'The draft queue is empty.',
+        'A draft is a markdown file in the queue folder: front matter, a status, and the text that publishes.',
+        actionButton({ label: 'New draft', id: 'draft.new' }),
+      ),
     );
-    empty.appendChild(
-      el('div', { class: 'z-review__actions' }, actionButton({ label: 'New draft', id: 'draft.new' })),
-    );
-    host.appendChild(empty);
     return;
   }
 

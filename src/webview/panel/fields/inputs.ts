@@ -454,7 +454,7 @@ export const listField: FieldFactory = (ctx) => {
           el('span', {}, value),
           el(
             'span',
-            { style: 'display:flex;gap:0.25rem' },
+            { class: 'z-row z-row--tight' },
             el(
               'button',
               {

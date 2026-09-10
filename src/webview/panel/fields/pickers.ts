@@ -161,7 +161,7 @@ export const choiceField: FieldFactory = (ctx) => {
   );
   const menu = dropdown(trigger, 'metadata_field__choice_list');
   const pills = el('div', { class: 'article__tags__items' });
-  shell.control.appendChild(el('div', { style: 'position:relative' }, trigger, menu.list));
+  shell.control.appendChild(el('div', { class: 'z-anchor' }, trigger, menu.list));
   shell.control.appendChild(pills);
 
   const remaining = (): NormalChoice[] =>
@@ -185,7 +185,7 @@ export const choiceField: FieldFactory = (ctx) => {
               'li',
               {
                 attrs: { role: 'option' },
-                style: 'opacity:0.8',
+                class: 'z-dim',
                 onclick: () => {
                   selected = [];
                   menu.setOpen(false);
@@ -578,7 +578,7 @@ export const contentRelationshipField: FieldFactory = (ctx) => {
       menu.list.appendChild(
         el(
           'li',
-          { style: 'text-align:center' },
+          { class: 'z-center' },
           el('span', { class: 'field_dropdown__hint' }, 'No results'),
         ),
       );

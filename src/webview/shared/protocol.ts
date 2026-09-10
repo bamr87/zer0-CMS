@@ -18,12 +18,17 @@
  */
 
 import type {
+  AgentRecord,
+  AuditFindingView,
   ContentRecord,
   DashboardView,
   Field,
   Freshness,
+  HarnessJoin,
   PageEntry,
   PanelSectionId,
+  SkillRecord,
+  WorkflowRecord,
 } from '../../core/shared/types';
 // Type-only alias re-export: the field widgets in WP12 need the exact same
 // `FmValue` the front-matter parser produces, and a second structural copy
@@ -34,19 +39,24 @@ import type { Messenger } from './messenger';
 
 export type { FmValue, FrontMatter };
 export type { ContentRecord, DashboardView, Field, Freshness, PageEntry, PanelSectionId };
+export type { AgentRecord, AuditFindingView, HarnessJoin, SkillRecord, WorkflowRecord };
 
 // ---------------------------------------------------------------------------
 // Command ids — the closed intent vocabulary
 // ---------------------------------------------------------------------------
 
 /**
- * Every intent a webview button may name. The first 38 are the palette
+ * Every intent a webview button may name. The first group are the palette
  * commands (`zer0Cms.<id>`) verbatim; the trailing group are host operations
  * that exist only for a surface (settings writes, file operations, the agent
  * approval reply) and are registered as handlers rather than as commands.
  *
  * Adding a literal here does NOT grant it — the host still has to implement a
  * handler, and every gate is re-checked in the same function the palette calls.
+ * Which is why the sixteen ids for PR2–PR5 can be declared now: a name with no
+ * handler behind it is looked up, missed, logged and dropped, exactly like a
+ * name that was never in the union at all. They are here so the packages that
+ * build those surfaces compile against one vocabulary instead of six.
  */
 export type CommandId =
   // project
@@ -94,6 +104,26 @@ export type CommandId =
   | 'fleet.refresh'
   | 'fleet.toggleSwitch'
   | 'fleet.dispatchLane'
+  // sites (PR3)
+  | 'site.pick'
+  | 'site.setActive'
+  | 'site.preview'
+  // audit (PR2)
+  | 'audit.open'
+  | 'audit.fix'
+  | 'audit.verify'
+  // harness and lanes (PR3, PR4)
+  | 'agent.runAsRole'
+  | 'harness.open'
+  | 'workflows.open'
+  | 'lane.scaffold'
+  // fleet slice 2 (PR5)
+  | 'fleet.rerunLastFailure'
+  | 'fleet.cancelNewest'
+  | 'fleet.toggleWorkflowFile'
+  | 'fleet.openInGitFactory'
+  | 'fleet.importHubRoster'
+  | 'monitor.open'
   // surface-only handlers
   | 'openLink'
   | 'openProject'
@@ -146,6 +176,22 @@ export const COMMAND_IDS: readonly CommandId[] = [
   'fleet.refresh',
   'fleet.toggleSwitch',
   'fleet.dispatchLane',
+  'site.pick',
+  'site.setActive',
+  'site.preview',
+  'audit.open',
+  'audit.fix',
+  'audit.verify',
+  'agent.runAsRole',
+  'harness.open',
+  'workflows.open',
+  'lane.scaffold',
+  'fleet.rerunLastFailure',
+  'fleet.cancelNewest',
+  'fleet.toggleWorkflowFile',
+  'fleet.openInGitFactory',
+  'fleet.importHubRoster',
+  'monitor.open',
   'openLink',
   'openProject',
   'revealFile',
@@ -171,7 +217,11 @@ export type RequestOp =
   | 'pickImage'
   | 'pickFile'
   | 'guardText'
-  | 'previewDraft';
+  | 'previewDraft'
+  // Declared for PR2/PR4/PR5. All three compute and return; none of them write.
+  | 'auditDryRun'
+  | 'lanePreview'
+  | 'fleetRuns';
 
 export type ViewState = PanelState | DashboardState | AgentState;
 
@@ -380,12 +430,104 @@ export interface PanelState {
 // Dashboard view model
 // ---------------------------------------------------------------------------
 
-export type DashboardRoute = 'contents' | 'drafts' | 'catering' | 'fleet' | 'settings' | 'welcome';
+/**
+ * Every route the dashboard can render, in final display order.
+ *
+ * Eleven now, six of them served today: the rest arrive with the packages that
+ * build them (`sites` in PR3, `audit` in PR2, `harness`/`workflows` in PR3–PR4,
+ * `monitor` in PR5). Declaring the whole union up front is what lets those
+ * packages be written in parallel against one vocabulary, and what makes the
+ * order a decision taken once rather than an accident of merge sequence.
+ *
+ * A route existing here grants nothing. `DASHBOARD_TABS` below is the list the
+ * host is willing to route to, and `DashboardState.tabs` is what it actually
+ * served this render — the webview draws that, never this.
+ */
+export type DashboardRoute =
+  | 'sites'
+  | 'contents'
+  | 'drafts'
+  | 'audit'
+  | 'catering'
+  | 'fleet'
+  | 'harness'
+  | 'workflows'
+  | 'monitor'
+  | 'settings'
+  | 'welcome';
+
+/** The same union at runtime — the route registry (decision D-H). */
+export const DASHBOARD_ROUTES: readonly DashboardRoute[] = [
+  'sites',
+  'contents',
+  'drafts',
+  'audit',
+  'catering',
+  'fleet',
+  'harness',
+  'workflows',
+  'monitor',
+  'settings',
+  'welcome',
+];
 
 export interface DashboardTab {
   id: DashboardRoute;
   label: string;
   icon: string;
+}
+
+/**
+ * The tabs the host may offer, with their labels and codicons — moved out of
+ * `dashboardPanel.ts` so the table lives beside the union it draws from.
+ *
+ * Six entries today, and it grows one PR at a time: a tab appears here only
+ * when something can render it. `catering` is dropped from a given snapshot
+ * without a `.cms/` contract and `fleet` while `zer0Cms.fleet.enabled` is off,
+ * which is a per-render decision the host makes — not a property of this table.
+ * The ids are a subset of `DASHBOARD_ROUTES`, in the same relative order.
+ */
+export const DASHBOARD_TABS: readonly DashboardTab[] = [
+  { id: 'contents', label: 'Contents', icon: 'files' },
+  { id: 'drafts', label: 'Drafts', icon: 'checklist' },
+  { id: 'catering', label: 'Distribution', icon: 'graph' },
+  { id: 'fleet', label: 'Fleet', icon: 'server-process' },
+  { id: 'settings', label: 'Settings', icon: 'settings-gear' },
+  { id: 'welcome', label: 'Welcome', icon: 'rocket' },
+];
+
+// ---------------------------------------------------------------------------
+// Sites — one row per workspace folder (decision D-B, filled by PR3)
+// ---------------------------------------------------------------------------
+
+/**
+ * One open folder as the Sites tab draws it. Every enum is a string on the
+ * wire: `platform`, `detectionSource` and `scheme` are all things the host
+ * resolved, and a new platform id must never break the webview's build.
+ */
+export interface SiteView {
+  id: string;
+  name: string;
+  root: string;
+  /** `file`, `vscode-vfs`, … — a virtual folder cannot run a process. */
+  scheme: string;
+  platform: string;
+  overlay: string | null;
+  detectionSource: string;
+  /** A project config was found in this folder. */
+  configured: boolean;
+  contentRoots: string[];
+  manifestPresent: boolean;
+  trusted: boolean;
+  counts: { pages: number; drafts: number };
+  active: boolean;
+}
+
+export interface SitesState {
+  sites: SiteView[];
+  activeId: string | null;
+  /** More than one folder is open — the switcher is worth drawing. */
+  multi: boolean;
 }
 
 export interface CountedTab {
@@ -451,6 +593,39 @@ export interface DraftsState {
   review: ReviewState | null;
 }
 
+// ---------------------------------------------------------------------------
+// Audit — every page's front matter, checked at once (decision D-D, PR2)
+// ---------------------------------------------------------------------------
+
+/** Structurally `core/shared/types`' `AuditIssue`, flattened for a table row. */
+export interface AuditIssueView {
+  path: string;
+  relPath: string;
+  collection: string;
+  /** The coarse rule id; `kind` keeps the `missing-key:<key>` spelling. */
+  rule: string;
+  kind: string;
+  severity: string;
+  lane: string;
+  field: string | null;
+  message: string;
+  suggestion: string | null;
+  /** A fix exists. Advisory — the host re-derives it before writing anything. */
+  fixable: boolean;
+}
+
+export interface AuditState {
+  /** `false` before the first scan: no issues is not the same as not looked. */
+  ran: boolean;
+  generatedAt: string | null;
+  counts: Record<string, number>;
+  issues: AuditIssueView[];
+  schemaSource: string;
+  collections: string[];
+  /** `zer0Cms.cms.verifyCommand`, or `null` when the site declares none. */
+  verifyCommand: string | null;
+}
+
 export interface TopicSignalView {
   topic: string;
   posts: number;
@@ -508,6 +683,34 @@ export interface FleetLaneView {
   /** Advisory. The host re-evaluates in `doToggleSwitch` / `doDispatchLane`. */
   toggleBlockers: BlockerView[];
   dispatchBlockers: BlockerView[];
+  // --- slice 2 (PR5). Optional until the host fills them, so the six routes
+  //     that ship today keep building against the same interface.
+  /** The engines' rulebook on this lane's workflow file. */
+  audit?: AuditFindingView[];
+  /** API-equivalent dollars, all-time, from the repository's own ledger. */
+  cost?: number | null;
+  /** Open pull requests attributed to this lane, by number. */
+  pulls?: number[];
+  /** The workflow file's own enablement — `active`, `disabled_manually`, … */
+  enabledState?: string;
+}
+
+/** A pull request as the read-only strip draws it. Never a merge verb. */
+export interface FleetPullView {
+  number: number;
+  title: string;
+  /** `prStage()` — derived from labels, widened to string on the wire. */
+  stage: string;
+  url: string;
+  laneId: string | null;
+}
+
+/** Structurally `core/shared/types`' `ManifestDrift`. */
+export interface ManifestDriftView {
+  laneId: string;
+  kind: string;
+  manifestSays: string;
+  workflowSays: string;
 }
 
 export interface FleetState {
@@ -528,13 +731,132 @@ export interface FleetState {
   fetchedAt: string | null;
   /** Why the live columns are what they are — "not signed in", a partial failure, … */
   note: string | null;
+  // --- slice 2 (PR5), optional for the same reason as `FleetLaneView`'s.
+  /** The read-only pull strip. `null` when nobody has read them yet. */
+  pulls?: FleetPullView[] | null;
+  /** `MERGE_POLICY_SWITCHES` and what the repository says about each. */
+  mergePolicy?: Record<string, string> | null;
+  /** The engines' letter grade for this repository's harness. */
+  grade?: string | null;
+  /** Where the manifest and the workflows disagree. */
+  drift?: ManifestDriftView[];
+}
+
+// ---------------------------------------------------------------------------
+// Harness, Workflows and Monitor (decisions D-E/D-F/D-G; PR3–PR5)
+// ---------------------------------------------------------------------------
+
+/**
+ * What a repository says about its own AI harness. The records are `Pick`ed
+ * from the core types rather than restated, so a field added there reaches the
+ * screen by widening one line instead of two structures that drift apart.
+ */
+export interface HarnessState {
+  readAt: string;
+  agents: Array<Pick<AgentRecord, 'name' | 'path' | 'description' | 'tools' | 'model' | 'dialect'>>;
+  skills: SkillRecord[];
+  workflows: Array<
+    Pick<
+      WorkflowRecord,
+      'path' | 'name' | 'runnerShape' | 'switches' | 'crons' | 'dispatchBypassesSwitch'
+    >
+  >;
+  joins: HarnessJoin[];
+  findings: Array<{ kind: string; severity: string; path: string | null; message: string }>;
+  ledger: { path: string; last7dUsd: number | null; unit: string } | null;
+  /** The resolved profile, or `null` when the agent is off. */
+  profile: {
+    model: string;
+    modelSource: string;
+    agent: string | null;
+    mcpServers: string[];
+    settingSources: string[];
+    /** The runner flag line the same profile would produce in CI. */
+    runnerLine: string;
+  } | null;
+}
+
+/**
+ * One lane's passport: everything read out of a hand-written workflow, plus
+ * whether the generators could express it again. Read-only by decision D-I —
+ * zer0-CMS never edits an arbitrary workflow's attributes in place.
+ */
+export interface LanePassportView {
+  id: string;
+  workflowPath: string | null;
+  runnerShape: string;
+  switch: string | null;
+  dispatchBypassesSwitch: boolean | null;
+  cron: string | null;
+  tokens: string[];
+  resultFile: string | null;
+  expressibility: string;
+  expressibilityReasons: string[];
+  /** `null` until someone asks for run history — no network at activation. */
+  runs: FleetRunView[] | null;
+}
+
+export interface WorkflowsState {
+  lanes: LanePassportView[];
+  /** The scaffold form, as settings rows the webview already knows how to draw. */
+  form: SettingItem[];
+  kitVersion: string;
+  /** `zer0Cms.fleet.scaffoldAllow`, from the settings layer. Advisory here. */
+  scaffoldAllow: boolean;
+  scaffoldBlockers: BlockerView[];
+  /** The computed plan, with nothing written. `null` before a preview. */
+  plan: {
+    shape: string;
+    reasons: string[];
+    files: Array<{ rel: string; exists: boolean; diff: string }>;
+    audit: Array<{ rule: string; severity: string; message: string }>;
+  } | null;
+}
+
+/** One repository on the roster × its lanes. Every column may be unknown. */
+export interface MonitorRepoView {
+  slug: string;
+  source: string;
+  localRoot: string | null;
+  fetchedAt: string | null;
+  note: string | null;
+  grade: string | null;
+  mergePolicy: Record<string, string> | null;
+  cost: { costUsd: number; window: string; note: string } | null;
+  lanes: Array<{
+    id: string;
+    switchValue: string;
+    lastRun: FleetRunView | null;
+    openPulls: number | null;
+    cost: number | null;
+    grade: string | null;
+  }>;
+  pulls: FleetPullView[] | null;
+}
+
+export interface MonitorState {
+  roster: MonitorRepoView[];
+  hub: {
+    slug: string;
+    readAt: string | null;
+    note: string | null;
+    scorecard: Array<{ key: string; value: string; status: string }> | null;
+  };
+  /** Base URL for the hand-off link, assembled locally and opened in a browser. */
+  gitfactoryUrl: string;
 }
 
 export interface SettingItem {
   key: string;
   label: string;
   description?: string;
-  kind: 'boolean' | 'string' | 'number' | 'choice';
+  /**
+   * `multichoice`, `path` and `secretName` are the three the lane form needs:
+   * a set of tools rather than one, a workspace-relative file the host resolves
+   * and the picker browses, and the *name* of a secret — never its value, which
+   * this process has no business holding.
+   */
+  kind: 'boolean' | 'string' | 'number' | 'choice' | 'multichoice' | 'path' | 'secretName';
   value: string | number | boolean;
   choices?: string[];
 }
@@ -573,6 +895,19 @@ export interface DashboardState {
   settings: SettingsState;
   welcome: WelcomeState;
   version: string;
+  // --- the five slices PR2–PR5 fill. Optional until the host builds each one,
+  //     so this interface can be complete before any of them exists; the PR
+  //     that starts serving a slice is the PR that makes it required.
+  /** One row per open workspace folder (PR3). */
+  sites?: SitesState;
+  /** `null` when the site has not been audited this session (PR2). */
+  audit?: AuditState | null;
+  /** `null` when nothing has read the harness yet (PR3/PR4). */
+  harness?: HarnessState | null;
+  /** `null` until the Workflows tab is opened (PR4). */
+  workflows?: WorkflowsState | null;
+  /** `null` until the Monitor tab is opened (PR5). */
+  monitor?: MonitorState | null;
 }
 
 // ---------------------------------------------------------------------------

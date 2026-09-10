@@ -10,6 +10,38 @@
       "type": "string",
       "description": "Path or URL of this schema. Optional — VS Code associates it via the extension's jsonValidation contribution."
     },
+    "platform": {
+      "type": "object",
+      "description": "Which static-site generator this repository is, and how much of the built-in profile to keep. Detection reads marker files (_config.yml, mkdocs.yml, hugo.toml, docusaurus.config.*, astro.config.*) and an explicit id here always wins. This block has no zer0Cms.* twin on purpose: what a site IS belongs to the site, not to whoever opened it.",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "jekyll",
+            "mkdocs",
+            "wikijs",
+            "hugo",
+            "docusaurus",
+            "astro",
+            "generic"
+          ],
+          "default": "auto",
+          "description": "auto detects from marker files; naming one skips detection entirely."
+        },
+        "overlay": {
+          "type": ["string", "null"],
+          "enum": ["zer0-mistakes", "auto", null],
+          "default": "auto",
+          "description": "A theme overlay ON a platform, never a platform of its own. auto probes for the zer0-mistakes remote theme; null keeps the bare profile even when the probe would match."
+        },
+        "overrides": {
+          "type": "object",
+          "description": "Per-key replacements for the resolved profile — content roots, front-matter dialect, commands, validators. Deliberately open: this is the escape hatch for a site the built-in profiles describe almost, but not quite."
+        }
+      }
+    },
     "contentFolders": {
       "type": "array",
       "description": "Folders that hold editable content. Paths may use the [[workspace]] token, * wildcards and {{date|...}} placeholders.",
@@ -205,6 +237,16 @@
           "type": "array",
           "items": { "type": "string" },
           "default": ["pages/"]
+        },
+        "aiConfigPath": {
+          "type": "string",
+          "default": "_data/ai.yml",
+          "description": "The site's own AI configuration — the provider, model and budget its CI lanes run on. Read so the in-editor agent and the repository's automation resolve the same model."
+        },
+        "verifyCommand": {
+          "type": "string",
+          "default": "",
+          "description": "The repository's own verification command, as you would type it. Empty means there is none; nothing is guessed."
         }
       }
     },
@@ -225,11 +267,27 @@
     },
     "fleet": {
       "type": "object",
-      "description": "The Fleet console: this repository's AI lanes, read from its fleet.manifest.yml. The master gate for switch and dispatch actions (zer0Cms.fleet.dispatchAllow) is a VS Code setting only and cannot be set here.",
+      "description": "The Fleet console: this repository's AI lanes, read from its fleet.manifest.yml. The two master gates — zer0Cms.fleet.dispatchAllow (flip a lane's switch, dispatch a lane) and zer0Cms.fleet.scaffoldAllow (write a generated lane into the folder) — are VS Code settings only and are rejected here, because a file that arrives with a clone must never be able to arm a write.",
       "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean", "default": false },
-        "manifestPath": { "type": "string", "default": "fleet.manifest.yml" }
+        "manifestPath": { "type": "string", "default": "fleet.manifest.yml" },
+        "roster": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Extra repositories the fleet Monitor watches, each as owner/name. Naming one reads nothing on its own."
+        },
+        "hub": {
+          "type": "string",
+          "default": "bamr87/bamr87",
+          "description": "The fleet's hub repository, as owner/name — the shared registry, the CI kits and the harness scorecard."
+        },
+        "gitfactoryUrl": {
+          "type": "string",
+          "default": "https://bamr87.github.io/gitorio/",
+          "description": "Base URL of the GitFactory console the hand-off link points at. The link is assembled locally; nothing is posted."
+        }
       }
     },
     "validation": {

@@ -524,28 +524,6 @@ body {
 
 /* ── item metadata primitives ──────────────────────────────────────────── */
 
-.z-status {
-  display: inline-block;
-  padding: 2px 3px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
-  border-radius: var(--z-radius);
-  color: var(--z-fg-badge);
-  background: var(--z-bg-badge);
-}
-
-.z-status--draft {
-  color: var(--z-danger-fg);
-  background: var(--z-danger);
-}
-
-.z-status--scheduled {
-  color: var(--z-status-warn-fg);
-  background: var(--z-status-warn-bg);
-}
-
 .z-date {
   font-size: 12px;
   color: var(--z-fg-muted);
@@ -570,45 +548,6 @@ body {
 
 .z-chip:hover {
   background: var(--z-btn2-hover);
-}
-
-/* ── tables ────────────────────────────────────────────────────────────── */
-
-.z-table__scroll {
-  position: relative;
-  width: 100%;
-  overflow-x: auto;
-}
-
-.z-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-indent: 0;
-}
-
-.z-table th {
-  height: 24px;
-  padding: var(--z-sp-2);
-  font-weight: 700;
-  text-align: left;
-  cursor: default;
-  background: var(--z-bg-table-head);
-  border-bottom: 1px solid var(--z-border-group);
-}
-
-.z-table td {
-  padding: var(--z-sp-1) var(--z-sp-2);
-  vertical-align: middle;
-  border-bottom: 1px solid var(--z-border-group);
-}
-
-.z-table tbody tr:nth-child(2n) {
-  background: var(--z-bg-zebra);
-}
-
-.z-table__num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 
 /* ── structure / folder tree ───────────────────────────────────────────── */
@@ -768,8 +707,11 @@ body {
   border-radius: var(--z-radius);
 }
 
+/* The review pane's frame around the shared `.z-blockers` sentence: a banner
+   rather than a caption, because here it is the reason the button is off. */
 .z-review__blockers {
   padding: var(--z-sp-2);
+  font-size: inherit;
   color: var(--z-fg-warning);
   background: var(--z-warn-bg);
   border-left: 2px solid var(--z-warn-border);
@@ -956,27 +898,6 @@ body {
   color: var(--z-fg-muted);
 }
 
-/* ── empty state ───────────────────────────────────────────────────────── */
-
-.z-emptystate {
-  max-width: 576px;
-  margin: var(--z-sp-8) auto;
-  text-align: center;
-}
-
-.z-emptystate .codicon {
-  display: block;
-  margin: 0 auto var(--z-sp-8);
-  font-size: 128px;
-  line-height: 128px;
-  opacity: 0.9;
-}
-
-.z-emptystate p {
-  font-size: 16px;
-  font-weight: 500;
-}
-
 /* ── modal ─────────────────────────────────────────────────────────────── */
 
 .z-modal__root {
@@ -1134,11 +1055,6 @@ body.vscode-high-contrast-light .z-tree__node:hover {
   box-shadow: none;
 }
 
-body.vscode-high-contrast .z-table tbody tr:nth-child(2n),
-body.vscode-high-contrast-light .z-table tbody tr:nth-child(2n) {
-  background: transparent;
-}
-
 body.vscode-high-contrast .z-modal__overlay,
 body.vscode-high-contrast-light .z-modal__overlay,
 body.vscode-high-contrast .z-slideover__overlay,
@@ -1146,8 +1062,6 @@ body.vscode-high-contrast-light .z-slideover__overlay {
   opacity: 0.9;
 }
 
-body.vscode-high-contrast .z-status,
-body.vscode-high-contrast-light .z-status,
 body.vscode-high-contrast .z-chip,
 body.vscode-high-contrast-light .z-chip {
   border: 1px solid var(--z-border);
@@ -1221,6 +1135,7 @@ body.vscode-high-contrast-light .z-chip {
 }
 
 .z-fleet__switch {
+  display: inline-block;
   white-space: nowrap;
 }
 
@@ -1255,18 +1170,13 @@ body.vscode-high-contrast-light .z-chip {
   color: var(--z-fg-error);
 }
 
+/* One column of gated buttons: each button carries its own blocker note, so
+   they stack rather than sitting side by side with the notes underneath. */
 .z-fleet__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--z-sp-2);
   min-width: 200px;
-}
-
-.z-fleet__actions .z-review__actions {
-  margin: 0;
-}
-
-.z-fleet__blockers {
-  margin-top: var(--z-sp-1);
-  font-size: 12px;
-  color: var(--z-fg-warning);
 }
 
 .z-fleet__tokens {

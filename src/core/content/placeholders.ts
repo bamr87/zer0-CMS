@@ -37,9 +37,20 @@
  * Custom scripts run through `execFile` with an argv array and **no shell**:
  * FM interpolated the workspace, file and title into a shell string, which a
  * path containing a quote turns into arbitrary command execution. A script that
- * fails, times out, or is simply missing yields `FAULTY_PLACEHOLDER`, which
- * `isEmpty` recognises — a broken placeholder must read as "no value", never as
- * a literal value that gets written into somebody's site.
+ * fails, times out, is simply missing, **or is refused by the execution gate**
+ * yields `FAULTY_PLACEHOLDER`, which `isEmpty` recognises — a broken
+ * placeholder must read as "no value", never as a literal value that gets
+ * written into somebody's site.
+ *
+ * A `placeholders[].script` is one of the five execution vectors (decision
+ * D13), and the one that arrives *entirely* from `zer0.json` — cloning a
+ * repository is enough to name a command here. So the spawn passes
+ * `evaluateExecGate` first: an untrusted workspace refuses, and so does a
+ * script that resolves outside the workspace root, in a trusted one too. Trust
+ * reaches this pure module two ways, in this order: `PlaceholderContext.trusted`
+ * when the caller knows, else the callback the shell installed with
+ * `setPlaceholderTrust()`. Its built-in default answers `false`, so a module
+ * that nobody wired up runs nothing.
  *
  * This module and `slug.ts` reference each other: `{{slug}}` is defined by the
  * slug template, and slug templates may contain time and front-matter tokens.
@@ -55,6 +66,7 @@ import * as path from 'node:path';
 import { absPath } from '../shared/config';
 import { formatDate, parseDate } from '../shared/dates';
 import { toPosix } from '../shared/glob';
+import { evaluateExecGate } from '../shared/trust';
 import {
   NOOP_LOG,
   type ContentFolder,
@@ -79,6 +91,27 @@ export const FAULTY_PLACEHOLDER = '<failed to process>';
 /** Milliseconds a placeholder script may run before it is killed. */
 export const PLACEHOLDER_SCRIPT_TIMEOUT_MS = 5000;
 
+/**
+ * Whether the workspace a placeholder script would run in is trusted.
+ *
+ * The core never imports `vscode`, so trust arrives as an injected callback —
+ * the same shape as `setActiveFolderResolver` in `src/config.ts`. The default
+ * refuses: a window where nothing installed a provider (a test, a stray
+ * import, an MCP process) is a window where no script runs.
+ * `src/commands/content.ts` installs the real one at activation.
+ */
+let trustProvider: () => boolean = () => false;
+
+/** Install the shell's answer, or `null` to restore the refusing default. */
+export function setPlaceholderTrust(provider: (() => boolean) | null): void {
+  trustProvider = provider ?? ((): boolean => false);
+}
+
+/** What the installed provider currently says. Exported for the shell's log. */
+export function placeholderTrust(): boolean {
+  return trustProvider();
+}
+
 /** Bytes of stdout a placeholder script may produce. */
 const SCRIPT_MAX_BUFFER = 1024 * 1024;
 
@@ -96,6 +129,11 @@ export interface PlaceholderContext {
   title?: string;
   /** The article's own date, when the tokens should not mean "now". */
   date?: Date;
+  /**
+   * Workspace Trust for `cfg.workspaceRoot`, when the caller knows it. Absent
+   * falls back to `placeholderTrust()`; it is never assumed.
+   */
+  trusted?: boolean;
   log?: LogSink;
 }
 
@@ -443,17 +481,35 @@ export async function processCustomPlaceholders(
     if (placeholder.script) {
       const scriptPath = absPath(ctx.cfg, placeholder.script);
       const command = placeholder.command ?? 'node';
-      const result = await runScript(
-        command,
-        [scriptPath, ctx.cfg.workspaceRoot, ctx.filePath ?? '', ctx.title ?? ''],
-        ctx.cfg.workspaceRoot,
-      );
 
-      if (!result.ok) {
-        log.warn(`Placeholder "${placeholder.id}" failed: ${result.output}`);
+      // The gate, before the spawn. `layer: 'zer0.json'` is a statement of
+      // fact: `placeholders[]` has no settings twin, so every script named
+      // here came with the repository.
+      const blocker = evaluateExecGate({
+        trusted: ctx.trusted ?? placeholderTrust(),
+        workspaceRoot: ctx.cfg.workspaceRoot,
+        scriptPath,
+        interpreter: command,
+        layer: 'zer0.json',
+        vector: 'placeholder',
+      });
+
+      if (blocker !== undefined) {
+        log.warn(`Placeholder "${placeholder.id}" refused: ${blocker.message}`);
         resolved = FAULTY_PLACEHOLDER;
       } else {
-        resolved = result.output;
+        const result = await runScript(
+          command,
+          [scriptPath, ctx.cfg.workspaceRoot, ctx.filePath ?? '', ctx.title ?? ''],
+          ctx.cfg.workspaceRoot,
+        );
+
+        if (!result.ok) {
+          log.warn(`Placeholder "${placeholder.id}" failed: ${result.output}`);
+          resolved = FAULTY_PLACEHOLDER;
+        } else {
+          resolved = result.output;
+        }
       }
     }
 

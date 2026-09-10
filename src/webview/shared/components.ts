@@ -1,19 +1,45 @@
 /**
- * The shared widget library — eleven builders that every surface reuses.
+ * The shared widget library — eighteen builders that every surface reuses.
  *
  * Each is a plain `(props) => HTMLElement` (or a small handle when the caller
  * needs to talk back to a live control). There is no base class, no lifecycle
  * and no registry: a widget is a function that returns a node, and the section
  * reconciler in `state.ts` decides when to call it again.
  *
- * The visual contract lives in `media/panel.css` and `media/dashboard.css`;
- * this file only ever names classes, never colours. Where a class name looks
- * like Front Matter's (`collapsible__body`, `metadata_field__input`), that is
- * deliberate — the stylesheets carry both vocabularies so the panel code can
- * be read against the same recon that produced the CSS.
+ * The visual contract lives in `media/base.css` (the kernel) with per-surface
+ * layout in `media/panel.css` and `media/dashboard.css`; this file only ever
+ * names classes, never colours. Where a class name looks like Front Matter's
+ * (`collapsible__body`, `metadata_field__input`), that is deliberate — the
+ * stylesheets carry both vocabularies so the panel code can be read against the
+ * same recon that produced the CSS.
+ *
+ * ## The operator primitives
+ *
+ * `statusPill`, `dataTable`, `emptyState`, `gatedButton`, `blockerNote`,
+ * `keyValueList` and `diffView` were each hand-rolled two or three times over
+ * in `dashboard/{fleet,governance,catering}.ts` before they moved here. Five
+ * more tabs need all seven, and three copies of "what does a grey cell mean"
+ * is how two screens end up disagreeing about the same lane.
+ *
+ * Two of them carry a rule rather than a look:
+ *
+ *  - **`unknown` is not `neutral`.** A cell nobody has asked about must not
+ *    render like a cell whose answer happens to be "no". `statusPill`'s
+ *    `unknown` variant is dashed, italic and unfilled precisely so it reads as
+ *    an absence; `neutral` is the ordinary filled badge. The Fleet route's four
+ *    honest switch states are the origin of this and the reason it is enforced
+ *    here rather than remembered per screen.
+ *  - **`gatedButton` is a courtesy, never a control** (decision D5). It renders
+ *    a disabled button plus the host's blocker sentence in the gate's own
+ *    order, and posts `{id, args}` — an intent and a target. Every gate is
+ *    re-checked host-side in the same function the command palette calls, so a
+ *    button that renders enabled when the gate says otherwise is a cosmetic
+ *    bug, not an escalation.
  */
 
 import { append, clear, debounce, el, icon, on, srOnly, type Child } from './dom';
+import { getMessenger } from './messenger';
+import type { BlockerView, CommandId } from './protocol';
 
 // ---------------------------------------------------------------------------
 // collapsible
@@ -684,4 +710,308 @@ export function toggle(options: ToggleOptions): ToggleHandle {
       input.checked = checked;
     },
   };
+}
+
+// ---------------------------------------------------------------------------
+// statusPill
+// ---------------------------------------------------------------------------
+
+/**
+ * The five honest states a cell can be in.
+ *
+ * `unknown` is the one that is not an answer — nobody asked, there was no
+ * credential, the tab was opened without one. It renders differently from
+ * `neutral` on purpose: a grey cell that looks like every other grey cell
+ * quietly claims the question was answered "no".
+ */
+export type StatusVariant = 'ok' | 'warn' | 'danger' | 'neutral' | 'unknown';
+
+export interface StatusPillOptions {
+  variant: StatusVariant;
+  text: string;
+  /** Tooltip — usually the raw value the pill is summarising. */
+  title?: string;
+}
+
+export function statusPill(options: StatusPillOptions): HTMLElement {
+  return el(
+    'span',
+    {
+      class: `z-status z-status--${options.variant}`,
+      title: options.title ?? '',
+    },
+    options.text,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// dataTable
+// ---------------------------------------------------------------------------
+
+export interface DataColumn {
+  label: string;
+  /** Right-aligned and `font-variant-numeric: tabular-nums`. */
+  numeric?: boolean;
+  title?: string;
+}
+
+export interface DataTableOptions {
+  /** A bare string is a left-aligned column with that label. */
+  columns: ReadonlyArray<string | DataColumn>;
+  /** One entry per row; each cell's contents are wrapped in a `<td>`. */
+  rows: ReadonlyArray<ReadonlyArray<Child>>;
+  /** Zero-based indices of numeric columns, merged with any `numeric` flag. */
+  numeric?: readonly number[];
+  /** Extra class on the `<table>`, e.g. `z-fleet__table`. */
+  className?: string;
+  /** Drawn instead of the table when `rows` is empty. */
+  empty?: string;
+  /** Accessible name for the table. */
+  label?: string;
+}
+
+function asColumn(column: string | DataColumn): DataColumn {
+  return typeof column === 'string' ? { label: column } : column;
+}
+
+/**
+ * A table inside its own horizontal scroll box.
+ *
+ * The `.z-table__scroll` wrapper is the point: an operator table is wide —
+ * lane, harness, triggers, switch, run, cost — and a page body that scrolls
+ * sideways takes the tab bar and the toolbar with it. Wide content scrolls in
+ * its own box or it does not scroll at all.
+ */
+export function dataTable(options: DataTableOptions): HTMLElement {
+  const columns = options.columns.map(asColumn);
+  const numeric = new Set<number>(options.numeric ?? []);
+  columns.forEach((column, index) => {
+    if (column.numeric === true) {
+      numeric.add(index);
+    }
+  });
+
+  if (options.rows.length === 0 && options.empty !== undefined) {
+    return el('p', { class: 'z-lane__empty' }, options.empty);
+  }
+
+  const head = el(
+    'thead',
+    {},
+    el(
+      'tr',
+      {},
+      ...columns.map((column, index) =>
+        el(
+          'th',
+          {
+            ...(numeric.has(index) ? { class: 'z-table__num' } : {}),
+            ...(column.title === undefined ? {} : { title: column.title }),
+            attrs: { scope: 'col' },
+          },
+          column.label,
+        ),
+      ),
+    ),
+  );
+
+  const body = el('tbody', {});
+  for (const row of options.rows) {
+    body.appendChild(
+      el(
+        'tr',
+        {},
+        ...row.map((cell, index) =>
+          el('td', numeric.has(index) ? { class: 'z-table__num' } : {}, cell),
+        ),
+      ),
+    );
+  }
+
+  return el(
+    'div',
+    { class: 'z-table__scroll' },
+    el(
+      'table',
+      {
+        class: options.className ? `z-table ${options.className}` : 'z-table',
+        ...(options.label === undefined ? {} : { attrs: { 'aria-label': options.label } }),
+      },
+      head,
+      body,
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// emptyState
+// ---------------------------------------------------------------------------
+
+export interface EmptyStateOptions {
+  /** Codicon name. */
+  icon: string;
+  message: string;
+  /** The second line: what would make this screen have something to show. */
+  hint?: string;
+  /** Buttons offering the thing the hint just named. */
+  actions?: Child[];
+}
+
+/**
+ * "There is nothing here, and here is why" — never a blank panel.
+ *
+ * The hint is the load-bearing half. `.cms/` absence, an unset switch and an
+ * empty draft queue are all normal states (decision D9), and a screen that
+ * renders nothing for them is indistinguishable from one that failed.
+ */
+export function emptyState(options: EmptyStateOptions): HTMLElement {
+  return el(
+    'div',
+    { class: 'z-emptystate' },
+    icon(options.icon),
+    el('p', {}, options.message),
+    options.hint === undefined ? null : el('p', { class: 'z-muted' }, options.hint),
+    options.actions === undefined || options.actions.length === 0
+      ? null
+      : el('div', { class: 'z-review__actions z-emptystate__actions' }, ...options.actions),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// blockerNote
+// ---------------------------------------------------------------------------
+
+/**
+ * `Publish disabled: a; b.` — the gate's own summary, in a UI frame.
+ *
+ * The order is the host's, verbatim: `evaluateGates()` returns blockers
+ * cheapest-and-most-fundamental first, so the sentence already leads with what
+ * to fix first. Re-sorting or de-duplicating here would make this screen and
+ * the confirmation modal disagree about the same draft, draft queue or lane.
+ */
+export function blockerNote(
+  verb: string,
+  blockers: readonly BlockerView[],
+  className = 'z-blockers',
+): HTMLElement | null {
+  if (blockers.length === 0) {
+    return null;
+  }
+  return el(
+    'p',
+    { class: className },
+    `${verb} disabled: ${blockers.map((blocker) => blocker.message).join('; ')}.`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// gatedButton
+// ---------------------------------------------------------------------------
+
+export interface GatedButtonOptions {
+  label: string;
+  /** The intent. The closed `CommandId` union is the host's allow-list. */
+  id: CommandId;
+  /** The target — which lane, which draft, which folder. Never an override. */
+  args?: unknown;
+  /** The host's advisory blockers. Non-empty disables the button. */
+  blockers: readonly BlockerView[];
+  /** How the blocker sentence names the action. Defaults to `label`. */
+  verb?: string;
+  title?: string;
+  secondary?: boolean;
+  danger?: boolean;
+}
+
+/**
+ * A button that is disabled when the host says the action is blocked, and the
+ * blocker sentence underneath it.
+ *
+ * The disabled state is a courtesy to the person, not a control (decision D5).
+ * The host re-reads state from disk and re-runs its gate inside the same
+ * function the command palette calls; nothing travels from here but the intent
+ * and its target.
+ */
+export function gatedButton(options: GatedButtonOptions): HTMLElement {
+  const blocked = options.blockers.length > 0;
+  const reason = options.blockers.map((blocker) => blocker.message).join('; ');
+  const button = el(
+    'button',
+    {
+      class: options.danger === true
+        ? 'z-btn z-btn--danger'
+        : options.secondary === true
+          ? 'z-btn z-btn--secondary'
+          : 'z-btn',
+      type: 'button',
+      disabled: blocked,
+      title: blocked ? reason : (options.title ?? options.label),
+      onclick: () => {
+        // An intent and a target. See the file header, and decision D5.
+        getMessenger().command(options.id, options.args);
+      },
+    },
+    options.label,
+  );
+  const note = blockerNote(options.verb ?? options.label, options.blockers);
+  if (note === null) {
+    return button;
+  }
+  return el('div', { class: 'z-gated' }, button, note);
+}
+
+// ---------------------------------------------------------------------------
+// keyValueList
+// ---------------------------------------------------------------------------
+
+export interface KeyValueRow {
+  key: string;
+  value: Child;
+  title?: string;
+}
+
+/**
+ * Provenance, as a definition list.
+ *
+ * Every operator screen has to say where its numbers came from — which
+ * manifest, read at what time, from which commit, by which credential. A `<dl>`
+ * says "these labels name those values" to a screen reader, which a two-column
+ * table of `<div>`s does not.
+ */
+export function keyValueList(rows: readonly KeyValueRow[], className?: string): HTMLElement {
+  const list = el('dl', { class: className ? `z-kv ${className}` : 'z-kv' });
+  for (const row of rows) {
+    list.appendChild(el('dt', { class: 'z-kv__key', title: row.title ?? '' }, row.key));
+    list.appendChild(el('dd', { class: 'z-kv__value' }, row.value));
+  }
+  return list;
+}
+
+// ---------------------------------------------------------------------------
+// diffView
+// ---------------------------------------------------------------------------
+
+/**
+ * A unified diff, coloured one line at a time.
+ *
+ * The line's first character picks its class and **nothing else** — the text
+ * chooses a class name, never a structure, and every character of it goes in
+ * through `createTextNode`. That is what makes it safe to render a diff an
+ * agent proposed or a scaffolder generated.
+ *
+ * The class names are the agent transcript's (`.z-agent__diff` with `.is-add`,
+ * `.is-del`, `.is-meta`), which `media/base.css` styles: the approval card and
+ * a lane-scaffold preview show the same kind of thing and must look identical.
+ * `src/webview/agent/main.ts`'s `diffPane()` is its twin — if one changes, the
+ * other changes with it.
+ */
+export function diffView(text: string): HTMLElement {
+  const pre = el('pre', { class: 'z-agent__diff' });
+  for (const line of text.split('\n')) {
+    const first = line.charAt(0);
+    const className =
+      first === '+' ? 'is-add' : first === '-' ? 'is-del' : first === '#' ? 'is-meta' : '';
+    pre.appendChild(className === '' ? el('span', {}, line) : el('span', { class: className }, line));
+  }
+  return pre;
 }

@@ -23,13 +23,32 @@
  * it is the only surface that may be entirely absent from a session, and
  * keeping it beside `agent.ts` keeps the whole optional capability in one
  * directory that can be read — or removed — as a unit.
+ *
+ * ### The constructor is what makes the four commands work
+ *
+ * `setAgentHost(this)` runs in the constructor, not in `open()`. Until this was
+ * here, nothing in `src/` ever installed a host and all four `zer0Cms.agent.*`
+ * commands ended at "the AI agent panel is not available in this window" —
+ * documented wiring that did not exist. The registration lives in `registered`
+ * rather than `disposables` on purpose: `disposables` is emptied by
+ * `teardown()` when the *webview* closes, and a closed webview must not
+ * uninstall the host that `agent.open` uses to bring it back.
+ *
+ * ### Two surfaces reach `start()`, so `start()` holds the gate
+ *
+ * `zer0Cms.agent.start` goes through `readyHost()` in `src/commands/agent.ts`,
+ * which checks Workspace Trust. The composer in this panel does not — it posts
+ * `agent.send` straight into the handler table. So `start()` asks again
+ * (decision D13). Same rule as everywhere else in this repository: the surface
+ * is a courtesy, the function is the gate.
  */
 
 import { randomBytes } from 'node:crypto';
 
 import * as vscode from 'vscode';
 
-import { currentConfig, workspaceRoot } from '../config';
+import { setAgentHost } from '../commands/agent';
+import { currentConfig, workspaceRoot, workspaceTrusted } from '../config';
 import { utcStamp } from '../core';
 import type { Zer0Shell } from '../extension';
 import { describeError, log } from '../logger';
@@ -41,7 +60,13 @@ import type {
   TranscriptRole,
   ViewMsg,
 } from '../webview/shared/protocol';
-import { CmsAgent, type AgentReporter, type AgentRole, type ApprovalRequest } from './agent';
+import {
+  CmsAgent,
+  DEFAULT_MODEL,
+  type AgentReporter,
+  type AgentRole,
+  type ApprovalRequest,
+} from './agent';
 
 /** Older lines are dropped rather than posted forever to a live webview. */
 const TRANSCRIPT_LIMIT = 400;
@@ -62,7 +87,10 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
 
   private panel: vscode.WebviewPanel | undefined;
   private agent: CmsAgent | undefined;
+  /** Lives as long as the current *webview*; `teardown()` empties it. */
   private readonly disposables: vscode.Disposable[] = [];
+  /** Lives as long as this *object*; only `dispose()` empties it. */
+  private readonly registered: vscode.Disposable[] = [];
 
   private transcript: TranscriptEntry[] = [];
   private approval: ApprovalCard | null = null;
@@ -95,6 +123,12 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
         log.show();
       },
     };
+
+    // The wiring the four `zer0Cms.agent.*` commands look for. `setAgentHost`
+    // returns a disposable that unhooks only if this host is still the
+    // installed one, so a second panel replacing this one and then closing
+    // cannot unhook the replacement.
+    this.registered.push(setAgentHost(this));
   }
 
   // -------------------------------------------------------------------------
@@ -151,6 +185,17 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
     const text = prompt.trim();
     this.open();
 
+    // The gate, re-asked here because the composer reaches this method without
+    // passing through `readyHost()` (D13). The panel still opens: the notice is
+    // the whole point, and a blank window would explain nothing.
+    if (!workspaceTrusted()) {
+      this.notice =
+        'This workspace is not trusted, so the agent will not run. It edits files and runs ' +
+        'commands inside this repository — trust the folder to enable it.';
+      this.post();
+      return;
+    }
+
     if (this.running) {
       this.notice = 'A run is already in progress.';
       this.post();
@@ -206,6 +251,12 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
 
   dispose(): void {
     this.teardown();
+    // After `teardown()`, which only empties the webview-scoped list. The host
+    // registration outlives every panel this object opens and closes, and is
+    // removed exactly once, here.
+    for (const disposable of this.registered.splice(0)) {
+      disposable.dispose();
+    }
     this.panel?.dispose();
     this.panel = undefined;
   }
@@ -348,7 +399,7 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
   private state(): AgentState {
     const cfg = currentConfig().agent;
     const available = this.agent?.available ?? true;
-    const model = cfg.model.trim().length > 0 ? cfg.model.trim() : 'claude-opus-5';
+    const model = cfg.model.trim().length > 0 ? cfg.model.trim() : DEFAULT_MODEL;
     return {
       kind: 'agent',
       enabled: cfg.enabled,
@@ -389,9 +440,21 @@ function nonce(): string {
  * `postMessage` and is written with `textContent`, which is what makes the
  * `default-src 'none'` policy below load-bearing rather than decorative.
  *
- * The `<style>` block is agent-specific layout only. It names `--z-*` tokens
- * exclusively, never a VS Code theme variable: `media/tokens.css` stays the one
- * file in the repository that knows those names.
+ * **There is no `<style>` block.** There used to be about forty rules inlined
+ * here, which meant the agent panel's styling was the one part of this
+ * extension's appearance that lived in a TypeScript string literal: invisible
+ * to the styling test, unreachable from `media/dashboard.css`, and re-parsed on
+ * every page render. Those rules now live in `media/base.css` beside the widget
+ * kernel, and this file links it. The class names it expects are the
+ * `z-agent__*` family the front end builds in `src/webview/agent/main.ts` —
+ * `bar`, `spacer`, `status` (with `is-running`), `notice`, `log`, `line` (with
+ * the six `--user/--assistant/--tool/--system/--result/--error` modifiers),
+ * `gutter`, `role`, `text`, `card` (with `card__head`, `card__tool`,
+ * `card__summary`, `card__actions`), `diff` (with `is-add`, `is-del`,
+ * `is-meta`), `composer` (with `composer__row`) and `hint`, plus the
+ * `#z-agent` column itself. Every one of them names `--z-*` tokens only:
+ * `media/tokens.css` stays the single file in the repository that knows a VS
+ * Code theme variable's name.
  */
 function agentHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
   const token = nonce();
@@ -414,59 +477,6 @@ function agentHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <link nonce="${token}" rel="stylesheet" href="${tokens.toString()}">
 <link nonce="${token}" rel="stylesheet" href="${base.toString()}">
 <link nonce="${token}" rel="stylesheet" href="${panel.toString()}">
-<style nonce="${token}">
-  body { display: flex; }
-  #z-agent { display: flex; flex-direction: column; width: 100%; height: 100vh; }
-  #z-agent > .z-section { flex: 0 0 auto; }
-  #z-agent > .z-section[data-section="transcript"] { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-  .z-agent__bar { display: flex; align-items: center; gap: var(--z-sp-2);
-    padding: var(--z-sp-2) var(--z-gutter); border-bottom: 1px solid var(--z-border); }
-  .z-agent__bar h1 { font-size: 1rem; font-weight: 600; color: var(--z-fg-header); }
-  .z-agent__spacer { flex: 1 1 auto; }
-  .z-agent__status { display: inline-flex; align-items: center; gap: var(--z-sp-1);
-    padding: 0 var(--z-sp-2); border-radius: var(--z-radius-round);
-    background: var(--z-bg-badge); color: var(--z-fg-badge); font-size: 0.85rem; }
-  .z-agent__status.is-running { background: var(--z-accent); }
-  .z-agent__notice { padding: var(--z-sp-2) var(--z-gutter); color: var(--z-fg-warning);
-    background: var(--z-warn-bg); border-bottom: 1px solid var(--z-border); }
-  .z-agent__log { display: flex; flex-direction: column; gap: var(--z-sp-2);
-    padding: var(--z-gutter) var(--z-gutter-lg); }
-  .z-agent__line { display: grid; grid-template-columns: 5.5rem 1fr; gap: var(--z-sp-2);
-    border-left: 2px solid transparent; padding-left: var(--z-sp-2); }
-  .z-agent__gutter { color: var(--z-fg-muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-  .z-agent__role { display: block; text-transform: uppercase; letter-spacing: 0.04em; }
-  .z-agent__text { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: inherit; }
-  .z-agent__line--user { border-left-color: var(--z-accent); }
-  .z-agent__line--assistant { border-left-color: var(--z-border-active); }
-  .z-agent__line--tool .z-agent__text { font-family: var(--z-mono); font-size: var(--z-mono-size); color: var(--z-fg-description); }
-  .z-agent__line--system .z-agent__text { color: var(--z-fg-muted); font-style: italic; }
-  .z-agent__line--result { border-left-color: var(--z-ok); }
-  .z-agent__line--error { border-left-color: var(--z-error-border); }
-  .z-agent__line--error .z-agent__text { color: var(--z-fg-error); }
-  .z-agent__card { margin: 0 var(--z-gutter-lg) var(--z-gutter);
-    border: 1px solid var(--z-warn-border); border-radius: var(--z-radius); overflow: hidden; }
-  .z-agent__card__head { display: flex; align-items: baseline; gap: var(--z-sp-2);
-    padding: var(--z-sp-2) var(--z-sp-3); background: var(--z-warn-bg); }
-  .z-agent__card__tool { font-weight: 600; }
-  .z-agent__card__summary { color: var(--z-fg-description); font-family: var(--z-mono);
-    font-size: var(--z-mono-size); overflow-wrap: anywhere; }
-  .z-agent__diff { max-height: 40vh; overflow: auto; margin: 0; padding: var(--z-sp-2) var(--z-sp-3);
-    font-family: var(--z-mono); font-size: var(--z-mono-size); background: var(--z-bg-input); }
-  .z-agent__diff span { display: block; white-space: pre-wrap; word-break: break-word; }
-  .z-agent__diff .is-add { color: var(--z-ok); }
-  .z-agent__diff .is-del { color: var(--z-fg-error); }
-  .z-agent__diff .is-meta { color: var(--z-fg-muted); }
-  .z-agent__card__actions { display: flex; justify-content: flex-end; gap: var(--z-sp-2);
-    padding: var(--z-sp-2) var(--z-sp-3); border-top: 1px solid var(--z-border); }
-  .z-agent__composer { display: flex; flex-direction: column; gap: var(--z-sp-2);
-    padding: var(--z-sp-3) var(--z-gutter-lg); border-top: 1px solid var(--z-border); }
-  .z-agent__composer textarea { width: 100%; resize: vertical; min-height: 4.5rem;
-    padding: var(--z-sp-2); color: var(--z-input-fg); background: var(--z-bg-input);
-    border: 1px solid var(--z-input-border); border-radius: var(--z-radius);
-    font-family: inherit; font-size: inherit; }
-  .z-agent__composer__row { display: flex; align-items: center; gap: var(--z-sp-2); }
-  .z-agent__hint { color: var(--z-fg-muted); font-size: 0.85rem; }
-</style>
 </head>
 <body>
 <div id="z-agent"></div>

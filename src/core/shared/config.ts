@@ -22,6 +22,8 @@ import * as path from 'node:path';
 import {
   FIELD_TYPES,
   PANEL_SECTION_IDS,
+  PLATFORM_IDS,
+  type AgentPermissionMode,
   type ContentFolder,
   type ContentType,
   type CustomTaxonomy,
@@ -34,6 +36,8 @@ import {
   type NumberOptions,
   type PanelSectionId,
   type Placeholder,
+  type PlatformConfig,
+  type PlatformProfileJson,
   type WhenClause,
   type WhenOperator,
   type Zer0Config,
@@ -70,6 +74,10 @@ export function defaultConfig(root: string): Zer0Config {
   return {
     workspaceRoot: root,
     configFile: DEFAULT_CONFIG_FILE,
+    // `auto` twice: detect the generator from its marker files, and probe for
+    // the overlay. A site that has never been opened here should need no
+    // configuration at all to be read correctly.
+    platform: { id: 'auto', overlay: 'auto', overrides: {} },
     contentFolders: [],
     contentTypes: [],
     fieldGroups: [],
@@ -122,6 +130,8 @@ export function defaultConfig(root: string): Zer0Config {
       engineScript: 'scripts/cms/cms.py',
       normalizerScript: 'scripts/content/normalize-frontmatter.py',
       contentDirs: ['pages/'],
+      aiConfigPath: '_data/ai.yml',
+      verifyCommand: '',
     },
     agent: { enabled: false, model: 'claude-opus-5', maxTurns: 40, permissionMode: 'default' },
     validation: { enabled: true },
@@ -137,7 +147,13 @@ export function defaultConfig(root: string): Zer0Config {
       pageSize: 16,
       cardFields: { state: true, date: true },
     },
-    fleet: { enabled: false, manifestPath: 'fleet.manifest.yml' },
+    fleet: {
+      enabled: false,
+      manifestPath: 'fleet.manifest.yml',
+      roster: [],
+      hub: 'bamr87/bamr87',
+      gitfactoryUrl: 'https://bamr87.github.io/gitorio/',
+    },
     logging: { level: 'info' },
   };
 }
@@ -558,6 +574,35 @@ function coerceBooleanMap(value: unknown): Record<string, boolean> | undefined {
   return out;
 }
 
+/**
+ * The `platform` block, coerced like every other untrusted file value.
+ *
+ * `id` and `overlay` are closed vocabularies, so an unrecognised spelling falls
+ * back to `auto` — detection is a better answer than a typo. `overrides` is
+ * deliberately kept as an unvalidated bag: it is a *partial* profile, and the
+ * only place that knows which of a profile's forty-odd keys are meaningful is
+ * the resolver in `core/platform/` that merges it. This layer guarantees one
+ * thing about it — that it is an object — and says so rather than pretending to
+ * have checked more.
+ */
+function coercePlatform(value: unknown): PlatformConfig | undefined {
+  const raw = asRecord(value);
+  if (!raw) {
+    return undefined;
+  }
+  const id = asEnum<PlatformConfig['id']>(raw.id, ['auto', ...PLATFORM_IDS]) ?? 'auto';
+  // `overlay: null` is a real answer ("no overlay, do not probe"), which is why
+  // it is read with the nullable reader rather than dropped as absent.
+  const overlayRaw = asNullableString(raw.overlay);
+  const overlay: PlatformConfig['overlay'] =
+    overlayRaw === null ? null : overlayRaw === 'zer0-mistakes' ? 'zer0-mistakes' : 'auto';
+  return {
+    id,
+    overlay,
+    overrides: (asRecord(raw.overrides) ?? {}) as Partial<PlatformProfileJson>,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Path helpers
 // ---------------------------------------------------------------------------
@@ -626,7 +671,12 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
 
   const cfg: Zer0Config = {
     workspaceRoot: root,
-    configFile: pick(settings.configFile, asString(json.configFile), defaults.configFile),
+    // Two layers, not three. `zer0.json` NAMES this file, so the name cannot
+    // live inside it: the schema rejects a `configFile` key and always has, and
+    // reading one here was a branch nothing could ever take.
+    configFile: pick(settings.configFile, undefined, defaults.configFile),
+    // `platform` is a project fact, so it has no settings twin to lose to.
+    platform: coercePlatform(json.platform) ?? defaults.platform,
     contentFolders: pick(
       settings.contentFolders,
       coerceFolders(json.contentFolders),
@@ -833,6 +883,16 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
         asStringList(fileCms.contentDirs),
         defaults.cms.contentDirs,
       ),
+      aiConfigPath: pick(
+        settings.cms?.aiConfigPath,
+        asString(fileCms.aiConfigPath),
+        defaults.cms.aiConfigPath,
+      ),
+      verifyCommand: pick(
+        settings.cms?.verifyCommand,
+        asString(fileCms.verifyCommand),
+        defaults.cms.verifyCommand,
+      ),
     },
     agent: {
       enabled: pick(settings.agent?.enabled, asBoolean(fileAgent.enabled), defaults.agent.enabled),
@@ -842,9 +902,18 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
         asNumber(fileAgent.maxTurns),
         defaults.agent.maxTurns,
       ),
+      // Clamped to the three-value enum on the FILE layer too. The settings
+      // layer has always been clamped (`explicitEnum` in src/config.ts), but
+      // `asString` here handed anything a `zer0.json` said — `dontAsk`, `auto`,
+      // a typo — straight to the agent SDK, which is exactly the place a
+      // repository must not be able to reach into.
       permissionMode: pick(
         settings.agent?.permissionMode,
-        asString(fileAgent.permissionMode),
+        asEnum<AgentPermissionMode>(fileAgent.permissionMode, [
+          'default',
+          'acceptEdits',
+          'plan',
+        ]),
         defaults.agent.permissionMode,
       ),
     },
@@ -914,6 +983,16 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
         settings.fleet?.manifestPath,
         asString(fileFleet.manifestPath),
         defaults.fleet.manifestPath,
+      ),
+      // `pick`, not `pickList`: an empty roster in your settings is a decision
+      // ("watch nothing but the folders I opened"), and `pickList` would read
+      // it as absence and let the project file speak instead.
+      roster: pick(settings.fleet?.roster, asStringList(fileFleet.roster), defaults.fleet.roster),
+      hub: pick(settings.fleet?.hub, asString(fileFleet.hub), defaults.fleet.hub),
+      gitfactoryUrl: pick(
+        settings.fleet?.gitfactoryUrl,
+        asString(fileFleet.gitfactoryUrl),
+        defaults.fleet.gitfactoryUrl,
       ),
     },
     logging: {

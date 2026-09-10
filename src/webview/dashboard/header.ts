@@ -12,9 +12,16 @@
  * └───────────────────────────────────────────────────────────────────────┘
  * ```
  *
- * Rows 2-6 exist only on `/contents`; the other four routes get the tab bar
- * and their own content, because a sort control above a draft queue would be
- * a control that does nothing.
+ * Rows 2-6 exist only on `/contents`; the other routes get the tab bar and —
+ * if they registered one — a single toolbar row of their own, because a sort
+ * control above a draft queue would be a control that does nothing, and Audit,
+ * Workflows and Monitor each have filters that are not Contents' filters.
+ *
+ * That is what `setRouteToolbar()` is for. A route module registers its own
+ * toolbar at import time and this file never learns what is in it; the
+ * alternative — `header.ts` importing every route — is a cycle the moment a
+ * route wants a shared control back. A route that registers nothing gets the
+ * tab bar and nothing else, exactly as before.
  *
  * Three behaviours here are contracts rather than preferences:
  *
@@ -39,6 +46,35 @@ import { SEARCH_DEBOUNCE_MS, type DashboardContext } from './main';
 
 /** Where "Documentation" goes. The repository, not a marketing site. */
 const DOCS_URL = 'https://github.com/bamr87/zer0-CMS#readme';
+
+// ---------------------------------------------------------------------------
+// The per-route toolbar slot
+// ---------------------------------------------------------------------------
+
+/** Build one route's toolbar row, or `null` when it has nothing to show. */
+export type RouteToolbar = (ctx: DashboardContext) => HTMLElement | null;
+
+const ROUTE_TOOLBARS = new Map<DashboardRoute, RouteToolbar>();
+
+/**
+ * Register a route's toolbar. Called at module scope by the route that owns it,
+ * so the registry is populated by the same import `main.ts`'s route table needs
+ * anyway — and `header.ts` never imports a route.
+ *
+ * `contents` is not registerable: its five-row stack is this file's, and its
+ * persisted keys (`sorting`, `grouping`, `page`, `view`) are read here.
+ */
+export function setRouteToolbar(route: DashboardRoute, toolbar: RouteToolbar): void {
+  if (route === 'contents') {
+    throw new Error('header: the Contents toolbar is owned by header.ts, not by a route');
+  }
+  ROUTE_TOOLBARS.set(route, toolbar);
+}
+
+/** What a route registered, if anything. Exported for the route table's tests. */
+export function routeToolbar(route: DashboardRoute): RouteToolbar | undefined {
+  return ROUTE_TOOLBARS.get(route);
+}
 
 /** The codicon each layout is drawn with, in switch order. */
 const VIEW_ICONS: ReadonlyArray<{ id: 'grid' | 'list' | 'structure'; glyph: string; label: string }> = [
@@ -568,6 +604,12 @@ export function renderHeader(host: HTMLElement, ctx: DashboardContext): void {
   host.appendChild(tabBar(ctx));
   const route = ctx.state.tabs.some((tab) => tab.id === ctx.ui.route) ? ctx.ui.route : 'contents';
   if (route !== 'contents') {
+    // Whatever the route registered, or nothing. A route with no filters still
+    // gets a bare tab bar, which is what every route but Contents had.
+    const own = ROUTE_TOOLBARS.get(route)?.(ctx) ?? null;
+    if (own !== null) {
+      host.appendChild(own);
+    }
     return;
   }
   host.appendChild(toolbarRow(ctx));

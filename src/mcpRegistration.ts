@@ -1,7 +1,9 @@
 /**
  * Registers the bundled MCP server with VS Code, so Copilot agent mode — and
- * anything else that speaks MCP through the editor — gets the eight zer0-CMS
- * tools without the user hand-editing a JSON file.
+ * anything else that speaks MCP through the editor — gets the zer0-CMS tools
+ * without the user hand-editing a JSON file. The tool list is whatever
+ * `src/mcp/tools.ts` exports and it grows every release; `tools/list` is the
+ * only honest count, which is why one is not written down here.
  *
  * **The two phases are the security design, not a formality.**
  *
@@ -29,6 +31,20 @@
  * that some future parser might read as present — and not merely omitted, which
  * would let an inherited `ZER0_CMS_MCP_ALLOW_PUBLISH=1` in the extension host's
  * own environment leak through into a server that is not allowed to publish.
+ *
+ * **Two more variables follow the same pattern exactly** (decision D13).
+ * `ZER0_CMS_MCP_ALLOW_EXEC` carries Workspace Trust across the process
+ * boundary: the server cannot ask `vscode` anything, so `zer0_contract` — the
+ * one tool that starts a process — refuses unless it was told, and it is told
+ * only in a trusted workspace. `ZER0_CMS_PYTHON` pins the *interpreter* to the
+ * settings layer, because choosing which binary runs is not a decision a
+ * `zer0.json` that arrived with a clone gets to make. Both are `null` when they
+ * do not apply, and both are read at resolve time and nowhere else.
+ *
+ * **And in an untrusted workspace there is no server at all.**
+ * `provideMcpServerDefinitions` returns `[]`, because a registered server would
+ * inherit this extension's whole reach over the folder — the trust decision has
+ * to happen before an agent is offered the tools, not inside each one.
  */
 
 import * as path from 'node:path';
@@ -39,7 +55,9 @@ import {
   CONFIG_SECTION,
   currentConfig,
   settingsPublishAllow,
+  settingsSnapshot,
   workspaceFolder,
+  workspaceTrusted,
 } from './config';
 import { describeError, log } from './logger';
 import { notifyError, notifyInfo } from './uiState';
@@ -117,6 +135,38 @@ export function mcpPublishAllowed(): boolean {
   return false;
 }
 
+/**
+ * Whether the bundled server may start a process — `zer0_contract`'s gate.
+ *
+ * Workspace Trust and nothing else. There is deliberately no setting here: a
+ * fourth switch to forget would be worse than the one decision VS Code already
+ * asks a person to make about a folder, and the tool's own refusal names the
+ * variable rather than a preference nobody would find. The value of the gate is
+ * what it denies: a server started by hand, or from a committed
+ * `.vscode/mcp.json`, gets no `env` at all and therefore never spawns.
+ */
+export function mcpExecAllowed(): boolean {
+  return workspaceTrusted();
+}
+
+/**
+ * The interpreter **as a human set it**, or `undefined`.
+ *
+ * `settingsPublishAllow`'s reasoning pointed at `cms.pythonPath`. A `zer0.json`
+ * ships with the repository and can name any binary on the machine; the three
+ * settings scopes are written by the person sitting at the editor. When nobody
+ * set one, nothing is injected and the server resolves the interpreter through
+ * its normal layers — behind `ZER0_CMS_MCP_ALLOW_EXEC`, which is the gate that
+ * decides whether anything runs at all.
+ */
+export function mcpPythonPath(): string | undefined {
+  if (!workspaceTrusted()) {
+    return undefined;
+  }
+  const python = settingsSnapshot().cms?.python?.trim();
+  return python === undefined || python === '' ? undefined : python;
+}
+
 export function registerMcpProvider(context: vscode.ExtensionContext): void {
   const didChange = new vscode.EventEmitter<void>();
 
@@ -124,6 +174,15 @@ export function registerMcpProvider(context: vscode.ExtensionContext): void {
     onDidChangeMcpServerDefinitions: didChange.event,
 
     provideMcpServerDefinitions: () => {
+      if (!vscode.workspace.isTrusted) {
+        // No server, rather than a server that refuses each tool one at a time.
+        // Whatever this returns may be cached and shown, so "offered but inert"
+        // would be a menu entry promising something the folder is not allowed
+        // to do; `onDidGrantWorkspaceTrust` below re-fires and the real list
+        // appears the moment the person says yes.
+        log.info('MCP server not offered: this workspace is not trusted');
+        return [];
+      }
       const folder = workspaceFolder();
       if (folder === undefined) {
         // The server reads the workspace it is rooted in. Without one there is
@@ -146,16 +205,22 @@ export function registerMcpProvider(context: vscode.ExtensionContext): void {
     resolveMcpServerDefinition: async (server) => {
       // Start time. Secrets may be read *here* and nowhere else.
       const allow = mcpPublishAllowed();
+      const exec = mcpExecAllowed();
+      const python = mcpPythonPath();
       const apiKey = await context.secrets.get(SECRET_KEYS.anthropicApiKey);
       server.env = {
         // Which project file the server should read, relative to its cwd.
         ZER0_CMS_CONFIG: configFileName(),
         // `null` = remove the variable from the child environment entirely.
         ZER0_CMS_MCP_ALLOW_PUBLISH: allow ? '1' : null,
+        ZER0_CMS_MCP_ALLOW_EXEC: exec ? '1' : null,
+        ZER0_CMS_PYTHON: python ?? null,
         ANTHROPIC_API_KEY: apiKey ?? null,
       };
       log.info(
         `MCP server starting — publish ${allow ? 'ENABLED' : 'disabled'}, ` +
+          `exec ${exec ? 'ENABLED' : 'disabled'}, ` +
+          `interpreter ${python === undefined ? 'from the project layers' : 'pinned from settings'}, ` +
           `config ${configFileName()}, api key ${apiKey === undefined ? 'absent' : 'injected'}`,
       );
       return server;
@@ -172,10 +237,22 @@ export function registerMcpProvider(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration(`${CONFIG_SECTION}.governance`)) {
+      // Three sections change what a *running* server would be told:
+      // `governance` (the publish flag), `cms` (the pinned interpreter and the
+      // config file name), and `fleet` — whose master gates are settings-only
+      // and whose scaffolding opt-in a later package injects here too.
+      if (
+        event.affectsConfiguration(`${CONFIG_SECTION}.governance`) ||
+        event.affectsConfiguration(`${CONFIG_SECTION}.cms`) ||
+        event.affectsConfiguration(`${CONFIG_SECTION}.fleet`)
+      ) {
         didChange.fire();
       }
     }),
+    // Granting trust turns an empty server list into a real one, and arms the
+    // exec flag on a server that is already running. Trust cannot be revoked
+    // without a window reload, so there is no matching "revoked" event.
+    vscode.workspace.onDidGrantWorkspaceTrust(() => didChange.fire()),
     vscode.workspace.onDidChangeWorkspaceFolders(() => didChange.fire()),
     vscode.lm.registerMcpServerDefinitionProvider(MCP_PROVIDER_ID, provider),
   );

@@ -22,7 +22,7 @@ import {
   parseYamlSubset,
   splitFrontMatter,
 } from '../core/content/frontmatter';
-import { buildIndex, pageToRecord } from '../core/content/pageIndex';
+import { buildIndex, pageToRecord, slimPage } from '../core/content/pageIndex';
 import {
   DENSITY_MAX,
   DENSITY_MIN,
@@ -46,6 +46,7 @@ import { roundHalfEven } from '../core/catering/catering';
 import { formatPercent, formatThousands } from '../core/catering/worklist';
 import { resolveConfig } from '../core/shared/config';
 import type { Zer0Settings } from '../core/shared/config';
+import { EXEC_VECTORS, evaluateExecGate, insideWorkspace } from '../core/shared/trust';
 import { formatDate, parseDate } from '../core/shared/dates';
 import { compileGlob, globMatches, toPosix } from '../core/shared/glob';
 import { pyJsonDump, readJsonc } from '../core/shared/jsonio';
@@ -58,7 +59,14 @@ import {
   transliterate,
   truncate,
 } from '../core/shared/text';
-import { UNKNOWN_COUNT, countLabel, isMeasured, type Zer0Config } from '../core/shared/types';
+import {
+  UNKNOWN_COUNT,
+  countLabel,
+  isMeasured,
+  type ExecGateInput,
+  type PageEntry,
+  type Zer0Config,
+} from '../core/shared/types';
 
 // ---------------------------------------------------------------------------
 // Fixture access. `__dirname` is `out/test`; the fixtures stay in `src/test`.
@@ -884,6 +892,147 @@ suite('core: the page index', () => {
     assert.equal(countLabel(0), '0');
     assert.equal(isMeasured(0), true);
   });
+
+  /**
+   * `changed` exists so the shell can skip a `workspaceState` write. On a real
+   * site that cache is megabytes, and a rebuild fires on every file save — most
+   * of them reusing every page. `false` has to mean "I have nothing new to
+   * store", and it has to be *false* only then.
+   */
+  test('changed is false over an unchanged tree, and true once an mtime has moved', async () => {
+    const cfg = fixtureConfig(workspaceSettings());
+    const cold = await buildIndex(cfg);
+    assert.equal(cold.changed, true, 'the first run built a cache nobody was holding');
+
+    const warm = await buildIndex(cfg, cold.cache);
+    assert.equal(warm.changed, false, 'every candidate reused and the same set of them');
+    assert.equal(warm.pages.length, cold.pages.length);
+
+    // A touch, to `buildIndex`, is exactly "the cache remembers an mtime this
+    // file no longer has" — so the cache is what moves here. This suite reads
+    // the fixture and never writes it; the tests that write live elsewhere.
+    const entries = { ...cold.cache.entries };
+    const [touchedPath] = Object.keys(entries);
+    assert.ok(touchedPath !== undefined);
+    const stale = entries[touchedPath];
+    assert.ok(stale !== undefined);
+    entries[touchedPath] = { mtime: stale.mtime - 1_000, page: stale.page };
+
+    const touched = await buildIndex(cfg, { ...cold.cache, entries });
+    assert.equal(touched.changed, true, 'one re-parsed page is a cache worth writing');
+    assert.notEqual(touched.pages[0], cold.pages[0], 'the touched page was read again');
+    assert.deepEqual(
+      touched.pages.map((page) => page.relPath),
+      cold.pages.map((page) => page.relPath),
+      'and it came back in its own place, not at the front',
+    );
+
+    // A file that left the tree parses nothing and still changes the cache: the
+    // rebuilt one is smaller than the one that was passed in.
+    const withGhost = { ...cold.cache, entries: { ...cold.cache.entries } };
+    const ghost = cold.pages[0];
+    assert.ok(ghost !== undefined);
+    withGhost.entries['/nowhere/deleted-yesterday.md'] = { mtime: 1, page: ghost };
+    const shrunk = await buildIndex(cfg, withGhost);
+    assert.equal(shrunk.changed, true, 'a deletion is a change even though nothing was parsed');
+    assert.equal(shrunk.pages.length, cold.pages.length);
+  });
+
+  /**
+   * The cold path stats and reads eight candidates at a time, so results arrive
+   * out of order. They are folded back **by candidate index**, which is what
+   * keeps this true: the page list is sorted by path, not by whichever file the
+   * disk answered first, and a cache hit is still the same object.
+   */
+  test('the concurrent cold path keeps page order and cached identity', async () => {
+    const cfg = fixtureConfig(workspaceSettings());
+    const [left, right] = await Promise.all([buildIndex(cfg), buildIndex(cfg)]);
+    assert.ok(left !== undefined && right !== undefined);
+
+    const order = left.pages.map((page) => page.relPath);
+    assert.deepEqual(order, right.pages.map((page) => page.relPath), 'two cold scans agree');
+    assert.deepEqual(order, [...order].sort(), 'completion order never reaches the result');
+
+    const warm = await buildIndex(cfg, left.cache);
+    assert.equal(warm.pages.length, left.pages.length);
+    for (let index = 0; index < left.pages.length; index += 1) {
+      assert.equal(warm.pages[index], left.pages[index], `page ${index} came back by identity`);
+    }
+  });
+
+  /**
+   * `PageEntry.data` is the whole front-matter block — right for the panel,
+   * which edits arbitrary fields, and wrong for a search reply, where it is
+   * about 1.2 MB of payload nothing on the other side reads.
+   */
+  test('slimPage is the row a view draws, without the front matter behind it', async () => {
+    const cfg = fixtureConfig(workspaceSettings());
+    const { pages } = await buildIndex(cfg);
+    const page = pages[0];
+    assert.ok(page !== undefined);
+
+    const slim = slimPage(page);
+    assert.deepEqual(Object.keys(slim), [
+      'relPath',
+      'path',
+      'title',
+      'slug',
+      'date',
+      'draft',
+      'collection',
+      'modified',
+    ]);
+    assert.equal('data' in slim, false, 'the whole point: the front matter stays host-side');
+    assert.equal(slim.relPath, page.relPath);
+    assert.equal(slim.path, page.filePath, 'absolute, for the command that opens it');
+    assert.equal(slim.title, 'Governed publishing without a platform');
+    assert.equal(slim.slug, 'governed-publishing');
+    assert.equal(slim.date, '2026-07-08', 'the date is the string that was written');
+    assert.equal(slim.draft, false);
+    assert.equal(slim.modified, page.modified);
+
+    // `collection` is the answer `pageToRecord` gives, reached without a config
+    // to strip the workspace root with.
+    const nested: PageEntry = {
+      ...page,
+      folder: path.join(WORKSPACE, 'pages/_posts'),
+      relPath: 'pages/_posts/corp/2026-07-08-governed-publishing.md',
+    };
+    assert.equal(slimPage(nested).collection, 'corp');
+    assert.equal(slimPage(nested).collection, pageToRecord(cfg, nested).collection);
+    assert.equal(slimPage(page).collection, pageToRecord(cfg, page).collection);
+  });
+
+  /**
+   * The summary line is the only place a run reports what it did, and both a
+   * human reading the log and the cache test above read it by shape. Concurrency
+   * changed how the work is done and must not change a character of this.
+   */
+  test('the summary line keeps its parsed/cached/skipped format', async () => {
+    const cfg = fixtureConfig(workspaceSettings());
+    const lines: string[] = [];
+    const log = {
+      info: () => undefined,
+      warn: () => undefined,
+      error: () => undefined,
+      verbose: (message: string) => void lines.push(message),
+    };
+
+    const cold = await buildIndex(cfg, undefined, log);
+    const first = lines.find((line) => line.startsWith('page index: pages='));
+    assert.ok(first !== undefined, 'one summary line per run');
+    assert.match(
+      first,
+      /^page index: pages=6 parsed=7 cached=0 skipped=1 folders=2 ms=\d+$/,
+      `the cold run reads all seven files, six of which are pages: ${first}`,
+    );
+
+    lines.length = 0;
+    await buildIndex(cfg, cold.cache, log);
+    const second = lines.find((line) => line.startsWith('page index: pages='));
+    assert.ok(second !== undefined);
+    assert.match(second, /^page index: pages=6 parsed=0 cached=6 skipped=1 folders=2 ms=\d+$/, second);
+  });
 });
 
 suite('core: SEO metrics', () => {
@@ -1010,5 +1159,97 @@ suite('core: SEO metrics', () => {
     assert.equal(isHealthyDensity(DENSITY_MIN), true);
     assert.equal(isHealthyDensity(DENSITY_MAX), false, 'the green band is half-open');
     assert.equal(isHealthyDensity(DENSITY_MIN - 0.01), false);
+  });
+});
+
+suite('core: the execution gate (D13)', () => {
+  /** A gate input for one vector, over the fixture workspace. */
+  const gateFor = (vector: (typeof EXEC_VECTORS)[number], trusted: boolean): ExecGateInput => ({
+    trusted,
+    workspaceRoot: WORKSPACE,
+    scriptPath: path.join(WORKSPACE, 'scripts/cms/cms.py'),
+    interpreter: 'python3',
+    layer: 'zer0.json',
+    vector,
+  });
+
+  test('an untrusted workspace refuses all five execution vectors', () => {
+    assert.deepEqual(
+      [...EXEC_VECTORS],
+      ['engine', 'normalizer', 'placeholder', 'agent', 'verify'],
+      'the doc claims five paths can start a process; this is the list it means',
+    );
+
+    for (const vector of EXEC_VECTORS) {
+      const blocker = evaluateExecGate(gateFor(vector, false));
+      assert.ok(blocker !== undefined, `${vector} must refuse in an untrusted workspace`);
+      assert.equal(blocker.reason, 'untrusted-workspace');
+      assert.ok(
+        blocker.message.includes('not trusted'),
+        'the refusal names the thing the person has to change',
+      );
+      // Trust is the OUTER gate: it is reported even though the path is fine.
+      assert.equal(evaluateExecGate(gateFor(vector, true)), undefined, `${vector} runs when trusted`);
+    }
+  });
+
+  test('insideWorkspace rejects traversal and absolute paths outside the root', () => {
+    assert.equal(insideWorkspace(WORKSPACE, path.join(WORKSPACE, 'scripts/x.py')), true);
+    assert.equal(insideWorkspace(WORKSPACE, WORKSPACE), true, 'the root is inside itself');
+    assert.equal(insideWorkspace(WORKSPACE, 'scripts/x.py'), true, 'relative resolves against the root');
+
+    // `../` traversal, however it is spelled.
+    assert.equal(insideWorkspace(WORKSPACE, '../../evil.py'), false);
+    assert.equal(insideWorkspace(WORKSPACE, path.join(WORKSPACE, '..', 'evil.py')), false);
+    assert.equal(insideWorkspace(WORKSPACE, 'scripts/../../../evil.py'), false);
+
+    // Absolute, and outside.
+    assert.equal(insideWorkspace(WORKSPACE, path.join(os.tmpdir(), 'evil.py')), false);
+
+    // A sibling whose name merely starts the same way is not inside: the
+    // comparison is on path boundaries, the bug `folderForFile` also fixes.
+    assert.equal(insideWorkspace(WORKSPACE, `${WORKSPACE}-old/x.py`), false);
+
+    // No root means no inside, and an empty path is not a path.
+    assert.equal(insideWorkspace('', path.join(WORKSPACE, 'x.py')), false);
+    assert.equal(insideWorkspace(WORKSPACE, ''), false);
+
+    // A refusal survives a TRUSTED workspace: a `zer0.json` arrives with the
+    // clone, and trusting the folder is not consent to run something outside it.
+    const escaped = evaluateExecGate({
+      trusted: true,
+      workspaceRoot: WORKSPACE,
+      scriptPath: path.join(WORKSPACE, '../../evil.py'),
+      interpreter: 'python3',
+      layer: 'zer0.json',
+      vector: 'engine',
+    });
+    assert.equal(escaped?.reason, 'outside-workspace');
+  });
+
+  test('agent.permissionMode from zer0.json is clamped to the three-value enum', () => {
+    // `asString` used to hand whatever the file said straight to the SDK.
+    for (const mode of ['default', 'acceptEdits', 'plan']) {
+      const cfg = resolveConfig(WORKSPACE, { agent: { permissionMode: mode } }, {});
+      assert.equal(cfg.agent.permissionMode, mode, 'a legal value survives the file layer');
+    }
+    for (const mode of ['dontAsk', 'auto', 'bypassPermissions', '', 42]) {
+      const cfg = resolveConfig(WORKSPACE, { agent: { permissionMode: mode } }, {});
+      assert.equal(
+        cfg.agent.permissionMode,
+        'default',
+        `a repository must not be able to reach the SDK with "${String(mode)}"`,
+      );
+    }
+  });
+
+  test('configFile is not read from zer0.json — the file cannot rename itself', () => {
+    const cfg = resolveConfig(WORKSPACE, { configFile: 'somewhere-else.json' }, {});
+    assert.equal(cfg.configFile, 'zer0.json', 'two layers, not three: settings, then the default');
+
+    const named = resolveConfig(WORKSPACE, { configFile: 'somewhere-else.json' }, {
+      configFile: 'cms.json',
+    });
+    assert.equal(named.configFile, 'cms.json', 'the settings layer still names it');
   });
 });

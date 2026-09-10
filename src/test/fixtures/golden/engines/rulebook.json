@@ -1,0 +1,77 @@
+[
+  {
+    "id": "auth-oauth-first",
+    "severity": "warn",
+    "title": "OAuth-first Claude auth"
+  },
+  {
+    "id": "kill-switch",
+    "severity": "fail",
+    "title": "Kill switch on scheduled AI"
+  },
+  {
+    "id": "loop-safety",
+    "severity": "fail",
+    "title": "Loop guard on self-retriggering writers"
+  },
+  {
+    "id": "concurrency",
+    "severity": "warn",
+    "title": "Concurrency block"
+  },
+  {
+    "id": "permissions",
+    "severity": "warn",
+    "title": "Least-privilege permissions"
+  },
+  {
+    "id": "top-level-write",
+    "severity": "info",
+    "title": "Job-scoped write grants"
+  },
+  {
+    "id": "ai-timeout",
+    "severity": "warn",
+    "title": "Timeout on AI jobs"
+  },
+  {
+    "id": "pin-branch",
+    "severity": "warn",
+    "title": "No branch-pinned actions"
+  },
+  {
+    "id": "pin-unpinned",
+    "severity": "warn",
+    "title": "No unpinned actions"
+  },
+  {
+    "id": "pin-sha",
+    "severity": "info",
+    "title": "SHA-pin marketplace actions"
+  },
+  {
+    "id": "plan-apply",
+    "severity": "info",
+    "title": "Plan/apply duality on mutating crons"
+  },
+  {
+    "id": "dormant-cron",
+    "severity": "info",
+    "title": "No dormant schedules"
+  },
+  {
+    "id": "sticky-marker",
+    "severity": "info",
+    "title": "Sticky-marker dedup on issue-filing crons"
+  },
+  {
+    "id": "standard-trio",
+    "severity": "warn",
+    "title": "Standard trio"
+  },
+  {
+    "id": "disabled-workflow",
+    "severity": "info",
+    "title": "No disabled workflows"
+  }
+]

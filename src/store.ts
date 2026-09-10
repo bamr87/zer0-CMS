@@ -24,6 +24,7 @@
  *     throwing.
  */
 
+import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
@@ -75,8 +76,21 @@ export interface Snapshot {
   performance: Record<string, PerfStats>;
 }
 
-/** Where the mtime-keyed page-index cache lives between windows. */
+/**
+ * Where the mtime-keyed page-index cache lives between windows.
+ *
+ * The key is suffixed with a hash of the workspace root, because the cache's
+ * entries are keyed by absolute path: one key holding every root of a
+ * multi-root window would rewrite every root's entries whenever any one of
+ * them refreshed. On this fleet's twelve-folder workspace that is a 2.2 MB
+ * `workspaceState` write for a one-file edit.
+ */
 export const INDEX_CACHE_KEY = 'zer0Cms.pageIndex.v1';
+
+/** The cache key for one root. A stable short hash, not the path — a Memento key is not a place for someone's home directory. */
+export function indexCacheKeyFor(root: string): string {
+  return root === '' ? INDEX_CACHE_KEY : `${INDEX_CACHE_KEY}:${createHash('sha1').update(root).digest('hex').slice(0, 12)}`;
+}
 
 /** File-watcher bursts are collapsed over this window. */
 const DEBOUNCE_MS = 250;
@@ -208,10 +222,17 @@ export class WorkspaceStore implements vscode.Disposable {
     }, DEBOUNCE_MS);
   }
 
-  /** Drop the persisted page-index cache and rebuild from the filesystem. */
+  /**
+   * Drop the persisted page-index cache and rebuild from the filesystem.
+   *
+   * Every root's key is cleared, not just this store's: "Clear cache" is what a
+   * person reaches for when they suspect the cache is lying, and leaving eleven
+   * sibling roots' entries behind would make the command a coin flip.
+   */
   async clearCache(): Promise<Snapshot> {
     if (this.state !== undefined) {
-      await this.state.update(INDEX_CACHE_KEY, undefined);
+      const keys = this.state.keys().filter((key) => key === INDEX_CACHE_KEY || key.startsWith(`${INDEX_CACHE_KEY}:`));
+      await Promise.all(keys.map((key) => this.state?.update(key, undefined)));
     }
     this.snapshot = undefined;
     this.log.info('page index cache cleared');
@@ -261,13 +282,13 @@ export class WorkspaceStore implements vscode.Disposable {
     const contractDir = absPath(cfg, cfg.cms.root);
 
     const [index, contract, ledger, drafts] = await Promise.all([
-      buildIndex(cfg, this.readIndexCache(), this.log),
+      buildIndex(cfg, this.readIndexCache(cfg.workspaceRoot), this.log),
       loadContract(cfg.workspaceRoot, { dir: contractDir }),
       loadLedger(ledgerPath),
       cfg.governance.enabled ? listQueue(draftsDir) : Promise.resolve<DraftFile[]>([]),
     ]);
 
-    this.writeIndexCache(index.cache);
+    this.writeIndexCache(cfg.workspaceRoot, index.cache, index.changed);
 
     // Decision D9: with no `.cms/` the page index supplies the same record
     // shape with `health: -1`. Projecting the index we already built keeps that
@@ -293,20 +314,29 @@ export class WorkspaceStore implements vscode.Disposable {
     };
   }
 
-  private readIndexCache(): IndexCache | undefined {
+  private readIndexCache(root: string): IndexCache | undefined {
     if (this.state === undefined) {
       return undefined;
     }
     // Anything that is not a v1 cache is treated as no cache: a bad cache must
     // cost a rescan, never a wrong page list.
-    return asIndexCache(this.state.get<unknown>(INDEX_CACHE_KEY));
+    return asIndexCache(this.state.get<unknown>(indexCacheKeyFor(root)));
   }
 
-  private writeIndexCache(cache: IndexCache): void {
-    if (this.state === undefined) {
+  /**
+   * Persist the cache — but only when the scan actually found something new.
+   *
+   * `buildIndex` reports `changed: false` when every candidate came back out of
+   * the cache it was given and the candidate set is identical, which is the
+   * common case: a file watcher fires, one unrelated file moved, and the page
+   * list is byte-for-byte what it already was. Writing anyway costs a 0.5-1.4 MB
+   * `workspaceState` round trip per rebuild per root, for nothing.
+   */
+  private writeIndexCache(root: string, cache: IndexCache, changed: boolean): void {
+    if (this.state === undefined || !changed) {
       return;
     }
-    void this.state.update(INDEX_CACHE_KEY, cache).then(undefined, (error: unknown) => {
+    void this.state.update(indexCacheKeyFor(root), cache).then(undefined, (error: unknown) => {
       this.log.warn(`could not persist the page index cache: ${describeError(error)}`);
     });
   }

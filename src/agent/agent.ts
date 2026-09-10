@@ -38,7 +38,7 @@ import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import type { Zer0Config } from '../core';
+import type { McpStdioSpec, Zer0Config } from '../core';
 import { describeError } from '../logger';
 import { notifyInfo, notifyWarning } from '../uiState';
 
@@ -98,6 +98,32 @@ export const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
   'NotebookRead',
 ]);
 
+/**
+ * The bundled MCP server's tools that cannot change anything.
+ *
+ * Seven of the twelve; the five that are absent all write — `zer0_draft` a
+ * queue file, `zer0_publish` content and the ledger, `zer0_worklist` and
+ * `zer0_ingest` under `.cms/`, and `zer0_contract` runs the repository's own
+ * engine. The names carry the SDK's `mcp__<server>__<tool>` prefix, and
+ * `<server>` is `zer0-cms` — `MCP_WORKSPACE_SERVER_ID` in
+ * `src/mcpRegistration.ts` — because that is what an approval card and a
+ * `canUseTool` argument actually spell.
+ *
+ * This is a **list, not an allow-rule**. It is folded into `READ_ONLY_TOOLS`
+ * where the agent attaches the server (a later package), so those seven skip
+ * the card the same way `Read` does; it is never passed to the SDK as
+ * `allowedTools`, for the reason decision D10 gives.
+ */
+export const MCP_READ_ONLY_TOOLS: readonly string[] = [
+  'mcp__zer0-cms__zer0_status',
+  'mcp__zer0-cms__zer0_list_content',
+  'mcp__zer0-cms__zer0_get_content',
+  'mcp__zer0-cms__zer0_preview',
+  'mcp__zer0-cms__zer0_portfolio',
+  'mcp__zer0-cms__zer0_media',
+  'mcp__zer0-cms__zer0_fleet_status',
+];
+
 /** Detail panes are capped so one `Write` cannot post a megabyte to a webview. */
 const MAX_DETAIL = 4000;
 
@@ -141,15 +167,59 @@ type PermissionResult =
  * it back would let a tool skip `canUseTool` entirely, which is exactly the bug
  * this rewrite removes, so it is not even declared here: a field that does not
  * exist on this interface cannot be added to the call below by accident.
+ *
+ * Everything past `canUseTool` is optional and unset today. It is declared now
+ * because the *point* of this layer is that a run in the editor and a run in CI
+ * are the same run described twice, and the way that stays true is for the
+ * option and its command-line counterpart to be written down side by side. Each
+ * comment names the flag the `claude` CLI — and therefore the hub's
+ * `claude-run` action and its `ai-lane.yml` inputs — uses for the same thing.
  */
 interface QueryOptions {
   cwd: string;
+  /** CI: `--model`. The `ai-lane.yml` input is `model`. */
   model: string;
+  /** CI: `--max-turns`. The `ai-lane.yml` input is `max-turns`. */
   maxTurns: number;
   permissionMode: string;
   abortController: AbortController;
+  /** CI: `--append-system-prompt`. The `ai-lane.yml` input is `system`. */
   systemPrompt: { type: 'preset'; preset: 'claude_code'; append: string };
   canUseTool: (first: unknown, second: unknown) => Promise<PermissionResult>;
+
+  /** CI: `--agent <name>`. Which `.claude/agents/<name>.md` role to run as. */
+  agent?: string;
+  /**
+   * CI: the agent definitions the runner passes with `--agents`. Supplied
+   * in-process rather than by path, so a role can be offered in a window whose
+   * repository has no `.claude/` directory at all.
+   */
+  agents?: Record<
+    string,
+    { description: string; prompt: string; tools?: string[]; model?: string }
+  >;
+  /** CI: `--mcp-config`. The `ai-lane.yml` input is `mcp`. */
+  mcpServers?: Record<string, McpStdioSpec>;
+  /**
+   * CI: `--strict-mcp-config`. Literal `true`, never a boolean: the point is
+   * that *only* the servers named above are attached, so a `.mcp.json` sitting
+   * in the repository cannot add one. A field that can hold `false` is a field
+   * somebody eventually sets to `false`.
+   */
+  strictMcpConfig?: true;
+  /**
+   * CI: `--setting-sources`. `[]` means "read no settings files at all" —
+   * `.claude/settings.json` in a cloned repository is another file that arrives
+   * with the checkout, and it can name hooks. Anything other than `[]` needs
+   * both a trusted workspace and a person's per-run opt-in.
+   */
+  settingSources?: Array<'user' | 'project' | 'local'>;
+  /** The child's environment, set explicitly rather than inherited wholesale. */
+  env?: Record<string, string>;
+  /** CI: the runner's `fallback-model`, used when the primary is overloaded. */
+  fallbackModel?: string;
+  /** CI: `--max-budget-usd`. A ceiling on one run, in API-equivalent dollars. */
+  maxBudgetUsd?: number;
 }
 
 type QueryFn = (args: { prompt: string; options: QueryOptions }) => AsyncIterable<unknown>;

@@ -1,0 +1,701 @@
+{
+  "ai-world-view": {
+    "score": 88,
+    "grade": "A",
+    "findings": [
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/grow-lineage.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no CI workflow — nothing with archetype 'standard-ci-caller' or 'ci-gate'",
+        "fix": "Add the thin caller of the hub reusable standard-ci.yml (or a repo-local CI gate)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no @claude mention handler — nothing with archetype 'mention-handler'",
+        "fix": "Seed the @claude mention workflow from the agent-context kit (standardize fan-out)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no markdown-oneline prose kit — nothing with archetype 'prose-kit'",
+        "fix": "Seed the markdown-oneline prose workflow (fan-out kit: prose)."
+      }
+    ],
+    "passedRules": [
+      "auth-oauth-first",
+      "permissions",
+      "top-level-write",
+      "pin-branch",
+      "pin-unpinned"
+    ],
+    "byWorkflow": {
+      ".github/workflows/grow-lineage.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 0
+      }
+    }
+  },
+  "bash-365": {
+    "score": 77,
+    "grade": "B",
+    "findings": [
+      {
+        "ruleId": "kill-switch",
+        "severity": "fail",
+        "path": ".github/workflows/preacher.yml",
+        "message": "scheduled AI line with no vars.*_ENABLED kill switch — cannot be disarmed without a redeploy (crons: 42 14 * * 6)",
+        "fix": "Gate the job with if: vars.<LINE>_ENABLED == 'true' (a default-OFF repo variable) so the schedule can be disarmed from repo settings."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/content-gardener.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests, issues, id-token)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/content-loop.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests, id-token)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/content-review.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests, issues, id-token)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/preacher.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests, id-token)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "plan-apply",
+        "severity": "info",
+        "path": ".github/workflows/content-gardener.yml",
+        "message": "mutating scheduled line without a plan-first apply input (dry-run duality) — writes pr",
+        "fix": "Add a workflow_dispatch apply input (default false) and keep the scheduled path plan-only."
+      },
+      {
+        "ruleId": "plan-apply",
+        "severity": "info",
+        "path": ".github/workflows/content-review.yml",
+        "message": "mutating scheduled line without a plan-first apply input (dry-run duality) — writes pr",
+        "fix": "Add a workflow_dispatch apply input (default false) and keep the scheduled path plan-only."
+      },
+      {
+        "ruleId": "plan-apply",
+        "severity": "info",
+        "path": ".github/workflows/preacher.yml",
+        "message": "mutating scheduled line without a plan-first apply input (dry-run duality) — writes pr",
+        "fix": "Add a workflow_dispatch apply input (default false) and keep the scheduled path plan-only."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no CI workflow — nothing with archetype 'standard-ci-caller' or 'ci-gate'",
+        "fix": "Add the thin caller of the hub reusable standard-ci.yml (or a repo-local CI gate)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no @claude mention handler — nothing with archetype 'mention-handler'",
+        "fix": "Seed the @claude mention workflow from the agent-context kit (standardize fan-out)."
+      }
+    ],
+    "passedRules": [
+      "auth-oauth-first",
+      "concurrency",
+      "permissions",
+      "ai-timeout",
+      "pin-branch",
+      "pin-unpinned",
+      "dormant-cron"
+    ],
+    "byWorkflow": {
+      ".github/workflows/content-gardener.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 2
+      },
+      ".github/workflows/content-loop.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 1
+      },
+      ".github/workflows/content-review.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 2
+      },
+      ".github/workflows/preacher.yml": {
+        "fails": 1,
+        "warns": 0,
+        "infos": 2
+      }
+    }
+  },
+  "hub": {
+    "score": 80,
+    "grade": "B",
+    "findings": [
+      {
+        "ruleId": "concurrency",
+        "severity": "warn",
+        "path": ".github/workflows/ai-lane.template.yml",
+        "message": "no concurrency block; parallel runs can pile up or race (triggers: schedule)",
+        "fix": "Add a top-level concurrency block, e.g. concurrency: { group: \"<line>-${{ github.ref }}\", cancel-in-progress: true }."
+      },
+      {
+        "ruleId": "permissions",
+        "severity": "warn",
+        "path": ".github/workflows/claude-run.action.yml",
+        "message": "no permissions block — the job runs with the repo's default token grants",
+        "fix": "Declare a permissions: block with the minimal scopes each job needs (start from contents: read)."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/ai-lane.template.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/ai-lane.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "plan-apply",
+        "severity": "info",
+        "path": ".github/workflows/ai-lane.template.yml",
+        "message": "mutating scheduled line without a plan-first apply input (dry-run duality) — writes pr",
+        "fix": "Add a workflow_dispatch apply input (default false) and keep the scheduled path plan-only."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no CI workflow — nothing with archetype 'standard-ci-caller' or 'ci-gate'",
+        "fix": "Add the thin caller of the hub reusable standard-ci.yml (or a repo-local CI gate)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no @claude mention handler — nothing with archetype 'mention-handler'",
+        "fix": "Seed the @claude mention workflow from the agent-context kit (standardize fan-out)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no markdown-oneline prose kit — nothing with archetype 'prose-kit'",
+        "fix": "Seed the markdown-oneline prose workflow (fan-out kit: prose)."
+      }
+    ],
+    "passedRules": [
+      "auth-oauth-first",
+      "ai-timeout",
+      "pin-unpinned",
+      "dormant-cron"
+    ],
+    "byWorkflow": {
+      ".github/workflows/ai-lane.template.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 2
+      },
+      ".github/workflows/ai-lane.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 0
+      },
+      ".github/workflows/claude-run.action.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 0
+      }
+    }
+  },
+  "irony-works": {
+    "score": 89,
+    "grade": "A",
+    "findings": [
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/germinate.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "plan-apply",
+        "severity": "info",
+        "path": ".github/workflows/germinate.yml",
+        "message": "mutating scheduled line without a plan-first apply input (dry-run duality) — writes pr",
+        "fix": "Add a workflow_dispatch apply input (default false) and keep the scheduled path plan-only."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no CI workflow — nothing with archetype 'standard-ci-caller' or 'ci-gate'",
+        "fix": "Add the thin caller of the hub reusable standard-ci.yml (or a repo-local CI gate)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no @claude mention handler — nothing with archetype 'mention-handler'",
+        "fix": "Seed the @claude mention workflow from the agent-context kit (standardize fan-out)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no markdown-oneline prose kit — nothing with archetype 'prose-kit'",
+        "fix": "Seed the markdown-oneline prose workflow (fan-out kit: prose)."
+      }
+    ],
+    "passedRules": [
+      "concurrency",
+      "permissions",
+      "pin-branch",
+      "pin-unpinned",
+      "dormant-cron"
+    ],
+    "byWorkflow": {
+      ".github/workflows/germinate.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 2
+      }
+    }
+  },
+  "it-journey": {
+    "score": 75,
+    "grade": "B",
+    "findings": [
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/cms-daily-loop.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/issue-autopilot.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/quest-walkthrough.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/issue-autopilot.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/quest-walkthrough.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "sticky-marker",
+        "severity": "info",
+        "path": ".github/workflows/issue-autopilot.yml",
+        "message": "scheduled issue-filer without an HTML-comment dedup marker — risks duplicate issues",
+        "fix": "Embed an HTML-comment marker (e.g. <!-- fleet:rule-id -->) in the issue body and update the marked issue when it already exists."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no CI workflow — nothing with archetype 'standard-ci-caller' or 'ci-gate'",
+        "fix": "Add the thin caller of the hub reusable standard-ci.yml (or a repo-local CI gate)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no @claude mention handler — nothing with archetype 'mention-handler'",
+        "fix": "Seed the @claude mention workflow from the agent-context kit (standardize fan-out)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no markdown-oneline prose kit — nothing with archetype 'prose-kit'",
+        "fix": "Seed the markdown-oneline prose workflow (fan-out kit: prose)."
+      }
+    ],
+    "passedRules": [
+      "auth-oauth-first",
+      "kill-switch",
+      "loop-safety",
+      "concurrency",
+      "permissions",
+      "top-level-write",
+      "pin-unpinned",
+      "plan-apply",
+      "dormant-cron"
+    ],
+    "byWorkflow": {
+      ".github/workflows/cms-daily-loop.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 0
+      },
+      ".github/workflows/issue-autopilot.yml": {
+        "fails": 0,
+        "warns": 2,
+        "infos": 1
+      },
+      ".github/workflows/quest-walkthrough.yml": {
+        "fails": 0,
+        "warns": 2,
+        "infos": 0
+      }
+    }
+  },
+  "lifehacker": {
+    "score": 57,
+    "grade": "C",
+    "findings": [
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/ai-usage.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/auto-fix.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/content-factory.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/explore.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, issues, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/pipeline.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: pull-requests, contents)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/triage.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, issues, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/auto-fix.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/explore.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/factory--issue-factory-1.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/theme-scout.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/auto-fix.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/content-factory.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/explore.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/pipeline.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/theme-scout.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "plan-apply",
+        "severity": "info",
+        "path": ".github/workflows/content-factory.yml",
+        "message": "mutating scheduled line without a plan-first apply input (dry-run duality) — writes pr",
+        "fix": "Add a workflow_dispatch apply input (default false) and keep the scheduled path plan-only."
+      },
+      {
+        "ruleId": "dormant-cron",
+        "severity": "info",
+        "path": ".github/workflows/ai-usage.yml",
+        "message": "schedule is commented out — dormant automation; re-arm or remove it (17 8 * * *)",
+        "fix": "Uncomment the cron to re-arm the schedule, or delete the commented-out block."
+      },
+      {
+        "ruleId": "dormant-cron",
+        "severity": "info",
+        "path": ".github/workflows/explore.yml",
+        "message": "schedule is commented out — dormant automation; re-arm or remove it (23 6 * * *)",
+        "fix": "Uncomment the cron to re-arm the schedule, or delete the commented-out block."
+      },
+      {
+        "ruleId": "sticky-marker",
+        "severity": "info",
+        "path": ".github/workflows/factory--issue-factory-1.yml",
+        "message": "scheduled issue-filer without an HTML-comment dedup marker — risks duplicate issues",
+        "fix": "Embed an HTML-comment marker (e.g. <!-- fleet:rule-id -->) in the issue body and update the marked issue when it already exists."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no @claude mention handler — nothing with archetype 'mention-handler'",
+        "fix": "Seed the @claude mention workflow from the agent-context kit (standardize fan-out)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no markdown-oneline prose kit — nothing with archetype 'prose-kit'",
+        "fix": "Seed the markdown-oneline prose workflow (fan-out kit: prose)."
+      }
+    ],
+    "passedRules": [
+      "auth-oauth-first",
+      "kill-switch",
+      "loop-safety",
+      "concurrency",
+      "permissions",
+      "pin-unpinned"
+    ],
+    "byWorkflow": {
+      ".github/workflows/ai-usage.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 2
+      },
+      ".github/workflows/auto-fix.yml": {
+        "fails": 0,
+        "warns": 2,
+        "infos": 1
+      },
+      ".github/workflows/content-factory.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 2
+      },
+      ".github/workflows/explore.yml": {
+        "fails": 0,
+        "warns": 2,
+        "infos": 2
+      },
+      ".github/workflows/factory--issue-factory-1.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 1
+      },
+      ".github/workflows/pipeline.yml": {
+        "fails": 0,
+        "warns": 1,
+        "infos": 1
+      },
+      ".github/workflows/theme-scout.yml": {
+        "fails": 0,
+        "warns": 2,
+        "infos": 0
+      },
+      ".github/workflows/triage.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 1
+      }
+    }
+  },
+  "zer0-mistakes": {
+    "score": 74,
+    "grade": "B",
+    "findings": [
+      {
+        "ruleId": "kill-switch",
+        "severity": "fail",
+        "path": ".github/workflows/ui-audit.yml",
+        "message": "scheduled AI line with no vars.*_ENABLED kill switch — cannot be disarmed without a redeploy (crons: 23 7 * * 1)",
+        "fix": "Gate the job with if: vars.<LINE>_ENABLED == 'true' (a default-OFF repo variable) so the schedule can be disarmed from repo settings."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/issue-pr-auto-merge.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: contents, pull-requests)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "top-level-write",
+        "severity": "info",
+        "path": ".github/workflows/ui-audit.yml",
+        "message": "write scopes granted at the top level; prefer per-job escalation (write scopes in file: issues)",
+        "fix": "Move write scopes down to the jobs that need them and keep the top level read-only."
+      },
+      {
+        "ruleId": "ai-timeout",
+        "severity": "warn",
+        "path": ".github/workflows/issue-autopilot.yml",
+        "message": "AI job without timeout-minutes — an unbounded cost risk",
+        "fix": "Set timeout-minutes on the AI job (e.g. timeout-minutes: 30)."
+      },
+      {
+        "ruleId": "pin-branch",
+        "severity": "warn",
+        "path": ".github/workflows/issue-autopilot.yml",
+        "message": "bamr87/bamr87/.github/actions/claude-run@main — action pinned to a moving branch",
+        "fix": "Pin bamr87/bamr87/.github/actions/claude-run to a release tag or commit SHA instead of @main."
+      },
+      {
+        "ruleId": "plan-apply",
+        "severity": "info",
+        "path": ".github/workflows/ui-audit.yml",
+        "message": "mutating scheduled line without a plan-first apply input (dry-run duality) — writes issue",
+        "fix": "Add a workflow_dispatch apply input (default false) and keep the scheduled path plan-only."
+      },
+      {
+        "ruleId": "sticky-marker",
+        "severity": "info",
+        "path": ".github/workflows/issue-autopilot.yml",
+        "message": "scheduled issue-filer without an HTML-comment dedup marker — risks duplicate issues",
+        "fix": "Embed an HTML-comment marker (e.g. <!-- fleet:rule-id -->) in the issue body and update the marked issue when it already exists."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no CI workflow — nothing with archetype 'standard-ci-caller' or 'ci-gate'",
+        "fix": "Add the thin caller of the hub reusable standard-ci.yml (or a repo-local CI gate)."
+      },
+      {
+        "ruleId": "standard-trio",
+        "severity": "warn",
+        "path": null,
+        "message": "standard trio: no @claude mention handler — nothing with archetype 'mention-handler'",
+        "fix": "Seed the @claude mention workflow from the agent-context kit (standardize fan-out)."
+      }
+    ],
+    "passedRules": [
+      "auth-oauth-first",
+      "loop-safety",
+      "concurrency",
+      "permissions",
+      "pin-unpinned",
+      "dormant-cron"
+    ],
+    "byWorkflow": {
+      ".github/workflows/ai-content-review.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 0
+      },
+      ".github/workflows/issue-autopilot.yml": {
+        "fails": 0,
+        "warns": 2,
+        "infos": 1
+      },
+      ".github/workflows/issue-pr-auto-merge.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 1
+      },
+      ".github/workflows/translate.yml": {
+        "fails": 0,
+        "warns": 0,
+        "infos": 0
+      },
+      ".github/workflows/ui-audit.yml": {
+        "fails": 1,
+        "warns": 0,
+        "infos": 2
+      }
+    }
+  }
+}

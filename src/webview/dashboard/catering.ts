@@ -25,7 +25,8 @@
  * plan and writes the file — this screen's numbers are never the input to it.
  */
 
-import { clear, el, icon } from '../shared/dom';
+import { dataTable, emptyState } from '../shared/components';
+import { clear, el, type Child } from '../shared/dom';
 import { getMessenger } from '../shared/messenger';
 import type {
   CateringState,
@@ -122,14 +123,20 @@ export function rateOf(signal: TopicSignalView): number {
 // Cells
 // ---------------------------------------------------------------------------
 
-/** The score, or an em dash when the engine never scored it. Never `-1`. */
-export function healthCell(health: number): HTMLElement {
+/**
+ * The score, or an em dash when the engine never scored it. Never `-1`.
+ *
+ * A `Child` rather than a `<td>`: `dataTable` owns the cell, and the column is
+ * declared numeric there, so the alignment and the tabular figures come from
+ * the column rather than from every call site remembering to say so.
+ */
+export function healthCell(health: number): Child {
   if (health >= 0) {
-    return el('td', { class: 'z-table__num' }, String(health));
+    return String(health);
   }
   return el(
-    'td',
-    { class: 'z-table__num z-lane__unknown', title: 'The engine has not scored this page' },
+    'span',
+    { class: 'z-lane__unknown', title: 'The engine has not scored this page' },
     '—',
   );
 }
@@ -139,39 +146,19 @@ function post(id: CommandId, args?: unknown): void {
 }
 
 /** The file cell: a monospaced path that opens the file when clicked. */
-function fileCell(contentPath: string): HTMLElement {
+function fileCell(contentPath: string): Child {
   return el(
-    'td',
-    {},
-    el(
-      'button',
-      {
-        class: 'z-chip',
-        type: 'button',
-        title: `Open ${contentPath}`,
-        onclick: () => {
-          post('openFile', { path: contentPath });
-        },
+    'button',
+    {
+      class: 'z-chip',
+      type: 'button',
+      title: `Open ${contentPath}`,
+      onclick: () => {
+        post('openFile', { path: contentPath });
       },
-      contentPath,
-    ),
+    },
+    contentPath,
   );
-}
-
-function headRow(labels: readonly string[]): HTMLElement {
-  const row = el('tr', {});
-  for (const label of labels) {
-    row.appendChild(el('th', { attrs: { scope: 'col' } }, label));
-  }
-  return el('thead', {}, row);
-}
-
-function table(labels: readonly string[], rows: readonly HTMLElement[]): HTMLElement {
-  const body = el('tbody', {});
-  for (const row of rows) {
-    body.appendChild(row);
-  }
-  return el('div', { class: 'z-table__scroll' }, el('table', { class: 'z-table' }, headRow(labels), body));
 }
 
 /** Strip the worklist's markdown emphasis: `_sentence._` → `sentence.` */
@@ -210,38 +197,47 @@ function laneA(state: CateringState): HTMLElement {
       emptyLine(state.emptyStates.undistributed, EMPTY_STATES.undistributed),
     );
   }
-  const rows = state.undistributed.map((record: ContentRecord, index: number) =>
-    el(
-      'tr',
-      {},
-      el('td', { class: 'z-table__num' }, String(index + 1)),
-      healthCell(record.health),
-      el('td', {}, record.freshness),
-      el('td', {}, record.collection),
-      fileCell(record.path),
-    ),
-  );
+  const rows = state.undistributed.map((record: ContentRecord, index: number) => [
+    String(index + 1),
+    healthCell(record.health),
+    record.freshness,
+    record.collection,
+    fileCell(record.path),
+  ]);
   return lane(
     'Lane A — Distribute what already exists',
     HINTS.undistributed,
-    table(['#', 'Health', 'Fresh', 'Collection', 'File'], rows),
+    dataTable({
+      columns: ['#', 'Health', 'Fresh', 'Collection', 'File'],
+      numeric: [0, 1],
+      label: 'Content that has never been distributed',
+      rows,
+    }),
   );
 }
 
-function signalRows(signals: readonly TopicSignalView[]): HTMLElement[] {
-  return signals.map((signal) =>
-    el(
-      'tr',
-      {},
-      el('td', {}, signal.topic),
-      el('td', { class: 'z-table__num' }, String(signal.posts)),
-      el('td', { class: 'z-table__num' }, formatThousands(signal.impressions)),
-      el('td', { class: 'z-table__num' }, formatPercent(rateOf(signal))),
-    ),
-  );
+function signalRows(signals: readonly TopicSignalView[]): Child[][] {
+  return signals.map((signal) => [
+    signal.topic,
+    String(signal.posts),
+    formatThousands(signal.impressions),
+    formatPercent(rateOf(signal)),
+  ]);
 }
 
 const SIGNAL_COLUMNS = ['Topic', 'Posts', 'Impressions', 'Engagement rate'] as const;
+
+/** Posts, impressions and rate are all figures that have to line up. */
+const SIGNAL_NUMERIC = [1, 2, 3] as const;
+
+function signalTable(label: string, signals: readonly TopicSignalView[]): HTMLElement {
+  return dataTable({
+    columns: [...SIGNAL_COLUMNS],
+    numeric: [...SIGNAL_NUMERIC],
+    label,
+    rows: signalRows(signals),
+  });
+}
 
 function laneB(state: CateringState): HTMLElement {
   const title = 'Lane B — Write more of what landed';
@@ -253,7 +249,7 @@ function laneB(state: CateringState): HTMLElement {
   if (state.proven.length === 0) {
     return lane(title, HINTS.proven, emptyLine(state.emptyStates.proven, EMPTY_STATES.proven));
   }
-  return lane(title, HINTS.proven, table(SIGNAL_COLUMNS, signalRows(state.proven)));
+  return lane(title, HINTS.proven, signalTable('Topics at or above the median', state.proven));
 }
 
 function laneC(state: CateringState): HTMLElement {
@@ -261,7 +257,7 @@ function laneC(state: CateringState): HTMLElement {
   if (state.quiet.length === 0) {
     return lane(title, HINTS.quiet, emptyLine(state.emptyStates.quiet, EMPTY_STATES.quiet));
   }
-  return lane(title, HINTS.quiet, table(SIGNAL_COLUMNS, signalRows(state.quiet)));
+  return lane(title, HINTS.quiet, signalTable('Topics below the median', state.quiet));
 }
 
 function laneD(state: CateringState): HTMLElement {
@@ -269,10 +265,21 @@ function laneD(state: CateringState): HTMLElement {
   if (state.refresh.length === 0) {
     return lane(title, HINTS.refresh, emptyLine(state.emptyStates.refresh, EMPTY_STATES.refresh));
   }
-  const rows = state.refresh.map((record: ContentRecord) =>
-    el('tr', {}, healthCell(record.health), el('td', {}, record.freshness), fileCell(record.path)),
+  const rows = state.refresh.map((record: ContentRecord) => [
+    healthCell(record.health),
+    record.freshness,
+    fileCell(record.path),
+  ]);
+  return lane(
+    title,
+    HINTS.refresh,
+    dataTable({
+      columns: ['Health', 'Fresh', 'File'],
+      numeric: [0],
+      label: 'Content that earned engagement and has gone stale',
+      rows,
+    }),
   );
-  return lane(title, HINTS.refresh, table(['Health', 'Fresh', 'File'], rows));
 }
 
 // ---------------------------------------------------------------------------
@@ -333,19 +340,11 @@ export function render(host: HTMLElement, state: DashboardState): void {
   // `.cms/` absence is a normal state, not a failure — decision D9.
   if (catering === null || !catering.present) {
     host.appendChild(
-      el(
-        'div',
-        { class: 'z-emptystate' },
-        icon('graph'),
-        el('p', {}, 'No content contract yet.'),
-        el(
-          'p',
-          { class: 'z-muted' },
-          'Run the CMS engine to build ".cms/", and distribution lanes appear here.',
-        ),
-        el(
-          'div',
-          { class: 'z-review__actions' },
+      emptyState({
+        icon: 'graph',
+        message: 'No content contract yet.',
+        hint: 'Run the CMS engine to build ".cms/", and distribution lanes appear here.',
+        actions: [
           el(
             'button',
             {
@@ -357,8 +356,8 @@ export function render(host: HTMLElement, state: DashboardState): void {
             },
             'Run CMS engine',
           ),
-        ),
-      ),
+        ],
+      }),
     );
     return;
   }

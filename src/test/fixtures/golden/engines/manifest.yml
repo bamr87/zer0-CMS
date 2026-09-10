@@ -1,0 +1,61 @@
+# GENERATED for src/test/fixtures/golden/engines. Not a real manifest.
+spec_version: fleet/v1
+repo: bamr87/zer0-CMS
+provenance: declared
+summary: "A frozen two-lane manifest — the emitter golden, not a real fleet."
+lanes:
+  - id: content-factory
+    kind: content
+    harness: claude-cli
+    implementation: .github/workflows/content-factory.yml
+    description: content-factory
+    triggers:
+      - kind: schedule
+        cron: "0 9 * * *"
+      - kind: dispatch
+    switch: CONTENT_FACTORY_ENABLED
+    uses_tokens:
+      - ANTHROPIC_API_KEY
+      - CLAUDE_CODE_OAUTH_TOKEN
+      - FLEET_TOKEN
+    guardrails:
+      never_merges: true
+      opens_pull_requests: true
+  - id: claude
+    kind: mention
+    harness: claude-code-action
+    implementation: .github/workflows/claude.yml
+    description: Claude
+    triggers:
+      - kind: event
+        events:
+          - issue_comment
+          - issues
+    switch: null
+    uses_tokens:
+      - CLAUDE_CODE_OAUTH_TOKEN
+    guardrails:
+      never_merges: true
+      writable_paths:
+        - pages/
+        - _data/
+tokens:
+  - name: ANTHROPIC_API_KEY
+    scope: fleet
+    required: false
+    purpose: "Fallback Claude auth, used only when the OAuth token is absent."
+    used_by:
+      - content-factory
+  - name: CLAUDE_CODE_OAUTH_TOKEN
+    scope: fleet
+    required: true
+    purpose: "Preferred Claude auth (house convention: OAuth first). Produced by `claude setup-token`."
+    used_by:
+      - content-factory
+      - claude
+  - name: FLEET_TOKEN
+    scope: fleet
+    required: false
+    purpose: Fine-grained PAT for cross-repo writes.
+    used_by:
+      - content-factory

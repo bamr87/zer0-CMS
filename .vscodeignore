@@ -1,3 +1,13 @@
+# What NEVER goes into the vsix.
+#
+# The package is built with `--no-dependencies`: esbuild bundles everything into
+# `dist/`, so no `node_modules` tree is folded in and nothing is ever unignored
+# back out of one. `media/**` ships (the webviews load their CSS and the codicon
+# font from the extension root at runtime) — including `media/templates/**`,
+# the vendored ai-runner lane template the Harness route reads from disk.
+#
+# The committed `.vsix-manifest.txt` is the expected result of this file; CI
+# diffs `vsce ls` against it, so a change here is a reviewed change.
 .vscode/**
 .vscode-test/**
 .vscode-test.mjs
@@ -8,7 +18,6 @@ rails/**
 tools/**
 docs/**
 node_modules/**
-!node_modules/@anthropic-ai/**
 
 **/*.ts
 **/*.map
@@ -22,8 +31,20 @@ eslint.config.mjs
 *.vsix
 test-runner.js
 
+# Release plumbing and toolchain pins: repository infrastructure, not payload.
+release-please-config.json
+.release-please-manifest.json
+.vsix-manifest.txt
+.nvmrc
+
+# This repository's own fleet manifest is documentation, not payload. The Fleet
+# console always reads the *workspace's* `fleet.manifest.yml` (resolved from
+# `zer0Cms.fleet.manifestPath` against the open folder) and never a file inside
+# the extension install directory — `context.extensionUri` is used only for
+# `media/` and `dist/` webview resources.
+fleet.manifest.yml
+
 # Agent guidance and per-directory notes are for contributors, not users.
 # The root README is the marketplace description and must stay.
 CLAUDE.md
 media/README.md
-

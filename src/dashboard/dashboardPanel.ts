@@ -110,6 +110,7 @@ import {
   type CountedTab,
   type DashboardRoute,
   type DashboardState,
+  DASHBOARD_TABS,
   type DashboardTab,
   type DraftSummary,
   type DraftsState,
@@ -148,17 +149,16 @@ const DEVELOPER_COMMAND_URIS: readonly string[] = [
 ];
 
 /**
- * The six routes, in tab order. `catering` is dropped without a contract and
- * `fleet` is dropped while `zer0Cms.fleet.enabled` is off.
+ * The tabs this build offers, in display order.
+ *
+ * The table itself lives in `src/webview/shared/protocol.ts` beside
+ * `DASHBOARD_ROUTES`, because the host and the webview have to agree about it
+ * and two hand-maintained copies would eventually not. `catering` is dropped
+ * without a `.cms/` contract and `fleet` while `zer0Cms.fleet.enabled` is off —
+ * a route absent from `state.tabs` degrades to Contents rather than blanking
+ * the page.
  */
-const TABS: readonly DashboardTab[] = [
-  { id: 'contents', label: 'Contents', icon: 'files' },
-  { id: 'drafts', label: 'Drafts', icon: 'checklist' },
-  { id: 'catering', label: 'Distribution', icon: 'graph' },
-  { id: 'fleet', label: 'Fleet', icon: 'server-process' },
-  { id: 'settings', label: 'Settings', icon: 'settings-gear' },
-  { id: 'welcome', label: 'Welcome', icon: 'rocket' },
-];
+const TABS: readonly DashboardTab[] = DASHBOARD_TABS;
 
 const ROUTE_IDS: ReadonlySet<string> = new Set<string>(TABS.map((tab) => tab.id));
 

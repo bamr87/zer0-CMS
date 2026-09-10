@@ -30,6 +30,21 @@
  * The dependency points this way (panel → commands, never commands → panel) so
  * that the command palette keeps working in a window where the panel has never
  * been opened, and so this module has no import edge into the webview layer.
+ *
+ * ### Trust, and the one thing here that can spawn
+ *
+ * Creating content resolves `{{…}}` tokens, and a `placeholders[]` entry may
+ * name a **script** — one of the five execution vectors (decision D13), and the
+ * only one that arrives entirely from `zer0.json`. `src/core` cannot ask
+ * `vscode` whether the workspace is trusted, so `registerContentCommands`
+ * installs the answer with `setPlaceholderTrust()` at activation; the core's
+ * own default refuses, which is why installing it is not optional.
+ *
+ * `createInto` then re-asks in the same breath it creates, because the point of
+ * the check is the sentence a person reads: creation still proceeds — editing
+ * front matter is allowed in an untrusted workspace — but every scripted
+ * placeholder resolves to `FAULTY_PLACEHOLDER` and the warning says so, rather
+ * than leaving somebody to discover `<failed to process>` in a filename.
  */
 
 import * as fs from 'node:fs/promises';
@@ -42,6 +57,7 @@ import {
   createContent,
   createSlug,
   decorateSlug,
+  FAULTY_PLACEHOLDER,
   folderForFile,
   getContentTypes,
   humanize,
@@ -51,6 +67,7 @@ import {
   renderContentFile,
   resolveContentType,
   resolveFolders,
+  setPlaceholderTrust,
   stampModified,
   writeArticle,
   type Article,
@@ -59,7 +76,7 @@ import {
   type CreateContentRequest,
   type Zer0Config,
 } from '../core';
-import { currentConfig } from '../config';
+import { currentConfig, workspaceTrusted } from '../config';
 import type { Zer0Shell } from '../extension';
 import { describeError } from '../logger';
 import { isEditableDocument, notifyInfo, notifyWarning } from '../uiState';
@@ -218,6 +235,17 @@ async function createInto(
     return;
   }
 
+  // The gate, inside the function (D13). A scripted placeholder is a spawn, and
+  // the `when` clause on the command says nothing about trust. Creation is not
+  // blocked — front-matter editing is allowed in an untrusted workspace — but
+  // the person is told before the file is written why a token came out unset.
+  if (!workspaceTrusted() && cfg.placeholders.some((placeholder) => placeholder.script)) {
+    await notifyWarning(
+      'this workspace is not trusted, so placeholder scripts will not run. ' +
+        `Those tokens resolve to "${FAULTY_PLACEHOLDER}" until you trust this folder.`,
+    );
+  }
+
   const title = await vscode.window.showInputBox({
     title: `New ${contentType.name}`,
     prompt: 'Title',
@@ -255,6 +283,13 @@ async function createInto(
 // ---------------------------------------------------------------------------
 
 export function registerContentCommands(shell: Zer0Shell): void {
+  // The core cannot import `vscode`, so it takes Workspace Trust as a callback
+  // and refuses by default until one is installed. This is that installation,
+  // and it happens at activation so the panel's own `resolvePlaceholder` round
+  // trip is covered too. It is never removed: the answer is read on every call,
+  // so a window that later becomes trusted needs no re-registration.
+  setPlaceholderTrust(workspaceTrusted);
+
   // --- Create content ------------------------------------------------------
   register(shell, 'createContent', async () => {
     const cfg = currentConfig();

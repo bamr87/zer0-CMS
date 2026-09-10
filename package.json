@@ -3,6 +3,7 @@
   "displayName": "zer0-CMS",
   "description": "A lightweight, governed CMS for your markdown repo — metadata panel, content dashboard, brand guard, human approval, and an idempotency ledger. Zero runtime dependencies.",
   "version": "0.1.0",
+  "private": true,
   "preview": true,
   "publisher": "bamr87",
   "author": "bamr87",
@@ -38,9 +39,49 @@
     "ai"
   ],
   "main": "./dist/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In an untrusted workspace zer0-CMS reads and edits front matter, and nothing else runs: the content engine, the front-matter normalizer, placeholder scripts, the AI agent and the bundled MCP server all stay off, and neither the publish nor the fleet gate can be armed. The settings below name paths and commands a repository would otherwise get to choose for you, so they are ignored until you trust the folder.",
+      "restrictedConfigurations": [
+        "zer0Cms.configFile",
+        "zer0Cms.cms.pythonPath",
+        "zer0Cms.cms.engineScript",
+        "zer0Cms.cms.normalizerScript",
+        "zer0Cms.cms.contentDirs",
+        "zer0Cms.cms.aiConfigPath",
+        "zer0Cms.cms.verifyCommand",
+        "zer0Cms.governance.publishAllow",
+        "zer0Cms.governance.bannedPatternsFile",
+        "zer0Cms.governance.target",
+        "zer0Cms.governance.draftsFolder",
+        "zer0Cms.governance.ledgerPath",
+        "zer0Cms.fleet.dispatchAllow",
+        "zer0Cms.fleet.scaffoldAllow",
+        "zer0Cms.fleet.manifestPath",
+        "zer0Cms.agent.enabled",
+        "zer0Cms.agent.model",
+        "zer0Cms.agent.permissionMode"
+      ]
+    },
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "The panel and the dashboard work over a virtual file system, but anything that spawns a process or reads a path directly — the content engine, the normalizer, placeholder scripts and the bundled MCP server — needs a real folder on disk."
+    }
+  },
   "activationEvents": [
     "workspaceContains:**/zer0.json",
-    "workspaceContains:**/.zer0/config.json"
+    "workspaceContains:**/.zer0/config.json",
+    "workspaceContains:**/_config.yml",
+    "workspaceContains:**/mkdocs.yml",
+    "workspaceContains:**/hugo.toml",
+    "workspaceContains:**/config.toml",
+    "workspaceContains:**/docusaurus.config.*",
+    "workspaceContains:**/astro.config.*",
+    "workspaceContains:**/fleet.manifest.yml"
   ],
   "contributes": {
     "viewsContainers": {
@@ -352,11 +393,11 @@
         },
         {
           "command": "zer0Cms.agent.open",
-          "when": "zer0Cms:agent:enabled"
+          "when": "zer0Cms:agent:enabled && zer0Cms:workspace:trusted"
         },
         {
           "command": "zer0Cms.agent.start",
-          "when": "zer0Cms:agent:enabled"
+          "when": "zer0Cms:agent:enabled && zer0Cms:workspace:trusted"
         },
         {
           "command": "zer0Cms.agent.stop",
@@ -377,6 +418,22 @@
         {
           "command": "zer0Cms.fleet.dispatchLane",
           "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.contract.run",
+          "when": "zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.contract.normalizePreview",
+          "when": "zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.contract.normalizeApply",
+          "when": "zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.mcp.writeWorkspaceConfig",
+          "when": "zer0Cms:workspace:trusted"
         }
       ],
       "editor/title": [
@@ -509,274 +566,412 @@
         "label": "zer0-CMS"
       }
     ],
-    "configuration": {
-      "title": "zer0-CMS",
-      "properties": {
-        "zer0Cms.configFile": {
-          "type": "string",
-          "default": "zer0.json",
-          "scope": "resource",
-          "markdownDescription": "Workspace-relative path of the project configuration file. The project *schema* — content folders, content types, taxonomy, SEO thresholds — lives there, not in VS Code settings."
-        },
-        "zer0Cms.panel.openOnSupportedFile": {
-          "type": "boolean",
-          "default": false,
-          "description": "Reveal the zer0-CMS panel automatically when a supported content file is opened."
-        },
-        "zer0Cms.panel.freeformTaxonomy": {
-          "type": "boolean",
-          "default": true,
-          "description": "Allow tags and categories that are not yet in the project taxonomy to be created from the panel."
-        },
-        "zer0Cms.panel.sections": {
-          "type": "array",
-          "items": {
+    "configuration": [
+      {
+        "title": "Project file",
+        "order": 1,
+        "properties": {
+          "zer0Cms.configFile": {
             "type": "string",
-            "enum": [
+            "default": "zer0.json",
+            "scope": "resource",
+            "markdownDescription": "Workspace-relative path of the project configuration file. The project *schema* — content folders, content types, taxonomy, SEO thresholds — lives there, not in VS Code settings."
+          }
+        }
+      },
+      {
+        "title": "Panel",
+        "order": 2,
+        "properties": {
+          "zer0Cms.panel.openOnSupportedFile": {
+            "type": "boolean",
+            "default": false,
+            "scope": "window",
+            "description": "Reveal the zer0-CMS panel automatically when a supported content file is opened."
+          },
+          "zer0Cms.panel.freeformTaxonomy": {
+            "type": "boolean",
+            "default": true,
+            "scope": "resource",
+            "description": "Allow tags and categories that are not yet in the project taxonomy to be created from the panel."
+          },
+          "zer0Cms.panel.sections": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "governance",
+                "metadata",
+                "seo",
+                "actions",
+                "recent",
+                "settings",
+                "other"
+              ]
+            },
+            "default": [
               "governance",
               "metadata",
               "seo",
               "actions",
               "recent",
-              "settings",
               "other"
-            ]
+            ],
+            "scope": "window",
+            "description": "Which panel sections to render, in order."
+          }
+        }
+      },
+      {
+        "title": "Dashboard",
+        "order": 3,
+        "properties": {
+          "zer0Cms.dashboard.openOnStartup": {
+            "type": "boolean",
+            "default": false,
+            "scope": "window",
+            "description": "Open the dashboard when the workspace loads."
           },
-          "default": [
-            "governance",
-            "metadata",
-            "seo",
-            "actions",
-            "recent",
-            "other"
-          ],
-          "description": "Which panel sections to render, in order."
-        },
-        "zer0Cms.dashboard.openOnStartup": {
-          "type": "boolean",
-          "default": false,
-          "description": "Open the dashboard when the workspace loads."
-        },
-        "zer0Cms.dashboard.defaultView": {
-          "type": "string",
-          "enum": [
-            "grid",
-            "list",
-            "structure"
-          ],
-          "default": "grid",
-          "description": "Initial layout of the dashboard Contents view."
-        },
-        "zer0Cms.dashboard.defaultSorting": {
-          "type": "string",
-          "enum": [
-            "LastModifiedDesc",
-            "LastModifiedAsc",
-            "FileNameAsc",
-            "FileNameDesc",
-            "PublishedDesc",
-            "PublishedAsc"
-          ],
-          "default": "LastModifiedDesc",
-          "description": "Initial sort order of the dashboard Contents view."
-        },
-        "zer0Cms.dashboard.pageSize": {
-          "type": "number",
-          "default": 16,
-          "minimum": 0,
-          "maximum": 52,
-          "description": "Items per page in the dashboard Contents view. 0 disables pagination."
-        },
-        "zer0Cms.dashboard.cardFields": {
-          "type": "object",
-          "default": {
-            "state": true,
-            "date": true
-          },
-          "description": "Which optional fields a content card shows."
-        },
-        "zer0Cms.content.autoUpdateModifiedDate": {
-          "type": "boolean",
-          "default": false,
-          "description": "Stamp the content type's modified-date field on every save."
-        },
-        "zer0Cms.content.preserveCasing": {
-          "type": "boolean",
-          "default": false,
-          "description": "Keep the original casing in generated filenames and in an explicitly supplied publish slug. A slug derived from a title is always lowercased."
-        },
-        "zer0Cms.content.defaultFileType": {
-          "type": "string",
-          "default": "md",
-          "description": "Extension used for newly created content."
-        },
-        "zer0Cms.content.supportedFileTypes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "md",
-            "mdx",
-            "markdown"
-          ],
-          "description": "File extensions zer0-CMS treats as content."
-        },
-        "zer0Cms.content.publicFolder": {
-          "type": "string",
-          "default": "",
-          "description": "Workspace-relative folder served at the site root — used to resolve image paths."
-        },
-        "zer0Cms.date.format": {
-          "type": "string",
-          "default": "yyyy-MM-dd",
-          "markdownDescription": "Date format for front-matter date fields. Tokens: `yyyy MM dd HH hh mm ss aaa`."
-        },
-        "zer0Cms.date.timezone": {
-          "type": "string",
-          "default": "UTC",
-          "description": "IANA timezone used when formatting and parsing dates."
-        },
-        "zer0Cms.seo.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the SEO insights section in the panel."
-        },
-        "zer0Cms.validation.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Report missing required fields as diagnostics in the Problems panel."
-        },
-        "zer0Cms.governance.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable the governed draft queue: draft, brand guard, human approval, publish, ledger."
-        },
-        "zer0Cms.governance.draftsFolder": {
-          "type": "string",
-          "default": ".zer0/drafts",
-          "description": "Workspace-relative folder holding the governed draft queue."
-        },
-        "zer0Cms.governance.ledgerPath": {
-          "type": "string",
-          "default": ".zer0/ledger.json",
-          "description": "Workspace-relative path of the idempotency ledger."
-        },
-        "zer0Cms.governance.acceptStatuses": {
-          "type": "array",
-          "items": {
+          "zer0Cms.dashboard.defaultView": {
             "type": "string",
             "enum": [
+              "grid",
+              "list",
+              "structure"
+            ],
+            "default": "grid",
+            "scope": "window",
+            "description": "Initial layout of the dashboard Contents view."
+          },
+          "zer0Cms.dashboard.defaultSorting": {
+            "type": "string",
+            "enum": [
+              "LastModifiedDesc",
+              "LastModifiedAsc",
+              "FileNameAsc",
+              "FileNameDesc",
+              "PublishedDesc",
+              "PublishedAsc"
+            ],
+            "default": "LastModifiedDesc",
+            "scope": "window",
+            "description": "Initial sort order of the dashboard Contents view."
+          },
+          "zer0Cms.dashboard.pageSize": {
+            "type": "number",
+            "default": 16,
+            "minimum": 0,
+            "maximum": 52,
+            "scope": "window",
+            "description": "Items per page in the dashboard Contents view. 0 disables pagination."
+          },
+          "zer0Cms.dashboard.cardFields": {
+            "type": "object",
+            "default": {
+              "state": true,
+              "date": true
+            },
+            "scope": "window",
+            "description": "Which optional fields a content card shows."
+          }
+        }
+      },
+      {
+        "title": "Content",
+        "order": 4,
+        "properties": {
+          "zer0Cms.content.autoUpdateModifiedDate": {
+            "type": "boolean",
+            "default": false,
+            "scope": "resource",
+            "description": "Stamp the content type's modified-date field on every save."
+          },
+          "zer0Cms.content.preserveCasing": {
+            "type": "boolean",
+            "default": false,
+            "scope": "resource",
+            "description": "Keep the original casing in generated filenames and in an explicitly supplied publish slug. A slug derived from a title is always lowercased."
+          },
+          "zer0Cms.content.defaultFileType": {
+            "type": "string",
+            "default": "md",
+            "scope": "resource",
+            "description": "Extension used for newly created content."
+          },
+          "zer0Cms.content.supportedFileTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "md",
+              "mdx",
+              "markdown"
+            ],
+            "scope": "resource",
+            "description": "File extensions zer0-CMS treats as content."
+          },
+          "zer0Cms.content.publicFolder": {
+            "type": "string",
+            "default": "",
+            "scope": "resource",
+            "description": "Workspace-relative folder served at the site root — used to resolve image paths."
+          }
+        }
+      },
+      {
+        "title": "Dates",
+        "order": 5,
+        "properties": {
+          "zer0Cms.date.format": {
+            "type": "string",
+            "default": "yyyy-MM-dd",
+            "scope": "resource",
+            "markdownDescription": "Date format for front-matter date fields. Tokens: `yyyy MM dd HH hh mm ss aaa`."
+          },
+          "zer0Cms.date.timezone": {
+            "type": "string",
+            "default": "UTC",
+            "scope": "resource",
+            "description": "IANA timezone used when formatting and parsing dates."
+          }
+        }
+      },
+      {
+        "title": "SEO and validation",
+        "order": 6,
+        "properties": {
+          "zer0Cms.seo.enabled": {
+            "type": "boolean",
+            "default": true,
+            "scope": "resource",
+            "description": "Show the SEO insights section in the panel."
+          },
+          "zer0Cms.validation.enabled": {
+            "type": "boolean",
+            "default": true,
+            "scope": "resource",
+            "description": "Report missing required fields as diagnostics in the Problems panel."
+          }
+        }
+      },
+      {
+        "title": "Governance",
+        "order": 7,
+        "properties": {
+          "zer0Cms.governance.enabled": {
+            "type": "boolean",
+            "default": true,
+            "scope": "resource",
+            "description": "Enable the governed draft queue: draft, brand guard, human approval, publish, ledger."
+          },
+          "zer0Cms.governance.draftsFolder": {
+            "type": "string",
+            "default": ".zer0/drafts",
+            "scope": "resource",
+            "description": "Workspace-relative folder holding the governed draft queue."
+          },
+          "zer0Cms.governance.ledgerPath": {
+            "type": "string",
+            "default": ".zer0/ledger.json",
+            "scope": "resource",
+            "description": "Workspace-relative path of the idempotency ledger."
+          },
+          "zer0Cms.governance.acceptStatuses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved"
+              ]
+            },
+            "default": [
               "pending",
               "approved"
-            ]
+            ],
+            "scope": "resource",
+            "markdownDescription": "Draft statuses the publish path accepts. Restrict to `[\"approved\"]` to require the in-editor approval step."
           },
-          "default": [
-            "pending",
-            "approved"
-          ],
-          "markdownDescription": "Draft statuses the publish path accepts. Restrict to `[\"approved\"]` to require the in-editor approval step."
-        },
-        "zer0Cms.governance.publishAllow": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Master switch. While this is off, publishing is blocked in the panel, the dashboard, the command palette **and** the bundled MCP server."
-        },
-        "zer0Cms.governance.bannedPatternsFile": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Optional workspace-relative JSON file of extra brand-guard patterns: `[{\"name\", \"pattern\", \"flags\"?}]`. Every workspace pattern is reported as an error."
-        },
-        "zer0Cms.governance.target": {
-          "type": "string",
-          "default": "jekyll",
-          "description": "Publish target that turns an approved draft into published content."
-        },
-        "zer0Cms.cms.root": {
-          "type": "string",
-          "default": ".cms",
-          "description": "Workspace-relative root of the .cms/ contract emitted by the content engine."
-        },
-        "zer0Cms.cms.pythonPath": {
-          "type": "string",
-          "default": "python3",
-          "scope": "machine-overridable",
-          "description": "Python interpreter used to run the content engine."
-        },
-        "zer0Cms.cms.engineScript": {
-          "type": "string",
-          "default": "scripts/cms/cms.py",
-          "description": "Workspace-relative path of the content engine script."
-        },
-        "zer0Cms.cms.normalizerScript": {
-          "type": "string",
-          "default": "scripts/content/normalize-frontmatter.py",
-          "description": "Workspace-relative path of the mechanical front-matter normalizer."
-        },
-        "zer0Cms.cms.contentDirs": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "zer0Cms.governance.publishAllow": {
+            "type": "boolean",
+            "default": false,
+            "scope": "resource",
+            "markdownDescription": "Master switch. While this is off, publishing is blocked in the panel, the dashboard, the command palette **and** the bundled MCP server."
           },
-          "default": [
-            "pages/"
-          ],
-          "description": "Directories the content engine scans."
-        },
-        "zer0Cms.agent.enabled": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Enable the optional AI agent. Requires the `@anthropic-ai/claude-agent-sdk` optional dependency and a Claude credential."
-        },
-        "zer0Cms.agent.model": {
-          "type": "string",
-          "default": "claude-opus-5",
-          "description": "Model the AI agent runs on."
-        },
-        "zer0Cms.agent.maxTurns": {
-          "type": "number",
-          "default": 40,
-          "minimum": 1,
-          "description": "Maximum agent turns per run."
-        },
-        "zer0Cms.agent.permissionMode": {
-          "type": "string",
-          "enum": [
-            "default",
-            "acceptEdits",
-            "plan"
-          ],
-          "default": "default",
-          "description": "Agent permission mode. 'default' routes every mutating tool through an approve/deny gate."
-        },
-        "zer0Cms.fleet.enabled": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml` (spec `fleet/v1`). Read-only until `#zer0Cms.fleet.dispatchAllow#` is also set."
-        },
-        "zer0Cms.fleet.manifestPath": {
-          "type": "string",
-          "default": "fleet.manifest.yml",
-          "description": "Workspace-relative path of the fleet manifest."
-        },
-        "zer0Cms.fleet.dispatchAllow": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Master switch for the two privileged fleet actions — flipping a lane's `*_ENABLED` variable and dispatching a lane once. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every action still asks for confirmation."
-        },
-        "zer0Cms.logging.level": {
-          "type": "string",
-          "enum": [
-            "error",
-            "warn",
-            "info",
-            "verbose"
-          ],
-          "default": "info",
-          "description": "Verbosity of the zer0-CMS output channel."
+          "zer0Cms.governance.bannedPatternsFile": {
+            "type": "string",
+            "default": "",
+            "scope": "resource",
+            "markdownDescription": "Optional workspace-relative JSON file of extra brand-guard patterns: `[{\"name\", \"pattern\", \"flags\"?}]`. Every workspace pattern is reported as an error."
+          },
+          "zer0Cms.governance.target": {
+            "type": "string",
+            "default": "jekyll",
+            "scope": "resource",
+            "description": "Publish target that turns an approved draft into published content."
+          }
+        }
+      },
+      {
+        "title": "Content engine",
+        "order": 8,
+        "properties": {
+          "zer0Cms.cms.root": {
+            "type": "string",
+            "default": ".cms",
+            "scope": "resource",
+            "description": "Workspace-relative root of the .cms/ contract emitted by the content engine."
+          },
+          "zer0Cms.cms.pythonPath": {
+            "type": "string",
+            "default": "python3",
+            "scope": "machine-overridable",
+            "description": "Python interpreter used to run the content engine."
+          },
+          "zer0Cms.cms.engineScript": {
+            "type": "string",
+            "default": "scripts/cms/cms.py",
+            "scope": "resource",
+            "description": "Workspace-relative path of the content engine script."
+          },
+          "zer0Cms.cms.normalizerScript": {
+            "type": "string",
+            "default": "scripts/content/normalize-frontmatter.py",
+            "scope": "resource",
+            "description": "Workspace-relative path of the mechanical front-matter normalizer."
+          },
+          "zer0Cms.cms.contentDirs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "pages/"
+            ],
+            "scope": "resource",
+            "description": "Directories the content engine scans."
+          },
+          "zer0Cms.cms.aiConfigPath": {
+            "type": "string",
+            "default": "_data/ai.yml",
+            "scope": "resource",
+            "description": "Workspace-relative path of the site's own AI configuration — the provider, model and token budget its CI lanes run on. zer0-CMS reads it so the in-editor agent and the repository's automation resolve the same model instead of quietly disagreeing."
+          },
+          "zer0Cms.cms.verifyCommand": {
+            "type": "string",
+            "default": "",
+            "scope": "resource",
+            "description": "Command that verifies this site — the repository's own test harness, as you would type it in a terminal. Empty means there is none to run, which the Audit view reports plainly rather than guessing a command for you."
+          }
+        }
+      },
+      {
+        "title": "AI agent",
+        "order": 9,
+        "properties": {
+          "zer0Cms.agent.enabled": {
+            "type": "boolean",
+            "default": false,
+            "scope": "window",
+            "markdownDescription": "Enable the optional AI agent. Requires the `@anthropic-ai/claude-agent-sdk` optional dependency and a Claude credential."
+          },
+          "zer0Cms.agent.model": {
+            "type": "string",
+            "default": "claude-opus-5",
+            "scope": "window",
+            "description": "Model the AI agent runs on."
+          },
+          "zer0Cms.agent.maxTurns": {
+            "type": "number",
+            "default": 40,
+            "minimum": 1,
+            "scope": "window",
+            "description": "Maximum agent turns per run."
+          },
+          "zer0Cms.agent.permissionMode": {
+            "type": "string",
+            "enum": [
+              "default",
+              "acceptEdits",
+              "plan"
+            ],
+            "default": "default",
+            "scope": "window",
+            "description": "Agent permission mode. 'default' routes every mutating tool through an approve/deny gate."
+          }
+        }
+      },
+      {
+        "title": "Fleet",
+        "order": 10,
+        "properties": {
+          "zer0Cms.fleet.enabled": {
+            "type": "boolean",
+            "default": false,
+            "scope": "resource",
+            "markdownDescription": "Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml` (spec `fleet/v1`). Read-only until `#zer0Cms.fleet.dispatchAllow#` is also set."
+          },
+          "zer0Cms.fleet.manifestPath": {
+            "type": "string",
+            "default": "fleet.manifest.yml",
+            "scope": "resource",
+            "description": "Workspace-relative path of the fleet manifest."
+          },
+          "zer0Cms.fleet.dispatchAllow": {
+            "type": "boolean",
+            "default": false,
+            "scope": "resource",
+            "markdownDescription": "Master switch for the two privileged fleet actions — flipping a lane's `*_ENABLED` variable and dispatching a lane once. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every action still asks for confirmation."
+          },
+          "zer0Cms.fleet.scaffoldAllow": {
+            "type": "boolean",
+            "default": false,
+            "scope": "resource",
+            "markdownDescription": "Master switch for writing a generated lane into the open folder — the workflow file, the agent file, the skill stub and the manifest entry. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every write still asks for confirmation, and the lane's `*_ENABLED` variable is never created by the same action that writes the files."
+          },
+          "zer0Cms.fleet.roster": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "scope": "window",
+            "markdownDescription": "Extra repositories the fleet Monitor watches, each as `owner/name`. The roster is these plus every workspace folder that carries a `fleet.manifest.yml`; naming one here reads nothing on its own, because a network call only ever follows an action you took."
+          },
+          "zer0Cms.fleet.hub": {
+            "type": "string",
+            "default": "bamr87/bamr87",
+            "scope": "window",
+            "markdownDescription": "The fleet's hub repository, as `owner/name` — where the shared registry, the CI kits and the harness scorecard live. Read only when you ask the Monitor to import the roster or refresh the hub."
+          },
+          "zer0Cms.fleet.gitfactoryUrl": {
+            "type": "string",
+            "default": "https://bamr87.github.io/gitorio/",
+            "scope": "window",
+            "markdownDescription": "Base URL of the GitFactory console that \"Open in GitFactory\" hands the current roster to. The link is assembled locally and opened in your browser: the roster travels as query parameters, and nothing is posted anywhere."
+          }
+        }
+      },
+      {
+        "title": "Logging",
+        "order": 11,
+        "properties": {
+          "zer0Cms.logging.level": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warn",
+              "info",
+              "verbose"
+            ],
+            "default": "info",
+            "scope": "window",
+            "description": "Verbosity of the zer0-CMS output channel."
+          }
         }
       }
-    },
+    ],
     "configurationDefaults": {
       "files.associations": {
         "zer0.json": "jsonc"
@@ -801,9 +996,10 @@
     "@anthropic-ai/claude-agent-sdk": "^0.3.181"
   },
   "devDependencies": {
+    "@bamr87/fleet-engines": "0.1.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.1",
-    "@types/vscode": "^1.101.0",
+    "@types/vscode": "1.101.x",
     "@vscode/codicons": "^0.0.36",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
@@ -812,6 +1008,7 @@
     "eslint": "^9.39.1",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.3"
+    "typescript-eslint": "^8.46.3",
+    "yaml": "2.9.0"
   }
 }

@@ -24,11 +24,26 @@
  *        that has to change.
  *     7  `zer0_worklist` writes only under `.cms/distribution/`.
  *     8  `zer0_contract` runs the repository's own engine; read-only unless
- *        the caller explicitly asks for `normalize-apply`.
+ *        the caller explicitly asks for `normalize-apply`. It is gated on
+ *        `ZER0_CMS_MCP_ALLOW_EXEC`, which only the editor sets and only in a
+ *        **trusted** workspace — a server started by hand or from a committed
+ *        `.vscode/mcp.json` gets no `env` at all and therefore spawns nothing.
  *    12  `zer0_fleet_status` reads the local `fleet.manifest.yml` and nothing
  *        else — no network from this process, ever. The switch state lives in
  *        the repository's Actions variables and only the dashboard reads it,
  *        behind a person's sign-in; this tool says so rather than guess.
+ *
+ * ### The two environment variables that are not the publish flag
+ *
+ * `ZER0_CMS_MCP_ALLOW_EXEC` is the execution opt-in (decision D13), and it
+ * carries the editor's Workspace Trust answer across the process boundary:
+ * this process cannot ask `vscode` anything, so the one thing it can do is
+ * refuse unless it was *told*. `ZER0_CMS_PYTHON` pins the interpreter to the
+ * settings layer exactly the way `governance.publishAllow` is pinned — a
+ * `zer0.json` arrives with the repository, and choosing which binary runs is
+ * not a decision a cloned file gets to make. The script it runs is fenced
+ * separately, and always: `evaluateExecGate` refuses a path that resolves
+ * outside the workspace root whichever layer supplied it.
  *
  * Nothing in this file may import `vscode` (decision D1) — the MCP bundle
  * marks nothing external, so a stray editor import is a build error rather
@@ -57,7 +72,6 @@ import {
   isEditable,
   issuesByLane,
   listQueue,
-  loadContractOrScan,
   loadLedger,
   ingestPerformance,
   loadPerformance,
@@ -92,6 +106,7 @@ import {
   type PublishOutcome,
   type Zer0Config,
 } from '../core';
+import { loadContractCached } from './cache';
 
 // ---------------------------------------------------------------------------
 // Environment
@@ -99,6 +114,27 @@ import {
 
 /** The publish opt-in. Absent or falsy means `zer0_publish` refuses. */
 export const PUBLISH_ENV_VAR = 'ZER0_CMS_MCP_ALLOW_PUBLISH';
+
+/**
+ * The execution opt-in. Absent or falsy means `zer0_contract` refuses.
+ *
+ * The editor sets it only when the workspace is **trusted** (D13), and sets it
+ * to `null` — remove the variable — otherwise, never to `"0"`. This process
+ * cannot read Workspace Trust for itself, so an absent variable and an
+ * untrusted workspace have to look the same from here, and they do: no spawn.
+ */
+export const EXEC_ENV_VAR = 'ZER0_CMS_MCP_ALLOW_EXEC';
+
+/**
+ * The interpreter, pinned to the settings layer by the editor.
+ *
+ * Same reasoning as the publish flag: `zer0.json` ships with the repository, so
+ * `{"cms":{"python":"./tools/definitely-python"}}` in a clone must not decide
+ * which binary this server executes. When it is set, it wins over every layer;
+ * when the editor did not set it, `zer0Cms.cms.pythonPath` was left at its
+ * default and the default is what arrives here.
+ */
+export const PYTHON_ENV_VAR = 'ZER0_CMS_PYTHON';
 
 /** Optional override for the project config file name, relative to `cwd`. */
 export const CONFIG_ENV_VAR = 'ZER0_CMS_CONFIG';
@@ -109,16 +145,31 @@ export function publishEnabled(env: NodeJS.ProcessEnv): boolean {
   return TRUTHY.has((env[PUBLISH_ENV_VAR] ?? '').trim().toLowerCase());
 }
 
+/** Whether this server may start a process at all. `zer0_contract`'s gate. */
+export function execEnabled(env: NodeJS.ProcessEnv): boolean {
+  return TRUTHY.has((env[EXEC_ENV_VAR] ?? '').trim().toLowerCase());
+}
+
 /**
  * Resolve the workspace configuration for a server rooted at `root`.
  *
  * `cwd` is the workspace folder — the extension sets it when it launches the
  * server, and a hand-run `node dist/mcp-server.js` inherits the shell's. The
- * settings layer carries exactly one value: `governance.publishAllow`, pinned
- * to the environment opt-in. That is deliberate. It means the core publish
- * gate and the MCP gate cannot disagree, and it means a `zer0.json` that says
- * `publishAllow: true` still does not let an MCP client publish unless the
- * process was started with the flag.
+ * settings layer carries exactly two values, and both are pinned to the
+ * environment rather than read from the file:
+ *
+ *   - `governance.publishAllow`, from `ZER0_CMS_MCP_ALLOW_PUBLISH`. The core
+ *     publish gate and the MCP gate therefore cannot disagree, and a
+ *     `zer0.json` saying `publishAllow: true` still does not let an MCP client
+ *     publish unless the process was started with the flag.
+ *   - `cms.python`, from `ZER0_CMS_PYTHON`, when the editor set it. Same
+ *     reasoning pointed at the interpreter: a file that arrives with a clone
+ *     does not get to choose which binary runs.
+ *
+ * An absent `ZER0_CMS_PYTHON` is left absent rather than pinned to a guess, so
+ * a hand-run server still resolves the interpreter through the normal three
+ * layers — and refuses to spawn anyway, because `ZER0_CMS_MCP_ALLOW_EXEC` is
+ * absent too.
  */
 export async function loadServerConfig(
   root: string,
@@ -137,9 +188,14 @@ export async function loadServerConfig(
     // `zer0_status` reports which of the two it was, so the model can say so.
     file = {};
   }
+  const python = (env[PYTHON_ENV_VAR] ?? '').trim();
   return resolveConfig(root, file, {
     configFile,
     governance: { publishAllow: publishEnabled(env) },
+    // `exactOptionalPropertyTypes`: an unset variable is an absent key, not a
+    // key holding `undefined` — the merge reads the two the same way, but the
+    // shape is the one the settings layer everywhere else in this repo uses.
+    ...(python === '' ? {} : { cms: { python } }),
   });
 }
 
@@ -275,7 +331,7 @@ async function toolStatus(cfg: Zer0Config, _args: ToolArgs): Promise<string> {
     `content     : ${cfg.contentFolders.length} folder(s), ${cfg.contentTypes.length} content type(s)`,
   ];
 
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   const ready = distributable(contract);
   lines.push(
     contract.present
@@ -313,6 +369,8 @@ async function toolStatus(cfg: Zer0Config, _args: ToolArgs): Promise<string> {
     `governance  : ${cfg.governance.enabled ? 'enabled' : 'disabled'}, target "${cfg.governance.target}"`,
     `publish tool enabled: ${publishEnabled(process.env)} ` +
       `(set ${PUBLISH_ENV_VAR}=1 in the server environment to enable)`,
+    `engine execution enabled: ${execEnabled(process.env)} ` +
+      `(${EXEC_ENV_VAR}; the editor sets it only in a trusted workspace)`,
     'Prefer zer0_draft: it stages a pending draft for a human to approve.',
   );
   return lines.join('\n');
@@ -323,7 +381,7 @@ async function toolStatus(cfg: Zer0Config, _args: ToolArgs): Promise<string> {
 // ---------------------------------------------------------------------------
 
 async function toolListContent(cfg: Zer0Config, args: ToolArgs): Promise<string> {
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   const query = argString(args, 'query').toLowerCase();
   const collection = argString(args, 'collection').toLowerCase();
   const limit = argCount(args, 'limit', 20, 1, 100);
@@ -413,7 +471,7 @@ async function toolGetContent(cfg: Zer0Config, args: ToolArgs): Promise<string> 
     return "error: 'ref' is required (a workspace-relative path, or a filename slug)";
   }
 
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   let record = byPath(contract, ref);
   let filePath = record ? absPath(cfg, record.path) : '';
   if (filePath === '' || !(await exists(filePath))) {
@@ -642,7 +700,7 @@ async function toolWorklist(cfg: Zer0Config, args: ToolArgs): Promise<string> {
   }
   const write = argBoolDefaultTrue(args, 'write');
 
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   const performance = await loadPerformance(contract);
   const ledger = await loadLedger(absPath(cfg, cfg.governance.ledgerPath));
   const plan = buildCatering(contract, performance, publishedPathsFromLedger(ledger));
@@ -698,7 +756,7 @@ async function toolIngest(cfg: Zer0Config, args: ToolArgs): Promise<string> {
     return `error: ${from} carries no statistics (expected an object keyed by post id, or {"posts": {...}})`;
   }
 
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   const ledger = await loadLedger(absPath(cfg, cfg.governance.ledgerPath));
   const existing = await loadPerformance(contract);
   const result = ingestPerformance(ledger, stats, existing);
@@ -732,7 +790,7 @@ async function toolIngest(cfg: Zer0Config, args: ToolArgs): Promise<string> {
 // ---------------------------------------------------------------------------
 
 async function toolPortfolio(cfg: Zer0Config, _args: ToolArgs): Promise<string> {
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   const ledger = await loadLedger(absPath(cfg, cfg.governance.ledgerPath));
   return renderPortfolio(buildPortfolio(ledger, contract));
 }
@@ -743,7 +801,7 @@ async function toolPortfolio(cfg: Zer0Config, _args: ToolArgs): Promise<string> 
 
 async function toolMedia(cfg: Zer0Config, args: ToolArgs): Promise<string> {
   const limit = argCount(args, 'limit', 50, 1, 500);
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   const records = distributable(contract).slice(0, limit);
   if (records.length === 0) {
     return 'media: no distributable content to check.';
@@ -763,8 +821,31 @@ const CONTRACT_COMMANDS: readonly string[] = [
 ];
 
 async function toolContract(cfg: Zer0Config, args: ToolArgs): Promise<string> {
+  // The gate, ahead of everything: this tool is the one that starts a process
+  // (decision D13). The editor sets the variable only for a trusted workspace,
+  // so a server launched from a committed `.vscode/mcp.json`, or by hand, or
+  // in a folder the user has not trusted, stops right here — and says which
+  // thing has to change, the way every other refusal in this file does.
+  if (!execEnabled(process.env)) {
+    return (
+      'engine execution is disabled. This tool runs the interpreter and scripts named by ' +
+      `this repository's configuration. The editor sets ${EXEC_ENV_VAR}=1 only in a trusted ` +
+      'workspace; a server started by hand never gets it. Use zer0_status, zer0_list_content ' +
+      'or zer0_get_content to read what the contract already holds.'
+    );
+  }
+
   const command = argString(args, 'command') || 'status';
-  const engine = engineConfigFor(cfg);
+  // This process has no settings layer of its own — `ZER0_CMS_PYTHON` is the
+  // only way a person's choice reaches it — and it cannot tell a `zer0.json`
+  // value apart from the built-in default, because `loadServerConfig` has
+  // already merged them. So it names the more suspicious of the two. `trusted`
+  // is `true` because the environment variable above *is* the editor's trust
+  // answer; the engine still refuses a script that leaves the workspace.
+  const engine = engineConfigFor(cfg, {
+    trusted: true,
+    layer: (process.env[PYTHON_ENV_VAR] ?? '').trim() === '' ? 'zer0.json' : 'settings',
+  });
   // `find` rather than a cast: the literal that survives the lookup *is* an
   // EngineCommand, so no assertion is needed to convince the compiler.
   const subcommand = ENGINE_COMMANDS.find((known) => known === command);
@@ -802,7 +883,7 @@ async function toolContract(cfg: Zer0Config, args: ToolArgs): Promise<string> {
     lines.push('stderr:', tail(result.stderr, 20));
   }
 
-  const contract = await loadContractOrScan(cfg);
+  const contract = await loadContractCached(cfg);
   lines.push(
     contract.present
       ? `contract: ${contract.records.length} record(s), generated ${contract.generatedAt || '(no timestamp)'}`
@@ -1092,6 +1173,7 @@ export const ERROR_PREFIXES: readonly string[] = [
   'blocked',
   'not found',
   'publishing is disabled',
+  'engine execution is disabled',
 ];
 
 export function isErrorText(text: string): boolean {

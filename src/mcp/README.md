@@ -1,18 +1,31 @@
 # `src/mcp` — the bundled MCP server
 
-Two files that expose the CMS as twelve tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
+Three files that expose the CMS as twelve tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
 
 | File | Exports | Owner |
 |---|---|---|
 | `server.ts` | `SERVER_NAME`, `SERVER_VERSION`, `runServer` | WP07 |
-| `tools.ts` | `PUBLISH_ENV_VAR`, `CONFIG_ENV_VAR`, `CONTENT_FIELDS`, `ToolArgs`, `ToolSchema`, `ToolDef`, `TOOLS`, `TOOLS_BY_NAME`, `ERROR_PREFIXES`, `isErrorText`, `publishEnabled`, `loadServerConfig` | WP07 |
+| `tools.ts` | `PUBLISH_ENV_VAR`, `EXEC_ENV_VAR`, `PYTHON_ENV_VAR`, `CONFIG_ENV_VAR`, `CONTENT_FIELDS`, `ToolArgs`, `ToolSchema`, `ToolDef`, `TOOLS`, `TOOLS_BY_NAME`, `ERROR_PREFIXES`, `isErrorText`, `publishEnabled`, `execEnabled`, `loadServerConfig` | WP07, WP1.3 |
+| `cache.ts` | `loadContractCached`, `clearIndexCaches`, `cachedRootCount` | WP1.3 |
 
 ## Running it
 
 ```bash
 node dist/mcp-server.js          # cwd is the workspace; nothing else required
 ZER0_CMS_MCP_ALLOW_PUBLISH=1 node dist/mcp-server.js   # publishing armed
+ZER0_CMS_MCP_ALLOW_EXEC=1 node dist/mcp-server.js      # zer0_contract may spawn
 ```
+
+## The four environment variables
+
+| Variable | Set by | Absent means |
+|---|---|---|
+| `ZER0_CMS_CONFIG` | the extension, always | `zer0.json` |
+| `ZER0_CMS_MCP_ALLOW_PUBLISH` | the extension, from the **settings** layer | `zer0_publish` refuses |
+| `ZER0_CMS_MCP_ALLOW_EXEC` | the extension, only in a **trusted** workspace | `zer0_contract` refuses |
+| `ZER0_CMS_PYTHON` | the extension, from the **settings** layer | the interpreter comes from the project layers |
+
+None of them is ever `"0"`: `src/mcpRegistration.ts` sets a variable to `null`, which the VS Code API defines as *remove it from the child's environment*, so an inherited value in the extension host cannot leak into a server that is not allowed to use it. And none of them is written into `.vscode/mcp.json` — a file committed to a repository is the last place any of these belong, which is why a hand-started server reads and drafts but neither publishes nor spawns.
 
 Inside VS Code the extension registers it through `vscode.lm.registerMcpServerDefinitionProvider` (`src/mcpRegistration.ts`), but standing it up by hand — Claude Code, a `.vscode/mcp.json` entry, a shell — is a supported way to run it, and the integration test spawns exactly this file.
 
@@ -34,7 +47,7 @@ Tools 8–10 are the feedback loop, and they sit *after* `zer0_publish` because 
 | 8 | `zer0_ingest` | `.cms/distribution/performance.json` | Joins a platform's statistics onto content paths through the ledger — the input the worklist ranks on. Aggregate counts only. |
 | 9 | `zer0_portfolio` | — | The published track record. Reads the ledger, so it works before any statistics exist. |
 | 10 | `zer0_media` | — | Which pages have a preview image, and the generator command for each that does not. |
-| 11 | `zer0_contract` | only with `normalize-apply` | Runs the repository's own engine. |
+| 11 | `zer0_contract` | only with `normalize-apply` | Runs the repository's own engine. **Gated on `ZER0_CMS_MCP_ALLOW_EXEC`** — see below. |
 | 12 | `zer0_fleet_status` | — | This repository's AI lanes as its local `fleet.manifest.yml` declares them. Reads the file only — **no network from this process** — so the switch state is reported as unknown; the dashboard reads it, behind a person's sign-in. |
 
 ## Contracts worth knowing before you change anything
@@ -43,9 +56,15 @@ Tools 8–10 are the feedback loop, and they sit *after* `zer0_publish` because 
 
 **`vscode` cannot appear anywhere in this graph.** The MCP esbuild bundle marks *nothing* external, so a stray editor import is a build error — `Could not resolve "vscode"` — rather than a crash inside somebody's MCP client half an hour later. eslint blocks it as well. This is decision D1, enforced twice.
 
-**Handlers return prose, including for failures.** Every tool is `(cfg, args) => Promise<string>` and the string is written for a reader. `ERROR_PREFIXES` (`error:`, `refused:`, `blocked`, `not found`, `publishing is disabled`) is how prose becomes `isError: true` — which is why every refusal in `tools.ts` is written to start with one of them. A new refusal needs a matching prefix or it will be reported as a success.
+**Handlers return prose, including for failures.** Every tool is `(cfg, args) => Promise<string>` and the string is written for a reader. `ERROR_PREFIXES` (`error:`, `refused:`, `blocked`, `not found`, `publishing is disabled`, `engine execution is disabled`) is how prose becomes `isError: true` — which is why every refusal in `tools.ts` is written to start with one of them. A new refusal needs a matching prefix or it will be reported as a success.
 
 **`zer0_publish` is gated twice, and each gate refuses on its own.** The environment gate (`ZER0_CMS_MCP_ALLOW_PUBLISH`) and the call gate (`confirm: true`) produce different prose, so a refusal always names the exact thing that has to change. Nothing else in the file may short-circuit either. The environment flag is also folded into `governance.publishAllow` by `loadServerConfig`, so the core publish gate and the MCP gate cannot disagree — one switch, not two. A `zer0.json` claiming `publishAllow: true` still does not let an MCP client publish unless the process was started with the flag — and `src/mcpRegistration.ts` will not start it with the flag on the strength of that file either: the editor reads `zer0Cms.governance.publishAllow` from the settings layer alone when it decides what to inject.
+
+**`zer0_contract` is the one tool that starts a process, and Workspace Trust is what decides.** This process cannot ask `vscode` anything, so the editor tells it: `ZER0_CMS_MCP_ALLOW_EXEC=1`, injected at resolve time and only when `vscode.workspace.isTrusted` (decision D13). Absent, the tool refuses with prose starting `engine execution is disabled` — which is in `ERROR_PREFIXES`, so it is reported as `isError: true` like every other refusal here. The practical effect is the one worth stating: **a server started by hand, or from a committed `.vscode/mcp.json`, spawns nothing at all**, because neither gets an `env`. In an untrusted workspace the editor does not even offer the server — `provideMcpServerDefinitions` returns `[]`.
+
+**`ZER0_CMS_PYTHON` pins the interpreter to the settings layer**, exactly as `ZER0_CMS_MCP_ALLOW_PUBLISH` pins the publish gate. A `zer0.json` arrives with the clone and can name any binary on the machine; which binary runs is not its decision. The *script* is fenced separately and always: `evaluateExecGate` in `src/core/shared/trust.ts` refuses a path that resolves outside the workspace root whichever layer supplied it, and `src/core/contract/engine.ts` gives any run ten minutes before it kills it.
+
+**Eight of the twelve tools begin with a page-index scan, so the scan is cached for the life of the process.** `src/mcp/cache.ts` holds one `IndexCache` per workspace root and hands it back into `loadContractOrScan(cfg, log, cache)`; with no `.cms/` contract present — the common case, and a normal state — that turns a 44–123 ms full walk into a 7–22 ms `stat`-per-candidate. It stays correct without a timer because `buildIndex` invalidates itself: entries are keyed by mtime, and `IndexCache.fingerprint` covers a configuration change that alters the projection while every mtime stays put. The map lives in `cache.ts` alone so `tools.ts` has exactly one owner for it, and it is never written to disk — the *extension* persists its own in `workspaceState`, this one dies with the process.
 
 **Configuration is re-read from disk on every tool call.** A long-lived server would otherwise keep gating against a `zer0.json` the author has since edited. Same rule as "the webview is never the gate": a stale snapshot is never the gate either.
 

@@ -1,0 +1,134 @@
+# Weekly content gardener.
+#
+# Every Monday, Claude drafts ONE new blog post into drafts/ — following the
+# repo's editorial instructions — and opens a pull request for human review.
+# It never pushes to main.
+#
+# Auth (Settings → Secrets and variables → Actions), OAuth preferred:
+#   1. CLAUDE_CODE_OAUTH_TOKEN — Claude Code OAuth token from `claude setup-token`
+#      (Claude Pro/Max). Used by default when set.
+#   2. ANTHROPIC_API_KEY — workspace API key. Fallback, used when no OAuth token.
+# When neither is set the workflow skips gracefully with a notice instead of
+# failing. If both are set, claude-code-action uses the OAuth token.
+#
+# Optional: add a GARDENER_GITHUB_TOKEN secret (fine-grained PAT with
+# Contents + Pull requests read/write on this repo). PRs opened with the
+# default GITHUB_TOKEN cannot trigger other workflows, so the Azure Static
+# Web Apps staging build only runs on the gardener's PRs when this PAT is
+# set (or after any human push to the PR branch).
+
+name: Content gardener
+
+on:
+  schedule:
+    - cron: '23 14 * * 1' # Mondays 14:23 UTC (~7–8 AM Denver)
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Optional topic override (one sentence). Leave blank to let the gardener pick an uncovered topic.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: content-gardener
+  cancel-in-progress: false
+
+jobs:
+  draft-post:
+    name: Draft one post and open a PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check for an Anthropic credential
+        id: gate
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CONTENT_LOOP_ENABLED: ${{ vars.CONTENT_LOOP_ENABLED }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          # When the content loop is on, its daily cadence covers this schedule —
+          # stand down so topics aren't doubled. A manual run still works.
+          if [ "$EVENT" = "schedule" ] && [ "$CONTENT_LOOP_ENABLED" = "true" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::The content loop is enabled (CONTENT_LOOP_ENABLED=true) and covers this schedule — the weekly gardener idles. Run it manually (workflow_dispatch) for an extra piece. See docs/content-loop.md."
+          elif [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Anthropic credential set — skipping the weekly draft. Add CLAUDE_CODE_OAUTH_TOKEN (preferred) or ANTHROPIC_API_KEY under Settings → Secrets and variables → Actions to activate the content gardener."
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Draft post and open PR
+        if: steps.gate.outputs.ready == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          # OAuth token preferred; the action uses it over the API key when both
+          # are provided. API key is the fallback for API-billed runs.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GARDENER_GITHUB_TOKEN || github.token }}
+          prompt: |
+            You are the weekly content gardener for bashconsultants.com, a
+            Denver-metro IT consultancy for small and medium businesses.
+            Draft exactly ONE new blog post and open a pull request. Never
+            commit or push to main.
+
+            Step 1 — read the editorial authority first:
+            - .github/instructions/content-style.instructions.md (voice, audience, banned phrases, universal checklist)
+            - .github/instructions/posts.instructions.md (frontmatter, filename, structure)
+            - .github/prompts/article-write.prompt.md (the drafting workflow to follow)
+
+            Step 2 — pick ONE topic:
+            - If this run supplied a topic override, use it: "${{ inputs.topic }}"
+              (ignore this line when it is blank).
+            - Otherwise list existing posts (pages/_posts/**/*.md — read their
+              titles, descriptions, categories, and tags) and read
+              _data/taxonomy.yml if it exists (fall back to
+              _data/entity/services.yml for the service catalog). Choose one
+              topic a Denver SMB owner/operator would search for that no
+              existing post covers yet, tied to a service the site offers.
+
+            Step 3 — write the draft:
+            - Get today's date with: date -u +%Y-%m-%d
+            - Create ONE file: drafts/YYYY-MM-DD-<kebab-slug>.md
+            - Follow the article-write prompt's frontmatter and body skeleton
+              exactly, with two deviations because this file awaits human
+              review in drafts/: set `draft: true`, and add an HTML comment at
+              the top of the body noting the intended pages/_posts subfolder
+              (corp/erp/muses/tech per the routing table).
+            - Use today's date for both `date:` and `lastmod:` in ISO-8601
+              with milliseconds (T12:00:00.000Z).
+            - Run the voice gate self-check from the article-write prompt
+              before finishing. Do not invent metrics, client names, or
+              certifications. Do not create any other files and do not
+              generate images.
+
+            Step 4 — open the pull request:
+            - git config user.name "github-actions[bot]" and
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            - Create a branch named content/weekly-draft-YYYY-MM-DD, commit the
+              single new file with message "content(posts): weekly draft — <topic>",
+              and push the branch.
+            - Open a PR against main with `gh pr create`, titled exactly:
+              content(posts): weekly draft — <topic>
+              The PR body must state the chosen topic and why it fills a gap,
+              plus a promotion checklist for the reviewer: move the file to
+              pages/_posts/<subfolder>/, flip `draft:` to false, confirm the
+              preview image at the frontmatter's `preview:` path exists (or
+              regenerate it), and update `lastmod` if edited.
+          claude_args: |
+            --max-turns 40
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(date:*),Bash(ls:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr list:*)"

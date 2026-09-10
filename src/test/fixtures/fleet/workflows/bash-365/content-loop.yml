@@ -1,0 +1,295 @@
+# The content loop — the practice's own work, turned into content on a cadence.
+#
+# Every day the planner (scripts/loop/plan.py) decides, without a model, one of:
+#   new      a new article is due (every other day): mine the recent work —
+#            commits, pull requests, AI sessions, tools — and hand the writer
+#            the best unspent stories and the most-overdue section;
+#   improve  an improvement is due (the days between): hand the writer the
+#            pages the inventory says are thin or stale, boosted when recent
+#            work touched their subject;
+#   idle     nothing due, or too many loop PRs already await review, or no
+#            unspent work to write about — recorded in the summary, never silent.
+# The writer (the loop-writer agent, following the content-loop skill) then
+# produces ONE on-voice piece, gates it, records the run in _data/loop/runs/,
+# and opens ONE pull request. A human merges. Operator's guide: docs/content-loop.md.
+#
+# OFF by default: the schedule idles until the repo VARIABLE CONTENT_LOOP_ENABLED
+# is "true" (Settings → Secrets and variables → Actions → Variables). The bot
+# token cannot set variables, so the loop can never enable itself. A manual
+# run (workflow_dispatch) works without the variable — a human pressed the button.
+# When the loop is on, the weekly content-gardener and content-review schedules
+# stand down (their gates check the same variable), so topics aren't doubled.
+#
+# Auth, OAuth preferred (the house convention):
+#   1. CLAUDE_CODE_OAUTH_TOKEN — from `claude setup-token` (Claude Pro/Max). Default.
+#   2. ANTHROPIC_API_KEY — workspace API key. Used only when the OAuth token is absent.
+# With neither, the loop still PLANS (a useful dry run) but never writes.
+#
+# Optional:
+#   CONTENT_LOOP_GITHUB_TOKEN — a fine-grained PAT (Contents + Pull requests
+#     read/write) so the loop's PRs trigger the normal build checks. Probed
+#     against the API before use: a set-but-expired token degrades to
+#     github.token with a warning instead of failing the run (the `secrets.X ||
+#     github.token` idiom tests presence, not validity — an expired PAT wins it).
+#   CONTENT_LOOP_MODEL — a repo variable to pin the writer's model.
+#   OPENAI_API_KEY — when present, a new post's preview image is generated on
+#     the PR branch with scripts/generate-preview-images.sh (best-effort).
+
+name: Content loop
+
+on:
+  schedule:
+    - cron: '11 14 * * *' # daily 14:11 UTC (~7–8 AM Denver); the planner decides new / improve / idle
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'auto = let the planner decide (cadence) | new | improve (forced; the open-PR cap still applies)'
+        required: false
+        default: 'auto'
+        type: choice
+        options: [auto, new, improve]
+      section:
+        description: 'Put this section first in the rotation ring: corp | erp | muses | tech. Blank = most overdue first.'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Plan only — print the decision and the activity digest, write nothing, open no PR.'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: content-loop
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Is the loop on?
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      plan: ${{ steps.check.outputs.plan }}
+      write: ${{ steps.check.outputs.write }}
+    steps:
+      - id: check
+        env:
+          ENABLED: ${{ vars.CONTENT_LOOP_ENABLED }}
+          EVENT: ${{ github.event_name }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          plan=false; write=false
+          if [ "$EVENT" = "workflow_dispatch" ] || [ "$ENABLED" = "true" ]; then
+            plan=true
+            if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ] || [ -n "$ANTHROPIC_API_KEY" ]; then
+              write=true
+            else
+              echo "::notice::No Anthropic credential set — the loop will plan but not write. Add CLAUDE_CODE_OAUTH_TOKEN (preferred) or ANTHROPIC_API_KEY under Settings → Secrets and variables → Actions."
+            fi
+          else
+            echo "::notice::Content loop is off (repo variable CONTENT_LOOP_ENABLED != true) — idle. Flip the variable to start the loop; run manually to try it."
+          fi
+          echo "plan=$plan" >> "$GITHUB_OUTPUT"
+          echo "write=$write" >> "$GITHUB_OUTPUT"
+
+  plan:
+    name: Plan (deterministic)
+    needs: gate
+    if: needs.gate.outputs.plan == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      section: ${{ steps.plan.outputs.section }}
+      reason: ${{ steps.plan.outputs.reason }}
+      stories: ${{ steps.plan.outputs.stories }}
+    steps:
+      - name: Checkout (full history — the history is the signal)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve a usable GitHub token (probe, don't assume)
+        id: tok
+        env:
+          CANDIDATE: ${{ secrets.CONTENT_LOOP_GITHUB_TOKEN }}
+          FALLBACK: ${{ github.token }}
+        run: |
+          token="$FALLBACK"; source=default
+          if [ -n "$CANDIDATE" ]; then
+            if GH_TOKEN="$CANDIDATE" gh api user --silent >/dev/null 2>&1; then
+              token="$CANDIDATE"; source=pat
+            else
+              echo "::warning::CONTENT_LOOP_GITHUB_TOKEN is set but REJECTED by the API (expired or revoked?) — degrading to github.token. PRs opened this run will not trigger build checks; mint a fresh token."
+            fi
+          fi
+          echo "GH_TOKEN=$token" >> "$GITHUB_ENV"
+          echo "source=$source" >> "$GITHUB_OUTPUT"
+
+      - name: Count open loop pull requests (backpressure)
+        id: prs
+        run: |
+          n="$(gh pr list --state open --limit 100 --json headRefName --jq '[.[] | select(.headRefName | startswith("loop/"))] | length' 2>/dev/null || echo 0)"
+          echo "open=${n:-0}" >> "$GITHUB_OUTPUT"
+          echo "open loop PRs: ${n:-0}"
+
+      - name: Decide today (scripts/loop/plan.py)
+        id: plan
+        env:
+          MODE: ${{ inputs.mode || 'auto' }}
+          SECTION: ${{ inputs.section }}
+        run: |
+          args=(--out .loop --open-prs "${{ steps.prs.outputs.open }}" --mode "$MODE")
+          [ -n "$SECTION" ] && args+=(--section "$SECTION")
+          python3 scripts/loop/plan.py "${args[@]}"
+
+      - name: Publish the plan to the run summary
+        run: |
+          {
+            cat .loop/plan.md
+            echo
+            echo "<details><summary>Activity digest</summary>"
+            echo
+            cat .loop/digest.md
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the plan for the writer
+        uses: actions/upload-artifact@v7
+        with:
+          name: content-loop-plan-${{ github.run_id }}
+          path: .loop/
+          retention-days: 14
+          if-no-files-found: error
+
+  produce:
+    name: Write one piece and open a PR
+    needs: [gate, plan]
+    if: >-
+      needs.gate.outputs.write == 'true'
+      && needs.plan.outputs.mode != 'idle'
+      && (github.event_name != 'workflow_dispatch' || !inputs.dry_run)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout (full history — the writer reads the diffs)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve a usable GitHub token (probe, don't assume)
+        env:
+          CANDIDATE: ${{ secrets.CONTENT_LOOP_GITHUB_TOKEN }}
+          FALLBACK: ${{ github.token }}
+        run: |
+          token="$FALLBACK"
+          if [ -n "$CANDIDATE" ] && GH_TOKEN="$CANDIDATE" gh api user --silent >/dev/null 2>&1; then
+            token="$CANDIDATE"
+          fi
+          echo "GH_TOKEN=$token" >> "$GITHUB_ENV"
+
+      - name: Fetch the plan
+        uses: actions/download-artifact@v8
+        with:
+          name: content-loop-plan-${{ github.run_id }}
+          path: .loop/
+
+      - name: Write, gate, record, open the PR (loop-writer charter)
+        uses: anthropics/claude-code-action@v1
+        with:
+          # OAuth token preferred; the API key is passed only when no OAuth token exists.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN == '' && secrets.ANTHROPIC_API_KEY || '' }}
+          github_token: ${{ env.GH_TOKEN }}
+          prompt: |
+            You are the CONTENT LOOP WRITER for bashconsultants.com. Your charter is
+            `.claude/agents/loop-writer.md` and your procedure is
+            `.claude/skills/content-loop/SKILL.md` — read BOTH first, then execute
+            exactly ONE run. You never push to main and never merge; you open ONE
+            pull request. Issues are DISABLED on this repository: never call
+            `gh issue`.
+
+            The deterministic planner has already decided this run. Its outputs are
+            in `.loop/plan.md`, `.loop/plan.json`, and `.loop/digest.md`. Do NOT re-run
+            it and do NOT re-decide the mode or the cadence — choose among what it offers.
+
+            This run: mode=${{ needs.plan.outputs.mode }} section=${{ needs.plan.outputs.section }}
+            Reason: ${{ needs.plan.outputs.reason }}
+
+            Follow the skill in order: read the story for real (`git show --stat`,
+            the diffs, the current files), translate it for the section's reader in
+            the section's voice — or, in improve mode, expand the first candidate
+            page from the same work — gate it (`python3 scripts/content_lint.py`,
+            `python3 scripts/doctrine_check.py`, `python3 tools/unwrap-prose.py --check <file>`),
+            record the run (`python3 scripts/loop/ledger.py --record …`, committed
+            WITH the content), then:
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git checkout -b loop/<run-id> ; commit ; push ; gh pr create --base main
+              python3 scripts/loop/ledger.py --set-pr <run-id> <pr-url> ; commit ; push
+            Title the PR exactly `content(<section>): <new|improve> — <subject>`.
+            Write `loop-result.json` at the repo root with pr, branch, file, mode,
+            section, run. If there is no honest lesson in the offered work, write
+            `{"pr": "", "reason": "…"}` there instead and stop.
+          claude_args: |
+            --max-turns 60 ${{ vars.CONTENT_LOOP_MODEL && format('--model {0}', vars.CONTENT_LOOP_MODEL) || '' }}
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(python3 scripts/loop/ledger.py:*),Bash(python3 scripts/loop/signals.py:*),Bash(python3 scripts/content_lint.py:*),Bash(python3 scripts/doctrine_check.py:*),Bash(python3 scripts/content_inventory.py:*),Bash(python3 tools/unwrap-prose.py:*),Bash(date:*),Bash(ls:*),Bash(cat:*),Bash(wc:*),Bash(git:*),Bash(gh pr create:*),Bash(gh pr list:*),Bash(gh pr view:*)"
+
+      # Reached only when the agent step succeeded, so an empty result means the
+      # agent ran and chose not to open a PR — which is legitimate only when it
+      # said why.
+      - name: Confirm a pull request was opened (or an honest reason given)
+        id: result
+        run: |
+          if [ ! -s loop-result.json ]; then
+            echo "::error::content loop: the writer ran but left no loop-result.json — see its log (push rejected? gate failed? auth?)."
+            exit 1
+          fi
+          pr="$(jq -r '.pr // ""' loop-result.json)"
+          if [ -z "$pr" ]; then
+            echo "::warning::content loop: no PR this run — $(jq -r '.reason // "no reason given"' loop-result.json)"
+            echo "pr=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "opened: $pr"
+          {
+            echo "pr=$pr"
+            echo "branch=$(jq -r '.branch // ""' loop-result.json)"
+            echo "file=$(jq -r '.file // ""' loop-result.json)"
+            echo "mode=$(jq -r '.mode // ""' loop-result.json)"
+          } >> "$GITHUB_OUTPUT"
+          { echo "## Content loop"; echo; echo "Opened $pr (mode: $(jq -r '.mode' loop-result.json), file: \`$(jq -r '.file' loop-result.json)\`)"; } >> "$GITHUB_STEP_SUMMARY"
+
+      # A new post ships with a banner (docs/preview-images.md); the preacher
+      # flagged posts that went live without one. Best-effort: only when the
+      # key exists, only for new posts, never fails the run.
+      - name: Generate the preview image on the PR branch (optional, needs OPENAI_API_KEY)
+        if: ${{ steps.result.outputs.pr != '' && steps.result.outputs.mode == 'new' }}
+        continue-on-error: true
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BRANCH: ${{ steps.result.outputs.branch }}
+          FILE: ${{ steps.result.outputs.file }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::notice::OPENAI_API_KEY not set — the preview image is left for the reviewer (see the PR checklist)."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "$BRANCH" && git checkout "$BRANCH"
+          ./scripts/generate-preview-images.sh --file "$FILE"
+          if git status --porcelain assets/images/previews | grep -q .; then
+            git add assets/images/previews
+            git commit -m "content(posts): preview image for the loop's new post"
+            git push origin "HEAD:refs/heads/$BRANCH"
+            echo "preview image committed to $BRANCH"
+          else
+            echo "::notice::no preview image was produced — the reviewer generates it (docs/preview-images.md)."
+          fi

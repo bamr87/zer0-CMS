@@ -1,0 +1,2474 @@
+{
+  "ai-world-view/grow-lineage.yml": {
+    "path": ".github/workflows/grow-lineage.yml",
+    "name": "Grow Lineage",
+    "dashType": "other",
+    "archetype": "other",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "repo-write-${{ inputs.repo }}",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": []
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v4",
+        "pin": "tag"
+      },
+      {
+        "action": "anthropics/claude-code-action",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v4",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-code-action"
+      ],
+      "models": [],
+      "maxTurns": 150,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "LIFECYCLE_PAT",
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [],
+    "sinks": [
+      "commit"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "bash-365/content-gardener.yml": {
+    "path": ".github/workflows/content-gardener.yml",
+    "name": "Content gardener",
+    "dashType": "other",
+    "archetype": "content-factory",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "23 14 * * 1"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "23 14 * * 1"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 30,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "content-gardener",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests",
+        "issues",
+        "id-token"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "anthropics/claude-code-action",
+        "ref": "v1",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-code-action"
+      ],
+      "models": [],
+      "maxTurns": 40,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [
+      "CONTENT_LOOP_ENABLED"
+    ],
+    "planApply": false,
+    "guards": [
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "GARDENER_GITHUB_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "GARDENER_GITHUB_TOKEN"
+    ],
+    "varsUsed": [
+      "CONTENT_LOOP_ENABLED"
+    ],
+    "sinks": [
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "bash-365/content-loop.yml": {
+    "path": ".github/workflows/content-loop.yml",
+    "name": "Content loop",
+    "dashType": "other",
+    "archetype": "prose-kit",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "11 14 * * *"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "11 14 * * *"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 3,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 40,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "content-loop",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests",
+        "id-token"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/download-artifact",
+        "ref": "v8",
+        "pin": "tag"
+      },
+      {
+        "action": "anthropics/claude-code-action",
+        "ref": "v1",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-code-action"
+      ],
+      "models": [],
+      "maxTurns": 60,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [
+      "CONTENT_LOOP_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "X",
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "CONTENT_LOOP_GITHUB_TOKEN",
+      "OPENAI_API_KEY"
+    ],
+    "varsUsed": [
+      "CONTENT_LOOP_ENABLED",
+      "CONTENT_LOOP_MODEL"
+    ],
+    "sinks": [
+      "pr",
+      "commit"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "bash-365/content-review.yml": {
+    "path": ".github/workflows/content-review.yml",
+    "name": "Content review (weekly)",
+    "dashType": "ai",
+    "archetype": "content-factory",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "37 14 * * 4"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "37 14 * * 4"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 30,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "content-review",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests",
+        "issues",
+        "id-token"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "anthropics/claude-code-action",
+        "ref": "v1",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-code-action"
+      ],
+      "models": [],
+      "maxTurns": 60,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [
+      "CONTENT_LOOP_ENABLED"
+    ],
+    "planApply": false,
+    "guards": [
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "CONTENT_REVIEW_GITHUB_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "CONTENT_REVIEW_GITHUB_TOKEN"
+    ],
+    "varsUsed": [
+      "CONTENT_LOOP_ENABLED"
+    ],
+    "sinks": [
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "bash-365/preacher.yml": {
+    "path": ".github/workflows/preacher.yml",
+    "name": "Preacher (weekly doctrine)",
+    "dashType": "other",
+    "archetype": "content-factory",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "42 14 * * 6"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "42 14 * * 6"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 30,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "preacher",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests",
+        "id-token"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "anthropics/claude-code-action",
+        "ref": "v1",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-code-action"
+      ],
+      "models": [],
+      "maxTurns": 40,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "PREACHER_GITHUB_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "PREACHER_GITHUB_TOKEN"
+    ],
+    "varsUsed": [],
+    "sinks": [
+      "pr",
+      "comment"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "hub/ai-lane.template.yml": {
+    "path": ".github/workflows/ai-lane.template.yml",
+    "name": "__LANE__",
+    "dashType": "ai",
+    "archetype": "other",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "17 6 * * 1"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "17 6 * * 1"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [
+      "bamr87/bamr87/.github/workflows/ai-lane.yml@main"
+    ],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [],
+    "concurrency": {
+      "present": false,
+      "group": null,
+      "cancelInProgress": "unset"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "bamr87/bamr87/.github/workflows/ai-lane.yml",
+        "ref": "main",
+        "pin": "branch"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": false,
+      "runners": [],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "__AGENT__"
+      ]
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "FLEET_TOKEN"
+    ],
+    "varsUsed": [],
+    "sinks": [
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "hub/ai-lane.yml": {
+    "path": ".github/workflows/ai-lane.yml",
+    "name": "ai-lane",
+    "dashType": "ai",
+    "archetype": "reusable-library",
+    "triggers": [
+      {
+        "kind": "workflow_call"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": true,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 5,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": false,
+      "group": null,
+      "cancelInProgress": "unset"
+    },
+    "permissions": {
+      "declared": false,
+      "topLevelRead": false,
+      "topLevelWrite": false,
+      "writeScopes": []
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [
+        "description"
+      ],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "grow",
+        "description"
+      ]
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [
+      "actor-guard"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "FLEET_TOKEN",
+      "OPENAI_API_KEY",
+      "GH_PAT"
+    ],
+    "varsUsed": [],
+    "sinks": [
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "hub/claude-run.action.yml": {
+    "path": ".github/workflows/claude-run.action.yml",
+    "name": "claude-run",
+    "dashType": "ai",
+    "archetype": "other",
+    "triggers": [],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 0,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [],
+    "concurrency": {
+      "present": false,
+      "group": null,
+      "cancelInProgress": "unset"
+    },
+    "permissions": {
+      "declared": false,
+      "topLevelRead": false,
+      "topLevelWrite": false,
+      "writeScopes": []
+    },
+    "actions": [
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": false,
+      "runners": [],
+      "models": [
+        "description"
+      ],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "grow",
+        "description"
+      ]
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [],
+    "tokenChain": [],
+    "secretsUsed": [],
+    "varsUsed": [],
+    "sinks": [],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "irony-works/germinate.yml": {
+    "path": ".github/workflows/germinate.yml",
+    "name": "Germinate",
+    "dashType": "other",
+    "archetype": "other",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "0 6 * * 1"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "0 6 * * 1"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "germinate",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "peter-evans/create-pull-request",
+        "ref": "v8",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": false,
+      "runners": [],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [
+      "GERMINATE_ENABLED"
+    ],
+    "planApply": false,
+    "guards": [
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [
+      "GERMINATE_ENABLED"
+    ],
+    "sinks": [
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "it-journey/cms-daily-loop.yml": {
+    "path": ".github/workflows/cms-daily-loop.yml",
+    "name": "🧭 CMS Daily Content Loop",
+    "dashType": "ai",
+    "archetype": "content-factory",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "0 9 * * *"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "0 9 * * *"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "cms-daily-loop",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "peter-evans/create-pull-request",
+        "ref": "v8",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-cli",
+        "agentic-engine"
+      ],
+      "models": [
+        "claude-opus-4-8"
+      ],
+      "maxTurns": 60,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [
+      "CMS_MECHANICAL_AUTOMERGE",
+      "CMS_LOOP_SUBSTANTIVE"
+    ],
+    "planApply": true,
+    "guards": [
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [
+      "CMS_MECHANICAL_AUTOMERGE",
+      "CMS_LOOP_SUBSTANTIVE"
+    ],
+    "sinks": [
+      "commit",
+      "merge",
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "it-journey/issue-autopilot.yml": {
+    "path": ".github/workflows/issue-autopilot.yml",
+    "name": "🧭 Issue Autopilot",
+    "dashType": "ai",
+    "archetype": "issue-autopilot",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "0 7 * * *"
+      },
+      {
+        "kind": "workflow_dispatch"
+      },
+      {
+        "kind": "issues",
+        "detail": "labeled"
+      }
+    ],
+    "crons": [
+      "0 7 * * *"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 3,
+    "hasMatrix": true,
+    "matrixDynamic": true,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "issue-autopilot",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "issue-triager",
+        "issue-resolver"
+      ]
+    },
+    "killSwitches": [
+      "ISSUE_AUTOPILOT_ENABLED",
+      "ISSUE_AUTOCLOSE_ENABLED",
+      "ISSUE_RESOLVE_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "AUTO_PR_GITHUB_TOKEN",
+      "PAT_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "AUTO_PR_GITHUB_TOKEN",
+      "PAT_TOKEN"
+    ],
+    "varsUsed": [
+      "ISSUE_AUTOPILOT_ENABLED",
+      "ISSUE_AUTOCLOSE_ENABLED",
+      "ISSUE_RESOLVE_ENABLED"
+    ],
+    "sinks": [
+      "pr",
+      "issue"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "it-journey/quest-walkthrough.yml": {
+    "path": ".github/workflows/quest-walkthrough.yml",
+    "name": "🧭 Quest Walkthrough",
+    "dashType": "ai",
+    "archetype": "agentic-validator",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "quest-ledger",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      },
+      {
+        "action": "peter-evans/create-pull-request",
+        "ref": "v8",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run",
+        "agentic-engine"
+      ],
+      "models": [],
+      "maxTurns": 40,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "quest-walker"
+      ]
+    },
+    "killSwitches": [
+      "QUEST_WALKTHROUGH_ENABLED"
+    ],
+    "planApply": false,
+    "guards": [
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "AUTO_PR_GITHUB_TOKEN",
+      "PAT_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "AUTO_PR_GITHUB_TOKEN",
+      "PAT_TOKEN"
+    ],
+    "varsUsed": [
+      "QUEST_WALKTHROUGH_ENABLED",
+      "QUEST_AI_MODEL",
+      "QUEST_WALKTHROUGH_BASE_URL"
+    ],
+    "sinks": [
+      "commit",
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "lifehacker/ai-usage.yml": {
+    "path": ".github/workflows/ai-usage.yml",
+    "name": "ai-usage",
+    "dashType": "ai",
+    "archetype": "ledger",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [
+      "17 8 * * *"
+    ],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "ai-usage",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": false,
+      "runners": [],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "none",
+      "agents": []
+    },
+    "killSwitches": [
+      "AI_USAGE_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [],
+    "varsUsed": [
+      "AI_USAGE_ENABLED"
+    ],
+    "sinks": [
+      "pr",
+      "comment",
+      "commit"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "lifehacker/auto-fix.yml": {
+    "path": ".github/workflows/auto-fix.yml",
+    "name": "auto-fix",
+    "dashType": "other",
+    "archetype": "self-repair",
+    "triggers": [
+      {
+        "kind": "workflow_run",
+        "detail": "pipeline"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "auto-fix-${{ github.event.workflow_run.head_branch }}",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "fleet-bugfix"
+      ]
+    },
+    "killSwitches": [
+      "AUTO_FIX_ENABLED"
+    ],
+    "planApply": false,
+    "guards": [
+      "attempt-limit",
+      "smuggle-guard",
+      "sticky-marker",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "FLEET_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "FLEET_TOKEN"
+    ],
+    "varsUsed": [
+      "AUTO_FIX_ENABLED"
+    ],
+    "sinks": [
+      "comment",
+      "label",
+      "commit"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "lifehacker/content-factory.yml": {
+    "path": ".github/workflows/content-factory.yml",
+    "name": "content-factory",
+    "dashType": "ai",
+    "archetype": "content-factory",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "0 9 * * *"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "0 9 * * *"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": true,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 20,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "content-factory",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "grow-lifehacker"
+      ]
+    },
+    "killSwitches": [
+      "CONTENT_FACTORY_ENABLED"
+    ],
+    "planApply": false,
+    "guards": [
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "FLEET_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "FLEET_TOKEN"
+    ],
+    "varsUsed": [
+      "CONTENT_FACTORY_ENABLED"
+    ],
+    "sinks": [
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "lifehacker/explore.yml": {
+    "path": ".github/workflows/explore.yml",
+    "name": "explore",
+    "dashType": "other",
+    "archetype": "scout",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [
+      "23 6 * * *"
+    ],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "explore",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "issues",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "site-explorer"
+      ]
+    },
+    "killSwitches": [
+      "EXPLORER_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [
+      "EXPLORER_ENABLED"
+    ],
+    "sinks": [
+      "pr",
+      "commit"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "lifehacker/factory--issue-factory-1.yml": {
+    "path": ".github/workflows/factory--issue-factory-1.yml",
+    "name": "Factory: Issue Factory 1",
+    "dashType": "automation",
+    "archetype": "generated-line",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      },
+      {
+        "kind": "schedule",
+        "detail": "0 6 * * 1-5"
+      }
+    ],
+    "crons": [
+      "0 6 * * 1-5"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "factory--issue-factory-1-${{ github.event.issue.number || github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || github.run_id }}",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": false,
+      "writeScopes": [
+        "id-token",
+        "issues"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "anthropics/claude-code-action",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-code-action"
+      ],
+      "models": [
+        "claude-sonnet-4-6"
+      ],
+      "maxTurns": 50,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "issue-batcher"
+      ]
+    },
+    "killSwitches": [
+      "ISSUE_FACTORY_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "rate-limiter",
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [
+      "ISSUE_FACTORY_ENABLED"
+    ],
+    "sinks": [
+      "issue",
+      "comment"
+    ],
+    "crossRepoTargets": [],
+    "generated": {
+      "blueprintPath": ".factory/issue-factory.blueprint.json",
+      "hash": "75309636"
+    },
+    "manualEditMarkers": 1
+  },
+  "lifehacker/pipeline.yml": {
+    "path": ".github/workflows/pipeline.yml",
+    "name": "pipeline",
+    "dashType": "other",
+    "archetype": "ci-gate",
+    "triggers": [
+      {
+        "kind": "pull_request"
+      },
+      {
+        "kind": "push"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 6,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 8,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "pipeline-${{ github.event.pull_request.number || github.ref }}",
+      "cancelInProgress": "conditional"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "pull-requests",
+        "contents"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "./.github/actions/build-and-harness",
+        "ref": null,
+        "pin": "local"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      },
+      {
+        "action": "actions/download-artifact",
+        "ref": "v8",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [
+      "./.github/actions/build-and-harness"
+    ],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "brand-reviewer",
+        "content-reviewer"
+      ]
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [
+      "attempt-limit",
+      "synchronize-skip",
+      "smuggle-guard",
+      "sticky-marker",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "FLEET_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "FLEET_TOKEN"
+    ],
+    "varsUsed": [],
+    "sinks": [
+      "comment",
+      "commit"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "lifehacker/theme-scout.yml": {
+    "path": ".github/workflows/theme-scout.yml",
+    "name": "theme-scout",
+    "dashType": "ai",
+    "archetype": "cross-repo-filer",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      },
+      {
+        "kind": "schedule",
+        "detail": "41 6 * * 1"
+      }
+    ],
+    "crons": [
+      "41 6 * * 1"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "theme-scout",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": []
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "theme-scout"
+      ]
+    },
+    "killSwitches": [
+      "THEME_SCOUT_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "sticky-marker",
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "FLEET_TOKEN"
+    ],
+    "varsUsed": [
+      "THEME_SCOUT_ENABLED"
+    ],
+    "sinks": [
+      "issue"
+    ],
+    "crossRepoTargets": [
+      "bamr87/zer0-mistakes"
+    ],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "lifehacker/triage.yml": {
+    "path": ".github/workflows/triage.yml",
+    "name": "triage",
+    "dashType": "automation",
+    "archetype": "other",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      },
+      {
+        "kind": "schedule",
+        "detail": "47 7 * * *"
+      }
+    ],
+    "crons": [
+      "47 7 * * *"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 2,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "triage",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "issues",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "./.github/actions/build-and-harness",
+        "ref": null,
+        "pin": "local"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [
+      "./.github/actions/build-and-harness"
+    ],
+    "ai": {
+      "present": false,
+      "runners": [],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "none",
+      "agents": []
+    },
+    "killSwitches": [
+      "TRIAGE_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "sticky-marker",
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "FLEET_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "FLEET_TOKEN"
+    ],
+    "varsUsed": [
+      "TRIAGE_ENABLED"
+    ],
+    "sinks": [
+      "pr",
+      "comment",
+      "commit"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "zer0-mistakes/ai-content-review.yml": {
+    "path": ".github/workflows/ai-content-review.yml",
+    "name": "Content & Docs Review",
+    "dashType": "ai",
+    "archetype": "pr-editor",
+    "triggers": [
+      {
+        "kind": "pull_request"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 5,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 15,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "content-review-${{ github.event.pull_request.number || github.ref }}",
+      "cancelInProgress": "always"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": []
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "marocchino/sticky-pull-request-comment",
+        "ref": "v3",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "./.github/actions/setup-ruby",
+        "ref": null,
+        "pin": "local"
+      }
+    ],
+    "compositeLocals": [
+      "./.github/actions/setup-ruby"
+    ],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-cli",
+        "agentic-engine"
+      ],
+      "models": [
+        "claude-sonnet-4-6"
+      ],
+      "maxTurns": 30,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [],
+    "sinks": [],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "zer0-mistakes/issue-autopilot.yml": {
+    "path": ".github/workflows/issue-autopilot.yml",
+    "name": "🧭 Issue Autopilot",
+    "dashType": "ai",
+    "archetype": "issue-autopilot",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "0 8 * * 1"
+      },
+      {
+        "kind": "workflow_dispatch"
+      },
+      {
+        "kind": "issues",
+        "detail": "labeled"
+      }
+    ],
+    "crons": [
+      "0 8 * * 1"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 4,
+    "hasMatrix": true,
+    "matrixDynamic": true,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": null,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "issue-autopilot",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": [
+        "contents",
+        "pull-requests",
+        "issues"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "bamr87/bamr87/.github/actions/claude-run",
+        "ref": "main",
+        "pin": "branch"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "./.github/actions/setup-ruby",
+        "ref": null,
+        "pin": "local"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [
+      "./.github/actions/setup-ruby"
+    ],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-run"
+      ],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": [
+        "issue-triager",
+        "issue-verifier",
+        "issue-resolver"
+      ]
+    },
+    "killSwitches": [
+      "ISSUE_AUTOPILOT_ENABLED",
+      "ISSUE_AUTOCLOSE_ENABLED",
+      "ISSUE_RESOLVE_ENABLED",
+      "ISSUE_VERIFY_CLOSE_ENABLED"
+    ],
+    "planApply": true,
+    "guards": [
+      "label-opt-in",
+      "gate-job",
+      "concurrency-singleton"
+    ],
+    "tokenChain": [
+      "AUTO_PR_GITHUB_TOKEN",
+      "PAT_TOKEN",
+      "github.token"
+    ],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY",
+      "AUTO_PR_GITHUB_TOKEN",
+      "PAT_TOKEN"
+    ],
+    "varsUsed": [
+      "ISSUE_AUTOPILOT_ENABLED",
+      "ISSUE_AUTOCLOSE_ENABLED",
+      "ISSUE_RESOLVE_ENABLED",
+      "ISSUE_VERIFY_CLOSE_ENABLED"
+    ],
+    "sinks": [
+      "label",
+      "pr",
+      "issue"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "zer0-mistakes/issue-pr-auto-merge.yml": {
+    "path": ".github/workflows/issue-pr-auto-merge.yml",
+    "name": "🤝 Issue PR Auto-Merge",
+    "dashType": "automation",
+    "archetype": "auto-merge-bot",
+    "triggers": [
+      {
+        "kind": "pull_request_target"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": true,
+    "timeoutMinutes": 30,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "issue-automerge-${{ github.event.pull_request.number }}",
+      "cancelInProgress": "always"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/setup-python",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": false,
+      "runners": [],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "none",
+      "agents": []
+    },
+    "killSwitches": [
+      "ISSUE_AUTOMERGE_ENABLED"
+    ],
+    "planApply": false,
+    "guards": [
+      "smuggle-guard",
+      "same-repo-only"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [],
+    "varsUsed": [
+      "ISSUE_AUTOMERGE_ENABLED"
+    ],
+    "sinks": [
+      "comment",
+      "label",
+      "merge"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "zer0-mistakes/translate.yml": {
+    "path": ".github/workflows/translate.yml",
+    "name": "Translate",
+    "dashType": "other",
+    "archetype": "prose-kit",
+    "triggers": [
+      {
+        "kind": "workflow_dispatch"
+      },
+      {
+        "kind": "push"
+      }
+    ],
+    "crons": [],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 120,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "translate",
+      "cancelInProgress": "never"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": true,
+      "topLevelWrite": false,
+      "writeScopes": [
+        "contents",
+        "pull-requests"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "ruby/setup-ruby",
+        "ref": "v1",
+        "pin": "tag"
+      },
+      {
+        "action": "peter-evans/create-pull-request",
+        "ref": "v8",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [],
+    "ai": {
+      "present": false,
+      "runners": [],
+      "models": [],
+      "maxTurns": null,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [],
+    "planApply": true,
+    "guards": [
+      "concurrency-singleton"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_AUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [],
+    "sinks": [
+      "pr"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  },
+  "zer0-mistakes/ui-audit.yml": {
+    "path": ".github/workflows/ui-audit.yml",
+    "name": "UI/UX Audit",
+    "dashType": "security",
+    "archetype": "nightly-audit",
+    "triggers": [
+      {
+        "kind": "schedule",
+        "detail": "23 7 * * 1"
+      },
+      {
+        "kind": "workflow_dispatch"
+      }
+    ],
+    "crons": [
+      "23 7 * * 1"
+    ],
+    "dormantCrons": [],
+    "isReusable": false,
+    "reusableCalls": [],
+    "jobCount": 1,
+    "hasMatrix": false,
+    "matrixDynamic": false,
+    "localWorkflowCalls": [],
+    "waitBound": false,
+    "timeoutMinutes": 30,
+    "runners": [
+      "ubuntu-latest"
+    ],
+    "concurrency": {
+      "present": true,
+      "group": "${{ github.workflow }}",
+      "cancelInProgress": "always"
+    },
+    "permissions": {
+      "declared": true,
+      "topLevelRead": false,
+      "topLevelWrite": true,
+      "writeScopes": [
+        "issues"
+      ]
+    },
+    "actions": [
+      {
+        "action": "actions/checkout",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "./.github/actions/setup-ruby",
+        "ref": null,
+        "pin": "local"
+      },
+      {
+        "action": "actions/setup-node",
+        "ref": "v7",
+        "pin": "tag"
+      },
+      {
+        "action": "actions/upload-artifact",
+        "ref": "v7",
+        "pin": "tag"
+      }
+    ],
+    "compositeLocals": [
+      "./.github/actions/setup-ruby"
+    ],
+    "ai": {
+      "present": true,
+      "runners": [
+        "claude-cli",
+        "agentic-engine"
+      ],
+      "models": [
+        "claude-sonnet-4-6"
+      ],
+      "maxTurns": 40,
+      "maxCostUsd": null,
+      "authMode": "oauth-first",
+      "agents": []
+    },
+    "killSwitches": [],
+    "planApply": false,
+    "guards": [
+      "sticky-marker"
+    ],
+    "tokenChain": [],
+    "secretsUsed": [
+      "CLAUDE_CODE_OAUTH_TOKEN",
+      "ANTHROPIC_API_KEY"
+    ],
+    "varsUsed": [
+      "PAGES_REPO_NWO"
+    ],
+    "sinks": [
+      "issue",
+      "comment",
+      "label"
+    ],
+    "crossRepoTargets": [],
+    "generated": null,
+    "manualEditMarkers": 0
+  }
+}

@@ -2,7 +2,7 @@
 
 zer0-CMS is configured from two surfaces that resolve into one value object.
 
-`zer0.json` describes the **project**: where content lives, what shape it has, what a slug looks like, which thresholds SEO is measured against. It is committed, it is read by the extension *and* by the bundled MCP server, and it is the same for everyone who clones the repo. VS Code settings under `zer0Cms.*` describe **your preferences on this machine**: whether the panel opens by itself, how big a dashboard page is, where your Python lives, whether publishing is allowed at all. There are 38 of them, and none of them describe the project.
+`zer0.json` describes the **project**: where content lives, what shape it has, what a slug looks like, which thresholds SEO is measured against. It is committed, it is read by the extension *and* by the bundled MCP server, and it is the same for everyone who clones the repo. VS Code settings under `zer0Cms.*` describe **your preferences on this machine**: whether the panel opens by itself, how big a dashboard page is, where your Python lives, whether publishing is allowed at all. There are 44 of them, and none of them describe the project.
 
 Everything below is checked against the code as it is: the settings against `package.json`, the `zer0.json` keys against `schemas/zer0.schema.json`, and the behaviour against `src/core/shared/config.ts` (the resolver) and `src/config.ts` (the only VS Code translator).
 
@@ -22,7 +22,7 @@ Everything below is checked against the code as it is: the settings against `pac
 
 This is the subtlety that makes three layers real rather than two.
 
-Every one of the 38 settings declares a `default` in `package.json`. So `vscode.workspace.getConfiguration('zer0Cms').get('governance.publishAllow')` **never** returns `undefined` — it returns `false` for a workspace that has never heard of the setting. A settings layer built that way would always have a value for every key, and would therefore silently outrank `zer0.json` everywhere.
+Every one of the 44 settings declares a `default` in `package.json`. So `vscode.workspace.getConfiguration('zer0Cms').get('governance.publishAllow')` **never** returns `undefined` — it returns `false` for a workspace that has never heard of the setting. A settings layer built that way would always have a value for every key, and would therefore silently outrank `zer0.json` everywhere.
 
 `src/config.ts` reads the settings layer with `inspect()` instead:
 
@@ -38,7 +38,11 @@ function explicit<T>(config: vscode.WorkspaceConfiguration, key: string): T | un
 
 A key is "set" only when it is written in a `settings.json` — folder scope first, then workspace, then user. The manifest default is skipped on purpose, because that is layer 3's job.
 
-The consequence worth internalising: **writing a setting's own default value into `settings.json` is not the same as leaving it out.** `"zer0Cms.governance.publishAllow": false` is an explicit `false` that overrides a `zer0.json` saying `true`; deleting that line lets the file's `true` through. Only `zer0Cms.configFile` is `resource`-scoped (so a multi-root workspace can set it per folder) and only `zer0Cms.cms.pythonPath` is `machine-overridable`; the rest are window-scoped, so their folder values do not exist and `explicit()` falls through to workspace and user.
+The consequence worth internalising: **writing a setting's own default value into `settings.json` is not the same as leaving it out.** `"zer0Cms.governance.publishAllow": false` is an explicit `false` that overrides a `zer0.json` saying `true`; deleting that line lets the file's `true` through.
+
+Scope decides whether a folder value is even possible. Most settings are `resource`-scoped — everything that describes a site rather than a person: the config file name, the content and date conventions, governance, the engine paths, the fleet manifest and its two master switches. In a multi-root workspace each folder answers those for itself, which is what lets one window hold a Jekyll site and an MkDocs site without either one's settings leaking into the other. The preferences that describe *you* stay `window`-scoped (the panel and dashboard, the agent, the log level, the fleet roster and hub), because a person does not want a per-folder answer to "how big is a page of results". `zer0Cms.cms.pythonPath` is `machine-overridable` so a machine-wide interpreter can still be overridden for one workspace. For a `window`-scoped key a folder value does not exist at all, and `explicit()` falls through to workspace and then user.
+
+One more gate sits outside all of this: in a workspace you have not trusted, the three switches that arm a write refuse regardless of what any layer says, and the extension registers no MCP server. See `docs/ARCHITECTURE.md`, decision D13.
 
 ### 1.2 A worked example
 
@@ -54,7 +58,7 @@ Take `governance.publishAllow`, the master publish gate.
 
 The `Resolved` column is what every gate inside the editor reads. It is **not** what arms the bundled MCP server: that reads the settings column alone, so row 2 gives an editor that can publish and an agent that cannot. See §6.
 
-The same three-layer walk applies to all 38 settings, and only to them. One setting, `zer0Cms.fleet.dispatchAllow`, is settings-only by design and never enters the merged value at all (§3.20). `contentFolders`, `contentTypes`, `fieldGroups`, `taxonomy`, `draftField`, `frontMatter`, `content.filePrefix`, `slug`, `placeholders`, and the six `seo` keys other than `enabled` have no settings twin at all — they are layer 2 or layer 3, never layer 1.
+The same three-layer walk applies to all 44 settings, and only to them. Three settings are settings-only by design and never enter the merged value at all — `zer0Cms.governance.publishAllow` for the MCP server's arming, `zer0Cms.fleet.dispatchAllow` and `zer0Cms.fleet.scaffoldAllow` (§3.20) — because a `zer0.json` arriving with a cloned repository must never be able to arm a write. `contentFolders`, `contentTypes`, `fieldGroups`, `taxonomy`, `draftField`, `frontMatter`, `content.filePrefix`, `slug`, `placeholders`, and the six `seo` keys other than `enabled` have no settings twin at all — they are layer 2 or layer 3, never layer 1.
 
 ### 1.3 Three merge rules that surprise people
 
@@ -560,11 +564,17 @@ The Fleet console: a dashboard tab that reads this repository's `fleet.manifest.
 
 | Property | Default | VS Code twin | Meaning |
 |---|---|---|---|
-| `enabled` | `false` | `zer0Cms.fleet.enabled` | Show the Fleet tab and the four `fleet.*` commands. Read-only on its own. |
+| `enabled` | `false` | `zer0Cms.fleet.enabled` | Show the Fleet tab and the `fleet.*` commands. Read-only on its own. |
 | `manifestPath` | `"fleet.manifest.yml"` | `zer0Cms.fleet.manifestPath` | Workspace-relative path of the manifest. |
-| — | `false` | **`zer0Cms.fleet.dispatchAllow`** | The master gate for the two privileged actions: flipping a lane's switch and dispatching a lane once. **Settings-only.** |
+| `roster` | `[]` | `zer0Cms.fleet.roster` | Other repositories to show beside this one, as `owner/name`. |
+| `hub` | `"bamr87/bamr87"` | `zer0Cms.fleet.hub` | The fleet's hub, read only when you ask for it. |
+| `gitfactoryUrl` | `"https://bamr87.github.io/gitorio/"` | `zer0Cms.fleet.gitfactoryUrl` | Where "open in GitFactory" points. |
+| — | `false` | **`zer0Cms.fleet.dispatchAllow`** | The master gate for the privileged actions on a lane: flipping its switch, dispatching it, re-running, cancelling, enabling or disabling its workflow file. **Settings-only.** |
+| — | `false` | **`zer0Cms.fleet.scaffoldAllow`** | The master gate for writing a new lane's files into the repository. **Settings-only.** |
 
-`dispatchAllow` has no `zer0.json` key, is rejected by the schema, and is not a member of `Zer0Config`: `settingsFleetDispatchAllow()` in `src/config.ts` reads it from the settings layer alone and hands it to `evaluateFleetGates`, which nothing overrides. The reasoning is the MCP publish flag's (§6): on the other side of this gate is a write to another system, and a `zer0.json` or a `fleet.manifest.yml` both arrive with a cloned repository. Only the three settings scopes are written by the person at the editor. With it off the tab still renders — the manifest, and the live columns once you press Refresh — but Switch and Dispatch stay disabled everywhere, including the command palette, and say why.
+Neither `dispatchAllow` nor `scaffoldAllow` has a `zer0.json` key; both are rejected by the schema and are not members of `Zer0Config`. `settingsFleetDispatchAllow()` and `settingsFleetScaffoldAllow()` in `src/config.ts` read them from the settings layer alone and hand them to `evaluateFleetGates`, which nothing overrides. The reasoning is the MCP publish flag's (§6): on the other side of each gate is a write to another system, and a `zer0.json` or a `fleet.manifest.yml` both arrive with a cloned repository. Only the settings scopes are written by the person at the editor, and both accessors additionally refuse in an untrusted workspace. With them off the tab still renders — the manifest, and the live columns once you press Refresh — but every privileged button stays disabled everywhere, including the command palette, and says why.
+
+`roster`, `hub` and `gitfactoryUrl` are ordinary two-layer keys, because none of them arms anything: a roster decides what you are shown, not what may be written to it, and building a GitFactory link opens no socket.
 
 ---
 
@@ -600,7 +610,9 @@ A content type's `template` seeds front-matter *values*, which are placeholder-e
 
 ## 5. VS Code settings
 
-All 35, exactly as `package.json` contributes them. None of these describe the project — that is what the split in §6 is about.
+All 44, exactly as `package.json` contributes them, in the same eleven titled sections the manifest declares. None of these describe the project — that is what the split in §6 is about.
+
+Most are `resource`-scoped, so a multi-root workspace can answer them per folder; the ones that describe you rather than a site (the panel and dashboard preferences, the agent, the log level) stay `window`-scoped, and `zer0Cms.cms.pythonPath` is `machine-overridable` so a machine-wide interpreter can still be overridden for one workspace. `tools/check-config-docs.py` fails the build if this section and the manifest ever disagree.
 
 ### Project file
 
@@ -671,6 +683,8 @@ All 35, exactly as `package.json` contributes them. None of these describe the p
 | `zer0Cms.cms.engineScript` | `"scripts/cms/cms.py"` | Workspace-relative path of the engine script. |
 | `zer0Cms.cms.normalizerScript` | `"scripts/content/normalize-frontmatter.py"` | Workspace-relative path of the mechanical front-matter normalizer. |
 | `zer0Cms.cms.contentDirs` | `["pages/"]` | Directories the engine scans. |
+| `zer0Cms.cms.aiConfigPath` | `"_data/ai.yml"` | Workspace-relative path of the site's own AI model configuration — the same file the fleet's CI runner reads, so an editor run and a lane agree on the model. |
+| `zer0Cms.cms.verifyCommand` | `""` | Optional command that verifies the site after a change (its test harness, a strict build, a lint). Empty means there is none. It runs only from an explicit action, and never in an untrusted workspace. |
 
 ### AI agent
 
@@ -688,6 +702,10 @@ All 35, exactly as `package.json` contributes them. None of these describe the p
 | `zer0Cms.fleet.enabled` | `false` | Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml`. Read-only until `dispatchAllow` is also set. |
 | `zer0Cms.fleet.manifestPath` | `"fleet.manifest.yml"` | Workspace-relative path of the fleet manifest. |
 | `zer0Cms.fleet.dispatchAllow` | `false` | Master switch for flipping a lane's `*_ENABLED` variable and dispatching a lane. Read from **your settings only** — a `zer0.json` cannot arm it (§3.20). Every action still asks for confirmation. |
+| `zer0Cms.fleet.scaffoldAllow` | `false` | Master switch for writing a new lane's files into the open repository. Settings-only, like `dispatchAllow`, and deliberately absent from the schema so a cloned `zer0.json` cannot arm it. Scaffolding writes local files for a person to commit; it never creates the lane's `*_ENABLED` variable in the same action, and never pushes. |
+| `zer0Cms.fleet.roster` | `[]` | Other repositories to show beside this one, as `owner/name`. Enrolment is consent, so the list is read from your settings; the console also finds any sibling folder in the workspace that carries a manifest. |
+| `zer0Cms.fleet.hub` | `"bamr87/bamr87"` | The fleet's hub repository, read only when you ask for it, for the shared registry and the harness scorecard. |
+| `zer0Cms.fleet.gitfactoryUrl` | `"https://bamr87.github.io/gitorio/"` | Where "open in GitFactory" points. Building that link opens no socket — the browser does. |
 
 ### Logging
 

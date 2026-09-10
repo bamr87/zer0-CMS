@@ -1,0 +1,50 @@
+# The ABC generator's tests, on their own trigger.
+#
+# This job used to be the second half of `extension.yml`. It is a separate
+# workflow because the two halves of this repository have nothing in common but
+# a git remote: a TypeScript PR that never touches `rails/` has no reason to
+# boot a Ruby toolchain, and a `rails/` PR has no reason to download VS Code.
+# Split, each half's trigger is a `paths:` filter and a green run means what it
+# says.
+#
+# The library under `rails/lib` is stdlib-only by design, so there is
+# deliberately NO `bundle install` here: the Gemfile exists for the optional
+# Rails wizard, and needing it to run the tests would be exactly the regression
+# this job catches. Do not "fix" a failure here by adding a bundler step —
+# a gem reached from `lib/` is the bug.
+name: abc-engine
+
+on:
+  pull_request:
+    paths:
+      - "rails/**"
+      - ".github/workflows/abc-engine.yml"
+  push:
+    branches: [main]
+    paths:
+      - "rails/**"
+      - ".github/workflows/abc-engine.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: abc-engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    name: ABC generator tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Engine tests
+        run: ruby -Ilib test/zer0_cms/test_abc_engine.rb
+        working-directory: rails

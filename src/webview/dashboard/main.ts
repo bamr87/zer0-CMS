@@ -44,9 +44,10 @@
  * abandoned query cannot overwrite a fast answer to the current one.
  */
 
-import { spinner } from '../shared/components';
+import { emptyState, spinner } from '../shared/components';
 import { watchTheme } from '../shared/dom';
 import { getMessenger, type Messenger } from '../shared/messenger';
+import { DASHBOARD_ROUTES } from '../shared/protocol';
 import type {
   DashboardRoute,
   DashboardState,
@@ -71,14 +72,51 @@ export const LOADING_TIMEOUT_MS = 5000;
 /** The search box's trailing debounce, as Front Matter had it. */
 export const SEARCH_DEBOUNCE_MS = 500;
 
-const ROUTES: ReadonlySet<string> = new Set<string>([
-  'contents',
-  'drafts',
-  'catering',
-  'fleet',
-  'settings',
-  'welcome',
-]);
+/**
+ * Every route this bundle can render, derived from the one table in
+ * `protocol.ts` rather than restated here. `DASHBOARD_ROUTES` is the closed set
+ * in display order; `DASHBOARD_TABS` is the subset the host currently offers.
+ * Deriving both from one literal is what keeps a route that exists in the union
+ * but has no renderer from being a runtime blank instead of a compile error.
+ */
+const ROUTES: ReadonlySet<string> = new Set<string>(DASHBOARD_ROUTES);
+
+/** What a route draws. One entry per member of `DashboardRoute`, so a new route cannot be added without a renderer. */
+type RouteRenderer = (host: HTMLElement, ctx: DashboardContext) => void;
+
+/**
+ * The five routes later slices fill — Sites, Audit, Harness, Workflows,
+ * Monitor. They are declared in `DashboardRoute` already, because the whole
+ * point of the route registry is that the host, the webview and the tab table
+ * agree about one closed set; but nothing renders them yet, and the host never
+ * offers them in `state.tabs`, so `effectiveRoute` degrades them to Contents
+ * before this can be reached. It exists to keep the table total: a `Record`
+ * over the union is a compile error the day a route is declared with no
+ * renderer, which is exactly the mistake worth catching.
+ */
+function renderNotAvailable(host: HTMLElement, _ctx: DashboardContext): void {
+  host.append(
+    emptyState({
+      icon: 'tools',
+      message: 'This view is not available in this build.',
+      hint: 'It is declared so the host and the webview agree about the route table, and it arrives in a later release.',
+    }),
+  );
+}
+
+const RENDERERS: Record<DashboardRoute, RouteRenderer> = {
+  contents: (host, ctx) => renderContents(host, ctx),
+  drafts: (host, ctx) => renderDrafts(host, ctx.state),
+  catering: (host, ctx) => renderCatering(host, ctx.state),
+  fleet: (host, ctx) => renderFleet(host, ctx.state),
+  settings: (host, ctx) => renderSettings(host, ctx.state),
+  welcome: (host, ctx) => renderWelcome(host, ctx.state),
+  sites: renderNotAvailable,
+  audit: renderNotAvailable,
+  harness: renderNotAvailable,
+  workflows: renderNotAvailable,
+  monitor: renderNotAvailable,
+};
 
 // ---------------------------------------------------------------------------
 // The view-local state
@@ -339,26 +377,7 @@ function boot(): void {
     ),
     render(ctx, host) {
       const route = effectiveRoute(ctx.state, ctx.ui);
-      switch (route) {
-        case 'contents':
-          renderContents(host, ctx);
-          return;
-        case 'drafts':
-          renderDrafts(host, ctx.state);
-          return;
-        case 'catering':
-          renderCatering(host, ctx.state);
-          return;
-        case 'fleet':
-          renderFleet(host, ctx.state);
-          return;
-        case 'settings':
-          renderSettings(host, ctx.state);
-          return;
-        case 'welcome':
-          renderWelcome(host, ctx.state);
-          return;
-      }
+      RENDERERS[route](host, ctx);
     },
   };
 
