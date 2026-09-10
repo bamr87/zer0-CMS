@@ -1290,6 +1290,89 @@ body.vscode-high-contrast-light .z-chip {
   margin-top: var(--z-sp-6);
 }
 
+/* ── fleet, slice 2: what a person needs before acting ─────────────────────
+
+   Five verbs now stack in the actions column, so the toolbar's own buttons get
+   their own row rather than fighting the note beside them; and three new
+   columns (open pull requests, the rulebook, cost) all have to be able to say
+   "nobody asked" without looking like an answer. `statusPill`'s `unknown`
+   variant does that job; everything here is spacing and alignment around it. */
+
+.z-fleet__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--z-sp-2);
+  justify-content: flex-end;
+}
+
+/* Pull requests attributed to one lane, under its description. */
+.z-fleet__lanepulls {
+  margin-top: var(--z-sp-1);
+  font-size: 12px;
+  color: var(--z-fg-description);
+}
+
+.z-fleet__grade,
+.z-fleet__cost {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Cost is a number to compare down a column, never prose. */
+.z-fleet__cost {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+}
+
+.z-fleet__inflight {
+  margin-top: var(--z-sp-6);
+}
+
+.z-fleet__pulls td {
+  vertical-align: top;
+}
+
+.z-fleet__pulltitle {
+  min-width: 220px;
+  max-width: 640px;
+}
+
+/* The merge policy sits under the queue it decides, and reads as a fact
+   sheet — three names, three values, and deliberately no control. */
+.z-fleet__policyhead {
+  margin-top: var(--z-sp-6);
+}
+
+.z-fleet__policy {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: var(--z-sp-1) var(--z-sp-4);
+  margin-top: var(--z-sp-2);
+}
+
+.z-fleet__policy .z-kv__key {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+}
+
+.z-fleet__drift {
+  margin-top: var(--z-sp-6);
+}
+
+.z-fleet__drifttable td {
+  vertical-align: top;
+}
+
+/* Both sides of a drift row are quoted verbatim, so they wrap rather than
+   truncate: the difference between the two strings is the whole story. */
+.z-fleet__driftsays {
+  display: inline-block;
+  max-width: 320px;
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  overflow-wrap: anywhere;
+}
+
 /* ---------------------------------------------------------------------------
    Sites — one row per open workspace folder (PR3)
 
@@ -1616,4 +1699,152 @@ body.vscode-high-contrast-light .z-chip {
    does not hold: writing a file is not arming a loop. */
 .z-workflows__notcreated {
   color: var(--z-fg-warning);
+}
+
+/* ---------------------------------------------------------------------------
+   Monitor — the roster as a matrix (PR5)
+
+   One section per repository, each a head (identity, badges, provenance, its
+   own Refresh) over a lane table. The visual job here is different from every
+   other tab's: most cells on this screen are unknown most of the time, so
+   nothing below may make a dashed `unknown` pill blend into the filled badges
+   beside it. `.z-status--unknown` in `media/base.css` carries that distinction;
+   these rules only give it room. Colours come from `media/tokens.css`.
+   --------------------------------------------------------------------------- */
+
+.z-monitor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--z-sp-4);
+  margin-bottom: var(--z-sp-4);
+}
+
+.z-monitor__heading {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.z-monitor__repo,
+.z-monitor__hub {
+  margin-bottom: var(--z-sp-4);
+}
+
+.z-monitor__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--z-sp-4);
+  margin-bottom: var(--z-sp-3);
+}
+
+.z-monitor__ident {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.z-monitor__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--z-sp-2);
+  margin: var(--z-sp-2) 0;
+}
+
+.z-monitor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--z-sp-2);
+  align-items: flex-start;
+}
+
+/* The sentence that says why a row is empty, or which read failed. It is the
+   most load-bearing text on the tab and is styled to be read, not skimmed. */
+.z-monitor__note {
+  margin-top: var(--z-sp-2);
+  font-size: 12px;
+  color: var(--z-fg-warning);
+}
+
+.z-monitor__table td {
+  vertical-align: middle;
+}
+
+/* "no run on record" is a measurement, not an unknown — muted, but filled
+   prose rather than a dashed pill. The difference is the point. */
+.z-monitor__none {
+  font-size: 12px;
+  color: var(--z-fg-muted);
+}
+
+.z-monitor__run--ok {
+  color: var(--z-ok);
+}
+
+.z-monitor__run--bad {
+  color: var(--z-fg-error);
+}
+
+.z-monitor__cost,
+.z-monitor__total {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+}
+
+.z-monitor__link {
+  padding: 0;
+  font: inherit;
+  color: var(--z-link);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.z-monitor__link:hover {
+  color: var(--z-link-hover);
+  text-decoration: underline;
+}
+
+.z-monitor__policy,
+.z-monitor__scorecard {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: var(--z-sp-1) var(--z-sp-4);
+  margin-top: var(--z-sp-3);
+}
+
+.z-monitor__policy .z-kv__key,
+.z-monitor__scorecard .z-kv__key {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+}
+
+.z-monitor__pulls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--z-sp-2);
+  margin-top: var(--z-sp-3);
+}
+
+/* One chip per open pull request: its number and the stage its labels put it
+   in. Clicking opens it in a browser; nothing on this screen merges one. */
+.z-monitor__pull {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--z-sp-1);
+  padding: var(--z-sp-1) var(--z-sp-2);
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+  color: var(--z-fg);
+  cursor: pointer;
+  background: var(--z-bg-widget);
+  border: 1px solid var(--z-border);
+  border-radius: var(--z-radius);
+}
+
+.z-monitor__pull:hover {
+  background-color: var(--z-bg-hover);
+  color: var(--z-fg-hover);
 }

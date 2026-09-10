@@ -44,7 +44,7 @@
  * abandoned query cannot overwrite a fast answer to the current one.
  */
 
-import { emptyState, spinner } from '../shared/components';
+import { spinner } from '../shared/components';
 import { watchTheme } from '../shared/dom';
 import { getMessenger, type Messenger } from '../shared/messenger';
 import { DASHBOARD_ROUTES } from '../shared/protocol';
@@ -60,6 +60,7 @@ import { renderContents } from './contents';
 import { renderHeader } from './header';
 import { render as renderAudit } from './audit';
 import { render as renderHarness } from './harness';
+import { render as renderMonitor } from './monitor';
 import { render as renderSites } from './sites';
 import { render as renderWorkflows } from './workflows';
 import { render as renderCatering } from './catering';
@@ -88,25 +89,6 @@ const ROUTES: ReadonlySet<string> = new Set<string>(DASHBOARD_ROUTES);
 /** What a route draws. One entry per member of `DashboardRoute`, so a new route cannot be added without a renderer. */
 type RouteRenderer = (host: HTMLElement, ctx: DashboardContext) => void;
 
-/**
- * The five routes later slices fill — Sites, Audit, Harness, Workflows,
- * Monitor. They are declared in `DashboardRoute` already, because the whole
- * point of the route registry is that the host, the webview and the tab table
- * agree about one closed set; but nothing renders them yet, and the host never
- * offers them in `state.tabs`, so `effectiveRoute` degrades them to Contents
- * before this can be reached. It exists to keep the table total: a `Record`
- * over the union is a compile error the day a route is declared with no
- * renderer, which is exactly the mistake worth catching.
- */
-function renderNotAvailable(host: HTMLElement, _ctx: DashboardContext): void {
-  host.append(
-    emptyState({
-      icon: 'tools',
-      message: 'This view is not available in this build.',
-      hint: 'It is declared so the host and the webview agree about the route table, and it arrives in a later release.',
-    }),
-  );
-}
 
 const RENDERERS: Record<DashboardRoute, RouteRenderer> = {
   sites: (host, ctx) => renderSites(host, ctx.state),
@@ -117,9 +99,9 @@ const RENDERERS: Record<DashboardRoute, RouteRenderer> = {
   fleet: (host, ctx) => renderFleet(host, ctx.state),
   harness: (host, ctx) => renderHarness(host, ctx.state),
   workflows: (host, ctx) => renderWorkflows(host, ctx.state),
+  monitor: (host, ctx) => renderMonitor(host, ctx.state),
   settings: (host, ctx) => renderSettings(host, ctx.state),
   welcome: (host, ctx) => renderWelcome(host, ctx.state),
-  monitor: renderNotAvailable,
 };
 
 // ---------------------------------------------------------------------------

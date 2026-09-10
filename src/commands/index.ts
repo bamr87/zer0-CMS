@@ -82,11 +82,19 @@ export {
   registerFleetCommands,
   type FleetActions,
   type FleetLive,
+  doRerunLastFailure,
+  doCancelNewest,
+  doToggleWorkflowFile,
+  fleetTargetFrom,
+  mergePolicyView,
+  pullViews,
+  type FleetTargetRef
 } from './fleet';
 
 /**
  * Every id `package.json` contributes, without the `zer0Cms.` prefix, grouped
- * the way the manifest groups them. Thirty-eight.
+ * the way the manifest groups them. Fifty-four — and the number is asserted
+ * against the manifest rather than trusted, in `src/test/extension.test.ts`.
  */
 export const ALL_COMMAND_IDS: readonly string[] = [
   // project — src/commands/project.ts (+ dashboard pair in src/extension.ts)
@@ -144,6 +152,12 @@ export const ALL_COMMAND_IDS: readonly string[] = [
   'harness.open',
   'workflows.open',
   'lane.scaffold',
+  'fleet.rerunLastFailure',
+  'fleet.cancelNewest',
+  'fleet.toggleWorkflowFile',
+  'fleet.openInGitFactory',
+  'fleet.importHubRoster',
+  'monitor.open',
 ];
 
 /** The fully qualified ids, for comparing against `getCommands()`. */

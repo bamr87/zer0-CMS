@@ -395,6 +395,40 @@
         "command": "zer0Cms.lane.scaffold",
         "title": "Scaffold an AI lane",
         "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.fleet.rerunLastFailure",
+        "title": "Re-run a lane's last failure",
+        "category": "zer0-CMS",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "zer0Cms.fleet.cancelNewest",
+        "title": "Cancel a lane's run",
+        "category": "zer0-CMS",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "zer0Cms.fleet.toggleWorkflowFile",
+        "title": "Enable or disable a lane's workflow",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.fleet.openInGitFactory",
+        "title": "Open the fleet in GitFactory",
+        "category": "zer0-CMS",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "zer0Cms.fleet.importHubRoster",
+        "title": "Import the roster from the hub",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.monitor.open",
+        "title": "Open the fleet monitor",
+        "category": "zer0-CMS",
+        "icon": "$(dashboard)"
       }
     ],
     "menus": {
@@ -530,6 +564,30 @@
         {
           "command": "zer0Cms.lane.scaffold",
           "when": "zer0Cms:fleet:enabled && zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.fleet.rerunLastFailure",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.cancelNewest",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.toggleWorkflowFile",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.openInGitFactory",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.importHubRoster",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.monitor.open",
+          "when": "zer0Cms:fleet:enabled"
         }
       ],
       "editor/title": [

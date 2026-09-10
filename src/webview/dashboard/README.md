@@ -1,8 +1,8 @@
 # `src/webview/dashboard` — the editor-tab surface
 
-Ten served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
+Eleven routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
 
-Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and ten are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
+Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and a route is served once something can render it. Until then `main.ts`'s renderer table holds a `notAvailable` placeholder: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
 
 ```
 main.ts        boot, gate order, route table, the section reconciler
@@ -13,14 +13,15 @@ structure.ts   the folder-tree browser
 governance.ts  the Drafts route — queue + review pane
 audit.ts       the Audit route — findings list + detail pane, and the fix-it
 catering.ts    the Catering route — four distribution lanes
-fleet.ts       the Fleet route — this repository's AI lanes, two gated buttons
+fleet.ts       the Fleet route — one repository's AI lanes, five gated buttons
 harness.ts     the Harness route — agents, skills, workflows, the join, the disagreements
 workflows.ts   the Workflows route — lane passports, the lane form, the write preview
+monitor.ts     the Monitor route — the whole roster as a matrix, read-only
 settings.ts    the Settings route — General + Content folders
 welcome.ts     the Welcome route — four onboarding steps
 ```
 
-The last nine export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
+The last ten export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
 
 **Gate order on boot** (PLAN §3.2): `settings === null` → spinner;
 `showWelcome || !initialized || contentFolders.length === 0` → Welcome; else
@@ -116,11 +117,33 @@ A health of `-1` means "the engine never scored this page". It renders as an em 
 
 ## Fleet (`fleet.ts`)
 
-One table: lane · kind · harness · triggers and guardrails · switch · last run · two buttons, over `FleetState`, which the host builds from `fleet.manifest.yml` and its last live read of GitHub. The tab is absent from `state.tabs` while `zer0Cms.fleet.enabled` is off, so a persisted `fleet` route degrades to Contents.
+One table — lane · kind · harness · triggers and guardrails · switch · last run · audit · cost · five buttons — plus an in-flight strip, the merge-policy block, the drift table and the token list, over `FleetState`, which the host builds from `fleet.manifest.yml` and its last live read of GitHub. The tab is absent from `state.tabs` while `zer0Cms.fleet.enabled` is off, so a persisted `fleet` route degrades to Contents.
 
-**Switch on / Switch off** and **Dispatch** are `gatedButton`s posting `{ type:'command', id, args:{ lane } }` — a lane id and nothing else. Not the new value (the host derives it from the variable it fetches inside the action), not a ref, not a `force`. The blockers under a disabled button are the host's advisory `evaluateFleetGates()` in the gate's own order, verbatim, for the reason the Drafts route keeps the publish gate's order: re-sorting here would make this screen and the confirmation modal disagree about the same lane.
+**Switch, Dispatch, Re-run failure, Cancel run and Enable/disable workflow** are `gatedButton`s posting `{ type:'command', id, args:{ repo, lane } }` — a repository slug and a lane id, and nothing else. Not the new switch value (the host derives it from the variable it fetches inside the action), not a run id (the host takes that from what the last Refresh read), not a ref, not a `force`. The blockers under a disabled button are the host's advisory `evaluateFleetGates()` in the gate's own order, verbatim, for the reason the Drafts route keeps the publish gate's order: re-sorting here would make this screen and the confirmation modal disagree about the same lane. The three run verbs additionally carry one *courtesy* blocker this view derives from the wire — "nothing has been read from this repository yet" — because a button certain to be refused should look like one. A webview may always disable more than the host would; it may never enable past it.
 
-The switch pill has four honest states — `true`, `false`, `unset` (the API said 404) and `unknown` (nobody has asked: no credential, or the tab was opened without one) — and an ungated lane draws a dash. `true` is `warn` amber because an armed lane is one that will spend tokens on its own; `unknown` is the `statusPill` variant that is not an answer, and it renders unfilled and dashed rather than as another grey badge. That distinction is enforced in the shared component now rather than remembered here, because five more tabs have to make it. **Refresh** posts `fleet.refresh`, the only intent on this screen that may prompt to sign in. Token rows show names only: the console never reads a secret.
+The switch pill has four honest states — `true`, `false`, `unset` (the repository really does not have the variable) and `unknown` (nobody has asked: no credential, or the tab was opened without one) — and an ungated lane draws a dash. `true` is `warn` amber because an armed lane is one that will spend tokens on its own; `unknown` is the `statusPill` variant that is not an answer, and it renders unfilled and dashed rather than as another grey badge. A workflow GitHub has registered `disabled_manually` gets its own `danger` pill beside the switch, because that is a second, independent control and the two are routinely confused.
+
+**Cost is `null` when nobody measured, and it is never drawn as `$0.00`** — a zero in a cost column reads as "this was free", and the ledger may simply have no row for that lane. `core/fleet/cost.ts` omits a lane rather than handing over zeroes precisely so this cell can tell the two apart. The audit cell is the same shape: `undefined` means no checkout was audited and draws as unknown, while an empty finding list is a real pass and draws as `clean`.
+
+**The merge-policy block is a read, and cannot be anything else.** `AUTO_MERGE_ENABLED`, `AUTO_UPDATE_ENABLED` and `AUTO_FIX_ENABLED` decide whether anything merges the queue above them without a person. None of them is a manifest lane, so the console reports them and offers **no control** — and `fleetPlanHasNoMergeVerbs` in `core/fleet/github.ts` is what makes that a boundary rather than an omission. The pull strip beside it shows `prStage`, derived from the repository's own labels, which is a report of where a pull request sits and never a prediction that it will merge. A pull request no lane claims is drawn as `unattributed` rather than assigned to a plausible lane.
+
+**Manifest drift is shown and never written.** Both sides of a row are quoted verbatim and wrap rather than truncate, because the difference between the two strings is the whole story; deriving a manifest is `wtd`'s job.
+
+**Refresh** posts `fleet.refresh {repo}` — one repository, four calls — and is the only intent on this screen that may prompt to sign in. Token rows show names only: the console never reads a secret.
+
+## Monitor (`monitor.ts`)
+
+The whole roster as a matrix: one section per repository (identity, provenance, grade, all-time spend, its own Refresh) over a lane table of switch · newest run · open PRs · cost · grade, then that repository's merge policy and its open pull requests as chips. Below them, the hub block and its scorecard.
+
+**Honesty is the whole design here, and it is a different problem from every other tab's.** The rest of this dashboard describes one repository a person has open, where "I do not know" is rare. This one describes up to a dozen, most of which nobody has read — so most cells are unknown most of the time, and a matrix whose unknown cells look like "off" is not a monitor, it is a hallucination with a grid around it. Three rules, and every cell obeys them:
+
+1. **A cell nobody has read renders `unknown`**, through `statusPill`'s dashed, unfilled, italic variant — visibly not the filled `neutral` badge that means "the answer is no".
+2. **Never a `0` where the truth is "nobody measured".** An open-pull count of `null` is not zero and a cost of `null` is not free; the host sends `null` for both so this file can tell them apart. `no run on record` is deliberately *not* a pill: it is a measurement, so it renders as muted prose, and only an unread row gets the dashed `unknown` in that column.
+3. **Two absences are different, and both are named.** A repository with a checkout but no refresh has real lane rows — the manifest is on disk, so the lanes are known and only the answers are missing. A repository with no checkout and no refresh has **no rows at all**, and says so in words rather than drawing an empty table that reads as "no lanes". Refreshed, that same repository gets real rows (its manifest is read with the declared contents call) and keeps `unknown` in the grade, drift and cost columns, because those are functions of files in a checkout.
+
+A fifth switch word appears only here: `ungated`. A lane with no `*_ENABLED` variable is not `unset` — nothing is holding it — and this row has no variable name to draw that distinction with, so the distinction travels on the wire as its own word and renders amber beside `true`.
+
+**Rendering this tab makes no request.** Reading a repository is a button on that repository's own row — four calls for one this window has open, five for one it does not — the hub is read only by the explicit **Import hub roster**, and **Open in GitFactory** assembles the link locally and hands it to the browser. There are no lane verbs on this screen: step 2 of every gate is "re-read the manifest from disk", so the console acts only on a repository it has a checkout of, and this tab exists to show the ones it does not.
 
 ## Harness (`harness.ts`)
 

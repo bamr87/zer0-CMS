@@ -29,7 +29,12 @@
  * both. Declaring a second `Blocker` would make the core barrel ambiguous.
  */
 
-import type { FleetLane, FleetManifest } from '../shared/types';
+import type {
+  FleetLane,
+  FleetManifest,
+  FleetRunRecord,
+  FleetWorkflowState,
+} from '../shared/types';
 import { isDispatchable, laneById } from './manifest';
 
 // ---------------------------------------------------------------------------
@@ -142,14 +147,27 @@ export type FleetBlockerKind =
   | 'laneExists'
   | 'workflowFileExists'
   | 'switchNameTaken'
-  | 'notExpressible';
+  | 'notExpressible'
+  // The three live verbs slice 2 adds. Appended, like the scaffold kinds, so
+  // the eight original positions stay where a test pinned them.
+  | 'noRetryableRun'
+  | 'noRunInProgress'
+  | 'workflowUnknown';
 
 export interface FleetBlocker {
   kind: FleetBlockerKind;
   message: string;
 }
 
-export type FleetGateMode = 'toggle' | 'dispatch' | 'scaffold';
+export type FleetGateMode =
+  | 'toggle'
+  | 'dispatch'
+  | 'scaffold'
+  // Acting on a run rather than on a lane's configuration: re-run the failure,
+  // cancel what is going, or disable the workflow file itself.
+  | 'rerun'
+  | 'cancel'
+  | 'toggleWorkflow';
 
 export interface FleetGateInput {
   workspaceRoot: string;
@@ -163,6 +181,23 @@ export interface FleetGateInput {
   manifest: FleetManifest | null;
   manifestReason?: string;
   laneId: string;
+  /**
+   * `owner/name`. The console gates per repository now, so a modal can say
+   * which one it is about to act on — and in a roster of a dozen, that sentence
+   * is the difference between a considered click and a lucky one.
+   */
+  repo?: string;
+  /**
+   * What one Refresh actually read, for the three modes that act on a run.
+   * Absent means nobody has refreshed, which is a different answer from "there
+   * is nothing to re-run" and produces a different blocker.
+   */
+  live?: {
+    /** This lane's runs, newest first, from the one bounded page. */
+    runs: readonly FleetRunRecord[];
+    /** This lane's registered workflow, absent when GitHub has none by that path. */
+    workflow?: FleetWorkflowState;
+  };
   /**
    * `zer0Cms.fleet.scaffoldAllow`, from the SETTINGS layer only — the master
    * gate for writing a lane's files, and separate from `dispatchAllow` because
@@ -374,6 +409,51 @@ function notExpressible(input: FleetGateInput): FleetBlocker | undefined {
   };
 }
 
+/** Nothing failed, so there is nothing to re-run. A success is not a retry candidate. */
+function noRetryableRun(input: FleetGateInput, lane: FleetLane | undefined): FleetBlocker | undefined {
+  const runs = input.live?.runs ?? [];
+  const failed = runs.some(
+    (run) => run.status === 'completed' && run.conclusion !== null && run.conclusion !== 'success',
+  );
+  if (failed) {
+    return undefined;
+  }
+  return {
+    kind: 'noRetryableRun',
+    message: `lane "${lane?.id ?? input.laneId}" has no failed run to re-run`,
+  };
+}
+
+/** Nothing is going, so there is nothing to cancel. */
+function noRunInProgress(input: FleetGateInput, lane: FleetLane | undefined): FleetBlocker | undefined {
+  const runs = input.live?.runs ?? [];
+  if (runs.some((run) => run.status !== 'completed')) {
+    return undefined;
+  }
+  return {
+    kind: 'noRunInProgress',
+    message: `lane "${lane?.id ?? input.laneId}" has nothing running to cancel`,
+  };
+}
+
+/**
+ * GitHub has no workflow registered at that path.
+ *
+ * A file can sit in `.github/workflows/` and be unknown to the Actions API —
+ * it registers on its first run. Enabling or disabling something GitHub has
+ * never seen is not a thing that can be done, and saying so beats a 404.
+ */
+function workflowUnknown(input: FleetGateInput, lane: FleetLane | undefined): FleetBlocker | undefined {
+  if (input.live?.workflow !== undefined) {
+    return undefined;
+  }
+  const where = lane?.implementation ?? input.laneId;
+  return {
+    kind: 'workflowUnknown',
+    message: `GitHub has no registered workflow at "${where}" — it may never have run`,
+  };
+}
+
 export function evaluateFleetGates(mode: FleetGateMode, input: FleetGateInput): FleetBlocker[] {
   const lane = input.manifest === null ? undefined : laneById(input.manifest, input.laneId);
 
@@ -405,6 +485,9 @@ export function evaluateFleetGates(mode: FleetGateMode, input: FleetGateInput): 
     laneUnknown(input, lane),
     mode === 'toggle' ? laneHasNoSwitch(lane) : undefined,
     mode === 'dispatch' ? laneNotDispatchable(lane) : undefined,
+    mode === 'rerun' ? noRetryableRun(input, lane) : undefined,
+    mode === 'cancel' ? noRunInProgress(input, lane) : undefined,
+    mode === 'toggleWorkflow' ? workflowUnknown(input, lane) : undefined,
     guardrailViolation(lane),
   ];
   return checks.filter((b): b is FleetBlocker => b !== undefined);

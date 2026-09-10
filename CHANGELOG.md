@@ -4,6 +4,26 @@ All notable changes to zer0-CMS are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### 🛰 The fleet, not one repository
+
+Slice 1 was one repository and two verbs. This is a fleet: a **roster** — the folders open in this window that carry a manifest, plus repositories you enrol in your settings, plus, only when you ask for it, the hub's registry — and a **Monitor** tab showing every repository against every lane: its switch, its newest run, the open pull requests attributed to it, what it has cost, and the grade the shared audit gives its workflows.
+
+Three verbs act on a run rather than on configuration: **re-run** the last failure, **cancel** what is in flight, **enable or disable** the workflow file. Each says plainly what it does — re-running queues a new attempt and the original stays on the record; cancelling leaves the run recorded as cancelled, which is not the same as failed; disabling registers the workflow with GitHub and **does not touch the file**, which is why it is not an edit and why a person who wants the lane gone still has to delete it.
+
+A refresh costs **four calls per repository, whatever the lane count** — variables, workflows, recent runs, open pull requests, joined locally. The previous slice cost one per gated lane plus one per lane, which on lifehacker alone was thirty-one. The whole nine-manifest roster now refreshes in thirty-six calls where it would have taken eighty-seven, and opening the Monitor reads nothing at all: a row's own button is the only thing that opens a socket.
+
+**The honesty rule matters more here than anywhere else, because a fleet view is mostly cells.** A cell nobody has read says `unknown` and looks different from `off`. A repository with no checkout and no refresh shows as unread rather than empty. Nothing renders `$0.00` for an unmeasured cost. `listVariables` returning `null` rather than an empty list is that rule in the type system: "there are no variables" and "you may not read them" are different answers, and rendering both as blank would be lying about one.
+
+### 🔒 The plan grew, and the guard got stricter
+
+The declared call plan went from six entries to fifteen. The guard that keeps it a boundary was tightened in the same change rather than after it.
+
+`fleetSurfaceIsRepoScopedOnly` used to check only that a path *began with* `/repos/{owner}/{repo}`. That would have admitted `/issues`, `/hooks`, `/keys`, `/collaborators` and `/actions/secrets` the moment anyone added one. It now matches an explicit allow-list of sub-roots, whole-segment. A second guard, `fleetPlanHasNoMergeVerbs`, refuses `/merge`, `/reviews`, `/update-branch`, `/actions/secrets`, `/collaborators`, any `DELETE`, and any write to `/labels`. Both are asserted from both directions — every planned call passes, and a hand-written forbidden one fails.
+
+A `..` path segment is now refused before a URL is built, because `fetch` would have normalised `…/contents/../../../user` into an endpoint the plan never named.
+
+This console never merges, approves, closes, removes a review label, or reads a secret. Those are the boundary, not a backlog.
+
 ### 🧭 The harness, inventoried
 
 An agent file, a skill, a workflow, a manifest lane, a kill switch, a token and a line in a spend ledger are seven files describing **one lane**, and holding that join in your head was the only way to see it. The **Harness** tab reads them and reports the joins — and, more usefully, where they disagree: an agent a workflow names that does not exist, a skill nothing references, a lane with no workflow, a workflow with no lane, a switch the manifest claims that no workflow reads.
