@@ -490,6 +490,7 @@ export interface DashboardTab {
 export const DASHBOARD_TABS: readonly DashboardTab[] = [
   { id: 'contents', label: 'Contents', icon: 'files' },
   { id: 'drafts', label: 'Drafts', icon: 'checklist' },
+  { id: 'audit', label: 'Audit', icon: 'report' },
   { id: 'catering', label: 'Distribution', icon: 'graph' },
   { id: 'fleet', label: 'Fleet', icon: 'server-process' },
   { id: 'settings', label: 'Settings', icon: 'settings-gear' },

@@ -58,6 +58,7 @@ import type {
 import { mountSections, staleOn, type Section } from '../shared/state';
 import { renderContents } from './contents';
 import { renderHeader } from './header';
+import { render as renderAudit } from './audit';
 import { render as renderCatering } from './catering';
 import { render as renderFleet } from './fleet';
 import { render as renderDrafts } from './governance';
@@ -107,12 +108,12 @@ function renderNotAvailable(host: HTMLElement, _ctx: DashboardContext): void {
 const RENDERERS: Record<DashboardRoute, RouteRenderer> = {
   contents: (host, ctx) => renderContents(host, ctx),
   drafts: (host, ctx) => renderDrafts(host, ctx.state),
+  audit: (host, ctx) => renderAudit(host, ctx.state),
   catering: (host, ctx) => renderCatering(host, ctx.state),
   fleet: (host, ctx) => renderFleet(host, ctx.state),
   settings: (host, ctx) => renderSettings(host, ctx.state),
   welcome: (host, ctx) => renderWelcome(host, ctx.state),
   sites: renderNotAvailable,
-  audit: renderNotAvailable,
   harness: renderNotAvailable,
   workflows: renderNotAvailable,
   monitor: renderNotAvailable,

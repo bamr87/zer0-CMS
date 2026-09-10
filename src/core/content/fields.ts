@@ -50,7 +50,7 @@
  */
 
 import { humanize } from '../shared/text';
-import type { Field, FieldGroup, WhenOperator, Zer0Config } from '../shared/types';
+import type { CmsIssue, Field, FieldGroup, WhenOperator, Zer0Config } from '../shared/types';
 import type { FmValue, FrontMatter } from './frontmatter';
 import { FAULTY_PLACEHOLDER } from './placeholders';
 
@@ -416,4 +416,35 @@ export function validateFields(
   const out: FieldViolation[] = [];
   collect(fields, data, cfg, [], out);
   return out;
+}
+
+/**
+ * A field violation as a `CmsIssue`, so the panel's validation and the site
+ * audit report one vocabulary.
+ *
+ * `kind` is `missing-key:<dotted path>` — lifehacker's spelling
+ * (`scripts/ci/lint_frontmatter.rb`), because an issue filed by that site's CI
+ * and one raised here have to dedupe against each other rather than be counted
+ * twice. `field` carries the same path so a surface can jump to the line.
+ *
+ * The lane is the fix's, not the field's: a field whose content type declares a
+ * `default` can be filled in by a script and is `mechanical`; every other empty
+ * required field needs a value chosen with judgment, and choosing one is not
+ * something a script may do quietly. That is the same split `.cms/` already
+ * uses, and it is why `.cms/config.yml` in it-journey calls populating a
+ * missing field substantive even for `author` and `date`.
+ */
+export function violationToIssue(violation: FieldViolation): CmsIssue {
+  const key = violation.path.join('.');
+  const hasDefault = violation.field.default !== undefined;
+  return {
+    kind: `missing-key:${key}`,
+    severity: 'error',
+    field: key,
+    message: violation.message,
+    lane: hasDefault ? 'mechanical' : 'substantive',
+    suggestion: hasDefault
+      ? `Set \`${key}\` to the content type's default.`
+      : `Give \`${labelOf(violation.field)}\` a value.`,
+  };
 }

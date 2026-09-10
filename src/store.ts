@@ -38,9 +38,14 @@ import {
   loadContract,
   loadLedger,
   loadPerformance,
+  auditSite,
+  detectPlatform,
   pageToRecord,
+  profileFor,
   publishedSourceFiles,
+  readSiteSchema,
   shareEntries,
+  emptySiteConfigFacts,
   type CateringPlan,
   type ContentRecord,
   type Contract,
@@ -51,6 +56,10 @@ import {
   type LogSink,
   type PageEntry,
   type PerfStats,
+  type PlatformIo,
+  type ResolvedPlatform,
+  type SiteAudit,
+  type SiteSchema,
   type Zer0Config,
 } from './core';
 import { currentConfig, onConfigChange, workspaceRoot } from './config';
@@ -74,6 +83,25 @@ export interface Snapshot {
   publishedSourceFiles: Set<string>;
   catering: CateringPlan;
   performance: Record<string, PerfStats>;
+  /**
+   * What kind of site this is, and what said so. Resolved once per rebuild
+   * rather than per call, because detection reads marker files and
+   * `currentConfig()` is deliberately uncached (D12).
+   */
+  platform: ResolvedPlatform;
+  /**
+   * Every front-matter finding across the site, or an empty audit when nothing
+   * has been scanned yet. It reports what it can check and stays quiet about
+   * the rest; it never computes a health score (D9).
+   */
+  audit: SiteAudit;
+  /**
+   * Which contract said what a page must carry — the site's own
+   * `frontmatter_schema.yml`, its `.cms/` schema, its `zer0.json`, or the
+   * platform's defaults. "Required" means something different in each case, so
+   * every surface that reports a missing key says which one answered.
+   */
+  schema: SiteSchema;
 }
 
 /**
@@ -101,6 +129,58 @@ export interface WorkspaceStoreOptions {
   log?: LogSink;
 }
 
+/**
+ * The platform a folderless (or not-yet-scanned) window reports.
+ *
+ * Detection reads marker files, which is asynchronous and which a folderless
+ * window has none of — so the empty snapshot answers from configuration alone
+ * and says so. `source: 'default'` is the honest word for "nobody has looked
+ * yet", and every real rebuild replaces it with a probed answer.
+ */
+function resolvedPlatformFor(cfg: Zer0Config): ResolvedPlatform {
+  return {
+    profile: profileFor(cfg),
+    source: cfg.platform.id === 'auto' ? 'default' : 'zer0.json',
+    evidence: [],
+    siteConfig: emptySiteConfigFacts(),
+  };
+}
+
+/** An audit that has not run. Not a clean site — an unexamined one. */
+function emptySiteAudit(root: string): SiteAudit {
+  return {
+    root,
+    generatedAt: '',
+    issues: [],
+    counts: { error: 0, warning: 0, info: 0 },
+    byRule: {},
+    scanned: 0,
+    skipped: [],
+  };
+}
+
+/** Workspace-relative reads for the platform and schema readers. Nothing else in this file touches the disk directly. */
+function storeIo(root: string): PlatformIo & { read(rel: string): Promise<string | undefined> } {
+  return {
+    async exists(rel: string): Promise<boolean> {
+      try {
+        await vscode.workspace.fs.stat(vscode.Uri.file(path.join(root, rel)));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    async read(rel: string): Promise<string | undefined> {
+      try {
+        const bytes = await vscode.workspace.fs.readFile(vscode.Uri.file(path.join(root, rel)));
+        return Buffer.from(bytes).toString('utf8');
+      } catch {
+        return undefined;
+      }
+    },
+  };
+}
+
 /** A snapshot with no disk behind it — the folderless-window answer. */
 export function emptySnapshot(cfg: Zer0Config): Snapshot {
   const contract: Contract = {
@@ -124,6 +204,9 @@ export function emptySnapshot(cfg: Zer0Config): Snapshot {
     // produces — so the dashboard has one code path, not two.
     catering: buildCatering(contract, {}, new Set<string>()),
     performance: {},
+    platform: resolvedPlatformFor(cfg),
+    audit: emptySiteAudit(cfg.workspaceRoot),
+    schema: { source: 'none', path: null, global: { required: [], draftType: null }, collections: {}, constraints: { titleMax: null, descriptionMin: null, descriptionMax: null } },
   };
 }
 
@@ -281,11 +364,18 @@ export class WorkspaceStore implements vscode.Disposable {
     const ledgerPath = absPath(cfg, cfg.governance.ledgerPath);
     const contractDir = absPath(cfg, cfg.cms.root);
 
-    const [index, contract, ledger, drafts] = await Promise.all([
+    // The platform is resolved before the index, because it decides how a
+    // filename's date is read and which key means draft — the index would
+    // otherwise be built under one set of rules and read under another.
+    const io = storeIo(cfg.workspaceRoot);
+    const platform = await detectPlatform(cfg.workspaceRoot, io);
+
+    const [index, contract, ledger, drafts, schema] = await Promise.all([
       buildIndex(cfg, this.readIndexCache(cfg.workspaceRoot), this.log),
       loadContract(cfg.workspaceRoot, { dir: contractDir }),
       loadLedger(ledgerPath),
       cfg.governance.enabled ? listQueue(draftsDir) : Promise.resolve<DraftFile[]>([]),
+      readSiteSchema(cfg.workspaceRoot, platform.profile, (rel) => io.read(rel), this.log),
     ]);
 
     this.writeIndexCache(cfg.workspaceRoot, index.cache, index.changed);
@@ -300,8 +390,18 @@ export class WorkspaceStore implements vscode.Disposable {
     const performance = await loadPerformance(contract);
     const published = publishedSourceFiles(ledger);
 
+    // The audit runs over the index that was just built rather than re-walking
+    // the tree, and only reports what the pages already carry — the parser
+    // blocks a per-file audit would need are not held in a snapshot, so the
+    // rules that depend on them stay quiet here and the Audit command, which
+    // does re-read, is what surfaces them.
+    const audit = auditSite(cfg, platform.profile, index.pages, [], schema, new Date(), this.log);
+
     return {
       cfg,
+      platform,
+      audit,
+      schema,
       pages: index.pages,
       contract,
       distributable: distributable(contract),

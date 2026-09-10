@@ -484,7 +484,7 @@ The publishing path: draft → brand guard → human approval → publish → le
 | `acceptStatuses` | `["pending", "approved"]` | `zer0Cms.governance.acceptStatuses` | Draft statuses **publishing** accepts. Approving always requires `pending`. |
 | `publishAllow` | `false` | `zer0Cms.governance.publishAllow` | The master switch. |
 | `bannedPatternsFile` | `""` | `zer0Cms.governance.bannedPatternsFile` | Extra brand-guard patterns. |
-| `target` | `"jekyll"` | `zer0Cms.governance.target` | Which publish target turns an approved draft into content. |
+| `target` | `""` | `zer0Cms.governance.target` | Which publish target turns an approved draft into content. Empty follows the detected platform (§3.21); Jekyll sites therefore keep publishing exactly as they did, without saying so. |
 
 A draft's status is one of `pending`, `approved`, `published`. Set `acceptStatuses` to `["approved"]` to force the in-editor approval step; `[]` is not a way to block everything (§1.3) — turn `publishAllow` off instead, which blocks the panel, the dashboard, the command palette *and* the bundled MCP server at once.
 
@@ -575,6 +575,28 @@ The Fleet console: a dashboard tab that reads this repository's `fleet.manifest.
 Neither `dispatchAllow` nor `scaffoldAllow` has a `zer0.json` key; both are rejected by the schema and are not members of `Zer0Config`. `settingsFleetDispatchAllow()` and `settingsFleetScaffoldAllow()` in `src/config.ts` read them from the settings layer alone and hand them to `evaluateFleetGates`, which nothing overrides. The reasoning is the MCP publish flag's (§6): on the other side of each gate is a write to another system, and a `zer0.json` or a `fleet.manifest.yml` both arrive with a cloned repository. Only the settings scopes are written by the person at the editor, and both accessors additionally refuse in an untrusted workspace. With them off the tab still renders — the manifest, and the live columns once you press Refresh — but every privileged button stays disabled everywhere, including the command palette, and says why.
 
 `roster`, `hub` and `gitfactoryUrl` are ordinary two-layer keys, because none of them arms anything: a roster decides what you are shown, not what may be written to it, and building a GitFactory link opens no socket.
+
+---
+
+### 3.21 `platform`
+
+Which static-site generator this repository is. Everything that differs between generators — where content lives, whether a filename carries its date, which key means "draft", what a page's URL will be, which build directory to ignore, how to serve the site locally — is one profile, resolved once.
+
+| Property | Default | Meaning |
+|---|---|---|
+| `id` | `"auto"` | `auto`, or one of `jekyll`, `mkdocs`, `wikijs`, `hugo`, `docusaurus`, `astro`, `generic`. Naming one skips detection entirely. |
+| `overlay` | `"auto"` | `zer0-mistakes`, `null`, or `auto`. An overlay refines a profile; it is never an identity of its own. |
+| `overrides` | `{}` | Any part of the resolved profile, replaced. Use it for the one thing your site does differently, not to restate a whole profile. |
+
+This block has **no `zer0Cms.*` twin**, on purpose. What a site *is* belongs to the site, not to whoever opened it: two people with the same repository must not disagree about whether it is a Hugo site. Everything else in this file follows the same rule (§6).
+
+**Detection** reads marker files — `_config.yml` with a `Gemfile` or `_layouts/` for Jekyll, `mkdocs.yml`, `hugo.toml` or `config/_default/`, `docusaurus.config.*`, `astro.config.*` — and records what it found, so "why does it think this is Hugo?" has an answer you can read rather than guess at. An explicit `id` always wins over a probe, and a probe always wins over the generic fallback.
+
+**zer0-mistakes is an overlay on Jekyll, never a sibling.** A site with `remote_theme: bamr87/zer0-mistakes` is a Jekyll site that additionally follows that theme's conventions; modelling it as its own platform would mean every rule Jekyll already has had to be restated to stay true, and one of the copies would eventually not be.
+
+**A site with no `zer0.json` at all is a normal state.** With none, the profile supplies the content roots from the site's own configuration — `collections_dir` for Jekyll, `docs_dir` for MkDocs — so a sister repository works with nothing added to it. Registering folders explicitly is how you narrow that, not how you enable it.
+
+**What the profile does not do:** it never runs anything. `commands.serve` and `commands.build` are argument lists the editor hands to a VS Code task when a person asks for a preview; nothing in the core spawns a process, and in an untrusted workspace nothing spawns at all (§3.16 and decision D13).
 
 ---
 
@@ -672,7 +694,7 @@ Most are `resource`-scoped, so a multi-root workspace can answer them per folder
 | `zer0Cms.governance.acceptStatuses` | `["pending", "approved"]` | Draft statuses the publish path accepts. Restrict to `["approved"]` to require the in-editor approval step. |
 | `zer0Cms.governance.publishAllow` | `false` | Master switch. While off, publishing is blocked in the panel, the dashboard, the command palette **and** the bundled MCP server. Arming the MCP server reads *this setting only* — `zer0.json` can enable publishing for the editor's own gates but never for an agent. |
 | `zer0Cms.governance.bannedPatternsFile` | `""` | Optional workspace-relative JSON file of extra brand-guard patterns. |
-| `zer0Cms.governance.target` | `"jekyll"` | Publish target that turns an approved draft into published content. |
+| `zer0Cms.governance.target` | `""` | Publish target that turns an approved draft into published content. Empty means: follow the platform this repository was detected as (§3.21). Name one only to override that, or to select a target you registered yourself. |
 
 ### Content engine
 

@@ -31,7 +31,8 @@ import * as path from 'node:path';
 
 import { recordSlug } from '../contract/contract';
 import { previewImageValue } from '../governance/publish';
-import type { ContentRecord } from '../shared/types';
+import { JEKYLL_PROFILE } from '../platform/profiles/jekyll';
+import type { ContentRecord, PlatformProfile } from '../shared/types';
 import type { FrontMatter } from '../content/frontmatter';
 
 /** Where the generator writes, and therefore where to look without front matter. */
@@ -65,14 +66,23 @@ export function hasMedia(media: Media): boolean {
  * from the article's own text, and inventing visual direction here would
  * compete with the stage that does it properly — badly, since this module has
  * read the front matter and not the piece.
+ *
+ * The command comes from the platform profile (`commands.previewImages`), which
+ * for Jekyll is the literal this function used to carry. A platform with no
+ * generator wired up says `null`, and the brief then names the article and
+ * stops there rather than telling somebody to run a command that does not exist
+ * on their site — a wrong command is worse than no command, because they will
+ * try it.
  */
-export function briefFor(record: Pick<ContentRecord, 'path' | 'title'>): string {
+export function briefFor(
+  record: Pick<ContentRecord, 'path' | 'title'>,
+  profile: PlatformProfile = JEKYLL_PROFILE,
+): string {
   const slug = recordSlug(record);
   const title = record.title || slug;
-  return (
-    `generate a preview image for ${record.path} (title: ${title}); ` +
-    `run: jekyll preview-images --only ${slug}`
-  );
+  const head = `generate a preview image for ${record.path} (title: ${title})`;
+  const command = profile.commands.previewImages;
+  return command === null ? `${head}.` : `${head}; run: ${command} --only ${slug}`;
 }
 
 async function sizeOf(absolute: string): Promise<number | undefined> {
@@ -132,6 +142,7 @@ export async function resolveMedia(
   root: string,
   record: Pick<ContentRecord, 'path' | 'title'>,
   data?: FrontMatter,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): Promise<Media> {
   const declared = await fromFrontMatter(root, data);
   if (declared) {
@@ -141,7 +152,7 @@ export async function resolveMedia(
   if (conventional) {
     return { path: conventional.rel, source: 'convention', bytes: conventional.bytes, brief: '' };
   }
-  return { path: '', source: 'none', bytes: 0, brief: briefFor(record) };
+  return { path: '', source: 'none', bytes: 0, brief: briefFor(record, profile) };
 }
 
 export interface MediaCoverage {
@@ -162,11 +173,12 @@ export async function mediaCoverage(
   root: string,
   records: ReadonlyArray<Pick<ContentRecord, 'path' | 'title'>>,
   frontMatterOf?: (record: Pick<ContentRecord, 'path' | 'title'>) => FrontMatter | undefined,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): Promise<MediaCoverage> {
   const items: MediaCoverage['items'] = [];
   let found = 0;
   for (const record of records) {
-    const media = await resolveMedia(root, record, frontMatterOf?.(record));
+    const media = await resolveMedia(root, record, frontMatterOf?.(record), profile);
     items.push({ record, media });
     if (hasMedia(media)) {
       found += 1;

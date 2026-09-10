@@ -25,16 +25,11 @@
 
 import * as path from 'node:path';
 
+import { JEKYLL_PROFILE } from '../platform/profiles/jekyll';
 import { slugify } from '../shared/text';
-import type { ContentType, Zer0Config } from '../shared/types';
+import type { ContentType, PlatformProfile, Zer0Config } from '../shared/types';
 import type { FrontMatter } from './frontmatter';
 import { processFmPlaceholders, processTimePlaceholders } from './placeholders';
-
-/** Files whose basename is this are page-bundle entry points, not slugs. */
-const BUNDLE_NAMES: ReadonlySet<string> = new Set(['index', '_index']);
-
-/** A `2026-07-31-` style prefix that a filename may carry ahead of its slug. */
-const DATE_PREFIX_RE = /^(\d{4}-\d{2}-\d{2}-)/;
 
 function baseName(filePath: string | undefined): string {
   if (!filePath) {
@@ -105,22 +100,34 @@ export function decorateSlug(cfg: Zer0Config, slug: string): string {
  * a Jekyll-shaped site orders its posts, not part of the slug. Renaming a page
  * bundle would move a whole directory, which is a decision for the command that
  * can ask the user, so it is refused here.
+ *
+ * Both of those rules are the *platform's*, not this module's, which is why
+ * they arrive in a `PlatformProfile` (decision D12). Hugo has no filename date
+ * to preserve and Docusaurus' `01-` prefix is a sidebar position rather than a
+ * date, so a profile that says `filenameDate: null` renames the whole stem —
+ * which is the correct answer there and would have been a bug here. The default
+ * is `JEKYLL_PROFILE`, whose values are the literals this function used to
+ * carry, so a caller that has not resolved a platform behaves exactly as before.
  */
 export function alignedFilePath(
   cfg: Zer0Config,
   filePath: string,
   slug: string,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): string | undefined {
   if (!cfg.slug.alignFilename || !slug) {
     return undefined;
   }
 
   const parsed = path.parse(filePath);
-  if (BUNDLE_NAMES.has(parsed.name.toLowerCase())) {
+  if (profile.frontMatter.bundleNames.includes(parsed.name.toLowerCase())) {
     return undefined;
   }
 
-  const datePrefix = DATE_PREFIX_RE.exec(parsed.name)?.[1] ?? '';
+  // `[0]` rather than `[1]`: the profile's pattern captures the date without
+  // its trailing dash, and what is re-attached to the new name is the whole
+  // matched prefix, dash included.
+  const datePrefix = profile.frontMatter.filenameDate?.exec(parsed.name)?.[0] ?? '';
   const safeSlug = slug.split(/[\\/]+/).filter(Boolean).join('-');
   if (safeSlug === '') {
     return undefined;

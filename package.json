@@ -335,6 +335,22 @@
         "command": "zer0Cms.fleet.dispatchLane",
         "title": "Dispatch a lane once",
         "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.audit.open",
+        "title": "Open the front-matter audit",
+        "category": "zer0-CMS",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "zer0Cms.audit.fix",
+        "title": "Fix a front-matter finding",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.audit.verify",
+        "title": "Verify the site",
+        "category": "zer0-CMS"
       }
     ],
     "menus": {
@@ -434,6 +450,14 @@
         {
           "command": "zer0Cms.mcp.writeWorkspaceConfig",
           "when": "zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.audit.verify",
+          "when": "zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.audit.fix",
+          "when": "false"
         }
       ],
       "editor/title": [
@@ -807,9 +831,9 @@
           },
           "zer0Cms.governance.target": {
             "type": "string",
-            "default": "jekyll",
+            "default": "",
             "scope": "resource",
-            "description": "Publish target that turns an approved draft into published content."
+            "description": "Publish target that turns an approved draft into published content. Empty means: follow the platform this repository was detected as, which is what you want unless you have registered a target of your own."
           }
         }
       },

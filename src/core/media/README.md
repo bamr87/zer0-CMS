@@ -14,6 +14,10 @@ This module makes the same question askable *across* the content set, before any
 
 `THUMBNAIL_KEYS` and `previewImageValue` are imported from `governance/publish`, not restated. A page that looked covered in the media report and then published without a thumbnail would be worse than no report at all.
 
+## The generator's command comes from the platform profile
+
+`briefFor` reads `profile.commands.previewImages` — `jekyll preview-images` for Jekyll and for a zer0-mistakes site, which is the literal this module used to hard-code. A platform with no generator wired up says `null`, and the brief then names the article and stops. Telling somebody to run a command that does not exist on their site is worse than telling them nothing, because they will try it.
+
 ## Resolution order
 
 1. **Front matter** — authoritative wherever the generator has run.
@@ -26,7 +30,9 @@ A declared path that is not on disk falls through to the convention rather than 
 
 | Export | Purpose |
 |---|---|
-| `resolveMedia(root, record, data?)` | one page's image, or a brief |
-| `mediaCoverage(root, records, frontMatterOf?)` | the whole set; sequential, to stay inside the fd table |
+| `resolveMedia(root, record, data?, profile?)` | one page's image, or a brief |
+| `mediaCoverage(root, records, frontMatterOf?, profile?)` | the whole set; sequential, to stay inside the fd table |
 | `renderCoverage(coverage)` | as text, listing only the gaps |
-| `briefFor(record)` | the generator request alone |
+| `briefFor(record, profile?)` | the generator request alone |
+
+`profile` defaults to `JEKYLL_PROFILE` everywhere it appears, so a caller that has not resolved a platform gets exactly the brief this module always emitted.

@@ -1,0 +1,34 @@
+{
+  "$schema": "../../../../schemas/zer0.schema.json",
+  "contentFolders": [
+    {
+      "title": "Posts",
+      "path": "[[workspace]]/pages/_posts",
+      "contentTypes": ["post"]
+    }
+  ],
+  "contentTypes": [
+    {
+      "name": "post",
+      "fileType": "md",
+      "slugTemplate": "{{title}}",
+      "fields": [
+        { "name": "title", "type": "string", "title": "Title", "single": true, "required": true },
+        { "name": "description", "type": "string", "title": "Description", "required": true },
+        { "name": "date", "type": "datetime", "title": "Publishing date", "isPublishDate": true },
+        { "name": "slug", "type": "slug", "title": "Slug" },
+        { "name": "layout", "type": "string", "title": "Layout", "single": true },
+        { "name": "permalink", "type": "string", "title": "Permalink", "single": true },
+        { "name": "tags", "type": "tags", "title": "Tags" },
+        { "name": "categories", "type": "categories", "title": "Categories" },
+        { "name": "featured", "type": "boolean", "title": "Featured" },
+        {
+          "name": "audience",
+          "type": "choice",
+          "title": "Audience",
+          "choices": ["practitioners", { "id": "internal", "title": "Internal only" }]
+        }
+      ]
+    }
+  ]
+}

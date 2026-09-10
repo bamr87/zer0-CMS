@@ -722,6 +722,113 @@ body {
   gap: var(--z-sp-2);
 }
 
+/* ── audit (site-wide front matter) ────────────────────────────────────── */
+
+/* The two-pane frame is the Drafts grid — `.z-audit` is applied beside
+   `.z-drafts` rather than instead of it, so the two screens cannot drift apart
+   on breakpoint, gutter or column width. The one thing it changes is alignment:
+   a short detail pane beside a long findings list should sit at the top, not
+   stretch to the list's height. Everything below is what the audit adds: the
+   summary strip, the filter row and the per-rule tally. */
+.z-audit {
+  align-items: start;
+}
+
+.z-audit__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--z-sp-4);
+  margin-bottom: var(--z-sp-6);
+  padding-bottom: var(--z-sp-4);
+  border-bottom: 1px solid var(--z-border);
+}
+
+.z-audit__counts {
+  display: flex;
+  gap: var(--z-sp-2);
+}
+
+/* The provenance list runs inline: three short labelled facts, not a form. */
+.z-audit__provenance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--z-sp-1) var(--z-sp-4);
+  margin: 0;
+  font-size: 12px;
+}
+
+.z-audit__provenance .z-kv__key {
+  color: var(--z-fg-muted);
+}
+
+.z-audit__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--z-sp-2);
+  margin-bottom: var(--z-sp-2);
+}
+
+.z-audit__list {
+  min-width: 0;
+}
+
+/* Same affordance as a draft queue row, because it is the same gesture: pick
+   one of many and read it in the pane to the right. */
+.z-audit__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: var(--z-sp-2);
+  text-align: left;
+  border-radius: var(--z-radius);
+  border-left: 2px solid transparent;
+}
+
+.z-audit__item:hover {
+  background: var(--z-bg-hover);
+}
+
+.z-audit__item.is-selected {
+  background: var(--z-bg-selected);
+  color: var(--z-fg-selected);
+  border-left-color: var(--z-border-active);
+}
+
+.z-audit__itemhead {
+  display: flex;
+  align-items: center;
+  gap: var(--z-sp-2);
+  min-width: 0;
+}
+
+.z-audit__itemhead code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+}
+
+.z-audit__tally {
+  margin-top: var(--z-sp-4);
+}
+
+.z-audit__table {
+  font-size: 12px;
+}
+
+.z-audit__detail {
+  min-width: 0;
+}
+
+.z-audit__detail code {
+  font-family: var(--z-mono);
+  font-size: var(--z-mono-size);
+}
+
 /* ── catering lanes ────────────────────────────────────────────────────── */
 
 .z-lane {

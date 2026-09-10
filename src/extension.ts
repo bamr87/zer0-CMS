@@ -77,6 +77,7 @@ import { WorkspaceStore } from './store';
 import { UiState } from './uiState';
 
 import { registerAgentCommands } from './commands/agent';
+import { registerAuditCommands, type AuditActions } from './commands/audit';
 import { registerContentCommands } from './commands/content';
 import { registerContentTypeCommands } from './commands/contentType';
 import { registerContractCommands } from './commands/contract';
@@ -161,6 +162,9 @@ export function activate(context: vscode.ExtensionContext): void {
   // around, for the same reason governance does. Registration only: nothing
   // here reads a credential or opens a socket (D11).
   const fleet: FleetActions = registerFleetCommands(shell);
+  // The audit's three verbs, and — like governance and fleet — the object the
+  // dashboard is built around, so the webview can only ever name an intent.
+  const audit: AuditActions = registerAuditCommands(shell);
 
   // --- 7. The metadata panel ----------------------------------------------
   context.subscriptions.push(
@@ -173,7 +177,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // --- 8. The dashboard and the agent panel --------------------------------
   // Constructed, not shown: the panel is created on first `open()`.
-  const dashboard = new DashboardPanel(shell, governance, fleet);
+  const dashboard = new DashboardPanel(shell, governance, fleet, audit);
   context.subscriptions.push(
     dashboard,
     vscode.commands.registerCommand('zer0Cms.dashboard', () => dashboard.open()),

@@ -1,0 +1,17 @@
+# The advisory half of the miniature site: it carries the SEO constraints the
+# CI gate above says nothing about, which is what makes the per-field fill-in
+# in `mergeSchemas` observable.
+version: 1
+content_root: pages
+required_base: [title, description, date, author]
+
+collections:
+  posts:
+    path: pages/_posts
+    fm_content_type: post
+    required_extra: []
+    recommended: [slug, tags, categories]
+
+constraints:
+  title:        { hard_max: 60, optimal_min: 30, optimal_max: 60 }
+  description:  { hard_min: 50, hard_max: 160, optimal_min: 120, optimal_max: 155 }

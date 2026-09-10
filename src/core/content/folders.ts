@@ -28,8 +28,10 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { datePrefixRuleAt, skipDirsFor } from '../platform/permalink';
+import { JEKYLL_PROFILE } from '../platform/profiles/jekyll';
 import { SKIP_DIRS, toPosix } from '../shared/glob';
-import type { ContentFolder, ContentType, Zer0Config } from '../shared/types';
+import type { ContentFolder, ContentType, PlatformProfile, Zer0Config } from '../shared/types';
 import { hasPlaceholder, processDatePlaceholders, processTimePlaceholders } from './placeholders';
 
 /** How many directory levels a `**` segment may descend before we stop. */
@@ -61,7 +63,11 @@ function segmentPattern(segment: string): RegExp {
   return new RegExp(`^${source}$`);
 }
 
-async function subdirectories(dirPosix: string, includeHidden: boolean): Promise<string[]> {
+async function subdirectories(
+  dirPosix: string,
+  includeHidden: boolean,
+  skip: ReadonlySet<string>,
+): Promise<string[]> {
   let entries;
   try {
     entries = await fs.readdir(toNative(dirPosix), { withFileTypes: true });
@@ -73,7 +79,7 @@ async function subdirectories(dirPosix: string, includeHidden: boolean): Promise
 
   const out: string[] = [];
   for (const entry of entries) {
-    if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) {
+    if (!entry.isDirectory() || skip.has(entry.name)) {
       continue;
     }
     if (!includeHidden && entry.name.startsWith('.')) {
@@ -88,6 +94,7 @@ async function expandSegments(
   basePosix: string,
   segments: readonly string[],
   depth: number,
+  skip: ReadonlySet<string>,
 ): Promise<string[]> {
   const head = segments[0];
   if (head === undefined) {
@@ -99,30 +106,30 @@ async function expandSegments(
     if (depth >= MAX_WILDCARD_DEPTH) {
       return [];
     }
-    const out = await expandSegments(basePosix, tail, depth);
-    for (const child of await subdirectories(basePosix, false)) {
-      out.push(...(await expandSegments(child, segments, depth + 1)));
+    const out = await expandSegments(basePosix, tail, depth, skip);
+    for (const child of await subdirectories(basePosix, false, skip)) {
+      out.push(...(await expandSegments(child, segments, depth + 1, skip)));
     }
     return out;
   }
 
   if (!hasMagic(head)) {
-    return expandSegments(`${basePosix}/${head}`, tail, depth);
+    return expandSegments(`${basePosix}/${head}`, tail, depth, skip);
   }
 
   const re = segmentPattern(head);
   const out: string[] = [];
-  for (const child of await subdirectories(basePosix, head.startsWith('.'))) {
+  for (const child of await subdirectories(basePosix, head.startsWith('.'), skip)) {
     const name = child.slice(child.lastIndexOf('/') + 1);
     if (re.test(name)) {
-      out.push(...(await expandSegments(child, tail, depth)));
+      out.push(...(await expandSegments(child, tail, depth, skip)));
     }
   }
   return out;
 }
 
 /** Every existing directory matching an absolute wildcard path, sorted. */
-async function directoriesMatching(pattern: string): Promise<string[]> {
+async function directoriesMatching(pattern: string, skip: ReadonlySet<string>): Promise<string[]> {
   const posix = toPosix(pattern);
   const segments = posix.split('/');
   const firstMagic = segments.findIndex(hasMagic);
@@ -130,7 +137,7 @@ async function directoriesMatching(pattern: string): Promise<string[]> {
     return [posix];
   }
   const base = segments.slice(0, firstMagic).join('/');
-  const expanded = await expandSegments(base === '' ? '/' : base, segments.slice(firstMagic), 0);
+  const expanded = await expandSegments(base === '' ? '/' : base, segments.slice(firstMagic), 0, skip);
   return [...new Set(expanded)].sort();
 }
 
@@ -143,10 +150,19 @@ async function directoriesMatching(pattern: string): Promise<string[]> {
  * the shell's decision to offer, not this module's to make. Duplicate paths
  * (two config entries expanding onto the same directory) are collapsed, first
  * declaration winning, so nothing is scanned or listed twice.
+ *
+ * `profile` supplies the platform's build-output directories, so a wildcard
+ * never expands onto a copy of the site inside `public/` or `dist/`. It
+ * defaults to Jekyll, whose output directory `_site` is already in `SKIP_DIRS`
+ * — which is why passing nothing behaves exactly as this function always did.
  */
-export async function resolveFolders(cfg: Zer0Config): Promise<ContentFolder[]> {
+export async function resolveFolders(
+  cfg: Zer0Config,
+  profile: PlatformProfile = JEKYLL_PROFILE,
+): Promise<ContentFolder[]> {
   const out: ContentFolder[] = [];
   const seen = new Set<string>();
+  const skip = skipDirsFor(profile, SKIP_DIRS);
 
   const push = (folder: ContentFolder): void => {
     const key = toPosix(folder.path);
@@ -165,7 +181,7 @@ export async function resolveFolders(cfg: Zer0Config): Promise<ContentFolder[]> 
 
     if (hasMagic(folder.path)) {
       const roots = toPosix(cfg.workspaceRoot);
-      for (const match of await directoriesMatching(folder.path)) {
+      for (const match of await directoriesMatching(folder.path, skip)) {
         const relative = match.startsWith(roots) ? match.slice(roots.length + 1) : match;
         push({
           ...folder,
@@ -269,11 +285,21 @@ export function folderForFile(
  *
  * The legacy literal `yyyy-MM-dd` is rewritten to `{{date|yyyy-MM-dd}}` —
  * without it, a date-shaped prefix would be taken as a literal filename.
+ *
+ * The platform gets one veto and no vote. Where the profile says a content root
+ * *forbids* a date prefix — MkDocs, Hugo and Astro all read a date out of front
+ * matter and treat filename digits as part of the URL — the configured prefix
+ * is dropped, because writing `2026-09-09-` onto a Hugo file silently changes
+ * the page's address. The profile never *adds* a prefix here: the one platform
+ * that requires one is Jekyll, and `governance/publish.ts` has stamped it at
+ * write time since long before profiles existed. Jekyll's own answer is
+ * therefore unchanged in both directions.
  */
 export function filePrefixFor(
   cfg: Zer0Config,
   folder: ContentFolder | undefined,
   ct: ContentType | undefined,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): string {
   let prefix: string | null | undefined = cfg.content.filePrefix;
 
@@ -287,5 +313,24 @@ export function filePrefixFor(
   if (prefix === null || prefix === undefined || prefix === '') {
     return '';
   }
+  // The folder reaches here from `zer0.json`, which is untrusted input, and a
+  // registered folder with no usable path simply cannot be asked about — the
+  // platform veto is skipped rather than the whole prefix chain failing.
+  const folderPath = typeof folder?.path === 'string' ? folder.path : '';
+  if (folderPath !== '' && datePrefixRuleAt(profile, relativeTo(cfg, folderPath)) === 'forbidden') {
+    return '';
+  }
   return prefix === 'yyyy-MM-dd' ? '{{date|yyyy-MM-dd}}' : prefix;
+}
+
+/**
+ * A path relative to the workspace root, for asking the profile about it.
+ * `ContentFolder.path` is absolute after `resolveConfig`, and the profile's
+ * content roots are site-relative, so one of the two has to move; moving the
+ * folder is cheaper and needs no config beyond the root it already carries.
+ */
+function relativeTo(cfg: Zer0Config, absolute: string): string {
+  const root = toPosix(cfg.workspaceRoot).replace(/\/+$/, '');
+  const value = toPosix(absolute);
+  return root !== '' && value.startsWith(`${root}/`) ? value.slice(root.length + 1) : value;
 }

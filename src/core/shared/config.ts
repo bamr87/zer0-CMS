@@ -38,10 +38,12 @@ import {
   type Placeholder,
   type PlatformConfig,
   type PlatformProfileJson,
+  type ResolvedPlatform,
   type WhenClause,
   type WhenOperator,
   type Zer0Config,
 } from './types';
+import { contentRootsFor } from '../platform/permalink';
 import { MINIMAL_STOP_WORDS, STOP_WORD_PRESETS } from './text';
 
 /** The token that stands for the workspace root inside configured paths. */
@@ -122,7 +124,7 @@ export function defaultConfig(root: string): Zer0Config {
       acceptStatuses: ['pending', 'approved'],
       publishAllow: false,
       bannedPatternsFile: '',
-      target: 'jekyll',
+      target: '',
     },
     cms: {
       root: '.cms',
@@ -1031,6 +1033,43 @@ export function resolveConfig(root: string, file: unknown, settings: Zer0Setting
   }));
 
   return cfg;
+}
+
+/**
+ * Fill in what the *site* already says, for a workspace that has not said it.
+ *
+ * This is the payoff of decision D12 and the reason a platform profile is worth
+ * having at all: point zer0-CMS at a sister site with no `zer0.json` and it
+ * still knows where the content is, because `collections_dir` and `collections`
+ * in `_config.yml` — or `docs_dir` in `mkdocs.yml`, or `contentDir` in
+ * `hugo.toml` — already answered. Without this, "support MkDocs" would mean
+ * "hand-write a `contentFolders` block for every repository you open".
+ *
+ * It only ever fills a **gap**. A workspace that configured its own folders
+ * keeps every one of them: a derived value must never overrule a stated one,
+ * and a site whose `_config.yml` lists twelve collections of which the author
+ * registered two meant two.
+ *
+ * Pure, and separate from `resolveConfig`, because deriving needs facts read off
+ * the disk and `resolveConfig` is a three-layer merge over values already in
+ * memory. The caller detects, then merges; this function does no I/O.
+ */
+export function withPlatformDefaults(cfg: Zer0Config, resolved: ResolvedPlatform): Zer0Config {
+  if (cfg.contentFolders.length > 0) {
+    return cfg;
+  }
+  const derived = contentRootsFor(resolved.profile, resolved.siteConfig, cfg.workspaceRoot);
+  if (derived.length === 0) {
+    return cfg;
+  }
+  return {
+    ...cfg,
+    contentFolders: derived.map((folder) => ({
+      ...folder,
+      path: absPath(cfg, folder.path),
+      originalPath: folder.originalPath ?? folder.path,
+    })),
+  };
 }
 
 // ---------------------------------------------------------------------------

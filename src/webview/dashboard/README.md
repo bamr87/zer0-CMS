@@ -1,8 +1,8 @@
 # `src/webview/dashboard` — the editor-tab surface
 
-Six served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
+Seven served routes in one esbuild bundle (`dist/dashboard.js`), no framework, no runtime dependencies. `main.ts` boots, holds the view-local UI state and owns the route table; every other file here renders one part of the page.
 
-Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and six are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
+Eleven routes are *declared* — `DASHBOARD_ROUTES` in `shared/protocol.ts`, in final display order — and seven are served. The rest arrive with the packages that build them, and until then `main.ts`'s renderer table holds a `notAvailable` placeholder for each: compile-complete and unreachable, because a route absent from `state.tabs` degrades to Contents. `src/test/routes.test.ts` pins the invariant that keeps the two lists from drifting — **the tab ids are a subset of the routes, in the same relative order**. Subset without order gives you a tab bar whose sequence depends on merge order; order without subset gives you a tab that routes nowhere.
 
 ```
 main.ts        boot, gate order, route table, the section reconciler
@@ -10,13 +10,14 @@ header.ts      tab bar, toolbars, filters, sorting, grouping, pagination
 contents.ts    grid / list cards, the item menu, bulk selection
 structure.ts   the folder-tree browser
 governance.ts  the Drafts route — queue + review pane
+audit.ts       the Audit route — findings list + detail pane, and the fix-it
 catering.ts    the Catering route — four distribution lanes
 fleet.ts       the Fleet route — this repository's AI lanes, two gated buttons
 settings.ts    the Settings route — General + Content folders
 welcome.ts     the Welcome route — four onboarding steps
 ```
 
-The last five export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
+The last six export `render(host, state)`: clear `host`, build the route into it from the `DashboardState` snapshot, return. They hold no snapshot of their own beyond the staged-edit map described below. `header.ts`, `contents.ts` and `structure.ts` instead take the `DashboardContext` `main.ts` owns, because they need the view-local state as well as the snapshot.
 
 **Gate order on boot** (PLAN §3.2): `settings === null` → spinner;
 `showWelcome || !initialized || contentFolders.length === 0` → Welcome; else
@@ -34,7 +35,7 @@ Two kinds of state, kept apart deliberately. Everything about *the workspace* �
 
 One tab bar for every route, plus — on Contents only — the five-row toolbar stack: create/refresh/search, the draft-state tabs with view switcher, filters and grouping and sorting, pagination, and the selection actions. A sort control above a draft queue is a control that does nothing, so no other route gets Contents' stack.
 
-Every other route may register **one** toolbar row of its own through `setRouteToolbar(route, ctx => node | null)`, called at module scope by the route that owns it. Audit, Workflows and Monitor each have filters, and they are not Contents' filters. `header.ts` never learns what is in a route's toolbar and never imports a route — the alternative is a cycle the moment a route wants a shared control back. A route that registers nothing gets the bare tab bar, exactly as before, and `contents` is not registerable because its five persisted keys (`sorting`, `grouping`, `page`, `view`) are read here.
+Every other route may register **one** toolbar row of its own through `setRouteToolbar(route, ctx => node | null)`, called at module scope by the route that owns it. Workflows and Monitor each have filters, and they are not Contents' filters. Audit registers nothing: its three filters narrow *the list in its own left pane*, so they live beside that list rather than in the chrome above the tab bar, and its view-local state is module-private rather than shared with `DashboardUi.filters` — a severity filter and a folder filter have no business in the same map. `header.ts` never learns what is in a route's toolbar and never imports a route — the alternative is a cycle the moment a route wants a shared control back. A route that registers nothing gets the bare tab bar, exactly as before, and `contents` is not registerable because its five persisted keys (`sorting`, `grouping`, `page`, `view`) are read here.
 
 Three behaviours here are contracts, not preferences: **sorting is disabled while a search query is active** (the host returns hits in relevance order and a sort would discard the ranking, so the control greys rather than silently ignoring you); **pagination is hidden while grouping is active and in Structure view**; and **View and Rename are enabled at exactly one selection** — not zero, not two — while Delete works on any non-empty selection and always confirms first.
 
@@ -73,6 +74,24 @@ exactly one `info` — the fold preview — so listing it would hang a permanent
 blockers cheapest-and-most-fundamental first, so `Publish disabled: a; b.` already leads with what to fix first. Re-sorting or de-duplicating here would make this screen and the confirmation modal disagree about the same draft.
 
 Approve is enabled only for a `pending` draft and relabels to `Approved` once the draft has moved on. Both Approve and Publish post `{ type:'command', id, args:{ draftPath } }` and nothing else.
+
+## Audit (`audit.ts`)
+
+The Drafts grid again — `.z-audit` is applied *beside* `.z-drafts` rather than instead of it, so the two screens cannot drift apart on breakpoint, gutter or column width. Findings on the left, one finding's detail on the right, and a summary strip above both: three `statusPill` counts, a `keyValueList` of provenance, and the two route-level actions.
+
+**Three claims this screen is allowed to make, and one it is not.** It may say how many files were scanned, how many findings there are by severity, and how many by rule. It may **not** show a health score: the audit does not compute one, `pageToRecord` keeps `health: -1` beside these issues, and a grade derived from a count would be a number nobody measured (decision D9).
+
+**The schema source is load-bearing, not a caption.** `title` is "required" in a very different sense when `frontmatter_schema.yml` said so than when the platform profile's own defaults did, so both the summary strip and the detail pane carry a "Required by" row spelling out which one answered. `SCHEMA_SOURCE_PROSE` is the webview's copy of `describeSchemaSource` in `src/commands/audit.ts` — one sentence written twice, because this bundle cannot import host code. Edit both in one commit. A site with no schema at all still gets an audit; it just gets a different sentence.
+
+**Three states, three screens.** No `audit` slice or `ran: false` is "this site has not been audited yet", with a button that runs it — not a blank pane. `ran: true` with an empty issue list is "this site is clean" — an `emptyState`, not an error. Anything else is the two-pane view. "The audit ran and found nothing" and "the audit never ran" are different facts and they look different.
+
+**Fix posts `{path, kind}` and nothing else.** It is a `gatedButton`; a finding with no mechanical repair renders it disabled with the reason, and the advice itself is already drawn under "What to do". `fixable` here is the host's advisory — `doFixIssue` re-reads the configuration, re-reads the site from disk, re-runs `auditPage` for that file and looks the finding up again before it derives a change set, so a stale `true` in this slice costs a refusal and can never cost a bad write.
+
+**Preview the fix is a request, not a slice.** It asks the host for `auditDryRun` with the same `{path, kind}` and expects back exactly what `dryRunFix` returned: `{before, after}`, or `{refused}`. The hunk drawn from that pair is computed here by trimming the common prefix and suffix — which is the whole diff for line surgery — and rendered through `diffView`. It is a rendering, not a decision: the host still opens the authoritative diff in a real editor before it writes anything, and a reply that arrives after the selection has moved on is dropped rather than painted over the current one.
+
+**Run verify** is a `gatedButton` too, blocked with the sentence that names `zer0Cms.cms.verifyCommand` when the site declares none — a normal state, since most sites have no single verification entry point.
+
+The list caps at 300 rows and says how many it is not drawing. A per-rule tally sits under it, over `dataTable`, counting what the filters currently show rather than the whole site — a tally that ignores the filters above it is a tally of a different question.
 
 ## Catering (`catering.ts`)
 

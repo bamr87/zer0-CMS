@@ -1,0 +1,32 @@
+# The miniature site's own CI gate. Written for this fixture, not copied:
+# `schemas/zer0-mistakes/frontmatter_schema.yml` is the verbatim article.
+schema_version: "1.0"
+
+global:
+  date_format: "iso8601"
+  draft_type: "boolean"
+  canonical_fields:
+    updated: lastmod
+  required_fields: []
+
+collections:
+  posts:
+    path_pattern: "pages/_posts/**/*.md"
+    required:
+      - title
+      - description
+      - date
+    optional:
+      - slug
+      - layout
+      - permalink
+      - tags
+      - categories
+      - audience
+      - featured
+      - author
+      - excerpt
+    layout:
+      allowed:
+        - post
+        - article
