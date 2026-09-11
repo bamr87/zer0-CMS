@@ -2,6 +2,17 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/bamr87/zer0-CMS/compare/v0.1.0...v0.2.0) (2026-09-11)
+
+
+### Features
+
+* **core:** close the feedback loop — analytics, portfolio, media ([#11](https://github.com/bamr87/zer0-CMS/issues/11)) ([159de61](https://github.com/bamr87/zer0-CMS/commit/159de61114d52552e824e45c735d949e593dd6a9))
+* **core:** fold multi-line plain scalars in the YAML subset parser ([5088da9](https://github.com/bamr87/zer0-CMS/commit/5088da9be39c84ce88fa081ce652c6047bab7a6f))
+* **core:** the fleet domain — manifest, gate, and a declared GitHub surface ([9207603](https://github.com/bamr87/zer0-CMS/commit/92076039f761c22c13543a8ddbf772cc4dc3412d))
+* **fleet:** the Fleet console — dashboard tab, two gated commands, an MCP read ([cf41ced](https://github.com/bamr87/zer0-CMS/commit/cf41ced25e2c92c7711fa061c71daced506062a7))
+* **fleet:** the Fleet console — read this repo's lanes, gate switch and dispatch on a human (slice 1) ([c83f8aa](https://github.com/bamr87/zer0-CMS/commit/c83f8aad99189a1f18c1b8e20f842ca58ca4060a))
+
 ## [Unreleased]
 
 ### 🧱 Foundations
