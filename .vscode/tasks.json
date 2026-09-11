@@ -1,21 +1,113 @@
+// zer0-CMS · .vscode/tasks.json — fleet-vscode/v1 · 2026-09-09. Convention + vocabulary: .vscode/README.md.
+// `npm: watch` and `npm: pretest` keep VS Code's auto-detected npm labels because launch.json's extension-host configs depend on them.
 {
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "npm: watch",
+      "detail": "Host node. The esbuild + tsc watchers behind F5 (Debug: extension host).",
       "type": "npm",
       "script": "watch",
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": ["$tsc-watch", "$esbuild-watch"],
       "isBackground": true,
-      "presentation": { "reveal": "never", "group": "watchers" },
-      "label": "npm: watch"
+      "problemMatcher": [
+        "$tsc-watch",
+        "$esbuild-watch"
+      ],
+      "presentation": {
+        "reveal": "never",
+        "group": "watchers"
+      }
     },
     {
+      "label": "npm: pretest",
+      "detail": "Host node. tsc → out/ then compile; the step before Debug: extension tests.",
       "type": "npm",
       "script": "pretest",
-      "group": "test",
-      "problemMatcher": ["$tsc"],
-      "label": "npm: pretest"
+      "problemMatcher": [
+        "$tsc"
+      ]
+    },
+    {
+      "label": "Build",
+      "detail": "Host node. check-types + lint + all five bundles (npm run compile).",
+      "type": "shell",
+      "command": "npm run compile",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Lint",
+      "detail": "Host node. tsc --noEmit, then eslint.",
+      "type": "shell",
+      "command": "npm run check-types && npm run lint",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "group": "test"
+    },
+    {
+      "label": "Test",
+      "detail": "Host node. pretest (tsc → out/, compile) + unit, golden, MCP stdio, integration — downloads VS Code once. The fast inner loop is the plain-Mocha command in CLAUDE.md.",
+      "type": "shell",
+      "command": "npm test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Test: ABC engine",
+      "detail": "Host ruby, stdlib only. The rails/ content engine's tests.",
+      "type": "shell",
+      "command": "ruby -Ilib test/zer0_cms/test_abc_engine.rb",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Verify",
+      "detail": "Host node. check-types → lint → compile → test, in extension.yml's order.",
+      "type": "shell",
+      "command": "npm run check-types && npm run lint && npm run compile && npm test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Claude: session",
+      "detail": "Interactive Claude Code in this repo with its .claude/agents + skills, on your logged-in credentials. House rules still apply: branch from main, open a PR, a human merges.",
+      "type": "shell",
+      "command": "claude",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      }
     }
   ]
 }
