@@ -22,6 +22,8 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-02-14 | YouTube founded | Science & Technology | [file]({{ '/news/science-technology/youtube-founded/' | relative_url }}) |
 | 2005-02-14 | Hariri assassination & Cedar Revolution | History & Politics | [file]({{ '/news/history-politics/hariri-assassination-cedar-revolution/' | relative_url }}) |
 | 2005-02-16 | Kyoto Protocol enters force | Science & Technology | [file]({{ '/news/science-technology/kyoto-protocol-enters-force/' | relative_url }}) |
+| 2005-02-21 | Hunter S. Thompson dies | People | [file]({{ '/news/people/hunter-s-thompson-dies/' | relative_url }}) |
+| 2005-02-25 | Darfur genocide escalation | History & Politics | [file]({{ '/news/history-politics/darfur-genocide-escalation/' | relative_url }}) |
 | 2005-03-17 | Congressional hearings on steroids in baseball | Society & Economics | [file]({{ '/news/society-economics/baseball-steroid-hearings/' | relative_url }}) |
 | 2005-03-18 | English Wikipedia passes half a million articles | Science & Technology | [file]({{ '/news/science-technology/wikipedia-500000-articles/' | relative_url }}) |
 | 2005-03-24 | Tulip Revolution in Kyrgyzstan | History & Politics | [file]({{ '/news/history-politics/tulip-revolution-kyrgyzstan/' | relative_url }}) |
@@ -55,6 +57,7 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-07-29 | Discovery of Eris announced | Science & Technology | [file]({{ '/news/science-technology/eris-discovery/' | relative_url }}) |
 | 2005 (Jul-Oct) | H5N1 avian flu escalation | Society & Economics | [file]({{ '/news/society-economics/avian-flu-h5n1-2005/' | relative_url }}) |
 | 2005-08-06 | Camp Casey anti-war protest | History & Politics | [file]({{ '/news/history-politics/camp-casey-protest/' | relative_url }}) |
+| 2005-08-07 | Peter Jennings dies | People | [file]({{ '/news/people/peter-jennings-dies/' | relative_url }}) |
 | 2005-08-15 | Israeli disengagement from the Gaza Strip | History & Politics | [file]({{ '/news/history-politics/gaza-disengagement-2005/' | relative_url }}) |
 | 2005-08-22 | Blu-ray and HD-DVD format war begins | Science & Technology | [file]({{ '/news/science-technology/bluray-hddvd-format-war/' | relative_url }}) |
 | 2005-08-29 | Hurricane Katrina | Society & Economics | [file]({{ '/news/society-economics/hurricane-katrina/' | relative_url }}) |
@@ -85,5 +88,5 @@ A chronological record of notable events of the year 2005, sourced from the know
 | 2005-12-23 | Lech Kaczyński elected President of Poland | History & Politics | [file]({{ '/news/history-politics/lech-kaczynski-elected-president-poland/' | relative_url }}) |
 | 2005 (year) | iTunes digital music sales triple | Society & Economics | [file]({{ '/news/society-economics/digital-music-revolution/' | relative_url }}) |
 
-> Generated from 72 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
+> Generated from 75 knowledge-table rows. Year-spanning entries without a discrete date are listed at the end. Links update when dedicated topic files are created.
 <!-- END GENERATED: timeline -->
