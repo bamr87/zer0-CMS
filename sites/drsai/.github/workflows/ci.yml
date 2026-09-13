@@ -9,6 +9,12 @@ on:
     tags: ['v*']
   pull_request:
     branches: [main]
+  schedule:
+    # Weekly full-matrix sweep (Mondays 06:00 UTC). PRs test Linux only (see
+    # the matrix comment below), so without this a Windows- or macOS-only
+    # regression could sit unnoticed through a quiet period with no push to
+    # main. Costs one 9-leg run a week instead of one per pull request.
+    - cron: '0 6 * * 1'
 
 jobs:
   test:
@@ -17,7 +23,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # The OS axis is trigger-dependent ON PURPOSE — do not flatten it back
+        # to a static list.
+        #
+        # drsai is a PRIVATE repo, so Actions minutes are billed with per-OS
+        # multipliers: Linux ×1, Windows ×2, macOS ×10. A static 3×3 matrix
+        # therefore bills 3×1 + 3×2 + 3×10 = 39 Linux-equivalent multiplier
+        # units on EVERY pull request, for a package with no compiled
+        # component: build backend is setuptools.build_meta, there are no
+        # ext_modules, every runtime dependency is pure-Python or ships
+        # universal wheels, and no `Operating System ::` classifier constrains
+        # the platforms.
+        #
+        # So pull requests run Linux × all three supported Pythons (3 legs),
+        # while push-to-main, `v*` tags, and the weekly schedule above keep the
+        # full 3×3. Nothing is dropped from the RELEASE gate: `publish` is
+        # tag-triggered, so it still needs all nine legs green. The only
+        # behavioural change is that a Windows/macOS-only regression surfaces
+        # at merge-to-main rather than at PR review.
+        os: >-
+          ${{ github.event_name == 'pull_request'
+          && fromJSON('["ubuntu-latest"]')
+          || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
         python-version: ["3.10", "3.11", "3.12"]
 
     defaults:

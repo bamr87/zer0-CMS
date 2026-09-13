@@ -46,6 +46,10 @@ dev = [
     "mypy>=1.5",
     "ruff>=0.1",
     "pre-commit>=3.5",
+    # Parses .github/workflows/ci.yml in tests/unit/test_ci_matrix.py. Arrives
+    # transitively via pre-commit today; declared so the CI-contract tests fail
+    # loudly rather than skip if that ever changes.
+    "pyyaml>=6.0",
 ]
 
 [project.scripts]
