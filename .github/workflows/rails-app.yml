@@ -72,11 +72,12 @@ jobs:
         run: |
           bin/rails assets:precompile
           bin/rails db:prepare
-          bin/rails server -b 127.0.0.1 -p 3000 -d
+          bin/rails server -b 127.0.0.1 -p 3000 -d -P tmp/pids/server.pid
           for attempt in $(seq 1 30); do
             if curl -fsS http://localhost:3000/up >/dev/null; then break; fi
             if [ "$attempt" = 30 ]; then echo "::error::the app did not answer /up"; exit 1; fi
             sleep 2
           done
           curl -fsS -o /dev/null -w "/admin/sites %{http_code}\n" http://localhost:3000/admin/sites
+          test -s tmp/pids/server.pid || { echo "::error::the daemonized server wrote no pid file"; exit 1; }
           kill "$(cat tmp/pids/server.pid)"

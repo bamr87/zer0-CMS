@@ -57,7 +57,11 @@ module Zer0Cms
       SPECIAL_LEADING = /\A[._#~]/
       SPECIAL_COLLECTIONS = %w[posts data].freeze
       DATE_FILENAME = %r{^(?>.+/)*?(\d{2,4}-\d{1,2}-\d{1,2})-([^/]*)(\.[^.]+)$}
-      DATELESS_FILENAME = %r{^(?:.+/)*(.*)(\.[^.]+)$}
+      # Jekyll's DATELESS_FILENAME_MATCHER, %r{^(?:.+/)*(.*)(\.[^.]+)$}, only ever
+      # asks "does the path end in a dot and at least one non-dot?". Its nested
+      # quantifiers backtrack polynomially on a crafted name (CodeQL rb/redos),
+      # so the same question is asked without them.
+      DATELESS_FILENAME = /\.[^.\n]+\z/
       CONTENT_EXTENSIONS = %w[.md .markdown .mkd .mkdn .mdown .html .htm].freeze
       IMAGE_EXTENSIONS = %w[.png .jpg .jpeg .svg .webp .gif].freeze
       KINDS = %i[page post draft document].freeze
