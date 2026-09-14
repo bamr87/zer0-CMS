@@ -1,0 +1,153 @@
+# zer0 doctor — the zer0 stack consumer contract check, as a reusable workflow.
+#
+# A content repository calls it (RFC §4):
+#
+#   jobs:
+#     doctor:
+#       uses: bamr87/zer0-CMS/.github/workflows/zer0-doctor.yml@main
+#       with:
+#         site-path: "."          # the Jekyll root inside the caller repo
+#         fail-on-error: false    # report-only by default
+#
+# It checks out the CALLER repository and bamr87/zer0-CMS (main) side by side,
+# runs `bin/zer0-cms doctor <site> --format findings` on plain Ruby (the doctor
+# is stdlib-only: no bundle, no gems), writes the findings as a job summary
+# table and a `zer0-doctor-findings` artifact, and fails only when
+# `fail-on-error` is true and the doctor reported an error. A bad `site-path`
+# (missing, absolute, or climbing out of the checkout) always fails.
+#
+# workflow_dispatch runs it against this repository, which is not a Jekyll
+# site: useful only to see the report shape.
+name: zer0-doctor
+
+on:
+  workflow_call:
+    inputs:
+      site-path:
+        description: "Path to the Jekyll site root, relative to the caller repository root"
+        type: string
+        required: false
+        default: "."
+      fail-on-error:
+        description: "Fail the job when the doctor reports an error"
+        type: boolean
+        required: false
+        default: false
+  workflow_dispatch:
+    inputs:
+      site-path:
+        description: "Path to the Jekyll site root, relative to the repository root"
+        type: string
+        required: false
+        default: "."
+      fail-on-error:
+        description: "Fail the job when the doctor reports an error"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zer0-doctor-${{ github.repository }}-${{ github.ref }}-${{ inputs.site-path }}
+  cancel-in-progress: true
+
+jobs:
+  doctor:
+    name: zer0 doctor (${{ inputs.site-path }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # In a called workflow `github.repository` is the caller, so this is the
+      # content repository.
+      - name: Check out the site
+        uses: actions/checkout@v7
+        with:
+          path: site
+          persist-credentials: false
+
+      - name: Check out zer0-CMS
+        uses: actions/checkout@v7
+        with:
+          repository: bamr87/zer0-CMS
+          ref: main
+          path: zer0-cms
+          persist-credentials: false
+
+      # The doctor's stdlib floor; abc-engine.yml runs its tests on 3.3 too.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Run the doctor
+        id: doctor
+        env:
+          SITE_PATH: ${{ inputs.site-path }}
+        run: |
+          case "$SITE_PATH" in
+            /* | .. | ../* | */.. | */../*)
+              echo "::error::site-path must be relative to the repository root and stay inside it: $SITE_PATH"
+              exit 2 ;;
+          esac
+          if [ ! -d "site/$SITE_PATH" ]; then
+            echo "::error::site-path is not a directory in the repository: $SITE_PATH"
+            exit 2
+          fi
+          mkdir -p doctor-report
+          set +e
+          ruby -I zer0-cms/rails/lib zer0-cms/rails/bin/zer0-cms doctor "site/$SITE_PATH" --format findings > doctor-report/findings.jsonl
+          status=$?
+          set -e
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" -gt 1 ]; then
+            echo "::error::the doctor could not run (exit $status)"
+            exit "$status"
+          fi
+
+      - name: Write the job summary
+        if: always() && steps.doctor.outputs.status != ''
+        env:
+          SITE_PATH: ${{ inputs.site-path }}
+        run: |
+          cat > "$RUNNER_TEMP/doctor-summary.rb" <<'RUBY'
+          require "json"
+            findings = File.readlines("doctor-report/findings.jsonl", chomp: true).reject(&:empty?).map { |line| JSON.parse(line) }
+            cell = ->(text) { text.to_s.gsub("|", "\\|").gsub(/\s+/, " ")[0, 200] }
+            errors = findings.select { |f| f["severity"] == "error" }
+            warnings = findings.select { |f| f["severity"] == "warning" }
+            out = +"## zer0 doctor: `#{cell.(ENV["SITE_PATH"])}`\n\n"
+            out << "**#{errors.size} error(s), #{warnings.size} warning(s).** Full findings: the `zer0-doctor-findings` artifact.\n\n"
+            listed = errors + warnings.reject { |f| f["check_id"] == "content" }
+            if listed.any?
+              out << "| Severity | Check | Rule | File | Evidence |\n|---|---|---|---|---|\n"
+              listed.first(200).each do |f|
+                file = f["line"] ? "#{f["file"]}:#{f["line"]}" : f["file"]
+                out << "| #{f["severity"]} | #{cell.(f["check_id"])} | #{cell.(f["rule"])} | #{cell.(file)} | #{cell.(f["evidence"])} |\n"
+              end
+              out << "\n_#{listed.size - 200} more rows in the artifact._\n" if listed.size > 200
+            end
+            content = warnings.select { |f| f["check_id"] == "content" }.group_by { |f| f["rule"] }
+            if content.any?
+              out << "\n### Content warnings by rule (report-only)\n\n| Rule | Files |\n|---|---|\n"
+              content.sort_by { |rule, list| [-list.size, rule] }.each { |rule, list| out << "| #{cell.(rule)} | #{list.size} |\n" }
+            end
+            File.write(ENV.fetch("GITHUB_STEP_SUMMARY"), out, mode: "a")
+          RUBY
+          ruby "$RUNNER_TEMP/doctor-summary.rb"
+
+      - name: Upload the findings
+        if: always() && steps.doctor.outputs.status != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: zer0-doctor-findings
+          path: doctor-report/findings.jsonl
+          if-no-files-found: error
+
+      - name: Fail on errors when asked
+        if: inputs.fail-on-error && steps.doctor.outputs.status == '1'
+        run: |
+          echo "::error::the zer0 doctor reported errors (fail-on-error is true)"
+          exit 1

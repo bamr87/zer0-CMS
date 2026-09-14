@@ -1,4 +1,5 @@
-# Stdlib tests for rails/lib (ABC generator + CMS catalog/front-matter/writer).
+# Stdlib tests for rails/lib: the ABC generator, the CMS catalog, front matter,
+# writer, and doctor.
 #
 # This job used to be the second half of `extension.yml`. It is a separate
 # workflow because the two halves of this repository have nothing in common but
@@ -8,10 +9,14 @@
 # says.
 #
 # The library under `rails/lib` is stdlib-only by design, so there is
-# deliberately NO `bundle install` here: the Gemfile exists for the Rails host
-# (Hotwire UI, sqlite), and needing it to run these tests would be exactly the
-# regression this job catches. Do not "fix" a failure here by adding a bundler
-# step — a gem reached from `lib/` is the bug.
+# deliberately NO `bundle install` here: the Gemfile exists for the Rails app
+# (Administrate, sqlite — gated by `rails-app.yml`), and needing it to run these
+# tests would be exactly the regression this job catches. Do not "fix" a failure
+# here by adding a bundler step — a gem reached from `lib/` is the bug.
+#
+# Two Rubies: 3.3, the floor a content repo's CI (and the reusable
+# zer0-doctor.yml) runs `bin/zer0-cms doctor` on, and 4.0.5, the Ruby the Rails
+# app and its Docker image run.
 name: abc-engine
 
 on:
@@ -34,17 +39,22 @@ concurrency:
 
 jobs:
   engine:
-    name: Rails stdlib tests
+    name: Rails stdlib tests (Ruby ${{ matrix.ruby }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.3", "4.0.5"]
     steps:
       - uses: actions/checkout@v7
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: ${{ matrix.ruby }}
 
-      - name: Stdlib tests (ABC + CMS primitives)
+      - name: Stdlib tests (ABC + CMS primitives + doctor)
         run: bash bin/test-stdlib
         working-directory: rails

@@ -6,9 +6,11 @@
 # "Missing X server or $DISPLAY" followed by a SIGSEGV. It is the single most
 # commonly missed piece of a VS Code extension pipeline.
 #
-# Rails stdlib tests live in `abc-engine.yml` so a TypeScript pull request no
-# longer boots a Ruby toolchain it does not use — hence the `paths-ignore`
-# below. `main` is not branch-protected, so a skipped run here is not a
+# The Rails half has its own workflows — `abc-engine.yml` (stdlib, no bundler)
+# and `rails-app.yml` (the app, its tests and a boot) — so a TypeScript pull
+# request no longer boots a Ruby toolchain it does not use, and a change to
+# `rails/` or the compose file no longer downloads VS Code: hence the
+# `paths-ignore` below. `main` is not branch-protected, so a skipped run here is not a
 # required check left pending.
 name: extension
 
@@ -16,10 +18,12 @@ on:
   pull_request:
     paths-ignore:
       - "rails/**"
+      - "docker-compose.yml"
   push:
     branches: [main]
     paths-ignore:
       - "rails/**"
+      - "docker-compose.yml"
 
 permissions:
   contents: read
