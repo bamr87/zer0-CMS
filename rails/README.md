@@ -25,7 +25,9 @@ The generator is **stdlib-only Ruby** — the CLI and the tests run without `bun
 cd rails
 ruby bin/zer0-cms styles                      # list ABC art styles
 ruby bin/zer0-cms themes                      # list bundled A–Z lexicons
-./bin/test-stdlib                             # ABC + catalog + front-matter + writer, no bundler
+./bin/test-stdlib                             # ABC + catalog + front-matter + writer + doctor, no bundler
+ruby bin/zer0-cms doctor ../../lifehacker.dev  # zer0 stack alignment (RFC §4); exit 1 on any error
+ruby bin/jekyll-parity ../../lifehacker.dev    # catalog vs Jekyll's own reader (needs the jekyll gem)
 
 # Draft the toddler "IT systems" book (A is for Automation) into a drsai checkout:
 ruby bin/zer0-cms new --theme "IT systems" --slug it-alphabet \
@@ -73,8 +75,10 @@ The wizard form drives the exact same `Zer0Cms::Abc::Wizard` + `JekyllExporter` 
 | Art styles | `lib/zer0_cms/abc/art_styles.rb` + `data/abc_art_styles.yml` | Style catalog + text-free prompt composition |
 | Wizard | `lib/zer0_cms/abc/wizard.rb` | theme → plan → art direction → per-letter → cover → validated Spec |
 | Exporter | `lib/zer0_cms/abc/jekyll_exporter.rb` | Spec → `pages/_books/<slug>/index.md` + `_data/abc_books/<slug>.json` |
-| CLI | `bin/zer0-cms` | Headless ABC driver |
-| CMS primitives | `lib/zer0_cms/cms/` | Catalog, front-matter surgery, writer (stdlib) |
+| CLI | `bin/zer0-cms` | Headless ABC driver and `doctor PATH [--format text\|findings] [--schema FILE]` |
+| CMS primitives | `lib/zer0_cms/cms/` | Catalog (Jekyll 4.4 reader rules), front-matter line surgery, confined writer — stdlib; see [`lib/zer0_cms/cms/README.md`](lib/zer0_cms/cms/README.md) |
+| Doctor | `lib/zer0_cms/doctor.rb` | The consumer contract check: theme, image engine, `zer0.json`, `fleet.manifest.yml`, front matter against the theme's schema; findings in lifehacker.dev's `findings.jsonl` shape |
+| Parity proofs | `bin/jekyll-parity`, `bin/front-matter-roundtrip`, `test/fixtures/` | The catalog diffed against Jekyll's reader; the front-matter round-trip property over real sites |
 | Web | `app/` + `config/` | Fleet CMS + ABC wizard (Hotwire, sqlite site registry) |
 | Rake wrappers | `lib/tasks/abc.rake` | `abc:styles` / `abc:themes` / `abc:new` — **not reachable today** |
 
@@ -82,10 +86,10 @@ The wizard form drives the exact same `Zer0Cms::Abc::Wizard` + `JekyllExporter` 
 
 ### The shared contract
 
-- **`schema/abc-book.schema.json`** — the ABC Book Spec, the interchange format
-  consumed by drsai.
+- **`schema/abc-book.schema.json`** — the ABC Book Spec, the interchange format consumed by drsai.
 - **`lib/zer0_cms/data/abc_art_styles.yml`** — a **byte-identical vendored copy**
 of the source of truth in [zer0-image-generator](https://github.com/bamr87/zer0-image-generator) (`lib/zer0_image_generator/abc/art_styles.yml`). Each art-style `id` is a cross-repo contract (drsai front matter + the theme's CSS skin). Re-sync the copy whenever the gem's catalog changes.
+- **`lib/zer0_cms/data/frontmatter_schema.yml`** — a **byte-identical vendored copy** of the theme's front-matter contract, [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) `.github/config/frontmatter_schema.yml`; the source commit is recorded in [`lib/zer0_cms/data/README.md`](lib/zer0_cms/data/README.md). `doctor` prefers a site's own copy, and `--schema FILE` over both.
 
 ## Conventions
 
