@@ -59,6 +59,26 @@
  * sentence: it refuses to rewrite a YAML block wholesale, precisely because a
  * full re-emit rebuilds it from what the parser understood.
  *
+ * ## The warnings channel
+ *
+ * Silence about the table above was the gap. A caller got `data` and no way to
+ * ask whether the parser had *understood* the block or merely survived it, so a
+ * site-wide audit over a file containing `defaults: &series` reported a
+ * confident `missing-key` for every key the anchor was meant to supply, and a
+ * fix-it stood ready to rewrite a file nothing had actually read.
+ *
+ * `FmBlock.warnings` closes it. Every construct in the table above appends one
+ * line naming the construct and the line it sits on; an empty array means the
+ * parser met nothing it had to guess at. The warnings are produced by a
+ * separate scan (`scanFrontMatterWarnings`) rather than by threading a sink
+ * through the recursive descent, so the parse path is byte-for-byte the code it
+ * always was — **the parser still never throws**, and it still returns the same
+ * values it returned before this existed.
+ *
+ * Every warning starts with `line <n>: `, 1-based within the block body. That
+ * prefix is a small contract: `content/audit.ts` reads it to place an
+ * `unreadable-frontmatter` finding on the right line.
+ *
  * ## `__proto__` is data, not a prototype
  *
  * Every mapping this file builds is populated through `setOwn` and read through
@@ -114,6 +134,13 @@ export interface FmBlock {
   /** Character offset just past the closing fence and its newline. */
   end: number;
   data: FrontMatter;
+  /**
+   * One line per construct the parser could not read, each prefixed
+   * `line <n>: `. Empty is the normal state and the only one under which
+   * `data` is a complete account of the block — see "The warnings channel"
+   * above. A caller that edits or audits a block reads this first.
+   */
+  warnings: string[];
 }
 
 const YAML_FENCE = '---';
@@ -209,6 +236,7 @@ function splitFencedBlock(
         start: offset,
         end: line.next,
         data: parseFrontMatterBlock(raw, format),
+        warnings: scanFrontMatterWarnings(raw, format),
       };
       return { block, body: text.slice(line.next) };
     }
@@ -243,6 +271,9 @@ function splitJsonBlock(text: string, offset: number): { block: FmBlock | null; 
     start: offset,
     end,
     data: parseFrontMatterBlock(raw, 'json'),
+    // JSON has no construct this reader guesses at: `JSON.parse` either agrees
+    // with the file exactly or the block is not JSON at all.
+    warnings: [],
   };
   return { block, body: text.slice(end) };
 }
@@ -1144,6 +1175,218 @@ function descend(root: FrontMatter, path: readonly string[]): FrontMatter {
     node = created;
   }
   return node;
+}
+
+// ---------------------------------------------------------------------------
+// The warnings channel — the constructs the parser had to guess at
+// ---------------------------------------------------------------------------
+
+/**
+ * One line per construct from the "not supported" table that this block
+ * actually contains, each prefixed `line <n>: ` (1-based, within `raw`).
+ *
+ * This is a **second pass**, deliberately: threading a sink through the
+ * recursive descent above would have meant editing every parse function to
+ * report something none of them needs, and the one property that must not move
+ * is that the parse path still never throws and still returns exactly what it
+ * returned before. A separate scan can be read, tested and changed on its own.
+ *
+ * It reports only lines that carry a *value*: a key line, or a sequence item.
+ * The body of a block scalar and the continuation lines of a folded plain
+ * scalar are prose, and an `&` or a `*` in prose is an ampersand and an
+ * asterisk. Under-reporting there is the right failure: a warning that fires on
+ * ordinary writing teaches its reader to ignore the channel.
+ */
+export function scanFrontMatterWarnings(raw: string, format: FmFormat): string[] {
+  if (format === 'json') {
+    // `JSON.parse` either agrees with the file exactly or there is no block.
+    return [];
+  }
+  return format === 'toml' ? scanTomlWarnings(raw) : scanYamlWarnings(raw);
+}
+
+function warnAt(line: number, message: string): string {
+  return `line ${line}: ${message}`;
+}
+
+/** An anchor name, as YAML spells it: no spaces, no flow indicators. */
+const ANCHOR_RE = /^&[A-Za-z0-9_][\w.\-/]*(?:\s|$)/;
+/** An alias is a whole value — `*base`, never `*emphasis* in prose`. */
+const ALIAS_RE = /^\*[A-Za-z0-9_][\w.\-/]*$/;
+/** `!!str`, `!Custom`, `!<tag:x>`. */
+const TAG_RE = /^!(?:!?[A-Za-z_][\w:.\-/]*|<[^>]*>)(?:\s|$)/;
+
+/**
+ * The offending escape in a double-quoted region of `value`, or `null`.
+ *
+ * `unquote` decodes eight escapes and lets every other one through as the
+ * literal characters that were written, so `"é"` reaches a caller as a
+ * backslash, a `u` and four digits rather than as `é`.
+ */
+function undecodedEscape(value: string): string | null {
+  let quoted = false;
+  for (let i = 0; i < value.length; i++) {
+    const ch = value.charAt(i);
+    if (!quoted) {
+      if (ch === '"') {
+        quoted = true;
+      } else if (ch === "'") {
+        // A single-quoted region has no backslash escapes at all.
+        const close = closingQuote(value, i);
+        i = close < 0 ? value.length : close;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      quoted = false;
+      continue;
+    }
+    if (ch !== '\\') {
+      continue;
+    }
+    const next = value.charAt(i + 1);
+    if (DOUBLE_ESCAPES[next] !== undefined) {
+      i++;
+      continue;
+    }
+    if (next === 'u' || next === 'x' || /[0-7]/.test(next)) {
+      return `\\${next}`;
+    }
+    i++;
+  }
+  return null;
+}
+
+/** The constructs a value can open, checked in the order the parser meets them. */
+function scanYamlValue(out: string[], lineNo: number, value: string): void {
+  if (value.length === 0) {
+    return;
+  }
+  if (ANCHOR_RE.test(value)) {
+    out.push(warnAt(lineNo, `a YAML anchor (\`${value.split(/\s/)[0] ?? value}\`) is kept as the literal text — anchors are not resolved`));
+    return;
+  }
+  if (ALIAS_RE.test(value)) {
+    out.push(warnAt(lineNo, `a YAML alias (\`${value}\`) is kept as the literal text — aliases are not resolved`));
+    return;
+  }
+  if (TAG_RE.test(value)) {
+    out.push(warnAt(lineNo, `a YAML tag (\`${value.split(/\s/)[0] ?? value}\`) stays part of the literal value — tags are not applied`));
+    return;
+  }
+  const first = value.charAt(0);
+  if ((first === '"' || first === "'") && closingQuote(value, 0) < 0) {
+    out.push(warnAt(lineNo, 'a quoted scalar that closes on a later line — the value is truncated to this line'));
+    return;
+  }
+  if ((first === '[' || first === '{') && closingBracket(value, 0) < 0) {
+    out.push(warnAt(lineNo, 'a flow collection that closes on a later line — the value is truncated to this line'));
+    return;
+  }
+  const escape = undecodedEscape(value);
+  if (escape !== null) {
+    out.push(warnAt(lineNo, `a \`${escape}\` escape is not decoded — the literal characters survive`));
+  }
+}
+
+function scanYamlWarnings(raw: string): string[] {
+  const out: string[] = [];
+  const lines = toLines(raw);
+  // While >= 0, we are inside the body of a block scalar opened by a key at
+  // this indentation. Its lines are prose and are never inspected.
+  let blockScalarAt = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line === undefined) {
+      continue;
+    }
+    if (blockScalarAt >= 0) {
+      if (line.blank || line.indent > blockScalarAt) {
+        continue;
+      }
+      blockScalarAt = -1;
+    }
+    if (line.blank || line.comment) {
+      continue;
+    }
+
+    let content = line.content;
+    let indent = line.indent;
+    // `- name: a` is a key line that happens to open a sequence item; `- *base`
+    // is a bare value. Both carry a value worth inspecting.
+    while (isYamlSequenceItem(content)) {
+      const after = content.slice(1);
+      indent += 1 + (after.length - after.trimStart().length);
+      content = after.trim();
+    }
+
+    const pair = parseYamlKeyLine(content);
+    if (pair === null) {
+      // Neither a key nor a sequence item: a continuation line of a folded
+      // plain scalar, or a construct `parseMapping` skips. Prose either way.
+      continue;
+    }
+    if (pair.key === '<<') {
+      out.push(
+        warnAt(i + 1, 'a YAML merge key (`<<`) is read as an ordinary key — the referenced mapping is not merged in'),
+      );
+      continue;
+    }
+
+    const value = stripComment(pair.rest);
+    if (BLOCK_SCALAR_RE.test(value)) {
+      blockScalarAt = indent;
+      continue;
+    }
+    scanYamlValue(out, i + 1, value);
+  }
+  return out;
+}
+
+function scanTomlWarnings(raw: string): string[] {
+  const out: string[] = [];
+  const lines = raw.split('\n').map((line) => (line.endsWith('\r') ? line.slice(0, -1) : line));
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = (lines[i] ?? '').trim();
+    if (line.length === 0 || line.startsWith('#')) {
+      continue;
+    }
+    if (line.startsWith('[[')) {
+      out.push(
+        warnAt(i + 1, `a TOML array-of-tables (\`${line}\`) is read as a plain table — every entry after the first overwrites the one before it`),
+      );
+      continue;
+    }
+    if (line.startsWith('[')) {
+      continue;
+    }
+    const eq = tomlAssignmentAt(line);
+    if (eq < 0) {
+      continue;
+    }
+    const value = line.slice(eq + 1).trim();
+    if (value.startsWith("'''")) {
+      out.push(warnAt(i + 1, "a TOML multi-line literal string (`'''`) is not supported — the value is the literal first line"));
+      // Skip to the closing delimiter so its own line is not read as a key.
+      let closed = value.slice(3).includes("'''");
+      while (!closed && i + 1 < lines.length) {
+        i++;
+        closed = (lines[i] ?? '').includes("'''");
+      }
+      continue;
+    }
+    if (value.startsWith('"""')) {
+      // Supported: skip the body so a `[[x]]` inside a string is not a finding.
+      let closed = value.slice(3).includes('"""');
+      while (!closed && i + 1 < lines.length) {
+        i++;
+        closed = (lines[i] ?? '').includes('"""');
+      }
+    }
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------

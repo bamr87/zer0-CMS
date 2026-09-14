@@ -340,11 +340,10 @@ export function settingsSnapshot(scope?: vscode.ConfigurationScope): Zer0Setting
       enabled: explicit<boolean>(c, 'agent.enabled'),
       model: explicit<string>(c, 'agent.model'),
       maxTurns: explicit<number>(c, 'agent.maxTurns'),
-      permissionMode: explicitEnum<string>(c, 'agent.permissionMode', [
-        'default',
-        'acceptEdits',
-        'plan',
-      ]),
+      // `acceptEdits` is gone from the manifest enum, but a settings file that
+      // still names it must not arm it either — a stale value is exactly how a
+      // removed mode survives an upgrade.
+      permissionMode: explicitEnum<string>(c, 'agent.permissionMode', ['default', 'plan']),
     },
     fleet: {
       enabled: explicit<boolean>(c, 'fleet.enabled'),

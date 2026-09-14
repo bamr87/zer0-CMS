@@ -43,14 +43,18 @@ import {
 
 import { FIELD_TYPES } from '../core/shared/types';
 import { renderContents } from '../webview/dashboard/contents';
+import { render as renderAudit } from '../webview/dashboard/audit';
 import { render as renderCatering } from '../webview/dashboard/catering';
+import { render as renderHarness } from '../webview/dashboard/harness';
+import { render as renderMonitor } from '../webview/dashboard/monitor';
+import { render as renderSites } from '../webview/dashboard/sites';
+import { render as renderWorkflows } from '../webview/dashboard/workflows';
 import { render as renderFleet } from '../webview/dashboard/fleet';
 import { render as renderDrafts } from '../webview/dashboard/governance';
 import { render as renderSettings } from '../webview/dashboard/settings';
 import { render as renderWelcome } from '../webview/dashboard/welcome';
 import { createFieldWidget } from '../webview/panel/fields/index';
 import { dataTable, gatedButton, statusPill } from '../webview/shared/components';
-import { el } from '../webview/shared/dom';
 import { resetStagedForm, stagedForm } from '../webview/shared/form';
 import { getMessenger } from '../webview/shared/messenger';
 import {
@@ -203,18 +207,6 @@ type Renderer = (host: HTMLElement, ctx: DashboardContext) => void;
  * `Record<DashboardRoute, Renderer>` is not satisfiable without it, and
  * "unreachable" is a claim worth being able to watch fail.
  */
-function notAvailable(route: DashboardRoute): Renderer {
-  return (host) => {
-    host.appendChild(
-      el(
-        'div',
-        { class: 'z-emptystate' },
-        el('p', {}, `The ${route} tab is not available in this build.`),
-        el('p', { class: 'z-muted' }, 'The host does not offer this route yet.'),
-      ),
-    );
-  };
-}
 
 /** The five routes that take a snapshot rather than the view-local context. */
 function bySnapshot(render: (host: HTMLElement, state: DashboardState) => void): Renderer {
@@ -224,15 +216,15 @@ function bySnapshot(render: (host: HTMLElement, state: DashboardState) => void):
 }
 
 const RENDERERS: Record<DashboardRoute, Renderer> = {
-  sites: notAvailable('sites'),
+  sites: bySnapshot(renderSites),
   contents: renderContents,
   drafts: bySnapshot(renderDrafts),
-  audit: notAvailable('audit'),
+  audit: bySnapshot(renderAudit),
   catering: bySnapshot(renderCatering),
   fleet: bySnapshot(renderFleet),
-  harness: notAvailable('harness'),
-  workflows: notAvailable('workflows'),
-  monitor: notAvailable('monitor'),
+  harness: bySnapshot(renderHarness),
+  workflows: bySnapshot(renderWorkflows),
+  monitor: bySnapshot(renderMonitor),
   settings: bySnapshot(renderSettings),
   welcome: bySnapshot(renderWelcome),
 };
@@ -290,16 +282,6 @@ suite('webview', () => {
     renderDrafts(drafts.el, state);
     assert.match(text(drafts.node), /The draft queue is empty\./);
 
-    // The five routes later PRs fill say so, rather than rendering a blank tab.
-    for (const route of ['sites', 'audit', 'harness', 'workflows', 'monitor'] as const) {
-      const mount = host();
-      RENDERERS[route](mount.el, ctx);
-      assert.match(
-        text(mount.node),
-        new RegExp(`The ${route} tab is not available`),
-        `the ${route} placeholder does not say the route is unfilled`,
-      );
-    }
   });
 
   test('statusPill renders `unknown` differently from `neutral`', () => {

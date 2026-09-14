@@ -28,6 +28,15 @@
  * person gets a dialog naming Workspace Trust, that one so no caller anywhere
  * can spawn by forgetting.
  *
+ * **These four act on the active site, and say which one that is.** There is no
+ * file argument to resolve a site from: the engine reads `.cms/`, the
+ * normalizer rewrites `cms.contentDirs`, and both are properties of one
+ * repository. So `currentConfig()` — which now means "the active site" rather
+ * than "folder zero" — is the right read, and the two modal dialogs name the
+ * folder they are about. In a twelve-folder window, "Rewrite front matter
+ * across the configured content directories?" without a repository name in it
+ * is a dialog nobody can safely answer.
+ *
  * **The worklist comes from the same renderer as the tree.**
  * `writeCateringWorklist` is `renderWorklist` plus a write, so the file on disk
  * and the Distribution view can never disagree. With no `.cms/` there is
@@ -35,6 +44,7 @@
  * untitled document instead of inventing a directory.
  */
 
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import {
@@ -54,7 +64,13 @@ import {
   type EngineResult,
   type Zer0Config,
 } from '../core';
-import { currentConfig, readConfigFileJson, settingsSnapshot, workspaceTrusted } from '../config';
+import {
+  currentConfig,
+  readConfigFileJson,
+  settingsSnapshot,
+  workspaceFolder,
+  workspaceTrusted,
+} from '../config';
 import type { Zer0Shell } from '../extension';
 import { confirm, notifyError, notifyInfo, notifyWarning } from '../uiState';
 import { openInEditor, register, showReport } from './project';
@@ -101,6 +117,11 @@ function logResult(shell: Zer0Shell, label: string, result: EngineResult): void 
 }
 
 /** `true` when there is a workspace to run anything in. */
+/** The active site's folder name, for a dialog that must not be ambiguous. */
+function siteName(cfg: Zer0Config): string {
+  return workspaceFolder()?.name ?? path.basename(cfg.workspaceRoot);
+}
+
 async function requireWorkspace(cfg: Zer0Config): Promise<boolean> {
   if (cfg.workspaceRoot !== '') {
     return true;
@@ -249,12 +270,14 @@ export function registerContractCommands(shell: Zer0Shell): void {
       return;
     }
 
-    // This one rewrites files in bulk. The dialog names the directories and
-    // says the word "rewrites", because "Normalize" on a button does not.
+    // This one rewrites files in bulk. The dialog names the site, the
+    // directories, and says the word "rewrites", because "Normalize" on a
+    // button does not.
     const ok = await confirm(
-      'Rewrite front matter across the configured content directories?',
+      `Rewrite front matter across "${siteName(cfg)}"'s configured content directories?`,
       'Rewrite files',
       [
+        `Site: ${cfg.workspaceRoot}`,
         `Script: ${cfg.cms.normalizerScript}`,
         `Directories: ${cfg.cms.contentDirs.join(', ') || '(none configured)'}`,
         '',

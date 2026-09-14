@@ -1,0 +1,4 @@
+# Which ai-runner kit produced the goldens in this directory.
+# Read by lanes.test.ts, which skips the golden comparisons with a note
+# when media/templates/ai-runner.VERSION has moved past this.
+kit: ai-runner v0.1.0

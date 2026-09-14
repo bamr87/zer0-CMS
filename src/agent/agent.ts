@@ -38,7 +38,21 @@ import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import type { McpStdioSpec, Zer0Config } from '../core';
+import type { HarnessProfile, McpStdioSpec, Zer0Config } from '../core';
+// Imported by module path rather than through `../core`: the harness barrel
+// lines (`export * from './harness/…'`) are WP3.0's to add to
+// `src/core/index.ts`, and they are not there yet. Normalise these three to
+// `../core` the moment they land — `src/mcp/server.ts` carries the same kind of
+// direct import for the same kind of reason.
+import { appendUsageRecord, usageRecordFrom } from '../core/harness/metering';
+import {
+  BASE_READ_ONLY_TOOLS,
+  DEFAULT_HARNESS_MODEL,
+  MCP_READ_ONLY_TOOLS as CORE_MCP_READ_ONLY_TOOLS,
+  describeProfile,
+  profileWarnings,
+  toSdkOptions,
+} from '../core/harness/profile';
 import { describeError } from '../logger';
 import { notifyInfo, notifyWarning } from '../uiState';
 
@@ -79,8 +93,15 @@ export interface AgentReporter {
 /** The optional dependency. Never imported statically. */
 export const SDK_MODULE = '@anthropic-ai/claude-agent-sdk';
 
-/** Decision D10. Also the `zer0Cms.agent.model` default in the manifest. */
-export const DEFAULT_MODEL = 'claude-opus-5';
+/**
+ * The model used when no layer answered.
+ *
+ * It is **not** declared here any more. `src/core/harness/profile.ts` owns the
+ * value, because the whole point of the harness vocabulary is that the editor
+ * and the repository's CI resolve one model through one precedence; a second
+ * constant in the shell is exactly the drift this package exists to remove.
+ */
+export const DEFAULT_MODEL = DEFAULT_HARNESS_MODEL;
 
 /**
  * Tools that cannot change the workspace, auto-allowed without a prompt.
@@ -88,54 +109,28 @@ export const DEFAULT_MODEL = 'claude-opus-5';
  * only to the agent's own scratch list, the second reads. Everything absent
  * from this set — `Edit`, `Write`, `MultiEdit`, `NotebookEdit`, `Bash`, every
  * MCP tool, every tool a future SDK version adds — fails closed.
+ *
+ * The **run** consults `profile.readOnlyTools`, not this set: a run with the
+ * bundled MCP server attached also auto-allows that server's read tools, and a
+ * run without it must not. This is the base every profile starts from.
  */
-export const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
-  'Read',
-  'Grep',
-  'Glob',
-  'LS',
-  'TodoWrite',
-  'NotebookRead',
-]);
+export const READ_ONLY_TOOLS: ReadonlySet<string> = new Set(BASE_READ_ONLY_TOOLS);
 
 /**
- * The bundled MCP server's tools that cannot change anything.
+ * The bundled MCP server's tools that cannot change anything — re-exported from
+ * the core harness, where the list now lives beside the profile that folds it
+ * into `readOnlyTools`. Eight of the thirteen; the five that are absent all
+ * write: `zer0_draft` a queue file, `zer0_publish` content and the ledger,
+ * `zer0_worklist` and `zer0_ingest` under `.cms/`, and `zer0_contract` runs the
+ * repository's own engine.
  *
- * Seven of the twelve; the five that are absent all write — `zer0_draft` a
- * queue file, `zer0_publish` content and the ledger, `zer0_worklist` and
- * `zer0_ingest` under `.cms/`, and `zer0_contract` runs the repository's own
- * engine. The names carry the SDK's `mcp__<server>__<tool>` prefix, and
- * `<server>` is `zer0-cms` — `MCP_WORKSPACE_SERVER_ID` in
- * `src/mcpRegistration.ts` — because that is what an approval card and a
- * `canUseTool` argument actually spell.
- *
- * This is a **list, not an allow-rule**. It is folded into `READ_ONLY_TOOLS`
- * where the agent attaches the server (a later package), so those seven skip
- * the card the same way `Read` does; it is never passed to the SDK as
+ * This is a **list, not an allow-rule**. It is never passed to the SDK as
  * `allowedTools`, for the reason decision D10 gives.
  */
-export const MCP_READ_ONLY_TOOLS: readonly string[] = [
-  'mcp__zer0-cms__zer0_status',
-  'mcp__zer0-cms__zer0_list_content',
-  'mcp__zer0-cms__zer0_get_content',
-  'mcp__zer0-cms__zer0_preview',
-  'mcp__zer0-cms__zer0_portfolio',
-  'mcp__zer0-cms__zer0_media',
-  'mcp__zer0-cms__zer0_fleet_status',
-];
+export const MCP_READ_ONLY_TOOLS: readonly string[] = CORE_MCP_READ_ONLY_TOOLS;
 
 /** Detail panes are capped so one `Write` cannot post a megabyte to a webview. */
 const MAX_DETAIL = 4000;
-
-/** Instructions appended to the `claude_code` preset system prompt. */
-const SYSTEM_APPEND = [
-  'You are running inside the zer0-CMS VS Code extension, over the user’s content repository.',
-  'Content moves through a governed queue: draft → brand guard → human approval → publish → ledger.',
-  'Write drafts and edit content; never approve or publish anything yourself, and never change',
-  '`governance.publishAllow` or a draft’s `status` field.',
-  'Do NOT create a branch, commit, push, or open a pull request — the user reviews every edit in the',
-  'approval card and handles git themselves.',
-].join(' ');
 
 const DISABLED_MESSAGE =
   'The AI agent is off. Turn on "zer0Cms.agent.enabled" to use it — it is opt-in because it loads an optional dependency and can edit files.';
@@ -271,16 +266,33 @@ function nextApprovalId(): string {
 // CmsAgent
 // ---------------------------------------------------------------------------
 
+/**
+ * Everything about *this* run that is not the prompt: the resolved harness, who
+ * the ledger should say ran it, and where that ledger is.
+ */
+export interface AgentRunContext {
+  /** The resolved harness — model, role, tools, MCP servers, setting sources. */
+  profile: HarnessProfile;
+  /** `owner/name` when the folder says so, else its name. Recorded, never sent. */
+  repo: string;
+  /** Where to append the usage record. `null` turns metering off entirely. */
+  usageLedgerPath: string | null;
+}
+
 export class CmsAgent {
   private current: AbortController | undefined;
 
   /** `undefined` until the first load attempt — probing would mean importing. */
   private sdkPresent: boolean | undefined;
 
+  /** Wall clock at the start of the current run, for the usage record. */
+  private startedAt = 0;
+
   constructor(
     private readonly repoRoot: string,
     private readonly reporter: AgentReporter,
     private readonly cfg: Zer0Config['agent'],
+    private readonly context: AgentRunContext,
   ) {}
 
   get running(): boolean {
@@ -296,10 +308,18 @@ export class CmsAgent {
     return this.sdkPresent !== false;
   }
 
-  /** The model this agent will use, after the empty-setting fallback. */
+  /**
+   * The model this run uses. Resolved by `resolveHarnessProfile` through the
+   * runner's own precedence — settings, then `zer0.json`, then the repository's
+   * `_data/ai.yml`, then the built-in default — never re-derived here.
+   */
   get model(): string {
-    const configured = this.cfg.model.trim();
-    return configured.length > 0 ? configured : DEFAULT_MODEL;
+    return this.context.profile.model;
+  }
+
+  /** The role this run performs as, or `null` for an unassigned run. */
+  get role(): string | null {
+    return this.context.profile.agent?.name ?? null;
   }
 
   /**
@@ -345,23 +365,28 @@ export class CmsAgent {
 
     const abort = new AbortController();
     this.current = abort;
+    this.startedAt = Date.now();
     this.reporter.clearTranscript();
     this.reporter.setStatus('running', true);
-    this.reporter.append(
-      'system',
-      `Starting the agent · ${this.model} · ${this.cfg.permissionMode} · max ${this.cfg.maxTurns} turns`,
-    );
+    this.reporter.append('system', `Starting the agent · ${describeProfile(this.context.profile)}`);
+
+    // Said before the first token, not after: a person deciding whether to let
+    // a run proceed needs to know that the mode they configured would have
+    // skipped the card, or that this run reads the repository's settings file.
+    for (const warning of profileWarnings(this.context.profile, this.cfg.permissionMode)) {
+      this.reporter.append('system', warning);
+    }
 
     try {
       const response = query({
         prompt: text,
         options: {
+          // One vocabulary, projected for the SDK. `toSdkOptions` is also what
+          // `toRunnerInvocation` projects for CI, which is the property that
+          // keeps an editor run and a lane run the same run described twice.
+          ...toSdkOptions(this.context.profile),
           cwd: this.repoRoot,
-          model: this.model,
-          maxTurns: this.cfg.maxTurns,
-          permissionMode: this.cfg.permissionMode,
           abortController: abort,
-          systemPrompt: { type: 'preset', preset: 'claude_code', append: SYSTEM_APPEND },
           // Deliberately no SDK-side allow list here — a tool matched by one
           // never reaches the callback, and the callback is the gate. (D10)
           canUseTool: (first, second) => this.decide(first, second),
@@ -429,7 +454,10 @@ export class CmsAgent {
   private async decide(first: unknown, second: unknown): Promise<PermissionResult> {
     const { tool, input } = resolveToolCall(first, second);
 
-    if (READ_ONLY_TOOLS.has(tool)) {
+    // The profile's list, not the module constant: a run with the bundled MCP
+    // server attached also auto-allows that server's read tools, and a run
+    // without it must not auto-allow names that are not even connected.
+    if (this.context.profile.readOnlyTools.includes(tool)) {
       return { behavior: 'allow', updatedInput: input };
     }
 
@@ -519,6 +547,7 @@ export class CmsAgent {
           parts.push(`$${cost.toFixed(4)}`);
         }
         this.reporter.append(msg['is_error'] === true ? 'error' : 'result', parts.join(' · '));
+        this.meter(msg);
         return;
       }
       default:
@@ -526,6 +555,33 @@ export class CmsAgent {
         // `stream_event` (per-token deltas) are deliberately not rendered.
         return;
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Metering
+  // -------------------------------------------------------------------------
+
+  /**
+   * Record what the run cost, in the shape the fleet's CI ledger uses, so one
+   * reader adds up both. Fire-and-forget: a meter that cannot write is a line
+   * in the transcript, never a failed run — and never a silent one either,
+   * which is why the rejection is reported rather than swallowed.
+   */
+  private meter(message: Record<string, unknown>): void {
+    const target = this.context.usageLedgerPath;
+    if (target === null) {
+      return;
+    }
+    const record = usageRecordFrom(message, {
+      agent: this.role,
+      model: this.model,
+      repo: this.context.repo,
+      workspaceRoot: this.repoRoot,
+      startedAt: this.startedAt,
+    });
+    void appendUsageRecord(target, record).catch((error: unknown) => {
+      this.reporter.append('system', `Could not record AI usage: ${describeError(error)}`);
+    });
   }
 }
 
@@ -638,9 +694,52 @@ export function describeTool(
         detail: description ? `# ${description}\n${clamp(command)}` : clamp(command),
       };
     }
-    default:
+    default: {
+      const mcp = parseMcpToolName(tool);
+      if (mcp !== null) {
+        // An MCP call used to land here as `mcp__zer0-cms__zer0_publish` over an
+        // opaque JSON blob, which is the least useful card this panel can draw:
+        // the one class of tool whose *arguments* are the whole decision. Name
+        // the server, the tool and the arguments instead.
+        return {
+          summary: `${mcp.tool} · ${mcp.server}${describeMcpArgs(input)}`,
+          detail: `# ${mcp.server} → ${mcp.tool}\n${dump()}`,
+        };
+      }
       return { summary: tool || '(unnamed tool)', detail: dump() };
+    }
   }
+}
+
+/** `mcp__zer0-cms__zer0_publish` → `{ server: 'zer0-cms', tool: 'zer0_publish' }`. */
+export function parseMcpToolName(tool: string): { server: string; tool: string } | null {
+  const match = /^mcp__([^_]+(?:_[^_]+)*)__(.+)$/.exec(tool);
+  const server = match?.[1];
+  const name = match?.[2];
+  return server === undefined || name === undefined ? null : { server, tool: name };
+}
+
+/** The arguments of an MCP call, on one line: `(path=a.md, confirm=true)`. */
+function describeMcpArgs(input: ToolInput): string {
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(input)) {
+    if (value === undefined || value === null) {
+      continue;
+    }
+    const flat =
+      typeof value === 'string'
+        ? value
+        : typeof value === 'number' || typeof value === 'boolean'
+          ? String(value)
+          : Array.isArray(value)
+            ? `[${value.length}]`
+            : '{…}';
+    parts.push(`${key}=${truncate(flat, 40)}`);
+    if (parts.length === 4) {
+      break;
+    }
+  }
+  return parts.length === 0 ? '' : ` (${parts.join(', ')})`;
 }
 
 /**

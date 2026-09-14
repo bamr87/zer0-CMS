@@ -26,12 +26,13 @@ The second rule follows from the first: **zero runtime dependencies**. YAML subs
 | `analytics/` | The read surface, and the join that turns a platform's statistics into `performance.json`. |
 | `portfolio/` | The published track record: volume, cadence, streak, collections. |
 | `media/` | Resolving the preview image a page already has, or emitting the generator's brief. |
+| `platform/` | What kind of site this is (decision D12): seven profiles as data, the zer0-mistakes overlay on Jekyll, marker-file detection over injected readers, the site's own config, and the permalink and content-root derivations. See `platform/README.md`. |
 | `fleet/` | The Fleet console's pure half: `fleet.manifest.yml` → typed lanes, the switch/dispatch gate, and the GitHub surface declared as data over an injected `fetch`. See `fleet/README.md`. |
 | `index.ts` | The barrel. Import from `../core`, not from individual files, outside of core itself. |
 
 ## Where a type lives
 
-Cross-cutting domain types are declared **once**, in `shared/types.ts`: `Zer0Config`, `Field`, `ContentType`, `ContentFolder`, `FieldGroup`, `PageEntry`, `ContentRecord`, `CmsIssue`, `PerfStats`, `Severity`, `Lane`, `Freshness`, `LogSink`, and the fleet vocabulary `FleetManifest`, `FleetLane`, `FleetTrigger`, `FleetGuardrails`, `FleetToken`, `FleetConfig`.
+Cross-cutting domain types are declared **once**, in `shared/types.ts`: `Zer0Config`, `Field`, `ContentType`, `ContentFolder`, `FieldGroup`, `PageEntry`, `ContentRecord`, `CmsIssue`, `PerfStats`, `Severity`, `Lane`, `Freshness`, `LogSink`, the platform vocabulary `PlatformId`, `PLATFORM_IDS`, `PlatformOverlay`, `PlatformConfig`, `PlatformProbe`, `RootMode`, `DatePrefixRule`, `PlatformContentRoot`, `PlatformProfile`, `PlatformProfileJson`, `SiteConfigFacts`, `ResolvedPlatform`, and the fleet vocabulary `FleetManifest`, `FleetLane`, `FleetTrigger`, `FleetGuardrails`, `FleetToken`, `FleetConfig`.
 
 Types owned by a single module stay with that module and are re-exported by the barrel: `FmValue`/`FrontMatter` (`content/frontmatter.ts`), `DraftFile` (`governance/drafts.ts`), `GuardFinding` (`governance/guard.ts`), `LedgerEntry`/`Ledger` (`governance/ledger.ts`), `Blocker` (`governance/approval.ts`), `Contract` (`contract/contract.ts`), `FleetBlocker`/`FleetLaneState` (`fleet/fleet.ts`), `FleetCall`/`FleetClient` (`fleet/github.ts`).
 

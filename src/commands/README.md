@@ -1,6 +1,6 @@
 # `src/commands/` — the command layer
 
-Thirty-eight commands, seven files, and one rule that matters more than the other thirty-seven: **`governance.ts` and `fleet.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below.
+Fifty-four commands, ten files, and one rule that matters more than the other fifty-three: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -15,9 +15,12 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `contentType.ts` | `contentType.generate`, `contentType.addMissingFields`, `contentType.set` | 253 |
 | `governance.ts` | `draft.new`, `draft.review`, `draft.approve`, `draft.publish`, `draft.guard`, `draft.preview` | 676 |
 | `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 320 |
-| `agent.ts` | `agent.open`, `agent.start`, `agent.stop`, `mcp.writeWorkspaceConfig` | 194 |
-| `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane` | 574 |
-| `index.ts` | barrel + `ALL_COMMAND_IDS` | 128 |
+| `agent.ts` | `agent.open`, `agent.start`, `agent.runAsRole`, `agent.stop`, `mcp.writeWorkspaceConfig` | 532 |
+| `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane`, `fleet.rerunLastFailure`, `fleet.cancelNewest`, `fleet.toggleWorkflowFile`, `fleet.openInGitFactory`, `fleet.importHubRoster`, `monitor.open` | 1896 |
+| `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 761 |
+| `site.ts` | `site.pick`, `site.setActive`, `site.preview` | 236 |
+| `harness.ts` | `harness.open`, `workflows.open`, `lane.scaffold` | 1251 |
+| `index.ts` | barrel + `ALL_COMMAND_IDS` | 136 |
 
 `dashboard` and `dashboard.close` are registered by `extension.ts`, beside the panel object they operate on. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
 
@@ -60,17 +63,80 @@ in the core, and no surface offers a way around it. A workspace that has not set
 
 The draft's status is flipped **after** the target reports success. A target failure must never leave a queue file claiming it published. A *ledger skip* — the URL was already recorded — still flips it, because the artifact genuinely is out there; that matches the CI lane, and the two have to agree.
 
+### The same gate, for the audit's fix-it
+
+`doFixIssue` in `audit.ts` is the third pair's single half, and it is the strictest of the three because it rewrites a file in the repository rather than a queue file or a remote variable. The webview posts `{type:'command', id:'audit.fix', args:{path, kind}}` — a file and a rule id, never a change set — and the host then, in this order: re-reads the configuration with `currentConfig()`; re-reads the **whole site** from disk through `scanSite`, which re-detects the platform, rebuilds the page index and re-reads every block; re-runs `auditPage` for that one file and looks the finding up **again** by `kind`; asks `fixFor` for the change set; renders it through `dryRunFix`; opens the two sides in a real diff editor over the `zer0cms-audit:` `TextDocumentContentProvider` this module registers; asks modally, naming the file, the rule and the change; and only then calls `writeArticle`.
+
+The re-lookup in step three is the point of the whole ordering. A `kind` that no longer fires means the file changed under the person between the scan and the click, and applying `missing-key:date` to a file that has since acquired a date would write a second, wrong one. It refuses, in words, and says why. `fixFor` returning `null` — every rule for which no mechanical repair is honest — is the same kind of refusal, and so is every case `dryRunFix` declines: TOML and JSON front matter, a nested path under a scalar, and any block the parser could not read.
+
+Both sides of the diff are **virtual**. Diffing the proposal against the `file:` URI would compare it with whatever an unsaved editor buffer happens to hold, and the bytes this flow read from disk are the bytes it is proposing to rewrite; showing anything else would be showing a diff of a different question.
+
+`auditDryRun(shell, target)` is the read-only half of the same derivation — the `auditDryRun` request the Audit tab's "Preview the fix" button makes — and both it and `doFixIssue` go through one `deriveFix`, because a preview computed by a different code path from the write it previews is a preview of a different question. `auditStateFrom` / `auditStateFromScan` build the `AuditState` slice the dashboard renders: they live here rather than in `dashboardPanel.ts` because two things in that slice are derivations rather than copies — the collection per finding (the last segment of its page's registered folder, mirroring the private `collectionNameOf` in `core/content/audit.ts`) and the `scanned` count folded in beside the three severities — and a second copy of either would be a second answer to the same question.
+
+`scanSite` also fills in `contentFolders` through `withPlatformDefaults` when the workspace registered none — that is what lets the audit read a sister site's 382 pages the first time it is opened rather than the zero folders it declared — and the `cfg` it returns, folders and all, is the one the fix is computed against.
+
+### The same gate, for writing a lane
+
+`doScaffoldLane` in `harness.ts` is the fourth pair's single half, and it is the strictest of the four because what it writes is a **workflow file**: a lane that, once its variable exists, spends tokens on a schedule with nobody watching. The webview posts `{type:'command', id:'lane.scaffold', args:{spec:'<lane id>'}}` — a lane id, never the rendered files and never the plan the screen just drew — and the host then, in this order: re-reads the configuration with `currentConfig()`, with the master gate `zer0Cms.fleet.scaffoldAllow` read from the settings layer alone through `settingsFleetScaffoldAllow()` (which re-asks Workspace Trust itself, so an untrusted folder refuses without a fifth trust check in this file); re-reads the harness inventory **and** the manifest from disk; re-reads the lane's description from the whitelisted UI state the host itself persisted, never from the message; plans **once** with `planScaffold`, passing `selfAudit` — this is the only place in the extension that does, because the engines seam is admitted to `dist/extension.js` alone; re-runs `evaluateFleetGates('scaffold', …)` over `scaffoldGateFacts` and refuses in the blockers' own words; and only then asks, modally.
+
+Two things about that modal are the point of the whole command.
+
+1. **It lists every file it would write**, with its byte count, and says that
+none of them exists. Nothing is summarised into "3 files".
+2. **It names the `*_ENABLED` variable it is NOT creating**, last and on its
+own. Writing a file somebody then commits and reviews is one power; arming a lane to run is another, and bundling them is how a person ends up with a live loop they only meant to draft. `doScaffoldLane` holds only the first, and `switchToCreateLater` is a note in the plan rather than an action anywhere.
+
+Two gates, because there are two questions. `evaluateFleetGates('scaffold', …)` answers *may this console write here* — the master switch, a lane id the manifest already declares, a file already at that path, a variable another lane claims, a lane the generators refuse. `preflightLaneSpec` and the engines' rulebook (both folded into `plan.audit`) answer *is this a lane worth writing* — a missing kill switch, a cron on the hour, a `secrets.X || …` presence chain. An `error`- or `fail`-severity finding refuses the write and names itself. That second half is enforced in the command rather than in the gate on purpose: the gate's blocker order is a pinned contract other surfaces render, and a house rule arriving as a sixth scaffold blocker would renumber it.
+
+The write itself is exclusive (`flag: 'wx'`), one file at a time, with the manifest last — a failure never leaves a manifest declaring a lane whose file is absent — and every path is checked to resolve inside the workspace root and never to be a `factory--*.yml`, which is GitFactory's compiled output and not this console's to own. **There is no `force` here.** The MCP tool has one, for the reason `publishPreview` does; nothing reachable from a keystroke passes it.
+
+`harnessStateFrom`, `lanePassportsFrom`, `workflowsStateFrom` and `lanePreview` are the read-only half — the two dashboard slices and the `lanePreview` request — and they live beside the gate for the reason `auditStateFrom` does: the profile's runner line and the lane passports' expressibility verdict are derivations, and a second copy of either would be a second answer to the same question.
+
 ### The same gate, for the fleet
 
-`doToggleSwitch` and `doDispatchLane` in `fleet.ts` are the second pair, and they follow the diagram above line for line: `currentConfig()` uncached (with `zer0Cms.fleet.dispatchAllow` read from the settings layer alone through `settingsFleetDispatchAllow()`), `readFleetManifest()` from disk, `evaluateFleetGates()`, then `confirm()` naming the repository, the lane, the variable and the value. The dashboard's Fleet tab posts `{type:'command', id:'fleet.toggleSwitch', args:{lane}}` — a lane id and nothing else. A toggle's new value is `nextSwitchValue()` of the variable as GitHub reports it inside the action; `unknown` has no next value, so a failed read refuses rather than guesses.
+`fleet.ts` holds **five** privileged verbs, and every one follows the diagram above line for line: `currentConfig()` uncached (with `zer0Cms.fleet.dispatchAllow` read from the settings layer alone through `settingsFleetDispatchAllow()`, **for the target repository's own folder**, because the setting is `resource`-scoped and arming one site must arm one site), `readFleetManifest()` from disk, `evaluateFleetGates()` for that verb's own mode, then `confirm()` naming the repository, the lane and exactly what is about to happen.
 
-**Decision D11** lives in this file's header. `extension.ts` still does no network and no auth on activation; the GitHub session is obtained lazily inside the action, every request goes through the `fetch` injected into `core/fleet/github.ts` (and is checked against `FLEET_PLAN` before it is sent), and no token is stored — the client asks VS Code for the session per request. Opening the tab is a passive read that never prompts; `fleet.refresh` is the interactive one.
+The dashboard posts `{type:'command', id:'fleet.<verb>', args:{repo, lane}}` — a repository slug and a lane id and nothing else. **Both are targets, neither is a value.** `repo` selects which roster row was clicked and is resolved against a roster the host builds itself from folders this window has open; a slug naming nothing this window has a checkout of is refused outright, because step 2 of the gate is "re-read the manifest from disk" and there is no disk to read.
+
+| Verb | Where the value comes from | What the modal says it does |
+|---|---|---|
+| `doToggleSwitch` | `nextSwitchValue()` of the variable as GitHub reports it inside the action | ON means the lane runs on its schedule spending its tokens; OFF means scheduled runs skip and `workflow_dispatch` still bypasses it. `unknown` has no next value, so a failed read refuses rather than guesses |
+| `doDispatchLane` | the default branch, read inside the action | queues exactly one run; merges nothing — the lane opens a pull request for a person, or it does nothing |
+| `doRerunLastFailure` | the newest `completed` non-`success` run in the bounded page **the last Refresh read**, joined to this lane host-side | re-running queues a **new attempt**; the original attempt stays on the record with its logs, and nothing is overwritten or deleted |
+| `doCancelNewest` | the newest run in that same page whose status is not `completed` | cancelling stops what is in flight and leaves the run recorded as **cancelled** — not removed, and not failed; work it had already done stays done |
+| `doToggleWorkflowFile` | the registered workflow `listWorkflows()` returned for this lane, and its direction from that state | disabling registers the workflow `disabled_manually` and **does not touch the file** — which is why it is not an edit, and why a person who wants the lane gone still has to delete the file and commit that |
+
+A run id is never in a message. A webview that wanted to re-run something else would have to change what Refresh read, which is a different program.
+
+**One Refresh is four calls, per repository, never per lane.** `readLive` asks for every Actions variable (which answers every lane's switch *and* the three merge-policy variables in one reply), every registered workflow with its state, one bounded page of recent runs, and one bounded page of open pull requests — then joins all four to the manifest's lanes locally. Slice 1 asked per lane and cost 2N; lifehacker's seventeen lanes and fourteen gated switches made that thirty-one requests for one screen. Each of the four fails on its own: a 403 on the variables leaves every switch `unknown` and names the failure in a note, and does not blank the runs beside it. Cost, the audit grade and the drift rows are read from the **checkout on disk** and add no calls at all.
+
+A rostered repository this window has no folder for costs **five**: `refreshRemote` reads its manifest with the declared contents call (whose own `returns` sentence names a manifest as one of the three things it is for) and then makes the same four. What it comes back without is the grade, the drift and the cost — all three are functions of files in a checkout, and fetching them would be one request per workflow file — so they stay `null`, the Monitor renders them unknown, and the row's note says why. No privileged verb is offered on such a row, because step 2 of every gate is "re-read the manifest from disk". Reading is safe; acting on a manifest nobody can re-read is not.
+
+**The roster comes from three places, and the precedence is about what can be read without a socket.** Every open folder carrying a readable manifest (`workspace`), plus `zer0Cms.fleet.roster` read from the settings layer alone (`settings`, so a cloned `zer0.json` cannot add a repository), plus — only after an explicit `fleet.importHubRoster` — the hub's own `_data/projects.yml` (`hub`). `mergeFleetRoster` keeps the record that has a local root, because that one is readable now, offline, at whatever commit is checked out.
+
+`fleet.openInGitFactory` builds the deep link with `gitFactoryLink` and hands it to `openExternal`: **building a URL opens no socket; the browser does.** `fleet.importHubRoster` is the only thing here that reaches a repository nobody named, which is exactly why it is a command a person invokes rather than something a tab open does.
+
+**Decision D11** lives in this file's header. `extension.ts` still does no network and no auth on activation; there is no timer, no watcher and no poll anywhere in this file. The GitHub session is obtained lazily inside the action, every request goes through the `fetch` injected into `core/fleet/github.ts` (and is checked against `FLEET_PLAN` before it is sent), and no token is stored — the client asks VS Code for the session per request. Opening the Fleet tab is a passive read that never prompts; opening the Monitor tab reads **nothing at all**, because a tab that fanned out four calls per repository on open would be exactly the ambient traffic D11 forbids. Refresh is per repository, from the row a person clicked.
 
 ---
 
+## `agent.runAsRole` — the repository's own roles, with a human in front of them
+
+The fleet's CI lanes run as a role: `--agent grow-lifehacker`, resolved against `.claude/agents/grow-lifehacker.md`. `agent.runAsRole` offers that same list — read from the open folder, never from a list this extension carries — and starts the SDK with that agent, its model and its tools. The differentiator versus a lane is deliberately **the human gate**, not a second runner: same role, same model, and every mutating call still on the approval card.
+
+The same QuickPick offers **"Copy the CI equivalent"**, which renders the run as either a `scripts/ai/run.sh` invocation or the `with:` block of a caller of the hub's reusable `ai-lane.yml`, so a run that works in the editor can move into a workflow without being re-derived. It emits only what the resolved profile actually knows — `lane`, `switch` and `prompt` stay placeholders, because filling them would be this console writing a workflow field it derived rather than read.
+
+Three helpers in this file are the shell half of `src/core/harness/`, which is pure and takes its I/O as a parameter: `workspaceHarnessIo(root)` (the injected filesystem), `agentMcpServer(shell, configFile)` (how to spawn the bundled MCP server as a child of a run, with an `env` carrying only which project file to read), and `resolveProfileFor(...)` (reads the repository's agents, skills and `_data/ai.yml`, then hands them to `resolveHarnessProfile`, which decides). `readRepoSlug(root)` reads `.git/config` — a file, not a socket — so a metered editor run carries the same `owner/name` a lane's ledger row does.
+
+## The lane form: fourteen keys the host owns
+
+`LANE_FIELDS` in `harness.ts` is the fourteen things a person fills in to describe a lane — id, kind, verb, description, agent, skill, switch, cron, prompt, tools, result file, dispatch-bypasses-switch, timeout and model. Everything else in a `LaneSpec` is *derived*: the project name from the manifest's repository, the platform from detection (decision D12), the runtime `setup-*` from the resolved profile's own serve/build command, the permissions pair, and the system prompt. A form with forty rows is a form nobody fills in, and half a lane spec is a consequence of the other half.
+
+Those values are a **draft, not a setting**, so they travel through `setUiState` rather than `updateSetting`: `LANE_UI_STATE_KEYS` maps each protocol key to its workspace-state id, the dashboard host merges that table into its own `UI_STATE_KEYS` whitelist, and `WorkflowsState.form` offers exactly those keys back — so the webview can only ever hand back a key the host itself named. `doScaffoldLane` then re-reads them from workspace state rather than from the message that triggered it, which is what makes "the message carries a lane id and nothing else" true rather than aspirational. When the id in the staged form and the id in the message disagree, it refuses and says so: the person edited the form after clicking, and acting on either answer would be acting on something nobody asked for.
+
 ## Trust is re-checked inside the function
 
-Five paths in this extension can start a process (decision D13), and three of them are reachable from this directory: the content engine and the front-matter normalizer in `contract.ts`, a `placeholders[].script` through `content.ts`, and the AI agent through `agent.ts`. Every one re-asks `workspaceTrusted()` **inside the handler**. A `when` clause on a menu entry is a hint to the menu system; `capabilities.untrustedWorkspaces` drops only the *workspace-scoped* value of a restricted setting, so a `true` in somebody's user settings still arrives in a folder they just cloned; and the `zer0Cms:workspace:trusted` context key is a mirror that is only as fresh as the last time somebody set it. None of those is a gate.
+Five paths in this extension can start a process (decision D13), and all five are now reachable from this directory (`site.preview` is a sixth *surface* but not a sixth vector — it starts a `vscode.Task`, which the person sees and owns): the content engine and the front-matter normalizer in `contract.ts`, a `placeholders[].script` through `content.ts`, the AI agent through `agent.ts`, and the site's own verification command through `audit.ts`. Every one re-asks `workspaceTrusted()` **inside the handler**. A `when` clause on a menu entry is a hint to the menu system; `capabilities.untrustedWorkspaces` drops only the *workspace-scoped* value of a restricted setting, so a `true` in somebody's user settings still arrives in a folder they just cloned; and the `zer0Cms:workspace:trusted` context key is a mirror that is only as fresh as the last time somebody set it. None of those is a gate.
 
 - **`contract.ts`** — `requireTrust()` runs beside `requireWorkspace()` in all
 three spawning handlers, and offers `workbench.trust.manage`. The core refuses a second time inside `runEngine`/`runNormalizer*`, as a value (`code: 1`, the reason on `stderr`), because "nothing rejects" is that module's older promise. Two checks on purpose: this one so a person reads a sentence, that one so no caller anywhere can spawn by forgetting. `engineFor(cfg)` is where trust and the interpreter's provenance are attached — `engineLayer()` over the settings snapshot's `cms` group and `zer0.json`'s, so the output channel can say whether the command about to run was named by a human or arrived with the clone.
@@ -78,8 +144,8 @@ three spawning handlers, and offers `workbench.trust.manage`. The core refuses a
 callback with `setPlaceholderTrust(workspaceTrusted)` at activation, because `src/core` cannot import `vscode` and its built-in default refuses. `createInto` then re-asks: creation still proceeds — editing front matter is allowed in an untrusted workspace — but when any placeholder names a script the person is told, before the file is written, that those tokens will come out as `<failed to process>`.
 - **`agent.ts`** — `readyHost()` checks trust *before* `agent.enabled`, because
 an untrusted folder is not a settings problem and offering "Enable it" would be the wrong sentence. `AgentPanel.start()` checks again, since the panel's composer reaches `start()` without passing through a command.
-
-The verify command is the fourth vector and has no handler here yet. When it gets one, it must call `runVerifyCommand` in `src/core/contract/engine.ts` rather than spawning: `node:child_process` is fenced by eslint to that file and `src/core/content/placeholders.ts`, which is what keeps the gate un-routable-around.
+- **`audit.ts`** — `doVerify` is the fifth vector's handler. It re-asks
+`workspaceTrusted()` before it even splits the argv, offers `workbench.trust.manage`, and then calls `runVerifyCommand` in `src/core/contract/engine.ts` rather than spawning: `node:child_process` is fenced by eslint to that file and `src/core/content/placeholders.ts`, which is what keeps the gate un-routable-around. The core refuses a second time inside the runner, as a value. An **unset** `zer0Cms.cms.verifyCommand` is a normal state rather than an error — most sites have no single verification entry point — and it is reported as the sentence that names the setting. `audit.fix` is deliberately *not* trust-gated: editing front matter is what decision D13 explicitly still allows in an untrusted workspace.
 
 ---
 
@@ -116,11 +182,28 @@ Both `set*` functions return a `Disposable` that unhooks only if the registratio
 
 ---
 
-## Command arguments arrive in four shapes
+## Command arguments arrive in four shapes — and name a site
 
 The same command is invoked from the palette (no argument), the explorer context menu (a `Uri`), a tree row (a `TreeItem` subclass), and a webview (a string, or `{draftPath}`). `toFilePath(cfg, arg)` in `project.ts` and `draftPathFrom(cfg, arg)` in `governance.ts` are the two coercions; every handler starts with one of them and falls back to a `showQuickPick`.
 
 A webview's string may be **workspace-relative** — it renders relative paths, so it names them that way — which is why the coercion takes a `Zer0Config`.
+
+### `siteTarget(arg)` — the multi-root half, and why it exists
+
+A command invoked on a file must act on **that file's** site, not on whichever one the console is pointed at. Approve a draft in one repository while the active site is another and the gate would read the wrong banned-patterns file, the wrong ledger and the wrong publish target — and every one of those would look like it worked.
+
+`siteTarget(arg)` in `project.ts` is that resolution, in two passes:
+
+1. `toFilePath(currentConfig(), arg)` resolves the argument. A `Uri` or an
+absolute path passes through; a **relative** string resolves against the active site, which is right by construction — a webview names the paths of the site it is showing.
+2. The owning folder of that absolute path decides the configuration
+(`siteConfigFor`). A second `currentConfig()` is paid for only when the file is in a different folder from the active one; a file outside every open folder falls back to the active site, exactly as before multi-root.
+
+Where a command already has the path, `siteConfigFor(filePath)` is the same second half on its own — that is what `collectGateContext` and `doGuard` in `governance.ts` call.
+
+Commands with **no** file argument act on the active site, and the ones that write in bulk say which site that is: `contract.normalizeApply`'s modal names the folder, because "Rewrite front matter across the configured content directories?" in a twelve-folder window is a dialog nobody can safely answer.
+
+`site.ts`'s own three commands take a site **id** and look it up in `SiteRegistry` — never a path they then trust. `site.preview` runs the detected platform's `commands.serve` through `vscode.tasks` rather than spawning: `node:child_process` is fenced out of this directory by eslint, and a task is something a person can see in the terminal panel and stop from it. It refuses in words for an untrusted workspace, a virtual folder, and a platform whose profile declares no serve command.
 
 ---
 

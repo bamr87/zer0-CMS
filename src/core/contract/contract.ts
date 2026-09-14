@@ -31,6 +31,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { buildIndex, pageToRecord, type IndexCache } from '../content/pageIndex';
+import { JEKYLL_PROFILE } from '../platform/profiles/jekyll';
 import { atomicWriteFile } from '../shared/atomic';
 import { absPath } from '../shared/config';
 import { pyJsonDump } from '../shared/jsonio';
@@ -44,6 +45,7 @@ import {
   type Lane,
   type LogSink,
   type PerfStats,
+  type PlatformProfile,
   type Severity,
   type Zer0Config,
 } from '../shared/types';
@@ -539,11 +541,17 @@ export interface ContractScan extends Contract {
  * `cache` is optional in both directions: pass one to make the scan warm, keep
  * the one that comes back to make the next one warm too. A caller that ignores
  * it gets exactly today's behaviour, a cold scan every time.
+ *
+ * `profile` reaches the fallback scan, not the contract: a repository that has
+ * adopted `.cms/` has already answered every question a profile answers, and
+ * overruling its engine with a guess about its generator would be the opposite
+ * of decision D9.
  */
 export async function loadContractOrScan(
   cfg: Zer0Config,
   log: LogSink = NOOP_LOG,
   cache?: IndexCache,
+  profile: PlatformProfile = JEKYLL_PROFILE,
 ): Promise<ContractScan> {
   const loaded = await loadContract(cfg.workspaceRoot, { dir: absPath(cfg, cfg.cms.root) });
   const contract: ContractScan = { ...loaded, cache };
@@ -551,8 +559,8 @@ export async function loadContractOrScan(
     return contract;
   }
   try {
-    const scan = await buildIndex(cfg, cache, log);
-    contract.records = scan.pages.map((page) => pageToRecord(cfg, page));
+    const scan = await buildIndex(cfg, cache, log, profile);
+    contract.records = scan.pages.map((page) => pageToRecord(cfg, page, undefined, profile));
     contract.cache = scan.cache;
   } catch (error) {
     // A scan failure degrades to "no records", never to a thrown promise: the
@@ -589,8 +597,17 @@ export function distributable(contract: Contract): ContentRecord[] {
  * refers to it says "hello". Path matches win over stem matches, and an exact
  * stem wins over a date-stripped one, so an unambiguous reference is never
  * resolved to the wrong file.
+ *
+ * *Which* prefix counts as a date is the platform's answer, not this module's
+ * (decision D12): on Hugo the digits are part of the name and stripping them
+ * would resolve a reference to a page nobody meant. `JEKYLL_PROFILE` carries
+ * the pattern this function used to inline, so the default is unchanged.
  */
-export function byPath(contract: Contract, pathOrSlug: string): ContentRecord | undefined {
+export function byPath(
+  contract: Contract,
+  pathOrSlug: string,
+  profile: PlatformProfile = JEKYLL_PROFILE,
+): ContentRecord | undefined {
   const wanted = pathOrSlug.trim();
   if (wanted === '') {
     return undefined;
@@ -599,12 +616,13 @@ export function byPath(contract: Contract, pathOrSlug: string): ContentRecord | 
   return (
     contract.records.find((record) => record.path === posix || record.path === wanted) ??
     contract.records.find((record) => recordSlug(record) === wanted) ??
-    contract.records.find((record) => stripDatePrefix(recordSlug(record)) === wanted)
+    contract.records.find((record) => stripDatePrefix(profile, recordSlug(record)) === wanted)
   );
 }
 
-function stripDatePrefix(stem: string): string {
-  return stem.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+function stripDatePrefix(profile: PlatformProfile, stem: string): string {
+  const re = profile.frontMatter.filenameDate;
+  return re === null ? stem : stem.replace(re, '');
 }
 
 /** Records grouped by collection, collections in insertion order. */

@@ -16,6 +16,9 @@ dist/panel.js
 media/base.css
 media/dashboard.css
 media/panel.css
+media/templates/agent.template.md
+media/templates/ai-lane.template.yml
+media/templates/ai-runner.VERSION
 media/tokens.css
 media/zer0-cms-128.png
 media/zer0-cms-activity.svg

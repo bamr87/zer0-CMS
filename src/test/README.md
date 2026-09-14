@@ -56,3 +56,11 @@ npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet}.test.js
 ```
 
 `extension.test.ts` needs the extension host and `mcp.test.ts` needs `dist/mcp-server.js`, so neither is in that list. On a headless Linux box `npm test` shells out to `xvfb-run` for you (see `test-runner.js`); set `ZER0_CMS_NO_XVFB=1` to force the plain path.
+
+## The multi-root suite
+
+`src/test/multiroot.test.ts` runs under its own `defineConfig` entry in `.vscode-test.mjs`, against `src/test/fixtures/multi.code-workspace` — two folders, one Jekyll and one MkDocs, one configured through a folder-scoped setting and the other through its own `zer0.json`. Run it with `npx vscode-test --label multiroot`.
+
+It declares its own precondition and skips itself in a window with fewer than two folders, which is why the single-root run reports it as pending rather than failing: `@vscode/test-cli` hands `files` straight to `glob`, and `glob` does not honour a `!` negation, so the first entry's pattern matches this file too.
+
+What it pins: two stores with distinct cache keys, each reading its own `zer0.json`; that the registry watches but **scans nothing** at activation; that the active site follows the active editor until a person picks one, and then stops; that a file-targeted command resolves its own site from a Uri, an absolute path, or falls back to the active site for a relative one; that the MCP provider offers one server per configured site with distinct working directories; that a folder-scoped `publishAllow` arms only its own server; and that a store whose resolver reports no folder installs zero watchers.

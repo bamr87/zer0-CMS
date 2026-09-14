@@ -20,8 +20,10 @@ Three layers, and the boundary between them is enforced by the build rather than
 | `extension.ts` | `activate()` in twelve ordered steps. Wires; never implements. |
 | `config.ts` | The only translator between VS Code settings + `zer0.json` and the core's `Zer0Config`. |
 | `logger.ts` | An `OutputChannel` wearing the core's `LogSink` face. |
-| `store.ts` | `WorkspaceStore` — one `Snapshot` that all four trees and both webviews read. |
-| `uiState.ts` | The nine context keys, the status bar item, the notification helpers. |
+| `store.ts` | `WorkspaceStore` — one `Snapshot` per site, read by the trees and both webviews. |
+| `sites.ts` | `SiteRegistry` — one store per open folder, which one is active, the resolver `config.ts` asks, and the Sites view model. |
+| `siteRule.ts` | `resolveActiveSite` — the active-site rule, pure, so the fast suite can test it. |
+| `uiState.ts` | The eleven context keys, the status bar item, the notification helpers. |
 | `diagnostics.ts` | Required-field diagnostics, drawn inside the front-matter block. |
 | `mcpRegistration.ts` | The two-phase MCP server definition provider, plus the `.vscode/mcp.json` fallback. |
 
@@ -31,11 +33,13 @@ Everything above is called by `commands/`, `views/`, `panel/`, `dashboard/` and 
 
 ## Five things that are easy to get wrong
 
-### 1. `currentConfig()` is not cached, and `explicit()` is why the three layers work
+### 1. `currentConfig()` is not cached, `explicit()` is why the three layers work, and the scope is the site
 
 Every one of the 38 contributed settings declares a default in `package.json`, so `getConfiguration('zer0Cms').get('governance.publishAllow')` returns `false` even for a user who has never opened the settings UI. If the settings layer were built from `get()`, it would always have a value, and `zer0.json` could never win for any key that also has a setting — three layers collapsing into one. `config.ts` therefore reads through `inspect()` and keeps only the values a human actually set (folder → workspace → global scope).
 
-Nothing is cached. `currentConfig()` re-reads the settings and re-parses `zer0.json` on every call. That is what makes "flip `zer0Cms.governance.publishAllow` and the next publish gate sees it" true without a window reload.
+Nothing is cached. `currentConfig()` re-reads the settings and re-parses `zer0.json` on every call. That is what makes "flip `zer0Cms.governance.publishAllow` and the next publish gate sees it" true without a window reload. Multi-root did not change that and must not: if a per-site console is too slow, say so — do not put a cache behind the rule.
+
+Every file-layer function takes an optional `scope`, and `SiteRegistry` installs the resolver that answers it. So `currentConfig()` with no argument means **the active site** rather than "folder zero", and `currentConfig(uri)` means "the site that owns that file". A command invoked on a file resolves the second — `siteTarget(arg)` in `commands/project.ts` is the one helper that does it, and the reason it exists is a bug class: approving a draft in one repository while the console is pointed at another would read the wrong banned-patterns file, the wrong ledger and the wrong publish target, and every one of them would look like it worked.
 
 ### 2. The store coalesces, debounces, and re-arms
 
@@ -48,11 +52,13 @@ Nothing is cached. `currentConfig()` re-reads the settings and re-parses `zer0.j
 - Watchers are disposed and rebuilt on a settings change, a `zer0.json` change
 or a workspace-folder change. Content folders are configuration, so a config change *is* a watcher change.
 - A folderless window installs **zero** watchers and makes **zero** filesystem
-  calls; `emptySnapshot()` is a real, renderable `Snapshot`.
+calls; `emptySnapshot()` is a real, renderable `Snapshot`. That is now a property of the *resolver* as much as of the store: `WorkspaceStore` asks `workspaceRoot(this.folder)`, and a resolver that fell back to `workspaceFolders[0]` would make a folderless store watch a folder nobody gave it. `multiroot.test.ts` pins it from that side.
+- **One store per open folder.** `SiteRegistry` builds them, keeps them across a
+folder change rather than re-creating them, and disposes the ones whose folder closed. N stores are N watcher sets and **zero** scans: the first scan is still the background refresh `extension.ts` kicks off for the active site, and the other sites are read when a surface asks (`refreshAll()`, from the Sites tab).
 
-### 3. Context keys: nine, and every one gates something
+### 3. Context keys: eleven, and every one gates something
 
-`zer0Cms:enabled`, `:file:isValid`, `:dashboard:open`, `:governance:enabled`, `:contract:present`, `:agent:enabled`, `:agent:running`, `:folder:registered`, `:fleet:enabled`.
+`zer0Cms:enabled`, `:file:isValid`, `:dashboard:open`, `:governance:enabled`, `:contract:present`, `:agent:enabled`, `:agent:running`, `:folder:registered`, `:fleet:enabled`, `:workspace:trusted`, `:sites:multi`.
 
 Upstream shipped fourteen, of which five were dead — including the one gating its *initialize project* command, which made that command unreachable in exactly the workspace that needed it. The rule: grep `package.json` for the key before adding one. `uiState.ts` mirrors each key in memory and only calls `setContext` when the value changes, so the active-editor listener can run on every keystroke without flooding the command bus.
 
@@ -64,7 +70,9 @@ Title length, description length and keyword density are **advice**, and advice 
 
 ### 5. The MCP registration is two-phase, and that is the security design
 
-`provideMcpServerDefinitions` is called eagerly and may be cached, so it returns a definition with an **empty `env`** — command, argv, cwd, version, nothing else. `resolveMcpServerDefinition` runs once, at server start, and is the only place the publish flag and any secret are read.
+`provideMcpServerDefinitions` is called eagerly and may be cached, so it returns definitions with an **empty `env`** — command, argv, cwd, version, nothing else. `resolveMcpServerDefinition` runs once, at server start, and is the only place the publish flag and any secret are read.
+
+It returns **one definition per configured folder**, plus the active one whether or not it carries a project config, each with its own `cwd` and — in a multi-root window — the folder's name in its label. `resolveMcpServerDefinition` then resolves the folder back from the server's own `cwd` and reads every flag scoped to it. That is what makes a `resource`-scoped `governance.publishAllow` mean what it says: arming publishing for the one repository you operate does not arm it for the other eleven folders open in the same window.
 
 The publish flag comes from the **settings** layer, not from the merged configuration. `zer0.json` ships with the repository, and past `ZER0_CMS_MCP_ALLOW_PUBLISH` the only remaining gate on `zer0_publish` is `confirm: true` — a value the model supplies to itself. A cloned repo whose `zer0.json` said `publishAllow: true` would otherwise arm an agent to publish with no human act anywhere in the chain. The in-editor gates keep reading the merged value: they are behind a modal a person answers.
 
