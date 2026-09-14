@@ -6,10 +6,10 @@
 # "Missing X server or $DISPLAY" followed by a SIGSEGV. It is the single most
 # commonly missed piece of a VS Code extension pipeline.
 #
-# The ABC generator's Ruby tests used to live here as a second job. They moved
-# to `abc-engine.yml` so a TypeScript pull request no longer boots a Ruby
-# toolchain it does not use — hence the `paths-ignore` below. `main` is not
-# branch-protected, so a skipped run here is not a required check left pending.
+# Rails stdlib tests live in `abc-engine.yml` so a TypeScript pull request no
+# longer boots a Ruby toolchain it does not use — hence the `paths-ignore`
+# below. `main` is not branch-protected, so a skipped run here is not a
+# required check left pending.
 name: extension
 
 on:

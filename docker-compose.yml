@@ -1,0 +1,38 @@
+# zer0-CMS — fleet CMS platform (Rails) + ABC wizard.
+#
+#   docker compose up --build      # http://localhost:3001
+#
+# Port 3001 so it can sit next to zer0-image-generator on 3000.
+# Jekyll sites are bind-mounted at /sites. ABC export writes into DRSAI_SITE_ROOT.
+
+services:
+  web:
+    build:
+      context: ./rails
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3001}:3000"
+    volumes:
+      - ./rails:/app
+      - bundle:/usr/local/bundle
+      - sqlite:/app/storage
+      - ${SITES_DIR:-..}:/sites
+    environment:
+      RAILS_ENV: development
+      DRSAI_SITE_ROOT: ${DRSAI_SITE_ROOT:-/sites}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      XAI_OAUTH_TOKEN: ${XAI_OAUTH_TOKEN:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 40s
+    stdin_open: true
+    tty: true
+
+volumes:
+  bundle:
+  sqlite:

@@ -1,4 +1,6 @@
-<h1>✅ Exported — <%= @spec.title %></h1>
+<% content_for :title, "Exported — #{@spec.title}" %>
+<% content_for :crumbs do %><%= link_to "ABC books", new_abc_book_path %> / Export<% end %>
+<h1>Exported — <%= @spec.title %></h1>
 
 <div class="card">
   <p>Wrote the book bundle into your drsai checkout:</p>

@@ -1,0 +1,34 @@
+<% content_for :title, "Search" %>
+<div class="page-head">
+  <div><h1>Search</h1><div class="sub">Find content across every registered site.</div></div>
+</div>
+
+<%= form_with url: search_path, method: :get, class: "filter-bar" do %>
+  <%= search_field_tag :q, @q, placeholder: "Title, path, author, tag…", autofocus: true %>
+  <%= submit_tag "Search", class: "btn primary" %>
+<% end %>
+
+<% if @q.length.positive? && @q.length < 2 %>
+  <p class="hint">Type at least two characters.</p>
+<% elsif @hits.any? %>
+  <div class="card pad-0">
+    <table class="list">
+      <thead><tr><th>Site</th><th>Title</th><th>Collection</th></tr></thead>
+      <tbody>
+        <% @hits.each do |site, entry| %>
+          <tr>
+            <td><%= link_to site.name, site %></td>
+            <td>
+              <%= link_to entry.title, item_site_pages_path(site, file: entry.relative) %>
+              <div class="faint mono" style="font-size:.76rem;"><%= entry.relative %></div>
+            </td>
+            <td class="mono faint"><%= entry.collection %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint" style="margin-top:.8rem;"><%= @hits.size %> hit<%= "s" if @hits.size != 1 %><%= " (capped)" if @hits.size >= 80 %>.</p>
+<% elsif @q.length >= 2 %>
+  <div class="empty"><div class="big">⌕</div>No matches for “<%= @q %>”.</div>
+<% end %>

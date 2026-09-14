@@ -1,0 +1,7 @@
+<nav class="tab-row">
+  <%= link_to "Overview", site, class: site_tab_class(controller_name == "sites" && action_name == "show") %>
+  <%= link_to "Content", site_pages_path(site), class: site_tab_class(controller_name == "site_pages") %>
+  <%= link_to "Media", site_media_path(site), class: site_tab_class(controller_name == "site_media") %>
+  <%= link_to "Taxonomy", site_taxonomy_path(site), class: site_tab_class(controller_name == "site_taxonomies") %>
+  <%= link_to "Config", site_config_path(site), class: site_tab_class(controller_name == "site_configs") %>
+</nav>

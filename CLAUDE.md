@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. It applies to any AI coding agent working in **zer0-CMS** (Claude Code, Copilot, Cursor).
 
-zer0-CMS has two halves. `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content: a metadata panel over the active file's front matter, a content dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → idempotency ledger). It was once a fork of Front Matter CMS and keeps that interaction design on purpose, but shares no code with it; see `ATTRIBUTION.md`. `rails/` is the **ABC generator** — a Ruby on Rails app + stdlib-only Ruby library that *generates* content, starting with children's **ABC / alphabet books**: it writes the words, composes a text-free illustration prompt per letter (art styles shared with the `zer0-image-generator` plugin), and exports a Jekyll board book for **drsai** to publish. "Done" for a generator change means `ruby -Ilib test/zer0_cms/*.rb` passes and the wizard still emits a valid ABC Book Spec. It is gated by its own `abc-engine.yml`, not by the extension's workflow. Do not call it "the content engine" — that name belongs to the `.cms/` contract engine in `src/core/contract/`, and the collision has already confused readers.
+zer0-CMS has two halves. `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content in the editor: a metadata panel, dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → ledger). `rails/` is the **fleet CMS platform** — a Rails/Hotwire control panel (zer0-image-generator layout) that registers Jekyll sites under `/sites`, edits front matter on disk, plus the ABC book wizard. "Done" for a `lib/` change means `rails/bin/test-stdlib` passes with no bundler. "Done" for the browser app means Docker still boots on :3001. Do not call Rails "the content engine" — that name belongs to `.cms/` in `src/core/contract/`. Platform contract: `docs/PLATFORM.md`. CI map: `docs/CICD.md`.
 
 ## Stack & commands
 
@@ -21,14 +21,16 @@ npx tsc -p . --outDir out
 npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet,engines,routes,webview,styling}.test.js
 npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or one test
 
-# ── ABC generator (rails/) — stdlib-only, no bundler needed ──
+# ── Rails CMS platform + ABC generator (rails/) ──
+# VS Code extension in src/ still edits content in the editor.
+# rails/ is the fleet CMS (sites, front matter, dashboard) plus ABC books.
 cd rails
 ruby bin/zer0-cms styles                         # list ABC art styles
 ruby bin/zer0-cms themes                         # list bundled A–Z lexicons
-ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai   # draft + export a book
-ruby bin/zer0-cms new --theme "the ocean" --print              # preview, write nothing
-ruby -Ilib test/zer0_cms/test_abc_engine.rb      # generator tests (16 runs, zero network)
-bundle install && bundle exec puma -p 3000 config.ru   # optional web wizard (there is no bin/rails binstub)
+ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai
+./bin/test-stdlib                                 # ABC + catalog + front matter + writer
+# Docker (from repo root): http://localhost:3001
+SITES_DIR=.. docker compose up --build
 
 python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-line CI gate
 ```
@@ -66,7 +68,7 @@ Declare it in `package.json` under `contributes.commands` (with any `when` claus
 
 ## Engine architecture (`rails/`)
 
-`lib/` is stdlib-only and gem-free by design — CI runs its tests with no `bundle install`, so a gem under `lib/` is exactly the regression that job catches. Rails-only code stays in `app/`. The wizard pipeline is theme → plan → art direction → per-letter → cover → validated `Spec` (`lib/zer0_cms/abc/`), written out by `jekyll_exporter.rb`. Bundled themes generate offline and deterministically; any other theme falls back to Claude and needs `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`. `lib/zer0_cms/data/abc_art_styles.yml` is a **byte-identical vendored copy** from `zer0-image-generator` — re-sync it rather than edit it; each style `id` is a cross-repo contract. Never hand-edit a generated book in drsai; re-run the wizard.
+The Rails app is the **fleet CMS platform**. `app/` owns HTTP, the site registry (SQLite), and views (zer0-image-generator layout). `lib/zer0_cms/cms/` is stdlib-only catalog + front-matter surgery. `lib/zer0_cms/abc/` is the ABC generator, still stdlib-only. CI for the generator (`ruby -Ilib test/zer0_cms/*.rb`) must not need `bundle install`; a gem under `lib/` is the regression that job catches. The VS Code extension in `src/` remains the in-editor editor — do not fold it into Rails. Bundled ABC themes generate offline; any other theme falls back to Claude. `lib/zer0_cms/data/abc_art_styles.yml` is a **byte-identical vendored copy** from `zer0-image-generator`. Never hand-edit a generated book in drsai; re-run the wizard.
 
 ## Conventions
 

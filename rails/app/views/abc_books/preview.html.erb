@@ -1,4 +1,6 @@
-<h1>👀 Preview — <%= @spec.title %></h1>
+<% content_for :title, "Preview — #{@spec.title}" %>
+<% content_for :crumbs do %><%= link_to "ABC books", new_abc_book_path %> / Preview<% end %>
+<h1>Preview — <%= @spec.title %></h1>
 <p class="muted"><%= @spec.subtitle %> · <%= @spec.alphabet.length %> letters ·
   art style <code><%= @spec.art_style %></code> · nothing was written.</p>
 

@@ -1,0 +1,26 @@
+<%= form_with model: site do |f| %>
+  <% if site.errors.any? %>
+    <div class="flash alert">
+      <ul style="margin:0;"><% site.errors.full_messages.each do |m| %><li><%= m %></li><% end %></ul>
+    </div>
+  <% end %>
+  <div class="card">
+    <div class="field">
+      <%= f.label :name %>
+      <%= f.text_field :name, placeholder: "lifehacker.dev" %>
+    </div>
+    <div class="field">
+      <%= f.label :path, "Absolute path to the Jekyll site root" %>
+      <%= f.text_field :path, placeholder: "/sites/lifehacker.dev", class: "mono" %>
+      <div class="hint">Must contain a <span class="mono">_config.yml</span>. In Docker, sites are mounted under <span class="mono">/sites</span>.</div>
+    </div>
+    <div class="field">
+      <%= f.label :notes, "Notes (optional)" %>
+      <%= f.text_area :notes, rows: 2 %>
+    </div>
+    <div class="btn-row">
+      <%= f.submit(site.new_record? ? "Register site" : "Save changes", class: "btn primary") %>
+      <%= link_to "Cancel", (site.new_record? ? sites_path : site), class: "btn" %>
+    </div>
+  </div>
+<% end %>

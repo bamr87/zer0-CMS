@@ -1,0 +1,27 @@
+<% content_for :title, "Config — #{@site.name}" %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Config<% end %>
+
+<div class="page-head">
+  <div>
+    <h1>Site config</h1>
+    <div class="sub mono"><%= @site.config_file %></div>
+  </div>
+</div>
+<%= render "shared/site_nav", site: @site %>
+
+<div class="grid cols-2" style="align-items:start;">
+  <div class="card">
+    <h2>Resolved keys</h2>
+    <table class="list">
+      <tbody>
+        <% %w[title url baseurl collections_dir source markdown highlighter].each do |key| %>
+          <tr><td class="dim"><%= key %></td><td class="mono"><%= @config[key].inspect %></td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>_config.yml</h2>
+    <pre class="logbox" style="max-height:70vh;"><%= @yaml %></pre>
+  </div>
+</div>

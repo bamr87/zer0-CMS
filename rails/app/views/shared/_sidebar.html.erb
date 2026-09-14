@@ -1,0 +1,49 @@
+<nav class="sidebar" data-sidebar-target="panel">
+  <%= link_to root_path, class: "brand" do %>
+    <span class="glyph">0</span>
+    <span>zer0-cms</span>
+  <% end %>
+
+  <% nav = ->(label, path, icon, active) {
+       link_to(path, class: (active ? "active" : "")) do
+         concat content_tag(:span, icon, class: "ico")
+         concat content_tag(:span, label)
+       end
+     } %>
+
+  <div class="nav-group">
+    <div class="nav">
+      <%= nav.("Dashboard", root_path, "◷", current_page?(root_path)) %>
+      <%= nav.("Search", search_path, "⌕", controller_name == "search") %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">Fleet</div>
+    <div class="nav">
+      <%= nav.("Sites", sites_path, "▤", controller_name == "sites" && %w[index new].include?(action_name)) %>
+    </div>
+  </div>
+
+  <% if @nav_sites&.any? %>
+    <div class="nav-group">
+      <div class="label">Sites</div>
+      <div class="nav nav-sites">
+        <% @nav_sites.each do |site| %>
+          <%= link_to site, class: (@site&.id == site.id ? "active" : ""), title: site.path do %>
+            <span class="ico">·</span>
+            <span><%= site.name %></span>
+          <% end %>
+        <% end %>
+        <%= nav.("Register site", new_site_path, "＋", current_page?(new_site_path)) %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="nav-group">
+    <div class="label">Generate</div>
+    <div class="nav">
+      <%= nav.("ABC books", new_abc_book_path, "✦", controller_name == "abc_books") %>
+    </div>
+  </div>
+</nav>

@@ -1,4 +1,4 @@
-# The ABC generator's tests, on their own trigger.
+# Stdlib tests for rails/lib (ABC generator + CMS catalog/front-matter/writer).
 #
 # This job used to be the second half of `extension.yml`. It is a separate
 # workflow because the two halves of this repository have nothing in common but
@@ -8,10 +8,10 @@
 # says.
 #
 # The library under `rails/lib` is stdlib-only by design, so there is
-# deliberately NO `bundle install` here: the Gemfile exists for the optional
-# Rails wizard, and needing it to run the tests would be exactly the regression
-# this job catches. Do not "fix" a failure here by adding a bundler step —
-# a gem reached from `lib/` is the bug.
+# deliberately NO `bundle install` here: the Gemfile exists for the Rails host
+# (Hotwire UI, sqlite), and needing it to run these tests would be exactly the
+# regression this job catches. Do not "fix" a failure here by adding a bundler
+# step — a gem reached from `lib/` is the bug.
 name: abc-engine
 
 on:
@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   engine:
-    name: ABC generator tests
+    name: Rails stdlib tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,6 +45,6 @@ jobs:
         with:
           ruby-version: "3.3"
 
-      - name: Engine tests
-        run: ruby -Ilib test/zer0_cms/test_abc_engine.rb
+      - name: Stdlib tests (ABC + CMS primitives)
+        run: bash bin/test-stdlib
         working-directory: rails

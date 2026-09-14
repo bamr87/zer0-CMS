@@ -1,0 +1,44 @@
+<% content_for :title, "New page — #{@site.name}" %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / <%= link_to "Content", site_pages_path(@site) %> / New<% end %>
+
+<div class="page-head"><h1>New page</h1></div>
+<%= render "shared/site_nav", site: @site %>
+
+<%= form_with url: site_pages_path(@site), method: :post, class: "card" do %>
+  <div class="field-row">
+    <div class="field">
+      <label>Collection</label>
+      <select name="collection">
+        <% @catalog.collections.each do |name| %>
+          <option value="<%= name %>" <%= "selected" if params[:collection] == name || (params[:collection].blank? && name == "posts") %>><%= name %></option>
+        <% end %>
+      </select>
+    </div>
+    <div class="field">
+      <label>Slug (optional)</label>
+      <input type="text" name="slug" value="<%= params[:slug] %>" class="mono" placeholder="auto from title">
+    </div>
+  </div>
+  <div class="field">
+    <label>Title</label>
+    <input type="text" name="title" value="<%= @title %>" required>
+  </div>
+  <div class="field">
+    <label>Description</label>
+    <textarea name="description" rows="2"><%= params[:description] %></textarea>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>Author</label><input type="text" name="author" value="<%= params[:author] %>"></div>
+    <div class="field"><label>Categories</label><input type="text" name="categories" value="<%= params[:categories] %>" placeholder="Hacks, Tools"></div>
+  </div>
+  <div class="field"><label>Tags</label><input type="text" name="tags" value="<%= params[:tags] %>"></div>
+  <div class="field"><label>Body</label><textarea name="body" class="code" rows="10"><%= params[:body] %></textarea></div>
+  <label class="field" style="display:flex; gap:.5rem; align-items:center;">
+    <input type="hidden" name="draft" value="0">
+    <input type="checkbox" name="draft" value="1" style="width:auto;" checked> Draft
+  </label>
+  <div class="btn-row">
+    <%= submit_tag "Create page", class: "btn primary" %>
+    <%= link_to "Cancel", site_pages_path(@site), class: "btn" %>
+  </div>
+<% end %>

@@ -1,0 +1,64 @@
+<% content_for :title, "Sites" %>
+<% content_for :topbar_actions do %>
+  <%= link_to "＋ Register site", new_site_path, class: "btn primary" %>
+<% end %>
+
+<div class="page-head">
+  <div><h1>Sites</h1><div class="sub">Jekyll / zer0-mistakes roots this CMS can manage. Paths are container paths (<span class="mono">/sites/…</span>).</div></div>
+</div>
+
+<%= form_with url: sites_path, method: :get, class: "filter-bar" do %>
+  <%= search_field_tag :q, @q, placeholder: "Filter by name or path…" %>
+  <%= submit_tag "Filter", class: "btn sm" %>
+<% end %>
+
+<% if @unregistered.any? %>
+  <div class="card" style="margin-bottom:1.2rem;">
+    <div class="page-head" style="margin-bottom:.8rem;">
+      <div>
+        <h2 style="margin:0;">Unregistered under /sites</h2>
+        <div class="sub">Jekyll roots the volume can see that are not in the database yet.</div>
+      </div>
+      <%= button_to "Register all", import_discovered_sites_path, class: "btn sm primary" %>
+    </div>
+    <table class="list">
+      <tbody>
+        <% @unregistered.each do |root| %>
+          <tr>
+            <td class="mono"><%= root %></td>
+            <td class="right">
+              <%= form_with url: sites_path do %>
+                <input type="hidden" name="site[name]" value="<%= File.basename(root) %>">
+                <input type="hidden" name="site[path]" value="<%= root %>">
+                <%= submit_tag "Register", class: "btn sm primary" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<% if @sites.any? %>
+  <div class="card pad-0">
+    <table class="list">
+      <thead><tr><th>Name</th><th>Path</th><th>Source</th><th></th></tr></thead>
+      <tbody>
+        <% @sites.each do |site| %>
+          <tr>
+            <td><%= link_to site.name, site %></td>
+            <td class="mono faint"><%= site.path %></td>
+            <td class="mono faint"><%= site.source_subdir.presence || "—" %></td>
+            <td class="right nowrap">
+              <%= link_to "Content", site_pages_path(site), class: "btn sm" %>
+              <%= link_to "Open", site, class: "btn sm primary" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="empty"><div class="big">▤</div>No sites registered.</div>
+<% end %>

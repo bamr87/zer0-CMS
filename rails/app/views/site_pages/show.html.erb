@@ -1,0 +1,74 @@
+<% content_for :title, @entry.title %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / <%= link_to "Content", site_pages_path(@site) %> / <%= @entry.title %><% end %>
+<% content_for :topbar_actions do %>
+  <%= button_to "Duplicate", duplicate_site_pages_path(@site, file: @entry.relative), class: "btn" %>
+  <%= button_to "Delete", item_site_pages_path(@site, file: @entry.relative), method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Delete #{@entry.relative}? This cannot be undone." } } %>
+<% end %>
+
+<div class="page-head">
+  <div>
+    <h1><%= @entry.title %></h1>
+    <div class="sub mono"><%= @entry.relative %></div>
+  </div>
+</div>
+<%= render "shared/site_nav", site: @site %>
+
+<div class="grid cols-2" style="align-items:start;" data-controller="editor" data-editor-preview-url-value="<%= preview_markdown_site_pages_path(@site) %>">
+  <div>
+    <div class="card">
+      <h2>Preview art</h2>
+      <% url = preview_url(@site, @entry) %>
+      <% if url %>
+        <div class="preview-frame" style="min-height:180px;"><img src="<%= url %>" alt="<%= @entry.title %>"></div>
+      <% else %>
+        <div class="empty" style="padding:1.5rem;">No on-disk preview.</div>
+      <% end %>
+    </div>
+    <div class="card" style="margin-top:1rem;">
+      <h2>Body</h2>
+      <%= form_with url: item_site_pages_path(@site, file: @entry.relative), method: :patch do %>
+        <div class="field">
+          <textarea name="body" class="code" rows="16" data-editor-target="body" data-action="input->editor#refreshPreview"><%= @doc.body %></textarea>
+        </div>
+        <%= submit_tag "Save body", class: "btn primary" %>
+      <% end %>
+    </div>
+    <div class="card" style="margin-top:1rem;">
+      <h2>Rendered markdown</h2>
+      <div class="markdown-body" data-editor-target="preview"><%= @html %></div>
+    </div>
+  </div>
+
+  <div class="card" data-action="input->editor#refreshCounts">
+    <h2>Front matter</h2>
+    <%= form_with url: item_site_pages_path(@site, file: @entry.relative), method: :patch do %>
+      <% data = @doc.data %>
+      <div class="field">
+        <label>Title <span class="hint" data-editor-target="titleCount"></span></label>
+        <input type="text" name="page[title]" value="<%= data["title"] %>" data-editor-target="title" data-action="input->editor#refreshCounts">
+      </div>
+      <div class="field">
+        <label>Description <span class="hint" data-editor-target="descCount"></span></label>
+        <textarea name="page[description]" rows="3" data-editor-target="description" data-action="input->editor#refreshCounts"><%= data["description"] %></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Date</label><input type="text" name="page[date]" value="<%= data["date"] %>" class="mono"></div>
+        <div class="field"><label>Author</label><input type="text" name="page[author]" value="<%= data["author"] %>"></div>
+      </div>
+      <div class="field"><label>Excerpt</label><textarea name="page[excerpt]" rows="2"><%= data["excerpt"] %></textarea></div>
+      <div class="field"><label>Categories (comma-separated)</label><input type="text" name="page[categories]" value="<%= Array(data["categories"]).join(", ") %>"></div>
+      <div class="field"><label>Tags (comma-separated)</label><input type="text" name="page[tags]" value="<%= Array(data["tags"]).join(", ") %>"></div>
+      <div class="field-row">
+        <div class="field"><label>Status</label><input type="text" name="page[status]" value="<%= data["status"] %>"></div>
+        <div class="field"><label>Preview</label><input type="text" name="page[preview]" value="<%= data["preview"] || data["image"] %>" class="mono"></div>
+      </div>
+      <label class="field" style="display:flex; gap:.5rem; align-items:center;">
+        <input type="hidden" name="page[draft]" value="0">
+        <input type="checkbox" name="page[draft]" value="1" style="width:auto;" <%= "checked" if data["draft"] %>> Draft
+      </label>
+      <div class="btn-row">
+        <%= submit_tag "Save front matter", class: "btn primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,52 @@
+<% content_for :title, @site.name %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= @site.name %><% end %>
+<% content_for :topbar_actions do %>
+  <%= button_to "Rescan", rescan_site_path(@site), class: "btn" %>
+<% end %>
+
+<div class="page-head">
+  <div>
+    <h1><%= @site.name %></h1>
+    <div class="sub mono"><%= @site.path %><%= " · source: #{@site.source_subdir}" if @site.source_subdir.present? %></div>
+  </div>
+</div>
+<%= render "shared/site_nav", site: @site %>
+
+<% if @scan_error %>
+  <div class="flash alert"><%= @scan_error %></div>
+<% elsif @catalog %>
+  <div class="grid cols-4" style="margin-bottom:1.3rem;">
+    <%= link_to site_pages_path(@site), class: "card stat" do %>
+      <span class="num"><%= @catalog.total %></span><span class="lbl">Content files</span>
+    <% end %>
+    <div class="card stat"><span class="num"><%= @catalog.published %></span><span class="lbl">Published</span></div>
+    <div class="card stat"><span class="num" style="color:var(--warn)"><%= @catalog.drafts %></span><span class="lbl">Drafts</span></div>
+    <div class="card stat"><span class="num"><%= @catalog.collections.size %></span><span class="lbl">Collections</span></div>
+  </div>
+
+  <div class="card">
+    <div class="page-head" style="margin-bottom:.8rem;">
+      <h2 style="margin:0;">Recent content</h2>
+      <%= link_to "See all", site_pages_path(@site), class: "btn sm" %>
+    </div>
+    <table class="list">
+      <tbody>
+        <% @catalog.entries.first(12).each do |entry| %>
+          <tr>
+            <td>
+              <%= link_to entry.title, item_site_pages_path(@site, file: entry.relative) %>
+              <div class="faint mono" style="font-size:.76rem;"><%= entry.relative %></div>
+            </td>
+            <td class="mono faint"><%= entry.collection %></td>
+            <td class="right"><span class="badge <%= entry.draft ? "warn" : "ok" %>"><%= entry.draft ? "draft" : (entry.status.presence || "live") %></span></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<div class="btn-row" style="margin-top:1.3rem;">
+  <%= link_to "Edit site", edit_site_path(@site), class: "btn sm" %>
+  <%= button_to "Remove from app", @site, method: :delete, class: "btn sm danger", form: { data: { confirm: "Remove #{@site.name}? Files on disk are left untouched." } } %>
+</div>

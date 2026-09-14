@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://bamr87.github.io/zer0-CMS/schema/abc-book.schema.json",
   "title": "ABC Book Spec",
-  "description": "The interchange contract for a children's ABC / alphabet book. Produced by the zer0-CMS Rails content engine (the wizard), rendered by the zer0-image-generator plugin, and published by drsai into the zer0-mistakes `books` collection. Every field here maps onto book front matter the `book-abc` theme layout understands.",
+  "description": "The interchange contract for a children's ABC / alphabet book. Produced by the zer0-CMS ABC wizard (`Zer0Cms::Abc`), illustrated via zer0-image-generator, and published by drsai into the zer0-mistakes `books` collection. Every field here maps onto book front matter the `book-abc` theme layout understands.",
   "type": "object",
   "required": ["spec_version", "series", "slug", "title", "audience", "art_style", "alphabet"],
   "additionalProperties": false,

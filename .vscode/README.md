@@ -22,6 +22,8 @@ Every repo in the bamr87 workspace carries the same four files, so the task pick
 | `Claude: session` | `claude` in this repo, with its agents and skills | Terminal → Run Task |
 | `Area: thing` | Repo extras (`Release: …`, `Quest: …`, `Preview images: …`) | Terminal → Run Task |
 
+Because zer0-CMS *is* the extension, its launch configs open a **content repo** in the dev host window rather than this one: `Debug: extension host (irony-works)` is the F5 default, `(pick a repo)` offers the fleet's markdown sites, `(any folder)` prompts for a path, and `(this repo)` is the old self-hosted behaviour for working on the extension's own tree. Add a repo to the `targetRepo` input in `launch.json` when a new site joins the fleet.
+
 A label is present only where it applies (a Python tool has no `Serve`). Launch configs are named `Debug: <what> (<where>)`; F5 runs the first one, the site in Edge on top of `Serve`. Change a config's `type` from `msedge` to `chrome` to use Chrome instead. In the multi-root workspace every entry is suffixed with its folder name, so the same label across repos stays unambiguous.
 
 ## Docker

@@ -1,0 +1,23 @@
+<% content_for :title, "Media — #{@site.name}" %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Media<% end %>
+
+<div class="page-head"><h1>Media</h1></div>
+<%= render "shared/site_nav", site: @site %>
+
+<% if @files.any? %>
+  <div class="media-grid">
+    <% @files.each do |file| %>
+      <% url = disk_file_url(file) %>
+      <% rel = file.relative_path_from(@site.root) %>
+      <%= link_to (url || "#"), class: "card pad-0 media-card", target: "_blank" do %>
+        <div class="preview-frame" style="aspect-ratio:4/3; min-height:0; padding:0;">
+          <% if url %><img src="<%= url %>" alt="<%= rel %>" loading="lazy"><% end %>
+        </div>
+        <div class="name" style="padding:.5rem .7rem;"><%= rel %></div>
+      <% end %>
+    <% end %>
+  </div>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+<% else %>
+  <div class="empty"><div class="big">▦</div>No images under assets/ or images/.</div>
+<% end %>

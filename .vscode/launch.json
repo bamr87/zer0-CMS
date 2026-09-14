@@ -1,9 +1,50 @@
 // zer0-CMS · .vscode/launch.json — fleet-vscode/v1 · 2026-09-09. Convention + vocabulary: .vscode/README.md.
+// The extension-host configs open a CONTENT repo in the dev host window, because zer0-CMS only has
+// anything to show when the workspace it opens is a markdown site. F5 runs the first one (irony-works).
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug: extension host",
+      "name": "Debug: extension host (irony-works)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${env:HOME}/github/irony-works"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "Debug: extension host (pick a repo)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${env:HOME}/github/${input:targetRepo}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "Debug: extension host (any folder)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${input:targetFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "Debug: extension host (this repo)",
       "type": "extensionHost",
       "request": "launch",
       "args": [
@@ -28,6 +69,32 @@
         "${workspaceFolder}/dist/**/*.js"
       ],
       "preLaunchTask": "npm: pretest"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "targetRepo",
+      "type": "pickString",
+      "description": "Which content repo should the dev host open?",
+      "default": "irony-works",
+      "options": [
+        "irony-works",
+        "lifehacker.dev",
+        "it-journey",
+        "zer0-mistakes",
+        "bash-365.com",
+        "ai-world-view.github.io",
+        "gitorio",
+        "aieo",
+        "SCHEMA",
+        "zer0-image-generator"
+      ]
+    },
+    {
+      "id": "targetFolder",
+      "type": "promptString",
+      "description": "Absolute path of the folder the dev host should open",
+      "default": "${env:HOME}/github/irony-works"
     }
   ]
 }

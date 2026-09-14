@@ -4,7 +4,9 @@ Two documents live here, and they answer different questions. Everything shorter
 
 | Document | Answers |
 |---|---|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, and what the ledger guarantees. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Extension boundary: why `src/core` cannot import `vscode`, the five bundles, the webview contract, the ledger, and D15 (Rails vs extension). |
+| [`PLATFORM.md`](PLATFORM.md) | Rails fleet CMS: routes, on-disk contracts, what "done" means for `rails/`. |
+| [`CICD.md`](CICD.md) | Workflows, which command to run before a PR, which specs CI actually pins. |
 | [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 38 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
 
 ## The rule these two follow
@@ -19,4 +21,4 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 ## Nearby documentation
 
-The per-directory `README.md` files are the other half of the documentation and are usually the faster answer: [`src/core/`](../src/core/README.md), [`src/core/shared/`](../src/core/shared/README.md), [`src/core/content/`](../src/core/content/README.md), [`src/core/governance/`](../src/core/governance/README.md), [`src/core/contract/`](../src/core/contract/README.md), [`src/core/catering/`](../src/core/catering/README.md), [`src/mcp/`](../src/mcp/README.md), [`src/panel/`](../src/panel/README.md), [`src/dashboard/`](../src/dashboard/README.md), [`src/webview/panel/fields/`](../src/webview/panel/fields/README.md), and [`rails/`](../rails/README.md) for the ABC content engine, which is a separate product in the same repository.
+The per-directory `README.md` files are the other half of the documentation and are usually the faster answer: [`src/core/`](../src/core/README.md), [`src/core/shared/`](../src/core/shared/README.md), [`src/core/content/`](../src/core/content/README.md), [`src/core/governance/`](../src/core/governance/README.md), [`src/core/contract/`](../src/core/contract/README.md), [`src/core/catering/`](../src/core/catering/README.md), [`src/mcp/`](../src/mcp/README.md), [`src/panel/`](../src/panel/README.md), [`src/dashboard/`](../src/dashboard/README.md), [`src/webview/panel/fields/`](../src/webview/panel/fields/README.md), and [`rails/`](../rails/README.md) for the fleet CMS platform (and the ABC wizard), which is a separate product in the same repository.

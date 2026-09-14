@@ -1,9 +1,11 @@
-<h1>📖 ABC Book Wizard</h1>
-<p class="muted">
-  Draft a toddler ABC book around any theme. The engine writes the words, composes
-  a text-free illustration prompt per letter in your chosen art style, and exports
-  a <strong>drsai</strong> board book ready to publish with the zer0-mistakes theme.
-</p>
+<% content_for :title, "ABC books" %>
+<% content_for :crumbs do %>ABC books<% end %>
+<div class="page-head">
+  <div>
+    <h1>ABC Book Wizard</h1>
+    <div class="sub">Draft a toddler ABC book around any theme. The engine writes the words, composes a text-free illustration prompt per letter, and exports a drsai board book.</div>
+  </div>
+</div>
 
 <%= form_with url: preview_abc_book_path, method: :post, local: true, class: "card" do |f| %>
   <label for="theme">Theme</label>

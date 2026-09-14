@@ -5,11 +5,11 @@
 </p>
 
 <p align="center">
-A lightweight CMS for your markdown repo, inside VS Code.<br> Edit front matter as real controls, browse your content in a dashboard, and publish through a gate a human has to walk through.
+A CMS for zer0-themed markdown sites: VS Code for in-editor edits, Rails for the fleet.<br> Edit front matter as real controls, browse every site in one dashboard, and publish through a gate a human has to walk through.
 </p>
 
 <p align="center">
-  <em>Zero runtime dependencies. One esbuild bundle. No framework.</em>
+  <em>Extension: zero runtime dependencies. Platform: Rails/Hotwire on :3001.</em>
 </p>
 
 ---
@@ -29,8 +29,12 @@ It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front
 
 | Path | What it is |
 |---|---|
-| `src/` | The **VS Code extension** — this README. |
-| `rails/` | The **ABC generator** — a stdlib-only Ruby library + optional Rails wizard that writes children's alphabet books and exports them as a Jekyll board book. A separate product with its own README and its own CI workflow: [`rails/README.md`](rails/README.md). ("Content engine" means the `.cms/` contract engine in `src/core/contract/`; these are different things.) |
+| `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*. This README. |
+| `rails/` | The **fleet CMS platform** — a Rails control panel (same visual language as zer0-image-generator) that registers every zer0-themed Jekyll site, lists and edits content, plus the ABC book wizard. [`rails/README.md`](rails/README.md). |
+
+```bash
+SITES_DIR=/path/to/github docker compose up --build   # → http://localhost:3001
+```
 
 ## How publishing works
 

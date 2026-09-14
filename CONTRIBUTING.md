@@ -11,11 +11,13 @@ npm run watch     # then press F5 in VS Code to launch the Extension Host
 npm test          # unit + golden + MCP stdio + integration
 ```
 
-The Ruby half needs nothing installed — it is stdlib-only:
+The Rails `lib/` half needs nothing installed — it is stdlib-only:
 
 ```bash
-cd rails && ruby -Ilib test/zer0_cms/test_abc_engine.rb
+cd rails && ./bin/test-stdlib
 ```
+
+The browser app is Docker: `SITES_DIR=.. docker compose up --build` → http://localhost:3001. See [`docs/PLATFORM.md`](docs/PLATFORM.md) and [`docs/CICD.md`](docs/CICD.md).
 
 ## The rules that are not negotiable
 
@@ -50,7 +52,7 @@ These are enforced by the build, so you will find out quickly, but knowing them 
 | `src/` (top level) | The thin `vscode` shell: activation, commands, views, providers. |
 | `media/` | Stylesheets and branding. |
 | `schemas/` | The JSON Schema for `zer0.json`. |
-| `rails/` | The ABC content engine — a separate product in the same repo. |
+| `rails/` | Fleet CMS platform (Rails/Hotwire) + ABC generator. `lib/` is stdlib-only. |
 
 ## Reporting things
 
