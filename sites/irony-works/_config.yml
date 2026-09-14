@@ -69,5 +69,6 @@ exclude:
   - AUTOPILOT.md
   - AI_USAGE.md
   - fleet.manifest.yml
+  - zer0.json
   - 2026-08-06-planting-irony-works-making-irony-machine-checkable.md
   - 2026-09-09-the-second-genus-teaching-a-vault-to-file-paradoxes.md
