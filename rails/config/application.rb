@@ -6,25 +6,39 @@ require "rails"
 require "active_record/railtie"
 require "action_controller/railtie"
 require "action_view/railtie"
-require "propshaft"
-require "importmap-rails"
-require "turbo-rails"
-require "stimulus-rails"
+require "rails/test_unit/railtie"
 
+Bundler.require(*Rails.groups)
+
+require "ipaddr"
 require "zer0_cms"
 
 module Zer0CmsWeb
-  # Rails host for the fleet CMS platform. The VS Code extension in ../../src
-  # still edits content in the editor; this app is the browser control panel
-  # for every zer0-themed Jekyll site mounted under /sites. ABC generation
-  # stays in Zer0Cms::Abc — the same classes the CLI drives.
+  # The fleet CMS on Administrate (docs/PLATFORM.md). Git is the source of
+  # truth; the SQLite database is an index of what Jekyll reads, rebuilt by
+  # Site#sync! from Zer0Cms::Cms::Catalog. Writes go to disk through
+  # PageEditor and Zer0Cms::Cms::Writer, never through ActiveRecord.
   class Application < Rails::Application
-    config.load_defaults 7.1
-    config.api_only = false
-    config.eager_load = ENV.fetch("RAILS_ENV", "development") == "production"
-    config.secret_key_base = ENV.fetch("SECRET_KEY_BASE", "dev-only-not-a-secret")
-    config.hosts.clear
-    config.x.sites_dir = ENV.fetch("SITES_DIR", "/sites")
-    config.x.drsai_site_root = ENV.fetch("DRSAI_SITE_ROOT", File.expand_path("../../../drsai", __dir__))
+    config.load_defaults 8.1
+    config.time_zone = "UTC"
+
+    # lib/zer0_cms is plain Ruby required above; nothing under lib/ is
+    # autoloaded or eager loaded.
+    config.autoload_lib(ignore: %w[tasks zer0_cms])
+
+    # DNS-rebinding guard: only loopback hosts unless the operator names more.
+    extra_hosts = ENV.fetch("ZER0_CMS_HOSTS", "").split(",").map(&:strip).reject(&:empty?)
+    config.hosts = ["localhost", IPAddr.new("127.0.0.1"), IPAddr.new("::1"), "[::1]", *extra_hosts]
+
+    # Jekyll roots live under SITES_DIR (the /sites bind mount in Docker).
+    # Outside a container an unset SITES_DIR means "any absolute path".
+    config.x.sites_dir = ENV["SITES_DIR"].presence || ("/sites" if File.exist?("/.dockerenv"))
+
+    # ABC export needs an explicit target; there is no default.
+    config.x.drsai_site_root = ENV["DRSAI_SITE_ROOT"].presence
+
+    if ENV["RAILS_LOG_TO_STDOUT"].present?
+      config.logger = ActiveSupport::TaggedLogging.logger($stdout)
+    end
   end
 end

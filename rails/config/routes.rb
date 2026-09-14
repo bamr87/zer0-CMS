@@ -1,30 +1,30 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  root "dashboard#show"
-  get "search", to: "search#show"
-
-  resources :sites do
-    collection { post :import_discovered }
-    resources :pages, only: %i[index new create], controller: "site_pages" do
-      collection do
-        get :item, action: :show
-        patch :item, action: :update
-        delete :item, action: :destroy
-        post :duplicate
-        post :preview_markdown
-      end
+  namespace :admin do
+    resources :sites do
+      post :sync, on: :member
+      post :discover, on: :collection
     end
-    resources :media, only: :index, controller: "site_media"
-    resource :taxonomy, only: :show, controller: "site_taxonomies"
-    resource :config, only: :show, controller: "site_configs"
-    member { post :rescan }
+    resources :pages do
+      post :duplicate, on: :member
+    end
+    resources :assets, only: %i[index show]
+    resources :terms, only: %i[index show]
+    post "markdown_preview", to: "markdown_previews#create", as: :markdown_preview
+
+    root to: "sites#index"
   end
 
+  root to: redirect("/admin")
+
+  # Images inside a registered site, by absolute path (thumbnails, media).
   get "files/*path", to: "files#show", as: :file, format: false
 
-  get  "abc/new",     to: "abc_books#new",     as: :new_abc_book
-  post "abc/preview", to: "abc_books#preview", as: :preview_abc_book
-  post "abc/export",  to: "abc_books#export",  as: :export_abc_book
-  get  "abc/catalog.json", to: "abc_books#catalog"
+  get  "abc/new",          to: "abc_books#new",     as: :new_abc_book
+  post "abc/preview",      to: "abc_books#preview", as: :preview_abc_book
+  post "abc/export",       to: "abc_books#export",  as: :export_abc_book
+  get  "abc/catalog.json", to: "abc_books#catalog", as: :abc_catalog
+
+  get "up", to: "rails/health#show", as: :rails_health_check
 end

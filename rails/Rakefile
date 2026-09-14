@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+
+# Loads the Rails tasks (db:*, test, zeitwerk:check) and lib/tasks/*.rake.
+require_relative "config/application"
+
+Rails.application.load_tasks
