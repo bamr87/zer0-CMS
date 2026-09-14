@@ -3,7 +3,10 @@
 #   docker compose up --build      # http://localhost:3001
 #
 # Port 3001 so it can sit next to zer0-image-generator on 3000.
-# Jekyll sites are bind-mounted at /sites. ABC export writes into DRSAI_SITE_ROOT.
+# Jekyll sites are bind-mounted at /sites. The port is published on 127.0.0.1 only:
+# the app refuses non-loopback requests unless ZER0_CMS_PASSWORD is set, and it
+# trusts the Docker bridge gateway as loopback only because of that binding.
+# ABC export needs an explicit target (DRSAI_SITE_ROOT or the form field).
 
 services:
   web:
@@ -11,7 +14,7 @@ services:
       context: ./rails
       dockerfile: Dockerfile
     ports:
-      - "${PORT:-3001}:3000"
+      - "127.0.0.1:${PORT:-3001}:3000"
     volumes:
       - ./rails:/app
       - bundle:/usr/local/bundle
@@ -19,13 +22,17 @@ services:
       - ${SITES_DIR:-..}:/sites
     environment:
       RAILS_ENV: development
-      DRSAI_SITE_ROOT: ${DRSAI_SITE_ROOT:-/sites}
+      SITES_DIR: /sites
+      ZER0_CMS_TRUST_DOCKER_GATEWAY: "1"
+      ZER0_CMS_PASSWORD: ${ZER0_CMS_PASSWORD:-}
+      ZER0_CMS_HOSTS: ${ZER0_CMS_HOSTS:-}
+      DRSAI_SITE_ROOT: ${DRSAI_SITE_ROOT:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
       XAI_OAUTH_TOKEN: ${XAI_OAUTH_TOKEN:-}
       XAI_API_KEY: ${XAI_API_KEY:-}
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
       interval: 10s
       timeout: 3s
       retries: 12

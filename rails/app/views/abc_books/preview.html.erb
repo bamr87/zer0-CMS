@@ -1,12 +1,14 @@
 <% content_for :title, "Preview — #{@spec.title}" %>
-<% content_for :crumbs do %><%= link_to "ABC books", new_abc_book_path %> / Preview<% end %>
-<h1>Preview — <%= @spec.title %></h1>
-<p class="muted"><%= @spec.subtitle %> · <%= @spec.alphabet.length %> letters ·
-  art style <code><%= @spec.art_style %></code> · nothing was written.</p>
+<header class="main-content__header">
+  <div>
+    <h1 class="main-content__page-title">Preview — <%= @spec.title %></h1>
+    <div class="sub"><%= @spec.subtitle %> · <%= @spec.alphabet.length %> letters · art style <code><%= @spec.art_style %></code> · nothing was written.</div>
+  </div>
+  <%= link_to "← Back to the wizard", new_abc_book_path, class: "button button--alt" %>
+</header>
 
-<p><%= link_to "← Back to the wizard", new_abc_book_path %></p>
+<section class="main-content__body">
+  <pre class="config"><%= @markdown %></pre>
+</section>
 
-<pre><%= @markdown %></pre>
-
-<p class="muted">Happy with it? Go back and choose <strong>Export to drsai</strong>
-  to write <code>pages/_books/<%= @spec.slug %>/index.md</code>.</p>
+<p class="faint">Happy with it? Go back, choose an export target and press <strong>Export</strong> to write <code>pages/_books/<%= @spec.slug %>/index.md</code>.</p>
