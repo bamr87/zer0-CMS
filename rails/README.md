@@ -43,27 +43,36 @@ Bundled themes (`ruby bin/zer0-cms themes`) generate **offline and deterministic
 
 ## The web platform (Rails)
 
-The Rails app is the fleet CMS (sites, content, media, taxonomy, search) plus the ABC wizard. It is the only part of this directory that needs gems:
+The Rails app is the fleet CMS: **Administrate 1.0 dashboards** over an index of every registered Jekyll site, plus the ABC wizard. It is the only part of this directory that needs gems (Ruby 4.0.5, Rails 8.1):
 
 ```bash
 cd rails
 bundle install
-DRSAI_SITE_ROOT=../../drsai bundle exec puma -p 3000 config.ru   # http://localhost:3000
+bin/rails db:prepare                       # creates storage/development.sqlite3
+SITES_DIR=$HOME/github bin/rails server    # http://localhost:3000/admin
+bin/rails test                             # integration tests (bundler); bin/test-stdlib stays bundler-free
 ```
 
-Docker (from the repository root; port 3001 so it can sit next to zer0-image-generator on 3000):
+Docker (from the repository root; port 3001 so it can sit next to zer0-image-generator on 3000; published on 127.0.0.1 only):
 
 ```bash
-SITES_DIR=/path/to/your/jekyll/sites docker compose up --build   # → http://localhost:3001
+SITES_DIR=/path/to/your/jekyll/sites docker compose up --build   # → http://localhost:3001/admin
 ```
 
-The dashboard lists Jekyll sites under `/sites`. Register them (or **Register all**), then open Content to search, create, edit, duplicate, or delete pages. Media, taxonomy, and `_config.yml` are per-site tabs. Fleet-wide search is in the sidebar. ABC books stay at `/abc/new`.
+**Git is the source of truth; the database is an index.** `Site#sync!` walks a site with `Zer0Cms::Cms::Catalog` (Jekyll 4.4's reader rules) and `Catalog.media`, and upserts `Page`, `Asset` and `Term` rows in one transaction. Nothing is edited through ActiveRecord:
 
-The browser UI is Hotwire (Turbo + Stimulus) via importmap, paginated with Pagy, with Kramdown/GFM for markdown preview.
+| Surface | Where | What it does |
+|---|---|---|
+| Sites | `/admin/sites` | Register (or **Register and sync all** under `SITES_DIR`), **Sync**, per-collection counts, the read-only `_config.yml` |
+| Pages | `/admin/pages` | Search title/description/author/path; filters `draft:` `live:` `future:` `error:` `collection:<name>` `site:<id>` `kind:` `tag:` `category:` `author:`; newest first, undated last |
+| Page edit | `app/services/page_editor.rb` | Re-reads the file, refuses when its digest differs from the index (sync first), sends `FrontMatter.update_keys` only the keys you changed (emptying a present key deletes it), optionally replaces the body, writes atomically, re-syncs that path. An unchanged save writes nothing |
+| New / duplicate / delete | `Zer0Cms::Cms::Writer`, `PageEditor` | Create in a declared collection and existing section; duplicate as a draft; delete after a Turbo confirm. Every path is realpath-confined and symlinks are refused (`app/services/site_path.rb`) |
+| Images, terms | `/admin/assets`, `/admin/terms` | Read-only; thumbnails are served by `/files/*path`, images inside a registered site only |
+| ABC books | `/abc/new` | The wizard; **Export** needs an explicit target directory holding `_config.yml` (`DRSAI_SITE_ROOT` prefills it; there is no default) |
 
-**Why `puma` and not `rails server`.** This app has no `bin/rails` binstub — `bin/` holds the headless CLI and nothing else. The `rails` executable searches upward for `bin/rails` and, finding none, decides you meant `rails new` and prints its usage; it never boots this app. `config.ru` requires `config/environment`, so any Rack server starts it, and `puma` is the one already in the `Gemfile`. Adding a `bin/rails` binstub is a reasonable follow-up; until someone does, this is the command that works.
+Custom Administrate fields live in `app/fields` + `app/views/fields`: `MarkdownField` (textarea with a debounced Stimulus preview), `TagListField` (comma input to a list), `PreviewImageField` (thumbnail through `/files`), `StateField` (error / draft / unpublished / future / live). The look is the zer0 sidebar frame themed by `app/assets/stylesheets/zer0-tokens.css`, a **byte-identical vendored copy** of zer0-image-generator's `web/app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens 1.0.0`; re-vendor with `cp` and check with `cmp`), mapped onto Administrate's markup by `administrate-theme.css`. Administrate's own compiled CSS/JS bundle is not loaded: it ships a second Turbo, jQuery, Trix and Selectize; importmap loads Turbo and Stimulus instead.
 
-The wizard form drives the exact same `Zer0Cms::Abc::Wizard` + `JekyllExporter` the CLI drives — **Preview** renders the book markdown, **Export to drsai** writes it into `DRSAI_SITE_ROOT`.
+**Access.** Only `localhost`, `127.0.0.1` and `[::1]` are accepted Host headers unless `ZER0_CMS_HOSTS` (comma-separated) names more. With `ZER0_CMS_PASSWORD` set every request needs HTTP basic auth (user `ZER0_CMS_USER`, default `zer0`); without it, any request whose TCP peer is not loopback gets a 403 (`ZER0_CMS_TRUST_DOCKER_GATEWAY=1`, set by compose, also accepts the container's default gateway, which is where a 127.0.0.1-published port arrives from). The CSP allows scripts and styles from the app only, plus a per-request nonce that the importmap tags carry.
 
 ## Architecture
 
@@ -79,10 +88,10 @@ The wizard form drives the exact same `Zer0Cms::Abc::Wizard` + `JekyllExporter` 
 | CMS primitives | `lib/zer0_cms/cms/` | Catalog (Jekyll 4.4 reader rules), front-matter line surgery, confined writer — stdlib; see [`lib/zer0_cms/cms/README.md`](lib/zer0_cms/cms/README.md) |
 | Doctor | `lib/zer0_cms/doctor.rb` | The consumer contract check: theme, image engine, `zer0.json`, `fleet.manifest.yml`, front matter against the theme's schema; findings in lifehacker.dev's `findings.jsonl` shape |
 | Parity proofs | `bin/jekyll-parity`, `bin/front-matter-roundtrip`, `test/fixtures/` | The catalog diffed against Jekyll's reader; the front-matter round-trip property over real sites |
-| Web | `app/` + `config/` | Fleet CMS + ABC wizard (Hotwire, sqlite site registry) |
-| Rake wrappers | `lib/tasks/abc.rake` | `abc:styles` / `abc:themes` / `abc:new` — **not reachable today** |
+| Web | `app/` + `config/` + `db/` | Fleet CMS on Administrate: `Site`/`Page`/`Asset`/`Term` index, `SiteSync`, `PageEditor`, custom fields, the ABC wizard |
+| Rake wrappers | `lib/tasks/abc.rake` | `bin/rails abc:styles` / `abc:themes` / `abc:new` |
 
-**About those rake tasks.** `lib/tasks/abc.rake` is written and correct, but this directory has no `Rakefile` and the app has no `bin/rails` to load one, so `rake abc:*` cannot be invoked from here. Use `bin/zer0-cms`, which drives the same classes. The `.rake` file is kept because it is what the tasks should look like once a `Rakefile` exists.
+**Rake tasks.** `lib/tasks/abc.rake` is loaded by the `Rakefile`, so `bin/rails abc:themes` works; `bin/zer0-cms` drives the same classes without bundler.
 
 ### The shared contract
 
