@@ -15,13 +15,18 @@ expectation: >
   in the genre of the previous winter's hoax about Microsoft buying the
   Catholic Church, and about as likely.
 reversal: >
-  Between 2014 and 2020 Microsoft open-sourced .NET, its editor, its
-  shell and its calculator; shipped a Linux kernel inside Windows; joined
-  the Linux Foundation at the top tier; was counted by GitHub as the
-  organisation with the most open-source contributors; and then bought
-  GitHub, the place where free software lives, for $7.5 billion. The
-  parody came true gag by gag — and it came true because the money left
-  the licence, not because Redmond was converted. The only jokes left
+  Microsoft now owns GitHub — the venue where the canonical source of
+  Python, Rust, Node.js, Kubernetes, LLVM, PyTorch and, since 2025,
+  Firefox is kept, with more than a hundred million developers in
+  residence — and npm, the largest package registry in the world. Its
+  editor is the one most programmers use; its language is one of the
+  most used on its own platform; and the open-source project with the
+  most contributors on GitHub was Microsoft's in the year Microsoft
+  bought GitHub. Along the way it open-sourced .NET, its shell, its
+  calculator and its Linux subsystem, shipped a Linux kernel inside
+  Windows, and joined the Linux Foundation at the top tier. The parody
+  came true gag by gag — and it came true because the money left the
+  licence, not because Redmond was converted. The only jokes left
   standing are the GNU Hurd, the source to Windows, and the word "free",
   which had to be renamed before the prophecy could be fulfilled.
 planted: 2026-09-14
@@ -39,7 +44,12 @@ sources:
   - Satya Nadella, "Microsoft ♥ Linux", San Francisco, 20 October 2014; .NET Core open-sourced 12 November 2014; Visual Studio Code open-sourced 18 November 2015; PowerShell open-sourced 18 August 2016
   - Windows Subsystem for Linux, announced 30 March 2016; WSL 2's Microsoft-built Linux kernel (GPLv2, source published on GitHub), 2019–2020; CBL-Mariner, later Azure Linux, 2020
   - The Linux Foundation, Microsoft joins as a Platinum member, 16 November 2016; Open Invention Network, Microsoft joins and pledges 60,000-plus patents, 10 October 2018
-  - GitHub, The State of the Octoverse 2016 — Microsoft the organisation with the most open-source contributors; Microsoft's acquisition of GitHub for $7.5 billion, announced 4 June 2018, closed 26 October 2018; Nat Friedman named CEO
+  - GitHub, The State of the Octoverse 2016 — Microsoft the organisation with the most open-source contributors; Octoverse 2018 and 2019 — microsoft/vscode the open-source project with the most contributors, MicrosoftDocs/azure-docs second in 2019; Microsoft's acquisition of GitHub for $7.5 billion, announced 4 June 2018, closed 26 October 2018; Nat Friedman named CEO
+  - GitHub's acquisitions of Dependabot (May 2019), Semmle and CodeQL (18 September 2019) and npm, Inc. (announced 16 March 2020); GitHub's "100 million developers" announcement, January 2023
+  - The canonical repositories on GitHub — CPython's migration, February 2017 (PEP 512); LLVM's migration, October 2019; Mozilla's migration of Firefox development from Mercurial to GitHub, 2025; Rust, Node.js, Kubernetes, PyTorch, TensorFlow, React and Swift hosted there throughout
+  - Stack Overflow Developer Survey 2023 and 2024 — Visual Studio Code the most used development environment, roughly 73–74 percent of respondents, against Vim, Neovim and Emacs at roughly 22, 12 and 4–5 percent
+  - TypeScript, first public release under Apache 2.0, 1 October 2012; GitHub, Octoverse 2022–2024 (TypeScript third most used language) and Octoverse 2025 (TypeScript reported the most used)
+  - Windows Subsystem for Linux open-sourced under MIT, Build, 19 May 2025; GitHub Copilot Chat extension for Visual Studio Code open-sourced under MIT, June 2025; Windows Terminal, PowerToys and Playwright, MIT-licensed throughout
   - Microsoft Edge rebuilt on Chromium, announced 6 December 2018, released 15 January 2020; Windows Calculator open-sourced under MIT, 6 March 2019
   - MS-DOS 1.25 and 2.0 source released through the Computer History Museum, 25 March 2014; re-released under MIT on GitHub, September 2018; MS-DOS 4.0 source under MIT, 25 April 2024
   - Xamarin (Miguel de Icaza, co-founder of GNOME) acquired February 2016; Guido van Rossum announces he has joined Microsoft, 12 November 2020
@@ -61,7 +71,7 @@ Newsgroups: comp.os.linux.advocacy,comp.os.ms-windows.advocacy
 Subject: [PARODY] MICROSOFT TO BECOME WORLD'S LARGEST FREE SOFTWARE MAINTAINER
 Date: Fri, 25 Aug 1995 07:41:02 GMT
 Organization: Anonymous contact service
-Lines: 110
+Lines: 121
 Message-ID: <41gk3s$pi7@anon.penet.fi>
 X-Anonymously-To: comp.os.linux.advocacy
 
@@ -95,6 +105,9 @@ million teaching the public where the Start button is will:
     where Linux lives, "so that the world's free software has a home
     it can never be evicted from, except by us."
 
+  * Acquire Walnut Creek CDROM, so that every disc of free software
+    in every bookstore in America is pressed by Microsoft.
+
   * Ship a complete copy of Linux inside a future version of
     Windows, "for compatibility with the future."  The kernel will be
     built in Redmond.  Source will be provided, as the licence
@@ -114,6 +127,14 @@ million teaching the public where the Start button is will:
 
   * Give a future version of Windows away for nothing, on the theory
     that it is not the software you charge for.
+
+  * Ship a free programmer's editor, source and all, that runs on
+    Linux, and that more programmers will use than Emacs and vi put
+    together.  Mr. Stallman has been sent a copy.
+
+  * Invent a programming language, give it away with the source, and
+    watch it become one of the three most used languages on the ftp
+    site it just bought -- alongside two free ones it did not write.
 
   * Rebuild Internet Explorer on a browser engine the company did
     not write.  This will be the second browser Microsoft has not
@@ -177,20 +198,31 @@ dignity.  Kernel 1.2.13 still fits on a floppy.
 "640K ought to be enough for anybody."  -- attributed, denied, repeated
 ```
 
+## The landlord
+
+The 1995 reader's nightmare was never that Microsoft might write free software. It was that Microsoft might own the place free software is kept — the parody's bullet about the FTP sites is the one with teeth — and that is the gag that came true most completely. Since October 2018 Microsoft has owned GitHub, and GitHub is where the canonical repositories of Python (moved there in 2017), Rust, Node.js, Kubernetes, LLVM (2019), PyTorch, TensorFlow, React and Swift live, along with mirrors of Linux and Git and, since 2025, Firefox — the direct descendant of the code Netscape "would never" give away. Since 2020 it has owned npm, the largest package registry in the world, so that every `npm install` on Earth resolves against a Microsoft server; since 2019, Dependabot and CodeQL, which patrol dependencies and code across the platform. More than a hundred million developers keep their work there.
+
+It also owns the most popular open-source tools on that platform, not just the platform. Visual Studio Code is the editor of just under three-quarters of the developers who answer Stack Overflow's survey — more than Vim, Neovim and Emacs put together, which is the gag about Mr. Stallman's copy. TypeScript, given away under Apache 2.0 from its first release in 2012, was one of the three most used languages on GitHub from 2022 to 2024, behind Python and JavaScript, and GitHub's 2025 count reported it had become the first. Playwright, PowerToys, Windows Terminal, .NET and PowerShell are Microsoft's; since May 2025 so are the source of the Windows Subsystem for Linux itself and of the Copilot Chat extension. And by GitHub's own Octoverse, the open-source project with the most contributors in the world in 2018 — the year Microsoft bought GitHub — was microsoft/vscode; in 2019 Microsoft held the top two places. The counted became the counter.
+
+The old guard declined the invitation: GNU keeps Savannah, Debian its own GitLab, GNOME and KDE theirs, and the kernel stays on kernel.org with GitHub as a mirror. Nearly everyone else moved in. Whether the landlord is a benevolent one is not this entry's question — the vault records reversals, not verdicts — but of the three verbs the Halloween Documents made famous, *embrace* and *extend* are on the ledger below, and the third is a position still open, of the kind the vault files under [[futures]].
+
 ## The ledger
 
 Hindsight loves to sharpen a joke, so every gag is checked against the record. Dates are the sources'; nothing below is rounded toward the punchline.
 
 | The gag, 1995 | The record |
 |---|---|
-| The largest maintainer of free software, "as measured by whoever ends up doing the counting" | GitHub counted: in its 2016 Octoverse, Microsoft was the organisation with the most open-source contributors. In 2018 Microsoft bought the counter, for $7.5 billion. |
+| The largest maintainer of free software, "as measured by whoever ends up doing the counting" | GitHub counted: in its 2016 Octoverse, Microsoft was the organisation with the most open-source contributors. In 2018 Microsoft bought the counter, for $7.5 billion. By that counter's own Octoverse, the open-source project with the most contributors in 2018 was microsoft/vscode; in 2019 Microsoft held the top two places. |
 | Recanting the Open Letter to Hobbyists — "we have decided to save them the trouble" | Windows 10 was a free upgrade for a year from July 2015. Visual Studio Code, .NET, TypeScript and PowerShell are free of charge and MIT- or Apache-licensed. |
-| Buying the FTP sites where Linux lives | GitHub, announced 4 June 2018, closed that October: the largest host of open-source code in the world, run from 2018 to 2021 by Nat Friedman, co-founder of Ximian, the first GNOME company. |
+| Buying the FTP sites where Linux lives | GitHub, announced 4 June 2018, closed that October: the largest host of source code in the world, home to the canonical repositories of Python, Rust, Node.js, Kubernetes, LLVM, PyTorch, TensorFlow, React, Swift and, since 2025, Firefox, and to mirrors of Linux and Git. Run from 2018 to 2021 by Nat Friedman, co-founder of Ximian, the first GNOME company. |
+| Buying Walnut Creek CDROM, so every disc of free software is pressed by Microsoft | npm, Inc., acquired by GitHub in March 2020: the largest package registry in the world. Dependabot (May 2019) and Semmle's CodeQL (September 2019) came first. |
 | A complete Linux inside Windows, the kernel built in Redmond, source provided as the licence requires | Windows Subsystem for Linux, 2016. WSL 2 ships a Microsoft-built Linux kernel under the GPLv2 with the source on GitHub, 2019–2020. Microsoft also builds its own distribution, Azure Linux, born CBL-Mariner in 2020. |
 | More patches to Linus than any other company, "until he accepts our hardware drivers" | July 2009: 20,000 lines of Hyper-V drivers submitted under the GPL. July 2011: by LWN's count Microsoft was the top contributor to Linux 3.0 by changesets — almost all of it cleaning up those drivers. |
 | Joining Linux International at "whatever the top tier ends up being called" | Platinum member of the Linux Foundation, 16 November 2016. The top tier is called Platinum. |
 | MS-DOS source "the moment it becomes worthless, around 2014" | 25 March 2014: MS-DOS 1.25 and 2.0, through the Computer History Museum. Re-released under MIT in 2018; MS-DOS 4.0 followed under MIT on 25 April 2024. |
 | The Calculator's source, so someone can fix it | Windows Calculator, MIT licence, 6 March 2019. Windows 3.1's Calculator did famously display 3.11 minus 3.1 as 0.00. |
+| A free editor, source and all, running on Linux, used by more programmers than Emacs and vi put together | Visual Studio Code, source under MIT since November 2015, on Linux from the start: the most used development environment in Stack Overflow's 2023 and 2024 surveys, at just under three-quarters of respondents — more than Vim, Neovim and Emacs combined. The caveat the record insists on: Microsoft's own binaries carry a proprietary licence, which is why VSCodium exists. |
+| A language given away with its source, among the three most used on the FTP site it bought | TypeScript, Apache 2.0 from its first release on 1 October 2012: third on GitHub from 2022 to 2024 behind Python and JavaScript, and first by GitHub's 2025 Octoverse. |
 | Internet Explorer rebuilt on an engine Microsoft did not write — "the second browser Microsoft has not written, after the first" | IE 1.0 was licensed Spyglass Mosaic (1995). Edge was rebuilt on Chromium, Google's open-source project, whose engine descends through WebKit from KDE's KHTML: announced 6 December 2018, shipped 15 January 2020. |
 | The lawyers finding the GPL "fine, actually", and giving the patents away | Ballmer, 2001: Linux is "a cancer". Ballmer, 2016: "now I love it". Microsoft joined the Open Invention Network on 10 October 2018 and pledged its 60,000-plus patents to the Linux ecosystem. |
 | Hiring the author of Python and "the founders of whatever free desktop environment gets written next" | Guido van Rossum joined Microsoft on 12 November 2020. GNOME was founded in 1997; its co-founder Miguel de Icaza arrived with the Xamarin acquisition in February 2016. |
