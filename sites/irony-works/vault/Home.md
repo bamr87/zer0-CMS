@@ -18,7 +18,7 @@ status: petrified
 ## The Branches
 - **Works** — [[oedipus-rex]] · [[a-modest-proposal]] · [[the-gift-of-the-magi]] · [[ozymandias]] · [[ironies-of-automation]]
 - **Figures** — [[socrates]] · [[oscar-wilde]]
-- **Instances** — [[thomas-midgley-jr]] · [[nobels-obituary]] · [[the-streisand-effect]] · [[the-kodak-moment]] · [[the-captcha-toll]] · [[curies-notebooks]] · [[the-licenser-returns]] · [[is-that-normal]]
+- **Instances** — [[thomas-midgley-jr]] · [[nobels-obituary]] · [[the-streisand-effect]] · [[the-kodak-moment]] · [[the-captcha-toll]] · [[curies-notebooks]] · [[the-licenser-returns]] · [[is-that-normal]] · [[the-redmond-prophecy]]
 - **Paradoxes** — [[the-liar]] · [[achilles-and-the-tortoise]] · [[the-heap]] · [[hilberts-hotel]] · [[russells-paradox]] · [[newcombs-problem]] · [[the-grandfather-paradox]] · [[the-fermi-paradox]]
 
 ## The Reflections
