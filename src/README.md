@@ -35,7 +35,7 @@ Everything above is called by `commands/`, `views/`, `panel/`, `dashboard/` and 
 
 ### 1. `currentConfig()` is not cached, `explicit()` is why the three layers work, and the scope is the site
 
-Every one of the 38 contributed settings declares a default in `package.json`, so `getConfiguration('zer0Cms').get('governance.publishAllow')` returns `false` even for a user who has never opened the settings UI. If the settings layer were built from `get()`, it would always have a value, and `zer0.json` could never win for any key that also has a setting — three layers collapsing into one. `config.ts` therefore reads through `inspect()` and keeps only the values a human actually set (folder → workspace → global scope).
+Every one of the 44 contributed settings declares a default in `package.json`, so `getConfiguration('zer0Cms').get('governance.publishAllow')` returns `false` even for a user who has never opened the settings UI. If the settings layer were built from `get()`, it would always have a value, and `zer0.json` could never win for any key that also has a setting — three layers collapsing into one. `config.ts` therefore reads through `inspect()` and keeps only the values a human actually set (folder → workspace → global scope).
 
 Nothing is cached. `currentConfig()` re-reads the settings and re-parses `zer0.json` on every call. That is what makes "flip `zer0Cms.governance.publishAllow` and the next publish gate sees it" true without a window reload. Multi-root did not change that and must not: if a per-site console is too slow, say so — do not put a cache behind the rule.
 
@@ -85,7 +85,7 @@ When publishing is off, `ZER0_CMS_MCP_ALLOW_PUBLISH` is set to `null`, which the
 1. Declare it in `package.json` under `contributes.commands`, with any `when`
    clause it needs in `contributes.menus`.
 2. Implement it in the matching `commands/*.ts`, taking the `Zer0Shell`.
-3. Do **not** add a registration to `extension.ts` — the module registers it.
+3. Add the id to `ALL_COMMAND_IDS` in `commands/index.ts`, and to `ALL_COMMANDS` in `src/test/extension.test.ts` with its `54` count bumped. An id inside an existing module needs no `extension.ts` change; a new command module also needs its `register*Commands(shell)` call in `activate()`.
 
 The only two commands `extension.ts` registers itself are `zer0Cms.dashboard` and `zer0Cms.dashboard.close`, because the dashboard panel is a singleton the shell owns and no command module does.
 

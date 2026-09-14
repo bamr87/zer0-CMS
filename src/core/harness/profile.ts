@@ -93,10 +93,12 @@ export const BASE_READ_ONLY_TOOLS: readonly string[] = [
 ];
 
 /**
- * The bundled MCP server's tools that cannot change anything — seven of the
- * twelve. The five that are absent all write: `zer0_draft` a queue file,
+ * The bundled MCP server's tools that cannot change anything — eight of the
+ * sixteen. The other eight stay on the card: `zer0_draft` writes a queue file,
  * `zer0_publish` content and the ledger, `zer0_worklist` and `zer0_ingest`
- * under `.cms/`, and `zer0_contract` runs the repository's own engine.
+ * write under `.cms/`, `zer0_contract` runs the repository's own engine,
+ * `zer0_lane_scaffold` writes a lane's files, and `zer0_harness_inventory` and
+ * `zer0_lane_preview` only read but are not listed yet.
  *
  * This is a **list, not an allow-rule**. It is folded into a profile's
  * `readOnlyTools` when the server is attached, so those seven skip the approval

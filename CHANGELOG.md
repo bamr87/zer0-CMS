@@ -2,17 +2,6 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0](https://github.com/bamr87/zer0-CMS/compare/v0.1.0...v0.2.0) (2026-09-11)
-
-
-### Features
-
-* **core:** close the feedback loop — analytics, portfolio, media ([#11](https://github.com/bamr87/zer0-CMS/issues/11)) ([159de61](https://github.com/bamr87/zer0-CMS/commit/159de61114d52552e824e45c735d949e593dd6a9))
-* **core:** fold multi-line plain scalars in the YAML subset parser ([5088da9](https://github.com/bamr87/zer0-CMS/commit/5088da9be39c84ce88fa081ce652c6047bab7a6f))
-* **core:** the fleet domain — manifest, gate, and a declared GitHub surface ([9207603](https://github.com/bamr87/zer0-CMS/commit/92076039f761c22c13543a8ddbf772cc4dc3412d))
-* **fleet:** the Fleet console — dashboard tab, two gated commands, an MCP read ([cf41ced](https://github.com/bamr87/zer0-CMS/commit/cf41ced25e2c92c7711fa061c71daced506062a7))
-* **fleet:** the Fleet console — read this repo's lanes, gate switch and dispatch on a human (slice 1) ([c83f8aa](https://github.com/bamr87/zer0-CMS/commit/c83f8aad99189a1f18c1b8e20f842ca58ca4060a))
-
 ## [Unreleased]
 
 ### 🛰 The fleet, not one repository
@@ -71,7 +60,7 @@ The agent in this editor and the AI lanes in CI shared nothing. The editor did n
 
 A **harness profile** now resolves a repository's roles, skills and model once, in the CI runner's own precedence — a setting, then `zer0.json`, then the site's `_data/ai.yml`, then a built-in fallback — and projects to either an editor run or the equivalent CI invocation. `zer0Cms.agent.runAsRole` picks a role from the repository's own agents and runs it under the approval card; **Copy the CI equivalent** hands you the `run.sh` line or the workflow `with:` block for that role. On lifehacker.dev the editor now resolves the same model that repository's own lanes use, instead of a different one.
 
-The extension's own MCP server is attached to an agent run, with its eight read-only tools auto-allowed and its five writers on the card. The publish and scaffold flags are explicitly deleted from the child environment: an editor run must not inherit whatever armed something else.
+The extension's own MCP server is attached to an agent run, with eight read-only tools auto-allowed and the other eight on the card — the six that write or spawn, plus `zer0_harness_inventory` and `zer0_lane_preview`, which only read but are not on the auto-allow list yet. The publish and scaffold flags are explicitly deleted from the child environment: an editor run must not inherit whatever armed something else.
 
 ### 🔒 A gate that was not holding
 
@@ -101,7 +90,25 @@ Every page checked against its content type, its site's own schema and its platf
 
 A finding that a script can honestly fix offers a fix; the rest say why not. `title: ''` is not a repair, and neither is `draft: true`. Applying one re-reads the file, re-runs the rule against what is actually on disk now, shows the real diff in a diff editor and asks — in that order, so a fix for a finding you have since edited away cannot land. The parser also grew a **warnings channel**: a file using YAML anchors, aliases, merge keys or multi-line flow collections is reported as unreadable rather than audited on a misreading, and fix-it refuses it outright.
 
-Available as an Audit tab, three commands, and a read-only `zer0_audit` MCP tool (thirteen now). Over lifehacker.dev's 382 real posts it reports **zero errors and two warnings**, both genuine over-long descriptions — the rules were tuned against a real corpus, and one that fired ten times on correct files was fixed rather than shipped.
+Available as an Audit tab, three commands, and a read-only `zer0_audit` MCP tool — the thirteenth; the harness tools above bring the set to sixteen. Over lifehacker.dev's 382 real posts it reports **zero errors and two warnings**, both genuine over-long descriptions — the rules were tuned against a real corpus, and one that fired ten times on correct files was fixed rather than shipped.
+
+### 🐛 Found by pointing the console at the real fleet
+
+- **An unread list is not an empty one.** `listWorkflows`, `recentRuns` and `openPulls` answered `[]` on a 403 or 404, so a repository whose Actions nobody could read drew every lane as never having run and every workflow as unregistered. They now return `null`, as `listVariables` always did: the Monitor and Fleet tabs draw unknown, the run verbs refuse with "could not be read", and the engines adapter throws rather than handing the package a fabricated `[]`.
+- **A quoted value PyYAML wrapped is read whole.** A `'…'` or `"…"` scalar continued on a more-indented line was truncated to its first line and reported as unreadable, and every one of it-journey's 131 quest reports tripped it. It is now folded the way YAML folds it — those 131 pages match PyYAML on all 1,826 of their string values — and a quote that never closes is still reported. Reading them also exposes what the audit had been skipping on those pages, including 121 `duplicate-slug` findings that come from how a dated file name's slug is derived.
+- **`keywords` is not a taxonomy.** The zer0-mistakes overlay listed it, and the theme never reads it as a list, so it-journey's 218 `keywords: {primary, secondary}` mappings were 218 false `tags-not-array` errors. The rule also called a mapping "a scalar" and offered to fix it; it now says mapping, and offers no fix.
+- **An anchored quoted value loses its quotes.** `title: &title "Lifehacker.dev"` was read as `"Lifehacker.dev"`, quotes and all, on lifehacker.dev, it-journey and zer0-mistakes; an anchored `""` now reads as absent, exactly as an unanchored one does.
+
+## [0.2.0](https://github.com/bamr87/zer0-CMS/compare/v0.1.0...v0.2.0) (2026-09-11)
+
+
+### Features
+
+* **core:** close the feedback loop — analytics, portfolio, media ([#11](https://github.com/bamr87/zer0-CMS/issues/11)) ([159de61](https://github.com/bamr87/zer0-CMS/commit/159de61114d52552e824e45c735d949e593dd6a9))
+* **core:** fold multi-line plain scalars in the YAML subset parser ([5088da9](https://github.com/bamr87/zer0-CMS/commit/5088da9be39c84ce88fa081ce652c6047bab7a6f))
+* **core:** the fleet domain — manifest, gate, and a declared GitHub surface ([9207603](https://github.com/bamr87/zer0-CMS/commit/92076039f761c22c13543a8ddbf772cc4dc3412d))
+* **fleet:** the Fleet console — dashboard tab, two gated commands, an MCP read ([cf41ced](https://github.com/bamr87/zer0-CMS/commit/cf41ced25e2c92c7711fa061c71daced506062a7))
+* **fleet:** the Fleet console — read this repo's lanes, gate switch and dispatch on a human (slice 1) ([c83f8aa](https://github.com/bamr87/zer0-CMS/commit/c83f8aad99189a1f18c1b8e20f842ca58ca4060a))
 
 ### 🧱 Foundations
 

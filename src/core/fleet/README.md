@@ -78,7 +78,7 @@ That is not hypothetical. `wtd fleet adopt` wraps a single-quoted scalar at colu
 `claude setup-token`.'
 ```
 
-**Four of the seven committed manifests in this fleet** — it-journey, zer0-mistakes, ai-world-view and this repository's own — are invalid YAML for exactly that reason. The `yaml` package throws; the package's parser returns nothing and says nothing; `parseYamlSubset` reads all four. `engines.test.ts` pins both halves: parity where the package can read, and the disagreement where it cannot.
+**Seven of the ten manifests committed across this fleet** (as of 2026-09-14: ai-world-view, aieo, bash-365, it-journey, zer0-CMS, zer0-image-generator and zer0-mistakes; gitorio, irony-works and lifehacker.dev parse) were invalid YAML for exactly that reason — this repository's own until it was re-wrapped by hand. The `yaml` package throws; the package's parser returns nothing and says nothing. `parseYamlSubset` recovers every lane, but it silently loses the tokens after the broken scalar — it-journey's manifest reads as 3 tokens where PyYAML reads 10, zer0-mistakes' as 3 of 5 — so a lane count is not proof a manifest was read whole. `engines.test.ts` pins both halves: parity where the package can read, and the disagreement where it cannot.
 
 ## What the conversion loses, out loud
 

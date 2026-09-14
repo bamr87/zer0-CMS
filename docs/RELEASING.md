@@ -15,11 +15,13 @@ Merge a `feat:` or `fix:` commit to `main` → release-please opens a **release 
 The `release` job is a thin caller of `bamr87/.github/.github/workflows/release-please.yml@main`, the fleet's shared release-please workflow. This repository contributes only two files to it:
 
 - **`release-please-config.json`** — `release-type: node` (the version lives in `package.json`), `changelog-path: CHANGELOG.md`, and `include-component-in-tag: false` so tags are `v0.2.0` rather than `zer0-cms-v0.2.0`.
-- **`.release-please-manifest.json`** — the released version, `{".": "0.1.0"}`. release-please rewrites this file; you do not.
+- **`.release-please-manifest.json`** — the released version, `{".": "0.2.0"}`. release-please rewrites this file; you do not.
 
 The config also carries **`bootstrap-sha: 9f729741954de209ea5afa97d710c01ca42f72ad`** at the top level, which is where release-please reads it — not inside the package block. That commit is `refactor!: break free from the Front Matter fork`, the first commit of zer0-CMS as its own project. Without it, release-please walks back through the entire inherited Front Matter history and reads five years of somebody else's Conventional Commits as this project's unreleased changes.
 
 On every push to `main` the job opens or updates one release PR that bumps `package.json` and `.release-please-manifest.json` and rewrites `CHANGELOG.md`. **Merging that PR is the release.** The shared workflow also re-locks `package-lock.json` on the release PR's own branch in the same run, so the merge commit is self-consistent and `npm ci` works at the tag.
+
+**A hand-written `## [Unreleased]` section is not folded in.** release-please writes its generated entry directly under the file's preamble, above whatever heading comes first. At 0.2.0 (`a8a045d0`) that was the hand-written `## [Unreleased]`, which it left as a separate section beneath the new `## [0.2.0]`. When a release PR opens, move the `[Unreleased]` notes under the generated heading in that same PR and delete the `## [Unreleased]` heading.
 
 The job's `concurrency` group is `release-please-main` with `cancel-in-progress: false`. A half-cancelled release leaves a tag without a Release, or a Release without a `.vsix`; waiting is always cheaper than reconciling that by hand.
 
@@ -67,7 +69,7 @@ None of these can be done from a pull request. They need somebody with the repos
 
 1. **Create the Marketplace publisher `bamr87`.** `package.json` already claims `"publisher": "bamr87"`; the publisher does not exist yet. Create it at <https://marketplace.visualstudio.com/manage>, then mint `VSCE_PAT` as described above.
 2. **Create the Open VSX namespace `bamr87`** and mint `OVSX_PAT`.
-3. **Tag `v0.1.0` on `9f729741954de209ea5afa97d710c01ca42f72ad`.** `.release-please-manifest.json` says the released version is `0.1.0`, and `bootstrap-sha` says history starts there — but there is no `v0.1.0` tag to match. Creating it makes the manifest, the tags and the history tell the same story before the first real release moves anything.
+3. **Tag `v0.1.0` on `9f729741954de209ea5afa97d710c01ca42f72ad`.** `bootstrap-sha` says history starts there, and the first real release, `v0.2.0` (2026-09-11), has already happened — but there is no `v0.1.0` tag, so the `v0.1.0...v0.2.0` compare link in `CHANGELOG.md` points at nothing. Creating the tag makes that link resolve and lets the tags and the history tell the same story.
 4. **Delete the 77 inherited Front Matter tags.** `git ls-remote --tags` on this repository returns 77 tags belonging to `estruyf/vscode-front-matter`, the newest of which is `v10.10.1`. They are not this project's releases, they make `v0.2.0` look like a catastrophic downgrade in every UI that sorts tags, and they are a standing trap for any tool that infers "latest" from tags rather than from the manifest. Delete them remotely and locally:
 
    ```bash

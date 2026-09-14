@@ -11,7 +11,7 @@ These fourteen decisions are the reason the code looks the way it does. They wer
 | **D1** | **`src/core` and `src/mcp` are pure Node.** The editor API is available only in the shell (`extension.ts`, `config.ts`, `commands/`, `views/`, `panel/`, `dashboard/`, `agent/`). If core needs the editor, it takes a parameter or an injected callback. | eslint `no-restricted-imports`; the MCP bundle's empty `external` list turns a stray import into a build error; every core test runs without an extension host |
 | **D2** | **Configuration is three layers** — VS Code settings, then `zer0.json`, then the manifest defaults — resolved per key. `src/config.ts` reads settings through `inspect()` rather than `get()`, because every setting has a default and `get()` would always return one, so `zer0.json` could never win. Nothing is cached: `currentConfig()` re-reads on every call, which is why flipping a gate takes effect without a window reload. | `explicit()` in `src/config.ts`; `resolveConfig` is pure and shared by the extension, the MCP server and the tests |
 | **D3** | **Zero *shipped* runtime dependencies.** `dependencies` is `{}` and stays `{}`. *Amended 2026-09-09 (see D14):* build-time libraries may be bundled by esbuild from `devDependencies` when they are named in the bundler's allow-list. The Claude Agent SDK remains the one optional, dynamically-imported exception. | `dependencies: {}`; the bare-import gate in `esbuild.js`; a test that `dist/mcp-server.js` contains no third-party package |
-| **D4** | **One full-state snapshot per render.** The host posts a whole `state` object; the webview never asks for a fragment. A protocol with a hundred wire names has a hundred entry points to audit. | `WorkspaceStore`'s single `Snapshot`; the `RequestOp` union is eight named operations, not an open channel |
+| **D4** | **One full-state snapshot per render.** The host posts a whole `state` object; the webview never asks for a fragment. A protocol with a hundred wire names has a hundred entry points to audit. | `WorkspaceStore`'s single `Snapshot`; the `RequestOp` union is eleven named operations, not an open channel |
 | **D5** | **The webview is UI, never the gate.** A button posts an intent and a target — never a payload, never an override. Every gate is re-checked host-side, in the same function the command palette calls, after re-reading state from disk. A disabled button is a courtesy to the person, not a control. | `doApprove`/`doPublish`/`doToggleSwitch`/`doDispatchLane` re-read and re-evaluate; the message shapes carry ids only |
 | **D6** | **Eighteen field types, not the upstream twenty-two.** The five dropped (`dataFile`, `dataBlock`, `block`, `fieldCollection` as a storage type, `dropdown`) either needed a second configuration file or duplicated another type. | `FIELD_TYPES` and its test; `schemas/zer0.schema.json` |
 | **D7** | **Front matter is edited by line surgery.** Only the lines belonging to changed keys are rewritten; untouched lines come out byte-identical, so comments and hand-formatting survive. Dates stay strings end to end. | `updateFrontMatterKeys`; full re-serialization is a documented fallback, not the path |
@@ -24,6 +24,22 @@ These fourteen decisions are the reason the code looks the way it does. They wer
 | **D14** | **A build-time dependency is bundled and allow-listed; a runtime dependency is still forbidden.** `@bamr87/fleet-engines` (and the `yaml` it needs) are exact-pinned `devDependencies`, and the bundler's allow-list admits them into `dist/extension.js` alone — so they enter the shipped bundle when, and only when, a surface in the extension host consumes the seam. The MCP bundle allows **no** bare import, so the layering gate that has always guarded `vscode` now guards every package. One seam, `src/core/fleet/engines.ts`, is the only importer, and it is never re-exported through the core barrel: everything else takes the engines as injected data, which is why the seam can stay out of the MCP graph entirely rather than relying on tree-shaking to remove it. | the per-target bare-import gate in `esbuild.js`; the metafile assertion on `dist/mcp-server.js`; eslint patterns forbidding the seam under `src/mcp/**` |
 
 **Why the engines arrive by dependency rather than by copy.** The audit rulebook, the workflow-facts scanner and the metrics engine already exist twice in this fleet — once in GitFactory's browser app and once in the hub's package — and the two copies have already diverged by one rule. A third copy inside this extension would diverge again, silently, and the two consoles would then disagree about whether a lane is safe. Consuming the published package is what keeps one answer.
+
+## Lettered decisions D-A–D-I
+
+Nine more decisions are cited in the code by letter rather than number. They are indexed here from the files that cite them, so a citation resolves; each is enforced where it is cited.
+
+| # | Decision | Cited in |
+|---|---|---|
+| **D-A** | The fleet's shared engines arrive by dependency — bundled into `dist/extension.js` alone, through one seam that is never re-exported (the dependency half is D14) — and this console still reads a manifest with its own parser, which refuses a foreign `spec_version` and keeps the tristate guardrail. | `esbuild.js`, `src/core/index.ts`, `src/core/fleet/engines.ts`, `src/core/fleet/README.md`, `src/core/shared/types.ts`, `src/test/engines.test.ts` |
+| **D-B** | Multi-root: every folder-touching function takes an optional scope, and the resolver the site registry installs answers which folder a call is about. | `src/config.ts`, `src/webview/shared/protocol.ts` |
+| **D-C** | A site's platform is a profile — the type vocabulary behind D12. | `src/core/shared/types.ts` |
+| **D-D** | The site-wide front-matter audit: lifehacker.dev's thirteen rule ids, the site's own schema, and a fix-it that never writes on its own. | `src/core/content/audit.ts`, `src/core/content/README.md`, `src/core/shared/types.ts`, `src/webview/shared/protocol.ts`, `src/test/audit.test.ts` |
+| **D-E** | Lane generation: a described lane becomes files a person reviews and commits, or a `bespoke` refusal with reasons. | `src/core/shared/types.ts`, `src/webview/shared/protocol.ts`, `src/test/lanes.test.ts` |
+| **D-F** | One harness vocabulary: the editor agent and the fleet's CI resolve a run's roles, skills and model once, in the runner's own precedence, and project that value two ways. | `src/core/harness/profile.ts`, `src/core/harness/aiConfig.ts`, `src/core/shared/types.ts`, `src/agent/README.md`, `src/test/harness.test.ts` |
+| **D-G** | Fleet slice 2: the roster, the pull strip, cost and drift. | `src/core/shared/types.ts`, `src/webview/shared/protocol.ts` |
+| **D-H** | The route registry: `DASHBOARD_ROUTES` and `DASHBOARD_TABS` are one table seen twice. | `src/webview/shared/protocol.ts` |
+| **D-I** | The workflow catalogue is read-only: this console never edits an arbitrary workflow's attributes in place. | `src/webview/shared/protocol.ts`, `src/webview/dashboard/workflows.ts`, `src/webview/dashboard/README.md`, `src/commands/harness.ts` |
 
 ## The layer map
 
@@ -43,7 +59,7 @@ These fourteen decisions are the reason the code looks the way it does. They wer
 ┌───────────────┴──────────────────────────────────────────────┐
 │ src/core/               pure Node. No `vscode`, ever.        │
 │   shared/  content/  governance/  catering/  contract/       │
-│   analytics/  portfolio/  media/  fleet/                     │
+│   analytics/  portfolio/  media/  fleet/  platform/  harness/│
 └───────────────▲──────────────────────────────────────────────┘
                 │
 ┌───────────────┴──────────────────────────────────────────────┐
@@ -122,11 +138,11 @@ Two properties matter:
 
 ## Activation
 
-`activate()` does no network I/O, no telemetry, and no auth check. In a folderless window it installs zero watchers and returns. The store keeps one snapshot for all four tree views and both webviews, with refreshes coalesced through a single in-flight promise so a burst of file events costs one rebuild.
+`activate()` does no network I/O, no telemetry, and no auth check. In a folderless window it installs zero watchers and returns. The store keeps one snapshot for all five tree views (Sites, Content, Drafts, Distribution, Published) and both webviews, with refreshes coalesced through a single in-flight promise so a burst of file events costs one rebuild.
 
 ## Sites, and the active-site rule
 
-A window can hold more than one site. The fleet's own workspace holds twelve folders, six of them Jekyll sites this extension can detect, audit and publish — and until this release eleven of them were invisible, because everything resolved `workspaceFolders[0]`.
+A window can hold more than one site. The fleet's own workspace holds twelve folders, seven of them Jekyll sites this extension can detect, audit and publish — and until this release eleven of them were invisible, because everything resolved `workspaceFolders[0]`.
 
 The unit is still one folder. `Zer0Config` describes one root, `WorkspaceStore` holds one snapshot, the page-index cache is keyed to one root, and the bundled MCP server is rooted in one directory. Nothing about that changed, and that is the point: multi-root is composition *above* the single-site model rather than a second model threaded through it. A `SiteRegistry` holds one store per folder; each store reads that folder's configuration, watches that folder's files, and writes its own cache key.
 
@@ -144,7 +160,7 @@ The rule lives in a pure function with tests, because a rule like this quietly a
 
 ## The Fleet console
 
-The first surface in the extension that talks to another system. It reads this repository's `fleet.manifest.yml` (spec `fleet/v1`, from bamr87/wtd's `docs/FLEET-SPEC.md`): the AI lanes, each with its harness, its workflow file, its triggers, its `*_ENABLED` repository-variable switch, the tokens it spends and the guardrails it declares. The dashboard's Fleet tab draws that table and, from GitHub, two more columns — the switch's current value and the workflow's newest run — and offers two verbs: flip the switch, or dispatch the lane once.
+The first surface in the extension that talks to another system. It reads this repository's `fleet.manifest.yml` (spec `fleet/v1`, from bamr87/wtd's `docs/FLEET-SPEC.md`): the AI lanes, each with its harness, its workflow file, its triggers, its `*_ENABLED` repository-variable switch, the tokens it spends and the guardrails it declares. The dashboard's Fleet tab draws that table and, from GitHub, the live columns — the switch's current value, the workflow's newest run, the open pull requests attributed to the lane — and offers five verbs: flip the switch, dispatch the lane once, re-run its last failure, cancel a run in flight, and enable or disable its workflow file. The Monitor tab draws the same columns across the whole roster, and the Workflows tab catalogues every lane and, behind `zer0Cms.fleet.scaffoldAllow`, writes a new one's files.
 
 **What it reads, declared before it is read.** `core/fleet/github.ts` lists every call as data — **eight reads and seven writes**, each with a sentence naming *the repository's own* thing that comes back. The reads are a variable and the whole variable list, the registered workflows and their state, one bounded page of recent runs, one bounded page of open pull requests, a file, and the default branch. The writes set a variable, dispatch a lane, re-run a failed run, cancel one in progress, and enable or disable a workflow file. Page sizes live in the declared path, so "bounded" is something the plan check enforces rather than a comment; there is no pagination, no retry, no ETag.
 
@@ -152,7 +168,7 @@ The first surface in the extension that talks to another system. It reads this r
 
 The client refuses a request outside the plan before opening a socket, and the suite intercepts `fetch` to prove it from the outside. No secret is ever read: the manifest names tokens, the console shows names.
 
-**The gates.** `evaluateFleetGates(mode, input)` is `governance/approval.ts` with a different vocabulary and the same properties: pure, a fixed and tested blocker order (`noWorkspace, dispatchDisabled, noCredential, manifestAbsent, laneUnknown, laneHasNoSwitch, laneNotDispatchable, guardrailViolation`), and a master gate nothing overrides. That gate is `zer0Cms.fleet.enabled` **and** `zer0Cms.fleet.dispatchAllow`, and the second is read from the VS Code settings layer alone — a `zer0.json` or a manifest arriving with a cloned repository cannot arm it, for the reason the MCP publish flag cannot be armed by a file. `guardrailViolation` refuses a lane whose own manifest admits to merging or writing to the default branch. Both privileged actions (`doToggleSwitch`, `doDispatchLane` in `src/commands/fleet.ts`) re-read the configuration, re-read the manifest from disk, re-run the gate and ask modally — naming the repository, the lane, the variable and the value — inside the same function the palette calls. The webview sends `{lane}` and nothing else; a toggle's new value is derived host-side from the variable as fetched a moment earlier, never from a message.
+**The gates.** `evaluateFleetGates(mode, input)` is `governance/approval.ts` with a different vocabulary and the same properties: pure, a fixed and tested blocker order (`noWorkspace, dispatchDisabled, noCredential, manifestAbsent, laneUnknown, laneHasNoSwitch, laneNotDispatchable, guardrailViolation`), and a master gate nothing overrides. That gate is `zer0Cms.fleet.enabled` **and** `zer0Cms.fleet.dispatchAllow`, and the second is read from the VS Code settings layer alone — a `zer0.json` or a manifest arriving with a cloned repository cannot arm it, for the reason the MCP publish flag cannot be armed by a file. `guardrailViolation` refuses a lane whose own manifest admits to merging or writing to the default branch. Both privileged actions (`doToggleSwitch`, `doDispatchLane` in `src/commands/fleet.ts`) re-read the configuration, re-read the manifest from disk, re-run the gate and ask modally — naming the repository, the lane, the variable and the value — inside the same function the palette calls. The webview sends `{repo, lane}` and nothing else; a toggle's new value is derived host-side from the variable as fetched a moment earlier, never from a message.
 
 **Decision D11.** The activation promise above stands. The relaxation is exactly this: network happens only from an explicit user action — the Refresh button, a toggle, a dispatch, or opening the Fleet tab (a passive read that never prompts for sign-in) — through a `fetch` the shell injects into the core's client, and never at activation. The credential is `vscode.authentication.getSession('github', …)`, obtained lazily inside the action and asked for per request; the extension stores no token. The bundled MCP server keeps its side of the rule absolutely: `zer0_fleet_status` reads the local manifest and reports the switch state as unknown, because that process never opens a socket.
 
@@ -160,11 +176,15 @@ The client refuses a request outside the plan before opening a socket, and the s
 
 The honesty rule matters more here than anywhere else in the extension, because a fleet view is mostly cells. **A cell nobody has read says `unknown`, and looks different from `off`.** A repository with no local checkout and no refresh shows as unread rather than as empty. `listVariables` (and, since the re-land, `listWorkflows`, `recentRuns` and `openPulls`) returning `null` rather than `[]` on a 403/404 is that rule in the type system: "there are no variables" and "you are not allowed to read them" are different answers, and a console that rendered both as a blank would be lying about one of them.
 
+## The front-matter audit
+
+Decision D-D. `auditSite` checks every page's front matter against the site's own schema — a `frontmatter_schema.yml`, a `.cms/` contract, `zer0.json`, or the platform's defaults, and every report names which one answered — under thirteen rule ids spelled exactly as lifehacker.dev's `scripts/ci/lint_frontmatter.rb` spells them, so a finding raised in the editor and one filed by that site's CI dedupe against each other. A block the parser could not fully read is reported as `unreadable-frontmatter` rather than audited on a misreading, and the fix-it refuses it. A fix is proposed by `fixFor` and rendered by `dryRunFix` through the ordinary line-surgery path without touching the disk; applying one re-reads the file, re-runs the rule against what is on disk now, and shows the real diff before it asks.
+
 ## Where the AI lives
 
 Two separate, independently-disableable surfaces:
 
-- **The MCP server** (`src/mcp/`) — twelve tools for any MCP client. The doctrine-preferred path is `zer0_draft`: the model writes a draft, a person approves it. `zer0_publish` needs an environment flag *and* a per-call confirmation.
+- **The MCP server** (`src/mcp/`) — sixteen tools for any MCP client. The doctrine-preferred path is `zer0_draft`: the model writes a draft, a person approves it. `zer0_publish` needs an environment flag *and* a per-call confirmation.
 - **The agent** (`src/agent/`) — the Claude Agent SDK, loaded through a dynamic import so it is never bundled, gated on a setting that defaults to off, and absent from the dependency tree unless you ask for it. Read-only tools run freely; every mutating tool goes through an approve/deny card showing the diff.
 
 Neither is required to use the CMS, and neither can publish without walking through the same gate a human command does.
@@ -194,7 +214,7 @@ It never merges, approves, closes, or removes a review label. It never reads or 
 
 ## Security: the five execution vectors
 
-Five paths in this extension can start a process, and Workspace Trust is the outer gate on all of them: the content engine, the front-matter normalizer, a `placeholders[].script`, the verify command, and the AI agent. In an untrusted workspace every one refuses — as a result value, never as a thrown exception — and the extension registers no MCP server at all, because that server would inherit the same reach.
+Five paths in this extension can start a process, and Workspace Trust is the outer gate on all of them: the content engine, the front-matter normalizer, a `placeholders[].script`, the verify command, and the AI agent. In an untrusted workspace every one refuses — as a result value, never as a thrown exception — and the extension registers no MCP server at all, because that server would inherit the same reach. The bundled MCP server is a separate process and learns trust from its environment: `zer0_contract` refuses unless `ZER0_CMS_MCP_ALLOW_EXEC=1`, which the editor sets only for a trusted workspace and removes otherwise.
 
 The inner gate is different in kind. A cloned repository ships its own `zer0.json`, so anything that arms a write is read from the VS Code settings layer alone and never from the file: publishing, fleet dispatch, and lane scaffolding. A path that resolves outside the workspace root is refused whichever layer supplied it. The `when` clause on a command is the courtesy; the check inside the function is the gate, and it re-reads trust rather than trusting a context key that was set at activation.
 

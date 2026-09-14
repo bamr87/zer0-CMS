@@ -28,6 +28,7 @@ The second rule follows from the first: **zero runtime dependencies**. YAML subs
 | `media/` | Resolving the preview image a page already has, or emitting the generator's brief. |
 | `platform/` | What kind of site this is (decision D12): seven profiles as data, the zer0-mistakes overlay on Jekyll, marker-file detection over injected readers, the site's own config, and the permalink and content-root derivations. See `platform/README.md`. |
 | `fleet/` | The Fleet console's pure half: `fleet.manifest.yml` → typed lanes, the switch/dispatch gate, and the GitHub surface declared as data over an injected `fetch`. See `fleet/README.md`. |
+| `harness/` | One vocabulary for the editor agent and CI: the agent, skill and `_data/ai.yml` readers, the harness profile (model precedence, permission-mode clamp, SDK and CI projections), the inventory and its joins, the `wtd fleet adopt` port, the usage ledger, and lane generation. See `harness/README.md`. |
 | `index.ts` | The barrel. Import from `../core`, not from individual files, outside of core itself. |
 
 ## Where a type lives
@@ -43,7 +44,7 @@ Declaring the same name in two modules makes `export *` ambiguous and breaks the
 Core tests run outside the extension host:
 
 ```bash
-npx tsc -p . --outDir out && npx mocha --ui tdd out/test/{core,fields,governance,golden,fleet}.test.js   # or: npm test
+npx tsc -p . --outDir out && npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet,engines,routes,webview,styling,platform,audit,harness,lanes}.test.js   # the fourteen pure-Node suites; or: npm test
 ```
 
-If a test needs `vscode`, it belongs in `extension.test.ts`, not here.
+If a test needs `vscode`, it belongs in `extension.test.ts` (or `multiroot.test.ts` for the two-folder window), not here.

@@ -1,6 +1,6 @@
 # `src/test/` — the test suite
 
-Eight files, three execution contexts, one command: `npm test`. The runner is `@vscode/test-cli` driving Mocha's **tdd** interface (`suite` / `test`) over the plain `tsc` output in `out/test/`, configured by `.vscode-test.mjs` at the repository root. `npm run pretest` compiles that output, builds the five esbuild bundles and runs eslint first, so a green `npm test` means the tests, the types, the lint gate and the shipped artifacts all agree.
+Seventeen suites, three execution contexts, one command: `npm test`. The runner is `@vscode/test-cli` driving Mocha's **tdd** interface (`suite` / `test`) over the plain `tsc` output in `out/test/`, configured by `.vscode-test.mjs` at the repository root. `npm run pretest` compiles that output, builds the five esbuild bundles and runs eslint first, so a green `npm test` means the tests, the types, the lint gate and the shipped artifacts all agree.
 
 | File | Runs in | Covers |
 |---|---|---|
@@ -10,8 +10,17 @@ Eight files, three execution contexts, one command: `npm test`. The runner is `@
 | `golden.test.ts` | plain Node | Cross-lane byte contracts against fixtures written by Python. |
 | `loop.test.ts` | plain Node | The feedback loop: the analytics join and its read-surface boundary, the portfolio, and media coverage. |
 | `fleet.test.ts` | plain Node | The Fleet console's pure half: the verbatim irony-works manifest (wrapped summary whole), a malformed manifest coercing without throwing, the blocker order in both modes, the repo-scoped-only surface guard, and every request the client makes landing in the declared plan — with a `fetch` that records and answers. |
+| `engines.test.ts` | plain Node | The engines seam: exactly one importer, no re-export through the barrel, `dist/mcp-server.js` free of the package (skipped without a build), the adapters, and parity against real sister-repository workflows and manifests. |
+| `routes.test.ts` | plain Node | The route registry: the tabs' ids are a subset of the routes, in the same relative order. |
+| `webview.test.ts` | plain Node, over a mini-DOM | Every route renders an empty state, the operator primitives keep their promises, field widgets mount and dispose without leaking, and an unread run list renders as unknown. |
+| `styling.test.ts` | plain Node | The styling gate: only `media/tokens.css` may name a VS Code theme variable. |
+| `platform.test.ts` | plain Node | The seven profiles and the zer0-mistakes overlay, detection over the fixture sites, a site's own configuration, and the Jekyll golden. |
+| `audit.test.ts` | plain Node | The thirteen front-matter rule ids, the parser's warnings channel, schema ingestion from sister sites' own files, and the fix-it that never writes. |
+| `harness.test.ts` | plain Node | One harness vocabulary over verbatim copies of four sibling repositories' agents, skills, workflows and AI configuration: the inventory, the joins and the profile. |
+| `lanes.test.ts` | plain Node | Lane generation: drift against the hub's reusable `ai-lane.yml`, and the rendered files against the `golden/lanes/` fixtures. |
 | `mcp.test.ts` | child process | Spawns the bundled `dist/mcp-server.js` over stdio with a scrubbed environment. |
 | `extension.test.ts` | extension host | Activation, the contributed commands, the context keys, and the fixture workspace's live settings. |
+| `multiroot.test.ts` | extension host, its own `multiroot` entry | The two-folder window: per-site stores, the active-site rule, per-site MCP servers. See below. |
 
 ## The two rules every test here obeys
 
@@ -31,9 +40,13 @@ Seven markdown files cover the shapes the parser has to survive: YAML front matt
 
 `.zer0/drafts/` is the queue: a `README.md` with no front matter that `listQueue` must skip, a `pending` draft whose source is already in the ledger (so a publish is skipped rather than duplicated), and an `approved` one that is not. `.zer0/ledger.json` carries a `_meta` block, one real share, and one half-written entry with no `urn` — the two rows `shareEntries` has to filter. `.cms/index/` holds a six-record content index and its summary, spanning fresh/aging/stale, health 40/82/88/90/93/95, one draft and one structural page.
 
+## The other fixture trees
+
+`fixtures/audit/` is a site for the audit suite — 23 posts shaped for the rules, plus the real front-matter schemas of it-journey and zer0-mistakes under `schemas/`. `fixtures/fleet/` holds verbatim copies of sister repositories' workflows and manifests for the engines and fleet suites. `fixtures/harness/` holds verbatim agents, skills, workflows and AI configuration from four sibling repositories, with provenance in `FIXTURE-SOURCES.md`. `fixtures/sites/` is six small sites, one per platform idiom: Astro, Docusaurus, Hugo, a Jekyll site on the zer0-mistakes theme, MkDocs and Wiki.js. `fixtures/multi/` and `fixtures/multi.code-workspace` are the two-folder window `multiroot.test.ts` opens.
+
 ## `fixtures/golden/` — generated, never hand-edited
 
-Every file here was written by **Python**, and the TypeScript core has to reproduce those bytes exactly. That is what makes them prove lane compatibility rather than self-consistency.
+`ledger.json` and the worklist pair were written by **Python**, and the TypeScript core has to reproduce those bytes exactly — that is what makes them prove lane compatibility rather than self-consistency. The three subdirectories are generated by Node instead, each by its own `generate.mjs`: `engines/` pins the engines' output (with an `ENGINES_VERSION` sidecar), `lanes/` the rendered lane files (with `LANES_VERSION`), and `platform/` the pre-profile Jekyll projection.
 
 `ledger.json` is `json.dumps(indent=2, sort_keys=True, ensure_ascii=True)` plus a trailing newline; its `café-métier` URL pins the escaping and the code-point key ordering in one object. `worklist.md` and `worklist-inputs.json` come from the real `catering.build` / `catering.render` and are inherited verbatim from BASH-CMS — eleven records and seven performance rows chosen to hit every lane boundary: health exactly 70, health `-1`, a draft, a structural page and a stale page with engagements.
 
@@ -48,14 +61,14 @@ When a golden test fails, the fix is either a real bug in our serializer or a re
 
 ## Running a subset
 
-`npm test` runs everything. During development the six pure-Node files also run under plain Mocha, which is much faster and needs no VS Code download:
+`npm test` runs everything. During development the fourteen pure-Node suites also run under plain Mocha, which is much faster and needs no VS Code download (Node >= 22.12, for the engines seam):
 
 ```bash
 npx tsc -p . --outDir out
-npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet}.test.js
+npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet,engines,routes,webview,styling,platform,audit,harness,lanes}.test.js
 ```
 
-`extension.test.ts` needs the extension host and `mcp.test.ts` needs `dist/mcp-server.js`, so neither is in that list. On a headless Linux box `npm test` shells out to `xvfb-run` for you (see `test-runner.js`); set `ZER0_CMS_NO_XVFB=1` to force the plain path.
+`extension.test.ts` and `multiroot.test.ts` need the extension host and `mcp.test.ts` needs `dist/mcp-server.js`, so none of the three is in that list. On a headless Linux box `npm test` shells out to `xvfb-run` for you (see `test-runner.js`); set `ZER0_CMS_NO_XVFB=1` to force the plain path.
 
 ## The multi-root suite
 

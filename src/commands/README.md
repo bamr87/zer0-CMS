@@ -10,23 +10,23 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 
 | File | Commands | LOC |
 |---|---|---|
-| `project.ts` | `init`, `refresh`, `cache.clear`, `showOutput`, `openFile`, `registerFolder`, `unregisterFolder` | 369 |
-| `content.ts` | `createContent`, `createContentInFolder`, `generateSlug`, `setLastModified`, `insertImage`, `collapseSections`, `focusTags`, `focusCategories` | 523 |
-| `contentType.ts` | `contentType.generate`, `contentType.addMissingFields`, `contentType.set` | 253 |
-| `governance.ts` | `draft.new`, `draft.review`, `draft.approve`, `draft.publish`, `draft.guard`, `draft.preview` | 676 |
-| `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 320 |
+| `project.ts` | `init`, `refresh`, `cache.clear`, `showOutput`, `openFile`, `registerFolder`, `unregisterFolder` | 430 |
+| `content.ts` | `createContent`, `createContentInFolder`, `generateSlug`, `setLastModified`, `insertImage`, `collapseSections`, `focusTags`, `focusCategories` | 539 |
+| `contentType.ts` | `contentType.generate`, `contentType.addMissingFields`, `contentType.set` | 262 |
+| `governance.ts` | `draft.new`, `draft.review`, `draft.approve`, `draft.publish`, `draft.guard`, `draft.preview` | 706 |
+| `contract.ts` | `contract.run`, `contract.normalizePreview`, `contract.normalizeApply`, `catering.worklist` | 343 |
 | `agent.ts` | `agent.open`, `agent.start`, `agent.runAsRole`, `agent.stop`, `mcp.writeWorkspaceConfig` | 532 |
-| `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane`, `fleet.rerunLastFailure`, `fleet.cancelNewest`, `fleet.toggleWorkflowFile`, `fleet.openInGitFactory`, `fleet.importHubRoster`, `monitor.open` | 1896 |
-| `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 761 |
-| `site.ts` | `site.pick`, `site.setActive`, `site.preview` | 236 |
-| `harness.ts` | `harness.open`, `workflows.open`, `lane.scaffold` | 1251 |
-| `index.ts` | barrel + `ALL_COMMAND_IDS` | 136 |
+| `fleet.ts` | `fleet.open`, `fleet.refresh`, `fleet.toggleSwitch`, `fleet.dispatchLane`, `fleet.rerunLastFailure`, `fleet.cancelNewest`, `fleet.toggleWorkflowFile`, `fleet.openInGitFactory`, `fleet.importHubRoster`, `monitor.open` | 1927 |
+| `audit.ts` | `audit.open`, `audit.fix`, `audit.verify` | 916 |
+| `site.ts` | `site.pick`, `site.setActive`, `site.preview` | 237 |
+| `harness.ts` | `harness.open`, `workflows.open`, `lane.scaffold` | 1255 |
+| `index.ts` | barrel + `ALL_COMMAND_IDS` | 164 |
 
 `dashboard` and `dashboard.close` are registered by `extension.ts`, beside the panel object they operate on. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
 
-### Three places, on purpose
+### Four places, on purpose
 
-An id has to appear in `contributes.commands` (`package.json`), in a `register(shell, id, …)` call here, and in `ALL_COMMAND_IDS`. Nothing in TypeScript connects the first two, and both failure modes are silent — a contributed id with no handler is a palette entry that does nothing; a handler with no contribution is a command nobody can find. `extension.test.ts` compares all three, so skipping one fails loudly instead of quietly.
+An id has to appear in `contributes.commands` (`package.json`), in a `register(shell, id, …)` call here, in `ALL_COMMAND_IDS` — and in `src/test/extension.test.ts`'s own `ALL_COMMANDS` list, whose `54` count is asserted too. Nothing in TypeScript connects the first two, and both failure modes are silent — a contributed id with no handler is a palette entry that does nothing; a handler with no contribution is a command nobody can find. The extension-host test compares its own list against the registered commands and, in order, against the manifest, so skipping one fails loudly instead of quietly; nothing else reads `ALL_COMMAND_IDS` today.
 
 ---
 
@@ -244,7 +244,8 @@ Guard findings, engine output and publish previews open as untitled markdown. Th
 2. `register(shell, 'my.command', handler)` in the file that owns its subject.
 The wrapper turns a rejected promise into a notification instead of an unhandled rejection nobody sees.
 3. Add the id to `ALL_COMMAND_IDS` in `index.ts`.
-4. If a webview should be able to invoke it, add the literal to `CommandId` in
+4. Add it to `ALL_COMMANDS` in `src/test/extension.test.ts` and bump that list's `54`. A new command module also needs its `register*Commands(shell)` call in `activate()`.
+5. If a webview should be able to invoke it, add the literal to `CommandId` in
 `src/webview/shared/protocol.ts` **and** a handler entry in the host's `Record<CommandId, Handler>`. Adding the literal alone grants nothing.
-5. If it is privileged, it goes through `evaluateGates()` and a modal
+6. If it is privileged, it goes through `evaluateGates()` and a modal
 confirmation, in the same function every other surface calls. Re-read state from disk first. A webview-only check is decoration.

@@ -1063,7 +1063,7 @@
             "type": "boolean",
             "default": false,
             "scope": "resource",
-            "markdownDescription": "Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml` (spec `fleet/v1`). Read-only until `#zer0Cms.fleet.dispatchAllow#` is also set."
+            "markdownDescription": "Enable the Fleet console: the Fleet, Workflows and Monitor tabs and the `fleet.*`, `workflows.open`, `lane.scaffold` and `monitor.open` commands, over this repository's `fleet.manifest.yml` (spec `fleet/v1`) and any roster you add. Read-only until `#zer0Cms.fleet.dispatchAllow#` (the run verbs) or `#zer0Cms.fleet.scaffoldAllow#` (writing a lane) is also set."
           },
           "zer0Cms.fleet.manifestPath": {
             "type": "string",
@@ -1075,7 +1075,7 @@
             "type": "boolean",
             "default": false,
             "scope": "resource",
-            "markdownDescription": "Master switch for the two privileged fleet actions — flipping a lane's `*_ENABLED` variable and dispatching a lane once. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every action still asks for confirmation."
+            "markdownDescription": "Master switch for the privileged fleet actions — flipping a lane's `*_ENABLED` variable, dispatching it once, re-running its last failure, cancelling a run, and enabling or disabling its workflow file. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every action still asks for confirmation."
           },
           "zer0Cms.fleet.scaffoldAllow": {
             "type": "boolean",

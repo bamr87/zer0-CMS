@@ -16,6 +16,12 @@ The fix is one resolved value and two projections. `resolveHarnessProfile` is th
 | `joins.ts` | The six edges of the lane join, and every finding a broken one produces. |
 | `ledger.ts` | `_data/ai_usage/` → `LedgerSummary`, or `null` for the five repositories that meter nothing. |
 | `inventory.ts` | `readHarnessInventory` — all seven artefacts, joined, over the injected `HarnessIo`. |
+| `lanes.ts` | Lane generation: which of three shapes a described lane fits — `bespoke`, with reasons, being one of them — and the whole plan of what writing it would do, with nothing written. |
+| `render.ts` | The renderers: a lane spec becomes a workflow (a substitution into the hub's vendored caller template, never a re-emit of it), an agent role, a skill stub and a manifest entry. |
+| `emitYaml.ts` | A small deterministic YAML emitter for the manifest entry — a port of the engines' own, so the MCP server, which may import no package, can render a lane preview. |
+| `manifestWrite.ts` | Appends one lane to `fleet.manifest.yml` by line surgery, so every other byte, comment and hand-written value survives. |
+| `preflight.ts` | The house rules, checked against a lane spec before anything renders: a `*_ENABLED` switch, a cron minute never `:00`, and the rest of what this fleet has already got wrong once. |
+| `selfAudit.ts` | The fleet's own rulebook, run over the files this console is about to propose — the one file here allowed to import the engines. |
 
 Everything here is pure: no `fs`, no `vscode`, no network. The readers take their I/O as a parameter, which is why the same code serves the extension host, the bundled MCP server, and a test over a fixture directory. `src/commands/agent.ts` supplies the real filesystem (`workspaceHarnessIo`) and the MCP server spec; `src/agent/agentPanel.ts` resolves a profile per run.
 
@@ -25,7 +31,7 @@ The hub's `run.sh` resolves a model as `--model` > `AI_MODEL` > `<repo>/_data/ai
 
 The layer that matters is the third one. `cfg.agent.model` is already the merged three-layer answer, so it can only speak for `zer0.json` once the settings layer has been asked separately (through `inspect()`, which returns only what a person actually set) **and** the manifest default has been excluded. A merged value that equals the built-in default is the default — not a choice anybody made — so it does not shadow the repository's own file. That is what makes `zer0Cms.agent.model` mean *inherit* when it is left alone, and it is why a repository with an `_data/ai.yml` stops disagreeing with its own CI.
 
-`zer0Cms.agent.model`'s manifest default should be `""` rather than a hard-coded model id, so that the intent is visible in the settings UI as well as in this behaviour. Until it is, one edge stays imprecise: a `zer0.json` that explicitly names the *same* id as the built-in default is attributed to `default` rather than `zer0.json`. Nothing resolves differently; only the label does.
+`zer0Cms.agent.model`'s manifest default is `""` — *inherit* — so the intent is visible in the settings UI as well as in this behaviour. One edge stays imprecise: `resolveModel` cannot tell a `zer0.json` that explicitly names `DEFAULT_HARNESS_MODEL` from the default itself, so such a file does not shadow `_data/ai.yml` — a site with both resolves to the `ai.yml` model — and a site without one labels the answer `default` rather than `zer0.json`.
 
 ## `settingSources` — the decision, and why it defaults to nothing
 
@@ -48,7 +54,7 @@ Measured against `@anthropic-ai/claude-agent-sdk` 0.3.220 on 2026-09-09, with a 
 | project `.claude/settings.json` with `permissions.allow: ['Write']`, `settingSources: ['project']` | yes | yes |
 | project `.claude/settings.json` with `permissions.defaultMode: 'acceptEdits'`, `settingSources: ['project']` | yes | yes |
 
-So exactly one configuration bypasses decision D10 — and it was a value this extension's own setting offered. `resolveHarnessProfile` therefore **clamps** any mode that can skip the card down to `default`, and `profileWarnings` returns a line the transcript prints before the first token, so a person is told that the mode they configured would have skipped the card and that this run does not. The manifest enum should be narrowed to `default` and `plan` for the same reason; the clamp lives here as well because a `zer0.json` arriving with a cloned repository can name a mode too, and a gate that exists only in the settings UI is not a gate.
+So exactly one configuration bypasses decision D10 — and it was a value this extension's own setting offered. `resolveHarnessProfile` therefore **clamps** any mode that can skip the card down to `default`, and `profileWarnings` returns a line the transcript prints before the first token, so a person is told that the mode they configured would have skipped the card and that this run does not. The manifest enum is narrowed to `default` and `plan` for the same reason; the clamp lives here as well because a `zer0.json` arriving with a cloned repository can name a mode too, and a gate that exists only in the settings UI is not a gate.
 
 The last two rows are worth keeping written down: they are the SDK behaving *better* than the pessimistic assumption, and re-deriving them later would cost another set of live runs.
 
@@ -58,7 +64,7 @@ A run gets this extension's own MCP server through `mcpServers`, spawned as `nod
 
 `strictMcpConfig: true` is always emitted: the servers this profile names are the only ones the run gets, so a `.mcp.json` sitting in a cloned repository cannot add one.
 
-`profile.readOnlyTools` is the list the approval gate consults, and it is the base six plus — **only when the server is actually attached** — the eight `mcp__zer0-cms__*` tools that cannot change anything: `zer0_status`, `zer0_list_content`, `zer0_get_content`, `zer0_preview`, `zer0_portfolio`, `zer0_media`, `zer0_fleet_status`, `zer0_audit`. The five that are absent all write, so they fail closed onto the card: `zer0_draft`, `zer0_publish`, `zer0_worklist`, `zer0_ingest`, `zer0_contract`. This is a **list, not an allow-rule** — it is never passed to the SDK as `allowedTools`, because a tool matched by an SDK-side allow rule never reaches `canUseTool`, and `canUseTool` is the gate (D10).
+`profile.readOnlyTools` is the list the approval gate consults, and it is the base six plus — **only when the server is actually attached** — the eight `mcp__zer0-cms__*` tools that cannot change anything: `zer0_status`, `zer0_list_content`, `zer0_get_content`, `zer0_preview`, `zer0_portfolio`, `zer0_media`, `zer0_fleet_status`, `zer0_audit`. The other eight fail closed onto the card: the six that write or spawn (`zer0_draft`, `zer0_publish`, `zer0_worklist`, `zer0_ingest`, `zer0_contract`, `zer0_lane_scaffold`) and two that are read-only but not on the list yet (`zer0_harness_inventory`, `zer0_lane_preview`) — the safe direction to be wrong in, since a tool left off the list costs a click, not a gate. This is a **list, not an allow-rule** — it is never passed to the SDK as `allowedTools`, because a tool matched by an SDK-side allow rule never reaches `canUseTool`, and `canUseTool` is the gate (D10).
 
 `toSdkOptions` also emits an explicit `env`. The SDK replaces the child environment wholesale when that field is set, so it starts from the host's and *deletes* `ZER0_CMS_MCP_ALLOW_PUBLISH` and `ZER0_CMS_MCP_ALLOW_SCAFFOLD`: an editor run must not be armed by whatever armed something else in this window.
 
@@ -161,7 +167,7 @@ Two more classes the derivation *cannot* see, both worth knowing before trusting
 
 ### An empty manifest from a non-empty file is a finding, not an absence
 
-Four of the seven committed manifests in this fleet are **not valid YAML**: `wtd fleet adopt` wraps a single-quoted scalar at column 80 and continues it at column 0, outside the block's indentation. The `yaml` package throws, and `@bamr87/fleet-engines`' parser answers with an **empty** manifest reporting **zero** skipped lanes — so a caller cannot tell it failed. This repository's own tolerant reader parses all seven, which is why `inventory.ts` uses it.
+Seven of the ten manifests committed across this fleet (as of 2026-09-14) are **not valid YAML**: `wtd fleet adopt` wraps a single-quoted scalar at column 80 and continues it at column 0, outside the block's indentation. The `yaml` package throws, and `@bamr87/fleet-engines`' parser answers with an **empty** manifest reporting **zero** skipped lanes — so a caller cannot tell it failed. This repository's own tolerant reader recovers every lane from all of them, which is why `inventory.ts` uses it — though not every token after the broken line (see `../fleet/README.md`).
 
 The posture outlives the parser: a manifest file that exists and yields no lanes carries its `reason` through. "This repository has no lanes" and "this repository's manifest would not parse" are different sentences, and nothing here may say the first when it means the second.
 

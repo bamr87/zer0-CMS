@@ -67,7 +67,7 @@ The **platform gets one veto and no vote** over filenames. Where a content root 
 
 ## Testing
 
-`src/test/platform.test.ts` (37 tests) and the byte-identity golden at `src/test/fixtures/golden/platform/`. Six fixture sites live under `src/test/fixtures/sites/`, each written in its platform's own idiom — TOML `+++` for Hugo, `published:`/`dateCreated:` for a Wiki.js export, a number-prefixed filename and `sidebar_position` for Docusaurus, `pubDate` under `src/content/` for Astro, and a YAML anchor in the fleet's `_config.yml` so the anchor warning is exercised against a real file rather than a contrived string.
+`src/test/platform.test.ts` (42 tests) and the byte-identity golden at `src/test/fixtures/golden/platform/`. Six fixture sites live under `src/test/fixtures/sites/`, each written in its platform's own idiom — TOML `+++` for Hugo, `published:`/`dateCreated:` for a Wiki.js export, a number-prefixed filename and `sidebar_position` for Docusaurus, `pubDate` under `src/content/` for Astro, and a YAML anchor in the fleet's `_config.yml` so the anchor warning is exercised against a real file rather than a contrived string.
 
 The golden is the load-bearing one. Run it after any change in this package:
 
