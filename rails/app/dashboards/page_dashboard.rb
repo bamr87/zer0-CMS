@@ -54,7 +54,9 @@ class PageDashboard < Administrate::BaseDashboard
 
   # Search terms match title, description, author and source path; these
   # narrow the result: `draft: live: future: error: collection:docs site:3
-  # kind:post tag:ruby category:hacks author:amr`.
+  # kind:post tag:ruby category:hacks author:amr`. `missing_preview:` (or
+  # `missing_preview:<site id>`) asks the image engine which files it would
+  # draw a preview for.
   COLLECTION_FILTERS = {
     draft: ->(resources) { resources.where(draft: true).or(resources.where(status: "draft")) },
     live: ->(resources) { resources.where(draft: false, published: true, future: false).where.not(status: "draft") },
@@ -65,7 +67,8 @@ class PageDashboard < Administrate::BaseDashboard
     kind: ->(resources, kind) { resources.where(kind: kind) },
     author: ->(resources, name) { resources.where(author: name) },
     tag: ->(resources, name) { resources.where(format(JSON_EACH, column: "tags"), name) },
-    category: ->(resources, name) { resources.where(format(JSON_EACH, column: "categories"), name) }
+    category: ->(resources, name) { resources.where(format(JSON_EACH, column: "categories"), name) },
+    missing_preview: ->(resources, site_id = nil) { ImageEngine.filter_missing(resources, site_id) }
   }.freeze
 
   def display_resource(page)

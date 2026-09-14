@@ -39,6 +39,9 @@
     <div class="label">Generate</div>
     <div class="nav">
       <%= nav.call("ABC books", new_abc_book_path, "✦", controller_name == "abc_books") %>
+      <%= link_to ImageEngine.generator_url, target: "_blank", rel: "noopener noreferrer", title: "zer0-image-generator: full preview runs" do %>
+        <span class="ico">◐</span><span>Image generator ↗</span>
+      <% end %>
     </div>
   </div>
 </nav>

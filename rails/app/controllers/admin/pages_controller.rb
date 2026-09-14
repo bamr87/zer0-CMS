@@ -3,11 +3,25 @@
 module Admin
   # Pages are an index of files. Index and show are Administrate's; every
   # write — edit, create, duplicate, destroy — goes to disk through
-  # PageEditor or Zer0Cms::Cms::Writer and then re-syncs the path.
+  # PageEditor or Zer0Cms::Cms::Writer and then re-syncs the path; a local
+  # preview is drawn by ImageEngine and written back the same way.
   class PagesController < Admin::ApplicationController
     EDIT_PARAMS = (PageEditor::SCALAR_KEYS.values + PageEditor::BOOLEAN_DEFAULTS.keys +
                    PageEditor::LIST_KEYS + %w[body base_digest]).freeze
     NEW_PARAMS = %i[site_id collection section title slug description author tags draft body].freeze
+
+    # `missing_preview:` asks the image engine; when it cannot answer, the
+    # index renders without that filter and says why.
+    def index
+      super
+    rescue ImageEngine::Error => e
+      raise if @retried_without_engine
+
+      @retried_without_engine = true
+      flash.now[:alert] = "missing_preview: is unavailable — #{e.message}"
+      params[:search] = params[:search].to_s.split.reject { |word| word.start_with?("missing_preview:") }.join(" ")
+      super
+    end
 
     def show
       begin
@@ -84,6 +98,16 @@ module Admin
       end
     rescue PageEditor::Error, SiteSync::Failed => e
       redirect_to [namespace, requested_resource], alert: e.message, status: :see_other
+    end
+
+    # One page, the local provider, the preview key written back through
+    # PageEditor. Full runs belong to the image generator's own panel.
+    def generate_preview
+      outcome = ImageEngine.generate_preview(requested_resource)
+      flash_key = outcome.status == :error ? :alert : :notice
+      redirect_to [namespace, outcome.page], flash_key => outcome.message, status: :see_other
+    rescue ImageEngine::Error, PageEditor::Error, SiteSync::Failed => e
+      redirect_to [namespace, requested_resource], alert: "No preview generated: #{e.message}", status: :see_other
     end
 
     def destroy

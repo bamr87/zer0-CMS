@@ -124,6 +124,7 @@ form.button_to { display: inline; margin: 0; }
   background: var(--bg-inset); border-color: var(--border-strong); color: var(--text); font-weight: 550;
 }
 .button--alt:hover { border-color: var(--accent); filter: none; }
+.button[disabled], .button[disabled]:hover { opacity: .55; cursor: not-allowed; filter: none; border-color: var(--border); }
 .button--danger {
   background: transparent; color: var(--err); border-color: color-mix(in srgb, var(--err) 45%, var(--border));
 }

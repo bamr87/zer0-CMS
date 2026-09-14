@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     end
     resources :pages do
       post :duplicate, on: :member
+      post :generate_preview, on: :member
     end
     resources :assets, only: %i[index show]
     resources :terms, only: %i[index show]

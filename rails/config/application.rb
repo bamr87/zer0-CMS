@@ -37,6 +37,11 @@ module Zer0CmsWeb
     # ABC export needs an explicit target; there is no default.
     config.x.drsai_site_root = ENV["DRSAI_SITE_ROOT"].presence
 
+    # The image generator's web panel: anything bigger than one page's local
+    # preview links out to it. Only an http(s) URL is used as a link target.
+    generator_url = ENV["ZER0_IMAGE_GENERATOR_URL"].to_s.strip
+    config.x.image_generator_url = generator_url.match?(%r{\Ahttps?://[^\s"'<>]+\z}i) ? generator_url : "http://localhost:3000"
+
     if ENV["RAILS_LOG_TO_STDOUT"].present?
       config.logger = ActiveSupport::TaggedLogging.logger($stdout)
     end

@@ -8,6 +8,8 @@
   <div class="btn-row">
     <%= button_to "Sync", sync_admin_site_path(site), class: "button" %>
     <%= link_to "New page", new_admin_page_path(site_id: site.id), class: "button button--alt" %>
+    <%= link_to "Missing previews", admin_pages_path(search: "site:#{site.id} missing_preview:"), class: "button button--alt" %>
+    <%= link_to "Image generator ↗", ImageEngine.generator_url, class: "button button--alt", target: "_blank", rel: "noopener noreferrer" %>
     <%= link_to "Edit", edit_admin_site_path(site), class: "button button--alt" %>
     <%= button_to "Remove from index", admin_site_path(site), method: :delete, class: "button button--danger",
           data: { turbo_confirm: "Remove #{site.name} from the index? Files on disk are not touched." } %>

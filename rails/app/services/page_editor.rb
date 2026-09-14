@@ -92,6 +92,41 @@ class PageEditor
     raise Invalid, e.message
   end
 
+  # The file's bytes as the index knows them; raises Stale when the file
+  # changed since the last sync.
+  def current_text
+    read.first
+  end
+
+  def file_path
+    confined_path
+  end
+
+  # The image engine wrote `key:` into the file itself (`engine_text`). That
+  # edit goes through the same path as a form save: the key alone is applied
+  # to the bytes the index knew (`original`) by FrontMatter.update_keys and
+  # written atomically over the engine's bytes, then the path is re-synced.
+  # When the engine changed anything besides that key, or its value cannot be
+  # written back, the original bytes are restored and the edit is refused.
+  # Returns the key's new value.
+  def replace_engine_write!(original, engine_text, key)
+    before = Zer0Cms::Cms::FrontMatter.parse(original)
+    after = Zer0Cms::Cms::FrontMatter.parse(engine_text)
+    value = after.data[key]
+    only_key = after.errors.empty? && value.is_a?(String) && after.body == before.body &&
+               after.data.except(key) == before.data.except(key)
+    edited = begin
+      only_key ? update_keys(original, { key => value }) : nil
+    rescue Invalid
+      nil
+    end
+    write_atomically(engine_text, edited || original)
+    page.site.sync_path!(page.relative)
+    raise Refused, "the image engine changed more than #{key}: in #{page.relative}; its edit was undone" unless edited
+
+    value
+  end
+
   private
 
   def confined_path
