@@ -1,0 +1,12 @@
+<div class="field-unit__label">
+  <%= f.label field.attribute %>
+</div>
+<div class="field-unit__field markdown-field"
+     data-controller="markdown-preview"
+     data-markdown-preview-url-value="<%= admin_markdown_preview_path %>">
+  <%= f.text_area field.attribute, rows: 20, class: "code", spellcheck: true,
+        data: { markdown_preview_target: "source", action: "input->markdown-preview#queue" } %>
+  <div class="markdown-body markdown-preview" data-markdown-preview-target="output" aria-live="polite">
+    <%= field.html %>
+  </div>
+</div>

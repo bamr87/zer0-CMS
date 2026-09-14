@@ -1,0 +1,44 @@
+<nav class="sidebar" data-sidebar-target="panel" aria-label="Main">
+  <%= link_to admin_root_path, class: "brand" do %>
+    <span class="glyph">0</span>
+    <span>zer0-cms</span>
+  <% end %>
+
+  <% nav = lambda do |label, path, icon, active, count = nil|
+       link_to(path, class: (active ? "active" : nil), "aria-current": (active ? "page" : nil)) do
+         concat content_tag(:span, icon, class: "ico")
+         concat content_tag(:span, label)
+         concat content_tag(:span, count, class: "nav-count") if count
+       end
+     end %>
+
+  <div class="nav-group">
+    <div class="label">Fleet</div>
+    <div class="nav">
+      <%= nav.call("Sites", admin_sites_path, "▤", controller_path == "admin/sites" && action_name == "index") %>
+      <%= nav.call("Pages", admin_pages_path, "▦", controller_path == "admin/pages") %>
+      <%= nav.call("Images", admin_assets_path, "◩", controller_path == "admin/assets") %>
+      <%= nav.call("Terms", admin_terms_path, "#", controller_path == "admin/terms") %>
+    </div>
+  </div>
+
+  <% sites = Site.named.select(:id, :name, :path, :pages_count).to_a %>
+  <% if sites.any? %>
+    <div class="nav-group">
+      <div class="label">Sites</div>
+      <div class="nav nav-sites">
+        <% current_site_id = controller_path == "admin/sites" ? params[:id].to_s : nil %>
+        <% sites.each do |site| %>
+          <%= nav.call(site.name, admin_site_path(site), "·", current_site_id == site.id.to_s, site.pages_count) %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="nav-group">
+    <div class="label">Generate</div>
+    <div class="nav">
+      <%= nav.call("ABC books", new_abc_book_path, "✦", controller_name == "abc_books") %>
+    </div>
+  </div>
+</nav>

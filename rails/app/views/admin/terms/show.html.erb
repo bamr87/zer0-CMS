@@ -1,0 +1,4 @@
+<% content_for(:header_last) do %>
+  <%= link_to "Pages with this #{page.resource.kind}", admin_pages_path(search: page.resource.pages_search), class: "button button--alt" %>
+<% end %>
+<%= render template: "administrate/application/show", locals: local_assigns %>

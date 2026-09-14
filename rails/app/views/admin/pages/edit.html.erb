@@ -1,0 +1,12 @@
+<% resource = page.resource %>
+<% content_for(:before_main) do %>
+  <p class="mono faint"><%= resource.relative %></p>
+  <% if @editor_error.is_a?(PageEditor::Stale) %>
+    <section class="card stale" role="alert">
+      <h2>The file changed on disk</h2>
+      <p>Nothing was written. Sync <%= resource.site.name %> to index the current file, then open the editor again.</p>
+      <%= button_to "Sync #{resource.site.name}", sync_admin_site_path(resource.site), class: "button" %>
+    </section>
+  <% end %>
+<% end %>
+<%= render template: "administrate/application/edit", locals: local_assigns %>

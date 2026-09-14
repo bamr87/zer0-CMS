@@ -1,4 +1,0 @@
-<% content_for :title, "Edit #{@site.name}" %>
-<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Edit<% end %>
-<div class="page-head"><h1>Edit site</h1></div>
-<%= render "form", site: @site %>

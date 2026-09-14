@@ -1,0 +1,9 @@
+<% if field.image_path %>
+  <div class="preview-frame"><%= image_tag field.image_path, alt: field.value %></div>
+  <div class="faint mono"><%= field.value %></div>
+<% elsif field.value.present? %>
+  <span class="mono"><%= field.value %></span>
+  <span class="faint"><%= field.external? ? "(external — not loaded)" : "(no such image in the site)" %></span>
+<% else %>
+  <span class="faint">—</span>
+<% end %>

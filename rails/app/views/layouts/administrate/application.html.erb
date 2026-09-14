@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= content_for?(:title) ? "#{strip_tags(content_for(:title)).squish} · zer0-CMS" : "zer0-CMS" %></title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2358a6ff'/><text x='50' y='68' font-size='58' font-family='monospace' font-weight='800' text-anchor='middle' fill='%2308111f'>0</text></svg>">
+  <%# kit: zer0-ui-tokens 1.0.0 — zer0-tokens.css is vendored byte-identically from zer0-image-generator web/app/assets/stylesheets/zer0-tokens.css; never edit it here %>
+  <%= stylesheet_link_tag "zer0-tokens", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "administrate-theme", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body data-controller="sidebar">
+  <%= render "administrate/application/icons" %>
+  <div class="nav-scrim" data-action="click->sidebar#close"></div>
+  <div class="app">
+    <%= render "layouts/zer0_sidebar" %>
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs">
+          <button type="button" class="nav-toggle" data-action="sidebar#toggle" aria-label="Open navigation">☰</button>
+          <%= link_to "zer0-CMS", admin_root_path %>
+          <% if content_for?(:title) %> / <%= strip_tags(content_for(:title)).squish %><% end %>
+        </div>
+      </div>
+      <main class="main-content content">
+        <%= render "layouts/zer0_flashes" %>
+        <%= yield %>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
