@@ -1,0 +1,15 @@
+# Fixture for rails/bin/jekyll-parity: every reader rule the catalog transcribes.
+title: Parity fixture
+collections_dir: pages
+collections:
+  docs:
+    output: true
+  notes:
+    output: false
+exclude:
+  - "*.tmp.md"
+  - drafts-old
+  - README.md
+include:
+  - _shared.md
+  - .well-known

@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Round-trip property for FrontMatter.update_keys over every content file of
+# one or more real sites. Read-only: nothing is written to disk.
+#
+#   ruby rails/bin/front-matter-roundtrip ~/github/lifehacker.dev ~/github/it-journey
+#
+# For every catalogued file with a parseable block it checks:
+#   noop     update_keys(text, parsed_data) is byte-identical to text
+#   reemit   per key: set the key to a sentinel, then back to its parsed value;
+#            the block must load back to the original data, and deleting the
+#            key from either text must give the same bytes (so no other line
+#            moved)
+# Prints counts per site and the first failures; exits 1 on any failure.
+
+require_relative "../lib/zer0_cms/cms/catalog"
+
+FM = Zer0Cms::Cms::FrontMatter
+SENTINEL = "zer0-roundtrip-sentinel"
+
+# nil deletes a key in a change set; a parsed null goes back as NULL.
+def as_changes(data)
+  data.transform_values { |v| v.nil? ? FM::NULL : v }
+end
+
+def check_file(path, stats, failures)
+  text = File.binread(path).force_encoding("UTF-8")
+  return stats[:skipped_encoding] += 1 unless text.valid_encoding?
+
+  doc = FM.parse(text)
+  return stats[:no_front_matter] += 1 unless doc.front_matter?
+  return stats[:unparseable] += 1 unless doc.errors.empty?
+
+  stats[:files] += 1
+  begin
+    out = FM.update_keys(text, as_changes(doc.data))
+    if out == text
+      stats[:noop_ok] += 1
+    else
+      stats[:noop_fail] += 1
+      failures << [path, "noop", "bytes changed"]
+    end
+  rescue FM::EditError => e
+    stats[:noop_fail] += 1
+    failures << [path, "noop", e.message]
+  end
+
+  doc.data.each do |key, value|
+    stats[:keys] += 1
+    begin
+      moved = FM.update_keys(text, key => SENTINEL)
+      back = FM.update_keys(moved, key => (value.nil? ? FM::NULL : value))
+      reread = FM.parse(back)
+      same = reread.errors.empty? && FM.same_value?(reread.data, doc.data)
+      aligned = FM.update_keys(back, key => nil) == FM.update_keys(text, key => nil)
+      if same && aligned
+        stats[:reemit_ok] += 1
+      else
+        stats[:reemit_fail] += 1
+        failures << [path, "reemit #{key}", same ? "other lines moved" : "data changed"]
+      end
+    rescue FM::EditError => e
+      stats[:reemit_fail] += 1
+      failures << [path, "reemit #{key}", e.message]
+    end
+  end
+end
+
+status = 0
+ARGV.each do |site|
+  stats = Hash.new(0)
+  failures = []
+  result = Zer0Cms::Cms::Catalog.scan(site)
+  result.entries.each { |entry| check_file(entry.path, stats, failures) }
+  puts "#{site}: #{result.entries.size} entries, #{stats[:files]} with front matter"
+  %i[noop_ok noop_fail keys reemit_ok reemit_fail no_front_matter unparseable skipped_encoding].each do |k|
+    puts "  #{k.to_s.ljust(18)} #{stats[k]}"
+  end
+  failures.first(25).each { |path, what, why| puts "  FAIL #{path.delete_prefix("#{site}/")} #{what}: #{why}" }
+  status = 1 unless failures.empty?
+end
+exit status
