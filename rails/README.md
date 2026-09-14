@@ -39,7 +39,7 @@ ruby bin/zer0-cms new --theme "the ocean" --art-style watercolor-storybook --pri
 
 Bundled themes (`ruby bin/zer0-cms themes`) generate **offline and deterministically**. Any other theme falls back to Claude and needs `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`.
 
-`./bin/test-stdlib` is exactly what CI runs in `.github/workflows/abc-engine.yml` — one job, no `bundle install`, triggered only by a change under `rails/`. Platform contract: [`docs/PLATFORM.md`](../docs/PLATFORM.md). Pipeline: [`docs/CICD.md`](../docs/CICD.md).
+`./bin/test-stdlib` is exactly what CI runs in `.github/workflows/abc-engine.yml` — no `bundle install`, on Ruby 3.3 and 4.0.5, triggered only by a change under `rails/`. The app half is `.github/workflows/rails-app.yml`. Platform contract: [`docs/PLATFORM.md`](../docs/PLATFORM.md). Stack contract and the reusable doctor workflow: [`docs/ZER0-STACK.md`](../docs/ZER0-STACK.md). Pipeline: [`docs/CICD.md`](../docs/CICD.md).
 
 ## The web platform (Rails)
 
@@ -56,8 +56,11 @@ bin/rails test                             # integration tests (bundler); bin/te
 Docker (from the repository root; port 3001 so it can sit next to zer0-image-generator on 3000; published on 127.0.0.1 only):
 
 ```bash
-SITES_DIR=/path/to/your/jekyll/sites docker compose up --build   # → http://localhost:3001/admin
+SITES_DIR=/path/to/your/jekyll/sites docker compose up --build                      # → http://localhost:3001/admin
+SITES_DIR=/path/to/your/jekyll/sites docker compose --profile imagegen up --build   # + zer0-image-generator on :3000
 ```
+
+The image (`Dockerfile`, build context `rails/`) is the app, not a dev shell: `ruby:4.0.5-slim`, the locked bundle installed deployment-style, precompiled assets, `RAILS_ENV=production`, an unprivileged `rails` user (uid/gid 1000; pass `--build-arg UID=$(id -u) --build-arg GID=$(id -g)` on Linux), a `/up` health check, and python3 + PyYAML + librsvg for the image engine. `bin/docker-entrypoint` generates a `secret_key_base` once into the `storage` volume unless `SECRET_KEY_BASE` is set, then runs `bin/rails db:prepare`. Rebuild after a code change.
 
 **Git is the source of truth; the database is an index.** `Site#sync!` walks a site with `Zer0Cms::Cms::Catalog` (Jekyll 4.4's reader rules) and `Catalog.media`, and upserts `Page`, `Asset` and `Term` rows in one transaction. Nothing is edited through ActiveRecord:
 
@@ -68,6 +71,7 @@ SITES_DIR=/path/to/your/jekyll/sites docker compose up --build   # → http://lo
 | Page edit | `app/services/page_editor.rb` | Re-reads the file, refuses when its digest differs from the index (sync first), sends `FrontMatter.update_keys` only the keys you changed (emptying a present key deletes it), optionally replaces the body, writes atomically, re-syncs that path. An unchanged save writes nothing |
 | New / duplicate / delete | `Zer0Cms::Cms::Writer`, `PageEditor` | Create in a declared collection and existing section; duplicate as a draft; delete after a Turbo confirm. Every path is realpath-confined and symlinks are refused (`app/services/site_path.rb`) |
 | Images, terms | `/admin/assets`, `/admin/terms` | Read-only; thumbnails are served by `/files/*path`, images inside a registered site only |
+| Previews | `missing_preview:` filter, page **Generate preview (local)**, `app/services/image_engine.rb` | Lists the pages the image engine would draw a preview for, and draws one with the free `local` provider; the key the engine writes is re-applied through `PageEditor`. Bigger runs link out to `ZER0_IMAGE_GENERATOR_URL` |
 | ABC books | `/abc/new` | The wizard; **Export** needs an explicit target directory holding `_config.yml` (`DRSAI_SITE_ROOT` prefills it; there is no default) |
 
 Custom Administrate fields live in `app/fields` + `app/views/fields`: `MarkdownField` (textarea with a debounced Stimulus preview), `TagListField` (comma input to a list), `PreviewImageField` (thumbnail through `/files`), `StateField` (error / draft / unpublished / future / live). The look is the zer0 sidebar frame themed by `app/assets/stylesheets/zer0-tokens.css`, a **byte-identical vendored copy** of zer0-image-generator's `web/app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens 1.0.0`; re-vendor with `cp` and check with `cmp`), mapped onto Administrate's markup by `administrate-theme.css`. Administrate's own compiled CSS/JS bundle is not loaded: it ships a second Turbo, jQuery, Trix and Selectize; importmap loads Turbo and Stimulus instead.
@@ -89,6 +93,8 @@ Custom Administrate fields live in `app/fields` + `app/views/fields`: `MarkdownF
 | Doctor | `lib/zer0_cms/doctor.rb` | The consumer contract check: theme, image engine, `zer0.json`, `fleet.manifest.yml`, front matter against the theme's schema; findings in lifehacker.dev's `findings.jsonl` shape |
 | Parity proofs | `bin/jekyll-parity`, `bin/front-matter-roundtrip`, `test/fixtures/` | The catalog diffed against Jekyll's reader; the front-matter round-trip property over real sites |
 | Web | `app/` + `config/` + `db/` | Fleet CMS on Administrate: `Site`/`Page`/`Asset`/`Term` index, `SiteSync`, `PageEditor`, custom fields, the ABC wizard |
+| Image engine | `app/services/image_engine.rb` | The only file that loads or runs zer0-image-generator: `Zer0ImageGenerator::Facade` when the bundled gem ships it, else the released 0.6.0 gem's Python engine as a confined subprocess |
+| Container | `Dockerfile`, `bin/docker-entrypoint`, `../docker-compose.yml` | The production image and the `cms` service; the `imagegen` profile runs zer0-image-generator beside it |
 | Rake wrappers | `lib/tasks/abc.rake` | `bin/rails abc:styles` / `abc:themes` / `abc:new` |
 
 **Rake tasks.** `lib/tasks/abc.rake` is loaded by the `Rakefile`, so `bin/rails abc:themes` works; `bin/zer0-cms` drives the same classes without bundler.

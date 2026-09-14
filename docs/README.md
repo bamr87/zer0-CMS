@@ -1,18 +1,19 @@
 # `docs/` — the long-form documentation
 
-Five documents live here, and they answer different questions. Everything shorter than these is in the root [`README.md`](../README.md); everything about *changing* the code is in [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CLAUDE.md`](../CLAUDE.md).
+Six documents live here, and they answer different questions. Everything shorter than these is in the root [`README.md`](../README.md); everything about *changing* the code is in [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CLAUDE.md`](../CLAUDE.md).
 
 | Document | Answers |
 |---|---|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the extension's internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, what the ledger guarantees, and D15 (the Rails CMS and the extension share files, not a process). |
-| [`PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: routes, on-disk contracts, what "done" means for `rails/`. |
-| [`CICD.md`](CICD.md) | Workflows, which command to run before a PR, which specs CI actually pins. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the extension's internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, what the ledger guarantees, and D15–D16: the Rails CMS and the extension share files, not a process, and the Rails UI is Administrate over an index git stays the truth for. |
+| [`PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
+| [`ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
+| [`CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
 | [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 44 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
 | [`RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 
-## The rule these two follow
+## The rule these documents follow
 
-Both documents describe **the code as it is**, not as a plan intended it. When they disagree with the source, the source is right and the document is a bug — so a change to configuration, to the JSON schema, or to the layer boundary is not finished until the matching document moves with it.
+Every document here describes **the code as it is**, not as a plan intended it. When they disagree with the source, the source is right and the document is a bug — so a change to configuration, to the JSON schema, or to the layer boundary is not finished until the matching document moves with it.
 
 Two places make that concrete for `CONFIG.md`: every `zer0Cms.*` id it names exists in `package.json`'s `contributes.configuration`, and every `zer0.json` key it names exists in [`../schemas/zer0.schema.json`](../schemas/zer0.schema.json). Adding a setting means editing three files — the manifest, the settings layer in `src/config.ts`, and `CONFIG.md`. Adding a `zer0.json` key means editing four — the schema, `src/core/shared/types.ts`, `src/core/shared/config.ts`, and `CONFIG.md`.
 

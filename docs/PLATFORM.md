@@ -1,64 +1,141 @@
 # Fleet CMS platform (`rails/`)
 
-The VS Code extension in `src/` edits one workspace. The Rails app in `rails/` is the **fleet control panel**: it registers every zer0-themed Jekyll site under `/sites`, lists and edits markdown in place, and still hosts the ABC book wizard.
-
-This document is the contract for continued development of that panel. The extension architecture (D1–D14) stays in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+The VS Code extension in `src/` edits one workspace. The Rails app in `rails/` is the **fleet CMS**: it indexes every registered zer0-themed Jekyll site, lets you search, edit, create, duplicate and delete content across all of them in a browser, draws a missing preview through zer0-image-generator, and hosts the ABC book wizard. This document is its contract. The extension's architecture (D1–D14) and the two decisions that govern this half — D15 (the two surfaces share files, not a process) and D16 (Administrate over a disk-synced index) — are in [`ARCHITECTURE.md`](ARCHITECTURE.md); how this repository fits with the theme and the image generator is in [`ZER0-STACK.md`](ZER0-STACK.md).
 
 ## Two surfaces, one disk
 
-| Surface | Process | Writes |
+| Surface | Process | Writes front matter with |
 |---|---|---|
-| VS Code extension | Extension Host | Front-matter line surgery via `updateFrontMatterKeys` |
-| Rails CMS | Puma in Docker (`:3001`) | Front-matter line surgery via `Zer0Cms::Cms::FrontMatter.update_keys` |
+| VS Code extension | Extension Host | `updateFrontMatterKeys` (line surgery) |
+| Fleet CMS | Puma (Docker on 127.0.0.1:3001, or `bin/rails server`) | `Zer0Cms::Cms::FrontMatter.update_keys` (the same line surgery, in Ruby) |
 
-Both operate on the same files. Neither owns a copy of the content. A save in the browser is a save on disk; the editor sees it on the next read.
+Both operate on the same files and neither owns a copy of the content. A save in the browser is a save on disk; the editor sees it on its next read. Do not fold the extension into Rails, and do not call the Rails app "the content engine" — that name belongs to `.cms/` in `src/core/contract/`.
 
-Do not fold the extension into Rails. Do not call the Rails app "the content engine" — that name is `.cms/` in `src/core/contract/`.
+## Stack
 
-## Layout
+Ruby 4.0.5 (`rails/.ruby-version`), Rails 8.1.3, Administrate 1.0, propshaft, importmap-rails, Turbo, Stimulus, sqlite3, kramdown with the GFM parser, and zer0-image-generator `~> 0.6` (`require: false`; only `ImageEngine` loads it). No Node, no asset build beyond propshaft's digesting, no CSS framework.
 
-```
+```text
 rails/
-  lib/zer0_cms/abc/     ABC generator (stdlib-only; CLI + tests; no gems)
-  lib/zer0_cms/cms/     Catalog, front-matter surgery, writer (stdlib-only)
-  app/                  Rails host: HTTP, SQLite site registry, Hotwire UI
-  schema/               Interchange specs (ABC Book Spec, …)
+  lib/zer0_cms/cms/     Catalog (Jekyll 4.4 reader rules), FrontMatter (line surgery), Writer — stdlib only
+  lib/zer0_cms/abc/     the ABC book generator — stdlib only
+  lib/zer0_cms/doctor.rb  zer0 doctor, the consumer contract check — stdlib only
+  bin/zer0-cms          the CLI (ABC books, doctor) — runs without bundler
+  app/                  the Rails app: models, SiteSync, PageEditor, ImageEngine, dashboards, fields, views
+  schema/               the ABC Book Spec
 ```
 
-Gems (Rails, Puma, sqlite3, Hotwire, Pagy, Kramdown) stay in `app/` + `Gemfile`. A gem required from `lib/` is a CI failure: `abc-engine.yml` runs `rails/bin/test-stdlib` with no `bundle install`.
+A gem required from `lib/` is a CI failure: `abc-engine.yml` runs `rails/bin/test-stdlib` with no `bundle install`.
 
-## Product surface (browser)
+## The index: git is the source of truth
 
-The UI follows zer0-image-generator (sidebar, tokens, tabs). Required routes:
+The SQLite database is an index of what Jekyll reads, never a second copy of the content (D16). It holds four models:
 
-- `/` dashboard — registered sites, unregistered `/sites` roots, ABC entry
-- `/search` — fleet-wide title/path/author/tag search
-- `/sites` — register, import-all, filter
-- `/sites/:id` — overview counts + recent files
-- `/sites/:id/pages` — collection/status/tag/author filters, pagination, create
-- `/sites/:id/pages/item?file=` — preview art, markdown render, front-matter form, duplicate, delete
-- `/sites/:id/media` — images under `assets/` and `images/`
-- `/sites/:id/taxonomy` — tags, categories, authors
-- `/sites/:id/config` — read-only `_config.yml`
-- `/abc/new` — ABC wizard (preview / export)
+| Model | One row per | Key columns |
+|---|---|---|
+| `Site` | registered Jekyll root | `path` (its realpath, unique), `source_subdir`, `collections_dir`, `pages_count`, `assets_count`, `last_synced_at`, `sync_error` |
+| `Page` | content file Jekyll reads — a page, post, draft or collection document | `source_relative` (unique per site), `relative` (from the site root), `kind`, `collection`, `title`, `description`, `author`, `date`, `lastmod`, `layout`, `permalink`, `preview`, `status`, `draft`, `published`, `future`, `tags`, `categories` (JSON), `front_matter` (JSON), `error`, `digest` (SHA-256 of the bytes), `bytes`, `mtime` |
+| `Asset` | image inside the site | `relative`, `ext`, `bytes`, `mtime` |
+| `Term` | tag, category or author | `kind`, `name`, `pages_count` |
 
-Hotwire (Turbo + Stimulus via importmap) is the JS stack. Do not add Webpack or a CSS framework.
+`Site#sync!` (`SiteSync#call`) walks the site with `Zer0Cms::Cms::Catalog.scan` and lists its images with `Catalog.media`, then, in one transaction, upserts pages by `(site_id, source_relative)` and assets by `(site_id, relative)`, deletes rows whose file vanished, and rebuilds the terms. Row ids survive a re-sync. `Site#sync_path!(relative)` re-indexes one path after a write: it runs the same full catalog walk (so the classification is exactly what a full sync gives) and upserts or deletes only that row.
 
-## On-disk contracts
+The catalog applies Jekyll 4.4's reader rules — `source:`, `collections_dir:`, `include`/`exclude`, underscore and dot rules, posts and drafts, dated filenames, `published:` and future dates — rather than a glob. `rails/test/fixtures/jekyll-site` holds a site built to exercise every rule, with expected lists generated by Jekyll 4.4.1 itself (`rails/bin/jekyll-parity`). One difference is deliberate: Jekyll also reads a non-markdown file with front matter (`search.json`, `assets/css/main.scss`) as a page, and the catalog indexes only content files. On the 12 sites under `~/github` on 2026-09-14 the index matched Jekyll's reader file-for-file except for exactly those ten Liquid-templated files.
 
-- **Jekyll root** — a directory with `_config.yml`. `collections_dir` / `source` are honoured. Collection folders are `_<name>/`.
-- **Front matter** — YAML between `---` fences. Updates rewrite only changed keys; comments and untouched lines stay byte-identical; dates stay strings.
-- **New posts** — `YYYY-MM-DD-<slug>.md` under the posts collection directory.
-- **ABC Book Spec** — [`rails/schema/abc-book.schema.json`](../rails/schema/abc-book.schema.json). Art-style ids are a byte-identical vendored copy of zer0-image-generator's catalog.
+## Write-back: nothing goes through ActiveRecord
 
-## SDLC
+Every write goes to the file and then re-syncs; the row is never saved from a form.
 
-See [`CICD.md`](CICD.md). Green `abc-engine` means every `rails/test/zer0_cms/test_*.rb` passed without bundler. Green `extension` means the VS Code half compiled and tested. A `rails/`-only PR should not download VS Code.
+- **Edit** (`PageEditor#save`). The form's values come from the file, not the index: scalars as written (a date shows as `2025-11-29T16:46:02.000Z`, not a Ruby `Time`), `draft`/`published` with their Jekyll defaults, lists as comma text. A key holding a structured value (a map or nested list) is locked, skipped on save, and named in a notice. On save the editor re-reads the file and refuses it in two layers — the on-disk digest must equal the indexed digest (409, with a Sync button), and the form's hidden `base_digest` must equal the indexed digest (a re-sync happened after the form opened). It sends `FrontMatter.update_keys` only the keys whose submitted value differs from the file (emptying a present key deletes it; list items you did not change keep their typed values), optionally replaces the body in the file's own line ending, writes a temp file in the same directory with `O_EXCL` and the original mode, fsyncs, checks the bytes once more, renames, and re-syncs that path. An unchanged save writes nothing.
+- **New** (`Zer0Cms::Cms::Writer.create`). Only into a declared collection with a real, non-symlink directory, and an existing section subdirectory; the slug and section are validated; a dated post gets `YYYY-MM-DD-<slug>.md`. Draft is checked by default.
+- **Duplicate** (`Writer.duplicate`) makes a draft copy next to the file. **Delete** refuses a stale file, like an edit.
+- **Generate preview (local)** runs the image engine for one page, then hands the key it wrote to `PageEditor` (below).
 
-## Local run
+## Routes
+
+| Route | What it does |
+|---|---|
+| `GET /` | Redirects to `/admin` |
+| `GET /admin`, `/admin/sites` | Registered sites; unregistered Jekyll roots one or two levels under `SITES_DIR` with **Register and sync all** (`POST /admin/sites/discover`) |
+| `GET /admin/sites/new`, `POST /admin/sites` | Register one site by container path; it syncs on create |
+| `GET /admin/sites/:id` | Counts, per-collection pages and drafts (each links to the filtered pages), the read-only `_config.yml`; **Sync** (`POST /admin/sites/:id/sync`), **New page**, **Missing previews**, **Image generator ↗**, **Edit**, **Remove from index** (no file is touched) |
+| `GET /admin/pages` | Every page across sites: search, sort (newest first, undated last), filters, pagination (`per_page` up to 200) |
+| `GET /admin/pages/:id` | The page: state, preview thumbnail, taxonomy, front matter, file facts, the rendered body; **Duplicate as draft**, **Generate preview (local)**, **Image generator ↗** |
+| `GET /admin/pages/:id/edit`, `PATCH /admin/pages/:id` | The editor (`PageEditor`) |
+| `GET /admin/pages/new`, `POST /admin/pages` | A new page (`Writer.create`) |
+| `POST /admin/pages/:id/duplicate`, `POST /admin/pages/:id/generate_preview`, `DELETE /admin/pages/:id` | Duplicate, draw a local preview, delete |
+| `POST /admin/markdown_preview` | The editor's live preview: kramdown GFM through an allow-list sanitizer |
+| `GET /admin/assets`, `/admin/assets/:id` | Images, with thumbnails; read-only |
+| `GET /admin/terms`, `/admin/terms/:id` | Tags, categories and authors; a term links to its pages |
+| `GET /files/*path` | An image inside a registered site, by absolute path (thumbnails) |
+| `GET /abc/new`, `POST /abc/preview`, `POST /abc/export`, `GET /abc/catalog.json` | The ABC book wizard |
+| `GET /up` | Health check |
+
+**Filters** go in the search box beside free text (title, description, author and source path). Pages: `draft:` `live:` `future:` `error:` `collection:<name>` `site:<id>` `kind:<page|post|draft|document>` `author:<name>` `tag:<name>` `category:<name>` `missing_preview:` (or `missing_preview:<site id>`). Sites: `unsynced:` `failing:`. Assets: `site:<id>` `ext:<ext>`. Terms: `tag:` `category:` `author:`. Administrate splits the query on spaces, so a filter argument cannot contain one; a term with a space in its name falls back to a site-scoped text search.
+
+**Custom fields** (`app/fields`, `app/views/fields`): `MarkdownField` (a textarea with a debounced Stimulus preview), `TagListField` (comma text to a list), `PreviewImageField` (a thumbnail through `/files`; a value like `/images/previews/x.png` is looked up under the site source, then under `assets/`, then from the root, as the image engine and the theme do), `StateField` (error, draft, unpublished, future, live).
+
+**Look.** Administrate's own compiled JavaScript and CSS are not loaded: the bundle ships its own Turbo, jQuery, Trix and Selectize, which next to importmap would start a second Turbo Drive. The layout loads importmap Turbo and Stimulus with jQuery-free ports of Administrate's table and tooltip controllers. `app/assets/stylesheets/zer0-tokens.css` is a byte-identical copy of zer0-image-generator's `web/app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens 1.0.0`), and `administrate-theme.css` maps Administrate's markup onto those tokens. Never edit the vendored file; re-vendor it with `cp` and check it with `cmp`.
+
+## Security posture
+
+- **Who may connect.** `config.hosts` accepts `localhost`, `127.0.0.1` and `[::1]` unless `ZER0_CMS_HOSTS` names more, so a DNS-rebinding page cannot reach the app. With `ZER0_CMS_PASSWORD` set, every request needs HTTP basic auth (user `ZER0_CMS_USER`, default `zer0`; both compared in constant time). Without it, a request is refused with 403 unless its TCP peer (`REMOTE_ADDR`, never `remote_ip`, which trusts `X-Forwarded-For` from private ranges) and every `X-Forwarded-For` hop are loopback. `ZER0_CMS_TRUST_DOCKER_GATEWAY=1` also accepts the container's default gateway, which is where a port published on 127.0.0.1 arrives from; compose sets it and publishes the port on 127.0.0.1 only.
+- **What a page may run.** The CSP allows scripts, styles, images, fonts and connections from the app only, with a per-request nonce on `script-src` and `style-src` that the importmap tags and Turbo's progress bar carry. There is no `unsafe-inline`, no inline `style=` attribute, `object-src 'none'` and `frame-ancestors 'none'`. Flash messages are escaped (they carry file paths and YAML errors from repository content). The markdown preview is sanitized with an allow-list.
+- **Which files it may touch.** A site's path is stored as its realpath and must be strictly inside `SITES_DIR` when that is set (in Docker it is `/sites`). Every read and write resolves a root-relative path through `SitePath`: no absolute prefix, no `..`, `lstat` on every component so a symlink anywhere is refused, and a realpath check. `source:` and `collections_dir:` values that resolve outside the root are refused by the catalog. The writer validates the collection, section and slug. `/files` picks the site by string prefix against stored realpaths before any `stat`, serves only image types, answers every refusal with a bare status code, and sends its own sandbox CSP and `nosniff`, so an SVG opened directly cannot run script in the app's origin.
+- **What the image engine gets.** The Python engine runs with `PATH`, `HOME`, `LANG`, `LC_ALL` and `TMPDIR` only — no credential — in its own process group with a deadline. `preview_images.output_dir` must resolve below the site source before it runs.
+- **ABC export** needs an explicit target: an absolute directory whose `_config.yml` is a regular, non-symlink file, strictly inside `SITES_DIR` when that is set, and never the mount itself. `DRSAI_SITE_ROOT` only prefills the field; there is no default.
+- **The container** runs as an unprivileged `rails` user (uid and gid 1000, build arguments), in production mode with no stack traces, and generates its `secret_key_base` once into the storage volume (mode 0600) unless `SECRET_KEY_BASE` is set.
+
+## The image-engine seam
+
+`app/services/image_engine.rb` is the only file that loads or runs zer0-image-generator. It asks two questions — which content files of a site lack a preview, and "draw this one file with the `local` provider" — through one of two backends, chosen once per process:
+
+- **Facade** — `Zer0ImageGenerator::Facade.missing_previews` and `generate_one`, the stable Ruby API. It is used as soon as the bundled gem ships `zer0_image_generator/facade`, which lands with the image generator's `feat/zer0-stack-tokens` branch in the first release after 0.7.0. The Gemfile.lock pins 0.6.0 today, which does not have it.
+- **Python** — what the released 0.6.0 gem exposes: `jekyll preview-images` is a launcher that execs its vendored single-file Python engine. The backend runs that engine with the CLI's own arguments (`--list-missing --collection all`, and `--file FILE --provider local --output-dir … --front-matter-key … --rasterizer …`) in the site root. It needs python3 with PyYAML; the Docker image installs both and librsvg, so the local SVG becomes a PNG. `ZER0_CMS_RASTERIZER` (default `auto`) and `PYTHON` override the defaults.
+
+**Missing previews.** The `missing_preview:` filter narrows the pages index to the rows whose file the engine lists; the site page links to it. A file the engine walks but Jekyll does not read as content has no row to show. When the engine cannot run, the index renders without that filter and says why.
+
+**Generate preview (local).** The engine writes the preview key into the file itself, so the action refuses a file that changed since the last sync before the engine runs, then compares the engine's bytes with the bytes the index knew. If the engine changed only that key, `PageEditor#replace_engine_write!` applies the same key to the original bytes with `FrontMatter.update_keys` and writes the result atomically over the engine's version; if it changed anything else, the original bytes are restored and the edit is refused. The site then re-syncs, so the new image is indexed as an asset. One generation runs at a time per process. When the engine cannot run, the button is disabled and its tooltip says why.
+
+Anything bigger than one page — batch runs, other providers, compositions, the studio — belongs to the image generator's own panel. **Image generator ↗** links to `ZER0_IMAGE_GENERATOR_URL` (default `http://localhost:3000`; only an http(s) URL is used), which compose's `imagegen` profile serves.
+
+## The ABC wizard
+
+`/abc/new` drives the same `Zer0Cms::Abc::Wizard` as `bin/zer0-cms new`: theme, plan, art direction, per-letter pages, cover, validated ABC Book Spec. **Preview** renders the markdown without writing; **Export** writes `pages/_books/<slug>/index.md` and `_data/abc_books/<slug>.json` into the explicit target above. Bundled themes generate offline; any other theme falls back to Claude and needs `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`. Art-style ids are a byte-identical vendored copy of zer0-image-generator's catalog.
+
+## Configuration
+
+| Variable | Default | Effect |
+|---|---|---|
+| `SITES_DIR` | `/sites` inside Docker; unset (any absolute path) outside | The directory registered sites must be inside, and where discovery looks |
+| `ZER0_CMS_PASSWORD` | unset | Turns on HTTP basic auth for every request; unset means loopback only |
+| `ZER0_CMS_USER` | `zer0` | The basic-auth user (an empty value means the default) |
+| `ZER0_CMS_HOSTS` | unset | Extra accepted Host headers, comma-separated |
+| `ZER0_CMS_TRUST_DOCKER_GATEWAY` | `1` in compose | Treat the container's default gateway as loopback |
+| `ZER0_IMAGE_GENERATOR_URL` | `http://localhost:3000` | Where **Image generator ↗** points |
+| `ZER0_CMS_RASTERIZER`, `PYTHON` | `auto`, `python3` | The Python image-engine backend's rasterizer and interpreter |
+| `DRSAI_SITE_ROOT` | unset | Prefills the ABC export target |
+| `SECRET_KEY_BASE` | generated into the storage volume | Production sessions and CSRF |
+| `RAILS_LOG_TO_STDOUT` | `1` in the image | Logs to stdout (production always does) |
+
+Compose also reads `PORT` (the CMS host port, default 3001), `IMAGEGEN_PORT` (3000) and `ZER0_IMAGE_GENERATOR_DIR` (`../zer0-image-generator`).
+
+## Running it
 
 ```bash
-SITES_DIR=/path/to/github docker compose up --build   # http://localhost:3001
+# On the host (Ruby 4.0.5)
+cd rails
+bundle install
+bin/rails db:prepare
+SITES_DIR=$HOME/github bin/rails server              # http://localhost:3000/admin
+
+# In Docker, from the repository root
+SITES_DIR=$HOME/github docker compose up --build     # http://localhost:3001/admin
+SITES_DIR=$HOME/github docker compose --profile imagegen up --build   # + the image generator on :3000
 ```
 
-Sites are container paths (`/sites/lifehacker.dev`). The SQLite registry lives in the `sqlite` volume; deleting a Site row does not delete files.
+Register sites by their container path (`/sites/lifehacker.dev`). The index lives in the named `storage` volume; removing a site from the index never touches its files, and the whole index can be rebuilt with **Register and sync all**. On Linux, build with `--build-arg UID=$(id -u) --build-arg GID=$(id -g)` so the container writes to your checkouts as you.
+
+## What "done" means for `rails/`
+
+`bash rails/bin/test-stdlib` passes with no bundler, `bin/rails test` and `bin/rails zeitwerk:check` pass with the bundle, the production boot in `rails-app.yml` answers `/up` and `/admin/sites`, and — when `rails/Dockerfile` or `docker-compose.yml` changed — the image builds and boots (see [`CICD.md`](CICD.md)).

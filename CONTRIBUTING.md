@@ -19,7 +19,7 @@ The Rails `lib/` half needs nothing installed — it is stdlib-only:
 cd rails && ./bin/test-stdlib
 ```
 
-The browser app is Docker: `SITES_DIR=.. docker compose up --build` → http://localhost:3001. See [`docs/PLATFORM.md`](docs/PLATFORM.md) and [`docs/CICD.md`](docs/CICD.md).
+The Rails app needs its bundle: `cd rails && bundle install && bin/rails test && bin/rails zeitwerk:check`. In Docker: `SITES_DIR=.. docker compose up --build` → http://localhost:3001/admin. See [`docs/PLATFORM.md`](docs/PLATFORM.md) and [`docs/CICD.md`](docs/CICD.md).
 
 ## The rules that are not negotiable
 
@@ -58,7 +58,7 @@ These are enforced by the build, so you will find out quickly, but knowing them 
 | `media/templates/` | The vendored caller template a generated lane is written from; shipped in the vsix. |
 | `tools/` | Repository gates: `check-config-docs.py` (settings against `docs/CONFIG.md`) and `unwrap-prose.py` (one paragraph per line). |
 | `schemas/` | The JSON Schema for `zer0.json`. |
-| `rails/` | Fleet CMS platform (Rails/Hotwire) + ABC generator. `lib/` is stdlib-only. |
+| `rails/` | The fleet CMS (Rails 8.1 on Administrate) + ABC generator. `lib/` is stdlib-only. |
 
 ## Reporting things
 

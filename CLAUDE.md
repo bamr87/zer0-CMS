@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. It applies to any AI coding agent working in **zer0-CMS** (Claude Code, Copilot, Cursor).
 
-zer0-CMS has two halves. `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content in the editor: a metadata panel, dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → ledger). `rails/` is the **fleet CMS platform** — a Rails/Hotwire control panel (zer0-image-generator layout) that registers Jekyll sites under `/sites`, edits front matter on disk, plus the ABC book wizard. "Done" for a `lib/` change means `rails/bin/test-stdlib` passes with no bundler. "Done" for the browser app means Docker still boots on :3001. Do not call Rails "the content engine" — that name belongs to `.cms/` in `src/core/contract/`. Platform contract: `docs/PLATFORM.md`. CI map: `docs/CICD.md`.
+zer0-CMS has two halves. `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content in the editor: a metadata panel, dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → ledger). `rails/` is the **fleet CMS** — a Rails 8.1 app on Administrate 1.0 that indexes every registered Jekyll site into SQLite and writes edits back to the files (git stays the source of truth), draws a missing preview through zer0-image-generator, and hosts the ABC book wizard; `rails/lib` is a stdlib-only library (the Jekyll-exact catalog, front-matter surgery, the confined writer, `zer0 doctor`, the ABC generator). "Done" for a `rails/lib` change means `rails/bin/test-stdlib` passes with no bundler. "Done" for the app means `bin/rails test` and `bin/rails zeitwerk:check` pass, and — when `rails/Dockerfile` or `docker-compose.yml` changed — the image still builds, boots and answers `/up`. Do not call Rails "the content engine" — that name belongs to `.cms/` in `src/core/contract/`. Platform contract: `docs/PLATFORM.md`. Stack contract: `docs/ZER0-STACK.md`. CI map: `docs/CICD.md`.
 
 ## Stack & commands
 
@@ -21,16 +21,17 @@ npx tsc -p . --outDir out
 npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet,engines,routes,webview,styling,platform,audit,harness,lanes}.test.js
 npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or one test
 
-# ── Rails CMS platform + ABC generator (rails/) ──
-# VS Code extension in src/ still edits content in the editor.
-# rails/ is the fleet CMS (sites, front matter, dashboard) plus ABC books.
+# ── Fleet CMS (rails/) — Rails 8.1 on Administrate; rails/lib stays stdlib-only ──
 cd rails
-ruby bin/zer0-cms styles                         # list ABC art styles
-ruby bin/zer0-cms themes                         # list bundled A–Z lexicons
-ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai
-./bin/test-stdlib                                 # ABC + catalog + front matter + writer
-# Docker (from repo root): http://localhost:3001
-SITES_DIR=.. docker compose up --build
+bash bin/test-stdlib                              # rails/lib: catalog, front matter, writer, doctor, ABC — no bundler
+ruby bin/zer0-cms doctor ../../lifehacker.dev      # zer0 stack alignment; exit 1 on any error
+ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai   # an ABC book, headless
+bundle install && bin/rails db:prepare
+SITES_DIR=$HOME/github bin/rails server            # http://localhost:3000/admin
+bin/rails test && bin/rails zeitwerk:check         # the app; image-engine tests need python3 + PyYAML
+# Docker, from the repository root (127.0.0.1 only): http://localhost:3001/admin
+SITES_DIR=$HOME/github docker compose up --build
+SITES_DIR=$HOME/github docker compose --profile imagegen up --build   # + zer0-image-generator on :3000
 
 python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-line CI gate
 ```
@@ -73,9 +74,18 @@ python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-lin
 
 Declare it in `package.json` under `contributes.commands` (with any `when` clause in `contributes.menus`), `register(shell, id, …)` it in the `src/commands/*.ts` file that owns its subject, add the id to `ALL_COMMAND_IDS` in `src/commands/index.ts`, and add it to `ALL_COMMANDS` in `src/test/extension.test.ts` — bumping that list's `54` assertion, because the test compares its own copy against the registered commands and, in order, against the manifest. An id inside an existing module needs no `extension.ts` change; a new command *module* also needs its `register*Commands(shell)` call in `activate()` (ten today). Any action that writes, publishes or approves must route through a function the command palette also calls, and that function must re-read state from disk and re-run `evaluateGates()` before acting.
 
-## Engine architecture (`rails/`)
+## Fleet CMS architecture (`rails/`) — the invariants
 
-The Rails app is the **fleet CMS platform**. `app/` owns HTTP, the site registry (SQLite), and views (zer0-image-generator layout). `lib/zer0_cms/cms/` is stdlib-only catalog + front-matter surgery. `lib/zer0_cms/abc/` is the ABC generator, still stdlib-only. CI for the generator (`ruby -Ilib test/zer0_cms/*.rb`) must not need `bundle install`; a gem under `lib/` is the regression that job catches. The VS Code extension in `src/` remains the in-editor editor — do not fold it into Rails. Bundled ABC themes generate offline; any other theme falls back to Claude. `lib/zer0_cms/data/abc_art_styles.yml` is a **byte-identical vendored copy** from `zer0-image-generator`. Never hand-edit a generated book in drsai; re-run the wizard.
+- **Git is the source of truth; SQLite is an index** (decision D16). `Site#sync!` rebuilds `Site`/`Page`/`Asset`/`Term` rows from disk in one transaction. Never write content through ActiveRecord: `PageEditor` and `Zer0Cms::Cms::Writer` are the only writers, and every write re-syncs the path. A page row is never saved from a form — the editor's values are virtual attributes read from the file.
+- **A stale write is refused, twice.** The on-disk digest must equal the indexed digest, and the form's `base_digest` must equal it too. The write re-checks the bytes right before an atomic rename. An unchanged save writes nothing — `page_editing_test.rb` proves it for every indexed fixture file.
+- **`rails/lib` is stdlib-only** (decision D15). CI runs its tests with no `bundle install` on Ruby 3.3 and 4.0.5; a gem reached from `lib/` is exactly the regression `abc-engine.yml` catches. Rails-only code stays in `app/`.
+- **The catalog is Jekyll's reader, not a glob.** It transcribes Jekyll 4.4's reader rules, and `test/fixtures/jekyll-site`'s expected lists were generated by Jekyll 4.4.1 (`bin/jekyll-parity`). Never re-baseline them by hand; a non-markdown page with front matter (`search.json`) is deliberately not indexed.
+- **Every disk path is confined.** Sites are stored as realpaths strictly inside `SITES_DIR`; every read and write goes through `SitePath` (no `..`, `lstat` on every component so symlinks are refused, a realpath check); `source:` and `collections_dir:` that escape the root are refused.
+- **`ImageEngine` is the only file that loads or runs zer0-image-generator.** The engine writes the preview key itself, so its write is replaced through `PageEditor#replace_engine_write!`; its subprocess gets no credentials. The locked 0.6.0 gem is Python; the facade backend activates by itself once a release ships `Zer0ImageGenerator::Facade`.
+- **Access is loopback or a password.** `AccessGuard` reads `REMOTE_ADDR` and every `X-Forwarded-For` hop, never `remote_ip`. Compose publishes on 127.0.0.1 and trusts the Docker gateway only because of that binding; never publish the port elsewhere without `ZER0_CMS_PASSWORD`.
+- **No inline script or style.** The CSP has a per-request nonce and no `unsafe-inline`. Administrate's compiled JS/CSS is deliberately not loaded (it would start a second Turbo); flashes are escaped because they carry repository text.
+- **Vendored files are byte-identical copies, never edited here:** `app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens`, from zer0-image-generator), `lib/zer0_cms/data/abc_art_styles.yml` (zer0-image-generator), `lib/zer0_cms/data/frontmatter_schema.yml` (zer0-mistakes). Re-sync them with `cp` and check with `cmp`.
+- The ABC wizard exports only into an explicit Jekyll root; bundled themes generate offline, anything else falls back to Claude. Never hand-edit a generated book in drsai; re-run the wizard.
 
 ## Conventions
 
@@ -88,7 +98,7 @@ The Rails app is the **fleet CMS platform**. `app/` owns HTTP, the site registry
 
 ## Fleet context
 
-This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents. `.github/workflows/ci.yml` and `markdown-oneline.yml` are thin hub-seeded callers — don't edit their logic. `extension.yml` is this repo's own and gates the extension alone; the ABC generator has its own `abc-engine.yml`, filtered to `rails/**`, so an extension pull request no longer runs Ruby and a generator change no longer downloads VS Code. `release.yml` calls the hub's release-please workflow and then a repo-owned marketplace job — see `docs/RELEASING.md`. `claude.yml` is the `@claude` mention lane (`anthropics/claude-code-action@v1`), the only workflow that calls a model and the one lane `fleet.manifest.yml` declares; `codeql-analysis.yml` is GitHub CodeQL (`github/codeql-action@v4`).
+This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents. `.github/workflows/ci.yml` and `markdown-oneline.yml` are thin hub-seeded callers — don't edit their logic. `extension.yml` is this repo's own and gates the extension alone; the Rails half has two of its own, both filtered to `rails/**` — `abc-engine.yml` (`rails/lib` with no bundler, Ruby 3.3 and 4.0.5) and `rails-app.yml` (the app with its bundle, Zeitwerk, and a production boot) — so an extension pull request no longer runs Ruby and a Rails change no longer downloads VS Code. `zer0-doctor.yml` is the reusable consumer-contract check content repositories call. `release.yml` calls the hub's release-please workflow and then a repo-owned marketplace job — see `docs/RELEASING.md`. `claude.yml` is the `@claude` mention lane (`anthropics/claude-code-action@v1`), the only workflow that calls a model and the one lane `fleet.manifest.yml` declares; `codeql-analysis.yml` is GitHub CodeQL (`github/codeql-action@v4`).
 
 ## Standard deviations
 
