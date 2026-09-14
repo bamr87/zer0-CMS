@@ -110,9 +110,19 @@ module Zer0Cms
 
     # ---- image engine ------------------------------------------------------
 
+    # A candidate path is a fork only when it reads the image engine's own
+    # `preview_images` config. The name alone is not enough: it-journey's
+    # `_plugins/preview_generator.rb` is a Front Matter CMS `/preview/` page
+    # mirror that shares the filename and nothing else.
+    def preview_fork?(path)
+      path.file? && path.read(mode: "rb").include?("preview_images")
+    rescue SystemCallError
+      false
+    end
+
     def check_image_engine(root, config, findings)
       PREVIEW_FORKS.each do |rel|
-        next unless root.join(rel).file?
+        next unless preview_fork?(root.join(rel))
 
         findings << finding("image-engine", "error", "vendored-preview-fork",
                             "a vendored preview generator; use the #{IMAGE_GEM} gem", file: rel)

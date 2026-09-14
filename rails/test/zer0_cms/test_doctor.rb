@@ -67,9 +67,9 @@ class TestDoctor < Minitest::Test
     files = ALIGNED.merge(
       "_config.yml" => "remote_theme: bamr87/zer0-mistakes\n",
       "Gemfile" => "gem \"github-pages\"\n",
-      "_plugins/preview_image_generator.rb" => "# fork\n",
-      "_plugins/preview_generator.rb" => "# fork\n",
-      "scripts/lib/preview_generator.py" => "# fork\n"
+      "_plugins/preview_image_generator.rb" => "config = site.config['preview_images']\n",
+      "_plugins/preview_generator.rb" => "config = site.config['preview_images']\n",
+      "scripts/lib/preview_generator.py" => "cfg = config.get('preview_images', {})\n"
     )
     site(files) do |dir|
       report = Doctor.run(dir)
@@ -77,6 +77,17 @@ class TestDoctor < Minitest::Test
       assert_equal %w[gemfile-missing-image-generator no-preview-images-config], rules(report, "warning")
       assert_equal %w[_plugins/preview_generator.rb _plugins/preview_image_generator.rb scripts/lib/preview_generator.py],
                    report.findings.select { |f| f["severity"] == "error" }.map { |f| f["file"] }.sort
+    end
+  end
+
+  # it-journey's _plugins/preview_generator.rb mirrors pages under /preview/
+  # for Front Matter CMS; it shares the fork's filename but not its job.
+  def test_a_namesake_that_does_not_read_preview_images_is_not_a_fork
+    files = ALIGNED.merge(
+      "_plugins/preview_generator.rb" => "config = site.config['preview_generator'] || {}\n"
+    )
+    site(files) do |dir|
+      refute_includes rules(Doctor.run(dir), "error"), "vendored-preview-fork"
     end
   end
 
