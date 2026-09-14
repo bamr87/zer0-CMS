@@ -27,7 +27,13 @@
  * that every reader understands beats six shapes each reader must switch on.
  */
 
-import { asBool, asString, parseTomlFlat, parseYamlSubset } from '../content/frontmatter';
+import {
+  asBool,
+  asString,
+  parseTomlFlat,
+  parseYamlScalar,
+  parseYamlSubset,
+} from '../content/frontmatter';
 import type { FmValue, FrontMatter } from '../content/frontmatter';
 import type { PlatformProfile, SiteConfigFacts } from '../shared/types';
 
@@ -67,7 +73,13 @@ export function emptySiteConfigFacts(): SiteConfigFacts {
 function anchoredValue(value: string): string | null {
   const match = /^&[A-Za-z0-9_-]+\s+(.*)$/u.exec(value);
   const inner = match?.[1]?.trim();
-  return inner !== undefined && inner !== '' && !inner.startsWith('*') ? inner : null;
+  if (inner === undefined || inner === '' || inner.startsWith('*')) {
+    return null;
+  }
+  // With the anchor gone, what is left is a scalar exactly as it would have
+  // been written without one, and it is read the same way: `&title "X"` is
+  // `X`, not `"X"` with its quotes still on, and `&baseurl ""` is empty.
+  return asString(parseYamlScalar(inner));
 }
 
 /** Does this string carry a YAML construct that cannot be resolved here? */
@@ -125,7 +137,12 @@ class FactReader {
         );
         continue;
       }
-      return anchoredValue(value) ?? value;
+      const resolved = anchoredValue(value) ?? value;
+      if (resolved === '') {
+        // `baseurl: &baseurl ""` says nothing, exactly as `baseurl: ""` does.
+        continue;
+      }
+      return resolved;
     }
     return null;
   }
@@ -182,7 +199,9 @@ function structuralWarnings(text: string, file: string): string[] {
     );
   }
   if (/^\s*[A-Za-z0-9_.-]+\s*:\s*&[A-Za-z0-9_-]+/m.test(text)) {
-    out.push(`${file}: declares YAML anchors (\`&name\`); anchored values are read as literal text`);
+    out.push(
+      `${file}: declares YAML anchors (\`&name\`); an anchored scalar is read as its value, but nothing reached through an alias (\`*name\`) is resolved`,
+    );
   }
   return out;
 }

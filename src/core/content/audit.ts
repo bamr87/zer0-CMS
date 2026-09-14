@@ -683,15 +683,24 @@ function auditTaxonomies(
     if (Array.isArray(value)) {
       continue;
     }
+    // A mapping is not a scalar, and no list is its one right flattening —
+    // `{primary: [a], secondary: [b]}` has at least two. Name what it is, and
+    // offer no mechanical fix (`asList` of a mapping is empty, so `fixFor`
+    // already declines; the flag must not promise otherwise).
+    const mapping = value !== null && typeof value === 'object';
     out.push(
       issueOf({
         rule: 'tags-not-array',
         path: page.relPath,
         field: key,
         line: lineOfKey(block, key),
-        fixable: true,
-        message: `\`${key}\` is a scalar; the site reads it as a list`,
-        suggestion: `Write \`${key}\` as a list.`,
+        fixable: !mapping,
+        message: mapping
+          ? `\`${key}\` is a mapping; the site reads it as a list`
+          : `\`${key}\` is a scalar; the site reads it as a list`,
+        suggestion: mapping
+          ? `Write \`${key}\` as a list by hand — a mapping has no one right way to flatten.`
+          : `Write \`${key}\` as a list.`,
       }),
     );
   }

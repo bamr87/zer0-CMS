@@ -64,7 +64,13 @@ export const ZER0_MISTAKES_OVERLAY: Partial<PlatformProfile> = {
     },
     dateFormat: 'date',
     filenameDate: /^(\d{4}-\d{2}-\d{2})-/,
-    taxonomyKeys: ['categories', 'tags', 'keywords'],
+    // `keywords` is not a taxonomy. The theme reads `page.tags` for the JSON-LD
+    // keywords it emits (`_layouts/note.html`, `_layouts/recipe.html`) and never
+    // reads `page.keywords` as a list, while it-journey writes `keywords` as a
+    // `{primary, secondary}` mapping on 218 pages — so listing it here raised
+    // 218 false `tags-not-array` errors. Sites that do want it split can say so
+    // with `frontMatter.commaSeparatedFields`.
+    taxonomyKeys: ['categories', 'tags'],
     slugKey: 'slug',
     permalinkKeys: ['permalink', 'canonical_url', 'canonicalUrl', 'url'],
     thumbnailKeys: ['preview', 'image', 'thumbnail', 'cover', 'featured_image', 'banner'],

@@ -502,10 +502,12 @@ suite("audit: the parser's warnings channel", () => {
     assert.match(warnings[1] ?? '', /^line 6: a YAML merge key \(`<<`\)/);
   });
 
-  test('a quoted scalar that closes on a later line is reported as truncated', () => {
+  test('a quoted scalar that never closes is reported as truncated', () => {
+    // A quote that closes on a later, more-indented line is read whole now
+    // (see core.test.ts); one that never closes is still a finding.
     const warnings = warningsOf(post('2026-02-03-multiline-quote.md'));
     assert.equal(warnings.length, 1);
-    assert.match(warnings[0] ?? '', /^line 1: a quoted scalar that closes on a later line/);
+    assert.match(warnings[0] ?? '', /^line 1: a quoted scalar that never closes inside its value/);
   });
 
   test('a multi-line flow collection is reported as truncated', () => {
@@ -906,3 +908,48 @@ suite('audit: the sites declare their own schemas', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+
+suite('audit: tags-not-array says what the value is', () => {
+  test('a mapping is called a mapping, and offers no mechanical fix', async () => {
+    const { schema } = await auditFixture();
+    const relPath = post('2026-01-01-clean.md');
+    const { article, ct, cfg } = articleAt(relPath);
+    const page = (tags: unknown): PageEntry => ({
+      filePath: article.filePath,
+      relPath,
+      folder: path.join(AUDIT, 'pages/_posts'),
+      contentType: 'post',
+      title: 'x',
+      description: '',
+      slug: '',
+      date: null,
+      modified: 0,
+      published: null,
+      draft: false,
+      tags: [],
+      categories: [],
+      previewImage: '',
+      data: { title: 'x', tags },
+    });
+    const findings = (tags: unknown): AuditIssue[] =>
+      auditPage(cfg, PROFILE, page(tags), ct, undefined, schema, NOW).filter((issue) => issue.rule === 'tags-not-array');
+
+    // it-journey's `keywords: {primary: [..], secondary: [..]}`, under a key
+    // this profile does treat as a taxonomy.
+    const mapping = findings({ primary: ['a'], secondary: ['b'] });
+    assert.equal(mapping.length, 1);
+    assert.match(mapping[0]?.message ?? '', /`tags` is a mapping; the site reads it as a list/);
+    assert.doesNotMatch(mapping[0]?.message ?? '', /scalar/, 'a mapping is not a scalar');
+    assert.equal(mapping[0]?.fixable, false, 'no list is the one right flattening of a mapping');
+
+    const scalar = findings('a, b');
+    assert.equal(scalar.length, 1);
+    assert.match(scalar[0]?.message ?? '', /`tags` is a scalar/);
+    assert.equal(scalar[0]?.fixable, true, 'a scalar still has its mechanical fix');
+
+    assert.deepEqual(findings(['a', 'b']), [], 'a list is what the site reads');
+  });
+});
+

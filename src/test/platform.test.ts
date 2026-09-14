@@ -43,6 +43,7 @@ import {
   profileFor,
   toProfileJson,
   type PlatformIo,
+  mergeProfile,
 } from '../core/platform/detect';
 import {
   contentRootsFor,
@@ -52,6 +53,7 @@ import {
   skipDirsFor,
 } from '../core/platform/permalink';
 import { readSiteConfigFacts } from '../core/platform/siteConfig';
+import { ZER0_MISTAKES_OVERLAY } from '../core/platform/overlays/zer0-mistakes';
 import { ASTRO_PROFILE } from '../core/platform/profiles/astro';
 import { DOCUSAURUS_PROFILE } from '../core/platform/profiles/docusaurus';
 import { GENERIC_PROFILE } from '../core/platform/profiles/generic';
@@ -698,3 +700,47 @@ suite('content roots and filename rules', () => {
     assert.equal(filePrefixFor(cfg, folderIn('notes'), undefined, MKDOCS_PROFILE), '{{date|yyyy-MM-dd}}');
   });
 });
+
+// ---------------------------------------------------------------------------
+
+suite('the zer0-mistakes overlay and anchored quoted scalars, as the real sites write them', () => {
+  test('keywords is not a taxonomy of the theme', () => {
+    // The theme reads `page.tags` for its JSON-LD keywords and never reads
+    // `page.keywords` as a list; it-journey writes it as a mapping.
+    const merged = mergeProfile(JEKYLL_PROFILE, ZER0_MISTAKES_OVERLAY);
+    assert.deepEqual(merged.frontMatter.taxonomyKeys, ['categories', 'tags']);
+    assert.ok(!merged.frontMatter.taxonomyKeys.includes('keywords'));
+  });
+
+  test('an anchored quoted scalar loses its anchor AND its quotes', () => {
+    // Each line is copied from a real `_config.yml`: lifehacker.dev:20,
+    // it-journey:59 and :61, zer0-mistakes:53.
+    const facts = readSiteConfigFacts(
+      JEKYLL_PROFILE,
+      [
+        'title                    : &title "Lifehacker.dev"',
+        'baseurl                  : &baseurl "" # the subpath of your site, e.g. /blog',
+        "url                      : &url 'https://it-journey.dev' # the base hostname & protocol",
+      ].join('\n'),
+    );
+    assert.equal(facts.title, 'Lifehacker.dev', 'not "\\"Lifehacker.dev\\"" with its quotes on');
+    assert.equal(facts.url, 'https://it-journey.dev');
+    assert.equal(facts.baseurl, null, 'an anchored empty string says nothing, exactly as `baseurl: ""` does');
+    assert.equal(
+      readSiteConfigFacts(JEKYLL_PROFILE, 'baseurl: ""').baseurl,
+      facts.baseurl,
+      'and the unanchored form agrees',
+    );
+
+    const escaped = readSiteConfigFacts(JEKYLL_PROFILE, "title: &t 'it''s mine'\nurl: &u \"https://x.dev\\/\"");
+    assert.equal(escaped.title, "it's mine");
+    assert.equal(escaped.url, 'https://x.dev/');
+
+    // Unquoted stays as it was, and an alias is still unknown.
+    assert.equal(readSiteConfigFacts(JEKYLL_PROFILE, 'url: &url https://zer0-mistakes.com').url, 'https://zer0-mistakes.com');
+    const aliased = readSiteConfigFacts(JEKYLL_PROFILE, 'title: *title');
+    assert.equal(aliased.title, null);
+    assert.ok(aliased.warnings.some((line) => line.includes('`title` is a YAML alias')));
+  });
+});
+

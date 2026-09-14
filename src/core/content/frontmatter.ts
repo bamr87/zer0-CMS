@@ -34,6 +34,12 @@
  *   folded the way YAML folds it — one space per line break, a newline per
  *   blank line — so a wrapped `summary:` reads as one sentence. A continuation
  *   line that looks like a key or a sequence item ends the scalar instead.
+ * - Multi-line quoted scalars: a `"…"` or `'…'` that closes on a later line,
+ *   every continuation indented past its key — which is exactly how PyYAML
+ *   wraps a long string at column 80. Folded the way YAML folds a flow scalar
+ *   (a break is one space, a blank line a newline, and in double quotes a
+ *   line ending in `\` joins with nothing), then unescaped, and always a
+ *   string. Inside the quotes a line that looks like a key is still prose.
  * - `#` comments (at line start and after a value), blank lines, CRLF, a BOM.
  * - Duplicate keys: last one wins.
  * - Quoted-string escapes: `\\ \" \/ \n \r \t \b \f` in double quotes and `''`
@@ -49,7 +55,7 @@
  * | Multi-document (`---` inside, `...`) | Unreachable — the second `---` closes the block. A `...` line is skipped. |
  * | Complex keys (`? key` / `: value`) | The lines are skipped; the key is absent from the result. |
  * | Multi-line flow collections | The value is the literal first line; the continuation lines are skipped. |
- * | Multi-line quoted scalars (a `"…"` or `'…'` that closes on a later line) | The value is the literal first line; the continuation lines are skipped. |
+ * | A quoted scalar that never closes inside its value (the end of the block, or a line not indented past its key, comes first) | The value is the literal first line; the continuation lines are skipped. |
  * | Sequences at the document root | Skipped — front matter must be a mapping. |
  *
  * In every one of those cases the *raw text is untouched on disk*: nothing in
@@ -512,6 +518,18 @@ function toNumber(value: string): number | null {
 }
 
 /** Coerce one plain or quoted scalar. Never throws; never builds a `Date`. */
+/**
+ * One YAML scalar read the way a value is read: quotes removed and escapes
+ * decoded, `null`/booleans/numbers coerced, anything else the text itself.
+ *
+ * Exported for `platform/siteConfig.ts`, which strips an anchor (`&title "X"`)
+ * off a value this parser keeps literally, and must then read what is left
+ * exactly as the unanchored value would have been read — quotes included.
+ */
+export function parseYamlScalar(text: string): FmValue {
+  return parseScalar(stripComment(text));
+}
+
 function parseScalar(text: string): FmValue {
   const value = text.trim();
   if (value.length === 0) {
@@ -814,9 +832,107 @@ function readValue(lines: YamlLine[], cur: Cursor, parentIndent: number, rest: s
     return parseFlowValue(text);
   }
   if (text.startsWith('"') || text.startsWith("'")) {
+    if (closingQuote(text, 0) < 0) {
+      const span = quotedScalarSpan(lines, cur.i, parentIndent, text);
+      if (span !== null) {
+        cur.i = span.end;
+        return foldQuoted(span.quoted);
+      }
+    }
     return parseScalar(text);
   }
   return readPlainScalar(lines, cur, parentIndent, text);
+}
+
+/**
+ * A quoted scalar that closes on a later line, as the quoted text spanning
+ * those lines — or `null` when it never closes inside its value.
+ *
+ * `from` is the first line after the one that opened the quote. A line belongs
+ * to the scalar while it is blank or indented past `parentIndent`, and the
+ * scalar ends on the line that closes the quote. Reaching a line at or above
+ * `parentIndent`, or the end of the block, first means the quote never closed
+ * where YAML would have closed it; `null` keeps that construct in the warnings
+ * channel rather than guessing where it was meant to end.
+ *
+ * The parser and the warnings scan both call this, so they cannot disagree
+ * about which blocks they vouch for.
+ */
+function quotedScalarSpan(
+  lines: readonly YamlLine[],
+  from: number,
+  parentIndent: number,
+  first: string,
+): { quoted: string; end: number } | null {
+  const pieces: string[] = [first];
+  for (let i = from; i < lines.length; i++) {
+    const line = lines[i];
+    if (line === undefined) {
+      break;
+    }
+    if (line.blank) {
+      pieces.push('');
+      continue;
+    }
+    if (line.indent <= parentIndent) {
+      return null;
+    }
+    pieces.push(line.content);
+    const joined = pieces.join('\n');
+    const close = closingQuote(joined, 0);
+    if (close >= 0) {
+      // Anything after the closing quote is a comment or malformed YAML, and
+      // the single-line reader drops it the same way.
+      return { quoted: joined.slice(0, close + 1), end: i + 1 };
+    }
+  }
+  return null;
+}
+
+/**
+ * YAML's flow folding for a quoted scalar that spans lines, then its escapes.
+ *
+ * Inside the quotes a line break becomes one space and each blank line a
+ * newline; white space around a break is not content. In double quotes a line
+ * ending in an unescaped `\` escapes the break itself, so the lines join with
+ * nothing between them and the white space before the backslash is kept. That
+ * is what PyYAML reads back from its own wrapped dump.
+ */
+function foldQuoted(quoted: string): string {
+  const quote = quoted.charAt(0);
+  const rows = quoted.slice(1, -1).split('\n');
+  let out = '';
+  let blanks = 0;
+  let join: 'none' | 'fold' | 'escaped' = 'none';
+  for (let r = 0; r < rows.length; r++) {
+    const last = r === rows.length - 1;
+    let text = rows[r] ?? '';
+    if (r > 0) {
+      text = text.replace(/^[ \t]+/, '');
+    }
+    let escaped = false;
+    if (!last) {
+      if (quote === '"' && /(?:^|[^\\])(?:\\\\)*\\$/.test(text)) {
+        text = text.slice(0, -1);
+        escaped = true;
+      } else {
+        text = text.replace(/[ \t]+$/, '');
+      }
+    }
+    if (r > 0 && !last && !escaped && text.length === 0) {
+      blanks++;
+      continue;
+    }
+    if (join === 'fold') {
+      out += blanks === 0 ? ' ' : '\n'.repeat(blanks);
+    } else if (join === 'escaped') {
+      out += '\n'.repeat(blanks);
+    }
+    blanks = 0;
+    out += text;
+    join = last ? 'none' : escaped ? 'escaped' : 'fold';
+  }
+  return unquote(`${quote}${out}${quote}`);
 }
 
 /**
@@ -1276,7 +1392,7 @@ function scanYamlValue(out: string[], lineNo: number, value: string): void {
   }
   const first = value.charAt(0);
   if ((first === '"' || first === "'") && closingQuote(value, 0) < 0) {
-    out.push(warnAt(lineNo, 'a quoted scalar that closes on a later line — the value is truncated to this line'));
+    out.push(warnAt(lineNo, 'a quoted scalar that never closes inside its value — the value is truncated to this line'));
     return;
   }
   if ((first === '[' || first === '{') && closingBracket(value, 0) < 0) {
@@ -1338,6 +1454,21 @@ function scanYamlWarnings(raw: string): string[] {
     if (BLOCK_SCALAR_RE.test(value)) {
       blockScalarAt = indent;
       continue;
+    }
+    const opens = value.charAt(0);
+    if ((opens === '"' || opens === "'") && closingQuote(value, 0) < 0) {
+      const span = quotedScalarSpan(lines, i + 1, indent, value);
+      if (span !== null) {
+        // The parser reads this whole — it is not a finding — but an escape it
+        // does not decode is still one, wherever in the span it sits. Its
+        // continuation lines are prose inside quotes, never keys to inspect.
+        const escape = undecodedEscape(span.quoted);
+        if (escape !== null) {
+          out.push(warnAt(i + 1, `a \`${escape}\` escape is not decoded — the literal characters survive`));
+        }
+        i = span.end - 1;
+        continue;
+      }
     }
     scanYamlValue(out, i + 1, value);
   }

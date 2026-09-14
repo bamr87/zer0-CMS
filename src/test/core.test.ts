@@ -421,6 +421,30 @@ suite('core: line surgery preserves what it did not touch (D7)', () => {
     return { raw, blockRaw: block.raw, body };
   };
 
+  test('a wrapped quoted scalar is one key to line surgery, now that it is read', () => {
+    // Before the parser read these, their blocks carried a warning and every
+    // write was refused. Now writes are allowed, so the continuation line has
+    // to travel with its key — kept byte for byte when another key changes,
+    // replaced with it when this one does.
+    const opts = serializeOptions(fixtureConfig(), 'yaml');
+    const raw = ["excerpt: 'An evidence-based quest-perfection", "  walkthrough from 2026-06-29.'", 'slice: developer/0000'].join('\n');
+
+    const other = updateFrontMatterKeys(raw, [{ key: 'slice', value: 'developer/0001' }], opts);
+    assert.ok(other !== null);
+    const otherLines = other.split('\n');
+    assert.equal(otherLines.length, 3, 'one line changed, none added or lost');
+    assert.deepEqual(otherLines.slice(0, 2), raw.split('\n').slice(0, 2), 'the wrapped value is untouched, byte for byte');
+
+    const own = updateFrontMatterKeys(raw, [{ key: 'excerpt', value: 'A shorter excerpt' }], opts);
+    assert.ok(own !== null);
+    assert.ok(!own.includes('walkthrough from'), 'the continuation line goes with the key it belongs to');
+    const reparsed = splitFrontMatter(`---\n${own}\n---\n`).block;
+    assert.ok(reparsed !== null);
+    assert.deepEqual(reparsed.warnings, []);
+    assert.equal(reparsed.data.excerpt, 'A shorter excerpt');
+    assert.equal(reparsed.data.slice, 'developer/0000');
+  });
+
   test('changing one key changes exactly one line, comments untouched', () => {
     const cfg = fixtureConfig();
     const { raw, blockRaw, body } = source();
@@ -1346,14 +1370,67 @@ suite("core: the parser's warnings channel — what it had to guess at (WP2.3)",
   });
 
   test('a value truncated to its first line says so — quoted or flow', () => {
-    const quoted = block(['title: "one', '  two"', 'date: 2026-01-01'].join('\n'));
+    const quoted = block(['title: "one', 'date: 2026-01-01'].join('\n'));
     assert.equal(quoted.warnings.length, 1);
-    assert.match(quoted.warnings[0] ?? '', /^line 1: a quoted scalar that closes on a later line/);
+    assert.match(quoted.warnings[0] ?? '', /^line 1: a quoted scalar that never closes inside its value/);
     assert.equal(quoted.data.title, '"one', 'which is exactly what the caller could not otherwise tell');
+    assert.equal(quoted.data.date, '2026-01-01', 'and the next key is still read');
+
+    // A continuation not indented past its key is not vouched for, even where
+    // PyYAML would be lenient: the value is not guessed, and the scan says so.
+    const shallow = block(['parent:', '  title: "one', ' two"'].join('\n'));
+    assert.equal(shallow.warnings.length, 1);
+    assert.match(shallow.warnings[0] ?? '', /^line 2: a quoted scalar that never closes inside its value/);
 
     const flow = block(['tags: [a,', '  b]'].join('\n'));
     assert.equal(flow.warnings.length, 1);
     assert.match(flow.warnings[0] ?? '', /^line 1: a flow collection that closes on a later line/);
+  });
+
+  test('a quoted scalar wrapped onto later lines reads whole, the way PyYAML reads it', () => {
+    // Every expectation below is what `yaml.safe_load` returns for the same
+    // text (PyYAML 6), recorded when this was written; the first case is an
+    // it-journey quest report's `excerpt:` verbatim, one of 131 that were
+    // reported unreadable before.
+    const wrapped = block(
+      [
+        "excerpt: 'Software Developer · Level 0000 — Foundation & Init World: an evidence-based quest-perfection",
+        "  walkthrough from 2026-06-29.'",
+        'slice: developer/0000',
+      ].join('\n'),
+    );
+    assert.deepEqual(wrapped.warnings, [], 'a valid wrapped scalar is not a finding');
+    assert.equal(
+      wrapped.data.excerpt,
+      'Software Developer · Level 0000 — Foundation & Init World: an evidence-based quest-perfection walkthrough from 2026-06-29.',
+    );
+    assert.equal(wrapped.data.slice, 'developer/0000', 'the continuation line is consumed, and the next key is read');
+
+    const cases: Array<[string, string[], unknown]> = [
+      ['a break is one space', ['t: "one', '  two"'], 'one two'],
+      ["'' survives the fold", ["t: 'it''s", "  wrapped'"], "it's wrapped"],
+      ['an escaped break joins with nothing', ['t: "a \\', '  b"'], 'a b'],
+      ['a blank line is a newline', ['t: "a', '', '  b"'], 'a\nb'],
+      ['an escape is decoded after the fold', ['t: "a\\n', '  b"'], 'a\n b'],
+      ['a line that looks like a key is prose inside quotes', ["t: 'a", "  b: c'"], 'a b: c'],
+      ['a comment after the closing quote is dropped', ["t: 'a", "  b' # note"], 'a b'],
+    ];
+    for (const [name, lines, expected] of cases) {
+      const parsed = block(lines.join('\n'));
+      assert.deepEqual(parsed.warnings, [], `${name}: no warning`);
+      assert.deepEqual(parsed.data, { t: expected }, name);
+    }
+
+    const item = block(['tags:', "- 'one", "  two'", '- three'].join('\n'));
+    assert.deepEqual(item.warnings, []);
+    assert.deepEqual(item.data.tags, ['one two', 'three'], 'a sequence item wraps the same way');
+
+    // Read whole is not the same as fully decoded: an escape this parser does
+    // not decode is still named, on the line the scalar opens.
+    const escaped = block(['t: "caf\\u00e9', '  x"'].join('\n'));
+    assert.equal(escaped.warnings.length, 1);
+    assert.match(escaped.warnings[0] ?? '', /^line 1: a `\\u` escape is not decoded/);
+    assert.equal(escaped.data.t, 'caf\\u00e9 x');
   });
 
   test('an undecoded escape, and the two TOML constructs', () => {
