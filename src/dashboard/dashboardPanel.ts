@@ -96,7 +96,28 @@ import {
   settingsFleetDispatchAllow,
   updateSetting,
 } from '../config';
-import { laneIdFrom, type FleetActions, type FleetLive } from '../commands/fleet';
+import {
+  auditDryRun,
+  auditStateFrom,
+  fixTargetFrom,
+  type AuditActions,
+} from '../commands/audit';
+import {
+  harnessStateFrom,
+  LANE_UI_STATE_KEYS,
+  specIdFrom,
+  workflowsStateFrom,
+  type HarnessActions,
+} from '../commands/harness';
+import { type SiteActions } from '../commands/site';
+import {
+  fleetTargetFrom,
+  laneIdFrom,
+  mergePolicyView,
+  pullViews,
+  type FleetActions,
+  type FleetLive,
+} from '../commands/fleet';
 import { draftPathFrom, type GovernanceActions } from '../commands/governance';
 import type { Zer0Shell } from '../extension';
 import { describeError, log } from '../logger';
@@ -178,6 +199,10 @@ const UI_STATE_KEYS: Readonly<Record<string, string>> = {
   SelectedFolder: 'zer0Cms:SelectedFolder',
   Route: 'zer0Cms:Dashboard:Route',
   'Drafts:Selected': 'zer0Cms:Dashboard:Drafts:Selected',
+  // The staged lane description. It lives in workspace state rather than in a
+  // message because a scaffold must not trust a payload: the host reads back
+  // what it persisted, and a form whose id no longer matches is refused.
+  ...LANE_UI_STATE_KEYS,
 };
 
 /**
@@ -287,6 +312,9 @@ export class DashboardPanel implements vscode.Disposable {
     private readonly shell: Zer0Shell,
     private readonly governance: GovernanceActions,
     private readonly fleet: FleetActions,
+    private readonly audit: AuditActions,
+    private readonly site: SiteActions,
+    private readonly harness: HarnessActions,
   ) {
     this.handlers = {
       // --- project ---------------------------------------------------------
@@ -334,14 +362,99 @@ export class DashboardPanel implements vscode.Disposable {
       'agent.open': () => this.run('agent.open'),
       // --- fleet: the gate, injected -----------------------------------------
       'fleet.open': () => this.run('fleet.open'),
-      'fleet.refresh': () => {
-        void this.refreshFleet(true);
+      'fleet.refresh': (args) => {
+        // The Monitor refreshes one repository per click; the Fleet tab's own
+        // button carries no repo and means "this one".
+        void this.refreshFleet(true, fleetTargetFrom(args)?.repo);
       },
       'fleet.toggleSwitch': (args) => {
         void this.runFleet('toggleSwitch', args);
       },
       'fleet.dispatchLane': (args) => {
         void this.runFleet('dispatchLane', args);
+      },
+      // The three verbs that act on a run rather than on configuration. The
+      // webview names a repository and a lane; the run id and the workflow come
+      // from what the last Refresh read, host-side (D5).
+      'fleet.rerunLastFailure': (args) => {
+        void this.runFleet('rerunLastFailure', args);
+      },
+      'fleet.cancelNewest': (args) => {
+        void this.runFleet('cancelNewest', args);
+      },
+      'fleet.toggleWorkflowFile': (args) => {
+        void this.runFleet('toggleWorkflowFile', args);
+      },
+      'fleet.openInGitFactory': () => {
+        // Building a URL opens no socket; the browser does.
+        void this.fleet.openInGitFactory();
+      },
+      'fleet.importHubRoster': () => {
+        void this.fleet.importHubRoster().then(
+          () => this.schedule(),
+          (error: unknown) => this.shell.log.warn(`hub roster: ${describeError(error)}`),
+        );
+      },
+      'monitor.open': () => this.run('monitor.open'),
+      // --- the front-matter audit -------------------------------------------
+      // The webview sends `{path, kind}` and nothing else. `doFixIssue` re-reads
+      // the file, re-runs the rule against it, and refuses when the finding is
+      // no longer there — applying a fix for a finding that has since been
+      // edited away is exactly what that ordering prevents (D5).
+      'audit.open': () => this.run('audit.open'),
+      'audit.fix': (args) => {
+        const target = fixTargetFrom(args);
+        if (target === undefined) {
+          this.shell.log.warn('audit fix: the message carried no file and rule.');
+          return;
+        }
+        void this.audit.fix(target).then(
+          (applied) => {
+            if (applied) {
+              void this.shell.store.refresh();
+            }
+          },
+          (error: unknown) => this.shell.log.warn(`audit fix: ${describeError(error)}`),
+        );
+      },
+      'audit.verify': () => {
+        void this.audit.verify();
+      },
+      // --- sites -------------------------------------------------------------
+      // The webview names a site id; the host validates it against its own
+      // registry and routes through the same function the palette calls (D5).
+      'site.pick': () => {
+        // No id: the palette's own picker, which is the only place a person
+        // chooses from a list rather than clicking a row.
+        void vscode.commands.executeCommand('zer0Cms.site.pick');
+      },
+      'site.setActive': (args) => {
+        this.site.setActive(args);
+      },
+      'site.preview': (args) => {
+        void this.site.preview(args);
+      },
+      // --- the harness and the lane catalogue --------------------------------
+      // `lane.scaffold` writes files. The webview sends a spec id and nothing
+      // else; `doScaffoldLane` re-reads the inventory and the manifest from
+      // disk, re-runs the scaffold gate, refuses on its own preflight, and
+      // names every file in a modal before a byte is written (D5).
+      'harness.open': () => this.run('harness.open'),
+      'workflows.open': () => this.run('workflows.open'),
+      'lane.scaffold': (args) => {
+        const id = specIdFrom(args);
+        if (id === undefined) {
+          this.shell.log.warn('lane.scaffold: the message named no lane.');
+          return;
+        }
+        void this.harness.scaffold(id).then(
+          (wrote) => {
+            if (wrote) {
+              this.schedule();
+            }
+          },
+          (error: unknown) => this.shell.log.warn(`lane scaffold: ${describeError(error)}`),
+        );
       },
       // --- surface-only ----------------------------------------------------
       openLink: (args) => {
@@ -617,7 +730,26 @@ export class DashboardPanel implements vscode.Disposable {
    * `executeCommand`: the injected actions are `doToggleSwitch`/`doDispatchLane`
    * themselves. The message names a lane; the host derives everything else.
    */
-  private async runFleet(action: 'toggleSwitch' | 'dispatchLane', args: unknown): Promise<void> {
+  private async runFleet(
+    action: 'toggleSwitch' | 'dispatchLane' | 'rerunLastFailure' | 'cancelNewest' | 'toggleWorkflowFile',
+    args: unknown,
+  ): Promise<void> {
+    // The two configuration verbs act on the lane in the open repository; the
+    // three run verbs name a repository too, because the Monitor can reach a
+    // roster row. Either way the message carries targets, never values.
+    if (action === 'rerunLastFailure' || action === 'cancelNewest' || action === 'toggleWorkflowFile') {
+      const target = fleetTargetFrom(args);
+      if (target === undefined) {
+        log.warn(`dashboard webview: "fleet.${action}" arrived without a repository and lane`);
+        return;
+      }
+      try {
+        await this.fleet[action](target);
+      } catch (error) {
+        log.warn(`dashboard webview: "fleet.${action}" failed — ${describeError(error)}`);
+      }
+      return;
+    }
     const laneId = laneIdFrom(args);
     if (laneId === undefined) {
       log.warn(`dashboard webview: "fleet.${action}" arrived without a lane id`);
@@ -642,9 +774,9 @@ export class DashboardPanel implements vscode.Disposable {
    * A snapshot rebuild never triggers it; `buildFleet` renders whatever the
    * last read left behind.
    */
-  private async refreshFleet(interactive: boolean): Promise<void> {
+  private async refreshFleet(interactive: boolean, repo?: string): Promise<void> {
     try {
-      await this.fleet.refresh(interactive);
+      await this.fleet.refresh(interactive, repo);
     } catch (error) {
       reportError(error, 'fleet.refresh');
     }
@@ -704,6 +836,25 @@ export class DashboardPanel implements vscode.Disposable {
           url: preview.url ?? null,
         };
       }
+      case 'lanePreview': {
+        // Read-only: it renders exactly what a write would produce, through the
+        // same planner, so the diff a person approves is the diff that lands.
+        const id = specIdFrom(payload);
+        if (id === undefined) {
+          throw new Error('lanePreview needs a lane to preview.');
+        }
+        return await this.harness.preview(id);
+      }
+      case 'auditDryRun': {
+        // Read-only on purpose: it renders what a fix *would* write so the
+        // person sees the diff before anything is decided. The write lives in
+        // `audit.fix`, behind a modal, in the same function the palette calls.
+        const target = fixTargetFrom(payload);
+        if (target === undefined) {
+          throw new Error('auditDryRun needs a file and a rule.');
+        }
+        return await auditDryRun(this.shell, target);
+      }
       default:
         // The remaining five ops are the panel's field widgets asking for a
         // slug, a picker or a placeholder. Nothing on this surface sends them.
@@ -746,6 +897,21 @@ export class DashboardPanel implements vscode.Disposable {
     // nothing and the tab says the values are unknown.
     if (key === 'Route' && value === 'fleet') {
       void this.refreshFleet(false);
+    }
+    if (key.startsWith('Lane:')) {
+      // Without this the value never comes back in a snapshot, the staged form
+      // never reconciles, and Preview stays disabled forever — the same reason
+      // `Drafts:Selected` re-posts.
+      this.schedule();
+    }
+    if (key === 'Route' && value === 'sites') {
+      // Opening the tab is the explicit act that makes reading the other
+      // folders worth it: every row wants that folder's configuration and,
+      // for one never scanned, a platform probe. Nothing here opens a socket.
+      void this.shell.sites.refreshAll().then(
+        () => this.schedule(),
+        (error: unknown) => this.shell.log.warn(`sites refresh: ${describeError(error)}`),
+      );
     }
   }
 
@@ -943,6 +1109,13 @@ export class DashboardPanel implements vscode.Disposable {
     const drafts = await this.buildDrafts(cfg, snapshot);
     const fleet = cfg.fleet.enabled ? await this.buildFleet(cfg) : null;
 
+    // The inventory is read once and used twice: the Harness tab describes what
+    // exists, the Workflows tab turns the same lanes into passports and offers
+    // the form that would add one.
+    const inventory = await this.harness.inventory();
+    const harnessState = inventory === null ? null : harnessStateFrom(inventory, null);
+    const workflowsState = cfg.fleet.enabled ? await workflowsStateFrom(this.shell) : null;
+
     return {
       kind: 'dashboard',
       initialized,
@@ -954,10 +1127,48 @@ export class DashboardPanel implements vscode.Disposable {
       tabs: TABS.filter(
         (tab) =>
           (tab.id !== 'catering' || snapshot.contract.present) &&
-          (tab.id !== 'fleet' || cfg.fleet.enabled),
+          (tab.id !== 'fleet' || cfg.fleet.enabled) &&
+          // Writing a lane is a fleet action, so the catalogue follows the
+          // fleet console's own switch — the same condition its `when` clause
+          // uses, so the tab and the palette agree.
+          (tab.id !== 'workflows' || cfg.fleet.enabled) &&
+          (tab.id !== 'monitor' || cfg.fleet.enabled) &&
+          // The harness needs only a folder: describing what a repository's AI
+          // machinery is has nothing to do with whether the console may act.
+          (tab.id !== 'harness' || folders.length > 0) &&
+          // Nothing registered and nothing derived means nothing to audit, and
+          // an Audit tab over zero files would report a clean site rather than
+          // an unexamined one — which is the lie D9 exists to prevent.
+          (tab.id !== 'audit' || folders.length > 0),
       ),
+      // Every open folder, with what is known about each. Resolved from the
+      // registry rather than the snapshot, because eleven of the twelve may
+      // never have been scanned and saying "0 pages" about an unscanned site
+      // would be a claim rather than an absence (D9).
+      sites: await this.shell.sites.sitesState(),
+      // What this repository's AI machinery is, and what a new lane would be.
+      // Both read from disk on demand rather than from the snapshot: an
+      // inventory is a join across seven kinds of file, and holding a stale one
+      // in a snapshot is how a console reports a lane that no longer exists.
+      harness: harnessState,
+      workflows: workflowsState,
+      // The roster and its lanes, read from the manifests on disk. Opening the
+      // tab reads nothing from GitHub; a row's own Refresh button does.
+      monitor: cfg.fleet.enabled ? await this.fleet.monitor() : null,
       contents: this.buildContents(cfg, snapshot, folders, custom),
       drafts,
+      // The store already ran the audit over the index it built, so this is a
+      // projection rather than a second scan. `auditStateFrom` owns the two
+      // derivations — the collection a finding belongs to, and how `scanned`
+      // rides alongside the severity counts — so the host and the Audit
+      // command cannot drift about either.
+      audit: auditStateFrom({
+        audit: snapshot.audit,
+        pages: snapshot.pages,
+        schema: snapshot.schema,
+        verifyCommand: cfg.cms.verifyCommand,
+        ran: snapshot.audit.generatedAt !== '',
+      }),
       catering: buildCatering(snapshot, await this.lastWorklist(snapshot)),
       fleet,
       settings: buildSettings(cfg, folders),
@@ -1124,6 +1335,11 @@ export class DashboardPanel implements vscode.Disposable {
       hasCredential: current !== undefined,
       manifest,
       laneId,
+      repo: manifest.repo,
+      // The three run verbs decide from what one Refresh actually read. Absent
+      // is not "there is nothing to re-run" — it is "nobody has looked", and
+      // the blockers say so in different words.
+      ...liveFor(current, laneId),
     });
     const lanes = buildLaneStates(manifest, current?.switches, current?.runs).map(
       (state: FleetLaneState): FleetLaneView => ({
@@ -1140,6 +1356,12 @@ export class DashboardPanel implements vscode.Disposable {
         lastRun: state.lastRun ?? null,
         toggleBlockers: evaluateFleetGates('toggle', gate(state.lane.id)),
         dispatchBlockers: evaluateFleetGates('dispatch', gate(state.lane.id)),
+        rerunBlockers: evaluateFleetGates('rerun', gate(state.lane.id)),
+        cancelBlockers: evaluateFleetGates('cancel', gate(state.lane.id)),
+        toggleWorkflowBlockers: evaluateFleetGates('toggleWorkflow', gate(state.lane.id)),
+        // Undefined, not a zero or an empty list: a column nobody has read must
+        // render as unknown rather than as an answer.
+        ...laneLiveFor(current, state.lane.id),
       }),
     );
     return {
@@ -1157,6 +1379,12 @@ export class DashboardPanel implements vscode.Disposable {
       })),
       fetchedAt: current?.fetchedAt ?? null,
       note: fleetNote(current, live),
+      pulls: current === undefined ? null : pullViews(current.pulls, current.pullsByLane),
+      mergePolicy: current === undefined ? null : mergePolicyView(current.mergePolicy),
+      grade: current?.grade ?? null,
+      drift: current?.drift ?? [],
+      runsReadable: current?.runsReadable ?? false,
+      workflowsReadable: current?.workflowsReadable ?? false,
     };
   }
 
@@ -1184,6 +1412,45 @@ export class DashboardPanel implements vscode.Disposable {
 // ---------------------------------------------------------------------------
 // Projections
 // ---------------------------------------------------------------------------
+
+
+/**
+ * The live half of a gate input, present only when a Refresh actually read.
+ *
+ * Written as a helper rather than inline because `exactOptionalPropertyTypes`
+ * distinguishes "absent" from "present and undefined", and a `Map.get()`
+ * repeated inside a conditional does not narrow. The distinction is the point:
+ * absent means nobody looked, which is a different blocker from "there is
+ * nothing to re-run".
+ */
+function liveFor(
+  current: FleetLive | undefined,
+  laneId: string,
+): Pick<FleetGateInput, 'live'> | Record<string, never> {
+  if (current === undefined) {
+    return {};
+  }
+  // An unreadable list travels as `null`, so the gate refuses with "could not
+  // be read" instead of "has no failed run" / "has no registered workflow".
+  const workflow = current.workflowsReadable ? current.workflows?.get(laneId) : null;
+  const runs = current.runsReadable ? (current.runsByLane?.get(laneId) ?? []) : null;
+  return { live: workflow === undefined ? { runs } : { runs, workflow } };
+}
+
+/** The lane columns a Refresh fills, each absent rather than zero when unread. */
+function laneLiveFor(
+  current: FleetLive | undefined,
+  laneId: string,
+): Partial<FleetLaneView> {
+  const audit = current?.audit?.get(laneId);
+  const state = current?.workflows?.get(laneId)?.state;
+  return {
+    cost: current?.cost?.get(laneId)?.costUsd ?? null,
+    pulls: current?.pullsByLane?.get(laneId)?.map((pull) => pull.number) ?? [],
+    ...(audit === undefined ? {} : { audit }),
+    ...(state === undefined ? {} : { enabledState: state }),
+  };
+}
 
 /** The sentence above the lane table explaining the live columns. */
 function fleetNote(current: FleetLive | undefined, live: FleetLive | undefined): string | null {

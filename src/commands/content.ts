@@ -80,7 +80,7 @@ import { currentConfig, workspaceTrusted } from '../config';
 import type { Zer0Shell } from '../extension';
 import { describeError } from '../logger';
 import { isEditableDocument, notifyInfo, notifyWarning } from '../uiState';
-import { openInEditor, register, toFilePath } from './project';
+import { openInEditor, register, siteTarget } from './project';
 
 // ---------------------------------------------------------------------------
 // The panel bridge
@@ -143,7 +143,11 @@ export interface ActiveArticle {
  */
 export async function activeArticle(): Promise<ActiveArticle | undefined> {
   const editor = vscode.window.activeTextEditor;
-  const cfg = currentConfig();
+  // The document's own site, not the active one. Usually they are the same —
+  // with no explicit pick the active site *follows* the editor — but a person
+  // who pinned site A and is now editing a file in site B must get B's content
+  // types, B's date format and B's slug template, not A's.
+  const cfg = editor === undefined ? currentConfig() : currentConfig(editor.document.uri);
 
   if (editor === undefined || !isEditableDocument(cfg, editor.document)) {
     await notifyWarning('open a content file first.');
@@ -223,13 +227,21 @@ async function pickContentType(
   return picked?.contentType;
 }
 
-/** The whole create sequence, shared by both create commands. */
+/**
+ * The whole create sequence, shared by both create commands.
+ *
+ * `cfg` is a parameter rather than a `currentConfig()` call because the two
+ * callers resolve two different sites: "Create content" acts on the active
+ * one, and "Create content here" acts on the site that owns the folder the
+ * person right-clicked. Re-reading here would quietly collapse both onto the
+ * active site again.
+ */
 async function createInto(
   shell: Zer0Shell,
   folder: ContentFolder,
+  cfg: Zer0Config,
   subFolder: string | undefined,
 ): Promise<void> {
-  const cfg = currentConfig();
   const contentType = await pickContentType(cfg, folder);
   if (contentType === undefined) {
     return;
@@ -306,18 +318,21 @@ export function registerContentCommands(shell: Zer0Shell): void {
     }
     const folder = await pickFolder(folders);
     if (folder !== undefined) {
-      await createInto(shell, folder, undefined);
+      await createInto(shell, folder, cfg, undefined);
     }
   });
 
   // --- Create content here (explorer context menu) -------------------------
   register(shell, 'createContentInFolder', async (arg: unknown) => {
-    const cfg = currentConfig();
-    const target = toFilePath(cfg, arg);
+    // The clicked directory decides the site: "create content here" in the
+    // explorer must offer the content types of the repository that was
+    // clicked, whatever the console is pointed at.
+    const target = siteTarget(arg);
     if (target === undefined) {
       await vscode.commands.executeCommand('zer0Cms.createContent');
       return;
     }
+    const cfg = target.cfg;
 
     // The clicked directory is usually *inside* a registered folder rather
     // than being one, so the owning folder supplies the content types and the
@@ -325,14 +340,14 @@ export function registerContentCommands(shell: Zer0Shell): void {
     // against `resolveFolders` output, not `cfg.contentFolders`, because a
     // wildcard entry has not been expanded into real directories yet and would
     // never prefix-match anything on disk.
-    const owner = folderForFile(await resolveFolders(cfg), target);
+    const owner = folderForFile(await resolveFolders(cfg), target.filePath);
     if (owner === undefined) {
       const answer = await notifyWarning(
-        `${path.basename(target)} is not inside a registered content folder.`,
+        `${path.basename(target.filePath)} is not inside a registered content folder.`,
         'Register it',
       );
       if (answer === 'Register it') {
-        await vscode.commands.executeCommand('zer0Cms.registerFolder', vscode.Uri.file(target));
+        await vscode.commands.executeCommand('zer0Cms.registerFolder', vscode.Uri.file(target.filePath));
       }
       return;
     }
@@ -341,8 +356,8 @@ export function registerContentCommands(shell: Zer0Shell): void {
       return;
     }
 
-    const sub = path.relative(owner.path, target);
-    await createInto(shell, owner, sub === '' ? undefined : sub);
+    const sub = path.relative(owner.path, target.filePath);
+    await createInto(shell, owner, cfg, sub === '' ? undefined : sub);
   });
 
   // --- Generate slug -------------------------------------------------------
@@ -413,7 +428,8 @@ export function registerContentCommands(shell: Zer0Shell): void {
   // --- Insert image --------------------------------------------------------
   register(shell, 'insertImage', async () => {
     const editor = vscode.window.activeTextEditor;
-    const cfg = currentConfig();
+    // The image is copied into *this file's* site public folder.
+    const cfg = editor === undefined ? currentConfig() : currentConfig(editor.document.uri);
     if (editor === undefined || !isSupported(cfg, editor.document.uri.fsPath)) {
       await notifyWarning('open a content file first.');
       return;

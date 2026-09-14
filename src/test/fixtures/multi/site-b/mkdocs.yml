@@ -1,0 +1,4 @@
+site_name: Site B
+site_url: https://site-b.example/
+docs_dir: docs
+use_directory_urls: true

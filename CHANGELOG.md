@@ -2,6 +2,104 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🛰 The fleet, not one repository
+
+Slice 1 was one repository and two verbs. This is a fleet: a **roster** — the folders open in this window that carry a manifest, plus repositories you enrol in your settings, plus, only when you ask for it, the hub's registry — and a **Monitor** tab showing every repository against every lane: its switch, its newest run, the open pull requests attributed to it, what it has cost, and the grade the shared audit gives its workflows.
+
+Three verbs act on a run rather than on configuration: **re-run** the last failure, **cancel** what is in flight, **enable or disable** the workflow file. Each says plainly what it does — re-running queues a new attempt and the original stays on the record; cancelling leaves the run recorded as cancelled, which is not the same as failed; disabling registers the workflow with GitHub and **does not touch the file**, which is why it is not an edit and why a person who wants the lane gone still has to delete it.
+
+A refresh costs **four calls per repository, whatever the lane count** — variables, workflows, recent runs, open pull requests, joined locally. The previous slice cost one per gated lane plus one per lane, which on lifehacker alone was thirty-one. The whole nine-manifest roster now refreshes in thirty-six calls where it would have taken eighty-seven, and opening the Monitor reads nothing at all: a row's own button is the only thing that opens a socket.
+
+**The honesty rule matters more here than anywhere else, because a fleet view is mostly cells.** A cell nobody has read says `unknown` and looks different from `off`. A repository with no checkout and no refresh shows as unread rather than empty. Nothing renders `$0.00` for an unmeasured cost. `listVariables` returning `null` rather than an empty list is that rule in the type system: "there are no variables" and "you may not read them" are different answers, and rendering both as blank would be lying about one.
+
+### 🔒 The plan grew, and the guard got stricter
+
+The declared call plan went from six entries to fifteen. The guard that keeps it a boundary was tightened in the same change rather than after it.
+
+`fleetSurfaceIsRepoScopedOnly` used to check only that a path *began with* `/repos/{owner}/{repo}`. That would have admitted `/issues`, `/hooks`, `/keys`, `/collaborators` and `/actions/secrets` the moment anyone added one. It now matches an explicit allow-list of sub-roots, whole-segment. A second guard, `fleetPlanHasNoMergeVerbs`, refuses `/merge`, `/reviews`, `/update-branch`, `/actions/secrets`, `/collaborators`, any `DELETE`, and any write to `/labels`. Both are asserted from both directions — every planned call passes, and a hand-written forbidden one fails.
+
+A `..` path segment is now refused before a URL is built, because `fetch` would have normalised `…/contents/../../../user` into an endpoint the plan never named.
+
+This console never merges, approves, closes, removes a review label, or reads a secret. Those are the boundary, not a backlog.
+
+### 🧭 The harness, inventoried
+
+An agent file, a skill, a workflow, a manifest lane, a kill switch, a token and a line in a spend ledger are seven files describing **one lane**, and holding that join in your head was the only way to see it. The **Harness** tab reads them and reports the joins — and, more usefully, where they disagree: an agent a workflow names that does not exist, a skill nothing references, a lane with no workflow, a workflow with no lane, a switch the manifest claims that no workflow reads.
+
+The rules were tuned against the real fleet rather than fixtures, and five of them were wrong on the first pass. Each guard now names the case that taught it: a metering line's `--agent` flag is a ledger role, not an agent reference; `<x> subagent` names an agent, not a skill; a comment *about* a token trap is not the trap. The strongest evidence they are right now: over lifehacker.dev the inventory reports twelve token-chain findings, and they are **byte-identical to the twelve workflows that repository's own token lint hand-maintains as migrating debt** — a list a person curated, rediscovered from scratch.
+
+A lane reader ports what `wtd fleet adopt` does, so the console and that tool agree about what a workflow *is*: **45 of 45 lanes across five repositories match** on every parity field. It is used only to agree — a derived lane is never written over a committed manifest, and a disagreement is reported as drift.
+
+### 🛠 Lanes you can write
+
+Describe a lane — what it should do, when, as whom — and get the files that make it real: a workflow calling the fleet's shared runner, an agent, a skill stub, and a manifest entry. Not a wizard that hides its output: a plan you read, a diff you review, and files you commit yourself.
+
+**It refuses more than it writes, and that is the point.** Modelled on lifehacker's own `content-review` lane, the generator classifies it **bespoke** and produces nothing — because expressing it as a shared-runner caller would silently drop the `github.event.action != 'synchronize'` loop-breaker, re-creating an infinite retrigger loop that fleet has already had to fix once. A lane it cannot express honestly comes back with reasons a person can act on, not a shrug.
+
+House rules are enforced rather than documented: the kit stamp is line 1; a cron is never on the hour (every lane in a fleet firing at `:00` queues behind the rest of GitHub); a token is never `secrets.X || github.token` (that degrades to a token which cannot open a pull request, silently, mid-run); every generated lane carries its `*_ENABLED` switch; and nothing ever targets a `factory--*.yml`.
+
+**Writing the files never arms the lane.** The variable that turns it on is named in the modal and deliberately not created — writing a file somebody reviews and arming a loop to run are different powers, and the console holds only the first.
+
+Three MCP tools join the set (sixteen): `zer0_harness_inventory` and `zer0_lane_preview` are read-only; `zer0_lane_scaffold` is double-gated by an environment flag *and* a per-call confirmation, exactly as publishing is.
+
+### 🗂 Many sites, one window
+
+A window can hold more than one site. The fleet's own workspace holds twelve folders — seven of them Jekyll sites this extension can detect, audit and publish — and until now eleven of them were invisible, because everything resolved the first folder.
+
+The unit is still one folder: one configuration, one snapshot, one cache key, one MCP server. Multi-root is composition above that rather than a second model threaded through it. A **site registry** holds one store per folder, and a **Sites** tree and dashboard tab show what is in the window: each folder's platform, whether it is configured, its content roots, its counts, whether it carries a fleet manifest.
+
+**Which site a command acts on is decided by the command, not by the window.** A command invoked on a file acts on *that file's* site — registering a folder edits that folder's `zer0.json`, a draft goes into its own site's queue, diagnostics validate against the owning site's content types. Only a command with no argument falls back to the active site, resolved as: an explicit pick that still exists, then the folder owning the active editor, then the first folder. That rule is a pure function with tests, because a rule like this quietly acquires a fourth case.
+
+The panel's persisted state is namespaced per site, so two sites no longer overwrite each other's collapsed sections. The MCP provider offers one server per configured site rather than one per window — on the twelve-folder workspace that is two or three servers, not twelve. `zer0Cms.site.preview` runs the detected platform's own serve command through a VS Code task and offers the preview URL when it is ready.
+
+### 🤝 One harness vocabulary
+
+The agent in this editor and the AI lanes in CI shared nothing. The editor did not read the repository's model configuration, did not know its `.claude/agents` roles, did not attach this extension's own MCP server, and defaulted to a model the fleet does not use — so "run this as the content role" was possible in a workflow and impossible at the desk, and the two disagreed about the model without anyone noticing.
+
+A **harness profile** now resolves a repository's roles, skills and model once, in the CI runner's own precedence — a setting, then `zer0.json`, then the site's `_data/ai.yml`, then a built-in fallback — and projects to either an editor run or the equivalent CI invocation. `zer0Cms.agent.runAsRole` picks a role from the repository's own agents and runs it under the approval card; **Copy the CI equivalent** hands you the `run.sh` line or the workflow `with:` block for that role. On lifehacker.dev the editor now resolves the same model that repository's own lanes use, instead of a different one.
+
+The extension's own MCP server is attached to an agent run, with eight read-only tools auto-allowed and the other eight on the card — the six that write or spawn, plus `zer0_harness_inventory` and `zer0_lane_preview`, which only read but are not on the auto-allow list yet. The publish and scaffold flags are explicitly deleted from the child environment: an editor run must not inherit whatever armed something else.
+
+### 🔒 A gate that was not holding
+
+**`permissionMode: 'acceptEdits'` bypassed the approval card entirely, and this extension offered it as a setting.** Measured against the Agent SDK rather than assumed: with that mode a `Write` landed on disk and `canUseTool` — the single gate the whole agent design rests on (decision D10) — was never called at all.
+
+It is gone from the manifest, removed from the type, and clamped at both configuration layers, so a settings file or a `zer0.json` that still names it falls through to `default` rather than disarming the gate. `plan` remains, because planning without acting needs no gate. Two related things were measured and are worth writing down: a repository-committed `permissions.allow` rule does *not* bypass the card, and a repository-committed escalating default mode is dropped by the CLI's own trust filter.
+
+Loading a repository's `.claude/settings.json` into an editor run is off unless the workspace is trusted **and** you opt in for that run — those files can declare hooks, which are command lines running under your credential.
+
+### 🌍 Every site, not just this one
+
+zer0-CMS now knows what kind of site it is looking at. Jekyll, MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback are **profiles** — content roots, front-matter dialect and keys, the draft convention, date keys and formats, the slug and permalink rules, the directories a build writes and the command that serves the site locally — resolved once from marker files, with an explicit `platform.id` in `zer0.json` always winning. Everything platform-specific that used to be hard-coded in the core now comes from one of them.
+
+zer0-mistakes is an **overlay on Jekyll**, never a sibling identity: a site using that theme is a Jekyll site with extra conventions, and modelling it as its own platform would have meant restating every Jekyll rule to keep it true.
+
+Three things this immediately fixed, each found by pointing the code at real repositories rather than fixtures:
+
+- **The theme overlay matched one site out of six.** The probe looked for the literal `remote_theme: bamr87/zer0-mistakes`, and five of the six sites in this fleet write it aligned and quoted — `remote_theme             : "bamr87/zer0-mistakes"`. A detector that only recognises tidy files is a detector for fixtures. Probes now read past spacing, quoting and case.
+- **A site whose `collections_dir` carries a YAML anchor was invisible.** it-journey.dev writes `collections_dir: &collections_dir pages`, and treating that as unresolvable meant **none** of its 409 content files were seen. An anchor is a *label on* a value — the value is right there, and reading it is not a guess. An alias, which points at a value defined elsewhere, still reports as unknown rather than being invented.
+- **Jekyll's loose pages were not content.** Deriving only the declared collections left fourteen of lifehacker.dev's 383 files unseen. Jekyll builds every markdown file under the source directory, and a CMS that cannot see a page cannot report a problem with it. Coverage on the two largest sites in the fleet went from 368/383 and 0/409 to **383/383 and 408/409** — the one remaining file has no front matter and is skipped on purpose.
+
+Publishing follows the platform too. `PublishTarget` was an open interface with exactly one implementation and a registry that **threw** for anything else, so a detected MkDocs site would have crashed the publish preview. One factory now serves every file-writing platform, with the same exclusive-write and adopt-a-retry semantics Jekyll always had. `governance.target` defaults to empty, meaning *follow the platform* — so naming one is a real choice rather than an indistinguishable default, and Jekyll sites publish exactly as they did.
+
+### 🔍 The front-matter audit
+
+Every page checked against its content type, its site's own schema and its platform's conventions — thirteen rules using **lifehacker.dev's own rule id strings**, so a finding raised in the editor and one filed by that site's CI are the same finding rather than two. It reads the schema the site already has (`frontmatter_schema.yml`, a `.cms/` contract, `zer0.json`, or the platform's defaults) instead of asking you to restate it, and every report names which one answered — because "required" means something different in each case.
+
+A finding that a script can honestly fix offers a fix; the rest say why not. `title: ''` is not a repair, and neither is `draft: true`. Applying one re-reads the file, re-runs the rule against what is actually on disk now, shows the real diff in a diff editor and asks — in that order, so a fix for a finding you have since edited away cannot land. The parser also grew a **warnings channel**: a file using YAML anchors, aliases, merge keys or multi-line flow collections is reported as unreadable rather than audited on a misreading, and fix-it refuses it outright.
+
+Available as an Audit tab, three commands, and a read-only `zer0_audit` MCP tool — the thirteenth; the harness tools above bring the set to sixteen. Over lifehacker.dev's 382 real posts it reports **zero errors and two warnings**, both genuine over-long descriptions — the rules were tuned against a real corpus, and one that fired ten times on correct files was fixed rather than shipped.
+
+### 🐛 Found by pointing the console at the real fleet
+
+- **An unread list is not an empty one.** `listWorkflows`, `recentRuns` and `openPulls` answered `[]` on a 403 or 404, so a repository whose Actions nobody could read drew every lane as never having run and every workflow as unregistered. They now return `null`, as `listVariables` always did: the Monitor and Fleet tabs draw unknown, the run verbs refuse with "could not be read", and the engines adapter throws rather than handing the package a fabricated `[]`.
+- **A quoted value PyYAML wrapped is read whole.** A `'…'` or `"…"` scalar continued on a more-indented line was truncated to its first line and reported as unreadable, and every one of it-journey's 131 quest reports tripped it. It is now folded the way YAML folds it — those 131 pages match PyYAML on all 1,826 of their string values — and a quote that never closes is still reported. Reading them also exposes what the audit had been skipping on those pages, including 121 `duplicate-slug` findings that come from how a dated file name's slug is derived.
+- **`keywords` is not a taxonomy.** The zer0-mistakes overlay listed it, and the theme never reads it as a list, so it-journey's 218 `keywords: {primary, secondary}` mappings were 218 false `tags-not-array` errors. The rule also called a mapping "a scalar" and offered to fix it; it now says mapping, and offers no fix.
+- **An anchored quoted value loses its quotes.** `title: &title "Lifehacker.dev"` was read as `"Lifehacker.dev"`, quotes and all, on lifehacker.dev, it-journey and zer0-mistakes; an anchored `""` now reads as absent, exactly as an unanchored one does.
+- **This repository's own `fleet.manifest.yml` parses.** Its `CLAUDE_CODE_OAUTH_TOKEN` purpose was a single-quoted scalar wrapped at column 80 and continued at column 0 — the `wtd fleet adopt` wrap PyYAML forgives and the `yaml` package rejects. It is one line now, and both read the same value.
+
 ## [0.2.0](https://github.com/bamr87/zer0-CMS/compare/v0.1.0...v0.2.0) (2026-09-11)
 
 
@@ -12,8 +110,6 @@ All notable changes to zer0-CMS are documented here. The format follows [Keep a 
 * **core:** the fleet domain — manifest, gate, and a declared GitHub surface ([9207603](https://github.com/bamr87/zer0-CMS/commit/92076039f761c22c13543a8ddbf772cc4dc3412d))
 * **fleet:** the Fleet console — dashboard tab, two gated commands, an MCP read ([cf41ced](https://github.com/bamr87/zer0-CMS/commit/cf41ced25e2c92c7711fa061c71daced506062a7))
 * **fleet:** the Fleet console — read this repo's lanes, gate switch and dispatch on a human (slice 1) ([c83f8aa](https://github.com/bamr87/zer0-CMS/commit/c83f8aad99189a1f18c1b8e20f842ca58ca4060a))
-
-## [Unreleased]
 
 ### 🧱 Foundations
 

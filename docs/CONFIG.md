@@ -484,7 +484,7 @@ The publishing path: draft → brand guard → human approval → publish → le
 | `acceptStatuses` | `["pending", "approved"]` | `zer0Cms.governance.acceptStatuses` | Draft statuses **publishing** accepts. Approving always requires `pending`. |
 | `publishAllow` | `false` | `zer0Cms.governance.publishAllow` | The master switch. |
 | `bannedPatternsFile` | `""` | `zer0Cms.governance.bannedPatternsFile` | Extra brand-guard patterns. |
-| `target` | `"jekyll"` | `zer0Cms.governance.target` | Which publish target turns an approved draft into content. |
+| `target` | `""` | `zer0Cms.governance.target` | Which publish target turns an approved draft into content. Empty follows the detected platform (§3.21); Jekyll sites therefore keep publishing exactly as they did, without saying so. |
 
 A draft's status is one of `pending`, `approved`, `published`. Set `acceptStatuses` to `["approved"]` to force the in-editor approval step; `[]` is not a way to block everything (§1.3) — turn `publishAllow` off instead, which blocks the panel, the dashboard, the command palette *and* the bundled MCP server at once.
 
@@ -503,7 +503,7 @@ A draft's status is one of `pending`, `approved`, `published`. Set `acceptStatus
 
 ### 3.16 `cms`
 
-Where the `.cms/` contract lives and how to run the Python content engine that produces it. All five have settings twins, and the interpreter is the setting you will actually reach for.
+Where the `.cms/` contract lives and how to run the Python content engine that produces it. All seven have settings twins, and the interpreter is the setting you will actually reach for.
 
 | Property | Default | VS Code twin |
 |---|---|---|
@@ -512,6 +512,8 @@ Where the `.cms/` contract lives and how to run the Python content engine that p
 | `engineScript` | `"scripts/cms/cms.py"` | `zer0Cms.cms.engineScript` |
 | `normalizerScript` | `"scripts/content/normalize-frontmatter.py"` | `zer0Cms.cms.normalizerScript` |
 | `contentDirs` | `["pages/"]` | `zer0Cms.cms.contentDirs` |
+| `aiConfigPath` | `"_data/ai.yml"` | `zer0Cms.cms.aiConfigPath` |
+| `verifyCommand` | `""` | `zer0Cms.cms.verifyCommand` |
 
 The name differs on purpose across the two surfaces: the setting is `zer0Cms.cms.pythonPath` (which is what a person looks for in the Settings UI), the `zer0.json` key is `cms.python`. Everything else matches one-to-one.
 
@@ -524,11 +526,15 @@ The optional AI layer. Off unless you turn it on, and it needs the optional `@an
 | Property | Default | VS Code twin |
 |---|---|---|
 | `enabled` | `false` | `zer0Cms.agent.enabled` |
-| `model` | `"claude-opus-5"` | `zer0Cms.agent.model` |
+| `model` | `""` (inherit) | `zer0Cms.agent.model` |
 | `maxTurns` | `40` | `zer0Cms.agent.maxTurns` |
 | `permissionMode` | `"default"` | `zer0Cms.agent.permissionMode` |
 
-`permissionMode` is `default`, `acceptEdits` or `plan`. The settings layer validates it against those three; the `zer0.json` layer accepts any string and hands it to the SDK, which is deliberate — an unknown mode degrades to the SDK's own handling rather than a type error. `default` routes every mutating tool call through an approve/deny card showing the diff.
+`permissionMode` is `default` or `plan`, and both layers clamp anything else to `default` — a repository must not be able to hand the SDK a mode of its own choosing.
+
+**`acceptEdits` used to be a third option and is gone.** It was measured against the SDK rather than assumed: with that mode a `Write` landed on disk and `canUseTool` — the approval card, the single gate the whole agent design rests on (decision D10) — was never called at all. A mode that silently disarms the only gate is not a preference, so it is not offered, and a settings file or `zer0.json` that still names it is clamped rather than honoured. `plan` remains, because planning without acting needs no gate.
+
+**`model` is empty by default, meaning inherit.** The precedence is the CI runner's own: this setting, then `zer0.json`, then the site's `_data/ai.yml` (see `zer0Cms.cms.aiConfigPath`), then a built-in fallback — so a repository with its own model configuration gets the same model at the desk that it gets in a workflow, and the panel shows which layer answered.
 
 ### 3.18 `validation`, `panel`, `dashboard`
 
@@ -575,6 +581,28 @@ The Fleet console: a dashboard tab that reads this repository's `fleet.manifest.
 Neither `dispatchAllow` nor `scaffoldAllow` has a `zer0.json` key; both are rejected by the schema and are not members of `Zer0Config`. `settingsFleetDispatchAllow()` and `settingsFleetScaffoldAllow()` in `src/config.ts` read them from the settings layer alone and hand them to `evaluateFleetGates`, which nothing overrides. The reasoning is the MCP publish flag's (§6): on the other side of each gate is a write to another system, and a `zer0.json` or a `fleet.manifest.yml` both arrive with a cloned repository. Only the settings scopes are written by the person at the editor, and both accessors additionally refuse in an untrusted workspace. With them off the tab still renders — the manifest, and the live columns once you press Refresh — but every privileged button stays disabled everywhere, including the command palette, and says why.
 
 `roster`, `hub` and `gitfactoryUrl` are ordinary two-layer keys, because none of them arms anything: a roster decides what you are shown, not what may be written to it, and building a GitFactory link opens no socket.
+
+---
+
+### 3.21 `platform`
+
+Which static-site generator this repository is. Everything that differs between generators — where content lives, whether a filename carries its date, which key means "draft", what a page's URL will be, which build directory to ignore, how to serve the site locally — is one profile, resolved once.
+
+| Property | Default | Meaning |
+|---|---|---|
+| `id` | `"auto"` | `auto`, or one of `jekyll`, `mkdocs`, `wikijs`, `hugo`, `docusaurus`, `astro`, `generic`. Naming one skips detection entirely. |
+| `overlay` | `"auto"` | `zer0-mistakes`, `null`, or `auto`. An overlay refines a profile; it is never an identity of its own. |
+| `overrides` | `{}` | Any part of the resolved profile, replaced. Use it for the one thing your site does differently, not to restate a whole profile. |
+
+This block has **no `zer0Cms.*` twin**, on purpose. What a site *is* belongs to the site, not to whoever opened it: two people with the same repository must not disagree about whether it is a Hugo site. Everything else in this file follows the same rule (§6).
+
+**Detection** reads marker files, in the order jekyll → mkdocs → hugo → docusaurus → astro → wikijs — `_config.yml` or `_config.yaml` for Jekyll (`Gemfile`, `_layouts/`, `_includes/`, `_posts/` and `pages/` are recorded as evidence, never required), `mkdocs.yml` or `mkdocs.yaml`, `hugo.{toml,yaml,yml,json}`, `config/_default/hugo.toml` or `config.toml` for Hugo, `docusaurus.config.{js,ts,mjs}`, `astro.config.{mjs,ts,js}` or an Astro content config, and a compose file naming `requarks/wiki` for Wiki.js — and records what it found, so "why does it think this is Hugo?" has an answer you can read rather than guess at. An explicit `id` always wins over a probe, and a probe always wins over the generic fallback.
+
+**zer0-mistakes is an overlay on Jekyll, never a sibling.** A site with `remote_theme: bamr87/zer0-mistakes` is a Jekyll site that additionally follows that theme's conventions; modelling it as its own platform would mean every rule Jekyll already has had to be restated to stay true, and one of the copies would eventually not be.
+
+**A site with no `zer0.json` at all is a normal state.** With none, the profile supplies the content roots from the site's own configuration — `collections_dir` for Jekyll, `docs_dir` for MkDocs — so a sister repository works with nothing added to it. Registering folders explicitly is how you narrow that, not how you enable it.
+
+**What the profile does not do:** it never runs anything. `commands.serve` and `commands.build` are argument lists the editor hands to a VS Code task when a person asks for a preview; nothing in the core spawns a process, and in an untrusted workspace nothing spawns at all (§3.16 and decision D13).
 
 ---
 
@@ -672,7 +700,7 @@ Most are `resource`-scoped, so a multi-root workspace can answer them per folder
 | `zer0Cms.governance.acceptStatuses` | `["pending", "approved"]` | Draft statuses the publish path accepts. Restrict to `["approved"]` to require the in-editor approval step. |
 | `zer0Cms.governance.publishAllow` | `false` | Master switch. While off, publishing is blocked in the panel, the dashboard, the command palette **and** the bundled MCP server. Arming the MCP server reads *this setting only* — `zer0.json` can enable publishing for the editor's own gates but never for an agent. |
 | `zer0Cms.governance.bannedPatternsFile` | `""` | Optional workspace-relative JSON file of extra brand-guard patterns. |
-| `zer0Cms.governance.target` | `"jekyll"` | Publish target that turns an approved draft into published content. |
+| `zer0Cms.governance.target` | `""` | Publish target that turns an approved draft into published content. Empty means: follow the platform this repository was detected as (§3.21). Name one only to override that, or to select a target you registered yourself. |
 
 ### Content engine
 
@@ -691,17 +719,17 @@ Most are `resource`-scoped, so a multi-root workspace can answer them per folder
 | Setting | Default | What it does |
 |---|---|---|
 | `zer0Cms.agent.enabled` | `false` | Enable the optional AI agent. Requires the `@anthropic-ai/claude-agent-sdk` optional dependency and a Claude credential. |
-| `zer0Cms.agent.model` | `"claude-opus-5"` | Model the agent runs on. |
+| `zer0Cms.agent.model` | `""` | Model the agent runs on. Empty inherits the repository's own AI configuration, so an editor run and the same role in CI agree. |
 | `zer0Cms.agent.maxTurns` | `40` | Maximum agent turns per run (minimum 1). |
-| `zer0Cms.agent.permissionMode` | `"default"` | `default`, `acceptEdits` or `plan`. `default` routes every mutating tool through an approve/deny gate. |
+| `zer0Cms.agent.permissionMode` | `"default"` | `default` or `plan`. `default` routes every mutating tool through an approve/deny gate. |
 
 ### Fleet
 
 | Setting | Default | What it does |
 |---|---|---|
-| `zer0Cms.fleet.enabled` | `false` | Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml`. Read-only until `dispatchAllow` is also set. |
+| `zer0Cms.fleet.enabled` | `false` | Enable the Fleet console: the Fleet, Workflows and Monitor tabs and the `fleet.*`, `workflows.open`, `lane.scaffold` and `monitor.open` commands, over this repository's `fleet.manifest.yml` and any roster you add. Read-only until `dispatchAllow` (the run verbs) or `scaffoldAllow` (writing a lane) is also set. |
 | `zer0Cms.fleet.manifestPath` | `"fleet.manifest.yml"` | Workspace-relative path of the fleet manifest. |
-| `zer0Cms.fleet.dispatchAllow` | `false` | Master switch for flipping a lane's `*_ENABLED` variable and dispatching a lane. Read from **your settings only** — a `zer0.json` cannot arm it (§3.20). Every action still asks for confirmation. |
+| `zer0Cms.fleet.dispatchAllow` | `false` | Master switch for the five privileged run verbs — flipping a lane's `*_ENABLED` variable, dispatching it, re-running its last failure, cancelling a run, and enabling or disabling its workflow file. Read from **your settings only** — a `zer0.json` cannot arm it (§3.20). Every action still asks for confirmation. |
 | `zer0Cms.fleet.scaffoldAllow` | `false` | Master switch for writing a new lane's files into the open repository. Settings-only, like `dispatchAllow`, and deliberately absent from the schema so a cloned `zer0.json` cannot arm it. Scaffolding writes local files for a person to commit; it never creates the lane's `*_ENABLED` variable in the same action, and never pushes. |
 | `zer0Cms.fleet.roster` | `[]` | Other repositories to show beside this one, as `owner/name`. Enrolment is consent, so the list is read from your settings; the console also finds any sibling folder in the workspace that carries a manifest. |
 | `zer0Cms.fleet.hub` | `"bamr87/bamr87"` | The fleet's hub repository, read only when you ask for it, for the shared registry and the harness scorecard. |
@@ -728,15 +756,15 @@ Nothing else is writable from a webview. The message posts a key and a value, an
 
 Ask who else needs the answer.
 
-**Put it in `zer0.json` when it describes the project.** Content folders, content types and their fields, field groups, taxonomy, the draft field, the front-matter dialect, the slug template, SEO thresholds and placeholders have no settings twin at all — they are the same for every person who clones the repo, they belong in review, and they are the half that other tools read. The bundled MCP server resolves its configuration from `zer0.json` and the defaults **only** — no VS Code setting reaches it, bar the publish flag it is handed as an environment variable (below) — so anything a model, a CI lane or a `node dist/mcp-server.js` needs has to be in the file.
+**Put it in `zer0.json` when it describes the project.** Content folders, content types and their fields, field groups, taxonomy, the draft field, the front-matter dialect, the slug template, SEO thresholds and placeholders have no settings twin at all — they are the same for every person who clones the repo, they belong in review, and they are the half that other tools read. The bundled MCP server resolves its configuration from `zer0.json` and the defaults **only** — no VS Code setting reaches it except through the five environment variables the editor injects when the server starts: `ZER0_CMS_CONFIG` (`zer0Cms.configFile`), `ZER0_CMS_MCP_ALLOW_PUBLISH` (`governance.publishAllow`, settings layer), `ZER0_CMS_MCP_ALLOW_EXEC` (Workspace Trust), `ZER0_CMS_MCP_ALLOW_SCAFFOLD` (`fleet.scaffoldAllow` with `fleet.enabled`, settings layer, trusted) and `ZER0_CMS_PYTHON` (`cms.pythonPath`, settings layer), described below — so anything a model, a CI lane or a `node dist/mcp-server.js` needs has to be in the file.
 
 **Put it in VS Code settings when it describes you or your machine.** `cms.pythonPath` is the clearest case — your interpreter is not your team's. So are `panel.openOnSupportedFile`, `dashboard.pageSize`, `logging.level`, and anything you want to try without dirtying the working tree.
 
 **Put it in *both* when you want a project default a person can override.** This is what the layering is for: `zer0.json` sets `"governance": {"acceptStatuses": ["approved"]}` as the project's stance, and someone working through a backlog locally can relax it in their own settings without committing anything. It works in the other direction too — a project can ship `"dashboard": {"defaultView": "structure"}` and anyone who prefers the grid overrides it for themselves.
 
-**Three keys are settings-only.** `zer0Cms.configFile` names the file, so it cannot live in it. `logging.level` is read straight from the settings by the output channel (§3.19). `zer0Cms.fleet.dispatchAllow` is settings-only by design, not by accident: it arms a write to another system, so it is read from the layer a repository cannot ship (§3.20).
+**Four keys are settings-only.** `zer0Cms.configFile` names the file, so it cannot live in it. `logging.level` is read straight from the settings by the output channel (§3.19). `zer0Cms.fleet.dispatchAllow` and `zer0Cms.fleet.scaffoldAllow` are settings-only by design, not by accident: each arms a write — to another system, or into the repository — so each is read from the layer a repository cannot ship (§3.20).
 
-**Two things belong in neither.** The MCP server's publish gate is an environment variable, `ZER0_CMS_MCP_ALLOW_PUBLISH=1`, plus `confirm: true` on the call. Inside that process the resolved `governance.publishAllow` is pinned to the variable, whatever `zer0.json` says — so a config file claiming `true` cannot let a hand-run server publish, and the core gate and the MCP gate cannot disagree. When VS Code launches the server it passes the flag exactly when `governance.enabled` is on (that one is read from the merged configuration, because a `zer0.json` turning governance *off* is a restriction and honouring a restriction from the project file is always safe) **and** `zer0Cms.governance.publishAllow` is set to `true` in the **settings** layer — user, workspace or folder scope. A `zer0.json` cannot arm it. That is the one place where the file layer deliberately loses: past this variable, `zer0_publish`'s only other gate is `confirm: true`, which a model supplies to itself, so a repository that ships `{"governance":{"publishAllow":true}}` would otherwise be enough to publish with no human act in the chain. The in-editor gates keep reading the merged value; they are behind a modal. The flag is re-resolved every time the server starts. `ZER0_CMS_CONFIG` names the config file for that process, the way `zer0Cms.configFile` does for the editor. And the Claude credential the optional agent needs lives in VS Code's secret storage — never in a setting, never in `zer0.json`.
+**Two things belong in neither.** The MCP server's publish gate is an environment variable, `ZER0_CMS_MCP_ALLOW_PUBLISH=1`, plus `confirm: true` on the call. Inside that process the resolved `governance.publishAllow` is pinned to the variable, whatever `zer0.json` says — so a config file claiming `true` cannot let a hand-run server publish, and the core gate and the MCP gate cannot disagree. When VS Code launches the server it passes the flag exactly when `governance.enabled` is on (that one is read from the merged configuration, because a `zer0.json` turning governance *off* is a restriction and honouring a restriction from the project file is always safe) **and** `zer0Cms.governance.publishAllow` is set to `true` in the **settings** layer — user, workspace or folder scope. A `zer0.json` cannot arm it. That is the one place where the file layer deliberately loses: past this variable, `zer0_publish`'s only other gate is `confirm: true`, which a model supplies to itself, so a repository that ships `{"governance":{"publishAllow":true}}` would otherwise be enough to publish with no human act in the chain. The in-editor gates keep reading the merged value; they are behind a modal. The flag is re-resolved every time the server starts. `ZER0_CMS_CONFIG` names the config file for that process, the way `zer0Cms.configFile` does for the editor. The other three variables follow the same discipline. `ZER0_CMS_MCP_ALLOW_EXEC` carries Workspace Trust across the process boundary: it is `'1'` only in a trusted workspace, so `zer0_contract` cannot spawn the repository's engine otherwise. `ZER0_CMS_MCP_ALLOW_SCAFFOLD` arms `zer0_lane_scaffold` only from the settings-layer `zer0Cms.fleet.scaffoldAllow`, with `zer0Cms.fleet.enabled` on, in a trusted workspace. `ZER0_CMS_PYTHON` passes the settings-layer `zer0Cms.cms.pythonPath`. The three `ALLOW` flags are set to `null` — removed from the child's environment — whenever they do not apply. And the Claude credential the optional agent needs lives in VS Code's secret storage — never in a setting, never in `zer0.json`.
 
 ---
 

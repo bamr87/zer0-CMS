@@ -68,9 +68,18 @@ function fieldEntries(entry: Record<string, unknown>): unknown[] {
   return Array.isArray(entry.fields) ? [...entry.fields] : [];
 }
 
-/** Make sure there is a project config to write types into. */
-async function ensureProjectConfig(): Promise<boolean> {
-  if (hasProjectConfig()) {
+/**
+ * Make sure there is a project config to write types into — **the one belonging
+ * to the file being edited**.
+ *
+ * A content type is a statement about a repository's own schema, so it belongs
+ * in that repository's `zer0.json`. In a multi-root window the file in the
+ * editor and the active site are routinely different folders, and writing the
+ * type into the active site's config would leave the file it was generated from
+ * still unschema'd — with a type nothing in that repository refers to.
+ */
+async function ensureProjectConfig(scope: vscode.Uri): Promise<boolean> {
+  if (hasProjectConfig(scope)) {
     return true;
   }
   const answer = await notifyWarning(
@@ -82,13 +91,13 @@ async function ensureProjectConfig(): Promise<boolean> {
   }
   await updateConfigFileJson((json) => {
     Object.assign(json, starterConfig());
-  });
+  }, scope);
   return true;
 }
 
-/** Open `zer0.json` so the author reviews what was just written. */
-async function revealProjectConfig(): Promise<void> {
-  const target = configFilePath();
+/** Open the site's `zer0.json` so the author reviews what was just written. */
+async function revealProjectConfig(scope: vscode.Uri): Promise<void> {
+  const target = configFilePath(scope);
   if (target !== undefined) {
     await openInEditor(target);
   }
@@ -117,7 +126,7 @@ export function registerContentTypeCommands(shell: Zer0Shell): void {
       await notifyWarning('this file has no front matter to infer a content type from.');
       return;
     }
-    if (!(await ensureProjectConfig())) {
+    if (!(await ensureProjectConfig(vscode.Uri.file(filePath)))) {
       return;
     }
 
@@ -149,7 +158,7 @@ export function registerContentTypeCommands(shell: Zer0Shell): void {
         entries.push({ ...generated });
       }
       json.contentTypes = entries;
-    });
+    }, vscode.Uri.file(filePath));
 
     shell.log.info(
       `${replaced ? 'replaced' : 'generated'} content type "${generated.name}" ` +
@@ -159,7 +168,7 @@ export function registerContentTypeCommands(shell: Zer0Shell): void {
       `${replaced ? 'replaced' : 'added'} content type "${generated.name}" with ` +
         `${generated.fields.length} field(s). Review it before relying on it.`,
     );
-    await revealProjectConfig();
+    await revealProjectConfig(vscode.Uri.file(filePath));
     await shell.store.refresh();
   });
 
@@ -176,7 +185,7 @@ export function registerContentTypeCommands(shell: Zer0Shell): void {
       await notifyInfo(`"${contentType.name}" already declares every key in this file.`);
       return;
     }
-    if (!(await ensureProjectConfig())) {
+    if (!(await ensureProjectConfig(vscode.Uri.file(filePath)))) {
       return;
     }
 
@@ -195,7 +204,7 @@ export function registerContentTypeCommands(shell: Zer0Shell): void {
         }
       }
       json.contentTypes = entries;
-    });
+    }, vscode.Uri.file(filePath));
 
     shell.log.info(
       `added ${missing.length} field(s) to "${contentType.name}" from ${relPath(cfg, filePath)}: ` +
@@ -205,7 +214,7 @@ export function registerContentTypeCommands(shell: Zer0Shell): void {
       `added ${missing.length} field(s) to "${contentType.name}": ` +
         missing.map((field) => field.name).join(', '),
     );
-    await revealProjectConfig();
+    await revealProjectConfig(vscode.Uri.file(filePath));
     await shell.store.refresh();
   });
 

@@ -488,10 +488,15 @@ export interface DashboardTab {
  * The ids are a subset of `DASHBOARD_ROUTES`, in the same relative order.
  */
 export const DASHBOARD_TABS: readonly DashboardTab[] = [
+  { id: 'sites', label: 'Sites', icon: 'book' },
   { id: 'contents', label: 'Contents', icon: 'files' },
   { id: 'drafts', label: 'Drafts', icon: 'checklist' },
+  { id: 'audit', label: 'Audit', icon: 'report' },
   { id: 'catering', label: 'Distribution', icon: 'graph' },
   { id: 'fleet', label: 'Fleet', icon: 'server-process' },
+  { id: 'harness', label: 'Harness', icon: 'circuit-board' },
+  { id: 'workflows', label: 'Workflows', icon: 'run-all' },
+  { id: 'monitor', label: 'Monitor', icon: 'dashboard' },
   { id: 'settings', label: 'Settings', icon: 'settings-gear' },
   { id: 'welcome', label: 'Welcome', icon: 'rocket' },
 ];
@@ -693,6 +698,17 @@ export interface FleetLaneView {
   pulls?: number[];
   /** The workflow file's own enablement — `active`, `disabled_manually`, … */
   enabledState?: string;
+  /**
+   * The three run verbs' blockers, computed host-side like the other two.
+   *
+   * A webview may disable more than the host would, never less — but deriving
+   * these here would mean the tab guessing at a rule the gate owns, and the
+   * two drifting is exactly what decision D5 exists to prevent.
+   */
+  rerunBlockers?: BlockerView[];
+  cancelBlockers?: BlockerView[];
+  toggleWorkflowBlockers?: BlockerView[];
+
 }
 
 /** A pull request as the read-only strip draws it. Never a merge verb. */
@@ -740,6 +756,16 @@ export interface FleetState {
   grade?: string | null;
   /** Where the manifest and the workflows disagree. */
   drift?: ManifestDriftView[];
+  /**
+   * `false` when the last read could not list the runs (403/404): every
+   * `lastRun: null` is then unread rather than "no run on record".
+   */
+  runsReadable?: boolean;
+  /**
+   * `false` when the last read could not list the registered workflows: an
+   * absent `enabledState` is then unread rather than "not registered".
+   */
+  workflowsReadable?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -819,6 +845,11 @@ export interface MonitorRepoView {
   source: string;
   localRoot: string | null;
   fetchedAt: string | null;
+  /**
+   * `true` only when a read happened AND its run page came back. With `false`
+   * a `lastRun: null` is unread, never "no run on record".
+   */
+  runsReadable: boolean;
   note: string | null;
   grade: string | null;
   mergePolicy: Record<string, string> | null;

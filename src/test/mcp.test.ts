@@ -48,6 +48,10 @@ const EXPECTED_TOOLS = [
   'zer0_media',
   'zer0_contract',
   'zer0_fleet_status',
+  'zer0_audit',
+  'zer0_harness_inventory',
+  'zer0_lane_preview',
+  'zer0_lane_scaffold',
 ];
 
 // ---------------------------------------------------------------------------
@@ -299,7 +303,7 @@ suite('mcp: a scripted stdio session against the shipped server', function () {
     }
   });
 
-  test('tools/list reports exactly the twelve tools, in order', () => {
+  test('tools/list reports exactly the sixteen tools, in order', () => {
     const tools = byId(session, 2)?.result?.tools ?? [];
     assert.deepStrictEqual(
       tools.map((tool) => tool.name),

@@ -36,8 +36,7 @@ tokens:
 - name: CLAUDE_CODE_OAUTH_TOKEN
   scope: fleet
   required: true
-  purpose: 'Preferred Claude auth (house convention: OAuth first). Produced by 
-`claude setup-token`.'
+  purpose: 'Preferred Claude auth (house convention: OAuth first). Produced by `claude setup-token`.'
   used_by:
   - claude
 

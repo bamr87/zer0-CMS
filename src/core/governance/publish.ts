@@ -27,26 +27,28 @@
  * Decision D8: `PublishTarget` is an interface. The built-in target is
  * `jekyll` — an approved draft becomes a file in a registered content folder
  * plus a ledger record. Nothing in this module knows about any social network.
+ *
+ * Decision D12 adds the second resolution path. `targetFor(cfg, profile)` reads
+ * an explicit `governance.target` from the registry (and still throws for a
+ * typo), then a registered target named by `profile.governanceTarget`, and
+ * failing both it *builds* one from the profile — see `fileTarget.ts`. A site
+ * the extension detected as MkDocs or Hugo therefore resolves a working target
+ * without anybody registering one: **nothing throws for a platform we detected
+ * ourselves.**
  */
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { readArticle, type Article } from '../content/article';
-import {
-  asBool,
-  asString,
-  splitFrontMatter,
-  type FmValue,
-  type FrontMatter,
-} from '../content/frontmatter';
+import { asBool, asString, type FmValue, type FrontMatter } from '../content/frontmatter';
 import { serializeFrontMatter, serializeOptions, stitch } from '../content/serialize';
 import { createSlug } from '../content/slug';
 import { absPath, relPath, requireContentFolders, requireLedgerPath } from '../shared/config';
 import { formatDate, parseDate } from '../shared/dates';
 import { toPosix, walkGlobs } from '../shared/glob';
 import { slugify, transliterate, truncate } from '../shared/text';
-import type { ContentFolder, PageEntry, Zer0Config } from '../shared/types';
+import type { ContentFolder, PageEntry, PlatformProfile, Zer0Config } from '../shared/types';
 import { evaluatePublishGates } from './approval';
 import {
   commentaryOf,
@@ -58,6 +60,12 @@ import {
   titleOf,
   type DraftFile,
 } from './drafts';
+import {
+  datePrefixRuleFor,
+  platformFileTarget,
+  targetIdFor,
+  writeArtifactExclusively,
+} from './fileTarget';
 import { guardText, workspacePatterns, type GuardFinding } from './guard';
 import { getEntry, record } from './ledger';
 
@@ -411,13 +419,32 @@ export function destinationFolder(cfg: Zer0Config, hint?: string): ContentFolder
  * When nothing is configured, a Jekyll `_posts` folder still gets a date —
  * Jekyll refuses to build a post without one, and silently writing a file the
  * site will not publish is the worst of the available failures.
+ *
+ * With a platform profile in hand the *platform* has the last word, because the
+ * filename is part of the URL on most generators that are not Jekyll: a content
+ * root that declares `datePrefix: 'forbidden'` gets no prefix however the
+ * configuration is written, and one that declares `'required'` gets a date even
+ * when nothing configured one. `'optional'` — and no matching root at all —
+ * leaves the configured answer alone.
  */
-function filePrefixFor(cfg: Zer0Config, folder: ContentFolder, now: Date): string {
+function filePrefixFor(
+  cfg: Zer0Config,
+  folder: ContentFolder,
+  now: Date,
+  profile?: PlatformProfile,
+): string {
+  const rule =
+    profile === undefined
+      ? 'optional'
+      : datePrefixRuleFor(cfg, profile, toPosix(relPath(cfg, folder.path)));
+  if (rule === 'forbidden') {
+    return '';
+  }
   const raw = (folder.filePrefix ?? cfg.content.filePrefix ?? '').trim();
   const wrapped = /^\{\{\s*date\s*\|\s*([^}]+?)\s*\}\}$/.exec(raw);
   const pattern = wrapped?.[1] ?? raw;
   if (pattern === '') {
-    return path.basename(folder.path) === '_posts'
+    return path.basename(folder.path) === '_posts' || rule === 'required'
       ? formatDate(now, 'yyyy-MM-dd', cfg.date.timezone)
       : '';
   }
@@ -429,8 +456,9 @@ function planDestination(
   folder: ContentFolder,
   slug: string,
   now: Date,
+  profile?: PlatformProfile,
 ): string {
-  const prefix = filePrefixFor(cfg, folder, now);
+  const prefix = filePrefixFor(cfg, folder, now, profile);
   const name = `${prefix === '' ? '' : `${prefix}-`}${slug}.${cfg.content.defaultFileType}`;
   return toPosix(path.join(relPath(cfg, folder.path), name));
 }
@@ -455,12 +483,21 @@ function titleFromMessage(message: string): string {
  * The artifact is produced by the *configured* target's `build`, so a preview
  * screen and the MCP `zer0_preview` tool show the literal bytes a publish
  * would write — not a summary that can drift from them.
+ *
+ * `profile` is optional and only ever narrows: it chooses the target through
+ * `targetFor` and lets the platform overrule a filename date prefix the site's
+ * generator would serve as part of the URL. Omitting it is the pre-platform
+ * behaviour exactly.
  */
-export async function buildPreview(cfg: Zer0Config, req: PreviewRequest): Promise<Preview> {
+export async function buildPreview(
+  cfg: Zer0Config,
+  req: PreviewRequest,
+  profile?: PlatformProfile,
+): Promise<Preview> {
   const kind = (req.type ?? 'article').trim().toLowerCase();
   const patterns = await workspacePatterns(cfg);
   const now = new Date();
-  const target = targetFor(cfg);
+  const target = targetFor(cfg, profile);
   const sourceFile = req.sourceFile ? toPosix(relPath(cfg, req.sourceFile)) : undefined;
 
   if (kind === 'text' || kind === 'update') {
@@ -485,7 +522,7 @@ export async function buildPreview(cfg: Zer0Config, req: PreviewRequest): Promis
         link: (req.link ?? '').trim(),
         image: '',
         folder: folder.path,
-        destination: planDestination(cfg, folder, slug, now),
+        destination: planDestination(cfg, folder, slug, now, profile),
       },
       ...(sourceFile ? { sourceFile } : {}),
     };
@@ -519,7 +556,7 @@ export async function buildPreview(cfg: Zer0Config, req: PreviewRequest): Promis
 
   const slug = slugFor(cfg, req.slug, title, now, source?.relPath);
   const folder = destinationFolder(cfg, req.folder);
-  const destination = planDestination(cfg, folder, slug, now);
+  const destination = planDestination(cfg, folder, slug, now, profile);
 
   const preview: Preview = {
     kind: 'article',
@@ -623,60 +660,14 @@ function requirePlan(preview: Preview): PublishPlan {
   return preview.plan;
 }
 
-function errnoCode(error: unknown): string | undefined {
-  if (typeof error === 'object' && error !== null && 'code' in error) {
-    const code = (error as { code?: unknown }).code;
-    return typeof code === 'string' ? code : undefined;
-  }
-  return undefined;
-}
-
-/**
- * Everything in an artifact except the moment it was built.
- *
- * `build` stamps `date` from `new Date()`, so the same publish retried a minute
- * later produces different bytes for identical content. Every other key, and
- * the body, are functions of the draft alone — which is what makes this a
- * usable answer to "did I already write this exact page?".
- */
-/** Whether the file already at `rel` is the artifact we were about to write. */
-async function sameArtifactOnDisk(
-  cfg: Zer0Config,
-  rel: string,
-  identity: string,
-): Promise<boolean> {
-  try {
-    return artifactIdentity(await fs.readFile(absPath(cfg, rel), 'utf8')) === identity;
-  } catch {
-    // The name is taken by something we cannot read — a directory, or a file
-    // whose permissions say no. "Not ours" is the safe answer: the caller bumps
-    // to the next name instead of assuming a match it could not verify.
-    return false;
-  }
-}
-
-function artifactIdentity(text: string): string {
-  const { block, body } = splitFrontMatter(text);
-  const keys = Object.entries(block?.data ?? {})
-    .filter(([key]) => key !== 'date')
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return JSON.stringify([keys, body.trim()]);
-}
-
 /**
  * The built-in target: an approved draft becomes a content file plus a ledger
- * record. `build` renders the bytes; `send` writes them **exclusively** —
- * `wx` fails rather than overwriting, and the destination bumps to `-2`, `-3`
- * on collision. Publishing must never silently replace somebody's page.
- *
- * **The `-2` bump is for a different page that wants the same name, and only
- * that.** Writing the file and recording the ledger entry are two steps, and a
- * crash — or a read-only `.zer0/` — between them leaves an artifact on disk
- * that no ledger key mentions. The next attempt passes every gate, reaches
- * `wx`, gets `EEXIST` and used to bump: two live pages for one canonical URL,
- * with the ledger naming the `-2` file under the URL the `-1` file is served
- * at. So an existing file whose content is this artifact's is *adopted* — the
- * publish is completed by recording it, not duplicated.
+ * record. `build` renders the bytes; `send` hands them to
+ * `writeArtifactExclusively`, which writes with the `wx` flag, bumps to `-2`,
+ * `-3` on a genuine collision and *adopts* a file whose content is already this
+ * artifact's (an interrupted publish). That function is shared with every
+ * platform target so the semantics cannot drift apart; its docblock in
+ * `fileTarget.ts` is where the reasoning lives.
  */
 export const jekyllTarget: PublishTarget = {
   id: 'jekyll',
@@ -722,45 +713,10 @@ export const jekyllTarget: PublishTarget = {
       ? preview.artifact
       : ((await jekyllTarget.build(cfg, preview)) as JekyllArtifact);
 
-    const intended = artifact.path;
-    const dir = path.dirname(absPath(cfg, intended));
-    await fs.mkdir(dir, { recursive: true });
-
-    const ext = path.extname(intended);
-    const stem = intended.slice(0, intended.length - ext.length);
-    const warnings: string[] = [];
-    const identity = artifactIdentity(artifact.contents);
-
-    for (let n = 1; ; n += 1) {
-      const rel = n === 1 ? intended : `${stem}-${n}${ext}`;
-      try {
-        // `wx`: create or fail. Never overwrite an existing page.
-        await fs.writeFile(absPath(cfg, rel), artifact.contents, { encoding: 'utf8', flag: 'wx' });
-        if (rel !== intended) {
-          warnings.push(`warning: ${intended} already existed; wrote ${rel} instead`);
-        }
-        deps.log?.(`published ${rel}`);
-        return { urn: `jekyll:${rel}`, warnings };
-      } catch (error) {
-        if (errnoCode(error) !== 'EEXIST') {
-          throw error;
-        }
-        if (await sameArtifactOnDisk(cfg, rel, identity)) {
-          // An earlier attempt wrote this exact page and did not get as far as
-          // the ledger. Adopt it and let the caller record it, rather than
-          // shipping a second copy of the same canonical URL.
-          warnings.push(
-            `warning: ${rel} was already on disk with this exact content but had no ledger ` +
-              'record — an interrupted publish. Recording it instead of writing a second copy.',
-          );
-          deps.log?.(`adopted the existing ${rel}`);
-          return { urn: `jekyll:${rel}`, warnings };
-        }
-        if (n > 50) {
-          throw new Error(`cannot find a free filename for ${intended}`);
-        }
-      }
-    }
+    // The `wx` write, the `-2` chain and the adopt-on-identical rule live in
+    // `fileTarget.ts` and are shared with every platform target. One copy is
+    // the only way "the same semantics" stays true of both.
+    return writeArtifactExclusively(cfg, jekyllTarget.id, artifact.path, artifact.contents, deps);
   },
 };
 
@@ -783,9 +739,57 @@ export function targetById(id: string): PublishTarget {
   return target;
 }
 
-/** The target this workspace is configured to use. */
-export function targetFor(cfg: Zer0Config): PublishTarget {
-  return targetById(cfg.governance.target || jekyllTarget.id);
+/**
+ * The configured target, or `''` when the config is merely carrying its default.
+ *
+ * `resolveConfig` defaults `governance.target` to `'jekyll'`, so a site that
+ * never mentioned a target is byte-identical to one that wrote
+ * `"target": "jekyll"`. Reading the default as an override would pin every
+ * MkDocs and Hugo workspace to the Jekyll target — the platform would be
+ * detected and then ignored. So the default is discarded **only** when a profile
+ * that is not Jekyll's is on the table; everywhere else the value is passed to
+ * `targetById` exactly as before, typos included. When the default becomes `''`
+ * this whole special case evaporates on its own.
+ */
+/**
+ * What a person actually asked for, or `''` when nobody asked.
+ *
+ * This used to have to guess. `governance.target` defaulted to `'jekyll'` in
+ * the resolver, so "never mentioned a target" and "wrote `jekyll`" produced the
+ * same value, and reading it as an override would have pinned every MkDocs and
+ * Hugo workspace to the Jekyll target — silently defeating the detection this
+ * release exists to add. The resolver's default is `''` now, so the question
+ * answers itself and the guess is gone.
+ */
+function configuredTarget(cfg: Zer0Config): string {
+  return (cfg.governance.target ?? '').trim();
+}
+
+/**
+ * The target this workspace publishes through, in three steps.
+ *
+ *   1. An **explicit** `cfg.governance.target` goes through `targetById` and
+ *      still throws for a typo. That is a person's mistake in their own config
+ *      and they should hear about it.
+ *   2. Otherwise a registered target whose id matches `profile.governanceTarget`
+ *      — which is how Jekyll (and its zer0-mistakes overlay) keeps resolving to
+ *      exactly the `jekyllTarget` object it always did, and how a
+ *      `registerTarget` call takes precedence over the generic file target.
+ *   3. Otherwise `platformFileTarget(profile)`, built on the fly.
+ *
+ * Step 3 is the point: **nothing throws for a platform the extension itself
+ * detected.** Without a profile the answer is Jekyll, unchanged.
+ */
+export function targetFor(cfg: Zer0Config, profile?: PlatformProfile): PublishTarget {
+  const explicit = configuredTarget(cfg);
+  if (explicit !== '') {
+    return targetById(explicit);
+  }
+  if (profile === undefined) {
+    return jekyllTarget;
+  }
+  const registered = TARGETS.get(targetIdFor(profile));
+  return registered ?? platformFileTarget(profile);
 }
 
 // ---------------------------------------------------------------------------

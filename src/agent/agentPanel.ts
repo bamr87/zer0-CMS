@@ -47,9 +47,18 @@ import { randomBytes } from 'node:crypto';
 
 import * as vscode from 'vscode';
 
-import { setAgentHost } from '../commands/agent';
-import { currentConfig, workspaceRoot, workspaceTrusted } from '../config';
-import { utcStamp } from '../core';
+import {
+  agentMcpServer,
+  hasProjectAgentSettings,
+  readRepoSlug,
+  resolveProfileFor,
+  setAgentHost,
+  type AgentStartOptions,
+} from '../commands/agent';
+import { configFileName, currentConfig, workspaceRoot, workspaceTrusted } from '../config';
+import { utcStamp, type HarnessProfile } from '../core';
+// Module path rather than `../core` until WP3.0's harness barrel lines land.
+import { defaultUsageLedgerPath } from '../core/harness/metering';
 import type { Zer0Shell } from '../extension';
 import { describeError, log } from '../logger';
 import type {
@@ -96,6 +105,15 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
   private approval: ApprovalCard | null = null;
   private status = 'idle';
   private notice: string | null = null;
+
+  /**
+   * The harness as last resolved — the model, the role and the layer that
+   * answered. Refreshed when the panel opens and again before every run, never
+   * cached across one: `_data/ai.yml` is a file in the repository the person is
+   * editing, and a status line that quotes a stale copy of it is worse than one
+   * that admits it does not know yet.
+   */
+  private profile: HarnessProfile | undefined;
 
   /** Pending `requestApproval` promises, keyed by card id. */
   private readonly pending = new Map<string, (approved: boolean) => void>();
@@ -165,6 +183,11 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
     this.panel = panel;
     panel.webview.html = agentHtml(panel.webview, extensionUri);
 
+    // Resolving the harness reads a handful of files (the repository's agents,
+    // its skills, its `_data/ai.yml`). It happens when a person opens this
+    // panel — never at activation, and never on a timer.
+    void this.refreshProfile(null, false);
+
     this.disposables.push(
       panel.webview.onDidReceiveMessage((message: unknown) => {
         this.receive(message);
@@ -180,8 +203,13 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
    * Start a run. Configuration is read fresh here — not cached at construction
    * — so toggling `zer0Cms.agent.enabled` or changing the model takes effect on
    * the next run without a reload, and the webview cannot supply either value.
+   *
+   * `options.role` and `options.loadProjectSettings` are the two things a *run*
+   * may differ by, and both are re-checked here: the composer in this panel
+   * reaches `start()` without passing through a command at all, so the second
+   * one is asked again, modally, before any settings file is read.
    */
-  async start(prompt: string): Promise<void> {
+  async start(prompt: string, options: AgentStartOptions = {}): Promise<void> {
     const text = prompt.trim();
     this.open();
 
@@ -218,12 +246,44 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
       return;
     }
 
+    // The repository's `.claude/settings.json` can name hooks, and a hook is a
+    // command line that runs under this person's own credential. So the opt-in
+    // is asked for again here, modally, naming what it means — and a workspace
+    // that is not trusted never reaches this line at all.
+    let loadProjectSettings = false;
+    if (options.loadProjectSettings === true && (await hasProjectAgentSettings(root))) {
+      const answer = await vscode.window.showWarningMessage(
+        'Load this repository’s .claude/settings.json for this run?',
+        {
+          modal: true,
+          detail:
+            'Its hooks and permission rules would apply to a run using your own credential. ' +
+            'A hook is a command line the repository supplies. This applies to this run only.',
+        },
+        'Load it for this run',
+      );
+      loadProjectSettings = answer === 'Load it for this run';
+      if (!loadProjectSettings) {
+        // Not a transcript line: `run()` clears the transcript a moment later,
+        // and the run's own opening status line already ends with "no settings
+        // files", which says the same thing where it will still be visible.
+        log.info('agent: the per-run settings-file opt-in was declined');
+      }
+    }
+
     // Read fresh, here, on every start: this is the authoritative copy of the
-    // enabled flag, the model and the turn limit (D5).
+    // enabled flag, the model and the turn limit (D5). The harness is resolved
+    // the same way — from the repository's own agents and `_data/ai.yml`, not
+    // from a value the webview supplied.
     const cfg = currentConfig();
+    const profile = await this.refreshProfile(options.role ?? null, loadProjectSettings);
     this.notice = null;
     this.appendEntry('user', text);
-    this.agent = new CmsAgent(root, this, cfg.agent);
+    this.agent = new CmsAgent(root, this, cfg.agent, {
+      profile,
+      repo: await readRepoSlug(root),
+      usageLedgerPath: defaultUsageLedgerPath(this.shell.context.globalStorageUri.fsPath),
+    });
     this.shell.ui.setAgentRunning(true);
     try {
       await this.agent.run(text);
@@ -235,6 +295,29 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
       this.shell.ui.setAgentRunning(false);
       this.post();
     }
+  }
+
+  /**
+   * Resolve the harness for the active site and remember it for the status
+   * line. The MCP server is attached here and nowhere else: `strictMcpConfig`
+   * means the servers this profile names are the only ones a run gets, so a
+   * `.mcp.json` arriving with a cloned repository cannot add one.
+   */
+  private async refreshProfile(
+    role: string | null,
+    loadProjectSettings: boolean,
+  ): Promise<HarnessProfile> {
+    const root = workspaceRoot();
+    const cfg = currentConfig();
+    const mcpServer = (await agentMcpServer(this.shell, configFileName())) ?? null;
+    const profile = await resolveProfileFor(this.shell, root ?? null, cfg, {
+      role,
+      loadProjectSettings: root === undefined ? false : loadProjectSettings,
+      mcpServer,
+    });
+    this.profile = profile;
+    this.post();
+    return profile;
   }
 
   /** Abort the current run and deny anything it was waiting on. */
@@ -399,7 +482,11 @@ export class AgentPanel implements AgentReporter, vscode.Disposable {
   private state(): AgentState {
     const cfg = currentConfig().agent;
     const available = this.agent?.available ?? true;
-    const model = cfg.model.trim().length > 0 ? cfg.model.trim() : DEFAULT_MODEL;
+    // The resolved profile is the authority. Only before the first resolve does
+    // this fall back to the configured value — and to `DEFAULT_MODEL` only when
+    // nothing configured one, which after the "inherit" default means "nothing
+    // has told us yet", not "this is what will run".
+    const model = this.profile?.model ?? (cfg.model.trim() || DEFAULT_MODEL);
     return {
       kind: 'agent',
       enabled: cfg.enabled,
