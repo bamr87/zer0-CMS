@@ -17,7 +17,8 @@ module AccessGuard
     if password.empty?
       refuse_remote unless LocalNetwork.local_request?(request)
     else
-      user = ENV.fetch("ZER0_CMS_USER", "zer0")
+      # Compose passes an unset variable through as "", which means the default.
+      user = ENV["ZER0_CMS_USER"].presence || "zer0"
       authenticate_or_request_with_http_basic("zer0-CMS") do |given_user, given_password|
         user_ok = ActiveSupport::SecurityUtils.secure_compare(given_user.to_s, user)
         password_ok = ActiveSupport::SecurityUtils.secure_compare(given_password.to_s, password)

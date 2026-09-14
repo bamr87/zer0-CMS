@@ -22,6 +22,15 @@ class SecurityTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "an empty ZER0_CMS_USER (how compose passes an unset one) means the default user" do
+    with_env("ZER0_CMS_PASSWORD" => "s3cret", "ZER0_CMS_USER" => "") do
+      get admin_sites_path, env: credentials("", "s3cret")
+      assert_response :unauthorized
+      get admin_sites_path, env: credentials("zer0", "s3cret")
+      assert_response :success
+    end
+  end
+
   test "without a password, requests from other machines are refused" do
     [admin_sites_path, admin_pages_path, new_abc_book_path, "/files/tmp/x.png"].each do |path|
       get path, env: { "REMOTE_ADDR" => "192.168.1.20" }
