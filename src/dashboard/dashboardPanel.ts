@@ -1383,6 +1383,8 @@ export class DashboardPanel implements vscode.Disposable {
       mergePolicy: current === undefined ? null : mergePolicyView(current.mergePolicy),
       grade: current?.grade ?? null,
       drift: current?.drift ?? [],
+      runsReadable: current?.runsReadable ?? false,
+      workflowsReadable: current?.workflowsReadable ?? false,
     };
   }
 
@@ -1428,8 +1430,10 @@ function liveFor(
   if (current === undefined) {
     return {};
   }
-  const workflow = current.workflows?.get(laneId);
-  const runs = current.runsByLane?.get(laneId) ?? [];
+  // An unreadable list travels as `null`, so the gate refuses with "could not
+  // be read" instead of "has no failed run" / "has no registered workflow".
+  const workflow = current.workflowsReadable ? current.workflows?.get(laneId) : null;
+  const runs = current.runsReadable ? (current.runsByLane?.get(laneId) ?? []) : null;
   return { live: workflow === undefined ? { runs } : { runs, workflow } };
 }
 

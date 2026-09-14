@@ -1015,6 +1015,7 @@ suite('fleet slice 2: the client speaks the whole plan, and nothing else', () =>
       },
     ], 'a run with no id is dropped rather than given a zero to cancel');
     const pulls = await client.openPulls();
+    assert.ok(pulls !== null, 'a 200 is a read');
     assert.equal(pulls.length, 1);
     assert.equal(pulls[0]?.number, 41);
     const file = await client.readFile('_data/ai_usage/summary.yml');
@@ -1031,7 +1032,7 @@ suite('fleet slice 2: the client speaks the whole plan, and nothing else', () =>
     const denied: Call[] = [];
     const blind = clientOver({ [`GET ${R}/actions/variables?per_page=100`]: { status: 403 } }, denied);
     assert.equal(await blind.listVariables(), null);
-    assert.deepEqual(await blind.listWorkflows(), [], 'a repository without Actions has no workflows, which is a real []');
+    assert.equal(await blind.listWorkflows(), null, 'an unanswered list (404 here) is unread too — see the tristate suite below');
     // A contents path that could climb out is refused before a socket opens.
     const climbed: Call[] = [];
     const climber = clientOver({}, climbed);
@@ -1610,5 +1611,112 @@ suite('fleet slice 2: the blocker order slice 2 must append to', () => {
       'switchNameTaken',
       'notExpressible',
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+suite('fleet: an unread list is null, and only a 200 is []', () => {
+  const LISTS = [
+    { member: 'listVariables', path: `GET ${R}/actions/variables?per_page=100`, empty: { total_count: 0, variables: [] } },
+    { member: 'listWorkflows', path: `GET ${R}/actions/workflows?per_page=100`, empty: { total_count: 0, workflows: [] } },
+    { member: 'recentRuns', path: `GET ${R}/actions/runs?per_page=20`, empty: { total_count: 0, workflow_runs: [] } },
+    { member: 'openPulls', path: `GET ${R}/pulls?state=open&per_page=30`, empty: [] },
+  ] as const;
+
+  function clientAnswering(path: string, answer: { status: number; body?: unknown }): FleetClient {
+    return githubFleetClient({
+      repo: 'bamr87/irony-works',
+      fetchImpl: recordingFetch({ [path]: answer }, []),
+      token: async () => 'tok',
+    });
+  }
+
+  function call(client: FleetClient, member: (typeof LISTS)[number]['member']): Promise<unknown[] | null> {
+    return client[member]();
+  }
+
+  test('403 and 404 come back null for every list — nobody could ask', async () => {
+    for (const list of LISTS) {
+      for (const status of [403, 404]) {
+        const answer = await call(clientAnswering(list.path, { status }), list.member);
+        assert.equal(answer, null, `${list.member} on ${status} must be unread, never an empty measurement`);
+      }
+    }
+  });
+
+  test('a 200 that lists nothing is [], not null — a real "there are none"', async () => {
+    for (const list of LISTS) {
+      const answer = await call(clientAnswering(list.path, { status: 200, body: list.empty }), list.member);
+      assert.ok(answer !== null, `${list.member}: a 200 is a read`);
+      assert.deepEqual(answer, [], `${list.member}: an empty 200 is an empty list`);
+    }
+  });
+
+  test('any other failure still throws, and names the call', async () => {
+    for (const list of LISTS) {
+      await assert.rejects(call(clientAnswering(list.path, { status: 500 }), list.member), /answered 500/);
+    }
+  });
+
+  test('the engines never see an unread list as an empty one', async () => {
+    const REF = { owner: 'bamr87', repo: 'irony-works' };
+    const blind = engineClientOver(clientAnswering(`GET ${R}`, { status: 200, body: {} }), 'bamr87/irony-works');
+    await assert.rejects(blind.listRepoWorkflows(REF), (error: Error & { status?: number }) => {
+      assert.equal(error.status, 403);
+      assert.match(error.message, /could not be read/);
+      return true;
+    });
+    await assert.rejects(blind.listFactoryRuns(REF), /the recent runs of bamr87\/irony-works could not be read/);
+
+    const empty = engineClientOver(
+      githubFleetClient({
+        repo: 'bamr87/irony-works',
+        fetchImpl: recordingFetch(
+          {
+            [LISTS[1].path]: { status: 200, body: LISTS[1].empty },
+            [LISTS[2].path]: { status: 200, body: LISTS[2].empty },
+          },
+          [],
+        ),
+        token: async () => 'tok',
+      }),
+      'bamr87/irony-works',
+    );
+    assert.deepEqual(await empty.listRepoWorkflows(REF), [], 'a 200 with no workflows is still []');
+    assert.deepEqual((await empty.listFactoryRuns(REF)).runs, [], 'a 200 with no runs is still []');
+  });
+
+  test('the run-verb gates say "could not be read" for null, and "none" only for []', () => {
+    const manifest = fixtureManifest();
+    const base: FleetGateInput = {
+      workspaceRoot: '/w',
+      enabled: true,
+      dispatchAllow: true,
+      hasCredential: true,
+      manifest,
+      laneId: 'germinate',
+      repo: 'bamr87/irony-works',
+    };
+    const message = (mode: 'rerun' | 'cancel' | 'toggleWorkflow', live: NonNullable<FleetGateInput['live']>): string | undefined => {
+      const kinds = { rerun: 'noRetryableRun', cancel: 'noRunInProgress', toggleWorkflow: 'workflowUnknown' } as const;
+      return evaluateFleetGates(mode, { ...base, live }).find((b) => b.kind === kinds[mode])?.message;
+    };
+
+    // Unread: the verb is refused under the same kind, with a sentence that
+    // claims no measurement.
+    assert.match(message('rerun', { runs: null }) ?? '', /could not be read/);
+    assert.match(message('cancel', { runs: null }) ?? '', /could not be read/);
+    assert.match(message('toggleWorkflow', { runs: [], workflow: null }) ?? '', /could not be read/);
+    assert.doesNotMatch(message('rerun', { runs: null }) ?? '', /has no failed run/);
+
+    // Read and empty: the measurement is real, and the sentence says so.
+    assert.match(message('rerun', { runs: [] }) ?? '', /has no failed run to re-run/);
+    assert.match(message('cancel', { runs: [] }) ?? '', /has nothing running to cancel/);
+    assert.match(message('toggleWorkflow', { runs: [] }) ?? '', /GitHub has no registered workflow/);
+
+    // Read and present: nothing blocks.
+    const workflow = { id: 12, path: '.github/workflows/germinate.yml', name: 'germinate', state: 'active' };
+    assert.equal(message('toggleWorkflow', { runs: [], workflow }), undefined);
   });
 });

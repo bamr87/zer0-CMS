@@ -62,6 +62,9 @@ import {
   type DashboardRoute,
   type DashboardState,
   type Field,
+  type FleetLaneView,
+  type FleetState,
+  type MonitorRepoView,
   type FieldContext,
   type PanelState,
   type SettingItem,
@@ -429,5 +432,116 @@ suite('webview', () => {
         `${mounted} mount/dispose cycles — dispose() has to release what it registered`,
     );
     assert.equal(mount.node.childNodes.length, 0, 'the host was not emptied between rounds');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// An unread run list is unknown, never "no run on record"
+// ---------------------------------------------------------------------------
+
+suite('webview: a run list GitHub refused renders unknown', () => {
+  setup(() => {
+    resetDom();
+    resetStagedForm();
+  });
+
+  function monitorRow(runsReadable: boolean): MonitorRepoView {
+    return {
+      slug: 'bamr87/irony-works',
+      source: 'workspace',
+      localRoot: '/w',
+      fetchedAt: '2026-09-14T00:00:00Z',
+      runsReadable,
+      note: null,
+      grade: null,
+      mergePolicy: null,
+      cost: null,
+      lanes: [{ id: 'germinate', switchValue: 'true', lastRun: null, openPulls: 0, cost: null, grade: null }],
+      pulls: [],
+    };
+  }
+
+  function renderMonitorRow(row: MonitorRepoView): FakeElement {
+    const mount = host();
+    renderMonitor(mount.el, {
+      ...emptyDashboardState(),
+      monitor: {
+        roster: [row],
+        hub: { slug: 'bamr87/bamr87', readAt: null, note: null, scorecard: null },
+        gitfactoryUrl: 'https://example.invalid/',
+      },
+    });
+    return mount.node;
+  }
+
+  test('Monitor: a read with a refused run page draws unknown; a read that listed none draws "no run on record"', () => {
+    const refused = renderMonitorRow(monitorRow(false));
+    assert.doesNotMatch(text(refused), /no run on record/, 'an unread run page must not claim a measurement');
+    assert.ok(
+      findAll(refused, '.z-status--unknown').some((pill) => text(pill) === 'unknown'),
+      'the run cell is an unknown pill',
+    );
+
+    resetDom();
+    const read = renderMonitorRow(monitorRow(true));
+    assert.match(text(read), /no run on record/, 'a 200 with no runs is a real answer');
+  });
+
+  function fleetState(fetchedAt: string | null, runsReadable: boolean, workflowsReadable: boolean): FleetState {
+    const lane: FleetLaneView = {
+      id: 'germinate',
+      kind: 'content',
+      harness: 'claude-cli',
+      implementation: '.github/workflows/germinate.yml',
+      description: 'germinate',
+      triggers: 'schedule',
+      switch: 'GERMINATE_ENABLED',
+      switchValue: 'true',
+      usesTokens: [],
+      guardrails: 'never merges',
+      lastRun: null,
+      toggleBlockers: [],
+      dispatchBlockers: [],
+    };
+    return {
+      enabled: true,
+      dispatchAllow: true,
+      manifestPath: 'fleet.manifest.yml',
+      repo: 'bamr87/irony-works',
+      summary: '',
+      provenance: 'derived',
+      reason: null,
+      lanes: [lane],
+      tokens: [],
+      fetchedAt,
+      note: null,
+      pulls: [],
+      runsReadable,
+      workflowsReadable,
+    };
+  }
+
+  function renderFleetState(state: FleetState): FakeElement {
+    const mount = host();
+    renderFleet(mount.el, { ...emptyDashboardState(), fleet: state });
+    return mount.node;
+  }
+
+  test('Fleet tab: unread and refused runs are not "no run on record"; a refused workflow list is not "not registered"', () => {
+    assert.doesNotMatch(text(renderFleetState(fleetState(null, false, false))), /no run on record/, 'nothing read yet');
+
+    resetDom();
+    const refused = renderFleetState(fleetState('2026-09-14T00:00:00Z', false, false));
+    assert.doesNotMatch(text(refused), /no run on record/);
+    assert.match(text(refused), /runs unreadable/);
+    const disabled = findAll(refused, 'button').map((button) => button.getAttribute('title') ?? '');
+    assert.ok(
+      !disabled.some((title) => /GitHub has no registered workflow/.test(title)),
+      'a refused workflow list must not be described as an unregistered workflow',
+    );
+
+    resetDom();
+    const read = renderFleetState(fleetState('2026-09-14T00:00:00Z', true, true));
+    assert.match(text(read), /no run on record/, 'a 200 with no runs is a real answer');
   });
 });

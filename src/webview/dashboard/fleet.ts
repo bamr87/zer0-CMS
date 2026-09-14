@@ -123,9 +123,22 @@ function switchCell(lane: FleetLaneView): Child {
   );
 }
 
-function runCell(run: FleetRunView | null): Child {
+/**
+ * `null` is "no run on record" only when a read listed the runs. Before any
+ * read, or when GitHub refused the run page, nobody measured — say so.
+ */
+function runCell(run: FleetRunView | null, fleet: FleetState): Child {
   if (run === null) {
-    return el('span', { class: 'z-fleet__unknown' }, 'no run on record');
+    if (fleet.fetchedAt === null) {
+      return el('span', { class: 'z-fleet__unknown', title: 'nothing has been read from this repository yet' }, 'unknown');
+    }
+    return fleet.runsReadable === false
+      ? el(
+          'span',
+          { class: 'z-fleet__unknown', title: 'the recent runs could not be read (GitHub answered 403 or 404)' },
+          'runs unreadable',
+        )
+      : el('span', { class: 'z-fleet__unknown' }, 'no run on record');
   }
   const label = run.conclusion === null ? run.status : `${run.status} · ${run.conclusion}`;
   const variant =
@@ -236,6 +249,13 @@ function actionsCell(lane: FleetLaneView, fleet: FleetState): Child {
   const noWorkflow: BlockerView[] =
     unread.length > 0
       ? unread
+      : fleet.workflowsReadable === false
+        ? [
+            {
+              kind: 'workflowUnknown',
+              message: 'the registered workflows could not be read (GitHub answered 403 or 404) — press Refresh to try again',
+            },
+          ]
       : lane.enabledState === undefined
         ? [
             {
@@ -344,7 +364,7 @@ function laneRow(lane: FleetLaneView, fleet: FleetState): Child[] {
       el('div', { class: 'z-fleet__guardrails', title: 'guardrails, as the manifest declares them' }, lane.guardrails),
     ),
     switchCell(lane),
-    runCell(lane.lastRun),
+    runCell(lane.lastRun, fleet),
     gradeCell(lane),
     costCell(lane),
     actionsCell(lane, fleet),

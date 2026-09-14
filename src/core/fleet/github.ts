@@ -456,12 +456,23 @@ export interface FleetClient {
   setVariable(name: string, value: string): Promise<void>;
   /** The newest run of a workflow file, or `undefined` when there is none. */
   latestRun(file: string): Promise<FleetRun | undefined>;
-  /** Every registered workflow with its state. `[]` for a repository without Actions. */
-  listWorkflows(): Promise<FleetWorkflowState[]>;
-  /** One bounded page of the newest runs across every workflow, newest first. */
-  recentRuns(): Promise<FleetRunRecord[]>;
-  /** One bounded page of the open pull requests. */
-  openPulls(): Promise<FleetPull[]>;
+  /**
+   * Every registered workflow with its state, or `null` when the list could not
+   * be read (403/404). `[]` is only ever a 200 that listed nothing — the same
+   * tristate as `listVariables()`, for the same reason: "GitHub has no workflow
+   * registered here" and "nobody could ask" lead a person to different acts.
+   */
+  listWorkflows(): Promise<FleetWorkflowState[] | null>;
+  /**
+   * One bounded page of the newest runs across every workflow, newest first, or
+   * `null` when the page could not be read (403/404). `[]` is a 200 with no runs.
+   */
+  recentRuns(): Promise<FleetRunRecord[] | null>;
+  /**
+   * One bounded page of the open pull requests, or `null` when the page could
+   * not be read (403/404). `[]` is a 200 that found none.
+   */
+  openPulls(): Promise<FleetPull[] | null>;
   /** A file on the default branch, or `null` when it is not there (404). */
   readFile(path: string): Promise<FleetFile | null>;
   /** A directory on the default branch; `[]` when it is not there. */
@@ -750,7 +761,7 @@ export function githubFleetClient(deps: FleetClientDeps): FleetClient {
       const path = `${repoPath}/actions/workflows?per_page=${FLEET_LIST_PAGE}`;
       const response = await send('GET', path);
       if (response.status === 403 || response.status === 404) {
-        return [];
+        return null;
       }
       if (!response.ok) {
         throw fail('GET', path, response.status);
@@ -764,7 +775,7 @@ export function githubFleetClient(deps: FleetClientDeps): FleetClient {
       const path = `${repoPath}/actions/runs?per_page=${FLEET_RUNS_PAGE}`;
       const response = await send('GET', path);
       if (response.status === 403 || response.status === 404) {
-        return [];
+        return null;
       }
       if (!response.ok) {
         throw fail('GET', path, response.status);
@@ -778,7 +789,7 @@ export function githubFleetClient(deps: FleetClientDeps): FleetClient {
       const path = `${repoPath}/pulls?state=open&per_page=${FLEET_PULLS_PAGE}`;
       const response = await send('GET', path);
       if (response.status === 403 || response.status === 404) {
-        return [];
+        return null;
       }
       if (!response.ok) {
         throw fail('GET', path, response.status);

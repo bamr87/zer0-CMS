@@ -108,15 +108,19 @@ function switchCell(value: string): Child {
 /**
  * The newest run — or the honest reason there is not one.
  *
- * `null` means two different things and the row knows which: with no read at
- * all it is `unknown`; with a read that simply found nothing, it is "no run on
- * record", which is a measurement.
+ * `null` means three different things and the row knows which: with no read at
+ * all it is `unknown`; with a read whose run page GitHub refused (403/404) it
+ * is also `unknown`; only a read whose run page came back and simply found
+ * nothing is "no run on record", which is a measurement.
  */
-function runCell(run: FleetRunView | null, read: boolean): Child {
+function runCell(run: FleetRunView | null, read: boolean, runsReadable: boolean): Child {
   if (run === null) {
-    return read
+    if (!read) {
+      return unknownPill('unknown', 'this repository has not been read');
+    }
+    return runsReadable
       ? el('span', { class: 'z-monitor__none' }, 'no run on record')
-      : unknownPill('unknown', 'this repository has not been read');
+      : unknownPill('unknown', 'the recent runs of this repository could not be read (GitHub answered 403 or 404)');
   }
   const label = run.conclusion === null ? run.status : `${run.status} · ${run.conclusion}`;
   const variant =
@@ -335,7 +339,7 @@ function repoSection(row: MonitorRepoView): HTMLElement {
           rows: row.lanes.map((lane) => [
             el('code', {}, lane.id),
             switchCell(lane.switchValue),
-            runCell(lane.lastRun, read),
+            runCell(lane.lastRun, read, row.runsReadable),
             countCell(lane.openPulls),
             costCell(lane.cost),
             gradeCell(lane.grade),

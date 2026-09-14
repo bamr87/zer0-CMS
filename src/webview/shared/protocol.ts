@@ -756,6 +756,16 @@ export interface FleetState {
   grade?: string | null;
   /** Where the manifest and the workflows disagree. */
   drift?: ManifestDriftView[];
+  /**
+   * `false` when the last read could not list the runs (403/404): every
+   * `lastRun: null` is then unread rather than "no run on record".
+   */
+  runsReadable?: boolean;
+  /**
+   * `false` when the last read could not list the registered workflows: an
+   * absent `enabledState` is then unread rather than "not registered".
+   */
+  workflowsReadable?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -835,6 +845,11 @@ export interface MonitorRepoView {
   source: string;
   localRoot: string | null;
   fetchedAt: string | null;
+  /**
+   * `true` only when a read happened AND its run page came back. With `false`
+   * a `lastRun: null` is unread, never "no run on record".
+   */
+  runsReadable: boolean;
   note: string | null;
   grade: string | null;
   mergePolicy: Record<string, string> | null;

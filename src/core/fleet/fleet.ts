@@ -193,10 +193,16 @@ export interface FleetGateInput {
    * is nothing to re-run" and produces a different blocker.
    */
   live?: {
-    /** This lane's runs, newest first, from the one bounded page. */
-    runs: readonly FleetRunRecord[];
-    /** This lane's registered workflow, absent when GitHub has none by that path. */
-    workflow?: FleetWorkflowState;
+    /**
+     * This lane's runs, newest first, from the one bounded page — or `null`
+     * when that page could not be read (403/404), which is not "no runs".
+     */
+    runs: readonly FleetRunRecord[] | null;
+    /**
+     * This lane's registered workflow. Absent when GitHub listed its workflows
+     * and none is at that path; `null` when the list itself could not be read.
+     */
+    workflow?: FleetWorkflowState | null;
   };
   /**
    * `zer0Cms.fleet.scaffoldAllow`, from the SETTINGS layer only — the master
@@ -409,8 +415,31 @@ function notExpressible(input: FleetGateInput): FleetBlocker | undefined {
   };
 }
 
+/**
+ * The run page could not be read, so no run can be named.
+ *
+ * The blocker keeps its verb's kind — the pinned order is by kind, and the
+ * verb is refused either way — but the sentence must not claim a measurement:
+ * "has no failed run" about a lane whose runs nobody could see is the same lie
+ * as drawing an unreadable switch as off.
+ */
+function runsUnread(
+  kind: 'noRetryableRun' | 'noRunInProgress',
+  input: FleetGateInput,
+  lane: FleetLane | undefined,
+  wanted: string,
+): FleetBlocker {
+  return {
+    kind,
+    message: `the runs of lane "${lane?.id ?? input.laneId}" could not be read (GitHub answered 403 or 404), so there is no ${wanted} to name`,
+  };
+}
+
 /** Nothing failed, so there is nothing to re-run. A success is not a retry candidate. */
 function noRetryableRun(input: FleetGateInput, lane: FleetLane | undefined): FleetBlocker | undefined {
+  if (input.live !== undefined && input.live.runs === null) {
+    return runsUnread('noRetryableRun', input, lane, 'a failure to re-run');
+  }
   const runs = input.live?.runs ?? [];
   const failed = runs.some(
     (run) => run.status === 'completed' && run.conclusion !== null && run.conclusion !== 'success',
@@ -426,6 +455,9 @@ function noRetryableRun(input: FleetGateInput, lane: FleetLane | undefined): Fle
 
 /** Nothing is going, so there is nothing to cancel. */
 function noRunInProgress(input: FleetGateInput, lane: FleetLane | undefined): FleetBlocker | undefined {
+  if (input.live !== undefined && input.live.runs === null) {
+    return runsUnread('noRunInProgress', input, lane, 'a run to cancel');
+  }
   const runs = input.live?.runs ?? [];
   if (runs.some((run) => run.status !== 'completed')) {
     return undefined;
@@ -444,10 +476,17 @@ function noRunInProgress(input: FleetGateInput, lane: FleetLane | undefined): Fl
  * never seen is not a thing that can be done, and saying so beats a 404.
  */
 function workflowUnknown(input: FleetGateInput, lane: FleetLane | undefined): FleetBlocker | undefined {
-  if (input.live?.workflow !== undefined) {
+  const workflow = input.live?.workflow;
+  if (workflow !== undefined && workflow !== null) {
     return undefined;
   }
   const where = lane?.implementation ?? input.laneId;
+  if (workflow === null) {
+    return {
+      kind: 'workflowUnknown',
+      message: `the registered workflows could not be read (GitHub answered 403 or 404), so "${where}" cannot be enabled or disabled`,
+    };
+  }
   return {
     kind: 'workflowUnknown',
     message: `GitHub has no registered workflow at "${where}" — it may never have run`,

@@ -209,6 +209,9 @@ const AUDIT_WEIGHTS: Readonly<Record<string, number>> = { fail: 10, warn: 3, inf
  *     `unknown`. When the list *was* readable, every gated lane's variable is
  *     pre-seeded `unset`, so an empty repository renders "off" rather than
  *     "unknown", which is what the workflow's `!= 'true'` gate would do.
+ *   * `runsReadable: false` / `workflowsReadable: false` are the same rule for
+ *     the run page and the workflow list: the maps are empty because nobody
+ *     could read them, and the screen and the gates say "unread", never "none".
  *   * `pulls: null` means the list could not be read; `[]` means there are none.
  *   * an absent `cost` entry means nobody measured that lane, and it is
  *     deliberately not a `LaneCost` full of zeroes.
@@ -225,6 +228,17 @@ export interface FleetLive {
   switches: Map<string, FleetSwitchValue>;
   /** `false` when the variable list came back 403/404 — nobody could ask. */
   switchesReadable: boolean;
+  /**
+   * `false` when the run page could not be read (403/404, or the call failed).
+   * `runs` and `runsByLane` are then empty, and an empty map here is NOT "no
+   * run on record": every run column renders unknown.
+   */
+  runsReadable: boolean;
+  /**
+   * `false` when the registered-workflow list could not be read. `workflows` is
+   * then empty, and an absent entry is NOT "GitHub has no workflow registered".
+   */
+  workflowsReadable: boolean;
   /** The newest run per lane id. */
   runs: Map<string, FleetRun>;
   /** Every run the one bounded page carried, per lane id, newest first. */
@@ -611,9 +625,11 @@ function liveFactsFor(read: FleetLive | undefined, laneId: string): FleetGateInp
   if (read === undefined) {
     return undefined;
   }
-  const workflow = read.workflows.get(laneId);
+  // Unreadable is `null`, carried to the gate so its refusal says "could not
+  // be read" rather than "has no failed run" or "has no registered workflow".
+  const workflow = read.workflowsReadable ? read.workflows.get(laneId) : null;
   return {
-    runs: read.runsByLane.get(laneId) ?? [],
+    runs: read.runsReadable ? (read.runsByLane.get(laneId) ?? []) : null,
     ...(workflow === undefined ? {} : { workflow }),
   };
 }
@@ -1243,13 +1259,15 @@ async function readLive(
       failures.push(`variables: ${describeError(error)}`);
       return null;
     });
+  // A failed call and a 403/404 are both `null` — "nobody could read it" —
+  // and never `[]`, which would draw every lane as never having run.
   const workflowList = await client.listWorkflows().catch((error: unknown) => {
     failures.push(`workflows: ${describeError(error)}`);
-    return [] as FleetWorkflowState[];
+    return null;
   });
   const recent = await client.recentRuns().catch((error: unknown) => {
     failures.push(`runs: ${describeError(error)}`);
-    return [] as FleetRunRecord[];
+    return null;
   });
   const pullList = await client.openPulls().catch((error: unknown) => {
     failures.push(`pulls: ${describeError(error)}`);
@@ -1259,6 +1277,14 @@ async function readLive(
   // --- switches --------------------------------------------------------------
   const switches = new Map<string, FleetSwitchValue>();
   const switchesReadable = variables !== null;
+  const workflowsReadable = workflowList !== null;
+  const runsReadable = recent !== null;
+  if (workflowList === null && !failures.some((line) => line.startsWith('workflows:'))) {
+    failures.push('workflows: unreadable (GitHub answered 403 or 404)');
+  }
+  if (recent === null && !failures.some((line) => line.startsWith('runs:'))) {
+    failures.push('runs: unreadable (GitHub answered 403 or 404)');
+  }
   if (variables !== null) {
     // Seed every name the screen asks about with `unset`, then overwrite from
     // the reply. Without the seed an empty repository would render `unknown`
@@ -1280,7 +1306,7 @@ async function readLive(
   // --- workflows, by lane ----------------------------------------------------
   const byPath = new Map<string, FleetWorkflowState>();
   const byFile = new Map<string, FleetWorkflowState>();
-  for (const workflow of workflowList) {
+  for (const workflow of workflowList ?? []) {
     byPath.set(workflow.path, workflow);
     byFile.set(workflow.path.slice(workflow.path.lastIndexOf('/') + 1), workflow);
   }
@@ -1301,7 +1327,7 @@ async function readLive(
   for (const lane of manifest.lanes) {
     const file = workflowFileOf(lane);
     const wanted = workflows.get(lane.id)?.path ?? lane.implementation;
-    const mine = recent.filter(
+    const mine = (recent ?? []).filter(
       (run) =>
         (wanted !== '' && run.path === wanted) ||
         (file !== '' && run.path.slice(run.path.lastIndexOf('/') + 1) === file),
@@ -1329,7 +1355,7 @@ async function readLive(
   const local =
     localRoot === null || localRoot === ''
       ? noLocalFacts()
-      : await readLocalFacts(localRoot, manifest, workflowList, workflows);
+      : await readLocalFacts(localRoot, manifest, workflowList ?? [], workflows);
   failures.push(...local.notes);
 
   return {
@@ -1339,6 +1365,8 @@ async function readLive(
     manifest,
     switches,
     switchesReadable,
+    runsReadable,
+    workflowsReadable,
     runs,
     runsByLane,
     workflows,
@@ -1424,7 +1452,7 @@ async function doRefresh(
     const gated = manifest.lanes.filter((lane) => lane.switch !== null).length;
     shell.log.info(
       `fleet: read ${manifest.repo} in 4 calls — ${next.switchesReadable ? `${gated} switches` : 'switches unreadable'}, ` +
-        `${next.runs.size} lanes with a run, ${next.pulls === null ? 'pulls unreadable' : `${next.pulls.length} open pulls`}`,
+        `${next.runsReadable ? `${next.runs.size} lanes with a run` : 'runs unreadable'}, ${next.pulls === null ? 'pulls unreadable' : `${next.pulls.length} open pulls`}`,
     );
     // The one sentence an operator wants before they look at the queue: is
     // anything going to merge these without a person? The vocabulary lives in
@@ -1660,6 +1688,9 @@ async function monitorStateFrom(shell: Zer0Shell, live: LiveCache): Promise<Moni
       source: site.entry.source,
       localRoot: site.entry.localRoot,
       fetchedAt: read?.fetchedAt ?? null,
+      // A read whose run page came back 403/404 has no `lastRun` for any lane,
+      // and that must not render as "no run on record".
+      runsReadable: read?.runsReadable ?? false,
       note,
       grade: read?.grade ?? null,
       mergePolicy: read === undefined ? null : mergePolicyView(read.mergePolicy),

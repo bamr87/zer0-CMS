@@ -102,6 +102,22 @@ export function engineClientOver(client: FleetClient, repo: string): EngineGithu
     );
   }
 
+  /**
+   * A list the console could not read (GitHub answered 403 or 404).
+   *
+   * The engines' contract returns `[]` there; this adapter does not, because
+   * `[]` is a measurement ("there are none") and nobody measured. Status 403 is
+   * the honest summary of both answers — GitHub hides a repository you may not
+   * see behind a 404, so either one means "you could not ask", never "absent".
+   */
+  function unread(member: string, what: string): FleetGithubError {
+    return new FleetGithubError(
+      `fleet: ${what} of ${repo} could not be read (GitHub answered 403 or 404) — an unread list is not an empty one`,
+      403,
+      `zer0-cms:fleet/${member}`,
+    );
+  }
+
   function check(ref: RepoRef, member: string): void {
     const asked = `${ref.owner}/${ref.repo}`.trim().toLowerCase();
     if (asked !== bound) {
@@ -205,6 +221,12 @@ export function engineClientOver(client: FleetClient, repo: string): EngineGithu
       const prefix = opts?.pathPrefix;
       const perPage = opts?.perPage;
       const records = await client.recentRuns();
+      if (records === null) {
+        // The package's own client answers `[]` here on a 403/404, and its
+        // telemetry would then draw every line as "never ran". An unread page
+        // is not an empty one, so the refusal travels as an error instead.
+        throw unread('listFactoryRuns', 'the recent runs');
+      }
       const runs = records
         .filter((run) => prefix === undefined || run.path.startsWith(prefix))
         .map((run) => ({
@@ -257,6 +279,9 @@ export function engineClientOver(client: FleetClient, repo: string): EngineGithu
     async listRepoWorkflows(ref) {
       check(ref, 'listRepoWorkflows');
       const workflows = await client.listWorkflows();
+      if (workflows === null) {
+        throw unread('listRepoWorkflows', 'the registered workflows');
+      }
       return workflows.map((workflow) => ({
         id: workflow.id,
         name: workflow.name,
