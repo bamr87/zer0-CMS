@@ -1,55 +1,45 @@
-<h1>📖 ABC Book Wizard</h1>
-<p class="muted">
-  Draft a toddler ABC book around any theme. The engine writes the words, composes
-  a text-free illustration prompt per letter in your chosen art style, and exports
-  a <strong>drsai</strong> board book ready to publish with the zer0-mistakes theme.
-</p>
+<% content_for :title, "ABC books" %>
+<header class="main-content__header">
+  <div>
+    <h1 class="main-content__page-title">ABC Book Wizard</h1>
+    <div class="sub">Draft a toddler ABC book around any theme. The engine writes the words, composes a text-free illustration prompt per letter, and exports a board book into a Jekyll site.</div>
+  </div>
+</header>
 
-<%= form_with url: preview_abc_book_path, method: :post, local: true, class: "card" do |f| %>
-  <label for="theme">Theme</label>
-  <%= f.text_field :theme, value: "IT systems", list: "themes",
-        placeholder: "e.g. IT systems, the ocean, kindness" %>
-  <datalist id="themes">
-    <% @themes.each do |t| %><option value="<%= t.tr('_', ' ') %>"></option><% end %>
-  </datalist>
-  <p class="muted">Bundled themes generate offline; any other theme uses Claude
-    (needs <code>ANTHROPIC_API_KEY</code> or <code>CLAUDE_CODE_OAUTH_TOKEN</code>).</p>
-
-  <div class="row">
-    <div>
-      <label for="art_style">Art style</label>
-      <%= f.select :art_style, @styles["styles"].map { |s| [s["name"], s["id"]] } %>
-    </div>
-    <div>
-      <label for="palette">Palette</label>
-      <%= f.select :palette, [["(style default)", ""]] + @styles["palettes"].map { |p| [p["name"], p["id"]] } %>
-    </div>
+<%= form_with url: preview_abc_book_path, method: :post, class: "card form" do |f| %>
+  <div class="field">
+    <%= f.label :theme %>
+    <%= f.text_field :theme, value: "IT systems", list: "themes", placeholder: "e.g. IT systems, the ocean, kindness" %>
+    <datalist id="themes">
+      <% @themes.each do |t| %><option value="<%= t.tr('_', ' ') %>"></option><% end %>
+    </datalist>
+    <div class="hint">Bundled themes generate offline; any other theme uses Claude (needs <code>ANTHROPIC_API_KEY</code> or <code>CLAUDE_CODE_OAUTH_TOKEN</code>).</div>
   </div>
 
-  <div class="row">
-    <div>
-      <label for="background">Background</label>
-      <%= f.select :background, @styles["backgrounds"].map { |b| [b["name"], b["id"]] } %>
-    </div>
-    <div>
-      <label for="mood">Mood</label>
-      <%= f.select :mood, @styles["moods"].map { |m| [m["name"], m["id"]] } %>
-    </div>
+  <div class="field-row">
+    <div class="field"><%= f.label :art_style %><%= f.select :art_style, @styles["styles"].map { |s| [s["name"], s["id"]] } %></div>
+    <div class="field"><%= f.label :palette %><%= f.select :palette, [["(style default)", ""]] + @styles["palettes"].map { |p| [p["name"], p["id"]] } %></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><%= f.label :background %><%= f.select :background, @styles["backgrounds"].map { |b| [b["name"], b["id"]] } %></div>
+    <div class="field"><%= f.label :mood %><%= f.select :mood, @styles["moods"].map { |m| [m["name"], m["id"]] } %></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><%= f.label :slug %><%= f.text_field :slug, placeholder: "auto from the title" %></div>
+    <div class="field"><%= f.label :audience %><%= f.select :audience, [%w[Toddler toddler], %w[Preschool preschool], ["Early reader", "early-reader"]] %></div>
   </div>
 
-  <div class="row">
-    <div>
-      <label for="slug">Slug <span class="muted">(optional)</span></label>
-      <%= f.text_field :slug, placeholder: "auto from the title" %>
-    </div>
-    <div>
-      <label for="audience">Audience</label>
-      <%= f.select :audience, [%w[Toddler toddler], %w[Preschool preschool], ["Early reader", "early-reader"]] %>
-    </div>
+  <div class="field">
+    <%= f.label :target, "Export target" %>
+    <%= f.text_field :target, value: @target, list: "export-targets", placeholder: "absolute path of a Jekyll root with _config.yml (e.g. the drsai checkout)" %>
+    <datalist id="export-targets">
+      <% @site_paths.each do |path| %><option value="<%= path %>"></option><% end %>
+    </datalist>
+    <div class="hint">Export writes <code>pages/_books/&lt;slug&gt;/index.md</code> and <code>_data/abc_books/&lt;slug&gt;.json</code> there. Preview writes nothing.</div>
   </div>
 
-  <p style="margin-top:1.2rem; display:flex; gap:.6rem;">
+  <div class="btn-row">
     <%= f.submit "Preview book", class: "button" %>
-    <%= button_tag "Export to drsai", formaction: export_abc_book_path, class: "ghost" %>
-  </p>
+    <%= button_tag "Export", formaction: export_abc_book_path, class: "button button--alt" %>
+  </div>
 <% end %>

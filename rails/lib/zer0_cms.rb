@@ -23,6 +23,8 @@
 
 require_relative "zer0_cms/version"
 require_relative "zer0_cms/abc"
+require_relative "zer0_cms/cms"
+require_relative "zer0_cms/doctor"
 
 module Zer0Cms
   ROOT = File.expand_path("..", __dir__)

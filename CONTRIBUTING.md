@@ -13,11 +13,13 @@ npm test          # unit + golden + MCP stdio + integration
 
 The fast inner loop skips the VS Code download: `npx tsc -p . --outDir out`, then `npx mocha --ui tdd` over the fourteen pure-Node suites listed in `CLAUDE.md`. It needs Node >= 22.12, because the engines seam is an ESM package reached through `require(esm)`.
 
-The Ruby half needs nothing installed — it is stdlib-only:
+The Rails `lib/` half needs nothing installed — it is stdlib-only:
 
 ```bash
-cd rails && ruby -Ilib test/zer0_cms/test_abc_engine.rb
+cd rails && ./bin/test-stdlib
 ```
+
+The Rails app needs its bundle: `cd rails && bundle install && bin/rails test && bin/rails zeitwerk:check`. In Docker: `SITES_DIR=.. docker compose up --build` → http://localhost:3001/admin. See [`docs/PLATFORM.md`](docs/PLATFORM.md) and [`docs/CICD.md`](docs/CICD.md).
 
 ## The rules that are not negotiable
 
@@ -56,7 +58,7 @@ These are enforced by the build, so you will find out quickly, but knowing them 
 | `media/templates/` | The vendored caller template a generated lane is written from; shipped in the vsix. |
 | `tools/` | Repository gates: `check-config-docs.py` (settings against `docs/CONFIG.md`) and `unwrap-prose.py` (one paragraph per line). |
 | `schemas/` | The JSON Schema for `zer0.json`. |
-| `rails/` | The ABC content engine — a separate product in the same repo. |
+| `rails/` | The fleet CMS (Rails 8.1 on Administrate) + ABC generator. `lib/` is stdlib-only. |
 
 ## Reporting things
 

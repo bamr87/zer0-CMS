@@ -1,0 +1,47 @@
+en:
+  activerecord:
+    models:
+      site:
+        one: Site
+        other: Sites
+      page:
+        one: Page
+        other: Pages
+      asset:
+        one: Image
+        other: Images
+      term:
+        one: Term
+        other: Terms
+    attributes:
+      site:
+        source_subdir: "Source (source:)"
+        collections_dir: Collections dir
+        pages_count: Pages
+        assets_count: Images
+        last_synced_at: Last synced
+        sync_error: Sync error
+      page:
+        source_relative: Source path
+        date_text: Date
+        lastmod: Last modified
+        front_matter: Front matter (as indexed)
+        bytes: Bytes
+        mtime: Modified on disk
+        digest: SHA-256
+      asset:
+        relative: Path
+        ext: Type
+        mtime: Modified on disk
+      term:
+        pages_count: Pages
+  administrate:
+    field_hints:
+      page:
+        date_text: As written in the file; dates stay strings. Empty removes the key.
+        tags: Comma-separated. Empty removes the key.
+        categories: Comma-separated. Empty removes the key.
+        preview: A path inside the site, as the site links it.
+        body: Markdown after the front matter. Written only when it differs from the file.
+      site:
+        path: Absolute path of a Jekyll root (inside SITES_DIR when that is set).

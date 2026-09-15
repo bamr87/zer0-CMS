@@ -1,0 +1,75 @@
+{
+  "generator": "Jekyll 4.4.1 reader via rails/bin/jekyll-parity",
+  "entries": [
+    [
+      "docs",
+      "pages/_docs/hidden.md"
+    ],
+    [
+      "docs",
+      "pages/_docs/intro.md"
+    ],
+    [
+      "notes",
+      "pages/_notes/first-note.md"
+    ],
+    [
+      "pages",
+      ".well-known/security.md"
+    ],
+    [
+      "pages",
+      "_shared.md"
+    ],
+    [
+      "pages",
+      "about.html"
+    ],
+    [
+      "pages",
+      "guides/deep/more.md"
+    ],
+    [
+      "pages",
+      "guides/setup.md"
+    ],
+    [
+      "pages",
+      "guides/template.md"
+    ],
+    [
+      "pages",
+      "index.md"
+    ],
+    [
+      "pages",
+      "pages/about-us.md"
+    ],
+    [
+      "posts",
+      "pages/_drafts/wip.md"
+    ],
+    [
+      "posts",
+      "pages/_posts/2026-01-01-hello.md"
+    ],
+    [
+      "posts",
+      "pages/_posts/2026-02-02-no-front-matter.md"
+    ],
+    [
+      "posts",
+      "pages/_posts/2099-01-01-future.md"
+    ],
+    [
+      "posts",
+      "pages/_posts/sub/2026-03-03-nested.md"
+    ]
+  ],
+  "skipped": {
+    "non_content_pages": 1,
+    "non_content_posts": 1,
+    "non_content_documents": 1
+  },
+  "notes": []
+}

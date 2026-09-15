@@ -1,0 +1,86 @@
+# zer0-CMS — the fleet CMS (Rails on Administrate) and the ABC wizard.
+#
+#   docker compose up --build                     # http://localhost:3001/admin
+#   docker compose --profile imagegen up --build  # + zer0-image-generator on :3000
+#
+# SITES_DIR (default: the parent of this checkout, the usual fleet layout) is
+# mounted at /sites; register sites by their container path, /sites/<name>.
+# The image generator's profile mounts the same directory at the same path,
+# so a site means the same checkout in both apps.
+#
+# Both ports are published on 127.0.0.1 only. Without ZER0_CMS_PASSWORD the
+# CMS refuses any request whose TCP peer is not loopback, and it treats the
+# container's default gateway as loopback (ZER0_CMS_TRUST_DOCKER_GATEWAY) only
+# because the port is not reachable from anywhere else. Publish it on another
+# interface only together with ZER0_CMS_PASSWORD.
+#
+# ABC export needs an explicit target: DRSAI_SITE_ROOT or the form field.
+# There is deliberately no default under the /sites mount.
+
+services:
+  cms:
+    build:
+      context: ./rails
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:${PORT:-3001}:3000"
+    volumes:
+      - ${SITES_DIR:-..}:/sites
+      - storage:/app/storage
+    environment:
+      SITES_DIR: /sites
+      ZER0_CMS_TRUST_DOCKER_GATEWAY: "1"
+      ZER0_CMS_PASSWORD: ${ZER0_CMS_PASSWORD:-}
+      ZER0_CMS_USER: ${ZER0_CMS_USER:-}
+      ZER0_CMS_HOSTS: ${ZER0_CMS_HOSTS:-}
+      ZER0_IMAGE_GENERATOR_URL: ${ZER0_IMAGE_GENERATOR_URL:-http://localhost:3000}
+      DRSAI_SITE_ROOT: ${DRSAI_SITE_ROOT:-}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+      # The ABC wizard's Claude fallback for themes without a bundled lexicon.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 40s
+
+  # zer0-image-generator's web panel (full preview runs, compositions, the
+  # studio), built from a sibling checkout. Its Dockerfile's build context is
+  # that repository's root (it loads the engine from ../lib), so the context
+  # is the checkout and the Dockerfile is web/Dockerfile.
+  imagegen:
+    profiles: ["imagegen"]
+    build:
+      context: ${ZER0_IMAGE_GENERATOR_DIR:-../zer0-image-generator}
+      dockerfile: web/Dockerfile
+      target: development
+    ports:
+      - "127.0.0.1:${IMAGEGEN_PORT:-3000}:3000"
+    volumes:
+      - ${SITES_DIR:-..}:/sites
+      - imagegen-storage:/app/web/storage
+      - imagegen-forge:/app/.forge
+    environment:
+      RAILS_ENV: development
+      BINDING: 0.0.0.0
+      SOLID_QUEUE_IN_PUMA: "true"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      XAI_OAUTH_TOKEN: ${XAI_OAUTH_TOKEN:-}
+      STABILITY_API_KEY: ${STABILITY_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+
+volumes:
+  storage:
+  imagegen-storage:
+  imagegen-forge:

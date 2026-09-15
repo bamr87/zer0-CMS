@@ -11,12 +11,13 @@
 ## How it was tested
 
 <!--
-What you actually ran, and what it told you. `npm run compile` and `npm test` at minimum for extension changes; for `rails/`, `ruby -Ilib test/zer0_cms/test_abc_engine.rb`. If you skipped something, say so. -->
+What you actually ran, and what it told you. `npm run compile` and `npm test` at minimum for extension changes; for `rails/`, `./bin/test-stdlib`. If you skipped something, say so. -->
 
 ## Checklist
 
-- [ ] `npm run compile` passes (type-check + lint + all five bundles)
-- [ ] `npm test` passes
+- [ ] `npm run compile` passes (type-check + lint + all five bundles) — skip if `rails/**` only
+- [ ] `npm test` passes — skip if `rails/**` only
+- [ ] `cd rails && ./bin/test-stdlib` passes — skip if `src/**` only
 - [ ] `src/core/` and `src/mcp/` still import no `vscode`
 - [ ] No `innerHTML` added under `src/webview/`
 - [ ] Every gate is still re-checked host-side — no new check that lives only in a webview

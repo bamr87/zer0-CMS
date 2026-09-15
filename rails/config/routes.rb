@@ -1,13 +1,31 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  root "abc_books#new"
+  namespace :admin do
+    resources :sites do
+      post :sync, on: :member
+      post :discover, on: :collection
+    end
+    resources :pages do
+      post :duplicate, on: :member
+      post :generate_preview, on: :member
+    end
+    resources :assets, only: %i[index show]
+    resources :terms, only: %i[index show]
+    post "markdown_preview", to: "markdown_previews#create", as: :markdown_preview
 
-  # The ABC book wizard.
-  get  "abc/new",     to: "abc_books#new",     as: :new_abc_book
-  post "abc/preview", to: "abc_books#preview", as: :preview_abc_book
-  post "abc/export",  to: "abc_books#export",  as: :export_abc_book
+    root to: "sites#index"
+  end
 
-  # JSON: the art-style catalog + bundled themes (drives the form's menus / an SPA).
-  get "abc/catalog.json", to: "abc_books#catalog"
+  root to: redirect("/admin")
+
+  # Images inside a registered site, by absolute path (thumbnails, media).
+  get "files/*path", to: "files#show", as: :file, format: false
+
+  get  "abc/new",          to: "abc_books#new",     as: :new_abc_book
+  post "abc/preview",      to: "abc_books#preview", as: :preview_abc_book
+  post "abc/export",       to: "abc_books#export",  as: :export_abc_book
+  get  "abc/catalog.json", to: "abc_books#catalog", as: :abc_catalog
+
+  get "up", to: "rails/health#show", as: :rails_health_check
 end

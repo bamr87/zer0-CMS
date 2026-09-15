@@ -1,0 +1,31 @@
+{
+  "generator": "Jekyll 4.4.1 reader via rails/bin/jekyll-parity",
+  "entries": [
+    [
+      "pages",
+      "about/team.md"
+    ],
+    [
+      "pages",
+      "index.md"
+    ],
+    [
+      "posts",
+      "_posts/2026-02-02-src-post.md"
+    ],
+    [
+      "posts",
+      "blog/_posts/2026-03-03-blog-post.md"
+    ],
+    [
+      "recipes",
+      "_recipes/soup.md"
+    ]
+  ],
+  "skipped": {
+    "non_content_pages": 0,
+    "non_content_posts": 0,
+    "non_content_documents": 0
+  },
+  "notes": []
+}

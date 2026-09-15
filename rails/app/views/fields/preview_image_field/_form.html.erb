@@ -1,0 +1,9 @@
+<div class="field-unit__label">
+  <%= f.label field.attribute %>
+</div>
+<div class="field-unit__field preview-field">
+  <%= f.text_field field.attribute, placeholder: "/assets/images/previews/…" %>
+  <% if field.image_path %>
+    <div class="preview-frame"><%= image_tag field.image_path, alt: "Current preview image" %></div>
+  <% end %>
+</div>

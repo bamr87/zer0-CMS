@@ -1,0 +1,18 @@
+<% content_for(:header_last) do %>
+  <div class="btn-row">
+    <%= link_to "Open site", admin_site_path(page.resource.site), class: "button button--alt" %>
+    <%= button_to "Duplicate as draft", duplicate_admin_page_path(page.resource), class: "button button--alt" %>
+    <% engine_unavailable = ImageEngine.unavailable_reason %>
+    <% if engine_unavailable %>
+      <button type="button" class="button button--alt" disabled title="<%= engine_unavailable %>">Generate preview (local)</button>
+    <% else %>
+      <%= button_to "Generate preview (local)", generate_preview_admin_page_path(page.resource), class: "button button--alt",
+            title: "Draws this page's preview with #{ImageEngine.description}, provider local" %>
+    <% end %>
+    <%= link_to "Image generator ↗", ImageEngine.generator_url, class: "button button--alt", target: "_blank", rel: "noopener noreferrer" %>
+  </div>
+<% end %>
+<% content_for(:before_main) do %>
+  <p class="mono faint"><%= page.resource.relative %></p>
+<% end %>
+<%= render template: "administrate/application/show", locals: local_assigns %>

@@ -1,0 +1,5 @@
+<% if field.image_path %>
+  <span class="preview-frame thumb"><%= image_tag field.image_path, alt: "", loading: "lazy" %></span>
+<% else %>
+  <span class="faint">—</span>
+<% end %>

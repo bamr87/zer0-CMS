@@ -1,0 +1,77 @@
+<% content_for(:title) { "New page" } %>
+<header class="main-content__header">
+  <h1 class="main-content__page-title">New page</h1>
+  <%= link_to "Back to pages", admin_pages_path, class: "button button--alt" %>
+</header>
+
+<section class="main-content__body">
+  <% if @site.nil? %>
+    <%= form_with url: new_admin_page_path, method: :get, class: "form" do |f| %>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :site_id, "Site" %></div>
+        <div class="field-unit__field"><%= f.select :site_id, sites.map { |s| [s.name, s.id] }, include_blank: "Choose a site" %></div>
+      </div>
+      <div class="form-actions"><%= f.submit "Continue", class: "button", name: nil %></div>
+    <% end %>
+  <% elsif @collections.empty? %>
+    <p><%= @site.name %> declares no collection with a directory on disk, so there is nowhere to create a page.</p>
+  <% else %>
+    <%= form_with url: admin_pages_path, scope: :page, class: "form" do |f| %>
+      <%= f.hidden_field :site_id, value: @site.id %>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :collection %></div>
+        <div class="field-unit__field">
+          <%= f.select :collection, @collections.keys, selected: @values["collection"] || (@collections.key?("posts") ? "posts" : @collections.keys.first) %>
+          <div class="field-unit__hint">Posts are named YYYY-MM-DD-slug.md; documents slug.md.</div>
+        </div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :section %></div>
+        <div class="field-unit__field">
+          <%= f.select :section,
+                grouped_options_for_select(@collections.map { |name, sections| [name, sections.map { |s| ["#{name}/#{s}", s] }] }.reject { |_, opts| opts.empty? }, @values["section"]),
+                include_blank: "(collection root)" %>
+          <div class="field-unit__hint">An existing subdirectory of the chosen collection.</div>
+        </div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :title %></div>
+        <div class="field-unit__field"><%= f.text_field :title, value: @values["title"], required: true %></div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :slug %></div>
+        <div class="field-unit__field">
+          <%= f.text_field :slug, value: @values["slug"], placeholder: "from the title" %>
+          <div class="field-unit__hint">a-z, 0-9 and single hyphens.</div>
+        </div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :description %></div>
+        <div class="field-unit__field"><%= f.text_field :description, value: @values["description"] %></div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :author %></div>
+        <div class="field-unit__field"><%= f.text_field :author, value: @values["author"] %></div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :tags %></div>
+        <div class="field-unit__field"><%= f.text_field :tags, value: @values["tags"], placeholder: "comma, separated" %></div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :draft, "Draft" %></div>
+        <div class="field-unit__field"><%= f.check_box :draft, checked: @values.key?("draft") ? @values["draft"] == "1" : true %></div>
+      </div>
+      <div class="field-unit">
+        <div class="field-unit__label"><%= f.label :body %></div>
+        <div class="field-unit__field markdown-field" data-controller="markdown-preview" data-markdown-preview-url-value="<%= admin_markdown_preview_path %>">
+          <%= f.text_area :body, value: @values["body"], rows: 16, class: "code",
+                data: { markdown_preview_target: "source", action: "input->markdown-preview#queue" } %>
+          <div class="markdown-body markdown-preview" data-markdown-preview-target="output" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <%= f.submit "Create file in #{@site.name}", class: "button" %>
+      </div>
+    <% end %>
+  <% end %>
+</section>

@@ -1,0 +1,12 @@
+# The build context of rails/Dockerfile (docker-compose.yml builds ./rails).
+# Local state, secrets and editor litter stay out of the image.
+.git
+.bundle
+.env
+.env.*
+.DS_Store
+log/*
+tmp/*
+storage/*
+public/assets
+node_modules

@@ -1,0 +1,5 @@
+<% if field.items.any? %>
+  <span class="chip-row"><% field.items.each do |item| %><span class="badge"><%= item %></span><% end %></span>
+<% else %>
+  <span class="faint">—</span>
+<% end %>

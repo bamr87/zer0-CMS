@@ -2,8 +2,8 @@
 
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 
-require "bundler/setup" if File.exist?(ENV["BUNDLE_GEMFILE"])
+require "bundler/setup"
 
-# Put the stdlib-only engine on the load path so `require "zer0_cms"` works
-# whether the app is booted via Rails or the CLI.
+# The stdlib content library (lib/zer0_cms) is required by path, not
+# autoloaded: it is plain Ruby shared with bin/zer0-cms and bin/test-stdlib.
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)

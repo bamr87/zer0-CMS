@@ -1,9 +1,10 @@
-<!-- rails/README.md — the ABC generator: what it is, how to run it, and what is deliberately absent. Read this before changing anything under rails/. -->
-<!-- The name matters. This half is the **ABC generator**, never "the content engine": that phrase already belongs to the `.cms/` contract engine the VS Code extension drives (`../src/core/contract/`), and one name for two things is one thing nobody can grep for. -->
+<!-- rails/README.md — fleet CMS platform + ABC generator. Never "the content engine": that phrase belongs to src/core/contract/. -->
 
-# zer0-CMS — the ABC generator (Ruby + optional Rails)
+# zer0-CMS — fleet CMS platform (Rails) + ABC generator
 
-This is the **content-generation** half of zer0-CMS: a stdlib-only Ruby library and an optional Rails wizard that draft children's **ABC / alphabet books**. It lives alongside the VS Code extension (`../src`) — the extension *edits* content, the ABC generator *generates* it.
+This is the **platform** half of zer0-CMS. The VS Code extension (`../src`) still *edits* content inside the editor. This Rails app is the browser control panel for every zer0-themed Jekyll site: register roots, scan collections, edit front matter in place, and generate ABC books.
+
+The ABC generator remains a stdlib-only Ruby library (`lib/zer0_cms/abc`) with a CLI. The web UI wraps that plus the new `Zer0Cms::Cms` catalog / front-matter layer.
 
 It is the first stage of the fleet's children's-book pipeline:
 
@@ -24,7 +25,9 @@ The generator is **stdlib-only Ruby** — the CLI and the tests run without `bun
 cd rails
 ruby bin/zer0-cms styles                      # list ABC art styles
 ruby bin/zer0-cms themes                      # list bundled A–Z lexicons
-ruby -Ilib test/zer0_cms/test_abc_engine.rb   # 16 tests, 435 assertions, zero network
+./bin/test-stdlib                             # ABC + catalog + front-matter + writer + doctor, no bundler
+ruby bin/zer0-cms doctor ../../lifehacker.dev  # zer0 stack alignment (RFC §4); exit 1 on any error
+ruby bin/jekyll-parity ../../lifehacker.dev    # catalog vs Jekyll's own reader (needs the jekyll gem)
 
 # Draft the toddler "IT systems" book (A is for Automation) into a drsai checkout:
 ruby bin/zer0-cms new --theme "IT systems" --slug it-alphabet \
@@ -36,21 +39,44 @@ ruby bin/zer0-cms new --theme "the ocean" --art-style watercolor-storybook --pri
 
 Bundled themes (`ruby bin/zer0-cms themes`) generate **offline and deterministically**. Any other theme falls back to Claude and needs `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`.
 
-That test line is also exactly what CI runs, in `.github/workflows/abc-engine.yml` — one job, no `bundle install`, triggered only by a change under `rails/`.
+`./bin/test-stdlib` is exactly what CI runs in `.github/workflows/abc-engine.yml` — no `bundle install`, on Ruby 3.3 and 4.0.5, triggered only by a change under `rails/`. The app half is `.github/workflows/rails-app.yml`. Platform contract: [`docs/PLATFORM.md`](../docs/PLATFORM.md). Stack contract and the reusable doctor workflow: [`docs/ZER0-STACK.md`](../docs/ZER0-STACK.md). Pipeline: [`docs/CICD.md`](../docs/CICD.md).
 
-## The web wizard (Rails)
+## The web platform (Rails)
 
-The Rails app is a thin HTTP wrapper over the same classes. It is optional, and it is the only part of this directory that needs gems:
+The Rails app is the fleet CMS: **Administrate 1.0 dashboards** over an index of every registered Jekyll site, plus the ABC wizard. It is the only part of this directory that needs gems (Ruby 4.0.5, Rails 8.1):
 
 ```bash
 cd rails
 bundle install
-DRSAI_SITE_ROOT=../../drsai bundle exec puma -p 3000 config.ru   # http://localhost:3000
+bin/rails db:prepare                       # creates storage/development.sqlite3
+SITES_DIR=$HOME/github bin/rails server    # http://localhost:3000/admin
+bin/rails test                             # integration tests (bundler); bin/test-stdlib stays bundler-free
 ```
 
-**Why `puma` and not `rails server`.** This app has no `bin/rails` binstub — `bin/` holds the headless CLI and nothing else. The `rails` executable searches upward for `bin/rails` and, finding none, decides you meant `rails new` and prints its usage; it never boots this app. `config.ru` requires `config/environment`, so any Rack server starts it, and `puma` is the one already in the `Gemfile`. Adding a `bin/rails` binstub is a reasonable follow-up; until someone does, this is the command that works.
+Docker (from the repository root; port 3001 so it can sit next to zer0-image-generator on 3000; published on 127.0.0.1 only):
 
-The wizard form drives the exact same `Zer0Cms::Abc::Wizard` + `JekyllExporter` the CLI drives — **Preview** renders the book markdown, **Export to drsai** writes it into `DRSAI_SITE_ROOT`.
+```bash
+SITES_DIR=/path/to/your/jekyll/sites docker compose up --build                      # → http://localhost:3001/admin
+SITES_DIR=/path/to/your/jekyll/sites docker compose --profile imagegen up --build   # + zer0-image-generator on :3000
+```
+
+The image (`Dockerfile`, build context `rails/`) is the app, not a dev shell: `ruby:4.0.5-slim`, the locked bundle installed deployment-style, precompiled assets, `RAILS_ENV=production`, an unprivileged `rails` user (uid/gid 1000; pass `--build-arg UID=$(id -u) --build-arg GID=$(id -g)` on Linux), a `/up` health check, and python3 + PyYAML + librsvg for the image engine. `bin/docker-entrypoint` generates a `secret_key_base` once into the `storage` volume unless `SECRET_KEY_BASE` is set, then runs `bin/rails db:prepare`. Rebuild after a code change.
+
+**Git is the source of truth; the database is an index.** `Site#sync!` walks a site with `Zer0Cms::Cms::Catalog` (Jekyll 4.4's reader rules) and `Catalog.media`, and upserts `Page`, `Asset` and `Term` rows in one transaction. Nothing is edited through ActiveRecord:
+
+| Surface | Where | What it does |
+|---|---|---|
+| Sites | `/admin/sites` | Register (or **Register and sync all** under `SITES_DIR`), **Sync**, per-collection counts, the read-only `_config.yml` |
+| Pages | `/admin/pages` | Search title/description/author/path; filters `draft:` `live:` `future:` `error:` `collection:<name>` `site:<id>` `kind:` `tag:` `category:` `author:`; newest first, undated last |
+| Page edit | `app/services/page_editor.rb` | Re-reads the file, refuses when its digest differs from the index (sync first), sends `FrontMatter.update_keys` only the keys you changed (emptying a present key deletes it), optionally replaces the body, writes atomically, re-syncs that path. An unchanged save writes nothing |
+| New / duplicate / delete | `Zer0Cms::Cms::Writer`, `PageEditor` | Create in a declared collection and existing section; duplicate as a draft; delete after a Turbo confirm. Every path is realpath-confined and symlinks are refused (`app/services/site_path.rb`) |
+| Images, terms | `/admin/assets`, `/admin/terms` | Read-only; thumbnails are served by `/files/*path`, images inside a registered site only |
+| Previews | `missing_preview:` filter, page **Generate preview (local)**, `app/services/image_engine.rb` | Lists the pages the image engine would draw a preview for, and draws one with the free `local` provider; the key the engine writes is re-applied through `PageEditor`. Bigger runs link out to `ZER0_IMAGE_GENERATOR_URL` |
+| ABC books | `/abc/new` | The wizard; **Export** needs an explicit target directory holding `_config.yml` (`DRSAI_SITE_ROOT` prefills it; there is no default) |
+
+Custom Administrate fields live in `app/fields` + `app/views/fields`: `MarkdownField` (textarea with a debounced Stimulus preview), `TagListField` (comma input to a list), `PreviewImageField` (thumbnail through `/files`), `StateField` (error / draft / unpublished / future / live). The look is the zer0 sidebar frame themed by `app/assets/stylesheets/zer0-tokens.css`, a **byte-identical vendored copy** of zer0-image-generator's `web/app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens 1.0.0`; re-vendor with `cp` and check with `cmp`), mapped onto Administrate's markup by `administrate-theme.css`. Administrate's own compiled CSS/JS bundle is not loaded: it ships a second Turbo, jQuery, Trix and Selectize; importmap loads Turbo and Stimulus instead.
+
+**Access.** Only `localhost`, `127.0.0.1` and `[::1]` are accepted Host headers unless `ZER0_CMS_HOSTS` (comma-separated) names more. With `ZER0_CMS_PASSWORD` set every request needs HTTP basic auth (user `ZER0_CMS_USER`, default `zer0`); without it, any request whose TCP peer is not loopback gets a 403 (`ZER0_CMS_TRUST_DOCKER_GATEWAY=1`, set by compose, also accepts the container's default gateway, which is where a 127.0.0.1-published port arrives from). The CSP allows scripts and styles from the app only, plus a per-request nonce that the importmap tags carry.
 
 ## Architecture
 
@@ -62,21 +88,26 @@ The wizard form drives the exact same `Zer0Cms::Abc::Wizard` + `JekyllExporter` 
 | Art styles | `lib/zer0_cms/abc/art_styles.rb` + `data/abc_art_styles.yml` | Style catalog + text-free prompt composition |
 | Wizard | `lib/zer0_cms/abc/wizard.rb` | theme → plan → art direction → per-letter → cover → validated Spec |
 | Exporter | `lib/zer0_cms/abc/jekyll_exporter.rb` | Spec → `pages/_books/<slug>/index.md` + `_data/abc_books/<slug>.json` |
-| CLI | `bin/zer0-cms` | Headless driver — the supported entry point |
-| Web | `app/` + `config/` | Thin Rails wrapper over the generator |
-| Rake wrappers | `lib/tasks/abc.rake` | `abc:styles` / `abc:themes` / `abc:new` — **not reachable today** |
+| CLI | `bin/zer0-cms` | Headless ABC driver and `doctor PATH [--format text\|findings] [--schema FILE]` |
+| CMS primitives | `lib/zer0_cms/cms/` | Catalog (Jekyll 4.4 reader rules), front-matter line surgery, confined writer — stdlib; see [`lib/zer0_cms/cms/README.md`](lib/zer0_cms/cms/README.md) |
+| Doctor | `lib/zer0_cms/doctor.rb` | The consumer contract check: theme, image engine, `zer0.json`, `fleet.manifest.yml`, front matter against the theme's schema; findings in lifehacker.dev's `findings.jsonl` shape |
+| Parity proofs | `bin/jekyll-parity`, `bin/front-matter-roundtrip`, `test/fixtures/` | The catalog diffed against Jekyll's reader; the front-matter round-trip property over real sites |
+| Web | `app/` + `config/` + `db/` | Fleet CMS on Administrate: `Site`/`Page`/`Asset`/`Term` index, `SiteSync`, `PageEditor`, custom fields, the ABC wizard |
+| Image engine | `app/services/image_engine.rb` | The only file that loads or runs zer0-image-generator: `Zer0ImageGenerator::Facade` when the bundled gem ships it, else the released 0.6.0 gem's Python engine as a confined subprocess |
+| Container | `Dockerfile`, `bin/docker-entrypoint`, `../docker-compose.yml` | The production image and the `cms` service; the `imagegen` profile runs zer0-image-generator beside it |
+| Rake wrappers | `lib/tasks/abc.rake` | `bin/rails abc:styles` / `abc:themes` / `abc:new` |
 
-**About those rake tasks.** `lib/tasks/abc.rake` is written and correct, but this directory has no `Rakefile` and the app has no `bin/rails` to load one, so `rake abc:*` cannot be invoked from here. Use `bin/zer0-cms`, which drives the same classes. The `.rake` file is kept because it is what the tasks should look like once a `Rakefile` exists.
+**Rake tasks.** `lib/tasks/abc.rake` is loaded by the `Rakefile`, so `bin/rails abc:themes` works; `bin/zer0-cms` drives the same classes without bundler.
 
 ### The shared contract
 
-- **`schema/abc-book.schema.json`** — the ABC Book Spec, the interchange format
-  consumed by drsai.
+- **`schema/abc-book.schema.json`** — the ABC Book Spec, the interchange format consumed by drsai.
 - **`lib/zer0_cms/data/abc_art_styles.yml`** — a **byte-identical vendored copy**
 of the source of truth in [zer0-image-generator](https://github.com/bamr87/zer0-image-generator) (`lib/zer0_image_generator/abc/art_styles.yml`). Each art-style `id` is a cross-repo contract (drsai front matter + the theme's CSS skin). Re-sync the copy whenever the gem's catalog changes.
+- **`lib/zer0_cms/data/frontmatter_schema.yml`** — a **byte-identical vendored copy** of the theme's front-matter contract, [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) `.github/config/frontmatter_schema.yml`; the source commit is recorded in [`lib/zer0_cms/data/README.md`](lib/zer0_cms/data/README.md). `doctor` prefers a site's own copy, and `--schema FILE` over both.
 
 ## Conventions
 
 - Conventional Commits; branch from `main`, open a PR.
-- The generator is **stdlib-only** — no gems in `lib/`. Keep Rails-only code in `app/`. CI runs the tests with no `bundle install`, so a gem reached from `lib/` is exactly the regression that job catches.
+- `lib/` is **stdlib-only** — no gems. Keep Rails-only code in `app/`. CI runs `bin/test-stdlib` with no `bundle install`, so a gem reached from `lib/` is exactly the regression that job catches.
 - Never hand-edit a generated book (`pages/_books/**` in drsai) — re-run the wizard.

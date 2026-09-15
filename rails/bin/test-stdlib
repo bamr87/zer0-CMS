@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run every stdlib-only test under rails/test/zer0_cms/ — no bundler.
+# This is the CI gate for lib/zer0_cms (ABC generator + CMS catalog/front matter).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+status=0
+shopt -s nullglob
+for f in test/zer0_cms/test_*.rb; do
+  echo "==> ruby -Ilib $f"
+  ruby -Ilib "$f" || status=1
+done
+exit "$status"

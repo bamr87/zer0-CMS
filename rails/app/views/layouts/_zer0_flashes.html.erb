@@ -1,0 +1,4 @@
+<% flash.each do |type, message| %>
+  <% next unless message.is_a?(String) %>
+  <div class="flash <%= type.to_s == "notice" ? "notice" : "alert" %>" role="<%= type.to_s == "notice" ? "status" : "alert" %>"><%= message %></div>
+<% end %>

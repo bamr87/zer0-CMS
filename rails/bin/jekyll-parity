@@ -1,0 +1,132 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Diff Zer0Cms::Cms::Catalog.scan against Jekyll's own reader on a site.
+#
+#   ruby rails/bin/jekyll-parity SITE            # report; exit 1 on any difference
+#   ruby rails/bin/jekyll-parity SITE --json     # print Jekyll's lists as JSON
+#
+# Needs the jekyll gem (4.4.x) — this is NOT part of bin/test-stdlib. The JSON
+# it prints is what test/fixtures/*.expected.json hold, so the stdlib test can
+# assert the catalog against Jekyll without Jekyll installed.
+#
+# Jekyll is run the way `jekyll build` runs from the site root, in safe mode
+# with no plugins, and with future, unpublished and drafts all shown — the
+# catalog records those states instead of hiding them. Only the reader runs
+# (directories, included files, collections); nothing renders or writes.
+# Content-extension filtering is applied to Jekyll's lists exactly as the
+# catalog applies it, and the rest is compared as counts.
+
+require "json"
+require "pathname"
+
+begin
+  require "jekyll"
+rescue LoadError
+  warn "jekyll-parity needs the jekyll gem (gem install jekyll -v 4.4.1)"
+  exit 2
+end
+require_relative "../lib/zer0_cms/cms/catalog"
+
+module JekyllParity
+  COUNTED = %w[non_content_pages non_content_posts non_content_documents].freeze
+  Catalog = Zer0Cms::Cms::Catalog
+
+  module_function
+
+  def content?(path) = Catalog.content_extension?(path)
+
+  def jekyll_lists(site_root)
+    root = File.realpath(site_root)
+    notes = []
+    Dir.chdir(root) do
+      Jekyll.logger.log_level = :error
+      overrides = {
+        "safe" => true, "quiet" => true, "future" => true, "unpublished" => true, "show_drafts" => true,
+        "plugins" => [], "incremental" => false, "disable_disk_cache" => true
+      }
+      config = Jekyll.configuration(overrides)
+      theme = config["theme"]
+      if theme.is_a?(String) && Gem::Specification.find_all_by_name(theme).empty?
+        notes << "theme gem #{theme} is not installed; read without its bundled _config.yml"
+        config["theme"] = nil
+      end
+      site = Jekyll::Site.new(config)
+      site.reset
+      site.reader.read_directories
+      site.reader.send(:read_included_excludes)
+      Jekyll::CollectionReader.new(site).read
+
+      source = Pathname.new(site.source)
+      entries = []
+      counts = COUNTED.to_h { |k| [k, 0] }
+      site.pages.each do |page|
+        rel = page.relative_path
+        content?(rel) ? entries << ["pages", rel] : counts["non_content_pages"] += 1
+      end
+      site.collections.each do |label, collection|
+        collection.docs.each do |doc|
+          rel = Pathname.new(doc.path).relative_path_from(source).to_s
+          if content?(rel)
+            entries << [label, rel]
+          else
+            counts[label == "posts" ? "non_content_posts" : "non_content_documents"] += 1
+          end
+        end
+      end
+      {
+        "generator" => "Jekyll #{Jekyll::VERSION} reader via rails/bin/jekyll-parity",
+        "entries" => entries.sort.uniq,
+        "skipped" => counts,
+        "notes" => notes
+      }
+    end
+  end
+
+  def catalog_lists(site_root)
+    result = Catalog.scan(site_root)
+    {
+      "entries" => result.entries.map { |e| [e.collection, e.source_relative] }.sort,
+      "skipped" => COUNTED.to_h { |k| [k, result.skipped[k.to_sym]] },
+      "symlinks" => result.skipped[:symlinks]
+    }
+  end
+
+  def diff(jekyll, catalog)
+    {
+      "only_in_jekyll" => jekyll["entries"] - catalog["entries"],
+      "only_in_catalog" => catalog["entries"] - jekyll["entries"],
+      "count_mismatches" => COUNTED.reject { |k| jekyll["skipped"][k] == catalog["skipped"][k] }
+                                  .to_h { |k| [k, { "jekyll" => jekyll["skipped"][k], "catalog" => catalog["skipped"][k] }] }
+    }
+  end
+
+  def main(argv)
+    json = argv.delete("--json")
+    site = argv.first
+    unless site && File.directory?(site)
+      warn "usage: jekyll-parity SITE [--json]"
+      return 2
+    end
+    jekyll = jekyll_lists(site)
+    catalog = catalog_lists(site)
+    delta = diff(jekyll, catalog)
+    differences = delta["only_in_jekyll"].size + delta["only_in_catalog"].size + delta["count_mismatches"].size
+    if json
+      puts JSON.pretty_generate(jekyll)
+    else
+      puts "#{site}: jekyll #{jekyll["entries"].size} entries, catalog #{catalog["entries"].size}; " \
+           "#{differences} difference(s); catalog skipped #{catalog["symlinks"]} symlink(s)"
+      jekyll["notes"].each { |note| puts "  note: #{note}" }
+      delta["only_in_jekyll"].each { |c, p| puts "  only in jekyll:  [#{c}] #{p}" }
+      delta["only_in_catalog"].each { |c, p| puts "  only in catalog: [#{c}] #{p}" }
+      delta["count_mismatches"].each { |k, v| puts "  count #{k}: jekyll #{v["jekyll"]}, catalog #{v["catalog"]}" }
+    end
+    differences.zero? ? 0 : 1
+  rescue Zer0Cms::Cms::UnsafePath => e
+    warn "#{site}: catalog refused the site: #{e.message}"
+    1
+  end
+end
+
+exit(JekyllParity.main(ARGV.dup)) if $PROGRAM_NAME == __FILE__

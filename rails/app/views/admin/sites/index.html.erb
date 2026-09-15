@@ -1,0 +1,20 @@
+<% discovered = Site.discover_roots %>
+<% content_for(:before_main) do %>
+  <% if discovered.any? %>
+    <section class="card discovered">
+      <div class="page-head">
+        <div>
+          <h2>Unregistered sites under <code><%= Site.sites_dir %></code></h2>
+          <div class="sub"><%= discovered.size %> Jekyll root<%= "s" unless discovered.size == 1 %> with a _config.yml.</div>
+        </div>
+        <%= button_to "Register and sync all", discover_admin_sites_path, class: "button" %>
+      </div>
+      <ul class="mono path-list">
+        <% discovered.each do |root| %><li><%= root %></li><% end %>
+      </ul>
+    </section>
+  <% elsif Site.sites_dir.nil? %>
+    <p class="faint">SITES_DIR is not set: register a site by its absolute path.</p>
+  <% end %>
+<% end %>
+<%= render template: "administrate/application/index", locals: local_assigns %>

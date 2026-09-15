@@ -1,0 +1,64 @@
+<% site = page.resource %>
+<% content_for(:title) { site.name } %>
+<header class="main-content__header">
+  <div>
+    <h1 class="main-content__page-title"><%= site.name %></h1>
+    <div class="sub mono"><%= site.path %></div>
+  </div>
+  <div class="btn-row">
+    <%= button_to "Sync", sync_admin_site_path(site), class: "button" %>
+    <%= link_to "New page", new_admin_page_path(site_id: site.id), class: "button button--alt" %>
+    <%= link_to "Missing previews", admin_pages_path(search: "site:#{site.id} missing_preview:"), class: "button button--alt" %>
+    <%= link_to "Image generator ↗", ImageEngine.generator_url, class: "button button--alt", target: "_blank", rel: "noopener noreferrer" %>
+    <%= link_to "Edit", edit_admin_site_path(site), class: "button button--alt" %>
+    <%= button_to "Remove from index", admin_site_path(site), method: :delete, class: "button button--danger",
+          data: { turbo_confirm: "Remove #{site.name} from the index? Files on disk are not touched." } %>
+  </div>
+</header>
+
+<% if site.sync_error.present? %>
+  <div class="flash alert" role="alert">Last sync failed: <%= site.sync_error %></div>
+<% end %>
+
+<section class="main-content__body">
+  <dl>
+    <% page.attributes.each do |_title, attributes| %>
+      <% attributes.each do |attribute| %>
+        <dt class="attribute-label"><%= t("helpers.label.site.#{attribute.name}", default: Site.human_attribute_name(attribute.name)) %></dt>
+        <dd class="attribute-data attribute-data--<%= attribute.html_class %>"><%= render_field attribute, page: page %></dd>
+      <% end %>
+    <% end %>
+  </dl>
+</section>
+
+<section class="main-content__body">
+  <h2>Collections</h2>
+  <% counts = site.collection_counts %>
+  <% if counts.any? %>
+    <table class="list">
+      <thead><tr><th scope="col">Collection</th><th scope="col" class="right">Pages</th><th scope="col" class="right">Drafts</th></tr></thead>
+      <tbody>
+        <% drafts = site.pages.drafts.group(:collection).count %>
+        <% counts.each do |collection, count| %>
+          <tr>
+            <td><%= link_to collection, admin_pages_path(search: "site:#{site.id} collection:#{collection}") %></td>
+            <td class="right"><%= count %></td>
+            <td class="right"><%= drafts.fetch(collection, 0) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="faint"><%= site.last_synced_at ? "No content files." : "Not synced yet — press Sync." %></p>
+  <% end %>
+</section>
+
+<section class="main-content__body">
+  <h2><code>_config.yml</code> <span class="faint">(read-only)</span></h2>
+  <% yaml = site.config_yaml %>
+  <% if yaml %>
+    <pre class="config"><%= yaml %></pre>
+  <% else %>
+    <p class="faint">_config.yml is missing or not a regular file.</p>
+  <% end %>
+</section>

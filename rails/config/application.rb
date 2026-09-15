@@ -3,24 +3,47 @@
 require_relative "boot"
 
 require "rails"
+require "active_record/railtie"
 require "action_controller/railtie"
 require "action_view/railtie"
+require "rails/test_unit/railtie"
 
+Bundler.require(*Rails.groups)
+
+require "ipaddr"
 require "zer0_cms"
 
 module Zer0CmsWeb
-  # The Rails host for the ABC content engine. Deliberately thin: it owns HTTP,
-  # forms, and views; all book logic lives in Zer0Cms::Abc (lib/zer0_cms), the
-  # same code the CLI and tests drive.
+  # The fleet CMS on Administrate (docs/PLATFORM.md). Git is the source of
+  # truth; the SQLite database is an index of what Jekyll reads, rebuilt by
+  # Site#sync! from Zer0Cms::Cms::Catalog. Writes go to disk through
+  # PageEditor and Zer0Cms::Cms::Writer, never through ActiveRecord.
   class Application < Rails::Application
-    config.load_defaults 7.1
-    config.api_only = false
-    config.eager_load = ENV.fetch("RAILS_ENV", "development") == "production"
-    config.secret_key_base = ENV.fetch("SECRET_KEY_BASE", "dev-only-not-a-secret")
+    config.load_defaults 8.1
+    config.time_zone = "UTC"
 
-    # Where `Export` writes book bundles. Point this at a sibling drsai checkout.
-    config.x.drsai_site_root = ENV.fetch("DRSAI_SITE_ROOT", File.expand_path("../../../drsai", __dir__))
+    # lib/zer0_cms is plain Ruby required above; nothing under lib/ is
+    # autoloaded or eager loaded.
+    config.autoload_lib(ignore: %w[tasks zer0_cms])
 
-    config.hosts.clear # dev convenience; scope this in a real deployment
+    # DNS-rebinding guard: only loopback hosts unless the operator names more.
+    extra_hosts = ENV.fetch("ZER0_CMS_HOSTS", "").split(",").map(&:strip).reject(&:empty?)
+    config.hosts = ["localhost", IPAddr.new("127.0.0.1"), IPAddr.new("::1"), "[::1]", *extra_hosts]
+
+    # Jekyll roots live under SITES_DIR (the /sites bind mount in Docker).
+    # Outside a container an unset SITES_DIR means "any absolute path".
+    config.x.sites_dir = ENV["SITES_DIR"].presence || ("/sites" if File.exist?("/.dockerenv"))
+
+    # ABC export needs an explicit target; there is no default.
+    config.x.drsai_site_root = ENV["DRSAI_SITE_ROOT"].presence
+
+    # The image generator's web panel: anything bigger than one page's local
+    # preview links out to it. Only an http(s) URL is used as a link target.
+    generator_url = ENV["ZER0_IMAGE_GENERATOR_URL"].to_s.strip
+    config.x.image_generator_url = generator_url.match?(%r{\Ahttps?://[^\s"'<>]+\z}i) ? generator_url : "http://localhost:3000"
+
+    if ENV["RAILS_LOG_TO_STDOUT"].present?
+      config.logger = ActiveSupport::TaggedLogging.logger($stdout)
+    end
   end
 end

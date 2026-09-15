@@ -5,11 +5,11 @@
 </p>
 
 <p align="center">
-A lightweight CMS for your markdown repo, inside VS Code.<br> Edit front matter as real controls, browse your content in a dashboard, and publish through a gate a human has to walk through.
+A CMS for zer0-themed markdown sites: VS Code for in-editor edits, Rails for the fleet.<br> Edit front matter as real controls, browse every site in one dashboard, and publish through a gate a human has to walk through.
 </p>
 
 <p align="center">
-  <em>Zero runtime dependencies. One esbuild bundle. No framework.</em>
+  <em>Extension: zero runtime dependencies. Fleet CMS: Rails 8.1 on Administrate, on 127.0.0.1:3001.</em>
 </p>
 
 ---
@@ -33,8 +33,15 @@ It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front
 
 | Path | What it is |
 |---|---|
-| `src/` | The **VS Code extension** — this README. |
-| `rails/` | The **ABC generator** — a stdlib-only Ruby library + optional Rails wizard that writes children's alphabet books and exports them as a Jekyll board book. A separate product with its own README and its own CI workflow: [`rails/README.md`](rails/README.md). ("Content engine" means the `.cms/` contract engine in `src/core/contract/`; these are different things.) |
+| `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*. This README. |
+| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), and hosts the ABC book wizard. [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) |
+
+```bash
+SITES_DIR=~/github docker compose up --build                      # → http://localhost:3001/admin
+SITES_DIR=~/github docker compose --profile imagegen up --build   # + zer0-image-generator → http://localhost:3000
+```
+
+Both ports are published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposing the CMS anywhere else. How this repository, the zer0-mistakes theme and zer0-image-generator fit together: [`docs/ZER0-STACK.md`](docs/ZER0-STACK.md).
 
 ## How publishing works
 

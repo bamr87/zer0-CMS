@@ -1,0 +1,7 @@
+# Fixture for rails/bin/jekyll-parity: a site whose source is a subdirectory.
+title: Source fixture
+source: src
+collections:
+  - recipes
+exclude:
+  - drafts/

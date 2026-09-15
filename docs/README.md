@@ -1,16 +1,19 @@
 # `docs/` — the long-form documentation
 
-Three documents live here, and they answer different questions. Everything shorter than these is in the root [`README.md`](../README.md); everything about *changing* the code is in [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CLAUDE.md`](../CLAUDE.md).
+Six documents live here, and they answer different questions. Everything shorter than these is in the root [`README.md`](../README.md); everything about *changing* the code is in [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CLAUDE.md`](../CLAUDE.md).
 
 | Document | Answers |
 |---|---|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, and what the ledger guarantees. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the extension's internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, what the ledger guarantees, and D15–D16: the Rails CMS and the extension share files, not a process, and the Rails UI is Administrate over an index git stays the truth for. |
+| [`PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
+| [`ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
+| [`CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
 | [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 44 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
 | [`RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 
-## The rule these two follow
+## The rule these documents follow
 
-Both documents describe **the code as it is**, not as a plan intended it. When they disagree with the source, the source is right and the document is a bug — so a change to configuration, to the JSON schema, or to the layer boundary is not finished until the matching document moves with it.
+Every document here describes **the code as it is**, not as a plan intended it. When they disagree with the source, the source is right and the document is a bug — so a change to configuration, to the JSON schema, or to the layer boundary is not finished until the matching document moves with it.
 
 Two places make that concrete for `CONFIG.md`: every `zer0Cms.*` id it names exists in `package.json`'s `contributes.configuration`, and every `zer0.json` key it names exists in [`../schemas/zer0.schema.json`](../schemas/zer0.schema.json). Adding a setting means editing three files — the manifest, the settings layer in `src/config.ts`, and `CONFIG.md`. Adding a `zer0.json` key means editing four — the schema, `src/core/shared/types.ts`, `src/core/shared/config.ts`, and `CONFIG.md`.
 
@@ -20,4 +23,4 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 ## Nearby documentation
 
-The per-directory `README.md` files are the other half of the documentation and are usually the faster answer: [`src/core/`](../src/core/README.md), [`src/core/shared/`](../src/core/shared/README.md), [`src/core/content/`](../src/core/content/README.md), [`src/core/governance/`](../src/core/governance/README.md), [`src/core/contract/`](../src/core/contract/README.md), [`src/core/catering/`](../src/core/catering/README.md), [`src/mcp/`](../src/mcp/README.md), [`src/panel/`](../src/panel/README.md), [`src/dashboard/`](../src/dashboard/README.md), [`src/webview/panel/fields/`](../src/webview/panel/fields/README.md), [`src/core/platform/`](../src/core/platform/README.md), [`src/core/fleet/`](../src/core/fleet/README.md), [`src/core/harness/`](../src/core/harness/README.md), [`src/commands/`](../src/commands/README.md), [`src/test/`](../src/test/README.md), [`src/views/`](../src/views/README.md), [`src/agent/`](../src/agent/README.md), [`src/webview/`](../src/webview/README.md), [`src/webview/dashboard/`](../src/webview/dashboard/README.md), [`media/`](../media/README.md), [`media/templates/`](../media/templates/README.md), and [`rails/`](../rails/README.md) for the ABC content engine, which is a separate product in the same repository.
+The per-directory `README.md` files are the other half of the documentation and are usually the faster answer: [`src/core/`](../src/core/README.md), [`src/core/shared/`](../src/core/shared/README.md), [`src/core/content/`](../src/core/content/README.md), [`src/core/governance/`](../src/core/governance/README.md), [`src/core/contract/`](../src/core/contract/README.md), [`src/core/catering/`](../src/core/catering/README.md), [`src/mcp/`](../src/mcp/README.md), [`src/panel/`](../src/panel/README.md), [`src/dashboard/`](../src/dashboard/README.md), [`src/webview/panel/fields/`](../src/webview/panel/fields/README.md), [`src/core/platform/`](../src/core/platform/README.md), [`src/core/fleet/`](../src/core/fleet/README.md), [`src/core/harness/`](../src/core/harness/README.md), [`src/commands/`](../src/commands/README.md), [`src/test/`](../src/test/README.md), [`src/views/`](../src/views/README.md), [`src/agent/`](../src/agent/README.md), [`src/webview/`](../src/webview/README.md), [`src/webview/dashboard/`](../src/webview/dashboard/README.md), [`media/`](../media/README.md), [`media/templates/`](../media/templates/README.md), and [`rails/`](../rails/README.md) for the fleet CMS platform (and the ABC wizard), which is a separate product in the same repository.

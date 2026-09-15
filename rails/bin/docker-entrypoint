@@ -1,0 +1,29 @@
+#!/bin/bash
+# The container's entrypoint: jemalloc when present, a secret_key_base that
+# survives restarts, the index database prepared, then the command.
+set -euo pipefail
+
+if [ -z "${LD_PRELOAD+x}" ]; then
+  jemalloc=$(find /usr/lib -name libjemalloc.so.2 -print -quit 2>/dev/null || true)
+  if [ -n "$jemalloc" ]; then
+    export LD_PRELOAD="$jemalloc"
+  fi
+fi
+
+# Production needs a secret_key_base (sessions, CSRF). Use SECRET_KEY_BASE when
+# the operator sets one; otherwise generate one once into the storage volume,
+# readable by this user only, so it is stable across restarts and never baked
+# into the image.
+if [ "${RAILS_ENV:-}" = "production" ] && [ -z "${SECRET_KEY_BASE:-}" ]; then
+  secret_file=storage/.secret_key_base
+  if [ ! -s "$secret_file" ]; then
+    (umask 077 && ruby -rsecurerandom -e 'print SecureRandom.hex(64)' > "$secret_file")
+  fi
+  SECRET_KEY_BASE=$(cat "$secret_file")
+  export SECRET_KEY_BASE
+fi
+
+# Creates storage/<env>.sqlite3 on a blank volume and migrates an old one.
+bin/rails db:prepare
+
+exec "$@"
