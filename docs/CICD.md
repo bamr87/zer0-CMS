@@ -1,6 +1,6 @@
 # SDLC / CI
 
-Two products share this repository, and each is gated on its own terms: the VS Code extension (`src/`) and the Rails fleet CMS (`rails/`). `main` is not branch-protected and no check is required; still never push to it — branch and open a PR. Every workflow here declares `permissions: contents: read` at the top (a job widens it only where it must write) and a `concurrency` group.
+Two products share this repository, and each is gated on its own terms: the VS Code extension (`src/`) and the Rails fleet CMS (`rails/`). `main` is not branch-protected and no check is required; still never push to it — branch and open a PR. Every workflow here declares `permissions: contents: read` at the top (a job widens it only where it must write) and a `concurrency` group — except the called `zer0-linkedin.yml`, which declares no permissions so that its caller's grant applies (`contents: write` to publish or read statistics, `contents: read` to check a token), and sets its concurrency per job.
 
 ## The workflows
 
@@ -10,6 +10,7 @@ Two products share this repository, and each is gated on its own terms: the VS C
 | `abc-engine.yml` | PR and push to `main` touching `rails/**` or the workflow | `rails/bin/test-stdlib` — every `rails/test/zer0_cms/test_*.rb` — with **no** `bundle install`, on Ruby 3.3 and 4.0.5 (matrix, `fail-fast: false`) |
 | `rails-app.yml` | PR and push to `main` touching `rails/**`, `docker-compose.yml` or the workflow | With the bundle (from `rails/.ruby-version` and `rails/Gemfile.lock`) and PyYAML: `bin/rails test`, `bin/rails zeitwerk:check`, then a production boot — `assets:precompile`, `db:prepare`, `bin/rails server` — that must answer `/up` and `/admin/sites` |
 | `zer0-doctor.yml` | `workflow_call` from a content repository; `workflow_dispatch` here | The zer0 stack consumer contract check on the caller's site (below); fails only when asked to |
+| `zer0-linkedin.yml` | `workflow_call` from a content repository | The LinkedIn distribution lane on the caller's site at its branch tip, with no bundle: `publish` (a rehearsal, or live with `ZER0_LINKEDIN_PUBLISH=1` set for that one step; `ZER0_LINKEDIN_MERGED=1` on the default branch), `status` (fails on a dead token or one within `warn-days` of expiry) or `stats`; commits the ledger, the queue and `performance.json` back with `[skip ci]` and uploads them as `zer0-linkedin-results`; skips with a notice when the caller has no LinkedIn credential. Contract: [`DISTRIBUTION.md`](DISTRIBUTION.md#ci-the-reusable-workflow) |
 | `ci.yml` | every PR and push to `main` | The hub's shared `standard-ci.yml` (a thin caller; the logic lives in bamr87/bamr87) |
 | `markdown-oneline.yml` | PR and push to `main` touching markdown | On a same-repo PR it runs `tools/unwrap-prose.py --write` and pushes the repair to the PR branch; on a fork PR or a push to `main` it fails with the fix command instead |
 | `codeql-analysis.yml` | push and PR to `main`, weekly (Fridays 14:24 UTC) | CodeQL over `javascript-typescript` and `ruby`, both `build-mode: none` |

@@ -1,0 +1,257 @@
+# zer0-linkedin — the LinkedIn distribution lane, as a reusable workflow.
+#
+# A content repository calls it (docs/DISTRIBUTION.md):
+#
+#   on:
+#     push:
+#       branches: [main]
+#       paths: ["drafts/linkedin/**"]     # a merged draft is an approved draft
+#     workflow_dispatch:
+#   permissions:
+#     contents: write                     # publish and stats commit results back
+#   jobs:
+#     publish:
+#       uses: bamr87/zer0-CMS/.github/workflows/zer0-linkedin.yml@main
+#       with:
+#         command: publish
+#         live: ${{ github.event_name == 'push' }}
+#       secrets: inherit
+#
+# Commands:
+#   publish  the queue (or one `draft`); rehearsal unless `live`
+#   status   the site's settings and — with a credential — LinkedIn's answer
+#            about the token; fails when it is dead or within `warn-days` of
+#            expiry, which is what a weekly token-health caller wants
+#   stats    aggregate statistics for the author's own published posts, into
+#            .cms/distribution/performance.json
+#
+# Permissions: this workflow declares none, so the caller's grant applies —
+# `contents: write` for publish and stats, which commit results back, and
+# `contents: read` for status.
+#
+# It runs against the tip of the branch the run is on, not the commit that
+# triggered it: a run queued behind another one must see the ledger that run
+# committed, or it would post the same draft again. On the repository's default
+# branch it sets ZER0_LINKEDIN_MERGED=1, which is what lets a site that treats a
+# merge as approval publish a `pending` draft; anywhere else a draft must be
+# `approved`.
+#
+# A rehearsal needs no credential and still fails on a guard error, a missing
+# page or an unconfirmed earlier attempt, so it can gate a pull request. Every
+# other run skips with a notice when LINKEDIN_ACCESS_TOKEN (or a refresh token)
+# is absent. `ZER0_LINKEDIN_PUBLISH=1` is set for the one step of a live
+# publish. After a live publish or a stats run the ledger, the queue and the
+# performance file are committed back with [skip ci] (a GITHUB_TOKEN push starts
+# no workflow, so it cannot loop); the report and those files are also uploaded
+# as the `zer0-linkedin-results` artifact, so a commit that cannot land loses
+# nothing.
+name: zer0-linkedin
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        description: "publish, status or stats"
+        type: string
+        required: false
+        default: publish
+      site-path:
+        description: "The Jekyll site root, relative to the caller repository root"
+        type: string
+        required: false
+        default: "."
+      live:
+        description: "publish only: send approved drafts to LinkedIn (otherwise rehearse)"
+        type: boolean
+        required: false
+        default: false
+      draft:
+        description: "publish only: one draft id instead of the whole queue"
+        type: string
+        required: false
+        default: ""
+      warn-days:
+        description: "status only: fail when the token expires within this many days"
+        type: number
+        required: false
+        default: 7
+      zer0-cms-ref:
+        description: "The zer0-CMS ref to run"
+        type: string
+        required: false
+        default: main
+    secrets:
+      LINKEDIN_ACCESS_TOKEN:
+        required: false
+      LINKEDIN_REFRESH_TOKEN:
+        required: false
+      LINKEDIN_CLIENT_ID:
+        required: false
+      LINKEDIN_CLIENT_SECRET:
+        required: false
+
+jobs:
+  linkedin:
+    name: zer0 linkedin ${{ inputs.command }}${{ inputs.live && ' (live)' || '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # One group per command: a token check queued behind a publish must never
+    # replace it, and two publishes must never run at once.
+    concurrency:
+      group: zer0-linkedin-${{ github.repository }}-${{ inputs.command }}
+      cancel-in-progress: false
+    steps:
+      - name: Validate the inputs and look for a credential
+        id: gate
+        env:
+          COMMAND: ${{ inputs.command }}
+          SITE_PATH: ${{ inputs.site-path }}
+          DRAFT: ${{ inputs.draft }}
+          LIVE: ${{ inputs.live }}
+          HAS_CREDENTIAL: ${{ secrets.LINKEDIN_ACCESS_TOKEN != '' || secrets.LINKEDIN_REFRESH_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          case "$COMMAND" in
+            publish | status | stats) ;;
+            *) echo "::error::command must be publish, status or stats, not: $COMMAND"; exit 2 ;;
+          esac
+          case "$SITE_PATH" in
+            /* | .. | ../* | */.. | */../*) echo "::error::site-path must stay inside the repository: $SITE_PATH"; exit 2 ;;
+          esac
+          if [ -n "$DRAFT" ] && ! printf '%s' "$DRAFT" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+            echo "::error::draft must be a draft id (a filename without .md)"; exit 2
+          fi
+          if [ "$HAS_CREDENTIAL" = "true" ] || { [ "$COMMAND" = "publish" ] && [ "$LIVE" != "true" ]; }; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No LinkedIn credential (LINKEDIN_ACCESS_TOKEN) — skipping $COMMAND. Add the secret to activate the lane."
+          fi
+
+      # In a called workflow `github.repository` and `github.ref` are the
+      # caller's. `ref` is the branch, so the checkout is its tip now.
+      - name: Check out the site
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          path: site
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          persist-credentials: ${{ (inputs.command == 'publish' && inputs.live) || inputs.command == 'stats' }}
+
+      - name: Check out zer0-CMS
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@v7
+        with:
+          repository: bamr87/zer0-CMS
+          ref: ${{ inputs.zer0-cms-ref }}
+          path: zer0-cms
+          persist-credentials: false
+
+      # The lane is stdlib Ruby, like the doctor: no bundle.
+      - uses: ruby/setup-ruby@v1
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          ruby-version: "3.3"
+
+      - name: Run zer0-cms linkedin ${{ inputs.command }}
+        id: run
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          COMMAND: ${{ inputs.command }}
+          SITE_PATH: ${{ inputs.site-path }}
+          DRAFT: ${{ inputs.draft }}
+          LIVE: ${{ inputs.live }}
+          WARN_DAYS: ${{ inputs.warn-days }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          ZER0_LINKEDIN_PUBLISH: ${{ inputs.command == 'publish' && inputs.live && '1' || '' }}
+          ZER0_LINKEDIN_MERGED: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && '1' || '' }}
+        run: |
+          set -uo pipefail
+          mkdir -p linkedin-report
+          cli=(ruby -I zer0-cms/rails/lib zer0-cms/rails/bin/zer0-cms linkedin)
+          site=(--site "site/$SITE_PATH")
+          case "$COMMAND" in
+            publish)
+              extra=()
+              [ -n "$DRAFT" ] && extra+=("$DRAFT")
+              [ "$LIVE" = "true" ] && extra+=(--live)
+              "${cli[@]}" publish "${site[@]}" "${extra[@]}" 2>&1 | tee linkedin-report/output.txt ;;
+            status)
+              check=()
+              [ -n "$LINKEDIN_ACCESS_TOKEN$LINKEDIN_REFRESH_TOKEN" ] && check+=(--check --warn-days "$WARN_DAYS")
+              "${cli[@]}" status "${site[@]}" "${check[@]}" 2>&1 | tee linkedin-report/output.txt ;;
+            stats)
+              "${cli[@]}" stats "${site[@]}" --write 2>&1 | tee linkedin-report/output.txt ;;
+          esac
+          status=${PIPESTATUS[0]}
+          "${cli[@]}" status "${site[@]}" --json > linkedin-report/status.json 2>/dev/null || true
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      - name: Keep a copy of the ledger, the queue and the statistics
+        if: always() && steps.gate.outputs.ready == 'true'
+        env:
+          SITE_PATH: ${{ inputs.site-path }}
+        run: |
+          ruby -rjson -rfileutils -e '
+            report = JSON.parse(File.read(ARGV[0])) rescue exit
+            %w[ledger queue performance].each do |key|
+              source = File.join(ARGV[1], report[key].to_s)
+              next if report[key].to_s.empty? || !File.exist?(source)
+              target = File.join("linkedin-report/state", report[key])
+              FileUtils.mkdir_p(File.dirname(target))
+              FileUtils.cp_r(source, target)
+            end
+          ' linkedin-report/status.json "site/$SITE_PATH" || true
+
+      - name: Commit the ledger, the queue and the statistics back
+        if: always() && steps.gate.outputs.ready == 'true' && ((inputs.command == 'publish' && inputs.live) || inputs.command == 'stats')
+        working-directory: site
+        env:
+          SITE_PATH: ${{ inputs.site-path }}
+        run: |
+          set -uo pipefail
+          report=../linkedin-report/status.json
+          if [ ! -s "$report" ]; then echo "No status report; nothing to commit."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ruby -rjson -e 'r = JSON.parse(File.read(ARGV[0])); %w[ledger queue performance].each { |k| puts File.join(ARGV[1], r[k]) }' \
+            "$report" "$SITE_PATH" | while read -r path; do
+            if [ -e "$path" ]; then git add -- "$path"; fi
+          done
+          if git diff --cached --quiet; then echo "Nothing changed."; exit 0; fi
+          git commit -m "chore(linkedin): record the distribution lane's results [skip ci]" || exit 1
+          for _ in 1 2 3; do
+            if git push; then exit 0; fi
+            if ! git pull --rebase --autostash; then
+              git rebase --abort 2>/dev/null || true
+              break
+            fi
+          done
+          echo "::error::could not commit the ledger back — its copy is in the zer0-linkedin-results artifact (state/). Add those entries to the ledger before the next publish runs."
+          exit 1
+
+      - name: Upload the results
+        if: always() && steps.gate.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: zer0-linkedin-results
+          path: linkedin-report
+          if-no-files-found: ignore
+
+      - name: Write the job summary
+        if: always() && steps.gate.outputs.ready == 'true'
+        env:
+          COMMAND: ${{ inputs.command }}
+        run: |
+          {
+            echo "## zer0 linkedin \`$COMMAND\`"
+            echo
+            echo '```text'
+            head -n 400 linkedin-report/output.txt 2>/dev/null || echo "(no output)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
