@@ -1,0 +1,52 @@
+- id: content-factory
+  kind: content
+  harness: claude-cli
+  implementation: .github/workflows/content-factory.yml
+  description: "Produce ONE on-voice, tested piece from the backlog, verify it with the repository harness, and open ONE pull request. Never merges."
+  triggers:
+  - kind: schedule
+    cron: "17 9 * * *"
+  - kind: dispatch
+  switch: CONTENT_FACTORY_ENABLED
+  uses_tokens:
+  - ANTHROPIC_API_KEY
+  - CLAUDE_CODE_OAUTH_TOKEN
+  - FLEET_TOKEN
+  guardrails:
+    never_merges: true
+    opens_pull_requests: true
+- id: docs-audit
+  kind: maintenance
+  harness: claude-cli
+  implementation: .github/workflows/docs-audit.yml
+  description: "Read the built documentation for pages that no longer match the code, fix the smallest honest set of them, and open ONE pull request. Never merges."
+  triggers:
+  - kind: schedule
+    cron: "41 6 * * 1"
+  - kind: dispatch
+  switch: DOCS_AUDIT_ENABLED
+  uses_tokens:
+  - ANTHROPIC_API_KEY
+  - CLAUDE_CODE_OAUTH_TOKEN
+  - FLEET_TOKEN
+  guardrails:
+    never_merges: true
+    opens_pull_requests: true
+- id: content-review
+  kind: review
+  harness: claude-cli
+  implementation: .github/workflows/content-review.yml
+  description: "Read the changed pages on a pull request, apply small improvements in place, and post judgement calls as comments. Never merges."
+  triggers:
+  - kind: event
+    events:
+    - pull_request
+  - kind: dispatch
+  switch: CONTENT_REVIEW_ENABLED
+  uses_tokens:
+  - ANTHROPIC_API_KEY
+  - CLAUDE_CODE_OAUTH_TOKEN
+  - FLEET_TOKEN
+  guardrails:
+    never_merges: true
+    opens_pull_requests: true

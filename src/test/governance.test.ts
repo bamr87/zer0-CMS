@@ -53,9 +53,11 @@ import {
 import {
   buildPreview,
   canonicalUrl,
+  jekyllTarget,
   previewRequestFromDraft,
   publishPreview,
   resolveSource,
+  targetById,
   targetFor,
 } from '../core/governance/publish';
 import {
@@ -67,10 +69,19 @@ import {
   recordSlug,
 } from '../core/contract/contract';
 import { resolveConfig } from '../core/shared/config';
+import { formatDate } from '../core/shared/dates';
 import type { Zer0Settings } from '../core/shared/config';
 import { readJsonc } from '../core/shared/jsonio';
 import type { BlockerKind, GateInput } from '../core/governance/approval';
-import type { ContentRecord, Zer0Config } from '../core/shared/types';
+import type { FmFormat } from '../core/content/frontmatter';
+import { PLATFORM_IDS } from '../core/shared/types';
+import type {
+  ContentRecord,
+  DatePrefixRule,
+  PlatformId,
+  PlatformProfile,
+  Zer0Config,
+} from '../core/shared/types';
 
 const WORKSPACE = path.resolve(__dirname, '../../src/test/fixtures/workspace');
 const DRAFTS = path.join(WORKSPACE, '.zer0/drafts');
@@ -78,6 +89,19 @@ const DRAFTS = path.join(WORKSPACE, '.zer0/drafts');
 function fixtureConfig(settings: Zer0Settings = {}): Zer0Config {
   const file = readJsonc<unknown>(fs.readFileSync(path.join(WORKSPACE, 'zer0.json'), 'utf8'));
   return resolveConfig(WORKSPACE, file, settings);
+}
+
+/**
+ * The same configuration with nobody having named a publish target.
+ *
+ * The fixture's `zer0.json` says `target: "jekyll"`, and since the resolver's
+ * default became `''` that is a real choice rather than an unset key — an
+ * explicit target outranks detection, which is exactly the behaviour the
+ * platform work is built on. The tests below are about what detection resolves
+ * to, so they ask with nobody choosing.
+ */
+function detected(cfg: Zer0Config): Zer0Config {
+  return { ...cfg, governance: { ...cfg.governance, target: '' } };
 }
 
 /** A fresh scratch directory. Every writer in this file goes through it. */
@@ -958,6 +982,265 @@ suite('governance: a publish interrupted before the ledger does not duplicate', 
       assert.notEqual(second.urn, first.urn);
       assert.ok(second.urn?.includes('-2.md'), `bumped: ${second.urn ?? ''}`);
       assert.ok(second.warnings.some((w) => w.includes('already existed')));
+    } finally {
+      remove(path.dirname(root));
+    }
+  });
+});
+
+suite('governance: publish targets per platform (D8 + D12)', () => {
+  /**
+   * A profile good enough to publish through, built here rather than imported.
+   *
+   * `core/platform` is a sibling work package; these tests are about the
+   * *target* layer, and depending on the real profile table would make a change
+   * of MkDocs' default content root fail a test about publishing. Only the keys
+   * the target reads carry meaning — the rest are the shape `PlatformProfile`
+   * demands, and are deliberately inert.
+   */
+  function profile(
+    id: PlatformId,
+    root: string,
+    datePrefix: DatePrefixRule,
+    over: { dialects?: FmFormat[]; dateKey?: string; thumbnailKey?: string } = {},
+  ): PlatformProfile {
+    return {
+      id,
+      overlay: null,
+      probes: [],
+      siteConfig: { file: null, format: 'none' },
+      contentRoots: [
+        {
+          collection: 'posts',
+          path: root,
+          mode: 'authored',
+          filename: { datePrefix, bundles: 'none' },
+          permalink: null,
+          requiredKeys: [],
+          recommendedKeys: [],
+          layoutAllowed: [],
+        },
+      ],
+      outputDirs: [],
+      frontMatter: {
+        dialects: over.dialects ?? ['yaml'],
+        typeKey: null,
+        draft: { name: 'draft', type: 'boolean' },
+        draftFolders: [],
+        dateKeys: { publish: [over.dateKey ?? 'date'], modified: [] },
+        dateFormat: 'date',
+        filenameDate: null,
+        taxonomyKeys: [],
+        slugKey: 'slug',
+        permalinkKeys: [],
+        thumbnailKeys: [over.thumbnailKey ?? 'image'],
+        structuralStems: [],
+        bundleNames: [],
+      },
+      commands: { serve: null, build: null, previewUrl: null, port: null, previewImages: null },
+      governanceTarget: id,
+      validators: [],
+    };
+  }
+
+  /** The corp folder is the one `destinationFolder` picks with no hint. */
+  const CORP = 'pages/_posts/corp';
+
+  /** The five ids WP2.2 exists for, each with its real filename convention. */
+  const PLATFORMS: Array<[PlatformId, DatePrefixRule]> = [
+    ['mkdocs', 'forbidden'],
+    ['hugo', 'forbidden'],
+    ['docusaurus', 'optional'],
+    ['astro', 'forbidden'],
+    ['wikijs', 'forbidden'],
+  ];
+
+  const sandbox = (): { root: string; cfg: Zer0Config } => {
+    const root = path.join(scratch(), 'ws');
+    fs.cpSync(WORKSPACE, root, { recursive: true });
+    return {
+      root,
+      cfg: resolveConfig(root, readJsonc<unknown>(fs.readFileSync(path.join(root, 'zer0.json'), 'utf8'))),
+    };
+  };
+
+  test("every platform target's build writes nothing and calls nothing out", async () => {
+    const cfg = detected(fixtureConfig());
+    const draft = await readDraft(path.join(DRAFTS, 'approved-note.md'));
+
+    const before = snapshotTree(WORKSPACE);
+    const realFetch = globalThis.fetch;
+    let calls = 0;
+    Object.defineProperty(globalThis, 'fetch', {
+      configurable: true,
+      writable: true,
+      value: () => {
+        calls += 1;
+        throw new Error('a target build must not reach the network');
+      },
+    });
+
+    try {
+      for (const [id, rule] of PLATFORMS) {
+        const p = profile(id, CORP, rule);
+        const target = targetFor(cfg, p);
+        assert.equal(target.id, id, `${id} resolves to its own target`);
+
+        // Built WITHOUT the profile on purpose: the plan then carries the
+        // configured `{{date|yyyy-MM-dd}}` prefix, and the artifact proves the
+        // target derives the destination from the profile rather than trusting
+        // whatever the plan handed it.
+        const preview = await buildPreview(cfg, previewRequestFromDraft(draft));
+        const artifact = (await target.build(cfg, preview)) as {
+          target: string;
+          path: string;
+          contents: string;
+          warnings: string[];
+        };
+        assert.equal(artifact.target, id);
+        assert.equal(artifact.path.startsWith(`${CORP}/`), true, artifact.path);
+        assert.match(artifact.contents, /MCP for the back office/);
+        if (rule === 'forbidden') {
+          assert.equal(
+            /\/\d{4}-\d{2}-\d{2}-/.test(artifact.path),
+            false,
+            `${id} serves the filename as the slug: ${artifact.path}`,
+          );
+          assert.equal(artifact.warnings.length, 1, `the rename is reported: ${id}`);
+        } else {
+          assert.match(artifact.path, /\/\d{4}-\d{2}-\d{2}-/, `${id} left the plan alone`);
+          assert.deepEqual(artifact.warnings, []);
+        }
+
+        // And with the profile threaded through, the plan itself is already
+        // right — so the target has nothing left to correct.
+        const aligned = await buildPreview(cfg, previewRequestFromDraft(draft), p);
+        const second = (await target.build(cfg, aligned)) as { path: string; warnings: string[] };
+        assert.equal(second.path, artifact.path, `${id} agrees with its own plan`);
+        assert.deepEqual(second.warnings, [], `${id} has nothing to warn about`);
+      }
+    } finally {
+      Object.defineProperty(globalThis, 'fetch', {
+        configurable: true,
+        writable: true,
+        value: realFetch,
+      });
+    }
+
+    assert.equal(calls, 0, 'nothing even attempted a fetch');
+    const after = snapshotTree(WORKSPACE);
+    assert.deepEqual([...after.keys()].sort(), [...before.keys()].sort(), 'no file appeared');
+    for (const [file, bytes] of before) {
+      assert.equal(after.get(file), bytes, `${file} is byte-identical`);
+    }
+  });
+
+  test('a platform send writes exclusively, urns as <platform>:<rel>, and adopts a retry', async () => {
+    const { root, cfg: named } = sandbox();
+    const cfg = detected(named);
+    try {
+      const p = profile('mkdocs', CORP, 'forbidden');
+      const target = targetFor(cfg, p);
+      const draft = await readDraft(path.join(root, '.zer0/drafts/approved-note.md'));
+      const url = '/pages/posts/tech/mcp-for-the-back-office/';
+
+      const first = await publishPreview(
+        cfg,
+        await buildPreview(cfg, previewRequestFromDraft(draft), p),
+        target,
+        { draft },
+      );
+      assert.equal(first.urn, `mkdocs:${CORP}/approved-note.md`, JSON.stringify(first));
+      assert.equal(fs.existsSync(path.join(root, CORP, 'approved-note.md')), true);
+      const written = fs.readdirSync(path.join(root, CORP)).sort();
+      assert.equal(await isPublished(path.join(root, '.zer0/ledger.json'), url), true);
+
+      // The interrupted-publish case, on the shared write path: the file is
+      // there, the ledger key is not. The retry adopts rather than writing -2.
+      const ledgerFile = path.join(root, '.zer0/ledger.json');
+      const ledger = JSON.parse(fs.readFileSync(ledgerFile, 'utf8')) as Record<string, unknown>;
+      delete ledger[url];
+      fs.writeFileSync(ledgerFile, `${JSON.stringify(ledger, null, 2)}\n`, 'utf8');
+
+      const retry = await publishPreview(
+        cfg,
+        await buildPreview(cfg, previewRequestFromDraft(draft), p),
+        target,
+        { draft },
+      );
+      assert.equal(retry.urn, first.urn, 'adopted, not duplicated');
+      assert.ok(retry.warnings.some((w) => w.includes('interrupted publish')));
+      assert.deepEqual(
+        fs.readdirSync(path.join(root, CORP)).sort(),
+        written,
+        'the retry added no second copy',
+      );
+    } finally {
+      remove(path.dirname(root));
+    }
+  });
+
+  test('targetFor never throws for a platform the extension itself detected', () => {
+    const cfg = detected(fixtureConfig());
+    for (const id of PLATFORM_IDS) {
+      const resolved = targetFor(cfg, profile(id, CORP, 'optional'));
+      assert.equal(resolved.id, id, `${id} resolved to a usable target`);
+      assert.equal(typeof resolved.build, 'function');
+      assert.equal(typeof resolved.send, 'function');
+    }
+
+    // The zer0-mistakes overlay is an overlay ON jekyll, never a sibling — so
+    // it resolves to the registered built-in, not to a second file target.
+    const overlay = profile('jekyll', CORP, 'required');
+    overlay.overlay = 'zer0-mistakes';
+    assert.equal(targetFor(cfg, overlay), jekyllTarget, 'the overlay publishes as jekyll');
+
+    // The registry still wins over the factory: `jekyll` is registered, so a
+    // jekyll profile gets the built-in object rather than a second file target
+    // built on the fly. That is the same branch a `registerTarget('mkdocs')`
+    // would take, without leaving a target behind for the next suite.
+    assert.equal(targetFor(cfg, profile('jekyll', CORP, 'required')), jekyllTarget);
+  });
+
+  test('an explicit unknown governance.target still throws', () => {
+    const typo = fixtureConfig({ governance: { target: 'jeykll' } });
+    assert.throws(() => targetFor(typo), /unknown publish target 'jeykll'/);
+    // Even with a perfectly good profile in hand: a typo in a person's own
+    // config is their mistake to hear about, not one to silently route around.
+    assert.throws(
+      () => targetFor(typo, profile('mkdocs', CORP, 'forbidden')),
+      /unknown publish target 'jeykll'/,
+    );
+    assert.throws(() => targetById('nope'), /known: jekyll/);
+  });
+
+  test('the jekyll urn and destination are unchanged', async () => {
+    const { root, cfg } = sandbox();
+    try {
+      assert.equal(targetFor(cfg), jekyllTarget, 'no profile still means the built-in');
+      assert.equal(
+        targetFor(cfg, profile('jekyll', CORP, 'required')),
+        jekyllTarget,
+        'a jekyll profile resolves to exactly the target it always did',
+      );
+
+      const draft = await readDraft(path.join(root, '.zer0/drafts/approved-note.md'));
+      const preview = await buildPreview(cfg, previewRequestFromDraft(draft));
+      const stamp = formatDate(new Date(), 'yyyy-MM-dd', cfg.date.timezone);
+      assert.equal(
+        preview.plan?.destination,
+        `${CORP}/${stamp}-approved-note.md`,
+        'the dated Jekyll destination, exactly as before',
+      );
+
+      const outcome = await publishPreview(cfg, preview, targetFor(cfg), { draft });
+      assert.equal(outcome.urn, `jekyll:${CORP}/${stamp}-approved-note.md`);
+      assert.deepEqual(outcome.warnings, [], 'a clean first publish says nothing');
+      assert.equal(
+        (preview.artifact as { target: string }).target,
+        'jekyll',
+        'the artifact shape the panel renders is untouched',
+      );
     } finally {
       remove(path.dirname(root));
     }

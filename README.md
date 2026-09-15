@@ -21,7 +21,11 @@ zer0-CMS turns a repository of markdown into something you can actually operate:
 - a **metadata panel** that renders the active file's front matter as typed controls instead of raw YAML,
 - a **dashboard** that lists every piece of content with search, filters and sorting,
 - **SEO insights** measured against thresholds you set,
-- and a **governed publishing path** — draft → brand guard → human approval → publish → ledger — where nothing goes out because a script decided it should.
+- a **governed publishing path** — draft → brand guard → human approval → publish → ledger — where nothing goes out because a script decided it should,
+- a **front-matter audit** of every page against the site's own schema, whose fixes you see as a diff before any of them lands,
+- **platform profiles** — Jekyll (with the zer0-mistakes theme as an overlay), MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback — so a site is read the way its own generator reads it,
+- **many sites in one window**, each with its own configuration, draft queue and MCP server,
+- and a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs.
 
 It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
@@ -104,9 +108,15 @@ The settings that matter most:
 | `zer0Cms.governance.ledgerPath` | `.zer0/ledger.json` | The shared ledger |
 | `zer0Cms.governance.bannedPatternsFile` | — | Extra brand-guard patterns |
 | `zer0Cms.cms.root` | `.cms` | Where the content engine's contract lives |
+| `zer0Cms.cms.aiConfigPath` | `_data/ai.yml` | The site's own AI configuration, so the editor agent and the repository's CI resolve the same model |
+| `zer0Cms.cms.verifyCommand` | — | The repository's own verification command; empty means there is none, and nothing is guessed |
 | `zer0Cms.agent.enabled` | `false` | The optional AI layer |
-| `zer0Cms.fleet.enabled` | `false` | The Fleet console (read-only) |
-| `zer0Cms.fleet.dispatchAllow` | `false` | Lets the console flip a lane's switch or dispatch it — your settings only |
+| `zer0Cms.fleet.enabled` | `false` | The Fleet, Workflows and Monitor tabs and the twelve `fleet.*`/`workflows.open`/`lane.scaffold`/`monitor.open` palette entries — read-only until `dispatchAllow` or `scaffoldAllow` |
+| `zer0Cms.fleet.dispatchAllow` | `false` | Lets the console flip a lane's switch, dispatch it, re-run its last failure, cancel a run, or enable/disable its workflow file — your settings only |
+| `zer0Cms.fleet.scaffoldAllow` | `false` | Lets the console write a new lane's files for you to review and commit — your settings only; it never creates the variable that arms the lane |
+| `zer0Cms.fleet.roster` | `[]` | Other repositories to show beside this one, as `owner/name` |
+| `zer0Cms.fleet.hub` | `bamr87/bamr87` | The fleet's hub, read only when you ask for it |
+| `zer0Cms.fleet.gitfactoryUrl` | `https://bamr87.github.io/gitorio/` | Where "Open in GitFactory" points |
 
 Full reference: [`docs/CONFIG.md`](docs/CONFIG.md).
 
@@ -118,17 +128,21 @@ If your repo has no `.cms/`, that is a normal state, not an error — the extens
 
 ## Fleet
 
-If the repository carries a `fleet.manifest.yml` (spec `fleet/v1`, written by `wtd fleet adopt`), the dashboard grows a **Fleet** tab once `zer0Cms.fleet.enabled` is on: every AI lane with its harness, workflow, triggers, guardrails and `*_ENABLED` switch, plus — after a GitHub sign-in you answer — the switch's current value and the lane's newest run. Two buttons: flip the switch, dispatch the lane once. Both are off until `zer0Cms.fleet.dispatchAllow` is set in *your* settings, both re-read the manifest and re-run the gate host-side, and both ask first, naming the repository, the lane, the variable and the value. The webview sends a lane id and nothing else. Nothing about the fleet runs at activation; the extension stores no token.
+If a repository carries a `fleet.manifest.yml` (spec `fleet/v1`, written by `wtd fleet adopt`), turning on `zer0Cms.fleet.enabled` adds three dashboard tabs. **Fleet** draws that repository's AI lanes — harness, workflow, triggers, guardrails, `*_ENABLED` switch — and, after a GitHub sign-in you answer, each switch's value, each lane's newest run, the open pull requests attributed to it, its cost from the repository's own usage ledger and the audit grade of its workflow. **Monitor** draws the same columns for a roster: the folders open in this window that carry a manifest, the repositories in `zer0Cms.fleet.roster`, and — only when you run `fleet.importHubRoster` — the hub's registry. **Workflows** catalogues every lane read-only and, behind `zer0Cms.fleet.scaffoldAllow`, writes a new lane's files (`lane.scaffold`) for you to commit, never creating the variable that arms it. The **Harness** tab needs no setting: it inventories a repository's agents, skills, workflows, lanes, switches and usage ledger, and reports where they disagree.
+
+Five verbs act on a lane: flip its switch, dispatch it once, re-run its last failure, cancel what is in flight, and enable or disable its workflow file. All five are off until `zer0Cms.fleet.dispatchAllow` is set in *your* settings; each re-reads the manifest and re-runs the gate host-side, and asks first. The webview sends `{repo, lane}` and nothing else. A refresh costs four calls per repository whatever its lane count, and a list GitHub refuses to show renders as unknown rather than as empty. Nothing about the fleet runs at activation; the extension stores no token.
 
 ## MCP server
 
-The extension registers a bundled MCP server with VS Code 1.101+, so Copilot agent mode (or any MCP client pointed at `dist/mcp-server.js`) gets twelve tools:
+The extension registers a bundled MCP server with VS Code 1.101+, so Copilot agent mode (or any MCP client pointed at `dist/mcp-server.js`) gets sixteen tools:
 
 | Tool | Safe? |
 |---|---|
-| `zer0_status` · `zer0_list_content` · `zer0_get_content` · `zer0_preview` · `zer0_portfolio` · `zer0_media` · `zer0_contract` · `zer0_fleet_status` | read-only (`zer0_fleet_status` reads the local manifest only — no network) |
+| `zer0_status` · `zer0_list_content` · `zer0_get_content` · `zer0_preview` · `zer0_portfolio` · `zer0_media` · `zer0_fleet_status` · `zer0_audit` · `zer0_harness_inventory` · `zer0_lane_preview` | read-only — the last four read local files only, and never open a socket |
+| `zer0_contract` | runs the repository's own content engine — refuses unless `ZER0_CMS_MCP_ALLOW_EXEC=1`, which the editor sets only in a trusted workspace; `normalize-apply` writes front matter |
 | `zer0_draft` · `zer0_worklist` · `zer0_ingest` | writes a draft, a worklist, or aggregate statistics under `.cms/` for a human |
 | `zer0_publish` | **off by default** — needs `ZER0_CMS_MCP_ALLOW_PUBLISH=1` in the server env *and* `confirm: true` per call |
+| `zer0_lane_scaffold` | **off by default** — needs `ZER0_CMS_MCP_ALLOW_SCAFFOLD=1` *and* `confirm: true`. Writes a lane's files; never creates the variable that arms it |
 
 The preferred path is `zer0_draft`: the model writes, the person approves.
 
@@ -140,6 +154,8 @@ Off unless you turn it on. With `zer0Cms.agent.enabled` and the `@anthropic-ai/c
 
 ```
 src/core/      pure Node. No `vscode` import — enforced by eslint and by the build.
+               content, governance, catering, contract, analytics, portfolio, media,
+               platform (site profiles), fleet (the console's pure half), harness.
 src/mcp/       the standalone MCP server. Bundles with nothing external.
 src/webview/   vanilla TS + CSS. No React, no Tailwind, no innerHTML.
 src/           the thin vscode shell: extension.ts, commands, views, providers.

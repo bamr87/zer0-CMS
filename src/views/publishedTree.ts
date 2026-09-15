@@ -1,3 +1,4 @@
+import type { StoreView } from '../sites';
 /**
  * The **Published** view — the idempotency ledger, newest first.
  *
@@ -21,7 +22,6 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import type { LedgerEntry } from '../core';
-import type { WorkspaceStore } from '../store';
 
 export class PublishedTreeItem extends vscode.TreeItem {
   constructor(
@@ -66,7 +66,7 @@ export class PublishedTreeProvider
 
   private readonly subscription: vscode.Disposable;
 
-  constructor(private readonly store: WorkspaceStore) {
+  constructor(private readonly store: StoreView) {
     this.subscription = store.onDidChange(() => this.emitter.fire());
   }
 

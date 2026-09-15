@@ -1,0 +1,216 @@
+{
+  "jekyll": {
+    "id": "content-factory",
+    "kind": "content",
+    "verb": "create",
+    "description": "Produce ONE on-voice, tested piece from the backlog, verify it with the repository harness, and open ONE pull request. Never merges.",
+    "agent": "grow-lifehacker",
+    "skill": "grow-lifehacker",
+    "projectName": "lifehacker.dev",
+    "platform": "jekyll",
+    "switch": "CONTENT_FACTORY_ENABLED",
+    "dispatchBypassesSwitch": true,
+    "cron": "17 9 * * *",
+    "events": [],
+    "prompt": "Use the grow-lifehacker skill to produce exactly ONE piece for lifehacker.dev. Pick the highest-priority backlog item whose kind matches the assignment; if every candidate duplicates an open pull request, propose a fresh on-voice idea, add it to the backlog, and draft that — never silently no-op. Verify with the repository's own harness before opening anything. Open ONE pull request on a branch, label it 'auto:content', write the resulting PR URL to pr-result.txt, flip the backlog item to done, and STOP. Never merge.",
+    "system": "You are the lifehacker.dev content factory. Produce one on-voice, tested piece and open one pull request. Never merge.",
+    "tools": [
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Grep",
+      "Glob"
+    ],
+    "mcp": null,
+    "model": null,
+    "maxTurns": null,
+    "setup": {
+      "ruby": "3.3",
+      "node": null,
+      "python": null
+    },
+    "preRun": null,
+    "postRun": null,
+    "resultFile": "pr-result.txt",
+    "artifactPath": null,
+    "timeoutMinutes": 20,
+    "cancelInProgress": false,
+    "continueOnError": false,
+    "permissions": {
+      "contents": "write",
+      "pull-requests": "write"
+    },
+    "matrix": null,
+    "crossRepoCheckout": false,
+    "prHeadCheckout": false,
+    "modelPasses": 1,
+    "labels": [
+      "auto:content"
+    ],
+    "branchPattern": "autopilot/",
+    "kitVersion": "0.1.0"
+  },
+  "mkdocs": {
+    "id": "docs-audit",
+    "kind": "maintenance",
+    "verb": "audit",
+    "description": "Read the built documentation for pages that no longer match the code, fix the smallest honest set of them, and open ONE pull request. Never merges.",
+    "agent": "docs-auditor",
+    "skill": "docs-audit",
+    "projectName": "the handbook",
+    "platform": "mkdocs",
+    "switch": "DOCS_AUDIT_ENABLED",
+    "dispatchBypassesSwitch": true,
+    "cron": "41 6 * * 1",
+    "events": [],
+    "prompt": "Audit the documentation under docs/ against the code it describes. Fix only what you can verify is wrong — a page that is merely old is not a finding. Run `mkdocs build --strict` before opening anything, open ONE pull request, write its URL to pr-result.txt, and STOP. Never merge.",
+    "system": "You are the documentation auditor for the handbook. Verify before you claim. Never merge.",
+    "tools": [
+      "Bash",
+      "Read",
+      "Edit",
+      "Grep",
+      "Glob"
+    ],
+    "mcp": null,
+    "model": null,
+    "maxTurns": null,
+    "setup": {
+      "ruby": null,
+      "node": null,
+      "python": "3.12"
+    },
+    "preRun": "pip install -r requirements.txt\nmkdocs build --strict",
+    "postRun": null,
+    "resultFile": "pr-result.txt",
+    "artifactPath": null,
+    "timeoutMinutes": 25,
+    "cancelInProgress": false,
+    "continueOnError": false,
+    "permissions": {
+      "contents": "write",
+      "pull-requests": "write"
+    },
+    "matrix": null,
+    "crossRepoCheckout": false,
+    "prHeadCheckout": false,
+    "modelPasses": 1,
+    "labels": [],
+    "branchPattern": null,
+    "kitVersion": "0.1.0"
+  },
+  "wikijs": {
+    "id": "content-review",
+    "kind": "review",
+    "verb": "review",
+    "description": "Read the changed pages on a pull request, apply small improvements in place, and post judgement calls as comments. Never merges.",
+    "agent": "content-reviewer",
+    "skill": "content-reviewer",
+    "projectName": "the wiki",
+    "platform": "wikijs",
+    "switch": "CONTENT_REVIEW_ENABLED",
+    "dispatchBypassesSwitch": true,
+    "cron": null,
+    "events": [
+      "pull_request"
+    ],
+    "prompt": "Review the changed pages on this pull request. Apply small improvements to the changed content files ONLY; if it already reads clean, make no commit and post a one-line comment instead. This is a single editorial pass, not an iterative polish. Post larger follow-ups as comments. Write what you did to review-result.txt. Never touch infrastructure. Never merge.",
+    "system": "You are the content reviewer for the wiki. Improve the changed content only; never merge.",
+    "tools": [
+      "Bash(gh pr comment:*)",
+      "Bash(git:*)",
+      "Read",
+      "Edit",
+      "Write(pages/**)",
+      "Grep",
+      "Glob"
+    ],
+    "mcp": null,
+    "model": null,
+    "maxTurns": null,
+    "setup": {
+      "ruby": null,
+      "node": "20",
+      "python": null
+    },
+    "preRun": null,
+    "postRun": "node scripts/verify-links.mjs",
+    "resultFile": "review-result.txt",
+    "artifactPath": null,
+    "timeoutMinutes": 15,
+    "cancelInProgress": true,
+    "continueOnError": true,
+    "permissions": {
+      "contents": "write",
+      "pull-requests": "write"
+    },
+    "matrix": null,
+    "crossRepoCheckout": false,
+    "prHeadCheckout": false,
+    "modelPasses": 1,
+    "labels": [],
+    "branchPattern": null,
+    "kitVersion": "0.1.0"
+  },
+  "matrixed": {
+    "id": "content-factory",
+    "kind": "content",
+    "verb": "create",
+    "description": "Produce ONE on-voice, tested piece from the backlog, verify it with the repository harness, and open ONE pull request. Never merges.",
+    "agent": "grow-lifehacker",
+    "skill": "grow-lifehacker",
+    "projectName": "lifehacker.dev",
+    "platform": "jekyll",
+    "switch": "CONTENT_FACTORY_ENABLED",
+    "dispatchBypassesSwitch": true,
+    "cron": "17 9 * * *",
+    "events": [],
+    "prompt": "Use the grow-lifehacker skill to produce exactly ONE ${{ matrix.item }} for lifehacker.dev. Pick the highest-priority backlog item whose kind IS '${{ matrix.item }}' — never borrow an item meant for another collection. If every candidate duplicates an open pull request, propose a fresh on-voice ${{ matrix.item }} idea, add it to the backlog, and draft that — never silently no-op, never cross collections. Verify with the repository's own harness before opening anything. Open ONE pull request, label it 'auto:content' and 'collection/${{ matrix.item }}', write the resulting PR URL to pr-result.txt, flip the backlog item to done, and STOP. Never merge.",
+    "system": "You are the lifehacker.dev content factory. Produce one on-voice, tested piece and open one pull request. Never merge.",
+    "tools": [
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Grep",
+      "Glob"
+    ],
+    "mcp": null,
+    "model": null,
+    "maxTurns": null,
+    "setup": {
+      "ruby": "3.3",
+      "node": null,
+      "python": null
+    },
+    "preRun": null,
+    "postRun": null,
+    "resultFile": "pr-result.txt",
+    "artifactPath": null,
+    "timeoutMinutes": 20,
+    "cancelInProgress": false,
+    "continueOnError": false,
+    "permissions": {
+      "contents": "write",
+      "pull-requests": "write"
+    },
+    "matrix": {
+      "static": [
+        "hack",
+        "tool",
+        "post",
+        "doc",
+        "wire"
+      ]
+    },
+    "crossRepoCheckout": false,
+    "prHeadCheckout": false,
+    "modelPasses": 1,
+    "labels": [
+      "auto:content"
+    ],
+    "branchPattern": "autopilot/",
+    "kitVersion": "0.1.0"
+  }
+}

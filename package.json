@@ -96,6 +96,11 @@
     "views": {
       "zer0-cms": [
         {
+          "id": "zer0Cms.sites",
+          "name": "Sites",
+          "when": "zer0Cms:sites:multi"
+        },
+        {
           "id": "zer0Cms.panel",
           "name": "Metadata",
           "type": "webview"
@@ -335,6 +340,95 @@
         "command": "zer0Cms.fleet.dispatchLane",
         "title": "Dispatch a lane once",
         "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.audit.open",
+        "title": "Open the front-matter audit",
+        "category": "zer0-CMS",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "zer0Cms.audit.fix",
+        "title": "Fix a front-matter finding",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.audit.verify",
+        "title": "Verify the site",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.site.pick",
+        "title": "Switch site",
+        "category": "zer0-CMS",
+        "icon": "$(book)"
+      },
+      {
+        "command": "zer0Cms.site.setActive",
+        "title": "Set the active site",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.site.preview",
+        "title": "Preview the site",
+        "category": "zer0-CMS",
+        "icon": "$(play)"
+      },
+      {
+        "command": "zer0Cms.agent.runAsRole",
+        "title": "Run the agent as a fleet role",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.harness.open",
+        "title": "Open the AI harness",
+        "category": "zer0-CMS",
+        "icon": "$(circuit-board)"
+      },
+      {
+        "command": "zer0Cms.workflows.open",
+        "title": "Open the lane catalogue",
+        "category": "zer0-CMS",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "zer0Cms.lane.scaffold",
+        "title": "Scaffold an AI lane",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.fleet.rerunLastFailure",
+        "title": "Re-run a lane's last failure",
+        "category": "zer0-CMS",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "zer0Cms.fleet.cancelNewest",
+        "title": "Cancel a lane's run",
+        "category": "zer0-CMS",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "zer0Cms.fleet.toggleWorkflowFile",
+        "title": "Enable or disable a lane's workflow",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.fleet.openInGitFactory",
+        "title": "Open the fleet in GitFactory",
+        "category": "zer0-CMS",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "zer0Cms.fleet.importHubRoster",
+        "title": "Import the roster from the hub",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.monitor.open",
+        "title": "Open the fleet monitor",
+        "category": "zer0-CMS",
+        "icon": "$(dashboard)"
       }
     ],
     "menus": {
@@ -434,6 +528,66 @@
         {
           "command": "zer0Cms.mcp.writeWorkspaceConfig",
           "when": "zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.audit.verify",
+          "when": "zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.audit.fix",
+          "when": "false"
+        },
+        {
+          "command": "zer0Cms.site.pick",
+          "when": "zer0Cms:sites:multi"
+        },
+        {
+          "command": "zer0Cms.site.setActive",
+          "when": "false"
+        },
+        {
+          "command": "zer0Cms.site.preview",
+          "when": "zer0Cms:enabled && zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.agent.runAsRole",
+          "when": "zer0Cms:agent:enabled && zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.harness.open",
+          "when": "zer0Cms:enabled"
+        },
+        {
+          "command": "zer0Cms.workflows.open",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.lane.scaffold",
+          "when": "zer0Cms:fleet:enabled && zer0Cms:workspace:trusted"
+        },
+        {
+          "command": "zer0Cms.fleet.rerunLastFailure",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.cancelNewest",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.toggleWorkflowFile",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.openInGitFactory",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.fleet.importHubRoster",
+          "when": "zer0Cms:fleet:enabled"
+        },
+        {
+          "command": "zer0Cms.monitor.open",
+          "when": "zer0Cms:fleet:enabled"
         }
       ],
       "editor/title": [
@@ -807,9 +961,9 @@
           },
           "zer0Cms.governance.target": {
             "type": "string",
-            "default": "jekyll",
+            "default": "",
             "scope": "resource",
-            "description": "Publish target that turns an approved draft into published content."
+            "description": "Publish target that turns an approved draft into published content. Empty means: follow the platform this repository was detected as, which is what you want unless you have registered a target of your own."
           }
         }
       },
@@ -878,9 +1032,9 @@
           },
           "zer0Cms.agent.model": {
             "type": "string",
-            "default": "claude-opus-5",
+            "default": "",
             "scope": "window",
-            "description": "Model the AI agent runs on."
+            "description": "Model the agent runs on. Empty inherits: the repository's own AI configuration answers, so an editor run and the same role in CI agree about the model instead of quietly differing."
           },
           "zer0Cms.agent.maxTurns": {
             "type": "number",
@@ -893,12 +1047,11 @@
             "type": "string",
             "enum": [
               "default",
-              "acceptEdits",
               "plan"
             ],
             "default": "default",
             "scope": "window",
-            "description": "Agent permission mode. 'default' routes every mutating tool through an approve/deny gate."
+            "description": "`default` routes every mutating tool through an approve/deny card; `plan` lets the agent plan without acting. `acceptEdits` was removed: it was measured to bypass the card outright — an edit landed with the gate never consulted — and a mode that silently disarms the only gate is not a preference."
           }
         }
       },
@@ -910,7 +1063,7 @@
             "type": "boolean",
             "default": false,
             "scope": "resource",
-            "markdownDescription": "Enable the Fleet console: a dashboard tab reading this repository's `fleet.manifest.yml` (spec `fleet/v1`). Read-only until `#zer0Cms.fleet.dispatchAllow#` is also set."
+            "markdownDescription": "Enable the Fleet console: the Fleet, Workflows and Monitor tabs and the `fleet.*`, `workflows.open`, `lane.scaffold` and `monitor.open` commands, over this repository's `fleet.manifest.yml` (spec `fleet/v1`) and any roster you add. Read-only until `#zer0Cms.fleet.dispatchAllow#` (the run verbs) or `#zer0Cms.fleet.scaffoldAllow#` (writing a lane) is also set."
           },
           "zer0Cms.fleet.manifestPath": {
             "type": "string",
@@ -922,7 +1075,7 @@
             "type": "boolean",
             "default": false,
             "scope": "resource",
-            "markdownDescription": "Master switch for the two privileged fleet actions — flipping a lane's `*_ENABLED` variable and dispatching a lane once. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every action still asks for confirmation."
+            "markdownDescription": "Master switch for the privileged fleet actions — flipping a lane's `*_ENABLED` variable, dispatching it once, re-running its last failure, cancelling a run, and enabling or disabling its workflow file. Read from **your settings only**: a `zer0.json` or a `fleet.manifest.yml` arriving with a cloned repository cannot arm it. Every action still asks for confirmation."
           },
           "zer0Cms.fleet.scaffoldAllow": {
             "type": "boolean",

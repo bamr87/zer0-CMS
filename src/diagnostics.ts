@@ -273,8 +273,16 @@ export class DiagnosticsManager implements vscode.Disposable {
    * Validate one document. Anything that is not editable content — the wrong
    * extension, no front matter, no workspace — clears its diagnostics instead
    * of leaving a stale set behind.
+   *
+   * The configuration is resolved from **this document's own folder**, not from
+   * the active site. In a multi-root window the two are routinely different: a
+   * person editing a file in one site while another is active would otherwise
+   * get squiggles from the wrong repository's content types — required keys
+   * that this file's own schema never asked for. `currentConfig(uri)` answers
+   * for the folder that owns the file, and falls back to the active site for a
+   * document that belongs to no open folder.
    */
-  validate(document: vscode.TextDocument, cfg: Zer0Config = currentConfig()): void {
+  validate(document: vscode.TextDocument, cfg: Zer0Config = currentConfig(document.uri)): void {
     if (
       cfg.workspaceRoot === '' ||
       document.uri.scheme !== 'file' ||

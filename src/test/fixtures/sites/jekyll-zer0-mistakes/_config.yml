@@ -1,0 +1,22 @@
+# A fleet site: Jekyll on the FLOATING zer0-mistakes remote theme.
+# The anchor on `title:` is here on purpose — real fleet _config.yml files use
+# them, the subset parser keeps them as literal text, and the profile has to
+# warn rather than hand back "&site_title lifehacker.dev" as a site title.
+title: &site_title lifehacker.dev
+description: Surviving life, one byte at a time
+url: https://lifehacker.dev
+baseurl: ""
+remote_theme: bamr87/zer0-mistakes
+collections_dir: pages
+defaults:
+  - scope:
+      path: ""
+    values:
+      author: *site_title
+collections:
+  posts:
+    output: true
+    permalink: /posts/:year/:month/:day/:title/
+  docs:
+    output: true
+    permalink: /docs/:name/

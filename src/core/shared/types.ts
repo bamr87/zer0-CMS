@@ -328,7 +328,16 @@ export interface CmsEngineConfig {
   verifyCommand: string;
 }
 
-export type AgentPermissionMode = 'default' | 'acceptEdits' | 'plan';
+/**
+ * The two modes this extension will run an agent in.
+ *
+ * `acceptEdits` is deliberately absent. It was measured against the Agent SDK:
+ * with that mode a `Write` landed on disk and `canUseTool` — the approval card,
+ * the single gate decision D10 rests on — was never called at all. A mode that
+ * silently disarms the only gate is not a preference, so it is not offered, and
+ * a `zer0.json` naming it is clamped to `default` rather than honoured.
+ */
+export type AgentPermissionMode = 'default' | 'plan';
 
 export interface AgentConfig {
   enabled: boolean;
@@ -987,10 +996,25 @@ export interface WorkflowRecord {
   agentRefs: string[];
   skillRefs: string[];
   switches: string[];
-  /** The repository or environment that holds the switch, when it says. */
+  /**
+   * The **workflow filename** that reads the switch, when it is not this one.
+   *
+   * The fleet has a real case: a lane's `*_ENABLED` variable is read by a
+   * different workflow that dispatches it, so flipping the switch does nothing
+   * to the file you are looking at. An operator needs to be told where the
+   * switch actually lives, not left to infer it.
+   */
   switchHost: string | null;
   switchPolarity: 'enabled-when-true' | 'disabled-when-false' | 'unknown';
-  /** `null` when the workflow has no dispatch trigger to bypass with. */
+  /**
+   * Whether a manual dispatch runs the lane even with its switch off.
+   *
+   * `null` covers two conditions, and both mean the question does not apply:
+   * the workflow has no dispatch trigger, or it has no switch. `false` would
+   * be a claim that a manual run respects a switch — and a switch that does
+   * not exist cannot be respected. The fleet is genuinely split on this, so an
+   * operator flipping a switch needs the real answer rather than a default.
+   */
   dispatchBypassesSwitch: boolean | null;
   crons: string[];
   /** Crons that are present but commented out — a lane someone parked. */
@@ -1037,6 +1061,8 @@ export interface HarnessJoin {
 }
 
 export type HarnessFindingKind =
+  // What an inventory finds when a repository's AI machinery disagrees with
+  // itself: a reference to something absent, or a claim a file contradicts.
   | 'dangling-agent'
   | 'dangling-skill'
   | 'agent-name-mismatch'
@@ -1045,7 +1071,21 @@ export type HarnessFindingKind =
   | 'workflow-without-lane'
   | 'manifest-drift'
   | 'token-presence-chain'
-  | 'unmetered-model-call';
+  | 'unmetered-model-call'
+  // What a preflight finds in a lane this console is about to write. These have
+  // their own kinds rather than borrowing `manifest-drift`, because a person
+  // reading "manifest drift" when the real problem is a cron on the hour has
+  // been told the wrong thing.
+  | 'no-trigger'
+  | 'cron-on-the-hour'
+  | 'matrix-without-item'
+  | 'factory-owned-path'
+  | 'prompt-missing-result-file'
+  | 'manifest-absent'
+  // A skill nothing references. The opposite direction from `dangling-skill`,
+  // and worth its own kind because the action differs: a dangling reference is
+  // a bug in a lane, an orphan is a file that may simply have outlived its use.
+  | 'orphan-skill';
 
 export interface HarnessFinding {
   kind: HarnessFindingKind;

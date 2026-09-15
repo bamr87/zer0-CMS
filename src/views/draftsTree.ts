@@ -1,3 +1,4 @@
+import type { StoreView } from '../sites';
 /**
  * The **Drafts** view — the governed queue, as a tree.
  *
@@ -42,7 +43,6 @@ import {
   truncate,
   type DraftFile,
 } from '../core';
-import type { WorkspaceStore } from '../store';
 
 /** How far the tooltip quotes a draft's commentary before it gets in the way. */
 const TOOLTIP_CHARS = 400;
@@ -115,7 +115,7 @@ export class DraftsTreeProvider implements vscode.TreeDataProvider<DraftTreeItem
 
   private readonly subscription: vscode.Disposable;
 
-  constructor(private readonly store: WorkspaceStore) {
+  constructor(private readonly store: StoreView) {
     this.subscription = store.onDidChange(() => this.emitter.fire());
   }
 

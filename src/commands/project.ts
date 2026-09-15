@@ -39,6 +39,7 @@ import {
   hasProjectConfig,
   readConfigFileJson,
   updateConfigFileJson,
+  workspaceFolder,
   workspaceRoot,
   writeConfigFileJson,
 } from '../config';
@@ -114,6 +115,55 @@ export function toFilePath(cfg: Zer0Config, arg: unknown): string | undefined {
     }
   }
   return undefined;
+}
+
+/**
+ * The same coercion, plus **the site that file belongs to**.
+ *
+ * This is the multi-root half of `toFilePath`, and the reason it exists is a
+ * bug class rather than a feature: a command invoked on a file must act on
+ * *that file's* site, not on whichever one happens to be active. Approve a
+ * draft in one repository while the console is pointed at another and the gate
+ * would read the wrong banned-patterns file, the wrong ledger and the wrong
+ * publish target — and every one of those would look like it worked.
+ *
+ * Two passes, in this order, because they answer two different questions:
+ *
+ *   1. `toFilePath(active, arg)` resolves the argument. A `Uri` or an absolute
+ *      path passes straight through; a **relative** string is resolved against
+ *      the active site, which is right by construction — a webview renders the
+ *      paths of the site it is showing, and that is the active one.
+ *   2. The owning folder of the resulting absolute path decides the
+ *      configuration. Only when that folder is not the active one is a second
+ *      `currentConfig()` paid for; a file outside every open folder falls back
+ *      to the active site, which is exactly what happened before multi-root.
+ *
+ * `currentConfig()` is deliberately uncached (decision D2), so this is two
+ * `zer0.json` reads in the worst case — on a user-driven single action. That is
+ * the right side of the trade; a cache here would be a cache of the one thing
+ * the design says must never be cached.
+ */
+export function siteTarget(arg: unknown): { cfg: Zer0Config; filePath: string } | undefined {
+  const active = currentConfig();
+  const filePath = toFilePath(active, arg);
+  if (filePath === undefined) {
+    return undefined;
+  }
+  return { cfg: siteConfigFor(filePath, active), filePath };
+}
+
+/**
+ * The configuration of the site that owns `filePath`, given the active one.
+ *
+ * Split out because several commands already have the path in hand and only
+ * need the second question answered.
+ */
+export function siteConfigFor(filePath: string, active: Zer0Config = currentConfig()): Zer0Config {
+  const owner = workspaceFolder(vscode.Uri.file(filePath));
+  if (owner === undefined || owner.uri.fsPath === active.workspaceRoot) {
+    return active;
+  }
+  return currentConfig(owner);
 }
 
 /** The active editor's document path, when it is a real file on disk. */
@@ -241,22 +291,32 @@ export function registerProjectCommands(shell: Zer0Shell): void {
   // `when: false` in the palette: this exists for tree rows and webview links,
   // which always pass a target. Invoked with nothing, it has nothing to open.
   register(shell, 'openFile', async (arg: unknown) => {
-    const filePath = toFilePath(currentConfig(), arg);
-    if (filePath === undefined) {
+    // `siteTarget` rather than `toFilePath`: opening is harmless either way,
+    // but this is the one place every "open this" in the extension funnels
+    // through, and resolving the owning site here is what makes a relative
+    // path from a webview and an absolute path from another site's tree row
+    // both land on the right file.
+    const target = siteTarget(arg);
+    if (target === undefined) {
       return;
     }
-    await openInEditor(filePath);
+    await openInEditor(target.filePath);
   });
 
   // --- Register a content folder -------------------------------------------
   register(shell, 'registerFolder', async (arg: unknown) => {
-    const cfg = currentConfig();
-    const folderPath = await resolveFolderArgument(cfg, arg, 'Register content folder');
+    const folderPath = await resolveFolderArgument(currentConfig(), arg, 'Register content folder');
     if (folderPath === undefined) {
       return;
     }
+    // The folder the person clicked decides which site's `zer0.json` is
+    // edited. Registering a content folder of site B into site A's config is
+    // the multi-root bug this line exists to prevent — and `relative`, below,
+    // is what refuses the cross-site case outright.
+    const cfg = siteConfigFor(folderPath);
+    const scope = vscode.Uri.file(folderPath);
 
-    if (!hasProjectConfig()) {
+    if (!hasProjectConfig(scope)) {
       const answer = await notifyWarning(
         `no ${cfg.configFile} in this workspace yet.`,
         'Initialize project',
@@ -264,10 +324,10 @@ export function registerProjectCommands(shell: Zer0Shell): void {
       if (answer !== 'Initialize project') {
         return;
       }
-      await writeConfigFileJson(starterConfig());
+      await writeConfigFileJson(starterConfig(), scope);
     }
 
-    if (isRegisteredFolder(currentConfig(), folderPath)) {
+    if (isRegisteredFolder(siteConfigFor(folderPath), folderPath)) {
       await notifyInfo(`${path.basename(folderPath)} is already registered.`);
       shell.ui.setFolderRegistered(true);
       return;
@@ -286,7 +346,7 @@ export function registerProjectCommands(shell: Zer0Shell): void {
         path: `${WORKSPACE_PLACEHOLDER}/${relative}`,
       });
       json.contentFolders = folders;
-    });
+    }, scope);
 
     shell.ui.setFolderRegistered(true);
     shell.log.info(`registered content folder ${relative}`);
@@ -296,13 +356,14 @@ export function registerProjectCommands(shell: Zer0Shell): void {
 
   // --- Unregister a content folder -----------------------------------------
   register(shell, 'unregisterFolder', async (arg: unknown) => {
-    const cfg = currentConfig();
-    const folderPath = await resolveFolderArgument(cfg, arg, 'Unregister content folder');
+    const folderPath = await resolveFolderArgument(currentConfig(), arg, 'Unregister content folder');
     if (folderPath === undefined) {
       return;
     }
 
-    const json = readConfigFileJson();
+    const cfg = siteConfigFor(folderPath);
+    const scope = vscode.Uri.file(folderPath);
+    const json = readConfigFileJson(scope);
     const remaining = configuredFolders(json).filter((entry) => {
       const configured = typeof entry.path === 'string' ? entry.path : '';
       return configured === '' || path.normalize(absPath(cfg, configured)) !== path.normalize(folderPath);
@@ -327,7 +388,7 @@ export function registerProjectCommands(shell: Zer0Shell): void {
 
     await updateConfigFileJson((patch) => {
       patch.contentFolders = remaining;
-    });
+    }, scope);
 
     shell.ui.setFolderRegistered(false);
     shell.log.info(`unregistered content folder ${relPath(cfg, folderPath)}`);

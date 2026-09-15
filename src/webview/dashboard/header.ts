@@ -12,6 +12,10 @@
  * └───────────────────────────────────────────────────────────────────────┘
  * ```
  *
+ * Row 1's action strip also carries the **site switcher** in a multi-root
+ * window — "which repository am I about to publish into?" is a question every
+ * tab needs answered, not only the Sites one.
+ *
  * Rows 2-6 exist only on `/contents`; the other routes get the tab bar and —
  * if they registered one — a single toolbar row of their own, because a sort
  * control above a draft queue would be a control that does nothing, and Audit,
@@ -92,6 +96,44 @@ function defaultFilterLabel(dimension: FilterDimension): string {
 // Row 1 — the tab bar
 // ---------------------------------------------------------------------------
 
+/**
+ * The site switcher — a menu of open folders, in the tab bar's action strip.
+ *
+ * Present only in a multi-root window, because a menu with one entry is a
+ * control that cannot do anything. Selecting an entry posts
+ * `site.setActive {site: '<id>'}`: an intent and a target, exactly like every
+ * other button in this webview. The host validates that id against
+ * `SiteRegistry`, which is the only place that knows which folders are open —
+ * this menu is drawing a list the host sent, and a list can go stale between a
+ * render and a click (decision D5).
+ *
+ * It lives beside the output and documentation buttons rather than inside the
+ * Sites tab, because "which repository am I about to publish into?" is a
+ * question every tab needs answered, not only that one.
+ */
+function siteSwitcher(ctx: DashboardContext): HTMLElement | null {
+  const sites = ctx.state.sites;
+  if (sites === undefined || !sites.multi) {
+    return null;
+  }
+  const active = sites.sites.find((site) => site.active);
+  return menuButton({
+    label: 'Site',
+    value: active?.name ?? '(none)',
+    align: 'end',
+    triggerTitle: 'Switch the active site',
+    items: sites.sites.map((site) => ({
+      id: site.id,
+      label: site.name,
+      icon: 'book',
+      checked: site.active,
+    })),
+    onSelect: (id) => {
+      ctx.msg.command('site.setActive', { site: id });
+    },
+  });
+}
+
 function tabBar(ctx: DashboardContext): HTMLElement {
   const active = ctx.state.tabs.some((tab) => tab.id === ctx.ui.route) ? ctx.ui.route : 'contents';
 
@@ -118,6 +160,9 @@ function tabBar(ctx: DashboardContext): HTMLElement {
   const actions = el(
     'div',
     { class: 'z-tabbar__actions' },
+    // The site switcher, only when there is more than one site to switch
+    // between. It posts an id and nothing else; see `siteSwitcher`.
+    siteSwitcher(ctx),
     // Reload and DevTools, on the two `command:` URIs the host's allow-list
     // contains. Present only outside a released build.
     ctx.state.developer

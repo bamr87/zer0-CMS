@@ -22,7 +22,13 @@ import {
   parseYamlSubset,
   splitFrontMatter,
 } from '../core/content/frontmatter';
-import { buildIndex, pageToRecord, slimPage } from '../core/content/pageIndex';
+import {
+  asIndexCache,
+  buildIndex,
+  emptyIndexCache,
+  pageToRecord,
+  slimPage,
+} from '../core/content/pageIndex';
 import {
   DENSITY_MAX,
   DENSITY_MIN,
@@ -49,6 +55,7 @@ import type { Zer0Settings } from '../core/shared/config';
 import { EXEC_VECTORS, evaluateExecGate, insideWorkspace } from '../core/shared/trust';
 import { formatDate, parseDate } from '../core/shared/dates';
 import { compileGlob, globMatches, toPosix } from '../core/shared/glob';
+import { resolveActiveSite } from '../siteRule';
 import { pyJsonDump, readJsonc } from '../core/shared/jsonio';
 import { utcStamp } from '../core/shared/timestamp';
 import {
@@ -413,6 +420,30 @@ suite('core: line surgery preserves what it did not touch (D7)', () => {
     assert.ok(block !== null);
     return { raw, blockRaw: block.raw, body };
   };
+
+  test('a wrapped quoted scalar is one key to line surgery, now that it is read', () => {
+    // Before the parser read these, their blocks carried a warning and every
+    // write was refused. Now writes are allowed, so the continuation line has
+    // to travel with its key — kept byte for byte when another key changes,
+    // replaced with it when this one does.
+    const opts = serializeOptions(fixtureConfig(), 'yaml');
+    const raw = ["excerpt: 'An evidence-based quest-perfection", "  walkthrough from 2026-06-29.'", 'slice: developer/0000'].join('\n');
+
+    const other = updateFrontMatterKeys(raw, [{ key: 'slice', value: 'developer/0001' }], opts);
+    assert.ok(other !== null);
+    const otherLines = other.split('\n');
+    assert.equal(otherLines.length, 3, 'one line changed, none added or lost');
+    assert.deepEqual(otherLines.slice(0, 2), raw.split('\n').slice(0, 2), 'the wrapped value is untouched, byte for byte');
+
+    const own = updateFrontMatterKeys(raw, [{ key: 'excerpt', value: 'A shorter excerpt' }], opts);
+    assert.ok(own !== null);
+    assert.ok(!own.includes('walkthrough from'), 'the continuation line goes with the key it belongs to');
+    const reparsed = splitFrontMatter(`---\n${own}\n---\n`).block;
+    assert.ok(reparsed !== null);
+    assert.deepEqual(reparsed.warnings, []);
+    assert.equal(reparsed.data.excerpt, 'A shorter excerpt');
+    assert.equal(reparsed.data.slice, 'developer/0000');
+  });
 
   test('changing one key changes exactly one line, comments untouched', () => {
     const cfg = fixtureConfig();
@@ -899,6 +930,34 @@ suite('core: the page index', () => {
    * of them reusing every page. `false` has to mean "I have nothing new to
    * store", and it has to be *false* only then.
    */
+  test('the agent model is inherited by default, and a card-skipping mode cannot be configured', () => {
+    // Two halves of one decision. The model default is empty so a repository's
+    // own AI configuration answers — an editor run and the same role in CI
+    // agreed about nothing before this, and disagreeing about the model is the
+    // kind of difference nobody notices until a bill arrives.
+    const cfg = resolveConfig('/site', {}, {});
+    assert.equal(cfg.agent.model, '', 'the built-in default must mean "inherit"');
+
+    // And `acceptEdits` was measured to bypass `canUseTool` outright: the edit
+    // landed with the approval card never consulted. It is gone from the
+    // manifest, and a `zer0.json` naming it is clamped rather than honoured —
+    // a file in the repository must not be able to disarm the only gate.
+    const sneaky = resolveConfig('/site', { agent: { permissionMode: 'acceptEdits' } }, {});
+    assert.equal(sneaky.agent.permissionMode, 'default');
+  });
+
+  test('a cache from before the platform existed is refused, not trusted', () => {
+    // Version 2 is not bookkeeping. A v1 entry was built by code that could not
+    // tell a Jekyll site from an MkDocs one, so its slug, its date and its
+    // draft flag are not answers this version would give. Reusing one would
+    // show a person a page list computed under the wrong rules, which is worse
+    // than rescanning.
+    const current = emptyIndexCache();
+    assert.equal(current.version, 2);
+    assert.notEqual(asIndexCache(current), undefined, 'a current cache is usable');
+    assert.equal(asIndexCache({ ...current, version: 1 }), undefined, 'a v1 cache must be refused');
+  });
+
   test('changed is false over an unchanged tree, and true once an mtime has moved', async () => {
     const cfg = fixtureConfig(workspaceSettings());
     const cold = await buildIndex(cfg);
@@ -1227,13 +1286,17 @@ suite('core: the execution gate (D13)', () => {
     assert.equal(escaped?.reason, 'outside-workspace');
   });
 
-  test('agent.permissionMode from zer0.json is clamped to the three-value enum', () => {
+  test('agent.permissionMode from zer0.json is clamped to the two modes that keep the gate', () => {
     // `asString` used to hand whatever the file said straight to the SDK.
-    for (const mode of ['default', 'acceptEdits', 'plan']) {
+    for (const mode of ['default', 'plan']) {
       const cfg = resolveConfig(WORKSPACE, { agent: { permissionMode: mode } }, {});
       assert.equal(cfg.agent.permissionMode, mode, 'a legal value survives the file layer');
     }
-    for (const mode of ['dontAsk', 'auto', 'bypassPermissions', '', 42]) {
+    // `acceptEdits` is in this list rather than the one above because it was
+    // measured to bypass `canUseTool` entirely: the edit landed and the
+    // approval card was never called. A repository naming it must not disarm
+    // the only gate the agent has (D10).
+    for (const mode of ['acceptEdits', 'dontAsk', 'auto', 'bypassPermissions', '', 42]) {
       const cfg = resolveConfig(WORKSPACE, { agent: { permissionMode: mode } }, {});
       assert.equal(
         cfg.agent.permissionMode,
@@ -1251,5 +1314,185 @@ suite('core: the execution gate (D13)', () => {
       configFile: 'cms.json',
     });
     assert.equal(named.configFile, 'cms.json', 'the settings layer still names it');
+  });
+});
+
+suite("core: the parser's warnings channel — what it had to guess at (WP2.3)", () => {
+  /** The block for a body, with the fences added. Never throws, by contract. */
+  function block(body: string, fence = '---'): { warnings: string[]; data: Record<string, unknown> } {
+    const { block: parsed } = splitFrontMatter(`${fence}\n${body}\n${fence}\nbody\n`);
+    assert.ok(parsed !== null, 'the parser still returns a block — it never throws');
+    return { warnings: parsed.warnings, data: parsed.data };
+  }
+
+  test('a clean block warns about nothing, which is the normal state', () => {
+    const clean = block(
+      [
+        'title: Hello',
+        'tags: [a, b]',
+        'nested:',
+        '  key: value',
+        'folded: >',
+        '  prose with & and * and [an unclosed bracket',
+        '  and a second line',
+        'list:',
+        '  - a & b',
+        '  - "quoted, with a comma"',
+      ].join('\n'),
+    );
+    assert.deepEqual(clean.warnings, [], `an ampersand in prose is an ampersand: ${clean.warnings.join(' | ')}`);
+    assert.equal(clean.data.title, 'Hello');
+  });
+
+  test('anchors and aliases are named, each on its own line', () => {
+    const anchored = block(['defaults: &series', '  layout: post', 'title: x'].join('\n'));
+    assert.equal(anchored.warnings.length, 1);
+    assert.match(anchored.warnings[0] ?? '', /^line 1: a YAML anchor \(`&series`\)/);
+    assert.equal(anchored.data.defaults, '&series', 'and the value really is the literal text');
+
+    const aliased = block(['title: x', 'meta: *series'].join('\n'));
+    assert.equal(aliased.warnings.length, 1);
+    assert.match(aliased.warnings[0] ?? '', /^line 2: a YAML alias \(`\*series`\)/);
+
+    // `*emphasis*` is markdown, not an alias, and must not be reported as one.
+    assert.deepEqual(block('title: a *bold* claim about 5 > 3').warnings, []);
+  });
+
+  test('merge keys and tags are named', () => {
+    const merged = block(['title: x', '<<: *defaults'].join('\n'));
+    assert.equal(merged.warnings.length, 1, 'the merge subsumes the alias on the same line');
+    assert.match(merged.warnings[0] ?? '', /^line 2: a YAML merge key \(`<<`\)/);
+
+    const tagged = block(['count: !!str 5', 'thing: !Custom {a: 1}'].join('\n'));
+    assert.equal(tagged.warnings.length, 2);
+    assert.match(tagged.warnings[0] ?? '', /^line 1: a YAML tag \(`!!str`\)/);
+    assert.match(tagged.warnings[1] ?? '', /^line 2: a YAML tag \(`!Custom`\)/);
+  });
+
+  test('a value truncated to its first line says so — quoted or flow', () => {
+    const quoted = block(['title: "one', 'date: 2026-01-01'].join('\n'));
+    assert.equal(quoted.warnings.length, 1);
+    assert.match(quoted.warnings[0] ?? '', /^line 1: a quoted scalar that never closes inside its value/);
+    assert.equal(quoted.data.title, '"one', 'which is exactly what the caller could not otherwise tell');
+    assert.equal(quoted.data.date, '2026-01-01', 'and the next key is still read');
+
+    // A continuation not indented past its key is not vouched for, even where
+    // PyYAML would be lenient: the value is not guessed, and the scan says so.
+    const shallow = block(['parent:', '  title: "one', ' two"'].join('\n'));
+    assert.equal(shallow.warnings.length, 1);
+    assert.match(shallow.warnings[0] ?? '', /^line 2: a quoted scalar that never closes inside its value/);
+
+    const flow = block(['tags: [a,', '  b]'].join('\n'));
+    assert.equal(flow.warnings.length, 1);
+    assert.match(flow.warnings[0] ?? '', /^line 1: a flow collection that closes on a later line/);
+  });
+
+  test('a quoted scalar wrapped onto later lines reads whole, the way PyYAML reads it', () => {
+    // Every expectation below is what `yaml.safe_load` returns for the same
+    // text (PyYAML 6), recorded when this was written; the first case is an
+    // it-journey quest report's `excerpt:` verbatim, one of 131 that were
+    // reported unreadable before.
+    const wrapped = block(
+      [
+        "excerpt: 'Software Developer · Level 0000 — Foundation & Init World: an evidence-based quest-perfection",
+        "  walkthrough from 2026-06-29.'",
+        'slice: developer/0000',
+      ].join('\n'),
+    );
+    assert.deepEqual(wrapped.warnings, [], 'a valid wrapped scalar is not a finding');
+    assert.equal(
+      wrapped.data.excerpt,
+      'Software Developer · Level 0000 — Foundation & Init World: an evidence-based quest-perfection walkthrough from 2026-06-29.',
+    );
+    assert.equal(wrapped.data.slice, 'developer/0000', 'the continuation line is consumed, and the next key is read');
+
+    const cases: Array<[string, string[], unknown]> = [
+      ['a break is one space', ['t: "one', '  two"'], 'one two'],
+      ["'' survives the fold", ["t: 'it''s", "  wrapped'"], "it's wrapped"],
+      ['an escaped break joins with nothing', ['t: "a \\', '  b"'], 'a b'],
+      ['a blank line is a newline', ['t: "a', '', '  b"'], 'a\nb'],
+      ['an escape is decoded after the fold', ['t: "a\\n', '  b"'], 'a\n b'],
+      ['a line that looks like a key is prose inside quotes', ["t: 'a", "  b: c'"], 'a b: c'],
+      ['a comment after the closing quote is dropped', ["t: 'a", "  b' # note"], 'a b'],
+    ];
+    for (const [name, lines, expected] of cases) {
+      const parsed = block(lines.join('\n'));
+      assert.deepEqual(parsed.warnings, [], `${name}: no warning`);
+      assert.deepEqual(parsed.data, { t: expected }, name);
+    }
+
+    const item = block(['tags:', "- 'one", "  two'", '- three'].join('\n'));
+    assert.deepEqual(item.warnings, []);
+    assert.deepEqual(item.data.tags, ['one two', 'three'], 'a sequence item wraps the same way');
+
+    // Read whole is not the same as fully decoded: an escape this parser does
+    // not decode is still named, on the line the scalar opens.
+    const escaped = block(['t: "caf\\u00e9', '  x"'].join('\n'));
+    assert.equal(escaped.warnings.length, 1);
+    assert.match(escaped.warnings[0] ?? '', /^line 1: a `\\u` escape is not decoded/);
+    assert.equal(escaped.data.t, 'caf\\u00e9 x');
+  });
+
+  test('an undecoded escape, and the two TOML constructs', () => {
+    const escaped = block('title: "caf\\u00e9"');
+    assert.equal(escaped.warnings.length, 1);
+    assert.match(escaped.warnings[0] ?? '', /^line 1: a `\\u` escape is not decoded/);
+    assert.deepEqual(block('title: "a \\n b \\" c"').warnings, [], 'the eight escapes we do decode are silent');
+
+    const toml = block(
+      ['title = "x"', "note = '''", 'over two lines', "'''", '[[items]]', 'name = "a"'].join('\n'),
+      '+++',
+    );
+    assert.equal(toml.warnings.length, 2);
+    assert.match(toml.warnings[0] ?? '', /^line 2: a TOML multi-line literal string/);
+    assert.match(toml.warnings[1] ?? '', /^line 5: a TOML array-of-tables \(`\[\[items\]\]`\)/);
+    assert.deepEqual(block(['title = "x"', '[meta]', 'a = 1'].join('\n'), '+++').warnings, []);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The active-site rule (src/siteRule.ts)
+// ---------------------------------------------------------------------------
+
+/**
+ * `resolveActiveSite` is the whole of "which of the open folders is the console
+ * pointed at?", and it lives alone in `src/siteRule.ts` precisely so it can be
+ * asked that question here — in the fast suite, with no extension host. The
+ * registry that uses it needs `vscode.EventEmitter`, `vscode.workspace` and a
+ * `WorkspaceStore` per folder; the rule needs three strings.
+ *
+ * The fourth case below is the one that would otherwise be found in the field:
+ * a person picks a site, closes that folder, and the id they picked is now a
+ * name for nothing. It has to fall through, not blank the console.
+ */
+suite('sites: the active-site rule', () => {
+  const folders = ['file:///a', 'file:///b', 'file:///c'];
+
+  test('an explicit pick wins over the active editor and over folder zero', () => {
+    assert.equal(resolveActiveSite(folders, 'file:///c', 'file:///b'), 'file:///c');
+    assert.equal(resolveActiveSite(folders, 'file:///b', undefined), 'file:///b');
+  });
+
+  test('with no pick, the folder owning the active editor wins', () => {
+    assert.equal(resolveActiveSite(folders, undefined, 'file:///c'), 'file:///c');
+  });
+
+  test('with neither, the first folder — the answer this extension always gave', () => {
+    assert.equal(resolveActiveSite(folders, undefined, undefined), 'file:///a');
+    assert.equal(
+      resolveActiveSite(folders, undefined, 'file:///elsewhere'),
+      'file:///a',
+      'an editor outside every open folder names no site',
+    );
+    assert.equal(resolveActiveSite([], 'file:///a', 'file:///b'), undefined, 'a folderless window');
+  });
+
+  test('an explicit id that no longer exists falls through to the next rule', () => {
+    assert.equal(
+      resolveActiveSite(folders, 'file:///closed', 'file:///b'),
+      'file:///b',
+      'the closed pick must not win, and must not blank the console either',
+    );
+    assert.equal(resolveActiveSite(folders, 'file:///closed', undefined), 'file:///a');
   });
 });

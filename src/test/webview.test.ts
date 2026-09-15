@@ -43,14 +43,18 @@ import {
 
 import { FIELD_TYPES } from '../core/shared/types';
 import { renderContents } from '../webview/dashboard/contents';
+import { render as renderAudit } from '../webview/dashboard/audit';
 import { render as renderCatering } from '../webview/dashboard/catering';
+import { render as renderHarness } from '../webview/dashboard/harness';
+import { render as renderMonitor } from '../webview/dashboard/monitor';
+import { render as renderSites } from '../webview/dashboard/sites';
+import { render as renderWorkflows } from '../webview/dashboard/workflows';
 import { render as renderFleet } from '../webview/dashboard/fleet';
 import { render as renderDrafts } from '../webview/dashboard/governance';
 import { render as renderSettings } from '../webview/dashboard/settings';
 import { render as renderWelcome } from '../webview/dashboard/welcome';
 import { createFieldWidget } from '../webview/panel/fields/index';
 import { dataTable, gatedButton, statusPill } from '../webview/shared/components';
-import { el } from '../webview/shared/dom';
 import { resetStagedForm, stagedForm } from '../webview/shared/form';
 import { getMessenger } from '../webview/shared/messenger';
 import {
@@ -58,6 +62,9 @@ import {
   type DashboardRoute,
   type DashboardState,
   type Field,
+  type FleetLaneView,
+  type FleetState,
+  type MonitorRepoView,
   type FieldContext,
   type PanelState,
   type SettingItem,
@@ -203,18 +210,6 @@ type Renderer = (host: HTMLElement, ctx: DashboardContext) => void;
  * `Record<DashboardRoute, Renderer>` is not satisfiable without it, and
  * "unreachable" is a claim worth being able to watch fail.
  */
-function notAvailable(route: DashboardRoute): Renderer {
-  return (host) => {
-    host.appendChild(
-      el(
-        'div',
-        { class: 'z-emptystate' },
-        el('p', {}, `The ${route} tab is not available in this build.`),
-        el('p', { class: 'z-muted' }, 'The host does not offer this route yet.'),
-      ),
-    );
-  };
-}
 
 /** The five routes that take a snapshot rather than the view-local context. */
 function bySnapshot(render: (host: HTMLElement, state: DashboardState) => void): Renderer {
@@ -224,15 +219,15 @@ function bySnapshot(render: (host: HTMLElement, state: DashboardState) => void):
 }
 
 const RENDERERS: Record<DashboardRoute, Renderer> = {
-  sites: notAvailable('sites'),
+  sites: bySnapshot(renderSites),
   contents: renderContents,
   drafts: bySnapshot(renderDrafts),
-  audit: notAvailable('audit'),
+  audit: bySnapshot(renderAudit),
   catering: bySnapshot(renderCatering),
   fleet: bySnapshot(renderFleet),
-  harness: notAvailable('harness'),
-  workflows: notAvailable('workflows'),
-  monitor: notAvailable('monitor'),
+  harness: bySnapshot(renderHarness),
+  workflows: bySnapshot(renderWorkflows),
+  monitor: bySnapshot(renderMonitor),
   settings: bySnapshot(renderSettings),
   welcome: bySnapshot(renderWelcome),
 };
@@ -290,16 +285,6 @@ suite('webview', () => {
     renderDrafts(drafts.el, state);
     assert.match(text(drafts.node), /The draft queue is empty\./);
 
-    // The five routes later PRs fill say so, rather than rendering a blank tab.
-    for (const route of ['sites', 'audit', 'harness', 'workflows', 'monitor'] as const) {
-      const mount = host();
-      RENDERERS[route](mount.el, ctx);
-      assert.match(
-        text(mount.node),
-        new RegExp(`The ${route} tab is not available`),
-        `the ${route} placeholder does not say the route is unfilled`,
-      );
-    }
   });
 
   test('statusPill renders `unknown` differently from `neutral`', () => {
@@ -447,5 +432,116 @@ suite('webview', () => {
         `${mounted} mount/dispose cycles — dispose() has to release what it registered`,
     );
     assert.equal(mount.node.childNodes.length, 0, 'the host was not emptied between rounds');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// An unread run list is unknown, never "no run on record"
+// ---------------------------------------------------------------------------
+
+suite('webview: a run list GitHub refused renders unknown', () => {
+  setup(() => {
+    resetDom();
+    resetStagedForm();
+  });
+
+  function monitorRow(runsReadable: boolean): MonitorRepoView {
+    return {
+      slug: 'bamr87/irony-works',
+      source: 'workspace',
+      localRoot: '/w',
+      fetchedAt: '2026-09-14T00:00:00Z',
+      runsReadable,
+      note: null,
+      grade: null,
+      mergePolicy: null,
+      cost: null,
+      lanes: [{ id: 'germinate', switchValue: 'true', lastRun: null, openPulls: 0, cost: null, grade: null }],
+      pulls: [],
+    };
+  }
+
+  function renderMonitorRow(row: MonitorRepoView): FakeElement {
+    const mount = host();
+    renderMonitor(mount.el, {
+      ...emptyDashboardState(),
+      monitor: {
+        roster: [row],
+        hub: { slug: 'bamr87/bamr87', readAt: null, note: null, scorecard: null },
+        gitfactoryUrl: 'https://example.invalid/',
+      },
+    });
+    return mount.node;
+  }
+
+  test('Monitor: a read with a refused run page draws unknown; a read that listed none draws "no run on record"', () => {
+    const refused = renderMonitorRow(monitorRow(false));
+    assert.doesNotMatch(text(refused), /no run on record/, 'an unread run page must not claim a measurement');
+    assert.ok(
+      findAll(refused, '.z-status--unknown').some((pill) => text(pill) === 'unknown'),
+      'the run cell is an unknown pill',
+    );
+
+    resetDom();
+    const read = renderMonitorRow(monitorRow(true));
+    assert.match(text(read), /no run on record/, 'a 200 with no runs is a real answer');
+  });
+
+  function fleetState(fetchedAt: string | null, runsReadable: boolean, workflowsReadable: boolean): FleetState {
+    const lane: FleetLaneView = {
+      id: 'germinate',
+      kind: 'content',
+      harness: 'claude-cli',
+      implementation: '.github/workflows/germinate.yml',
+      description: 'germinate',
+      triggers: 'schedule',
+      switch: 'GERMINATE_ENABLED',
+      switchValue: 'true',
+      usesTokens: [],
+      guardrails: 'never merges',
+      lastRun: null,
+      toggleBlockers: [],
+      dispatchBlockers: [],
+    };
+    return {
+      enabled: true,
+      dispatchAllow: true,
+      manifestPath: 'fleet.manifest.yml',
+      repo: 'bamr87/irony-works',
+      summary: '',
+      provenance: 'derived',
+      reason: null,
+      lanes: [lane],
+      tokens: [],
+      fetchedAt,
+      note: null,
+      pulls: [],
+      runsReadable,
+      workflowsReadable,
+    };
+  }
+
+  function renderFleetState(state: FleetState): FakeElement {
+    const mount = host();
+    renderFleet(mount.el, { ...emptyDashboardState(), fleet: state });
+    return mount.node;
+  }
+
+  test('Fleet tab: unread and refused runs are not "no run on record"; a refused workflow list is not "not registered"', () => {
+    assert.doesNotMatch(text(renderFleetState(fleetState(null, false, false))), /no run on record/, 'nothing read yet');
+
+    resetDom();
+    const refused = renderFleetState(fleetState('2026-09-14T00:00:00Z', false, false));
+    assert.doesNotMatch(text(refused), /no run on record/);
+    assert.match(text(refused), /runs unreadable/);
+    const disabled = findAll(refused, 'button').map((button) => button.getAttribute('title') ?? '');
+    assert.ok(
+      !disabled.some((title) => /GitHub has no registered workflow/.test(title)),
+      'a refused workflow list must not be described as an unregistered workflow',
+    );
+
+    resetDom();
+    const read = renderFleetState(fleetState('2026-09-14T00:00:00Z', true, true));
+    assert.match(text(read), /no run on record/, 'a 200 with no runs is a real answer');
   });
 });

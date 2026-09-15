@@ -1,0 +1,77 @@
+{
+  "generatedFrom": "pre-D12 core",
+  "rows": [
+    {
+      "relPath": "pages/_posts/corp/2026-07-08-governed-publishing.md",
+      "title": "Governed publishing without a platform",
+      "slug": "governed-publishing",
+      "computedSlug": "governed-publishing-without-platform",
+      "date": "2026-07-08",
+      "draft": false,
+      "collection": "",
+      "previewImage": "assets/images/governed-publishing.png",
+      "canonicalUrl": "/pages/posts/corp/governed-publishing/",
+      "filePrefix": "{{date|yyyy-MM-dd}}"
+    },
+    {
+      "relPath": "pages/_posts/corp/2026-07-12-house-style.md",
+      "title": "House style, mechanically enforced",
+      "slug": "house-style",
+      "computedSlug": "house-style-mechanically-enforced",
+      "date": "2026-07-12",
+      "draft": false,
+      "collection": "",
+      "previewImage": "",
+      "canonicalUrl": "/pages/posts/corp/house-style/",
+      "filePrefix": "{{date|yyyy-MM-dd}}"
+    },
+    {
+      "relPath": "pages/_posts/corp/2026-07-25-work-in-progress.md",
+      "title": "Work in progress",
+      "slug": "work-in-progress",
+      "computedSlug": "work-progress",
+      "date": "2026-07-25",
+      "draft": true,
+      "collection": "",
+      "previewImage": "",
+      "canonicalUrl": "/pages/posts/corp/work-in-progress/",
+      "filePrefix": "{{date|yyyy-MM-dd}}"
+    },
+    {
+      "relPath": "pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md",
+      "title": "MCP for the back office",
+      "slug": "mcp-for-the-back-office",
+      "computedSlug": "mcp-back-office",
+      "date": "2026-07-06",
+      "draft": false,
+      "collection": "",
+      "previewImage": "assets/images/mcp.png",
+      "canonicalUrl": "/pages/posts/tech/mcp-for-the-back-office/",
+      "filePrefix": "{{date|yyyy-MM-dd}}"
+    },
+    {
+      "relPath": "pages/_posts/tech/2026-07-20-toml-dialect.md",
+      "title": "The TOML dialect",
+      "slug": "toml-dialect",
+      "computedSlug": "toml-dialect",
+      "date": "2026-07-20",
+      "draft": false,
+      "collection": "",
+      "previewImage": "",
+      "canonicalUrl": "/pages/posts/tech/toml-dialect/",
+      "filePrefix": "{{date|yyyy-MM-dd}}"
+    },
+    {
+      "relPath": "pages/_posts/tech/2026-07-22-json-dialect.md",
+      "title": "The JSON dialect",
+      "slug": "json-dialect",
+      "computedSlug": "json-dialect",
+      "date": "2026-07-22",
+      "draft": false,
+      "collection": "",
+      "previewImage": "",
+      "canonicalUrl": "/pages/posts/tech/json-dialect/",
+      "filePrefix": "{{date|yyyy-MM-dd}}"
+    }
+  ]
+}

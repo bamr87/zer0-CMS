@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "generated_from": [".cms/config.yml"],
+  "constraints": {
+    "title": { "hard_max": 60, "optimal_min": 30, "optimal_max": 60 },
+    "description": { "hard_min": 50, "hard_max": 160, "optimal_min": 120, "optimal_max": 155 }
+  },
+  "collections": {
+    "posts": {
+      "path": "pages/_posts",
+      "fm_content_type": "post",
+      "required": ["title", "description", "date", "author"],
+      "recommended": ["slug", "tags", "categories"]
+    }
+  }
+}
