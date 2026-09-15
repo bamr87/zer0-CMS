@@ -47,6 +47,31 @@ class TestDoctor < Minitest::Test
     end
   end
 
+  def test_distribution_check
+    with_block = lambda do |block|
+      ALIGNED.merge("zer0.json" => ALIGNED["zer0.json"].sub("\"$schema\"", "\"distribution\": { \"linkedin\": #{block} },\n  \"$schema\""))
+    end
+    valid = '{ "author": "urn:li:organization:1", "siteUrl": "https://example.test", "ledger": "log.json" }'
+    site(with_block.call(valid)) { |dir| assert_empty Doctor.run(dir).findings.select { |f| f["check_id"] == "distribution" } }
+
+    site(with_block.call('{ "author": "urn:li:company:1", "publishAllow": true }')) do |dir|
+      report = Doctor.run(dir)
+      assert_equal %w[distribution-config-invalid], rules(report, "error").grep(/distribution/)
+      assert_includes rules(report, "warning"), "distribution-config"
+      refute report.ok?
+    end
+    site(with_block.call(valid).merge("log.json" => "{ not json")) do |dir|
+      assert_includes rules(Doctor.run(dir), "error"), "distribution-ledger-unreadable"
+    end
+    site(with_block.call('{ "author": "urn:li:person:x", "queue": "../outside" }')) do |dir|
+      assert_includes rules(Doctor.run(dir), "error"), "distribution-config-invalid"
+    end
+    site(ALIGNED.merge("scripts/features/linkedin/posts.py" => "# publisher\n")) do |dir|
+      finding = Doctor.run(dir).findings.find { |f| f["rule"] == "vendored-linkedin-publisher" }
+      assert_equal ["warning", "scripts/features/linkedin/posts.py"], finding.values_at("severity", "file")
+    end
+  end
+
   def test_theme_check
     site(ALIGNED.merge("_config.yml" => "remote_theme: someone/else\npreview_images: {}\n", ".theme-overrides.yml" => nil)) do |dir|
       assert_equal %w[no-theme-overrides theme-not-zer0], rules(Doctor.run(dir)).grep(/theme/)
