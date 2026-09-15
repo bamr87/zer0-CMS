@@ -10,6 +10,10 @@
             title: "Draws this page's preview with #{ImageEngine.description}, provider local" %>
     <% end %>
     <%= link_to "Image generator ↗", ImageEngine.generator_url, class: "button button--alt", target: "_blank", rel: "noopener noreferrer" %>
+    <% if page.resource.state == "live" %>
+      <%= button_to "Draft a LinkedIn post", admin_distribution_drafts_path(page.resource.site), params: { page_id: page.resource.id },
+            class: "button button--alt", title: "Writes a pending draft to the site's LinkedIn queue; a person approves it before it can publish" %>
+    <% end %>
   </div>
 <% end %>
 <% content_for(:before_main) do %>

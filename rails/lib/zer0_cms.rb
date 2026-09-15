@@ -20,11 +20,18 @@
 # The whole generator is stdlib-only Ruby so the headless wizard (`bin/zer0-cms`)
 # and its tests run without Rails or bundler; the Rails app under ../app + ../config
 # is a thin web wrapper over exactly these classes.
+#
+# Beside it: `Zer0Cms::LinkedIn`, a LinkedIn API client whose every call is
+# declared as data, and `Zer0Cms::Distribution`, the governed lane that carries
+# a site's content to LinkedIn and its aggregate response back
+# (docs/DISTRIBUTION.md). Same rule — stdlib only.
 
 require_relative "zer0_cms/version"
 require_relative "zer0_cms/abc"
 require_relative "zer0_cms/cms"
 require_relative "zer0_cms/doctor"
+require_relative "zer0_cms/linkedin"
+require_relative "zer0_cms/distribution"
 
 module Zer0Cms
   ROOT = File.expand_path("..", __dir__)

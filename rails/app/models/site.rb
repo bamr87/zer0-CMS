@@ -9,6 +9,8 @@ class Site < ApplicationRecord
   has_many :pages, dependent: :delete_all
   has_many :assets, dependent: :delete_all
   has_many :terms, dependent: :delete_all
+  # Not an index: a channel holds a token nothing on disk can rebuild.
+  has_many :channels, dependent: :destroy
 
   before_validation :canonicalize_path
 

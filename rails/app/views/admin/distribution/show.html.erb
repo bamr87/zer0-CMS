@@ -1,0 +1,136 @@
+<% content_for(:title) { "#{@site.name} · LinkedIn" } %>
+<header class="main-content__header">
+  <div>
+    <h1 class="main-content__page-title"><%= @site.name %> · LinkedIn</h1>
+    <div class="sub mono"><%= @config.queue %> → <%= @config.ledger %></div>
+  </div>
+  <div class="btn-row">
+    <%= link_to "Site", admin_site_path(@site), class: "button button--alt" %>
+    <% if @channel %>
+      <%= link_to "Channel", admin_channel_path(@channel), class: "button button--alt" %>
+    <% else %>
+      <%= link_to "Add a channel", new_admin_channel_path, class: "button button--alt" %>
+    <% end %>
+    <% if @status["published"].to_i.positive? %>
+      <%= button_to "Read statistics", admin_distribution_statistics_path(@site), class: "button button--alt",
+            title: "Aggregate counts for the author's own published posts, into #{@status["performance"]}" %>
+    <% end %>
+  </div>
+</header>
+
+<section class="main-content__body">
+  <dl>
+    <dt class="attribute-label">Author</dt>
+    <dd class="attribute-data mono"><%= @config.author.presence || "none — set distribution.linkedin.author in zer0.json" %></dd>
+    <dt class="attribute-label">Credential</dt>
+    <dd class="attribute-data">
+      <% if @channel&.connected? %>
+        connected channel<%= @channel.days_left ? " (#{@channel.days_left} days left)" : "" %>
+      <% elsif @status.dig("credentials", "LINKEDIN_ACCESS_TOKEN") %>
+        LINKEDIN_ACCESS_TOKEN from the environment
+      <% else %>
+        none
+      <% end %>
+    </dd>
+    <dt class="attribute-label">Site URL</dt>
+    <dd class="attribute-data mono"><%= @config.site_url.presence || "—" %></dd>
+    <dt class="attribute-label">LinkedIn-Version</dt>
+    <dd class="attribute-data"><%= @config.api_version %> <%= distribution_badge(@status["api_version_status"], version_tone(@status["api_version_status"])) %></dd>
+    <dt class="attribute-label">Publishes drafts that are</dt>
+    <dd class="attribute-data"><%= @config.accept_statuses.join(" or ") %></dd>
+    <dt class="attribute-label">Publishing on this server</dt>
+    <dd class="attribute-data"><%= publish_armed? ? distribution_badge("armed", :ok) : distribution_badge("off", :warn) %></dd>
+  </dl>
+  <% (@status["errors"].map { |m| [m, :err] } + @status["warnings"].map { |m| [m, :warn] }).each do |message, tone| %>
+    <p><%= distribution_badge(tone == :err ? "error" : "warning", tone) %> <%= message %></p>
+  <% end %>
+</section>
+
+<section class="main-content__body main-content__body--flush">
+  <h2 class="section-title">Queue</h2>
+  <% if @previews.empty? %>
+    <p class="faint">No drafts in <%= @config.queue %>. Draft one from a page below, or with <code>zer0-cms linkedin draft</code>.</p>
+  <% else %>
+    <table class="list">
+      <thead><tr><th scope="col">Draft</th><th scope="col">Status</th><th scope="col">Type</th><th scope="col">Shares</th><th scope="col">Gates</th></tr></thead>
+      <tbody>
+        <% @previews.each do |preview| %>
+          <% blocking = preview.problems %>
+          <tr>
+            <td><%= link_to preview.draft.id, admin_distribution_draft_path(@site, preview.draft.id) %></td>
+            <td><%= distribution_badge(preview.draft.status, draft_tone(preview.draft.status)) %></td>
+            <td><%= preview.kind %></td>
+            <td class="mono"><%= preview.key.to_s.truncate(70) %></td>
+            <td>
+              <% if blocking.any? %>
+                <%= blocking.first.message %>
+              <% elsif preview.blockers.any? %>
+                <span class="faint">ready — <%= preview.blockers.map(&:message).to_sentence %></span>
+              <% else %>
+                <%= distribution_badge("ready", :ok) %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>
+
+<% unshared = @sources.reject(&:shared?) %>
+<section class="main-content__body main-content__body--flush">
+  <h2 class="section-title">Not shared yet <span class="faint">(<%= unshared.size %>)</span></h2>
+  <% if unshared.empty? %>
+    <p class="faint">Every shareable page has been shared.</p>
+  <% else %>
+    <table class="list">
+      <thead><tr><th scope="col">Page</th><th scope="col">Date</th><th scope="col">URL</th><th scope="col"></th></tr></thead>
+      <tbody>
+        <% unshared.first(50).each do |source| %>
+          <% page = @pages[source.entry.relative] %>
+          <tr>
+            <td><%= page ? link_to(source.entry.title, admin_page_path(page)) : source.entry.title %></td>
+            <td class="mono"><%= source.entry.date_raw.to_s[0, 10] %></td>
+            <td class="mono"><%= source.url.delete_prefix(@config.site_url) %></td>
+            <td class="right">
+              <% if page %>
+                <%= button_to "Draft a post", admin_distribution_drafts_path(@site), params: { page_id: page.id }, class: "button button--alt" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>
+
+<% shares = @pipeline.ledger.shares %>
+<section class="main-content__body main-content__body--flush">
+  <h2 class="section-title">Published <span class="faint">(<%= shares.size %>)</span></h2>
+  <% if shares.empty? %>
+    <p class="faint">Nothing published from this site yet.</p>
+  <% else %>
+    <table class="list">
+      <thead>
+        <tr>
+          <th scope="col">Shared</th><th scope="col">Post</th><th scope="col">When</th>
+          <th scope="col" class="right">Impressions</th><th scope="col" class="right">Clicks</th><th scope="col" class="right">Engagements</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% shares.sort_by { |_, entry| entry["posted_at"].to_s }.reverse_each do |key, entry| %>
+          <% counts = @performance[entry["source_file"].to_s] || {} %>
+          <tr>
+            <td class="mono"><%= key.delete_prefix(@config.site_url).truncate(70) %></td>
+            <td><%= linkedin_post_link(entry["urn"]) %></td>
+            <td class="mono"><%= entry["posted_at"].to_s[0, 10] %></td>
+            <td class="right"><%= counts["impressions"] || "—" %></td>
+            <td class="right"><%= counts["clicks"] || "—" %></td>
+            <td class="right"><%= counts["engagements"] || "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="faint">Counts are the author's own aggregate statistics from <%= @status["performance"] %>. Nothing about who engaged is read or stored.</p>
+  <% end %>
+</section>

@@ -36,7 +36,9 @@ module Zer0Cms
       _plugins/preview_generator.rb
       scripts/lib/preview_generator.py
     ].freeze
-    CHECKS = %w[theme image-engine cms fleet content].freeze
+    CHECKS = %w[theme image-engine cms fleet distribution content].freeze
+    # The per-site LinkedIn publisher the distribution lane replaced.
+    VENDORED_LINKEDIN = %w[scripts/features/linkedin/posts.py scripts/features/linkedin/mcp_server.py].freeze
 
     Report = Struct.new(:root, :schema, :findings, keyword_init: true) do
       def errors = findings.count { |f| f["severity"] == "error" }
@@ -53,8 +55,35 @@ module Zer0Cms
       check_image_engine(root, config, findings)
       check_cms(root, findings)
       check_fleet(root, findings)
+      check_distribution(root, findings)
       schema_path = check_content(root, schema, findings)
       Report.new(root: root, schema: schema_path, findings: findings)
+    end
+
+    # ---- distribution --------------------------------------------------------
+
+    # Only a site that configures `distribution.linkedin` is checked beyond the
+    # vendored-publisher warning. The environment is ignored on purpose: the
+    # doctor reports what the repository says, the same on every machine.
+    def check_distribution(root, findings)
+      vendored = VENDORED_LINKEDIN.find { |rel| root.join(rel).file? }
+      if vendored
+        findings << finding("distribution", "warning", "vendored-linkedin-publisher",
+                            "a per-site LinkedIn publisher; zer0-cms linkedin replaces it", file: vendored)
+      end
+      return unless root.join("zer0.json").file?
+
+      require_relative "distribution"
+      config = Distribution::Config.load(root, env: {})
+      return unless config.configured?
+
+      config.errors.each { |message| findings << finding("distribution", "error", "distribution-config-invalid", message, file: "zer0.json") }
+      config.warnings.each { |message| findings << finding("distribution", "warning", "distribution-config", message, file: "zer0.json") }
+      return if Distribution::Ledger.new(config.path(config.ledger)).readable?
+
+      findings << finding("distribution", "error", "distribution-ledger-unreadable", "#{config.ledger} is not valid JSON", file: config.ledger)
+    rescue Distribution::ConfigError, Cms::UnsafePath => e
+      findings << finding("distribution", "error", "distribution-config-invalid", e.message, file: "zer0.json")
     end
 
     # The finding shape of lifehacker.dev scripts/ci/_lib.rb LH.finding, with

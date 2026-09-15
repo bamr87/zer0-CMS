@@ -1,0 +1,102 @@
+<% content_for(:title) { @draft.id } %>
+<header class="main-content__header">
+  <div>
+    <h1 class="main-content__page-title"><%= @draft.id %></h1>
+    <div class="sub mono"><%= @draft.relative %></div>
+  </div>
+  <div class="btn-row">
+    <%= link_to "Queue", admin_distribution_site_path(@site), class: "button button--alt" %>
+    <% if @draft.status == "pending" %>
+      <%= button_to "Approve", admin_distribution_approve_path(@site, @draft.id), class: "button",
+            data: { turbo_confirm: "Approve this draft? Approval is the decision that lets it publish." } %>
+    <% end %>
+  </div>
+</header>
+
+<section class="main-content__body">
+  <dl>
+    <dt class="attribute-label">Status</dt>
+    <dd class="attribute-data"><%= distribution_badge(@draft.status, draft_tone(@draft.status)) %></dd>
+    <dt class="attribute-label">Type</dt>
+    <dd class="attribute-data"><%= @preview.kind %></dd>
+    <dt class="attribute-label">Shares</dt>
+    <dd class="attribute-data mono"><%= @preview.key || "—" %></dd>
+    <% if @preview.entry %>
+      <dt class="attribute-label">Page</dt>
+      <dd class="attribute-data mono"><%= @preview.entry.relative %></dd>
+    <% end %>
+    <dt class="attribute-label">Card image</dt>
+    <dd class="attribute-data mono"><%= @preview.thumbnail ? @preview.thumbnail.delete_prefix("#{@config.root}/") : "none" %></dd>
+    <dt class="attribute-label">Posts as</dt>
+    <dd class="attribute-data mono"><%= @config.author.presence || "—" %></dd>
+    <% if @draft.meta["linkedin_urn"].present? %>
+      <dt class="attribute-label">LinkedIn post</dt>
+      <dd class="attribute-data"><%= linkedin_post_link(@draft.meta["linkedin_urn"]) %></dd>
+    <% end %>
+  </dl>
+</section>
+
+<section class="main-content__body">
+  <h2 class="section-title">Commentary</h2>
+  <% before, after = fold_split(@preview.commentary) %>
+  <div class="commentary mono"><span class="fold-before"><%= before %></span><% if after.present? %><span class="fold-marker" aria-hidden="true">…see more</span><span class="fold-after"><%= after %></span><% end %></div>
+  <p class="faint">
+    <%= Zer0Cms::LinkedIn::Posts.commentary_length(@preview.commentary) %> of <%= Zer0Cms::LinkedIn::COMMENTARY_MAX %> characters as sent.
+    A reader sees the first <%= Zer0Cms::Distribution::Guard::FOLD %> before “see more”. Edit the draft file to change the text.
+  </p>
+  <% @preview.notes.each do |note| %>
+    <p><%= distribution_badge("note", :info) %> <%= note %></p>
+  <% end %>
+</section>
+
+<section class="main-content__body">
+  <h2 class="section-title">Brand guard</h2>
+  <% findings = @preview.guard.reject { |f| f.level == "info" } %>
+  <% if findings.empty? %>
+    <p class="faint">Nothing to report. The guard is a floor, not a review: read it as the reader will.</p>
+  <% else %>
+    <ul class="gate-list">
+      <% findings.each do |finding| %>
+        <li><%= distribution_badge(finding.level, finding_tone(finding.level)) %> <%= finding.message %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <h2 class="section-title">Gates</h2>
+  <% if @preview.blockers.empty? %>
+    <p><%= distribution_badge("clear", :ok) %> Nothing blocks this draft.</p>
+  <% else %>
+    <ul class="gate-list">
+      <% @preview.blockers.each do |blocker| %>
+        <li><span class="mono"><%= blocker.kind %></span> — <%= blocker.message %></li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>
+
+<section class="main-content__body">
+  <h2 class="section-title">Publish</h2>
+  <% if @preview.blockers.empty? %>
+    <%= form_with url: admin_distribution_publish_path(@site, @draft.id), method: :post,
+          data: { turbo_confirm: "Publish this draft to LinkedIn as #{@config.author}?" } do |form| %>
+      <p class="confirm-row">
+        <%= check_box_tag :confirm, "1", false, id: "confirm-publish" %>
+        <label for="confirm-publish">I have read the request below; publish it to LinkedIn as <span class="mono"><%= @config.author %></span>.</label>
+      </p>
+      <%= form.submit "Publish to LinkedIn", class: "button" %>
+    <% end %>
+  <% else %>
+    <p class="faint">Not available while a gate above applies. The server checks every gate again when publishing.</p>
+  <% end %>
+
+  <h3>The exact request</h3>
+  <p class="mono faint">POST https://api.linkedin.com/rest/posts · LinkedIn-Version <%= @config.api_version %> · X-Restli-Protocol-Version 2.0.0</p>
+  <% if @preview.payload %>
+    <pre class="config"><%= JSON.pretty_generate(@preview.payload) %></pre>
+    <% if @preview.thumbnail %>
+      <p class="faint">The card image is uploaded first and its <span class="mono">urn:li:image</span> is set as <span class="mono">content.article.thumbnail</span>.</p>
+    <% end %>
+  <% else %>
+    <p class="faint">No payload: <%= @preview.blockers.first&.message %>.</p>
+  <% end %>
+</section>

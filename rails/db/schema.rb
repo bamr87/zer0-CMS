@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_14_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_15_000001) do
   create_table "assets", force: :cascade do |t|
     t.integer "bytes", default: 0, null: false
     t.datetime "created_at", null: false
@@ -21,6 +21,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_000001) do
     t.datetime "updated_at", null: false
     t.index ["site_id", "relative"], name: "index_assets_on_site_id_and_relative", unique: true
     t.index ["site_id"], name: "index_assets_on_site_id"
+  end
+
+  create_table "channels", force: :cascade do |t|
+    t.text "access_token"
+    t.string "author_urn", null: false
+    t.datetime "checked_at"
+    t.datetime "connected_at"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.text "last_error"
+    t.string "member_urn", default: "", null: false
+    t.string "name", default: "", null: false
+    t.string "provider", default: "linkedin", null: false
+    t.datetime "refresh_expires_at"
+    t.text "refresh_token"
+    t.string "scopes", default: "", null: false
+    t.integer "site_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["site_id", "provider", "author_urn"], name: "index_channels_on_site_id_and_provider_and_author_urn", unique: true
+    t.index ["site_id"], name: "index_channels_on_site_id"
   end
 
   create_table "pages", force: :cascade do |t|
@@ -83,6 +103,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_000001) do
   end
 
   add_foreign_key "assets", "sites"
+  add_foreign_key "channels", "sites"
   add_foreign_key "pages", "sites"
   add_foreign_key "terms", "sites"
 end

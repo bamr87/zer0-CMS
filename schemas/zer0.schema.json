@@ -221,6 +221,59 @@
         "target": { "type": "string", "default": "jekyll" }
       }
     },
+    "distribution": {
+      "type": "object",
+      "description": "Lanes that carry this site's content off the site (docs/DISTRIBUTION.md). Settings only: credentials come from the environment, and nothing here can arm a live publish.",
+      "additionalProperties": false,
+      "properties": {
+        "linkedin": {
+          "type": "object",
+          "description": "LinkedIn publishing through zer0-cms linkedin, the zer0-linkedin.yml workflow, the fleet CMS and its MCP server.",
+          "additionalProperties": false,
+          "properties": {
+            "author": {
+              "type": "string",
+              "pattern": "^urn:li:(organization|person):[A-Za-z0-9_-]+$",
+              "description": "Who posts: urn:li:organization:{id} for a page, urn:li:person:{id} for a member's own profile."
+            },
+            "siteUrl": {
+              "type": "string",
+              "pattern": "^https?://",
+              "description": "The origin canonical URLs are built on. Defaults to _config.yml url + baseurl."
+            },
+            "apiVersion": {
+              "type": "string",
+              "pattern": "^[0-9]{6}$",
+              "default": "202608",
+              "description": "The Linkedin-Version header (YYYYMM). LinkedIn supports each version for twelve months."
+            },
+            "queue": { "type": "string", "default": ".zer0/drafts/linkedin", "description": "The draft queue folder." },
+            "ledger": { "type": "string", "default": ".zer0/ledger.json", "description": "The idempotency ledger." },
+            "acceptStatuses": {
+              "type": "array",
+              "items": { "enum": ["pending", "approved"] },
+              "minItems": 1,
+              "uniqueItems": true,
+              "default": ["approved"],
+              "description": "Draft statuses that may publish. A repository whose merge is the approval lists pending too."
+            },
+            "sources": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Collections whose pages can be shared. Empty or absent: every collection."
+            },
+            "fallbackImage": { "type": "string", "description": "A PNG, JPG or GIF card image for a page with no uploadable preview." },
+            "hashtagLimit": { "type": "integer", "minimum": 0, "maximum": 10, "default": 3 },
+            "bannedPatternsFile": { "type": "string", "description": "Extra brand-guard bans: [{ name, pattern, flags }]." },
+            "scopes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "OAuth scopes a connection asks for. Default: the least the author type needs."
+            }
+          }
+        }
+      }
+    },
     "cms": {
       "type": "object",
       "description": "Where the .cms/ contract lives and how to run the Python content engine.",
