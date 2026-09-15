@@ -2,6 +2,35 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/bamr87/zer0-CMS/compare/v0.2.0...v0.3.0) (2026-09-15)
+
+
+### Features
+
+* **cms:** doctor — the zer0 stack consumer contract check ([0ed8d0f](https://github.com/bamr87/zer0-CMS/commit/0ed8d0fbb2d18c9e2ed9b339ea1d627c271fdcaf))
+* **distribution:** LinkedIn distribution — a declared-call API client, the governed lane, CLI, workflow, MCP and fleet CMS screens ([64db526](https://github.com/bamr87/zer0-CMS/commit/64db5260664ab37c74afe739a4aba8147461affc))
+* **distribution:** the governed LinkedIn lane — queue, guard, ledger, pipeline, CLI, MCP ([601c772](https://github.com/bamr87/zer0-CMS/commit/601c772ab58478d6ad48b039215c84fa29cff40a))
+* **doctor:** check a site's LinkedIn distribution settings ([96ad097](https://github.com/bamr87/zer0-CMS/commit/96ad097361b6755e0a40b71397049c0d3dd3c61e))
+* **linkedin:** a stdlib LinkedIn client whose every call is declared ([ae27019](https://github.com/bamr87/zer0-CMS/commit/ae270190ee4bc8ea7134bab20953f1ea989e9a72))
+* **rails:** LinkedIn distribution and channels in the fleet CMS ([a41bca4](https://github.com/bamr87/zer0-CMS/commit/a41bca43741a94752aa12fa4f87d2af925012339))
+* **rails:** Site/Page/Asset/Term index rebuilt from disk by SiteSync ([41a7f15](https://github.com/bamr87/zer0-CMS/commit/41a7f15505f844c15b7e49a0d29dd8851498e4f2))
+* **rails:** the fleet CMS on Administrate — disk-synced index, safe write-back, image-engine bridge, zer0 doctor (contains PR A) ([27db8e6](https://github.com/bamr87/zer0-CMS/commit/27db8e6eaf72d2ed735be87af3fa10689babdfb2))
+* **rails:** the fleet CMS platform — a site registry, in-place front matter, media, taxonomy, search ([e456a92](https://github.com/bamr87/zer0-CMS/commit/e456a92dc2d8e22a3680be1fb60fe4d7a8b4a74f))
+* **rails:** the image-engine bridge — missing previews and a local preview per page ([8671131](https://github.com/bamr87/zer0-CMS/commit/8671131a1b673d09a93f995df667ce559d2d5afe))
+* **rails:** the panel on Administrate — dashboards, custom fields, PageEditor ([ac80405](https://github.com/bamr87/zer0-CMS/commit/ac80405339f58291f2abdd06d4fc15acf783819a))
+* re-land console v2 ([#18](https://github.com/bamr87/zer0-CMS/issues/18)–[#21](https://github.com/bamr87/zer0-CMS/issues/21)) with fleet, parser and docs fixes ([b8864b7](https://github.com/bamr87/zer0-CMS/commit/b8864b7de1bf3eeefa716a4d5c5742391c36b94a))
+
+
+### Bug Fixes
+
+* **ci:** keep compose out of the vsix, pin the boot pid, drop a ReDoS regex ([91da9d5](https://github.com/bamr87/zer0-CMS/commit/91da9d55ad32bcfceef34c43dd36d606f7852749))
+* **cms:** Jekyll-exact catalog, the extension's front-matter surgery, a confined writer ([3e68a25](https://github.com/bamr87/zer0-CMS/commit/3e68a2500444ba0d9a3a1644b6c545f5acd89b59))
+* **core:** read wrapped quotes, keywords and anchored quotes like YAML ([77de536](https://github.com/bamr87/zer0-CMS/commit/77de5366d6579f328e623d0efbac60cb9e85abec))
+* **doctor:** a preview fork reads preview_images, not just the filename ([fcbef06](https://github.com/bamr87/zer0-CMS/commit/fcbef0608c1a0ce5619dd2b6bb55eba343b741ab))
+* **fleet:** an unread workflow, run or pull list is null, never [] ([1d4273b](https://github.com/bamr87/zer0-CMS/commit/1d4273b9a3cb9fa5bf54bce6e0f1da05521f5288))
+* **rails:** an empty ZER0_CMS_USER means the default user ([95da0b5](https://github.com/bamr87/zer0-CMS/commit/95da0b573f2d617fe405fccee653c31baa47e2d5))
+* **rails:** basic auth or loopback only, CSP nonce, confined /files, explicit ABC export target ([600882f](https://github.com/bamr87/zer0-CMS/commit/600882f8960ce6eff4271ae35d1a82d7387a33a1))
+
 ## [Unreleased]
 
 ### 🛰 The fleet, not one repository
