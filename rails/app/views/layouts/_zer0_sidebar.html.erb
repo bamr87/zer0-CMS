@@ -36,6 +36,14 @@
   <% end %>
 
   <div class="nav-group">
+    <div class="label">Distribute</div>
+    <div class="nav">
+      <%= nav.call("LinkedIn", admin_distribution_path, "↗", controller_path == "admin/distribution") %>
+      <%= nav.call("Channels", admin_channels_path, "⇄", controller_path == "admin/channels") %>
+    </div>
+  </div>
+
+  <div class="nav-group">
     <div class="label">Generate</div>
     <div class="nav">
       <%= nav.call("ABC books", new_abc_book_path, "✦", controller_name == "abc_books") %>

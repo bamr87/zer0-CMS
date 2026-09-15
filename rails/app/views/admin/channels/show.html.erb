@@ -1,0 +1,29 @@
+<% channel = page.resource %>
+<% content_for(:header_last) do %>
+  <div class="btn-row">
+    <%= link_to "Distribution", admin_distribution_site_path(channel.site), class: "button button--alt" %>
+    <%# A POST, so no other site can start a connection; Turbo is off so the browser follows the redirect to LinkedIn. %>
+    <%= button_to channel.connected? ? "Reconnect" : "Connect with LinkedIn", connect_admin_channel_path(channel),
+          class: "button", form: { data: { turbo: false } },
+          title: "Opens LinkedIn's consent screen for the member who owns this account or administers this page" %>
+    <% if channel.connected? %>
+      <%= button_to "Check token", check_admin_channel_path(channel), class: "button button--alt" %>
+      <%= button_to "Disconnect", disconnect_admin_channel_path(channel), class: "button button--danger",
+            data: { turbo_confirm: "Remove the stored token for #{channel}? LinkedIn keeps it valid until it expires or the member removes the app." } %>
+    <% end %>
+  </div>
+<% end %>
+<% content_for(:before_main) do %>
+  <p class="faint">
+    <% if channel.connected? %>
+      Connected<%= channel.days_left ? " — the access token expires in #{channel.days_left} day(s)" : "" %>.
+      The token is encrypted in the CMS database and is never shown.
+    <% else %>
+      Not connected. Until it is, publishing for <%= channel.site.name %> uses LINKEDIN_ACCESS_TOKEN from the CMS environment, if one is set.
+    <% end %>
+    <% unless LinkedinGateway.oauth_ready? %>
+      Connecting needs LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET in the CMS environment.
+    <% end %>
+  </p>
+<% end %>
+<%= render template: "administrate/application/show", locals: local_assigns %>

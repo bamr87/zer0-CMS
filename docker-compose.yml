@@ -39,6 +39,14 @@ services:
       # The ABC wizard's Claude fallback for themes without a bundled lexicon.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      # LinkedIn distribution (docs/DISTRIBUTION.md). The app credentials let a
+      # person connect a channel; LINKEDIN_ACCESS_TOKEN is the fallback token
+      # when a site has none; nothing publishes unless ZER0_LINKEDIN_PUBLISH=1.
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
+      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN:-}
+      ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
+      ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
       interval: 10s

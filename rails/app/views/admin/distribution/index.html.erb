@@ -1,0 +1,49 @@
+<% content_for(:title) { "LinkedIn distribution" } %>
+<header class="main-content__header">
+  <div>
+    <h1 class="main-content__page-title">LinkedIn distribution</h1>
+    <div class="sub">
+      Drafts wait for a person to approve them.
+      Publishing is <%= publish_armed? ? "armed on this server" : "off on this server (ZER0_LINKEDIN_PUBLISH is not set)" %>.
+    </div>
+  </div>
+  <div class="btn-row">
+    <%= link_to "Channels", admin_channels_path, class: "button button--alt" %>
+  </div>
+</header>
+
+<section class="main-content__body main-content__body--flush">
+  <table class="list">
+    <thead>
+      <tr>
+        <th scope="col">Site</th>
+        <th scope="col">Author</th>
+        <th scope="col">LinkedIn-Version</th>
+        <th scope="col" class="right">Pending</th>
+        <th scope="col" class="right">Approved</th>
+        <th scope="col" class="right">Published</th>
+        <th scope="col">Problems</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @rows.each do |site, status| %>
+        <tr>
+          <td><%= link_to site.name, admin_distribution_site_path(site) %></td>
+          <td>
+            <span class="mono"><%= status["author"].presence || "—" %></span>
+            <% unless status["configured"] %><span class="faint">(not configured)</span><% end %>
+          </td>
+          <td>
+            <% if status["api_version"] %>
+              <%= status["api_version"] %> <%= distribution_badge(status["api_version_status"], version_tone(status["api_version_status"])) %>
+            <% end %>
+          </td>
+          <td class="right"><%= status.dig("drafts", "pending") %></td>
+          <td class="right"><%= status.dig("drafts", "approved") %></td>
+          <td class="right"><%= status["published"] %></td>
+          <td><%= Array(status["errors"]).first %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

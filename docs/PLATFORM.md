@@ -69,6 +69,12 @@ Every write goes to the file and then re-syncs; the row is never saved from a fo
 | `GET /admin/terms`, `/admin/terms/:id` | Tags, categories and authors; a term links to its pages |
 | `GET /files/*path` | An image inside a registered site, by absolute path (thumbnails) |
 | `GET /abc/new`, `POST /abc/preview`, `POST /abc/export`, `GET /abc/catalog.json` | The ABC book wizard |
+| `GET /admin/distribution` | Every registered site's LinkedIn state: author, `Linkedin-Version` health, queue counts, published count, problems ([`DISTRIBUTION.md`](DISTRIBUTION.md)) |
+| `GET /admin/distribution/:site_id` | One site: its settings, which credential applies, the queue with each draft's gates, pages not shared yet (**Draft a post**), published posts with their aggregate statistics; **Read statistics** |
+| `GET /admin/distribution/:site_id/drafts/:draft` | One draft: the commentary with LinkedIn's fold, the brand guard, every gate and the exact request; **Approve** (pending only) and **Publish to LinkedIn** (behind a ticked confirmation) |
+| `POST /admin/distribution/:site_id/drafts`, `…/drafts/:draft/approve`, `…/drafts/:draft/publish`, `…/statistics` | Draft from a page, approve, publish, read statistics — each through `Zer0Cms::Distribution::Pipeline`, which re-reads the draft and re-runs every gate |
+| `GET /admin/channels`, `/admin/channels/:id` and the generated forms | The LinkedIn accounts a site posts as; **Connect with LinkedIn** (`POST /admin/channels/:id/connect`), **Check token** (`POST …/check`), **Disconnect** (`POST …/disconnect`) |
+| `GET /oauth/linkedin/callback` | LinkedIn's return from consent; accepted only for this session's unexpired, unused `state` |
 | `GET /up` | Health check |
 
 **Filters** go in the search box beside free text (title, description, author and source path). Pages: `draft:` `live:` `future:` `error:` `collection:<name>` `site:<id>` `kind:<page|post|draft|document>` `author:<name>` `tag:<name>` `category:<name>` `missing_preview:` (or `missing_preview:<site id>`). Sites: `unsynced:` `failing:`. Assets: `site:<id>` `ext:<ext>`. Terms: `tag:` `category:` `author:`. Administrate splits the query on spaces, so a filter argument cannot contain one; a term with a space in its name falls back to a site-scoped text search.
