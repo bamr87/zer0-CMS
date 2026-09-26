@@ -48,7 +48,7 @@ services:
       ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
       ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/up"]
       interval: 10s
       timeout: 3s
       retries: 12
@@ -82,7 +82,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/up"]
       interval: 10s
       timeout: 3s
       retries: 12
