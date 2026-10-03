@@ -9,7 +9,7 @@
 # into Linux bind mounts.
 services:
   site:
-    image: ruby:3.3
+    image: ruby:3.4
     working_dir: /srv/zer0-pages
     command:
       - bash
@@ -19,8 +19,8 @@ services:
         bundle exec jekyll serve --host 0.0.0.0 --port 4000
         --livereload --livereload-port 35729 --force_polling --trace
     ports:
-      - "4000:4000"
-      - "35729:35729"
+      - "127.0.0.1:${ZER0_PAGES_PORT:-4000}:4000"
+      - "127.0.0.1:${ZER0_PAGES_LIVERELOAD_PORT:-35729}:35729"
     volumes:
       - .:/srv/zer0-pages
       - bundle-cache:/usr/local/bundle
