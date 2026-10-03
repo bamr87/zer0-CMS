@@ -46,7 +46,7 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git pkg-config && \
     rm -rf /var/lib/apt/lists/*
 
-COPY web/Gemfile web/Gemfile.lock ./
+COPY web/Gemfile ./
 # The Gemfile is app-only (the engine is required off $LOAD_PATH, not as a
 # path gem), so this layer caches independently of the engine source.
 # Install the exact Bundler the lockfile was written with: an older Bundler
