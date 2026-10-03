@@ -4,7 +4,7 @@
 
 services:
   jekyll:
-    image: ruby:3.2-slim
+    image: ruby:3.4-slim
     platform: linux/amd64
     working_dir: /site
     command:
@@ -22,8 +22,8 @@ services:
       - .:/site
       - bundle_cache:/usr/local/bundle
     ports:
-      - "4000:4000"
-      - "35729:35729"
+      - "127.0.0.1:${ZER0_PAGES_REMOTE_PORT:-4000}:4000"
+      - "127.0.0.1:${ZER0_PAGES_REMOTE_LIVERELOAD_PORT:-35729}:35729"
     environment:
       - JEKYLL_ENV=${JEKYLL_ENV:-development}
       - BUNDLE_PATH=/usr/local/bundle
