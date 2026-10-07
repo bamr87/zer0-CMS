@@ -1,5 +1,5 @@
 /*
- * kit: zer0-ui-tokens 1.0.0 — source of truth for every zer0 Rails panel; consumers vendor this file byte-identically
+ * kit: zer0-ui-tokens 1.0.1 — source of truth for every zer0 Rails panel; consumers vendor this file byte-identically
  *
  * The zer0 design-token layer: palette, radii, spacing, shadow and font
  * stacks as CSS custom properties — dark-first, with a prefers-color-scheme
@@ -46,7 +46,7 @@
     --radius:   10px;
     --radius-sm: 6px;
     --gap:      1rem;
-    --maxw:     1180px;
+    --maxw:     1320px;
 
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.25);
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
