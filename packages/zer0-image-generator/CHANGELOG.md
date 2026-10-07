@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator/v0.8.0...zer0-image-generator/v0.9.0) (2026-10-07)
+
+
+### Features
+
+* **providers:** Grok Imagine through a refreshable xAI login — Kilo token refresh, aspect ratio, Cloudflare-safe requests, honest .jpg (contains [#23](https://github.com/bamr87/zer0-image-generator/issues/23)) ([#24](https://github.com/bamr87/zer0-image-generator/issues/24)) ([affdc8e](https://github.com/bamr87/zer0-image-generator/commit/affdc8ecf25efb574e92f68e582e83cfa0f9c5c7))
+* zer0 stack — design-token kit, engine Facade, and stack docs ([#22](https://github.com/bamr87/zer0-image-generator/issues/22)) ([9932668](https://github.com/bamr87/zer0-image-generator/commit/9932668b4f5666582c19ad30e33fed3833f5283b))
+
+
+### Bug Fixes
+
+* **web:** sync the zer0-ui-tokens kit's --maxw with application.css (1.0.1) ([#27](https://github.com/bamr87/zer0-image-generator/issues/27)) ([13ccd63](https://github.com/bamr87/zer0-image-generator/commit/13ccd633aea0a8f53c340f7d74a82c1bf277c43a))
+
 ## [0.8.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator/v0.7.0...zer0-image-generator/v0.8.0) (2026-10-03)
 
 
