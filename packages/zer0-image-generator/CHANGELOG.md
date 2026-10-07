@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator/v0.7.0...zer0-image-generator/v0.8.0) (2026-10-03)
+
+
+### Features
+
+* **config:** make `rasterizer` a site-level knob (SVG-only mode) ([9f53375](https://github.com/bamr87/zer0-image-generator/commit/9f53375dbefb2a3d1dfc5eddab0801378b2949e6))
+* **local:** content-aware SVG banners + site-level `rasterizer` knob ([2bddc3f](https://github.com/bamr87/zer0-image-generator/commit/2bddc3f57dbd3926a180d5eb241087f202fd0fcb))
+* **local:** content-aware SVG banners instead of one recoloured skyline ([dc0b4bb](https://github.com/bamr87/zer0-image-generator/commit/dc0b4bb2a9b177614d1aa0c765726b8fcc779bf2))
+* **providers:** capability ladder — auto, claude SVG, shared collection default ([55da59f](https://github.com/bamr87/zer0-image-generator/commit/55da59f48b03eb205209cd70d88751a1f75bfab1))
+* **providers:** capability ladder — auto, Claude-authored SVG, shared collection default ([0088a94](https://github.com/bamr87/zer0-image-generator/commit/0088a949d3308c956a3a035dd03a12b33c424bd4))
+* **providers:** Grok OAuth for the xAI renderer, API key as the fallback ([#19](https://github.com/bamr87/zer0-image-generator/issues/19)) ([c57e527](https://github.com/bamr87/zer0-image-generator/commit/c57e52799aa744110f1ce093a0bfb542ff971b0e))
+
 ## [0.7.0](https://github.com/bamr87/zer0-image-generator/compare/zer0-image-generator/v0.6.0...zer0-image-generator/v0.7.0) (2026-07-24)
 
 
