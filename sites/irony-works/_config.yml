@@ -43,6 +43,26 @@ favicon:
   png: /assets/images/logo.svg
   apple_touch: /assets/images/logo.svg
 
+# Preview banners, in the zer0-image-generator gem's documented keys (its README
+# "Configuration"). This block describes the plates the site already publishes;
+# it does not draw them. The renderer of record is engine/scripts/preview.mjs:
+# publish.yml runs it before transplant.mjs, writing one deterministic SVG per
+# vault note (plus default.svg) into output_dir, and transplant.mjs stamps
+# `preview:` onto every entry. The gem is not installed (no Gemfile, by design;
+# see CLAUDE.md) and the Pages build could not load it, so no banner changes.
+# The block tells zer0-CMS and any `jekyll preview-images` run where the plates
+# live and to stay offline and SVG-only. assets_prefix and auto_prefix are left
+# unset: the theme's includes read both with the same defaults.
+preview_images:
+  provider: local             # key-free SVG renderer, like preview.mjs
+  rasterizer: none            # SVG-only: the plates ship as .svg, never PNG
+  prompt_engine: template     # no model call for the art brief
+  review_engine: none         # no model call to review a render
+  output_dir: assets/images/previews
+  front_matter_key: preview
+  collections: [entries]
+  authors_file: ''            # no _data/authors.yml in this repo
+
 plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
@@ -69,6 +89,7 @@ exclude:
   - AUTOPILOT.md
   - AI_USAGE.md
   - fleet.manifest.yml
+  - zer0.json
   - 2026-08-06-planting-irony-works-making-irony-machine-checkable.md
   - 2026-09-09-the-second-genus-teaching-a-vault-to-file-paradoxes.md
   - 2026-09-14-the-parody-that-came-true-period-satire-with-an-anachronism-audit.md

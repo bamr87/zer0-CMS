@@ -65,6 +65,10 @@ The theme has no `_includes/home/` directory at all, so the last two are net-new
 
 **Local preview.** There is none, by design-so-far: no `Gemfile`, no `docker-compose.yml`, no local bundle. CI builds with `actions/jekyll-build-pages` (the github-pages image, which bundles `jekyll-remote-theme`), so the only current way to see a themed change rendered is to push and let `publish.yml` run. Content and engine work does not need it — `node engine/scripts/transplant.mjs` runs with no credentials and shows exactly what Jekyll will be handed. Adding a local preview stack is a maintainer decision, not a papercut to patch around.
 
+## The zer0 stack
+
+Irony Works is a consumer of the zer0 stack: the `bamr87/zer0-mistakes` theme (the unpinned `remote_theme` above, with its three deliberate forks named in `.theme-overrides.yml`), the `zer0-image-generator` preview engine, and zer0-CMS. The `preview_images:` block in `_config.yml` uses the gem's documented keys to describe the plates `engine/scripts/preview.mjs` already renders (provider `local`, SVG-only, `assets/images/previews/`, front-matter key `preview`). The gem itself is not installed: there is no Gemfile by design, the Pages build could not load it, and `preview.mjs` stays the renderer of record. `zer0.json` at the root is the zer0-CMS content model. It registers the vault folders (the source of truth) and the root pages, with one content type per `vault/templates/` shape, and it leaves out `_entries/` on purpose, because that folder is gitignored transplant output that the next publish overwrites. To check alignment, dispatch `.github/workflows/zer0-doctor.yml` (report-only, also weekly) or run `ruby -I rails/lib rails/bin/zer0-cms doctor /path/to/irony-works` from a zer0-CMS checkout.
+
 ## Content conventions
 
 - One entry per file, kebab-case filename; the filename is the permalink slug.
@@ -79,6 +83,7 @@ The theme has no `_includes/home/` directory at all, so the last two are net-new
 - `.github/workflows/germinate.yml` — weekly cron (Mon 06:00 UTC) + manual dispatch with `count` and `domain` inputs (`domain: paradox:time-and-physics` targets a genus for one run); runs the engine and opens a PR from `vault/nursery/` changes. Needs the `CLAUDE_CODE_OAUTH_TOKEN` repo secret (or `ANTHROPIC_API_KEY` as fallback).
 - `.github/workflows/alanis-gate.yml` — advisory PR check on `vault/**` changes; scores changed entries (excluding templates and compost) against the gate of their `type:` — Alanis for ironies, Epimenides for paradoxes; notes with neither `expectation` nor `premises` are reported UNGATED — and posts the report as a PR comment and step summary. Never blocks — the gates score, humans merge.
 - `.github/workflows/publish.yml` — on push to main: transplant → Jekyll build (github-pages image bundles `jekyll-remote-theme`) → deploy to GitHub Pages.
+- `.github/workflows/zer0-doctor.yml` — weekly (Fri 05:53 UTC) + manual dispatch; a thin, report-only caller of zer0-CMS's reusable `zer0 doctor` (see [The zer0 stack](#the-zer0-stack)). No model call, no secret, never on a pull request, `fail-on-error: false`.
 
 ## Fleet context
 
