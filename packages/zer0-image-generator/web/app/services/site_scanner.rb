@@ -10,8 +10,12 @@
 class SiteScanner
   class Error < StandardError; end
 
-  Entry = Struct.new(:path, :relative, :title, :collection, :preview, :exists, keyword_init: true) do
+  Entry = Struct.new(:path, :relative, :title, :collection, :preview, :exists, :disk_path, keyword_init: true) do
     def missing? = !exists
+
+    def remote?
+      preview.to_s.start_with?("http://", "https://")
+    end
   end
   Result = Struct.new(:settings, :collections, :entries, keyword_init: true) do
     def total = entries.size
@@ -50,13 +54,15 @@ class SiteScanner
       next unless cf
 
       exists = cf.preview && content.check_preview_exists(cf.preview, settings, @site.root)
+      disk = exists ? content.find_preview_image(cf.preview, settings, @site.root) : nil
       Entry.new(
         path: path.to_s,
         relative: path.relative_path_from(@site.root).to_s,
         title: cf.title.to_s.empty? ? File.basename(path) : cf.title,
         collection: name,
         preview: cf.preview,
-        exists: !!exists
+        exists: !!exists,
+        disk_path: disk&.to_s
       )
     end
   end

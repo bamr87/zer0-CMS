@@ -359,6 +359,19 @@ class TestHttpRequest < Minitest::Test
     end
   end
 
+  # Every request names the engine unless the caller names a client: a CDN
+  # rejects a stock client signature (Cloudflare `error code: 1010` on api.x.ai).
+  def test_default_user_agent_and_caller_override
+    seen = []
+    resp = FakeResponse.new(200, "{}", {})
+    with_perform(->(_uri, _method, headers, *) { seen << headers; resp }) do
+      M::Http.request("https://api", method: "POST", headers: { "Accept" => "x" })
+      M::Http.request("https://api", method: "POST", headers: { "user-agent" => "custom/1" })
+    end
+    assert_equal({ "Accept" => "x", "User-Agent" => "zer0-image-generator" }, seen[0])
+    assert_equal({ "user-agent" => "custom/1" }, seen[1])
+  end
+
   def test_json_posts_and_parses
     resp = FakeResponse.new(200, %({"stop_reason": "end_turn"}), {})
     with_perform(->(*) { resp }) do

@@ -7,12 +7,14 @@ Zero network: every provider/API test monkeypatches the module's HTTP layer.
 """
 
 import argparse
+import base64
 import json
 import os
 import sys
 import tempfile
 import time
 import unittest
+import urllib.parse
 from pathlib import Path
 from unittest import mock
 
@@ -57,7 +59,8 @@ class TestFlagSurface(unittest.TestCase):
         # New additive flags
         ["-p", "local"], ["-p", "gemini"],
         ["--prompt-engine", "claude"], ["--prompt-engine", "template"],
-        ["--review", "claude"], ["--review", "none"],
+        ["--prompt-engine", "xai"],
+        ["--review", "claude"], ["--review", "none"], ["--review", "xai"],
         ["--rasterizer", "none"],
         ["-w", "2"],
         # Back-compat no-op from the previous engine's CLI
@@ -1166,6 +1169,63 @@ class TestXAIAuth(unittest.TestCase):
         self.assertEqual(result.error, "xAI API error: upstream down")
         self.assertEqual(len(calls), 1)
 
+    def test_imagine_model_is_sent_the_banner_aspect_ratio(self):
+        calls = []
+
+        def fake_json(url, payload, headers, timeout=900):
+            calls.append(payload)
+            return self.ok_response()
+
+        with mock.patch.object(pg, "http_json", fake_json):
+            for model in ("grok-imagine-image-2.0", ""):
+                pg.PROVIDERS["xai"].generate(
+                    "p", make_settings(model=model, size="1536x1024"),
+                    self.tmp / "slug", self.ctx(self.env(XAI_API_KEY="k")))
+        self.assertEqual(calls[0]["model"], "grok-imagine-image-2.0")
+        self.assertEqual(calls[0]["aspect_ratio"], "3:2")
+        # grok-2-image predates the parameter: its request shape is unchanged.
+        self.assertEqual(calls[1]["model"], "grok-2-image")
+        self.assertNotIn("aspect_ratio", calls[1])
+
+    def test_aspect_ratio_is_the_nearest_imagine_ratio(self):
+        imagine = "grok-imagine-image-2.0"
+        self.assertEqual(pg.xai_aspect_ratio(imagine, "1792x1024"), "16:9")
+        self.assertEqual(pg.xai_aspect_ratio(imagine, "1024x1536"), "2:3")
+        self.assertEqual(pg.xai_aspect_ratio(imagine, "1024x1024"), "1:1")
+        self.assertIsNone(pg.xai_aspect_ratio(imagine, "auto"))
+        self.assertIsNone(pg.xai_aspect_ratio(imagine, "0x1024"))
+        self.assertIsNone(pg.xai_aspect_ratio("grok-2-image", "1536x1024"))
+
+    def test_jpeg_render_is_saved_under_a_jpg_name(self):
+        jpeg = base64.b64encode(b"\xff\xd8\xff\xe0JFIF").decode("ascii")
+        result, _ = self.generate(self.env(XAI_API_KEY="k"),
+                                  [{"data": [{"b64_json": jpeg}]}])
+        self.assertTrue(result.ok)
+        self.assertEqual((result.kind, result.path.name), ("jpg", "slug.jpg"))
+        self.assertTrue(result.path.is_file())
+        self.assertFalse((self.tmp / "slug.png").exists())
+
+    def test_image_media_type_reads_the_bytes(self):
+        self.assertEqual(pg.image_media_type(b"\xff\xd8\xff\xe0"), "image/jpeg")
+        self.assertEqual(pg.image_media_type(b"RIFF\x00\x00\x00\x00WEBPVP8 "), "image/webp")
+        self.assertEqual(pg.image_media_type(pg.PNG_SIGNATURE), "image/png")
+        self.assertEqual(pg.image_media_type(b""), "image/png")
+
+    def test_grok_review_labels_a_jpeg_as_jpeg(self):
+        image = self.tmp / "render.jpg"
+        image.write_bytes(b"\xff\xd8\xff\xe0JFIF")
+        seen = []
+
+        def fake_json(url, payload, headers, timeout=900):
+            seen.append(payload)
+            return {"choices": [{"message": {"content": "{}"}}]}
+
+        with mock.patch.object(pg, "http_json", fake_json), \
+                mock.patch.object(pg, "with_retries", lambda fn, what: fn()):
+            pg.GrokClient(self.env(XAI_API_KEY="k")).complete_vision("s", "u", image)
+        url = seen[0]["messages"][1]["content"][0]["image_url"]["url"]
+        self.assertTrue(url.startswith("data:image/jpeg;base64,"))
+
     def test_prompt_cap_is_unchanged(self):
         calls = []
 
@@ -1185,6 +1245,13 @@ class TestXAIAuth(unittest.TestCase):
         _, calls = self.generate(self.env(), [self.ok_response()])
         self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer file-tok"})
 
+    def test_kilo_access_alias_is_accepted(self):
+        self.write_credentials_file(
+            {"xai": {"access": "kilo-tok",
+                     "expires": int((time.time() + 3600) * 1000)}})
+        _, calls = self.generate(self.env(), [self.ok_response()])
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer kilo-tok"})
+
     def test_nested_and_millisecond_expiry_shapes_are_accepted(self):
         self.write_credentials_file(
             {"xai": {"access_token": "nested-tok",
@@ -1200,6 +1267,135 @@ class TestXAIAuth(unittest.TestCase):
                                  [self.ok_response()])
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer xai-key"})
+
+    # --- refresh: an expired token whose store can renew it (Kilo Code's login) ---
+
+    KILO = ".local/share/kilo/auth.json"
+
+    def write_kilo_store(self, **slot):
+        record = {"type": "oauth", "access": "old-tok", "refresh": "old-refresh",
+                  "client_id": "kilo-client",
+                  "expires": int((time.time() - 60) * 1000)}
+        record.update(slot)
+        path = self.write_credentials_file({"xai": record, "other": {"keep": 1}},
+                                           rel=self.KILO)
+        os.chmod(path, 0o600)
+        return path
+
+    @staticmethod
+    def jwt(claims):
+        body = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
+        return f"e30.{body}.sig"
+
+    def fake_token_endpoint(self, *responses):
+        """Patch http_request with a scripted auth.x.ai: dicts answer 200 with
+        that JSON, exceptions are raised. Returns the recorded calls."""
+        calls, script = [], list(responses)
+
+        def fake_request(url, method="GET", headers=None, data=None, timeout=120):
+            calls.append({"url": url, "method": method, "headers": headers,
+                          "form": urllib.parse.parse_qs(data.decode("utf-8"))})
+            entry = script.pop(0)
+            if isinstance(entry, Exception):
+                raise entry
+            return 200, {}, json.dumps(entry).encode("utf-8")
+
+        patcher = mock.patch.object(pg, "http_request", fake_request)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return calls
+
+    def test_expired_kilo_token_is_refreshed_and_saved_in_its_own_shape(self):
+        path = self.write_kilo_store()
+        refreshes = self.fake_token_endpoint(
+            {"access_token": "new-tok", "refresh_token": "new-refresh", "expires_in": 7200})
+        result, calls = self.generate(self.env(), [self.ok_response()])
+        self.assertTrue(result.ok)
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer new-tok"})
+        self.assertEqual(len(refreshes), 1)
+        self.assertEqual(refreshes[0]["url"], "https://auth.x.ai/oauth2/token")
+        self.assertEqual(refreshes[0]["method"], "POST")
+        self.assertEqual(refreshes[0]["form"], {
+            "grant_type": ["refresh_token"], "refresh_token": ["old-refresh"],
+            "client_id": ["kilo-client"]})
+        store = json.loads(path.read_text(encoding="utf-8"))
+        slot = store["xai"]
+        self.assertEqual((slot["access"], slot["refresh"], slot["type"]),
+                         ("new-tok", "new-refresh", "oauth"))
+        self.assertNotIn("access_token", slot)          # Kilo's key names kept
+        self.assertGreater(slot["expires"], (time.time() + 7000) * 1000)  # still ms
+        self.assertEqual(store["other"], {"keep": 1})   # the rest of the store kept
+        self.assertEqual(os.stat(path).st_mode & 0o777, 0o600)
+        # The saved token is fresh, so the next run reads it without refreshing.
+        _, again = self.generate(self.env(), [self.ok_response()])
+        self.assertEqual(again[0]["headers"], {"Authorization": "Bearer new-tok"})
+        self.assertEqual(len(refreshes), 1)
+
+    def test_refresh_reads_client_id_from_the_jwt_when_the_store_has_none(self):
+        path = self.write_kilo_store(client_id=None,
+                                     access=self.jwt({"aud": ["jwt-client"]}))
+        refreshes = self.fake_token_endpoint({"access_token": "new-tok"})
+        result, calls = self.generate(self.env(), [self.ok_response()])
+        self.assertTrue(result.ok)
+        self.assertEqual(refreshes[0]["form"]["client_id"], ["jwt-client"])
+        # No rotated refresh token in the answer: the stored one is kept.
+        self.assertEqual(json.loads(path.read_text())["xai"]["refresh"], "old-refresh")
+
+    def test_expired_refreshable_token_counts_as_configured_without_a_request(self):
+        path = self.write_kilo_store()
+        refreshes = self.fake_token_endpoint()   # any request would pop an empty script
+        self.assertTrue(pg.PROVIDERS["xai"].is_configured(self.env()))
+        self.assertEqual(pg.xai_auth_describe(self.env()),
+                         f"Grok OAuth token ({path}; expired, refreshed on use)")
+        self.assertEqual(refreshes, [])
+
+    def test_failed_refresh_falls_back_to_the_api_key(self):
+        path = self.write_kilo_store()
+        before = path.read_text(encoding="utf-8")
+        self.fake_token_endpoint(
+            pg.HttpStatusError(400, b'{"error":"invalid_grant"}', pg.XAI_TOKEN_ENDPOINT))
+        result, calls = self.generate(self.env(XAI_API_KEY="xai-key"), [self.ok_response()])
+        self.assertTrue(result.ok)
+        self.assertEqual(calls[0]["headers"], {"Authorization": "Bearer xai-key"})
+        self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+    def test_failed_refresh_without_a_fallback_is_an_error_not_a_request(self):
+        self.write_kilo_store()
+        self.fake_token_endpoint(pg.HttpStatusError(
+            400, b'{"error":"invalid_grant","error_description":"echoed input"}',
+            pg.XAI_TOKEN_ENDPOINT))
+        result, calls = self.generate(self.env(), [])
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error, "xAI OAuth refresh failed "
+                                       "(HTTP 400: invalid_grant); re-run your Grok login")
+        self.assertEqual(calls, [])
+
+    def test_iso_expiry_is_saved_as_iso(self):
+        path = self.write_credentials_file(
+            {"access_token": "old", "refresh_token": "r", "client_id": "c",
+             "expires_at": "2020-01-01T00:00:00Z"})
+        self.fake_token_endpoint({"access_token": "new", "expires_in": 3600})
+        self.generate(self.env(), [self.ok_response()])
+        saved = json.loads(path.read_text())
+        self.assertEqual(saved["access_token"], "new")
+        self.assertRegex(saved["expires_at"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+        self.assertIsNotNone(pg.xai_auth_describe(self.env()))
+
+    def test_grok_client_refreshes_before_its_first_call(self):
+        self.write_kilo_store()
+        self.fake_token_endpoint({"access_token": "chat-tok", "expires_in": 3600})
+        seen = []
+
+        def fake_json(url, payload, headers, timeout=900):
+            seen.append(headers)
+            return {"choices": [{"message": {"content": "brief"}}]}
+
+        with mock.patch.object(pg, "http_json", fake_json), \
+                mock.patch.object(pg, "with_retries", lambda fn, what: fn()):
+            client = pg.GrokClient(self.env())
+            self.assertTrue(client.available())
+            self.assertEqual(client.complete("sys", "user"), "brief")
+        self.assertEqual(seen, [{"Authorization": "Bearer chat-tok"}])
 
     def test_expires_in_needs_an_issue_time_to_mean_anything(self):
         path = self.write_credentials_file({"access_token": "lifetime-only",
@@ -1508,6 +1704,42 @@ class TestMultipartBuilder(unittest.TestCase):
         self.assertIn(b'filename="a.png"', body)
         self.assertIn(b"BYTES", body)
         self.assertTrue(body.endswith(f"--{boundary}--\r\n".encode()))
+
+
+class TestHttpUserAgent(unittest.TestCase):
+    """Every request names the engine unless the caller names a client: a CDN
+    rejects urllib's stock signature (Cloudflare `error code: 1010` on api.x.ai)."""
+
+    def sent_request(self, headers):
+        seen = []
+
+        class Response:
+            status, headers = 200, {}
+
+            def read(self):
+                return b"{}"
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        def fake_urlopen(req, timeout=None):
+            seen.append(req)
+            return Response()
+
+        with mock.patch.object(pg.urllib.request, "urlopen", fake_urlopen):
+            pg.http_request("https://api.x.ai/v1/images/generations", "POST", headers, b"{}")
+        return seen[0]
+
+    def test_default_user_agent(self):
+        self.assertEqual(self.sent_request({}).get_header("User-agent"),
+                         "zer0-image-generator")
+
+    def test_caller_user_agent_wins(self):
+        req = self.sent_request({"user-agent": "custom/1"})
+        self.assertEqual(req.get_header("User-agent"), "custom/1")
 
 
 class TestHttpErrorParsing(unittest.TestCase):

@@ -59,10 +59,11 @@ module Fakes
   class Ctx
     attr_reader :env, :slug, :project_root, :article
 
-    def initialize(env: {}, claude: nil, slug: "", project_root: Pathname.new("."),
+    def initialize(env: {}, claude: nil, grok: nil, slug: "", project_root: Pathname.new("."),
                    article: nil)
       @env = env
       @claude = claude || Object.new
+      @grok = grok || Object.new
       @slug = slug
       @project_root = project_root
       @article = article
@@ -72,9 +73,17 @@ module Fakes
       @claude
     end
 
+    def grok_client
+      @grok
+    end
+
+    def orchestrator(engine)
+      engine.to_s == "xai" ? grok_client : claude
+    end
+
     def with_slug(slug, article: nil)
-      Ctx.new(env: @env, claude: @claude, slug: slug, project_root: @project_root,
-              article: article)
+      Ctx.new(env: @env, claude: @claude, grok: @grok, slug: slug,
+              project_root: @project_root, article: article)
     end
   end
 

@@ -156,6 +156,7 @@ module Zer0ImageGenerator
       end
       raise "no Anthropic credential configured" if @mode.nil?
 
+      image_bytes = File.binread(image_path.to_s)
       payload = {
         "model" => model,
         "max_tokens" => max_tokens,
@@ -165,8 +166,8 @@ module Zer0ImageGenerator
           "role" => "user",
           "content" => [
             { "type" => "image", "source" => {
-              "type" => "base64", "media_type" => "image/png",
-              "data" => Base64.strict_encode64(File.binread(image_path.to_s))
+              "type" => "base64", "media_type" => Zer0ImageGenerator.image_media_type(image_bytes),
+              "data" => Base64.strict_encode64(image_bytes)
             } },
             { "type" => "text", "text" => user_text }
           ]

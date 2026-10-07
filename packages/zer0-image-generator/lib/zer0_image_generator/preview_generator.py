@@ -73,6 +73,7 @@ import base64
 import functools
 import io
 import json
+import math
 import os
 import re
 import shutil
@@ -83,6 +84,7 @@ import threading
 import time
 import uuid
 import urllib.error
+import urllib.parse
 import urllib.request
 import zlib
 import xml.etree.ElementTree as ET
@@ -243,6 +245,17 @@ style, or contains text/glitches — minor taste differences are not grounds
 for revision."""
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+JPEG_SIGNATURE = b"\xff\xd8\xff"
+
+
+def image_media_type(data: bytes) -> str:
+    """The MIME type a raster's own bytes declare. Providers do not all answer
+    PNG (xAI Imagine answers JPEG), and vision APIs check the label."""
+    if data[:3] == JPEG_SIGNATURE:
+        return "image/jpeg"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return "image/png"
 
 # Pause after each successful non-dry generation (Bash parity: polite pacing
 # between paid API calls). Tests set this to 0.
@@ -428,6 +441,12 @@ class HttpStatusError(Exception):
         return self.body.decode("utf-8", "replace")[:500]
 
 
+# Sent on every request that does not name its own client. api.x.ai and
+# auth.x.ai sit behind Cloudflare, whose bot rules answer urllib's stock
+# `Python-urllib/3.x` with a 403 page or `error code: 1010`.
+HTTP_USER_AGENT = "zer0-image-generator"
+
+
 def http_request(
     url: str,
     method: str = "GET",
@@ -438,6 +457,8 @@ def http_request(
     req = urllib.request.Request(url, data=data, method=method)
     for key, value in (headers or {}).items():
         req.add_header(key, value)
+    if not req.has_header("User-agent"):  # urllib stores names capitalize()d
+        req.add_header("User-Agent", HTTP_USER_AGENT)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.status, dict(resp.headers.items()), resp.read()
@@ -2073,6 +2094,7 @@ class AnthropicClient:
         system_blocks = [{"type": "text", "text": system_text}]
         if self.mode == "oauth":
             system_blocks.insert(0, {"type": "text", "text": CLAUDE_CODE_SYSTEM_PROMPT})
+        image_bytes = image_path.read_bytes()
         payload: Dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
@@ -2082,8 +2104,8 @@ class AnthropicClient:
                 "role": "user",
                 "content": [
                     {"type": "image", "source": {
-                        "type": "base64", "media_type": "image/png",
-                        "data": base64.b64encode(image_path.read_bytes()).decode("ascii"),
+                        "type": "base64", "media_type": image_media_type(image_bytes),
+                        "data": base64.b64encode(image_bytes).decode("ascii"),
                     }},
                     {"type": "text", "text": user_text},
                 ],
@@ -2217,6 +2239,7 @@ class RunContext:
     project_root: Path
     env: Dict[str, str]
     anthropic: Optional[AnthropicClient] = None
+    grok: Optional["GrokClient"] = None
     slug: str = ""
     # The page's own context (slug/section/title/categories/description/body),
     # set per file by the runner. The local renderer derives BOTH composition
@@ -2228,6 +2251,14 @@ class RunContext:
         if self.anthropic is None:
             self.anthropic = AnthropicClient(self.env)
         return self.anthropic
+
+    def grok_client(self) -> "GrokClient":
+        if self.grok is None:
+            self.grok = GrokClient(self.env)
+        return self.grok
+
+    def orchestrator(self, engine: str):
+        return self.grok_client() if engine == "xai" else self.claude()
 
 
 def adapt_openai_size_quality(model: str, size: str, quality: str) -> Tuple[str, str]:
@@ -2303,7 +2334,8 @@ class OpenAIProvider(Provider):
         # gpt-image-2 does not accept input_fidelity (historical behavior).
         if model != "gpt-image-2":
             fields["input_fidelity"] = settings.enhance_fidelity
-        files = [("image[]", image_path.name, image_path.read_bytes(), "image/png")]
+        image_bytes = image_path.read_bytes()
+        files = [("image[]", image_path.name, image_bytes, image_media_type(image_bytes))]
         out_path = out_path or image_path
         debug(f"OpenAI edit: model={model} fidelity="
               f"{fields.get('input_fidelity', '(omitted)')} format={settings.enhance_format}")
@@ -2338,12 +2370,14 @@ class OpenAIProvider(Provider):
 # and a console API key is where the value comes from and what we tell the human
 # when it is rejected.
 #
-# Deliberately NOT implemented: minting or refreshing an OAuth token. xAI does
-# not publish its device-code/PKCE endpoints or a public client id, and the
-# credentials file belongs to whichever login tool wrote it — inventing a token
-# endpoint, or writing back into another tool's store, would be guesswork. The
-# engine CONSUMES a token that a Grok login already produced, treats an expired
-# one as absent, and falls back to the API key.
+# Refresh, not login. The engine never MINTS a token — that takes an interactive
+# login — but an expired token whose store also holds a refresh
+# token and a client id (Kilo Code's login does) is refreshed at auth.x.ai once,
+# right before a request needs it, and written back to that store so the login
+# tool and the next run both see the rotated pair (lifehacker.dev's cover-art
+# script already refreshes and saves the same way). Expired with nothing to
+# refresh with, a token is treated as absent and the chain falls back to the
+# API key.
 XAI_API_BASE = "https://api.x.ai/v1"
 
 # OAuth access token straight from the environment. XAI_ first (it matches the
@@ -2362,6 +2396,7 @@ XAI_API_KEY_ENV = "XAI_API_KEY"
 # home directory so a test (and a container) can point HOME elsewhere.
 XAI_DEFAULT_CREDENTIALS_FILES: Tuple[str, ...] = (
     ".grok/auth.json", ".config/grok/auth.json", ".xai/auth.json",
+    ".local/share/kilo/auth.json",
 )
 
 # Credential files nest the token differently per tool; look at the top level
@@ -2377,6 +2412,17 @@ XAI_EXPIRY_LEEWAY = 60.0
 # the API key as the fallback; the other two pin one rung.
 XAI_AUTH_MODE_ENV = "XAI_AUTH"
 XAI_AUTH_MODES: Tuple[str, ...] = ("auto", "oauth", "api_key")
+
+# The refresh grant's endpoint, as auth.x.ai's OIDC discovery document
+# (/.well-known/openid-configuration) publishes it.
+XAI_TOKEN_ENDPOINT = "https://auth.x.ai/oauth2/token"
+XAI_REFRESH_TOKEN_KEYS: Tuple[str, ...] = ("refresh_token", "refresh")
+XAI_EXPIRY_KEYS: Tuple[str, ...] = ("expires_at", "expiry", "expiration", "expires")
+XAI_ISSUED_KEYS: Tuple[str, ...] = ("created_at", "obtained_at", "issued_at", "issued")
+# Workers share one store: the first to find the token expired refreshes it,
+# the rest wait and read the result. A refresh token may rotate on use, so two
+# concurrent refreshes would leave one worker holding a dead token.
+_XAI_REFRESH_LOCK = threading.Lock()
 
 XAI_MISSING_HINT = (
     "The xAI provider needs a Grok OAuth token or an xAI API key — any ONE of:\n"
@@ -2396,6 +2442,9 @@ class XAICredential:
     mode: str    # "oauth" | "api_key" — which rung of the chain this is
     token: str
     source: str  # human label for logs and fallback warnings
+    # Set when the token has expired but its store can refresh it: the token is
+    # empty until xai_ready_credential() refreshes it, right before use.
+    refresh_path: Optional[str] = None
 
     def headers(self) -> Dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
@@ -2471,7 +2520,11 @@ def _xai_credential_files(env: Dict[str, str]) -> List[str]:
     home = _xai_home_dir(env)
     if not home:
         return []
-    return [os.path.join(home, rel) for rel in XAI_DEFAULT_CREDENTIALS_FILES]
+    paths = [os.path.join(home, rel) for rel in XAI_DEFAULT_CREDENTIALS_FILES]
+    kilo = env.get("KILO_AUTH_PATH") or ""
+    if kilo:
+        paths.insert(0, kilo)
+    return paths
 
 
 def _xai_home_dir(env: Dict[str, str]) -> Optional[str]:
@@ -2507,20 +2560,189 @@ def _xai_file_credential(path: str) -> Optional[XAICredential]:
         debug(f"xAI OAuth: no access_token in {path}; ignoring")
         return None
     if _xai_expired(node):
-        debug(f"xAI OAuth: the token in {path} has expired; re-run your Grok login")
+        if _xai_refresh_token(node) and _xai_client_id(node):
+            return XAICredential("oauth", "",
+                                 f"Grok OAuth token ({path}; expired, refreshed on use)",
+                                 refresh_path=path)
+        debug(f"xAI OAuth: the token in {path} has expired and holds nothing to "
+              f"refresh it with; re-run your Grok login")
         return None
     return XAICredential("oauth", str(node["access_token"]),
                          f"Grok OAuth token ({path})")
 
 
+def xai_ready_credential(credential: XAICredential) -> XAICredential:
+    """The credential ready to send: itself, or for an expired OAuth token its
+    store can refresh, the refreshed one. Raises RuntimeError on a failed refresh."""
+    if not credential.refresh_path:
+        return credential
+    return _xai_refresh_file_credential(credential.refresh_path)
+
+
+def _xai_refresh_file_credential(path: str) -> XAICredential:
+    with _XAI_REFRESH_LOCK:
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f"xAI OAuth: cannot re-read {path} ({exc})") from None
+        node = _xai_find_token_node(data) if isinstance(data, dict) else None
+        if node is None:
+            raise RuntimeError(f"xAI OAuth: no access token left in {path}")
+        # Another worker may have refreshed the store while this one waited.
+        current = _xai_token_node(data)
+        if current is not None and not _xai_expired(current):
+            return XAICredential("oauth", str(current["access_token"]),
+                                 f"Grok OAuth token ({path})")
+        refresh, client_id = _xai_refresh_token(node), _xai_client_id(node)
+        if not refresh or not client_id:
+            raise RuntimeError(f"xAI OAuth: the token in {path} cannot be refreshed")
+        fresh = _xai_request_refresh(refresh, client_id)
+        _xai_store_refreshed(node, fresh, time.time())
+        try:
+            _xai_write_store(path, data)
+        except OSError as exc:
+            # The refresh token may already have rotated, so say so loudly — but
+            # this run still holds a working access token.
+            warn(f"xAI OAuth: refreshed, but could not save the new token to {path} "
+                 f"({exc}); the login tool may need a fresh sign-in")
+        debug(f"xAI OAuth: refreshed the token in {path}")
+        return XAICredential("oauth", str(fresh["access_token"]),
+                             f"Grok OAuth token ({path}; refreshed)")
+
+
+def _xai_request_refresh(refresh_token: str, client_id: str) -> Dict[str, Any]:
+    """POST the refresh grant. Never retried: a refresh token that rotated on a
+    request whose response was lost is already spent."""
+    body = urllib.parse.urlencode({
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": client_id,
+    }).encode("utf-8")
+    headers = {"Content-Type": "application/x-www-form-urlencoded",
+               "Accept": "application/json"}
+    try:
+        _, _, raw = http_request(XAI_TOKEN_ENDPOINT, "POST", headers, body, 60)
+    except HttpStatusError as exc:
+        # The OAuth error code (invalid_grant, invalid_client) is safe to show
+        # and says whether a re-login is due; the description may echo input.
+        details = exc.json()
+        code = details.get("error") if isinstance(details, dict) else None
+        reason = f"HTTP {exc.status}: {code}" if _xai_token_string(code) else f"HTTP {exc.status}"
+        raise RuntimeError(f"xAI OAuth refresh failed ({reason})") from None
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except ValueError:
+        raise RuntimeError("xAI OAuth refresh returned non-JSON") from None
+    if not isinstance(data, dict) or not _xai_token_string(data.get("access_token")):
+        raise RuntimeError("xAI OAuth refresh returned no access_token")
+    return data
+
+
+def _xai_store_refreshed(node: Dict[str, Any], fresh: Dict[str, Any], now: float) -> None:
+    """Write the refreshed pair into the store's own node, in its own key names
+    and time units, so the tool that owns the file still reads it."""
+    token_key = "access_token" if _xai_token_string(node.get("access_token")) else "access"
+    node[token_key] = fresh["access_token"]
+    if _xai_token_string(fresh.get("refresh_token")):
+        refresh_key = next((k for k in XAI_REFRESH_TOKEN_KEYS
+                            if _xai_token_string(node.get(k))), "refresh_token")
+        node[refresh_key] = fresh["refresh_token"]
+    lifetime = _xai_number(fresh.get("expires_in")) or 3600.0
+    for key in XAI_EXPIRY_KEYS:
+        if _xai_epoch_seconds(node.get(key)) is not None:
+            node[key] = _xai_timestamp_like(node[key], now + lifetime)
+            return
+    if _xai_number(node.get("expires_in")) is not None:
+        node["expires_in"] = int(lifetime)
+        for key in XAI_ISSUED_KEYS:
+            if _xai_epoch_seconds(node.get(key)) is not None:
+                node[key] = _xai_timestamp_like(node[key], now)
+                return
+
+
+def _xai_timestamp_like(previous: Any, seconds: float) -> Any:
+    """`seconds` in the shape `previous` used: epoch ms, epoch s, or ISO-8601."""
+    value = _xai_number(previous)
+    if value is not None:
+        stamp = int(seconds * 1000) if value > 1e11 else int(seconds)
+        return str(stamp) if isinstance(previous, str) else stamp
+    return datetime.fromtimestamp(int(seconds), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _xai_write_store(path: str, data: Dict[str, Any]) -> None:
+    """Replace the store atomically, keeping its permissions (it holds secrets)."""
+    target = Path(os.path.realpath(path))
+    mode = target.stat().st_mode & 0o777
+    tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+    try:
+        # Created owner-only: the token must never sit world-readable, even briefly.
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        os.chmod(tmp, mode)
+        os.replace(tmp, target)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
+def _xai_refresh_token(node: Dict[str, Any]) -> Optional[str]:
+    for key in XAI_REFRESH_TOKEN_KEYS:
+        if _xai_token_string(node.get(key)):
+            return node[key]
+    return None
+
+
+def _xai_client_id(node: Dict[str, Any]) -> Optional[str]:
+    """The OAuth client the token was issued to: the store's own record, else
+    the access token's JWT claims (client_id, then a string or first aud)."""
+    if _xai_token_string(node.get("client_id")):
+        return node["client_id"]
+    access = node.get("access_token") if _xai_token_string(node.get("access_token")) \
+        else node.get("access")
+    claims = _xai_jwt_claims(access)
+    if _xai_token_string(claims.get("client_id")):
+        return claims["client_id"]
+    aud = claims.get("aud")
+    if isinstance(aud, list):
+        aud = next((a for a in aud if _xai_token_string(a)), None)
+    return aud if _xai_token_string(aud) else None
+
+
+def _xai_jwt_claims(token: Any) -> Dict[str, Any]:
+    parts = token.split(".") if isinstance(token, str) else []
+    if len(parts) < 2:
+        return {}
+    try:
+        padded = parts[1] + "=" * (-len(parts[1]) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return {}
+    return claims if isinstance(claims, dict) else {}
+
+
 def _xai_token_node(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """The dict actually holding `access_token`: the document itself, or one of
-    the containers a login tool nests it under."""
-    if _xai_token_string(data.get("access_token")):
+    the containers a login tool nests it under. Kilo's store uses `access`."""
+    node = _xai_find_token_node(data)
+    if node is None:
+        return None
+    if _xai_token_string(node.get("access_token")):
+        return node
+    out = dict(node)
+    out["access_token"] = node["access"]
+    return out
+
+
+def _xai_find_token_node(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    if _xai_token_string(data.get("access_token")) or _xai_token_string(data.get("access")):
         return data
     for key in XAI_NESTED_KEYS:
         nested = data.get(key)
-        if isinstance(nested, dict) and _xai_token_string(nested.get("access_token")):
+        if isinstance(nested, dict) and (
+            _xai_token_string(nested.get("access_token"))
+            or _xai_token_string(nested.get("access"))
+        ):
             return nested
     return None
 
@@ -2571,6 +2793,28 @@ def _xai_epoch_seconds(raw: Any) -> Optional[float]:
     return parsed.timestamp()
 
 
+# Aspect ratios the Imagine models take. grok-imagine renders a square unless
+# told otherwise, which a wide banner then crops; grok-2-image predates the
+# parameter, so it is sent nothing.
+XAI_IMAGINE_PREFIX = "grok-imagine"
+XAI_ASPECT_RATIOS: Tuple[Tuple[str, float], ...] = (
+    ("1:1", 1.0), ("3:2", 1.5), ("2:3", 2 / 3), ("4:3", 4 / 3),
+    ("3:4", 0.75), ("16:9", 16 / 9), ("9:16", 9 / 16),
+)
+
+
+def xai_aspect_ratio(model: str, size: str) -> Optional[str]:
+    """The Imagine aspect ratio nearest the configured WIDTHxHEIGHT size, or None
+    for a non-Imagine model or a size with no dimensions (e.g. `auto`)."""
+    if not (model or "").strip().lower().startswith(XAI_IMAGINE_PREFIX):
+        return None
+    match = re.fullmatch(r"\s*(\d+)\s*[xX]\s*(\d+)\s*", size or "")
+    if not match or not int(match.group(1)) or not int(match.group(2)):
+        return None
+    wanted = math.log(int(match.group(1)) / int(match.group(2)))
+    return min(XAI_ASPECT_RATIOS, key=lambda item: abs(math.log(item[1]) - wanted))[0]
+
+
 def _xai_number(raw: Any) -> Optional[float]:
     # bool is an int subclass; a JSON true/false is not a timestamp.
     if isinstance(raw, bool):
@@ -2583,6 +2827,96 @@ def _xai_number(raw: Any) -> Optional[float]:
         return float(raw)
     except ValueError:
         return None
+
+
+class GrokClient:
+    """OpenAI-compatible chat client for api.x.ai.
+
+    Duck-typed against AnthropicClient (complete / complete_vision / available /
+    describe) so analyze/review can run on Grok with the same OAuth token the
+    image renderer already uses.
+    """
+
+    DEFAULT_MODEL = "grok-4"
+
+    def __init__(self, env: Optional[Dict[str, str]] = None) -> None:
+        self.env = dict(os.environ if env is None else env)
+        chain = xai_credential_chain(self.env)
+        self.credential = chain[0] if chain else None
+
+    def available(self) -> bool:
+        return self.credential is not None
+
+    def describe(self) -> str:
+        return self.credential.source if self.credential else "none"
+
+    def complete(
+        self,
+        system_text: str,
+        user_text: str,
+        model: str = DEFAULT_MODEL,
+        max_tokens: int = 2048,
+        effort: str = "",
+    ) -> str:
+        if self.credential is None:
+            raise RuntimeError("no xAI credential configured")
+        payload = {
+            "model": self._resolve_model(model),
+            "messages": [
+                {"role": "system", "content": system_text},
+                {"role": "user", "content": user_text},
+            ],
+            "max_tokens": max_tokens,
+        }
+        return self._message_text(self._api_call(payload, "xAI chat"))
+
+    def complete_vision(
+        self,
+        system_text: str,
+        user_text: str,
+        image_path: Path,
+        model: str = DEFAULT_MODEL,
+        max_tokens: int = 2048,
+        effort: str = "",
+    ) -> str:
+        if self.credential is None:
+            raise RuntimeError("no xAI credential configured")
+        raw = Path(image_path).read_bytes()
+        b64 = base64.b64encode(raw).decode("ascii")
+        payload = {
+            "model": self._resolve_model(model),
+            "messages": [
+                {"role": "system", "content": system_text},
+                {"role": "user", "content": [
+                    {"type": "image_url",
+                     "image_url": {"url": f"data:{image_media_type(raw)};base64,{b64}"}},
+                    {"type": "text", "text": user_text},
+                ]},
+            ],
+            "max_tokens": max_tokens,
+        }
+        return self._message_text(self._api_call(payload, "xAI chat (review)"))
+
+    def _resolve_model(self, model: str) -> str:
+        name = (model or "").strip()
+        if not name or name.startswith("claude"):
+            return self.DEFAULT_MODEL
+        return name
+
+    def _api_call(self, payload: Dict[str, Any], what: str) -> dict:
+        self.credential = xai_ready_credential(self.credential)
+        url = f"{xai_base_url(self.env)}/chat/completions"
+        return with_retries(
+            lambda: http_json(url, payload, self.credential.headers(), timeout=900),
+            what,
+        )
+
+    def _message_text(self, data: dict) -> str:
+        choices = data.get("choices") or []
+        if not choices:
+            return ""
+        message = choices[0].get("message") or {}
+        return str(message.get("content") or "")
 
 
 class XAIProvider(Provider):
@@ -2614,6 +2948,18 @@ class XAIProvider(Provider):
     def default_model(self) -> str:
         return "grok-2-image"
 
+    @staticmethod
+    def _named_for_its_bytes(out_path: Path) -> ImageResult:
+        """Imagine answers JPEG: keep the bytes (a PNG re-encode is ~4x larger)
+        and give the file the extension they are, so it is served as what it is."""
+        with out_path.open("rb") as handle:
+            head = handle.read(12)
+        if image_media_type(head) != "image/jpeg":
+            return ImageResult(True, "png", out_path)
+        jpg_path = out_path.with_suffix(".jpg")
+        out_path.replace(jpg_path)
+        return ImageResult(True, "jpg", jpg_path)
+
     def generate(self, prompt, settings, out_base, ctx) -> ImageResult:
         chain = xai_credential_chain(ctx.env)
         if not chain:
@@ -2621,8 +2967,19 @@ class XAIProvider(Provider):
         model = effective_model(settings, self)
         out_path = out_base.with_suffix(".png")
         payload = {"model": model, "prompt": prompt[:self.PROMPT_LIMIT], "n": 1}
+        aspect = xai_aspect_ratio(model, settings.size)
+        if aspect:
+            payload["aspect_ratio"] = aspect
         url = f"{xai_base_url(ctx.env)}/images/generations"
         for index, credential in enumerate(chain):
+            try:
+                credential = xai_ready_credential(credential)
+            except Exception as exc:
+                fallback = chain[index + 1] if index + 1 < len(chain) else None
+                if fallback is not None:
+                    warn(f"{exc} — retrying with {fallback.source}")
+                    continue
+                return ImageResult(False, error=f"{exc}; re-run your Grok login")
             debug(f"xAI generate: model={model} auth={credential.source}")
             try:
                 data = with_retries(
@@ -2632,7 +2989,7 @@ class XAIProvider(Provider):
                 entries = data.get("data") or []
                 if not entries or not _write_image_payload(entries[0], out_path):
                     return ImageResult(False, error="No image data in xAI response")
-                return ImageResult(True, "png", out_path)
+                return self._named_for_its_bytes(out_path)
             except HttpStatusError as exc:
                 fallback = chain[index + 1] if index + 1 < len(chain) else None
                 if exc.status in self.AUTH_FAILURE_STATUSES and fallback is not None:
@@ -3027,19 +3384,22 @@ class Runner:
         base_prompt = build_prompt(cf, file_settings)
         prompt = base_prompt
         orchestrated = settings.provider != "local"  # local is deterministic
-        if (orchestrated and file_settings.prompt_engine == "claude"
+        if (orchestrated and file_settings.prompt_engine in ("claude", "xai")
                 and not settings.dry_run):
             prompt = claude_article_brief(
-                self.ctx.claude(), cf, file_settings, base_prompt)
+                self.ctx.orchestrator(file_settings.prompt_engine),
+                cf, file_settings, base_prompt)
         debug(f"Generated prompt: {prompt[:500]}...")
 
         if settings.dry_run:
             info("[DRY RUN] Would generate image:")
             print(f"  Provider: {settings.provider}")
-            if orchestrated and file_settings.prompt_engine == "claude":
-                print("  Prompt engine: claude (article analysis runs at generation time)")
-            if orchestrated and file_settings.review_engine == "claude":
-                print("  Review: claude (image review runs at generation time)")
+            if orchestrated and file_settings.prompt_engine in ("claude", "xai"):
+                print(f"  Prompt engine: {file_settings.prompt_engine} "
+                      "(article analysis runs at generation time)")
+            if orchestrated and file_settings.review_engine in ("claude", "xai"):
+                print(f"  Review: {file_settings.review_engine} "
+                      "(image review runs at generation time)")
             print(f"  Output: {out_base.with_suffix('.png')}")
             print(f"  Preview path: {preview_front_matter_path(file_settings, slug + '.png')}")
             print(f"  Prompt: {prompt[:400]}...")
@@ -3058,10 +3418,11 @@ class Runner:
         result = provider.generate(prompt, file_settings, out_base, file_ctx)
 
         # ---- Review: Claude inspects the render; at most ONE regeneration ----
-        if (orchestrated and file_settings.review_engine == "claude"
-                and result.ok and result.path and result.kind == "png"):
+        if (orchestrated and file_settings.review_engine in ("claude", "xai")
+                and result.ok and result.path and result.kind in ("png", "jpg")):
             approved, critique, revised = claude_review_image(
-                self.ctx.claude(), result.path, cf, prompt, file_settings)
+                self.ctx.orchestrator(file_settings.review_engine),
+                result.path, cf, prompt, file_settings)
             if approved:
                 if critique:
                     debug(f"Claude review: {critique}")
@@ -3296,12 +3657,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
                         help="Input fidelity (implies --enhance)")
     parser.add_argument("--enhance-format", choices=["png", "jpeg", "webp"],
                         help="Enhanced output format (implies --enhance)")
-    parser.add_argument("--prompt-engine", choices=["template", "claude"],
-                        help="Art-direction brief: claude analyzes the article "
-                             "(default) or template uses the built-in prompt")
-    parser.add_argument("--review", choices=["claude", "none"],
-                        help="Post-render review: claude inspects the image and "
-                             "may request one refined regeneration (default: claude)")
+    parser.add_argument("--prompt-engine", choices=["template", "claude", "xai"],
+                        help="Art-direction brief: claude or xai (Grok OAuth) "
+                             "analyzes the article (default: claude); template "
+                             "uses the built-in prompt")
+    parser.add_argument("--review", choices=["claude", "xai", "none"],
+                        help="Post-render review: claude or xai inspects the image "
+                             "and may request one refined regeneration (default: claude)")
     parser.add_argument("--rasterizer",
                         choices=["auto", "rsvg", "inkscape", "magick", "playwright", "none"],
                         help="SVG→PNG tool for claude/local providers (default: "
@@ -3391,6 +3753,35 @@ def resolve_auto_provider(settings: Settings, env: Dict[str, str]) -> Settings:
     return replace(settings, provider="default")
 
 
+def _degrade_llm(settings: Settings, ctx: RunContext) -> Settings:
+    """Turn off Claude/Grok stages that have no credential, independently."""
+    if settings.prompt_engine == "claude" or settings.review_engine == "claude":
+        if ctx.claude().available():
+            info(f"Claude orchestration: {ctx.claude().describe()}")
+        else:
+            warn(CLAUDE_CREDENTIAL_HINT)
+            settings = replace(
+                settings,
+                prompt_engine=("template" if settings.prompt_engine == "claude"
+                               else settings.prompt_engine),
+                review_engine=("none" if settings.review_engine == "claude"
+                               else settings.review_engine),
+            )
+    if settings.prompt_engine == "xai" or settings.review_engine == "xai":
+        if ctx.grok_client().available():
+            info(f"Grok orchestration: {ctx.grok_client().describe()}")
+        else:
+            warn(XAI_MISSING_HINT)
+            settings = replace(
+                settings,
+                prompt_engine=("template" if settings.prompt_engine == "xai"
+                               else settings.prompt_engine),
+                review_engine=("none" if settings.review_engine == "xai"
+                               else settings.review_engine),
+            )
+    return settings
+
+
 def validate_credentials(settings: Settings, ctx: RunContext) -> None:
     """Credential checks are skipped for --list-missing/--dry-run (historical
     behavior), but an unknown provider name (from AI_PROVIDER / _config.yml —
@@ -3450,19 +3841,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     settings = resolve_auto_provider(settings, ctx.env)
     validate_credentials(settings, ctx)
 
-    # Claude orchestration (analyze/review) degrades gracefully: without a
-    # Claude credential the run continues on template prompts, unreviewed.
-    wants_claude = (
-        settings.provider not in ("local", "default")
-        and "claude" in (settings.prompt_engine, settings.review_engine)
-        and not (settings.dry_run or settings.list_only)
-    )
-    if wants_claude:
-        if ctx.claude().available():
-            info(f"Claude orchestration: {ctx.claude().describe()}")
-        else:
-            warn(CLAUDE_CREDENTIAL_HINT)
-            settings = replace(settings, prompt_engine="template", review_engine="none")
+    # LLM orchestration degrades gracefully: without a credential the run
+    # continues on template prompts, unreviewed. Claude and Grok degrade
+    # independently so a missing Claude token does not disable a Grok review.
+    if (settings.provider not in ("local", "default")
+            and not (settings.dry_run or settings.list_only)):
+        settings = _degrade_llm(settings, ctx)
 
     output_dir = project_root / settings.output_dir
     if not settings.dry_run and not settings.list_only:

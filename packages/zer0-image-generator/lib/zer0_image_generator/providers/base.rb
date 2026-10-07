@@ -120,12 +120,13 @@ module Zer0ImageGenerator
   # cross-contaminate concurrent renders.
   class RunContext
     attr_reader :project_root, :env
-    attr_accessor :anthropic, :slug, :article
+    attr_accessor :anthropic, :grok, :slug, :article
 
-    def initialize(project_root:, env:, anthropic: nil, slug: "", article: nil)
+    def initialize(project_root:, env:, anthropic: nil, grok: nil, slug: "", article: nil)
       @project_root = project_root
       @env = env
       @anthropic = anthropic
+      @grok = grok
       @slug = slug
       # The page's own context (slug/section/title/categories/description/body),
       # set per file by the runner. The local renderer derives BOTH composition
@@ -139,6 +140,14 @@ module Zer0ImageGenerator
       @anthropic ||= AnthropicClient.new(@env)
     end
 
+    def grok_client
+      @grok ||= GrokClient.new(@env)
+    end
+
+    def orchestrator(engine)
+      engine.to_s == "xai" ? grok_client : claude
+    end
+
     # Per-file copy carrying a fresh slug (the runner calls `ctx.with_slug(slug)`
     # once per worker). project_root/env/anthropic are shared by reference on
     # purpose: env is read-only and the AnthropicClient is stateless after init,
@@ -146,7 +155,7 @@ module Zer0ImageGenerator
     # and therefore must not be shared.
     def with_slug(slug, article: nil)
       RunContext.new(project_root: @project_root, env: @env,
-                     anthropic: @anthropic, slug: slug, article: article)
+                     anthropic: @anthropic, grok: @grok, slug: slug, article: article)
     end
   end
 end

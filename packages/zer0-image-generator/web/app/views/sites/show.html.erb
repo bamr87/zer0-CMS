@@ -1,7 +1,6 @@
 <% content_for :title, @site.name %>
 <% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= @site.name %><% end %>
 <% content_for :topbar_actions do %>
-  <%= link_to "Config", site_config_path(@site), class: "btn" %>
   <%= button_to "Rescan", rescan_site_path(@site), class: "btn" %>
   <%= link_to "＋ New run", new_site_run_path(@site), class: "btn primary" %>
 <% end %>
@@ -10,17 +9,36 @@
   <div>
     <h1><%= @site.name %></h1>
     <div class="sub mono"><%= @site.path %><%= " · source: #{@site.source_subdir}" if @site.source_subdir.present? %></div>
+    <% if @site.notes.present? %><p class="dim" style="margin:.4rem 0 0;"><%= @site.notes %></p><% end %>
   </div>
 </div>
+
+<%= render "shared/site_nav", site: @site %>
 
 <% if @scan_error %>
   <div class="flash alert">Could not read this site: <%= @scan_error %></div>
 <% elsif @scan %>
   <div class="grid cols-4" style="margin-bottom:1.3rem;">
-    <div class="card stat"><span class="num"><%= @scan.total %></span><span class="lbl">Content files</span></div>
-    <div class="card stat"><span class="num" style="color:var(--warn)"><%= @scan.missing %></span><span class="lbl">Missing preview</span></div>
-    <div class="card stat"><span class="num" style="color:var(--ok)"><%= @scan.present %></span><span class="lbl">Have preview</span></div>
-    <div class="card stat"><span class="num"><%= @scan.collections.size %></span><span class="lbl">Collections</span></div>
+    <%= link_to site_content_index_path(@site), class: "card stat" do %>
+      <span class="num"><%= @scan.total %></span><span class="lbl">Content files</span>
+    <% end %>
+    <%= link_to site_content_index_path(@site, filter: "missing"), class: "card stat" do %>
+      <span class="num" style="color:var(--warn)"><%= @scan.missing %></span><span class="lbl">Missing preview</span>
+    <% end %>
+    <%= link_to site_content_index_path(@site, filter: "present"), class: "card stat" do %>
+      <span class="num" style="color:var(--ok)"><%= @scan.present %></span><span class="lbl">Have preview</span>
+    <% end %>
+    <%= link_to site_config_path(@site), class: "card stat" do %>
+      <span class="num" style="font-size:1.15rem;"><%= @scan.settings.provider %></span><span class="lbl">Provider</span>
+    <% end %>
+  </div>
+
+  <div class="btn-row" style="margin-bottom:1.3rem;">
+    <%= link_to "Dry run", new_site_run_path(@site, kind: "dry_run"), class: "btn" %>
+    <%= link_to "List missing", new_site_run_path(@site, kind: "list_missing"), class: "btn" %>
+    <%= link_to "Generate missing", new_site_run_path(@site, kind: "generate"), class: "btn primary" %>
+    <%= link_to "Enhance existing", new_site_run_path(@site, kind: "enhance"), class: "btn" %>
+    <%= link_to "Edit config", site_config_path(@site), class: "btn" %>
   </div>
 
   <div class="grid cols-2" style="align-items:start;">
@@ -31,21 +49,30 @@
       </div>
       <table class="list">
         <tbody>
-          <% @scan.entries.first(8).each do |entry| %>
+          <% @scan.entries.sort_by { |entry| entry.exists ? 1 : 0 }.first(8).each do |entry| %>
             <tr>
+              <td style="width:88px;">
+                <% url = preview_image_url(entry) %>
+                <% if url %>
+                  <%= link_to item_site_content_index_path(@site, file: entry.relative) do %>
+                    <span class="preview-frame thumb"><img src="<%= url %>" alt="" loading="lazy"></span>
+                  <% end %>
+                <% end %>
+              </td>
               <td>
-                <%= entry.title %>
+                <%= link_to entry.title, item_site_content_index_path(@site, file: entry.relative) %>
                 <div class="faint mono" style="font-size:.76rem;"><%= entry.relative %></div>
               </td>
-              <td class="right">
+              <td class="right nowrap">
                 <% if entry.exists %><span class="badge ok"><span class="dot"></span>preview</span>
                 <% else %><span class="badge warn"><span class="dot"></span>missing</span><% end %>
+                <%= link_to "Generate", new_site_run_path(@site, kind: "generate", file: entry.relative), class: "btn sm" %>
               </td>
             </tr>
           <% end %>
         </tbody>
       </table>
-      <% if @scan.total > 8 %><p class="hint" style="margin-top:.8rem;"><%= @scan.total - 8 %> more…</p><% end %>
+      <% if @scan.total > 8 %><p class="hint" style="margin-top:.8rem;"><%= @scan.total - 8 %> more… <%= link_to "browse", site_content_index_path(@site) %></p><% end %>
     </div>
 
     <div class="card">
@@ -74,4 +101,5 @@
 
 <div class="btn-row" style="margin-top:1.3rem;">
   <%= link_to "Edit site", edit_site_path(@site), class: "btn sm" %>
+  <%= button_to "Remove from app", @site, method: :delete, class: "btn sm danger", form: { data: { turbo_confirm: "Remove #{@site.name}? Files on disk are left untouched." } } %>
 </div>

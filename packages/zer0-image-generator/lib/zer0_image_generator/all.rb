@@ -26,8 +26,9 @@ require_relative "svg/local_renderer"
 require_relative "svg/rasterizer"
 require_relative "svg/lint"
 require_relative "svg/pixel_kit"
-require_relative "providers"
-require_relative "runner"
+  require_relative "providers"
+  require_relative "grok/client"
+  require_relative "runner"
 require_relative "cli"
 
 # ABC / alphabet-book plugin — additive and self-contained (touches none of the

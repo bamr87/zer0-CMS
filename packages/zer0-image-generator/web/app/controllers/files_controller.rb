@@ -8,6 +8,8 @@
 # allowed root. Without that check, `files/../../etc/passwd` would be a file
 # disclosure hole; the allow-list of roots is the whole security boundary.
 class FilesController < ApplicationController
+  skip_before_action :load_nav
+
   IMAGE_TYPES = {
     ".png" => "image/png", ".svg" => "image/svg+xml",
     ".jpg" => "image/jpeg", ".jpeg" => "image/jpeg", ".webp" => "image/webp"

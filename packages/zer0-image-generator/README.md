@@ -208,28 +208,34 @@ export ANTHROPIC_API_KEY="..."         # 3. console.anthropic.com
 
 Keys are read from the environment or a git-ignored `.env` at the site root. On a Claude Pro/Max subscription the orchestration costs nothing extra; only the renderer bills per image.
 
-### Grok OAuth (xAI renderer)
+### Grok OAuth (xAI renderer + art direction)
 
-`--provider xai` accepts a **Grok OAuth access token** as well as an API key, and tries them in that order — so a SuperGrok / X Premium+ login can render banners without a console.x.ai key:
+The same **Grok OAuth access token** authenticates `--provider xai` *and* `--prompt-engine xai` / `--review xai` (Grok writes the art brief and vision-reviews the render). SuperGrok / X Premium+ can drive the whole pipeline without a console.x.ai key:
 
 ```bash
 export XAI_OAUTH_TOKEN="..."           # 1. an OAuth access token (GROK_OAUTH_TOKEN also works)
 #    …or a credentials file from a Grok login — ~/.grok/auth.json by default,
-#    or set XAI_OAUTH_CREDENTIALS / GROK_OAUTH_CREDENTIALS to point elsewhere
-export XAI_API_KEY="..."               # 2. console.x.ai — and the automatic fallback
+#    ~/.local/share/kilo/auth.json (Kilo's xAI store), or set
+#    XAI_OAUTH_CREDENTIALS / GROK_OAUTH_CREDENTIALS / KILO_AUTH_PATH
+export XAI_API_KEY="..."               # 2. console.x.ai — renderer fallback only
 ```
 
-Both are `Authorization: Bearer` credentials on the same endpoint, which is what makes the fallback real rather than cosmetic: **if the OAuth token is expired or the API rejects it (401/403) and an `XAI_API_KEY` is present, the same request is retried with the key** and the page still renders. A token whose recorded expiry has already passed is skipped without spending a request at all. Other failures (a 500, a bad prompt) are *not* credential problems, so they never burn the fallback.
+Both are `Authorization: Bearer` credentials on the same endpoint, which is what makes the fallback real rather than cosmetic: **if the OAuth token is expired or the API rejects it (401/403) and an `XAI_API_KEY` is present, the same request is retried with the key** and the page still renders. A token whose recorded expiry has already passed, with nothing to refresh it with, is skipped without spending a request at all. Other failures (a 500, a bad prompt) are *not* credential problems, so they never burn the fallback.
 
-The engine only ever *reads* a token — it does not mint or refresh one, and never writes to the credentials file, because xAI publishes neither a device-code endpoint nor a public client id. Re-run your Grok login when a token expires.
+**Expired tokens are refreshed when their store can.** The engine never mints a token (that takes an interactive login), but a login that saved a refresh token and a client id — Kilo Code's does, as `{ "xai": { "access", "refresh", "expires" } }` — is renewed at `https://auth.x.ai/oauth2/token` (the endpoint auth.x.ai's OIDC discovery document publishes) right before the first request that needs it. The rotated pair is written back into that same file, atomically, keeping its key names, time units, other entries and permissions, so the login tool and your next run both see it. The client id comes from the store, else from the access token's JWT `client_id` or `aud` claim. Parallel workers share one refresh. A refresh is never retried, because a refresh token that rotated on a lost response is already spent. If it fails, the chain moves on to `XAI_API_KEY`; with no key the page fails with the reason. A token with no refresh token still needs you to re-run your Grok login.
 
 | variable | effect |
 | --- | --- |
 | `XAI_OAUTH_TOKEN` / `GROK_OAUTH_TOKEN` | OAuth access token, tried first |
 | `XAI_OAUTH_CREDENTIALS` / `GROK_OAUTH_CREDENTIALS` | explicit path to a Grok credentials JSON (wins outright over `~/.grok/auth.json`) |
+| `KILO_AUTH_PATH` | extra credentials file (Kilo store uses `{ "xai": { "access": "…", "refresh": "…" } }`; refreshed in place when expired) |
 | `XAI_API_KEY` | API key — the fallback rung |
 | `XAI_AUTH` | `auto` (default), `oauth` or `api_key` — pin one rung |
 | `XAI_BASE_URL` | override `https://api.x.ai/v1` |
+
+**Imagine models get a banner shape.** With `--model grok-imagine-image-2.0` (any `grok-imagine*` model) the request carries the `aspect_ratio` nearest your `size` — `1536x1024` sends `3:2` — because Imagine renders a square by default and a wide banner would crop it. `grok-2-image` requests are unchanged. Imagine answers JPEG, so the banner is saved as `<slug>.jpg` (front matter points there) rather than JPEG bytes under a `.png` name; the vision review and `--enhance` label every upload with the MIME type its bytes declare.
+
+Every request sends `User-Agent: zer0-image-generator` unless the caller names its own: `api.x.ai` and `auth.x.ai` sit behind Cloudflare, which answers a stock `Python-urllib` client with a 403 page or `error code: 1010`.
 
 The run's config banner names the credential it picked (`xai auth: XAI_OAUTH_TOKEN (Grok OAuth token), falling back to XAI_API_KEY (xAI API key)`), and a fallback mid-run is logged as a warning — a silent swap would hide a token that has quietly stopped working.
 

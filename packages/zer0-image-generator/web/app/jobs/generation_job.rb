@@ -22,7 +22,7 @@ class GenerationJob < ApplicationJob
     interrupt = DbInterrupt.new(run)
     config = EngineBridge.read_config(site.root)
     settings = EngineBridge.resolve_settings(engine_args(run), config)
-    env = ENV.to_h.merge(Credential.environment)
+    env = AiEnv.snapshot
 
     # _config.yml lives at the site root, but Jekyll's `source:` key shifts
     # where content and assets are. The engine applies that shift before the

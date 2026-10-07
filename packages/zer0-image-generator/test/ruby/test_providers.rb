@@ -3,7 +3,7 @@
 # Integration tests for the image-provider layer.
 #
 # These run the REAL sibling slices (logging, constants, settings, http, svg)
-# and fake ONLY the network boundary — Http.json/multipart/download_to/
+# and fake ONLY the network boundary — Http.json/multipart/request/download_to/
 # with_retries are overridden with an in-memory transport, so the request
 # shapes, response parsing, error surfacing, and the LocalProvider SVG pipeline
 # are all exercised against production code with zero network and no bundler:
@@ -30,7 +30,7 @@ require "open3"
 %w[
   logging constants settings http
   svg/sanitizer svg/local_renderer svg/rasterizer
-  providers
+  providers grok/client
 ].each { |mod| require "zer0_image_generator/#{mod}" }
 
 Z = Zer0ImageGenerator
@@ -84,6 +84,14 @@ Z::Http.define_singleton_method(:multipart) do |url, fields, files, headers, tim
   FakeHttp.calls << { kind: :multipart, url: url, fields: fields, files: files,
                       headers: headers, timeout: timeout }
   FakeHttp.deliver
+end
+
+# The raw request is only reached by the xAI OAuth refresh (a form POST to
+# auth.x.ai); scripted entries answer 200 with that hash as JSON.
+Z::Http.define_singleton_method(:request) do |url, method: "GET", headers: nil, data: nil, timeout: 120|
+  FakeHttp.calls << { kind: :request, url: url, method: method, headers: headers,
+                      data: data, timeout: timeout }
+  [200, {}, JSON.generate(FakeHttp.deliver).b]
 end
 
 Z::Http.define_singleton_method(:download_to) do |url, dest, **_opts|
@@ -377,6 +385,59 @@ class TestXAIProvider < Minitest::Test
     assert_equal "GROK", File.binread(result.path.to_s)
   end
 
+  def test_imagine_model_is_sent_the_banner_aspect_ratio
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: "grok-imagine-image-2.0", size: "1536x1024"),
+                      @out_base, ctx(env("XAI_API_KEY" => "xai-key")))
+    assert_equal "grok-imagine-image-2.0", FakeHttp.last[:payload]["model"]
+    assert_equal "3:2", FakeHttp.last[:payload]["aspect_ratio"]
+
+    # grok-2-image predates the parameter: its request shape is unchanged.
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: "", size: "1536x1024"),
+                      @out_base, ctx(env("XAI_API_KEY" => "xai-key")))
+    assert_equal "grok-2-image", FakeHttp.last[:payload]["model"]
+    refute FakeHttp.last[:payload].key?("aspect_ratio")
+  end
+
+  def test_jpeg_render_is_saved_under_a_jpg_name
+    FakeHttp.next_response = { "data" => [{ "b64_json" => b64("\xff\xd8\xff\xe0JFIF".b) }] }
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                               ctx(env("XAI_API_KEY" => "k")))
+
+    assert result.ok
+    assert_equal ["jpg", "my-slug.jpg"], [result.kind, result.path.basename.to_s]
+    assert File.file?(result.path.to_s)
+    refute File.exist?(@out_base.sub_ext(".png").to_s)
+  end
+
+  def test_image_media_type_reads_the_bytes
+    assert_equal "image/jpeg", Z.image_media_type("\xff\xd8\xff\xe0".b)
+    assert_equal "image/webp", Z.image_media_type("RIFF\x00\x00\x00\x00WEBPVP8 ".b)
+    assert_equal "image/png", Z.image_media_type(Z::PNG_SIGNATURE)
+    assert_equal "image/png", Z.image_media_type("")
+  end
+
+  def test_grok_review_labels_a_jpeg_as_jpeg
+    image = File.join(@tmp, "render.jpg")
+    File.binwrite(image, "\xff\xd8\xff\xe0JFIF".b)
+    FakeHttp.next_response = { "choices" => [{ "message" => { "content" => "{}" } }] }
+    Z::GrokClient.new(env("XAI_API_KEY" => "k")).complete_vision("s", "u", image)
+
+    url = FakeHttp.last[:payload]["messages"][1]["content"][0]["image_url"]["url"]
+    assert url.start_with?("data:image/jpeg;base64,")
+  end
+
+  def test_aspect_ratio_is_the_nearest_imagine_ratio
+    imagine = "grok-imagine-image-2.0"
+    assert_equal "16:9", Z::XAIAuth.aspect_ratio(imagine, "1792x1024")
+    assert_equal "2:3", Z::XAIAuth.aspect_ratio(imagine, "1024x1536")
+    assert_equal "1:1", Z::XAIAuth.aspect_ratio(imagine, "1024x1024")
+    assert_nil Z::XAIAuth.aspect_ratio(imagine, "auto")
+    assert_nil Z::XAIAuth.aspect_ratio(imagine, "0x1024")
+    assert_nil Z::XAIAuth.aspect_ratio("grok-2-image", "1536x1024")
+  end
+
   def test_generate_error_prefix
     FakeHttp.error_to_raise = status_error(500, "upstream down")
     result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
@@ -455,6 +516,14 @@ class TestXAIProvider < Minitest::Test
     assert_equal 1, FakeHttp.calls.length
   end
 
+  def test_kilo_access_alias_is_accepted
+    write_credentials_file("xai" => { "access" => "kilo-tok",
+                                      "expires" => (Time.now.to_i + 3600) * 1000 })
+    FakeHttp.next_response = ok_response
+    provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+    assert_equal({ "Authorization" => "Bearer kilo-tok" }, FakeHttp.last[:headers])
+  end
+
   def test_oauth_credentials_file_is_read_when_no_token_env_is_set
     write_credentials_file("access_token" => "file-tok",
                            "expires_at" => Time.now.to_i + 3600)
@@ -482,6 +551,131 @@ class TestXAIProvider < Minitest::Test
     # No wasted request on a token we already know is dead.
     assert_equal 1, FakeHttp.calls.length
     assert_equal({ "Authorization" => "Bearer xai-key" }, FakeHttp.last[:headers])
+  end
+
+  # --- refresh: an expired token whose store can renew it (Kilo Code's login) ---
+
+  KILO = ".local/share/kilo/auth.json"
+
+  def write_kilo_store(**slot)
+    record = { "type" => "oauth", "access" => "old-tok", "refresh" => "old-refresh",
+               "client_id" => "kilo-client",
+               "expires" => ((Time.now.to_f - 60) * 1000).to_i }
+    record.merge!(slot.transform_keys(&:to_s))
+    path = write_credentials_file({ "xai" => record, "other" => { "keep" => 1 } }, KILO)
+    File.chmod(0o600, path)
+    path
+  end
+
+  def jwt(claims)
+    body = [JSON.dump(claims)].pack("m0").tr("+/", "-_").delete("=")
+    "e30.#{body}.sig"
+  end
+
+  def refresh_calls
+    FakeHttp.calls.select { |call| call[:kind] == :request }
+  end
+
+  def image_calls
+    FakeHttp.calls.select { |call| call[:kind] == :json }
+  end
+
+  def test_expired_kilo_token_is_refreshed_and_saved_in_its_own_shape
+    path = write_kilo_store
+    FakeHttp.script = [{ "access_token" => "new-tok", "refresh_token" => "new-refresh",
+                         "expires_in" => 7200 }, ok_response]
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+
+    assert result.ok
+    assert_equal({ "Authorization" => "Bearer new-tok" }, image_calls[0][:headers])
+    assert_equal 1, refresh_calls.length
+    assert_equal "https://auth.x.ai/oauth2/token", refresh_calls[0][:url]
+    assert_equal "POST", refresh_calls[0][:method]
+    assert_equal({ "grant_type" => ["refresh_token"], "refresh_token" => ["old-refresh"],
+                   "client_id" => ["kilo-client"] },
+                 URI.decode_www_form(refresh_calls[0][:data]).group_by(&:first)
+                    .transform_values { |pairs| pairs.map(&:last) })
+    store = JSON.parse(File.read(path))
+    slot = store["xai"]
+    assert_equal ["new-tok", "new-refresh", "oauth"], slot.values_at("access", "refresh", "type")
+    refute slot.key?("access_token")                        # Kilo's key names kept
+    assert_operator slot["expires"], :>, (Time.now.to_f + 7000) * 1000  # still ms
+    assert_equal({ "keep" => 1 }, store["other"])           # the rest of the store kept
+    assert_equal 0o600, File.stat(path).mode & 0o777
+
+    # The saved token is fresh, so the next run reads it without refreshing.
+    FakeHttp.script = [ok_response]
+    provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+    assert_equal({ "Authorization" => "Bearer new-tok" }, image_calls.last[:headers])
+    assert_equal 1, refresh_calls.length
+  end
+
+  def test_refresh_reads_client_id_from_the_jwt_when_the_store_has_none
+    path = write_kilo_store(client_id: nil, access: jwt("aud" => ["jwt-client"]))
+    FakeHttp.script = [{ "access_token" => "new-tok" }, ok_response]
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+
+    assert result.ok
+    assert_includes refresh_calls[0][:data], "client_id=jwt-client"
+    # No rotated refresh token in the answer: the stored one is kept.
+    assert_equal "old-refresh", JSON.parse(File.read(path))["xai"]["refresh"]
+  end
+
+  def test_expired_refreshable_token_counts_as_configured_without_a_request
+    path = write_kilo_store
+    assert provider.is_configured(env)
+    assert_equal "Grok OAuth token (#{path}; expired, refreshed on use)", Z::XAIAuth.describe(env)
+    assert_empty FakeHttp.calls
+  end
+
+  def test_failed_refresh_falls_back_to_the_api_key
+    path = write_kilo_store
+    before = File.read(path)
+    FakeHttp.script = [Z::HttpStatusError.new(400, '{"error":"invalid_grant"}',
+                                              Z::XAIAuth::TOKEN_ENDPOINT), ok_response]
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base,
+                               ctx(env("XAI_API_KEY" => "xai-key")))
+
+    assert result.ok
+    assert_equal({ "Authorization" => "Bearer xai-key" }, image_calls[0][:headers])
+    assert_equal before, File.read(path)
+  end
+
+  def test_failed_refresh_without_a_fallback_is_an_error_not_a_request
+    write_kilo_store
+    FakeHttp.script = [Z::HttpStatusError.new(
+      400, '{"error":"invalid_grant","error_description":"echoed input"}',
+      Z::XAIAuth::TOKEN_ENDPOINT
+    )]
+    result = provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+
+    refute result.ok
+    assert_equal "xAI OAuth refresh failed (HTTP 400: invalid_grant); re-run your Grok login",
+                 result.error
+    assert_empty image_calls
+  end
+
+  def test_iso_expiry_is_saved_as_iso
+    path = write_credentials_file("access_token" => "old", "refresh_token" => "r",
+                                  "client_id" => "c", "expires_at" => "2020-01-01T00:00:00Z")
+    FakeHttp.script = [{ "access_token" => "new", "expires_in" => 3600 }, ok_response]
+    provider.generate("p", Z::Settings.new(model: ""), @out_base, ctx(env))
+
+    saved = JSON.parse(File.read(path))
+    assert_equal "new", saved["access_token"]
+    assert_match(/\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\z/, saved["expires_at"])
+    refute_nil Z::XAIAuth.describe(env)
+  end
+
+  def test_grok_client_refreshes_before_its_first_call
+    write_kilo_store
+    FakeHttp.script = [{ "access_token" => "chat-tok", "expires_in" => 3600 },
+                       { "choices" => [{ "message" => { "content" => "brief" } }] }]
+    client = Z::GrokClient.new(env)
+
+    assert client.available?
+    assert_equal "brief", client.complete("sys", "user")
+    assert_equal({ "Authorization" => "Bearer chat-tok" }, image_calls[0][:headers])
   end
 
   def test_expires_in_needs_an_issue_time_to_mean_anything

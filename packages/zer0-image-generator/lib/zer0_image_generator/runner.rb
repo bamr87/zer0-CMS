@@ -258,19 +258,20 @@ module Zer0ImageGenerator
       base_prompt = @deps.build_prompt(cf, file_settings)
       prompt = base_prompt
       orchestrated = settings.provider != "local" # local is deterministic
-      if orchestrated && file_settings.prompt_engine == "claude" && !settings.dry_run
-        prompt = @deps.claude_article_brief(@ctx.claude, cf, file_settings, base_prompt)
+      if orchestrated && %w[claude xai].include?(file_settings.prompt_engine) && !settings.dry_run
+        prompt = @deps.claude_article_brief(@ctx.orchestrator(file_settings.prompt_engine),
+                                            cf, file_settings, base_prompt)
       end
       debug("Generated prompt: #{prompt[0, 500]}...")
 
       if settings.dry_run
         info("[DRY RUN] Would generate image:")
         say("  Provider: #{settings.provider}")
-        if orchestrated && file_settings.prompt_engine == "claude"
-          say("  Prompt engine: claude (article analysis runs at generation time)")
+        if orchestrated && %w[claude xai].include?(file_settings.prompt_engine)
+          say("  Prompt engine: #{file_settings.prompt_engine} (article analysis runs at generation time)")
         end
-        if orchestrated && file_settings.review_engine == "claude"
-          say("  Review: claude (image review runs at generation time)")
+        if orchestrated && %w[claude xai].include?(file_settings.review_engine)
+          say("  Review: #{file_settings.review_engine} (image review runs at generation time)")
         end
         say("  Output: #{out_base.sub_ext('.png')}")
         say("  Preview path: #{@deps.preview_front_matter_path(file_settings, slug + '.png')}")
@@ -291,10 +292,11 @@ module Zer0ImageGenerator
       result = provider.generate(prompt, file_settings, out_base, file_ctx)
 
       # ---- Review: Claude inspects the render; at most ONE regeneration ----
-      if orchestrated && file_settings.review_engine == "claude" &&
-         result.ok && result.path && result.kind == "png"
+      if orchestrated && %w[claude xai].include?(file_settings.review_engine) &&
+         result.ok && result.path && %w[png jpg].include?(result.kind)
         approved, critique, revised =
-          @deps.claude_review_image(@ctx.claude, result.path, cf, prompt, file_settings)
+          @deps.claude_review_image(@ctx.orchestrator(file_settings.review_engine),
+                                    result.path, cf, prompt, file_settings)
         if approved
           debug("Claude review: #{critique}") if critique && !critique.empty?
         else

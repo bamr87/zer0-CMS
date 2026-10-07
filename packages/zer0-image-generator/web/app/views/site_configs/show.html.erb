@@ -4,6 +4,7 @@
 <div class="page-head">
   <div><h1>Preview config</h1><div class="sub">Edits the <span class="mono">preview_images:</span> block in <span class="mono"><%= @site.config_file %></span>. Comments and other keys are preserved.</div></div>
 </div>
+<%= render "shared/site_nav", site: @site %>
 
 <% if @error %>
   <div class="flash alert"><%= @error %></div>
@@ -13,7 +14,7 @@
       <div class="card">
         <h2>Rendering</h2>
         <div class="field"><label>Provider</label>
-          <%= f.select :provider, %w[openai xai stability gemini local].map { |p| [p, p] }, selected: @values["provider"] %>
+          <%= f.select :provider, EngineBridge.provider_names.map { |p| [p, p] }, selected: @values["provider"] %>
         </div>
         <div class="field"><label>Model (blank = provider default)</label><%= f.text_field :model, value: @values["model"] %></div>
         <div class="field-row">
@@ -27,11 +28,11 @@
       <div class="card">
         <h2>Orchestration</h2>
         <div class="field"><label>Prompt engine</label>
-          <%= f.select :prompt_engine, %w[claude template].map { |p| [p, p] }, selected: @values["prompt_engine"] %>
-          <div class="hint">Claude reads each article into an art brief; template uses a fixed prompt.</div>
+          <%= f.select :prompt_engine, [%w[claude claude], ["xai (Grok OAuth)", "xai"], %w[template template]], selected: @values["prompt_engine"] %>
+          <div class="hint">Claude or Grok reads each article into an art brief; template uses a fixed prompt. Grok uses the same OAuth token as the xAI renderer.</div>
         </div>
         <div class="field"><label>Review engine</label>
-          <%= f.select :review_engine, %w[claude none].map { |p| [p, p] }, selected: @values["review_engine"] %>
+          <%= f.select :review_engine, [%w[claude claude], ["xai (Grok OAuth)", "xai"], %w[none none]], selected: @values["review_engine"] %>
         </div>
         <div class="field"><label>Rasterizer</label>
           <%= f.select :rasterizer, %w[auto rsvg inkscape magick playwright none].map { |p| [p, p] }, selected: @values["rasterizer"] %>

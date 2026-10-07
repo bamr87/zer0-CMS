@@ -14,15 +14,18 @@ class CompositionsController < ApplicationController
       style: Zer0ImageGenerator::DEFAULTS["style"]
     )
     @claude_available = Credential.claude_available?(run_env)
+    @xai_available = Credential.xai_available?(run_env)
     @available_providers = EngineBridge.available_providers(run_env)
   rescue EngineBridge::Error
     @composition ||= Composition.new(provider: "local", prompt_engine: "claude", review_engine: "claude")
     @claude_available = Credential.claude_available?(run_env)
+    @xai_available = Credential.xai_available?(run_env)
     @available_providers = ["local"]
   end
 
   def show
     @claude_available = Credential.claude_available?(run_env)
+    @xai_available = Credential.xai_available?(run_env)
     @openai_available = run_env["OPENAI_API_KEY"].present?
   end
 
@@ -33,6 +36,7 @@ class CompositionsController < ApplicationController
       redirect_to @composition, notice: "Creating your image…"
     else
       @claude_available = Credential.claude_available?(run_env)
+      @xai_available = Credential.xai_available?(run_env)
       @available_providers = EngineBridge.available_providers(run_env)
       render :new, status: :unprocessable_entity
     end
@@ -65,6 +69,6 @@ class CompositionsController < ApplicationController
   end
 
   def run_env
-    @run_env ||= ENV.to_h.merge(Credential.environment)
+    @run_env ||= AiEnv.snapshot
   end
 end

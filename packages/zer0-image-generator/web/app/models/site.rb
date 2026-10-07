@@ -14,6 +14,16 @@ class Site < ApplicationRecord
   validate :path_is_a_jekyll_site
 
   scope :recently_scanned, -> { order(last_scanned_at: :desc) }
+  scope :named, -> { order(:name) }
+
+  def self.discover_roots(mount = "/sites")
+    dir = Pathname.new(mount)
+    return [] unless dir.directory?
+
+    configs = Pathname.glob(dir.join("*/_config.yml")) + Pathname.glob(dir.join("*/*/_config.yml"))
+    registered = pluck(:path).to_set
+    configs.map { |cfg| cfg.dirname.to_s }.uniq.reject { |path| registered.include?(path) }.sort
+  end
 
   def root
     Pathname.new(path)

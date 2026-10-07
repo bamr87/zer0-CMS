@@ -14,10 +14,10 @@
   <div class="grid cols-3">
     <% @compositions.each do |composition| %>
       <% img = composition.latest_image %>
-      <%= link_to composition, class: "card pad-0", style: "display:block; color:inherit; text-decoration:none;" do %>
+      <%= link_to composition, class: "card pad-0 feature", style: "display:block;" do %>
         <div class="preview-frame" style="min-height:130px; aspect-ratio:3/2;">
           <% if img&.exists? %>
-            <img src="<%= file_path(path: img.pathname.realpath.to_s.sub(%r{\A/}, "")) %>" loading="lazy" alt="<%= composition.title %>">
+            <img src="<%= disk_file_url(img.pathname) %>" loading="lazy" alt="<%= composition.title %>">
           <% else %>
             <span class="faint"><%= composition.working? ? "working…" : "no image" %></span>
           <% end %>

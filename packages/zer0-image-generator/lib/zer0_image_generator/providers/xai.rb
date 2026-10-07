@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../constants"
 require_relative "base"
 require_relative "xai_auth"
 
@@ -39,6 +40,18 @@ module Zer0ImageGenerator
       "grok-2-image"
     end
 
+    # Imagine answers JPEG: keep the bytes (a PNG re-encode is ~4x larger) and
+    # give the file the extension they are, so it is served as what it is.
+    def named_for_its_bytes(out_path)
+      head = File.open(out_path.to_s, "rb") { |handle| handle.read(12) }
+      return ImageResult.new(true, "png", out_path) unless
+        Zer0ImageGenerator.image_media_type(head) == "image/jpeg"
+
+      jpg_path = out_path.sub_ext(".jpg")
+      File.rename(out_path.to_s, jpg_path.to_s)
+      ImageResult.new(true, "jpg", jpg_path)
+    end
+
     def generate(prompt, settings, out_base, ctx)
       credentials = XAIAuth.chain(ctx.env)
       return ImageResult.new(false, error: XAIAuth::MISSING_HINT) if credentials.empty?
@@ -46,9 +59,22 @@ module Zer0ImageGenerator
       model = Zer0ImageGenerator.effective_model(settings, self)
       out_path = out_base.sub_ext(".png")
       payload = { "model" => model, "prompt" => prompt[0, PROMPT_LIMIT], "n" => 1 }
+      aspect = XAIAuth.aspect_ratio(model, settings.size)
+      payload["aspect_ratio"] = aspect if aspect
       url = "#{XAIAuth.base_url(ctx.env)}/images/generations"
 
       credentials.each_with_index do |credential, index|
+        begin
+          credential = XAIAuth.ready_credential(credential)
+        rescue StandardError => exc
+          fallback = credentials[index + 1]
+          if fallback
+            Logging.warn("#{exc.message} — retrying with #{fallback.source}")
+            next
+          end
+
+          return ImageResult.new(false, error: "#{exc.message}; re-run your Grok login")
+        end
         Logging.debug("xAI generate: model=#{model} auth=#{credential.source}")
         begin
           data = Http.with_retries("xAI API") do
@@ -59,7 +85,7 @@ module Zer0ImageGenerator
             return ImageResult.new(false, error: "No image data in xAI response")
           end
 
-          return ImageResult.new(true, "png", out_path)
+          return named_for_its_bytes(out_path)
         rescue HttpStatusError => exc
           fallback = credentials[index + 1]
           if AUTH_FAILURE_STATUSES.include?(exc.status) && fallback

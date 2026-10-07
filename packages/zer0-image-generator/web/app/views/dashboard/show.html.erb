@@ -1,25 +1,71 @@
 <% content_for :title, "Dashboard" %>
+<% content_for :topbar_actions do %>
+  <%= link_to "＋ New image", new_composition_path, class: "btn" %>
+  <%= link_to "＋ Register site", new_site_path, class: "btn primary" %>
+<% end %>
 
 <div class="page-head">
   <div>
     <h1>Dashboard</h1>
-    <div class="sub">AI preview banners and SVG artwork for your Jekyll sites — the <span class="mono">jekyll preview-images</span> engine, on the web.</div>
-  </div>
-  <div class="btn-row">
-    <%= link_to "＋ Register site", new_site_path, class: "btn primary" %>
+    <div class="sub">AI preview banners, the image forge, and SVG studio — every control the engine has, in the browser.</div>
   </div>
 </div>
 
 <div class="grid cols-4" style="margin-bottom: 1.4rem;">
-  <div class="card stat"><span class="num"><%= @sites.size %></span><span class="lbl">Sites</span></div>
-  <div class="card stat"><span class="num"><%= @active_runs %></span><span class="lbl">Active runs</span></div>
-  <div class="card stat"><span class="num"><%= @studio_count %></span><span class="lbl">Studio renders</span></div>
-  <div class="card stat"><span class="num"><%= @library_count %></span><span class="lbl">Library pieces</span></div>
+  <%= link_to sites_path, class: "card stat" do %>
+    <span class="num"><%= @sites.size %></span><span class="lbl">Sites</span>
+  <% end %>
+  <%= link_to runs_path, class: "card stat" do %>
+    <span class="num"><%= @active_runs %></span><span class="lbl">Active runs</span>
+  <% end %>
+  <%= link_to compositions_path, class: "card stat" do %>
+    <span class="num"><%= @composition_count %></span><span class="lbl">Forge images</span>
+  <% end %>
+  <%= link_to studio_root_path, class: "card stat" do %>
+    <span class="num"><%= @studio_count %></span><span class="lbl">Studio renders</span>
+  <% end %>
 </div>
 
-<div class="grid cols-2">
+<h2 style="margin-bottom:.7rem;">All features</h2>
+<div class="grid cols-3" style="margin-bottom:1.6rem;">
+  <%= link_to sites_path, class: "card feature" do %>
+    <h3>Sites</h3>
+    <p>Register Jekyll roots, scan missing previews, edit <span class="mono">preview_images:</span>, generate or enhance banners.</p>
+    <span class="badge"><%= @sites.size %> registered</span>
+  <% end %>
+  <%= link_to compositions_path, class: "card feature" do %>
+    <h3>Image forge</h3>
+    <p>Standalone images: Claude directs, a renderer produces, Claude reviews, OpenAI can process further.</p>
+    <span class="badge"><%= @composition_count %> compositions</span>
+  <% end %>
+  <%= link_to studio_root_path, class: "card feature" do %>
+    <h3>SVG studio</h3>
+    <p>Parametric generators with live knobs, lint, save, favorite, and seed sweeps.</p>
+    <span class="badge"><%= @studio_count %> saved</span>
+  <% end %>
+  <%= link_to library_entries_path, class: "card feature" do %>
+    <h3>Library</h3>
+    <p>Curated SVGs with provenance and licenses. Sync from <span class="mono">MANIFEST.json</span>.</p>
+    <span class="badge"><%= @library_count %> pieces</span>
+  <% end %>
+  <%= link_to freesvg_search_path, class: "card feature" do %>
+    <h3>FreeSVG</h3>
+    <p>Search the public-domain catalog and promote keepers into the library.</p>
+    <span class="badge">source</span>
+  <% end %>
+  <%= link_to credentials_path, class: "card feature" do %>
+    <h3>Credentials</h3>
+    <p>Encrypted renderer keys plus Claude and Grok OAuth tokens. Local provider needs none.</p>
+    <span class="badge <%= @claude_ok ? "ok" : "warn" %>"><%= @claude_ok ? "Claude ready" : "Claude missing" %></span>
+  <% end %>
+</div>
+
+<div class="grid cols-2" style="margin-bottom:1.4rem;">
   <div class="card">
-    <h2>Sites</h2>
+    <div class="page-head" style="margin-bottom:.8rem;">
+      <h2 style="margin:0;">Sites</h2>
+      <%= link_to "All", sites_path, class: "btn sm" %>
+    </div>
     <% if @sites.any? %>
       <table class="list">
         <tbody>
@@ -27,6 +73,10 @@
             <tr>
               <td><%= link_to site.name, site %></td>
               <td class="mono faint"><%= site.path %></td>
+              <td class="right nowrap">
+                <%= link_to "Content", site_content_index_path(site), class: "btn sm" %>
+                <%= link_to "Run", new_site_run_path(site), class: "btn sm" %>
+              </td>
             </tr>
           <% end %>
         </tbody>
@@ -34,19 +84,23 @@
     <% else %>
       <div class="empty">
         <div class="big">▤</div>
-        No sites yet. <%= link_to "Register one", new_site_path %> to point the engine at a Jekyll site.
+        No sites yet. <%= link_to "Register one", new_site_path %> or import whatever is mounted under <span class="mono">/sites</span>.
       </div>
     <% end %>
   </div>
 
   <div class="card">
-    <h2>Recent runs</h2>
+    <div class="page-head" style="margin-bottom:.8rem;">
+      <h2 style="margin:0;">Recent runs</h2>
+      <%= link_to "All", runs_path, class: "btn sm" %>
+    </div>
     <% if @recent_runs.any? %>
       <table class="list">
         <tbody>
           <% @recent_runs.each do |run| %>
             <tr>
               <td><%= link_to run.kind, run %></td>
+              <td><%= run.site ? link_to(run.site.name, run.site) : "—" %></td>
               <td><%= render "shared/run_status", run: run %></td>
               <td class="faint nowrap"><%= time_ago_in_words(run.created_at) %> ago</td>
             </tr>
@@ -54,22 +108,57 @@
         </tbody>
       </table>
     <% else %>
-      <div class="empty"><div class="big">▶</div>No runs yet.</div>
+      <div class="empty"><div class="big">▶</div>No runs yet. Start from a site or queue a studio sweep.</div>
     <% end %>
   </div>
 </div>
 
-<div class="card" style="margin-top: 1.4rem;">
-  <div class="page-head" style="margin-bottom: .8rem;">
+<% if @recent_compositions.any? %>
+  <div class="page-head" style="margin-bottom:.7rem;">
+    <h2 style="margin:0;">Image forge</h2>
+    <%= link_to "All", compositions_path, class: "btn sm" %>
+  </div>
+  <div class="grid cols-3" style="margin-bottom:1.6rem;">
+    <% @recent_compositions.each do |composition| %>
+      <% img = composition.latest_image %>
+      <%= link_to composition, class: "card pad-0 feature", style: "display:block;" do %>
+        <div class="preview-frame" style="min-height:110px; aspect-ratio:3/2;">
+          <% url = img&.exists? ? disk_file_url(img.pathname) : nil %>
+          <% if url %><img src="<%= url %>" loading="lazy" alt="<%= composition.title %>">
+          <% else %><span class="faint"><%= composition.working? ? "working…" : "no image" %></span><% end %>
+        </div>
+        <div style="padding:.6rem .8rem;">
+          <div style="font-weight:600; font-size:.9rem;"><%= composition.title %></div>
+          <div class="faint mono" style="font-size:.74rem;"><%= composition.provider %> · <%= composition.status %></div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @favorites.any? %>
+  <div class="page-head" style="margin-bottom:.7rem;">
+    <h2 style="margin:0;">Studio favorites</h2>
+    <%= link_to "Studio", studio_root_path, class: "btn sm" %>
+  </div>
+  <div class="grid cols-4" style="margin-bottom:1.6rem;">
+    <% @favorites.each do |render| %>
+      <%= render_card(render) %>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="card">
+  <div class="page-head" style="margin-bottom:.8rem;">
     <h2 style="margin:0;">Provider credentials</h2>
     <%= link_to "Manage", credentials_path, class: "btn sm" %>
   </div>
   <div class="btn-row">
     <% Credential::PROVIDERS.each do |provider| %>
-      <span class="badge <%= @credentials.include?(provider) ? "ok" : "" %>">
+      <%= link_to credentials_path, class: "badge #{@credentials.include?(provider) ? "ok" : ""}" do %>
         <span class="dot"></span><%= provider %>
-      </span>
+      <% end %>
     <% end %>
   </div>
-  <p class="hint" style="margin-top:.8rem;">A renderer key is required to produce images; the <span class="mono">local</span> provider needs none. Anthropic is optional — it drives the analyze/review stages.</p>
+  <p class="hint" style="margin-top:.8rem;">A renderer key is required to produce images; the <span class="mono">local</span> provider needs none. Anthropic / Claude OAuth drives the analyze/review stages. Grok takes an OAuth token or an API key.</p>
 </div>

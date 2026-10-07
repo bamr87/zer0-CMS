@@ -25,7 +25,7 @@ class CredentialXaiTest < ActiveSupport::TestCase
   test "an auth slot names the renderer it logs into" do
     assert_equal "xai", Credential.new(provider: "xai_oauth").renders_as
     assert_equal "xai", Credential.new(provider: "xai").renders_as
-    assert_equal "xai renderer login", Credential.role_label("xai_oauth")
+    assert_equal "xAI renderer + Grok art direction", Credential.role_label("xai_oauth")
     assert_equal "renderer", Credential.role_label("xai")
     assert_equal "Claude art direction", Credential.role_label("claude_oauth")
   end

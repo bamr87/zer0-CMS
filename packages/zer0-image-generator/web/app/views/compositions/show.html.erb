@@ -6,8 +6,10 @@
 
 <div id="composition-header"><%= render "compositions/header", composition: @composition %></div>
 
-<% unless @claude_available %>
+<% if @composition.uses_claude? && !@claude_available %>
   <div class="flash alert" style="margin-top:1rem;">Claude art direction is off (no credential) — renders use the template prompt. <%= link_to "Add a Claude token", new_credential_path(provider: "claude_oauth") %>.</div>
+<% elsif @composition.uses_xai_llm? && !@xai_available %>
+  <div class="flash alert" style="margin-top:1rem;">Grok art direction is off (no credential) — renders use the template prompt. <%= link_to "Add a Grok OAuth token", new_credential_path(provider: "xai_oauth") %>.</div>
 <% end %>
 
 <div class="grid cols-2" style="margin-top:1.3rem; align-items:start;">

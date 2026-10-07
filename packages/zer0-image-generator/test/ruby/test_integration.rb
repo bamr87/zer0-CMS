@@ -105,15 +105,24 @@ class TestEngineIntegration < Minitest::Test
       code = run_cli(["-p", "local", "-c", "posts", "--verbose"], logger)
       post = root / "_posts" / "2026-01-01-hello.md"
 
-      if code.zero?
-        png = root / "assets" / "images" / "previews" / "hello-world.png"
+      previews = root / "assets" / "images" / "previews"
+      text = log_text(logger)
+
+      if code.zero? && text.include?("No SVG rasterizer available")
+        # No rasterizer (rsvg/inkscape/magick/playwright) on this host: the
+        # engine deliberately keeps the .svg preview and still wires it in.
+        assert (previews / "hello-world.svg").exist?, "local provider should have kept the SVG preview"
+        assert_match(%r{^preview: .*hello-world\.svg$}, post.read.lines.grep(/preview:/).first.to_s)
+        assert_includes text, "Images generated: 1"
+      elsif code.zero?
+        png = previews / "hello-world.png"
         assert png.exist?, "local provider should have produced the PNG"
         assert_match(/^preview:/, post.read.lines.grep(/preview:/).first.to_s)
-        assert_includes log_text(logger), "Images generated: 1"
+        assert_includes text, "Images generated: 1"
       else
         # A missing rasterizer (rsvg/inkscape/magick/playwright) is an
         # environment gap, not a wiring failure — the run reached the renderer.
-        assert_includes log_text(logger), "Errors: 1"
+        assert_includes text, "Errors: 1"
         skip "no SVG rasterizer available in this environment"
       end
     end

@@ -1,15 +1,16 @@
 # web — the zer0-image-generator control panel
 
-A Rails 8 app that puts the whole engine behind a browser:
+A Rails 8 app that puts the whole engine behind a browser. The dashboard and sidebar expose every surface — nothing is URL-only:
 
-- **Sites** — register Jekyll sites, edit their `preview_images:` config, and run
-generation (dry-run / list-missing / generate / enhance) with a live-streaming log; results wire straight into front matter.
+- **Sites** — register Jekyll sites (or import whatever is mounted under
+`/sites`), scan missing previews, edit `preview_images:` config, and run generation (dry-run / list-missing / generate / enhance) with a live-streaming log. Site pages share Overview / Content / Config / Runs tabs; any content file can queue a single-file generate.
 - **Image forge** — create a standalone image interactively: Claude reads your
 brief and directs the art, a renderer produces it, Claude reviews it, and you can then process any version further with OpenAI. Not tied to a site.
 - **SVG studio** — drive the parametric `tools/svg/` generators from knob forms
-  with live render + inline lint, and queue seed sweeps.
-- **Library** — browse the curated `tools/svg/library/` with provenance, and
-  source new pieces from FreeSVG.org.
+with live render + inline lint, save/favorite, reopen a saved recipe, and queue seed sweeps.
+- **Library** — browse the curated `tools/svg/library/` with provenance, search
+  and tag-filter, and source new pieces from **FreeSVG.org**.
+- **Runs** — cross-site audit trail, filterable by kind and status.
 - **Credentials** — encrypted per-provider keys, including the Claude Code OAuth
   token that powers the art-direction/review stages.
 
@@ -25,7 +26,7 @@ SITES_DIR=/path/to/your/jekyll/sites docker compose up --build
 # → http://localhost:3000
 ```
 
-`SITES_DIR` is bind-mounted into the container at `/sites`; register a site using its **container** path (e.g. `/sites/my-blog`). Provider keys can be set in the UI (encrypted at rest) or exported into the container's environment — including `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) for Claude art direction and `OPENAI_API_KEY` for rendering and the enhance/further-process step. The xAI renderer takes either a Grok OAuth token (`XAI_OAUTH_TOKEN`, or the **xai_oauth** slot in the UI) or `XAI_API_KEY`, and falls back from the first to the second when a token is expired or rejected. The `local` provider needs no keys and is fully deterministic.
+`SITES_DIR` is bind-mounted into the container at `/sites`; register a site using its **container** path (e.g. `/sites/my-blog`). Provider keys can be set in the UI (encrypted at rest) or exported into the container's environment. Every AI-using job (generation, forge, enhance) reads the same snapshot (`AiEnv`): process ENV, then stored credentials. `CLAUDE_CODE_OAUTH_TOKEN` drives Claude art direction; `OPENAI_API_KEY` drives rendering and enhance. The Grok OAuth token (`XAI_OAUTH_TOKEN` / **xai_oauth** slot) authenticates the xAI renderer *and* Grok art-direction/review when `prompt_engine` / `review_engine` is `xai`. `XAI_API_KEY` is the renderer fallback. The `local` provider needs no keys and is fully deterministic.
 
 Without Docker:
 
@@ -48,6 +49,7 @@ Requires a rasterizer for the `local` provider and studio PNGs — the Docker im
 | Site scan / config | [app/services/site_scanner.rb](app/services/site_scanner.rb), [app/services/site_config_editor.rb](app/services/site_config_editor.rb) (surgically rewrites just the `preview_images:` block) |
 | SVG studio | [app/services/studio_catalog.rb](app/services/studio_catalog.rb) (knob metadata), [app/services/studio_renderer.rb](app/services/studio_renderer.rb) (maps forms → generators), [app/jobs/sweep_job.rb](app/jobs/sweep_job.rb) |
 | Library / sourcing | [app/services/library_sync.rb](app/services/library_sync.rb), [app/services/freesvg_source.rb](app/services/freesvg_source.rb) |
+| AI env | [app/services/ai_env.rb](app/services/ai_env.rb) — single credential snapshot for generation, forge, and enhance |
 | Credentials | [app/models/credential.rb](app/models/credential.rb) — encrypted; renderer keys, the xAI ladder (Grok OAuth token → API key) and the Claude credential chain (OAuth token → auth token → API key) |
 
 ## Data model

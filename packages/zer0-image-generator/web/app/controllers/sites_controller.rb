@@ -4,7 +4,13 @@ class SitesController < ApplicationController
   before_action :set_site, only: %i[show edit update destroy rescan]
 
   def index
-    @sites = Site.recently_scanned
+    @q = params[:q].to_s.strip
+    @sites = Site.named
+    if @q.present?
+      like = "%#{ActiveRecord::Base.sanitize_sql_like(@q)}%"
+      @sites = @sites.where("name LIKE ? OR path LIKE ?", like, like)
+    end
+    @unregistered = Site.discover_roots
   end
 
   def show
@@ -49,6 +55,18 @@ class SitesController < ApplicationController
     absorb_source_subdir(@site)
     @site.update(last_scanned_at: Time.current)
     redirect_to @site, notice: "Rescanned."
+  end
+
+  def import_discovered
+    count = 0
+    Site.discover_roots.each do |root|
+      site = Site.new(name: File.basename(root), path: root)
+      next unless site.save
+
+      absorb_source_subdir(site)
+      count += 1
+    end
+    redirect_to sites_path, notice: (count.positive? ? "Registered #{count} site#{'s' if count != 1}." : "No new sites to register.")
   end
 
   private

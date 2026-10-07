@@ -34,10 +34,13 @@ class Forge
     # ---- Analyze: Claude reads the brief and writes the art direction -------
     base_prompt = Zer0ImageGenerator::Prompt.build_prompt(cf, settings)
     prompt = base_prompt
-    if orchestrated && settings.prompt_engine == "claude"
-      log("Analyzing brief with Claude (#{claude_source})…")
-      prompt = Zer0ImageGenerator::Orchestration.claude_article_brief(ctx.claude, cf, settings, base_prompt)
-      log(prompt == base_prompt ? "Claude unavailable — using the template prompt." : "Claude wrote the art brief.")
+    if orchestrated && %w[claude xai].include?(settings.prompt_engine)
+      label = settings.prompt_engine == "xai" ? "Grok" : "Claude"
+      log("Analyzing brief with #{label} (#{orchestrator_source(settings.prompt_engine)})…")
+      prompt = Zer0ImageGenerator::Orchestration.claude_article_brief(
+        ctx.orchestrator(settings.prompt_engine), cf, settings, base_prompt
+      )
+      log(prompt == base_prompt ? "#{label} unavailable — using the template prompt." : "#{label} wrote the art brief.")
     else
       log("Using the template prompt (provider=#{settings.provider}, prompt_engine=#{settings.prompt_engine}).")
     end
@@ -51,29 +54,30 @@ class Forge
     # Claude actually directed this render only if the brief it produced
     # differs from the template fallback — a failed/unavailable Claude call
     # leaves prompt == base_prompt.
-    directed = orchestrated && settings.prompt_engine == "claude" && prompt != base_prompt
+    directed = orchestrated && %w[claude xai].include?(settings.prompt_engine) && prompt != base_prompt
     produced << persist(composition, result, stage: "render", vendor: settings.provider,
                                      prompt: prompt, settings: settings, claude_directed: directed)
     log("Rendered #{File.basename(result.path.to_s)}.")
 
     # ---- Review: Claude inspects the render; at most ONE revision -----------
-    if orchestrated && settings.review_engine == "claude" && result.ok? && result.kind == "png"
-      log("Reviewing the render with Claude…")
+    if orchestrated && %w[claude xai].include?(settings.review_engine) && result.ok? && result.kind == "png"
+      review_label = settings.review_engine == "xai" ? "Grok" : "Claude"
+      log("Reviewing the render with #{review_label}…")
       approved, critique, revised = Zer0ImageGenerator::Orchestration.claude_review_image(
-        ctx.claude, result.path, cf, prompt, settings
+        ctx.orchestrator(settings.review_engine), result.path, cf, prompt, settings
       )
       produced.last.update!(critique: critique) if critique.present?
       if approved
-        log(critique.present? ? "Claude approved: #{critique}" : "Claude approved the render.")
+        log(critique.present? ? "#{review_label} approved: #{critique}" : "#{review_label} approved the render.")
       else
-        log("Claude requested a revision: #{critique}")
+        log("#{review_label} requested a revision: #{critique}")
         revised_base = forge_dir(composition).join(next_slug(composition, "revision"))
         retry_result = provider.generate(revised, settings, revised_base, ctx)
         if retry_result.ok?
           produced << persist(composition, retry_result, stage: "revision", vendor: settings.provider,
                                           prompt: revised, settings: settings, critique: critique,
                                           claude_directed: true)
-          log("Regenerated with Claude's revised brief.")
+          log("Regenerated with #{review_label}'s revised brief.")
         else
           log("Revision render failed (#{retry_result.error}); keeping the original.")
         end
@@ -193,5 +197,9 @@ class Forge
 
   def claude_source
     Credential.claude_source(@env) || "credential chain"
+  end
+
+  def orchestrator_source(engine)
+    engine.to_s == "xai" ? (Credential.xai_source(@env) || "Grok OAuth chain") : claude_source
   end
 end

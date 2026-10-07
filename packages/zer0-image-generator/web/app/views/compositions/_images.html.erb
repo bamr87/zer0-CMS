@@ -1,5 +1,5 @@
 <% images = composition.images.ordered.to_a %>
-<% openai_ok = ENV.to_h.merge(Credential.environment)["OPENAI_API_KEY"].present? %>
+<% openai_ok = AiEnv.snapshot["OPENAI_API_KEY"].present? %>
 <% if images.any? %>
   <div class="grid" style="gap:1.1rem;">
     <% images.reverse_each do |image| %>

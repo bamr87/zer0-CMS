@@ -20,20 +20,21 @@
       <% @generator.knobs.each do |knob| %>
         <div class="field">
           <label><%= knob.label %></label>
+          <% knob_value = knob.key == "seed" ? (params[:seed].presence || knob.default) : ((params[:knobs] || {})[knob.key.to_s] || (params[:knobs] || {})[knob.key] || knob.default) %>
           <% case knob.type %>
           <% when :enum %>
             <select name="<%= knob.key == "seed" ? "seed" : "knobs[#{knob.key}]" %>">
               <% knob.choices.each do |choice| %>
-                <option value="<%= choice %>" <%= "selected" if choice == knob.default %>><%= choice %></option>
+                <option value="<%= choice %>" <%= "selected" if choice.to_s == knob_value.to_s %>><%= choice %></option>
               <% end %>
             </select>
           <% when :int, :float %>
             <input type="number" step="<%= knob.type == :float ? "any" : "1" %>"
                    name="<%= knob.key == "seed" ? "seed" : "knobs[#{knob.key}]" %>"
-                   value="<%= knob.default %>"
+                   value="<%= knob_value %>"
                    <%= "min=#{knob.min}".html_safe if knob.min %> <%= "max=#{knob.max}".html_safe if knob.max %>>
           <% else %>
-            <input type="text" name="<%= knob.key == "seed" ? "seed" : "knobs[#{knob.key}]" %>" value="<%= knob.default %>">
+            <input type="text" name="<%= knob.key == "seed" ? "seed" : "knobs[#{knob.key}]" %>" value="<%= knob_value %>">
           <% end %>
         </div>
       <% end %>

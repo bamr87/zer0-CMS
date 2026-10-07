@@ -2,11 +2,41 @@
 <% content_for :crumbs do %>
   <% if @site %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Runs<% else %>Runs<% end %>
 <% end %>
-<% if @site %>
-  <% content_for :topbar_actions do %><%= link_to "＋ New run", new_site_run_path(@site), class: "btn primary" %><% end %>
+<% content_for :topbar_actions do %>
+  <% if @site %>
+    <%= link_to "＋ New run", new_site_run_path(@site), class: "btn primary" %>
+  <% elsif @nav_sites&.any? %>
+    <label class="run-picker">
+      <span class="faint">Start a run on</span>
+      <select onchange="if(this.value) location=this.value">
+        <option value="">choose a site…</option>
+        <% @nav_sites.each do |site| %>
+          <option value="<%= new_site_run_path(site) %>"><%= site.name %></option>
+        <% end %>
+      </select>
+    </label>
+  <% end %>
 <% end %>
 
 <div class="page-head"><h1><%= @site ? "#{@site.name} runs" : "All runs" %></h1></div>
+<% if @site %><%= render "shared/site_nav", site: @site %><% end %>
+
+<% run_index = ->(kind: nil, status: nil) {
+     opts = { kind: kind, status: status }.compact_blank
+     @site ? site_runs_path(@site, opts) : runs_path(opts)
+   } %>
+<div class="chip-row" style="margin-bottom:1rem;">
+  <%= link_to "all kinds", run_index.(status: @status.presence), class: "badge #{@kind.blank? ? "ok" : ""}" %>
+  <% Run::KINDS.each do |kind| %>
+    <%= link_to kind, run_index.(kind: kind, status: @status.presence), class: "badge #{@kind == kind ? "ok" : ""}" %>
+  <% end %>
+</div>
+<div class="chip-row" style="margin-bottom:1.2rem;">
+  <%= link_to "all statuses", run_index.(kind: @kind.presence), class: "badge #{@status.blank? ? "ok" : ""}" %>
+  <% Run::STATUSES.each do |status| %>
+    <%= link_to status, run_index.(kind: @kind.presence, status: status), class: "badge #{@status == status ? "ok" : ""}" %>
+  <% end %>
+</div>
 
 <% if @runs.any? %>
   <div class="card pad-0">
@@ -29,5 +59,5 @@
     </table>
   </div>
 <% else %>
-  <div class="empty"><div class="big">▶</div>No runs yet.</div>
+  <div class="empty"><div class="big">▶</div>No runs yet<%= " for this filter" if @kind.present? || @status.present? %>.</div>
 <% end %>

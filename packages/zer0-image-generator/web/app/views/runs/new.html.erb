@@ -4,6 +4,7 @@
 <div class="page-head">
   <div><h1>Generate previews</h1><div class="sub"><span class="mono"><%= @site.path %></span></div></div>
 </div>
+<%= render "shared/site_nav", site: @site %>
 
 <% if @scan %>
   <div class="grid cols-3" style="margin-bottom:1.3rem;">
@@ -40,13 +41,13 @@
         <select name="run[collection]">
           <option value="all">All configured collections</option>
           <% (@scan&.collections || []).each do |c| %>
-            <option value="<%= c %>"><%= c %></option>
+            <option value="<%= c %>" <%= "selected" if params[:collection] == c %>><%= c %></option>
           <% end %>
         </select>
       </div>
       <div class="field">
         <label>Single file (optional)</label>
-        <input type="text" name="run[file]" placeholder="_posts/2026-01-01-hello.md" class="mono">
+        <input type="text" name="run[file]" value="<%= params[:file] %>" placeholder="_posts/2026-01-01-hello.md" class="mono">
         <div class="hint">Overrides collection. Path relative to the site root.</div>
       </div>
       <div class="field">
@@ -73,10 +74,10 @@
       <div class="grid cols-2" style="margin-top:1rem;">
         <div>
           <div class="field"><label>Prompt engine</label>
-            <select name="run[prompt_engine]"><option value="">config default</option><option value="claude">claude</option><option value="template">template</option></select>
+            <select name="run[prompt_engine]"><option value="">config default</option><option value="claude">claude</option><option value="xai">xai (Grok OAuth)</option><option value="template">template</option></select>
           </div>
           <div class="field"><label>Review engine</label>
-            <select name="run[review]"><option value="">config default</option><option value="claude">claude</option><option value="none">none</option></select>
+            <select name="run[review]"><option value="">config default</option><option value="claude">claude</option><option value="xai">xai (Grok OAuth)</option><option value="none">none</option></select>
           </div>
           <div class="field"><label>Rasterizer (local provider)</label>
             <select name="run[rasterizer]"><% %w[auto rsvg inkscape magick playwright none].each do |r| %><option value="<%= r %>"><%= r %></option><% end %></select>

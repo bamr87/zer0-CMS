@@ -27,6 +27,27 @@ jobs:
       - run: python -m py_compile lib/zer0_image_generator/preview_generator.py
       - run: python test/test_preview_generator.py
 
+  ruby-port:
+    name: Ruby port (byte-identity vs Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install pyyaml
+      - name: Ruby port tests
+        run: |
+          status=0
+          for f in test/ruby/test_*.rb; do
+            echo "==> ruby -Ilib $f"
+            ruby -Ilib "$f" || status=1
+          done
+          exit $status
+
   gem-build:
     name: Gem build + Ruby syntax
     runs-on: ubuntu-latest

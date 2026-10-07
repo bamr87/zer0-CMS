@@ -5,11 +5,14 @@ Rails.application.routes.draw do
   root "dashboard#show"
 
   resources :sites do
+    collection { post :import_discovered }
     # A site's `preview_images:` block, edited as a form and round-tripped back
-    # into _config.yml.
+    # into `_config.yml`.
     resource :config, only: %i[show update], controller: "site_configs"
     # Content files and their preview status.
-    resources :content, only: %i[index], controller: "site_content"
+    resources :content, only: %i[index], controller: "site_content" do
+      collection { get :item, action: :show, as: :item }
+    end
     # Launching a run is site-scoped (it needs a site); a run's own pages are
     # not, so they live at the top level below.
     resources :runs, only: %i[index new create]

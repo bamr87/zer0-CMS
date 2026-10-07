@@ -26,8 +26,8 @@ module Zer0ImageGenerator
     ENHANCE_QUALITY_CHOICES = %w[low medium high auto].freeze
     ENHANCE_FIDELITY_CHOICES = %w[high low].freeze
     ENHANCE_FORMAT_CHOICES = %w[png jpeg webp].freeze
-    PROMPT_ENGINE_CHOICES = %w[template claude].freeze
-    REVIEW_CHOICES = %w[claude none].freeze
+    PROMPT_ENGINE_CHOICES = %w[template claude xai].freeze
+    REVIEW_CHOICES = %w[claude xai none].freeze
     RASTERIZER_CHOICES = %w[auto rsvg inkscape magick playwright none].freeze
 
     # The argparse Namespace, field-for-field. Booleans default false, parallel
@@ -200,6 +200,32 @@ module Zer0ImageGenerator
       end
     end
 
+    def degrade_llm(settings, ctx, deps:, logger:)
+      if settings.prompt_engine == "claude" || settings.review_engine == "claude"
+        if ctx.claude.available?
+          logger.info("Claude orchestration: #{ctx.claude.describe}")
+        else
+          logger.warn(deps.claude_credential_hint)
+          settings = settings.dup_with(
+            prompt_engine: (settings.prompt_engine == "claude" ? "template" : settings.prompt_engine),
+            review_engine: (settings.review_engine == "claude" ? "none" : settings.review_engine)
+          )
+        end
+      end
+      if settings.prompt_engine == "xai" || settings.review_engine == "xai"
+        if ctx.grok_client.available?
+          logger.info("Grok orchestration: #{ctx.grok_client.describe}")
+        else
+          logger.warn(XAIAuth::MISSING_HINT)
+          settings = settings.dup_with(
+            prompt_engine: (settings.prompt_engine == "xai" ? "template" : settings.prompt_engine),
+            review_engine: (settings.review_engine == "xai" ? "none" : settings.review_engine)
+          )
+        end
+      end
+      settings
+    end
+
     # Full run. Returns the process exit code (0/1). Usage errors and
     # error_exit escape as ExitError(status); CLI.start converts those for a
     # command-line binary.
@@ -239,19 +265,11 @@ module Zer0ImageGenerator
       ctx = deps.new_run_context(project_root, ENV.to_h)
       validate_credentials(settings, ctx, deps: deps, logger: logger)
 
-      # Claude orchestration (analyze/review) degrades gracefully: without a
-      # Claude credential the run continues on template prompts, unreviewed.
-      wants_claude =
-        settings.provider != "local" &&
-        (settings.prompt_engine == "claude" || settings.review_engine == "claude") &&
-        !(settings.dry_run || settings.list_only)
-      if wants_claude
-        if ctx.claude.available?
-          logger.info("Claude orchestration: #{ctx.claude.describe}")
-        else
-          logger.warn(deps.claude_credential_hint)
-          settings = deps.degrade_settings(settings)
-        end
+      # LLM orchestration degrades gracefully: without a credential the run
+      # continues on template prompts, unreviewed. Claude and Grok degrade
+      # independently so a missing Claude token does not disable a Grok review.
+      unless settings.dry_run || settings.list_only || settings.provider == "local"
+        settings = degrade_llm(settings, ctx, deps: deps, logger: logger)
       end
 
       output_dir = Pathname.new(project_root.to_s) / settings.output_dir

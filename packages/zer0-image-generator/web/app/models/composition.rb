@@ -9,8 +9,8 @@
 # stage on a chosen version.
 class Composition < ApplicationRecord
   RENDERERS = %w[openai xai stability gemini local].freeze
-  PROMPT_ENGINES = %w[claude template].freeze
-  REVIEW_ENGINES = %w[claude none].freeze
+  PROMPT_ENGINES = %w[claude xai template].freeze
+  REVIEW_ENGINES = %w[claude xai none].freeze
   STATUSES = %w[draft working ready failed].freeze
 
   has_many :images, class_name: "CompositionImage", dependent: :destroy
@@ -51,5 +51,9 @@ class Composition < ApplicationRecord
   # review). Used to warn when no Claude credential is configured.
   def uses_claude?
     (prompt_engine == "claude" || review_engine == "claude") && provider != "local"
+  end
+
+  def uses_xai_llm?
+    (prompt_engine == "xai" || review_engine == "xai") && provider != "local"
   end
 end

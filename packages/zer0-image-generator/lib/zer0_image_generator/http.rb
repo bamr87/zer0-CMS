@@ -138,7 +138,13 @@ module Zer0ImageGenerator
     MAX_REDIRECTS = 10
     REDIRECT_STATUSES = [301, 302, 303, 307, 308].freeze
 
+    # Sent on every request that does not name its own client. api.x.ai and
+    # auth.x.ai sit behind Cloudflare, whose bot rules answer a stock client
+    # signature with a 403 page or `error code: 1010`.
+    USER_AGENT = "zer0-image-generator"
+
     def request(url, method: "GET", headers: nil, data: nil, timeout: 120)
+      headers = with_user_agent(headers)
       uri = URI(url)
       redirects = 0
       loop do
@@ -242,6 +248,14 @@ module Zer0ImageGenerator
       http.start { |conn| conn.request(request) }
     end
     private_class_method :perform
+
+    def with_user_agent(headers)
+      headers = (headers || {}).to_h
+      return headers if headers.keys.any? { |key| key.to_s.casecmp?("user-agent") }
+
+      headers.merge("User-Agent" => USER_AGENT)
+    end
+    private_class_method :with_user_agent
 
     def request_class(method)
       case method.to_s.upcase

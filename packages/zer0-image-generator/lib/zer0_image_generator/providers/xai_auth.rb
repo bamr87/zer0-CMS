@@ -2,6 +2,9 @@
 
 require "json"
 require "time"
+require "uri"
+
+require_relative "../http"
 
 # xAI (Grok) credential resolution, shared by the XAIProvider.
 #
@@ -10,23 +13,28 @@ require "time"
 # console API key is where the value comes from and what we tell the human when
 # it is rejected. This file owns that chain; the provider owns the request.
 #
-# Deliberately NOT implemented here: minting or refreshing an OAuth token. xAI
-# does not publish its device-code/PKCE endpoints or a public client id, and the
-# credentials file belongs to whichever login tool wrote it — inventing a token
-# endpoint, or writing back into another tool's store, would be guesswork. The
-# engine CONSUMES a token that a Grok login already produced, treats an expired
-# one as absent, and falls back to the API key.
+# Refresh, not login. The engine never MINTS a token — that takes an interactive
+# login — but an expired token whose store also holds a refresh
+# token and a client id (Kilo Code's login does) is refreshed at auth.x.ai once,
+# right before a request needs it, and written back to that store so the login
+# tool and the next run both see the rotated pair (lifehacker.dev's cover-art
+# script already refreshes and saves the same way). Expired with nothing to
+# refresh with, a token is treated as absent and the chain falls back to the
+# API key.
 module Zer0ImageGenerator
   # One resolved way to authenticate against api.x.ai.
   class XAICredential
-    attr_reader :mode, :token, :source
+    attr_reader :mode, :token, :source, :refresh_path
 
     # mode:   "oauth" | "api_key" — which rung of the chain this is.
     # source: human label for logs and fallback warnings.
-    def initialize(mode, token, source)
+    # refresh_path: set when the token has expired but its store can refresh
+    #   it — the token is empty until XAIAuth.ready_credential refreshes it.
+    def initialize(mode, token, source, refresh_path = nil)
       @mode = mode
       @token = token
       @source = source
+      @refresh_path = refresh_path
     end
 
     def headers
@@ -50,7 +58,8 @@ module Zer0ImageGenerator
     # Where a Grok login drops its token when no path is configured. Relative to
     # the home directory so a test (and a container) can point HOME elsewhere.
     DEFAULT_CREDENTIALS_FILES = [
-      ".grok/auth.json", ".config/grok/auth.json", ".xai/auth.json"
+      ".grok/auth.json", ".config/grok/auth.json", ".xai/auth.json",
+      ".local/share/kilo/auth.json"
     ].freeze
 
     # Credential files nest the token differently per tool; look at the top
@@ -66,6 +75,17 @@ module Zer0ImageGenerator
     # with the API key as the fallback; the other two pin one rung.
     AUTH_MODE_ENV = "XAI_AUTH"
     AUTH_MODES = %w[auto oauth api_key].freeze
+
+    # The refresh grant's endpoint, as auth.x.ai's OIDC discovery document
+    # (/.well-known/openid-configuration) publishes it.
+    TOKEN_ENDPOINT = "https://auth.x.ai/oauth2/token"
+    REFRESH_TOKEN_KEYS = %w[refresh_token refresh].freeze
+    EXPIRY_KEYS = %w[expires_at expiry expiration expires].freeze
+    ISSUED_KEYS = %w[created_at obtained_at issued_at issued].freeze
+    # Workers share one store: the first to find the token expired refreshes
+    # it, the rest wait and read the result. A refresh token may rotate on use,
+    # so two concurrent refreshes would leave one worker holding a dead token.
+    REFRESH_LOCK = Mutex.new
 
     MISSING_HINT =
       "The xAI provider needs a Grok OAuth token or an xAI API key — any ONE of:\n" \
@@ -148,7 +168,10 @@ module Zer0ImageGenerator
       home = home_dir(env)
       return [] if home.nil? || home.empty?
 
-      DEFAULT_CREDENTIALS_FILES.map { |rel| File.join(home, rel) }
+      paths = DEFAULT_CREDENTIALS_FILES.map { |rel| File.join(home, rel) }
+      kilo = env["KILO_AUTH_PATH"]
+      paths.unshift(kilo) unless kilo.nil? || kilo.empty?
+      paths
     end
 
     # The env snapshot is the source of truth (tests and containers set HOME);
@@ -182,7 +205,13 @@ module Zer0ImageGenerator
         return nil
       end
       if expired?(node)
-        debug("xAI OAuth: the token in #{path} has expired; re-run your Grok login")
+        if refresh_token(node) && client_id(node)
+          return XAICredential.new("oauth", "",
+                                   "Grok OAuth token (#{path}; expired, refreshed on use)",
+                                   path)
+        end
+        debug("xAI OAuth: the token in #{path} has expired and holds nothing to " \
+              "refresh it with; re-run your Grok login")
         return nil
       end
 
@@ -196,14 +225,182 @@ module Zer0ImageGenerator
       nil
     end
 
+    # The credential ready to send: itself, or for an expired OAuth token its
+    # store can refresh, the refreshed one. Raises RuntimeError on a failed refresh.
+    def ready_credential(credential)
+      return credential if credential.refresh_path.nil?
+
+      refresh_file_credential(credential.refresh_path)
+    end
+
+    def refresh_file_credential(path)
+      REFRESH_LOCK.synchronize do
+        begin
+          data = JSON.parse(File.read(path, encoding: "UTF-8"))
+        rescue JSON::ParserError, SystemCallError, IOError => exc
+          raise "xAI OAuth: cannot re-read #{path} (#{exc.message})"
+        end
+        node = data.is_a?(Hash) ? find_token_node(data) : nil
+        raise "xAI OAuth: no access token left in #{path}" if node.nil?
+
+        # Another worker may have refreshed the store while this one waited.
+        current = token_node(data)
+        if current && !expired?(current)
+          return XAICredential.new("oauth", current["access_token"].to_s,
+                                   "Grok OAuth token (#{path})")
+        end
+        refresh = refresh_token(node)
+        cid = client_id(node)
+        raise "xAI OAuth: the token in #{path} cannot be refreshed" if refresh.nil? || cid.nil?
+
+        fresh = request_refresh(refresh, cid)
+        store_refreshed(node, fresh, Time.now.to_f)
+        begin
+          write_store(path, data)
+        rescue SystemCallError, IOError => exc
+          # The refresh token may already have rotated, so say so loudly — but
+          # this run still holds a working access token.
+          warn_log("xAI OAuth: refreshed, but could not save the new token to #{path} " \
+                   "(#{exc.message}); the login tool may need a fresh sign-in")
+        end
+        debug("xAI OAuth: refreshed the token in #{path}")
+        XAICredential.new("oauth", fresh["access_token"].to_s,
+                          "Grok OAuth token (#{path}; refreshed)")
+      end
+    end
+
+    # POST the refresh grant. Never retried: a refresh token that rotated on a
+    # request whose response was lost is already spent.
+    def request_refresh(refresh_token, client_id)
+      body = URI.encode_www_form("grant_type" => "refresh_token",
+                                 "refresh_token" => refresh_token,
+                                 "client_id" => client_id)
+      headers = { "Content-Type" => "application/x-www-form-urlencoded",
+                  "Accept" => "application/json" }
+      begin
+        _, _, raw = Http.request(TOKEN_ENDPOINT, method: "POST", headers: headers,
+                                                 data: body, timeout: 60)
+      rescue HttpStatusError => exc
+        # The OAuth error code (invalid_grant, invalid_client) is safe to show
+        # and says whether a re-login is due; the description may echo input.
+        details = exc.json
+        code = details.is_a?(Hash) ? details["error"] : nil
+        reason = token_string?(code) ? "HTTP #{exc.status}: #{code}" : "HTTP #{exc.status}"
+        raise "xAI OAuth refresh failed (#{reason})"
+      end
+      begin
+        data = JSON.parse(raw.to_s.dup.force_encoding("UTF-8"))
+      rescue JSON::ParserError, EncodingError
+        raise "xAI OAuth refresh returned non-JSON"
+      end
+      unless data.is_a?(Hash) && token_string?(data["access_token"])
+        raise "xAI OAuth refresh returned no access_token"
+      end
+
+      data
+    end
+
+    # Write the refreshed pair into the store's own node, in its own key names
+    # and time units, so the tool that owns the file still reads it.
+    def store_refreshed(node, fresh, now)
+      token_key = token_string?(node["access_token"]) ? "access_token" : "access"
+      node[token_key] = fresh["access_token"]
+      if token_string?(fresh["refresh_token"])
+        refresh_key = REFRESH_TOKEN_KEYS.find { |key| token_string?(node[key]) } || "refresh_token"
+        node[refresh_key] = fresh["refresh_token"]
+      end
+      lifetime = number(fresh["expires_in"])
+      lifetime = 3600.0 if lifetime.nil? || lifetime.zero?
+      EXPIRY_KEYS.each do |key|
+        next if epoch_seconds(node[key]).nil?
+
+        node[key] = timestamp_like(node[key], now + lifetime)
+        return
+      end
+      return if number(node["expires_in"]).nil?
+
+      node["expires_in"] = lifetime.to_i
+      ISSUED_KEYS.each do |key|
+        next if epoch_seconds(node[key]).nil?
+
+        node[key] = timestamp_like(node[key], now)
+        return
+      end
+    end
+
+    # `seconds` in the shape `previous` used: epoch ms, epoch s, or ISO-8601.
+    def timestamp_like(previous, seconds)
+      value = number(previous)
+      unless value.nil?
+        stamp = value > 1e11 ? (seconds * 1000).to_i : seconds.to_i
+        return previous.is_a?(String) ? stamp.to_s : stamp
+      end
+      Time.at(seconds.to_i).utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    end
+
+    # Replace the store atomically, keeping its permissions (it holds secrets).
+    def write_store(path, data)
+      target = File.realpath(path)
+      mode = File.stat(target).mode & 0o777
+      tmp = File.join(File.dirname(target), ".#{File.basename(target)}.#{Process.pid}.tmp")
+      begin
+        # Created owner-only: the token must never sit world-readable, even briefly.
+        File.open(tmp, File::WRONLY | File::CREAT | File::TRUNC, 0o600) do |handle|
+          handle.write("#{JSON.pretty_generate(data)}\n")
+        end
+        File.chmod(mode, tmp)
+        File.rename(tmp, target)
+      ensure
+        File.delete(tmp) if File.exist?(tmp)
+      end
+    end
+
+    def refresh_token(node)
+      REFRESH_TOKEN_KEYS.each { |key| return node[key] if token_string?(node[key]) }
+      nil
+    end
+
+    # The OAuth client the token was issued to: the store's own record, else
+    # the access token's JWT claims (client_id, then a string or first aud).
+    def client_id(node)
+      return node["client_id"] if token_string?(node["client_id"])
+
+      access = token_string?(node["access_token"]) ? node["access_token"] : node["access"]
+      claims = jwt_claims(access)
+      return claims["client_id"] if token_string?(claims["client_id"])
+
+      aud = claims["aud"]
+      aud = aud.find { |entry| token_string?(entry) } if aud.is_a?(Array)
+      token_string?(aud) ? aud : nil
+    end
+
+    def jwt_claims(token)
+      parts = token.is_a?(String) ? token.split(".") : []
+      return {} if parts.length < 2
+
+      claims = JSON.parse(parts[1].tr("-_", "+/").unpack1("m").force_encoding("UTF-8"))
+      claims.is_a?(Hash) ? claims : {}
+    rescue JSON::ParserError, ArgumentError, EncodingError
+      {}
+    end
+
     # The hash actually holding `access_token`: the document itself, or one of
     # the containers a login tool nests it under.
     def token_node(data)
-      return data if token_string?(data["access_token"])
+      node = find_token_node(data)
+      return nil if node.nil?
+      return node if token_string?(node["access_token"])
+
+      node.merge("access_token" => node["access"])
+    end
+
+    def find_token_node(data)
+      return data if token_string?(data["access_token"]) || token_string?(data["access"])
 
       NESTED_KEYS.each do |key|
         nested = data[key]
-        return nested if nested.is_a?(Hash) && token_string?(nested["access_token"])
+        next unless nested.is_a?(Hash)
+        return nested if token_string?(nested["access_token"]) || token_string?(nested["access"])
       end
       nil
     end
@@ -250,6 +447,27 @@ module Zer0ImageGenerator
       end
     end
 
+    # Aspect ratios the Imagine models take. grok-imagine renders a square
+    # unless told otherwise, which a wide banner then crops; grok-2-image
+    # predates the parameter, so it is sent nothing.
+    IMAGINE_PREFIX = "grok-imagine"
+    ASPECT_RATIOS = [
+      ["1:1", 1.0], ["3:2", 1.5], ["2:3", 2.0 / 3], ["4:3", 4.0 / 3],
+      ["3:4", 0.75], ["16:9", 16.0 / 9], ["9:16", 9.0 / 16]
+    ].freeze
+
+    # The Imagine aspect ratio nearest the configured WIDTHxHEIGHT size, or nil
+    # for a non-Imagine model or a size with no dimensions (e.g. `auto`).
+    def aspect_ratio(model, size)
+      return nil unless (model || "").to_s.strip.downcase.start_with?(IMAGINE_PREFIX)
+
+      match = /\A\s*(\d+)\s*[xX]\s*(\d+)\s*\z/.match(size.to_s)
+      return nil if match.nil? || match[1].to_i.zero? || match[2].to_i.zero?
+
+      wanted = Math.log(match[1].to_f / match[2].to_i)
+      ASPECT_RATIOS.min_by { |(_label, ratio)| (Math.log(ratio) - wanted).abs }[0]
+    end
+
     def number(raw)
       return raw.to_f if raw.is_a?(Numeric)
       return nil unless raw.is_a?(String) && !raw.empty?
@@ -265,6 +483,10 @@ module Zer0ImageGenerator
     # never let a diagnostic take down credential resolution.
     def debug(message)
       Logging.debug(message) if defined?(Logging)
+    end
+
+    def warn_log(message)
+      Logging.warn(message) if defined?(Logging)
     end
   end
 end

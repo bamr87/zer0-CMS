@@ -31,11 +31,13 @@ class StudioRenderer
     # The generators, sanitizer, and linter live in the engine; make sure it is
     # loaded rather than assuming some other request already pulled it in.
     EngineBridge.load!
-    raw = build_svg
-    svg = Zer0ImageGenerator::Svg::Sanitizer.sanitize_svg(raw).first
-    Result.new(svg: svg, lint: lint_of(svg), meta: meta)
-  rescue Zer0ImageGenerator::Svg::SvgError => e
-    raise Error, "Generator produced invalid SVG: #{e.message}"
+    begin
+      raw = build_svg
+      svg = Zer0ImageGenerator::Svg::Sanitizer.sanitize_svg(raw).first
+      Result.new(svg: svg, lint: lint_of(svg), meta: meta)
+    rescue Zer0ImageGenerator::Svg::SvgError => e
+      raise Error, "Generator produced invalid SVG: #{e.message}"
+    end
   end
 
   private

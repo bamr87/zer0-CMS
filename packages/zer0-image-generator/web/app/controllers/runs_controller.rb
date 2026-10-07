@@ -5,11 +5,12 @@ class RunsController < ApplicationController
   before_action :set_run, only: %i[show cancel]
 
   def index
-    if @site
-      @runs = @site.runs.recent.limit(100)
-    else
-      @runs = Run.recent.includes(:site).limit(100)
-    end
+    @kind = params[:kind].to_s
+    @status = params[:status].to_s
+    @runs = @site ? @site.runs.recent : Run.recent.includes(:site)
+    @runs = @runs.where(kind: @kind) if @kind.present? && Run::KINDS.include?(@kind)
+    @runs = @runs.where(status: @status) if @status.present? && Run::STATUSES.include?(@status)
+    @runs = @runs.limit(100)
   end
 
   def new
@@ -70,7 +71,7 @@ class RunsController < ApplicationController
   end
 
   def run_environment
-    ENV.to_h.merge(Credential.environment)
+    AiEnv.snapshot
   end
 
   def safe_scan

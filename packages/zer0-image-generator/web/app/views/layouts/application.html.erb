@@ -12,12 +12,16 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
+  <body data-controller="sidebar">
+    <div class="nav-scrim" data-action="click->sidebar#close"></div>
     <div class="app">
       <%= render "shared/sidebar" %>
       <div class="main">
         <div class="topbar">
-          <div class="crumbs"><%= content_for(:crumbs).presence || link_to("Dashboard", root_path) %></div>
+          <div class="crumbs">
+            <button type="button" class="nav-toggle" data-action="sidebar#toggle" aria-label="Open navigation">☰</button>
+            <%= content_for(:crumbs).presence || link_to("Dashboard", root_path) %>
+          </div>
           <div class="btn-row"><%= yield :topbar_actions %></div>
         </div>
         <div class="content">

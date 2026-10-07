@@ -38,7 +38,7 @@ class Credential < ApplicationRecord
   LABELS = {
     "openai" => "OpenAI (renderer)",
     "xai" => "xAI Grok API key (renderer)",
-    "xai_oauth" => "xAI Grok OAuth token (renderer)",
+    "xai_oauth" => "xAI Grok OAuth token (renderer + art direction)",
     "stability" => "Stability (renderer)",
     "gemini" => "Gemini (renderer)",
     "anthropic" => "Anthropic API key (Claude art direction)",
@@ -96,9 +96,16 @@ class Credential < ApplicationRecord
   # What a slot does, for the credentials table.
   def self.role_label(provider)
     return "Claude art direction" if CLAUDE_PROVIDERS.include?(provider)
+    return "xAI renderer + Grok art direction" if provider == "xai_oauth"
     return "#{RENDERER_AUTH[provider]} renderer login" if RENDERER_AUTH.key?(provider)
 
     "renderer"
+  end
+
+  def self.xai_available?(env = ENV)
+    return true if usable.where(provider: %w[xai xai_oauth]).exists?
+
+    %w[XAI_OAUTH_TOKEN GROK_OAUTH_TOKEN XAI_API_KEY].any? { |name| env[name].present? }
   end
 
   # A short description of how the xAI renderer will authenticate, for the UI.

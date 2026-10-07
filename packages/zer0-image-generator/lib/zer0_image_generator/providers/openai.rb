@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../constants"
 require_relative "base"
 
 module Zer0ImageGenerator
@@ -61,8 +62,9 @@ module Zer0ImageGenerator
       }
       # gpt-image-2 does not accept input_fidelity (historical behavior).
       fields["input_fidelity"] = settings.enhance_fidelity if model != "gpt-image-2"
+      image_bytes = File.binread(image_path.to_s)
       files = [["image[]", image_path.basename.to_s,
-                File.binread(image_path.to_s), "image/png"]]
+                image_bytes, Zer0ImageGenerator.image_media_type(image_bytes)]]
       out_path ||= image_path
       Logging.debug(
         "OpenAI edit: model=#{model} fidelity=" \

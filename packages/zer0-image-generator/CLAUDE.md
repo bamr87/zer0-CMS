@@ -33,6 +33,7 @@ sample in `docs/samples/` exactly. Ruby's built-in `Random` does NOT match CPyth
 - The engine is stdlib-only by policy (no Nokogiri/ActiveSupport in `lib/`).
 - The web app loads the engine via `lib/zer0_image_generator/all.rb` and drives
 the same `Runner` the CLI drives, through the single seam `web/app/services/engine_bridge.rb`. Keep engine-coupling in that one file.
+- Art direction/review is Claude **or** Grok: `--prompt-engine xai` / `--review xai` (and the matching web form). `GrokClient` duck-types `AnthropicClient`. Same Grok OAuth token as the xAI renderer (`XAI_OAUTH_TOKEN`, `~/.grok/auth.json`, or Kilo's `~/.local/share/kilo/auth.json` `access` key; an expired token whose store holds a refresh token is refreshed and written back — every request goes through `XAIAuth.ready_credential` / `xai_ready_credential`). Jobs take credentials from `AiEnv.snapshot`, never ad-hoc `ENV.merge`.
 
 ## Conventions
 

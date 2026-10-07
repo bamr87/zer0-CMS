@@ -12,7 +12,7 @@ class EnhanceJob < ApplicationJob
     composition.start!
     broadcast_header(composition)
 
-    env = ENV.to_h.merge(Credential.environment)
+    env = AiEnv.snapshot
     forge = Forge.new(env: env, logger: log_sink(composition))
     forge.enhance(image, prompt: prompt)
 

@@ -158,6 +158,17 @@ module Zer0ImageGenerator
   PROMPT
 
   PNG_SIGNATURE = "\x89PNG\r\n\x1a\n".b.freeze
+  JPEG_SIGNATURE = "\xff\xd8\xff".b.freeze
+
+  # The MIME type a raster's own bytes declare. Providers do not all answer PNG
+  # (xAI Imagine answers JPEG), and vision APIs check the label.
+  def self.image_media_type(data)
+    bytes = data.to_s.b
+    return "image/jpeg" if bytes[0, 3] == JPEG_SIGNATURE
+    return "image/webp" if bytes[0, 4] == "RIFF" && bytes[8, 4] == "WEBP"
+
+    "image/png"
+  end
 
   # Pause after each successful non-dry generation (Bash parity: polite pacing
   # between paid API calls).

@@ -8,7 +8,7 @@
   </div>
   <div class="btn-row">
     <%= button_to (@render.favorite ? "★ Favorited" : "☆ Favorite"), favorite_studio_render_path(@render), class: "btn #{@render.favorite ? "primary" : ""}" %>
-    <%= link_to "Open in studio", studio_renders_path(generator: @render.generator, seed: @render.seed), class: "btn" %>
+    <%= link_to "Open in studio", new_studio_render_path(generator: @render.generator, seed: @render.seed, knobs: @render.params), class: "btn" %>
     <%= button_to "Delete", studio_render_path(@render), method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Delete this render?" } } %>
   </div>
 </div>
