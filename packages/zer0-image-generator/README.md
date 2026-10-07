@@ -332,6 +332,8 @@ The style catalog (`lib/zer0_image_generator/abc/art_styles.yml`) is the source 
 
 The [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme renders `preview:` values with a pure-Liquid include (GitHub-Pages-safe, no plugin needed) and currently vendors this engine at `scripts/lib/preview_generator.py`. This repo is the portable home: the theme is expected to consume the gem (or curl the engine from here) in a follow-up, so there is exactly ONE engine.
 
+How the engine fits the zer0 stack — the theme, zer0-CMS, the `Facade` API and the shared design tokens — is on one page: [docs/ZER0-STACK.md](docs/ZER0-STACK.md).
+
 ## Development
 
 ```bash
