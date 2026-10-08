@@ -35,7 +35,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "requests>=2.31",
     "rich>=13.0",
-    "pronouncing>=0.2.0",
+    "pronouncing>=0.3.0",
 ]
 
 [project.optional-dependencies]
