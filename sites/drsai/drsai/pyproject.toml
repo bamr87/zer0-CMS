@@ -45,7 +45,7 @@ dev = [
     "black>=23.0",
     "mypy>=1.5",
     "ruff>=0.1",
-    "pre-commit>=3.5",
+    "pre-commit>=4.6.2",
     # Parses .github/workflows/ci.yml in tests/unit/test_ci_matrix.py. Arrives
     # transitively via pre-commit today; declared so the CI-contract tests fail
     # loudly rather than skip if that ever changes.
