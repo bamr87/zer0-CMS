@@ -6,7 +6,7 @@ name: Germinate
 
 on:
   schedule:
-    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+    - cron: "40 14 * * 1"  # staggered AI cron (bamr87/bamr87#348); was 0 6 * * 1
   workflow_dispatch:
     inputs:
       count:
