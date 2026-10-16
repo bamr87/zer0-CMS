@@ -1,0 +1,35 @@
+# Development overrides — layered on top of _config.yml by docker-compose.yml:
+#   jekyll serve --config _config.yml,_config_dev.yml
+
+# Keep the remote theme in dev too (no theme gem needed locally).
+remote_theme: "bamr87/zer0-mistakes"
+
+url: "http://localhost:4410"
+baseurl: ""
+host: "0.0.0.0"
+port: 4410
+livereload: true
+incremental: false
+show_drafts: true
+future: true
+
+# Never send analytics from a dev build.
+google_analytics: null
+posthog:
+  enabled: false
+
+# Jekyll REPLACES (does not merge) `exclude` and `plugins` when layering configs,
+# so this list must include everything from _config.yml.
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - .jekyll-metadata
+  - node_modules/
+  - vendor/
+  - Gemfile.lock
+  - docker-compose.yml
+  - zer0.install.yml
+  - .env
+  - .env.example
+  - README.md
+  - "*.log"
