@@ -14,7 +14,7 @@ gem "zer0-image-generator", group: :jekyll_plugins
 
 # Local theme development against a sibling checkout (needed while theme
 # changes are unreleased):
-#   ZER0_THEME_LOCAL=../zer0-mistakes bundle install
+#   ZER0_THEME_LOCAL=../../packages/zer0-mistakes bundle install
 #   bundle exec jekyll serve --config _config.yml,_config_dev.yml
 gem "jekyll-theme-zer0", path: ENV["ZER0_THEME_LOCAL"] if ENV["ZER0_THEME_LOCAL"]
 

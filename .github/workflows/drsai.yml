@@ -1,0 +1,75 @@
+# sites/drsai — the story engine's tests and lint, the ABC-book drift check,
+# and a site build against the theme in packages/zer0-mistakes (the in-repo
+# replacement for the sibling-checkout ZER0_THEME_LOCAL the site already
+# supports). Ported from bamr87/drsai's ci.yml without its tag-triggered PyPI
+# publish; the Pages deploy stays in the original repository for now (see
+# docs/MONOREPO.md).
+name: drsai
+
+on:
+  push:
+    branches: [main]
+    paths: ["sites/drsai/**", "packages/zer0-mistakes/**", ".github/workflows/drsai.yml"]
+  pull_request:
+    paths: ["sites/drsai/**", "packages/zer0-mistakes/**", ".github/workflows/drsai.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: drsai-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine:
+    name: Story engine (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: sites/drsai/drsai
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: sites/drsai/drsai/pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: python -c "import nltk; nltk.download('cmudict', quiet=True)"
+      - run: ruff check src/
+      - run: black --check src/ tests/
+      - run: pytest tests/ -q
+
+  content:
+    name: ABC books match their spec
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sites/drsai
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python3 tools/import_abc_book.py --check
+      - run: python3 tools/unwrap-prose.py --check
+
+  site:
+    name: Jekyll build against packages/zer0-mistakes
+    runs-on: ubuntu-latest
+    env:
+      ZER0_THEME_LOCAL: ../../packages/zer0-mistakes
+    defaults:
+      run:
+        working-directory: sites/drsai
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - run: bundle install
+      - run: bundle exec jekyll build --config _config.yml,_config_dev.yml

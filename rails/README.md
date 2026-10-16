@@ -29,9 +29,9 @@ ruby bin/zer0-cms themes                      # list bundled A–Z lexicons
 ruby bin/zer0-cms doctor ../../lifehacker.dev  # zer0 stack alignment (RFC §4); exit 1 on any error
 ruby bin/jekyll-parity ../../lifehacker.dev    # catalog vs Jekyll's own reader (needs the jekyll gem)
 
-# Draft the toddler "IT systems" book (A is for Automation) into a drsai checkout:
+# Draft the toddler "IT systems" book (A is for Automation) into the monorepo's sites/drsai:
 ruby bin/zer0-cms new --theme "IT systems" --slug it-alphabet \
-     --art-style isometric-tech-toy --out ../../drsai
+     --art-style isometric-tech-toy --out ../sites/drsai
 
 # Preview any theme without writing files:
 ruby bin/zer0-cms new --theme "the ocean" --art-style watercolor-storybook --print

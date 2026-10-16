@@ -33,9 +33,8 @@ drsai/ (Python story engine) ─ new verse/stories            zer0-mistakes them
 
 ```bash
 # against the released theme gem is not enough while book layouts are
-# unreleased — point at a sibling checkout of the theme:
-git clone https://github.com/bamr87/zer0-mistakes ../zer0-mistakes
-ZER0_THEME_LOCAL=../zer0-mistakes bundle install
+# unreleased — point at the theme in this monorepo (packages/zer0-mistakes):
+ZER0_THEME_LOCAL=../../packages/zer0-mistakes bundle install
 bundle exec jekyll serve --config _config.yml,_config_dev.yml
 # → http://localhost:4000
 ```
@@ -77,10 +76,10 @@ See [`drsai/README.md`](./drsai/README.md) for the story engine's full CLI, mete
 drsai also publishes toddler **ABC board books** — one big letter, one word, one picture per page. The words and per-letter illustration prompts are drafted by the **[zer0-CMS](https://github.com/bamr87/zer0-CMS) ABC wizard**, which exports straight into this repo. The first is [**The IT Alphabet: A is for Automation**](https://bamr87.github.io/drsai/books/it-alphabet/) — A is for Automation, B is for Backup … Z is for Zero Trust.
 
 ```bash
-# In a sibling zer0-CMS checkout, draft a book and export it here:
-cd ../zer0-CMS/rails
+# From the zer0-CMS monorepo's Rails app, draft a book and export it here:
+cd ../../rails
 ruby bin/zer0-cms new --theme "IT systems" --slug it-alphabet \
-     --art-style isometric-tech-toy --out ../../drsai
+     --art-style isometric-tech-toy --out ../sites/drsai
 
 # Back in drsai: guard the page against its spec, then render the plates.
 python3 tools/import_abc_book.py --check                       # drift check (CI)

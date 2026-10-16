@@ -25,7 +25,7 @@ npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or 
 cd rails
 bash bin/test-stdlib                              # rails/lib: catalog, front matter, writer, doctor, ABC — no bundler
 ruby bin/zer0-cms doctor ../../lifehacker.dev      # zer0 stack alignment; exit 1 on any error
-ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai   # an ABC book, headless
+ruby bin/zer0-cms new --theme "IT systems" --out ../sites/drsai   # an ABC book, headless
 bundle install && bin/rails db:prepare
 SITES_DIR=$HOME/github bin/rails server            # http://localhost:3000/admin
 bin/rails test && bin/rails zeitwerk:check         # the app; image-engine tests need python3 + PyYAML
@@ -89,7 +89,7 @@ Declare it in `package.json` under `contributes.commands` (with any `when` claus
 
 ## The monorepo (`packages/`, `sites/`)
 
-The theme (`packages/zer0-mistakes/`), the image generator (`packages/zer0-image-generator/`) and four sites (`sites/zer0-pages/`, `sites/zer0-pages-remote/`, `sites/zer0-demo-cookbook/`, `sites/zer0-demo-garden/`) were imported with full history from their own repositories; `docs/MONOREPO.md` has the layout and the import recipe. Each keeps its own `CLAUDE.md`, which governs work inside it — read it before touching that tree, and run its commands from inside that directory. Only the root `.github/workflows/` runs, so the imported `.github/workflows/` directories are inert reference copies; a gate ported to the root is path-filtered to its own tree (`zer0-image-generator.yml`, `zer0-pages.yml`). Nothing under `packages/` or `sites/` may assume it is the git root (`git rev-parse --show-toplevel` is zer0-CMS) — resolve paths from the file instead. The original repositories still publish the gems, the Pages sites and the `remote_theme`, so do not archive them until `docs/MONOREPO.md` § What still depends on the original repositories is empty.
+The theme (`packages/zer0-mistakes/`), the image generator (`packages/zer0-image-generator/`), the books app (`packages/books/`) and five sites (`sites/drsai/`, `sites/zer0-pages/`, `sites/zer0-pages-remote/`, `sites/zer0-demo-cookbook/`, `sites/zer0-demo-garden/`) were imported with full history from their own repositories; `docs/MONOREPO.md` has the layout and the import recipe. Each keeps its own `CLAUDE.md`, which governs work inside it — read it before touching that tree, and run its commands from inside that directory. Only the root `.github/workflows/` runs, so the imported `.github/workflows/` directories are inert reference copies; a gate ported to the root is path-filtered to its own tree (`zer0-image-generator.yml`, `zer0-pages.yml`, `books.yml`, `drsai.yml`). Nothing under `packages/` or `sites/` may assume it is the git root (`git rev-parse --show-toplevel` is zer0-CMS) — resolve paths from the file instead. The original repositories still publish the gems, the Pages sites and the `remote_theme`, so do not archive them until `docs/MONOREPO.md` § What still depends on the original repositories is empty.
 
 ## Conventions
 
