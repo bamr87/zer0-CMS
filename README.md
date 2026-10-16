@@ -45,7 +45,7 @@ Both ports are published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before expos
 
 ### The rest of the stack, in the same repository
 
-The theme, the image generator, the books app, the zer0 sites and the barodybroject app live here too, imported with their full history. See [`docs/MONOREPO.md`](docs/MONOREPO.md) for the layout and for what still runs from the original repositories.
+The theme, the image generator, the books app, the zer0 sites and the barodybroject app live here too, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
 
 | Path | What it is |
 |---|---|

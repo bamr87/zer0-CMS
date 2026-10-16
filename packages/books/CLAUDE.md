@@ -44,6 +44,6 @@ python3 tools/unwrap-prose.py --check
 
 This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents.
 
-The shared CI caller (`.github/workflows/ci.yml`) detects `pyproject.toml`, runs `pip install -e .` and then `pytest -q`. Don't edit the caller — the gate logic is versioned in the hub. Note that the install step swallows failures, which is why the test suite adds `src/` to `sys.path` in `tests/conftest.py` and the package has no required dependencies.
+This package lives in the zer0-CMS monorepo at `packages/books/`, and only the root `.github/workflows/` runs: `books.yml` installs `.[dev]`, then runs `pytest -q` and `ruff check src tests` on Python 3.10 and 3.12 (`bin/zer0 run test books` from the repository root does the same). The hub caller it replaced swallowed install failures, which is why the test suite adds `src/` to `sys.path` in `tests/conftest.py` and the package has no required dependencies.
 
 Still missing for the baseline: a `LICENSE`. This repo holds both code and original fiction, which usually want different terms, so it needs an owner decision rather than a default.

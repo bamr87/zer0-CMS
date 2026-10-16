@@ -1,6 +1,7 @@
-# sites/zer0-pages — the bridge/graph unit tests and the SCHEMA.md pyramid lint
-# that used to run in bamr87/zer0-pages, ported into the monorepo and filtered
-# to the site's own tree. The Pages deploy (pages.yml) is not ported: GitHub
+# sites/zer0-pages — the bridge/graph unit tests, the SCHEMA.md pyramid lint
+# and the themed Jekyll build that used to run in bamr87/zer0-pages (the last
+# through the hub's standard-ci), ported into the monorepo and filtered to the
+# site's own tree. The Pages deploy (pages.yml) is not ported: GitHub
 # Pages still publishes from the original repository (see docs/MONOREPO.md).
 name: zer0-pages
 
@@ -40,3 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: python3 tools/schema_lint.py check .
+
+  build:
+    name: jekyll build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: sites/zer0-pages
+      - run: bundle exec jekyll build

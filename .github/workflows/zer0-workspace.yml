@@ -1,0 +1,65 @@
+# The workspace gate: the tooling behind bin/zer0 passes its own tests, and
+# `bin/zer0 check` passes against the real tree — every directory under
+# packages/, sites/ and apps/ is registered in workspace.yml, every project's
+# workflow exists and filters on its path, and every vendored copy is still
+# byte-identical to its source. It runs on every pull request (it takes
+# seconds and needs nothing but Ruby), because drift can come from any tree.
+#
+# It also prints, to the job summary, the projects a pull request affects (so
+# a reviewer can see which projects' gates should have run) and the CMS's own
+# `zer0 doctor` over every zer0 site in the repository — report-only, like the
+# reusable zer0-doctor.yml it mirrors, because two sites carry known errors
+# (docs/MONOREPO.md).
+name: zer0-workspace
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zer0-workspace-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: bin/zer0 check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Workspace tooling tests
+        run: |
+          for f in tools/workspace/test/test_*.rb; do
+            echo "==> ruby $f"
+            ruby "$f"
+          done
+      - name: bin/zer0 check
+        run: bin/zer0 check
+      - name: Projects this change affects
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          {
+            echo "### Projects this pull request affects"
+            echo
+            bin/zer0 affected --base "origin/$BASE_REF" | sed 's/^/- /'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: zer0 doctor over every site (report-only)
+        run: |
+          {
+            echo "### zer0 doctor"
+            echo
+            echo '```'
+            bin/zer0 doctor
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

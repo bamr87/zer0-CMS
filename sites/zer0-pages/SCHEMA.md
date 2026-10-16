@@ -11,7 +11,7 @@ coverage: listed
 
 | entry | kind | purpose | rules |
 |---|---|---|---|
-| `.github/` | dir | GitHub Actions workflows — Pages build/deploy (`pages.yml`), the shared-CI caller (`ci.yml`), the SCHEMA.md lint gate (`schema-check.yml`), the one-paragraph-per-line gate (`markdown-oneline.yml`), and the `@claude` mention handler (`claude.yml`) | terminal |
+| `.github/` | dir | The Pages build/deploy (`pages.yml`), kept for reference: in the zer0-CMS monorepo only the root `.github/workflows/` runs, where `zer0-pages.yml` gates this site (unit tests, SCHEMA lint, themed build) | terminal |
 | `claude-obsidian/` | dir | Git submodule of the external claude-obsidian content engine (AgriciDaniel/claude-obsidian) — consumed, never edited here | terminal |
 | `pages/` | dir | The Obsidian vault and Jekyll source — all content collections, wiki, data files, bridge plugins, and assets | |
 | `tests/` | dir | Stdlib-only Ruby unit tests for the Obsidian bridge plugin cores | |
