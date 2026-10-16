@@ -1,0 +1,102 @@
+{% comment %}
+File: base.html
+Description: Shell for the remaining server-rendered pages (allauth account flows, profile, errors)
+Author: Barodybroject Team
+Created: 2024-01-01
+Last Modified: 2026-09-14
+Version: 0.6.0
+
+The application UI is the React app served by `spa/index.html`; this template
+only wraps the pages Django still renders itself, so it stays deliberately
+small — the app's own stylesheet, a link back to the app, and nothing else.
+{% endcomment %}
+<!DOCTYPE html>
+{% load static i18n %}
+<html lang="{{ LANGUAGE_CODE }}" data-bs-theme="auto">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        {% block meta %}
+            <meta name="description" content="AI-powered parody news generator. Bring your own AI provider."/>
+        {% endblock meta %}
+        <link rel="icon" href="{% static 'favicon.ico' %}"/>
+        <title>
+            {% block title %}{% block head_title %}Account{% endblock head_title %} | Barody Broject{% endblock title %}
+        </title>
+        {% comment %}
+        The React bundle's stylesheet already carries Bootstrap and Bootstrap
+        Icons, so these pages match the app exactly and need no CDN.
+
+        There is deliberately no CDN fallback for an unbuilt frontend. These
+        pages carry the login form, and a fallback would mean that a deployment
+        shipped without a frontend build silently goes back to fetching CSS
+        from a third party on every sign-in — the exact dependency this
+        replaced. Unstyled is a visible, local failure; a CDN round-trip is an
+        invisible, remote one. Build the frontend (`npm run build` in
+        `src/frontend/`, which the Dockerfile does) and this resolves.
+        {% endcomment %}
+        {% for href in frontend_styles %}<link rel="stylesheet" href="{{ href }}"/>{% endfor %}
+        <style>
+            html, body { height: 100%; }
+            body { display: flex; flex-direction: column; }
+            main { flex: 1 0 auto; }
+            footer { flex-shrink: 0; }
+        </style>
+        {% block page_head %}{% endblock page_head %}
+        {% block extra_head %}{% endblock extra_head %}
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-xl">
+                <a class="navbar-brand" href="/">Barody Broject</a>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    {% if user.is_authenticated %}
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-house"></i>
+                            <span class="d-none d-lg-inline ms-1">{% translate "App" %}</span>
+                        </a>
+                        <a href="{% url 'account_logout' %}" class="btn btn-outline-secondary">
+                            {% translate "Sign Out" %}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>{% translate "Sign In" %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            {% block body %}
+                {% comment %}
+                Not dismissible: these pages load no JavaScript at all, and a
+                Django message is shown once per request anyway.
+                {% endcomment %}
+                {% if messages %}
+                    <div class="container-xl mt-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="container-xl py-4">
+                    {% block content %}{% endblock content %}
+                </div>
+            {% endblock body %}
+            {% block extra_body %}{% endblock extra_body %}
+        </main>
+
+        <footer class="footer mt-auto py-3 bg-body-tertiary">
+            {% include "footer.html" %}
+        </footer>
+
+        {% comment %}
+        No Bootstrap JavaScript: nothing on these pages needs it, so the auth
+        flow works with no third-party requests and no scripts at all.
+        Allauth's own snippets (passkeys, WebAuthn) still load via this block.
+        {% endcomment %}
+        {% block extra_scripts %}{% endblock extra_scripts %}
+    </body>
+</html>

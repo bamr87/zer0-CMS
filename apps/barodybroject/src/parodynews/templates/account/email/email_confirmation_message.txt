@@ -1,0 +1,14 @@
+{% extends "account/email/base_message.txt" %}
+{% load account %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}
+Hello from barodybroject.com!
+
+You're receiving this email because user {{ user.username }} has given your email address to register an account on barodybroject.com.
+
+To confirm this is correct, go to {{ activate_url }}
+
+Thank you for using barodybroject.com!
+barodybroject.com
+{% endautoescape %}{% endblock content %}
