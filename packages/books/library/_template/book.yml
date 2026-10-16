@@ -1,0 +1,21 @@
+# Manifest for one book. Schema: docs/SCHEMA.md
+# `books new` overwrites slug, title, status and created; edit the rest by hand.
+slug: "{{slug}}"
+title: "{{title}}"
+subtitle: ""
+status: idea
+genre: ""
+logline: "One sentence: who wants what, and what stands in the way."
+
+pov: Third person limited
+tense: Past
+era: ""
+protagonist: ""
+
+acts: 3
+planned_chapters: 12
+target_word_count: 80000
+
+tags: []
+themes: []
+cast: []
