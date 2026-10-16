@@ -1,6 +1,7 @@
 ---
 title: Natas26
-description: "Username: natas26\n    URL:      http://natas26.natas.labs.overthewire.org"
+description: "Natas Level 26 — a cookie contains serialised PHP data the server later unserialises; learn how object injection can write files on the server."
+excerpt: "Natas Level 26 — a cookie contains serialised PHP data the server later unserialises; learn how object injection can write files on the server."
 permalink: /docs/wargames/natas/natas26/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,32 @@ sidebar_label: "Level 26"
 
     Username: natas26
     URL:      http://natas26.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas26` and find the password for `natas27`.
+
+### What this level teaches
+
+PHP object injection through unsafe deserialisation.
+
+### Key ideas
+
+- **Serialisation.** PHP converts objects to strings and back; the conversion can call special "magic" methods such as a destructor.
+- **User-controlled objects.** If the server unserialises a cookie, the client chooses which class is created and with what values.
+- **Gadgets.** An existing class in the application (here, a logger) does something dangerous when its destructor runs.
+- **Read the source.** Every class definition you need is visible.
+
+### How to approach it
+
+1. Study how the drawing feature stores state in the cookie.
+2. Find a class whose methods perform file operations with data it holds.
+3. Build a serialised object of that class, encode it as the cookie expects, and send it.
+
+### How developers prevent it
+
+Never unserialise untrusted data. Use a data-only format such as JSON and validate it.
+
+<!-- study-guide:end -->

@@ -1,10 +1,7 @@
 ---
 title: Maze
-description: 'Maze is a wargame that has been rescued from the demise of
-
-  intruded.net, previously hosted on maze.intruded.net. Big thanks
-
-  to adc, morla and reth for their help in resurrecting this game!'
+description: "Maze is a harder binary-exploitation wargame rated 5/10 that needs exploitation, programming and reverse-engineering skills, with deliberately tricky levels."
+excerpt: "Maze is a harder binary-exploitation wargame rated 5/10 that needs exploitation, programming and reverse-engineering skills, with deliberately tricky levels."
 permalink: /docs/wargames/maze/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -69,3 +66,44 @@ To login to the first level use:
     Password: maze0
 
 Data for the levels can be found in **/maze/**.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+This guide is spoiler-free. It explains how to approach Maze and what each stage asks of you, but upstream deliberately withholds level descriptions, so there are no level-specific claims here beyond what the index says.
+
+### What Maze teaches
+
+Maze is a harder binary-exploitation wargame. Its authors say it needs knowledge of exploitation techniques, programming and reverse engineering, and that the levels are deliberately tricky and sometimes strange.
+
+### Connecting
+
+Maze is reached with SSH at `maze.labs.overthewire.org` on port 2225. Levels are accounts called `maze0`, `maze1` and so on, and the level data is in `/maze/`. These games were rescued from the defunct intruded.net with thanks to adc, morla and reth.
+
+### Prerequisites
+
+Finish Narnia, Behemoth and ideally Utumno. The authors list the requirements as knowledge of exploitation techniques, programming (of course) and reverse engineering, and recommend getting ready to use `gdb`.
+
+### A reconnaissance checklist
+
+1. `ls -l /maze/` and look at the permissions. A setuid bit marks the program that is your route to the next user.
+2. `file` and `strings` on the binary.
+3. Run it normally, then with odd input.
+4. `ltrace` and `strace` for library and system calls.
+5. `gdb` or `objdump -d` for the logic.
+6. Decide what kind of flaw you are looking at before choosing an attack.
+
+### How the levels are numbered
+
+The page for Level N is the account `mazeN`. Each level's password is typically stored in a file readable only by the next user, and your task is to get the program for level N to read or reveal it.
+
+### Tools
+
+`gdb`, `objdump`, `ltrace`, `strace`, `ghidra`, `gcc`, `nc`, `pwntools`, and a notes file for addresses, offsets and observations.
+
+### Keep it ethical
+
+Everything here is for the wargame servers. Do not attack other systems, and do not share passwords or complete solutions that would spoil the game for others.
+
+<!-- study-guide:end -->

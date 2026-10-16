@@ -1,12 +1,6 @@
 ---
 title: Bandit15
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level can be retrieved by submitting the
-
-  password of the current level to port 30000 on localhost.'
+description: "Bandit Level 15 — talk to a plain-text network service on localhost with netcat."
 permalink: /docs/wargames/bandit/bandit15/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -25,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 15 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 15 — talk to a plain-text network service on localhost with netcat."
 draft: false
 keywords:
 - security
@@ -64,3 +58,32 @@ accurate, but good enough for beginners)
 [Localhost on Wikipedia]: https://en.wikipedia.org/wiki/Localhost
 [Ports]: https://computer.howstuffworks.com/web-server8.htm
 [Port (computer networking) on Wikipedia]: https://en.wikipedia.org/wiki/Port_(computer_networking)
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit14`, find the password for `bandit15`.
+
+### What this level teaches
+
+What a network service is, and how to talk to one directly.
+
+### Key ideas
+
+- **Client and server.** A server listens on a port; a client connects and exchanges data. Here you are the client.
+- **`localhost`** (`127.0.0.1`) means "this very machine", which makes it ideal for safe practice.
+- **TCP.** A reliable byte stream. Many simple protocols are just lines of text.
+- **`nc` (netcat)** opens a TCP connection and connects it to your keyboard and screen, so you can type to a service like a human protocol client.
+
+### How to approach it
+
+1. Connect to the port the Level Goal gives.
+2. Send the previous level's password followed by a newline, and read the reply.
+3. Notice that anyone on the network path could read this exchange because it is unencrypted. The next level fixes that.
+
+### Why it matters
+
+Every protocol you know (HTTP, SMTP, Redis) is text over a port, and netcat is the debugging tool for all of them.
+
+<!-- study-guide:end -->

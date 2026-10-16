@@ -1,6 +1,7 @@
 ---
 title: Behemoth6
-description: There is no information for this level, intentionally.
+description: "Behemoth Level 6 — a later level that combines custom shellcode with a helper program; investigate the level directory and the program's behaviour."
+excerpt: "Behemoth Level 6 — a later level that combines custom shellcode with a helper program; investigate the level directory and the program's behaviour."
 permalink: /docs/wargames/behemoth/behemoth6/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -33,3 +34,32 @@ sidebar_label: "Level 6"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 There is no information for this level, intentionally.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `behemoth6`, find the password for `behemoth7`.
+
+### What this level teaches
+
+Stepping up from a single technique to a combined challenge.
+
+### Key ideas
+
+- **Read what is provided.** Look in `/behemoth/` for the level's binary and any helper files it uses.
+- **Understand the helper.** Trace how the main program invokes it and what data flows between them.
+- **Shellcode skills.** You may need to write or adapt small machine-code payloads.
+- **Test in pieces.** Verify each stage before running the whole chain.
+
+### How to approach it
+
+1. List the files and permissions, then trace what the program starts.
+2. Work out which part you control and how it is interpreted.
+3. Build the payload step by step.
+
+### Why it matters
+
+Real attacks are multi-stage, and breaking them into verified steps is the key to getting them working.
+
+<!-- study-guide:end -->

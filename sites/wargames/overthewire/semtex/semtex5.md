@@ -1,16 +1,7 @@
 ---
 title: Semtex5
-description: 'Random Networking
-
-  -----------------
-
-  Make 10 connections to port 24027 from different IP''s. On each
-
-  connection you will receive a string of 10 ASCII characters. XOR
-
-  this string with the Semtex5 password, character by character. Then
-
-  send back the 10 c...'
+description: "Semtex Level 5 — connect from ten different IP addresses, answer a challenge on each, and receive the password on a randomly chosen connection."
+excerpt: "Semtex Level 5 — connect from ten different IP addresses, answer a challenge on each, and receive the password on a randomly chosen connection."
 permalink: /docs/wargames/semtex/semtex5/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -53,3 +44,32 @@ Reading Material
 - [Socks5 Request For Comment][]
 
 [Socks5 Request For Comment]: http://www.faqs.org/rfcs/rfc1928.html
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the challenge service is on port 24027.
+
+### What this level teaches
+
+Working with multiple source addresses and a challenge-response protocol.
+
+### Key ideas
+
+- **Challenge-response.** Each connection sends ten ASCII characters that you must combine, character by character, with the Semtex 5 password using XOR, then send back along with your own identifier.
+- **Timing.** You have five seconds to answer, and connections time out after two minutes.
+- **Different IPs.** You cannot reuse an address that is still connected, so you need several exits, such as proxies.
+- **Reading.** The SOCKS5 RFC is linked, as a way of routing connections through other hosts.
+
+### How to approach it
+
+1. Write and test the challenge-response handling on a single connection.
+2. Route ten connections through different addresses, using SOCKS or SSH tunnels.
+3. Keep them open until the password arrives.
+
+### Why it matters
+
+It shows how defences based on source IP can be circumvented with proxies.
+
+<!-- study-guide:end -->

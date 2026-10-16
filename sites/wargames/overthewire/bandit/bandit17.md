@@ -1,16 +1,6 @@
 ---
 title: Bandit17
-description: 'Level Goal
-
-  ----------
-
-  The credentials for the next level can be retrieved by submitting the
-
-  password of the current level to a port on localhost in the range
-
-  31000 to 32000. First find out which of these ports have a server
-
-  listening on them. Then fi...'
+description: "Bandit Level 17 — scan a range of ports with nmap, tell TLS from plain services, and find the one that returns credentials."
 permalink: /docs/wargames/bandit/bandit17/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -29,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 17 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 17 — scan a range of ports with nmap, tell TLS from plain services, and find the one that returns credentials."
 draft: false
 keywords:
 - security
@@ -59,3 +49,32 @@ Helpful Reading Material
 - [Port scanner on Wikipedia][]
 
 [Port scanner on Wikipedia]: https://en.wikipedia.org/wiki/Port_scanner
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit16`, find the credentials for `bandit17`.
+
+### What this level teaches
+
+Reconnaissance: finding which services are running and what they speak.
+
+### Key ideas
+
+- **Port scanning.** `nmap -p 31000-32000 localhost` tests each port in a range to see which are open.
+- **Service detection.** Nmap's version-detection options probe open ports to guess whether they speak TLS or plain text.
+- **Elimination.** Of the open ports, some are echo servers that repeat what you send; only one returns real credentials.
+- **Credentials are not always passwords.** Here the reward is a private key. Save it to a new directory you create under `/tmp` and set strict permissions before using it.
+
+### How to approach it
+
+1. Scan only the range given and only `localhost`.
+2. For each open port, try TLS first, then plain text, and watch the responses.
+3. Write down which port did what; it helps you avoid repeating work.
+
+### Why it matters
+
+Mapping a target's attack surface is step one of every penetration test. The ethics rule applies: **scan only systems you own or have written permission to test.**
+
+<!-- study-guide:end -->

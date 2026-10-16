@@ -1,6 +1,7 @@
 ---
 title: Natas16
-description: "Username: natas16\n    URL:      http://natas16.natas.labs.overthewire.org"
+description: "Natas Level 16 — command injection returns, but with stricter filtering and no visible output; learn to turn a search tool into a yes/no oracle."
+excerpt: "Natas Level 16 — command injection returns, but with stricter filtering and no visible output; learn to turn a search tool into a yes/no oracle."
 permalink: /docs/wargames/natas/natas16/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,32 @@ sidebar_label: "Level 16"
 
     Username: natas16
     URL:      http://natas16.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas16` and find the password for `natas17`.
+
+### What this level teaches
+
+Blind command injection through whatever characters the filter still allows.
+
+### Key ideas
+
+- **Shell expansion.** A shell evaluates certain constructs before running the command, so you can influence what runs without using the blocked characters.
+- **Side-channel output.** The page still shows whether a word was found, which is the oracle.
+- **Building on earlier levels.** The method resembles Level 15, applied to a shell command.
+- **Automation.** Guess the secret one character at a time with a script.
+
+### How to approach it
+
+1. Compare this filter with the one from Level 10 and list the characters that are still allowed.
+2. Look up what those allowed characters can still do inside the command you saw.
+3. Use the page's reply as a true/false signal and automate the guessing.
+
+### How developers prevent it
+
+As with all injection bugs: separate data from code. Do not pass user input through a shell at all.
+
+<!-- study-guide:end -->

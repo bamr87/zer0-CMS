@@ -1,12 +1,7 @@
 ---
 title: Semtex11
-description: 'Deja vue
-
-  --------
-
-  /rdx/vl1b is vortex semtex1 with a slight modification to make
-
-  things a little bit harder.'
+description: "Semtex Level 11 — \"Déjà vu\": a modified version of an earlier encryption tool, with process plumbing (popen, dup2) suggested as reading."
+excerpt: "Semtex Level 11 — \"Déjà vu\": a modified version of an earlier encryption tool, with process plumbing (popen, dup2) suggested as reading."
 permalink: /docs/wargames/semtex/semtex11/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -48,4 +43,30 @@ Suggested reading
 -----------------
 manpages: popen, dup2
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** the program is `/rdx/vl1b`, a slightly harder variant of the Vortex/Semtex 1 tool.
+
+### What this level teaches
+
+Applying a previous technique to a modified target, and understanding how programs connect to other processes.
+
+### Key ideas
+
+- **Reuse your Level 1 approach.** The page says this is the earlier tool with a modification that makes it harder.
+- **popen and dup2.** The suggested manual pages describe how a program starts a child and wires up its input and output.
+- **Differences.** Find exactly what has changed.
+
+### How to approach it
+
+1. Run both tools on the same inputs and compare.
+2. Read the manual pages for the suggested system calls.
+3. Adapt your earlier solution.
+
+### Why it matters
+
+Variants of the same idea appear constantly, and a systematic comparison is the fastest way through.
+
+<!-- study-guide:end -->

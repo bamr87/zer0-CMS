@@ -1,6 +1,7 @@
 ---
 title: Natas33
-description: "Username: natas33\n    URL:      http://natas33.natas.labs.overthewire.org"
+description: "Natas Level 33 — an upload checker and a file function combine so that a crafted archive triggers deserialisation; learn about PHP phar attacks."
+excerpt: "Natas Level 33 — an upload checker and a file function combine so that a crafted archive triggers deserialisation; learn about PHP phar attacks."
 permalink: /docs/wargames/natas/natas33/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 33"
 
     Username: natas33
     URL:      http://natas33.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas33` and find the password for `natas34`.
+
+### What this level teaches
+
+How seemingly harmless file functions can trigger object deserialisation.
+
+### Key ideas
+
+- **Phar archives.** PHP can read an archive format called phar, which stores serialised metadata.
+- **Stream wrappers.** File functions accept URL-like paths such as `phar://...`; opening one can cause the metadata to be unserialised automatically.
+- **Gadget in the source.** A class in the page code performs an unsafe action when it is destroyed.
+- **Building a phar.** PHP's `Phar` class lets you create one with your own metadata, if the build is allowed in your environment.
+
+### How to approach it
+
+1. Read the upload and checking code carefully, and find the class that does something interesting.
+2. Work out how to get your file to the server and make a file function open it as a phar.
+
+### How developers prevent it
+
+Disallow `phar://` for user-controlled paths, update PHP, and avoid dangerous classes that act on destruction.
+
+<!-- study-guide:end -->

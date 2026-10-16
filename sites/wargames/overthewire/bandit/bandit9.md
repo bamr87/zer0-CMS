@@ -1,12 +1,6 @@
 ---
 title: Bandit9
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in the file data.txt
-
-  and is the only line of text that occurs only once'
+description: "Bandit Level 9 — find the only unique line in a file by pairing sort with uniq through a pipe."
 permalink: /docs/wargames/bandit/bandit9/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -25,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 9 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 9 — find the only unique line in a file by pairing sort with uniq through a pipe."
 draft: false
 keywords:
 - security
@@ -53,3 +47,31 @@ Helpful Reading Material
 - [Piping and Redirection][]
 
 [Piping and Redirection]: https://ryanstutorials.net/linuxtutorial/piping.php
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit8`, find the password for `bandit9`.
+
+### What this level teaches
+
+Chaining small tools with pipes, and a classic gotcha: `uniq` only compares neighbouring lines.
+
+### Key ideas
+
+- **Pipes.** `cmd1 | cmd2` feeds the output of the first command to the second, so simple tools combine into powerful ones.
+- **`sort`** orders lines so duplicates become adjacent.
+- **`uniq`** collapses adjacent duplicate lines; with options it can count them or print only those that occur once.
+- Reading `man uniq` carefully shows the option you need.
+
+### How to approach it
+
+1. Run `uniq` on the unsorted file and see why it does not help.
+2. Sort first, then pipe into `uniq` with the right option.
+
+### Why it matters
+
+"Sort, then count unique" is the backbone of countless one-liners, from finding the most frequent IP address in a log to spotting an outlier.
+
+<!-- study-guide:end -->

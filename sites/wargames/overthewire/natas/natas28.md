@@ -1,6 +1,7 @@
 ---
 title: Natas28
-description: "Username: natas28\n    URL:      http://natas28.natas.labs.overthewire.org"
+description: "Natas Level 28 — a query is encrypted with AES in ECB mode; learn how block-by-block encryption lets an attacker cut and paste ciphertext."
+excerpt: "Natas Level 28 — a query is encrypted with AES in ECB mode; learn how block-by-block encryption lets an attacker cut and paste ciphertext."
 permalink: /docs/wargames/natas/natas28/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,32 @@ sidebar_label: "Level 28"
 
     Username: natas28
     URL:      http://natas28.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas28` and find the password for `natas29`.
+
+### What this level teaches
+
+An encryption oracle attack against ECB mode.
+
+### Key ideas
+
+- **ECB mode.** Each block of 16 bytes is encrypted independently, so identical plaintext blocks give identical ciphertext blocks and blocks can be rearranged.
+- **Oracle.** The application encrypts text you submit, which you can study.
+- **Finding the block boundaries.** Submitting repeated input and watching where the ciphertext starts to repeat reveals how the application's own text is laid out.
+- **Cut and paste.** You can build a ciphertext containing the plaintext you want by assembling blocks from different requests.
+
+### How to approach it
+
+1. Submit inputs of increasing length and watch the output length and repeating patterns.
+2. Work out the unknown prefix and suffix the server adds.
+3. Craft input so that a block you control contains the SQL you want, then reuse it.
+
+### How developers prevent it
+
+Use authenticated encryption such as AES-GCM, and do not construct SQL from decrypted data.
+
+<!-- study-guide:end -->

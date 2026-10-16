@@ -1,16 +1,6 @@
 ---
 title: Bandit21
-description: 'Level Goal
-
-  ----------
-
-  There is a setuid binary in the homedirectory that does the
-
-  following: it makes a connection to localhost on the port you
-
-  specify as a commandline argument. It then reads a line of text from
-
-  the connection and compares it to the...'
+description: "Bandit Level 21 — run your own network listener in the background so a setuid program can connect to it."
 permalink: /docs/wargames/bandit/bandit21/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -29,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 21 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 21 — run your own network listener in the background so a setuid program can connect to it."
 draft: false
 keywords:
 - security
@@ -54,3 +44,31 @@ Commands you may need to solve this level
 -----------------------------------------
 ssh, nc, cat, bash, screen, tmux, Unix 'job control' (bg, fg, jobs, &, CTRL-Z, ...)
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit20`, find the password for `bandit21`.
+
+### What this level teaches
+
+Reversing the client and server roles, and juggling several things at once in one terminal.
+
+### Key ideas
+
+- **Listening.** `nc -l PORT` waits for someone to connect (the exact syntax varies between netcat versions, so check `man nc`). Think of it as building a tiny server by hand.
+- **The role flip.** This time the setuid program is the client; you provide the server.
+- **Job control.** Press Ctrl-Z to suspend a command, `bg` to continue it in the background, `fg` to bring it back, `jobs` to list. Adding `&` at the end of a command starts it in the background.
+- **Alternatives.** A second SSH session, `tmux` or `screen` solve the same problem by giving you multiple terminals.
+
+### How to approach it
+
+1. Start a listener that will send the current password to whatever connects.
+2. Launch the setuid program pointing at your listener's port.
+3. Read what the program sends back; as the Level Goal says, test your listener on its own first to be sure it behaves as you expect.
+
+### Why it matters
+
+Reverse connections, callbacks and test servers are everyday techniques for debugging networks and, in security, for understanding how malware communicates.
+
+<!-- study-guide:end -->

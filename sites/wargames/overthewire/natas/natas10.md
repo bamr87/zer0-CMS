@@ -1,6 +1,7 @@
 ---
 title: Natas10
-description: "Username: natas10\n    URL:      http://natas10.natas.labs.overthewire.org"
+description: "Natas Level 10 — the site now filters dangerous characters; learn why blocklists fail and how a legitimate tool's own features can be bent to your purpose."
+excerpt: "Natas Level 10 — the site now filters dangerous characters; learn why blocklists fail and how a legitimate tool's own features can be bent to your purpose."
 permalink: /docs/wargames/natas/natas10/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,30 @@ sidebar_label: "Level 10"
 
     Username: natas10
     URL:      http://natas10.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas10` and find the password for `natas11`.
+
+### What this level teaches
+
+Why filtering out "bad" characters is fragile, and how to achieve the goal using only characters that are allowed.
+
+### Key ideas
+
+- **Blocklist vs allow-list.** A blocklist tries to list everything dangerous and always misses something; an allow-list accepts only what is known to be safe.
+- **Same program, different use.** The command being run has options and arguments of its own. Even without chaining, you can steer what it searches and which files it reads.
+- **Read the manual.** The program's man page is as useful here as it was in Bandit.
+
+### How to approach it
+
+1. Compare this level's code with the previous one and list what changed.
+2. Ask what the allowed characters still let you tell the command to do.
+
+### How developers prevent it
+
+Do not construct shell commands from input. Use library functions that search text directly and never hand user data to a shell.
+
+<!-- study-guide:end -->

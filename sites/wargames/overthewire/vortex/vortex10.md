@@ -1,16 +1,7 @@
 ---
 title: Vortex10
-description: 'Random?
-
-  -------
-
-  Read in 20 integers and write the seed used to generate those
-
-  numbers in unsigned little endian format. You have a time limit of
-
-  30 seconds to do this. You must login to
-
-  [vortex.labs.overthewire.org][]'
+description: "Vortex Level 10 — recover the seed that produced 20 random-looking integers within a 30-second time limit."
+excerpt: "Vortex Level 10 — recover the seed that produced 20 random-looking integers within a 30-second time limit."
 permalink: /docs/wargames/vortex/vortex10/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -47,3 +38,32 @@ Random?
 Read in 20 integers and write the seed used to generate those numbers in unsigned little endian format. You have a time limit of 30 seconds to do this. You must login to [vortex.labs.overthewire.org][]
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex10`, obtain access to `vortex11`.
+
+### What this level teaches
+
+Why pseudo-random number generators are predictable if you know how they work.
+
+### Key ideas
+
+- **PRNG state.** A generator's output is entirely determined by its seed and algorithm.
+- **The task.** Read 20 integers and write back the seed that generated them, in unsigned little-endian format, within 30 seconds.
+- **Search or invert.** Either search the seed space efficiently or invert the generator's algorithm.
+- **Time pressure.** A script is essential; manual work will not meet the limit.
+
+### How to approach it
+
+1. Identify the generator and how it was seeded from the level's behaviour.
+2. Write a program that reproduces its output for a candidate seed.
+3. Automate the exchange end to end and test timing.
+
+### Why it matters
+
+Predictable seeds have broken real systems, from session tokens to game servers and cryptographic keys.
+
+<!-- study-guide:end -->

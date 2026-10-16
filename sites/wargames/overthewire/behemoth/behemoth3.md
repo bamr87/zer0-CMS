@@ -1,6 +1,7 @@
 ---
 title: Behemoth3
-description: There is no information for this level, intentionally.
+description: "Behemoth Level 3 — a format-string vulnerability in a binary without source, used to write to memory and take control."
+excerpt: "Behemoth Level 3 — a format-string vulnerability in a binary without source, used to write to memory and take control."
 permalink: /docs/wargames/behemoth/behemoth3/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -33,3 +34,32 @@ sidebar_label: "Level 3"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 There is no information for this level, intentionally.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `behemoth3`, find the password for `behemoth4`.
+
+### What this level teaches
+
+Format-string exploitation starting from a compiled program.
+
+### Key ideas
+
+- **Recognising the bug.** The program prints your input with a `printf`-style call without a fixed format. Feeding `%x` specifiers shows stack contents.
+- **Locating your input** on the stack with positional specifiers.
+- **Choosing a target to overwrite.** A function pointer, a Global Offset Table entry or a return address can redirect execution.
+- **Where to put shellcode.** An environment variable is a convenient place, and its address can be computed.
+
+### How to approach it
+
+1. Confirm the vulnerability with a harmless sequence of specifiers.
+2. Find the stack index of your own input.
+3. Decide on the target and the value, then build the write.
+
+### Why it matters
+
+It repeats a technique you learned earlier in a more realistic setting.
+
+<!-- study-guide:end -->

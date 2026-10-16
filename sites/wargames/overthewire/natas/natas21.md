@@ -1,6 +1,7 @@
 ---
 title: Natas21
-description: "Username: natas21\n    URL:      http://natas21.natas.labs.overthewire.org"
+description: "Natas Level 21 — two related sites share one session store; learn how an application you can influence can poison a more trusted one."
+excerpt: "Natas Level 21 — two related sites share one session store; learn how an application you can influence can poison a more trusted one."
 permalink: /docs/wargames/natas/natas21/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 21"
 
     Username: natas21
     URL:      http://natas21.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas21` and find the password for `natas22`.
+
+### What this level teaches
+
+Trust boundaries between co-located applications, and session sharing across them.
+
+### Key ideas
+
+- **Shared session store.** The page mentions a second, "experimenter" site that runs next to this one and can set session data.
+- **Parameter-to-session mapping.** The experimenter application copies request parameters into the session without limiting which ones.
+- **Cookie scope.** The browser decides when to send a cookie, and you can copy a value from one site's request to another.
+
+### How to approach it
+
+1. Visit the linked second site and study how it uses your input.
+2. Think about which session value the main site uses to grant access.
+3. Make the second site write that value into a session you then use on the first.
+
+### How developers prevent it
+
+Separate session stores for separate trust levels, and never copy arbitrary request parameters into session state.
+
+<!-- study-guide:end -->

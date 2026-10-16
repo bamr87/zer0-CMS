@@ -1,6 +1,7 @@
 ---
 title: Natas12
-description: "Username: natas12\n    URL:      http://natas12.natas.labs.overthewire.org"
+description: "Natas Level 12 — upload a file the server stores and then serves; learn why trusting the client's filename and file type lets attackers run their own code."
+excerpt: "Natas Level 12 — upload a file the server stores and then serves; learn why trusting the client's filename and file type lets attackers run their own code."
 permalink: /docs/wargames/natas/natas12/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,32 @@ sidebar_label: "Level 12"
 
     Username: natas12
     URL:      http://natas12.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas12` and find the password for `natas13`.
+
+### What this level teaches
+
+How an unrestricted file upload can turn into remote code execution.
+
+### Key ideas
+
+- **Uploads become files on the server.** If they land in a folder the web server executes, the file can run as a script.
+- **Never trust the client.** The filename and extension arrive from the browser, and even hidden form fields can be edited.
+- **Execution depends on extension.** The web server decides whether to run or merely serve a file by its name.
+- **What to run.** A tiny server-side script that reads the password file is enough.
+
+### How to approach it
+
+1. Upload a harmless file, then find where it is stored and what name it was given.
+2. Inspect the form and the code to see which part of the name the server chooses and which part you do.
+3. Request the uploaded file from the browser to see what happens.
+
+### How developers prevent it
+
+Store uploads outside the web root, generate the filename yourself, validate the file's true type, and serve uploads from a domain that never executes code.
+
+<!-- study-guide:end -->

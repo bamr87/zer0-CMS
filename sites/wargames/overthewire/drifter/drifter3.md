@@ -1,10 +1,7 @@
 ---
 title: Drifter3
-description: 'Level 3 is a remote heap corruption issue. Source code can be found in
-
-  /drifter/drifter3src/. It is linked against an ancient malloc
-
-  implementation so it should be easily exploitable :)'
+description: "Drifter Level 3 — a remote heap corruption bug in a program linked against an old malloc implementation, with source supplied."
+excerpt: "Drifter Level 3 — a remote heap corruption bug in a program linked against an old malloc implementation, with source supplied."
 permalink: /docs/wargames/drifter/drifter3/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -41,3 +38,32 @@ Level 3 is a remote heap corruption issue. Source code can be found in /drifter/
 [Once upon a free()...][] - suitable reading material, amongst others.
 
   [Once upon a free()...]: http://phrack.org/archives/issues/57/9.txt
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Where it fits:** Drifter level 3 of 0–15, in the memory corruption stage of the game. The page does not say which account you start as, so check with `id` after connecting. The source is in `/drifter/drifter3_src/`.
+
+### What this level teaches
+
+Classic heap-metadata attacks against an allocator without modern checks.
+
+### Key ideas
+
+- **Ancient malloc.** The program uses an old allocator that does not validate its internal metadata, which the page says should make it easily exploitable.
+- **Unlink-style attacks.** Corrupting a chunk's links so that a later free writes where you choose.
+- **Remote.** You deliver the corruption over the network, so build a reliable client.
+- **Reading.** "Once upon a free()..." is the suggested paper.
+
+### How to approach it
+
+1. Read the allocator behaviour and the program's use of it.
+2. Find the overflow and what chunk it reaches.
+3. Turn the corrupted metadata into a controlled write, then into code execution.
+
+### Why it matters
+
+Modern allocators add many checks because of exactly this class of attack.
+
+<!-- study-guide:end -->

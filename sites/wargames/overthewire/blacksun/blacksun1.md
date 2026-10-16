@@ -1,10 +1,7 @@
 ---
 title: Blacksun1
-description: 'Level1 is a trivial stack buffer overflow. Note that you''ll probably
-
-  find it easier to use the compiled version than compiling it from
-
-  source.'
+description: "Blacksun Level 1 — a trivial stack overflow in a binary with ASLR but no PIE and no stack protector, so fixed program addresses can be used."
+excerpt: "Blacksun Level 1 — a trivial stack overflow in a binary with ASLR but no PIE and no stack protector, so fixed program addresses can be used."
 permalink: /docs/wargames/blacksun/blacksun1/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -47,4 +44,31 @@ Level1 is a trivial stack buffer overflow. Note that you'll probably find it eas
 |--------------------------------------------:+:----------------|
 | Location: 				      | /levels/level1  |
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** the vulnerable program is `/levels/level1` on the Blacksun host.
+
+### What this level teaches
+
+How to reason about which parts of an address space are randomised and which are not.
+
+### Key ideas
+
+- **ASLR without PIE.** The stack and libraries move, but the main program's code and data stay at fixed addresses, so you can still reference them.
+- **No stack protector.** There is no canary to detect an overwritten return address.
+- **Use the compiled binary.** The page notes that it is easier to analyse the compiled version than to compile the source yourself.
+- **Non-executable pages are off,** so classic shellcode is possible, but you must find a reliable way to reach it.
+
+### How to approach it
+
+1. Check the protections with the table on the page and with tools such as `checksec`.
+2. Find the offset to the return address in `gdb`.
+3. Choose a return target that is stable despite randomisation.
+
+### Why it matters
+
+Understanding what each mitigation does and does not randomise is the heart of exploit development.
+
+<!-- study-guide:end -->

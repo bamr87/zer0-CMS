@@ -1,10 +1,7 @@
 ---
 title: Blacksun2
-description: 'Level2 is a test application from a [pop3 library][] that''s pretty
-
-  buggy. The idea is to write a pop3 server to trigger a vulnerability
-
-  (pick any you like :p) in the code and get a shell.'
+description: "Blacksun Level 2 — write a malicious POP3 server that triggers a vulnerability in a buggy mail-client library and gets a shell despite ASLR."
+excerpt: "Blacksun Level 2 — write a malicious POP3 server that triggers a vulnerability in a buggy mail-client library and gets a shell despite ASLR."
 permalink: /docs/wargames/blacksun/blacksun2/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -60,3 +57,33 @@ Binary information
 | Location:                                   | /levels/level2							 	|
 
   [pop3 library]: http://brouits.free.fr/libspopc/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the test client is `/levels/level2`, built from the libspopc 0.7 sources in `/levels/2/`.
+
+### What this level teaches
+
+Attacking a client by controlling the server it talks to.
+
+### Key ideas
+
+- **The server is the attacker.** The test application connects to a POP3 server; you write that server and craft responses that trigger a bug in the parsing code.
+- **Code auditing.** The challenge says to pick any vulnerability you like, so finding one comes first. Read the library source for unchecked lengths and copies.
+- **Position-independent code.** The note about compile options means libraries use relocatable code, so addresses are randomised.
+- **Remote and ASLR.** You must work out addresses without being able to attach a debugger to the live run.
+- **Be generous.** The page suggests telling the library's author about any real bugs you find.
+
+### How to approach it
+
+1. Read the POP3 protocol basics and the library's response-handling code.
+2. Build a minimal fake server that produces ordinary responses, then alter one field at a time.
+3. Turn a crash into control of execution.
+
+### Why it matters
+
+Malicious servers attacking vulnerable clients (mail clients, browsers, update tools) are a major real-world attack class.
+
+<!-- study-guide:end -->

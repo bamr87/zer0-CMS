@@ -1,10 +1,7 @@
 ---
 title: Utumno
-description: 'Utumno is a wargame that has been rescued from the demise of
-
-  intruded.net, previously hosted on utumno.intruded.net. Big thanks
-
-  to adc, morla and reth for their help in resurrecting this game!'
+description: "Utumno is a binary-exploitation wargame rated 4/10 by its authors — slightly harder than Behemoth — with undocumented levels you analyse yourself."
+excerpt: "Utumno is a binary-exploitation wargame rated 4/10 by its authors — slightly harder than Behemoth — with undocumented levels you analyse yourself."
 permalink: /docs/wargames/utumno/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -67,3 +64,44 @@ To login to the first level use:
     Password: utumno0
 
 Data for the levels can be found in **/utumno/**.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+This guide is spoiler-free. It explains how to approach Utumno and what each stage asks of you, but upstream deliberately withholds level descriptions, so there are no level-specific claims here beyond what the index says.
+
+### What Utumno teaches
+
+Utumno is a regular binary-exploitation wargame rescued from intruded.net. Its authors call it slightly harder than Behemoth and a lot harder than Leviathan.
+
+### Connecting
+
+Utumno is reached with SSH at `utumno.labs.overthewire.org` on port 2227. Levels are accounts called `utumno0`, `utumno1` and so on, and the level data is in `/utumno/`. These games were rescued from the defunct intruded.net with thanks to adc, morla and reth.
+
+### Prerequisites
+
+Finish Narnia and Behemoth first. The authors state that Utumno is a lot harder than Leviathan and a bit harder than Behemoth, so if you have not beaten those two you will probably want to do that before starting.
+
+### A reconnaissance checklist
+
+1. `ls -l /utumno/` and look at the permissions. A setuid bit marks the program that is your route to the next user.
+2. `file` and `strings` on the binary.
+3. Run it normally, then with odd input.
+4. `ltrace` and `strace` for library and system calls.
+5. `gdb` or `objdump -d` for the logic.
+6. Decide what kind of flaw you are looking at before choosing an attack.
+
+### How the levels are numbered
+
+The page for Level N is the account `utumnoN`. Each level's password is typically stored in a file readable only by the next user, and your task is to get the program for level N to read or reveal it.
+
+### Tools
+
+`gdb`, `objdump`, `ltrace`, `strace`, `ghidra`, `gcc`, `nc`, `pwntools`, and a notes file for addresses, offsets and observations.
+
+### Keep it ethical
+
+Everything here is for the wargame servers. Do not attack other systems, and do not share passwords or complete solutions that would spoil the game for others.
+
+<!-- study-guide:end -->

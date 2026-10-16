@@ -1,12 +1,6 @@
 ---
 title: Bandit3
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in a file called --spaces
-
-  in this filename-- located in the home directory'
+description: "Bandit Level 3 — read a file whose name contains spaces by using quoting, escaping or tab completion."
 permalink: /docs/wargames/bandit/bandit3/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -25,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 3 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 3 — read a file whose name contains spaces by using quoting, escaping or tab completion."
 draft: false
 keywords:
 - security
@@ -53,3 +47,31 @@ Helpful Reading Material
 - [Google Search for "spaces in filename"][]
 
 [Google Search for "spaces in filename"]: https://www.google.com/search?q=spaces+in+filename
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit2`, find the password for `bandit3`.
+
+### What this level teaches
+
+How the shell splits a command line into words, and how to keep a filename with spaces together.
+
+### Key ideas
+
+- **Word splitting.** The shell breaks a command at every space, so `cat my file` is read as two arguments, `my` and `file`.
+- **Quoting** (single or double quotes) and **backslash escaping** both tell the shell "treat this as one word".
+- **Tab completion** has the shell finish a name for you, inserting the correct escapes automatically.
+
+### How to approach it
+
+1. `ls` shows the file. Note how its name appears.
+2. Try the three techniques above on a harmless file first, for example one you create yourself in a `mktemp -d` directory.
+3. Start typing the name and press Tab. Seeing the escapes the shell inserts is the quickest way to understand them.
+
+### Why it matters
+
+Spaces and special characters in filenames cause the classic scripting bugs. Always quoting variables in scripts (`"$file"`) comes directly from this lesson.
+
+<!-- study-guide:end -->

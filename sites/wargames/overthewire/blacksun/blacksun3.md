@@ -1,8 +1,7 @@
 ---
 title: Blacksun3
-description: 'Level3 is a blast from the past, with not much details and a sstriped
-
-  binary!'
+description: "Blacksun Level 3 — analyse a stripped binary with little documentation, work out what it expects, and exploit it, with some brute force."
+excerpt: "Blacksun Level 3 — analyse a stripped binary with little documentation, work out what it expects, and exploit it, with some brute force."
 permalink: /docs/wargames/blacksun/blacksun3/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -47,3 +46,31 @@ Experiment around / partially disassemble level3, work out what it wants, and ho
 |--------------------------------------------:+:----------------|
 | Location:                                   | /levels/level3  |
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the target is `/levels/level3`; it is a stripped binary with stack protection and ASLR on and PIE off.
+
+### What this level teaches
+
+Reverse engineering with no symbols and no source.
+
+### Key ideas
+
+- **Stripped binaries.** Function names are gone, so you identify functions by behaviour and by the library calls they make.
+- **Partial disassembly.** The page encourages experimenting and disassembling only the interesting parts.
+- **Stack protector.** With SSP enabled, overwriting the return address crudely will abort the program, so you need a way around or an information leak.
+- **Brute force.** If a protection value has few possibilities per attempt, repeated attempts can defeat it.
+
+### How to approach it
+
+1. Run the program, observe its behaviour and input format, and trace its system calls.
+2. Disassemble the input-handling path in `objdump` or Ghidra.
+3. Identify the weakness and decide whether a leak or brute force is the practical bypass.
+
+### Why it matters
+
+Most real targets have no source. Learning to find the bug from the binary is a core skill.
+
+<!-- study-guide:end -->

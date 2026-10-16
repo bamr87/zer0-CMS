@@ -1,8 +1,7 @@
 ---
 title: Reading material
-description: 'Reading material
-
-  ================'
+description: "Blacksun reading list — papers on format strings, heap exploitation, frame-pointer overwrites, ASLR, PaX, stack protection and hardware defences."
+excerpt: "Blacksun reading list — papers on format strings, heap exploitation, frame-pointer overwrites, ASLR, PaX, stack protection and hardware defences."
 permalink: /docs/wargames/blacksun/reading_material/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -138,3 +137,31 @@ If you have some relevant papers that would be suitable for this site, please dr
   [Advances In Software Attack]: papers/advancesinsoftwareattacks.pdf
   [Seccomp announcement]: http://kerneltrap.org/node/4005
   [me]: mailto:andrewg@felinemenace.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+This list is a curated syllabus for Blacksun, and it is useful for anyone studying exploitation.
+
+### How to use this list
+
+- **Start with the bug class you are about to face.** Format strings for Level 0; stack overflows and frame-pointer overwrites for Level 1; heap papers for Level 4.
+- **Read the historical papers for ideas,** not as current recipes. The page itself warns that later glibc versions added checks that defeat some older heap attacks.
+- **Read the defence documents too.** Understanding how PaX, Execshield, StackGuard and the NX bit work tells you exactly what each protection does and does not stop.
+- **Then read the general papers and presentations,** which give a wider view of the field.
+- **Secure computing.** The final section collects material on building safer systems, the other side of the same coin.
+
+### A suggested order
+
+1. A format-string paper (Scut's is the class paper).
+2. Heap exploitation classics, then the more recent glibc-specific work.
+3. Frame-pointer overwrites.
+4. ASLR, PaX and Execshield documentation.
+5. Stack-protection and hardware-protection (NX bit) papers.
+
+### Contributing
+
+The list ends with an invitation to email the maintainer with other good papers.
+
+<!-- study-guide:end -->

@@ -1,12 +1,7 @@
 ---
 title: Vortex1
-description: 'Canary Values
-
-  -------------
-
-  We are looking for a specific value in ptr. You may need to consider
-
-  how bash handles EOF..'
+description: "Vortex Level 1 — a buffer overflow must set a pointer to a specific value, with a hint about how bash handles end of file."
+excerpt: "Vortex Level 1 — a buffer overflow must set a pointer to a specific value, with a hint about how bash handles end of file."
 permalink: /docs/wargames/vortex/vortex1/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -51,3 +46,32 @@ Reading Material
 
 [Smashing the Stack for Fun and Profit]: http://www.phrack.com/issues/49/14.html#article
 [Smashing The Modern Stack For Fun And Profit]: https://www.exploit-db.com/papers/13162/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex1`, obtain access to `vortex2`.
+
+### What this level teaches
+
+How to overwrite a specific value in memory and how shell input handling can interfere with doing so.
+
+### Key ideas
+
+- **Target value.** The page says you are looking for a particular value in `ptr`, a variable you must overwrite precisely.
+- **Canary values.** The level title refers to a value placed to detect overflows, and to what it takes to preserve or satisfy it.
+- **Shell and EOF.** The page hints that how bash treats end-of-file matters to your input. Pipelines, here-strings and reading from files may behave differently.
+- **Reading.** "Smashing the Stack for Fun and Profit" and its modern follow-up are linked.
+
+### How to approach it
+
+1. Read the source and compute how many bytes separate the buffer from `ptr`.
+2. Build the exact bytes with a script, mindful of endianness.
+3. If the program reads input oddly, test how your input arrives.
+
+### Why it matters
+
+It trains you to control memory byte by byte, and to debug the delivery mechanism as well as the payload.
+
+<!-- study-guide:end -->

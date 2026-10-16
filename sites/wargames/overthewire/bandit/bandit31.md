@@ -1,10 +1,6 @@
 ---
 title: Bandit31
-description: 'Level Goal
-
-  ----------
-
-  There is a git repository at ssh://bandit30-git@bandit.labs.overthewire.org/home/bandit30-git/repo via the port 2220. The password for the user bandit30-git is the same as for the user bandit30.'
+description: "Bandit Level 31 — find a secret stored in a Git tag rather than in any file or branch."
 permalink: /docs/wargames/bandit/bandit31/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -23,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 31 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 31 — find a secret stored in a Git tag rather than in any file or branch."
 draft: false
 keywords:
 - security
@@ -56,3 +52,31 @@ Helpful Reading Material
 
 [Installing Git]: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 [Git from the Bottom Up]: https://jwiegley.github.io/git-from-the-bottom-up/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** using the password for `bandit30`, find the password for `bandit31`.
+
+### What this level teaches
+
+That Git stores more than files and branches, including tags and other references.
+
+### Key ideas
+
+- **Tags** are permanent labels on a specific commit, usually marking releases such as `v1.0`.
+- **Annotated tags** can carry a message of their own.
+- **`git tag`** lists them and `git show TAG` displays what each points to.
+- **Searching a repo.** When files and logs reveal nothing, enumerate every kind of reference Git keeps.
+
+### How to approach it
+
+1. Clone the repository and check the visible files and log.
+2. List the tags in the repository and inspect them.
+
+### Why it matters
+
+Secrets can hide in the less obvious corners of a repository, which is why secret-scanning tools search all references, not just the latest files.
+
+<!-- study-guide:end -->

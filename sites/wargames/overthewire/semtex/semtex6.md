@@ -1,16 +1,7 @@
 ---
 title: Semtex6
-description: 'ICMP forging
-
-  ------------
-
-  Send a special ICMP packet to an unknown host. Add the correct
-
-  payload to it, to make sure you can receive the password. Spoof your
-
-  origin address and make semtex believe, the packet is really coming
-
-  from some government ser...'
+description: "Semtex Level 6 — forge an ICMP packet with a spoofed source address using a raw socket helper."
+excerpt: "Semtex Level 6 — forge an ICMP packet with a spoofed source address using a raw socket helper."
 permalink: /docs/wargames/semtex/semtex6/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -57,3 +48,32 @@ Reading Material
 
 [ICMP Request For Comment]: http://www.faqs.org/rfcs/rfc792.html
 [Mixter's raw socket tutorial]: http://mixter.void.ru/rawip.html
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the helper is `/semtex/semtexraw`; more instructions are in your home directory.
+
+### What this level teaches
+
+Raw sockets, ICMP and source-address spoofing.
+
+### Key ideas
+
+- **ICMP.** The protocol behind `ping`, used for network control messages.
+- **Raw sockets.** They let a program craft packets, including headers; this normally requires special privilege, which is why a helper is provided.
+- **Spoofing.** The page asks you to make the packet appear to come from a `.gov` server and notes that your sending host needs a reverse DNS entry.
+- **Reading.** The ICMP RFC and a raw socket tutorial are linked.
+
+### How to approach it
+
+1. Read the helper's source and the instructions in your home directory.
+2. Build the ICMP message with the required payload.
+3. Send it and listen for the reply.
+
+### Why it matters
+
+Spoofing is the basis of reflection attacks, and source address validation is the defence.
+
+<!-- study-guide:end -->

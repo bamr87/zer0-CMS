@@ -1,6 +1,7 @@
 ---
 title: Semtex2
-description: "Dynamic tricks\n--------------\nThis program checks your user ID.\n \nPerhaps you can trick it, so that it thinks you have a different one.\n \nThink dynamically."
+description: "Semtex Level 2 — a program checks your user ID; trick it into seeing a different one using function interception."
+excerpt: "Semtex Level 2 — a program checks your user ID; trick it into seeing a different one using function interception."
 permalink: /docs/wargames/semtex/semtex2/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -45,3 +46,32 @@ Reading Material
 - [Link][]
 
 [Link]: http://www.google.com/search?q=linux+function+interception
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the goal is to make the program believe you are a different user.
+
+### What this level teaches
+
+Dynamic tricks: changing a program's behaviour without changing the program.
+
+### Key ideas
+
+- **Library calls can be replaced.** On Linux, the dynamic linker can be told to load your own version of a function before the system's, so the program calls yours.
+- **Think dynamically.** The page's hint is to think about what happens at run time rather than in the file on disk.
+- **The reading link.** The page points you to a search about Linux function interception.
+- **Limits.** Setuid programs ignore some of these mechanisms for safety; understanding which is part of the challenge.
+
+### How to approach it
+
+1. Find which function the program uses to learn the user ID.
+2. Research function interception on Linux.
+3. Build and test a small replacement.
+
+### Why it matters
+
+Interposition is used by profilers and debuggers as well as by malware.
+
+<!-- study-guide:end -->

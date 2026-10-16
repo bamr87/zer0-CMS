@@ -1,14 +1,7 @@
 ---
 title: Vortex20
-description: 'Remote Integer Fun
-
-  ------------------
-
-  The source code for the exploitable application can be found in
-
-  "/home/vortex20". You must login to [vortex.labs.overthewire.org][]
-
-  to complete this level.'
+description: "Vortex Level 20 — exploit integer handling bugs in a remote application whose source is available."
+excerpt: "Vortex Level 20 — exploit integer handling bugs in a remote application whose source is available."
 permalink: /docs/wargames/vortex/vortex20/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -45,3 +38,31 @@ Remote Integer Fun
 The source code for the exploitable application can be found in "/home/vortex20". You must login to [vortex.labs.overthewire.org][] to complete this level.
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex20`, obtain access to `vortex21`. The exploitable source is in `/home/vortex20`.
+
+### What this level teaches
+
+Integer overflows, sign confusion and length checks that go wrong.
+
+### Key ideas
+
+- **Source provided.** Read it carefully; every arithmetic operation on a length or index deserves scrutiny.
+- **Integer pitfalls.** Wrap-around, signed versus unsigned comparison and truncation all turn safe-looking checks into bypassable ones.
+- **Remote.** You interact over the network, so scripting and careful framing of data are essential.
+
+### How to approach it
+
+1. List each integer in the code with its type and where it is checked and used.
+2. Find a value that passes the check but breaks the later use.
+3. Build the network exchange to deliver it.
+
+### Why it matters
+
+Integer errors lead to buffer overflows in many real programs and are easy to overlook in review.
+
+<!-- study-guide:end -->

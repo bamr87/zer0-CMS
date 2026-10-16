@@ -1,12 +1,6 @@
 ---
 title: Bandit8
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in the file data.txt
-
-  next to the word millionth'
+description: "Bandit Level 8 — find one line in a large text file with grep."
 permalink: /docs/wargames/bandit/bandit8/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -25,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 8 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 8 — find one line in a large text file with grep."
 draft: false
 keywords:
 - security
@@ -47,3 +41,30 @@ The password for the next level is stored in the file **data.txt** next to the w
 Commands you may need to solve this level
 -----------------------------------------
 [man](https://manpages.ubuntu.com/manpages/noble/man1/man.1.html), grep, sort, uniq, strings, base64, tr, tar, gzip, bzip2, xxd
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit7`, find the password for `bandit8`.
+
+### What this level teaches
+
+Searching inside files rather than for them: `grep`, the tool you will use more than any other for log and data analysis.
+
+### Key ideas
+
+- **`grep PATTERN FILE`** prints every line that contains the pattern.
+- **Line-oriented thinking.** Unix text tools treat each line as a record; the password is on the same line as the marker word.
+- Options like `-i` (ignore case), `-n` (show line numbers) and `-r` (recurse) turn grep into a general search tool.
+
+### How to approach it
+
+1. Look at the file's size first (`ls -l`, `wc -l`). Reading a huge file by eye is the wrong approach.
+2. Search for the marker word named in the Level Goal and read the line that comes back.
+
+### Why it matters
+
+Log analysis, code search and threat hunting all begin with grep. Learning it early makes every later level faster.
+
+<!-- study-guide:end -->

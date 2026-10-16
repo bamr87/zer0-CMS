@@ -1,14 +1,6 @@
 ---
 title: Bandit12
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in the file data.txt,
-
-  where all lowercase (a-z) and uppercase (A-Z) letters have been
-
-  rotated by 13 positions'
+description: "Bandit Level 12 — undo a ROT13 substitution cipher with the tr command."
 permalink: /docs/wargames/bandit/bandit12/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -27,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 12 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 12 — undo a ROT13 substitution cipher with the tr command."
 draft: false
 keywords:
 - security
@@ -55,3 +47,31 @@ Helpful Reading Material
 - [Rot13 on Wikipedia][]
 
 [Rot13 on Wikipedia]: https://en.wikipedia.org/wiki/ROT13
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit11`, find the password for `bandit12`.
+
+### What this level teaches
+
+Substitution ciphers, and character translation with `tr`.
+
+### Key ideas
+
+- **ROT13** replaces each letter by the one 13 places later in the alphabet, wrapping around. Because the alphabet has 26 letters, applying ROT13 twice returns the original, so the same operation encrypts and decrypts.
+- **`tr SET1 SET2`** replaces each character of the first set with the corresponding character of the second. Ranges such as `a-e` are allowed, so `tr 'a-e' 'A-E'` upper-cases only those five letters.
+- ROT13 is trivially reversible and provides obfuscation, not security.
+
+### How to approach it
+
+1. Work out by hand where `A` and `a` land after a 13-place shift, and write the two sets so every letter is covered.
+2. Remember upper and lower case need their own ranges.
+3. Test your `tr` command on a word you encode yourself before applying it to the real file.
+
+### Why it matters
+
+This is the first step of Krypton, where simple ciphers like this are attacked systematically with frequency analysis.
+
+<!-- study-guide:end -->

@@ -1,14 +1,7 @@
 ---
 title: Vortex7
-description: 'Checksum Fun
-
-  ------------
-
-  This level requires CRC\32(argv[1], strlen(argv[1])) to be
-
-  0xe1ca95ee. You might need to extract the crc tables from the
-
-  program.'
+description: "Vortex Level 7 — find input whose CRC-32 checksum equals a given value, learning that CRCs are not cryptographic hashes."
+excerpt: "Vortex Level 7 — find input whose CRC-32 checksum equals a given value, learning that CRCs are not cryptographic hashes."
 permalink: /docs/wargames/vortex/vortex7/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -53,3 +46,32 @@ Reading Material
 
 [CRC and How to Reverse It]: http://www.woodmann.com/fravia/crctut1.htm
 [CRC and How to Reverse It (mirror)]: http://taz.newffr.com/TAZ/Reverse_Engineering/CRC.html
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex7`, obtain access to `vortex8`.
+
+### What this level teaches
+
+How CRC checksums work and why they can be forged.
+
+### Key ideas
+
+- **The requirement.** The CRC-32 of the program's first argument must equal a specific 32-bit value shown on the page.
+- **CRC tables.** The program uses a lookup table you may need to extract from the binary.
+- **Linearity.** CRCs are linear over a finite field, so you can compute bytes that force any result, which is impossible with a proper cryptographic hash.
+- **Reading.** "CRC and How to Reverse It" is linked.
+
+### How to approach it
+
+1. Learn how a table-driven CRC-32 is computed.
+2. Choose how many free bytes you will append or choose and solve for them.
+3. Verify your answer with an independent CRC implementation.
+
+### Why it matters
+
+CRCs detect accidental errors, not tampering. Never use them for integrity against an attacker.
+
+<!-- study-guide:end -->

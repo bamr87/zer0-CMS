@@ -1,6 +1,7 @@
 ---
 title: Natas5
-description: "Username: natas5\n    URL:      http://natas5.natas.labs.overthewire.org"
+description: "Natas Level 5 — a login state is stored in a cookie the user can edit; learn to inspect and change cookies."
+excerpt: "Natas Level 5 — a login state is stored in a cookie the user can edit; learn to inspect and change cookies."
 permalink: /docs/wargames/natas/natas5/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,30 @@ sidebar_label: "Level 5"
 
     Username: natas5
     URL:      http://natas5.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas5` and find the password for `natas6`.
+
+### What this level teaches
+
+How cookies carry state between requests, and the danger of storing trust decisions in them.
+
+### Key ideas
+
+- **Cookies.** Small name-value pairs the server asks the browser to store and return with every request.
+- **Visible and editable.** The developer tools show all cookies for the site, and you can change them or send your own.
+- **State must be verified.** If the server simply believes a cookie that says you are authorised, anyone can claim that.
+
+### How to approach it
+
+1. Look at the page's message about your status, then check the cookies the browser holds for this site.
+2. Think about what value would change the server's decision.
+
+### How developers prevent it
+
+Keep authorisation state on the server and give the client only an unguessable session identifier, or sign any data you must hand to the client.
+
+<!-- study-guide:end -->

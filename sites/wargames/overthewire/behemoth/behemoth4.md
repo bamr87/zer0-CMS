@@ -1,6 +1,7 @@
 ---
 title: Behemoth4
-description: There is no information for this level, intentionally.
+description: "Behemoth Level 4 — a program reads a file whose name depends on its process ID, which opens the door to a race condition using symbolic links."
+excerpt: "Behemoth Level 4 — a program reads a file whose name depends on its process ID, which opens the door to a race condition using symbolic links."
 permalink: /docs/wargames/behemoth/behemoth4/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -33,3 +34,32 @@ sidebar_label: "Level 4"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 There is no information for this level, intentionally.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `behemoth4`, find the password for `behemoth5`.
+
+### What this level teaches
+
+Race conditions and predictable file names.
+
+### Key ideas
+
+- **Predictable names.** A file path derived from a value you can learn, such as the process ID, is predictable.
+- **Time window.** The program pauses between steps, which gives you time to change what a path points at.
+- **Symbolic links.** A link at the expected path can make the privileged program read a file it was never meant to show you.
+- **Controlling the process.** Job control or signals (`kill -STOP`) let you pause a process so you can prepare the link.
+
+### How to approach it
+
+1. Use `strace` to find which path the program opens and how it names it.
+2. Work out how to learn the process ID early and arrange for the right file to exist.
+3. Repeat until the timing works.
+
+### Why it matters
+
+Time-of-check to time-of-use bugs are a major real-world class, which is why secure temporary-file functions exist.
+
+<!-- study-guide:end -->

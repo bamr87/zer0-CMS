@@ -1,6 +1,7 @@
 ---
 title: Natas22
-description: "Username: natas22\n    URL:      http://natas22.natas.labs.overthewire.org"
+description: "Natas Level 22 — the server redirects you away, but still sends the page body; learn that a redirect does not stop the content from being delivered."
+excerpt: "Natas Level 22 — the server redirects you away, but still sends the page body; learn that a redirect does not stop the content from being delivered."
 permalink: /docs/wargames/natas/natas22/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 22"
 
     Username: natas22
     URL:      http://natas22.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas22` and find the password for `natas23`.
+
+### What this level teaches
+
+How HTTP redirects really work, and how browsers hide what the server sent.
+
+### Key ideas
+
+- **A redirect is a response.** The server answers with a status like 302 and a `Location` header, and may still include a body.
+- **Browsers follow it automatically,** so you never see the body of the first response.
+- **`curl` shows everything.** Tools that do not follow redirects, or that print them, reveal the full reply.
+- **Server-side logic does not halt.** Code that sets a redirect but does not stop executing still produces output.
+
+### How to approach it
+
+1. Request the page without following redirects and read the whole response.
+2. Study the source to learn which parameter triggers the privileged behaviour.
+
+### How developers prevent it
+
+Always stop execution after sending a redirect, and perform the authorisation check before generating any sensitive output.
+
+<!-- study-guide:end -->

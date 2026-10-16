@@ -1,16 +1,7 @@
 ---
 title: Semtex1
-description: 'Simple encryption
-
-  -----------------
-
-  A password has been crypted using the /semtex/semtex1 tool.
-
-  The crypted password is HRXDZNWEAWWCP.
-
-  You have to reverse engineer the algorithm and decrypt the password.
-
-  You might try the -v switch for encrypt.'
+description: "Semtex Level 1 — reverse engineer a simple encryption tool and decrypt a given ciphertext."
+excerpt: "Semtex Level 1 — reverse engineer a simple encryption tool and decrypt a given ciphertext."
 permalink: /docs/wargames/semtex/semtex1/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -46,3 +37,31 @@ Simple encryption
 -----------------
 A password has been crypted using the /semtex/semtex1 tool. The crypted password is HRXDZNWEAWWCP. You have to reverse engineer the algorithm and decrypt the password. You might try the -v switch for encrypt.
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the goal is to decrypt the password shown on the page, which was produced by `/semtex/semtex1`.
+
+### What this level teaches
+
+Working out an encryption algorithm by experiment and by reading the program.
+
+### Key ideas
+
+- **Black-box analysis.** The page notes the tool has a `-v` switch for encryption. Feed it simple inputs and watch the output.
+- **Look for structure.** Does the same letter always encrypt the same way? Does position matter? Does the output length match?
+- **Invert it.** Once you understand the transformation you can write the reverse.
+- **Reading code.** Disassembly can confirm your hypothesis.
+
+### How to approach it
+
+1. Run the tool with inputs like all `A`s, a single changed letter and different lengths.
+2. Formulate a rule and test predictions.
+3. Apply the inverse to the ciphertext on the page.
+
+### Why it matters
+
+It is the same method used to break many home-made ciphers.
+
+<!-- study-guide:end -->

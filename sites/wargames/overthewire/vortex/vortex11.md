@@ -1,12 +1,7 @@
 ---
 title: Vortex11
-description: 'Chunk Corruption
-
-  ----------------
-
-  You must corrupt the heap in order to gain arbitrary control of this
-
-  program. Do recall, the application is using phkmalloc.'
+description: "Vortex Level 11 — corrupt the heap to gain arbitrary control of a program that uses the phkmalloc allocator."
+excerpt: "Vortex Level 11 — corrupt the heap to gain arbitrary control of a program that uses the phkmalloc allocator."
 permalink: /docs/wargames/vortex/vortex11/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -56,3 +51,32 @@ Reading Material
 [Once upon a free()]: http://www.phrack.org/issues.html?issue=57&id=9#article
 [Advanced Doug Lea's malloc exploits]: http://www.phrack.org/issues.html?issue=61&id=6#article
 [Exploiting the Wilderness]: http://archive.cert.uni-stuttgart.de/vuln-dev/2004/02/msg00025.html
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex11`, obtain access to `vortex12`.
+
+### What this level teaches
+
+Heap exploitation against a specific allocator.
+
+### Key ideas
+
+- **The heap.** Dynamically allocated memory managed by an allocator that keeps its own metadata.
+- **phkmalloc.** The BSD allocator named in the level; its structure determines which corruptions are useful.
+- **Chunk corruption.** Overflowing one allocation into a neighbour's metadata can turn later allocator operations into controlled writes.
+- **Reading.** The page lists BSD heap smashing, "Once upon a free()", Doug Lea malloc exploits and "Exploiting the Wilderness".
+
+### How to approach it
+
+1. Read the papers and then the allocator's behaviour in this program.
+2. Map how allocations are laid out for a given input.
+3. Craft the overflow and confirm its effect in a debugger.
+
+### Why it matters
+
+Heap bugs dominate modern vulnerability reports, and the techniques follow the same ideas.
+
+<!-- study-guide:end -->

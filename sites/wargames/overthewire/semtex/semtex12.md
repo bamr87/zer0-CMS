@@ -1,16 +1,7 @@
 ---
 title: Semtex12
-description: 'Authentication Daemon
-
-  ---------------------
-
-  There is an authentication daemon waiting on brebera port 24012. You
-
-  connect to it, supply your password and get authenticated. The
-
-  semtex 12 password will give you user access, the admin password
-
-  will give...'
+description: "Semtex Level 12 — an authentication daemon and a remote file reader, where speed matters because the server is fast."
+excerpt: "Semtex Level 12 — an authentication daemon and a remote file reader, where speed matters because the server is fast."
 permalink: /docs/wargames/semtex/semtex12/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -50,9 +41,31 @@ After authentication you connect to the remote file system reader on port 24013.
 
 Thanks to bk for this level!
 
+<!-- study-guide:start -->
 
+## Study guide
 
+**Level map:** the authentication daemon is on port 24012 and the file reader on port 24013 of the Semtex network host.
 
+### What this level teaches
 
+Multi-step network protocols and timing-sensitive attacks.
 
+### Key ideas
 
+- **Two services.** You authenticate on one port, then use the other to list and read files, with the privilege level depending on your credentials.
+- **Passwords by level.** The Semtex 12 password gives user access, while an admin password gives more.
+- **A fast server.** The page asks whether you can be faster, which suggests a timing-dependent weakness.
+- **Where the target is.** The Semtex 13 password is in one of the files on the remote file system.
+
+### How to approach it
+
+1. Explore both services manually with netcat.
+2. Look for a gap in time or sequence between authentication and authorisation.
+3. Script the sequence and run it quickly.
+
+### Why it matters
+
+Race conditions between check and use are a persistent class of real vulnerability.
+
+<!-- study-guide:end -->

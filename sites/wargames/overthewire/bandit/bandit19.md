@@ -1,14 +1,6 @@
 ---
 title: Bandit19
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in a file readme in
-
-  the homedirectory. Unfortunately, someone has modified .bashrc
-
-  to log you out when you log in with SSH.'
+description: "Bandit Level 19 — read a file even though .bashrc logs you out, by running a command remotely instead of opening a shell."
 permalink: /docs/wargames/bandit/bandit19/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -27,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 19 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 19 — read a file even though .bashrc logs you out, by running a command remotely instead of opening a shell."
 draft: false
 keywords:
 - security
@@ -50,3 +42,29 @@ Commands you may need to solve this level
 -----------------------------------------
 ssh, ls, cat
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit18`, find the password for `bandit19`.
+
+### What this level teaches
+
+That an SSH login is not the only way to run something on a server, and what shell startup files do.
+
+### Key ideas
+
+- **`.bashrc`.** A script that bash reads when it starts, used to customise your shell. Whoever controls it controls what happens at login, and attackers abuse that for persistence.
+- **Interactive vs command mode.** `ssh user@host` opens an interactive shell, but `ssh user@host COMMAND` runs one command and returns.
+- Read the argument description in `man ssh` to see how the command is passed.
+
+### How to approach it
+
+1. Try logging in normally and observe what the modified `.bashrc` does.
+2. Use the remote-command form of ssh to run `ls` first, then `cat` the file the Level Goal mentions.
+
+### Why it matters
+
+Automation tools such as Ansible, deployment scripts and Git over SSH all run commands remotely this way.
+
+<!-- study-guide:end -->

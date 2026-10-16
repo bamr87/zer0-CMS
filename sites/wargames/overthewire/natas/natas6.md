@@ -1,6 +1,7 @@
 ---
 title: Natas6
-description: "Username: natas6\n    URL:      http://natas6.natas.labs.overthewire.org"
+description: "Natas Level 6 — read the server-side logic the site exposes and follow it to a file that holds the secret, learning how sensitive includes leak."
+excerpt: "Natas Level 6 — read the server-side logic the site exposes and follow it to a file that holds the secret, learning how sensitive includes leak."
 permalink: /docs/wargames/natas/natas6/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,30 @@ sidebar_label: "Level 6"
 
     Username: natas6
     URL:      http://natas6.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas6` and find the password for `natas7`.
+
+### What this level teaches
+
+How reading source code shows you what the server compares your input against, and how that comparison value ends up exposed.
+
+### Key ideas
+
+- **Source disclosure.** The page offers its own source code. A good habit is to read every offered source file in full.
+- **Include files.** Applications often keep configuration or secrets in a separate file that is loaded by the main script.
+- **Reachable by URL.** If that file lies inside the web root, anyone can request it directly.
+
+### How to approach it
+
+1. Open the source and ask: what does the code compare my input to, and where does that value come from?
+2. Fetch the referenced file by its path.
+
+### How developers prevent it
+
+Store secrets outside the web root or in environment variables, and give server-side includes extensions that the web server will not serve as text.
+
+<!-- study-guide:end -->

@@ -1,8 +1,7 @@
 ---
 title: Drifter6
-description: 'Level 6 is a simple remote daemon with a particular vulnerability. In
-
-  what I intended for this level, it is running in a vulnerable state :P'
+description: "Drifter Level 6 — a simple remote daemon with a format-string vulnerability, left in a deliberately vulnerable state."
+excerpt: "Drifter Level 6 — a simple remote daemon with a format-string vulnerability, left in a deliberately vulnerable state."
 permalink: /docs/wargames/drifter/drifter6/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -49,3 +48,32 @@ As usual when I grab random code and look over it, someone might want to tell th
   [Advances in format string exploitation]: http://www.phrack.org/archives/59/p59-0x07.txt
   [Format String Technique]: http://julianor.tripod.com/bc/NN-formats.txt
   [Exploiting Format String Vulnerabilities]: http://doc.bughunter.net/format-string/exploit-fs.html
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Where it fits:** Drifter level 6 of 0–15, in the remote daemons stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+
+### What this level teaches
+
+Remote format-string exploitation.
+
+### Key ideas
+
+- **Format strings** let an attacker read and write memory when user data is used as the format argument of a `printf`-style call.
+- **Remote.** You will drive the exploit over the network.
+- **Reading.** The page links "Advances in format string exploitation", "Format String Technique" and "Exploiting Format String Vulnerabilities".
+- **Real-world note.** The author remarks that the code came from somewhere else and someone might want to tell the developer.
+
+### How to approach it
+
+1. Identify how your input reaches the formatting function.
+2. Leak stack values to learn the layout.
+3. Use a write specifier to alter the value or pointer that gives you control.
+
+### Why it matters
+
+It repeats the lesson that unvalidated formatting is dangerous, this time in a network service.
+
+<!-- study-guide:end -->

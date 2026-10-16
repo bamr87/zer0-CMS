@@ -1,6 +1,7 @@
 ---
 title: Natas18
-description: "Username: natas18\n    URL:      http://natas18.natas.labs.overthewire.org"
+description: "Natas Level 18 — session identifiers come from a small number space; learn how predictable session IDs can be brute-forced to hijack an admin session."
+excerpt: "Natas Level 18 — session identifiers come from a small number space; learn how predictable session IDs can be brute-forced to hijack an admin session."
 permalink: /docs/wargames/natas/natas18/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 18"
 
     Username: natas18
     URL:      http://natas18.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas18` and find the password for `natas19`.
+
+### What this level teaches
+
+Why session identifiers must be large, random and unpredictable.
+
+### Key ideas
+
+- **Sessions.** After login the server gives you an identifier in a cookie, and that identifier alone proves who you are.
+- **Small space.** If IDs are just small numbers, an attacker can try them all and eventually find an authenticated admin.
+- **Scripting.** Loop over the possible values, set the cookie and look for a change in the response.
+
+### How to approach it
+
+1. Read the source and work out the range of session IDs the application can issue.
+2. Write a loop that sends each candidate in the session cookie.
+3. Detect success by a distinctive difference in the reply.
+
+### How developers prevent it
+
+Use long cryptographically random session IDs from your framework, rotate them at login, expire them and bind them to additional checks where appropriate.
+
+<!-- study-guide:end -->

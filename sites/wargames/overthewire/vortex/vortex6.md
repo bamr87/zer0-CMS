@@ -1,12 +1,7 @@
 ---
 title: Vortex6
-description: 'Generic Binary Exploitation
-
-  ---------------------------
-
-  You must disassemble this level''s exploitable application in order
-
-  to find the hole.'
+description: "Vortex Level 6 — generic binary exploitation where you must disassemble the program to find the hole."
+excerpt: "Vortex Level 6 — generic binary exploitation where you must disassemble the program to find the hole."
 permalink: /docs/wargames/vortex/vortex6/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -49,3 +44,31 @@ Reading Material
 
 [Reconstructing Binaries to C For Beginners]: http://www.exploit-db.com/papers/13216/
 [Reverse Engineering - Functions... functions! functions!? sheesh]: http://www.exploit-db.com/papers/13215/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex6`, obtain access to `vortex7`.
+
+### What this level teaches
+
+Reverse engineering a program to discover a vulnerability without any description.
+
+### Key ideas
+
+- **No hints on purpose.** The page says only that you must disassemble the exploitable application.
+- **Reading assembly.** Identify function boundaries, arguments and local buffers, and rebuild what the C source would have looked like.
+- **Reading.** The page links two papers on reconstructing binaries to C for beginners and on reading functions in disassembly.
+
+### How to approach it
+
+1. Run the program normally, then disassemble with `objdump -d` or a GUI tool.
+2. Annotate each function with what it does, searching for unsafe copies and unchecked lengths.
+3. Test your suspicion with oversized input, then build the exploit.
+
+### Why it matters
+
+This is the real-world situation: no source, only a binary.
+
+<!-- study-guide:end -->

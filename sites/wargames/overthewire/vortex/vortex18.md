@@ -1,10 +1,7 @@
 ---
 title: Vortex18
-description: 'urandom seeds
-
-  -------------
-
-  Take advantage of the application''s urandom dependency.'
+description: "Vortex Level 18 — take advantage of how the program depends on /dev/urandom for its seeds."
+excerpt: "Vortex Level 18 — take advantage of how the program depends on /dev/urandom for its seeds."
 permalink: /docs/wargames/vortex/vortex18/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -40,4 +37,30 @@ urandom seeds
 -------------
 Take advantage of the application's urandom dependency.
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** logged in as `vortex18`, obtain access to `vortex19`.
+
+### What this level teaches
+
+How randomness sources are used, and what happens when a program uses them badly.
+
+### Key ideas
+
+- **`/dev/urandom`.** A cryptographically strong source of random bytes; it is only as good as how the program uses it.
+- **Dependence.** The program relies on it in a way you can influence or predict.
+- **Environment control.** Think about what the program does if the random source behaves differently, is exhausted, or is read in an unexpected way.
+
+### How to approach it
+
+1. Trace the program's file and system calls with `strace`.
+2. See exactly how many bytes it reads and what it does with them.
+3. Find the assumption that fails.
+
+### Why it matters
+
+Seeding mistakes are a recurring cause of weak keys and tokens.
+
+<!-- study-guide:end -->

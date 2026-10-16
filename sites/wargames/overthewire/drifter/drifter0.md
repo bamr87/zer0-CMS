@@ -1,8 +1,7 @@
 ---
 title: Drifter0
-description: 'Drifter can be accessed on drifter.labs.overthewire.org via SSH on port 2230. Level 0 listens
-
-  on port 1111.'
+description: "Drifter Level 0 — talk to an encrypted remote system-call proxy that you must drive with correctly formed syscalls to read a password file."
+excerpt: "Drifter Level 0 — talk to an encrypted remote system-call proxy that you must drive with correctly formed syscalls to read a password file."
 permalink: /docs/wargames/drifter/drifter0/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -87,3 +86,34 @@ The following sourcecode is located in /drifter/drifter0_src/ :
   [this]: http://www.google.com.au/search?q=linux+lxr+__NR_read&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a
   [http://lxr.linux.no]: http://lxr.linux.no
   [such as:]: http://lxr.linux.no/linux/include/asm-i386/unistd.h#L11
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the service is on port 1111 of the Drifter host. Your aim is to read `drifter0.password` and so get the password for `drifter0`.
+
+### What this level teaches
+
+How system calls work at the lowest level, and how to build a client for a custom protocol.
+
+### Key ideas
+
+- **A syscall proxy.** The server reads nine integers, decrypts them with RC4 and hands them to `syscall()`, so a client can ask the server to perform any system call on its behalf.
+- **RC4.** A stream cipher whose key is derived from your connecting IP address and port, so you must reproduce that derivation to encrypt your requests correctly.
+- **Calling convention.** System-call numbers and arguments are passed in registers, not on the stack. The page lists the relevant calls: `mmap2`, `read`, `open` and `write`.
+- **A chain of calls.** Allocate memory, read a filename into it, open the file, read its contents and write them to the socket.
+- **NAT warning.** Behind NAT your visible address and port change, so the page suggests working from the Vortex machine.
+- **Source.** The code is in `/drifter/drifter0_src/`.
+
+### How to approach it
+
+1. Read the source to understand exactly how the key is derived and how the nine integers are decoded.
+2. Write a client that encrypts and sends one harmless syscall first.
+3. Chain the calls listed on the page, using each response in the next request.
+
+### Why it matters
+
+Understanding syscalls demystifies shellcode, sandboxes and tools like `strace`.
+
+<!-- study-guide:end -->

@@ -1,14 +1,7 @@
 ---
 title: Krypton6
-description: 'Level Info
-
-  ----------
-
-  Hopefully by now its obvious that encryption using repeating keys is
-
-  a bad idea. Frequency analysis can destroy repeating/fixed key
-
-  substitution crypto.'
+description: "Krypton Level 6 — move from classical ciphers to stream ciphers and exploit a weak pseudo-random keystream using a known-plaintext attack."
+excerpt: "Krypton Level 6 — move from classical ciphers to stream ciphers and exploit a weak pseudo-random keystream using a known-plaintext attack."
 permalink: /docs/wargames/krypton/krypton6/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -83,3 +76,34 @@ The password for level 7 (krypton7) is encrypted with 'encrypt6'.
 Good Luck!
 
 [cryptool.]: http://www.cryptool.com/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `krypton6`, decrypt the file that holds the password for `krypton7`.
+
+### What this level teaches
+
+The ideas behind modern cryptography: one-time pads, block and stream ciphers, and what happens when the keystream is not truly random.
+
+### Key ideas
+
+- **One-time pad.** A key as long as the message, truly random and never reused, gives perfect secrecy. The page's example uses a book as a key, which shows why that is not random enough in practice.
+- **Block ciphers vs stream ciphers.** Block ciphers work on fixed-size chunks; stream ciphers generate a keystream combined byte by byte, typically by XOR.
+- **XOR.** `plaintext XOR keystream = ciphertext`, and XOR-ing again with the same keystream restores the plaintext.
+- **Weak generator.** The program mixes the key with a "random" number that is not strong enough, so the keystream has structure you can exploit.
+- **Work with bytes, not text.** Use `hexdump` or `xxd`, and tools like CrypTool.
+- **Hints.** The level directory contains hint files if you need a push, labelled `HINT1` and `HINT2`.
+
+### How to approach it
+
+1. Read all of the page, including the explanation of keys and streams.
+2. Use the provided `encrypt6` program on plaintext you choose, and compare the output carefully across runs.
+3. Look for repetition or predictability in the keystream, and use it on the password file.
+
+### Why it matters
+
+Real stream ciphers fail catastrophically when a keystream repeats or is predictable, and many protocols have been broken that way. Never reuse a nonce or write your own cipher.
+
+<!-- study-guide:end -->

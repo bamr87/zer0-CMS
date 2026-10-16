@@ -1,6 +1,7 @@
 ---
 title: Natas17
-description: "Username: natas17\n    URL:      http://natas17.natas.labs.overthewire.org"
+description: "Natas Level 17 — the application gives no feedback at all; learn time-based blind SQL injection, where a deliberate delay is the answer."
+excerpt: "Natas Level 17 — the application gives no feedback at all; learn time-based blind SQL injection, where a deliberate delay is the answer."
 permalink: /docs/wargames/natas/natas17/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 17"
 
     Username: natas17
     URL:      http://natas17.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas17` and find the password for `natas18`.
+
+### What this level teaches
+
+Using response time as the only observable signal.
+
+### Key ideas
+
+- **Time as a channel.** If the page always looks the same, you can still make the database pause when a condition is true and measure how long the response takes.
+- **Delay functions.** SQL dialects provide ways to sleep or run an expensive operation conditionally.
+- **Noise.** Network jitter produces false positives, so choose a delay that is clearly larger than normal variation and consider repeating questionable guesses.
+
+### How to approach it
+
+1. Use the previous blind level as your template.
+2. Replace "true/false in the page" with "slow/fast response".
+3. Time each request in your script and choose a threshold carefully.
+
+### How developers prevent it
+
+Use parameterised queries, impose database query time limits, and alert on unusual response times.
+
+<!-- study-guide:end -->

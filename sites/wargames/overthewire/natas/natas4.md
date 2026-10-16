@@ -1,6 +1,7 @@
 ---
 title: Natas4
-description: "Username: natas4\n    URL:      http://natas4.natas.labs.overthewire.org"
+description: "Natas Level 4 — the server decides who you are from the Referer header, which you control; learn to craft and modify HTTP requests."
+excerpt: "Natas Level 4 — the server decides who you are from the Referer header, which you control; learn to craft and modify HTTP requests."
 permalink: /docs/wargames/natas/natas4/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,30 @@ sidebar_label: "Level 4"
 
     Username: natas4
     URL:      http://natas4.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas4` and find the password for `natas5`.
+
+### What this level teaches
+
+That HTTP request headers are user-controlled, so any decision based on them is a weak one.
+
+### Key ideas
+
+- **Request headers.** Besides the URL, a browser sends headers such as `User-Agent`, `Cookie` and `Referer` (sic) describing the request.
+- **The Referer header** says which page you came from. Servers sometimes use it as a crude access check.
+- **You can send any header.** `curl -H` and a proxy let you set values the browser would not.
+
+### How to approach it
+
+1. Read what the page tells you about where it expects you to come from.
+2. Use a tool that lets you set the header yourself, then request the page again.
+
+### How developers prevent it
+
+Never use a client-supplied header as proof of identity or origin. Use real authentication and authorisation checks.
+
+<!-- study-guide:end -->

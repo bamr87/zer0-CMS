@@ -1,16 +1,6 @@
 ---
 title: Bandit14
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in
-
-  /etc/bandit\pass/bandit14 and can only be read by user
-
-  bandit14. For this level, you don''t get the next password, but you
-
-  get a private SSH key that can be used to log into the next l...'
+description: "Bandit Level 14 — authenticate to SSH with a private key instead of a password."
 permalink: /docs/wargames/bandit/bandit14/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -29,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 14 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 14 — authenticate to SSH with a private key instead of a password."
 draft: false
 keywords:
 - security
@@ -57,3 +47,32 @@ Helpful Reading Material
 - [SSH/OpenSSH/Keys][]
 
 [SSH/OpenSSH/Keys]: https://help.ubuntu.com/community/SSH/OpenSSH/Keys
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit13`, gain access to `bandit14`.
+
+### What this level teaches
+
+Public-key authentication, the way professionals actually log in to servers.
+
+### Key ideas
+
+- **Key pairs.** A private key stays secret with you; the matching public key sits on the server. The server proves you hold the private key without the key ever crossing the network.
+- **Strict permissions.** `ssh` refuses to use a private key that other users can read, printing "UNPROTECTED PRIVATE KEY FILE". Keys need mode `600`.
+- **`ssh -i FILE`** names the identity (private key) to use.
+- **Copying files.** `scp` copies files over SSH, and the same server can also connect back to itself.
+
+### How to approach it
+
+1. Find the key in your home directory and look at its permissions.
+2. Decide whether you will use the key from your own machine or from the server, and make the file permissions correct wherever it lives.
+3. Log in as the next user, then read that user's password from the location the Level Goal gives. You will need that password for the next level.
+
+### Why it matters
+
+Passwords get guessed and phished; keys are far harder to steal remotely. Almost every cloud server and Git host uses SSH keys.
+
+<!-- study-guide:end -->

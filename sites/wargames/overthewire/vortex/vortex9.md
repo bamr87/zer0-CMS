@@ -1,12 +1,7 @@
 ---
 title: Vortex9
-description: 'BlackBox
-
-  --------
-
-  There is no information available for this level. Login to
-
-  [vortex.labs.overthewire.org][] and check it out.'
+description: "Vortex Level 9 — \"BlackBox\": the page gives no information, so log in and investigate the level yourself."
+excerpt: "Vortex Level 9 — \"BlackBox\": the page gives no information, so log in and investigate the level yourself."
 permalink: /docs/wargames/vortex/vortex9/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -43,3 +38,31 @@ BlackBox
 There is no information available for this level. Login to [vortex.labs.overthewire.org][] and check it out.
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex9`, obtain access to `vortex10`.
+
+### What this level teaches
+
+Exploring an unknown level with nothing but your own reconnaissance.
+
+### Key ideas
+
+- **Black-box testing.** You see inputs and outputs but not the design.
+- **Recon checklist.** Look at the home directory, `/vortex/`, file types and permissions, any setuid binary, and run the program with various inputs.
+- **Make hypotheses.** State what you think it does, and design a test that could prove you wrong.
+
+### How to approach it
+
+1. Log in to `vortex.labs.overthewire.org` as the level's user and list everything relevant.
+2. Use `file`, `strings` and `ltrace`.
+3. Keep detailed notes of observed behaviour.
+
+### Why it matters
+
+Penetration testers frequently begin with exactly this: no documentation and a deadline.
+
+<!-- study-guide:end -->

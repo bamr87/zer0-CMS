@@ -1,6 +1,7 @@
 ---
 title: Natas2
-description: "Username: natas2\n    URL:      http://natas2.natas.labs.overthewire.org"
+description: "Natas Level 2 — notice that the page loads a resource you can follow, and discover what an exposed directory listing reveals."
+excerpt: "Natas Level 2 — notice that the page loads a resource you can follow, and discover what an exposed directory listing reveals."
 permalink: /docs/wargames/natas/natas2/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,30 @@ sidebar_label: "Level 2"
 
     Username: natas2
     URL:      http://natas2.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas2` and find the password for `natas3`.
+
+### What this level teaches
+
+How to enumerate the resources a page loads and explore the directories they live in.
+
+### Key ideas
+
+- **A page references other files.** Images, scripts and stylesheets each have a URL, and those URLs reveal folder names.
+- **Directory listing.** If a web server has "autoindex" enabled and a directory has no index page, visiting it lists every file inside.
+- **Walking up the path.** Removing the last part of a URL moves you to the parent folder, a basic reconnaissance move.
+
+### How to approach it
+
+1. Read the source and list every resource the page references.
+2. Visit the folder that holds a resource and see what the server shows you.
+
+### How developers prevent it
+
+Disable directory listings, keep sensitive files out of the web root, and treat every file reachable by URL as public.
+
+<!-- study-guide:end -->

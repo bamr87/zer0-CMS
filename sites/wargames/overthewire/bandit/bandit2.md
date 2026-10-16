@@ -1,12 +1,6 @@
 ---
 title: Bandit2
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in a file called -
-
-  located in the home directory'
+description: "Bandit Level 2 — read a file literally named \"-\" and learn why commands treat a leading dash as an option."
 permalink: /docs/wargames/bandit/bandit2/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -25,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 2 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 2 — read a file literally named \"-\" and learn why commands treat a leading dash as an option."
 draft: false
 keywords:
 - security
@@ -55,3 +49,31 @@ Helpful Reading Material
 
 [Google Search for "dashed filename"]: https://www.google.com/search?q=dashed+filename
 [Advanced Bash-scripting Guide - Chapter 3 - Special Characters]: https://linux.die.net/abs-guide/special-chars.html
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit1`, find the password for `bandit2`.
+
+### What this level teaches
+
+Why some filenames break commands, and how to talk to a command about a file that looks like an option.
+
+### Key ideas
+
+- **Options start with a dash.** `cat -n file` means "number the lines". A bare `-` is conventionally "standard input", so a command that receives only `-` does not see a file at all.
+- **The shell passes arguments through unchanged.** It is the program, not the shell, that decides `-` is special.
+- **Two standard remedies exist:** make the argument unmistakably a path, or tell the program that options have ended. Both are described in the man pages of nearly every command.
+
+### How to approach it
+
+1. Run `ls` and notice the odd filename. Try `cat` on it and observe what happens; failing on purpose is a good way to learn.
+2. Think about how to write a path that does not begin with a dash. The current directory has a short name you already know.
+3. Search `man cat` or `man bash` for the "end of options" convention, which is useful for every command you will ever use.
+
+### Why it matters
+
+Attackers deliberately create files whose names look like command-line flags, which can trick scripts that run `rm *` or `tar *` into executing options. Knowing the mechanism is how you defend against it.
+
+<!-- study-guide:end -->

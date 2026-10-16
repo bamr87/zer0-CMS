@@ -1,16 +1,6 @@
 ---
 title: Bandit1
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in a file called
-
-  readme located in the home directory. Use this password to log
-
-  into bandit1 using SSH. Whenever you find a password for a level,
-
-  use SSH (on port 2220) to log into that ...'
+description: "Bandit Level 1 — find and read a file named readme in your home directory using ls and cat."
 permalink: /docs/wargames/bandit/bandit1/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -29,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 1 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 1 — find and read a file named readme in your home directory using ls and cat."
 draft: false
 keywords:
 - security
@@ -57,3 +47,32 @@ Commands you may need to solve this level
 Passwords for levels are *not* saved automatically. If you do not save them yourself, you will need to start over from bandit0.
 
 Passwords also occasionally change. It is recommended to take notes on how to solve each challenge. As levels get more challenging, detailed notes are useful to return to where you left off, reference for later problems, or help others after you've completed the challenge.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit0`, find the password for `bandit1`.
+
+### What this level teaches
+
+Orientation in a Unix filesystem and your first real data-gathering commands. A password is waiting in an ordinary file; the skill is knowing where you are and how to look inside a file.
+
+### Key ideas
+
+- **Home directory** — the folder you land in after logging in, shorthand `~`. `pwd` prints the current directory.
+- **`ls`** lists a directory's contents. Options such as `-l` (long format) and `-a` (include hidden entries) change what you see.
+- **`cat`** prints a file's contents to the terminal.
+- **Everything is a file** — on Unix, configuration, devices and passwords are all just files with permissions.
+
+### How to approach it
+
+1. Look around before acting: `pwd`, then `ls`.
+2. Print the file that the Level Goal names.
+3. Copy the result into your notes file. The password is plain text, and the next level's login (`ssh bandit1@...`) needs it.
+
+### Why it matters
+
+"Where am I, what is here, what does it say?" is the loop you will run thousands of times, on every system you ever investigate.
+
+<!-- study-guide:end -->

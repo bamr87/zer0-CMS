@@ -1,6 +1,7 @@
 ---
 title: Natas11
-description: "Username: natas11\n    URL:      http://natas11.natas.labs.overthewire.org"
+description: "Natas Level 11 — a cookie is \"encrypted\" with repeating-key XOR; learn how a known plaintext reveals the key and lets you forge the cookie."
+excerpt: "Natas Level 11 — a cookie is \"encrypted\" with repeating-key XOR; learn how a known plaintext reveals the key and lets you forge the cookie."
 permalink: /docs/wargames/natas/natas11/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,32 @@ sidebar_label: "Level 11"
 
     Username: natas11
     URL:      http://natas11.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas11` and find the password for `natas12`.
+
+### What this level teaches
+
+How weak, home-made encryption fails against someone who knows part of the plaintext.
+
+### Key ideas
+
+- **XOR.** Combining two byte strings with exclusive-or is reversible: `(a XOR b) XOR b = a`.
+- **Known-plaintext attack.** If you know the original data and see the encrypted result, XOR-ing them together reveals the key.
+- **Repeating key.** A short key reused over a long message leaks quickly, as in Krypton's Vigenère levels.
+- **Forgery.** Once you have the key, you can build your own valid cookie.
+
+### How to approach it
+
+1. Read the source to learn what data is stored in the cookie and how it is encoded.
+2. Work out what plaintext the server started with and use it with the cookie value to recover the key.
+3. Create the data you want, encrypt it the same way, and send it back.
+
+### How developers prevent it
+
+Never invent encryption. Use authenticated encryption from a trusted library, or keep state on the server and send only a random session ID.
+
+<!-- study-guide:end -->

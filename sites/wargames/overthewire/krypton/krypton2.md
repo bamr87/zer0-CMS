@@ -1,10 +1,7 @@
 ---
 title: Krypton2
-description: 'Level Info
-
-  ----------
-
-  ROT13 is a simple substitution cipher.'
+description: "Krypton Level 2 — break a Caesar cipher by feeding the provided encryption program known text and watching how it responds."
+excerpt: "Krypton Level 2 — break a Caesar cipher by feeding the provided encryption program known text and watching how it responds."
 permalink: /docs/wargames/krypton/krypton2/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -72,3 +69,31 @@ Here is an example:
     krypton2@melinda:/tmp/tmp.Wf2OnCpCDQ$ ls
     ciphertext  keyfile.dat
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `krypton2`, decrypt the file that holds the password for `krypton3`.
+
+### What this level teaches
+
+A chosen-plaintext attack: if you can make a system encrypt text of your choice, you can learn its key.
+
+### Key ideas
+
+- **Caesar cipher.** A substitution cipher where the alphabet is shifted by a fixed amount, here with an unknown shift.
+- **Encryption oracle.** The `encrypt` program encrypts anything you give it using the secret key.
+- **Chosen plaintext.** Encrypting the full alphabet once shows exactly how every letter is transformed, which is enough to decrypt anything.
+- **Practical setup.** The program looks for its key file in your current directory and runs as the next user, so it needs a working directory under `/tmp` with a link to the key and permissive directory permissions. The page walks you through an example.
+
+### How to approach it
+
+1. Follow the setup in the page text to be able to run `encrypt`.
+2. Think about the smallest, most informative input to encrypt.
+3. Use what you learn to build the reverse mapping and apply it to the password file.
+
+### Why it matters
+
+Any system that lets attackers encrypt, decrypt or sign arbitrary data is an oracle. Many real attacks, from padding oracles to the ECB cut-and-paste in Natas, use this idea.
+
+<!-- study-guide:end -->

@@ -1,10 +1,6 @@
 ---
 title: Bandit33
-description: 'Level Goal
-
-  ----------
-
-  After all this git stuff, it''s time for another escape. Good luck!'
+description: "Bandit Level 33 — escape from a shell that converts everything you type to uppercase."
 permalink: /docs/wargames/bandit/bandit33/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -23,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 33 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 33 — escape from a shell that converts everything you type to uppercase."
 draft: false
 keywords:
 - security
@@ -45,3 +41,32 @@ After all this `git` stuff, it's time for another escape. Good luck!
 Commands you may need to solve this level
 -----------------------------------------
 sh, man
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit32`, find the password for `bandit33`.
+
+### What this level teaches
+
+How shell parameters and expansions work, by being forced to use only characters that survive uppercase conversion.
+
+### Key ideas
+
+- **Commands are case-sensitive.** `LS` is not `ls`, so a shell that upper-cases input rejects normal commands.
+- **Special parameters.** The shell defines variables such as the name of the running shell and the number of arguments. These are written with symbols and digits that uppercase conversion cannot change.
+- **Expansions** replace such a parameter with its value *before* the command runs, so you can obtain a lowercase command indirectly.
+- Read the "Special Parameters" section of `man bash`.
+
+### How to approach it
+
+1. Log in and observe exactly what the restricted program does to your input.
+2. Search the bash manual for parameters that are not letters.
+3. Think about what program that parameter's value would run, and what you could do from there.
+
+### Why it matters
+
+Input filters and blocklists are routinely bypassed by features of the interpreter behind them. This is the mindset behind many web and shell injection techniques.
+
+<!-- study-guide:end -->

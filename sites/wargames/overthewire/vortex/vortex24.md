@@ -1,10 +1,7 @@
 ---
 title: Vortex24
-description: 'Guess the seed
-
-  --------------
-
-  You might want to analyze "random\r.c" from the GLIBC source code.'
+description: "Vortex Level 24 — guess the seed of a generator using the GNU C library's random_r implementation as a reference."
+excerpt: "Vortex Level 24 — guess the seed of a generator using the GNU C library's random_r implementation as a reference."
 permalink: /docs/wargames/vortex/vortex24/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -40,4 +37,30 @@ Guess the seed
 --------------
 You might want to analyze "random\_r.c" from the GLIBC source code.
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** logged in as `vortex24`, obtain access to `vortex25`.
+
+### What this level teaches
+
+How `rand`/`random` work internally and how to predict them.
+
+### Key ideas
+
+- **glibc source.** The page suggests reading `random_r.c` from glibc.
+- **State.** The generator keeps a small internal state that is updated by a simple recurrence, so a modest number of outputs can reveal the rest.
+- **Seed guessing.** If the seed has limited entropy (for example a timestamp), you can try all candidates.
+
+### How to approach it
+
+1. Read `random_r.c` and implement or reuse the generator.
+2. Compare candidate seeds against observed outputs.
+3. Predict the next values and use them.
+
+### Why it matters
+
+`rand()` is not suitable for security; this level shows exactly why.
+
+<!-- study-guide:end -->

@@ -1,10 +1,7 @@
 ---
 title: Vortex8
-description: 'Some simple reverse engineering
-
-  -------------------------------
-
-  Disassemble this dynamically linked executable.'
+description: "Vortex Level 8 — a simple reverse-engineering task: disassemble a dynamically linked executable and work out what it wants."
+excerpt: "Vortex Level 8 — a simple reverse-engineering task: disassemble a dynamically linked executable and work out what it wants."
 permalink: /docs/wargames/vortex/vortex8/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -45,3 +42,31 @@ Reading Material
 - [Reverse Engineering][]
 
 [Reverse Engineering]: https://web.archive.org/web/20160315083251/http://althing.cs.dartmouth.edu/local/www.acm.uiuc.edu/sigmil/RevEng/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex8`, obtain access to `vortex9`.
+
+### What this level teaches
+
+Static analysis of a small dynamically linked program.
+
+### Key ideas
+
+- **Dynamic linking.** Library calls go through the procedure linkage table; tools like `ltrace` show them at run time.
+- **Static plus dynamic.** Read the disassembly and confirm your reading by running the program under a tracer or debugger.
+- **Reading.** The page links a reverse-engineering primer.
+
+### How to approach it
+
+1. Run `file`, `strings` and `ltrace` to form a first impression.
+2. Disassemble `main` and follow the control flow to the success path.
+3. Work out the input that reaches it.
+
+### Why it matters
+
+Small reversing tasks build the pattern recognition used for every larger binary you will face.
+
+<!-- study-guide:end -->

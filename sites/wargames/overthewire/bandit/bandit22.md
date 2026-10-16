@@ -1,14 +1,6 @@
 ---
 title: Bandit22
-description: 'Level Goal
-
-  ----------
-
-  A program is running automatically at regular intervals from
-
-  cron, the time-based job scheduler. Look in /etc/cron.d/ for
-
-  the configuration and see what command is being executed.'
+description: "Bandit Level 22 — read a cron job's configuration and script to see what a scheduled task does."
 permalink: /docs/wargames/bandit/bandit22/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -27,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 22 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 22 — read a cron job's configuration and script to see what a scheduled task does."
 draft: false
 keywords:
 - security
@@ -50,3 +42,31 @@ Commands you may need to solve this level
 -----------------------------------------
 cron, crontab, crontab(5) (use "man 5 crontab" to access this)
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit21`, find the password for `bandit22`.
+
+### What this level teaches
+
+How Linux schedules recurring work, and why reading someone else's script is a security skill.
+
+### Key ideas
+
+- **cron** is a daemon that runs commands at scheduled times. System-wide entries live in `/etc/cron.d/`.
+- **Crontab syntax.** Five time fields (minute, hour, day of month, month, day of week) followed by the user and the command. `man 5 crontab` explains each field.
+- **Whose permissions?** A cron job runs as the user named in its entry, which may not be you.
+- **Follow the data.** The job's script reads something and writes it somewhere; your job is to see where.
+
+### How to approach it
+
+1. List `/etc/cron.d/` and read the entry for the next user.
+2. Open the script it runs and trace, line by line, what it reads and where it writes.
+3. Go and look at the output location.
+
+### Why it matters
+
+Cron is a favourite place for misconfigurations that expose data or allow privilege escalation, and attackers also use it for persistence.
+
+<!-- study-guide:end -->

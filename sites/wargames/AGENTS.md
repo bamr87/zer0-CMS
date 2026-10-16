@@ -32,7 +32,7 @@ There is no test suite. CI is the safety net — see the workflow list in [`CLAU
 1. Make minimal, surgical changes. Match existing style.
 2. Validate before declaring done — run a Jekyll build and `python3 tools/unwrap-prose.py --check`.
 3. Site content lives at the repo root (`index.md`, `overthewire/**`); site data lives in `_data/`.
-4. **Don't hand-edit `overthewire/**`** — those pages are vendored and re-synced from upstream by `scripts/docs-aggregator/`.
+4. **Don't hand-edit the upstream text in `overthewire/**`** — those pages are vendored and re-synced from upstream by `scripts/docs-aggregator/`. The exceptions are the **Study guide** block at the end of each page (between the `study-guide` marker comments) and the `description` / `excerpt` front matter; after a re-sync, restore them with `tools/carry-study-guides.py` (see [`README.md`](README.md)). Study guides must stay spoiler-free: no passwords, payloads or finished solutions.
 5. **No theme overrides here.** This repo is a pure `remote_theme` consumer with no `_layouts/`, `_includes/`, `_sass/`, or `_plugins/` — keep it that way. Theme changes belong upstream in [zer0-mistakes](https://github.com/bamr87/zer0-mistakes).
 
 See [`CLAUDE.md`](CLAUDE.md) for the fuller site-wiring reference and [`README.md`](README.md) for the reader-facing overview.

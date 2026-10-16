@@ -1,12 +1,6 @@
 ---
 title: Bandit11
-description: 'Level Goal
-
-  ----------
-
-  The password for the next level is stored in the file data.txt,
-
-  which contains base64 encoded data'
+description: "Bandit Level 11 — decode Base64 data, learning that encoding is not encryption."
 permalink: /docs/wargames/bandit/bandit11/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -25,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 11 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 11 — decode Base64 data, learning that encoding is not encryption."
 draft: false
 keywords:
 - security
@@ -53,3 +47,31 @@ Helpful Reading Material
 - [Base64 on Wikipedia][]
 
 [Base64 on Wikipedia]: https://en.wikipedia.org/wiki/Base64
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit10`, find the password for `bandit11`.
+
+### What this level teaches
+
+What Base64 is, how to recognise it, and how to reverse it.
+
+### Key ideas
+
+- **Encoding vs encryption.** Base64 represents arbitrary bytes using 64 safe text characters so they survive email, URLs and JSON. It involves no key and provides no secrecy.
+- **Recognising Base64.** Letters, digits, `+` and `/`, often with `=` padding at the end, in lines of regular length.
+- **`base64 -d`** decodes; run without `-d` it encodes.
+
+### How to approach it
+
+1. Look at the file and note the telltale alphabet.
+2. Decode it with the `base64` command; check the manual for the decode flag.
+3. Try encoding a short phrase and decoding it back to see the round trip.
+
+### Why it matters
+
+Base64 appears in HTTP headers, tokens, certificates and email. Mistaking it for encryption is a common real-world security error.
+
+<!-- study-guide:end -->

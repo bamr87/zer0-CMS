@@ -1,6 +1,7 @@
 ---
 title: Natas20
-description: "Username: natas20\n    URL:      http://natas20.natas.labs.overthewire.org"
+description: "Natas Level 20 — a custom session file handler trusts a newline in user input; learn how data written to server-side state can be forged."
+excerpt: "Natas Level 20 — a custom session file handler trusts a newline in user input; learn how data written to server-side state can be forged."
 permalink: /docs/wargames/natas/natas20/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,32 @@ sidebar_label: "Level 20"
 
     Username: natas20
     URL:      http://natas20.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas20` and find the password for `natas21`.
+
+### What this level teaches
+
+How custom serialisation formats create injection bugs.
+
+### Key ideas
+
+- **Session storage.** Server-side sessions keep a small file or record of values keyed by the session ID.
+- **Line-based format.** The handler writes one `key value` pair per line, so a newline in your input looks like a new entry.
+- **Two requests.** The application reads the session at the start of a request, so a poisoned write on one request can take effect on the next.
+- **Read the code.** The source for the custom `myread` and `mywrite` handlers is the whole puzzle.
+
+### How to approach it
+
+1. Read how a value you supply ends up inside the stored session.
+2. Think about what a line break lets you add.
+3. Make the first request to write the data, and the second to benefit from it.
+
+### How developers prevent it
+
+Use your framework's well-tested session handlers, and encode data (for example JSON) instead of inventing a format that can be broken by delimiters.
+
+<!-- study-guide:end -->

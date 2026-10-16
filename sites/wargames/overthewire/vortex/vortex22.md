@@ -1,12 +1,7 @@
 ---
 title: Vortex22
-description: 'Object Analysis
-
-  ---------------
-
-  This is another keygen level. You might want to check
-
-  "/vortex/vortex22\\.o" for some object files.'
+description: "Vortex Level 22 — another key-generation level, this time with object files available in /vortex to analyse."
+excerpt: "Vortex Level 22 — another key-generation level, this time with object files available in /vortex to analyse."
 permalink: /docs/wargames/vortex/vortex22/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -41,3 +36,31 @@ sidebar_label: "Level 22"
 Object Analysis
 ---------------
 This is another keygen level. You might want to check "/vortex/vortex22\_\*.o" for some object files.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex22`, obtain access to `vortex23`.
+
+### What this level teaches
+
+Using object files to understand a program's pieces.
+
+### Key ideas
+
+- **Object files** (`.o`) contain compiled code and symbols before linking, so they often have more names than the final binary.
+- **Where to look.** The page points to files matching `/vortex/vortex22_*.o`.
+- **Keygen again.** Replicate the validation, then produce valid input.
+
+### How to approach it
+
+1. Inspect the object files with `objdump -d` and `nm`.
+2. Rebuild the logic of the check.
+3. Write a generator and test it on the real program.
+
+### Why it matters
+
+Intermediate build artefacts can leak much more than a stripped final binary.
+
+<!-- study-guide:end -->

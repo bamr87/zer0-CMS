@@ -1,6 +1,7 @@
 ---
 title: Natas13
-description: "Username: natas13\n    URL:      http://natas13.natas.labs.overthewire.org"
+description: "Natas Level 13 — the server now checks that an upload looks like an image; learn what file signatures are and why checking them is not enough."
+excerpt: "Natas Level 13 — the server now checks that an upload looks like an image; learn what file signatures are and why checking them is not enough."
 permalink: /docs/wargames/natas/natas13/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 13"
 
     Username: natas13
     URL:      http://natas13.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas13` and find the password for `natas14`.
+
+### What this level teaches
+
+That validating the first few bytes of a file does not make the whole file safe.
+
+### Key ideas
+
+- **Magic bytes.** Image formats start with fixed bytes that identify them. Functions such as PHP's `exif_imagetype` look only at those.
+- **Polyglot files.** A file can satisfy two formats at once, for example start like an image and contain a script after it.
+- **Same weakness, new gate.** The execution risk from the previous level is unchanged; only the filter is different.
+
+### How to approach it
+
+1. Read the new check and work out exactly what it examines.
+2. Build a file that passes that check while still containing your payload.
+3. Use `xxd` or a hex editor to see your file the way the server does.
+
+### How developers prevent it
+
+Re-encode images with an image library (which discards extra content), store them outside the web root, and never rely on a header check alone.
+
+<!-- study-guide:end -->

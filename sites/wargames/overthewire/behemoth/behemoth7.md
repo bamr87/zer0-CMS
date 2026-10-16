@@ -1,6 +1,7 @@
 ---
 title: Behemoth7
-description: There is no information for this level, intentionally.
+description: "Behemoth Level 7 — one of the last Behemoth levels, where you apply everything learned so far to a binary that gives no hints."
+excerpt: "Behemoth Level 7 — one of the last Behemoth levels, where you apply everything learned so far to a binary that gives no hints."
 permalink: /docs/wargames/behemoth/behemoth7/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -33,3 +34,31 @@ sidebar_label: "Level 7"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 There is no information for this level, intentionally.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `behemoth7`, find the password for `behemoth8`.
+
+### What this level teaches
+
+Choosing the right technique unaided.
+
+### Key ideas
+
+- **Diagnose first.** Determine from tracing and disassembly which kind of flaw is present before building an exploit.
+- **Constraints.** Expect restrictions on what your payload may contain or where it can go, and design around them.
+- **Use the debugger.** Compare the stack and registers in `gdb` with your expectations.
+
+### How to approach it
+
+1. Run the standard checklist: `file`, `strings`, `ltrace`, `strace`, disassembly.
+2. State your hypothesis about the bug in one sentence.
+3. Prove it with the smallest test, then build the exploit.
+
+### Why it matters
+
+Being able to go from an unknown binary to a working exploit is the point of the whole game.
+
+<!-- study-guide:end -->

@@ -1,6 +1,7 @@
 ---
 title: Drifter7
-description: Gentleman, start your disassemblers
+description: "Drifter Level 7 — \"Gentleman, start your disassemblers\": a reverse-engineering level with IDA recommended."
+excerpt: "Drifter Level 7 — \"Gentleman, start your disassemblers\": a reverse-engineering level with IDA recommended."
 permalink: /docs/wargames/drifter/drifter7/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -42,3 +43,31 @@ Gentleman, start your disassemblers
 
   [IDA Pro Freeware]: http://www.hex-rays.com/idapro/idadownfreeware.htm
   [IDA Pro Demo]: http://www.hex-rays.com/idapro/idadowndemo.htm
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Where it fits:** Drifter level 7 of 0–15, in the remote daemons stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+
+### What this level teaches
+
+Using a disassembler to understand a program.
+
+### Key ideas
+
+- **Disassembler.** The page links IDA Pro Freeware and a demo. Ghidra is a free alternative.
+- **Method.** Identify entry points, strings and library calls first, then follow interesting paths.
+- **Annotate.** Rename functions and variables as you understand them.
+
+### How to approach it
+
+1. Load the binary, list strings and imports.
+2. Trace from input to decision.
+3. Confirm your reading by running it with chosen inputs.
+
+### Why it matters
+
+Reverse-engineering fluency is the skill that unlocks the rest of the game.
+
+<!-- study-guide:end -->

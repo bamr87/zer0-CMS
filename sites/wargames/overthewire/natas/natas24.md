@@ -1,6 +1,7 @@
 ---
 title: Natas24
-description: "Username: natas24\n    URL:      http://natas24.natas.labs.overthewire.org"
+description: "Natas Level 24 — a password check uses strcmp, which behaves unexpectedly when it is given the wrong type of input; learn PHP type confusion."
+excerpt: "Natas Level 24 — a password check uses strcmp, which behaves unexpectedly when it is given the wrong type of input; learn PHP type confusion."
 permalink: /docs/wargames/natas/natas24/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 24"
 
     Username: natas24
     URL:      http://natas24.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas24` and find the password for `natas25`.
+
+### What this level teaches
+
+How unexpected input types can defeat a security comparison.
+
+### Key ideas
+
+- **Parameters can be arrays.** In PHP, a form field written like `name[]` arrives as an array, not a string.
+- **Functions misbehave on the wrong type.** Passing an array where a string is expected produces a warning and a surprising return value.
+- **Loose comparison of that value.** The check then treats the result as success.
+- **Read the manual.** The PHP documentation for `strcmp` lists its return values.
+
+### How to approach it
+
+1. Work out what the code compares and how it interprets the result.
+2. Consider what input types you can send that the developer did not imagine.
+
+### How developers prevent it
+
+Validate input types, use strict comparison, and modern PHP versions that raise errors when the wrong type is passed.
+
+<!-- study-guide:end -->

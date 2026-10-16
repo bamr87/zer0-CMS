@@ -1,16 +1,7 @@
 ---
 title: Semtex8
-description: 'Non-sniffable data
-
-  ------------------
-
-  This level is about some very simple covert channel, about
-
-  transferring information that cannot possibly be sniffed.
-
-  There is a socket file in /rdx/nature. It is a local Unix socket.
-
-  Receive data from it until EO...'
+description: "Semtex Level 8 — receive a file through a timing covert channel where delays between bytes stand for bytes that were never sent."
+excerpt: "Semtex Level 8 — receive a file through a timing covert channel where delays between bytes stand for bytes that were never sent."
 permalink: /docs/wargames/semtex/semtex8/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -60,3 +51,31 @@ Thus you are receiving data while not receiving anything.
 
 The output file is a .jpg image :)
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** read from the Unix socket `/rdx/nature` until end of file and save the result.
+
+### What this level teaches
+
+Covert channels: hiding data in timing so it cannot be sniffed as content.
+
+### Key ideas
+
+- **Timing channel.** The delay before each received byte encodes extra data: a pause in the 1–2 second range stands for one letter, 2–3 seconds another, and so on, as the page's table shows.
+- **Reconstruct the data.** Insert the omitted characters exactly where the delays occurred.
+- **The result.** The completed file is a JPEG image.
+- **Local Unix socket.** A file-like endpoint for local inter-process communication.
+
+### How to approach it
+
+1. Write a reader that records the time between bytes.
+2. Apply the table to insert the hidden bytes.
+3. Verify the output with `file` and open the picture.
+
+### Why it matters
+
+Covert timing channels exist in real malware and in side-channel attacks.
+
+<!-- study-guide:end -->

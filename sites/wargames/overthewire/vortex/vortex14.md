@@ -1,16 +1,7 @@
 ---
 title: Vortex14
-description: 'Bad Encryption
-
-  --------------
-
-  Based on something seen in the "real world", it has weak encryption
-
-  usage, used over a TCP/IP connection. This level requires you to
-
-  apply some logic to the challenge at hand. You must login to
-
-  [vortex.labs.overthewire.o...'
+description: "Vortex Level 14 — analyse a captured network exchange that uses weak encryption and recover the secret by classifying and dividing the problem."
+excerpt: "Vortex Level 14 — analyse a captured network exchange that uses weak encryption and recover the secret by classifying and dividing the problem."
 permalink: /docs/wargames/vortex/vortex14/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -51,3 +42,32 @@ The \> indicates traffic "from the server, to the client", and the < indicates t
 If you need some hints, consider how you can divide and conquer the problem. For example, does it look like symmetric encryption, or asymmetric encryption? How can you further classify them?
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex14`, obtain access to `vortex15`.
+
+### What this level teaches
+
+Analysing an unknown protocol and breaking weak encryption.
+
+### Key ideas
+
+- **Real-world flaw.** The level is based on something seen in the wild: weak encryption used over TCP/IP.
+- **Notation.** In the traffic shown, one marker means data from the server to the client and the other means client to server.
+- **Classify first.** The page suggests asking whether it looks like symmetric or asymmetric encryption, and then narrowing further.
+- **Divide and conquer.** Break the message into parts and identify what each part does.
+
+### How to approach it
+
+1. Study the captured exchange: lengths, repeated patterns and structure.
+2. Form a hypothesis about the algorithm and test it on pieces of the data.
+3. Build a decryptor or a forged message.
+
+### Why it matters
+
+Home-made protocols and weak ciphers are still found in devices and legacy software.
+
+<!-- study-guide:end -->

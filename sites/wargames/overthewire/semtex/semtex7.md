@@ -1,16 +1,7 @@
 ---
 title: Semtex7
-description: 'Multi-vitamin
-
-  -------------
-
-  Getting out of the restricted shell shouldn''t take you more than
-
-  five minutes. Then have a look at /rdx/multivitamin. Try to analyse
-
-  the algorithm very carefully. There is a weakness that really speeds
-
-  up your quest...\'
+description: "Semtex Level 7 — escape a restricted shell, then analyse the multivitamin algorithm for a weakness that makes it easy to defeat."
+excerpt: "Semtex Level 7 — escape a restricted shell, then analyse the multivitamin algorithm for a weakness that makes it easy to defeat."
 permalink: /docs/wargames/semtex/semtex7/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -54,3 +45,31 @@ up your quest...\
 
 
 [http://gmplib.org/]: http://gmplib.org/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** analyse the program in `/rdx/multivitamin` after leaving the restricted shell.
+
+### What this level teaches
+
+Restricted-shell escapes and cryptanalysis of an arithmetic scheme.
+
+### Key ideas
+
+- **Restricted shells.** The page says getting out should take about five minutes. Many programs offer ways to run other commands.
+- **Study the algorithm carefully.** The page says a weakness really speeds up the solution.
+- **Big numbers.** The hint "multiplication is easy and so is division...?" and the link to the GMP library suggest arithmetic on very large numbers.
+
+### How to approach it
+
+1. Get out of the restricted environment.
+2. Read the algorithm and identify which operation is easy to reverse.
+3. Use a big-number library to implement the attack.
+
+### Why it matters
+
+Number-theoretic schemes are only as strong as the hardness of the underlying problem, and misuse can destroy that hardness.
+
+<!-- study-guide:end -->

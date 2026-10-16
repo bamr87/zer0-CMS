@@ -1,18 +1,7 @@
 ---
 title: Semtex3
-description: 'Number-Lock Action
-
-  ------------------
-
-  You are almost on Semtex 3, there is just one big door before you.
-
-  It is locked with a number lock.
-
-  Analyze and use the locks in /semtex/semtex3 to adjust all the
-
-  numbers in the correct way.
-
-  They will open your w...'
+description: "Semtex Level 3 — set a combination of numeric locks correctly, by calculation or by brute force."
+excerpt: "Semtex Level 3 — set a combination of numeric locks correctly, by calculation or by brute force."
 permalink: /docs/wargames/semtex/semtex3/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -50,3 +39,30 @@ You are almost on Semtex 3, there is just one big door before you. It is locked 
 
 Tip : **If you are not good at math, you should consider brute force. Rewrite the program and try all possible combinations of the locks. It wont take more than a few seconds ;)**
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the "door" in `/semtex/semtex3` must be unlocked to proceed.
+
+### What this level teaches
+
+Combinatorial analysis, and when brute force beats cleverness.
+
+### Key ideas
+
+- **Analyse the locks.** Work out what each lock does to the numbers.
+- **The tip.** If maths is not your strength, rewrite the program and try every combination, which the page says takes only seconds.
+- **Search space.** Estimate the number of combinations before you start.
+
+### How to approach it
+
+1. Read the program and write down the rules.
+2. Estimate how many combinations there are.
+3. Decide between solving it analytically and a simple search.
+
+### Why it matters
+
+Knowing when exhaustive search is cheap is a core security instinct.
+
+<!-- study-guide:end -->

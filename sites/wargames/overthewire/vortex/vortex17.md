@@ -1,14 +1,7 @@
 ---
 title: Vortex17
-description: 'Working Backwards
-
-  -----------------
-
-  This level requires you to work backwards to find out what''s
-
-  happening then exploit it. You must login to
-
-  [vortex.labs.overthewire.org][] to complete this level.'
+description: "Vortex Level 17 — work backwards from observed behaviour to understand the program, then exploit it."
+excerpt: "Vortex Level 17 — work backwards from observed behaviour to understand the program, then exploit it."
 permalink: /docs/wargames/vortex/vortex17/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -45,3 +38,31 @@ Working Backwards
 This level requires you to work backwards to find out what's happening then exploit it. You must login to [vortex.labs.overthewire.org][] to complete this level.
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex17`, obtain access to `vortex18`.
+
+### What this level teaches
+
+Reasoning from effects back to causes.
+
+### Key ideas
+
+- **Reverse reasoning.** Start from what the program outputs or does and deduce what inputs and internal state produced it.
+- **Instrument.** Use tracing and a debugger to see intermediate values.
+- **Then attack.** Once you understand the logic, the vulnerability becomes clear.
+
+### How to approach it
+
+1. Gather the observable behaviour in detail.
+2. Build a model that explains it.
+3. Look for where the model allows a mistake you can exploit.
+
+### Why it matters
+
+Debugging and exploit work are both inference problems.
+
+<!-- study-guide:end -->

@@ -1,16 +1,6 @@
 ---
 title: Bandit20
-description: 'Level Goal
-
-  ----------
-
-  To gain access to the next level, you should use the setuid binary
-
-  in the homedirectory. Execute it without arguments to find out how
-
-  to use it. The password for this level can be found in the usual
-
-  place (/etc/bandit\pass), aft...'
+description: "Bandit Level 20 — use a setuid binary to read a file owned by another user, and learn what the setuid permission bit means."
 permalink: /docs/wargames/bandit/bandit20/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -29,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 20 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 20 — use a setuid binary to read a file owned by another user, and learn what the setuid permission bit means."
 draft: false
 keywords:
 - security
@@ -53,3 +43,32 @@ Helpful Reading Material
 - [setuid on Wikipedia][]
 
 [setuid on Wikipedia]: https://en.wikipedia.org/wiki/Setuid
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit19`, find the password for `bandit20`.
+
+### What this level teaches
+
+How Unix lets a program run with its owner's privileges, and why that is both useful and dangerous.
+
+### Key ideas
+
+- **User IDs.** A process has a real UID (who started it) and an effective UID (whose permissions it uses for access checks).
+- **setuid.** When a file has the setuid bit (shown as `s` in `ls -l`), running it makes the effective UID the file's owner. The classic example is `passwd`, which lets ordinary users update a root-owned file.
+- **`id`** prints your current user and group IDs.
+- **Boundary.** Every setuid program is a deliberate crack in the privilege wall, so it must be written very carefully.
+
+### How to approach it
+
+1. Look at the binary with `ls -l` and note the `s`.
+2. Run it with no arguments, as the Level Goal suggests, and read how it wants to be used.
+3. The password then sits in the usual place under `/etc/bandit_pass`.
+
+### Why it matters
+
+Hunting for setuid binaries (`find / -perm -4000`) is a standard step in Linux privilege escalation, both for attackers and for hardening audits.
+
+<!-- study-guide:end -->

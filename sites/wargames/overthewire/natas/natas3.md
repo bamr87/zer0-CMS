@@ -1,6 +1,7 @@
 ---
 title: Natas3
-description: "Username: natas3\n    URL:      http://natas3.natas.labs.overthewire.org"
+description: "Natas Level 3 — learn how robots.txt, meant to guide search engines, can instead point an attacker at the very paths you wanted hidden."
+excerpt: "Natas Level 3 — learn how robots.txt, meant to guide search engines, can instead point an attacker at the very paths you wanted hidden."
 permalink: /docs/wargames/natas/natas3/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,30 @@ sidebar_label: "Level 3"
 
     Username: natas3
     URL:      http://natas3.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas3` and find the password for `natas4`.
+
+### What this level teaches
+
+The `robots.txt` convention, and why it is a map for attackers rather than a lock.
+
+### Key ideas
+
+- **robots.txt** is a public text file at the root of a site that asks well-behaved crawlers not to visit certain paths.
+- **Not enforced.** The file does nothing to stop a human; listing a path there advertises it.
+- **Hints in page content.** The page's message about search engines is the clue to where the answer lives.
+
+### How to approach it
+
+1. Read the hint on the page and think about which standard file a site uses to talk to crawlers.
+2. Open that file in the browser and follow any path it names.
+
+### How developers prevent it
+
+Never rely on robots.txt for secrecy. Protect sensitive areas with authentication, and do not list private paths in a public file.
+
+<!-- study-guide:end -->

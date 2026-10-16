@@ -1,16 +1,7 @@
 ---
 title: Vortex25
-description: 'Crackploit
-
-  ----------
-
-  {% include beginNote.html title="Vortex 25 &rarr; 26 is missing" %}
-
-  This level seems to have been lost, but we leave its description
-
-  here for historical reasons.
-
-  {% include endNote.html %}'
+description: "Vortex Level 25 — a lost level kept for history, which paired a password-cracking task with an exploit."
+excerpt: "Vortex Level 25 — a lost level kept for history, which paired a password-cracking task with an exploit."
 permalink: /docs/wargames/vortex/vortex25/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -51,3 +42,21 @@ This level seems to have been lost, but we leave its description here for histor
 There are two challenges for this level. One is to work out the password for the binary (a dictionary search should get it), and then work how you can exploit the level. A world readable binary is in /levels/decode. You must login to [vortex.labs.overthewire.org][] to complete this level.
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** this level is described as lost; there is nothing to solve on the server.
+
+### What this means
+
+The page keeps its description for historical reasons. It describes two challenges: work out the password for a provided binary (a dictionary search should find it), then work out how to exploit the level.
+
+### What you can learn from it
+
+- **Dictionary attacks.** Trying likely words before brute force is much more efficient.
+- **Two-stage challenges.** Authentication to a program is one problem, exploiting it afterwards another.
+- **Practise elsewhere.** Reproduce the idea with a program of your own and an exploit exercise from another game.
+
+<!-- study-guide:end -->

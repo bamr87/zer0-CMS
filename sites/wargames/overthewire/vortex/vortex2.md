@@ -1,10 +1,7 @@
 ---
 title: Vortex2
-description: 'Level Goal
-
-  ----------
-
-  Create a special tar file'
+description: "Vortex Level 2 — create a specially crafted tar file, learning the archive format and how tools process it."
+excerpt: "Vortex Level 2 — create a specially crafted tar file, learning the archive format and how tools process it."
 permalink: /docs/wargames/vortex/vortex2/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -47,3 +44,31 @@ Helpful Reading Material
 
 
 [GNU tar manual]: http://linux.die.net/man/1/tar
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex2`, obtain access to `vortex3`.
+
+### What this level teaches
+
+How an archive format works and how a program that handles archives can be steered.
+
+### Key ideas
+
+- **tar format.** A tar archive is a sequence of header blocks and data; the page links the GNU tar manual.
+- **Crafting input.** Instead of using `tar` normally, think about which fields and filenames you control.
+- **Find your lever.** The page says only that a special tar file is needed, so work out which part of the program's use of tar you control: names, options or contents.
+
+### How to approach it
+
+1. Read the GNU tar manual sections on formats and options.
+2. Look at the level's program under `/vortex/` and trace how it invokes tar.
+3. Build and test small archives before the final one.
+
+### Why it matters
+
+Archive handling flaws (path traversal, symlinks, overwrite) are common real vulnerabilities.
+
+<!-- study-guide:end -->

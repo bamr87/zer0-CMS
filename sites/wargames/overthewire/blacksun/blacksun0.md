@@ -1,12 +1,7 @@
 ---
 title: Blacksun0
-description: 'Level0 is a remote format string intended to get you started with
-
-  blacksun. It is a remote format string bug with you being able to see
-
-  the reply, with address space randomisation enabled. You''ll need to use
-
-  the direct parameter access method to anal...'
+description: "Blacksun Level 0 — exploit a remote format-string bug in a binary with ASLR, PIE and stack protection by using direct parameter access to study the stack."
+excerpt: "Blacksun Level 0 — exploit a remote format-string bug in a binary with ASLR, PIE and stack protection by using direct parameter access to study the stack."
 permalink: /docs/wargames/blacksun/blacksun0/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -53,4 +48,32 @@ Once getting access to a shell, read /etc/motd for more information
 
 Alternatively, there is a debug version on port 78 if you need help understanding what you're seeing
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** you attack a network service (port 79, with a debug version on port 78) to get a shell, then read `/etc/motd` for more information.
+
+### What this level teaches
+
+How to exploit a format-string vulnerability remotely when the layout of memory is randomised.
+
+### Key ideas
+
+- **You can see the reply.** That is what makes a leak possible: format specifiers print stack values back to you.
+- **Direct parameter access.** The `%N$x` syntax reads the Nth argument directly, so you can scan the stack without writing hundreds of specifiers.
+- **Defeating ASLR with a leak.** If you can read a pointer from the stack, you can compute where other things are for that particular run.
+- **Protections table.** The page lists SSP, PIE and ASLR as on, and non-executable pages as off, so injected shellcode on the stack is still allowed.
+- **Debug version.** Port 78 serves a version that explains what you are seeing.
+
+### How to approach it
+
+1. Use the debug service to understand the stack layout, then repeat on the real one.
+2. Leak the values you need, compute addresses, and design the write.
+3. Script the exploit so you can rerun it against a fresh address space.
+
+### Why it matters
+
+Info leaks plus a write primitive are the building blocks of nearly every modern exploit chain.
+
+<!-- study-guide:end -->

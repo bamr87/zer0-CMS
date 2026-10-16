@@ -1,6 +1,7 @@
 ---
 title: Behemoth8
-description: There is no information for this level, intentionally.
+description: "Behemoth Level 8 — the last Behemoth page in this mirror; use it to consolidate your skills and decide what to study next."
+excerpt: "Behemoth Level 8 — the last Behemoth page in this mirror; use it to consolidate your skills and decide what to study next."
 permalink: /docs/wargames/behemoth/behemoth8/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -33,3 +34,21 @@ sidebar_label: "Level 8"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 There is no information for this level, intentionally.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `behemoth8`. This is the highest-numbered Behemoth page; the upstream index counts nine levels, `behemoth0` to `behemoth8`.
+
+### What this means
+
+You have reached the end of the levels this mirror documents. If the server offers anything further, treat it as a bonus.
+
+### What to do next
+
+- **Write down your toolkit.** For each Behemoth level, record the bug class, the tool that found it and the technique that exploited it.
+- **Continue.** From the [games index](../../), Utumno and Maze are the next steps in the suggested order.
+- **Read about defences.** Stack canaries, non-executable memory, ASLR and RELRO each map to attacks you have just performed.
+
+<!-- study-guide:end -->

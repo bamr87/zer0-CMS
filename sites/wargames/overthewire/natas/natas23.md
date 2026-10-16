@@ -1,6 +1,7 @@
 ---
 title: Natas23
-description: "Username: natas23\n    URL:      http://natas23.natas.labs.overthewire.org"
+description: "Natas Level 23 — a password check mixes string search with a numeric comparison; learn how PHP's loose typing can be satisfied in surprising ways."
+excerpt: "Natas Level 23 — a password check mixes string search with a numeric comparison; learn how PHP's loose typing can be satisfied in surprising ways."
 permalink: /docs/wargames/natas/natas23/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 23"
 
     Username: natas23
     URL:      http://natas23.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas23` and find the password for `natas24`.
+
+### What this level teaches
+
+How comparing text and numbers together in a dynamically typed language creates logic holes.
+
+### Key ideas
+
+- **Type juggling.** In older PHP, comparing a string with a number converts one into the other, often in surprising ways.
+- **Two conditions at once.** The code requires a string to contain a specific word *and* to compare as a number against a threshold.
+- **Satisfying both.** An input can start with digits and contain the required word.
+- **Read the source.** The two checks are written explicitly.
+
+### How to approach it
+
+1. Read the conditions and look up how PHP converts strings to numbers.
+2. Construct one input that satisfies both.
+
+### How developers prevent it
+
+Use strict comparison (`===`), validate types explicitly and keep password logic out of hand-written conditions.
+
+<!-- study-guide:end -->

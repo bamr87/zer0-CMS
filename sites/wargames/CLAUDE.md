@@ -2,7 +2,7 @@
 
 Guidance for AI coding agents (Claude Code, Copilot, Cursor) working in **wargames**.
 
-Wargames is a **content-only Jekyll site**: a vendored markdown mirror of the [OverTheWire](https://overthewire.org/wargames/) challenges, published on GitHub Pages with the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme loaded via `remote_theme`. "Done" means the content renders under the theme and the Pages build stays green. The challenge pages under `overthewire/**` are **vendored** — re-sync them from upstream via `scripts/docs-aggregator/`, don't hand-edit.
+Wargames is a **content-only Jekyll site**: a vendored markdown mirror of the [OverTheWire](https://overthewire.org/wargames/) challenges, published on GitHub Pages with the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme loaded via `remote_theme`. "Done" means the content renders under the theme and the Pages build stays green. The challenge pages under `overthewire/**` are **vendored** — re-sync them from upstream via `scripts/docs-aggregator/`, don't hand-edit the upstream text. The one exception is the **Study guide** section at the end of each page (between `<!-- study-guide:start -->` and `<!-- study-guide:end -->` markers) plus the `description` / `excerpt` front matter; those are this site's own additions and are edited in place.
 
 ## Stack & commands
 
@@ -12,18 +12,21 @@ Wargames is a **content-only Jekyll site**: a vendored markdown mirror of the [O
 # build:                  bundle exec jekyll build
 # re-sync content:        pip install -r scripts/docs-aggregator/requirements.txt && ./scripts/docs-aggregator/aggregate_docs.sh
 # lint:                   python3 tools/unwrap-prose.py --check
+# after a re-sync:        python3 tools/carry-study-guides.py pages/_docs/wargames/overthewire   # re-attach study guides
 # tests:                  none — content-only repo; the CI gates below are the whole safety net
 ```
 
 There is no test suite. CI is four workflows: `ci.yml` (thin caller of the hub's shared `standard-ci.yml` — don't edit the logic here), `markdown-oneline.yml` (the same `unwrap-prose.py --check`, with `SCHEMA.md`/`CHANGELOG.md` excluded), `jekyll-gh-pages.yml` (push to `main` → Bundler build → publish `_site/` to the `gh-pages` branch), and `claude.yml` (the `@claude` mention handler seeded from the hub's `templates/agent-context/` — an `@claude` mention in an issue, PR comment, or review runs `anthropics/claude-code-action`, one run at a time per thread, authenticated by `CLAUDE_CODE_OAUTH_TOKEN` with `ANTHROPIC_API_KEY` as fallback).
 
-Re-sync gotcha: `aggregate_docs.sh` still stages its output under `pages/_docs/wargames/` (its it-journey-era layout; upstream is cloned into `work/`) — it does **not** rewrite `overthewire/**` in place, so diff and move the refreshed pages over after a run.
+Re-sync gotcha: `aggregate_docs.sh` still stages its output under `pages/_docs/wargames/` (its it-journey-era layout; upstream is cloned into `work/`) — it does **not** rewrite `overthewire/**` in place, so diff and move the refreshed pages over after a run. A re-sync also drops the study guides: run `tools/carry-study-guides.py` on the staged pages *before* moving them over (steps in `README.md`), and write a guide for any page it reports as unmatched. Delete `pages/` and `work/` afterwards; Jekyll would build `pages/` as duplicate content.
+
+Study-guide rules: no passwords, payloads or finished solutions (the guides explain concepts and give hint-level approaches); state only what the upstream page or a verified source supports, and say so where a level's topic is unknown; keep one paragraph per line; avoid Liquid (`{{`, `{%`) in prose; use relative links such as `../` so they work under the `/wargames` baseurl.
 
 ## Site wiring
 
 - `_config.yml` — `remote_theme: bamr87/zer0-mistakes`; `defaults` attach theme layouts to the root-level content (no Jekyll collections); `exclude` keeps tooling out of the build.
 - `index.md` — homepage (`layout: home`, `permalink: /`).
-- `overthewire/**` — vendored challenge pages at `/docs/wargames/…` (`layout: default` + auto games sidebar). Each level page carries `nav_order` + `sidebar_label` front matter (stamped by the aggregator) that the sidebar sorts/labels by; don't hand-edit — re-sync instead.
+- `overthewire/**` — vendored challenge pages at `/docs/wargames/…` (`layout: default` + auto games sidebar), each ending with a site-authored study guide. Each level page carries `nav_order` + `sidebar_label` front matter (stamped by the aggregator) that the sidebar sorts/labels by; don't hand-edit — re-sync instead. `overthewire/index.md` is the games index and also carries a guide (the comparison table of all games).
 - `_data/navigation/` — `main.yml` (navbar) only. The games→levels sidebar is **auto-built** by the theme's `nav: pages` mode (set on the `overthewire` scope in `_config.yml`) from the page URLs under `/docs/wargames/` — there is no sidebar data file to generate or maintain.
 - `zer0.install.yml` — declarative installer config; re-scaffold with the theme's `scripts/bin/install --config zer0.install.yml`.
 

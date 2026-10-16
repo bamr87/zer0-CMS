@@ -1,14 +1,7 @@
 ---
 title: Vortex13
-description: 'Inconveniences
-
-  --------------
-
-  How big is your shellcode? This level has a non-executable stack.
-
-  You must login to [vortex.labs.overthewire.org][] to complete this
-
-  level.'
+description: "Vortex Level 13 — a non-executable-stack level that asks \"how big is your shellcode?\", pushing you toward compact payloads."
+excerpt: "Vortex Level 13 — a non-executable-stack level that asks \"how big is your shellcode?\", pushing you toward compact payloads."
 permalink: /docs/wargames/vortex/vortex13/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -45,3 +38,32 @@ Inconveniences
 How big is your shellcode? This level has a non-executable stack. You must login to [vortex.labs.overthewire.org][] to complete this level.
 
 [vortex.labs.overthewire.org]: ssh://vortex.labs.overthewire.org:2228
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex13`, obtain access to `vortex14`.
+
+### What this level teaches
+
+Working under tight space constraints.
+
+### Key ideas
+
+- **Size matters.** The level's title and question point to a limited amount of room for your payload.
+- **Compact shellcode.** Shorter instruction sequences, reusing registers, and avoiding forbidden bytes.
+- **Non-executable stack still applies,** so check whether you must reuse existing code.
+- **Verify in the debugger.** Count bytes and test on the target.
+
+### How to approach it
+
+1. Measure the space you have and what bytes are forbidden.
+2. Find the smallest sequence that achieves your goal.
+3. Test the payload with the real constraints.
+
+### Why it matters
+
+Real exploits often have only a few bytes to work with, which is why shellcode tricks and staged payloads exist.
+
+<!-- study-guide:end -->

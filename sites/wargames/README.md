@@ -14,7 +14,21 @@ All challenge content is aggregated from the OverTheWire website and is distribu
 - **Upstream:** <https://github.com/OverTheWireOrg/OverTheWire-website> (`gh-pages` branch)
 - **License:** [MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)
 
-This is **vendored content** — treat it as read-only and re-sync from upstream rather than editing the challenge pages by hand. Each page carries `source_repo` / `source_url` / `license` frontmatter recording its origin.
+This is **vendored content** — treat the upstream text as read-only and re-sync from upstream rather than editing it by hand. Each page carries `source_repo` / `source_url` / `license` frontmatter recording its origin. The one deliberate exception is the [study guides](#study-guides) this site appends to each page.
+
+## Study guides
+
+Many upstream pages are sparse (some say only "There is no information for this level, intentionally"), so every page under `overthewire/**` ends with a **Study guide** written for learners: what the level or game teaches, the concepts behind it, a hint-level approach, and why the skill matters in real IT and security work. The game index pages add prerequisites, tool lists and a level-by-level roadmap, and `overthewire/index.md` compares all the games.
+
+The guides follow a few rules:
+
+- **Marked and appended.** A guide sits at the very end of its page between `<!-- study-guide:start -->` and `<!-- study-guide:end -->`, so it is easy to tell apart from the vendored text above it, which is left untouched.
+- **No spoilers.** Guides name the concept a level exercises but never contain passwords, payloads or finished solutions, so the games stay worth playing.
+- **Honest about gaps.** Where upstream withholds a level's description and the topic could not be confirmed, the guide gives a general investigation method and says so instead of guessing.
+- **Level map.** Numbering differs between games (in Bandit, page N explains how to *reach* level N; in Natas, page N is the level you are *in*), so most guides open with a one-line map of which account you are logged in as and which password you are after.
+- **Page summaries.** `description` and `excerpt` front matter are one-sentence summaries of the page. The values the aggregator derives from upstream are truncated body text such as `Level Goal ----------`.
+
+Re-syncing from upstream regenerates the pages and drops the guides. Carry them across with `tools/carry-study-guides.py` as described in [Regenerating from upstream](#regenerating-from-upstream).
 
 ## Theme & site
 
@@ -60,15 +74,21 @@ bundle exec jekyll serve   # http://localhost:4000/wargames/
 
 ```
 index.md                 # Homepage (layout: home) — wargames hub
-overthewire/             # Vendored OverTheWire challenge pages
+overthewire/             # Vendored OverTheWire challenge pages + study guides
   index.md               #   Games index (/docs/wargames/)
   bandit/                #   Linux/Unix fundamentals
-  natas/                 #   Server-side web security
-  narnia/ behemoth/ ...  #   Binary exploitation and beyond
+  natas/                 #   Server-side web security (browser, no SSH)
+  krypton/ leviathan/    #   Cryptography; first steps in reverse engineering
+  narnia/ behemoth/      #   Binary exploitation, with and without source
+  utumno/ maze/ ...      #   Harder binary exploitation
+  manpage/ vortex/ ...   #   Code auditing and advanced mixed games (drifter, formulaone)
+  semtex/ blacksun/      #   Offline / down games kept as reference
+  abraxas/ hes2010/ ...  #   Downloadable conference games (kishi, monxla)
 _config.yml              # Jekyll config (remote_theme, defaults, excludes)
 _data/navigation/        # Top navbar (main.yml) — the games sidebar is auto-built
 zer0.install.yml         # Installer config that scaffolds the framework
 scripts/docs-aggregator/ # Upstream content sync pipeline
+tools/                   # unwrap-prose.py (lint) and carry-study-guides.py (re-sync helper)
 ```
 
 ## Regenerating from upstream
@@ -81,6 +101,18 @@ pip install -r scripts/docs-aggregator/requirements.txt
 ```
 
 Sources are registered in `scripts/docs-aggregator/docs_config.yml`.
+
+The pipeline stages its output under `pages/_docs/wargames/overthewire/` rather than rewriting `overthewire/**` in place, so refreshing the site is a short manual process:
+
+```bash
+./scripts/docs-aggregator/aggregate_docs.sh
+python3 tools/carry-study-guides.py pages/_docs/wargames/overthewire   # re-attach the study guides and page summaries
+diff -r pages/_docs/wargames/overthewire overthewire                    # review what changed upstream
+cp -R pages/_docs/wargames/overthewire/. overthewire/                   # move the refreshed pages over
+rm -rf pages work                                                       # staging areas; Jekyll would otherwise build duplicates
+```
+
+`carry-study-guides.py` copies each current page's study guide and its `description` / `excerpt` onto the matching refreshed page and lists any page it could not match, such as a level newly added upstream, which needs a guide written for it.
 
 ## Using this content
 

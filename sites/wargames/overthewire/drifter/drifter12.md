@@ -1,6 +1,7 @@
 ---
 title: Drifter12
-description: Remote Procedure Call style reverse engineering fun :-)
+description: "Drifter Level 12 — a remote-procedure-call style reverse-engineering challenge."
+excerpt: "Drifter Level 12 — a remote-procedure-call style reverse-engineering challenge."
 permalink: /docs/wargames/drifter/drifter12/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -33,3 +34,31 @@ sidebar_label: "Level 12"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 Remote Procedure Call style reverse engineering fun :-)
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Where it fits:** Drifter level 12 of 0–15, in the randomisation and reversing stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+
+### What this level teaches
+
+Reverse engineering a protocol with an RPC flavour: request, function identifier, arguments, response.
+
+### Key ideas
+
+- **Protocol discovery.** Capture traffic and read the binary to learn the message format.
+- **Function dispatch.** An RPC server maps identifiers to functions; one of them may do more than intended.
+- **Write a client.** Reimplement the protocol so you can call functions freely.
+
+### How to approach it
+
+1. Observe a normal exchange with a packet capture or a loop-back test.
+2. Read the server's dispatcher.
+3. Experiment with each function, looking for unsafe behaviour.
+
+### Why it matters
+
+Custom binary protocols are a common attack surface for embedded and industrial software.
+
+<!-- study-guide:end -->

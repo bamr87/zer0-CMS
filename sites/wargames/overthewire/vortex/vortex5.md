@@ -1,14 +1,7 @@
 ---
 title: Vortex5
-description: 'MD5 Brute Force
-
-  ---------------
-
-  A password is required for the next level. vortex5.c and md5.h.
-
-  a-z,A-Z,0-9 is the search space. The password length is 5 chars
-
-  long, it was originally 7 chars long.'
+description: "Vortex Level 5 — brute-force an MD5 search space, and learn why shortening a password makes the attack feasible."
+excerpt: "Vortex Level 5 — brute-force an MD5 search space, and learn why shortening a password makes the attack feasible."
 permalink: /docs/wargames/vortex/vortex5/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -47,5 +40,31 @@ A password is required for the next level. vortex5.c and md5.h. a-z,A-Z,0-9 is t
     Collision(s) tested : 489265082 in 217 second(s), 361 millisec, 101 microsec.
     Average of 2250932.1 hashes/sec.
 
+<!-- study-guide:start -->
 
+## Study guide
 
+**Level map:** logged in as `vortex5`, obtain access to `vortex6`.
+
+### What this level teaches
+
+How big search spaces are, and how speed (hashes per second) decides what is feasible.
+
+### Key ideas
+
+- **Search space.** Letters and digits (a–z, A–Z, 0–9) give 62 choices per position. A five-character password has 62 to the power 5, about 916 million possibilities.
+- **Throughput.** The page records a run of roughly 2.25 million hashes per second. At that speed five characters take a few minutes, while the original seven characters (about 3.5 trillion possibilities) would take weeks on that hardware.
+- **Provided source.** The code and `md5.h` are available; you are expected to write or adapt a search.
+- **Optimise.** Fast hashing loops in C, multiple cores or GPUs, and early rejection all change the arithmetic.
+
+### How to approach it
+
+1. Read the source to learn exactly what is hashed and what you must match.
+2. Write an efficient search in C, and test it on a small known case first.
+3. Estimate the time before launching the full run.
+
+### Why it matters
+
+It explains why password length and slow hashes (bcrypt, scrypt, Argon2) matter, and why fast hashes such as MD5 are poor for storing passwords.
+
+<!-- study-guide:end -->

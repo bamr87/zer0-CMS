@@ -1,6 +1,7 @@
 ---
 title: Narnia3
-description: There is no information for this level, intentionally.
+description: "Narnia Level 3 — another overflow level; use the source to see what an overflowing input can reach and plan around the program's file handling."
+excerpt: "Narnia Level 3 — another overflow level; use the source to see what an overflowing input can reach and plan around the program's file handling."
 permalink: /docs/wargames/narnia/narnia3/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -33,3 +34,31 @@ sidebar_label: "Level 3"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 There is no information for this level, intentionally.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `narnia3`, find the password for `narnia4`.
+
+### What this level teaches
+
+Reasoning about stack layout and about what the program does with files, not only about return addresses.
+
+### Key ideas
+
+- **Read the source before debugging.** Note every buffer, its size, the variables declared near it and what the program does with them.
+- **Not all overflows target return addresses.** Overwriting the right neighbouring variable can be easier and just as powerful.
+- **Files as inputs and outputs.** When a program reads and writes files, think about what names you control and what links to other files you could create in a private `/tmp` directory.
+
+### How to approach it
+
+1. Draw the stack layout of the main function from the source.
+2. Work out which variable your overflow reaches first and how the program uses it.
+3. Test in `gdb`, then craft the file names or links needed.
+
+### Why it matters
+
+Real exploits are usually found by studying program behaviour, not by blindly overwriting return addresses.
+
+<!-- study-guide:end -->

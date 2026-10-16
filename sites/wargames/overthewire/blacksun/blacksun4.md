@@ -1,8 +1,7 @@
 ---
 title: Blacksun4
-description: 'level4 is an installation of Apache and PHP with an introduced heap
-
-  vulnerability.'
+description: "Blacksun Level 4 — exploit a deliberately introduced heap vulnerability in Apache and PHP by running your own PHP code on the server."
+excerpt: "Blacksun Level 4 — exploit a deliberately introduced heap vulnerability in Apache and PHP by running your own PHP code on the server."
 permalink: /docs/wargames/blacksun/blacksun4/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -55,5 +54,31 @@ The document root is in /levels/level4/htdocs, you'll need to put your php code 
 |--------------------------------------------:+:----------------|
 | Location:                                   | 127.0.0.1:55555 |
 
+<!-- study-guide:start -->
 
+## Study guide
 
+**Level map:** the service listens on `127.0.0.1:55555`, with the document root at `/levels/level4/htdocs`.
+
+### What this level teaches
+
+Exploiting a bug in an interpreter by writing scripts in the language it runs.
+
+### Key ideas
+
+- **Interpreter exploitation.** The vulnerability is in the PHP runtime, so your PHP code is the attack vector.
+- **Heap memory.** PHP's allocator and the web server's heap layout determine what an overflow or free corrupts.
+- **Constraints.** The page says the spawned shell cannot be `/bin/sh` or `/bin/bash`, and the Apache process cannot read certain paths, so your goal and payload must account for that.
+- **All protections on.** SSP, PIE and ASLR are enabled, with non-executable pages off.
+
+### How to approach it
+
+1. Place a simple PHP file in the document root and request it through the web server on the stated port.
+2. Study the introduced vulnerability described on the page and work out how to trigger it from PHP.
+3. Iterate on heap layout until the corruption lands where you need it.
+
+### Why it matters
+
+Modern attacks often target interpreters and runtimes, and heap grooming is the key technique.
+
+<!-- study-guide:end -->

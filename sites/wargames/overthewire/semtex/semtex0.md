@@ -1,10 +1,7 @@
 ---
 title: Semtex0
-description: 'Get a shell
-
-  -----------
-
-  semtex.labs.overthewire.org'
+description: "Semtex Level 0 — receive a stream from a network port, discard every second byte, and run the executable that reveals the password."
+excerpt: "Semtex Level 0 — receive a stream from a network port, discard every second byte, and run the executable that reveals the password."
 permalink: /docs/wargames/semtex/semtex0/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -59,3 +56,33 @@ Reading Material
 
 [semtex1@semtex.labs.overthewire.org]: ssh://semtex1@semtex.labs.overthewire.org:2229
 [Beej's guide to network programming]: http://beej.us/guide/bgnet/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** this level gives you the login for `semtex1`, used on port 2229.
+
+### What this level teaches
+
+Raw network reading and handling unusual file formats.
+
+### Key ideas
+
+- **Choose your platform.** The page lists three ports for three platforms: x86 ELF, amd64 ELF and PowerPC Mach-O. Pick the one you can run.
+- **Read until the port closes,** then process the data.
+- **Cleaning the stream.** Every second byte is garbage to ignore; the others form an executable.
+- **Run it.** The program shows the password. Check its type with `file` first.
+- **Reading.** Beej's guide to network programming is linked.
+
+### How to approach it
+
+1. Write a small client that connects, reads everything and saves it.
+2. Remove the unwanted bytes with a script.
+3. Mark the result executable and run it in a safe environment.
+
+### Why it matters
+
+Receiving untrusted executables is risky; analyse them in a virtual machine.
+
+<!-- study-guide:end -->

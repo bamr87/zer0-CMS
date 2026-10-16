@@ -1,16 +1,6 @@
 ---
 title: Bandit18
-description: 'Level Goal
-
-  ----------
-
-  There are 2 files in the homedirectory: passwords.old and
-
-  passwords.new. The password for the next level is in
-
-  passwords.new and is the only line that has been changed between
-
-  passwords.old and passwords.new'
+description: "Bandit Level 18 — compare two files with diff to find the single line that changed."
 permalink: /docs/wargames/bandit/bandit18/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -29,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 18 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 18 — compare two files with diff to find the single line that changed."
 draft: false
 keywords:
 - security
@@ -54,3 +44,30 @@ Commands you may need to solve this level
 -----------------------------------------
 cat, grep, ls, diff
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit17`, find the password for `bandit18`.
+
+### What this level teaches
+
+How to find differences between two versions of a file, and how to read a diff.
+
+### Key ideas
+
+- **`diff old new`** prints only the lines that differ. A `<` marks a line from the first file and `>` a line from the second.
+- **Why it matters for text.** Version control, patches and configuration audits all rely on exactly this idea.
+- A hint in the Level Goal: only one line changed, so the output should be tiny.
+
+### How to approach it
+
+1. Read `man diff`, paying attention to the default output format.
+2. Decide which of the two lines is the password, using the file names in the Level Goal.
+3. After you finish, log out and back in as the new user. If a message appears, it relates to the next level, so keep reading.
+
+### Why it matters
+
+`git diff`, code review and configuration-drift tools are all diff under another name.
+
+<!-- study-guide:end -->

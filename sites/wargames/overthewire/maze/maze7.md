@@ -1,6 +1,7 @@
 ---
 title: Maze7
-description: There is no information for this level, intentionally.
+description: "Maze Level 7 — an intentionally undocumented later level, with a method for investigating it."
+excerpt: "Maze Level 7 — an intentionally undocumented later level, with a method for investigating it."
 permalink: /docs/wargames/maze/maze7/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -33,3 +34,30 @@ sidebar_label: "Level 7"
 > **Source:** This content is aggregated from [overthewire](https://github.com/OverTheWireOrg/OverTheWire-website) ([MIT](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original repository for the latest version.
 
 There is no information for this level, intentionally.
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `maze7`, find the password for `maze8`.
+
+### What to expect
+
+Upstream states "There is no information for this level, intentionally." That is part of the game: you discover what the level does by investigating it. Maze is a harder binary-exploitation wargame. Its authors say it needs knowledge of exploitation techniques, programming and reverse engineering, and that the levels are deliberately tricky and sometimes strange.
+
+### Where it fits
+
+Maze is rated 5/10 by its original authors, and lives under `/maze/` on the game server (SSH port 2225). This is page 8 of 10 in this mirror. Later levels tend to combine ideas from earlier ones, so reread your notes on previous levels for tools you can reuse.
+
+### How to approach it
+
+1. List what the program trusts: input length, file names, the environment, the current directory, the time.
+2. Look through the game's data directory for source code, helper files and anything readable that explains the setup.
+3. The authors' advice is to get ready to use `gdb`; step through the program rather than guessing.
+4. Write down the one thing the program assumes about its input, then test what happens when that assumption is false.
+
+### Why it matters
+
+Each level is a miniature version of a real bug class. Working it out yourself without hints builds the investigative habits that no walkthrough can give you.
+
+<!-- study-guide:end -->

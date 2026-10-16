@@ -1,16 +1,7 @@
 ---
 title: Semtex9
-description: 'Tunneling your firewall
-
-  -----------------------
-
-  How do you get data through a firewall that is blocking any tcp
-
-  connection? You just don''t use a tcp connection, but instead other
-
-  packets, that might not be filtered. For example network maintenance
-
-  pr...'
+description: "Semtex Level 9 — write a client that tunnels a TCP session through ICMP packets to get past a firewall."
+excerpt: "Semtex Level 9 — write a client that tunnels a TCP session through ICMP packets to get past a firewall."
 permalink: /docs/wargames/semtex/semtex9/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -52,5 +43,31 @@ The protocol and the server, that is used by the ICMP tunnel is described in you
 
 You will have to use /rdx/rawwrapper. 
 
+<!-- study-guide:start -->
 
+## Study guide
 
+**Level map:** use `/rdx/rawwrapper` to talk to the ICMP "server"; the protocol is described in your home directory.
+
+### What this level teaches
+
+Protocol tunnelling over a protocol that firewalls often allow.
+
+### Key ideas
+
+- **Firewalls filter by protocol.** If TCP is blocked but ICMP is allowed, data can be wrapped inside ICMP packets.
+- **Raw wrapper.** A helper lets you send and receive ICMP from an unprivileged account.
+- **Black-box shortcut.** The page says that if you manage to analyse the protocol as a black box, you can jump directly from `semtex0` to `semtex10`.
+- **A shell at the end.** A working tunnel lands you in a shell on an unknown system.
+
+### How to approach it
+
+1. Read the protocol document in your home directory.
+2. Build a client that sends and receives framed data inside ICMP.
+3. Use the tunnel to run commands and search for the password.
+
+### Why it matters
+
+ICMP and DNS tunnelling are well-known exfiltration techniques, and network monitoring tools look for them.
+
+<!-- study-guide:end -->

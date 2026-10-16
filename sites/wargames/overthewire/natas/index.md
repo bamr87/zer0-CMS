@@ -1,6 +1,7 @@
 ---
 title: Natas
-description: Natas teaches the basics of serverside web-security.
+description: "Natas teaches server-side web security through 35 browser-based levels, from reading page source to SQL injection, session attacks and cryptographic oracles."
+excerpt: "Natas teaches server-side web security through 35 browser-based levels, from reading page source to SQL injection, session attacks and cryptographic oracles."
 permalink: /docs/wargames/natas/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -56,3 +57,51 @@ A webbrowser, curl, ZAP proxy
 developed in association with<br/> the <a href="http://www.nessos-project.eu/">NESSoS FP7 project</a>
 </div>
 
+<!-- study-guide:start -->
+
+## Study guide
+
+This guide is spoiler-free: it names the concept each level exercises so you know what to study, but it never gives passwords, payloads or finished solutions.
+
+### What Natas teaches
+
+Natas is a tour of how web applications fail. There is no SSH login. Each level is its own website at `natasN.natas.labs.overthewire.org`, protected by HTTP Basic authentication (a browser pop-up asking for a username and password). Your job is to make the site disclose the password for the next level. Along the way you meet most of the classic web vulnerabilities, always from the server side: the flaws are in how the *server* trusts what the browser sends.
+
+### How the levels are numbered
+
+Unlike Bandit, the page for Level N is the level you are *in*: sign in as `natasN` and look for the password to `natasN+1`. Every level's password is also stored on the server in `/etc/natas_webpass/`, readable only by that level's user and the previous one, which is the file the vulnerabilities in later levels aim to read.
+
+### The learning path
+
+| Levels | Theme | Core ideas |
+|--------|-------|-----------|
+| 0–3 | Information disclosure | page source, hidden resources, directory listings, `robots.txt` |
+| 4–7 | Trusting the client | request headers, cookies, source disclosure, file inclusion |
+| 8–11 | Encodings and weak crypto | reversing an encoding, command injection, XOR |
+| 12–13 | File upload | trusting filenames and file signatures |
+| 14–17 | SQL injection | authentication bypass, blind and time-based extraction |
+| 18–21 | Sessions | predictable IDs, custom session handling, shared state |
+| 22–25 | PHP behaviour | redirects, loose comparison, filters and log files |
+| 26–28 | Deeper flaws | object deserialization, truncation, block-cipher misuse |
+| 29–33 | Perl and PHP internals | injection through language features, uploads, phar |
+| 34 | The end (for now) | consolidate and move on |
+
+### Tools you need
+
+- **A browser with developer tools.** View source, the Network tab (to see requests, headers and cookies) and the cookie viewer cover the first third of the game.
+- **`curl`.** Sends exactly the request you specify, which is how you control headers, cookies and methods. Run `curl -u natasN:PASSWORD URL`.
+- **An intercepting proxy** such as OWASP ZAP or Burp Suite for editing requests in flight.
+- **A scripting language.** Python with `requests` is ideal from the blind-injection levels onward, where you automate hundreds of requests.
+
+### How to approach any web level
+
+1. Use the app as a normal user and note every input: form fields, URL parameters, cookies, headers, uploaded files.
+2. Read all the client-side code and the page source, and follow every link and referenced resource.
+3. When source code is offered, read it as a defender: what does the server assume about each input?
+4. Form a hypothesis, test it with the smallest possible request, and read the response closely.
+
+### Staying on the right side of the line
+
+Everything here is meant to be attacked, but only the Natas servers. Never apply these techniques to websites you do not own or have written permission to test.
+
+<!-- study-guide:end -->

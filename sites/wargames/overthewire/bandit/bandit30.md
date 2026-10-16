@@ -1,10 +1,6 @@
 ---
 title: Bandit30
-description: 'Level Goal
-
-  ----------
-
-  There is a git repository at ssh://bandit29-git@bandit.labs.overthewire.org/home/bandit29-git/repo via the port 2220. The password for the user bandit29-git is the same as for the user bandit29.'
+description: "Bandit Level 30 — discover that the interesting commit lives on a branch other than the one you cloned."
 permalink: /docs/wargames/bandit/bandit30/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -23,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 30 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 30 — discover that the interesting commit lives on a branch other than the one you cloned."
 draft: false
 keywords:
 - security
@@ -56,3 +52,31 @@ Helpful Reading Material
 
 [Installing Git]: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 [Git from the Bottom Up]: https://jwiegley.github.io/git-from-the-bottom-up/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** using the password for `bandit29`, find the password for `bandit30`.
+
+### What this level teaches
+
+Git branches, and how to see work that is not on the default branch.
+
+### Key ideas
+
+- **Branches** are named, movable pointers to lines of development. A clone checks out only the default branch at first.
+- **Remote branches.** `git branch -a` lists local and remote branches; `git checkout` switches to one.
+- **Log per branch.** `git log` shows only the history reachable from the branch you are on.
+
+### How to approach it
+
+1. After cloning, read the files and log, then ask what else could exist.
+2. List all branches, including remote ones, and look through each.
+3. Read files in any branch that looks like a work in progress.
+
+### Why it matters
+
+Development, feature and release branches often hold unreleased code or leftover secrets, and reviewers must check them all.
+
+<!-- study-guide:end -->

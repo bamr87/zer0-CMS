@@ -1,10 +1,6 @@
 ---
 title: Bandit28
-description: 'Level Goal
-
-  ----------
-
-  There is a git repository at ssh://bandit27-git@bandit.labs.overthewire.org/home/bandit27-git/repo via the port 2220. The password for the user bandit27-git is the same as for the user bandit27.'
+description: "Bandit Level 28 — clone a Git repository over SSH from your own machine and read its files."
 permalink: /docs/wargames/bandit/bandit28/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -23,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 28 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 28 — clone a Git repository over SSH from your own machine and read its files."
 draft: false
 keywords:
 - security
@@ -56,3 +52,30 @@ Helpful Reading Material
 
 [Installing Git]: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 [Git from the Bottom Up]: https://jwiegley.github.io/git-from-the-bottom-up/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** using the password for `bandit27`, find the password for `bandit28`.
+
+### What this level teaches
+
+The basic Git workflow: cloning a remote repository over SSH.
+
+### Key ideas
+
+- **Repository.** A folder whose history of changes is stored in a hidden `.git` directory.
+- **`git clone URL`** copies the repository to your machine. SSH URLs have the form `ssh://user@host:PORT/path`; note that the port goes in the URL.
+- **Work locally.** The Level Goal asks you to do this on your own machine, so install Git there first.
+
+### How to approach it
+
+1. Clone using the URL given, supplying the password when asked.
+2. Read the files in the working tree, starting with a README if present.
+
+### Why it matters
+
+Git is the foundation of modern software development, and every remaining Bandit level is a lesson in how it stores history.
+
+<!-- study-guide:end -->

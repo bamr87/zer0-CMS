@@ -1,14 +1,6 @@
 ---
 title: Bandit25
-description: 'Level Goal
-
-  ----------
-
-  A daemon is listening on port 30002 and will give you the password for
-
-  bandit25 if given the password for bandit24 and a secret numeric 4-digit pincode.
-
-  There is no way to retrieve the pincode except by going through all of the ...'
+description: "Bandit Level 25 — brute-force a 4-digit PIN against a network service by scripting 10,000 guesses over one connection."
 permalink: /docs/wargames/bandit/bandit25/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -27,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 25 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 25 — brute-force a 4-digit PIN against a network service by scripting 10,000 guesses over one connection."
 draft: false
 keywords:
 - security
@@ -49,3 +41,32 @@ bandit25 if given the password for bandit24 and a secret numeric 4-digit pincode
 There is no way to retrieve the pincode except by going through all of the 10000
 combinations, called brute-forcing.  
 You do not need to create new connections each time
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `bandit24`, find the password for `bandit25`.
+
+### What this level teaches
+
+How brute force works, when it is feasible, and how to automate it with a shell loop.
+
+### Key ideas
+
+- **Search space.** A four-digit PIN has 10,000 possibilities; at that size, exhaustive search is practical.
+- **Loops.** Shell `for` loops, `seq` and `printf` can generate every candidate, and `printf '%04d'` pads with leading zeros (so `7` becomes `0007`).
+- **One connection.** The Level Goal says you do not need a new connection for each guess, so you can pipe the whole stream into a single `nc`.
+- **Defences.** Rate limiting, lockouts and longer secrets exist precisely to make this attack impractical.
+
+### How to approach it
+
+1. Test the protocol by hand with a few guesses to learn the exact input format.
+2. Generate all 10,000 lines of the form the service expects, then send them in one go.
+3. Filter the output so only the successful reply stands out.
+
+### Why it matters
+
+Understanding the arithmetic of brute force explains why short PINs, weak passwords and unthrottled login forms are dangerous.
+
+<!-- study-guide:end -->

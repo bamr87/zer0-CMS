@@ -1,6 +1,7 @@
 ---
 title: Natas31
-description: "Username: natas31\n    URL:      http://natas31.natas.labs.overthewire.org"
+description: "Natas Level 31 — a CSV upload feature passes a file handle to Perl's diamond operator; learn how that can read arbitrary files."
+excerpt: "Natas Level 31 — a CSV upload feature passes a file handle to Perl's diamond operator; learn how that can read arbitrary files."
 permalink: /docs/wargames/natas/natas31/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 31"
 
     Username: natas31
     URL:      http://natas31.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas31` and find the password for `natas32`.
+
+### What this level teaches
+
+How a language feature meant for convenience becomes a file read vulnerability when input is user-controlled.
+
+### Key ideas
+
+- **The diamond operator.** In Perl, `<>` reads from files named on the command line or from standard input, and its handling of special names is surprising.
+- **CGI file uploads.** An upload parameter can be either a file or a plain string depending on how the request is built.
+- **Dual nature of a value.** The script treats a value as a file handle in one place and as a name in another.
+- **Read the documentation.** Perl's `perlop` description of `<>` and `<<>>` explains the behaviour.
+
+### How to approach it
+
+1. Study how the script reads the uploaded file.
+2. Work out how to make the same parameter mean something different to the second use.
+
+### How developers prevent it
+
+Use the safe double-diamond form, avoid reading from user-supplied names, and test upload handling with unexpected input shapes.
+
+<!-- study-guide:end -->

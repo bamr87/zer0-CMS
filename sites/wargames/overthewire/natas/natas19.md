@@ -1,6 +1,7 @@
 ---
 title: Natas19
-description: "Username: natas19\n    URL:      http://natas19.natas.labs.overthewire.org"
+description: "Natas Level 19 — session IDs look random but encode the username; learn to see structure in what appears to be gibberish."
+excerpt: "Natas Level 19 — session IDs look random but encode the username; learn to see structure in what appears to be gibberish."
 permalink: /docs/wargames/natas/natas19/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 19"
 
     Username: natas19
     URL:      http://natas19.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas19` and find the password for `natas20`.
+
+### What this level teaches
+
+That apparent randomness may hide a predictable structure, which can be decoded and forged.
+
+### Key ideas
+
+- **Decoding the cookie.** Compare the cookie values you receive for different usernames and look for a pattern, for example a standard encoding of readable text.
+- **Predictable plus enumerable.** Once the format is understood, building candidate values is a short script.
+- **Same goal as before.** You are still after the administrator's session.
+
+### How to approach it
+
+1. Log in with several different usernames and compare the resulting cookie values.
+2. Work out what is being encoded, and what part varies.
+3. Generate candidates for the admin account and test them.
+
+### How developers prevent it
+
+Treat session IDs as opaque random tokens. Never derive them from user attributes.
+
+<!-- study-guide:end -->

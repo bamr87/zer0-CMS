@@ -1,8 +1,7 @@
 ---
 title: Semtex4
-description: 'Ptrace your way
-
-  ---------------'
+description: "Semtex Level 4 — make a stripped, statically linked program print the next level's password, using ptrace."
+excerpt: "Semtex Level 4 — make a stripped, statically linked program print the next level's password, using ptrace."
 permalink: /docs/wargames/semtex/semtex4/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -45,3 +44,31 @@ Tip :
 -   Pass uses geteuid() to get its information.
 -   Read man ptrace
 
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** the `pass` program prints your own level's password; you must make it print the next one.
+
+### What this level teaches
+
+Using `ptrace`, the system call behind debuggers, to alter another process.
+
+### Key ideas
+
+- **Stripped, static binary.** The page shows the file is 32-bit, statically linked and stripped, so there are no symbols and no dynamic library calls to intercept.
+- **`geteuid()`.** The program decides what to print from the effective user ID.
+- **`ptrace`.** A tracing parent can read and change a child's registers and memory, so you can alter the value the child sees.
+- **Reading.** `man ptrace`, as the page advises.
+
+### How to approach it
+
+1. Find where the program calls `geteuid` (by tracing system calls).
+2. Write a launcher that traces the program and changes the result.
+3. Run it and read the output.
+
+### Why it matters
+
+This is how debuggers, sandboxes and many anti-debugging tricks work.
+
+<!-- study-guide:end -->

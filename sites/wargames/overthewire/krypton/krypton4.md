@@ -1,10 +1,7 @@
 ---
 title: Krypton4
-description: 'Level Info
-
-  ----------
-
-  Good job!'
+description: "Krypton Level 4 — break a Vigenère cipher when you know the key length, by treating each position as a separate Caesar problem."
+excerpt: "Krypton Level 4 — break a Vigenère cipher when you know the key length, by treating each position as a separate Caesar problem."
 permalink: /docs/wargames/krypton/krypton4/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -67,4 +64,31 @@ For this exercise, the key length is 6. The password to level five is in the usu
 
 Have fun!
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** logged in as `krypton4`, decrypt the file that holds the password for `krypton5`.
+
+### What this level teaches
+
+Polyalphabetic ciphers and how knowing the key length turns them back into simple substitution.
+
+### Key ideas
+
+- **Vigenère.** A repeating keyword is added letter by letter to the plaintext, modulo 26, so one plaintext letter can encrypt to many different ciphertext letters. The page includes a worked example with the key `GOLD`.
+- **Defeating the repetition.** With a key of length six, every sixth letter was shifted by the same amount. Splitting the text into six groups gives six independent Caesar ciphers.
+- **Frequency analysis per group.** Each group is plain shifted English, so the most common letter is likely `E` (or another common letter) shifted.
+- **Reassemble the key.** Once you know the shift for each group, you know the key and can decrypt everything.
+
+### How to approach it
+
+1. Combine the intercepted messages for more data and split them by position modulo the key length.
+2. Count letters in each group and deduce each shift.
+3. Decrypt and read the result; correct any group that gives gibberish.
+
+### Why it matters
+
+Vigenère was considered unbreakable for centuries. Once you know how it is attacked, the lesson sticks: repeated keys leak.
+
+<!-- study-guide:end -->

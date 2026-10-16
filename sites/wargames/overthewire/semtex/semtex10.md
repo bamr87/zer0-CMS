@@ -1,10 +1,7 @@
 ---
 title: Semtex10
-description: 'Hacking szene
-
-  -------------
-
-  Thanks to zaphod and Mush for finding a bugs in this level'
+description: "Semtex Level 10 — exploit a weakness in how an authentication daemon checks passwords, in the style of old Windows 95/98 network shares."
+excerpt: "Semtex Level 10 — exploit a weakness in how an authentication daemon checks passwords, in the style of old Windows 95/98 network shares."
 permalink: /docs/wargames/semtex/semtex10/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -52,4 +49,31 @@ This level implements a weakness in the authentication scheme used by M$ win95 a
 
 There is a TCP daemon on brebera port 24019. It authenticates your password. Once you send the correct password, it echoes it back. Well, let the source speak for itself. As far as brute force may take you, a little brain is never bad :P Perhaps you have heard of pqwak?
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** the daemon listens on port 24019 of the Semtex network host; its source is provided.
+
+### What this level teaches
+
+How a flawed authentication scheme lets you recover a password far faster than brute force.
+
+### Key ideas
+
+- **Movie hacking.** The page jokes about the progress-bar password crackers from films.
+- **The weakness.** It mirrors a real flaw in Windows 95 and 98 network shares, where a password could be verified in pieces, so each part can be guessed separately.
+- **Source provided.** Study how the daemon compares your input and what it reveals.
+- **Brain over brawn.** The page notes brute force goes only so far, then mentions a tool called pqwak.
+
+### How to approach it
+
+1. Read the source and note how the comparison is done and what feedback you get.
+2. Design an attack that learns the password one part at a time.
+3. Script it and watch the answer appear.
+
+### Why it matters
+
+Comparison functions that reveal how much of a guess was right are a real weakness; use constant-time comparison and rate limiting.
+
+<!-- study-guide:end -->

@@ -1,12 +1,7 @@
 ---
 title: Vortex21
-description: 'Reverse Me
-
-  ----------
-
-  This level is a slightly more difficult reverse me (which might
-
-  require understanding the encryptor for it).'
+description: "Vortex Level 21 — a harder reverse-engineering task that may require understanding an encryptor."
+excerpt: "Vortex Level 21 — a harder reverse-engineering task that may require understanding an encryptor."
 permalink: /docs/wargames/vortex/vortex21/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -41,3 +36,31 @@ sidebar_label: "Level 21"
 Reverse Me
 ----------
 This level is a slightly more difficult reverse me (which might require understanding the encryptor for it).
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** logged in as `vortex21`, obtain access to `vortex22`.
+
+### What this level teaches
+
+Reverse engineering a program whose logic depends on an encryption routine.
+
+### Key ideas
+
+- **Understand the encryptor.** The page warns you may need to understand how it works.
+- **Divide the program.** Separate the input handling, the transformation and the comparison.
+- **Invert.** Once you know the transformation, work backwards from the target.
+
+### How to approach it
+
+1. Locate the encryption routine and describe it in pseudocode.
+2. Write an equivalent function and test it against the binary's output.
+3. Invert it to obtain the required input.
+
+### Why it matters
+
+Understanding custom crypto from binaries is a staple of malware analysis.
+
+<!-- study-guide:end -->

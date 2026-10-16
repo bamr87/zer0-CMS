@@ -1,8 +1,7 @@
 ---
 title: Krypton5
-description: 'Level Info
-
-  ----------'
+description: "Krypton Level 5 — break a Vigenère cipher when the key length is unknown, by first discovering the length from patterns in the ciphertext."
+excerpt: "Krypton Level 5 — break a Vigenère cipher when the key length is unknown, by first discovering the length from patterns in the ciphertext."
 permalink: /docs/wargames/krypton/krypton5/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -41,4 +40,31 @@ FA can break a known key length as well. Lets try one last polyalphabetic cipher
 
 Enjoy.
 
+<!-- study-guide:start -->
 
+## Study guide
+
+**Level map:** logged in as `krypton5`, decrypt the file that holds the password for `krypton6`.
+
+### What this level teaches
+
+How to find an unknown key length, then reuse the Level 4 method.
+
+### Key ideas
+
+- **Repeated sequences (Kasiski examination).** If the same plaintext fragment is encrypted at positions separated by a multiple of the key length, it produces the same ciphertext. Distances between repeats suggest the length.
+- **Index of coincidence.** A statistic measuring how uneven the letter distribution is. When you split text by the correct key length, each group looks like English and the statistic jumps.
+- **Try lengths systematically.** A short script that computes the statistic for lengths 1 to about 20 is quick to write.
+- **Then proceed as before** with frequency analysis for each position.
+
+### How to approach it
+
+1. Look for repeated sequences and note their spacing, or compute the coincidence statistic.
+2. Pick the most plausible key length.
+3. Apply the method from Level 4.
+
+### Why it matters
+
+Key-length discovery generalises to many attacks on reused keys, including repeating-key XOR, which you will meet again.
+
+<!-- study-guide:end -->

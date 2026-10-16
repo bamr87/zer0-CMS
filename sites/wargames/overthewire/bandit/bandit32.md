@@ -1,10 +1,6 @@
 ---
 title: Bandit32
-description: 'Level Goal
-
-  ----------
-
-  There is a git repository at ssh://bandit31-git@bandit.labs.overthewire.org/home/bandit31-git/repo via the port 2220. The password for the user bandit31-git is the same as for the user bandit31.'
+description: "Bandit Level 32 — push a commit to a Git remote and defeat a .gitignore rule that stops your file from being added."
 permalink: /docs/wargames/bandit/bandit32/
 date: '2026-04-07T01:41:08.000Z'
 lastmod: '2026-04-07T01:41:08.000Z'
@@ -23,7 +19,7 @@ source_url: https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/
 source_name: overthewire
 license: MIT
 author: bamr87
-excerpt: OverTheWire Bandit level 32 — practice Linux command-line and security skills through hands-on challenges.
+excerpt: "Bandit Level 32 — push a commit to a Git remote and defeat a .gitignore rule that stops your file from being added."
 draft: false
 keywords:
 - security
@@ -56,3 +52,32 @@ Helpful Reading Material
 
 [Installing Git]: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 [Git from the Bottom Up]: https://jwiegley.github.io/git-from-the-bottom-up/
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** using the password for `bandit31`, find the password for `bandit32`.
+
+### What this level teaches
+
+Pushing to a remote, and how ignore rules and server-side hooks work.
+
+### Key ideas
+
+- **The three areas.** Working tree, staging area (`git add`) and repository (`git commit`) are separate; `git push` then sends commits to the remote.
+- **`.gitignore`.** A list of patterns Git deliberately skips. If a file you need to add matches a pattern, Git silently refuses unless you force it.
+- **Server hooks.** A remote can run a script when it receives a push and send messages back to you. Read the output of `git push` carefully.
+- **Read the README.** It states exactly what the remote expects.
+
+### How to approach it
+
+1. Clone, then read the README to learn what file and content the server wants.
+2. Create it, try to add and commit it, and diagnose why Git skips it.
+3. Push and read what the server prints back.
+
+### Why it matters
+
+Hooks drive continuous integration, deployments and policy checks, and understanding what `git add` actually does stops "my change disappeared" confusion.
+
+<!-- study-guide:end -->

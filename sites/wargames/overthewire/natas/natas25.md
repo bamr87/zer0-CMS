@@ -1,6 +1,7 @@
 ---
 title: Natas25
-description: "Username: natas25\n    URL:      http://natas25.natas.labs.overthewire.org"
+description: "Natas Level 25 — a weak path filter and a logged User-Agent combine into log poisoning; learn how reading a log file can execute attacker-supplied code."
+excerpt: "Natas Level 25 — a weak path filter and a logged User-Agent combine into log poisoning; learn how reading a log file can execute attacker-supplied code."
 permalink: /docs/wargames/natas/natas25/
 date: '2026-04-07T01:41:09.000Z'
 lastmod: '2026-04-07T01:41:09.000Z'
@@ -34,3 +35,31 @@ sidebar_label: "Level 25"
 
     Username: natas25
     URL:      http://natas25.natas.labs.overthewire.org
+
+<!-- study-guide:start -->
+
+## Study guide
+
+**Level map:** sign in as `natas25` and find the password for `natas26`.
+
+### What this level teaches
+
+Chaining two small weaknesses into a much bigger one.
+
+### Key ideas
+
+- **Naive filtering.** A filter that removes `../` once may be defeated by input that reconstitutes the sequence after removal.
+- **Local file inclusion.** If the application includes a file whose path you can influence, it will run any PHP it contains.
+- **Log poisoning.** Applications log request details such as the User-Agent header. If you can include the log file, anything you put in that header becomes code.
+- **Request headers again.** You control them, as in Level 4.
+
+### How to approach it
+
+1. Read how the language parameter is filtered and how the log filename is chosen.
+2. Plan the sequence: get your own text into the log, then include the log.
+
+### How developers prevent it
+
+Resolve and validate paths against an allow-list, never include files by user-supplied name, and store logs where the web application cannot execute them.
+
+<!-- study-guide:end -->
