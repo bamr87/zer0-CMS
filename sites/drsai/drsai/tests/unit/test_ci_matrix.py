@@ -92,8 +92,20 @@ class TestCoverageIsNotWeakened:
     def test_weekly_full_matrix_sweep_exists(self, triggers):
         """A schedule catches platform-only regressions during quiet periods."""
         schedule = triggers.get("schedule")
-        assert schedule, "no schedule: trigger -- nothing sweeps the full matrix"
-        assert any(entry.get("cron") for entry in schedule)
+        if schedule:
+            assert any(entry.get("cron") for entry in schedule)
+            return
+        # The schedule is deliberately paused while Actions billing is blocked
+        # (bamr87/bamr87#268): a scheduled run would be refused without running.
+        # Accept that only while the pause is documented in the workflow, the
+        # weekly cron is kept ready to uncomment, and a manual trigger remains.
+        text = WORKFLOW.read_text()
+        assert "bamr87/bamr87#268" in text, (
+            "no schedule: trigger and no documented billing pause -- "
+            "nothing sweeps the full matrix"
+        )
+        assert "#   - cron:" in text, "paused schedule lost its cron line"
+        assert "workflow_dispatch" in triggers, "paused schedule needs a manual trigger"
 
     def test_push_and_tag_triggers_survive(self, triggers):
         push = triggers["push"]
