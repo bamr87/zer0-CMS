@@ -1,0 +1,100 @@
+# Feature: ZER0-082
+# Main Navigation Configuration
+# Used by: _includes/navigation/navbar.html
+# Purpose: Primary site navigation with dropdown children
+# Schema: See README.md for full documentation
+
+- title: Quick Start
+  icon: bi-rocket-takeoff
+  url: /quickstart/
+  children:
+    - title: Machine Setup
+      url: /quickstart/machine-setup/
+    - title: Jekyll Setup
+      url: /quickstart/jekyll-setup/
+    - title: GitHub Setup
+      url: /quickstart/github-setup/
+
+- title: News
+  icon: bi-newspaper
+  url: /news/
+  children:
+    - title: Categories
+      url: /categories/
+    - title: Tags
+      url: /tags/
+
+- title: Notes
+  icon: bi-journal-text
+  url: /notes/
+  children:
+    - title: Git Cheatsheet
+      url: /notes/git-cheatsheet/
+    - title: Docker Commands
+      url: /notes/docker-commands/
+    - title: Jekyll Front Matter
+      url: /notes/jekyll-front-matter/
+    - title: Markdown Tips
+      url: /notes/markdown-tips/
+    - title: Bash Shortcuts
+      url: /notes/bash-shortcuts/
+
+- title: Notebooks
+  icon: bi-journal-code
+  url: /notebooks/
+  children:
+    - title: Test Notebook
+      url: /notebooks/test-notebook/
+
+- title: Recipes
+  icon: bi-egg-fried
+  url: /recipes/
+  children:
+    - title: No-Knead Focaccia
+      url: /recipes/no-knead-focaccia/
+    - title: Brown Butter Cookies
+      url: /recipes/brown-butter-chocolate-chip-cookies/
+    - title: Tomato Butter Pasta
+      url: /recipes/weeknight-tomato-butter-pasta/
+    - title: How Recipes Work
+      url: /docs/features/cookbook-collection/
+
+- title: Docs
+  icon: bi-journal-bookmark
+  url: /docs/
+  children:
+    - title: Installation
+      url: /docs/installation/
+    - title: Jekyll Guide
+      url: /docs/jekyll/
+    - title: Docker
+      url: /docs/docker/
+    - title: Features
+      url: /features/
+    # Live demo site, built by .github/workflows/pages.yml into
+    # /examples/swerve-of-shore/. Not part of this site's Jekyll build —
+    # examples/ is excluded from _config.yml — so this is an absolute path
+    # into the deployed tree rather than a page in site.html_pages.
+    - title: Example Site
+      url: /examples/swerve-of-shore/
+    - title: Troubleshooting
+      url: /docs/troubleshooting/
+
+- title: About
+  icon: bi-info-circle
+  url: /about/
+  children:
+    - title: Features
+      url: /features/
+    - title: Design System
+      url: /design/
+    - title: Authors
+      url: /authors/
+    - title: Statistics
+      url: /about/stats/
+    - title: Config
+      url: /about/config/
+    - title: Site Map
+      url: /sitemap/
+    - title: Contact
+      url: /contact/

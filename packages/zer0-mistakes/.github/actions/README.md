@@ -1,0 +1,216 @@
+# GitHub Composite Actions
+
+This directory contains reusable composite actions for the zer0-mistakes Jekyll theme CI/CD pipelines.
+
+## Overview
+
+Composite actions encapsulate common workflow steps into reusable components, reducing duplication and ensuring consistency across workflows.
+
+```
+.github/actions/
+├── configure-git/     # Git identity configuration
+├── quality-checks/    # Code quality validation
+├── setup-ruby/        # Ruby environment setup
+└── test-suite/        # Test execution
+```
+
+## Actions
+
+### 1. `setup-ruby`
+
+Sets up the Ruby environment with bundler caching.
+
+**Usage:**
+```yaml
+- uses: ./.github/actions/setup-ruby
+  with:
+    ruby-version: '3.2'        # Default: '3.2'
+    install-system-deps: true  # Default: true (installs jq)
+```
+
+**Inputs:**
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `ruby-version` | No | `'3.2'` | Ruby version to install |
+| `install-system-deps` | No | `'true'` | Install system dependencies (jq) |
+
+**Used by:** All workflows
+
+---
+
+### 2. `configure-git`
+
+Configures Git identity for automated commits and pushes.
+
+**Usage:**
+```yaml
+- uses: ./.github/actions/configure-git
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    user-name: 'github-actions[bot]'  # Optional
+    user-email: 'github-actions[bot]@users.noreply.github.com'  # Optional
+```
+
+**Inputs:**
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `github-token` | Yes | - | GitHub token for authentication |
+| `user-name` | No | `'github-actions[bot]'` | Git user name |
+| `user-email` | No | `'github-actions[bot]@users.noreply.github.com'` | Git user email |
+
+**Used by:** `version-bump.yml`
+
+---
+
+### 3. `test-suite`
+
+Runs the comprehensive test suite with configurable options.
+
+**Usage:**
+```yaml
+- uses: ./.github/actions/test-suite
+  with:
+    ruby-version: '3.2'
+    verbose: true
+    suites: 'core,quality'
+    skip-docker: true
+```
+
+**Inputs:**
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `ruby-version` | No | `'3.2'` | Ruby version for tests |
+| `verbose` | No | `'true'` | Enable verbose test output |
+| `suites` | No | `'core,quality'` | Comma-separated test suites |
+| `skip-docker` | No | `'true'` | Skip Docker-dependent tests |
+
+**Used by:** `ci.yml`, `release.yml`, `version-bump.yml`
+
+---
+
+### 4. `quality-checks`
+
+Runs code quality checks including linting and formatting validation.
+
+**Usage:**
+```yaml
+- uses: ./.github/actions/quality-checks
+  with:
+    ruby-version: '3.2'
+    check-markdown: true
+    fix-formatting: false
+```
+
+**Inputs:**
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `ruby-version` | No | `'3.2'` | Ruby version |
+| `check-markdown` | No | `'true'` | Run markdown format checks |
+| `fix-formatting` | No | `'false'` | Auto-fix formatting issues |
+
+**Checks performed:**
+- Ruby code quality (`test/test_quality.sh`)
+- Markdown formatting (`scripts/fix-markdown-format.sh`)
+- Project structure validation (required files/directories)
+
+**Used by:** `ci.yml`
+
+---
+
+### 5. `claude-run` (consumed from the hub, not stored here)
+
+The universal AI step — one Claude Code invocation as a named agent (`.claude/agents/<name>.md`), OAuth-first, Claude API fallback, exit 1 on an attempted-and-failed call — is the fleet's `ai-runner` kit, versioned once in [bamr87/bamr87](https://github.com/bamr87/bamr87) and referenced at `@main`. It is **not** a local action any more: there is no `.github/actions/claude-run/` in this repo, and nothing to copy forward.
+
+**Usage:**
+```yaml
+- uses: bamr87/bamr87/.github/actions/claude-run@main
+  env:
+    CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional fallback
+  with:
+    agent: issue-triager
+    prompt: "..."
+    tools: "Read,Grep,Glob,Bash(gh:*)"
+```
+
+Inputs (`prompt`, `agent`, `tools`, `mcp`, `system`, `out`, `model`, `max-turns`), environment, and exit codes are documented in the hub kit README: [`templates/ai-runner/README.md`](https://github.com/bamr87/bamr87/blob/main/templates/ai-runner/README.md). The runner acts on the consumer checkout (`$GITHUB_WORKSPACE`) and picks up this repo's optional companions when present — `_data/ai.yml` (model), `scripts/ai/usage.rb` + `usage_report.rb` (metering), `scripts/ai/api_call.rb` (fallback), `tools/unwrap-prose.py` (prose normalizer); see [`scripts/ai/README.md`](../../scripts/ai/README.md).
+
+**Used by:** `issue-autopilot.yml`, `visual-evidence-autogen.yml`
+
+---
+
+## Creating New Actions
+
+### Action Structure
+
+```
+my-action/
+└── action.yml    # Action definition
+```
+
+### Basic Template
+
+```yaml
+name: 'My Action'
+description: 'Description of what this action does'
+
+inputs:
+  my-input:
+    description: 'Input description'
+    required: false
+    default: 'default-value'
+
+outputs:
+  my-output:
+    description: 'Output description'
+    value: ${{ steps.my-step.outputs.value }}
+
+runs:
+  using: composite
+  steps:
+    - name: My Step
+      id: my-step
+      shell: bash
+      run: |
+        echo "Doing something..."
+        echo "value=result" >> $GITHUB_OUTPUT
+```
+
+### Best Practices
+
+1. **Use composite actions** for multi-step processes
+2. **Set sensible defaults** to reduce required configuration
+3. **Validate inputs** before executing main logic
+4. **Use `::notice::` and `::error::`** for GitHub Actions annotations
+5. **Document all inputs/outputs** in the action.yml description
+6. **Test locally** before committing changes
+
+## Troubleshooting
+
+### Action not found
+```
+Error: Can't find 'action.yml', 'action.yaml' or 'Dockerfile'
+```
+- Verify action directory structure
+- Check spelling of action path in workflow
+
+### Input not passed correctly
+- Ensure input names match exactly (case-sensitive)
+- Check that required inputs are provided
+- Verify default values in action.yml
+
+### Shell script failures
+- Ensure scripts have executable permissions
+- Use absolute paths or `./` prefix
+- Add `set -e` for early failure detection
+
+### Debugging
+Add debug output to actions:
+```yaml
+- name: Debug
+  shell: bash
+  run: |
+    echo "Input value: ${{ inputs.my-input }}"
+    echo "Working directory: $(pwd)"
+    ls -la
+```

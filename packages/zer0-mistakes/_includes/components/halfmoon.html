@@ -1,0 +1,31 @@
+{% comment %} Feature: ZER0-077 {% endcomment %}
+{% comment %}
+  file: halfmoon.html
+  path: _includes/components/halfmoon.html
+  description: Dark / light / auto color-mode switcher (segmented control).
+               Buttons carry data-bs-theme-value; assets/js/halfmoon.js wires
+               clicks, persistence (localStorage "theme") and active state.
+               No ids on purpose — the control may render more than once per
+               page (settings offcanvas + theme-controls-bar).
+  params:      class (string, optional, default "") — extra btn-group classes,
+               e.g. "w-100" to fill the parent.
+  config:      site.color_mode_lock: true removes the control entirely — the
+               site pins one mode and visitor switching is disabled
+               (halfmoon.js + core/color-mode-init.html enforce the same).
+ {% endcomment %}
+{% unless site.color_mode_lock %}
+<div class="btn-group bd-theme-switch {{ include.class | default: '' }}" role="group" aria-label="Color mode">
+  <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-1" data-bs-theme-value="light" aria-pressed="false">
+    <svg class="bi flex-shrink-0" width="1em" height="1em" fill="currentColor" aria-hidden="true"><use href="#sun-fill"></use></svg>
+    <span>Light</span>
+  </button>
+  <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-1" data-bs-theme-value="dark" aria-pressed="false">
+    <svg class="bi flex-shrink-0" width="1em" height="1em" fill="currentColor" aria-hidden="true"><use href="#moon-stars-fill"></use></svg>
+    <span>Dark</span>
+  </button>
+  <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-1" data-bs-theme-value="auto" aria-pressed="false">
+    <svg class="bi flex-shrink-0" width="1em" height="1em" fill="currentColor" aria-hidden="true"><use href="#circle-half"></use></svg>
+    <span>Auto</span>
+  </button>
+</div>
+{% endunless %}

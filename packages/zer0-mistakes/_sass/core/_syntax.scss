@@ -1,0 +1,203 @@
+/* ==========================================================================
+   Syntax highlighting (Rouge)
+   Light mode: GitHub Light-inspired — WCAG AA on --bd-pre-bg: #f8f9fa
+   Dark mode:  Material Dark base16  — designed for --bd-pre-bg: #1b1f22
+   ========================================================================== */
+
+// Dark mode palette (Material Dark / base16)
+$base00: #263238 !default;
+$base01: #2e3c43 !default;
+$base02: #314549 !default;
+$base03: #546e7a !default;
+$base04: #b2ccd6 !default;
+$base05: #eeffff !default;
+$base06: #eeffff !default;
+$base07: #ffffff !default;
+$base08: #f07178 !default;
+$base09: #f78c6c !default;
+$base0a: #ffcb6b !default;
+$base0b: #c3e88d !default;
+$base0c: #89ddff !default;
+$base0d: #82aaff !default;
+$base0e: #c792ea !default;
+$base0f: #ff5370 !default;
+
+.highlight pre {
+  width: 100%;
+}
+
+// ---------------------------------------------------------------------------
+// Default (light mode) — GitHub Light palette, high contrast on #f8f9fa
+// ---------------------------------------------------------------------------
+.highlight .hll { background-color: #fff3cd; }
+.highlight {
+  .c, .cm, .cp, .c1, .cs, .sd {
+    /* Comment */
+    color: #6a737d;
+  }
+  .err {
+    /* Error */
+    color: #b31d28;
+  }
+  .k, .kc, .kd, .kn, .kp, .kr {
+    /* Keyword */
+    color: #d73a49;
+  }
+  .kt {
+    /* Keyword.Type */
+    color: #005cc5;
+  }
+  .l {
+    /* Literal */
+    color: #005cc5;
+  }
+  .n {
+    /* Name */
+    color: #24292e;
+  }
+  .o, .ow {
+    /* Operator */
+    color: #d73a49;
+  }
+  .p, .w {
+    /* Punctuation / Whitespace */
+    color: #24292e;
+  }
+  .gd {
+    /* Generic.Deleted */
+    color: #b31d28;
+    background-color: #ffeef0;
+  }
+  .ge {
+    /* Generic.Emph */
+    font-style: italic;
+  }
+  .gh {
+    /* Generic.Heading */
+    color: #24292e;
+    font-weight: bold;
+  }
+  .gi {
+    /* Generic.Inserted */
+    color: #22863a;
+    background-color: #f0fff4;
+  }
+  .gp {
+    /* Generic.Prompt */
+    color: #6a737d;
+    font-weight: bold;
+  }
+  .gs {
+    /* Generic.Strong */
+    font-weight: bold;
+  }
+  .gu {
+    /* Generic.Subheading */
+    color: #005cc5;
+    font-weight: bold;
+  }
+  .ld {
+    /* Literal.Date */
+    color: #005cc5;
+  }
+  .m, .mf, .mh, .mi, .mo, .il {
+    /* Literal.Number */
+    color: #005cc5;
+  }
+  .s, .sb, .sc, .sh, .sx, .sr, .s1, .s2, .ss {
+    /* Literal.String */
+    color: #032f62;
+  }
+  .se, .si {
+    /* String.Escape / String.Interpol */
+    color: #e36209;
+  }
+  .sd {
+    /* String.Doc (docstring) */
+    color: #6a737d;
+  }
+  .na {
+    /* Name.Attribute */
+    color: #6f42c1;
+  }
+  .nb, .bp {
+    /* Name.Builtin */
+    color: #005cc5;
+  }
+  .nc, .nn {
+    /* Name.Class / Name.Namespace */
+    color: #6f42c1;
+  }
+  .no, .nv, .vc, .vg, .vi {
+    /* Name.Constant / Name.Variable */
+    color: #e36209;
+  }
+  .nd, .nt {
+    /* Name.Decorator / Name.Tag */
+    color: #d73a49;
+  }
+  .ni, .py {
+    /* Name.Entity / Name.Property */
+    color: #24292e;
+  }
+  .ne {
+    /* Name.Exception */
+    color: #b31d28;
+  }
+  .nf, .nx {
+    /* Name.Function / Name.Other */
+    color: #6f42c1;
+  }
+  .nl {
+    /* Name.Label (JSON keys, etc.) */
+    color: #005cc5;
+  }
+  .kn {
+    /* Keyword.Namespace */
+    color: #d73a49;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dark mode overrides — Material Dark base16 on --bd-pre-bg: #1b1f22
+// ---------------------------------------------------------------------------
+[data-bs-theme="dark"] {
+  .highlight .hll { background-color: $base06; }
+  .highlight {
+    .c, .cm, .cp, .c1, .cs, .sd { color: $base04; }
+    .err                          { color: $base08; }
+    .k, .kc, .kd, .kn, .kp, .kr  { color: $base0e; }
+    .kt                           { color: $base0a; }
+    .l                            { color: $base09; }
+    .n                            { color: $base05; }
+    .o, .ow                       { color: $base0c; }
+    .p, .w                        { color: $base05; }
+    .gd                           { color: $base08; background-color: transparent; }
+    .ge                           { font-style: italic; }
+    .gh, .gs                      { color: $base05; font-weight: bold; }
+    .gi                           { color: $base0b; background-color: transparent; }
+    .gp                           { color: $base04; font-weight: bold; }
+    .gu                           { color: $base0c; font-weight: bold; }
+    .ld                           { color: $base0b; }
+    .m, .mf, .mh, .mi, .mo, .il  { color: $base09; }
+    .s, .sb, .sc, .sh, .sx, .sr,
+    .s1, .s2, .ss, .se, .si       { color: $base0b; }
+    .sd                           { color: $base04; }
+    .na                           { color: $base0d; }
+    .nb, .bp                      { color: $base05; }
+    .nc, .nn                      { color: $base0a; }
+    .no, .nv, .vc, .vg, .vi       { color: $base08; }
+    .nd, .nt                      { color: $base0c; }
+    .ni, .py                      { color: $base05; }
+    .ne                           { color: $base08; }
+    .nf, .nx                      { color: $base0d; }
+    .nl                           { color: $base05; }
+    .kn                           { color: $base0c; }
+  }
+}
+
+.gist {
+  th, td {
+    border-bottom: 0;
+  }
+}

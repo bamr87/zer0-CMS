@@ -1,0 +1,82 @@
+{% comment %} Feature: ZER0-013 {% endcomment %}
+{%- comment -%}
+  Component:   mermaid
+  Path:        _includes/components/mermaid.html
+  Purpose:     Load Mermaid and the theme's diagram-figure behaviour on pages
+               that opt in with `mermaid: true` (gated in core/head.html).
+               Emits a config block and one deferred script; renders no
+               markup itself — every ```mermaid fence (and legacy
+               <div class="mermaid">) becomes an accessible <figure> with a
+               toolbar (zoom, fullscreen, copy source, download SVG), a
+               caption from `accTitle`, and an error state that keeps the
+               source on the page.
+  Params:      none — configured via site.mermaid:
+                 src            (path, default /assets/vendor/mermaid/mermaid.min.js)
+                 security_level (strict | loose, default strict — `loose` is
+                                 needed only for `click` callbacks / HTML labels)
+                 toolbar        (bool, default true)
+                 fullscreen     (bool, default true)
+                 download       (bool, default true)
+               Labels come from _data/ui-text.yml via core/i18n.html so the
+               toolbar is translated with the rest of the UI.
+  Depends on:  assets/vendor/mermaid/mermaid.min.js (vendored, no CDN —
+               GitHub Pages-safe), assets/js/mermaid-diagrams.js,
+               _sass/components/_mermaid.scss
+  Notes:       The Mermaid bundle (~1 MB) is NOT emitted as a <script> any
+               more. mermaid-diagrams.js (deferred) converts fences into
+               figures at execution time, before code-copy.js's
+               DOMContentLoaded pass decorates <pre> blocks, and injects the
+               bundle from `src` below only when the page has a diagram and
+               the first one nears the viewport (IntersectionObserver). A
+               `mermaid: true` page without fences never downloads it. It used
+               to be a parse-time `defer` script on every opted-in page, and
+               before that a synchronous one in <head>. Diagram colours
+               are not configured here: the script derives them from the live
+               --zer0-*/--bs-* tokens so light/dark/wizard modes and skins
+               work without per-mode overrides.
+{%- endcomment -%}
+{%- include core/i18n.html -%}
+{%- assign mm = site.mermaid -%}
+{%- comment -%}
+  Liquid's `default` filter treats `false` as missing, so boolean flags are
+  resolved with if-tags — an explicit `toolbar: false` must stay false.
+{%- endcomment -%}
+{%- assign mm_toolbar = true -%}
+{%- if mm.toolbar == false -%}{%- assign mm_toolbar = false -%}{%- endif -%}
+{%- assign mm_fullscreen = true -%}
+{%- if mm.fullscreen == false -%}{%- assign mm_fullscreen = false -%}{%- endif -%}
+{%- assign mm_download = true -%}
+{%- if mm.download == false -%}{%- assign mm_download = false -%}{%- endif -%}
+{%- assign mm_src = mm.src | default: '/assets/vendor/mermaid/mermaid.min.js' -%}
+
+{% comment %} Diagram configuration consumed by assets/js/mermaid-diagrams.js {% endcomment %}
+<script id="mermaidConfig" type="application/json">
+{
+  "securityLevel": {{ mm.security_level | default: "strict" | jsonify }},
+  "toolbar": {{ mm_toolbar | jsonify }},
+  "fullscreen": {{ mm_fullscreen | jsonify }},
+  "download": {{ mm_download | jsonify }},
+  "labels": {
+    "diagram": {{ ui.diagram_label | default: "Diagram" | jsonify }},
+    "tools": {{ ui.diagram_tools_label | default: "Diagram tools" | jsonify }},
+    "zoomIn": {{ ui.diagram_zoom_in | default: "Zoom in" | jsonify }},
+    "zoomOut": {{ ui.diagram_zoom_out | default: "Zoom out" | jsonify }},
+    "zoomReset": {{ ui.diagram_zoom_reset | default: "Reset zoom" | jsonify }},
+    "fullscreen": {{ ui.diagram_fullscreen | default: "View fullscreen" | jsonify }},
+    "close": {{ ui.diagram_fullscreen_close | default: "Close fullscreen view" | jsonify }},
+    "copy": {{ ui.diagram_copy_source | default: "Copy diagram source" | jsonify }},
+    "copied": {{ ui.diagram_copied | default: "Copied" | jsonify }},
+    "copyFailed": {{ ui.diagram_copy_failed | default: "Copy failed" | jsonify }},
+    "download": {{ ui.diagram_download | default: "Download as SVG" | jsonify }},
+    "errorTitle": {{ ui.diagram_error_title | default: "This diagram could not be rendered" | jsonify }},
+    "errorHint": {{ ui.diagram_error_hint | default: "Check the syntax in the Mermaid Live Editor. The source is shown below so nothing is lost." | jsonify }},
+    "showSource": {{ ui.diagram_source_label | default: "Diagram source" | jsonify }},
+    "loading": {{ ui.diagram_loading | default: "Loading diagram" | jsonify }}
+  }
+}
+</script>
+{% comment %} Bundle URL for the lazy loader. Passed as a script global rather than
+   through the JSON block above: a URL read back out of DOM text and assigned
+   to script.src is a script-injection sink (CodeQL js/xss-through-dom). {% endcomment %}
+<script>window.zer0MermaidSrc = {{ mm_src | relative_url | jsonify }};</script>
+<script defer src="{{ '/assets/js/mermaid-diagrams.js' | relative_url }}"></script>

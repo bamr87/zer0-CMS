@@ -1,0 +1,35 @@
+// Features: ZER0-001, ZER0-008, ZER0-010, ZER0-011
+// ==============================================================================
+// CUSTOM STYLES barrel — Zer0-Mistakes "custom layer"
+// ==============================================================================
+//
+// This file used to be a ~1,100-line monolith mixing @imports with a grab-bag of
+// rules (navbar, search modal, UI polish, grids, …). It has been decomposed into
+// the focused partials imported below. It remains as a thin barrel so:
+//   1. the compiled cascade order is unchanged (the partials are imported in the
+//      same order their rules originally appeared), and
+//   2. forks that `@import "custom"` directly keep working.
+//
+// The core nav/content partials (notebooks, nav-tree, sidebar-categories,
+// navbar, offcanvas-panels, obsidian) are imported directly from
+// assets/css/main.scss § 7b, immediately before this barrel. The navbar fixed/
+// grid layout and the search modal were relocated to core/_navbar.scss and
+// components/_search-modal.scss respectively.
+// ==============================================================================
+
+// Page-frame globals: base resets, sticky helper, bottom shadow, min-height,
+// landing-hero media placeholder shim.
+@import "layouts/global-chrome";
+
+// Table-of-contents styling (#TableOfContents + .toc sticky sidebar + collapse).
+@import "core/toc";
+
+// Sidebar / TOC active states + cookie-banner & back-to-top responsive shims.
+@import "core/sidebar-extras";
+
+// Bootstrap component polish: buttons, cards, hero, code blocks, motion, mobile,
+// focus, print — the "UI/UX enhancements" layer.
+@import "components/ui-enhancements";
+
+// Notes & notebooks index-page grids + difficulty badges.
+@import "components/notes-index";

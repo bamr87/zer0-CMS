@@ -1,0 +1,5 @@
+/*
+ * Legacy asset path — not used by the current theme.
+ * Custom styles: _sass/custom.scss (compiled into assets/css/main.css), or optional user-overrides.css.
+ * Kept so older builds or cached HTML that still link here do not 404.
+ */

@@ -1,0 +1,28 @@
+{%- comment -%}
+  ===================================================================
+  NAV_LIST — DEPRECATED legacy accordion navigation
+  ===================================================================
+
+  Status: DEPRECATED as of v1.8. Slated for removal in v2.0.
+  Replacement: _includes/navigation/nav-tree.html (three-level tree with
+               proper aria-expanded / aria-controls and no broken nesting).
+
+  Why deprecated:
+    1. The original markup mismatched <li> nesting (the `{% if %}` for sublinks
+       did not close its parent <li> before `{% endif %}`), producing invalid
+       HTML that confused assistive tech.
+    2. Used inline `style="padding-left: 0;"` instead of utility classes.
+    3. Did not respect the documented page.sidebar.nav schema.
+
+  Migration:
+    Replace `{% include navigation/nav_list.html nav="foo" %}` with
+    `{% include navigation/nav-tree.html nav="foo" %}`.
+
+  The block below is now a thin wrapper that delegates to nav-tree.html so
+  any straggling call sites continue to function during the deprecation
+  window. It also emits a build-time warning when JEKYLL_LOG_LEVEL=debug.
+  ===================================================================
+{%- endcomment -%}
+{%- if include.nav -%}
+  {% include navigation/nav-tree.html nav=include.nav %}
+{%- endif -%}

@@ -1,0 +1,275 @@
+# Feature: ZER0-072
+name: Content & Docs Review
+
+# Reviews changed Markdown content and docs on pull requests:
+#   1. Deterministic SEO + quality checks (scripts/content-review.rb) — always
+#      runs, no secrets required, works on fork PRs.
+#   2. Claude Code content-reviewer agent — runs only when a Claude credential
+#      is configured (CLAUDE_CODE_OAUTH_TOKEN preferred, ANTHROPIC_API_KEY as
+#      fallback), for editorial/consistency/polish review.
+#   3. Docs front matter, internal links, and markdownlint (formerly the
+#      separate docs-validate.yml).
+# See .github/instructions/content-review.instructions.md for the contract.
+
+on:
+  pull_request:
+    paths:
+      - "pages/**/*.md"
+      - "docs/**"
+      - ".github/config/content_review.yml"
+      - ".github/instructions/documentation.instructions.md"
+      - ".claude/agents/content-reviewer.md"
+      - "scripts/content-review.rb"
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Base git ref to diff against"
+        required: false
+        default: "origin/main"
+
+# Least-privilege default; the comment-posting jobs grant pull-requests: write.
+permissions:
+  contents: read
+
+concurrency:
+  group: content-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Tier 1 — deterministic checks (always)
+  # ---------------------------------------------------------------------------
+  deterministic-review:
+    name: SEO & quality checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # post the sticky review comment
+    outputs:
+      has_content: ${{ steps.review.outputs.has_content }}
+      ai_enabled: ${{ steps.ai-gate.outputs.enabled }}
+    steps:
+      # Gate for the Claude Code tier — a step here rather than a separate job
+      # (secrets aren't readable in job-level `if:`, but a one-liner step doesn't
+      # justify its own runner).
+      #
+      # THIS IS A PRESENCE CHECK, NOT AN AUTH CHECK. A revoked or expired
+      # credential is still a non-empty string, so `enabled=true` says only that
+      # a value exists — it cannot tell a live token from a dead one, and for a
+      # week in 2026-08 it happily enabled a tier that could not authenticate
+      # (#418). Validity is established the only place it can be: by the API call
+      # itself, which scripts/ci/agent_review_result.py now turns into a red
+      # check instead of a silent green one. Do not reword the notice below to
+      # imply the credential works.
+      - name: Check AI credential is configured
+        id: ai-gate
+        env:
+          OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$OAUTH" ] || [ -n "$KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::A Claude credential is present, so the review tier will run. Presence is not validity — a revoked token fails the tier loudly rather than posting a green non-review."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY set — skipping the Claude Code review tier."
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Determine base ref
+        id: base
+        run: |
+          base="${{ github.event.inputs.base || format('origin/{0}', github.base_ref) }}"
+          echo "ref=${base}" >> "$GITHUB_OUTPUT"
+
+      - name: Run content review
+        id: review
+        run: |
+          ruby scripts/content-review.rb \
+            --changed --base "${{ steps.base.outputs.ref }}" \
+            --json /tmp/content-review.json \
+            --summary /tmp/content-review.md \
+            --quiet || true
+          # Surface a build-log copy too.
+          cat /tmp/content-review.md || true
+          # Did any in-scope content files actually change? Gates the AI tier.
+          count=$(ruby -rjson -e 'puts (JSON.parse(File.read("/tmp/content-review.json"))["files"] || []).length' 2>/dev/null || echo 0)
+          if [ "${count:-0}" -gt 0 ]; then
+            echo "has_content=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_content=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post / update PR comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: ai-content-review
+          path: /tmp/content-review.md
+
+      - name: Upload results
+        uses: actions/upload-artifact@v7
+        with:
+          name: content-review-results
+          path: |
+            /tmp/content-review.json
+            /tmp/content-review.md
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Tier 2 — Claude Code content-reviewer agent
+  # ---------------------------------------------------------------------------
+  ai-review:
+    name: Claude Code content review
+    needs: deterministic-review
+    if: ${{ github.event_name == 'pull_request' && needs.deterministic-review.outputs.ai_enabled == 'true' && needs.deterministic-review.outputs.has_content == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write   # post the sticky agent-review comment
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run content-reviewer agent (headless)
+        id: agent
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BASE_REF: origin/${{ github.base_ref }}
+        run: |
+          set +e
+          # House convention: OAuth wins when both are set — drop the API key
+          # entirely so an empty-string secret never triggers empty-key auth.
+          if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+            unset ANTHROPIC_API_KEY
+          fi
+          read -r -d '' PROMPT <<EOF
+          Use the content-reviewer subagent to review the Markdown content files
+          changed on this branch versus ${BASE_REF}. Follow
+          .github/instructions/content-review.instructions.md and the
+          per-collection thresholds in .github/config/content_review.yml. Focus
+          on SEO, consistency, polish, accessibility, and technical accuracy.
+          Output ONLY the final Markdown review (verdict + per-file findings +
+          summary) to stdout. Do not modify any files, and do not print anything
+          before or after the review itself.
+          EOF
+          # Read-only allowlist: the agent never writes — posting is done by the
+          # sticky-comment step below, so no edit/comment tools are granted.
+          claude -p "$PROMPT" \
+            --model claude-sonnet-4-6 \
+            --max-turns 30 \
+            --allowedTools "Task,Read,Grep,Glob,Bash(ruby scripts/content-review.rb:*),Bash(git diff:*),Bash(git merge-base:*),Bash(cat /tmp/content-review.json)" \
+            --output-format text \
+            > /tmp/agent-review.md 2> /tmp/agent-err.log
+          status=$?
+          echo "claude exit status: $status"
+          echo "----- stderr (tail) -----"
+          tail -n 50 /tmp/agent-err.log || true
+          # Decide whether a review actually HAPPENED, and fail the job if it did
+          # not. This step used to end by piping stdout straight into the sticky
+          # comment and exiting 0 — which is how `401 OAuth access token has been
+          # revoked` got posted to PR #414 under a green check (#418). Checking
+          # `$status` alone would not have caught it: the CLI reported the auth
+          # failure on stdout. Hence a separate, unit-tested guard —
+          # scripts/ci/test_agent_review_result.py drives it with that exact
+          # output. `Post agent review` is `if: always()`, so the failure notice
+          # still reaches the PR.
+          set -e
+          python3 scripts/ci/agent_review_result.py \
+            --status "$status" \
+            --stdout /tmp/agent-review.md \
+            --stderr /tmp/agent-err.log \
+            --out /tmp/agent-review-final.md
+
+      - name: Post agent review
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: ai-content-review-agent
+          path: /tmp/agent-review-final.md
+
+  # ---------------------------------------------------------------------------
+  # Docs validation (formerly docs-validate.yml) — front matter, links, lint.
+  # These jobs inherit the top-level least-privilege `contents: read`.
+  # ---------------------------------------------------------------------------
+  lint-frontmatter:
+    name: Front matter compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Use the shared composite action, which installs gems non-frozen. The
+      # theme is a path gem whose gemspec lists git-tracked files, so frozen
+      # mode (ruby/setup-ruby's bundler-cache) aborts with "The gemspecs for
+      # path gems changed". The composite avoids that; see its inline notes.
+      - name: Set up Ruby
+        uses: ./.github/actions/setup-ruby
+        with:
+          ruby-version: "3.3"
+
+      - name: Check front matter
+        run: bash scripts/docs/lint-frontmatter.sh
+
+  check-links:
+    name: Internal link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check internal links
+        run: bash scripts/docs/check-links.sh
+
+  markdownlint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+
+      # Blocking since the 2026-06 baseline cleanup (T-014): zero violations
+      # with .github/config/.markdownlint.json. Do not re-add warn-only
+      # suppressions — fix the markdown or tune the shared config instead.
+      - name: Lint docs/ (excluding archive)
+        run: |
+          markdownlint "docs/**/*.md" \
+            --ignore "docs/archive/**" \
+            --config .github/config/.markdownlint.json
+
+      - name: Lint pages/_docs/
+        run: |
+          markdownlint "pages/_docs/**/*.md" \
+            --config .github/config/.markdownlint.json
