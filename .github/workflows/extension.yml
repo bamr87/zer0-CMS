@@ -10,7 +10,8 @@
 # and `rails-app.yml` (the app, its tests and a boot) — so a TypeScript pull
 # request no longer boots a Ruby toolchain it does not use, and a change to
 # `rails/` or the compose file no longer downloads VS Code: hence the
-# `paths-ignore` below. `main` is not branch-protected, so a skipped run here is not a
+# `paths-ignore` below. The same goes for the imported `packages/` and `sites/`
+# trees, which have workflows of their own (see docs/MONOREPO.md). `main` is not branch-protected, so a skipped run here is not a
 # required check left pending.
 name: extension
 
@@ -18,11 +19,15 @@ on:
   pull_request:
     paths-ignore:
       - "rails/**"
+      - "packages/**"
+      - "sites/**"
       - "docker-compose.yml"
   push:
     branches: [main]
     paths-ignore:
       - "rails/**"
+      - "packages/**"
+      - "sites/**"
       - "docker-compose.yml"
 
 permissions:

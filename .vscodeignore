@@ -31,6 +31,12 @@ eslint.config.mjs
 *.vsix
 test-runner.js
 
+# The rest of the zer0 stack, imported into this repository (docs/MONOREPO.md):
+# the theme, the image generator and the sites are their own deliverables.
+packages/**
+sites/**
+.gitmodules
+
 # The Rails half's container definition: repository infrastructure, not payload.
 docker-compose.yml
 

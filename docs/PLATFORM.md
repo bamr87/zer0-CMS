@@ -124,7 +124,7 @@ Anything bigger than one page — batch runs, other providers, compositions, the
 | `SECRET_KEY_BASE` | generated into the storage volume | Production sessions and CSRF |
 | `RAILS_LOG_TO_STDOUT` | `1` in the image | Logs to stdout (production always does) |
 
-Compose also reads `PORT` (the CMS host port, default 3001), `IMAGEGEN_PORT` (3000) and `ZER0_IMAGE_GENERATOR_DIR` (`../zer0-image-generator`).
+Compose also reads `PORT` (the CMS host port, default 3001), `IMAGEGEN_PORT` (3000) and `ZER0_IMAGE_GENERATOR_DIR` (`./packages/zer0-image-generator`).
 
 ## Running it
 

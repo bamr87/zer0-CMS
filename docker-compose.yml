@@ -55,13 +55,14 @@ services:
       start_period: 40s
 
   # zer0-image-generator's web panel (full preview runs, compositions, the
-  # studio), built from a sibling checkout. Its Dockerfile's build context is
-  # that repository's root (it loads the engine from ../lib), so the context
-  # is the checkout and the Dockerfile is web/Dockerfile.
+  # studio), built from packages/zer0-image-generator in this monorepo. Its
+  # Dockerfile's build context is that package's root (it loads the engine
+  # from ../lib), so the context is the package and the Dockerfile is
+  # web/Dockerfile.
   imagegen:
     profiles: ["imagegen"]
     build:
-      context: ${ZER0_IMAGE_GENERATOR_DIR:-../zer0-image-generator}
+      context: ${ZER0_IMAGE_GENERATOR_DIR:-./packages/zer0-image-generator}
       dockerfile: web/Dockerfile
       target: development
     ports:

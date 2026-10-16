@@ -78,5 +78,5 @@ The workflow checks out the caller and `bamr87/zer0-CMS` at `main` side by side,
 | Image generator (forge, runs, studio) | zer0-image-generator | `docker compose --profile imagegen up --build` here, or `docker compose up --build` in its own repo | http://localhost:3000 | `${SITES_DIR:-..}:/sites` |
 
 - Both apps mount the same `SITES_DIR` at `/sites`, so a site registered as `/sites/<name>` means the same checkout in both. Register container paths, never host paths.
-- The default `..` works when the repositories sit side by side in one fleet checkout; otherwise export `SITES_DIR` once (for example `export SITES_DIR=~/github`). The `imagegen` profile builds from `${ZER0_IMAGE_GENERATOR_DIR:-../zer0-image-generator}`.
+- The default `..` works when the repositories sit side by side in one fleet checkout; otherwise export `SITES_DIR` once (for example `export SITES_DIR=~/github`). The `imagegen` profile builds from `${ZER0_IMAGE_GENERATOR_DIR:-./packages/zer0-image-generator}`.
 - Both ports are published on 127.0.0.1 only. `PORT` moves the CMS and `IMAGEGEN_PORT` moves the image generator; point `ZER0_IMAGE_GENERATOR_URL` at the new address when you move it.
