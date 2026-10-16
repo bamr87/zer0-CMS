@@ -43,7 +43,7 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
     "black>=23.0",
-    "mypy>=1.5",
+    "mypy>=2.4.0",
     "ruff>=0.1",
     "pre-commit>=4.6.2",
     # Parses .github/workflows/ci.yml in tests/unit/test_ci_matrix.py. Arrives
