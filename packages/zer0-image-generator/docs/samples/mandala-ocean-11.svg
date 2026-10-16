@@ -1,0 +1,255 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img">
+<title>Mandala, seed 11, 20-fold, palette ocean</title>
+<rect width="800" height="800" fill="#04121f"/>
+<circle cx="400.0" cy="400.0" r="378" fill="none" stroke="#0b3a5b" stroke-width="3"/>
+<circle cx="400.0" cy="400.0" r="368" fill="none" stroke="#5bc0be" stroke-width="1.5" opacity="0.7"/>
+<defs>
+<path id="m0" d="M0 -21.1 L 0 21.1" stroke="#0b3a5b" stroke-width="3.4" stroke-linecap="round"/>
+<path id="m1" d="M0 -21.1 L 13.3 0 L 0 21.1 L -13.3 0 Z" fill="#1c88a8" stroke="#e8f1f2" stroke-width="1.5" opacity="0.92"/>
+<path id="m2" d="M0 -21.1 L 0 21.1" stroke="#5bc0be" stroke-width="3.4" stroke-linecap="round"/>
+<path id="m3" d="M0 -21.1 L 13.3 0 L 0 21.1 L -13.3 0 Z" fill="#0b3a5b" stroke="#e8f1f2" stroke-width="1.5" opacity="0.92"/>
+<circle id="m4" r="7.8" fill="#1c88a8" stroke="#e8f1f2" stroke-width="1.5"/>
+<ellipse id="m5" rx="13.3" ry="21.1" fill="#5bc0be" stroke="#e8f1f2" stroke-width="1.5" opacity="0.92"/>
+<path id="m6" d="M0 -21.1 L 0 21.1" stroke="#0b3a5b" stroke-width="3.4" stroke-linecap="round"/>
+<ellipse id="mc" rx="9.8" ry="24.5" fill="#5bc0be" stroke="#e8f1f2" stroke-width="1.5" opacity="0.92"/>
+</defs>
+<g transform="translate(400.0 400.0)">
+<use href="#m0" transform="rotate(0.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(18.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(36.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(54.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(72.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(90.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(108.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(126.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(144.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(162.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(180.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(198.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(216.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(234.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(252.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(270.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(288.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(306.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(324.00) translate(0 -44.5)"/>
+<use href="#m0" transform="rotate(342.00) translate(0 -44.5)"/>
+</g>
+<g transform="translate(400.0 400.0)">
+<use href="#m1" transform="rotate(0.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(9.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(18.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(27.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(36.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(45.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(54.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(63.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(72.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(81.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(90.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(99.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(108.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(117.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(126.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(135.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(144.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(153.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(162.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(171.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(180.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(189.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(198.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(207.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(216.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(225.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(234.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(243.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(252.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(261.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(270.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(279.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(288.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(297.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(306.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(315.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(324.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(333.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(342.00) translate(0 -89.0)"/>
+<use href="#m1" transform="rotate(351.00) translate(0 -89.0)"/>
+</g>
+<g transform="translate(400.0 400.0)">
+<use href="#m2" transform="rotate(0.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(18.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(36.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(54.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(72.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(90.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(108.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(126.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(144.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(162.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(180.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(198.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(216.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(234.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(252.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(270.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(288.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(306.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(324.00) translate(0 -133.5)"/>
+<use href="#m2" transform="rotate(342.00) translate(0 -133.5)"/>
+</g>
+<g transform="translate(400.0 400.0)">
+<use href="#m3" transform="rotate(0.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(9.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(18.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(27.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(36.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(45.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(54.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(63.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(72.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(81.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(90.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(99.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(108.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(117.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(126.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(135.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(144.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(153.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(162.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(171.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(180.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(189.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(198.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(207.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(216.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(225.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(234.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(243.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(252.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(261.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(270.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(279.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(288.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(297.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(306.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(315.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(324.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(333.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(342.00) translate(0 -178.0)"/>
+<use href="#m3" transform="rotate(351.00) translate(0 -178.0)"/>
+</g>
+<g transform="translate(400.0 400.0)">
+<use href="#m4" transform="rotate(0.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(18.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(36.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(54.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(72.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(90.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(108.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(126.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(144.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(162.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(180.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(198.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(216.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(234.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(252.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(270.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(288.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(306.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(324.00) translate(0 -222.5)"/>
+<use href="#m4" transform="rotate(342.00) translate(0 -222.5)"/>
+</g>
+<g transform="translate(400.0 400.0)">
+<use href="#m5" transform="rotate(0.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(9.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(18.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(27.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(36.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(45.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(54.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(63.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(72.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(81.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(90.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(99.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(108.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(117.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(126.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(135.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(144.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(153.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(162.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(171.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(180.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(189.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(198.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(207.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(216.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(225.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(234.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(243.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(252.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(261.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(270.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(279.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(288.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(297.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(306.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(315.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(324.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(333.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(342.00) translate(0 -267.0)"/>
+<use href="#m5" transform="rotate(351.00) translate(0 -267.0)"/>
+</g>
+<g transform="translate(400.0 400.0)">
+<use href="#m6" transform="rotate(9.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(27.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(45.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(63.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(81.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(99.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(117.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(135.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(153.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(171.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(189.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(207.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(225.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(243.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(261.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(279.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(297.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(315.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(333.00) translate(0 -311.5)"/>
+<use href="#m6" transform="rotate(351.00) translate(0 -311.5)"/>
+</g>
+<g transform="translate(400.0 400.0)">
+<use href="#mc" transform="rotate(0.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(18.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(36.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(54.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(72.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(90.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(108.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(126.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(144.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(162.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(180.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(198.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(216.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(234.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(252.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(270.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(288.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(306.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(324.00) translate(0 -26.7)"/>
+<use href="#mc" transform="rotate(342.00) translate(0 -26.7)"/>
+</g>
+<circle cx="400.0" cy="400.0" r="18.7" fill="#5bc0be"/>
+<circle cx="400.0" cy="400.0" r="10.7" fill="#e8f1f2"/>
+<circle cx="400.0" cy="400.0" r="4.0" fill="#04121f"/>
+</svg>

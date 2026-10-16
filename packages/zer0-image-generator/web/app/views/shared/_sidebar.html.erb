@@ -1,0 +1,68 @@
+<nav class="sidebar" data-sidebar-target="panel">
+  <%= link_to root_path, class: "brand" do %>
+    <span class="glyph">0</span>
+    <span>zer0-images</span>
+  <% end %>
+
+  <% nav = ->(label, path, icon, active, badge = nil) {
+       classes = active ? "active" : ""
+       link_to(path, class: classes) do
+         concat content_tag(:span, icon, class: "ico")
+         concat content_tag(:span, label)
+         concat content_tag(:span, badge, class: "nav-count") if badge.present?
+       end
+     } %>
+
+  <div class="nav-group">
+    <div class="nav">
+      <%= nav.("Dashboard", root_path, "◷", current_page?(root_path)) %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">Create</div>
+    <div class="nav">
+      <%= nav.("Image forge", compositions_path, "✧", controller_name.start_with?("composition")) %>
+      <%= nav.("New image", new_composition_path, "＋", current_page?(new_composition_path)) %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">Previews</div>
+    <div class="nav">
+      <%= nav.("Sites", sites_path, "▤", controller_name == "sites" && action_name == "index") %>
+      <%= nav.("Runs", runs_path, "▶", controller_name == "runs" && params[:site_id].blank?, @nav_active_runs.positive? ? @nav_active_runs : nil) %>
+    </div>
+  </div>
+
+  <% if @nav_sites&.any? %>
+    <div class="nav-group">
+      <div class="label">Sites</div>
+      <div class="nav nav-sites">
+        <% @nav_sites.each do |site| %>
+          <%= link_to site, class: (@site&.id == site.id ? "active" : ""), title: site.path do %>
+            <span class="ico">·</span>
+            <span><%= site.name %></span>
+          <% end %>
+        <% end %>
+        <%= nav.("Register site", new_site_path, "＋", current_page?(new_site_path)) %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="nav-group">
+    <div class="label">SVG</div>
+    <div class="nav">
+      <%= nav.("Studio", studio_root_path, "✦", controller_path.start_with?("studio")) %>
+      <%= nav.("Library", library_entries_path, "▦", controller_name == "library_entries") %>
+      <%= nav.("FreeSVG", freesvg_search_path, "↘", controller_path.start_with?("freesvg")) %>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="label">Settings</div>
+    <div class="nav">
+      <%= nav.("Credentials", credentials_path, "⚿", controller_name == "credentials") %>
+    </div>
+  </div>
+</nav>

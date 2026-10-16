@@ -1,0 +1,39 @@
+// zer0-image-generator · .vscode/settings.json — fleet-vscode/v1 · 2026-09-09. Convention + vocabulary: .vscode/README.md.
+// Repo-scoped settings only. Personal editor preferences belong in the fleet workspace file.
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true
+  },
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/node_modules": true,
+    "**/web/tmp": true,
+    "**/web/log": true
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+  },
+  "cSpell.words": [
+    "bamr",
+    "zer0",
+    "endcapture",
+    "endraw",
+    "frontmatter",
+    "Jamstack",
+    "lastmod",
+    "livereload",
+    "markdownify",
+    "wikilinks",
+    "rubygems",
+    "gemspec",
+    "webrick",
+    "posthog"
+  ],
+  "[ruby]": {
+    "editor.tabSize": 2
+  }
+}

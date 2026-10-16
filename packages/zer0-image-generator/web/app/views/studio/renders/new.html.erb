@@ -1,0 +1,69 @@
+<% content_for :title, "Studio — #{@generator.label}" %>
+<% content_for :crumbs do %><%= link_to "Studio", studio_root_path %> / <%= @generator.label %><% end %>
+
+<div class="page-head">
+  <div><h1><%= @generator.label %></h1><div class="sub"><%= @generator.blurb %></div></div>
+</div>
+
+<div style="display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1.2rem;">
+  <% StudioCatalog.generators.each do |g| %>
+    <%= link_to g.label.split(" ").first, new_studio_render_path(generator: g.key),
+                class: "btn sm #{g.key == @generator.key ? "primary" : ""}" %>
+  <% end %>
+</div>
+
+<div class="grid cols-2" style="align-items:start;" data-controller="studio-preview" data-studio-preview-url-value="<%= preview_studio_renders_path %>">
+  <div class="card">
+    <h2>Knobs</h2>
+    <form data-studio-preview-target="form" data-action="input->studio-preview#render change->studio-preview#render">
+      <input type="hidden" name="generator" value="<%= @generator.key %>">
+      <% @generator.knobs.each do |knob| %>
+        <div class="field">
+          <label><%= knob.label %></label>
+          <% knob_value = knob.key == "seed" ? (params[:seed].presence || knob.default) : ((params[:knobs] || {})[knob.key.to_s] || (params[:knobs] || {})[knob.key] || knob.default) %>
+          <% case knob.type %>
+          <% when :enum %>
+            <select name="<%= knob.key == "seed" ? "seed" : "knobs[#{knob.key}]" %>">
+              <% knob.choices.each do |choice| %>
+                <option value="<%= choice %>" <%= "selected" if choice.to_s == knob_value.to_s %>><%= choice %></option>
+              <% end %>
+            </select>
+          <% when :int, :float %>
+            <input type="number" step="<%= knob.type == :float ? "any" : "1" %>"
+                   name="<%= knob.key == "seed" ? "seed" : "knobs[#{knob.key}]" %>"
+                   value="<%= knob_value %>"
+                   <%= "min=#{knob.min}".html_safe if knob.min %> <%= "max=#{knob.max}".html_safe if knob.max %>>
+          <% else %>
+            <input type="text" name="<%= knob.key == "seed" ? "seed" : "knobs[#{knob.key}]" %>" value="<%= knob_value %>">
+          <% end %>
+        </div>
+      <% end %>
+      <div class="btn-row">
+        <button type="button" class="btn" data-action="studio-preview#reroll">🎲 Reroll seed</button>
+      </div>
+    </form>
+
+    <hr style="border:none; border-top:1px solid var(--border); margin:1.2rem 0;">
+
+    <%= form_with url: studio_renders_path, method: :post, id: "save-form" do |f| %>
+      <%# The Stimulus controller copies the current knob values into these
+          hidden fields before submit, so Save persists exactly what is shown. %>
+      <div data-studio-preview-target="saveFields"></div>
+      <div class="btn-row">
+        <%= f.submit "Save this render", class: "btn primary" %>
+        <%= button_tag "Queue seed sweep", type: "button", class: "btn", data: { action: "studio-preview#sweep" } %>
+      </div>
+    <% end %>
+    <%= form_with url: sweep_studio_renders_path, method: :post, id: "sweep-form", style: "display:none;" do %>
+      <div data-studio-preview-target="sweepFields"></div>
+      <input type="number" name="count" value="12" min="1" max="48">
+    <% end %>
+  </div>
+
+  <div class="card">
+    <h2>Preview</h2>
+    <turbo-frame id="studio-preview" data-studio-preview-target="frame">
+      <div class="empty" style="padding:2rem;">Adjust a knob to render.</div>
+    </turbo-frame>
+  </div>
+</div>
