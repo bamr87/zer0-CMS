@@ -38,6 +38,9 @@ packages/**
 sites/**
 apps/**
 .gitmodules
+# The workspace registry and its command (tools/** above holds the library).
+workspace.yml
+bin/**
 
 # The Rails half's container definition: repository infrastructure, not payload.
 docker-compose.yml

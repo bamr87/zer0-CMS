@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/zer0 — one command for every project in this repository. It reads
+# workspace.yml; `bin/zer0 --help` lists the commands, and
+# tools/workspace/README.md explains them.
+
+root = File.expand_path("..", __dir__)
+require File.join(root, "tools/workspace/lib/zer0_workspace")
+
+exit Zer0Workspace::CLI.new(ARGV, root: root).run
