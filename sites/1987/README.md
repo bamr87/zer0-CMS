@@ -89,7 +89,7 @@ Contributions welcome! If you know something interesting about 1987, open an iss
 
 ## Changelog
 
-There is no CHANGELOG.md yet; changes are tracked in the [commit history](https://github.com/bamr87/1987/commits/main).
+Notable changes are recorded in [CHANGELOG.md](CHANGELOG.md); the full record is in the [commit history](https://github.com/bamr87/1987/commits/main).
 
 ## License
 
