@@ -1,11 +1,24 @@
 # Wargames
 
+> OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site, extracted from it-journey.
+
+[![CI](https://github.com/bamr87/wargames/actions/workflows/ci.yml/badge.svg)](https://github.com/bamr87/wargames/actions/workflows/ci.yml) [![License](https://img.shields.io/github/license/bamr87/wargames)](LICENSE) [![Live site](https://img.shields.io/badge/live-bamr87.github.io%2Fwargames-2ea44f)](https://bamr87.github.io/wargames/)
+
+## Overview
+
 Curated **security wargames** content — a vendored, markdown mirror of the [OverTheWire](https://overthewire.org/wargames/) community challenges (Bandit, Natas, Narnia, Behemoth, Leviathan, Krypton, and more), published as a Jekyll site with the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme.
 
 > **Provenance:** This collection was extracted from
 > [bamr87/it-journey](https://github.com/bamr87/it-journey) (`pages/_docs/wargames/`) via
 > `git subtree split`, so the full edit history is preserved here. It now lives as a standalone
 > repository so the IT-Journey site can stay focused on its gamified quests.
+
+## Features
+
+- Markdown mirrors of OverTheWire wargames: Bandit, Natas, Narnia, Behemoth, Leviathan, Krypton and more
+- Study guides that explain concepts with hint-level approaches, never passwords or solutions
+- A Jekyll site on the zer0-mistakes theme, published to GitHub Pages
+- Scripts to re-sync content from the upstream OverTheWire website
 
 ## Source & license
 
@@ -70,8 +83,7 @@ bundle install
 bundle exec jekyll serve   # http://localhost:4000/wargames/
 ```
 
-## Structure
-
+## Project structure
 ```
 index.md                 # Homepage (layout: home) — wargames hub
 overthewire/             # Vendored OverTheWire challenge pages + study guides
@@ -117,3 +129,24 @@ rm -rf pages work                                                       # stagin
 ## Using this content
 
 The pages are plain Markdown with YAML frontmatter (Jekyll-compatible). They can be served as a standalone Jekyll site, embedded in another docs system, or read as-is on GitHub.
+
+## Development
+
+Full commands, conventions and gotchas for humans and AI agents live in [AGENTS.md](AGENTS.md).
+
+## Contributing
+
+Contributions are welcome via pull request. Use [Conventional Commits](https://www.conventionalcommits.org/) and keep the CI checks green. The fleet-wide workflow is described in the hub's [CONTRIBUTING.md](https://github.com/bamr87/bamr87/blob/main/CONTRIBUTING.md). AI agents should start with [AGENTS.md](AGENTS.md) (with [CLAUDE.md](CLAUDE.md) for Claude Code).
+
+## Changelog
+
+There is no CHANGELOG.md yet; changes are tracked in the [commit history](https://github.com/bamr87/wargames/commits/main).
+
+## License
+
+The repository is released under the [MIT License](LICENSE). The challenge content is aggregated from OverTheWire under its own MIT license; see [Source & license](#source--license).
+
+---
+
+<!-- bamr87-portfolio-footer -->
+Part of the [bamr87 portfolio](https://github.com/bamr87) — browse every project on [Amr's GitHub profile](https://github.com/bamr87).
