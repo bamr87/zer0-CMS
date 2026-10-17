@@ -94,6 +94,7 @@ exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
+  - CHANGELOG.md
   - LICENSE
   - CLAUDE.md
   - AGENTS.md
