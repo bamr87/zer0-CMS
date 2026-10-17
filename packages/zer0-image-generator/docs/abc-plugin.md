@@ -43,7 +43,7 @@ pack.render_prompt(
 #     arm ..., standing for the word AUTOMATION (letter A). ... no text ..."
 
 book = YAML.safe_load_file("it-alphabet.abc.yml")   # an ABC Book Spec
-plan = Zer0ImageGenerator::Abc::Plugin.build_plan(book, root: "../drsai")
+plan = Zer0ImageGenerator::Abc::Plugin.build_plan(book, root: "../../sites/drsai")
 plan.each { |job| puts "#{job.letter} → #{job.out_path}" }
 ```
 

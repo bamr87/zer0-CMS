@@ -116,16 +116,7 @@ back to a plain link list) — authoritative spec: the header comment of `pages/
   - Graph index: `ruby -Ipages/_plugins tests/test_graph_index.rb`
 - **Local site build** (needs bundler + Jekyll 4):
   `bundle install && bundle exec jekyll build`
-- **CI** — five workflows, only two of which build the site:
-  - `pages.yml` — builds on ruby 3.3 (`JEKYLL_ENV: production`, `actions/configure-pages`)
-and deploys to GitHub Pages. Triggers: **push to `main`** touching `pages/**`, `_config.yml`, `Gemfile*`, or the workflow itself, plus `workflow_dispatch`. **There is no `pull_request` trigger**, so the exact production build-and-deploy path is never exercised before merge. Deployment requires the one-time GitHub Pages setting described under [Content flow](#content-flow) (Source: GitHub Actions).
-  - `ci.yml` — runs on **`pull_request`** and push to `main`; a thin caller of the shared
-`bamr87/bamr87/.github/workflows/standard-ci.yml@main`. That reusable workflow auto-detects the stack, and because this repo has a `Gemfile`, no Rakefile `test` task, and no `spec/`, it falls through to `bundle exec jekyll build` — so a PR that breaks the themed build **is** caught. Two caveats: the gate's logic lives in another repo and floats on `@main` (it can change without a commit here), and it builds without `JEKYLL_ENV: production` and without `actions/configure-pages`, so it is not a byte-for-byte rehearsal of the deploy build.
-  - `schema-check.yml` — `python3 tools/schema_lint.py check .` on PRs, pushes to `main`,
-    and dispatch. Errors gate; warnings only log.
-  - `markdown-oneline.yml` — `tools/unwrap-prose.py --check` on `**/*.md` in PRs and
-    pushes to `main` (`SCHEMA.md` / `CHANGELOG.md` excluded). Fix with `--write`.
-  - `claude.yml` — `@claude` mention handler for issues and PR comments; not a gate.
+- **CI** — this site lives in the zer0-CMS monorepo at `sites/zer0-pages/`, and only the root `.github/workflows/` runs (see the root `docs/MONOREPO.md`). The root `zer0-pages.yml` gates every pull request touching this tree: the bridge and graph-index unit tests, `python3 tools/schema_lint.py check .` (errors gate; warnings only log), and a themed `bundle exec jekyll build` (without `JEKYLL_ENV: production` or `actions/configure-pages`, so still not a byte-for-byte rehearsal of the deploy). The root `markdown-oneline.yml` and `claude.yml` cover the prose gate and `@claude` mentions repo-wide. `.github/workflows/pages.yml` here is the deploy, which does **not** run from the monorepo yet: the site is still published from the original `bamr87/zer0-pages` repository. `bin/zer0 run check zer0-pages` from the repository root runs the same tests locally.
 
 ## More detail
 
