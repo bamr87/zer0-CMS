@@ -2,9 +2,28 @@
 
 > All things 1987 — history, politics, science, culture, and more from the year 1987.
 
+[![CI](https://github.com/bamr87/1987/actions/workflows/ci.yml/badge.svg)](https://github.com/bamr87/1987/actions/workflows/ci.yml) [![License](https://img.shields.io/github/license/bamr87/1987)](LICENSE) [![Live site](https://img.shields.io/badge/live-bamr87.github.io%2F1987-2ea44f)](https://bamr87.github.io/1987/)
+
 ## What is 1987?
 
 1987 was a pivotal year of the Cold War's final chapter — a year of geopolitical breakthroughs, financial shocks, cultural milestones, and scientific discoveries. This repository serves as a curated collection of knowledge, references, and resources about everything related to the year **1987**.
+
+## Features
+
+- Topic pages grouped by category: `history-politics/`, `science-technology/`, `arts-culture/`, `society-economics/` and `people/`
+- A notable-events table in this README that links each event to its deep-dive page
+- Claude Code slash commands (`/grow`, `/deep-dive`, `/update-readme`, `/genesis`) that research, write and publish new content
+- `seed.md` records the concept and an evolution log, so the same framework can be retargeted to any subject
+- `ROADMAP.md` and `TIMELINE.md` track planned topics and the year's chronology
+
+## Quick start
+
+Read it on the [live site](https://bamr87.github.io/1987/) or browse the category folders here. To grow it, open the repo in [Claude Code](https://claude.com/claude-code) and run a growth tick:
+
+```text
+/grow
+/deep-dive "Black Monday"
+```
 
 ## Topics
 
@@ -45,10 +64,38 @@
 | [Fox Broadcasting Company launches primetime](society-economics/fox-broadcasting.md) | Rupert Murdoch's Fox debuts *Married...with Children* and *The Tracey Ullman Show* on April 5, becoming the first successful fourth U.S. broadcast network since 1956. |
 | [*Beloved* by Toni Morrison published](arts-culture/beloved.md) | Toni Morrison's novel about an escaped enslaved woman haunted by her murdered daughter is published on September 16, later winning the 1988 Pulitzer Prize and ranking among the greatest American novels. |
 
+## Project structure
+
+| Path | What it is |
+|---|---|
+| `history-politics/`, `science-technology/`, `arts-culture/`, `society-economics/`, `people/` | Topic pages by category |
+| `index.md` | Site home page |
+| `seed.md` | Concept, architecture inventory and evolution log |
+| `ROADMAP.md`, `TIMELINE.md` | Planned topics and the 1987 chronology |
+| `.github/` | Agents, prompts, skills and workflows that grow the repo |
+| `tools/` | Repo scripts (`unwrap-prose.py`) |
+
+## Development
+
+```bash
+python3 tools/unwrap-prose.py --check   # one-paragraph-per-line rule that CI enforces
+```
+
+Full commands, conventions and gotchas for humans and AI agents live in [CLAUDE.md](CLAUDE.md).
+
 ## Contributing
 
 Contributions welcome! If you know something interesting about 1987, open an issue or submit a pull request.
 
+## Changelog
+
+There is no CHANGELOG.md yet; changes are tracked in the [commit history](https://github.com/bamr87/1987/commits/main).
+
 ## License
 
-MIT
+Released under the [MIT License](LICENSE).
+
+---
+
+<!-- bamr87-portfolio-footer -->
+Part of the [bamr87 portfolio](https://github.com/bamr87) — browse every project on [Amr's GitHub profile](https://github.com/bamr87).
