@@ -84,6 +84,9 @@ exclude:
   - engine
   - vault
   - README.md
+  - CHANGELOG.md
+  - LICENSE
+  - LICENSE-CONTENT
   - CONTRIBUTING.md
   - CLAUDE.md
   - AUTOPILOT.md

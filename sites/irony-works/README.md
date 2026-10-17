@@ -2,7 +2,7 @@
 
 > The perpetual encyclopedia of irony. Expectation, reversed. Recursively.
 
-[![Live site](https://img.shields.io/badge/live-bamr87.github.io%2Firony--works-2ea44f)](https://bamr87.github.io/irony-works/)
+[![Live site](https://img.shields.io/badge/live-bamr87.github.io%2Firony--works-2ea44f)](https://bamr87.github.io/irony-works/) [![License](https://img.shields.io/github/license/bamr87/irony-works)](LICENSE)
 
 ## Overview
 
@@ -157,11 +157,11 @@ Contributions are welcome via pull request. Use [Conventional Commits](https://w
 
 ## Changelog
 
-There is no CHANGELOG.md yet; changes are tracked in the [commit history](https://github.com/bamr87/irony-works/commits/main).
+Notable changes are recorded in [CHANGELOG.md](CHANGELOG.md); the full record is in the [commit history](https://github.com/bamr87/irony-works/commits/main).
 
 ## License
 
-Engine: MIT. Vault content: CC BY-SA 4.0. Attribution for the founding intent belongs to [the founding prompt](vault/the-founding-prompt.md), preserved verbatim as the seed's seed.
+Engine: [MIT](LICENSE). Vault content: [CC BY-SA 4.0](LICENSE-CONTENT). Attribution for the founding intent belongs to [the founding prompt](vault/the-founding-prompt.md), preserved verbatim as the seed's seed.
 
 ---
 
