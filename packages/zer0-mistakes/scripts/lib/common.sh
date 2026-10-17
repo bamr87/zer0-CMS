@@ -173,9 +173,11 @@ get_script_dir() {
     cd -P "$(dirname "$script_path")" && pwd
 }
 
-# Get repository root
+# Get the theme's root (two levels above scripts/lib/). Resolved from this
+# file rather than `git rev-parse --show-toplevel`, because the theme lives at
+# packages/zer0-mistakes/ inside the zer0-CMS monorepo, not at the git root.
 get_repo_root() {
-    git rev-parse --show-toplevel 2>/dev/null || error "Not in a git repository"
+    (cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd) || error "Cannot resolve the theme root"
 }
 
 # Print header

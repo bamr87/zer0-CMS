@@ -15,7 +15,7 @@ This is the **minimal reference consumer** of the [bamr87/zer0-mistakes](https:/
 # lint:                   python3 tools/unwrap-prose.py --check   # --write to fix
 ```
 
-CI is three workflows: `ci.yml` (thin caller of the hub's shared `standard-ci.yml`, which runs `bundle exec jekyll build` — don't edit the logic here), `markdown-oneline.yml` (the same `unwrap-prose.py --check`, with `SCHEMA.md`/`CHANGELOG.md` excluded), and `claude.yml` (the `@claude` mention handler). There is **no deploy workflow**: GitHub Pages builds and publishes this repo natively, which means production runs the `github-pages` gem in **safe mode** (the live site reports `Jekyll v3.10.0`). `docker-compose.yml` and the `Gemfile` deliberately use that same gem so local output matches what GitHub publishes.
+This repo now lives in the zer0-CMS monorepo at `sites/zer0-pages-remote/`, where the root `sites.yml` runs `bundle exec jekyll build` on any pull request touching it, and the root `markdown-oneline.yml` and `claude.yml` cover prose and `@claude` mentions. There is **no deploy workflow**: GitHub Pages builds and publishes this repo natively, which means production runs the `github-pages` gem in **safe mode** (the live site reports `Jekyll v3.10.0`). `docker-compose.yml` and the `Gemfile` deliberately use that same gem so local output matches what GitHub publishes.
 
 ## What is deliberately absent
 

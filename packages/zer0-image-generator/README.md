@@ -1,6 +1,6 @@
 # zer0-image-generator
 
-[![Test](https://github.com/bamr87/zer0-image-generator/actions/workflows/test.yml/badge.svg)](https://github.com/bamr87/zer0-image-generator/actions/workflows/test.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Test](https://github.com/bamr87/zer0-CMS/actions/workflows/zer0-image-generator.yml/badge.svg)](https://github.com/bamr87/zer0-CMS/actions/workflows/zer0-image-generator.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 AI preview/social images for **any Jekyll site** — Claude directs and reviews, an image model renders, and your front matter gets wired up automatically.
 

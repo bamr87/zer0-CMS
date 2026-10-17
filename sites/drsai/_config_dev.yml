@@ -3,7 +3,7 @@
 #
 # Builds against a LOCAL checkout of the zer0-mistakes theme instead of the
 # remote theme (required while theme changes are unreleased):
-#   ZER0_THEME_LOCAL=../zer0-mistakes bundle install
+#   ZER0_THEME_LOCAL=../../packages/zer0-mistakes bundle install
 #
 # NOTE: Jekyll replaces (does not merge) the `plugins:` list; this slim list
 # intentionally drops jekyll-remote-theme so dev builds never hit the network.
