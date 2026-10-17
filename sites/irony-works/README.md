@@ -1,14 +1,22 @@
 # Irony Works
 
-### The perpetual encyclopedia of irony
+> The perpetual encyclopedia of irony. Expectation, reversed. Recursively.
 
-> Expectation, reversed. Recursively.
+[![Live site](https://img.shields.io/badge/live-bamr87.github.io%2Firony--works-2ea44f)](https://bamr87.github.io/irony-works/)
+
+## Overview
 
 **Irony Works** is a self-growing Obsidian vault that catalogs irony in all its forms — past, present, and pending — and, since its second genus was planted, paradoxes old, new, debated, and hypothetical; tended by an AI engine and published to the web with the [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) theme. It is a seed, not a site: clone it, plant it, and the germination cycle takes over.
 
 An encyclopedia of irony compiled by a machine that cannot be embarrassed is either the death of the form or its final proof. This repository exists to find out.
 
----
+## Features
+
+- Entries must state an `expectation` and a `reversal` in front matter, so irony can be checked
+- The Alanis Gate scores candidate entries before they leave the nursery
+- A second genus for paradoxes, old, new, debated and hypothetical
+- An AI germination cycle (scout, gate, scribe, nursery and compost) run from `engine/scripts/`
+- The vault is transplanted into a Jekyll collection and published with the zer0-mistakes theme
 
 ## The Premise
 
@@ -133,6 +141,29 @@ The engine may write **only** to `vault/nursery/` and the two compost ledgers. I
 
 `_config.yml` uses `remote_theme: bamr87/zer0-mistakes`. The publish workflow first runs `engine/scripts/transplant.mjs`, which converts `[[wikilinks]]` to permalinks and moves entries into a Jekyll collection, then builds and deploys Pages. The vault stays the source of truth; the site is a pressing.
 
+## Development
+
+```bash
+npm i js-yaml --no-save
+node engine/scripts/gate.mjs vault/nursery/some-entry.md
+node engine/scripts/transplant.mjs
+```
+
+Full commands, conventions and gotchas for humans and AI agents live in [CLAUDE.md](CLAUDE.md).
+
+## Contributing
+
+Contributions are welcome via pull request. Use [Conventional Commits](https://www.conventionalcommits.org/) and keep the CI checks green. See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow. AI agents should start with [CLAUDE.md](CLAUDE.md).
+
+## Changelog
+
+There is no CHANGELOG.md yet; changes are tracked in the [commit history](https://github.com/bamr87/irony-works/commits/main).
+
 ## License
 
 Engine: MIT. Vault content: CC BY-SA 4.0. Attribution for the founding intent belongs to [the founding prompt](vault/the-founding-prompt.md), preserved verbatim as the seed's seed.
+
+---
+
+<!-- bamr87-portfolio-footer -->
+Part of the [bamr87 portfolio](https://github.com/bamr87) — browse every project on [Amr's GitHub profile](https://github.com/bamr87).
