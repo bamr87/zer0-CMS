@@ -1,7 +1,6 @@
 # PLAN: zer0-CMS → agent-native headless CMS (Django/Wagtail + Rails)
 
-Source of truth for the target: `docs/plan/agent-native-design.md` (called "the note"; section numbers refer to it).
-Working rules: `AGENTS.md` (draft at `AGENTS.draft.md`). One milestone = one Claude Code session = one PR. Tick boxes in the same PR that does the work.
+Source of truth for the target: `docs/plan/agent-native-design.md` (called "the note"; section numbers refer to it). Working rules: `AGENTS.md` (draft at `AGENTS.draft.md`). One milestone = one Claude Code session = one PR. Tick boxes in the same PR that does the work.
 
 ## 0. What is in this repo today (review findings)
 
