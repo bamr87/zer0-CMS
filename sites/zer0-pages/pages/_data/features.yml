@@ -1,0 +1,7 @@
+# Features registry (zer0-pages)
+# Read by the theme gem's feature-card/component-showcase includes
+# (site.data.features.features). Valid-structure stub: this site tracks no
+# theme feature registry of its own. Entry schema (if populated later) mirrors
+# the zer0-mistakes theme's _data/features.yml:
+#   - id, title, description, implemented, version, link, docs, tags, date
+features: []

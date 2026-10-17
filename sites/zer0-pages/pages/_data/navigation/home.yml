@@ -1,0 +1,24 @@
+# Home Navigation Configuration (zer0-pages)
+# Used by: _includes/core/header.html (theme gem) — renders one icon button
+#          per TOP-LEVEL entry (title/icon/url); children are not read.
+# Purpose: Quick access links in the header. All URLs are kept-page permalinks.
+
+- title: Home
+  icon: bi-house
+  url: /
+
+- title: Docs
+  icon: bi-journal-bookmark
+  url: /docs/
+
+- title: Posts
+  icon: bi-newspaper
+  url: /posts/
+
+- title: Notes
+  icon: bi-journal-text
+  url: /notes/
+
+- title: Wiki
+  icon: bi-diagram-3
+  url: /wiki/

@@ -25,7 +25,7 @@ npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or 
 cd rails
 bash bin/test-stdlib                              # rails/lib: catalog, front matter, writer, doctor, ABC — no bundler
 ruby bin/zer0-cms doctor ../../lifehacker.dev      # zer0 stack alignment; exit 1 on any error
-ruby bin/zer0-cms new --theme "IT systems" --out ../../drsai   # an ABC book, headless
+ruby bin/zer0-cms new --theme "IT systems" --out ../sites/drsai   # an ABC book, headless
 bundle install && bin/rails db:prepare
 SITES_DIR=$HOME/github bin/rails server            # http://localhost:3000/admin
 bin/rails test && bin/rails zeitwerk:check         # the app; image-engine tests need python3 + PyYAML
@@ -34,6 +34,12 @@ SITES_DIR=$HOME/github docker compose up --build
 SITES_DIR=$HOME/github docker compose --profile imagegen up --build   # + zer0-image-generator on :3000
 
 python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-line CI gate
+
+# ── The workspace (every project in the repository) — stdlib Ruby, no installs ──
+bin/zer0 list                     # projects, paths, what each publishes and what gates it
+bin/zer0 run check --affected     # the fast tier of everything this branch touched (+ dependents)
+bin/zer0 check                    # registry, paths, workflows and vendored copies all agree
+bin/zer0 doctor                   # zer0 doctor over every in-repo site
 ```
 
 `extension.test.ts` and `multiroot.test.ts` need a real extension host (`multiroot` has its own entry in `.vscode-test.mjs`: `npx vscode-test --label multiroot`), and `mcp.test.ts` needs `dist/mcp-server.js`, so the fourteen-suite command above leaves all three out; `out/test/mcp.test.js` does run under plain Mocha once `npm run compile` has built the bundle. On headless Linux `npm test` shells out to `xvfb-run` itself (`test-runner.js`); `ZER0_CMS_NO_XVFB=1` forces the plain path.
@@ -84,8 +90,19 @@ Declare it in `package.json` under `contributes.commands` (with any `when` claus
 - **`ImageEngine` is the only file that loads or runs zer0-image-generator.** The engine writes the preview key itself, so its write is replaced through `PageEditor#replace_engine_write!`; its subprocess gets no credentials. The locked 0.6.0 gem is Python; the facade backend activates by itself once a release ships `Zer0ImageGenerator::Facade`.
 - **Access is loopback or a password.** `AccessGuard` reads `REMOTE_ADDR` and every `X-Forwarded-For` hop, never `remote_ip`. Compose publishes on 127.0.0.1 and trusts the Docker gateway only because of that binding; never publish the port elsewhere without `ZER0_CMS_PASSWORD`.
 - **No inline script or style.** The CSP has a per-request nonce and no `unsafe-inline`. Administrate's compiled JS/CSS is deliberately not loaded (it would start a second Turbo); flashes are escaped because they carry repository text.
-- **Vendored files are byte-identical copies, never edited here:** `app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens`, from zer0-image-generator), `lib/zer0_cms/data/abc_art_styles.yml` (zer0-image-generator), `lib/zer0_cms/data/frontmatter_schema.yml` (zer0-mistakes). Re-sync them with `cp` and check with `cmp`.
+- **Vendored files are byte-identical copies, never edited here:** `app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens`, from zer0-image-generator), `lib/zer0_cms/data/abc_art_styles.yml` (zer0-image-generator), `lib/zer0_cms/data/frontmatter_schema.yml` (zer0-mistakes). They are declared under `vendored:` in the root `workspace.yml`: re-sync with `bin/zer0 vendor --write` and read the diff; `bin/zer0 check` (and CI) fails while any copy differs from its source.
 - The ABC wizard exports only into an explicit Jekyll root; bundled themes generate offline, anything else falls back to Claude. Never hand-edit a generated book in drsai; re-run the wizard.
+
+## The monorepo (`packages/`, `sites/`, `apps/`) — `workspace.yml` and `bin/zer0`
+
+Ten repositories live here, each imported with full history: the theme (`packages/zer0-mistakes/`), the image generator (`packages/zer0-image-generator/`), the books app (`packages/books/`), five sites (`sites/drsai/`, `sites/zer0-pages/`, `sites/zer0-pages-remote/`, `sites/zer0-demo-cookbook/`, `sites/zer0-demo-garden/`) and one app (`apps/barodybroject/`), next to this repository's own extension and Rails app. `docs/MONOREPO.md` explains the design; `tools/workspace/README.md` documents the tool.
+
+- **`workspace.yml` is the registry, and `bin/zer0` reads it.** Every project is an entry: its path, kind, dependencies, what it publishes, the root workflow that gates it, its zer0 site root, and its `setup`/`check`/`test`/`build` commands. Run a project's commands with `bin/zer0 run <task> <project>`, or from inside its directory; never restate them in a second place. `bin/zer0 run check --affected` is the fast loop for a branch.
+- **A new directory under `packages/`, `sites/` or `apps/` is a new entry in `workspace.yml` in the same change**, with a root workflow (or `ci: none — <reason>`). `bin/zer0 check` fails otherwise, and so does `zer0-workspace.yml` on every pull request.
+- **Each project keeps its own `CLAUDE.md`, which governs work inside it.** Read it before touching that tree. Only the root `.github/workflows/` runs. A project's root workflow is path-filtered to its own tree and runs inside it. Nested `.github/workflows/` files that remain are reference copies of what is not ported yet.
+- **Nothing under `packages/`, `sites/` or `apps/` may assume it is the git root.** `git rev-parse --show-toplevel` is zer0-CMS; resolve paths from the file instead.
+- **A file that must exist in two projects is `vendored:` in `workspace.yml`**, with its one source. Edit the source, then run `bin/zer0 vendor --write` and read the diff. `bin/zer0 check` fails while a copy differs.
+- The original repositories still publish the gems, the Pages sites, the Azure deploy and the `remote_theme`, so do not archive them until `docs/MONOREPO.md` § What still depends on the original repositories is empty.
 
 ## Conventions
 

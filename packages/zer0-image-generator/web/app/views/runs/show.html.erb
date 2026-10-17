@@ -1,0 +1,36 @@
+<% content_for :title, "Run ##{@run.id}" %>
+<% content_for :crumbs do %>
+  <%= link_to "Runs", runs_path %> /
+  <% if @run.site %><%= link_to @run.site.name, @run.site %> / <% end %>Run #<%= @run.id %>
+<% end %>
+
+<%# Subscribe to this run's Turbo Stream so the header and log update live. %>
+<%= turbo_stream_from @run %>
+
+<div id="run-header"><%= render "runs/header", run: @run %></div>
+
+<div class="grid cols-2" style="margin-top:1.3rem; align-items:start;">
+  <div class="card">
+    <h2>Log</h2>
+    <div class="logbox" id="run-log" data-controller="autoscroll"><%= render "runs/log_body", run: @run %></div>
+  </div>
+
+  <div class="card">
+    <h2>Artifacts</h2>
+    <div id="run-artifacts">
+      <%= render "runs/artifacts", run: @run, artifacts: @artifacts %>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.3rem;">
+  <h3>Parameters</h3>
+  <table class="list">
+    <tbody>
+      <tr><td class="dim">Kind</td><td class="mono"><%= @run.kind %></td></tr>
+      <% @run.params.each do |k, v| %>
+        <tr><td class="dim"><%= k %></td><td class="mono"><%= v %></td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

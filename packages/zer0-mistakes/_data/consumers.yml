@@ -1,0 +1,394 @@
+# ==============================================================================
+# _data/consumers.yml — downstream consumers of this theme
+# ==============================================================================
+#
+# The registry that makes theme releases propagate instead of sitting unnoticed.
+# Every site that renders with zer0-mistakes is listed here together with HOW it
+# consumes the theme and WHICH files hold its version pin.
+#
+# Read by:
+#   - scripts/bin/propagate         report pin drift; dispatch release events
+#   - .github/workflows/propagate-theme.yml   release fan-out
+#
+# Why this exists: nothing connected a release to the sites built on it. When
+# 1.27.0 shipped, all five consumers were still on v1.26.0 (or floating on main)
+# and none of them knew. Bumps were a manual, five-repo chore that nobody
+# remembered, so pins drifted until a site broke.
+#
+# ------------------------------------------------------------------------------
+# Consumption modes
+# ------------------------------------------------------------------------------
+#   remote_theme_pinned    `remote_theme: bamr87/zer0-mistakes@vX.Y.Z` — GitHub
+#                          Pages fetches the tagged theme at build time. Gets a
+#                          bump PR on release.
+#   remote_theme_floating  `remote_theme: bamr87/zer0-mistakes` with no tag —
+#                          tracks main, so every push to this repo reaches
+#                          production immediately. Nothing to bump; what these
+#                          need is a canary, not a PR. See `risk` below.
+#   gem                    `gem "jekyll-theme-zer0", "~> X.Y.Z"` — the theme is
+#                          resolved from RubyGems, not GitHub. Bumping means
+#                          editing a Gemfile and re-locking. This is the mode the
+#                          scheduled updater matters most for: no remote_theme
+#                          means no automatic pickup of anything, ever.
+#   path                   `gem "jekyll-theme-zer0", path: ...` — a local
+#                          checkout for development. Never version-pinned and
+#                          never bumped; listed so audits don't flag it.
+#
+# ------------------------------------------------------------------------------
+# Pin kinds (scripts/bin/propagate knows how to read/rewrite each)
+# ------------------------------------------------------------------------------
+#   remote_theme        `remote_theme: "bamr87/zer0-mistakes@vX.Y.Z"` in a config
+#   hub_registry        `theme_repo: bamr87/zer0-mistakes@vX.Y.Z` in _data/hub.yml
+#   gem_constraint      `gem 'jekyll-theme-zer0', '~> X.Y.Z'` in a Gemfile
+#   theme_name          `theme: "jekyll-theme-zer0"` — names the gem, carries no
+#                       version; tracked so a bump doesn't miss the config that
+#                       activates it
+#   path_gem            local path gem, unversioned (development only)
+#   gem_unconstrained   `gem 'jekyll-theme-zer0'` with no version — resolves
+#                       whatever RubyGems has at `bundle update` time; tracked
+#                       only (like resolved_lockfile), never reports drift
+#
+# ------------------------------------------------------------------------------
+# Stack fields (optional; informational — scripts/bin/propagate ignores them)
+# ------------------------------------------------------------------------------
+#   How far each consumer is aligned with the zer0 stack (one theme, one image
+#   engine, one CMS — templates/consumer/README.md § The zer0 stack). A dated
+#   snapshot of each consumer's default branch, not a live reading: refresh it
+#   from `zer0-cms doctor <checkout>` (bamr87/zer0-CMS), never from memory.
+#
+#   stack:
+#     checked             date the default branch was read
+#     image_gem           Gemfile requires zer0-image-generator
+#     preview_images      _config.yml has a preview_images: block
+#     vendored_generator  copies of the image engine the gem replaces
+#                         (_plugins/preview_*.rb forks, scripts/lib/
+#                         preview_generator.py, scripts/generate-preview-images.sh);
+#                         a deliberate local generator is NOT listed
+#     zer0_json           a zer0.json (zer0-CMS project file) is committed
+#     doctor              .github/workflows/zer0-doctor.yml caller is committed
+# ==============================================================================
+
+version: 1
+
+defaults:
+  branch: main
+  # repository_dispatch event type consumers listen for. Their side of the
+  # contract lives in templates/consumer/theme-bump.yml.
+  dispatch_event: theme-release
+
+consumers:
+  # ---------------------------------------------------------------------------
+  - repo: bamr87/it-journey
+    mode: remote_theme_floating
+    site: https://it-journey.dev
+    dispatch: false
+    risk: >-
+      Unpinned. Every push to this theme's main reaches production with no gate
+      and no rollback — that part is the real exposure. Recommend pinning and
+      joining the fan-out. NOTE: this entry previously claimed it "shadows ~55
+      theme files … ~75 lines of !important CSS working around #338", which
+      audit-consumer does not support. Only 2 files actually shadow a theme
+      file (_includes/content/giscus.html, assets/js/particles-source.js); the
+      other ~52 are it-journey's own quest-system layouts and includes that
+      share no filename with anything in this theme, so they carry no drift
+      risk at all. The !important CSS is real but is 31 lines in
+      assets/css/user-overrides.css — this theme's own documented extension
+      hook, enabled by `user_overrides: true`, not a shadow — and no fix
+      numbered #338 could be substantiated in that repo. Keep this field
+      derived from audit-consumer output, not hand-maintained estimates.
+    stack:
+      checked: "2026-09-14"
+      image_gem: true
+      preview_images: true
+      vendored_generator:
+        - _plugins/preview_image_generator.rb
+        - _plugins/preview_generator.rb
+        - scripts/lib/preview_generator.py
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 36, no tag — floats main
+
+  # ---------------------------------------------------------------------------
+  - repo: bamr87/lifehacker.dev
+    mode: remote_theme_floating
+    site: https://lifehacker.dev
+    dispatch: false
+    risk: >-
+      Unpinned, same exposure as it-journey. Small override surface (2 includes).
+      Recommend pinning and joining the fan-out.
+    stack:
+      checked: "2026-09-14"
+      image_gem: true
+      preview_images: true
+      vendored_generator:
+        - scripts/generate-preview-images.sh
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 40, no tag — floats main
+
+  # ---------------------------------------------------------------------------
+  - repo: bamr87/bashconsultants
+    mode: gem
+    site: https://bashconsultants.com
+    dispatch: true
+    note: >-
+      Three stacks, three theme surfaces: GitHub Pages uses the pinned
+      remote_theme, Azure Static Web Apps resolves the published gem via
+      Gemfile.azure + _config.azure.yml, and local dev mounts a path gem. A bump
+      must move the remote_theme tag and the gem constraint together or the two
+      production stacks render different theme versions.
+    stack:
+      checked: "2026-09-14"
+      image_gem: false
+      preview_images: true
+      vendored_generator:
+        - _plugins/preview_image_generator.rb
+        - scripts/generate-preview-images.sh
+      zer0_json: true
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 31
+      - file: Gemfile.azure
+        kind: gem_constraint
+        note: line 9 — must match the remote_theme tag
+      - file: _config.azure.yml
+        kind: theme_name
+        note: line 3 — activates the gem; no version of its own
+      - file: Gemfile
+        kind: path_gem
+        note: line 40 — dev checkout via ZER0_MISTAKES_PATH; never bumped
+
+  # ---------------------------------------------------------------------------
+  - repo: amr-bash/bash-365.com
+    mode: remote_theme_floating
+    site: https://bash-365.com
+    dispatch: false
+    note: >-
+      BASH Consulting's site, forked from bamr87/bashconsultants (which stays
+      registered above) and carrying the same three-stack shape: GitHub Pages
+      via remote_theme, Azure Static Web Apps via Gemfile.azure +
+      _config.azure.yml, local dev via a path gem. Unlike its parent, nothing
+      here carries a version any more — remote_theme is untagged and
+      Gemfile.azure names the gem with no constraint — so there is no pin for a
+      bump PR to rewrite. Declares its intentional forks in .theme-overrides.yml.
+    risk: >-
+      Unpinned on Pages; the Azure stack advances only when someone runs
+      `bundle update jekyll-theme-zer0`, so the two production stacks can
+      render different theme versions with nothing here to notice. Recommend
+      pinning remote_theme and constraining Gemfile.azure together and joining
+      the fan-out.
+    stack:
+      checked: "2026-09-14"
+      image_gem: false
+      preview_images: true
+      vendored_generator:
+        - _plugins/preview_image_generator.rb
+        - scripts/generate-preview-images.sh
+      zer0_json: true
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 33, no tag — floats main
+      - file: Gemfile.azure
+        kind: gem_unconstrained
+        note: line 10 — no version; `bundle update jekyll-theme-zer0` advances it
+      - file: _config.azure.yml
+        kind: theme_name
+        note: line 3 — activates the gem; no version of its own
+      - file: Gemfile
+        kind: path_gem
+        note: line 59 — dev checkout via ZER0_MISTAKES_PATH; never bumped
+
+  # ---------------------------------------------------------------------------
+  - repo: year-of-ai/year-of-ai.github.io
+    mode: remote_theme_pinned
+    site: https://year-of-ai.github.io
+    dispatch: true
+    fans_out_to_members: true
+    note: >-
+      An org hub, not just a site. Its _data/hub.yml theme_repo is the value
+      stamped into every member repo's _config.yml by scripts/provision-org-sites.rb,
+      so one bump here re-rolls the whole org (12 sites). The hub's own
+      _config.yml and hub.yml must move together — they are read by different
+      code paths and drift silently otherwise.
+    stack:
+      checked: "2026-09-14"
+      image_gem: true
+      preview_images: true
+      vendored_generator:
+        - scripts/generate-preview-images.sh
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 40
+      - file: _data/hub.yml
+        kind: hub_registry
+        note: "line 42 (pages.theme_repo) — re-roll members after bumping"
+
+  # ---------------------------------------------------------------------------
+  - repo: ai-world-view/ai-world-view.github.io
+    mode: remote_theme_floating
+    site: https://ai-world-view.github.io
+    dispatch: false
+    fans_out_to_members: true
+    note: >-
+      Same two-file hub shape as year-of-ai; members join by auto_discover, so
+      the member count grows without this file changing. Was registered as
+      remote_theme_pinned until the 2026-09 fleet harmonization, but both its
+      _config.yml remote_theme and its hub.yml theme_repo carry NO tag — the
+      hub and every member it stamps float on this theme's main.
+    risk: >-
+      Unpinned, and an org hub: a theme break here reaches every auto-discovered
+      member site at once. Recommend pinning both files together and joining
+      the fan-out (dispatch: true) like year-of-ai.
+    stack:
+      checked: "2026-09-14"
+      image_gem: true
+      preview_images: true
+      vendored_generator:
+        - scripts/generate-preview-images.sh
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 36, no tag — floats main
+      - file: _data/hub.yml
+        kind: hub_registry
+        note: "line 39 (pages.theme_repo), no tag — members float too"
+
+  # ---------------------------------------------------------------------------
+  # The four entries below were missing entirely until the 2026-08 fleet audit.
+  # Unregistered consumers are invisible to propagate.rb in BOTH directions: no
+  # release dispatch reaches them, and they never appear in the weekly drift
+  # report — so their pins can rot indefinitely with nothing to notice. That is
+  # exactly what happened to zer0-pages, which sat three minors behind on a gem
+  # constraint that already permitted the current release.
+  # ---------------------------------------------------------------------------
+  - repo: bamr87/zer0-pages
+    mode: gem
+    site: https://bamr87.github.io/zer0-pages/
+    dispatch: true
+    note: >-
+      Dual Obsidian-vault / Jekyll repo. Two things make it unlike every other
+      consumer. (1) It sets `source: pages`, so the whole themable tree lives
+      under pages/ — audit-consumer follows `source:` for this reason; auditing
+      the repo root reports a falsely clean result. (2) It is gem mode with no
+      remote_theme anywhere, so NOTHING is picked up automatically: the
+      scheduled bump is its only path to a new version.
+    risk: >-
+      Gemfile.lock resolved 1.25.0 while the Gemfile constraint (~> 1.25)
+      already permitted 1.28.0 — stale purely because nothing was nudging it.
+      Keeps two deliberate include forks, declared in its .theme-overrides.yml.
+    stack:
+      checked: "2026-09-14"
+      image_gem: true
+      preview_images: true
+      vendored_generator: []
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: Gemfile
+        kind: gem_constraint
+        note: 'line 11 — `gem "jekyll-theme-zer0", "~> 1.25"`'
+      - file: Gemfile.lock
+        kind: resolved_lockfile
+        note: "line 86 — re-lock with `bundle lock --update jekyll-theme-zer0`"
+      - file: _config.yml
+        kind: theme_name
+        note: "line 29 — `theme: jekyll-theme-zer0`; activates the gem, no version of its own"
+
+  # ---------------------------------------------------------------------------
+  - repo: bamr87/irony-works
+    mode: remote_theme_floating
+    site: https://bamr87.github.io/irony-works/
+    dispatch: false
+    note: >-
+      Vault + Node engine; engine/scripts/transplant.mjs converts vault/ into
+      the _entries/ collection before Jekyll runs. Has NO Gemfile at all — it
+      builds via actions/jekyll-build-pages (the github-pages image), so it can
+      only ever be tracked as remote_theme_floating; there is no gem constraint
+      surface for a bump to rewrite.
+    risk: >-
+      Unpinned, and with no local preview path a contributor cannot see a theme
+      break before pushing. Keeps three deliberate overrides, declared in its
+      .theme-overrides.yml.
+    stack:
+      checked: "2026-09-14"
+      image_gem: false
+      preview_images: false
+      vendored_generator: []
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 4, no tag — floats main
+
+  # ---------------------------------------------------------------------------
+  - repo: bamr87/wargames
+    mode: remote_theme_floating
+    site: https://bamr87.github.io/wargames/
+    dispatch: false
+    note: >-
+      Content-only vendored mirror of the OverTheWire challenges. Zero local
+      theme files — one of the cleanest consumers in the fleet. Its _config.yml
+      uses column-aligned YAML (`remote_theme             : "..."`), the style
+      that used to defeat audit-consumer's mode detection.
+    risk: >-
+      Unpinned, and its only build runs on push to main (jekyll-gh-pages.yml),
+      so a break ships before anyone sees it.
+    stack:
+      checked: "2026-09-14"
+      image_gem: false
+      preview_images: false
+      vendored_generator: []
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 44, no tag — floats main
+
+  # ---------------------------------------------------------------------------
+  - repo: bamr87/zer0-pages-remote
+    mode: remote_theme_floating
+    site: https://bamr87.github.io/zer0-pages-remote/
+    dispatch: false
+    note: >-
+      The minimal reference consumer: _config.yml + Gemfile + index.md, no
+      local theme files and no _data at all, still showing the onboarding
+      wizard by design. Useful as the canary for what a stock remote_theme
+      consumer gets with zero customisation — if the theme breaks a bare site,
+      it breaks here first.
+    private: true
+    risk: >-
+      Unpinned. Low stakes (a demo, not a content site), but it has already
+      caught one real integration break: PR #8 fixed a Liquid `include_cached`
+      failure caused by a Gemfile plugin missing from the safe-mode whitelist.
+      This repo is PRIVATE, so an unauthenticated `propagate.rb` run reports it
+      "unreachable" rather than reading its pin — drift reporting needs a token
+      here even though it is read-only. CI already supplies one; a bare local
+      run will not.
+    stack:
+      checked: "2026-09-14"
+      image_gem: false
+      preview_images: false
+      vendored_generator: []
+      zer0_json: false
+      doctor: false
+    pins:
+      - file: _config.yml
+        kind: remote_theme
+        note: line 12, no tag — floats main

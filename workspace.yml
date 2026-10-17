@@ -1,0 +1,255 @@
+# The zer0 workspace: every project this repository holds, in one registry.
+#
+# This file is the single source of truth for what lives where, how each
+# project is set up, checked, tested and built, what it publishes, and what it
+# depends on inside the repository. `bin/zer0` reads it (list, run, affected,
+# check, vendor), CI calls `bin/zer0` rather than restating commands, and
+# `bin/zer0 check` fails when this file and the tree disagree — a directory
+# nobody registered, a path that does not exist, a dependency on a name that is
+# not here, or a vendored copy that drifted from its source.
+#
+# Schema (validated by tools/workspace/lib/zer0_workspace/manifest.rb):
+#   projects.<name>:
+#     path:        directory the project lives in, relative to the root
+#     paths:       (optional) the globs it owns, when `path` is "." and the
+#                  project shares the root with others; otherwise `path/**`
+#     kind:        extension | rails | gem | python | site | app
+#     stack:       the toolchains it needs (node, ruby, python, jekyll, docker)
+#     summary:     one sentence
+#     upstream:    the repository it was imported from (docs/MONOREPO.md)
+#     depends_on:  names of projects in this file it builds against
+#     publishes:   what it ships — vsix, gem:<name>, pypi:<name>, pages, azure
+#     ci:          the root workflow that gates it, or `none` (with a reason)
+#     site:        (optional) the Jekyll root, relative to `path`, of a zer0
+#                  site — `bin/zer0 doctor` checks every project that has one
+#                  against the zer0 stack with the CMS's own `zer0 doctor`
+#     tasks.<task>: a command run from `path` — or {run:, cwd:, env:}
+#       setup  installs dependencies (may use the network)
+#       check  fast, offline, no installs beyond the language runtime
+#       test   the full suite (assumes `setup` ran)
+#       build  produces the project's artifact
+#
+# vendored: byte-identical copies one project keeps of another's file. The
+# copy is what ships (a Docker context or a stdlib-only library cannot reach
+# outside its own directory); the source is the only place it is edited.
+# `bin/zer0 vendor` lists them, `bin/zer0 vendor --write` re-copies, and
+# `bin/zer0 check` fails on drift.
+
+version: 1
+
+projects:
+  cms-extension:
+    path: "."
+    paths:
+      - "src/**"
+      - "media/**"
+      - "schemas/**"
+      - "package.json"
+      - "package-lock.json"
+      - "esbuild.js"
+      - "eslint.config.mjs"
+      - "tsconfig.json"
+      - "test-runner.js"
+      - ".vscode-test.mjs"
+      - ".vscodeignore"
+      - ".vsix-manifest.txt"
+    kind: extension
+    stack: [node]
+    summary: The VS Code extension — front matter as controls, a dashboard, SEO insights and a governed publishing path.
+    upstream: bamr87/zer0-CMS
+    publishes: [vsix]
+    ci: extension.yml
+    tasks:
+      setup: npm ci
+      check: npm run compile
+      test: npm test
+      build: npx @vscode/vsce package --no-dependencies
+
+  cms-rails:
+    path: rails
+    kind: rails
+    stack: [ruby]
+    summary: The fleet CMS — a Rails 8.1 app that indexes every registered site and writes edits back to the files, plus the stdlib-only zer0 library (catalog, doctor, ABC generator).
+    upstream: bamr87/zer0-CMS
+    depends_on: [zer0-image-generator]
+    ci: rails-app.yml
+    tasks:
+      setup: bundle install
+      check: bash bin/test-stdlib
+      test: bin/rails test && bin/rails zeitwerk:check
+
+  zer0-mistakes:
+    path: packages/zer0-mistakes
+    kind: gem
+    stack: [ruby, node, jekyll, docker]
+    summary: The Jekyll theme, published as the jekyll-theme-zer0 gem, with its docs site, installer and theme-propagation tooling.
+    upstream: bamr87/zer0-mistakes
+    publishes: ["gem:jekyll-theme-zer0", pages]
+    ci: zer0-mistakes.yml
+    site: "."
+    tasks:
+      setup: bundle install && npm ci
+      check: ./scripts/bin/test lib
+      test: ./scripts/bin/test
+      build: gem build jekyll-theme-zer0.gemspec
+
+  zer0-image-generator:
+    path: packages/zer0-image-generator
+    kind: gem
+    stack: [ruby, python]
+    summary: AI preview and social-image generation for any Jekyll site — the jekyll preview-images gem, its Python engine, the byte-identical Ruby port and the web panel.
+    upstream: bamr87/zer0-image-generator
+    publishes: ["gem:zer0-image-generator"]
+    ci: zer0-image-generator.yml
+    tasks:
+      setup: python3 -m pip install pyyaml
+      check:
+        run: for f in test/ruby/test_*.rb; do ruby -Ilib "$f" || exit 1; done
+        env: {LANG: C.UTF-8, LC_ALL: C.UTF-8}
+      test:
+        run: python3 test/test_preview_generator.py && ruby test/test_command.rb && for f in test/ruby/test_*.rb; do ruby -Ilib "$f" || exit 1; done
+        env: {LANG: C.UTF-8, LC_ALL: C.UTF-8}
+      build: gem build zer0-image-generator.gemspec
+
+  books:
+    path: packages/books
+    kind: python
+    stack: [python]
+    summary: A shelf of book projects (library/<slug>/) and the bookshelf app that validates, compiles and edits them, with a Claude-backed studio.
+    upstream: bamr87/books
+    ci: books.yml
+    tasks:
+      setup: pip install -e ".[dev]"
+      check:
+        run: python3 -m pytest -q
+        env: {PYTHONPATH: src}
+      test: python3 -m pytest -q && ruff check src tests
+
+  drsai:
+    path: sites/drsai
+    kind: site
+    stack: [ruby, jekyll, python]
+    summary: The children's picture-book site and its Python story engine; the CMS's ABC wizard exports into it.
+    upstream: bamr87/drsai
+    depends_on: [zer0-mistakes]
+    publishes: [pages, "pypi:drsai"]
+    ci: drsai.yml
+    site: "."
+    tasks:
+      setup:
+        run: bundle install && (cd drsai && pip install -e ".[dev]")
+        env: {ZER0_THEME_LOCAL: ../../packages/zer0-mistakes}
+      check: python3 tools/import_abc_book.py --check
+      test:
+        run: (cd drsai && pytest tests/ -q) && python3 tools/import_abc_book.py --check
+      build:
+        run: bundle exec jekyll build --config _config.yml,_config_dev.yml
+        env: {ZER0_THEME_LOCAL: ../../packages/zer0-mistakes}
+
+  zer0-pages:
+    path: sites/zer0-pages
+    kind: site
+    stack: [ruby, jekyll]
+    summary: One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge.
+    upstream: bamr87/zer0-pages
+    depends_on: [zer0-mistakes, zer0-image-generator]
+    publishes: [pages]
+    ci: zer0-pages.yml
+    site: "."
+    tasks:
+      setup: bundle install
+      check: ruby -Ipages/_plugins tests/test_obsidian_bridge.rb && ruby -Ipages/_plugins tests/test_graph_index.rb && python3 tools/schema_lint.py check .
+      build: bundle exec jekyll build
+
+  zer0-pages-remote:
+    path: sites/zer0-pages-remote
+    kind: site
+    stack: [ruby, jekyll]
+    summary: The minimal remote_theme consumer — proof of how few files a working GitHub Pages site needs.
+    upstream: bamr87/zer0-pages-remote
+    depends_on: [zer0-mistakes]
+    publishes: [pages]
+    ci: sites.yml
+    site: "."
+    tasks:
+      setup: bundle install
+      build: bundle exec jekyll build
+
+  zer0-demo-cookbook:
+    path: sites/zer0-demo-cookbook
+    kind: site
+    stack: [ruby, jekyll]
+    summary: A demo site generated by the theme's installer (cookbook profile).
+    upstream: bamr87/zer0-demo-cookbook
+    depends_on: [zer0-mistakes]
+    publishes: [pages]
+    ci: sites.yml
+    site: "."
+    tasks:
+      setup: bundle install
+      build: bundle exec jekyll build
+
+  zer0-demo-garden:
+    path: sites/zer0-demo-garden
+    kind: site
+    stack: [ruby, jekyll]
+    summary: A demo site generated by the theme's installer (garden profile).
+    upstream: bamr87/zer0-demo-garden
+    depends_on: [zer0-mistakes]
+    publishes: [pages]
+    ci: sites.yml
+    site: "."
+    tasks:
+      setup: bundle install
+      build: bundle exec jekyll build
+
+  barodybroject:
+    path: apps/barodybroject
+    kind: app
+    stack: [python, node, docker]
+    summary: A Django 5.2 + React app that generates and manages parody news with a provider-agnostic AI layer, deployed to Azure Container Apps.
+    upstream: bamr87/barodybroject
+    publishes: [azure, pages]
+    ci: barodybroject.yml
+    site: "src/pages"
+    tasks:
+      setup: pip install -r requirements-dev.txt
+      check: ruff check src/ && black --check src/
+      test:
+        run: python -m pytest
+        cwd: src
+        env: {DJANGO_SETTINGS_MODULE: barodybroject.settings.testing}
+
+vendored:
+  - copy: rails/app/assets/stylesheets/zer0-tokens.css
+    source: packages/zer0-image-generator/web/app/assets/stylesheets/zer0-tokens.css
+    why: The fleet CMS is themed by the zer0-ui-tokens kit; rails/ is its own Docker build context.
+  - copy: rails/lib/zer0_cms/data/abc_art_styles.yml
+    source: packages/zer0-image-generator/lib/zer0_image_generator/abc/art_styles.yml
+    why: The ABC wizard offers the image generator's art styles; rails/lib is stdlib-only and loads no gem.
+  - copy: rails/lib/zer0_cms/data/frontmatter_schema.yml
+    source: packages/zer0-mistakes/.github/config/frontmatter_schema.yml
+    why: zer0 doctor checks a site's front matter against the theme's schema without loading the theme.
+  # The hub-seeded one-paragraph-per-line fixer. The root copy is the source:
+  # the root markdown-oneline.yml runs it over the whole repository. Each
+  # project keeps its own copy because its own code, docs or CI call it by a
+  # project-relative path (the theme's scripts/translate.rb and
+  # test/test_i18n.sh among them).
+  - copy: packages/zer0-mistakes/tools/unwrap-prose.py
+    source: tools/unwrap-prose.py
+    why: scripts/translate.rb and test/test_i18n.sh run it from the theme's root.
+  - copy: packages/books/tools/unwrap-prose.py
+    source: tools/unwrap-prose.py
+    why: books documents `python3 tools/unwrap-prose.py --check` as its prose gate.
+  - copy: sites/drsai/tools/unwrap-prose.py
+    source: tools/unwrap-prose.py
+    why: drsai.yml runs it inside the site.
+  - copy: sites/zer0-pages/tools/unwrap-prose.py
+    source: tools/unwrap-prose.py
+    why: Registered in the site's tools/SCHEMA.md pyramid.
+  - copy: sites/zer0-pages-remote/tools/unwrap-prose.py
+    source: tools/unwrap-prose.py
+    why: The site's documented lint command; excluded from its Jekyll build in _config.yml.
+  - copy: apps/barodybroject/tools/unwrap-prose.py
+    source: tools/unwrap-prose.py
+    why: The app's own markdown-oneline workflow runs it from the app's root.

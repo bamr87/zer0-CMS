@@ -6,6 +6,7 @@ Six documents live here, and they answer different questions. Everything shorter
 |---|---|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the extension's internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, what the ledger guarantees, and D15–D16: the Rails CMS and the extension share files, not a process, and the Rails UI is Administrate over an index git stays the truth for. |
 | [`PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
+| [`MONOREPO.md`](MONOREPO.md) | The monorepo: every project under `packages/`, `sites/` and `apps/`, how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs from the original repositories. |
 | [`ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
 | [`CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
 | [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 44 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |

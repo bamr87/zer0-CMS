@@ -1,0 +1,180 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "barodybroject"
+version = "0.6.0"
+description = "A provider-agnostic AI parody news generator: Django + DRF backend, React frontend, Claude Code by default"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+  { name = "bamr87", email = "bamr87@users.noreply.github.com" }
+]
+keywords = ["django", "react", "ai", "claude", "parody", "news"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Framework :: Django",
+  "Framework :: Django :: 5.1",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+# Dependencies with version constraints for compatibility
+dependencies = [
+  # Web server
+  "gunicorn>=23.0.0,<24.0.0",
+  "whitenoise>=6.9,<7.0",
+  
+  # Django framework (5.1)
+  "Django>=5.1.4,<5.3",
+  "djangorestframework>=3.15.0,<4.0",
+  "django-environ>=0.11.0,<1.0",
+  
+  # Django utilities
+  "django-import-export>=4.0.0,<5.0",
+  "django-json-widget>=2.0.0,<3.0",
+  "django-markdownify>=0.9.0,<1.0",
+  "django-allauth[mfa,saml,socialaccount,steam]>=65.0.0,<66.0",
+  "django-ses>=4.0.0,<5.0",
+  
+  # Database
+  "psycopg2-binary>=2.9.0,<3.0",
+  
+  # Data processing
+  "jsonref>=1.1.0,<2.0",
+  "jsonschema>=4.20.0,<5.0",
+  "jsonschema-specifications>=2024.10.0,<2025.0",
+  "Markdown>=3.5.0,<3.6",
+  "PyYAML>=6.0,<7.0",
+  "martor>=1.6.0,<2.0",
+  
+  # Email
+  "aiosmtpd>=1.4.0,<2.0",
+  "dkimpy>=1.1.0,<2.0",
+  
+  # Cloud services
+  "azure-monitor-opentelemetry>=1.6.0,<2.0",
+  "boto3>=1.35.0,<2.0",
+  "pygithub>=2.5.0,<3.0",
+  
+  # AI providers — reached only through `parodynews.ai`, never imported
+  # directly by application code. claude-agent-sdk is the default provider and
+  # bundles the Claude Code CLI it drives.
+  "claude-agent-sdk>=0.2.152,<0.3",
+  "anthropic>=1.5.0,<2.0",
+  "openai>=3.0,<4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/bamr87/barodybroject"
+Repository = "https://github.com/bamr87/barodybroject"
+
+[project.optional-dependencies]
+dev = [
+  # Development tools
+  "cruft>=2.15.0,<3.0",
+  "pip-tools>=7.4.0,<8.0",
+  
+  # Testing
+  "pytest>=8.3.0,<10.0",
+  "pytest-django>=4.9.0,<5.0",
+  "pytest-playwright>=0.6.0,<1.0",
+  "pytest-cov>=6.0.0,<7.0",
+  "coverage[toml]>=7.6.0,<8.0",
+  
+  # Web testing
+  "selenium>=4.27.0,<5.0",
+  "beautifulsoup4>=4.12.0,<5.0",
+  "requests>=2.32.0,<3.0",
+  "axe-playwright-python>=0.1.5,<1.0",
+  
+  # Code quality
+  "black>=24.10.0,<27.0",
+  "ruff>=0.8.0,<1.0",
+  "pre-commit>=4.0.0,<5.0",
+  "mypy>=1.13.0,<2.0",
+  "django-stubs>=5.1.0,<6.0",
+  
+  # Documentation
+  "sphinx>=8.1.0,<9.0",
+  "sphinx-autodoc-typehints>=2.5.0,<3.0",
+  "sphinx-rtd-theme>=3.0.0,<4.0",
+  "myst-parser>=4.0.0,<5.0",
+]
+
+security = [
+  "django-security>=0.18.0,<1.0",
+  "django-csp>=3.8,<4.0",
+  "django-ratelimit>=4.1.0,<5.0",
+]
+
+monitoring = [
+  "django-debug-toolbar>=4.4.0,<5.0",
+  "django-extensions>=3.2.0,<4.0",
+  "sentry-sdk[django]>=2.18.0,<3.0",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Black formatter
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+# Ruff linter
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+# `test/` and `scripts/` at the repository root are pre-existing legacy code
+# (~730 findings) that predates the lint config being fixed. They are excluded
+# so `ruff check .` reports only findings a contributor is responsible for;
+# `src/` is clean and CI gates on it. Cleaning them up is tracked separately.
+extend-exclude = ["frontend", "pages", "*/migrations/*", "test", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "SIM", "DJ"]
+ignore = [
+  "E501",   # line length is enforced by the formatter
+  "B008",   # Django/DRF idioms call functions in defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Settings modules re-export with star imports by design.
+"barodybroject/settings/*.py" = ["F403", "F405", "E402"]
+"src/barodybroject/settings/*.py" = ["F403", "F405", "E402"]
+
+# Pytest
+[tool.pytest.ini_options]
+addopts = ["--cov=parodynews", "--cov=barodybroject"]
+testpaths = ["src/parodynews/tests", "test"]
+# The frontend has its own runner (Vitest); pytest must not walk into it.
+norecursedirs = ["scripts", "frontend", "node_modules"]
+pythonpath = ["src"]
+DJANGO_SETTINGS_MODULE = "barodybroject.settings.testing"
+markers = [
+  "e2e: end-to-end tests that require a running Django server and Playwright",
+]
+
+# Coverage
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/migrations/*", "*/tests/*", "manage.py", "*/settings/*"]
+
+# MyPy
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main"]

@@ -1,0 +1,44 @@
+<% content_for :title, @render.slug %>
+<% content_for :crumbs do %><%= link_to "Studio", studio_root_path %> / <%= @render.slug %><% end %>
+
+<div class="page-head">
+  <div>
+    <h1><%= @render.generator %></h1>
+    <div class="sub mono"><%= @render.slug %></div>
+  </div>
+  <div class="btn-row">
+    <%= button_to (@render.favorite ? "★ Favorited" : "☆ Favorite"), favorite_studio_render_path(@render), class: "btn #{@render.favorite ? "primary" : ""}" %>
+    <%= link_to "Open in studio", new_studio_render_path(generator: @render.generator, seed: @render.seed, knobs: @render.params), class: "btn" %>
+    <%= button_to "Delete", studio_render_path(@render), method: :delete, class: "btn danger", form: { data: { turbo_confirm: "Delete this render?" } } %>
+  </div>
+</div>
+
+<div class="grid cols-2" style="align-items:start;">
+  <div class="card">
+    <div class="preview-frame" style="min-height:300px;">
+      <%== studio_scaled_svg(@render.svg) %>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Details</h2>
+    <table class="list">
+      <tbody>
+        <tr><td class="dim">Generator</td><td class="mono"><%= @render.generator %></td></tr>
+        <tr><td class="dim">Seed</td><td class="mono"><%= @render.seed %></td></tr>
+        <% @render.params.each do |k, v| %><tr><td class="dim"><%= k %></td><td class="mono"><%= v %></td></tr><% end %>
+        <tr><td class="dim">Size</td><td class="mono"><%= number_with_delimiter(@render.svg.bytesize) %> B</td></tr>
+        <tr><td class="dim">Lint</td><td><span class="badge <%= @render.lint_clean? ? "ok" : "warn" %>"><span class="dot"></span><%= @render.lint_clean? ? "clean" : "#{@render.lint_errors.size + @render.lint_warnings.size} issue(s)" %></span></td></tr>
+      </tbody>
+    </table>
+    <% if @render.lint_errors.any? || @render.lint_warnings.any? %>
+      <ul class="faint" style="font-size:.8rem;">
+        <% @render.lint_errors.each do |e| %><li style="color:var(--err)"><%= e %></li><% end %>
+        <% @render.lint_warnings.each do |w| %><li style="color:var(--warn)"><%= w %></li><% end %>
+      </ul>
+    <% end %>
+    <details style="margin-top:1rem;">
+      <summary style="cursor:pointer; font-weight:600;">SVG source</summary>
+      <textarea class="code" rows="14" readonly style="margin-top:.6rem;"><%= @render.svg %></textarea>
+    </details>
+  </div>
+</div>

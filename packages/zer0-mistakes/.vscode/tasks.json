@@ -1,0 +1,300 @@
+// zer0-mistakes · .vscode/tasks.json — fleet-vscode/v1 · 2026-09-09. Convention + vocabulary: .vscode/README.md.
+// Docker-first: container-native work (Jekyll, Ruby, the test tiers, scripts) runs inside the `jekyll` service; tools not in that image (markdownlint, yamllint, Playwright) run via throwaway `docker run` images, nothing installed on the host.
+// The one host exception is `Release:` publishing — it pushes to RubyGems + git and needs host credentials. Dry runs stay in the container.
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Serve",
+      "detail": "Docker. The theme dev server (_config.yml,_config_dev.yml) on http://localhost:4000 with livereload on :35729. Runs until Stop.",
+      "type": "shell",
+      "command": "docker compose up",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "owner": "serve",
+        "pattern": {
+          "regexp": "^(never-matches)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Server (running|address)|Container \\S+\\s+Running"
+        }
+      }
+    },
+    {
+      "label": "Stop",
+      "detail": "Stops and removes the dev stack (docker compose down).",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Shell",
+      "detail": "Docker. Interactive bash inside the running jekyll container (/site).",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec jekyll bash",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      }
+    },
+    {
+      "label": "Build",
+      "detail": "Docker. Build validation — required before declaring theme/layout/include/sass changes done.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T jekyll bundle exec jekyll build --config _config.yml,_config_dev.yml",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Lint",
+      "detail": "Docker. The canonical preflight (scripts/validate --quick), the CI preflight step.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T jekyll bash -lc 'cd /site && ./scripts/validate --quick'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Verify",
+      "detail": "Docker. Preflight, then every test tier (lib + theme + integration) via scripts/bin/test — what ci.yml runs.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T jekyll bash -lc 'cd /site && ./scripts/validate --quick && ./scripts/bin/test'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Test",
+      "detail": "Docker. One test tier. The integration tier's mermaid sub-test probes the live server and may fail depending on build state.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T jekyll bash -lc 'cd /site && ./scripts/bin/test ${input:tier}'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Lint: markdown",
+      "detail": "Docker image (markdownlint-cli2), mirrors the CI config; nothing installed locally.",
+      "type": "shell",
+      "command": "docker run --rm -v \"$PWD:/workdir\" davidanson/markdownlint-cli2:latest --config .github/config/.markdownlint.json 'docs/**/*.md' 'pages/_docs/**/*.md' '!docs/archive/**'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Lint: yaml",
+      "detail": "Docker image (yamllint) with the repo config; nothing installed locally.",
+      "type": "shell",
+      "command": "docker run --rm -v \"$PWD:/data\" cytopia/yamllint:latest -c .github/config/.yamllint.yml .",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Playwright",
+      "detail": "Docker (official Playwright image) against the running dev server at host.docker.internal:4000; runs npm ci in an isolated node_modules volume. Snapshot baselines are Linux-generated — run that tier on Linux for matching pixels.",
+      "type": "shell",
+      "command": "docker compose up -d && docker run --rm --add-host host.docker.internal:host-gateway -v \"$PWD:/work\" -v /work/node_modules -w /work -e BASE_URL=http://host.docker.internal:4000 mcr.microsoft.com/playwright:v1.58.2-noble bash -lc 'npm ci && npm run test:${input:playwrightProject}'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Release",
+      "detail": "HOST: publishes a release (changelog, version bump, tests, build, push to RubyGems + git). Needs host RubyGems + git credentials.",
+      "type": "shell",
+      "command": "./scripts/release ${input:bump}",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      }
+    },
+    {
+      "label": "Release: dry run",
+      "detail": "Docker. Previews a patch release without changing anything.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T jekyll bash -lc 'cd /site && ./scripts/release patch --dry-run'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: quick build (no publish)",
+      "detail": "HOST: changelog + bump + tests + build, skipping RubyGems. Still commits/tags/pushes git, so needs host git credentials.",
+      "type": "shell",
+      "command": "./scripts/release patch --skip-publish --no-github-release",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      }
+    },
+    {
+      "label": "Preview images: list missing",
+      "detail": "Docker. Content files without a preview image.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T jekyll bash -lc 'cd /site && ./scripts/generate-preview-images.sh --list-missing'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Preview images: dry run",
+      "detail": "Docker. What would be generated, without changes.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T jekyll bash -lc 'cd /site && ./scripts/generate-preview-images.sh --dry-run --verbose'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Preview images: generate",
+      "detail": "Docker. Generates for the chosen collection; the default claude provider reads CLAUDE_CODE_OAUTH_TOKEN / ANTHROPIC_API_KEY from your environment or /site/.env, OPENAI_API_KEY for --provider openai. Costs credits.",
+      "type": "shell",
+      "command": "docker compose up -d && docker compose exec -T -e CLAUDE_CODE_OAUTH_TOKEN -e ANTHROPIC_API_KEY -e OPENAI_API_KEY jekyll bash -lc 'cd /site && ./scripts/generate-preview-images.sh --collection ${input:collection}'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: rebuild",
+      "detail": "Force-rebuilds and recreates the dev stack (after Dockerfile / compose changes).",
+      "type": "shell",
+      "command": "docker compose up --build --force-recreate -d",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: logs",
+      "detail": "Follows the jekyll container's logs.",
+      "type": "shell",
+      "command": "docker compose logs -f jekyll",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Claude: session",
+      "detail": "Interactive Claude Code in this repo with its .claude/agents + skills, on your logged-in credentials. House rules still apply: branch from main, open a PR, a human merges.",
+      "type": "shell",
+      "command": "claude",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "tier",
+      "type": "pickString",
+      "description": "Which test tier?",
+      "options": [
+        "lib",
+        "theme",
+        "integration",
+        "install"
+      ],
+      "default": "lib"
+    },
+    {
+      "id": "playwrightProject",
+      "type": "pickString",
+      "description": "Which Playwright tier?",
+      "options": [
+        "smoke",
+        "critical",
+        "mobile",
+        "snapshots",
+        "regression"
+      ],
+      "default": "smoke"
+    },
+    {
+      "id": "bump",
+      "type": "pickString",
+      "description": "Which version bump?",
+      "options": [
+        "patch",
+        "minor",
+        "major"
+      ],
+      "default": "patch"
+    },
+    {
+      "id": "collection",
+      "type": "pickString",
+      "description": "Which collection?",
+      "options": [
+        "posts",
+        "all"
+      ],
+      "default": "posts"
+    }
+  ]
+}

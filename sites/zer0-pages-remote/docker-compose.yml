@@ -1,0 +1,36 @@
+# Local development for a GitHub Pages site using a remote theme.
+# Mirrors the GitHub Pages build environment (github-pages gem) so what you
+# see locally matches what GitHub will publish.
+
+services:
+  jekyll:
+    image: ruby:3.4-slim
+    platform: linux/amd64
+    working_dir: /site
+    command:
+      - bash
+      - -lc
+      - |
+        set -e
+        apt-get update && apt-get install -y --no-install-recommends build-essential git curl >/dev/null
+        bundle config set --local path /usr/local/bundle
+        bundle install --jobs 4 --retry 3
+        exec bundle exec jekyll serve \
+          --host 0.0.0.0 --port 4000 \
+          --livereload --watch --force_polling
+    volumes:
+      - .:/site
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "127.0.0.1:${ZER0_PAGES_REMOTE_PORT:-4000}:4000"
+      - "127.0.0.1:${ZER0_PAGES_REMOTE_LIVERELOAD_PORT:-35729}:35729"
+    environment:
+      - JEKYLL_ENV=${JEKYLL_ENV:-development}
+      - BUNDLE_PATH=/usr/local/bundle
+      - PAGES_REPO_NWO=${PAGES_REPO_NWO:-bamr87/zer0-pages-remote}
+    stdin_open: true
+    tty: true
+
+volumes:
+  bundle_cache:
+    driver: local

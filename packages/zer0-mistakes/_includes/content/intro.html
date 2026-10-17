@@ -1,0 +1,322 @@
+{% comment %}
+  file: _includes/content/intro.html
+  description: Enhanced intro section with share, edit, and improve/report buttons
+  path: _includes/content/intro.html
+  features:
+    - Responsive share dropdown with multiple social platforms
+    - Edit on GitHub quick link
+    - "Improve" button — opens the page-feedback widget (capture type + description
+      + live page context + console logs → GitHub issue). Progressive enhancement:
+      it is a real link to the issue form, upgraded by assets/js/page-feedback.js.
+      See _includes/components/page-feedback.html.
+    - Responsive flex layout: full-width content block, frosted metadata footer with reading time and action buttons
+    - Balanced padding and typography hierarchy via bd-intro-* classes
+    - Metadata row: author, dates, category, difficulty, tags, view source
+{% endcomment %}
+{%- include core/i18n.html -%}
+{% if page.collection %}
+  {% capture page_dir %}{{ site.collections_dir }}{% endcapture %}
+  {% assign testvar = "collection exists" %}
+{% endif %}
+
+{% comment %} Intro Section {% endcomment %}
+
+{% comment %}
+  Determine the preview image path. Preview paths can omit the /assets/ prefix.
+  The component will auto-prepend the assets_prefix from _config.yml.
+{% endcomment %}
+{% assign preview_image = page.preview | default: site.info_banner %}
+{% assign assets_prefix = site.preview_images.assets_prefix | default: '/assets' %}
+{% assign auto_prefix = site.preview_images.auto_prefix | default: true %}
+
+{% comment %} Leading-slash normalisation, as in components/preview-image.html:
+   `preview: images/x.png` used to resolve to /assetsimages/x.png. {% endcomment %}
+{% unless preview_image == nil or preview_image == "" or preview_image contains '://' or preview_image contains 'data:' %}
+  {% assign preview_first = preview_image | slice: 0 %}
+  {% if preview_first != '/' %}{% assign preview_image = '/' | append: preview_image %}{% endif %}
+{% endunless %}
+
+{% if preview_image contains '://' %}
+  {% assign preview_path = preview_image %}
+{% elsif auto_prefix and preview_image != blank %}
+  {% if preview_image contains assets_prefix %}
+    {% assign preview_path = preview_image | relative_url %}
+  {% else %}
+    {% assign preview_path = assets_prefix | append: preview_image | relative_url %}
+  {% endif %}
+{% else %}
+  {% assign preview_path = preview_image | relative_url %}
+{% endif %}
+
+{% comment %}
+  Build the file path, branch, and repo owner for action buttons.
+{% endcomment %}
+{% assign repo_branch = site.branch | default: "main" %}
+{% comment %}
+  Only join with "/" when there is a collection directory. Pages outside a
+  collection have an empty page_dir, and the unconditional join produced
+  ".../blob/main//pages/tags.md" (double slash) in the edit/source links.
+{% endcomment %}
+{% if page_dir and page_dir != "" %}
+  {% assign file_path = page_dir | append: "/" | append: page.path %}
+{% else %}
+  {% assign file_path = page.path %}
+{% endif %}
+{% assign repo_parts = site.repository | split: "/" %}
+{% assign repo_owner = repo_parts[0] %}
+{% assign page_absolute_url = page.url | absolute_url %}
+{% assign linkedin_share_title = page.title | default: site.title | strip_html | strip_newlines | strip %}
+{% assign linkedin_share_description = page.description | default: page.excerpt | default: site.description | strip_html | strip_newlines | strip %}
+
+{% comment %}
+  Resolve author display name and optional profile URL from page front matter,
+  _data/authors.yml, or site.author fallback.
+{% endcomment %}
+{% assign intro_author_key = page.author %}
+{% assign intro_author_data = nil %}
+{% if intro_author_key and intro_author_key != "" %}
+  {% assign intro_author_data = site.data.authors[intro_author_key] %}
+{% endif %}
+{% if intro_author_data %}
+  {% assign intro_author_name = intro_author_data.name %}
+{% elsif intro_author_key and intro_author_key != "" %}
+  {% assign intro_author_name = intro_author_key %}
+{% else %}
+  {% assign intro_author_name = site.author.name %}
+{% endif %}
+{% assign intro_author_url = nil %}
+{% if intro_author_data %}
+  {% if intro_author_data.website %}
+    {% assign intro_author_url = intro_author_data.website %}
+  {% elsif intro_author_data.github %}
+    {% assign intro_author_url = "https://github.com/" | append: intro_author_data.github %}
+  {% endif %}
+{% elsif site.author.github_username %}
+  {% assign intro_author_url = "https://github.com/" | append: site.author.github_username %}
+{% endif %}
+
+{% comment %} Dates: prefer last_modified_at, then lastmod {% endcomment %}
+{% assign intro_updated = page.last_modified_at | default: page.lastmod %}
+{% assign intro_published = page.date %}
+{% assign intro_show_updated = false %}
+{% if intro_updated %}
+  {% if intro_published == nil %}
+    {% assign intro_show_updated = true %}
+  {% else %}
+    {% assign intro_published_day = intro_published | date: "%Y-%m-%d" %}
+    {% assign intro_updated_day = intro_updated | date: "%Y-%m-%d" %}
+    {% if intro_updated_day != intro_published_day %}
+      {% assign intro_show_updated = true %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% comment %} Category or collection badge (most specific category wins) {% endcomment %}
+{% assign intro_category = nil %}
+{% assign intro_category_url = nil %}
+{% if page.categories.size > 0 %}
+  {% assign intro_category = page.categories | last %}
+  {% if page.categories.size > 1 %}
+    {% for cat in page.categories %}
+      {% if cat != "docs" and cat != "pages" %}
+        {% assign intro_category = cat %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+  {% if page.categories contains "docs" %}
+    {% assign intro_category_slug = intro_category | append: '' | slugify %}
+    {% capture intro_category_url %}{{ site.baseurl }}/docs/{{ intro_category_slug }}/{% endcapture %}
+  {% else %}
+    {% assign intro_category_slug = intro_category | append: '' | slugify %}
+    {% capture intro_category_url %}{{ '/tags/' | relative_url }}#{{ intro_category_slug }}{% endcapture %}
+  {% endif %}
+{% elsif page.collection and page.collection != "pages" %}
+  {% assign intro_category = page.collection %}
+  {% capture intro_category_url %}{{ site.baseurl }}/{{ page.collection }}/{% endcapture %}
+{% endif %}
+
+{% assign intro_level = page.difficulty | default: page.level %}
+{% assign intro_subtitle = page.subtitle | default: page.sub-title %}
+{% assign intro_source_url = nil %}
+{% if site.repository and file_path != blank %}
+  {% capture intro_source_url %}https://github.com/{{ site.repository }}/blob/{{ repo_branch }}/{{ file_path }}{% endcapture %}
+{% endif %}
+
+{% assign intro_read_words = content | number_of_words %}
+{% assign intro_read_mins = intro_read_words | divided_by: 200 %}
+{% if intro_read_mins < 1 %}
+  {% assign intro_read_mins = 1 %}
+{% endif %}
+
+<div class="bd-intro" style="
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ preview_path }}') no-repeat center center / cover;">
+
+  <div class="bd-intro-inner">
+    <div class="bd-intro-content">
+      <h1 class="bd-intro-title">{{ page.title }}</h1>
+      {% if intro_subtitle %}
+      <p class="bd-intro-subtitle">{{ intro_subtitle }}</p>
+      {% endif %}
+      {% if page.description %}
+      <p class="bd-intro-description">{{ page.description }}</p>
+      {% endif %}
+    </div>
+
+    <div class="bd-intro-meta-footer">
+      <ul class="bd-intro-meta-row list-unstyled" aria-label="Page metadata">
+        <li class="bd-intro-meta-item">
+          <i class="bi bi-person-fill bd-intro-meta-icon" aria-hidden="true"></i>
+          {% if intro_author_url %}
+          <a class="bd-intro-meta-link" href="{{ intro_author_url }}" rel="author" itemprop="author">{{ intro_author_name }}</a>
+          {% else %}
+          <span itemprop="author">{{ intro_author_name }}</span>
+          {% endif %}
+        </li>
+
+        {% if intro_published %}
+        <li class="bd-intro-meta-item">
+          <i class="bi bi-calendar3 bd-intro-meta-icon" aria-hidden="true"></i>
+          <time datetime="{{ intro_published | date_to_xmlschema }}" itemprop="datePublished">
+            {{ ui.published_label | default: "Published" }} {{ intro_published | date: "%b %d, %Y" }}
+          </time>
+        </li>
+        {% endif %}
+
+        {% if intro_show_updated %}
+        <li class="bd-intro-meta-item">
+          <i class="bi bi-pencil bd-intro-meta-icon" aria-hidden="true"></i>
+          <time datetime="{{ intro_updated | date_to_xmlschema }}" itemprop="dateModified">
+            {{ ui.updated_label | default: "Updated" }} {{ intro_updated | date: "%b %d, %Y" }}
+          </time>
+        </li>
+        {% endif %}
+
+        {% if intro_category %}
+        <li class="bd-intro-meta-item">
+          <i class="bi bi-folder2 bd-intro-meta-icon" aria-hidden="true"></i>
+          {% if intro_category_url %}
+          <a class="bd-intro-meta-link bd-intro-badge" href="{{ intro_category_url }}">{{ intro_category | replace: '-', ' ' | capitalize }}</a>
+          {% else %}
+          <span class="bd-intro-badge">{{ intro_category | replace: '-', ' ' | capitalize }}</span>
+          {% endif %}
+        </li>
+        {% endif %}
+
+        {% if intro_level %}
+        <li class="bd-intro-meta-item">
+          <i class="bi bi-bar-chart-steps bd-intro-meta-icon" aria-hidden="true"></i>
+          {% assign intro_level_label = intro_level | append: '' %}
+          <span class="bd-intro-badge bd-intro-badge--level bd-intro-badge--level-{{ intro_level_label | slugify }}">{{ intro_level_label | capitalize }}</span>
+        </li>
+        {% endif %}
+
+        {% if page.tags and page.tags.size > 0 %}
+        <li class="bd-intro-meta-item bd-intro-meta-item--tags">
+          <i class="bi bi-tags bd-intro-meta-icon" aria-hidden="true"></i>
+          <span class="bd-intro-tag-list">
+            {% for tag in page.tags limit: 5 %}
+            {% assign intro_tag_label = tag | append: '' %}
+            <a class="bd-intro-badge bd-intro-badge--tag" href="{{ '/tags/' | relative_url }}#{{ intro_tag_label | slugify }}">{{ intro_tag_label }}</a>
+            {% endfor %}
+            {% if page.tags.size > 5 %}
+            <span class="bd-intro-badge bd-intro-badge--tag bd-intro-badge--more">+{{ page.tags.size | minus: 5 }}</span>
+            {% endif %}
+          </span>
+        </li>
+        {% endif %}
+
+        {% if intro_source_url %}
+        <li class="bd-intro-meta-item bd-intro-meta-item--source d-none d-md-inline-flex">
+          <i class="bi bi-file-earmark-code bd-intro-meta-icon" aria-hidden="true"></i>
+          <a class="bd-intro-meta-link" href="{{ intro_source_url }}" target="_blank" rel="noopener noreferrer">{{ ui.view_source | default: "View source" }}</a>
+        </li>
+        {% endif %}
+      </ul>
+
+      <div class="bd-intro-meta-bottom">
+        <p class="bd-intro-meta">
+          <i class="bi bi-clock me-1" aria-hidden="true"></i>
+          {% if page.estimated_reading_time %}
+          {{ ui.reading_time_label | default: "Estimated reading time:" }} {{ page.estimated_reading_time }}
+          {% else %}
+          {{ ui.reading_time_label | default: "Estimated reading time:" }} {{ intro_read_mins }} {{ ui.reading_time_minute | default: "minute" }}{% if intro_read_mins != 1 %}s{% endif %}
+          {% endif %}
+        </p>
+
+        {% comment %} Action Buttons Group {% endcomment %}
+        <div class="bd-intro-actions">
+    {% comment %} Share Button {% endcomment %}
+    <div class="dropdown">
+      {%- comment -%} aria-label keeps an accessible name below 576px, where the visible text is d-none. {%- endcomment -%}
+      <button class="btn btn-sm btn-info dropdown-toggle" type="button" id="shareDropdownBottom" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ ui.share_label | default: 'Share' }}">
+        <i class="bi bi-share" aria-hidden="true"></i>
+        <span class="d-none d-sm-inline ms-1">{{ ui.share_label | default: "Share" }}</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="shareDropdownBottom">
+        <li>
+          <a class="dropdown-item" href="https://reddit.com/submit?url={{ page_absolute_url | uri_escape }}&amp;title={{ page.title | uri_escape }}" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-reddit me-2"></i>{{ ui.share_on_label | default: "Share on" }} Reddit
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item js-linkedin-share"
+             href="https://www.linkedin.com/sharing/share-offsite/?url={{ page_absolute_url | uri_escape }}"
+             target="_blank"
+             rel="noopener noreferrer"
+             title="Copies a cleaned article summary to your clipboard, then opens LinkedIn sharing"
+             data-share-url="{{ page_absolute_url | escape }}"
+             data-share-title="{{ linkedin_share_title | escape }}"
+             data-share-description="{{ linkedin_share_description | escape }}">
+            <i class="bi bi-linkedin me-2"></i>{{ ui.share_on_label | default: "Share on" }} LinkedIn
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="https://x.com/intent/tweet?url={{ site.url | append: page.url | url_encode }}&text={{ page.title | url_encode }}" target="_blank" aria-label="{{ ui.share_on_label | default: 'Share on' }} X">
+            <i class="bi bi-twitter-x me-2"></i>{{ ui.share_on_label | default: "Share on" }} X
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          {%- comment -%}
+            Uses the data-copy binding from assets/js/ui-helpers.js, which
+            announces success via an accessible aria-live toast instead of
+            the blocking alert() the legacy markup used.
+          {%- endcomment -%}
+          <button class="dropdown-item" type="button" data-copy="{{ site.url | append: page.url }}">
+            <i class="bi bi-clipboard me-2" aria-hidden="true"></i>{{ ui.copy_link_label | default: "Copy Link" }}
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    {% comment %} Improve / Report — opens the page-feedback widget (assets/js/page-feedback.js).
+         Progressive enhancement: this is a real link to the issue form, so it
+         works without JavaScript; page-feedback.js intercepts [data-pf-open]
+         clicks and opens the richer capture modal (context + logs + AI) instead. {% endcomment %}
+    {% if site.page_feedback.enabled %}
+    <a class="btn btn-sm btn-success bd-intro-action-link"
+       href="https://github.com/{{ site.repository }}/issues/new?template=page_improvement.yml&labels=page-feedback"
+       data-pf-open
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Report a problem or suggest an improvement for this page">
+      <i class="bi bi-megaphone" aria-hidden="true"></i>
+      <span class="d-none d-sm-inline ms-1">{{ ui.improve_label | default: "Improve" }}</span>
+    </a>
+    {% endif %}
+
+    {% comment %} Edit on GitHub Button {% endcomment %}
+    <a href="https://github.com/{{ site.repository }}/blob/{{ repo_branch }}/{{ file_path }}"
+       class="btn btn-sm btn-dark bd-intro-action-link"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="{{ ui.edit_on_github | default: 'Edit on GitHub' }}">
+      <i class="bi bi-github" aria-hidden="true"></i>
+      <span class="d-none d-sm-inline ms-1">{{ ui.edit_on_github | default: "Edit on GitHub" }}</span>
+    </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

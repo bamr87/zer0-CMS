@@ -1,0 +1,149 @@
+{% comment %} Feature: ZER0-077 {% endcomment %}
+{% comment %}
+  ===================================================================
+  BACKGROUND SETTINGS — fffuel-style background controls (tab content)
+  ===================================================================
+
+  File: background-settings.html
+  Path: _includes/components/background-settings.html
+  Purpose: Theme-skin selector and SVG-background controls, rendered
+           inside the Settings offcanvas Appearance tab.
+
+  Dependencies:
+    - assets/js/background-customizer.js (zer0Bg API)
+    - _sass/theme/_backgrounds.scss (CSS custom properties)
+    - Bootstrap 5 form components
+
+  Section headings match the h6 pattern used by the parent
+  info-section.html so the Appearance tab reads as one surface.
+  ===================================================================
+{% endcomment %}
+
+{% assign skins = "air,aqua,contrast,dark,dirt,neon,mint,plum,sunrise" | split: "," %}
+{% assign current_skin = site.theme_skin | default: "dark" %}
+
+{% comment %} Skin selector {% endcomment %}
+<div class="mb-4">
+  <h3 class="h6 text-body-secondary small text-uppercase fw-semibold mb-2">
+    <i class="bi bi-palette2 me-1" aria-hidden="true"></i>Theme Skin
+  </h3>
+  <div class="d-flex flex-wrap gap-2" id="zer0SkinButtons" role="group" aria-label="Theme skin">
+    {% for skin in skins %}
+    <button class="btn btn-sm btn-outline-primary{% if skin == current_skin %} active{% endif %}"
+            data-skin="{{ skin }}"
+            type="button"
+            aria-pressed="{% if skin == current_skin %}true{% else %}false{% endif %}">
+      {{ skin | capitalize }}
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
+{% comment %} SVG background toggle + layer opacity {% endcomment %}
+<div class="mb-4">
+  <h3 class="h6 text-body-secondary small text-uppercase fw-semibold mb-2">
+    <i class="bi bi-image me-1" aria-hidden="true"></i>Background
+  </h3>
+
+  <div class="d-flex align-items-center justify-content-between p-3 bg-body-tertiary rounded mb-3">
+    <label class="form-check-label" for="zer0BgToggle">SVG backgrounds</label>
+    <div class="form-check form-switch mb-0">
+      <input class="form-check-input" type="checkbox" id="zer0BgToggle" checked>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label small d-flex justify-content-between mb-1" for="zer0GradientOpacity">
+      <span>Gradient opacity</span>
+      <span class="text-body-secondary" id="zer0GradientOpacityVal">0.6</span>
+    </label>
+    <input type="range" class="form-range" id="zer0GradientOpacity"
+           min="0" max="1" step="0.05" value="0.6">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label small d-flex justify-content-between mb-1" for="zer0TextureOpacity">
+      <span>Texture opacity</span>
+      <span class="text-body-secondary" id="zer0TextureOpacityVal">0.04</span>
+    </label>
+    <input type="range" class="form-range" id="zer0TextureOpacity"
+           min="0" max="0.2" step="0.005" value="0.04">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label small d-flex justify-content-between mb-1" for="zer0PatternOpacity">
+      <span>Pattern opacity</span>
+      <span class="text-body-secondary" id="zer0PatternOpacityVal">0.08</span>
+    </label>
+    <input type="range" class="form-range" id="zer0PatternOpacity"
+           min="0" max="0.3" step="0.01" value="0.08">
+  </div>
+
+  <button class="btn btn-sm btn-outline-secondary" id="zer0BgReset" type="button">
+    <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Reset background
+  </button>
+</div>
+
+{% comment %} Customizer interaction logic {% endcomment %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof zer0Bg === "undefined") return;
+
+  // Skin buttons
+  // `.active` is a Bootstrap visual class and carries no accessibility
+  // semantics, so selection is also exposed via aria-pressed (WCAG 4.1.2),
+  // matching the sibling color-mode group. Both are set in one place so no
+  // code path can leave them disagreeing.
+  function markActiveSkinButton(btn) {
+    document.querySelectorAll("#zer0SkinButtons .btn").forEach(function (b) {
+      b.classList.remove("active");
+      b.setAttribute("aria-pressed", "false");
+    });
+    if (btn) {
+      btn.classList.add("active");
+      btn.setAttribute("aria-pressed", "true");
+    }
+  }
+
+  document.querySelectorAll("#zer0SkinButtons [data-skin]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var skin = this.getAttribute("data-skin");
+      zer0Bg.setSkin(skin);
+      markActiveSkinButton(this);
+    });
+  });
+
+  // Background toggle
+  var toggle = document.getElementById("zer0BgToggle");
+  toggle.checked = document.documentElement.getAttribute("data-zer0-bg") !== "off";
+  toggle.addEventListener("change", function () { zer0Bg.toggle(this.checked); });
+
+  // Opacity sliders
+  function bindSlider(id, layer) {
+    var slider = document.getElementById(id);
+    var valSpan = document.getElementById(id + "Val");
+    slider.addEventListener("input", function () {
+      zer0Bg.setOpacity(layer, this.value);
+      valSpan.textContent = this.value;
+    });
+  }
+  bindSlider("zer0GradientOpacity", "gradient");
+  bindSlider("zer0TextureOpacity", "texture");
+  bindSlider("zer0PatternOpacity", "pattern");
+
+  // Reset
+  document.getElementById("zer0BgReset").addEventListener("click", function () {
+    zer0Bg.setSkin("{{ current_skin }}");
+    zer0Bg.toggle(true);
+    var defaults = { zer0GradientOpacity: "0.6", zer0TextureOpacity: "0.04", zer0PatternOpacity: "0.08" };
+    var layers = { zer0GradientOpacity: "gradient", zer0TextureOpacity: "texture", zer0PatternOpacity: "pattern" };
+    Object.keys(defaults).forEach(function (id) {
+      zer0Bg.setOpacity(layers[id], defaults[id]);
+      document.getElementById(id).value = defaults[id];
+      document.getElementById(id + "Val").textContent = defaults[id];
+    });
+    toggle.checked = true;
+    markActiveSkinButton(document.querySelector('#zer0SkinButtons [data-skin="{{ current_skin }}"]'));
+  });
+});
+</script>

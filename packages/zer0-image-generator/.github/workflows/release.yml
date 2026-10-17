@@ -1,0 +1,37 @@
+# Standardized release pipeline — same framework as zer0-mistakes.
+# Conventional Commits drive release-please, which opens a release PR (bumps
+# lib/zer0_image_generator/version.rb + CHANGELOG.md). Merging that PR tags
+# vX.Y.Z, creates the GitHub Release, and publish.yml builds the gem and
+# pushes it to RubyGems (needs the RUBYGEMS_API_KEY repo secret).
+#
+# Shared definitions live in bamr87/.github. See release-please-config.json.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    uses: bamr87/.github/.github/workflows/release-please.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+    secrets: inherit
+
+  publish:
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    uses: bamr87/.github/.github/workflows/publish.yml@main
+    with:
+      tag: ${{ needs.release.outputs.tag_name }}
+      version: ${{ needs.release.outputs.version }}
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    secrets: inherit

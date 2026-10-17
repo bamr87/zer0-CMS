@@ -66,7 +66,7 @@ The workflow checks out the caller and `bamr87/zer0-CMS` at `main` side by side,
 
 **The image engine.** The Rails app bundles `zer0-image-generator ~> 0.6` with `require: false`, and `app/services/image_engine.rb` is the only file that loads or runs it. It lists a site's missing previews (the `missing_preview:` filter) and draws one page's preview with the free `local` provider, writing the key back through `PageEditor` so the engine's own writer never has the last word. Against the released 0.6.0 gem it runs the gem's Python engine as the CLI would; when a release ships `Zer0ImageGenerator::Facade` (the first after 0.7.0), raise the Gemfile floor, re-lock, and the app uses the facade with no code change. Everything bigger than one page links out to the image generator's panel at `ZER0_IMAGE_GENERATOR_URL`. See [`PLATFORM.md`](PLATFORM.md#the-image-engine-seam).
 
-**The design tokens.** `rails/app/assets/stylesheets/zer0-tokens.css` is a byte-identical copy of the image generator's `web/app/assets/stylesheets/zer0-tokens.css`, the `zer0-ui-tokens` kit (1.0.0 today; the stamp is its first comment line). Administrate is themed through it by `administrate-theme.css`. Never edit the copy: change the kit upstream, bump its version, and re-vendor; `cmp` is the whole check.
+**The design tokens.** `rails/app/assets/stylesheets/zer0-tokens.css` is a byte-identical copy of the image generator's `web/app/assets/stylesheets/zer0-tokens.css`, the `zer0-ui-tokens` kit (1.0.1 today; the stamp is its first comment line). Administrate is themed through it by `administrate-theme.css`. Never edit the copy: change the kit in `packages/zer0-image-generator`, bump its version, and re-vendor with `bin/zer0 vendor --write`; `bin/zer0 check` fails CI while the two differ.
 
 **The theme's contracts.** `rails/lib/zer0_cms/data/frontmatter_schema.yml` is the theme's front-matter schema, and `rails/lib/zer0_cms/data/abc_art_styles.yml` is the image generator's ABC art-style catalog; both are byte-identical vendored copies, re-synced rather than edited.
 
@@ -74,9 +74,9 @@ The workflow checks out the caller and `bamr87/zer0-CMS` at `main` side by side,
 
 | App | Repo | Start | URL | Sites mount |
 |---|---|---|---|---|
-| Fleet CMS (admin, editor, ABC wizard) | zer0-CMS | `docker compose up --build` at the repo root | http://localhost:3001/admin | `${SITES_DIR:-..}:/sites` |
-| Image generator (forge, runs, studio) | zer0-image-generator | `docker compose --profile imagegen up --build` here, or `docker compose up --build` in its own repo | http://localhost:3000 | `${SITES_DIR:-..}:/sites` |
+| Fleet CMS (admin, editor, ABC wizard) | zer0-CMS | `docker compose up --build` at the repo root | http://localhost:3001/admin | `${SITES_DIR:-.}:/sites` |
+| Image generator (forge, runs, studio) | zer0-image-generator | `docker compose --profile imagegen up --build` here, or `docker compose up --build` in `packages/zer0-image-generator` | http://localhost:3000 | `${SITES_DIR:-.}:/sites` |
 
 - Both apps mount the same `SITES_DIR` at `/sites`, so a site registered as `/sites/<name>` means the same checkout in both. Register container paths, never host paths.
-- The default `..` works when the repositories sit side by side in one fleet checkout; otherwise export `SITES_DIR` once (for example `export SITES_DIR=~/github`). The `imagegen` profile builds from `${ZER0_IMAGE_GENERATOR_DIR:-../zer0-image-generator}`.
+- The default `.` is this repository: the CMS discovers the zer0 sites the monorepo holds (`/sites/sites/drsai`, `/sites/packages/zer0-mistakes`, …) with no setup. To manage repositories that live outside it, export `SITES_DIR` once (for example `export SITES_DIR=~/github`). The `imagegen` profile builds from `${ZER0_IMAGE_GENERATOR_DIR:-./packages/zer0-image-generator}`.
 - Both ports are published on 127.0.0.1 only. `PORT` moves the CMS and `IMAGEGEN_PORT` moves the image generator; point `ZER0_IMAGE_GENERATOR_URL` at the new address when you move it.

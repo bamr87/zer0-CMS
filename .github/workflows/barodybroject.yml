@@ -1,0 +1,151 @@
+# apps/barodybroject — the Django + React app's pull-request gate, ported from
+# its own ci.yml (Django pre-checks, pytest on 3.10–3.12 against PostgreSQL,
+# the frontend typecheck/tests/build, and lint/dependency/quality analysis).
+# Its .github/scripts/*.sh are relative to the app's root, so every job runs
+# inside apps/barodybroject. Not ported yet (see docs/MONOREPO.md): the
+# Playwright E2E job, the container validation and Trivy jobs, and the Azure
+# deploy.
+name: barodybroject
+
+on:
+  push:
+    branches: [main]
+    paths: ["apps/barodybroject/**", ".github/workflows/barodybroject.yml"]
+  pull_request:
+    paths: ["apps/barodybroject/**", ".github/workflows/barodybroject.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: barodybroject-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "22"
+  DJANGO_SETTINGS_MODULE: barodybroject.settings.testing
+
+defaults:
+  run:
+    working-directory: apps/barodybroject
+
+jobs:
+  pre-checks:
+    name: Django pre-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ci_barodydb
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        ports: ["5432:5432"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            apps/barodybroject/src/requirements.txt
+            apps/barodybroject/requirements-dev.txt
+      - run: bash .github/scripts/ci-install-system-deps.sh django
+      - run: bash .github/scripts/python-install.sh runtime
+      - run: bash .github/scripts/django-prechecks.sh
+        env:
+          SECRET_KEY: ci-test-key-not-for-production
+          DEBUG: "False"
+          DB_CHOICE: postgres
+          DB_HOST: localhost
+          DB_NAME: ci_barodydb
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          DB_SCHEMA: public
+
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    needs: pre-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_barodydb
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        ports: ["5432:5432"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            apps/barodybroject/src/requirements.txt
+            apps/barodybroject/requirements-dev.txt
+      - run: bash .github/scripts/ci-install-system-deps.sh test
+      - run: bash .github/scripts/python-install.sh test
+      - run: bash .github/scripts/run-pytest.sh
+        env:
+          SECRET_KEY: ci-test-key-not-for-production
+          DEBUG: "True"
+          DB_CHOICE: postgres
+          DB_HOST: localhost
+          DB_NAME: test_barodydb
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          DB_SCHEMA: public
+
+  frontend:
+    name: Frontend
+    needs: pre-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/barodybroject/src/frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/barodybroject/src/frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: npm run test -- --run
+      - run: npm run build
+
+  quality:
+    name: Quality and security
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            apps/barodybroject/src/requirements.txt
+            apps/barodybroject/requirements-dev.txt
+      - run: bash .github/scripts/ci-install-system-deps.sh quality
+      - run: bash .github/scripts/python-install.sh lint
+      - run: bash .github/scripts/quality.sh lint
+      - run: bash .github/scripts/python-install.sh security
+      - run: bash .github/scripts/quality.sh dependency-scan
+      - run: bash .github/scripts/python-install.sh quality
+      - run: bash .github/scripts/quality.sh metrics
+      - run: bash .github/scripts/quality.sh environment

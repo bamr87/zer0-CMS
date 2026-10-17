@@ -1,0 +1,3 @@
+[submodule "sites/zer0-pages/claude-obsidian"]
+	path = sites/zer0-pages/claude-obsidian
+	url = https://github.com/AgriciDaniel/claude-obsidian.git

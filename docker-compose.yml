@@ -3,8 +3,11 @@
 #   docker compose up --build                     # http://localhost:3001/admin
 #   docker compose --profile imagegen up --build  # + zer0-image-generator on :3000
 #
-# SITES_DIR (default: the parent of this checkout, the usual fleet layout) is
-# mounted at /sites; register sites by their container path, /sites/<name>.
+# SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
+# the zer0 sites — discovery finds them two levels down, e.g.
+# /sites/sites/drsai) is mounted at /sites; register sites by their container
+# path. Point it at a wider fleet checkout (SITES_DIR=~/github) to manage
+# repositories that live outside this one.
 # The image generator's profile mounts the same directory at the same path,
 # so a site means the same checkout in both apps.
 #
@@ -25,7 +28,7 @@ services:
     ports:
       - "127.0.0.1:${PORT:-3001}:3000"
     volumes:
-      - ${SITES_DIR:-..}:/sites
+      - ${SITES_DIR:-.}:/sites
       - storage:/app/storage
     environment:
       SITES_DIR: /sites
@@ -55,19 +58,20 @@ services:
       start_period: 40s
 
   # zer0-image-generator's web panel (full preview runs, compositions, the
-  # studio), built from a sibling checkout. Its Dockerfile's build context is
-  # that repository's root (it loads the engine from ../lib), so the context
-  # is the checkout and the Dockerfile is web/Dockerfile.
+  # studio), built from packages/zer0-image-generator in this monorepo. Its
+  # Dockerfile's build context is that package's root (it loads the engine
+  # from ../lib), so the context is the package and the Dockerfile is
+  # web/Dockerfile.
   imagegen:
     profiles: ["imagegen"]
     build:
-      context: ${ZER0_IMAGE_GENERATOR_DIR:-../zer0-image-generator}
+      context: ${ZER0_IMAGE_GENERATOR_DIR:-./packages/zer0-image-generator}
       dockerfile: web/Dockerfile
       target: development
     ports:
       - "127.0.0.1:${IMAGEGEN_PORT:-3000}:3000"
     volumes:
-      - ${SITES_DIR:-..}:/sites
+      - ${SITES_DIR:-.}:/sites
       - imagegen-storage:/app/web/storage
       - imagegen-forge:/app/.forge
     environment:

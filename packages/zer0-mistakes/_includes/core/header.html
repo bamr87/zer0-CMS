@@ -1,0 +1,250 @@
+{% comment %} Feature: ZER0-011 {% endcomment %}
+{% comment %}
+  ===================================================================
+  HEADER - Main Navigation and Site Header
+  ===================================================================
+  
+  File: header.html
+  Path: _includes/header.html
+  Purpose: Primary site navigation with responsive design and 
+           offcanvas mobile menu integration
+  
+  Template Logic:
+  - Responsive navigation bar with Bootstrap 5 components
+  - Offcanvas sidebars for mobile navigation
+  - Brand logo and home navigation integration
+  - Settings modal and navigation toggles
+  - Skip-to-content link for accessibility
+  
+  Dependencies:
+  - branding.html: Site title and logo display
+  - navbar.html: Main navigation menu items
+  - Bootstrap 5 offcanvas and navbar components
+  
+  Responsive Behavior:
+  - Desktop: Full horizontal navigation bar
+  - Mobile: Collapsed navigation with hamburger menu
+  - Offcanvas panels for sidebar and navigation
+  
+  Accessibility:
+  - Skip-to-content link for keyboard navigation
+  - ARIA labels for screen readers
+  - Focus management for offcanvas
+  
+  Nanobar:
+  - Configured via `site.nanobar.*` in _config.yml
+  - When `position: navbar`, the bar mounts inside `#top-progress-target` below
+  - Otherwise it floats fixed to the viewport (top or bottom)
+  ===================================================================
+{% endcomment %}
+
+{% comment %} ================================ {% endcomment %}
+{% comment %} SKIP TO CONTENT LINK            {% endcomment %}
+{% comment %} ================================ {% endcomment %}
+{% comment %} UI strings resolve per page language (core/i18n.html sets `ui`) {% endcomment %}
+{%- include core/i18n.html -%}
+{% comment %} Accessibility: allows keyboard users to skip navigation {% endcomment %}
+<a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 z-3 m-3 btn btn-primary">
+  {{ ui.skip_main_content | default: "Skip to main content" }}
+</a>
+
+<header id="navbar" class="container-fluid text-center fixed-top" role="banner">
+
+    {% comment %} ================================ {% endcomment %}
+    {% comment %} TOP NAVIGATION BAR              {% endcomment %}
+    {% comment %} ================================ {% endcomment %}
+    <div class="navbar navbar-expand-lg bg-body-tertiary flex-nowrap w-100 bottom-shadow">
+
+        {% comment %} ========================== {% endcomment %}
+        {% comment %} MAIN NAVIGATION CONTAINER {% endcomment %}
+        {% comment %} ========================== {% endcomment %}
+        <nav class="container-fluid order-2 order-lg-1 d-flex align-items-center gap-1 flex-nowrap navbar-main w-100" aria-label="Primary navigation">
+
+            {% comment %} Leading cluster: sidebar toggle + brand + titles (grid column 1 on lg+) {% endcomment %}
+            <div class="navbar-main-start d-flex align-items-center gap-1 gap-lg-2 min-w-0 flex-shrink-1 flex-grow-1">
+
+            {% comment %} ========================== {% endcomment %}
+            {% comment %} MOBILE MENU CONTROLS      {% endcomment %}
+            {% comment %} ========================== {% endcomment %}
+            
+            {% comment %} Left Sidebar Toggle - Mobile view only. Uses the shared
+                 resolver (navigation/sidebar-config.html) so this gate can
+                 never drift from the default layout's aside. {% endcomment %}
+            {% include navigation/sidebar-config.html %}
+
+            {%- comment -%}
+              Two conditions, and BOTH are required (issue #373).
+
+              `sidebar_has_content` asks "is there nav content to show". It is
+              not enough on its own: this include is pulled in by
+              _layouts/root.html, so it renders on EVERY layout, while
+              `#bdSidebar` is emitted by _layouts/default.html alone. On a
+              layout that inherits root directly — admin, stats, 404, section,
+              home … — the toggle rendered pointing at an offcanvas that was
+              never in the document: a dead control, and aria-controls
+              dangling into nothing for assistive tech. Measured before the
+              fix: 37 of 415 built pages.
+
+              The unified drawer is exempt because #zer0UnifiedDrawer IS
+              emitted from root.html, so it exists on every layout — that
+              target is always real and the toggle is always live.
+            {%- endcomment -%}
+            {% if sidebar_has_content and site.navigation.unified_mobile_drawer %}
+              {%- assign _sidebar_toggle_ok = true -%}
+            {% elsif sidebar_has_content and sidebar_offcanvas_rendered %}
+              {%- assign _sidebar_toggle_ok = true -%}
+            {% else %}
+              {%- assign _sidebar_toggle_ok = false -%}
+            {% endif %}
+            {% if _sidebar_toggle_ok %}
+              {%- if site.navigation.unified_mobile_drawer -%}
+                {%- assign _sidebar_target = "#zer0UnifiedDrawer" -%}
+                {%- assign _sidebar_controls = "zer0UnifiedDrawer" -%}
+              {%- else -%}
+                {%- assign _sidebar_target = "#bdSidebar" -%}
+                {%- assign _sidebar_controls = "bdSidebar" -%}
+              {%- endif -%}
+            <div class="bd-navbar-toggle">
+                <button class="navbar-toggler p-2"
+                        type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="{{ _sidebar_target }}"
+                        aria-controls="{{ _sidebar_controls }}"
+                        aria-label="Toggle sidebar navigation"
+                        aria-expanded="false">
+                    <span class="bi bi-list" aria-hidden="true"></span>
+                </button>
+            </div>
+            {% endif %}
+
+            {% comment %} ========================== {% endcomment %}
+            {% comment %} BRAND AND HOME NAVIGATION {% endcomment %}
+            {% comment %} ========================== {% endcomment %}
+            <div class="navbar-brand-group d-inline-flex align-items-center gap-2">
+                {% comment %} Home Navigation Button (Desktop only) {% endcomment %}
+                <div class="navbar-home-links d-none" role="navigation" aria-label="Quick navigation">
+                    {%- assign nav_home = site.data.navigation.home -%}
+                    {%- if nav_home and nav_home.size > 0 -%}
+                      {%- for home in nav_home -%}
+                      <a class="btn" href="{{ home.url | relative_url }}" aria-label="{{ home.title }}" title="{{ home.title }}" {%- if home.url == page.url %} aria-current="page"{% endif %}>
+                          <i class="{{ site.default_icon}} {{ home.icon }}"></i>
+                      </a>
+                      {%- endfor -%}
+                    {%- else -%}
+                      <a class="btn" href="{{ '/' | relative_url }}" aria-label="Home" title="Home — {{ site.title }}">
+                          <i class="{{ site.default_icon }} bi-house"></i>
+                      </a>
+                    {%- endif -%}
+                </div>
+                
+                {% comment %} Brand Logo Link to Root {% endcomment %}
+                {% comment %} Logo path configured in _config.yml {% endcomment %}
+                {% capture logo_path %}{{ site.logo }}{% endcapture %}
+                <a class="navbar-brand" href="{{ site.baseurl }}/" aria-label="Home - {{ site.title }}" {% if page.url == '/' %}aria-current="page"{% endif %}>
+                    <img src="{{ logo_path | relative_url }}" alt="{{ site.title }} logo" width="30" height="30">
+                </a>
+            </div>
+            
+            {% comment %} ========================== {% endcomment %}
+            {% comment %} SITE BRANDING SECTION     {% endcomment %}
+            {% comment %} ========================== {% endcomment %}
+            {% comment %} Site title and subtitle display {% endcomment %}
+            {% include core/branding.html %}
+
+            </div>
+
+            {%- comment -%}
+              Tablet-only shortcut chips (md–lg) fill the center band while
+              the full menubar remains in the offcanvas. Below md the title
+              in branding.html uses the flex-grow space instead.
+            {%- endcomment -%}
+            {% include navigation/navbar-mobile-quicklinks.html %}
+    
+            {% comment %} ========================== {% endcomment %}
+            {% comment %} MAIN NAVIGATION MENU      {% endcomment %}
+            {% comment %} ========================== {% endcomment %}
+            {% comment %} Primary navigation items from _data/navigation.yml {% endcomment %}
+            {% include navigation/navbar.html %}
+
+            {% comment %} ========================== {% endcomment %}
+            {% comment %} UTILITY CONTROLS          {% endcomment %}
+            {% comment %} ========================== {% endcomment %}
+            <div class="navbar-utility-controls d-flex align-items-center flex-shrink-0" role="group" aria-label="Utility controls">
+                {% comment %} Language selection lives in the Settings offcanvas
+                     (components/info-section.html, Appearance tab) so the bar
+                     keeps its width for the main navigation items. {% endcomment %}
+
+                {% comment %} Search Modal Toggle {% endcomment %}
+                <button
+                    class="btn nav-search-button"
+                    type="button"
+                    data-search-toggle
+                    aria-label="{{ ui.shortcuts_search | default: 'Open search' }}"
+                    aria-haspopup="dialog"
+                    aria-keyshortcuts="/ Meta+K Control+K"
+                    title="{{ ui.search_button_title | default: 'Search — press / or Ctrl+K' }}"
+                >
+                    <i class="{{site.default_icon}} bi-search" aria-hidden="true"></i>
+                    <span class="nav-link-text d-none d-xl-inline ms-1">{{ ui.search_button_label | default: "Search" }}</span>
+                    <kbd class="nav-search-kbd d-none d-xl-inline-flex" aria-hidden="true">/</kbd>
+                </button>
+
+                {% comment %} Settings Offcanvas Toggle {% endcomment %}
+                <button
+                    class="btn nav-settings-button d-none d-lg-inline-flex"
+                    type="button"
+                    data-bs-toggle="offcanvas" 
+                    data-bs-target="#info-section" 
+                    aria-label="Open settings"
+                    aria-haspopup="dialog"
+                    title="Site settings and information"
+                >
+                    <i class="{{site.default_icon}} bi-gear" aria-hidden="true"></i>
+                </button>
+
+                {% comment %} Navigation Menu Toggle - Mobile view {% endcomment %}
+                {%- if site.navigation.unified_mobile_drawer -%}
+                  {%- assign _menu_target = "#zer0UnifiedDrawer" -%}
+                  {%- assign _menu_controls = "zer0UnifiedDrawer" -%}
+                {%- else -%}
+                  {%- assign _menu_target = "#bdNavbar" -%}
+                  {%- assign _menu_controls = "bdNavbar" -%}
+                {%- endif -%}
+                {% comment %} Below lg this is a LABELLED control, not a bare glyph (#405).
+                     Two toggles coexist here — the sidebar hamburger and this one — and
+                     three-dots vs. list gave no clue which opened what. The gear is
+                     `d-lg-none`-excluded above (desktop only; on mobile its contents are
+                     reached through the drawer), so labelling this one is what makes the
+                     pair unambiguous.
+                     aria-label matches the visible "Menu" text verbatim (rather than the
+                     older, more descriptive "Toggle main navigation") so the accessible
+                     name CONTAINS the visible label in every locale — WCAG 2.5.3 Label in
+                     Name — instead of only coincidentally in English. {% endcomment %}
+                {%- assign _menu_toggle_label = ui.nav_menu_toggle_label | default: "Menu" -%}
+                <div class="bd-navbar-toggle d-lg-none">
+                    <button class="navbar-toggler navbar-toggler-labeled p-2"
+                            type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="{{ _menu_target }}"
+                            aria-controls="{{ _menu_controls }}"
+                            aria-label="{{ _menu_toggle_label }}"
+                            aria-expanded="false">
+                        <span class="bi bi-three-dots" aria-hidden="true"></span>
+                        <span class="navbar-toggler-text">{{ _menu_toggle_label }}</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    {% comment %} ========================== {% endcomment %}
+    {% comment %} PROGRESS BAR MOUNT POINT  {% endcomment %}
+    {% comment %} ========================== {% endcomment %}
+    {% comment %} Nanobar mounts here when site.nanobar.position == "navbar" so the bar
+         renders as a thin strip directly under the header. For "top" / "bottom"
+         the bar floats fixed to the viewport and no mount is needed. {% endcomment %}
+    {%- assign _nb_pos = site.nanobar.position | default: "top" -%}
+    {%- if site.nanobar.enabled != false and _nb_pos == "navbar" -%}
+    <div id="top-progress-target" class="nanobar-mount" aria-hidden="true"></div>
+    {%- endif -%}
+</header>

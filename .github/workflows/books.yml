@@ -1,0 +1,38 @@
+# packages/books — the bookshelf app's tests and lint, ported from
+# bamr87/books (whose CI was the hub's standard-ci: pip install, then pytest).
+# Filtered to the package's own tree, and run inside it.
+name: books
+
+on:
+  push:
+    branches: [main]
+    paths: ["packages/books/**", ".github/workflows/books.yml"]
+  pull_request:
+    paths: ["packages/books/**", ".github/workflows/books.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: books-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: packages/books
+
+jobs:
+  test:
+    name: pytest + ruff (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: python -m pytest -q
+      - run: ruff check src tests

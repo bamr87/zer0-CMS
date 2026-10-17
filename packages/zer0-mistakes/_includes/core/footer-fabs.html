@@ -1,0 +1,45 @@
+{%- comment -%}
+  ===================================================================
+  FOOTER FABS — page-dependent floating action buttons + local graph
+  ===================================================================
+
+  File: footer-fabs.html
+  Path: _includes/core/footer-fabs.html
+  Purpose: The page-front-matter-dependent tail extracted out of
+           core/footer.html so the footer chrome itself stays page-invariant
+           and cacheable via include_cached (see _layouts/root.html).
+
+  These pieces read per-page front matter (page.sidebar, page.post_type,
+  page.local_graph, page.layout) and therefore MUST render fresh per page:
+    - navigation/toc-fab.html          (table-of-contents FAB)
+    - navigation/local-graph-fab.html  (local-graph FAB)
+    - navigation/local-graph.html      (local-graph offcanvas panel)
+
+  All are position:fixed with explicit z-index tokens
+  (_sass/components/_back-to-top.scss), so emitting them as siblings right
+  after </footer> is visually identical to the previous nesting.
+  ===================================================================
+{%- endcomment -%}
+{%- comment -%}
+  The TOC FAB controls `#tocContents`, which navigation/sidebar-right.html
+  emits — and only _layouts/default.html includes that. This used to be a
+  DENYLIST of layouts to skip, which fails open: any layout not on the list got
+  the FAB whether or not it rendered the panel, and the list had already fallen
+  behind (404 and the book-* layouts were missing, so those pages shipped a FAB
+  pointing at nothing — issue #373).
+
+  Replaced with the positive gate from navigation/sidebar-config.html, which
+  fails safe: a new layout gets no FAB until it is declared as one that renders
+  the offcanvas. sidebar-config is included here rather than relied upon from
+  header.html because Liquid assigns propagate to the INCLUDING template, and
+  these are two sibling includes of root.html.
+{%- endcomment -%}
+{% include navigation/sidebar-config.html %}
+{%- if sidebar_offcanvas_rendered -%}
+  {% include navigation/toc-fab.html %}
+  {%- comment -%} Local-graph FAB/panel are part of the Obsidian feature. {%- endcomment -%}
+  {%- if site.obsidian.enabled != false -%}
+    {% include navigation/local-graph-fab.html %}
+    {% include navigation/local-graph.html %}
+  {%- endif -%}
+{%- endif -%}

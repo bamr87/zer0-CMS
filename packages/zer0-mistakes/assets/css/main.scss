@@ -1,0 +1,76 @@
+---
+# this ensures Jekyll reads the file to be transformed into CSS later
+# only Main files contain this front matter, not partials.
+---
+
+@charset "utf-8";
+
+// Theme layer on top of bundled Bootstrap CSS (assets/vendor/bootstrap/css/bootstrap.min.css in head.html).
+// Advanced: npm run css:bootstrap can emit a custom Bootstrap build; swap the head <link> — never load two full Bootstraps.
+
+// 1. Semantic design tokens (CSS custom properties: --zer0-*) — must load before everything
+//    that consumes them. Runtime overrides come from _includes/core/tokens-inline.html.
+@import "tokens/index";
+
+// 2. Legacy Sass variables + --bd-* tokens + wizard palette (kept for backward compat)
+@import "core/variables";
+@import "core/theme";
+
+// 3. Bootstrap-docs-style layout (trimmed; was ~3.2k-line vendor snapshot)
+@import "core/docs-layout";
+//    Code-example chrome split out of docs-layout; imported immediately after
+//    it so the concatenated cascade order is unchanged.
+@import "core/docs-code-examples";
+
+// 4. Reusable utilities (motion, focus rings, layout helpers) — used by components below
+@import "utilities/motion";
+@import "utilities/focus";
+@import "utilities/layout";
+
+// 5. Component partials (formerly inside custom.scss + new primitives)
+@import "components/cookie-banner";
+@import "components/back-to-top";
+@import "components/notes";
+@import "components/skeleton";
+@import "components/callout";
+@import "components/post-navigation";
+@import "components/author";
+@import "components/footer";
+@import "components/theme-preview";
+@import "components/content-tables";
+@import "components/search-modal";
+@import "components/page-feedback";
+@import "components/page-views";
+@import "components/book";
+@import "components/recipe";
+@import "components/setup-wizard";
+@import "components/mermaid";
+
+// 6. Layout partials
+@import "layouts/landing";
+@import "layouts/section";
+@import "layouts/navbar-extras";
+
+// 7. Bootstrap Styles
+// @import "bootstrap.scss";
+
+// 7b. Core nav/content partials formerly imported from the top of custom.scss.
+//     Lifted here so assets/css/main.scss is the single assembly manifest; kept
+//     in their original relative order (immediately before the custom layer) so
+//     the compiled cascade is unchanged.
+@import "notebooks";
+@import "core/nav-tree";
+@import "core/sidebar-categories";
+@import "core/navbar";
+@import "core/offcanvas-panels";
+@import "core/obsidian";
+
+// 8. Custom layer — thin barrel that imports the focused partials the old
+//    custom.scss monolith was decomposed into (global-chrome, toc,
+//    sidebar-extras, ui-enhancements, notes-index). See _sass/custom.scss.
+@import "custom.scss";
+
+// 9. Custom Features
+@import "core/code-copy";
+@import "core/syntax";
+

@@ -1,0 +1,46 @@
+# Landing page content (zer0-pages)
+# Drives _layouts/landing.html (theme gem). Only used if a page opts into
+# `layout: landing`; kept slim and pointing at real permalinks so the layout
+# renders sensibly either way.
+
+# Hero — used only when page.title / page.description are not set.
+hero:
+  cta_primary:
+    label: "Browse the Docs"
+    url: "/docs/"
+    icon: "bi-journal-bookmark"
+    variant: "light"
+  cta_secondary:
+    label: "Explore the Graph"
+    url: "/docs/obsidian/graph/"
+    icon: "bi-diagram-3"
+    variant: "outline"
+  cta_tertiary:
+    label: "GitHub"
+    url: "https://github.com/bamr87/zer0-pages"
+    icon: "bi-github"
+    variant: "outline"
+    external: true
+
+# Features section
+features:
+  heading: "Zero friction. Infinite possibilities."
+  lead: "An AI-powered knowledge vault — authored in Obsidian, rendered by Jekyll"
+  items:
+    - title: "Obsidian-Native Authoring"
+      description: "Wikilinks, callouts, and Dataview queries are converted to HTML at build time by the vault's bridge plugins — write notes, publish pages."
+      icon: "bi-diagram-3"
+      icon_bg: "bg-primary"
+    - title: "Interactive Graph"
+      description: "An Obsidian-style graph view maps every doc, post, and note and the wikilinks between them — explore the vault visually."
+      icon: "bi-share"
+      icon_bg: "bg-success"
+    - title: "AI-Powered Wiki"
+      description: "claude-obsidian ingests sources, cross-links pages, and keeps the knowledge base growing on its own."
+      icon: "bi-robot"
+      icon_bg: "bg-info"
+
+# Get-started section
+get_started:
+  heading: "Ready to explore?"
+  lead: "Pick a path into the vault"

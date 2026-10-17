@@ -1,0 +1,79 @@
+<% content_for :title, "Config — #{@site.name}" %>
+<% content_for :crumbs do %><%= link_to "Sites", sites_path %> / <%= link_to @site.name, @site %> / Config<% end %>
+
+<div class="page-head">
+  <div><h1>Preview config</h1><div class="sub">Edits the <span class="mono">preview_images:</span> block in <span class="mono"><%= @site.config_file %></span>. Comments and other keys are preserved.</div></div>
+</div>
+<%= render "shared/site_nav", site: @site %>
+
+<% if @error %>
+  <div class="flash alert"><%= @error %></div>
+<% else %>
+  <%= form_with url: site_config_path(@site), method: :patch, scope: :config do |f| %>
+    <div class="grid cols-2" style="align-items:start;">
+      <div class="card">
+        <h2>Rendering</h2>
+        <div class="field"><label>Provider</label>
+          <%= f.select :provider, EngineBridge.provider_names.map { |p| [p, p] }, selected: @values["provider"] %>
+        </div>
+        <div class="field"><label>Model (blank = provider default)</label><%= f.text_field :model, value: @values["model"] %></div>
+        <div class="field-row">
+          <div class="field"><label>Size</label><%= f.text_field :size, value: @values["size"] %></div>
+          <div class="field"><label>Quality</label><%= f.text_field :quality, value: @values["quality"] %></div>
+        </div>
+        <div class="field"><label>Style</label><%= f.text_area :style, value: @values["style"], rows: 2 %></div>
+        <div class="field"><label>Style modifiers</label><%= f.text_area :style_modifiers, value: @values["style_modifiers"], rows: 2 %></div>
+      </div>
+
+      <div class="card">
+        <h2>Orchestration</h2>
+        <div class="field"><label>Prompt engine</label>
+          <%= f.select :prompt_engine, [%w[claude claude], ["xai (Grok OAuth)", "xai"], %w[template template]], selected: @values["prompt_engine"] %>
+          <div class="hint">Claude or Grok reads each article into an art brief; template uses a fixed prompt. Grok uses the same OAuth token as the xAI renderer.</div>
+        </div>
+        <div class="field"><label>Review engine</label>
+          <%= f.select :review_engine, [%w[claude claude], ["xai (Grok OAuth)", "xai"], %w[none none]], selected: @values["review_engine"] %>
+        </div>
+        <div class="field"><label>Rasterizer</label>
+          <%= f.select :rasterizer, %w[auto rsvg inkscape magick playwright none].map { |p| [p, p] }, selected: @values["rasterizer"] %>
+          <div class="hint">SVG&rarr;PNG tool for the local/claude renderers. <span class="mono">none</span> is SVG-only: the vector banner ships as-is and no PNG is written.</div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Claude model (blank = default)</label><%= f.text_field :claude_model, value: @values["claude_model"] %></div>
+          <div class="field"><label>Claude effort</label>
+            <%= f.select :claude_effort, [["low","low"],["medium","medium"],["high","high"],["(none)",""]], selected: @values["claude_effort"] %>
+          </div>
+        </div>
+        <label class="field" style="display:flex; gap:.5rem; align-items:center;">
+          <%= f.check_box :enabled, { checked: ActiveModel::Type::Boolean.new.cast(@values["enabled"]) }, "true", "false" %> Enabled
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>Layout & paths</h2>
+        <div class="field"><label>Collections (comma-separated, or <span class="mono">auto</span>)</label><%= f.text_field :collections, value: @values["collections"] %></div>
+        <div class="field"><label>Collections dir (Jekyll's own key)</label><%= f.text_field :collections_dir, value: @values["collections_dir"] %></div>
+        <div class="field"><label>Front-matter key</label><%= f.text_field :front_matter_key, value: @values["front_matter_key"] %>
+          <div class="hint"><span class="mono">preview</span> for zer0 themes; <span class="mono">image</span> for jekyll-seo-tag.</div>
+        </div>
+        <div class="field"><label>Output dir</label><%= f.text_field :output_dir, value: @values["output_dir"] %></div>
+        <div class="field"><label>Authors file (blank disables)</label><%= f.text_field :authors_file, value: @values["authors_file"] %></div>
+      </div>
+
+      <div class="card">
+        <h2>Path normalization</h2>
+        <div class="field"><label>Assets prefix</label><%= f.text_field :assets_prefix, value: @values["assets_prefix"] %>
+          <div class="hint">Written paths omit this prefix; it is re-added for existence checks.</div>
+        </div>
+        <label class="field" style="display:flex; gap:.5rem; align-items:center;">
+          <%= f.check_box :auto_prefix, { checked: ActiveModel::Type::Boolean.new.cast(@values["auto_prefix"]) }, "true", "false" %> Auto-prefix
+        </label>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:1.2rem;">
+      <%= f.submit "Save to _config.yml", class: "btn primary" %>
+      <%= link_to "Back to site", @site, class: "btn" %>
+    </div>
+  <% end %>
+<% end %>

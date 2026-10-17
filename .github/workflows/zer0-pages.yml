@@ -1,0 +1,55 @@
+# sites/zer0-pages — the bridge/graph unit tests, the SCHEMA.md pyramid lint
+# and the themed Jekyll build that used to run in bamr87/zer0-pages (the last
+# through the hub's standard-ci), ported into the monorepo and filtered to the
+# site's own tree. The Pages deploy (pages.yml) is not ported: GitHub
+# Pages still publishes from the original repository (see docs/MONOREPO.md).
+name: zer0-pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["sites/zer0-pages/**", ".github/workflows/zer0-pages.yml"]
+  pull_request:
+    paths: ["sites/zer0-pages/**", ".github/workflows/zer0-pages.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zer0-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sites/zer0-pages
+
+jobs:
+  unit:
+    name: Bridge + graph index (minitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - run: ruby -Ipages/_plugins tests/test_obsidian_bridge.rb
+      - run: ruby -Ipages/_plugins tests/test_graph_index.rb
+
+  schema:
+    name: SCHEMA.md pyramid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 tools/schema_lint.py check .
+
+  build:
+    name: jekyll build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: sites/zer0-pages
+      - run: bundle exec jekyll build

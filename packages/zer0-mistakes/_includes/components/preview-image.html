@@ -1,0 +1,75 @@
+{% comment %} Feature: ZER0-004 {% endcomment %}
+{% comment %}
+  PREVIEW IMAGE - Simple, Consistent Image Rendering
+  
+  Usage:
+    {%- include components/preview-image.html 
+       src=post.preview 
+       alt=post.title 
+       class="card-img-top" 
+       style="height: 180px; object-fit: cover;"
+    -%}
+
+  Optional: loading (default "lazy"), fetchpriority, decoding, width, height.
+  All but `loading` are emitted only when passed, so existing call sites
+  render unchanged. width/height are the image's intrinsic size (or its
+  aspect ratio): they let the browser reserve the box before the file
+  arrives (Lighthouse `unsized-images`) and never distort the image, since
+  CSS height:auto / object-fit still win once it has loaded.
+  An above-the-fold hero (the LCP element) should pass loading="eager"
+  fetchpriority="high" -- see the article.html hero.
+
+  WHICH INCLUDE: this one renders an <img> in the content flow. For cover art
+  painted as a CSS background on an otherwise empty box, use the sibling
+  components/background-image.html -- a background image is invisible to
+  assistive tech, so that case needs role="img" + aria-label (or aria-hidden
+  when purely decorative) rather than an alt attribute.
+
+  Convention: Preview paths can omit the /assets/ prefix.
+  The component will auto-prepend the assets_prefix from _config.yml.
+  Examples:
+    - /images/previews/my-image.png → /assets/images/previews/my-image.png
+    - images/previews/my-image.png → /assets/images/previews/my-image.png
+      (a missing leading slash used to produce /assetsimages/previews/…)
+    - /assets/images/previews/my-image.png → unchanged
+    - https://example.com/image.png → unchanged (external URL)
+{% endcomment %}
+{% assign img = include.src | default: site.teaser %}
+{% assign alt = include.alt | default: "Preview image" %}
+{% assign class = include.class | default: "card-img-top" %}
+{% assign style = include.style %}
+{% assign loading = include.loading | default: "lazy" %}
+
+{% comment %} Get assets prefix configuration {% endcomment %}
+{% assign assets_prefix = site.preview_images.assets_prefix | default: '/assets' %}
+{% assign auto_prefix = site.preview_images.auto_prefix | default: true %}
+
+{% comment %} Normalise a site-relative path to start with "/" so joining it to
+   assets_prefix can never glue two segments together ("images/x.png" became
+   "/assetsimages/x.png"). URLs and data: URIs are left alone. {% endcomment %}
+{% unless img == nil or img == "" or img contains '://' or img contains 'data:' %}
+  {% assign img_first = img | slice: 0 %}
+  {% if img_first != '/' %}{% assign img = '/' | append: img %}{% endif %}
+{% endunless %}
+
+{% comment %} Determine final image source {% endcomment %}
+{% if img contains '://' %}
+  {% comment %} External URL - use as-is {% endcomment %}
+  {% assign final_src = img %}
+{% elsif auto_prefix and img != blank %}
+  {% comment %} Check if path already has the assets prefix {% endcomment %}
+  {% if img contains assets_prefix %}
+    {% assign final_src = img | relative_url %}
+  {% else %}
+    {% comment %} Prepend assets prefix to the path {% endcomment %}
+    {% assign final_src = assets_prefix | append: img | relative_url %}
+  {% endif %}
+{% else %}
+  {% assign final_src = img | relative_url %}
+{% endif %}
+
+<img src="{{ final_src }}" 
+     class="{{ class }}" 
+     alt="{{ alt | escape }}"
+     {% if style %}style="{{ style }}"{% endif %}
+     loading="{{ loading }}"{% if include.width %} width="{{ include.width }}"{% endif %}{% if include.height %} height="{{ include.height }}"{% endif %}{% if include.fetchpriority %} fetchpriority="{{ include.fetchpriority }}"{% endif %}{% if include.decoding %} decoding="{{ include.decoding }}"{% endif %}>
