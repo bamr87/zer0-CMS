@@ -31,7 +31,7 @@ class Config(BaseModel):
     # Model settings
     openai_model: str = Field(default="gpt-4o", description="OpenAI model to use")
     anthropic_model: str = Field(
-        default="claude-sonnet-4-20250514", description="Anthropic model to use"
+        default="claude-sonnet-5-5", description="Anthropic model to use"
     )
     xai_model: str = Field(default="grok-3-latest", description="xAI Grok model to use")
 
@@ -74,7 +74,7 @@ class Config(BaseModel):
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
             xai_api_key=os.getenv("XAI_API_KEY"),
             openai_model=os.getenv("DRSAI_OPENAI_MODEL", "gpt-4o"),
-            anthropic_model=os.getenv("DRSAI_ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
+            anthropic_model=os.getenv("DRSAI_ANTHROPIC_MODEL", "claude-sonnet-5-5"),
             xai_model=os.getenv("DRSAI_XAI_MODEL", "grok-3-latest"),
             max_tokens=int(os.getenv("DRSAI_MAX_TOKENS", "2000")),
             temperature=float(os.getenv("DRSAI_TEMPERATURE", "0.8")),

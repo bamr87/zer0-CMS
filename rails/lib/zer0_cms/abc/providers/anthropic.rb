@@ -20,7 +20,7 @@ module Zer0Cms
         API_URL       = "https://api.anthropic.com/v1/messages"
         API_VERSION   = "2023-06-01"
         OAUTH_BETA    = "oauth-2025-04-20"
-        DEFAULT_MODEL = "claude-opus-4-8"
+        DEFAULT_MODEL = "claude-opus-5-5"
         CLAUDE_CODE_SYSTEM = "You are Claude Code, Anthropic's official CLI for Claude."
 
         class ProviderError < StandardError; end

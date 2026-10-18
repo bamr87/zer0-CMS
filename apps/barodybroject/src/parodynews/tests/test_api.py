@@ -137,7 +137,7 @@ def test_testing_a_provider_returns_its_reply(api_client):
 def test_staff_can_store_a_credential(staff_api_client):
     response = staff_api_client.patch(
         "/api/providers/claude_code/config/",
-        {"api_key": "sk-ant-oat01-secret", "default_model": "claude-sonnet-5"},
+        {"api_key": "sk-ant-oat01-secret", "default_model": "claude-sonnet-5-5"},
         format="json",
     )
     assert response.status_code == 200

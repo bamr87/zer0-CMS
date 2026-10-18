@@ -82,11 +82,11 @@ def test_ai_model_stamps_both_timestamps(ai_model):
 
 
 def test_the_same_model_id_may_exist_for_two_providers():
-    """`claude-opus-5` is reachable through both claude_code and anthropic, so
+    """`claude-opus-5-5` is reachable through both claude_code and anthropic, so
     uniqueness is on the PAIR, not on model_id alone."""
-    AIModel.objects.create(provider="claude_code", model_id="claude-opus-5")
-    AIModel.objects.create(provider="anthropic", model_id="claude-opus-5")
-    assert AIModel.objects.filter(model_id="claude-opus-5").count() == 2
+    AIModel.objects.create(provider="claude_code", model_id="claude-opus-5-5")
+    AIModel.objects.create(provider="anthropic", model_id="claude-opus-5-5")
+    assert AIModel.objects.filter(model_id="claude-opus-5-5").count() == 2
 
 
 def test_a_model_id_is_unique_within_one_provider():
@@ -97,11 +97,11 @@ def test_a_model_id_is_unique_within_one_provider():
 
 def test_ai_models_are_ordered_by_provider_then_model_id():
     AIModel.objects.create(provider="openai", model_id="gpt-4o")
-    AIModel.objects.create(provider="anthropic", model_id="claude-sonnet-5")
-    AIModel.objects.create(provider="anthropic", model_id="claude-opus-5")
+    AIModel.objects.create(provider="anthropic", model_id="claude-sonnet-5-5")
+    AIModel.objects.create(provider="anthropic", model_id="claude-opus-5-5")
     assert list(AIModel.objects.values_list("provider", "model_id")) == [
-        ("anthropic", "claude-opus-5"),
-        ("anthropic", "claude-sonnet-5"),
+        ("anthropic", "claude-opus-5-5"),
+        ("anthropic", "claude-sonnet-5-5"),
         ("openai", "gpt-4o"),
     ]
 

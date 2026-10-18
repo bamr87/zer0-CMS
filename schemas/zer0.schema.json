@@ -309,7 +309,7 @@
       "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean", "default": false },
-        "model": { "type": "string", "default": "claude-opus-5" },
+        "model": { "type": "string", "default": "claude-opus-5-5" },
         "maxTurns": { "type": "number", "default": 40 },
         "permissionMode": {
           "type": "string",

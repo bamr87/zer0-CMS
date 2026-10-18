@@ -77,11 +77,11 @@ These are in the system prompt on every request, and they encode the defects the
 
 ## Model and cost
 
-Defaults to `claude-opus-5` with adaptive thinking at `high` effort. Override per run:
+Defaults to `claude-opus-5-5` with adaptive thinking at `high` effort. Override per run:
 
 ```bash
-books studio --model claude-sonnet-5
-BOOKSHELF_MODEL=claude-sonnet-5 books ask impairment critique --chapter 3
+books studio --model claude-sonnet-5-5
+BOOKSHELF_MODEL=claude-sonnet-5-5 books ask impairment critique --chapter 3
 ```
 
 Requests opt into server-side fallbacks, so a request the model's safety classifiers decline is retried on Anthropic's recommended fallback inside the same call instead of coming back empty. If your account does not have that beta — or your installed SDK predates the parameter — the request is transparently retried without it. `--no-fallbacks` turns the opt-in off.

@@ -253,12 +253,12 @@ def test_an_unusable_settings_default_falls_back_to_claude_code(db):
 
 def test_get_provider_reads_credentials_from_the_database(db):
     AIProviderConfig.objects.create(
-        provider="anthropic", api_key="sk-ant-api-db", default_model="claude-sonnet-5"
+        provider="anthropic", api_key="sk-ant-api-db", default_model="claude-sonnet-5-5"
     )
     provider = get_provider("anthropic")
     assert provider.credential() == "sk-ant-api-db"
     assert provider.credential_source() == "database"
-    assert provider.model == "claude-sonnet-5"
+    assert provider.model == "claude-sonnet-5-5"
 
 
 def test_a_database_credential_beats_the_environment(db, monkeypatch):
@@ -406,17 +406,17 @@ def test_claude_code_passes_the_schema_as_structured_output():
 
 
 def test_claude_code_uses_the_requested_model_over_the_default():
-    options = ClaudeCodeProvider().build_options(request_with(model="claude-haiku-4-5"))
-    assert options.model == "claude-haiku-4-5"
+    options = ClaudeCodeProvider().build_options(request_with(model="claude-haiku-5-5"))
+    assert options.model == "claude-haiku-5-5"
 
 
 def test_claude_code_default_model_is_opus_5():
-    assert ClaudeCodeProvider().model == "claude-opus-5"
+    assert ClaudeCodeProvider().model == "claude-opus-5-5"
 
 
 def test_claude_code_model_can_be_set_by_environment(monkeypatch):
-    monkeypatch.setenv("CLAUDE_CODE_MODEL", "claude-sonnet-5")
-    assert ClaudeCodeProvider().model == "claude-sonnet-5"
+    monkeypatch.setenv("CLAUDE_CODE_MODEL", "claude-sonnet-5-5")
+    assert ClaudeCodeProvider().model == "claude-sonnet-5-5"
 
 
 def test_claude_code_extra_options_reach_the_sdk():
@@ -451,7 +451,7 @@ def test_render_transcript_labels_a_multi_turn_conversation():
 # --------------------------------------------------------------------------- #
 def test_anthropic_builds_a_messages_request():
     kwargs = AnthropicProvider().build_kwargs(request_with(system="sys"))
-    assert kwargs["model"] == "claude-opus-5"
+    assert kwargs["model"] == "claude-opus-5-5"
     assert kwargs["system"] == "sys"
     assert kwargs["messages"] == [{"role": "user", "content": "Write something."}]
     assert kwargs["max_tokens"] > 0
@@ -469,7 +469,7 @@ def test_anthropic_omits_temperature_on_models_that_reject_it():
     """Opus 5 and the Fable family run adaptive thinking and 400 on sampling
     parameters, so passing one through would fail the whole request."""
     kwargs = AnthropicProvider().build_kwargs(
-        request_with(model="claude-opus-5", temperature=0.7)
+        request_with(model="claude-opus-5-5", temperature=0.7)
     )
     assert "temperature" not in kwargs
 
@@ -482,7 +482,7 @@ def test_anthropic_keeps_temperature_on_models_that_accept_it():
 
 
 def test_anthropic_enables_refusal_fallbacks_on_opus_5():
-    assert AnthropicProvider()._use_fallbacks("claude-opus-5") is True
+    assert AnthropicProvider()._use_fallbacks("claude-opus-5-5") is True
 
 
 def test_anthropic_leaves_fallbacks_off_for_other_models():
@@ -493,7 +493,7 @@ def test_anthropic_fallbacks_can_be_switched_off():
     provider = AnthropicProvider(
         ProviderConfig(slug="anthropic", extra={"server_side_fallbacks": False})
     )
-    assert provider._use_fallbacks("claude-opus-5") is False
+    assert provider._use_fallbacks("claude-opus-5-5") is False
 
 
 def test_anthropic_without_a_credential_is_a_configuration_error(db, monkeypatch):
@@ -508,7 +508,7 @@ def test_anthropic_lists_static_models_without_a_credential(db, monkeypatch):
     monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
     models = AnthropicProvider().list_models()
     assert all(isinstance(m, ModelInfo) for m in models)
-    assert "claude-opus-5" in {m.id for m in models}
+    assert "claude-opus-5-5" in {m.id for m in models}
 
 
 # --------------------------------------------------------------------------- #
@@ -556,3 +556,11 @@ def test_describe_never_leaks_the_credential(monkeypatch):
     """The settings screen shows this to any signed-in user."""
     monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-ant-oat01-secret")
     assert "secret" not in str(ClaudeCodeProvider().describe())
+
+
+def test_anthropic_drops_temperature_on_haiku_5_5():
+    """Every Claude 5.5 model, Haiku included, rejects non-default sampling."""
+    kwargs = AnthropicProvider().build_kwargs(
+        request_with(model="claude-haiku-5-5", temperature=0.7)
+    )
+    assert "temperature" not in kwargs
