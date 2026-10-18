@@ -30,9 +30,7 @@ class Config(BaseModel):
 
     # Model settings
     openai_model: str = Field(default="gpt-4o", description="OpenAI model to use")
-    anthropic_model: str = Field(
-        default="claude-sonnet-5-5", description="Anthropic model to use"
-    )
+    anthropic_model: str = Field(default="claude-sonnet-5-5", description="Anthropic model to use")
     xai_model: str = Field(default="grok-3-latest", description="xAI Grok model to use")
 
     # Generation settings

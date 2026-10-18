@@ -48,7 +48,11 @@ API_KEY_PREFIX = "sk-ant-api"
 # Models the Claude Code CLI accepts. The CLI also understands the aliases
 # ``opus``, ``sonnet`` and ``haiku``.
 STATIC_MODELS: tuple[tuple[str, str, str], ...] = (
-    ("claude-opus-5-5", "Claude Opus 5.5", "Default. Best quality for long-form writing."),
+    (
+        "claude-opus-5-5",
+        "Claude Opus 5.5",
+        "Default. Best quality for long-form writing.",
+    ),
     (
         "claude-sonnet-5-5",
         "Claude Sonnet 5.5",
