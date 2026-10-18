@@ -37,7 +37,7 @@ python3 tools/unwrap-prose.py --check
 
 - **Prose**: read the book's `outline.md`, the act guide in `guides/`, and the adjacent chapters before writing. Names are decided in `notes/characters.md`; open questions live in `notes/continuity.md`. Never put `(Chapter 8)` or a `[Placeholder]` in narrative text — both are validation findings.
 - **Code**: no required runtime dependencies (the front matter parser has a stdlib fallback so `books validate` works in a bare checkout). The Anthropic SDK is the one exception and is optional -- `ai.py` imports it inside the client factory, and everything else must keep working without it. Only `cli.py` prints. A new check goes in `validate.py` with a code, a test, and a row in `docs/SCHEMA.md`.
-- **Assistant**: `ai.py` builds every request from the book's own files. A new task is an entry in `TASKS`; changing what the model is given means changing `build_brief`/`build_local`, and `books context <slug>` shows the result without an API call. Model is `claude-opus-5` with adaptive thinking -- don't add `temperature`, `top_p` or `budget_tokens`, which that model rejects.
+- **Assistant**: `ai.py` builds every request from the book's own files. A new task is an entry in `TASKS`; changing what the model is given means changing `build_brief`/`build_local`, and `books context <slug>` shows the result without an API call. Model is `claude-opus-5-5` with adaptive thinking -- don't add `temperature`, `top_p` or `budget_tokens`, which that model rejects.
 - Full agent brief: [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Design rationale: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Editor and assistant: [`docs/STUDIO.md`](docs/STUDIO.md).
 
 ## Fleet context

@@ -51,7 +51,7 @@ class AIModel(models.Model):
     """A model offered by an AI provider.
 
     Replaces the OpenAI-only ``OpenAIModel``. A row is identified by the pair
-    ``(provider, model_id)``: ``claude-opus-5`` can exist for both the
+    ``(provider, model_id)``: ``claude-opus-5-5`` can exist for both the
     ``claude_code`` and the ``anthropic`` provider, and ``gpt-4o-mini`` for
     ``openai``. Rows are created from the settings UI ("Sync models"), by the
     ``sync_models`` management command, or by hand in the admin.

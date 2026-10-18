@@ -167,11 +167,11 @@ def test_message_records_which_provider_answered(thread, content_item):
         contentitem=content_item,
         role=Message.ROLE_ASSISTANT,
         provider="anthropic",
-        model_id="claude-opus-5",
+        model_id="claude-opus-5-5",
         usage={"output_tokens": 42},
     )
     stored = Message.objects.get(pk=reply.pk)
-    assert (stored.provider, stored.model_id) == ("anthropic", "claude-opus-5")
+    assert (stored.provider, stored.model_id) == ("anthropic", "claude-opus-5-5")
     assert stored.usage["output_tokens"] == 42
 
 

@@ -36,18 +36,15 @@ FALLBACK_BETA = "server-side-fallback-2026-07-01"
 DEFAULT_MAX_TOKENS = 16000
 
 STATIC_MODELS: tuple[tuple[str, str, str], ...] = (
-    ("claude-opus-5", "Claude Opus 5", "Default. 1M context."),
-    ("claude-sonnet-5", "Claude Sonnet 5", "Fast and capable."),
-    ("claude-haiku-4-5", "Claude Haiku 4.5", "Cheapest; 200K context."),
-    ("claude-opus-4-8", "Claude Opus 4.8", "Previous Opus generation."),
-    ("claude-opus-4-6", "Claude Opus 4.6", "Supports sampling parameters."),
-    ("claude-sonnet-4-6", "Claude Sonnet 4.6", "Supports sampling parameters."),
+    ("claude-opus-5-5", "Claude Opus 5.5", "Default. Latest Opus."),
+    ("claude-sonnet-5-5", "Claude Sonnet 5.5", "Fast and capable."),
+    ("claude-haiku-5-5", "Claude Haiku 5.5", "Cheapest and fastest."),
     ("claude-fable-5-1", "Claude Fable 5.1", "Most capable; premium pricing."),
 )
 
 # Model families that reject temperature / top_p (they run adaptive thinking).
 _NO_SAMPLING_RE = re.compile(
-    r"^claude-(opus-5|sonnet-5|opus-4-[78]|fable|mythos)", re.IGNORECASE
+    r"^claude-(opus-5|sonnet-5|haiku-5|opus-4-[78]|fable|mythos)", re.IGNORECASE
 )
 _FALLBACK_RE = re.compile(r"^claude-(opus-5|fable)", re.IGNORECASE)
 
@@ -59,7 +56,7 @@ class AnthropicProvider(AIProvider):
         "Claude via the Messages API with an Anthropic API key. Use this for "
         "multi-tenant or commercial deployments."
     )
-    default_model = "claude-opus-5"
+    default_model = "claude-opus-5-5"
     credential_env_vars = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
     model_env_var = "ANTHROPIC_MODEL"
     supports_model_discovery = True

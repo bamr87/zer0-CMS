@@ -80,7 +80,7 @@ Model factories are shared from `parodynews/tests/conftest.py` and are built fro
 
 ### `AIModel` is keyed by a pair
 
-`(provider, model_id)`, under a unique constraint — not by `model_id` alone. `claude-opus-5` legitimately exists for both the `claude_code` and `anthropic` providers, and they are different rows with different credentials behind them.
+`(provider, model_id)`, under a unique constraint — not by `model_id` alone. `claude-opus-5-5` legitimately exists for both the `claude_code` and `anthropic` providers, and they are different rows with different credentials behind them.
 
 ## Usage
 

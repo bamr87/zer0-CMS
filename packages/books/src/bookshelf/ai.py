@@ -24,7 +24,7 @@ from typing import Any
 from .models import Book, Chapter
 
 #: Default model. Override per request or with BOOKSHELF_MODEL.
-DEFAULT_MODEL = "claude-opus-5"
+DEFAULT_MODEL = "claude-opus-5-5"
 
 #: Reasoning depth. Drafting prose benefits from the default; quick checks do not.
 DEFAULT_EFFORT = "high"
