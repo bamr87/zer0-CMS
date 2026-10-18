@@ -295,7 +295,7 @@ class TestOrchestration < Minitest::Test
 
   def test_claude_model_for_default_and_override
     assert_equal M::DEFAULT_CLAUDE_MODEL, M::Orchestration.claude_model_for(make_settings)
-    assert_equal "claude-sonnet-5", M::Orchestration.claude_model_for(make_settings(claude_model: "claude-sonnet-5"))
+    assert_equal "claude-sonnet-5-5", M::Orchestration.claude_model_for(make_settings(claude_model: "claude-sonnet-5-5"))
   end
 
   def test_article_brief_uses_art_director_and_context
@@ -321,8 +321,8 @@ class TestOrchestration < Minitest::Test
 
   def test_claude_model_setting_respected
     client = FakeClaude.new(text_reply: "brief")
-    M::Orchestration.claude_article_brief(client, make_content_file, make_settings(claude_model: "claude-sonnet-5"), "base")
-    assert_equal "claude-sonnet-5", client.complete_calls[0][2]
+    M::Orchestration.claude_article_brief(client, make_content_file, make_settings(claude_model: "claude-sonnet-5-5"), "base")
+    assert_equal "claude-sonnet-5-5", client.complete_calls[0][2]
   end
 
   def test_review_approve

@@ -67,7 +67,7 @@ import { findAgent } from './agents';
  * shell so the core, the manifest default and the shell cannot hold three
  * opinions; `src/agent/agent.ts` re-exports it as `DEFAULT_MODEL`.
  */
-export const DEFAULT_HARNESS_MODEL = 'claude-opus-5';
+export const DEFAULT_HARNESS_MODEL = 'claude-opus-5-5';
 
 /**
  * What `zer0Cms.agent.model` means when it is left alone: *inherit* — ask the

@@ -121,7 +121,11 @@ class AnthropicClient(BaseLLMClient):
                 ),
                 messages=[{"role": "user", "content": prompt}],
             )
-            content = response.content[0].text
+            # Current Claude models can return thinking blocks before the text,
+            # so read the reply by block type rather than by position.
+            content = "".join(
+                block.text for block in response.content if getattr(block, "type", None) == "text"
+            )
             return content.strip()
         except Exception as e:
             if "timeout" in str(e).lower():

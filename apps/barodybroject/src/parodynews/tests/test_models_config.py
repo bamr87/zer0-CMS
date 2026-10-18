@@ -93,7 +93,7 @@ def test_provider_config_round_trips():
         provider="anthropic",
         display_name="Anthropic",
         api_key="sk-ant-api-test",
-        default_model="claude-opus-5",
+        default_model="claude-opus-5-5",
     )
     stored = AIProviderConfig.objects.get(pk=row.pk)
     assert stored.api_key == "sk-ant-api-test"
