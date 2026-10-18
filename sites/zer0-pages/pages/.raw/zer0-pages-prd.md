@@ -200,7 +200,7 @@ The AI Content Engine powers all content generation across the platform.
 # Supported AI Providers
 PROVIDERS = {
     "openai": ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
-    "anthropic": ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
+    "anthropic": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
     "xai": ["grok-2", "grok-2-mini"]
 }
 ```

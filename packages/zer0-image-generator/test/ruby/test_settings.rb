@@ -126,7 +126,7 @@ class TestResolveSettingsDifferential < Minitest::Test
     "collection_styles_map" => [{}, { "preview_images" => { "collection_styles" => STYLES } }, {}],
     "collection_styles_not_a_map" => [{}, { "preview_images" => { "collection_styles" => ["hacks"] } }, {}],
     "claude_effort_empty" => [{}, { "preview_images" => { "claude_effort" => "" } }, {}],
-    "claude_model_config" => [{}, { "preview_images" => { "claude_model" => "claude-opus-4-8" } }, {}],
+    "claude_model_config" => [{}, { "preview_images" => { "claude_model" => "claude-opus-5-5" } }, {}],
     "env_parallel_numeric" => [{}, {}, { "MAX_PARALLEL" => "7" }],
     "env_parallel_non_numeric" => [{}, {}, { "MAX_PARALLEL" => "abc" }],
     "cli_parallel_wins" => [{ parallel: 2 }, {}, { "MAX_PARALLEL" => "7" }],
@@ -355,7 +355,7 @@ class TestSettingsPortedAssertions < Minitest::Test
   end
 
   def test_model_family_detection
-    assert_equal "claude", M.model_family("claude-opus-4-8")
+    assert_equal "claude", M.model_family("claude-opus-5-5")
     assert_equal "openai", M.model_family("gpt-image-2")
     assert_equal "openai", M.model_family("dall-e-3")
     assert_equal "xai", M.model_family("grok-2-image")
@@ -364,7 +364,7 @@ class TestSettingsPortedAssertions < Minitest::Test
   end
 
   def test_foreign_family_model_falls_back
-    s = Zer0ImageGenerator::Settings.new(model: "claude-opus-4-8")
+    s = Zer0ImageGenerator::Settings.new(model: "claude-opus-5-5")
     assert_equal "gpt-image-2", M.effective_model(s, openai)
   end
 

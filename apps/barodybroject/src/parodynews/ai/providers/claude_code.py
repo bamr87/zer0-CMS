@@ -48,15 +48,17 @@ API_KEY_PREFIX = "sk-ant-api"
 # Models the Claude Code CLI accepts. The CLI also understands the aliases
 # ``opus``, ``sonnet`` and ``haiku``.
 STATIC_MODELS: tuple[tuple[str, str, str], ...] = (
-    ("claude-opus-5", "Claude Opus 5", "Default. Best quality for long-form writing."),
     (
-        "claude-sonnet-5",
-        "Claude Sonnet 5",
+        "claude-opus-5-5",
+        "Claude Opus 5.5",
+        "Default. Best quality for long-form writing.",
+    ),
+    (
+        "claude-sonnet-5-5",
+        "Claude Sonnet 5.5",
         "Fast and capable; good for bulk generation.",
     ),
-    ("claude-haiku-4-5", "Claude Haiku 4.5", "Cheapest and fastest; short outputs."),
-    ("claude-opus-4-8", "Claude Opus 4.8", "Previous Opus generation."),
-    ("claude-sonnet-4-6", "Claude Sonnet 4.6", "Previous Sonnet generation."),
+    ("claude-haiku-5-5", "Claude Haiku 5.5", "Cheapest and fastest; short outputs."),
     ("claude-fable-5-1", "Claude Fable 5.1", "Most capable model; premium pricing."),
 )
 
@@ -86,7 +88,7 @@ class ClaudeCodeProvider(AIProvider):
         "Claude via the Claude Agent SDK, authenticated with a Claude Code OAuth "
         "token from `claude setup-token`. Falls back to ANTHROPIC_API_KEY."
     )
-    default_model = "claude-opus-5"
+    default_model = "claude-opus-5-5"
     credential_env_vars = ("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")
     model_env_var = "CLAUDE_CODE_MODEL"
 
