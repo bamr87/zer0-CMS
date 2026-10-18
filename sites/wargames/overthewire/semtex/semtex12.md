@@ -1,5 +1,5 @@
 ---
-title: Semtex12
+title: "Semtex Level 12"
 description: "Semtex Level 12 — an authentication daemon and a remote file reader, where speed matters because the server is fast."
 excerpt: "Semtex Level 12 — an authentication daemon and a remote file reader, where speed matters because the server is fast."
 permalink: /docs/wargames/semtex/semtex12/
@@ -43,9 +43,13 @@ Thanks to bk for this level!
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the authentication daemon is on port 24012 and the file reader on port 24013 of the Semtex network host.
+</div>
 
 ### What this level teaches
 
@@ -67,5 +71,9 @@ Multi-step network protocols and timing-sensitive attacks.
 ### Why it matters
 
 Race conditions between check and use are a persistent class of real vulnerability.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex11/">Level 11</a><a class="sg-index" href="../">Semtex overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

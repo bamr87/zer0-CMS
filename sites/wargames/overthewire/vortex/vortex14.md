@@ -1,5 +1,5 @@
 ---
-title: Vortex14
+title: "Vortex Level 14"
 description: "Vortex Level 14 — analyse a captured network exchange that uses weak encryption and recover the secret by classifying and dividing the problem."
 excerpt: "Vortex Level 14 — analyse a captured network exchange that uses weak encryption and recover the secret by classifying and dividing the problem."
 permalink: /docs/wargames/vortex/vortex14/
@@ -45,9 +45,13 @@ If you need some hints, consider how you can divide and conquer the problem. For
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex14`, obtain access to `vortex15`.
+</div>
 
 ### What this level teaches
 
@@ -69,5 +73,9 @@ Analysing an unknown protocol and breaking weak encryption.
 ### Why it matters
 
 Home-made protocols and weak ciphers are still found in devices and legacy software.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex13/">Level 13</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex15/">Level 15</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -67,6 +67,8 @@ Data for the levels can be found in **/behemoth/**.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide is spoiler-free: it explains what Behemoth expects of you and how to work, but never gives passwords or finished exploits.
@@ -103,5 +105,9 @@ Narnia hands you the C source. Behemoth gives you the compiled program, so you m
 ### Where this fits
 
 The recommended order is Bandit, one of Natas, Krypton or Leviathan, Narnia, then Behemoth, then Utumno and Maze.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="behemoth0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

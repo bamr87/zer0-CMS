@@ -1,5 +1,5 @@
 ---
-title: Drifter7
+title: "Drifter Level 7"
 description: "Drifter Level 7 — \"Gentleman, start your disassemblers\": a reverse-engineering level with IDA recommended."
 excerpt: "Drifter Level 7 — \"Gentleman, start your disassemblers\": a reverse-engineering level with IDA recommended."
 permalink: /docs/wargames/drifter/drifter7/
@@ -46,9 +46,13 @@ Gentleman, start your disassemblers
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 7 of 0–15, in the remote daemons stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -69,5 +73,9 @@ Using a disassembler to understand a program.
 ### Why it matters
 
 Reverse-engineering fluency is the skill that unlocks the rest of the game.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter6/">Level 6</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter8/">Level 8</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

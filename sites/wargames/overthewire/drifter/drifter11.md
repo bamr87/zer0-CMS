@@ -1,5 +1,5 @@
 ---
-title: Drifter11
+title: "Drifter Level 11"
 description: "Drifter Level 11 — the executable base and the stack are randomised, so you must defeat ASLR to get code execution."
 excerpt: "Drifter Level 11 — the executable base and the stack are randomised, so you must defeat ASLR to get code execution."
 permalink: /docs/wargames/drifter/drifter11/
@@ -37,9 +37,13 @@ This level randomizes the executable base and stack -- can you beat the randomis
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 11 of 0–15, in the randomisation and reversing stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Address space layout randomisation and how to work around it.
 ### Why it matters
 
 ASLR is one of the main defences in use, and bypasses are routine in real exploit chains.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter10/">Level 10</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter12/">Level 12</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -35,13 +35,14 @@ Many upstream pages are sparse (some say only "There is no information for this 
 
 The guides follow a few rules:
 
-- **Marked and appended.** A guide sits at the very end of its page between `<!-- study-guide:start -->` and `<!-- study-guide:end -->`, so it is easy to tell apart from the vendored text above it, which is left untouched.
+- **Marked and appended.** A guide sits at the very end of its page between `<!-- study-guide:start -->` and `<!-- study-guide:end -->`, wrapped in a `<section class="study-guide">` that the site styles as a panel, so it is easy to tell apart from the vendored text above it, which is left untouched.
 - **No spoilers.** Guides name the concept a level exercises but never contain passwords, payloads or finished solutions, so the games stay worth playing.
 - **Honest about gaps.** Where upstream withholds a level's description and the topic could not be confirmed, the guide gives a general investigation method and says so instead of guessing.
 - **Level map.** Numbering differs between games (in Bandit, page N explains how to *reach* level N; in Natas, page N is the level you are *in*), so most guides open with a one-line map of which account you are logged in as and which password you are after.
-- **Page summaries.** `description` and `excerpt` front matter are one-sentence summaries of the page. The values the aggregator derives from upstream are truncated body text such as `Level Goal ----------`.
+- **Page summaries and titles.** `description` and `excerpt` front matter are one-sentence summaries of the page (the theme shows `description` under the page title, and search indexes it). The values the aggregator derives from upstream are truncated body text such as `Level Goal ----------`. Level pages are titled `Bandit Level 2` rather than the aggregator's `Bandit2`.
+- **Navigation.** Each level guide ends with previous / next links (relative, so they work under any `baseurl`), and the level map is shown as a callout.
 
-Re-syncing from upstream regenerates the pages and drops the guides. Carry them across with `tools/carry-study-guides.py` as described in [Regenerating from upstream](#regenerating-from-upstream).
+Re-syncing from upstream regenerates the pages and drops the guides and the site-owned front matter. Carry them across with `tools/carry-study-guides.py` as described in [Regenerating from upstream](#regenerating-from-upstream).
 
 ## Theme & site
 
@@ -74,18 +75,57 @@ sidebar:
 
 Ordering and labels come from per-page front matter stamped by the content pipeline — each level page carries `nav_order` (its numeric suffix, so levels sort 0,1,2,…,10) and `sidebar_label` (`"Level N"`). The aggregator (`scripts/docs-aggregator/transform.py`) sets both on every sync, so the sidebar stays in step with the content with nothing to regenerate by hand. The theme marks the current page active and expands its game on load (server-side, no JavaScript).
 
+### Look and feel
+
+`remote_theme` gives the site the theme's `_layouts/`, `_includes/`, `_sass/` and `assets/` and **nothing else**: it does not merge the theme's own `_config.yml`, `_data/` or plugins. Everything the theme's chrome needs is therefore set in this repo, using only the theme's documented customisation layers. No layout, include, sass or plugin is overridden.
+
+| File | What it does |
+|------|--------------|
+| `_config.yml` | `repository` / `branch` (the theme builds "Edit on GitHub" and "View source" from them), `theme_skin: mint`, `logo`, `favicon`, `info_banner`, the footer `links` / `powered_by` / `footer_quick_links`, `user_overrides: true`, `search.content_length`, and per-game `defaults` that give each game's pages a banner and a difficulty badge. `email` is deliberately unset: even an empty value makes the footer emit an empty `mailto:` link. |
+| `assets/css/user-overrides.css` | The site's only stylesheet: homepage, study-guide panel, "All levels" index, and hiding theme chrome that does not apply here (cookie banner, newsletter placeholder, tag badges). |
+| `assets/js/user-overrides.js` | A shim that adds the `baseurl` to the search modal's hard-coded `/search.json` request, which otherwise 404s on a project site. |
+| `assets/images/wargames/`, `favicon.ico` | Logo, favicon and one generated banner per game. |
+| `search.json` | The search index the theme's search modal loads. `remote_theme` does not ship it. |
+| `tags.md` | Served at `/tags/`: a one-page "All levels" index. The theme's category and tag badges link there. |
+| `_data/games.yml` | The games by tier; feeds the homepage cards through the theme's `card-grid` include. |
+| `_data/navigation/main.yml` | The top navbar, grouped by tier. |
+| `_data/authors.yml` | Byline names. |
+
+The left sidebar's group order and labels are fixed by the theme (it sorts games by URL name and labels them from the URL segment), so they cannot be changed from here.
+
 ### Local development
 
-GitHub Pages renders the theme remotely; for a local preview, load the theme as a gem instead of `remote_theme`:
+Preview with the same Bundler build the Pages workflow runs:
 
 ```bash
 bundle install
 bundle exec jekyll serve   # http://localhost:4000/wargames/
 ```
 
-## Project structure
+The `Gemfile` uses `jekyll-remote-theme`, so this downloads the theme from GitHub exactly as `.github/workflows/jekyll-gh-pages.yml` does, and what you see is what production serves. Do **not** preview by loading the theme as a gem (`theme: jekyll-theme-zer0`) instead: a gem theme also merges the theme's `_config.yml` and `_data/`, which hides defects (the "Edit on GitHub" link built from an unset `repository`, the dead search, the cookie banner). To preview against a local checkout of the theme (for example an unreleased change) while keeping production's behaviour, stage only the four directories `remote_theme` ships and ignore the theme config:
+
+```bash
+THEME=/path/to/zer0-mistakes STAGE=/tmp/zer0-remote
+mkdir -p $STAGE && for d in _layouts _includes _sass assets lib; do cp -R $THEME/$d $STAGE/; done
+cp $THEME/jekyll-theme-zer0.gemspec $STAGE/    # replace its `git ls-files` with a Dir.glob; the stage is not a git repo
+# Gemfile: gem "jekyll-theme-zer0", path: "/tmp/zer0-remote"  (plus jekyll and the plugins in _config.yml)
+cat > /tmp/override.yml <<'EOF'
+remote_theme: ""
+theme: jekyll-theme-zer0
+ignore_theme_config: true
+plugins: [jekyll-feed, jekyll-sitemap, jekyll-seo-tag, jekyll-include-cache]
+EOF
+bundle exec jekyll build --config _config.yml,/tmp/override.yml -d /tmp/site
 ```
-index.md                 # Homepage (layout: home) — wargames hub
+
+## Project structure
+
+```
+index.md                 # Homepage (layout: home): hero, learning path, game cards
+search.json              # Search index for the theme's search modal
+tags.md                  # "All levels" index, served at /tags/
+favicon.ico
+assets/                  # css/user-overrides.css, js/user-overrides.js, images/wargames/ (logo, banners)
 overthewire/             # Vendored OverTheWire challenge pages + study guides
   index.md               #   Games index (/docs/wargames/)
   bandit/                #   Linux/Unix fundamentals
@@ -97,7 +137,8 @@ overthewire/             # Vendored OverTheWire challenge pages + study guides
   semtex/ blacksun/      #   Offline / down games kept as reference
   abraxas/ hes2010/ ...  #   Downloadable conference games (kishi, monxla)
 _config.yml              # Jekyll config (remote_theme, defaults, excludes)
-_data/navigation/        # Top navbar (main.yml) — the games sidebar is auto-built
+_data/                   # games.yml (homepage cards), authors.yml, navigation/main.yml (top navbar)
+                         #   — the games sidebar is auto-built from page URLs
 zer0.install.yml         # Installer config that scaffolds the framework
 scripts/docs-aggregator/ # Upstream content sync pipeline
 tools/                   # unwrap-prose.py (lint) and carry-study-guides.py (re-sync helper)
@@ -118,13 +159,15 @@ The pipeline stages its output under `pages/_docs/wargames/overthewire/` rather 
 
 ```bash
 ./scripts/docs-aggregator/aggregate_docs.sh
-python3 tools/carry-study-guides.py pages/_docs/wargames/overthewire   # re-attach the study guides and page summaries
-diff -r pages/_docs/wargames/overthewire overthewire                    # review what changed upstream
-cp -R pages/_docs/wargames/overthewire/. overthewire/                   # move the refreshed pages over
-rm -rf pages work                                                       # staging areas; Jekyll would otherwise build duplicates
+STAGED=pages/_docs/wargames/overthewire
+python3 tools/unwrap-prose.py --write $STAGED      # the repo keeps one paragraph per line; fresh upstream text is soft-wrapped
+python3 tools/carry-study-guides.py $STAGED        # re-attach the study guides and the site-owned front matter
+diff -r $STAGED overthewire                         # review what changed upstream
+cp -R $STAGED/. overthewire/                        # move the refreshed pages over
+rm -rf pages work                                   # staging areas; Jekyll would otherwise build duplicates
 ```
 
-`carry-study-guides.py` copies each current page's study guide and its `description` / `excerpt` onto the matching refreshed page and lists any page it could not match, such as a level newly added upstream, which needs a guide written for it.
+`carry-study-guides.py` keeps each current page's study guide and its site-owned front matter (`description`, `excerpt`, `title`, `author`, `draft`, `keywords`, the game category, `date`) and takes the provenance keys (`source_*`, `permalink`, `nav_order`, …) from the fresh page. It keeps `lastmod` when the upstream text did not change, so a re-sync with no upstream changes produces **no diff**; any page that does differ is a real upstream change worth reviewing. It lists pages it could not match, such as a level newly added upstream, which need a guide (and the site-owned front matter) written for them.
 
 ## Using this content
 

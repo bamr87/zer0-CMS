@@ -13,3 +13,11 @@ default:
   twitter: ""
   email: ""
   role: "Site Owner"
+
+# Level pages carry `author: bamr87` (stamped by the content pipeline); this entry gives the
+# byline a display name and a profile link instead of the bare handle.
+bamr87:
+  name: "Amr Abdel-Motaleb"
+  bio: "Maintainer of this OverTheWire challenge mirror and of the zer0-mistakes Jekyll theme it is built on."
+  github: "bamr87"
+  role: "Site Owner"

@@ -1,5 +1,5 @@
 ---
-title: Vortex21
+title: "Vortex Level 21"
 description: "Vortex Level 21 — a harder reverse-engineering task that may require understanding an encryptor."
 excerpt: "Vortex Level 21 — a harder reverse-engineering task that may require understanding an encryptor."
 permalink: /docs/wargames/vortex/vortex21/
@@ -39,9 +39,13 @@ This level is a slightly more difficult reverse me (which might require understa
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex21`, obtain access to `vortex22`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Reverse engineering a program whose logic depends on an encryption routine.
 ### Why it matters
 
 Understanding custom crypto from binaries is a staple of malware analysis.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex20/">Level 20</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex22/">Level 22</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

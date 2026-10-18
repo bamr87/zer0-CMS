@@ -1,5 +1,5 @@
 ---
-title: Blacksun0
+title: "Blacksun Level 0"
 description: "Blacksun Level 0 — exploit a remote format-string bug in a binary with ASLR, PIE and stack protection by using direct parameter access to study the stack."
 excerpt: "Blacksun Level 0 — exploit a remote format-string bug in a binary with ASLR, PIE and stack protection by using direct parameter access to study the stack."
 permalink: /docs/wargames/blacksun/blacksun0/
@@ -50,9 +50,13 @@ Alternatively, there is a debug version on port 78 if you need help understandin
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** you attack a network service (port 79, with a debug version on port 78) to get a shell, then read `/etc/motd` for more information.
+</div>
 
 ### What this level teaches
 
@@ -75,5 +79,9 @@ How to exploit a format-string vulnerability remotely when the layout of memory 
 ### Why it matters
 
 Info leaks plus a write primitive are the building blocks of nearly every modern exploit chain.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Blacksun overview</a><a class="sg-next" href="../blacksun1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

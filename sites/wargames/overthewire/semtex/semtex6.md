@@ -1,5 +1,5 @@
 ---
-title: Semtex6
+title: "Semtex Level 6"
 description: "Semtex Level 6 — forge an ICMP packet with a spoofed source address using a raw socket helper."
 excerpt: "Semtex Level 6 — forge an ICMP packet with a spoofed source address using a raw socket helper."
 permalink: /docs/wargames/semtex/semtex6/
@@ -51,9 +51,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the helper is `/semtex/semtexraw`; more instructions are in your home directory.
+</div>
 
 ### What this level teaches
 
@@ -75,5 +79,9 @@ Raw sockets, ICMP and source-address spoofing.
 ### Why it matters
 
 Spoofing is the basis of reflection attacks, and source address validation is the defence.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex5/">Level 5</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

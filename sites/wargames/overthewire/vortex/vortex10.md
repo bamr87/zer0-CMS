@@ -1,5 +1,5 @@
 ---
-title: Vortex10
+title: "Vortex Level 10"
 description: "Vortex Level 10 — recover the seed that produced 20 random-looking integers within a 30-second time limit."
 excerpt: "Vortex Level 10 — recover the seed that produced 20 random-looking integers within a 30-second time limit."
 permalink: /docs/wargames/vortex/vortex10/
@@ -41,9 +41,13 @@ Read in 20 integers and write the seed used to generate those numbers in unsigne
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex10`, obtain access to `vortex11`.
+</div>
 
 ### What this level teaches
 
@@ -65,5 +69,9 @@ Why pseudo-random number generators are predictable if you know how they work.
 ### Why it matters
 
 Predictable seeds have broken real systems, from session tokens to game servers and cryptographic keys.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex9/">Level 9</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex11/">Level 11</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

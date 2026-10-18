@@ -1,5 +1,5 @@
 ---
-title: Natas8
+title: "Natas Level 8"
 description: "Natas Level 8 — reverse a chain of encodings found in the source to work out the secret, and learn that obfuscation is not encryption."
 excerpt: "Natas Level 8 — reverse a chain of encodings found in the source to work out the secret, and learn that obfuscation is not encryption."
 permalink: /docs/wargames/natas/natas8/
@@ -38,9 +38,13 @@ sidebar_label: "Level 8"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas8` and find the password for `natas9`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Reading code that stores a secret in a transformed form, and undoing the steps.
 ### How developers prevent it
 
 Use proper hashing for passwords (a slow, salted hash) so that nothing needs to be reversible, and never store secrets in source code.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas7/">Level 7</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas9/">Level 9</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Natas32
+title: "Natas Level 32"
 description: "Natas Level 32 — the same Perl file-reading trick is back, but now the goal is running a command; learn how to turn a file read into execution."
 excerpt: "Natas Level 32 — the same Perl file-reading trick is back, but now the goal is running a command; learn how to turn a file read into execution."
 permalink: /docs/wargames/natas/natas32/
@@ -38,9 +38,13 @@ sidebar_label: "Level 32"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas32` and find the password for `natas33`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Escalating from file read to command execution using the same Perl behaviour as 
 ### How developers prevent it
 
 As in the previous level, along with running web applications as users that cannot read other levels' secrets (least privilege).
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas31/">Level 31</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas33/">Level 33</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -170,24 +170,59 @@ def rewrite_relative_links(body: str, repo_url: str, branch: str, content_base: 
     return re.sub(r"\[([^\]]*)\]\(([^)]+)\)", _rewrite, body)
 
 
-def normalize_overthewire_links(body: str) -> str:
+UPSTREAM_SITE = "https://overthewire.org/wargames"
+
+
+def absolutize_relative_images(body: str, rel_dir: str) -> str:
+    """Point relative ``<img src>`` at the upstream site, and give it an ``alt`` if it has none.
+
+    A page such as ``natas/index.md`` embeds ``<img src="FP7-NESSOS.jpg">``. The file lives next to the
+    page upstream but is not mirrored here, so the relative URL would 404. That upstream tag also has no
+    ``alt``, which leaves the image (and the link around it) without an accessible name once it loads, so
+    one is derived from the file name.
+    """
+
+    def _fix(match: re.Match) -> str:
+        tag = match.group(0)
+        src_match = re.search(r'\bsrc="([^"]+)"', tag)
+        if src_match is None:
+            return tag
+        src = src_match.group(1)
+        if re.match(r"(?:[a-z][a-z0-9+.-]*:|/|#|\{\{)", src, re.IGNORECASE):
+            return tag
+        base = f"{UPSTREAM_SITE}/{rel_dir}".rstrip("/")
+        tag = tag.replace(src_match.group(0), f'src="{base}/{src.lstrip("./")}"', 1)
+        if not re.search(r"\balt=", tag):
+            alt = re.sub(r"[-_]+", " ", Path(src).stem)
+            tag = tag.replace("<img", f'<img alt="{alt}"', 1)
+        return tag
+
+    return re.sub(r"<img\b[^>]*>", _fix, body)
+
+
+def normalize_overthewire_links(body: str, rel_dir: str = "") -> str:
     """Fix OverTheWire self-referential links to this site's permalinks.
 
     Upstream serves challenge pages at ``/wargames/<game>/<page>.html``; here
     they live at ``/docs/wargames/<game>/<page>/``. Reference-style links
     (``[text]: /path``) are not matched by ``rewrite_relative_links`` (which
     only handles inline ``[text](url)``), so they arrive verbatim and 404.
-    Also point the community chat link (which has no local page) back to
-    overthewire.org. The ``(?<!/docs)`` / ``(?<!overthewire\\.org)`` guards keep
-    the pass idempotent.
+
+    The site is served under a ``baseurl`` (``/wargames`` on GitHub Pages), so the
+    new targets go through Liquid's ``relative_url`` filter; a bare ``/docs/...`` would
+    resolve against the domain root and 404. The lookbehinds keep absolute
+    ``https://overthewire.org/wargames/...`` links untouched and the pass idempotent.
+    Also point the community chat link (which has no local page) back to overthewire.org,
+    and make relative images absolute (see ``absolutize_relative_images``).
     """
-    body = re.sub(r"(?<!/docs)/wargames/([a-z0-9]+)/([a-z0-9]+)\.html",
-                  r"/docs/wargames/\1/\2/", body)
-    body = re.sub(r"(?<!/docs)/wargames/([a-z0-9]+)/",
-                  r"/docs/wargames/\1/", body)
+    body = re.sub(r"(?<![\w./:-])(?<!/docs)/wargames/([a-z0-9]+)/([a-z0-9]+)\.html",
+                  r"{{ '/docs/wargames/\1/\2/' | relative_url }}", body)
+    body = re.sub(r"(?<![\w./:-])(?<!/docs)/wargames/([a-z0-9]+)/",
+                  r"{{ '/docs/wargames/\1/' | relative_url }}", body)
     body = re.sub(r"(?<!overthewire\.org)/information/chat\.html",
                   "https://overthewire.org/information/chat.html", body)
-    return body
+    rel_dir = "" if rel_dir in (".", "") else rel_dir
+    return absolutize_relative_images(body, rel_dir)
 
 
 def strip_jekyll_includes(body: str) -> str:
@@ -234,7 +269,7 @@ def transform_file(
     body = strip_jekyll_includes(body)
     body = rewrite_relative_links(body, source_meta["repo"], branch, content_base)
     if source_meta.get("category") == "wargames" or source_meta.get("name") == "overthewire":
-        body = normalize_overthewire_links(body)
+        body = normalize_overthewire_links(body, rel_path.parent.as_posix())
     body = add_source_attribution(body, source_meta)
 
     # Serialize

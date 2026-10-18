@@ -1,5 +1,5 @@
 ---
-title: Vortex7
+title: "Vortex Level 7"
 description: "Vortex Level 7 — find input whose CRC-32 checksum equals a given value, learning that CRCs are not cryptographic hashes."
 excerpt: "Vortex Level 7 — find input whose CRC-32 checksum equals a given value, learning that CRCs are not cryptographic hashes."
 permalink: /docs/wargames/vortex/vortex7/
@@ -49,9 +49,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex7`, obtain access to `vortex8`.
+</div>
 
 ### What this level teaches
 
@@ -73,5 +77,9 @@ How CRC checksums work and why they can be forged.
 ### Why it matters
 
 CRCs detect accidental errors, not tampering. Never use them for integrity against an attacker.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex6/">Level 6</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex8/">Level 8</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

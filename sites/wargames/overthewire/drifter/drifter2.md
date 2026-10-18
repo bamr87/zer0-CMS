@@ -1,5 +1,5 @@
 ---
-title: Drifter2
+title: "Drifter Level 2"
 description: "Drifter Level 2 — a simple stack overflow whose side effects get in the way of debugging and of launching a program directly with execve."
 excerpt: "Drifter Level 2 — a simple stack overflow whose side effects get in the way of debugging and of launching a program directly with execve."
 permalink: /docs/wargames/drifter/drifter2/
@@ -37,9 +37,13 @@ Simple stack overflow, but with a side effect that affects debugging, and execut
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 2 of 0–15, in the memory corruption stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How an apparently simple exploit can be complicated by the environment.
 ### Why it matters
 
 Real targets have quirks that break textbook exploits, and diagnosing them is half the job.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter1/">Level 1</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

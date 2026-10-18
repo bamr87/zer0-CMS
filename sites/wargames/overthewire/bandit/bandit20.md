@@ -1,5 +1,5 @@
 ---
-title: Bandit20
+title: "Bandit Level 20"
 description: "Bandit Level 20 — use a setuid binary to read a file owned by another user, and learn what the setuid permission bit means."
 permalink: /docs/wargames/bandit/bandit20/
 date: '2026-04-07T01:41:08.000Z'
@@ -46,9 +46,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit19`, find the password for `bandit20`.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ How Unix lets a program run with its owner's privileges, and why that is both us
 ### Why it matters
 
 Hunting for setuid binaries (`find / -perm -4000`) is a standard step in Linux privilege escalation, both for attackers and for hardening audits.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit19/">Level 19</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit21/">Level 21</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

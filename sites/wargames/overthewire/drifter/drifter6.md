@@ -1,5 +1,5 @@
 ---
-title: Drifter6
+title: "Drifter Level 6"
 description: "Drifter Level 6 — a simple remote daemon with a format-string vulnerability, left in a deliberately vulnerable state."
 excerpt: "Drifter Level 6 — a simple remote daemon with a format-string vulnerability, left in a deliberately vulnerable state."
 permalink: /docs/wargames/drifter/drifter6/
@@ -51,9 +51,13 @@ As usual when I grab random code and look over it, someone might want to tell th
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 6 of 0–15, in the remote daemons stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -75,5 +79,9 @@ Remote format-string exploitation.
 ### Why it matters
 
 It repeats the lesson that unvalidated formatting is dangerous, this time in a network service.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter5/">Level 5</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

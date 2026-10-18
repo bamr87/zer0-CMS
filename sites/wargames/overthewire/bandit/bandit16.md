@@ -1,5 +1,5 @@
 ---
-title: Bandit16
+title: "Bandit Level 16"
 description: "Bandit Level 16 — talk to a TLS-encrypted service on localhost using openssl s_client."
 permalink: /docs/wargames/bandit/bandit16/
 date: '2026-04-07T01:41:08.000Z'
@@ -54,9 +54,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit15`, find the password for `bandit16`.
+</div>
 
 ### What this level teaches
 
@@ -78,5 +82,9 @@ TLS, the encryption layer behind HTTPS, and how to speak it by hand.
 ### Why it matters
 
 Debugging HTTPS, mail or API connections often means using `openssl s_client` to see what the server really presents.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit15/">Level 15</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit17/">Level 17</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Narnia2
+title: "Narnia Level 2"
 description: "Narnia Level 2 — a classic stack buffer overflow where you overwrite the saved return address to take control of execution."
 excerpt: "Narnia Level 2 — a classic stack buffer overflow where you overwrite the saved return address to take control of execution."
 permalink: /docs/wargames/narnia/narnia2/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia2`, find the password for `narnia3`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ The textbook "smash the stack" attack.
 ### Why it matters
 
 Understanding this attack explains stack canaries, non-executable stacks and address randomisation, all of which exist to stop it.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia1/">Level 1</a><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

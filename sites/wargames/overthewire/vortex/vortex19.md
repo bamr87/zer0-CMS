@@ -1,5 +1,5 @@
 ---
-title: Vortex19
+title: "Vortex Level 19"
 description: "Vortex Level 19 — write a key generator for a program, hindered by a weak form of binary encryption."
 excerpt: "Vortex Level 19 — write a key generator for a program, hindered by a weak form of binary encryption."
 permalink: /docs/wargames/vortex/vortex19/
@@ -39,9 +39,13 @@ This level requires you to "keygen" the level, with a minor obstacle of a weak f
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex19`, obtain access to `vortex20`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Reverse-engineering a licence or key check, and working around obfuscation.
 ### Why it matters
 
 Packers and obfuscators appear in malware and licence schemes, and unpacking is a basic skill.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex18/">Level 18</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex20/">Level 20</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

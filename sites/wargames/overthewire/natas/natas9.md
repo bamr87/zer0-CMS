@@ -1,5 +1,5 @@
 ---
-title: Natas9
+title: "Natas Level 9"
 description: "Natas Level 9 — user input is passed into a shell command; learn what OS command injection is and why shell metacharacters are dangerous."
 excerpt: "Natas Level 9 — user input is passed into a shell command; learn what OS command injection is and why shell metacharacters are dangerous."
 permalink: /docs/wargames/natas/natas9/
@@ -38,9 +38,13 @@ sidebar_label: "Level 9"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas9` and find the password for `natas10`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ How building a shell command from user input lets the user add commands of their
 ### How developers prevent it
 
 Avoid shelling out. If you must, pass arguments as separate parameters without a shell, validate against an allow-list and escape the rest.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas8/">Level 8</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas10/">Level 10</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Vortex11
+title: "Vortex Level 11"
 description: "Vortex Level 11 — corrupt the heap to gain arbitrary control of a program that uses the phkmalloc allocator."
 excerpt: "Vortex Level 11 — corrupt the heap to gain arbitrary control of a program that uses the phkmalloc allocator."
 permalink: /docs/wargames/vortex/vortex11/
@@ -54,9 +54,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex11`, obtain access to `vortex12`.
+</div>
 
 ### What this level teaches
 
@@ -78,5 +82,9 @@ Heap exploitation against a specific allocator.
 ### Why it matters
 
 Heap bugs dominate modern vulnerability reports, and the techniques follow the same ideas.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex10/">Level 10</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex12/">Level 12</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

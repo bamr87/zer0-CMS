@@ -1,5 +1,5 @@
 ---
-title: Bandit34
+title: "Bandit Level 34"
 description: "Bandit Level 34 — a placeholder page: this level does not exist yet, so Level 33 is where Bandit currently ends."
 permalink: /docs/wargames/bandit/bandit34/
 date: '2026-04-07T01:41:08.000Z'
@@ -38,9 +38,13 @@ sidebar_label: "Level 34"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** nothing to solve here. The upstream page says level 34 does not exist yet.
+</div>
 
 ### What this means
 
@@ -51,5 +55,9 @@ Bandit currently ends at `bandit33`. The OverTheWire maintainers occasionally ad
 - **Consolidate.** Re-read your notes from Levels 0–33 and try to redo three or four levels from memory without them. The ones you cannot redo are the ones to revisit.
 - **Pick a path.** From the [games index](../../): Natas for web security, Krypton for cryptography, Leviathan for introductory reverse engineering.
 - **Write up your own notes.** Explaining a technique in your own words is the best test of understanding. Avoid publishing passwords or step-by-step solutions, which would spoil the game for others.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit33/">Level 33</a><a class="sg-index" href="../">Bandit overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

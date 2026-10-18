@@ -1,5 +1,5 @@
 ---
-title: Vortex4
+title: "Vortex Level 4"
 description: "Vortex Level 4 — a common format-string bug guarded by a check on argc, which makes you think about how programs are started."
 excerpt: "Vortex Level 4 — a common format-string bug guarded by a check on argc, which makes you think about how programs are started."
 permalink: /docs/wargames/vortex/vortex4/
@@ -51,9 +51,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex4`, obtain access to `vortex5`.
+</div>
 
 ### What this level teaches
 
@@ -75,5 +79,9 @@ Format-string exploitation under an unusual constraint.
 ### Why it matters
 
 Understanding how the kernel and loader hand a program its arguments helps in many exploitation scenarios.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex3/">Level 3</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

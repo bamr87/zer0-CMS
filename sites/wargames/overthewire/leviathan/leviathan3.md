@@ -1,5 +1,5 @@
 ---
-title: Leviathan3
+title: "Leviathan Level 3"
 description: "Leviathan Level 3 — another password-checking program; apply what you learned about tracing and compare with the earlier level."
 excerpt: "Leviathan Level 3 — another password-checking program; apply what you learned about tracing and compare with the earlier level."
 permalink: /docs/wargames/leviathan/leviathan3/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `leviathan3`, find the password for `leviathan4`.
+</div>
 
 ### What this level teaches
 
@@ -59,5 +63,9 @@ Recognising a familiar pattern in a slightly different disguise, and confirming 
 ### Why it matters
 
 Experienced analysts pattern-match constantly. Having a short checklist (run, trace, strings, then disassemble) saves hours.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../leviathan2/">Level 2</a><a class="sg-index" href="../">Leviathan overview</a><a class="sg-next" href="../leviathan4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

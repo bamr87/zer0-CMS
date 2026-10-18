@@ -1,5 +1,5 @@
 ---
-title: Leviathan5
+title: "Leviathan Level 5"
 description: "Leviathan Level 5 — a setuid program reads a file from a fixed path; learn how symbolic links redirect it."
 excerpt: "Leviathan Level 5 — a setuid program reads a file from a fixed path; learn how symbolic links redirect it."
 permalink: /docs/wargames/leviathan/leviathan5/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `leviathan5`, find the password for `leviathan6`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ How symbolic links ("symlinks") can trick a privileged program that trusts a pre
 ### Why it matters
 
 Insecure use of temporary files is a classic source of local privilege escalation, which is why `mktemp` and unpredictable names exist.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../leviathan4/">Level 4</a><a class="sg-index" href="../">Leviathan overview</a><a class="sg-next" href="../leviathan6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

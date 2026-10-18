@@ -1,5 +1,5 @@
 ---
-title: Behemoth4
+title: "Behemoth Level 4"
 description: "Behemoth Level 4 — a program reads a file whose name depends on its process ID, which opens the door to a race condition using symbolic links."
 excerpt: "Behemoth Level 4 — a program reads a file whose name depends on its process ID, which opens the door to a race condition using symbolic links."
 permalink: /docs/wargames/behemoth/behemoth4/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth4`, find the password for `behemoth5`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Race conditions and predictable file names.
 ### Why it matters
 
 Time-of-check to time-of-use bugs are a major real-world class, which is why secure temporary-file functions exist.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../behemoth3/">Level 3</a><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Natas20
+title: "Natas Level 20"
 description: "Natas Level 20 — a custom session file handler trusts a newline in user input; learn how data written to server-side state can be forged."
 excerpt: "Natas Level 20 — a custom session file handler trusts a newline in user input; learn how data written to server-side state can be forged."
 permalink: /docs/wargames/natas/natas20/
@@ -38,9 +38,13 @@ sidebar_label: "Level 20"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas20` and find the password for `natas21`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ How custom serialisation formats create injection bugs.
 ### How developers prevent it
 
 Use your framework's well-tested session handlers, and encode data (for example JSON) instead of inventing a format that can be broken by delimiters.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas19/">Level 19</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas21/">Level 21</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

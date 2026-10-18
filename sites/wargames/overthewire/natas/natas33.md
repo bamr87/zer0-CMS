@@ -1,5 +1,5 @@
 ---
-title: Natas33
+title: "Natas Level 33"
 description: "Natas Level 33 — an upload checker and a file function combine so that a crafted archive triggers deserialisation; learn about PHP phar attacks."
 excerpt: "Natas Level 33 — an upload checker and a file function combine so that a crafted archive triggers deserialisation; learn about PHP phar attacks."
 permalink: /docs/wargames/natas/natas33/
@@ -38,9 +38,13 @@ sidebar_label: "Level 33"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas33` and find the password for `natas34`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How seemingly harmless file functions can trigger object deserialisation.
 ### How developers prevent it
 
 Disallow `phar://` for user-controlled paths, update PHP, and avoid dangerous classes that act on destruction.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas32/">Level 32</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas34/">Level 34</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

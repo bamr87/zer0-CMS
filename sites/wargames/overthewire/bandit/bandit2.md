@@ -1,5 +1,5 @@
 ---
-title: Bandit2
+title: "Bandit Level 2"
 description: "Bandit Level 2 — read a file literally named \"-\" and learn why commands treat a leading dash as an option."
 permalink: /docs/wargames/bandit/bandit2/
 date: '2026-04-07T01:41:08.000Z'
@@ -52,9 +52,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit1`, find the password for `bandit2`.
+</div>
 
 ### What this level teaches
 
@@ -75,5 +79,9 @@ Why some filenames break commands, and how to talk to a command about a file tha
 ### Why it matters
 
 Attackers deliberately create files whose names look like command-line flags, which can trick scripts that run `rm *` or `tar *` into executing options. Knowing the mechanism is how you defend against it.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit1/">Level 1</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

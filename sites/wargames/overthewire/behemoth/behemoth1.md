@@ -1,5 +1,5 @@
 ---
-title: Behemoth1
+title: "Behemoth Level 1"
 description: "Behemoth Level 1 — a classic stack buffer overflow in a binary without source, where you inject shellcode and redirect execution to it."
 excerpt: "Behemoth Level 1 — a classic stack buffer overflow in a binary without source, where you inject shellcode and redirect execution to it."
 permalink: /docs/wargames/behemoth/behemoth1/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth1`, find the password for `behemoth2`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ The Narnia-style stack overflow, but starting from a binary alone.
 ### Why it matters
 
 It consolidates the Narnia skills and confirms you can work without source.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../behemoth0/">Level 0</a><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

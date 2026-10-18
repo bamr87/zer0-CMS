@@ -1,5 +1,5 @@
 ---
-title: Vortex1
+title: "Vortex Level 1"
 description: "Vortex Level 1 — a buffer overflow must set a pointer to a specific value, with a hint about how bash handles end of file."
 excerpt: "Vortex Level 1 — a buffer overflow must set a pointer to a specific value, with a hint about how bash handles end of file."
 permalink: /docs/wargames/vortex/vortex1/
@@ -49,9 +49,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex1`, obtain access to `vortex2`.
+</div>
 
 ### What this level teaches
 
@@ -73,5 +77,9 @@ How to overwrite a specific value in memory and how shell input handling can int
 ### Why it matters
 
 It trains you to control memory byte by byte, and to debug the delivery mechanism as well as the payload.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex0/">Level 0</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

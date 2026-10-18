@@ -1,5 +1,5 @@
 ---
-title: Leviathan7
+title: "Leviathan Level 7"
 description: "Leviathan Level 7 — the final level of Leviathan; there is no further password, only a pointer to the next challenge."
 excerpt: "Leviathan Level 7 — the final level of Leviathan; there is no further password, only a pointer to the next challenge."
 permalink: /docs/wargames/leviathan/leviathan7/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** this is the last level; there is no `leviathan8`.
+</div>
 
 ### What this means
 
@@ -50,5 +54,9 @@ You have completed Leviathan. The level confirms your progress and nudges you to
 - **Write down your toolkit.** List the five commands that solved the most levels and what each is for.
 - **Move to binary exploitation.** From the [games index](../../), Narnia gives you source code and teaches memory-corruption bugs.
 - **Deepen your analysis skills.** Try the tools mentioned in the Leviathan index, `objdump` and Ghidra, on programs you wrote yourself.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../leviathan6/">Level 6</a><a class="sg-index" href="../">Leviathan overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

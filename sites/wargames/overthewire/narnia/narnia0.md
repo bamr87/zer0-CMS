@@ -1,5 +1,5 @@
 ---
-title: Narnia0
+title: "Narnia Level 0"
 description: "Narnia Level 0 — overflow a buffer to overwrite a neighbouring variable and learn how data is laid out in memory."
 excerpt: "Narnia Level 0 — overflow a buffer to overwrite a neighbouring variable and learn how data is laid out in memory."
 permalink: /docs/wargames/narnia/narnia0/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia0`, find the password for `narnia1`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ The simplest memory bug: writing more data than a buffer holds so that it spills
 ### Why it matters
 
 Overwriting an adjacent flag, length or permission field is a real-world pattern as well as a teaching one.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

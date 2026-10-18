@@ -4,7 +4,7 @@ description: "Natas teaches server-side web security through 35 browser-based le
 excerpt: "Natas teaches server-side web security through 35 browser-based levels, from reading page source to SQL injection, session attacks and cryptographic oracles."
 permalink: /docs/wargames/natas/
 date: '2026-04-07T01:41:09.000Z'
-lastmod: '2026-04-07T01:41:09.000Z'
+lastmod: '2026-10-16T22:41:14.000Z'
 categories:
 - wargames
 - natas
@@ -53,11 +53,13 @@ Tools you may find useful to solve this wargame
 A webbrowser, curl, ZAP proxy
 
 <div style="float: right; text-align: center">
-<a href="http://www.nessos-project.eu/"><img src="FP7-NESSOS.jpg"></a><br/>
+<a href="http://www.nessos-project.eu/"><img alt="FP7 NESSOS" src="https://overthewire.org/wargames/natas/FP7-NESSOS.jpg"></a><br/>
 developed in association with<br/> the <a href="http://www.nessos-project.eu/">NESSoS FP7 project</a>
 </div>
 
 <!-- study-guide:start -->
+
+<section class="study-guide" markdown="1">
 
 ## Study guide
 
@@ -103,5 +105,9 @@ Unlike Bandit, the page for Level N is the level you are *in*: sign in as `natas
 ### Staying on the right side of the line
 
 Everything here is meant to be attacked, but only the Natas servers. Never apply these techniques to websites you do not own or have written permission to test.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="natas0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

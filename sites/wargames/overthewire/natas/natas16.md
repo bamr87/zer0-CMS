@@ -1,5 +1,5 @@
 ---
-title: Natas16
+title: "Natas Level 16"
 description: "Natas Level 16 — command injection returns, but with stricter filtering and no visible output; learn to turn a search tool into a yes/no oracle."
 excerpt: "Natas Level 16 — command injection returns, but with stricter filtering and no visible output; learn to turn a search tool into a yes/no oracle."
 permalink: /docs/wargames/natas/natas16/
@@ -38,9 +38,13 @@ sidebar_label: "Level 16"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas16` and find the password for `natas17`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Blind command injection through whatever characters the filter still allows.
 ### How developers prevent it
 
 As with all injection bugs: separate data from code. Do not pass user input through a shell at all.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas15/">Level 15</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas17/">Level 17</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

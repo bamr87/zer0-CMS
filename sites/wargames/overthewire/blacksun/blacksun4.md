@@ -1,5 +1,5 @@
 ---
-title: Blacksun4
+title: "Blacksun Level 4"
 description: "Blacksun Level 4 — exploit a deliberately introduced heap vulnerability in Apache and PHP by running your own PHP code on the server."
 excerpt: "Blacksun Level 4 — exploit a deliberately introduced heap vulnerability in Apache and PHP by running your own PHP code on the server."
 permalink: /docs/wargames/blacksun/blacksun4/
@@ -56,9 +56,13 @@ The document root is in /levels/level4/htdocs, you'll need to put your php code 
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the service listens on `127.0.0.1:55555`, with the document root at `/levels/level4/htdocs`.
+</div>
 
 ### What this level teaches
 
@@ -80,5 +84,9 @@ Exploiting a bug in an interpreter by writing scripts in the language it runs.
 ### Why it matters
 
 Modern attacks often target interpreters and runtimes, and heap grooming is the key technique.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../blacksun3/">Level 3</a><a class="sg-index" href="../">Blacksun overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

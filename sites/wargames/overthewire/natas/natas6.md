@@ -1,5 +1,5 @@
 ---
-title: Natas6
+title: "Natas Level 6"
 description: "Natas Level 6 — read the server-side logic the site exposes and follow it to a file that holds the secret, learning how sensitive includes leak."
 excerpt: "Natas Level 6 — read the server-side logic the site exposes and follow it to a file that holds the secret, learning how sensitive includes leak."
 permalink: /docs/wargames/natas/natas6/
@@ -38,9 +38,13 @@ sidebar_label: "Level 6"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas6` and find the password for `natas7`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ How reading source code shows you what the server compares your input against, a
 ### How developers prevent it
 
 Store secrets outside the web root or in environment variables, and give server-side includes extensions that the web server will not serve as text.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas5/">Level 5</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

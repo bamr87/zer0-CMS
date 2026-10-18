@@ -1,5 +1,5 @@
 ---
-title: Vortex23
+title: "Vortex Level 23"
 description: "Vortex Level 23 — \"The Properties of a Mirror\": independent research is needed, and the level's title is the main hint."
 excerpt: "Vortex Level 23 — \"The Properties of a Mirror\": independent research is needed, and the level's title is the main hint."
 permalink: /docs/wargames/vortex/vortex23/
@@ -41,9 +41,13 @@ It's time for some independent research, the title of this level serves as quite
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex23`, obtain access to `vortex24`.
+</div>
 
 ### What this level teaches
 
@@ -64,5 +68,9 @@ Researching an unfamiliar concept yourself.
 ### Why it matters
 
 Security work constantly means learning unfamiliar systems quickly.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex22/">Level 22</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex24/">Level 24</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

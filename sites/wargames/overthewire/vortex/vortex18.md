@@ -1,5 +1,5 @@
 ---
-title: Vortex18
+title: "Vortex Level 18"
 description: "Vortex Level 18 — take advantage of how the program depends on /dev/urandom for its seeds."
 excerpt: "Vortex Level 18 — take advantage of how the program depends on /dev/urandom for its seeds."
 permalink: /docs/wargames/vortex/vortex18/
@@ -39,9 +39,13 @@ Take advantage of the application's urandom dependency.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex18`, obtain access to `vortex19`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ How randomness sources are used, and what happens when a program uses them badly
 ### Why it matters
 
 Seeding mistakes are a recurring cause of weak keys and tokens.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex17/">Level 17</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex19/">Level 19</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

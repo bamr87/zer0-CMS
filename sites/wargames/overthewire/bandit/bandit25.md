@@ -1,5 +1,5 @@
 ---
-title: Bandit25
+title: "Bandit Level 25"
 description: "Bandit Level 25 — brute-force a 4-digit PIN against a network service by scripting 10,000 guesses over one connection."
 permalink: /docs/wargames/bandit/bandit25/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ You do not need to create new connections each time
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit24`, find the password for `bandit25`.
+</div>
 
 ### What this level teaches
 
@@ -68,5 +72,9 @@ How brute force works, when it is feasible, and how to automate it with a shell 
 ### Why it matters
 
 Understanding the arithmetic of brute force explains why short PINs, weak passwords and unthrottled login forms are dangerous.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit24/">Level 24</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit26/">Level 26</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

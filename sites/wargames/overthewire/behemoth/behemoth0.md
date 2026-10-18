@@ -1,5 +1,5 @@
 ---
-title: Behemoth0
+title: "Behemoth Level 0"
 description: "Behemoth Level 0 — a program that asks for a password; learn to find what it compares your input to by tracing and string extraction."
 excerpt: "Behemoth Level 0 — a program that asks for a password; learn to find what it compares your input to by tracing and string extraction."
 permalink: /docs/wargames/behemoth/behemoth0/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth0`, find the password for `behemoth1`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Static and dynamic analysis of a simple password-checking binary, as in Leviatha
 ### Why it matters
 
 Hard-coded credentials in binaries are found constantly in real firmware and applications.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Drifter10
+title: "Drifter Level 10"
 description: "Drifter Level 10 — additional practice with a non-executable stack, relying on careful reverse engineering."
 excerpt: "Drifter Level 10 — additional practice with a non-executable stack, relying on careful reverse engineering."
 permalink: /docs/wargames/drifter/drifter10/
@@ -37,9 +37,13 @@ If you're not a pro at this stuff yet, here's some additional practice. Beware o
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 10 of 0–15, in the privileges and practice stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Exploiting a program when the stack is non-executable.
 ### Why it matters
 
 Practice with non-executable memory is practice with the modern default.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter9/">Level 9</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter11/">Level 11</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

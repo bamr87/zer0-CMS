@@ -1,5 +1,5 @@
 ---
-title: Bandit3
+title: "Bandit Level 3"
 description: "Bandit Level 3 — read a file whose name contains spaces by using quoting, escaping or tab completion."
 permalink: /docs/wargames/bandit/bandit3/
 date: '2026-04-07T01:41:08.000Z'
@@ -50,9 +50,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit2`, find the password for `bandit3`.
+</div>
 
 ### What this level teaches
 
@@ -73,5 +77,9 @@ How the shell splits a command line into words, and how to keep a filename with 
 ### Why it matters
 
 Spaces and special characters in filenames cause the classic scripting bugs. Always quoting variables in scripts (`"$file"`) comes directly from this lesson.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit2/">Level 2</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

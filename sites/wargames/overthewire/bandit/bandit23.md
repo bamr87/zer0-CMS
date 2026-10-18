@@ -1,5 +1,5 @@
 ---
-title: Bandit23
+title: "Bandit Level 23"
 description: "Bandit Level 23 — read a shell script run by cron and work out what it computes and for whom."
 permalink: /docs/wargames/bandit/bandit23/
 date: '2026-04-07T01:41:08.000Z'
@@ -46,9 +46,13 @@ cron, crontab, crontab(5) (use "man 5 crontab" to access this)
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit22`, find the password for `bandit23`.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ Reading shell scripts critically, including who a script runs as.
 ### Why it matters
 
 "Security through an obscure filename" fails once the algorithm is visible. Auditing scripts and spotting such patterns is routine code-review work.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit22/">Level 22</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit24/">Level 24</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

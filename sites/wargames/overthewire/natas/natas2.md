@@ -1,5 +1,5 @@
 ---
-title: Natas2
+title: "Natas Level 2"
 description: "Natas Level 2 — notice that the page loads a resource you can follow, and discover what an exposed directory listing reveals."
 excerpt: "Natas Level 2 — notice that the page loads a resource you can follow, and discover what an exposed directory listing reveals."
 permalink: /docs/wargames/natas/natas2/
@@ -38,9 +38,13 @@ sidebar_label: "Level 2"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas2` and find the password for `natas3`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ How to enumerate the resources a page loads and explore the directories they liv
 ### How developers prevent it
 
 Disable directory listings, keep sensitive files out of the web root, and treat every file reachable by URL as public.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas1/">Level 1</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

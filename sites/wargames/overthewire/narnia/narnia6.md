@@ -1,5 +1,5 @@
 ---
-title: Narnia6
+title: "Narnia Level 6"
 description: "Narnia Level 6 — a harder overflow where relying on injected shellcode is unattractive; think about reusing code that already exists in the program."
 excerpt: "Narnia Level 6 — a harder overflow where relying on injected shellcode is unattractive; think about reusing code that already exists in the program."
 permalink: /docs/wargames/narnia/narnia6/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia6`, find the password for `narnia7`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Reusing existing code rather than injecting your own, a stepping stone to modern
 ### Why it matters
 
 Return-to-libc leads directly to return-oriented programming (ROP), the standard bypass for non-executable stacks.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia5/">Level 5</a><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

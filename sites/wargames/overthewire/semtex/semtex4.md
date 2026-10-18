@@ -1,5 +1,5 @@
 ---
-title: Semtex4
+title: "Semtex Level 4"
 description: "Semtex Level 4 — make a stripped, statically linked program print the next level's password, using ptrace."
 excerpt: "Semtex Level 4 — make a stripped, statically linked program print the next level's password, using ptrace."
 permalink: /docs/wargames/semtex/semtex4/
@@ -46,9 +46,13 @@ Tip :
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the `pass` program prints your own level's password; you must make it print the next one.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ Using `ptrace`, the system call behind debuggers, to alter another process.
 ### Why it matters
 
 This is how debuggers, sandboxes and many anti-debugging tricks work.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex3/">Level 3</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

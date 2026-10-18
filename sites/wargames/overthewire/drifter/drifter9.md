@@ -1,5 +1,5 @@
 ---
-title: Drifter9
+title: "Drifter Level 9"
 description: "Drifter Level 9 — escalate privileges by working out a secret file format and exploiting security oversights."
 excerpt: "Drifter Level 9 — escalate privileges by working out a secret file format and exploiting security oversights."
 permalink: /docs/wargames/drifter/drifter9/
@@ -37,9 +37,13 @@ Get ready to escalate those privileges. You'll have to work out a secret file fo
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 9 of 0–15, in the privileges and practice stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Local privilege escalation by combining format knowledge and configuration mista
 ### Why it matters
 
 Most real privilege escalations come from trust mistakes rather than exotic bugs.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter8/">Level 8</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter10/">Level 10</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

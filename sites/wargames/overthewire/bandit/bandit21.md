@@ -1,5 +1,5 @@
 ---
-title: Bandit21
+title: "Bandit Level 21"
 description: "Bandit Level 21 — run your own network listener in the background so a setuid program can connect to it."
 permalink: /docs/wargames/bandit/bandit21/
 date: '2026-04-07T01:41:08.000Z'
@@ -46,9 +46,13 @@ ssh, nc, cat, bash, screen, tmux, Unix 'job control' (bg, fg, jobs, &, CTRL-Z, .
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit20`, find the password for `bandit21`.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ Reversing the client and server roles, and juggling several things at once in on
 ### Why it matters
 
 Reverse connections, callbacks and test servers are everyday techniques for debugging networks and, in security, for understanding how malware communicates.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit20/">Level 20</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit22/">Level 22</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

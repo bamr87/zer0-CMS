@@ -1,5 +1,5 @@
 ---
-title: Vortex13
+title: "Vortex Level 13"
 description: "Vortex Level 13 — a non-executable-stack level that asks \"how big is your shellcode?\", pushing you toward compact payloads."
 excerpt: "Vortex Level 13 — a non-executable-stack level that asks \"how big is your shellcode?\", pushing you toward compact payloads."
 permalink: /docs/wargames/vortex/vortex13/
@@ -41,9 +41,13 @@ How big is your shellcode? This level has a non-executable stack. You must login
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex13`, obtain access to `vortex14`.
+</div>
 
 ### What this level teaches
 
@@ -65,5 +69,9 @@ Working under tight space constraints.
 ### Why it matters
 
 Real exploits often have only a few bytes to work with, which is why shellcode tricks and staged payloads exist.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex12/">Level 12</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex14/">Level 14</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

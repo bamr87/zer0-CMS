@@ -1,5 +1,5 @@
 ---
-title: Semtex2
+title: "Semtex Level 2"
 description: "Semtex Level 2 — a program checks your user ID; trick it into seeing a different one using function interception."
 excerpt: "Semtex Level 2 — a program checks your user ID; trick it into seeing a different one using function interception."
 permalink: /docs/wargames/semtex/semtex2/
@@ -49,9 +49,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the goal is to make the program believe you are a different user.
+</div>
 
 ### What this level teaches
 
@@ -73,5 +77,9 @@ Dynamic tricks: changing a program's behaviour without changing the program.
 ### Why it matters
 
 Interposition is used by profilers and debuggers as well as by malware.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex1/">Level 1</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

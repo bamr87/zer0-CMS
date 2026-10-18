@@ -1,5 +1,5 @@
 ---
-title: Vortex20
+title: "Vortex Level 20"
 description: "Vortex Level 20 — exploit integer handling bugs in a remote application whose source is available."
 excerpt: "Vortex Level 20 — exploit integer handling bugs in a remote application whose source is available."
 permalink: /docs/wargames/vortex/vortex20/
@@ -41,9 +41,13 @@ The source code for the exploitable application can be found in "/home/vortex20"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex20`, obtain access to `vortex21`. The exploitable source is in `/home/vortex20`.
+</div>
 
 ### What this level teaches
 
@@ -64,5 +68,9 @@ Integer overflows, sign confusion and length checks that go wrong.
 ### Why it matters
 
 Integer errors lead to buffer overflows in many real programs and are easy to overlook in review.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex19/">Level 19</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex21/">Level 21</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

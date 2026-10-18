@@ -1,5 +1,5 @@
 ---
-title: Drifter4
+title: "Drifter Level 4"
 description: "Drifter Level 4 — a binary that needs simple analysis, with a hint to keep resource limits in mind."
 excerpt: "Drifter Level 4 — a binary that needs simple analysis, with a hint to keep resource limits in mind."
 permalink: /docs/wargames/drifter/drifter4/
@@ -39,9 +39,13 @@ Hint: Keep in mind about resource limits
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 4 of 0–15, in the analysis and logic stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Basic reverse engineering, and how process resource limits affect behaviour.
 ### Why it matters
 
 Limits and environment variables are an under-appreciated part of the attack surface.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter3/">Level 3</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Natas28
+title: "Natas Level 28"
 description: "Natas Level 28 — a query is encrypted with AES in ECB mode; learn how block-by-block encryption lets an attacker cut and paste ciphertext."
 excerpt: "Natas Level 28 — a query is encrypted with AES in ECB mode; learn how block-by-block encryption lets an attacker cut and paste ciphertext."
 permalink: /docs/wargames/natas/natas28/
@@ -38,9 +38,13 @@ sidebar_label: "Level 28"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas28` and find the password for `natas29`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ An encryption oracle attack against ECB mode.
 ### How developers prevent it
 
 Use authenticated encryption such as AES-GCM, and do not construct SQL from decrypted data.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas27/">Level 27</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas29/">Level 29</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Vortex17
+title: "Vortex Level 17"
 description: "Vortex Level 17 — work backwards from observed behaviour to understand the program, then exploit it."
 excerpt: "Vortex Level 17 — work backwards from observed behaviour to understand the program, then exploit it."
 permalink: /docs/wargames/vortex/vortex17/
@@ -41,9 +41,13 @@ This level requires you to work backwards to find out what's happening then expl
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex17`, obtain access to `vortex18`.
+</div>
 
 ### What this level teaches
 
@@ -64,5 +68,9 @@ Reasoning from effects back to causes.
 ### Why it matters
 
 Debugging and exploit work are both inference problems.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex16/">Level 16</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex18/">Level 18</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

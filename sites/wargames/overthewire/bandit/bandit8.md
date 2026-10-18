@@ -1,5 +1,5 @@
 ---
-title: Bandit8
+title: "Bandit Level 8"
 description: "Bandit Level 8 — find one line in a large text file with grep."
 permalink: /docs/wargames/bandit/bandit8/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ Commands you may need to solve this level
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit7`, find the password for `bandit8`.
+</div>
 
 ### What this level teaches
 
@@ -66,5 +70,9 @@ Searching inside files rather than for them: `grep`, the tool you will use more 
 ### Why it matters
 
 Log analysis, code search and threat hunting all begin with grep. Learning it early makes every later level faster.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit7/">Level 7</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit9/">Level 9</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Narnia9
+title: "Narnia Level 9"
 description: "Narnia Level 9 — the final Narnia page in this mirror; apply everything from Levels 0–8 and consolidate your exploitation skills."
 excerpt: "Narnia Level 9 — the final Narnia page in this mirror; apply everything from Levels 0–8 and consolidate your exploitation skills."
 permalink: /docs/wargames/narnia/narnia9/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia9`. This is the highest-numbered Narnia page; the upstream index counts ten levels, `narnia0` to `narnia9`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Putting the whole Narnia toolbox together without a hint about which technique t
 - **Re-derive one earlier exploit from scratch** using only the source and `gdb`.
 - **Move on to Behemoth.** From the [games index](../../), Behemoth is the next step; it does not hand you source code.
 - **Learn the defences.** Read about stack canaries, non-executable memory and address randomisation to see why today's exploits are harder.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia8/">Level 8</a><a class="sg-index" href="../">Narnia overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

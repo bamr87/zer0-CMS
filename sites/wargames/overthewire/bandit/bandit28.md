@@ -1,5 +1,5 @@
 ---
-title: Bandit28
+title: "Bandit Level 28"
 description: "Bandit Level 28 — clone a Git repository over SSH from your own machine and read its files."
 permalink: /docs/wargames/bandit/bandit28/
 date: '2026-04-07T01:41:08.000Z'
@@ -55,9 +55,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** using the password for `bandit27`, find the password for `bandit28`.
+</div>
 
 ### What this level teaches
 
@@ -77,5 +81,9 @@ The basic Git workflow: cloning a remote repository over SSH.
 ### Why it matters
 
 Git is the foundation of modern software development, and every remaining Bandit level is a lesson in how it stores history.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit27/">Level 27</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit29/">Level 29</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Natas17
+title: "Natas Level 17"
 description: "Natas Level 17 — the application gives no feedback at all; learn time-based blind SQL injection, where a deliberate delay is the answer."
 excerpt: "Natas Level 17 — the application gives no feedback at all; learn time-based blind SQL injection, where a deliberate delay is the answer."
 permalink: /docs/wargames/natas/natas17/
@@ -38,9 +38,13 @@ sidebar_label: "Level 17"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas17` and find the password for `natas18`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Using response time as the only observable signal.
 ### How developers prevent it
 
 Use parameterised queries, impose database query time limits, and alert on unusual response times.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas16/">Level 16</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas18/">Level 18</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

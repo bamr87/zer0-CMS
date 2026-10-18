@@ -1,5 +1,5 @@
 ---
-title: Behemoth3
+title: "Behemoth Level 3"
 description: "Behemoth Level 3 — a format-string vulnerability in a binary without source, used to write to memory and take control."
 excerpt: "Behemoth Level 3 — a format-string vulnerability in a binary without source, used to write to memory and take control."
 permalink: /docs/wargames/behemoth/behemoth3/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth3`, find the password for `behemoth4`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Format-string exploitation starting from a compiled program.
 ### Why it matters
 
 It repeats a technique you learned earlier in a more realistic setting.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../behemoth2/">Level 2</a><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

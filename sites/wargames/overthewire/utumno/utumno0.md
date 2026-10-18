@@ -1,5 +1,5 @@
 ---
-title: Utumno0
+title: "Utumno Level 0"
 description: "Utumno Level 0 — an intentionally undocumented first level, with a method for investigating it."
 excerpt: "Utumno Level 0 — an intentionally undocumented first level, with a method for investigating it."
 permalink: /docs/wargames/utumno/utumno0/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `utumno0`, find the password for `utumno1`.
+</div>
 
 ### What to expect
 
@@ -59,5 +63,9 @@ Utumno is rated 4/10 by its original authors, and lives under `/utumno/` on the 
 ### Why it matters
 
 Each level is a miniature version of a real bug class. Working it out yourself without hints builds the investigative habits that no walkthrough can give you.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Utumno overview</a><a class="sg-next" href="../utumno1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

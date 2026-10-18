@@ -3,7 +3,7 @@ title: Bandit
 description: "Bandit is the beginner Linux and SSH wargame — 34 short levels that teach the command-line skills every other OverTheWire game assumes."
 permalink: /docs/wargames/bandit/
 date: '2026-04-07T01:41:08.000Z'
-lastmod: '2026-04-07T01:41:08.000Z'
+lastmod: '2026-10-16T22:30:54.000Z'
 categories:
 - wargames
 - bandit
@@ -63,14 +63,16 @@ You're ready to start! Begin with [Level 0][], linked at the left of this page. 
 
 **Note for VMs:** You may fail to connect to overthewire.org via SSH with a "*broken pipe error*” when the network adapter for the VM is configured to use NAT mode. Adding the setting **`IPQoS throughput`** to `/etc/ssh/ssh_config` should resolve the issue. If this does not solve your issue, the only option then is to change the adapter to Bridged mode. 
 
-  [Level 1]: /docs/wargames/bandit/bandit1/
-  [Level 0]: /docs/wargames/bandit/bandit0/
+  [Level 1]: {{ '/docs/wargames/bandit/bandit1/' | relative_url }}
+  [Level 0]: {{ '/docs/wargames/bandit/bandit0/' | relative_url }}
   [introduction to user commands]: https://manpages.ubuntu.com/manpages/noble/man1/intro.1.html
   [man page]: https://en.wikipedia.org/wiki/Man_page
   [Google]: https://www.google.com
   [join us via chat]: https://overthewire.org/information/chat.html
 
 <!-- study-guide:start -->
+
+<section class="study-guide" markdown="1">
 
 ## Study guide
 
@@ -117,5 +119,9 @@ Each level page describes how to get **to** that level from the one before it. T
 ### After Bandit
 
 The suggested order on the [games index](../) is Bandit first, then any of Natas (web), Krypton (cryptography) or Leviathan (reverse engineering), then the binary-exploitation games Narnia, Behemoth and onward.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="bandit0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

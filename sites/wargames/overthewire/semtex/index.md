@@ -59,6 +59,8 @@ This wargame is from the community for the community. If you want to contribute,
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide describes what each Semtex level asks for, using the upstream level pages, without passwords or complete solutions.
@@ -92,5 +94,9 @@ C or Python, comfort with sockets (Beej's guide is linked from Level 0), the abi
 ### Take-aways
 
 Several levels teach ideas that are very relevant today: covert channels, ICMP tunnelling to bypass firewalls, weak challenge-response schemes and spoofed source addresses. Treat them as study cases, and only experiment on systems you own or are authorised to test.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="semtex0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Krypton3
+title: "Krypton Level 3"
 description: "Krypton Level 3 — recover a substitution key from several intercepted English messages using frequency analysis."
 excerpt: "Krypton Level 3 — recover a substitution key from several intercepted English messages using frequency analysis."
 permalink: /docs/wargames/krypton/krypton3/
@@ -50,9 +50,13 @@ Enjoy.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `krypton3`, decrypt the file that holds the password for `krypton4`.
+</div>
 
 ### What this level teaches
 
@@ -74,5 +78,9 @@ Frequency analysis, the classic attack on monoalphabetic substitution ciphers.
 ### Why it matters
 
 Fixed substitution preserves the statistics of the language. Good modern ciphers are designed so ciphertext looks uniformly random.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../krypton2/">Level 2</a><a class="sg-index" href="../">Krypton overview</a><a class="sg-next" href="../krypton4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

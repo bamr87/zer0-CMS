@@ -1,5 +1,5 @@
 ---
-title: Leviathan4
+title: "Leviathan Level 4"
 description: "Leviathan Level 4 — find a program whose output is a string of binary digits and learn to convert numbers between bases."
 excerpt: "Leviathan Level 4 — find a program whose output is a string of binary digits and learn to convert numbers between bases."
 permalink: /docs/wargames/leviathan/leviathan4/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `leviathan4`, find the password for `leviathan5`.
+</div>
 
 ### What this level teaches
 
@@ -59,5 +63,9 @@ Number bases and text encoding, plus another round of careful directory explorat
 ### Why it matters
 
 Reading binary, hexadecimal and ASCII fluently makes all later binary-exploitation work easier.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../leviathan3/">Level 3</a><a class="sg-index" href="../">Leviathan overview</a><a class="sg-next" href="../leviathan5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

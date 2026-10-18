@@ -1,5 +1,5 @@
 ---
-title: Bandit14
+title: "Bandit Level 14"
 description: "Bandit Level 14 — authenticate to SSH with a private key instead of a password."
 permalink: /docs/wargames/bandit/bandit14/
 date: '2026-04-07T01:41:08.000Z'
@@ -50,9 +50,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit13`, gain access to `bandit14`.
+</div>
 
 ### What this level teaches
 
@@ -74,5 +78,9 @@ Public-key authentication, the way professionals actually log in to servers.
 ### Why it matters
 
 Passwords get guessed and phished; keys are far harder to steal remotely. Almost every cloud server and Git host uses SSH keys.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit13/">Level 13</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit15/">Level 15</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

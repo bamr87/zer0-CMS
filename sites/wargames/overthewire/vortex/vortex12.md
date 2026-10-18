@@ -1,5 +1,5 @@
 ---
-title: Vortex12
+title: "Vortex Level 12"
 description: "Vortex Level 12 — exploit a program knowing the stack is not executable, which rules out classic shellcode on the stack."
 excerpt: "Vortex Level 12 — exploit a program knowing the stack is not executable, which rules out classic shellcode on the stack."
 permalink: /docs/wargames/vortex/vortex12/
@@ -41,9 +41,13 @@ Exploit this level knowing that the stack is not executable. You must login to [
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex12`, obtain access to `vortex13`.
+</div>
 
 ### What this level teaches
 
@@ -65,5 +69,9 @@ Defeating the non-executable stack.
 ### Why it matters
 
 Non-executable memory is standard today, so ret2libc and ROP are the baseline techniques.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex11/">Level 11</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex13/">Level 13</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

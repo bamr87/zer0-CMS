@@ -1,5 +1,5 @@
 ---
-title: Bandit24
+title: "Bandit Level 24"
 description: "Bandit Level 24 — write your first shell script and let a cron job run it with more privileges than you have."
 permalink: /docs/wargames/bandit/bandit24/
 date: '2026-04-07T01:41:08.000Z'
@@ -48,9 +48,13 @@ chmod, cron, crontab, crontab(5) (use "man 5 crontab" to access this)
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit23`, find the password for `bandit24`.
+</div>
 
 ### What this level teaches
 
@@ -72,5 +76,9 @@ Writing a script, and the danger of a privileged job that executes files other u
 ### Why it matters
 
 This is a textbook privilege-escalation pattern: a root-run cron or service that executes files from a world-writable location.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit23/">Level 23</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit25/">Level 25</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

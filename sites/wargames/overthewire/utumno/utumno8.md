@@ -1,5 +1,5 @@
 ---
-title: Utumno8
+title: "Utumno Level 8"
 description: "Utumno Level 8 — an intentionally undocumented final level, with a method for investigating it."
 excerpt: "Utumno Level 8 — an intentionally undocumented final level, with a method for investigating it."
 permalink: /docs/wargames/utumno/utumno8/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `utumno8`. The upstream index counts ten levels, but this mirror documents `utumno0` to `utumno8`.
+</div>
 
 ### What to expect
 
@@ -65,5 +69,9 @@ Each level is a miniature version of a real bug class. Working it out yourself w
 - **Consolidate.** For each level, record the bug class, the tool that found it and the technique that worked.
 - **Continue.** From the [games index](../../), Maze is a natural next step.
 - **Read about defences.** Stack canaries, non-executable memory, ASLR and RELRO each map to attacks you have practised.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../utumno7/">Level 7</a><a class="sg-index" href="../">Utumno overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

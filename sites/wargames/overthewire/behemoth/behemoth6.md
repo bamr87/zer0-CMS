@@ -1,5 +1,5 @@
 ---
-title: Behemoth6
+title: "Behemoth Level 6"
 description: "Behemoth Level 6 — a later level that combines custom shellcode with a helper program; investigate the level directory and the program's behaviour."
 excerpt: "Behemoth Level 6 — a later level that combines custom shellcode with a helper program; investigate the level directory and the program's behaviour."
 permalink: /docs/wargames/behemoth/behemoth6/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth6`, find the password for `behemoth7`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Stepping up from a single technique to a combined challenge.
 ### Why it matters
 
 Real attacks are multi-stage, and breaking them into verified steps is the key to getting them working.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../behemoth5/">Level 5</a><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

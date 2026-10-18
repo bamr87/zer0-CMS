@@ -1,5 +1,5 @@
 ---
-title: Blacksun2
+title: "Blacksun Level 2"
 description: "Blacksun Level 2 — write a malicious POP3 server that triggers a vulnerability in a buggy mail-client library and gets a shell despite ASLR."
 excerpt: "Blacksun Level 2 — write a malicious POP3 server that triggers a vulnerability in a buggy mail-client library and gets a shell despite ASLR."
 permalink: /docs/wargames/blacksun/blacksun2/
@@ -60,9 +60,13 @@ Binary information
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the test client is `/levels/level2`, built from the libspopc 0.7 sources in `/levels/2/`.
+</div>
 
 ### What this level teaches
 
@@ -85,5 +89,9 @@ Attacking a client by controlling the server it talks to.
 ### Why it matters
 
 Malicious servers attacking vulnerable clients (mail clients, browsers, update tools) are a major real-world attack class.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../blacksun1/">Level 1</a><a class="sg-index" href="../">Blacksun overview</a><a class="sg-next" href="../blacksun3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

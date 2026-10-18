@@ -1,5 +1,5 @@
 ---
-title: Bandit33
+title: "Bandit Level 33"
 description: "Bandit Level 33 — escape from a shell that converts everything you type to uppercase."
 permalink: /docs/wargames/bandit/bandit33/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ sh, man
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit32`, find the password for `bandit33`.
+</div>
 
 ### What this level teaches
 
@@ -68,5 +72,9 @@ How shell parameters and expansions work, by being forced to use only characters
 ### Why it matters
 
 Input filters and blocklists are routinely bypassed by features of the interpreter behind them. This is the mindset behind many web and shell injection techniques.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit32/">Level 32</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit34/">Level 34</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

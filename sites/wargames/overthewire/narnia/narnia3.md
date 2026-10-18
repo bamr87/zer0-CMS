@@ -1,5 +1,5 @@
 ---
-title: Narnia3
+title: "Narnia Level 3"
 description: "Narnia Level 3 — another overflow level; use the source to see what an overflowing input can reach and plan around the program's file handling."
 excerpt: "Narnia Level 3 — another overflow level; use the source to see what an overflowing input can reach and plan around the program's file handling."
 permalink: /docs/wargames/narnia/narnia3/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia3`, find the password for `narnia4`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Reasoning about stack layout and about what the program does with files, not onl
 ### Why it matters
 
 Real exploits are usually found by studying program behaviour, not by blindly overwriting return addresses.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia2/">Level 2</a><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

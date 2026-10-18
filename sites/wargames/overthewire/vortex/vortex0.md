@@ -1,5 +1,5 @@
 ---
-title: Vortex0
+title: "Vortex Level 0"
 description: "Vortex Level 0 — write a small TCP client that reads four unsigned integers in host byte order, adds them, and sends back the result."
 excerpt: "Vortex Level 0 — write a small TCP client that reads four unsigned integers in host byte order, adds them, and sends back the result."
 permalink: /docs/wargames/vortex/vortex0/
@@ -49,9 +49,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** connect to port 5842 on `vortex.labs.overthewire.org` to obtain the credentials for the next account.
+</div>
 
 ### What this level teaches
 
@@ -72,5 +76,9 @@ Basic network programming and the realities of 32-bit little-endian data.
 ### Why it matters
 
 Binary protocols and integer width mistakes are the foundation of countless exploits.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

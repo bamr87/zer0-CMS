@@ -1,5 +1,5 @@
 ---
-title: Bandit26
+title: "Bandit Level 26"
 description: "Bandit Level 26 — discover that a user's login shell is not bash, then break out of the restricted program that replaced it."
 permalink: /docs/wargames/bandit/bandit26/
 date: '2026-04-07T01:41:08.000Z'
@@ -49,9 +49,13 @@ ssh, cat, more, vi, ls, id, pwd
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit25`, gain an interactive shell as `bandit26`.
+</div>
 
 ### What this level teaches
 
@@ -74,5 +78,9 @@ How login shells work, and that many ordinary programs have built-in escape hatc
 ### Why it matters
 
 Restricted shells, kiosk systems and sudo rules that permit "just one safe command" are all defeated by this kind of escape.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit25/">Level 25</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit27/">Level 27</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

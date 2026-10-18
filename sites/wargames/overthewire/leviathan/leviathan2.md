@@ -1,5 +1,5 @@
 ---
-title: Leviathan2
+title: "Leviathan Level 2"
 description: "Leviathan Level 2 — a setuid program checks whether you may read a file before printing it; learn what that check really verifies."
 excerpt: "Leviathan Level 2 — a setuid program checks whether you may read a file before printing it; learn what that check really verifies."
 permalink: /docs/wargames/leviathan/leviathan2/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `leviathan2`, find the password for `leviathan3`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ How a program decides whether you are allowed to read a file, and how the name i
 ### Why it matters
 
 This class of bug, known as time-of-check to time-of-use, has caused real privilege escalations in widely used software.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../leviathan1/">Level 1</a><a class="sg-index" href="../">Leviathan overview</a><a class="sg-next" href="../leviathan3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

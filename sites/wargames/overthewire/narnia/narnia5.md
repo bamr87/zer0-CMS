@@ -1,5 +1,5 @@
 ---
-title: Narnia5
+title: "Narnia Level 5"
 description: "Narnia Level 5 — a format-string bug; learn how printf-style functions can be made to read and write arbitrary memory."
 excerpt: "Narnia Level 5 — a format-string bug; learn how printf-style functions can be made to read and write arbitrary memory."
 permalink: /docs/wargames/narnia/narnia5/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia5`, find the password for `narnia6`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Format-string vulnerabilities.
 ### Why it matters
 
 Format-string bugs were once everywhere. Compilers now warn about them, but the technique teaches how arbitrary-write primitives work.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia4/">Level 4</a><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Natas5
+title: "Natas Level 5"
 description: "Natas Level 5 — a login state is stored in a cookie the user can edit; learn to inspect and change cookies."
 excerpt: "Natas Level 5 — a login state is stored in a cookie the user can edit; learn to inspect and change cookies."
 permalink: /docs/wargames/natas/natas5/
@@ -38,9 +38,13 @@ sidebar_label: "Level 5"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas5` and find the password for `natas6`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ How cookies carry state between requests, and the danger of storing trust decisi
 ### How developers prevent it
 
 Keep authorisation state on the server and give the client only an unguessable session identifier, or sign any data you must hand to the client.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas4/">Level 4</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

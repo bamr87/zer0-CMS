@@ -1,5 +1,5 @@
 ---
-title: Vortex2
+title: "Vortex Level 2"
 description: "Vortex Level 2 — create a specially crafted tar file, learning the archive format and how tools process it."
 excerpt: "Vortex Level 2 — create a specially crafted tar file, learning the archive format and how tools process it."
 permalink: /docs/wargames/vortex/vortex2/
@@ -47,9 +47,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex2`, obtain access to `vortex3`.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ How an archive format works and how a program that handles archives can be steer
 ### Why it matters
 
 Archive handling flaws (path traversal, symlinks, overwrite) are common real vulnerabilities.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex1/">Level 1</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

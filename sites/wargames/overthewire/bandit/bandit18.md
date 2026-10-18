@@ -1,5 +1,5 @@
 ---
-title: Bandit18
+title: "Bandit Level 18"
 description: "Bandit Level 18 — compare two files with diff to find the single line that changed."
 permalink: /docs/wargames/bandit/bandit18/
 date: '2026-04-07T01:41:08.000Z'
@@ -46,9 +46,13 @@ cat, grep, ls, diff
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit17`, find the password for `bandit18`.
+</div>
 
 ### What this level teaches
 
@@ -69,5 +73,9 @@ How to find differences between two versions of a file, and how to read a diff.
 ### Why it matters
 
 `git diff`, code review and configuration-drift tools are all diff under another name.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit17/">Level 17</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit19/">Level 19</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

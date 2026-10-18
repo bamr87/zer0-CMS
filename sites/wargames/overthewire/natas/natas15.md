@@ -1,5 +1,5 @@
 ---
-title: Natas15
+title: "Natas Level 15"
 description: "Natas Level 15 — the application only answers \"exists\" or \"does not exist\"; learn blind boolean SQL injection and how to automate it."
 excerpt: "Natas Level 15 — the application only answers \"exists\" or \"does not exist\"; learn blind boolean SQL injection and how to automate it."
 permalink: /docs/wargames/natas/natas15/
@@ -38,9 +38,13 @@ sidebar_label: "Level 15"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas15` and find the password for `natas16`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Extracting data one true/false question at a time when the application never pri
 ### How developers prevent it
 
 Parameterised queries again, plus rate limiting and monitoring for bursts of near-identical requests.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas14/">Level 14</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas16/">Level 16</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

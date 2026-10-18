@@ -1,5 +1,5 @@
 ---
-title: Bandit29
+title: "Bandit Level 29"
 description: "Bandit Level 29 — find a secret that was removed from the current files but is still preserved in Git history."
 permalink: /docs/wargames/bandit/bandit29/
 date: '2026-04-07T01:41:08.000Z'
@@ -55,9 +55,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** using the password for `bandit28`, find the password for `bandit29`.
+</div>
 
 ### What this level teaches
 
@@ -78,5 +82,9 @@ Deleting something from the latest version of a repository does not delete it fr
 ### Why it matters
 
 Committing API keys and passwords is one of the most common real-world leaks. If it happens, rotate the secret; rewriting history is not enough.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit28/">Level 28</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit30/">Level 30</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

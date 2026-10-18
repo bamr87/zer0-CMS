@@ -1,5 +1,5 @@
 ---
-title: Natas22
+title: "Natas Level 22"
 description: "Natas Level 22 — the server redirects you away, but still sends the page body; learn that a redirect does not stop the content from being delivered."
 excerpt: "Natas Level 22 — the server redirects you away, but still sends the page body; learn that a redirect does not stop the content from being delivered."
 permalink: /docs/wargames/natas/natas22/
@@ -38,9 +38,13 @@ sidebar_label: "Level 22"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas22` and find the password for `natas23`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How HTTP redirects really work, and how browsers hide what the server sent.
 ### How developers prevent it
 
 Always stop execution after sending a redirect, and perform the authorisation check before generating any sensitive output.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas21/">Level 21</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas23/">Level 23</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

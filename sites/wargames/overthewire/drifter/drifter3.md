@@ -1,5 +1,5 @@
 ---
-title: Drifter3
+title: "Drifter Level 3"
 description: "Drifter Level 3 — a remote heap corruption bug in a program linked against an old malloc implementation, with source supplied."
 excerpt: "Drifter Level 3 — a remote heap corruption bug in a program linked against an old malloc implementation, with source supplied."
 permalink: /docs/wargames/drifter/drifter3/
@@ -41,9 +41,13 @@ Level 3 is a remote heap corruption issue. Source code can be found in /drifter/
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 3 of 0–15, in the memory corruption stage of the game. The page does not say which account you start as, so check with `id` after connecting. The source is in `/drifter/drifter3_src/`.
+</div>
 
 ### What this level teaches
 
@@ -65,5 +69,9 @@ Classic heap-metadata attacks against an allocator without modern checks.
 ### Why it matters
 
 Modern allocators add many checks because of exactly this class of attack.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter2/">Level 2</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

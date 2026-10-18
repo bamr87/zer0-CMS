@@ -1,5 +1,5 @@
 ---
-title: Vortex9
+title: "Vortex Level 9"
 description: "Vortex Level 9 — \"BlackBox\": the page gives no information, so log in and investigate the level yourself."
 excerpt: "Vortex Level 9 — \"BlackBox\": the page gives no information, so log in and investigate the level yourself."
 permalink: /docs/wargames/vortex/vortex9/
@@ -41,9 +41,13 @@ There is no information available for this level. Login to [vortex.labs.overthew
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex9`, obtain access to `vortex10`.
+</div>
 
 ### What this level teaches
 
@@ -64,5 +68,9 @@ Exploring an unknown level with nothing but your own reconnaissance.
 ### Why it matters
 
 Penetration testers frequently begin with exactly this: no documentation and a deadline.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex8/">Level 8</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex10/">Level 10</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

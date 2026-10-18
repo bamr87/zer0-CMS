@@ -1,5 +1,5 @@
 ---
-title: Reading material
+title: "Blacksun reading material"
 description: "Blacksun reading list — papers on format strings, heap exploitation, frame-pointer overwrites, ASLR, PaX, stack protection and hardware defences."
 excerpt: "Blacksun reading list — papers on format strings, heap exploitation, frame-pointer overwrites, ASLR, PaX, stack protection and hardware defences."
 permalink: /docs/wargames/blacksun/reading_material/
@@ -140,6 +140,8 @@ If you have some relevant papers that would be suitable for this site, please dr
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This list is a curated syllabus for Blacksun, and it is useful for anyone studying exploitation.
@@ -163,5 +165,9 @@ This list is a curated syllabus for Blacksun, and it is useful for anyone studyi
 ### Contributing
 
 The list ends with an invitation to email the maintainer with other good papers.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../">Blacksun overview</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

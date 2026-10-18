@@ -1,5 +1,5 @@
 ---
-title: Natas21
+title: "Natas Level 21"
 description: "Natas Level 21 — two related sites share one session store; learn how an application you can influence can poison a more trusted one."
 excerpt: "Natas Level 21 — two related sites share one session store; learn how an application you can influence can poison a more trusted one."
 permalink: /docs/wargames/natas/natas21/
@@ -38,9 +38,13 @@ sidebar_label: "Level 21"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas21` and find the password for `natas22`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Trust boundaries between co-located applications, and session sharing across the
 ### How developers prevent it
 
 Separate session stores for separate trust levels, and never copy arbitrary request parameters into session state.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas20/">Level 20</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas22/">Level 22</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Drifter15
+title: "Drifter Level 15"
 description: "Drifter Level 15 — \"Explosive decompression\": a level hinting at a decompression-related weakness."
 excerpt: "Drifter Level 15 — \"Explosive decompression\": a level hinting at a decompression-related weakness."
 permalink: /docs/wargames/drifter/drifter15/
@@ -37,9 +37,13 @@ Explosive decompression :-)
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 15 of 0–15, in the open-ended stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ The dangers of decompression code and of untrusted compressed data.
 ### Why it matters
 
 Decompression bugs have affected image libraries, archive tools and network protocols.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter14/">Level 14</a><a class="sg-index" href="../">Drifter overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

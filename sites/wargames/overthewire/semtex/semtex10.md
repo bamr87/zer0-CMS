@@ -1,5 +1,5 @@
 ---
-title: Semtex10
+title: "Semtex Level 10"
 description: "Semtex Level 10 — exploit a weakness in how an authentication daemon checks passwords, in the style of old Windows 95/98 network shares."
 excerpt: "Semtex Level 10 — exploit a weakness in how an authentication daemon checks passwords, in the style of old Windows 95/98 network shares."
 permalink: /docs/wargames/semtex/semtex10/
@@ -51,9 +51,13 @@ There is a TCP daemon on brebera port 24019. It authenticates your password. Onc
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the daemon listens on port 24019 of the Semtex network host; its source is provided.
+</div>
 
 ### What this level teaches
 
@@ -75,5 +79,9 @@ How a flawed authentication scheme lets you recover a password far faster than b
 ### Why it matters
 
 Comparison functions that reveal how much of a guess was right are a real weakness; use constant-time comparison and rate limiting.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex9/">Level 9</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex11/">Level 11</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

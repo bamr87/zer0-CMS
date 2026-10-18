@@ -1,5 +1,5 @@
 ---
-title: Natas24
+title: "Natas Level 24"
 description: "Natas Level 24 — a password check uses strcmp, which behaves unexpectedly when it is given the wrong type of input; learn PHP type confusion."
 excerpt: "Natas Level 24 — a password check uses strcmp, which behaves unexpectedly when it is given the wrong type of input; learn PHP type confusion."
 permalink: /docs/wargames/natas/natas24/
@@ -38,9 +38,13 @@ sidebar_label: "Level 24"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas24` and find the password for `natas25`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How unexpected input types can defeat a security comparison.
 ### How developers prevent it
 
 Validate input types, use strict comparison, and modern PHP versions that raise errors when the wrong type is passed.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas23/">Level 23</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas25/">Level 25</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

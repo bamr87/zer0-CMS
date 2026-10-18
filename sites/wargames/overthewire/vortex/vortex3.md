@@ -1,5 +1,5 @@
 ---
-title: Vortex3
+title: "Vortex Level 3"
 description: "Vortex Level 3 — a stack overflow with a twist, involving shellcode that must call setuid and the limits of overwriting constructor and destructor tables."
 excerpt: "Vortex Level 3 — a stack overflow with a twist, involving shellcode that must call setuid and the limits of overwriting constructor and destructor tables."
 permalink: /docs/wargames/vortex/vortex3/
@@ -52,9 +52,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex3`, obtain access to `vortex4`.
+</div>
 
 ### What this level teaches
 
@@ -76,5 +80,9 @@ Writing shellcode that survives dropped privileges, and understanding binary har
 ### Why it matters
 
 Privilege handling in shells and the evolution of mitigations like RELRO explain why old exploit recipes stop working.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex2/">Level 2</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

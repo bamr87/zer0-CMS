@@ -1,5 +1,5 @@
 ---
-title: Natas30
+title: "Natas Level 30"
 description: "Natas Level 30 — a Perl database call quotes a single value, but not when it receives a list; learn how SQL injection survives an escaping function."
 excerpt: "Natas Level 30 — a Perl database call quotes a single value, but not when it receives a list; learn how SQL injection survives an escaping function."
 permalink: /docs/wargames/natas/natas30/
@@ -38,9 +38,13 @@ sidebar_label: "Level 30"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas30` and find the password for `natas31`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How a subtle API behaviour defeats escaping, and why parameter handling in CGI s
 ### How developers prevent it
 
 Use placeholders in prepared statements instead of escaping manually, and treat parameters as having a single expected type.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas29/">Level 29</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas31/">Level 31</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

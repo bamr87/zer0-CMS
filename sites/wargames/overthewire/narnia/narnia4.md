@@ -1,5 +1,5 @@
 ---
-title: Narnia4
+title: "Narnia Level 4"
 description: "Narnia Level 4 — a stack overflow where the environment has been cleared, so your injected code must live in the buffer itself."
 excerpt: "Narnia Level 4 — a stack overflow where the environment has been cleared, so your injected code must live in the buffer itself."
 permalink: /docs/wargames/narnia/narnia4/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia4`, find the password for `narnia5`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Adapting a familiar attack when a convenient hiding place is taken away.
 ### Why it matters
 
 Practice in adapting to constraints is the core skill of exploit development.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia3/">Level 3</a><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

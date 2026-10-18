@@ -1,5 +1,5 @@
 ---
-title: Natas12
+title: "Natas Level 12"
 description: "Natas Level 12 — upload a file the server stores and then serves; learn why trusting the client's filename and file type lets attackers run their own code."
 excerpt: "Natas Level 12 — upload a file the server stores and then serves; learn why trusting the client's filename and file type lets attackers run their own code."
 permalink: /docs/wargames/natas/natas12/
@@ -38,9 +38,13 @@ sidebar_label: "Level 12"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas12` and find the password for `natas13`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ How an unrestricted file upload can turn into remote code execution.
 ### How developers prevent it
 
 Store uploads outside the web root, generate the filename yourself, validate the file's true type, and serve uploads from a domain that never executes code.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas11/">Level 11</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas13/">Level 13</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Bandit30
+title: "Bandit Level 30"
 description: "Bandit Level 30 — discover that the interesting commit lives on a branch other than the one you cloned."
 permalink: /docs/wargames/bandit/bandit30/
 date: '2026-04-07T01:41:08.000Z'
@@ -55,9 +55,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** using the password for `bandit29`, find the password for `bandit30`.
+</div>
 
 ### What this level teaches
 
@@ -78,5 +82,9 @@ Git branches, and how to see work that is not on the default branch.
 ### Why it matters
 
 Development, feature and release branches often hold unreleased code or leftover secrets, and reviewers must check them all.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit29/">Level 29</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit31/">Level 31</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

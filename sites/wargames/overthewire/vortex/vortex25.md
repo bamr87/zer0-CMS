@@ -1,5 +1,5 @@
 ---
-title: Vortex25
+title: "Vortex Level 25"
 description: "Vortex Level 25 — a lost level kept for history, which paired a password-cracking task with an exploit."
 excerpt: "Vortex Level 25 — a lost level kept for history, which paired a password-cracking task with an exploit."
 permalink: /docs/wargames/vortex/vortex25/
@@ -45,9 +45,13 @@ There are two challenges for this level. One is to work out the password for the
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** this level is described as lost; there is nothing to solve on the server.
+</div>
 
 ### What this means
 
@@ -58,5 +62,9 @@ The page keeps its description for historical reasons. It describes two challeng
 - **Dictionary attacks.** Trying likely words before brute force is much more efficient.
 - **Two-stage challenges.** Authentication to a program is one problem, exploiting it afterwards another.
 - **Practise elsewhere.** Reproduce the idea with a program of your own and an exploit exercise from another game.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex24/">Level 24</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex26/">Level 26</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

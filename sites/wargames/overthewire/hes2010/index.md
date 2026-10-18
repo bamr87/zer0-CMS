@@ -1,5 +1,5 @@
 ---
-title: Index
+title: "HES2010"
 description: "HES2010 is a released conference wargame from Hackito Ergo Sum 2010 that you run as a local virtual machine, with its own website inside the VM."
 excerpt: "HES2010 is a released conference wargame from Hackito Ergo Sum 2010 that you run as a local virtual machine, with its own website inside the VM."
 permalink: /docs/wargames/hes2010/
@@ -51,6 +51,8 @@ The following instructions are also included on the diskimage:
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide explains what HES2010 is and how to run it safely. It does not describe the challenges.
@@ -80,5 +82,7 @@ The game has its own local website on the virtual machine. Once the VM is runnin
 ### Where this fits
 
 A good follow-up once you are comfortable with web and Linux basics from Bandit and Natas, and want a themed, multi-stage scenario.
+
+</section>
 
 <!-- study-guide:end -->

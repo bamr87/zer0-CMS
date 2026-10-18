@@ -67,6 +67,8 @@ Data for the levels can be found in **/utumno/**.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide is spoiler-free. It explains how to approach Utumno and what each stage asks of you, but upstream deliberately withholds level descriptions, so there are no level-specific claims here beyond what the index says.
@@ -103,5 +105,9 @@ The page for Level N is the account `utumnoN`. Each level's password is typicall
 ### Keep it ethical
 
 Everything here is for the wargame servers. Do not attack other systems, and do not share passwords or complete solutions that would spoil the game for others.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="utumno0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

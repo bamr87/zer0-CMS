@@ -1,5 +1,5 @@
 ---
-title: Blacksun3
+title: "Blacksun Level 3"
 description: "Blacksun Level 3 — analyse a stripped binary with little documentation, work out what it expects, and exploit it, with some brute force."
 excerpt: "Blacksun Level 3 — analyse a stripped binary with little documentation, work out what it expects, and exploit it, with some brute force."
 permalink: /docs/wargames/blacksun/blacksun3/
@@ -48,9 +48,13 @@ Experiment around / partially disassemble level3, work out what it wants, and ho
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the target is `/levels/level3`; it is a stripped binary with stack protection and ASLR on and PIE off.
+</div>
 
 ### What this level teaches
 
@@ -72,5 +76,9 @@ Reverse engineering with no symbols and no source.
 ### Why it matters
 
 Most real targets have no source. Learning to find the bug from the binary is a core skill.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../blacksun2/">Level 2</a><a class="sg-index" href="../">Blacksun overview</a><a class="sg-next" href="../blacksun4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Vortex8
+title: "Vortex Level 8"
 description: "Vortex Level 8 — a simple reverse-engineering task: disassemble a dynamically linked executable and work out what it wants."
 excerpt: "Vortex Level 8 — a simple reverse-engineering task: disassemble a dynamically linked executable and work out what it wants."
 permalink: /docs/wargames/vortex/vortex8/
@@ -45,9 +45,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex8`, obtain access to `vortex9`.
+</div>
 
 ### What this level teaches
 
@@ -68,5 +72,9 @@ Static analysis of a small dynamically linked program.
 ### Why it matters
 
 Small reversing tasks build the pattern recognition used for every larger binary you will face.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex7/">Level 7</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex9/">Level 9</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

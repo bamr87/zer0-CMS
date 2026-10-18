@@ -1,5 +1,5 @@
 ---
-title: Natas7
+title: "Natas Level 7"
 description: "Natas Level 7 — a page parameter chooses which file is shown; learn about path traversal and local file inclusion."
 excerpt: "Natas Level 7 — a page parameter chooses which file is shown; learn about path traversal and local file inclusion."
 permalink: /docs/wargames/natas/natas7/
@@ -38,9 +38,13 @@ sidebar_label: "Level 7"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas7` and find the password for `natas8`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How an unvalidated filename parameter can be abused to read files the developer 
 ### How developers prevent it
 
 Never build file paths from user input. Map user choices to a fixed allow-list of identifiers and resolve paths on the server.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas6/">Level 6</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas8/">Level 8</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

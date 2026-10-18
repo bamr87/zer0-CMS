@@ -1,5 +1,5 @@
 ---
-title: Narnia1
+title: "Narnia Level 1"
 description: "Narnia Level 1 — the program runs code taken from an environment variable; learn what shellcode is and how to supply it."
 excerpt: "Narnia Level 1 — the program runs code taken from an environment variable; learn what shellcode is and how to supply it."
 permalink: /docs/wargames/narnia/narnia1/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia1`, find the password for `narnia2`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How executable code can be delivered through an environment variable, and what s
 ### Why it matters
 
 It is the cleanest demonstration of why executing data as code is dangerous, and why modern systems mark data memory as non-executable.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia0/">Level 0</a><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

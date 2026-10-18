@@ -1,5 +1,5 @@
 ---
-title: Bandit13
+title: "Bandit Level 13"
 description: "Bandit Level 13 — peel back layers of a hexdump, gzip, bzip2 and tar by repeatedly identifying and unpacking the file."
 permalink: /docs/wargames/bandit/bandit13/
 date: '2026-04-07T01:41:08.000Z'
@@ -50,9 +50,13 @@ grep, sort, uniq, strings, base64, tr, tar, gzip, bzip2, xxd, mkdir, cp, mv, fil
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit12`, find the password for `bandit13`.
+</div>
 
 ### What this level teaches
 
@@ -74,5 +78,9 @@ A repeatable loop for dealing with unknown, nested data: identify, unpack, repea
 ### Why it matters
 
 Malware droppers, CTF challenges and forensic images are frequently layered. A calm identify-and-unpack loop beats guessing.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit12/">Level 12</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit14/">Level 14</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

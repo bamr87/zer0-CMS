@@ -1,5 +1,5 @@
 ---
-title: Drifter14
+title: "Drifter Level 14"
 description: "Drifter Level 14 — a vulnerability in a third-party library, with extra code present that may make exploiting it easier."
 excerpt: "Drifter Level 14 — a vulnerability in a third-party library, with extra code present that may make exploiting it easier."
 permalink: /docs/wargames/drifter/drifter14/
@@ -41,9 +41,13 @@ If you're feeling kind hearted, you may wish to tell the developer of the bugs y
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 14 of 0–15, in the open-ended stage of the game. The page does not say which account you start as, so check with `id` after connecting. The library source is in `/drifter/drifter14_src/`.
+</div>
 
 ### What this level teaches
 
@@ -65,5 +69,9 @@ Auditing third-party code and chaining it with the application around it.
 ### Why it matters
 
 Vulnerable dependencies are one of the most common real-world risks.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter13/">Level 13</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter15/">Level 15</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

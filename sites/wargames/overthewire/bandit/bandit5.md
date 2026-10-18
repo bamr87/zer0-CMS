@@ -1,5 +1,5 @@
 ---
-title: Bandit5
+title: "Bandit Level 5"
 description: "Bandit Level 5 — identify the one human-readable file among many using the file command."
 permalink: /docs/wargames/bandit/bandit5/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ Commands you may need to solve this level
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit4`, find the password for `bandit5`.
+</div>
 
 ### What this level teaches
 
@@ -66,5 +70,9 @@ A filename or extension tells you nothing reliable about contents. The `file` co
 ### Why it matters
 
 Forensics, malware triage and upload filters all rely on content-based identification rather than trusting names, a theme that returns strongly in the web-security game Natas.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit4/">Level 4</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

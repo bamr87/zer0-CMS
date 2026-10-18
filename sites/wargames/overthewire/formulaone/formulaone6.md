@@ -1,5 +1,5 @@
 ---
-title: Formulaone6
+title: "FormulaOne Level 6"
 description: "FormulaOne Level 6 — an intentionally undocumented final level, with a method for investigating it."
 excerpt: "FormulaOne Level 6 — an intentionally undocumented final level, with a method for investigating it."
 permalink: /docs/wargames/formulaone/formulaone6/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the account for this page is `formulaone6`; the index tells you levels are accounts named `formulaone0`, `formulaone1` and so on.
+</div>
 
 ### What to expect
 
@@ -65,5 +69,9 @@ Each level is a miniature version of a real bug class. Working it out yourself w
 - **Consolidate.** For each level, record the bug class, the tool that found it and the technique that worked.
 - **Continue.** From the [games index](../../), Vortex is a natural next step.
 - **Read about defences.** Stack canaries, non-executable memory, ASLR and RELRO each map to attacks you have practised.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../formulaone5/">Level 5</a><a class="sg-index" href="../">FormulaOne overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -22,7 +22,7 @@ python3 tools/unwrap-prose.py --check      # Lint: one paragraph per line (--wri
 - Don't hand-edit the upstream text in `overthewire/**`; it is re-synced from upstream by `scripts/docs-aggregator/`. The **Study guide** block at the end of each page (between `<!-- study-guide:start -->` and `<!-- study-guide:end -->`) and the `description` / `excerpt` front matter are this site's own and may be edited.
 - Study guides are spoiler-free: no passwords, payloads or finished solutions.
 - Markdown prose is one paragraph per line (CI enforces it).
-- No theme overrides: no `_layouts/`, `_includes/`, `_sass/` or `_plugins/` here. Theme changes belong in zer0-mistakes.
+- No theme overrides: no `_layouts/`, `_includes/`, `_sass/` or `_plugins/` here. Theme changes belong in zer0-mistakes. Style the site only through the theme's documented layers: `_config.yml`, `_data/`, and `assets/css/user-overrides.css` / `assets/js/user-overrides.js`.
 - Navigation: the top navbar is `_data/navigation/main.yml`; the games sidebar is built automatically from page URLs.
 - Conventional Commits, and open a pull request rather than pushing to `main`.
 

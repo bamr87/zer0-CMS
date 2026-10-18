@@ -1,5 +1,5 @@
 ---
-title: Krypton0
+title: "Krypton Level 0"
 description: "Krypton Level 0 — decode a Base64 string to log in, learning the difference between encoding and encryption."
 excerpt: "Krypton Level 0 — decode a Base64 string to log in, learning the difference between encoding and encryption."
 permalink: /docs/wargames/krypton/krypton0/
@@ -43,9 +43,13 @@ Use this password to log in to krypton.labs.overthewire.org with username krypto
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the page gives you the password for `krypton1` in encoded form.
+</div>
 
 ### What this level teaches
 
@@ -67,5 +71,9 @@ Base64 is an encoding, not a cipher. Anyone can undo it.
 ### Why it matters
 
 Tokens and credentials in Base64 are often mistaken for encrypted data. Treat the format as public.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Krypton overview</a><a class="sg-next" href="../krypton1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

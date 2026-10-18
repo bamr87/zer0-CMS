@@ -1,5 +1,5 @@
 ---
-title: Bandit9
+title: "Bandit Level 9"
 description: "Bandit Level 9 — find the only unique line in a file by pairing sort with uniq through a pipe."
 permalink: /docs/wargames/bandit/bandit9/
 date: '2026-04-07T01:41:08.000Z'
@@ -50,9 +50,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit8`, find the password for `bandit9`.
+</div>
 
 ### What this level teaches
 
@@ -73,5 +77,9 @@ Chaining small tools with pipes, and a classic gotcha: `uniq` only compares neig
 ### Why it matters
 
 "Sort, then count unique" is the backbone of countless one-liners, from finding the most frequent IP address in a log to spotting an outlier.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit8/">Level 8</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit10/">Level 10</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

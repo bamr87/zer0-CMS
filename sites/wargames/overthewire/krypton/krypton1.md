@@ -1,5 +1,5 @@
 ---
-title: Krypton1
+title: "Krypton Level 1"
 description: "Krypton Level 1 — decrypt a rotation cipher, the simplest substitution cipher, using a one-line command."
 excerpt: "Krypton Level 1 — decrypt a rotation cipher, the simplest substitution cipher, using a one-line command."
 permalink: /docs/wargames/krypton/krypton1/
@@ -39,9 +39,13 @@ The password for level 2 is in the file 'krypton2'. It is 'encrypted' using a si
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `krypton1`, decrypt the file that holds the password for `krypton2`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ How a rotation cipher works and how to reverse it with the `tr` command.
 ### Why it matters
 
 Rotation ciphers are weak because there is nothing secret: the algorithm is the key. The same flaw reappears in less obvious forms.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../krypton0/">Level 0</a><a class="sg-index" href="../">Krypton overview</a><a class="sg-next" href="../krypton2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

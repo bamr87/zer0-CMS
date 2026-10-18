@@ -1,5 +1,5 @@
 ---
-title: Vortex24
+title: "Vortex Level 24"
 description: "Vortex Level 24 — guess the seed of a generator using the GNU C library's random_r implementation as a reference."
 excerpt: "Vortex Level 24 — guess the seed of a generator using the GNU C library's random_r implementation as a reference."
 permalink: /docs/wargames/vortex/vortex24/
@@ -39,9 +39,13 @@ You might want to analyze "random\_r.c" from the GLIBC source code.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex24`, obtain access to `vortex25`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ How `rand`/`random` work internally and how to predict them.
 ### Why it matters
 
 `rand()` is not suitable for security; this level shows exactly why.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex23/">Level 23</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex25/">Level 25</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

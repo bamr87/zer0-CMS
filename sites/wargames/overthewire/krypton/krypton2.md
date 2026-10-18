@@ -1,5 +1,5 @@
 ---
-title: Krypton2
+title: "Krypton Level 2"
 description: "Krypton Level 2 — break a Caesar cipher by feeding the provided encryption program known text and watching how it responds."
 excerpt: "Krypton Level 2 — break a Caesar cipher by feeding the provided encryption program known text and watching how it responds."
 permalink: /docs/wargames/krypton/krypton2/
@@ -71,9 +71,13 @@ Here is an example:
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `krypton2`, decrypt the file that holds the password for `krypton3`.
+</div>
 
 ### What this level teaches
 
@@ -95,5 +99,9 @@ A chosen-plaintext attack: if you can make a system encrypt text of your choice,
 ### Why it matters
 
 Any system that lets attackers encrypt, decrypt or sign arbitrary data is an oracle. Many real attacks, from padding oracles to the ECB cut-and-paste in Natas, use this idea.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../krypton1/">Level 1</a><a class="sg-index" href="../">Krypton overview</a><a class="sg-next" href="../krypton3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

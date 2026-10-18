@@ -1,5 +1,5 @@
 ---
-title: Semtex7
+title: "Semtex Level 7"
 description: "Semtex Level 7 — escape a restricted shell, then analyse the multivitamin algorithm for a weakness that makes it easy to defeat."
 excerpt: "Semtex Level 7 — escape a restricted shell, then analyse the multivitamin algorithm for a weakness that makes it easy to defeat."
 permalink: /docs/wargames/semtex/semtex7/
@@ -48,9 +48,13 @@ up your quest...\
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** analyse the program in `/rdx/multivitamin` after leaving the restricted shell.
+</div>
 
 ### What this level teaches
 
@@ -71,5 +75,9 @@ Restricted-shell escapes and cryptanalysis of an arithmetic scheme.
 ### Why it matters
 
 Number-theoretic schemes are only as strong as the hardness of the underlying problem, and misuse can destroy that hardness.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex6/">Level 6</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex8/">Level 8</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

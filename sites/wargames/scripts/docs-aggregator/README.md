@@ -150,7 +150,8 @@ Usage: transform.py [--work-dir path] [--output-dir path] [--nav-output path]
 - **Markdown only**: Currently processes `.md` files. HTML-to-Markdown conversion is planned.
 - **No AI enhancement**: Deterministic transformation only. AI-powered quality scoring is a future feature.
 - **Relative links**: Rewritten to point to source repo on GitHub, not resolved locally.
-- **Internal links ignore `baseurl`**: Links between wargames pages are written as `/docs/wargames/…`, without the `/wargames` baseurl, so they do not resolve on the project-site deployment. Fixing this belongs in `normalize_overthewire_links()` in `transform.py`.
+- **Internal links use Liquid**: `normalize_overthewire_links()` rewrites upstream's absolute `/wargames/<game>/…` links to `{{ '/docs/wargames/<game>/…' | relative_url }}` so they resolve under the site's `baseurl`, and `absolutize_relative_images()` points relative `<img src>` at overthewire.org (a bare relative path would 404 here).
+- **Dead upstream links**: the Blacksun reading list links to `papers/…` files that 404 on overthewire.org too; they cannot be repointed.
 - **Description extraction**: `description` is taken from the first paragraph of the body, which for many level pages is a heading underline such as `Level Goal ----------`. The study guides replace it with a real summary; see [Applying a re-sync](#applying-a-re-sync).
 
 ## Sidebar Navigation
@@ -164,10 +165,11 @@ Usage: transform.py [--work-dir path] [--output-dir path] [--nav-output path]
 The pipeline writes only to `pages/_docs/`. To refresh the site's pages:
 
 1. Run `bash scripts/docs-aggregator/aggregate_docs.sh`.
-2. Run `python3 tools/carry-study-guides.py pages/_docs/wargames/overthewire`. The pipeline regenerates each page from upstream, which discards the site's own additions: the **Study guide** section (between the `<!-- study-guide:start -->` and `<!-- study-guide:end -->` markers) and the rewritten `description` / `excerpt` front matter. The tool copies both from the current `overthewire/` page onto the matching refreshed page and lists pages it cannot match, such as a level added upstream, which need a guide written for them.
-3. Review the upstream changes with `diff -r pages/_docs/wargames/overthewire overthewire`.
-4. Move the pages over with `cp -R pages/_docs/wargames/overthewire/. overthewire/`.
-5. Delete `pages/` and `work/`, then run `bundle exec jekyll build` and `python3 tools/unwrap-prose.py --check`.
+2. Run `python3 tools/unwrap-prose.py --write pages/_docs/wargames/overthewire`. The repo keeps one paragraph per line (CI enforces it) and fresh upstream text is soft-wrapped.
+3. Run `python3 tools/carry-study-guides.py pages/_docs/wargames/overthewire`. The pipeline regenerates each page from upstream, which discards the site's own additions: the **Study guide** section (between the `<!-- study-guide:start -->` and `<!-- study-guide:end -->` markers) and front matter the site owns (`description`, `excerpt`, `title`, `author`, `draft`, `keywords`, the game category, `date`). The tool carries those from the current `overthewire/` page, takes provenance keys (`source_*`, `permalink`, `nav_order`, …) from the fresh page, and keeps `lastmod` when the upstream text did not change. It lists pages it cannot match, such as a level added upstream, which need a guide written for them.
+4. Review the upstream changes with `diff -r pages/_docs/wargames/overthewire overthewire`. With no upstream change this is empty, so anything that shows up is a real change.
+5. Move the pages over with `cp -R pages/_docs/wargames/overthewire/. overthewire/`.
+6. Delete `pages/` and `work/`, then run `bundle exec jekyll build` and `python3 tools/unwrap-prose.py --check`.
 
 ## Troubleshooting
 

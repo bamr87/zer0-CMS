@@ -1,5 +1,5 @@
 ---
-title: Natas10
+title: "Natas Level 10"
 description: "Natas Level 10 — the site now filters dangerous characters; learn why blocklists fail and how a legitimate tool's own features can be bent to your purpose."
 excerpt: "Natas Level 10 — the site now filters dangerous characters; learn why blocklists fail and how a legitimate tool's own features can be bent to your purpose."
 permalink: /docs/wargames/natas/natas10/
@@ -38,9 +38,13 @@ sidebar_label: "Level 10"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas10` and find the password for `natas11`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Why filtering out "bad" characters is fragile, and how to achieve the goal using
 ### How developers prevent it
 
 Do not construct shell commands from input. Use library functions that search text directly and never hand user data to a shell.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas9/">Level 9</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas11/">Level 11</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

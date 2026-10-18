@@ -1,5 +1,5 @@
 ---
-title: Krypton4
+title: "Krypton Level 4"
 description: "Krypton Level 4 — break a Vigenère cipher when you know the key length, by treating each position as a separate Caesar problem."
 excerpt: "Krypton Level 4 — break a Vigenère cipher when you know the key length, by treating each position as a separate Caesar problem."
 permalink: /docs/wargames/krypton/krypton4/
@@ -66,9 +66,13 @@ Have fun!
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `krypton4`, decrypt the file that holds the password for `krypton5`.
+</div>
 
 ### What this level teaches
 
@@ -90,5 +94,9 @@ Polyalphabetic ciphers and how knowing the key length turns them back into simpl
 ### Why it matters
 
 Vigenère was considered unbreakable for centuries. Once you know how it is attacked, the lesson sticks: repeated keys leak.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../krypton3/">Level 3</a><a class="sg-index" href="../">Krypton overview</a><a class="sg-next" href="../krypton5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

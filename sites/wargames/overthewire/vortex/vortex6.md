@@ -1,5 +1,5 @@
 ---
-title: Vortex6
+title: "Vortex Level 6"
 description: "Vortex Level 6 — generic binary exploitation where you must disassemble the program to find the hole."
 excerpt: "Vortex Level 6 — generic binary exploitation where you must disassemble the program to find the hole."
 permalink: /docs/wargames/vortex/vortex6/
@@ -47,9 +47,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex6`, obtain access to `vortex7`.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ Reverse engineering a program to discover a vulnerability without any descriptio
 ### Why it matters
 
 This is the real-world situation: no source, only a binary.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex5/">Level 5</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

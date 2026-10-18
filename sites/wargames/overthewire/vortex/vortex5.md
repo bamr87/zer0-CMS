@@ -1,5 +1,5 @@
 ---
-title: Vortex5
+title: "Vortex Level 5"
 description: "Vortex Level 5 — brute-force an MD5 search space, and learn why shortening a password makes the attack feasible."
 excerpt: "Vortex Level 5 — brute-force an MD5 search space, and learn why shortening a password makes the attack feasible."
 permalink: /docs/wargames/vortex/vortex5/
@@ -42,9 +42,13 @@ A password is required for the next level. vortex5.c and md5.h. a-z,A-Z,0-9 is t
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex5`, obtain access to `vortex6`.
+</div>
 
 ### What this level teaches
 
@@ -66,5 +70,9 @@ How big search spaces are, and how speed (hashes per second) decides what is fea
 ### Why it matters
 
 It explains why password length and slow hashes (bcrypt, scrypt, Argon2) matter, and why fast hashes such as MD5 are poor for storing passwords.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex4/">Level 4</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

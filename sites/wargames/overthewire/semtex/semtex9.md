@@ -1,5 +1,5 @@
 ---
-title: Semtex9
+title: "Semtex Level 9"
 description: "Semtex Level 9 — write a client that tunnels a TCP session through ICMP packets to get past a firewall."
 excerpt: "Semtex Level 9 — write a client that tunnels a TCP session through ICMP packets to get past a firewall."
 permalink: /docs/wargames/semtex/semtex9/
@@ -45,9 +45,13 @@ You will have to use /rdx/rawwrapper.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** use `/rdx/rawwrapper` to talk to the ICMP "server"; the protocol is described in your home directory.
+</div>
 
 ### What this level teaches
 
@@ -69,5 +73,9 @@ Protocol tunnelling over a protocol that firewalls often allow.
 ### Why it matters
 
 ICMP and DNS tunnelling are well-known exfiltration techniques, and network monitoring tools look for them.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex8/">Level 8</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex10/">Level 10</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

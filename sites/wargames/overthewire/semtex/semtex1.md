@@ -1,5 +1,5 @@
 ---
-title: Semtex1
+title: "Semtex Level 1"
 description: "Semtex Level 1 — reverse engineer a simple encryption tool and decrypt a given ciphertext."
 excerpt: "Semtex Level 1 — reverse engineer a simple encryption tool and decrypt a given ciphertext."
 permalink: /docs/wargames/semtex/semtex1/
@@ -39,9 +39,13 @@ A password has been crypted using the /semtex/semtex1 tool. The crypted password
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the goal is to decrypt the password shown on the page, which was produced by `/semtex/semtex1`.
+</div>
 
 ### What this level teaches
 
@@ -63,5 +67,9 @@ Working out an encryption algorithm by experiment and by reading the program.
 ### Why it matters
 
 It is the same method used to break many home-made ciphers.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex0/">Level 0</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

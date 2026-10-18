@@ -1,5 +1,5 @@
 ---
-title: Behemoth5
+title: "Behemoth Level 5"
 description: "Behemoth Level 5 — a privileged program sends data over the network to localhost, so you must set up a listener to receive it."
 excerpt: "Behemoth Level 5 — a privileged program sends data over the network to localhost, so you must set up a listener to receive it."
 permalink: /docs/wargames/behemoth/behemoth5/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth5`, find the password for `behemoth6`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Understanding a program's network behaviour and writing a matching receiver.
 ### Why it matters
 
 Programs that phone home or log over the network are everywhere, and knowing how to capture that traffic is a basic analysis step.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../behemoth4/">Level 4</a><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

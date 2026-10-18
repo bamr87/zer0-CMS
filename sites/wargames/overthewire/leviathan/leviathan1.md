@@ -1,5 +1,5 @@
 ---
-title: Leviathan1
+title: "Leviathan Level 1"
 description: "Leviathan Level 1 — watch a setuid program ask for a password and use ltrace to see what it compares your input to."
 excerpt: "Leviathan Level 1 — watch a setuid program ask for a password and use ltrace to see what it compares your input to."
 permalink: /docs/wargames/leviathan/leviathan1/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `leviathan1`, find the password for `leviathan2`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Dynamic analysis: running a program under a tracer instead of reading its code.
 ### Why it matters
 
 Tracing is a fast first step in malware analysis and debugging when you lack source code.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../leviathan0/">Level 0</a><a class="sg-index" href="../">Leviathan overview</a><a class="sg-next" href="../leviathan2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

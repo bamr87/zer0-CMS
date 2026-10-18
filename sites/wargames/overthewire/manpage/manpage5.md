@@ -1,5 +1,5 @@
 ---
-title: Manpage5
+title: "Manpage Level 5"
 description: "Manpage Level 5 — an intentionally undocumented later level, with a method for investigating it."
 excerpt: "Manpage Level 5 — an intentionally undocumented later level, with a method for investigating it."
 permalink: /docs/wargames/manpage/manpage5/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `manpage5`, find the password for `manpage6`.
+</div>
 
 ### What to expect
 
@@ -59,5 +63,9 @@ Manpage is given only as x/10 in its original description, so effectively unrate
 ### Why it matters
 
 Each level is a miniature version of a real bug class. Working it out yourself without hints builds the investigative habits that no walkthrough can give you.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../manpage4/">Level 4</a><a class="sg-index" href="../">Manpage overview</a><a class="sg-next" href="../manpage6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

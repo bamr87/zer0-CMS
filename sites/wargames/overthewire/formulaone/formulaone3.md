@@ -1,5 +1,5 @@
 ---
-title: Formulaone3
+title: "FormulaOne Level 3"
 description: "FormulaOne Level 3 — an intentionally undocumented mid-game level, with a method for investigating it."
 excerpt: "FormulaOne Level 3 — an intentionally undocumented mid-game level, with a method for investigating it."
 permalink: /docs/wargames/formulaone/formulaone3/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the account for this page is `formulaone3`; the index tells you levels are accounts named `formulaone0`, `formulaone1` and so on.
+</div>
 
 ### What to expect
 
@@ -59,5 +63,9 @@ FormulaOne is not given a difficulty rating in its index, and lives under `/form
 ### Why it matters
 
 Each level is a miniature version of a real bug class. Working it out yourself without hints builds the investigative habits that no walkthrough can give you.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../formulaone2/">Level 2</a><a class="sg-index" href="../">FormulaOne overview</a><a class="sg-next" href="../formulaone4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

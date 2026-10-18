@@ -1,5 +1,5 @@
 ---
-title: Semtex0
+title: "Semtex Level 0"
 description: "Semtex Level 0 — receive a stream from a network port, discard every second byte, and run the executable that reveals the password."
 excerpt: "Semtex Level 0 — receive a stream from a network port, discard every second byte, and run the executable that reveals the password."
 permalink: /docs/wargames/semtex/semtex0/
@@ -59,9 +59,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** this level gives you the login for `semtex1`, used on port 2229.
+</div>
 
 ### What this level teaches
 
@@ -84,5 +88,9 @@ Raw network reading and handling unusual file formats.
 ### Why it matters
 
 Receiving untrusted executables is risky; analyse them in a virtual machine.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

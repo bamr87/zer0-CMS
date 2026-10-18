@@ -1,7 +1,9 @@
 ---
 title: Wargames — Security Challenges
-description: Curated security wargames from the OverTheWire community. Learn and practice security concepts through gamified challenges.
+description: "Learn Linux, web security, cryptography and binary exploitation by playing OverTheWire wargames, with a spoiler-free study guide on every page."
 layout: home
+hide_title: true
+rss_subscribe: false
 permalink: /
 date: '2025-01-27T00:00:00.000Z'
 lastmod: '2026-04-07T02:46:45.000Z'
@@ -29,85 +31,63 @@ keywords:
 - cybersecurity
 ---
 
-> **Source:** This section aggregates content from the [OverTheWire](https://overthewire.org/wargames/) community project ([MIT License](https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE)). Visit the original site to play the games live via SSH.
+<section class="wg-hero">
+<div class="container-xl wg-hero-inner">
+<p class="wg-eyebrow">OverTheWire · study edition</p>
+<h1 class="wg-title">Learn Linux and security by playing wargames</h1>
+<p class="wg-lead">Hands-on challenges that teach the command line, web security, cryptography and binary exploitation, one level at a time. Every page comes with a spoiler-free study guide that explains the ideas without giving away the answers.</p>
+<div class="wg-cta">
+<a class="btn btn-primary btn-lg" href="{{ '/docs/wargames/bandit/' | relative_url }}"><i class="bi bi-terminal me-2" aria-hidden="true"></i>Start with Bandit</a>
+<a class="btn btn-outline-light btn-lg" href="{{ '/docs/wargames/' | relative_url }}">How wargames work</a>
+</div>
+<p class="wg-terminal"><span class="wg-prompt">$</span> ssh bandit0@bandit.labs.overthewire.org -p 2220</p>
+<ul class="wg-stats">
+<li><strong>18</strong> wargames</li>
+<li><strong>~200</strong> levels</li>
+<li><strong>219</strong> study guides</li>
+<li><strong>0</strong> spoilers</li>
+</ul>
+</div>
+</section>
 
-## What Are Wargames?
+<div class="container-xl wg-section">
+<h2>How it works</h2>
+<p class="wg-sub">Wargames are security challenges played as a game. Each level hides a password; finding it teaches a skill, and the password unlocks the next level.</p>
+<div class="row g-3">
+<div class="col-md-4"><div class="wg-tile"><i class="bi bi-terminal" aria-hidden="true"></i><h3>Play for real</h3><p>Connect over SSH, or in your browser for Natas, to real, intentionally vulnerable servers run by the OverTheWire community.</p></div></div>
+<div class="col-md-4"><div class="wg-tile"><i class="bi bi-mortarboard" aria-hidden="true"></i><h3>Study without spoilers</h3><p>Every page ends with a study guide: the concepts behind the level, a hint-level approach, and why the skill matters in real work.</p></div></div>
+<div class="col-md-4"><div class="wg-tile"><i class="bi bi-signpost-split" aria-hidden="true"></i><h3>Follow a path</h3><p>Games are grouped by difficulty and ordered so that each one prepares you for the next. Start with the first.</p></div></div>
+</div>
+</div>
 
-Wargames are security-focused challenges offered by the [OverTheWire](https://overthewire.org/) community. They teach security concepts in a gamified, progressive format, starting from basic Unix/Linux commands and building up to advanced exploitation techniques.
+<div class="container-xl wg-section">
+<h2>A suggested path</h2>
+<p class="wg-sub">This is the order the OverTheWire maintainers suggest. Skipping ahead is fine, but Bandit's skills are assumed everywhere.</p>
+<ol class="wg-path">
+<li><strong>Bandit</strong><span>Linux command line and SSH. Do this first.</span></li>
+<li><strong>Natas, Krypton or Leviathan</strong><span>Pick one by interest: web, cryptography or reverse engineering.</span></li>
+<li><strong>Narnia, then Behemoth</strong><span>Binary exploitation, first with the source code and then without.</span></li>
+<li><strong>Utumno, Maze and beyond</strong><span>Harder binaries, code auditing and mixed advanced topics.</span></li>
+</ol>
+</div>
 
-Each wargame is a series of levels that must be completed in order. In most games you connect to a server over SSH and use what you know to find the password for the next level. The password is the reward, but the real prize is the skill you build while finding it.
+<div class="container-xl wg-section">
+<h2>The games</h2>
+<p class="wg-sub">Open any game for its overview, prerequisites and a level-by-level roadmap. The sidebar on every page lists its levels, or <a href="{{ '/tags/' | relative_url }}">browse every level on one page</a>.</p>
+<div class="wg-tier"><h3>Beginner</h3><small>Start here</small></div>
+{% include components/card-grid.html items=site.data.games.beginner columns="row-cols-1 row-cols-md-2 row-cols-xl-4" heading_level="h4" aria_label="Beginner wargames" %}
+<div class="wg-tier"><h3>Intermediate</h3><small>Binary exploitation begins</small></div>
+{% include components/card-grid.html items=site.data.games.intermediate columns="row-cols-1 row-cols-md-2 row-cols-xl-3" heading_level="h4" aria_label="Intermediate wargames" %}
+<div class="wg-tier"><h3>Advanced</h3><small>Bring a debugger</small></div>
+{% include components/card-grid.html items=site.data.games.advanced columns="row-cols-1 row-cols-md-2 row-cols-xl-3" heading_level="h4" aria_label="Advanced wargames" %}
+<div class="wg-tier"><h3>Archive and downloads</h3><small>Offline games and conference virtual machines</small></div>
+{% include components/card-grid.html items=site.data.games.archive columns="row-cols-1 row-cols-md-2 row-cols-xl-3" heading_level="h4" aria_label="Archived and downloadable wargames" %}
+</div>
 
-## How This Site Helps You Learn
-
-The challenge pages are a mirror of the upstream OverTheWire pages, and many of them are deliberately sparse: some levels say only that there is "no information for this level, intentionally". To make the collection useful for self-study, every page also carries a **Study guide** section that:
-
-- explains the concepts the level is about, in plain language;
-- suggests how to approach it, with hints rather than answers;
-- says why the skill matters in real security and IT work.
-
-The guides are **spoiler-free**. They never contain passwords or finished solutions, so you can read them without ruining the game. Where upstream withholds details about a level and the guide cannot say more, it says so instead of guessing.
-
-## Available Games
-
-### Beginner
-
-| Game | Focus | What you will practise |
-|------|-------|------------------------|
-| [**Bandit**](docs/wargames/bandit/) | Linux basics | the command line, SSH, text tools, permissions, cron, git |
-| [**Natas**](docs/wargames/natas/) | Web security | server-side web flaws from page source to SQL injection, played in a browser |
-| [**Krypton**](docs/wargames/krypton/) | Cryptography | classical ciphers, frequency analysis, Vigenère, a weak stream cipher |
-| [**Leviathan**](docs/wargames/leviathan/) | Reverse engineering | tracing small setuid programs, with no programming required |
-
-### Intermediate
-
-| Game | Focus | What you will practise |
-|------|-------|------------------------|
-| [**Narnia**](docs/wargames/narnia/) | Binary exploitation | buffer overflows and format strings, with source code provided |
-| [**Behemoth**](docs/wargames/behemoth/) | Binary exploitation | overflows, format strings and race conditions without source |
-| [**Utumno**](docs/wargames/utumno/) | Binary exploitation | harder binaries, a step above Behemoth |
-
-### Advanced
-
-| Game | Focus | What you will practise |
-|------|-------|------------------------|
-| [**Maze**](docs/wargames/maze/) | Exploitation and reversing | tricky, unconventional levels that call for `gdb` |
-| [**Manpage**](docs/wargames/manpage/) | Code auditing | finding bugs by reading manual pages for C pitfalls |
-| [**Vortex**](docs/wargames/vortex/) | Mixed advanced topics | network programming, heap bugs, weak crypto, reverse engineering |
-| [**Drifter**](docs/wargames/drifter/) | Mixed advanced topics | remote services, C++ and heap corruption, ASLR |
-| [**FormulaOne**](docs/wargames/formulaone/) | Exploitation | a game rescued from intruded.net |
-
-### Archived and downloadable
-
-| Game | Status |
-|------|--------|
-| [**Semtex**](docs/wargames/semtex/) | offline; network programming and reverse engineering |
-| [**Blacksun**](docs/wargames/blacksun/) | currently down; exploiting hardened hosts |
-| [**Abraxas**](docs/wargames/abraxas/), [**HES2010**](docs/wargames/hes2010/), [**Monxla**](docs/wargames/monxla/), [**Kishi**](docs/wargames/kishi/) | released conference games you run locally as virtual machines |
-
-The [full games index](docs/wargames/) compares all of them, including levels, SSH ports and difficulty.
-
-## How to Get Started
-
-1. **Start with Bandit.** It teaches the basics you will need for every other game.
-2. **Connect via SSH:** `ssh bandit0@bandit.labs.overthewire.org -p 2220` (password: `bandit0`). Every game uses its own port.
-3. **Progress through the levels.** Each level's password unlocks the next.
-4. **Take notes.** Record the password, the command that worked, and why it worked. Passwords are not saved for you.
-5. **Pick your next game** from the suggested order: Bandit, then one of Natas, Krypton or Leviathan, then Narnia, Behemoth, Utumno and Maze.
-
-## Ground Rules
-
-- Only attack the wargame servers and the accounts the games provide. Never use these techniques against systems you do not own or have written permission to test.
-- Do not disrupt other players, and clean up after yourself in `/tmp`.
-- Do not publish passwords or step-by-step solutions. Write about the concepts instead.
-
-## About This Content
-
-This documentation is aggregated from the [OverTheWire-website repository](https://github.com/OverTheWireOrg/OverTheWire-website) using the docs aggregation pipeline in `scripts/docs-aggregator/`. The content is transformed to fit the zer0-mistakes theme while preserving the original educational material. The **Study guide** sections are additions made by this site and sit after the upstream text, between `study-guide` marker comments, so they can be told apart from vendored content.
-
-To update the upstream content, run:
-
-```bash
-bash scripts/docs-aggregator/aggregate_docs.sh
-```
-
-See the [aggregator documentation](https://github.com/bamr87/wargames/blob/main/scripts/docs-aggregator/README.md) for details, including how to carry the study guides over when you re-sync.
+<div class="container-xl wg-section">
+{%- capture wg_rules -%}
+<ul class="mb-0"><li>Only attack the wargame servers and the accounts the games provide. Never use these techniques on systems you do not own or have written permission to test.</li><li>Do not disrupt other players, and clean up after yourself in <code>/tmp</code>.</li><li>Do not publish passwords or step-by-step solutions. Write about the concepts instead.</li></ul>
+{%- endcapture -%}
+{% include components/callout.html type="warning" title="Ground rules" content=wg_rules %}
+<p class="wg-about">The challenge pages are a mirror of the <a href="https://overthewire.org/wargames/">OverTheWire</a> wargames, aggregated from the <a href="https://github.com/OverTheWireOrg/OverTheWire-website">OverTheWire-website repository</a> under the <a href="https://github.com/OverTheWireOrg/OverTheWire-website/blob/gh-pages/LICENSE">MIT License</a>. Visit the original site to play the games live. The <strong>Study guide</strong> section at the end of each page is this site's own addition, between <code>study-guide</code> marker comments, and is kept apart from the upstream text. To refresh the upstream content, see the <a href="https://github.com/bamr87/wargames/blob/main/scripts/docs-aggregator/README.md">aggregator documentation</a>.</p>
+</div>

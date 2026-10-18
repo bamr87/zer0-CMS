@@ -1,5 +1,5 @@
 ---
-title: Natas0
+title: "Natas Level 0"
 description: "Natas Level 0 — sign in to the first website and find a password the page does not show you but still sends to your browser."
 excerpt: "Natas Level 0 — sign in to the first website and find a password the page does not show you but still sends to your browser."
 permalink: /docs/wargames/natas/natas0/
@@ -39,9 +39,13 @@ sidebar_label: "Level 0"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas0` and find the password for `natas1`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ That a web page is more than what you see on screen. Your browser receives HTML,
 ### How developers prevent it
 
 Never put secrets, credentials or internal notes in HTML, comments or JavaScript. Treat everything in the response as public.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

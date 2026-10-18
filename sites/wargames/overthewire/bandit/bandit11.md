@@ -1,5 +1,5 @@
 ---
-title: Bandit11
+title: "Bandit Level 11"
 description: "Bandit Level 11 — decode Base64 data, learning that encoding is not encryption."
 permalink: /docs/wargames/bandit/bandit11/
 date: '2026-04-07T01:41:08.000Z'
@@ -50,9 +50,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit10`, find the password for `bandit11`.
+</div>
 
 ### What this level teaches
 
@@ -73,5 +77,9 @@ What Base64 is, how to recognise it, and how to reverse it.
 ### Why it matters
 
 Base64 appears in HTTP headers, tokens, certificates and email. Mistaking it for encryption is a common real-world security error.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit10/">Level 10</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit12/">Level 12</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

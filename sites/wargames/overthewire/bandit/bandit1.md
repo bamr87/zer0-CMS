@@ -1,5 +1,5 @@
 ---
-title: Bandit1
+title: "Bandit Level 1"
 description: "Bandit Level 1 — find and read a file named readme in your home directory using ls and cat."
 permalink: /docs/wargames/bandit/bandit1/
 date: '2026-04-07T01:41:08.000Z'
@@ -50,9 +50,13 @@ Passwords also occasionally change. It is recommended to take notes on how to so
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit0`, find the password for `bandit1`.
+</div>
 
 ### What this level teaches
 
@@ -74,5 +78,9 @@ Orientation in a Unix filesystem and your first real data-gathering commands. A 
 ### Why it matters
 
 "Where am I, what is here, what does it say?" is the loop you will run thousands of times, on every system you ever investigate.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit0/">Level 0</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

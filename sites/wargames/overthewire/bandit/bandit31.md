@@ -1,5 +1,5 @@
 ---
-title: Bandit31
+title: "Bandit Level 31"
 description: "Bandit Level 31 — find a secret stored in a Git tag rather than in any file or branch."
 permalink: /docs/wargames/bandit/bandit31/
 date: '2026-04-07T01:41:08.000Z'
@@ -55,9 +55,13 @@ Helpful Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** using the password for `bandit30`, find the password for `bandit31`.
+</div>
 
 ### What this level teaches
 
@@ -78,5 +82,9 @@ That Git stores more than files and branches, including tags and other reference
 ### Why it matters
 
 Secrets can hide in the less obvious corners of a repository, which is why secret-scanning tools search all references, not just the latest files.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit30/">Level 30</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit32/">Level 32</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Blacksun1
+title: "Blacksun Level 1"
 description: "Blacksun Level 1 — a trivial stack overflow in a binary with ASLR but no PIE and no stack protector, so fixed program addresses can be used."
 excerpt: "Blacksun Level 1 — a trivial stack overflow in a binary with ASLR but no PIE and no stack protector, so fixed program addresses can be used."
 permalink: /docs/wargames/blacksun/blacksun1/
@@ -46,9 +46,13 @@ Level1 is a trivial stack buffer overflow. Note that you'll probably find it eas
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the vulnerable program is `/levels/level1` on the Blacksun host.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ How to reason about which parts of an address space are randomised and which are
 ### Why it matters
 
 Understanding what each mitigation does and does not randomise is the heart of exploit development.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../blacksun0/">Level 0</a><a class="sg-index" href="../">Blacksun overview</a><a class="sg-next" href="../blacksun2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

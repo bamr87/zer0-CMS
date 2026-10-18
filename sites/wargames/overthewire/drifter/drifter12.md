@@ -1,5 +1,5 @@
 ---
-title: Drifter12
+title: "Drifter Level 12"
 description: "Drifter Level 12 — a remote-procedure-call style reverse-engineering challenge."
 excerpt: "Drifter Level 12 — a remote-procedure-call style reverse-engineering challenge."
 permalink: /docs/wargames/drifter/drifter12/
@@ -37,9 +37,13 @@ Remote Procedure Call style reverse engineering fun :-)
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 12 of 0–15, in the randomisation and reversing stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Reverse engineering a protocol with an RPC flavour: request, function identifier
 ### Why it matters
 
 Custom binary protocols are a common attack surface for embedded and industrial software.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter11/">Level 11</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter13/">Level 13</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

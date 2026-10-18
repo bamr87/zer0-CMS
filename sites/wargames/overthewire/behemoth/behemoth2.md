@@ -1,5 +1,5 @@
 ---
-title: Behemoth2
+title: "Behemoth Level 2"
 description: "Behemoth Level 2 — a privileged program runs another program by name, so how it finds that program becomes the weakness."
 excerpt: "Behemoth Level 2 — a privileged program runs another program by name, so how it finds that program becomes the weakness."
 permalink: /docs/wargames/behemoth/behemoth2/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth2`, find the password for `behemoth3`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How the `PATH` environment variable and the current directory influence which pr
 ### Why it matters
 
 Unsafe use of `system()` and relative commands in setuid programs is a long-standing source of privilege escalation.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../behemoth1/">Level 1</a><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth3/">Level 3</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

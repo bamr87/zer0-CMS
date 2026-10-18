@@ -1,5 +1,5 @@
 ---
-title: Krypton — OverTheWire Wargame Index
+title: "Krypton"
 description: "Krypton is a cryptography wargame of 7 levels that moves from Base64 and Caesar ciphers through frequency analysis and Vigenère to a weak stream cipher."
 excerpt: "Krypton is a cryptography wargame of 7 levels that moves from Base64 and Caesar ciphers through frequency analysis and Vigenère to a weak stream cipher."
 permalink: /docs/wargames/krypton/
@@ -39,6 +39,8 @@ Krypton
 The Krypton wargame.
 
 <!-- study-guide:start -->
+
+<section class="study-guide" markdown="1">
 
 ## Study guide
 
@@ -83,5 +85,9 @@ Level 0 contains the first password in encoded form. After that, the page for Le
 ### Where this fits
 
 Krypton is one of the three games suggested after Bandit. Its ideas return in Natas (for example the XOR cookie) and in any later work on authentication and encryption.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="krypton0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Leviathan6
+title: "Leviathan Level 6"
 description: "Leviathan Level 6 — a program wants a four-digit code; learn to brute-force a small secret with a shell loop."
 excerpt: "Leviathan Level 6 — a program wants a four-digit code; learn to brute-force a small secret with a shell loop."
 permalink: /docs/wargames/leviathan/leviathan6/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `leviathan6`, find the password for `leviathan7`.
+</div>
 
 ### What this level teaches
 
@@ -59,5 +63,9 @@ Automating a guessing attack on a small search space.
 ### Why it matters
 
 It shows why short numeric codes need rate limiting, and gives you practice with shell automation for later games.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../leviathan5/">Level 5</a><a class="sg-index" href="../">Leviathan overview</a><a class="sg-next" href="../leviathan7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

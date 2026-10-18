@@ -1,5 +1,5 @@
 ---
-title: Vortex22
+title: "Vortex Level 22"
 description: "Vortex Level 22 — another key-generation level, this time with object files available in /vortex to analyse."
 excerpt: "Vortex Level 22 — another key-generation level, this time with object files available in /vortex to analyse."
 permalink: /docs/wargames/vortex/vortex22/
@@ -39,9 +39,13 @@ This is another keygen level. You might want to check "/vortex/vortex22\_\*.o" f
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex22`, obtain access to `vortex23`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Using object files to understand a program's pieces.
 ### Why it matters
 
 Intermediate build artefacts can leak much more than a stripped final binary.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex21/">Level 21</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex23/">Level 23</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

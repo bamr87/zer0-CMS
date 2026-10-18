@@ -1,5 +1,5 @@
 ---
-title: Bandit22
+title: "Bandit Level 22"
 description: "Bandit Level 22 — read a cron job's configuration and script to see what a scheduled task does."
 permalink: /docs/wargames/bandit/bandit22/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ cron, crontab, crontab(5) (use "man 5 crontab" to access this)
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit21`, find the password for `bandit22`.
+</div>
 
 ### What this level teaches
 
@@ -68,5 +72,9 @@ How Linux schedules recurring work, and why reading someone else's script is a s
 ### Why it matters
 
 Cron is a favourite place for misconfigurations that expose data or allow privilege escalation, and attackers also use it for persistence.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit21/">Level 21</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit23/">Level 23</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

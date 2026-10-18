@@ -1,5 +1,5 @@
 ---
-title: Bandit19
+title: "Bandit Level 19"
 description: "Bandit Level 19 — read a file even though .bashrc logs you out, by running a command remotely instead of opening a shell."
 permalink: /docs/wargames/bandit/bandit19/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ ssh, ls, cat
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit18`, find the password for `bandit19`.
+</div>
 
 ### What this level teaches
 
@@ -66,5 +70,9 @@ That an SSH login is not the only way to run something on a server, and what she
 ### Why it matters
 
 Automation tools such as Ansible, deployment scripts and Git over SSH all run commands remotely this way.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit18/">Level 18</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit20/">Level 20</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

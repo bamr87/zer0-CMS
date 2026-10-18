@@ -1,5 +1,5 @@
 ---
-title: Semtex5
+title: "Semtex Level 5"
 description: "Semtex Level 5 — connect from ten different IP addresses, answer a challenge on each, and receive the password on a randomly chosen connection."
 excerpt: "Semtex Level 5 — connect from ten different IP addresses, answer a challenge on each, and receive the password on a randomly chosen connection."
 permalink: /docs/wargames/semtex/semtex5/
@@ -47,9 +47,13 @@ Reading Material
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the challenge service is on port 24027.
+</div>
 
 ### What this level teaches
 
@@ -71,5 +75,9 @@ Working with multiple source addresses and a challenge-response protocol.
 ### Why it matters
 
 It shows how defences based on source IP can be circumvented with proxies.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex4/">Level 4</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

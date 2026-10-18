@@ -1,5 +1,5 @@
 ---
-title: Semtex11
+title: "Semtex Level 11"
 description: "Semtex Level 11 — \"Déjà vu\": a modified version of an earlier encryption tool, with process plumbing (popen, dup2) suggested as reading."
 excerpt: "Semtex Level 11 — \"Déjà vu\": a modified version of an earlier encryption tool, with process plumbing (popen, dup2) suggested as reading."
 permalink: /docs/wargames/semtex/semtex11/
@@ -45,9 +45,13 @@ manpages: popen, dup2
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the program is `/rdx/vl1b`, a slightly harder variant of the Vortex/Semtex 1 tool.
+</div>
 
 ### What this level teaches
 
@@ -68,5 +72,9 @@ Applying a previous technique to a modified target, and understanding how progra
 ### Why it matters
 
 Variants of the same idea appear constantly, and a systematic comparison is the fastest way through.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex10/">Level 10</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex12/">Level 12</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

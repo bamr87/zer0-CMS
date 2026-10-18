@@ -1,5 +1,5 @@
 ---
-title: Behemoth7
+title: "Behemoth Level 7"
 description: "Behemoth Level 7 — one of the last Behemoth levels, where you apply everything learned so far to a binary that gives no hints."
 excerpt: "Behemoth Level 7 — one of the last Behemoth levels, where you apply everything learned so far to a binary that gives no hints."
 permalink: /docs/wargames/behemoth/behemoth7/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `behemoth7`, find the password for `behemoth8`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Choosing the right technique unaided.
 ### Why it matters
 
 Being able to go from an unknown binary to a working exploit is the point of the whole game.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../behemoth6/">Level 6</a><a class="sg-index" href="../">Behemoth overview</a><a class="sg-next" href="../behemoth8/">Level 8</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

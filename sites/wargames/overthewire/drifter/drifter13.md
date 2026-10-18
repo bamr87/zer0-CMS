@@ -1,5 +1,5 @@
 ---
-title: Drifter13
+title: "Drifter Level 13"
 description: "Drifter Level 13 — \"challenge your preconceptions of what's possible\": an open-ended level with no description of the technique."
 excerpt: "Drifter Level 13 — \"challenge your preconceptions of what's possible\": an open-ended level with no description of the technique."
 permalink: /docs/wargames/drifter/drifter13/
@@ -37,9 +37,13 @@ Challenge your pre-conceptions of what's possible
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 13 of 0–15, in the open-ended stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Lateral thinking.
 ### Why it matters
 
 Attackers succeed by finding the assumption the developer did not know they were making.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter12/">Level 12</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter14/">Level 14</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

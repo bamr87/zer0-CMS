@@ -1,5 +1,5 @@
 ---
-title: Semtex8
+title: "Semtex Level 8"
 description: "Semtex Level 8 — receive a file through a timing covert channel where delays between bytes stand for bytes that were never sent."
 excerpt: "Semtex Level 8 — receive a file through a timing covert channel where delays between bytes stand for bytes that were never sent."
 permalink: /docs/wargames/semtex/semtex8/
@@ -53,9 +53,13 @@ The output file is a .jpg image :)
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** read from the Unix socket `/rdx/nature` until end of file and save the result.
+</div>
 
 ### What this level teaches
 
@@ -77,5 +81,9 @@ Covert channels: hiding data in timing so it cannot be sniffed as content.
 ### Why it matters
 
 Covert timing channels exist in real malware and in side-channel attacks.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex7/">Level 7</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex9/">Level 9</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

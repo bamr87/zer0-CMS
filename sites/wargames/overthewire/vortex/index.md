@@ -40,6 +40,8 @@ Many thanks to those who have made sure all levels can be played
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide is spoiler-free: it explains the skills each Vortex level asks for, using only what the level pages say, and never lists passwords or solutions.
@@ -82,5 +84,9 @@ The page for Level N describes the challenge that gives you credentials for the 
 - Write a script for every exploit; you will rerun it often.
 - Keep notes on memory layouts and addresses.
 - Read the reading list at the bottom of each page before you start; many levels are direct applications of those papers.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="vortex0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

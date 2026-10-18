@@ -1,5 +1,5 @@
 ---
-title: Natas29
+title: "Natas Level 29"
 description: "Natas Level 29 — a Perl script opens a filename taken from the request; learn how Perl's open function can run commands."
 excerpt: "Natas Level 29 — a Perl script opens a filename taken from the request; learn how Perl's open function can run commands."
 permalink: /docs/wargames/natas/natas29/
@@ -38,9 +38,13 @@ sidebar_label: "Level 29"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas29` and find the password for `natas30`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How features of a language runtime can turn a file parameter into command execut
 ### How developers prevent it
 
 Use the three-argument form of `open` with an explicit mode, validate filenames, and never pass user input to the shell.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas28/">Level 28</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas30/">Level 30</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

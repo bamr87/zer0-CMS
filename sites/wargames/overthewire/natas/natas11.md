@@ -1,5 +1,5 @@
 ---
-title: Natas11
+title: "Natas Level 11"
 description: "Natas Level 11 — a cookie is \"encrypted\" with repeating-key XOR; learn how a known plaintext reveals the key and lets you forge the cookie."
 excerpt: "Natas Level 11 — a cookie is \"encrypted\" with repeating-key XOR; learn how a known plaintext reveals the key and lets you forge the cookie."
 permalink: /docs/wargames/natas/natas11/
@@ -38,9 +38,13 @@ sidebar_label: "Level 11"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas11` and find the password for `natas12`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ How weak, home-made encryption fails against someone who knows part of the plain
 ### How developers prevent it
 
 Never invent encryption. Use authenticated encryption from a trusted library, or keep state on the server and send only a random session ID.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas10/">Level 10</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas12/">Level 12</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Bandit10
+title: "Bandit Level 10"
 description: "Bandit Level 10 — extract readable text from a binary file with strings and filter it with grep."
 permalink: /docs/wargames/bandit/bandit10/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ grep, sort, uniq, strings, base64, tr, tar, gzip, bzip2, xxd
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit9`, find the password for `bandit10`.
+</div>
 
 ### What this level teaches
 
@@ -66,5 +70,9 @@ Finding human-readable fragments inside data that is mostly binary.
 ### Why it matters
 
 `strings` is often the very first command run on an unknown executable. You will use it again in Leviathan and other binary games.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit9/">Level 9</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit11/">Level 11</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

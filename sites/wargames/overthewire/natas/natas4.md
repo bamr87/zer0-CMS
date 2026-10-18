@@ -1,5 +1,5 @@
 ---
-title: Natas4
+title: "Natas Level 4"
 description: "Natas Level 4 — the server decides who you are from the Referer header, which you control; learn to craft and modify HTTP requests."
 excerpt: "Natas Level 4 — the server decides who you are from the Referer header, which you control; learn to craft and modify HTTP requests."
 permalink: /docs/wargames/natas/natas4/
@@ -38,9 +38,13 @@ sidebar_label: "Level 4"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas4` and find the password for `natas5`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ That HTTP request headers are user-controlled, so any decision based on them is 
 ### How developers prevent it
 
 Never use a client-supplied header as proof of identity or origin. Use real authentication and authorisation checks.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas3/">Level 3</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas5/">Level 5</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

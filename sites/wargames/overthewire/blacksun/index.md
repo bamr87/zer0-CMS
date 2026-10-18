@@ -1,5 +1,5 @@
 ---
-title: Index
+title: "Blacksun"
 description: "Blacksun is an advanced exploitation wargame (currently down) about attacking hardened hosts that use ASLR, non-executable memory and stack protection."
 excerpt: "Blacksun is an advanced exploitation wargame (currently down) about attacking hardened hosts that use ASLR, non-executable memory and stack protection."
 permalink: /docs/wargames/blacksun/
@@ -61,10 +61,12 @@ Blacksun is aimed towards demonstrating and helping people better understand:
 A list of suggested reading material can be found [here][readingmaterial]
 
   [andrewg]: mailto:andrewg@felinemenace.org
-  [here]: /docs/wargames/vortex/
+  [here]: {{ '/docs/wargames/vortex/' | relative_url }}
   [readingmaterial]: https://overthewire.org/wargames/blacksun/reading_material.html
 
 <!-- study-guide:start -->
+
+<section class="study-guide" markdown="1">
 
 ## Study guide
 
@@ -110,5 +112,9 @@ Each level page includes a table of exactly which protections are enabled, which
 ### Reading material
 
 See the [reading list](reading_material/) for papers on format strings, heap exploitation, frame-pointer overwrites, ASLR and PaX, Execshield, stack protection and hardware protections.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="blacksun0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

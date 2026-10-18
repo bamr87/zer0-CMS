@@ -74,6 +74,8 @@ strings, hexdump, objdump, ghidra
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide is spoiler-free: it explains the skills Leviathan builds and how to approach unknown programs, but it never gives passwords or finished solutions.
@@ -113,5 +115,9 @@ The page for Level N is the account you are logged in as. You are `leviathanN` a
 ### Where this fits
 
 Leviathan is rated 1 out of 10 by its authors. The suggested path is Bandit, then one of Natas, Krypton or Leviathan, then Narnia for binary exploitation.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="leviathan0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

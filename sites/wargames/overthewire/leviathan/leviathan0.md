@@ -1,5 +1,5 @@
 ---
-title: Leviathan0
+title: "Leviathan Level 0"
 description: "Leviathan Level 0 — explore your starting home directory for something that does not show up in an ordinary listing."
 excerpt: "Leviathan Level 0 — explore your starting home directory for something that does not show up in an ordinary listing."
 permalink: /docs/wargames/leviathan/leviathan0/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `leviathan0`, find the password for `leviathan1`.
+</div>
 
 ### What this level teaches
 
@@ -59,5 +63,9 @@ Careful reconnaissance: always look for what a default view hides.
 ### Why it matters
 
 Backups, old exports and leftovers regularly leak data in real incidents.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Leviathan overview</a><a class="sg-next" href="../leviathan1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

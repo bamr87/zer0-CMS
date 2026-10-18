@@ -1,5 +1,5 @@
 ---
-title: Bandit7
+title: "Bandit Level 7"
 description: "Bandit Level 7 — search the whole server with find for a file owned by a given user and group, and silence permission errors."
 permalink: /docs/wargames/bandit/bandit7/
 date: '2026-04-07T01:41:08.000Z'
@@ -47,9 +47,13 @@ Commands you may need to solve this level
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit6`, find the password for `bandit7`.
+</div>
 
 ### What this level teaches
 
@@ -71,5 +75,9 @@ Using `find` on the entire filesystem with ownership filters, and handling the f
 ### Why it matters
 
 Tracking down files by owner is how administrators audit permissions, and redirection is the basis of every shell pipeline you will write.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit6/">Level 6</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit8/">Level 8</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

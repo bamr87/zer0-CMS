@@ -1,5 +1,5 @@
 ---
-title: Vortex16
+title: "Vortex Level 16"
 description: "Vortex Level 16 — find 100 bits out of a 128-bit randomly generated hashed key, a partial hash-matching problem."
 excerpt: "Vortex Level 16 — find 100 bits out of a 128-bit randomly generated hashed key, a partial hash-matching problem."
 permalink: /docs/wargames/vortex/vortex16/
@@ -41,9 +41,13 @@ This level requires finding 100 bits out of a 128 bit randomly generated hashed 
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex16`, obtain access to `vortex17`.
+</div>
 
 ### What this level teaches
 
@@ -64,5 +68,9 @@ The cost and structure of partial hash search.
 ### Why it matters
 
 It illustrates truncated hashes and why a short checksum gives only weak assurance.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex15/">Level 15</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex17/">Level 17</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

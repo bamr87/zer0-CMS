@@ -1,5 +1,5 @@
 ---
-title: Utumno3
+title: "Utumno Level 3"
 description: "Utumno Level 3 — an intentionally undocumented mid-game level, with a method for investigating it."
 excerpt: "Utumno Level 3 — an intentionally undocumented mid-game level, with a method for investigating it."
 permalink: /docs/wargames/utumno/utumno3/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `utumno3`, find the password for `utumno4`.
+</div>
 
 ### What to expect
 
@@ -59,5 +63,9 @@ Utumno is rated 4/10 by its original authors, and lives under `/utumno/` on the 
 ### Why it matters
 
 Each level is a miniature version of a real bug class. Working it out yourself without hints builds the investigative habits that no walkthrough can give you.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../utumno2/">Level 2</a><a class="sg-index" href="../">Utumno overview</a><a class="sg-next" href="../utumno4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

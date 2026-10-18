@@ -38,6 +38,8 @@ Drifter is a wargame along the lines of Vortex.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide explains what each Drifter level asks for, based on the level pages, without passwords or finished exploits.
@@ -75,5 +77,9 @@ Finish Bandit, Narnia and Behemoth, and ideally the early Vortex levels. The Dri
 - Read the source where it is given before touching the binary.
 - Script everything; remote exploits need many attempts.
 - Keep a record of addresses and offsets, as they differ between levels and sometimes between runs.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="drifter0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

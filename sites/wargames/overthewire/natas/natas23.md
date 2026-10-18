@@ -1,5 +1,5 @@
 ---
-title: Natas23
+title: "Natas Level 23"
 description: "Natas Level 23 — a password check mixes string search with a numeric comparison; learn how PHP's loose typing can be satisfied in surprising ways."
 excerpt: "Natas Level 23 — a password check mixes string search with a numeric comparison; learn how PHP's loose typing can be satisfied in surprising ways."
 permalink: /docs/wargames/natas/natas23/
@@ -38,9 +38,13 @@ sidebar_label: "Level 23"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas23` and find the password for `natas24`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ How comparing text and numbers together in a dynamically typed language creates 
 ### How developers prevent it
 
 Use strict comparison (`===`), validate types explicitly and keep password logic out of hand-written conditions.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas22/">Level 22</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas24/">Level 24</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Narnia7
+title: "Narnia Level 7"
 description: "Narnia Level 7 — a format-string bug again, this time used to redirect a function pointer."
 excerpt: "Narnia Level 7 — a format-string bug again, this time used to redirect a function pointer."
 permalink: /docs/wargames/narnia/narnia7/
@@ -37,9 +37,13 @@ There is no information for this level, intentionally.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `narnia7`, find the password for `narnia8`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Combining the format-string write primitive with a function pointer to change co
 ### Why it matters
 
 Writing a pointer is the usual first step to controlling a program, even in modern, hardened software.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../narnia6/">Level 6</a><a class="sg-index" href="../">Narnia overview</a><a class="sg-next" href="../narnia8/">Level 8</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

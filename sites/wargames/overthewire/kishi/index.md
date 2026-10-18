@@ -1,5 +1,5 @@
 ---
-title: Index
+title: "Kishi (HES 2013)"
 description: "Kishi is a released conference wargame from Hackito Ergo Sum and No Such Con 2013, distributed as a Vagrant box with several LXC containers."
 excerpt: "Kishi is a released conference wargame from Hackito Ergo Sum and No Such Con 2013, distributed as a Vagrant box with several LXC containers."
 permalink: /docs/wargames/kishi/
@@ -57,6 +57,8 @@ To start the game, visit Kishi's web server on port 80 (or port 6680 of the host
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide explains how Kishi is built and how to run it safely. It does not describe the challenges.
@@ -95,5 +97,7 @@ Kishi runs several LXC containers internally, which you can inspect from the hos
 ### Where this fits
 
 Kishi suits players comfortable with Linux administration, networking and web security who want a scenario with several hosts.
+
+</section>
 
 <!-- study-guide:end -->

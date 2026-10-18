@@ -1,9 +1,9 @@
 ---
-title: Bandit0
+title: "Bandit Level 0"
 description: "Bandit Level 0 — log in to a remote Linux server over SSH on port 2220, the skill every other OverTheWire level builds on."
 permalink: /docs/wargames/bandit/bandit0/
 date: '2026-04-07T01:41:08.000Z'
-lastmod: '2026-04-07T01:41:08.000Z'
+lastmod: '2026-10-16T22:30:54.000Z'
 categories:
 - wargames
 - bandit
@@ -48,16 +48,20 @@ Helpful Reading Material
 - [How to use SSH with a non-standard port on It's FOSS][]
 - [How to use SSH with ssh-keys on wikiHow][]
 
-[Level 1]: /docs/wargames/bandit/bandit1/
+[Level 1]: {{ '/docs/wargames/bandit/bandit1/' | relative_url }}
 [Secure Shell (SSH) on Wikipedia]: https://en.wikipedia.org/wiki/Secure_Shell
 [How to use SSH with a non-standard port on It's FOSS]: https://itsfoss.com/ssh-to-port/
 [How to use SSH with ssh-keys on wikiHow]: https://www.wikihow.com/Use-SSH
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** this is the starting line. You log in as `bandit0` (password `bandit0`); logging in successfully is the whole level.
+</div>
 
 ### What this level teaches
 
@@ -79,5 +83,9 @@ How to open a secure remote shell. Almost everything in OverTheWire, and most re
 ### Why it matters
 
 SSH is how engineers administer servers, deploy code and tunnel traffic. Understanding hosts, ports and host-key verification is the foundation for everything that follows.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

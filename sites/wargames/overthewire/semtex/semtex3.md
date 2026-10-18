@@ -1,5 +1,5 @@
 ---
-title: Semtex3
+title: "Semtex Level 3"
 description: "Semtex Level 3 — set a combination of numeric locks correctly, by calculation or by brute force."
 excerpt: "Semtex Level 3 — set a combination of numeric locks correctly, by calculation or by brute force."
 permalink: /docs/wargames/semtex/semtex3/
@@ -41,9 +41,13 @@ Tip : **If you are not good at math, you should consider brute force. Rewrite th
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the "door" in `/semtex/semtex3` must be unlocked to proceed.
+</div>
 
 ### What this level teaches
 
@@ -64,5 +68,9 @@ Combinatorial analysis, and when brute force beats cleverness.
 ### Why it matters
 
 Knowing when exhaustive search is cheap is a core security instinct.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../semtex2/">Level 2</a><a class="sg-index" href="../">Semtex overview</a><a class="sg-next" href="../semtex4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

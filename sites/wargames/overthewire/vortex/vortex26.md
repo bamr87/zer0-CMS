@@ -1,5 +1,5 @@
 ---
-title: Vortex26
+title: "Vortex Level 26"
 description: "Vortex Level 26 — a historical page: this level asked players to create and submit their own level, and is no longer active."
 excerpt: "Vortex Level 26 — a historical page: this level asked players to create and submit their own level, and is no longer active."
 permalink: /docs/wargames/vortex/vortex26/
@@ -43,9 +43,13 @@ Due to the overwhelming flood of new levels, vortex26 shall be to make a level, 
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** nothing to solve; the page says its description is kept for historical reasons and should not be followed.
+</div>
 
 ### What this means
 
@@ -56,5 +60,9 @@ The maintainers stopped adding levels to Vortex. The last "level" invited player
 - **Design a level.** Writing a vulnerable program, and its exploit, is one of the best ways to understand a bug class.
 - **Share responsibly.** If you publish it, do so in a form that keeps the learning value for others.
 - **Move on.** From the [games index](../../), you can continue with other binary games or revisit levels you skipped.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex25/">Level 25</a><a class="sg-index" href="../">Vortex overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

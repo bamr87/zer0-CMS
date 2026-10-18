@@ -1,5 +1,5 @@
 ---
-title: Natas1
+title: "Natas Level 1"
 description: "Natas Level 1 — the same secret is hidden in the page, but the site tries to stop you viewing it; learn why client-side restrictions are not security."
 excerpt: "Natas Level 1 — the same secret is hidden in the page, but the site tries to stop you viewing it; learn why client-side restrictions are not security."
 permalink: /docs/wargames/natas/natas1/
@@ -38,9 +38,13 @@ sidebar_label: "Level 1"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas1` and find the password for `natas2`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ A site can try to block "right click" or shortcuts, but cannot stop the browser 
 ### How developers prevent it
 
 Enforce security on the server. Client-side checks are useful for convenience and user experience only, never for access control.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas0/">Level 0</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas2/">Level 2</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

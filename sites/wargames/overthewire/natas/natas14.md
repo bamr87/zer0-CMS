@@ -1,5 +1,5 @@
 ---
-title: Natas14
+title: "Natas Level 14"
 description: "Natas Level 14 — a login form builds its SQL query by pasting in your input; learn the basics of SQL injection and authentication bypass."
 excerpt: "Natas Level 14 — a login form builds its SQL query by pasting in your input; learn the basics of SQL injection and authentication bypass."
 permalink: /docs/wargames/natas/natas14/
@@ -38,9 +38,13 @@ sidebar_label: "Level 14"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas14` and find the password for `natas15`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ SQL injection: input that changes the meaning of a database query.
 ### How developers prevent it
 
 Use parameterised queries (prepared statements) so input is always data, never SQL.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas13/">Level 13</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas15/">Level 15</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

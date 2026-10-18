@@ -1,5 +1,5 @@
 ---
-title: Drifter5
+title: "Drifter Level 5"
 description: "Drifter Level 5 — a series of logic and mathematics games, one of which is always solvable and can be understood by reverse engineering."
 excerpt: "Drifter Level 5 — a series of logic and mathematics games, one of which is always solvable and can be understood by reverse engineering."
 permalink: /docs/wargames/drifter/drifter5/
@@ -39,9 +39,13 @@ The game 3 is always solvable - if you are stuck on it you may wish to reverse e
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 5 of 0–15, in the analysis and logic stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ Solving puzzle-style challenges by reading the code behind them.
 ### Why it matters
 
 Reading poor-quality code is routine in security work.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter4/">Level 4</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

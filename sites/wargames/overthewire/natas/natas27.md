@@ -1,5 +1,5 @@
 ---
-title: Natas27
+title: "Natas Level 27"
 description: "Natas Level 27 — a registration and login system that compares trimmed values; learn how database column truncation can create a duplicate account."
 excerpt: "Natas Level 27 — a registration and login system that compares trimmed values; learn how database column truncation can create a duplicate account."
 permalink: /docs/wargames/natas/natas27/
@@ -38,9 +38,13 @@ sidebar_label: "Level 27"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas27` and find the password for `natas28`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ How the database and the application disagree about what a username is.
 ### How developers prevent it
 
 Enforce uniqueness in the database with a unique constraint, normalise input before checking it, and run the database in strict mode so that over-long values are rejected rather than truncated.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas26/">Level 26</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas28/">Level 28</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

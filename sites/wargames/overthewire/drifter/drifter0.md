@@ -1,5 +1,5 @@
 ---
-title: Drifter0
+title: "Drifter Level 0"
 description: "Drifter Level 0 — talk to an encrypted remote system-call proxy that you must drive with correctly formed syscalls to read a password file."
 excerpt: "Drifter Level 0 — talk to an encrypted remote system-call proxy that you must drive with correctly formed syscalls to read a password file."
 permalink: /docs/wargames/drifter/drifter0/
@@ -89,9 +89,13 @@ The following sourcecode is located in /drifter/drifter0_src/ :
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** the service is on port 1111 of the Drifter host. Your aim is to read `drifter0.password` and so get the password for `drifter0`.
+</div>
 
 ### What this level teaches
 
@@ -115,5 +119,9 @@ How system calls work at the lowest level, and how to build a client for a custo
 ### Why it matters
 
 Understanding syscalls demystifies shellcode, sandboxes and tools like `strace`.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter1/">Level 1</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

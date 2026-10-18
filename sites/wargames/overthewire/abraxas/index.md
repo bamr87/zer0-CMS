@@ -1,5 +1,5 @@
 ---
-title: Index
+title: "Abraxas (HES 2011)"
 description: "Abraxas is a released conference wargame from Hackito Ergo Sum 2011 that you download as a virtual machine and play locally around a fictitious company."
 permalink: /docs/wargames/abraxas/
 date: '2026-04-07T01:41:08.000Z'
@@ -51,6 +51,8 @@ The following instructions are also included on the diskimage:
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide explains what Abraxas is and how to run it safely. It does not describe the challenges, which are meant to be discovered.
@@ -80,5 +82,7 @@ Games such as Bandit and Narnia run on OverTheWire servers. Abraxas runs on your
 ### Where this fits
 
 Conference wargames suit people who have already completed several of the main games, such as Bandit, Natas and Narnia, and want story-driven, multi-step challenges.
+
+</section>
 
 <!-- study-guide:end -->

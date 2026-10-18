@@ -1,5 +1,5 @@
 ---
-title: Bandit27
+title: "Bandit Level 27"
 description: "Bandit Level 27 — you already have a shell as bandit26; use a setuid helper in its home directory to read the next password."
 permalink: /docs/wargames/bandit/bandit27/
 date: '2026-04-07T01:41:08.000Z'
@@ -44,9 +44,13 @@ ls
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit26`, find the password for `bandit27`.
+</div>
 
 ### What this level teaches
 
@@ -67,5 +71,9 @@ Recognising a pattern you have met before: the setuid binary from Level 20 again
 ### Why it matters
 
 Mature administrators know "how do I run one command as another user" by heart: `sudo`, setuid helpers and `su` all follow the same idea.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit26/">Level 26</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit28/">Level 28</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

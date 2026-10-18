@@ -1,5 +1,5 @@
 ---
-title: Natas3
+title: "Natas Level 3"
 description: "Natas Level 3 — learn how robots.txt, meant to guide search engines, can instead point an attacker at the very paths you wanted hidden."
 excerpt: "Natas Level 3 — learn how robots.txt, meant to guide search engines, can instead point an attacker at the very paths you wanted hidden."
 permalink: /docs/wargames/natas/natas3/
@@ -38,9 +38,13 @@ sidebar_label: "Level 3"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas3` and find the password for `natas4`.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ The `robots.txt` convention, and why it is a map for attackers rather than a loc
 ### How developers prevent it
 
 Never rely on robots.txt for secrecy. Protect sensitive areas with authentication, and do not list private paths in a public file.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas2/">Level 2</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas4/">Level 4</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

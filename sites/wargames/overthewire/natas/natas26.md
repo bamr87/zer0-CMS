@@ -1,5 +1,5 @@
 ---
-title: Natas26
+title: "Natas Level 26"
 description: "Natas Level 26 — a cookie contains serialised PHP data the server later unserialises; learn how object injection can write files on the server."
 excerpt: "Natas Level 26 — a cookie contains serialised PHP data the server later unserialises; learn how object injection can write files on the server."
 permalink: /docs/wargames/natas/natas26/
@@ -38,9 +38,13 @@ sidebar_label: "Level 26"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas26` and find the password for `natas27`.
+</div>
 
 ### What this level teaches
 
@@ -62,5 +66,9 @@ PHP object injection through unsafe deserialisation.
 ### How developers prevent it
 
 Never unserialise untrusted data. Use a data-only format such as JSON and validate it.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas25/">Level 25</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas27/">Level 27</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

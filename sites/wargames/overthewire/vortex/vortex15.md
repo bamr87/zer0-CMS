@@ -1,5 +1,5 @@
 ---
-title: Vortex15
+title: "Vortex Level 15"
 description: "Vortex Level 15 — decrypt an encrypted file using reverse engineering and cryptanalysis, helped by the fact the password is eight uppercase letters."
 excerpt: "Vortex Level 15 — decrypt an encrypted file using reverse engineering and cryptanalysis, helped by the fact the password is eight uppercase letters."
 permalink: /docs/wargames/vortex/vortex15/
@@ -41,9 +41,13 @@ You have found an encrypted file, decrypt it (some reversing, crypt and general 
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `vortex15`, obtain access to `vortex16`.
+</div>
 
 ### What this level teaches
 
@@ -64,5 +68,9 @@ Combining reverse engineering with cryptanalysis.
 ### Why it matters
 
 Many proprietary file protections are weak. Knowing how to analyse them shows why standard, reviewed algorithms are essential.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../vortex14/">Level 14</a><a class="sg-index" href="../">Vortex overview</a><a class="sg-next" href="../vortex16/">Level 16</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Natas25
+title: "Natas Level 25"
 description: "Natas Level 25 — a weak path filter and a logged User-Agent combine into log poisoning; learn how reading a log file can execute attacker-supplied code."
 excerpt: "Natas Level 25 — a weak path filter and a logged User-Agent combine into log poisoning; learn how reading a log file can execute attacker-supplied code."
 permalink: /docs/wargames/natas/natas25/
@@ -38,9 +38,13 @@ sidebar_label: "Level 25"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas25` and find the password for `natas26`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ Chaining two small weaknesses into a much bigger one.
 ### How developers prevent it
 
 Resolve and validate paths against an allow-list, never include files by user-supplied name, and store logs where the web application cannot execute them.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas24/">Level 24</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas26/">Level 26</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

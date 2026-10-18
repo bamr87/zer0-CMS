@@ -74,6 +74,8 @@ objdump, ghidra, pwntools, gcc, gdb
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide is spoiler-free: it explains what Narnia teaches and how to work, but it never gives finished exploits, payloads or passwords.
@@ -110,5 +112,9 @@ The page for Level N is the account you are logged in as. You are `narniaN` and 
 ### Safety and ethics
 
 Exploit development against your own lab machines and wargames is legal and educational; do not run these techniques against systems you have no permission to test.
+
+<nav class="sg-nav" aria-label="Level navigation"><span></span><span></span><a class="sg-next" href="narnia0/">Start at Level 0</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

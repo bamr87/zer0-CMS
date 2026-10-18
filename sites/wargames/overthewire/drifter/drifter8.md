@@ -1,5 +1,5 @@
 ---
-title: Drifter8
+title: "Drifter Level 8"
 description: "Drifter Level 8 — a Phrack Search Daemon runs on the server without its GPLv2 source available, so bug hunting and custom shellcode may be needed."
 excerpt: "Drifter Level 8 — a Phrack Search Daemon runs on the server without its GPLv2 source available, so bug hunting and custom shellcode may be needed."
 permalink: /docs/wargames/drifter/drifter8/
@@ -37,9 +37,13 @@ Phrack Search Daemon is running on the server. Good luck finding bugs without th
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Where it fits:** Drifter level 8 of 0–15, in the remote daemons stage of the game. The page does not say which account you start as, so check with `id` after connecting.
+</div>
 
 ### What this level teaches
 
@@ -60,5 +64,9 @@ Finding vulnerabilities in a real program without source.
 ### Why it matters
 
 This is close to genuine vulnerability research on a real codebase.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../drifter7/">Level 7</a><a class="sg-index" href="../">Drifter overview</a><a class="sg-next" href="../drifter9/">Level 9</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

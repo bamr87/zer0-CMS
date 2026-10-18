@@ -1,5 +1,5 @@
 ---
-title: Bandit15
+title: "Bandit Level 15"
 description: "Bandit Level 15 — talk to a plain-text network service on localhost with netcat."
 permalink: /docs/wargames/bandit/bandit15/
 date: '2026-04-07T01:41:08.000Z'
@@ -61,9 +61,13 @@ accurate, but good enough for beginners)
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit14`, find the password for `bandit15`.
+</div>
 
 ### What this level teaches
 
@@ -85,5 +89,9 @@ What a network service is, and how to talk to one directly.
 ### Why it matters
 
 Every protocol you know (HTTP, SMTP, Redis) is text over a port, and netcat is the debugging tool for all of them.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit14/">Level 14</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit16/">Level 16</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

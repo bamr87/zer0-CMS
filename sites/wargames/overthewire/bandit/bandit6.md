@@ -1,5 +1,5 @@
 ---
-title: Bandit6
+title: "Bandit Level 6"
 description: "Bandit Level 6 — use find to locate a file by size and permissions in a directory tree."
 permalink: /docs/wargames/bandit/bandit6/
 date: '2026-04-07T01:41:08.000Z'
@@ -47,9 +47,13 @@ Commands you may need to solve this level
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `bandit5`, find the password for `bandit6`.
+</div>
 
 ### What this level teaches
 
@@ -70,5 +74,9 @@ Searching a directory tree by properties instead of by name, with `find`.
 ### Why it matters
 
 Locating files by size, owner or modification time is core incident-response work, for example finding recently changed files or unexpected setuid binaries.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../bandit5/">Level 5</a><a class="sg-index" href="../">Bandit overview</a><a class="sg-next" href="../bandit7/">Level 7</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

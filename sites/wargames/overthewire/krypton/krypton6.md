@@ -1,5 +1,5 @@
 ---
-title: Krypton6
+title: "Krypton Level 6"
 description: "Krypton Level 6 — move from classical ciphers to stream ciphers and exploit a weak pseudo-random keystream using a known-plaintext attack."
 excerpt: "Krypton Level 6 — move from classical ciphers to stream ciphers and exploit a weak pseudo-random keystream using a known-plaintext attack."
 permalink: /docs/wargames/krypton/krypton6/
@@ -79,9 +79,13 @@ Good Luck!
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `krypton6`, decrypt the file that holds the password for `krypton7`.
+</div>
 
 ### What this level teaches
 
@@ -105,5 +109,9 @@ The ideas behind modern cryptography: one-time pads, block and stream ciphers, a
 ### Why it matters
 
 Real stream ciphers fail catastrophically when a keystream repeats or is predictable, and many protocols have been broken that way. Never reuse a nonce or write your own cipher.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../krypton5/">Level 5</a><a class="sg-index" href="../">Krypton overview</a><span></span></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Natas19
+title: "Natas Level 19"
 description: "Natas Level 19 — session IDs look random but encode the username; learn to see structure in what appears to be gibberish."
 excerpt: "Natas Level 19 — session IDs look random but encode the username; learn to see structure in what appears to be gibberish."
 permalink: /docs/wargames/natas/natas19/
@@ -38,9 +38,13 @@ sidebar_label: "Level 19"
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** sign in as `natas19` and find the password for `natas20`.
+</div>
 
 ### What this level teaches
 
@@ -61,5 +65,9 @@ That apparent randomness may hide a predictable structure, which can be decoded 
 ### How developers prevent it
 
 Treat session IDs as opaque random tokens. Never derive them from user attributes.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../natas18/">Level 18</a><a class="sg-index" href="../">Natas overview</a><a class="sg-next" href="../natas20/">Level 20</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

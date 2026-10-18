@@ -1,5 +1,5 @@
 ---
-title: Krypton5
+title: "Krypton Level 5"
 description: "Krypton Level 5 — break a Vigenère cipher when the key length is unknown, by first discovering the length from patterns in the ciphertext."
 excerpt: "Krypton Level 5 — break a Vigenère cipher when the key length is unknown, by first discovering the length from patterns in the ciphertext."
 permalink: /docs/wargames/krypton/krypton5/
@@ -42,9 +42,13 @@ Enjoy.
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
+<div class="sg-map" markdown="1">
 **Level map:** logged in as `krypton5`, decrypt the file that holds the password for `krypton6`.
+</div>
 
 ### What this level teaches
 
@@ -66,5 +70,9 @@ How to find an unknown key length, then reuse the Level 4 method.
 ### Why it matters
 
 Key-length discovery generalises to many attacks on reused keys, including repeating-key XOR, which you will meet again.
+
+<nav class="sg-nav" aria-label="Level navigation"><a class="sg-prev" href="../krypton4/">Level 4</a><a class="sg-index" href="../">Krypton overview</a><a class="sg-next" href="../krypton6/">Level 6</a></nav>
+
+</section>
 
 <!-- study-guide:end -->

@@ -1,5 +1,5 @@
 ---
-title: Index
+title: "Monxla (HES 2012)"
 description: "Monxla is a released conference wargame from Hackito Ergo Sum 2012 that you boot from a live CD image, set around a fictitious crime family."
 excerpt: "Monxla is a released conference wargame from Hackito Ergo Sum 2012 that you boot from a live CD image, set around a fictitious crime family."
 permalink: /docs/wargames/monxla/
@@ -46,6 +46,8 @@ The following instructions are also included on the livecd:
 
 <!-- study-guide:start -->
 
+<section class="study-guide" markdown="1">
+
 ## Study guide
 
 This guide explains what Monxla is and how to run it safely. It does not describe the challenges.
@@ -75,5 +77,7 @@ Boot the ISO in a virtual machine (or from a burned disc). The upstream page say
 ### Where this fits
 
 A live-CD game suits players who like self-contained puzzles that can be reset with a reboot, after finishing several of the main OverTheWire games.
+
+</section>
 
 <!-- study-guide:end -->
