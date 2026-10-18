@@ -48,7 +48,7 @@ harness:
                           # ANTHROPIC_API_KEY. "anthropic" = API key only.
                           # There is no lifehacker.dev completion endpoint;
                           # "the lifehacker harness" IS this one.
-  model: claude-sonnet-4-6
+  model: claude-sonnet-5-5
   max_tokens: 4000        # applies to the API fallback; the CLI budgets itself
 
 metering:                 # the meter, mirroring lifehacker.dev's AI_USAGE.md

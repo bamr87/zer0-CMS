@@ -102,7 +102,7 @@ const WIRE_PREAMBLE = [
 function harnessClaudeCode(system, user, h, label) {
   const raw = execFileSync(
     "claude",
-    ["-p", "--model", h.model ?? "claude-sonnet-4-6",
+    ["-p", "--model", h.model ?? "claude-sonnet-5-5",
      "--append-system-prompt", `${WIRE_PREAMBLE}\n\n${system}`,
      "--output-format", "json"],
     { input: user, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }
@@ -113,7 +113,7 @@ function harnessClaudeCode(system, user, h, label) {
   recordUsage({
     label,
     provider: "claude-code",
-    model: h.model ?? "claude-sonnet-4-6",
+    model: h.model ?? "claude-sonnet-5-5",
     input_tokens: u.input_tokens ?? 0,
     output_tokens: u.output_tokens ?? 0,
     cache_read_tokens: u.cache_read_input_tokens ?? 0,
@@ -128,7 +128,7 @@ function harnessClaudeCode(system, user, h, label) {
 async function harnessAnthropicAPI(system, user, h, label) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("no harness available: claude CLI not found and ANTHROPIC_API_KEY is not set");
-  const model = h.model ?? "claude-sonnet-4-6";
+  const model = h.model ?? "claude-sonnet-5-5";
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
