@@ -106,7 +106,7 @@ export function SettingsPage() {
               ))}
             </Select>
           </Field>
-          <Field label="Model override (optional)" hint="e.g. gpt-4o, claude-sonnet-4, sonnet. Leave blank for the provider default.">
+          <Field label="Model override (optional)" hint="e.g. gpt-4o, claude-sonnet-5-5, sonnet. Leave blank for the provider default.">
             <Input
               value={settings.model}
               onChange={(e) => settings.setModel(e.target.value)}

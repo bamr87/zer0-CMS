@@ -207,7 +207,7 @@ Return the optimized content:"""
         if not self.anthropic_client:
             raise ValueError("Anthropic API key not configured")
 
-        claude_model = model if "claude" in model.lower() else "claude-3-opus-20240229"
+        claude_model = model if "claude" in model.lower() else "claude-opus-5-5"
         try:
             message = await self.anthropic_client.messages.create(
                 model=claude_model,
@@ -216,6 +216,9 @@ Return the optimized content:"""
                     {"role": "user", "content": prompt},
                 ],
             )
-            return message.content[0].text
+            # Adaptive thinking can put a thinking block first; read text blocks by type.
+            return "".join(
+                b.text for b in message.content if getattr(b, "type", None) == "text"
+            )
         except Exception as e:
             raise ValueError(f"Anthropic API error: {e}")

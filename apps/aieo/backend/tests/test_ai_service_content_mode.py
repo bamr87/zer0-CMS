@@ -29,7 +29,7 @@ def test_select_provider_falls_back_to_configured_client():
 
     # Only OpenAI configured, but a Claude model requested.
     ai2 = AIService(openai_api_key="sk-test", anthropic_api_key="")
-    assert ai2._select_provider("claude-sonnet-4") == "openai"
+    assert ai2._select_provider("claude-sonnet-5-5") == "openai"
 
     # Both configured: prefer the client matching the model name.
     ai3 = AIService(openai_api_key="sk-test", anthropic_api_key="sk-ant-test")

@@ -59,7 +59,7 @@ def main():
         choices=["openai", "anthropic", "claude-cli", "claude-code"],
         help="AI provider ('claude-cli' uses the Claude Code CLI over OAuth — no API key)",
     )
-    parser.add_argument("--model", help="Model name (e.g., gpt-4o, claude-sonnet-4-20250514)")
+    parser.add_argument("--model", help="Model name (e.g., gpt-4o, claude-sonnet-5-5)")
     parser.add_argument("--api-key", help="API key (or set OPENAI_API_KEY / ANTHROPIC_API_KEY env var)")
     parser.add_argument("--sites", default="sites.txt", help="Path to sites file")
     parser.add_argument("--output", help="Output directory (default: auto-generated temp dir)")

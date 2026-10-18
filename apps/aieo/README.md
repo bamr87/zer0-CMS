@@ -144,7 +144,7 @@ Full CLI options:
 ```
 python run_audit.py [OPTIONS]
   --provider [openai|anthropic]   AI provider
-  --model MODEL                   Model name (gpt-4o, claude-sonnet-4-20250514, etc.)
+  --model MODEL                   Model name (gpt-4o, claude-sonnet-5-5, etc.)
   --api-key KEY                   API key (or set via env var)
   --sites FILE                    Path to URL list (default: sites.txt)
   --output DIR                    Output directory (default: auto temp dir)

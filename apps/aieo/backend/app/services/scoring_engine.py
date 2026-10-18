@@ -32,6 +32,10 @@ from ..analyzers import (
     SEOQualityRater,
 )
 
+# Default Claude model when only ANTHROPIC_API_KEY is configured. Keep in step with
+# https://platform.claude.com/docs/en/about-claude/models/overview (latest Sonnet).
+DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5-5"
+
 logger = logging.getLogger(__name__)
 
 
@@ -108,7 +112,7 @@ class ScoringEngine:
             elif settings.ANTHROPIC_API_KEY:
                 self.api_key = settings.ANTHROPIC_API_KEY
                 self.provider = self.provider or "anthropic"
-                self.model = self.model or "claude-sonnet-4-20250514"
+                self.model = self.model or DEFAULT_ANTHROPIC_MODEL
         except (ImportError, Exception):
             pass  # Running standalone without full backend config
 
@@ -123,7 +127,7 @@ class ScoringEngine:
                     self.model = self.model or "gpt-5.4"
                 else:
                     self.provider = self.provider or "anthropic"
-                    self.model = self.model or "claude-sonnet-4-20250514"
+                    self.model = self.model or DEFAULT_ANTHROPIC_MODEL
 
     @staticmethod
     def _detect_provider(api_key: str) -> str:
@@ -284,14 +288,17 @@ class ScoringEngine:
             )
 
         message = client.messages.create(
-            model=self.model or "claude-sonnet-4-20250514",
+            model=self.model or DEFAULT_ANTHROPIC_MODEL,
             max_tokens=8192,
             system=system_prompt,
             messages=[
                 {"role": "user", "content": user_content},
             ],
         )
-        return message.content[0].text
+        # Adaptive thinking can put a thinking block first; read text blocks by type.
+        return "".join(
+            b.text for b in message.content if getattr(b, "type", None) == "text"
+        )
 
     def _call_claude_cli(
         self, system_prompt: str, user_prompt: str, screenshot_b64: Optional[str] = None
