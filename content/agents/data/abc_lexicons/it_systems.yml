@@ -1,0 +1,149 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Themed A–Z lexicon: "IT systems" — a toddler's first alphabet of the concepts
+# that run the digital world, each turned into something small, friendly and
+# drawable. Consumed by Zer0Cms::Abc::Providers::Deterministic so the seed book
+# "The IT Alphabet: A is for Automation" generates fully offline (no API key).
+#
+# Each letter carries:
+#   word    — the IT concept the letter stands for
+#   subject — a concrete, drawable little scene (fed to the art plugin)
+#   tagline — the read-aloud line a grown-up says
+#   alt     — accessible description of the intended plate
+# ─────────────────────────────────────────────────────────────────────────────
+theme: "IT systems"
+title: "The IT Alphabet"
+subtitle: "A is for Automation"
+default_art_style: isometric-tech-toy
+default_palette: cool-tech
+audience: toddler
+letters:
+  A:
+    word: Automation
+    subject: "a friendly robot arm stacking soft toy blocks all by itself"
+    tagline: "A is for Automation — little helpers that do the work for us!"
+    alt: "A cheerful robot arm stacking blocks on its own."
+  B:
+    word: Backup
+    subject: "two identical happy folders holding hands, one labelled with a heart"
+    tagline: "B is for Backup — keep a spare copy so nothing gets lost!"
+    alt: "Two matching folders side by side, keeping each other safe."
+  C:
+    word: Cloud
+    subject: "a smiling fluffy cloud with tiny data raindrops falling gently"
+    tagline: "C is for Cloud — computers that live up in the sky!"
+    alt: "A smiling cloud sprinkling little sparkles of data."
+  D:
+    word: Database
+    subject: "a neat stack of labelled drawers, each full of tidy shapes"
+    tagline: "D is for Database — a big tidy box that remembers everything!"
+    alt: "A stack of tidy drawers, each holding neatly sorted shapes."
+  E:
+    word: Encryption
+    subject: "a cheerful padlock hugging a letter, sparkling with secret stars"
+    tagline: "E is for Encryption — secret code that keeps things safe!"
+    alt: "A friendly padlock wrapping a message in sparkles."
+  F:
+    word: Firewall
+    subject: "a sturdy brick wall shielding a happy little computer, a shield in front"
+    tagline: "F is for Firewall — a wall that stops the naughty bits!"
+    alt: "A brick wall with a shield, protecting a smiling computer."
+  G:
+    word: Gateway
+    subject: "a friendly archway doorway with a glowing path leading through it"
+    tagline: "G is for Gateway — a doorway between two places!"
+    alt: "A glowing archway doorway inviting you through."
+  H:
+    word: Hardware
+    subject: "a smiling computer chip with tiny gears and a little face"
+    tagline: "H is for Hardware — the parts you can actually touch!"
+    alt: "A happy computer chip with little gears."
+  I:
+    word: Internet
+    subject: "a round friendly globe wrapped in gently glowing connecting wires"
+    tagline: "I is for Internet — wires that link the whole wide world!"
+    alt: "A globe hugged by softly glowing connection lines."
+  J:
+    word: JSON
+    subject: "a pair of round curly-brace characters holding tidy little name-tags"
+    tagline: "J is for JSON — neat little notes computers pass around!"
+    alt: "Two curly-brace characters carrying tidy labelled notes."
+  K:
+    word: Kernel
+    subject: "a glowing cozy seed at the very center of a sleeping computer"
+    tagline: "K is for Kernel — the little heart of the computer!"
+    alt: "A warm glowing core resting at the center of a computer."
+  L:
+    word: Logs
+    subject: "a long friendly ribbon scroll covered in tiny tidy check-marks"
+    tagline: "L is for Logs — little notes about what happened!"
+    alt: "A ribbon scroll filled with small tidy check-marks."
+  M:
+    word: Memory
+    subject: "a gentle elephant holding a stick of glowing memory chips"
+    tagline: "M is for Memory — where the computer keeps what it knows!"
+    alt: "A kind elephant cradling a glowing memory stick."
+  N:
+    word: Network
+    subject: "round friendly dots holding hands in a happy connected circle"
+    tagline: "N is for Network — friends all holding hands!"
+    alt: "A ring of round dots linked hand in hand."
+  O:
+    word: "Open Source"
+    subject: "an open treasure chest of glowing code shared out to everyone"
+    tagline: "O is for Open Source — code we share with everybody!"
+    alt: "An open treasure chest spilling friendly glowing code."
+  P:
+    word: Password
+    subject: "a shiny key made of little stars, twinkling"
+    tagline: "P is for Password — a secret word just for you!"
+    alt: "A sparkling star-shaped key."
+  Q:
+    word: Queue
+    subject: "a tidy line of smiling parcels waiting patiently for their turn"
+    tagline: "Q is for Queue — waiting nicely in a line!"
+    alt: "Smiling parcels lined up in a neat queue."
+  R:
+    word: Router
+    subject: "a cheerful little signpost box beaming friendly arrows every way"
+    tagline: "R is for Router — it shows the way to go!"
+    alt: "A signpost box sending out friendly arrows."
+  S:
+    word: Server
+    subject: "a tall friendly tower of softly blinking happy lights"
+    tagline: "S is for Server — a helper that never sleeps!"
+    alt: "A tall tower of gently blinking lights with a smile."
+  T:
+    word: Terminal
+    subject: "a little screen with a blinking smile for a cursor"
+    tagline: "T is for Terminal — where we type to the computer!"
+    alt: "A screen whose blinking cursor makes a smile."
+  U:
+    word: Update
+    subject: "a small sprout growing one leaf taller, a soft up-arrow above it"
+    tagline: "U is for Update — a little bit better today!"
+    alt: "A sprout growing taller beneath a gentle up-arrow."
+  V:
+    word: Version
+    subject: "three friendly nesting dolls in a row, numbered one, two, three"
+    tagline: "V is for Version — which one came next!"
+    alt: "Three nesting dolls in a numbered row."
+  W:
+    word: "Wi-Fi"
+    subject: "cheerful curved waves floating little hearts through the air"
+    tagline: "W is for Wi-Fi — hellos that fly through the air!"
+    alt: "Curved signal waves carrying little hearts."
+  X:
+    word: "eXit"
+    subject: "a friendly open door with a soft green glow and a waving hand"
+    tagline: "X is for eXit — a friendly way to say goodbye!"
+    alt: "An open door glowing green with a little waving hand."
+  Y:
+    word: YAML
+    subject: "a tidy indented list of round shapes, each on its own little step"
+    tagline: "Y is for YAML — tidy lists computers love!"
+    alt: "A neatly indented list of shapes stepping down."
+  Z:
+    word: "Zero Trust"
+    subject: "a kindly little guard checking name-tags at a friendly gate"
+    tagline: "Z is for Zero Trust — always check who's knocking!"
+    alt: "A friendly guard checking name-tags at a gate."

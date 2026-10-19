@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "a0cc51206d7579b3",
+  "response": {
+    "text": "Tightened the one paragraph.",
+    "tokens_in": 1200,
+    "tokens_out": 200,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5",
+    "tool_calls": []
+  }
+}

@@ -38,15 +38,19 @@ packages/**
 sites/**
 apps/**
 .gitmodules
+# The content plane (docs/adr/0001-target-architecture.md) and the shared
+# schemas it owns. Only schemas/zer0.schema.json ships in the vsix.
+content/**
+schemas/events/**
+schemas/graphql/**
+schemas/content/**
+.markdownlint-cli2.jsonc
 # The workspace registry and its command (tools/** above holds the library).
 workspace.yml
 bin/**
 
 # The Rails half's container definition: repository infrastructure, not payload.
 docker-compose.yml
-
-# Repository lint configuration: contributors' tooling, not payload.
-.markdownlint-cli2.jsonc
 
 # Release plumbing and toolchain pins: repository infrastructure, not payload.
 release-please-config.json

@@ -1,0 +1,9 @@
+# The content plane's local state: never committed.
+db.sqlite3
+db.sqlite3-journal
+/media/
+/static/
+/.test-media/
+.env
+*.pyc
+.ruff_cache/

@@ -1,0 +1,26 @@
+{
+  "prompt_digest": "a0cc51206d7579b3",
+  "response": {
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "replace",
+          "block_id": "{{results.0.body.0.id}}",
+          "block": {
+            "type": "markdown",
+            "value": "We made this site to share our books. You can find all of them here."
+          },
+          "rationale": "Same two facts in half the words."
+        }
+      }
+    ],
+    "tokens_in": 1050,
+    "tokens_out": 160,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5",
+    "text": ""
+  }
+}

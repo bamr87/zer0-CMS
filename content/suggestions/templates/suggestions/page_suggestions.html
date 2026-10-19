@@ -1,0 +1,36 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n %}
+{% block titletag %}{% trans "Suggestions" %} — {{ page.title }}{% endblock %}
+{% block content %}
+  {% include "wagtailadmin/shared/header.html" with title=page.title subtitle="Agent suggestions" icon="edit" %}
+  <div class="nice-padding">
+    {% if not pending %}<p>{% trans "Nothing pending." %}</p>{% endif %}
+    {% for run_id, items in runs.items %}
+      <section>
+        <h2>{% if run_id %}Run {{ run_id }}{% else %}{% trans "No run" %}{% endif %} — {{ items.0.agent.slug|default:"agent" }}</h2>
+        {% if run_id and items|length > 1 %}
+          <form method="post" action="{% url 'suggestions_decide' items.0.pk 'accept' %}">{% csrf_token %}
+            <input type="hidden" name="whole_run" value="1">
+            <button class="button" type="submit">{% blocktrans count n=items|length %}Accept {{ n }} as one revision{% plural %}Accept all {{ n }} as one revision{% endblocktrans %}</button>
+          </form>
+        {% endif %}
+        <table class="listing">
+          <thead><tr><th>{% trans "Change" %}</th><th>{% trans "Proposed" %}</th><th>{% trans "Why" %}</th><th></th></tr></thead>
+          <tbody>
+          {% for s in items %}
+            <tr>
+              <td>{{ s.op }}{% if s.field %} <code>{{ s.field }}</code>{% endif %}{% if s.block_id %}<br><small>block {{ s.block_id }}</small>{% endif %}</td>
+              <td><pre style="white-space: pre-wrap">{{ s.payload|pprint|truncatechars:800 }}</pre></td>
+              <td>{{ s.rationale }}</td>
+              <td>
+                <form method="post" action="{% url 'suggestions_decide' s.pk 'accept' %}">{% csrf_token %}<button class="button button-small" type="submit">{% trans "Accept" %}</button></form>
+                <form method="post" action="{% url 'suggestions_decide' s.pk 'reject' %}">{% csrf_token %}<button class="button button-small button-secondary" type="submit">{% trans "Reject" %}</button></form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    {% endfor %}
+  </div>
+{% endblock %}

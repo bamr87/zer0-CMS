@@ -1,0 +1,11 @@
+{
+  "specversion": "1.0",
+  "id": "e1f2a3b4-c5d6-4e7f-8091-a2b3c4d5e6f7",
+  "source": "zer0-cms/app",
+  "type": "app.user.interaction",
+  "subject": "page:42",
+  "time": "2026-10-19T12:05:00Z",
+  "datacontenttype": "application/json",
+  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/app.user.interaction.v1.json",
+  "data": { "anon_id": "a7c9e1f3b5d7", "page_id": 42, "kind": "view", "session_page_ids": [17, 42] }
+}

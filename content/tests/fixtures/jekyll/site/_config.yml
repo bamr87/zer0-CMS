@@ -1,0 +1,16 @@
+# A small zer0-style Jekyll site for the importer and exporter tests.
+title: Fixture Site
+url: "https://fixture.example"
+baseurl: ""
+collections_dir: pages
+collections:
+  posts:
+    output: true
+  docs:
+    output: true
+    permalink: /docs/:path/
+  books:
+    output: true
+exclude:
+  - README.md
+  - Gemfile

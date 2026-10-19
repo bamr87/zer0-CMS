@@ -1,0 +1,32 @@
+# The brand review: the extension's brand guard, as a workflow task.
+slug: brand
+name: Brand guard
+role: review
+description: Fails a page in moderation when it uses a banned phrase (suggestions/guard.py).
+handler: agents.handlers.reviews.brand
+policy: suggest
+max_steps: 1
+budget_usd: "0"
+tools:
+  - review.submit_verdict
+evals:
+  - name: clean-page-passes
+    input:
+      page:
+        type: ArticlePage
+        title: Our backup routine
+        body:
+          - {type: markdown, value: "We copy the site every night."}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: verdict, passed: true}
+  - name: banned-phrase-fails
+    input:
+      page:
+        type: ArticlePage
+        title: Our cutting-edge backup routine
+        body:
+          - {type: markdown, value: "A world-class approach to copying files."}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: verdict, passed: false}

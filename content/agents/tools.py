@@ -1,0 +1,77 @@
+"""The harness's own tools: scoped memory and the house style.
+
+`memory.remember` writes to `Memory`, the agent-owned layer editors can read
+and correct (note §4); it is `propose`, not `write`, because it changes no
+content. Agents read the brand rules before writing (`brand.rules`).
+"""
+
+from datetime import timedelta
+
+from django.utils import timezone
+
+from .models import Memory
+from .registry import obj, tool
+
+SCOPE = {"type": "string", "enum": Memory.SCOPES}
+
+
+@tool(
+    "memory.recall",
+    effect="read",
+    description="What has been remembered under a scope (global, site, section, page, user, agent), optionally one key.",
+    input_schema=obj({"scope": SCOPE, "scope_id": {"type": "string"}, "key": {"type": "string"}}, required=["scope"]),
+)
+def recall(ctx, scope, scope_id="", key=None):
+    now = timezone.now()
+    qs = Memory.objects.filter(scope=scope, scope_id=scope_id).exclude(expires_at__lt=now)
+    if key:
+        qs = qs.filter(key=key)
+    return {"memories": [{"key": m.key, "value": m.value, "updated_at": m.updated_at.isoformat()} for m in qs]}
+
+
+@tool(
+    "memory.remember",
+    effect="propose",
+    description="Remember a value under a scope and key, optionally for a number of days.",
+    input_schema=obj(
+        {
+            "scope": SCOPE,
+            "scope_id": {"type": "string"},
+            "key": {"type": "string", "minLength": 1, "maxLength": 120},
+            "value": {},
+            "ttl_days": {"type": "integer", "minimum": 1, "maximum": 3650},
+        },
+        required=["scope", "key", "value"],
+    ),
+    rate="60/m",
+)
+def remember(ctx, scope, key, value, scope_id="", ttl_days=None):
+    memory, _ = Memory.objects.update_or_create(
+        scope=scope,
+        scope_id=scope_id,
+        key=key,
+        defaults={
+            "value": value if isinstance(value, dict) else {"value": value},
+            "updated_by_run": ctx.run,
+            "expires_at": timezone.now() + timedelta(days=ttl_days) if ttl_days else None,
+        },
+    )
+    return {"key": memory.key, "scope": memory.scope}
+
+
+@tool(
+    "brand.rules",
+    effect="read",
+    description="The house style guide and the banned phrases every proposal is checked against.",
+    input_schema=obj({}),
+)
+def brand_rules(ctx):
+    from cms.models import BrandRules
+    from suggestions.guard import BANNED_PATTERNS
+
+    active = BrandRules.objects.filter(is_active=True)
+    return {
+        "style_guides": [r.style_guide for r in active if r.style_guide],
+        "banned": [name for name, _ in BANNED_PATTERNS]
+        + [p.get("name") for r in active for p in (r.banned_patterns or [])],
+    }

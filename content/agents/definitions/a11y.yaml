@@ -1,0 +1,35 @@
+# The accessibility review: alt text and heading order, as a workflow task.
+slug: a11y
+name: Accessibility
+role: review
+description: Fails a page in moderation with an image that has no alt text or a heading that skips a level.
+handler: agents.handlers.reviews.a11y
+policy: suggest
+max_steps: 1
+budget_usd: "0"
+tools:
+  - review.submit_verdict
+evals:
+  - name: heading-order-passes
+    input:
+      page:
+        type: ArticlePage
+        title: Headings in order
+        body:
+          - {type: heading, value: {level: "2", text: "Before you start"}}
+          - {type: heading, value: {level: "3", text: "What you need"}}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: verdict, passed: true}
+  - name: heading-jump-fails
+    input:
+      page:
+        type: ArticlePage
+        title: Headings out of order
+        body:
+          - {type: heading, value: {level: "2", text: "Before you start"}}
+          - {type: heading, value: {level: "5", text: "What you need"}}
+          - {type: markdown, value: "![](/assets/images/diagram.png)"}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: verdict, passed: false}

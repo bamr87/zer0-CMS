@@ -65,6 +65,25 @@ projects:
       test: npm test
       build: npx @vscode/vsce package --no-dependencies
 
+  content:
+    path: content
+    paths:
+      - "content/**"
+      - "schemas/events/**"
+      - "schemas/graphql/**"
+      - "schemas/content/**"
+    kind: app
+    stack: [python, docker]
+    summary: The content plane — Django + Wagtail pages, the agent harness and its one tool registry, suggestions, the content graph, the outbox, and GraphQL/REST/MCP over all of it (ADR 0001).
+    upstream: bamr87/zer0-CMS
+    ci: content.yml
+    tasks:
+      setup: pip install -r requirements-dev.txt
+      check: python3 -m pytest -q -m "not slow" && python3 manage.py makemigrations --check --dry-run
+      test:
+        run: python3 -m pytest -q && python3 manage.py makemigrations --check --dry-run && ruff check . && ruff format --check .
+      build: docker build -f Dockerfile ..
+
   cms-rails:
     path: rails
     kind: rails
@@ -227,6 +246,9 @@ vendored:
   - copy: rails/lib/zer0_cms/data/abc_art_styles.yml
     source: packages/zer0-image-generator/lib/zer0_image_generator/abc/art_styles.yml
     why: The ABC wizard offers the image generator's art styles; rails/lib is stdlib-only and loads no gem.
+  - copy: content/agents/data/abc_lexicons/it_systems.yml
+    source: rails/lib/zer0_cms/abc/lexicons/it_systems.yml
+    why: The content plane's ABC drafter generates the same offline books as the Rails wizard, from the same lexicon.
   - copy: rails/lib/zer0_cms/data/frontmatter_schema.yml
     source: packages/zer0-mistakes/.github/config/frontmatter_schema.yml
     why: zer0 doctor checks a site's front matter against the theme's schema without loading the theme.

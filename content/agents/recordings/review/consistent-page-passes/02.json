@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "efc5090e3c7614b1",
+  "response": {
+    "text": "Passed.",
+    "tokens_in": 1200,
+    "tokens_out": 200,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5",
+    "tool_calls": []
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "prompt_digest": "71b192433fce52c6",
+  "response": {
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "meta",
+          "field": "seo_title",
+          "value": "Nightly site backups with thirty days of copies",
+          "rationale": "States the routine and its retention."
+        }
+      },
+      {
+        "id": "call_2",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "meta",
+          "field": "search_description",
+          "value": "We copy the whole site to a second disk every night and keep thirty days of copies. A page comes back in a minute.",
+          "rationale": "Two plain sentences from the page's own facts."
+        }
+      },
+      {
+        "id": "call_3",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "meta",
+          "field": "ai_keywords",
+          "value": [
+            "backup",
+            "restore",
+            "site",
+            "nightly"
+          ],
+          "rationale": "The page's main terms."
+        }
+      }
+    ],
+    "tokens_in": 1050,
+    "tokens_out": 160,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-haiku-5-5",
+    "text": ""
+  }
+}

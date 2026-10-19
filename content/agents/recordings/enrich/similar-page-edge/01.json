@@ -1,0 +1,23 @@
+{
+  "prompt_digest": "b4121e7f80b94785",
+  "response": {
+    "tool_calls": [
+      {
+        "id": "call_2",
+        "name": "graph.upsert_edge",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "rel": "similar_to",
+          "dst": "page:{{input.fixture_ids.0}}",
+          "confidence": 0.7,
+          "rationale": "Both pages are about the nightly site backup."
+        }
+      }
+    ],
+    "tokens_in": 1050,
+    "tokens_out": 160,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-haiku-5-5",
+    "text": ""
+  }
+}

@@ -1,0 +1,12 @@
+{% load wagtailcore_tags %}<!doctype html>
+{# Preview only: zer0-CMS is headless, and the Jekyll sites render pages for real (PLAN §2). #}
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ page.seo_title|default:page.title }}</title></head>
+<body>
+<main>
+  <h1>{{ page.title }}</h1>
+  {% if page.ai_summary %}<p><em>{{ page.ai_summary }}</em></p>{% endif %}
+  {% for block in page.body %}<section data-block-id="{{ block.id }}" data-block-type="{{ block.block_type }}">{% include_block block %}</section>{% endfor %}
+</main>
+</body>
+</html>

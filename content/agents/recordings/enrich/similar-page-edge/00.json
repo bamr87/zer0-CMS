@@ -1,0 +1,27 @@
+{
+  "prompt_digest": "b4121e7f80b94785",
+  "response": {
+    "tool_calls": [
+      {
+        "id": "call_0",
+        "name": "content.get_page",
+        "arguments": {
+          "page_id": "{{target.id}}"
+        }
+      },
+      {
+        "id": "call_1",
+        "name": "graph.search",
+        "arguments": {
+          "query": "site backup",
+          "first": 5
+        }
+      }
+    ],
+    "tokens_in": 900,
+    "tokens_out": 120,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-haiku-5-5",
+    "text": ""
+  }
+}
