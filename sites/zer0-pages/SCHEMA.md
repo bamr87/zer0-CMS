@@ -18,7 +18,8 @@ coverage: listed
 | `tools/` | dir | Repo tooling — the vendored Pyramid Schema linter | |
 | `_site/` | dir | Jekyll build output (gitignored) — never hand-edit | generated |
 | `vendor/` | dir | Local bundler gem install path (BUNDLE_PATH; gitignored) | generated |
-| `CLAUDE.md` | file | Claude Code guidance for working in this repo (architecture, workflows, conventions) | |
+| `AGENTS.md` | file | Agent guidance for working in this repo (architecture, workflows, conventions) — the one file every coding agent reads | |
+| `CLAUDE.md` | file | A one-line pointer that imports `AGENTS.md` for Claude Code | |
 | `Gemfile` | file | Ruby dependencies — Jekyll 4.3 plus the jekyll-theme-zer0 gem and Jekyll plugins | |
 | `Gemfile.lock` | file | Locked gem versions for reproducible builds | |
 | `PRD.md` | file | Product requirements document — goals, architecture decisions, and roadmap for zer0-pages | |
