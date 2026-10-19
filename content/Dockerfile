@@ -28,6 +28,6 @@ RUN SECRET_KEY=build-only python manage.py collectstatic --noinput -v0 \
 
 USER app
 EXPOSE 8000
-HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=12 \
-    CMD curl -fsS http://127.0.0.1:8000/healthz || exit 1
+# No HEALTHCHECK here: one image runs four roles (web, worker, beat, relay),
+# and only the web role answers HTTP. Each compose service declares its own.
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--access-logfile", "-"]

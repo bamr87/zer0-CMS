@@ -1,4 +1,5 @@
-"""Celery tasks: the relay runs every few seconds from beat (settings)."""
+"""Celery task form of the relay, for a deployment that prefers beat to the
+`relay_outbox` process; compose runs the process."""
 
 from celery import shared_task
 

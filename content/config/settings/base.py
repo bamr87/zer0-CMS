@@ -11,6 +11,7 @@ to offline backends (`config.settings.testing`).
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # content/
 REPO_ROOT = BASE_DIR.parent  # the zer0-CMS checkout
@@ -166,8 +167,10 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = None
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 CELERY_TASK_ACKS_LATE = True
+# The outbox relay runs as its own process (`manage.py relay_outbox`, the
+# compose `relay` service); beat schedules the nightly graph job.
 CELERY_BEAT_SCHEDULE = {
-    "relay-outbox": {"task": "outbox.tasks.relay_outbox", "schedule": 5.0},
+    "viewed-together-nightly": {"task": "graph.tasks.build_viewed_together", "schedule": crontab(hour=3, minute=17)},
 }
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
