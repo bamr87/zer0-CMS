@@ -1,10 +1,6 @@
 # Evolution telemetry ledger
 
-`evolution.jsonl.gz` is the raw record of every AI agent run in this lineage's growth loop — one
-gzipped JSON line per `grow` workflow run, appended automatically by
-[`telemetry.yml`](../.github/workflows/telemetry.yml) after each run completes. It retains the
-agent's full inputs/outputs (conversation turns, tool calls, usage, cost, permission denials) for
-detached analysis, review, evaluation, and learning.
+`evolution.jsonl.gz` is the raw record of every AI agent run in this lineage's growth loop — one gzipped JSON line per `grow` workflow run, appended automatically by [`telemetry.yml`](../.github/workflows/telemetry.yml) after each run completes. It retains the agent's full inputs/outputs (conversation turns, tool calls, usage, cost, permission denials) for detached analysis, review, evaluation, and learning.
 
 ## Schema — `evolution-telemetry/v1`
 
@@ -20,8 +16,7 @@ One JSON object per line:
 | `attempts.subscription` | Same, for the subscription-fallback attempt when it ran, or `null` |
 | `collected_at` | When the record was appended |
 
-Records where both attempts are `null` correspond to runs that failed before the agent produced
-output — kept for complete run coverage.
+Records where both attempts are `null` correspond to runs that failed before the agent produced output — kept for complete run coverage.
 
 ## Reading it
 
@@ -39,5 +34,4 @@ import pandas as pd
 df = pd.read_json("telemetry/evolution.jsonl.gz", lines=True, compression="gzip")
 ```
 
-Append-only: never edit or reorder existing lines — downstream evaluators treat the ledger as an
-immutable event stream.
+Append-only: never edit or reorder existing lines — downstream evaluators treat the ledger as an immutable event stream.
