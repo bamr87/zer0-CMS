@@ -145,6 +145,9 @@ services:
       CSRF_COOKIE_SECURE: "false"
       DATABASE_URL: postgres://zer0:${POSTGRES_PASSWORD:-zer0}@db:5432/zer0
       REDIS_URL: redis://redis:6379/0
+      # Tool rate limits are counted in the cache, so it has to be shared by
+      # every worker and process.
+      CACHE_URL: rediscache://redis:6379/1
       # recorded (fixtures, no network) unless a deployment opts into a model.
       LLM_BACKEND: ${LLM_BACKEND:-recorded}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

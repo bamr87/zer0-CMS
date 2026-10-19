@@ -152,3 +152,29 @@ def test_editor_admin_view_lists_and_accepts(client, article, run, editor):
     assert response.status_code == 302
     s.refresh_from_db()
     assert s.status == Suggestion.ACCEPTED
+
+
+@pytest.mark.django_db
+def test_agent_rich_text_is_whitelisted_and_active_markup_refused(article, run):
+    s = proposal(
+        article,
+        run,
+        op="insert",
+        payload={
+            "type": "paragraph",
+            "value": '<p onclick="x()">Hi <b>there</b> <a href="javascript:alert(1)">x</a> <a href="https://ok.example">ok</a></p>',
+        },
+    )
+    assert s.payload["value"] == '<p>Hi <b>there</b> <a>x</a> <a href="https://ok.example">ok</a></p>'
+    for hostile in (
+        "<script>alert(1)</script>",
+        '<img src=x onerror="alert(1)">',
+        "[x](javascript:alert(1))",
+        '<iframe src="https://evil.example"></iframe>',
+    ):
+        with pytest.raises(SuggestionError, match="active markup"):
+            proposal(article, run, op="insert", payload={"type": "markdown", "value": f"Fine text. {hostile}"})
+    # Code is code: a fence may show a script without running it.
+    assert proposal(
+        article, run, op="insert", payload={"type": "code", "value": {"language": "html", "code": "<script>x</script>"}}
+    )

@@ -22,11 +22,13 @@ import uuid
 
 from django.db import transaction
 from django.utils import timezone
+from wagtail.admin.rich_text.converters.editor_html import EditorHTMLConverter
+from wagtail.blocks import RichTextBlock
 from wagtail.models import Revision
 
 from agents.schema import META_FIELDS, BlockInvalid, validate_block
 
-from .guard import has_errors, page_findings, text_of
+from .guard import has_errors, markup_findings, page_findings, text_of
 from .models import BlockProvenance, Suggestion, target_content_type
 
 IMAGE_META_FIELDS = ("ai_alt", "ai_caption", "ai_tags")
@@ -51,7 +53,12 @@ def clean_block(payload: dict) -> dict:
     except BlockInvalid as e:
         raise SuggestionError(str(e)) from e
     child = BasePage._meta.get_field("body").stream_block.child_blocks[payload["type"]]
-    return {"type": payload["type"], "value": child.get_prep_value(native)}
+    value = child.get_prep_value(native)
+    if isinstance(child, RichTextBlock):
+        # Wagtail whitelists rich text that comes through its editor; a value
+        # that arrives as JSON gets the same whitelist here.
+        value = EditorHTMLConverter(features=child.features).to_database_format(value)
+    return {"type": payload["type"], "value": value}
 
 
 def clean_meta(field: str, value):
@@ -70,8 +77,12 @@ def clean_meta(field: str, value):
     return value
 
 
-def guard(value):
-    findings = page_findings(text_of(value))
+def guard(value, block_type=None):
+    """The checks every agent-proposed value passes, at propose time and again
+    at accept time: the brand guard, and — outside a code block, which shows
+    markup rather than running it — no active markup."""
+    text = text_of(value)
+    findings = page_findings(text) + ([] if block_type == "code" else markup_findings(text))
     if has_errors(findings):
         raise SuggestionError("brand guard: " + "; ".join(f["message"] for f in findings if f["level"] == "error"))
     return findings
@@ -142,7 +153,7 @@ def validate_proposal(target, op, block_id, payload, field):
         raise SuggestionError(f"block {block_id!r} is not in page {target.pk}")
     if op in (Suggestion.INSERT, Suggestion.REPLACE):
         block = clean_block(payload)
-        guard(block["value"])
+        guard(block["value"], block["type"])
         return block
     if op == Suggestion.DELETE:
         return {}
@@ -249,7 +260,7 @@ def accept(suggestions, user):
             if s.op == Suggestion.META:
                 guard(payload.get("value"))
             elif s.op in (Suggestion.INSERT, Suggestion.REPLACE):
-                guard(payload.get("value"))
+                guard(payload.get("value"), payload.get("type"))
             block = apply_op(page, s.op, block_id=s.block_id, payload=payload, field=s.field)
             if block:
                 written.append((s, block))

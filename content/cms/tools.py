@@ -212,7 +212,7 @@ def draft_revision(ctx, page_id, ops, rationale):
         for op in ops:
             payload = op.get("block") if op["op"] in ("insert", "replace") else {"value": op.get("value")}
             if op["op"] != "delete":
-                guard(payload.get("value"))
+                guard(payload.get("value"), payload.get("type"))
             block = apply_op(
                 latest, op["op"], block_id=op.get("block_id", ""), payload=payload, field=op.get("field", "")
             )

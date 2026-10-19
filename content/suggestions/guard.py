@@ -115,6 +115,21 @@ def page_findings(text: str, extra=None) -> list[dict]:
     return bans + _filler(text or "", errored)
 
 
+# Markup that runs code or loads a frame. Raw HTML stays allowed in a
+# Markdown block (it is lossless on purpose), but an *agent* never gets to
+# propose active content: page text is untrusted input to a model, and a
+# prompt-injected script would otherwise reach a published page through one
+# careless accept.
+ACTIVE_MARKUP = re.compile(r"<\s*(script|iframe|object|embed|style|form)\b|javascript\s*:|\son[a-z]+\s*=", re.I)
+
+
+def markup_findings(text: str) -> list[dict]:
+    match = ACTIVE_MARKUP.search(text or "")
+    if not match:
+        return []
+    return [{"level": "error", "message": f'active markup "{match.group(0).strip()}" is not accepted from an agent'}]
+
+
 def has_errors(findings) -> bool:
     return any(f["level"] == "error" for f in findings)
 
