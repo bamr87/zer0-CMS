@@ -1,7 +1,15 @@
-# zer0-CMS — the fleet CMS (Rails on Administrate) and the ABC wizard.
+# zer0-CMS — the fleet CMS (Rails on Administrate), the ABC wizard, and the
+# content plane (Django + Wagtail, docs/adr/0001-target-architecture.md).
 #
 #   docker compose up --build                     # http://localhost:3001/admin
 #   docker compose --profile imagegen up --build  # + zer0-image-generator on :3000
+#   docker compose --profile content up -d --wait # + the content plane on :8000
+#
+# The content profile adds Postgres with pgvector, Redis, the Django app
+# (/healthz, /admin/, /graphql/, /api/v2/, /mcp/), a Celery worker and beat
+# (agent runs, the nightly graph job) and the outbox relay to Redis Streams.
+# It is a profile, not the default, because the content plane is additive
+# until PLAN-D1 is decided: the Rails CMS above needs none of it.
 #
 # SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
 # the zer0 sites — discovery finds them two levels down, e.g.
@@ -92,7 +100,116 @@ services:
       retries: 12
       start_period: 60s
 
+  # ── The content plane (profile: content) ────────────────────────────────
+  db:
+    profiles: ["content"]
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: zer0
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zer0}
+      POSTGRES_DB: zer0
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zer0 -d zer0"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    profiles: ["content"]
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  content:
+    profiles: ["content"]
+    build:
+      context: .
+      dockerfile: content/Dockerfile
+    command: >-
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py sync_agents --publish &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -"
+    ports:
+      - "127.0.0.1:${CONTENT_PORT:-8000}:8000"
+    environment: &content-env
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      SECRET_KEY: ${CONTENT_SECRET_KEY:-change-me-in-production}
+      ALLOWED_HOSTS: localhost,127.0.0.1,content
+      CSRF_TRUSTED_ORIGINS: http://localhost:${CONTENT_PORT:-8000},http://127.0.0.1:${CONTENT_PORT:-8000}
+      SESSION_COOKIE_SECURE: "false"
+      CSRF_COOKIE_SECURE: "false"
+      DATABASE_URL: postgres://zer0:${POSTGRES_PASSWORD:-zer0}@db:5432/zer0
+      REDIS_URL: redis://redis:6379/0
+      # Tool rate limits are counted in the cache, so it has to be shared by
+      # every worker and process.
+      CACHE_URL: rediscache://redis:6379/1
+      # recorded (fixtures, no network) unless a deployment opts into a model.
+      LLM_BACKEND: ${LLM_BACKEND:-recorded}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MCP_ALLOWED_ORIGINS: http://localhost:${CONTENT_PORT:-8000}
+    volumes:
+      - ${SITES_DIR:-.}:/sites:ro
+      - content-media:/app/content/media
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 60s
+
+  worker:
+    profiles: ["content"]
+    build:
+      context: .
+      dockerfile: content/Dockerfile
+    command: celery -A config worker --loglevel=INFO
+    environment: *content-env
+    volumes:
+      - content-media:/app/content/media
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping --timeout 5 -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  beat:
+    profiles: ["content"]
+    build:
+      context: .
+      dockerfile: content/Dockerfile
+    command: celery -A config beat --loglevel=INFO --schedule /tmp/celerybeat-schedule
+    environment: *content-env
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      disable: true
+
+  relay:
+    profiles: ["content"]
+    build:
+      context: .
+      dockerfile: content/Dockerfile
+    command: python manage.py relay_outbox
+    environment: *content-env
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      disable: true
+
 volumes:
   storage:
   imagegen-storage:
   imagegen-forge:
+  pgdata:
+  content-media:

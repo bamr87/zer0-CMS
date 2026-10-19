@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "580c59fa4420f8b2",
+  "response": {
+    "text": "Draft proposed as three blocks after the brief: a heading, the idea, and the 3-2-1 rule of thumb. Accept them together to get one draft revision.",
+    "tokens_in": 1200,
+    "tokens_out": 200,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5",
+    "tool_calls": []
+  }
+}

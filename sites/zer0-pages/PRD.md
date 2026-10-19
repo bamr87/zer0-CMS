@@ -19,7 +19,7 @@ combined_from:
 > via the `claude-obsidian` plugin, with build-time bridge plugins converting Obsidian
 > syntax to HTML — no Django, React, or database component exists in this repository.
 > See [pages/wiki/sources/zer0-pages-prd.md](pages/wiki/sources/zer0-pages-prd.md) and
-> root [CLAUDE.md](CLAUDE.md) for what actually exists today.
+> root [AGENTS.md](AGENTS.md) for what actually exists today.
 
 ## 1. Executive Summary
 

@@ -1,0 +1,18 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n %}
+{% block titletag %}{% trans "Agent runs" %}{% endblock %}
+{% block content %}
+  {% include "wagtailadmin/shared/header.html" with title="Agent runs" icon="time" %}
+  <div class="nice-padding">
+    <h2>{% trans "By agent" %}</h2>
+    <table class="listing">
+      <thead><tr><th>{% trans "Agent" %}</th><th>{% trans "Runs" %}</th><th>{% trans "Failed or refused" %}</th><th>{% trans "Cost (USD)" %}</th><th>{% trans "Tokens" %}</th></tr></thead>
+      <tbody>{% for row in by_agent %}<tr><td>{{ row.agent__slug }}</td><td>{{ row.total }}</td><td>{{ row.failed }}</td><td>{{ row.cost|default:"0" }}</td><td>{{ row.tokens|default:"0" }}</td></tr>{% endfor %}</tbody>
+    </table>
+    <h2>{% trans "Latest runs" %}</h2>
+    <table class="listing">
+      <thead><tr><th>#</th><th>{% trans "Agent" %}</th><th>{% trans "Trigger" %}</th><th>{% trans "Status" %}</th><th>{% trans "Cost" %}</th><th>{% trans "Trace" %}</th><th>{% trans "When" %}</th><th>{% trans "Error" %}</th></tr></thead>
+      <tbody>{% for run in runs %}<tr><td>{{ run.pk }}</td><td>{{ run.agent.slug }}</td><td>{{ run.trigger }}</td><td>{{ run.status }}</td><td>{{ run.cost_usd }}</td><td><code>{{ run.trace_id|truncatechars:12 }}</code></td><td>{{ run.created_at }}</td><td>{{ run.error|truncatechars:80 }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+{% endblock %}

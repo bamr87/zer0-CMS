@@ -1,0 +1,20 @@
+{
+  "specversion": "1.0",
+  "id": "8b1d7e52-0c3a-4f6e-a2d9-5c4b3a2f1e00",
+  "source": "zer0-cms/content",
+  "type": "content.suggestion.created",
+  "subject": "page:42",
+  "time": "2026-10-19T12:01:00Z",
+  "datacontenttype": "application/json",
+  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.suggestion.created.v1.json",
+  "data": {
+    "suggestion_id": 7,
+    "target": "page:42",
+    "page_id": 42,
+    "op": "meta",
+    "block_id": null,
+    "field": "seo_title",
+    "agent": "seo",
+    "run_id": 3
+  }
+}

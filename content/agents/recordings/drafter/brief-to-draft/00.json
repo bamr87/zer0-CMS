@@ -1,0 +1,26 @@
+{
+  "prompt_digest": "580c59fa4420f8b2",
+  "response": {
+    "text": "I'll read the page and the schema first.",
+    "tool_calls": [
+      {
+        "id": "call_0",
+        "name": "content.get_schema",
+        "arguments": {
+          "page_type": "cms.ArticlePage"
+        }
+      },
+      {
+        "id": "call_1",
+        "name": "content.get_page",
+        "arguments": {
+          "page_id": "{{target.id}}"
+        }
+      }
+    ],
+    "tokens_in": 900,
+    "tokens_out": 120,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5"
+  }
+}

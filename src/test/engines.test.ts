@@ -154,7 +154,7 @@ suite('engines: the seam holds', () => {
     assert.deepEqual(
       importers.sort(),
       ['core/fleet/engines.ts'],
-      'Only src/core/fleet/engines.ts may import @bamr87/fleet-engines (CLAUDE.md, decision D14). ' +
+      'Only src/core/fleet/engines.ts may import @bamr87/fleet-engines (AGENTS.md, decision D14). ' +
         'Everything else takes the engine result as a parameter or converts through core/fleet/adapters.ts.',
     );
   });

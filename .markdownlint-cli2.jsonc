@@ -1,0 +1,15 @@
+// markdownlint-cli2 settings for the repository root (`npx markdownlint-cli2 AGENTS.md docs/**/*.md`).
+//
+// Markdown here is one paragraph per line (tools/unwrap-prose.py, enforced by
+// markdown-oneline.yml), so the 80-column rule would flag every paragraph and
+// an aligned-pipe table rule would flag every one-row-per-line table. Both are
+// relaxed; everything else is markdownlint's default. Projects under
+// packages/, sites/ and apps/ keep their own lint configuration.
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD060": false
+  },
+  "ignores": ["node_modules/**", "packages/**", "sites/**", "apps/**", "content/**/templates/**"]
+}

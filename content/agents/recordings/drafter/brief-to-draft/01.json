@@ -1,0 +1,55 @@
+{
+  "prompt_digest": "580c59fa4420f8b2",
+  "response": {
+    "text": "Proposing the draft in reading order.",
+    "tool_calls": [
+      {
+        "id": "call_2",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "insert",
+          "block_id": "{{results.1.body.0.id}}",
+          "block": {
+            "type": "heading",
+            "value": {
+              "level": "2",
+              "text": "Why a backup matters"
+            }
+          },
+          "rationale": "Opens the piece with the brief's topic."
+        }
+      },
+      {
+        "id": "call_3",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "insert",
+          "block": {
+            "type": "markdown",
+            "value": "A backup is a second copy of your site that lives somewhere else. If a disk fails or a change goes wrong, you copy the site back and carry on. Without one, a single mistake can cost you years of work."
+          },
+          "rationale": "Explains the idea in plain words for a small-site owner."
+        }
+      },
+      {
+        "id": "call_4",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "insert",
+          "block": {
+            "type": "markdown",
+            "value": "**Rule of thumb:** keep three copies, on two kinds of storage, with one of them away from home. Then test a restore once a month."
+          },
+          "rationale": "The one rule of thumb the brief asks for."
+        }
+      }
+    ],
+    "tokens_in": 1050,
+    "tokens_out": 160,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5"
+  }
+}

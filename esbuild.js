@@ -59,7 +59,7 @@ const problemMatcherPlugin = {
  * error, and the empty allow-list keeps the engines package — and every other
  * bare import — out of the MCP process, which must stay pure Node with no
  * transitive surprises. Adding a name to the MCP target's allow-list is not a
- * build tweak; it is a change to the layering rule in CLAUDE.md.
+ * build tweak; it is a change to the layering rule in AGENTS.md.
  */
 /** Node's own list of builtins, so the gate does not have to keep its own. */
 const BUILTINS = new Set(require('node:module').builtinModules);

@@ -1,6 +1,6 @@
 # PLAN: zer0-CMS → agent-native headless CMS (Django/Wagtail + Rails)
 
-Source of truth for the target: `docs/plan/agent-native-design.md` (called "the note"; section numbers refer to it). Working rules: `AGENTS.md` (draft at `AGENTS.draft.md`). One milestone = one Claude Code session = one PR. Tick boxes in the same PR that does the work.
+Source of truth for the target: `docs/plan/agent-native-design.md` (called "the note"; section numbers refer to it). Working rules: [`AGENTS.md`](../../AGENTS.md). The decision record is [ADR 0001](../adr/0001-target-architecture.md), which also makes the interim calls on §7's open decisions. One milestone = one Claude Code session = one PR. Tick boxes in the same PR that does the work.
 
 ## 0. What is in this repo today (review findings)
 
@@ -108,87 +108,110 @@ Moving `rails/` → `app/` and `src/` → `clients/vscode/` is milestone M2 (pur
 
 Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `docker compose up -d db redis` where noted.
 
+**Status, 2026-10-19.** M0, M3–M15 landed together (one branch, one commit series per area, so the PR can still be split), as the content plane `content/` — additive, because D1 is open (ADR 0001: the Jekyll files stay canonical until it is decided). M1 and M2 are held on decisions, M16–M20 on D1 and on §4.8's two-release rule; each says what is done and what blocks the rest. Test paths are `content/tests/<area>/…` rather than `content/tests/<area>` run from the repository root; `cd content && python -m pytest -q` runs them all, on SQLite and (with `DATABASE_URL`) on Postgres + pgvector.
+
 ### Phase A: Foundation
 
-- [ ] **M0: AGENTS.md + hub conventions**
+- [x] **M0: AGENTS.md + hub conventions**
   - Tasks: promote `AGENTS.draft.md` → `AGENTS.md`; make the root `CLAUDE.md` a pointer to it; make sub-package `CLAUDE.md` files pointers or AGENTS.md sections; add `docs/adr/0001-target-architecture.md` linking to the note.
   - Files: `AGENTS.md`, `CLAUDE.md`, `*/CLAUDE.md`, `docs/adr/`.
   - Accept: `bin/zer0 check` passes; there is one canonical agent file.
   - Test: `bin/zer0 check && npx markdownlint-cli2 AGENTS.md`
+  - Done: the draft was already at `AGENTS.md`, so "promote" became "merge": the root `CLAUDE.md`'s invariants moved into it and every `CLAUDE.md` is now a pointer whose `@AGENTS.md` line imports it (so Claude Code reads the same text other agents do); project `CLAUDE.md` files became their own `AGENTS.md` (the theme's was folded into its existing one), and Jekyll sites exclude `AGENTS.md` from their builds. A root `.markdownlint-cli2.jsonc` relaxes the two rules that contradict the one-paragraph-per-line gate, so the test passes.
 - [ ] **M1: CI on standard-ci@v2 + monorepo release-please**
   - Tasks: add `.github/workflows/ci.yml` calling `bamr87/<hub>/.github/workflows/standard-ci.yml@v2` (the exact hub path is open decision D5) with a matrix from `bin/zer0 affected`; convert the root `release-please-config.json` to multi-package (`.`, `rails`, `apps/barodybroject`, `packages/*`) with a `.release-please-manifest.json`; delete the nested release-please configs; fold the per-project workflows into the matrix (keep codeql and claude.yml).
   - Accept: one PR run executes check/test for affected projects only; release-please dry-run lists every package.
   - Test: `bin/zer0 affected --base origin/main && npx release-please release-pr --dry-run --repo-url=bamr87/zer0-CMS --token=$GITHUB_TOKEN` (dry-run, read-only); `actionlint`
+  - Partly done, rest held: the root `ci.yml` already calls `bamr87/bamr87/.github/workflows/standard-ci.yml@v2` (D5's hub path), and every project — `content/` included, via the new `content.yml` — has one path-filtered root workflow, so a PR already runs only what it touches. Not done: multi-package release-please. The original repositories still release `jekyll-theme-zer0` and `zer0-image-generator` (docs/MONOREPO.md), so a second release line here would double-version them; how tags are prefixed once packages share this repository is the decision MONOREPO.md lists. Folding the per-project workflows into one matrix is left until then too: each carries setup (services, xvfb, Ruby/Python matrices) a generic matrix would lose.
 - [ ] **M2: Layout moves**
   - Tasks: `git mv rails app`, `git mv src media package.json … clients/vscode/`, `git mv packages/zer0-mistakes frontends/jekyll-theme`, `git mv sites frontends/sites`; update `workspace.yml`, workflow paths, compose, and vendored paths.
   - Accept: every project's `check` and `test` tasks are green; `bin/zer0 check` passes.
   - Test: `bin/zer0 run check --all && bin/zer0 run test --all`
-- [ ] **M3: Root docker compose**
+  - Held: D5 (does the extension stay here or split out?) is open, and moving `package.json` off the root changes what the hub's `detect-stack` sees (docs/RELEASING.md: the root manifest's `private: true` steers it). The new project was placed where the target layout puts it (`content/`), so M2 no longer has to move it.
+- [x] **M3: Root docker compose**
   - Tasks: services `db` (pgvector/pgvector:pg16), `redis`, `content` (Django), `worker` (Celery), `app` (Rails), `app-jobs` (Solid Queue), `relay` (outbox relay), `imagegen`; delete the per-project compose files that duplicate these (keep the site-preview ones behind profile `sites`).
   - Accept: `docker compose up` gives healthy services; `/healthz` returns 200 on content and app.
   - Test: `docker compose up -d --wait && curl -fsS localhost:8000/healthz && curl -fsS localhost:3000/up`
+  - Done, with three deviations: the content plane's services (`db` on pgvector/pgvector:pg16, `redis`, `content`, `worker`, `beat`, `relay`) are behind `--profile content`, because the Rails CMS needs none of them while D1 is open; the Rails service keeps its name `cms` on :3001 and runs Solid Queue in-process (no `app-jobs` until M16 gives it jobs); and the per-project compose files stay, since they are each project's own dev server. Verified: `docker compose --profile content up -d --wait db redis content worker beat relay` → all healthy, `/healthz` 200, a REST-started run executed by the worker, the relay delivering to the `zer0:content` stream.
 
 ### Phase B: Content plane
 
-- [ ] **M4: Wagtail skeleton from barodybroject**
+- [x] **M4: Wagtail skeleton from barodybroject**
   - Tasks: create `content/` from `apps/barodybroject/src` settings; add Wagtail 6, Postgres + pgvector extension, `cms` app with `BasePage`, `ArticlePage`, `BookPage`, the `AgentManagedMixin` (note §2.2), custom `AbstractImage` with `ai_alt`, `ai_tags`, `embedding`, `embedding_model`; keep the parodynews app mounted read-only for now.
   - Accept: migrations apply; Wagtail admin loads; existing barodybroject tests still pass.
   - Test: `cd content && pytest -q && python manage.py makemigrations --check --dry-run`
-- [ ] **M5: Headless APIs**
+  - Deviations: Wagtail 7.4, not 6 (Wagtail 6 does not support the Django 5.2 LTS barodybroject runs); barodybroject's settings *shape* is kept (base/development/production/testing, all from the environment) but `parodynews` is not mounted — its data comes in through `import_barodybroject` from a `dumpdata`, so the content plane carries none of barodybroject's dependencies and barodybroject's own suite is untouched; `ai_keywords` is JSON (SQLite and Postgres share one schema); vectors live in `graph.Embedding`, not on the page or image row (a revision would copy them); `front_matter` is an order-preserving JSON text field (Postgres `jsonb` sorts keys).
+- [x] **M5: Headless APIs**
   - Tasks: Grapple (or Strawberry, D2) schema for the page types; Wagtail API v2 `/api/v2/pages/`; export `schemas/graphql/schema.graphql`; CI check for drift.
   - Accept: a GraphQL query for an `ArticlePage` returns StreamField JSON; the schema file is committed and checked.
   - Test: `pytest content/tests/api -q && python manage.py graphql_schema --out /tmp/s.graphql && diff /tmp/s.graphql schemas/graphql/schema.graphql`
-- [ ] **M6: Importers (see §4)**: Jekyll → Wagtail, barodybroject posts → ArticlePage.
-- [ ] **M7: Jekyll exporter** so the static sites keep building from Wagtail (§4).
-- [ ] **M8: Outbox + event schemas**
+  - D2 decided as Grapple (ADR 0001). StreamField JSON is `bodyJson` (Grapple's `rawValue` cannot represent a struct block); mutations sit behind a GraphQL view that authenticates agent tokens and enforces CSRF for browser sessions.
+- [x] **M6: Importers (see §4)**: Jekyll → Wagtail, barodybroject posts → ArticlePage.
+  - Done: `import_jekyll` (idempotent; refuses to overwrite a page edited in Wagtail; links indexed in a second pass; front-matter `preview` images into a collection per site; ABC `alphabet:` → `letter` blocks) and `import_barodybroject` (posts, `PostVersion` history as dated revisions by `legacy:import`, assistants as legacy definitions that cannot run). drsai's books import through `import_jekyll`.
+  - [ ] `packages/books` `library/<slug>/` → `BookPage` + chapters (§4.5) — not started.
+  - Found: `apps/barodybroject/src/pages/_config.yml` refers to an undefined YAML alias (`*site_domain`), which Jekyll's YAML loader refuses as well; the importer reports it instead of guessing.
+- [x] **M7: Jekyll exporter** so the static sites keep building from Wagtail (§4).
+  - Done: `export_jekyll` and `roundtrip_jekyll`. An unchanged page exports its source byte for byte; an edited one renders typed fields over its original front matter, in its original key order. Every Jekyll site in the repository round-trips byte for byte — the theme (376 files), zer0-pages (210), drsai, the two demos and zer0-pages-remote — on SQLite and on Postgres (`test_the_real_sites_round_trip_byte_for_byte`). The build-time switch to exporter output (§4.8) waits on D1.
+- [x] **M8: Outbox + event schemas**
   - Tasks: `outbox` app (`OutboxEvent` written in the same transaction as publish/revision); relay to Redis Streams; `schemas/events/` CloudEvents JSON Schemas for `content.page.published`, `content.suggestion.created`, `agent.run.completed`, `app.user.interaction`; contract tests on both sides.
   - Accept: publishing a page writes exactly one outbox row; the relay delivers it at least once; consumers dedupe by event id.
   - Test: `pytest content/tests/outbox -q`
+  - The Rails side of the contract is `rails/lib/zer0_cms/events.rb` + `rails/test/zer0_cms/test_event_contracts.rb` (stdlib, in `abc-engine.yml`). `content.suggestion.created` carries a `target` (`page:`/`image:`) so image suggestions fit; D6 decided as Redis Streams.
 
 ### Phase C: Agents, harness, graph (note §10 build order)
 
-- [ ] **M9 (build step 1a): Agent users, AgentRun/AgentStep, tool registry**
+- [x] **M9 (build step 1a): Agent users, AgentRun/AgentStep, tool registry**
   - Tasks: `agents` app with the models from note §4; data migration creating the `Agents` group and `agent:seo`, `agent:editor`, `agent:drafter`, `agent:review` users with page and collection permissions; `@tool(effect, perms, rate)` decorator, registry, permission resolution to the agent user; LiteLLM wrapper; runner as a Celery task with a hand-rolled state machine (D3); OTel spans with `trace_id`.
   - Accept: a run of a fake tool records an `AgentRun` + steps; a tool with effect `publish` is refused unless the policy allows it; there is no superuser path.
   - Test: `pytest content/tests/agents -q`
-- [ ] **M10 (build step 1b): Suggestion model + editor sidebar**
+  - Deviations: agent users and groups are provisioned at `post_migrate` (and by `sync_agents`), not in a data migration — Wagtail's page-permission rows do not exist until after migrations run. LiteLLM is an optional backend loaded lazily, not a pinned dependency; tests use `recorded` and `fake`. OpenTelemetry spans open when `opentelemetry` is installed; the trace id is recorded either way and crosses planes as `traceparent`.
+- [x] **M10 (build step 1b): Suggestion model + editor sidebar**
   - Tasks: `Suggestion` (note §2.3), accept → new Revision by the agent user with `BlockProvenance`; Wagtail admin panel hook; port the extension's governance semantics (draft queue → Suggestion `pending`, approval → accept, brand guard → validator).
   - Accept: accepting creates one revision; rejecting records the status; the accept rate is queryable.
   - Test: `pytest content/tests/suggestions -q`
-- [ ] **M11 (build step 2a): Schema export + validated block tools**
+  - The editor side is a panel in every page's edit view plus an accept/reject view ("accept all of this run" = one revision). The brand guard is a rule-for-rule port of `src/core/governance/guard.ts`.
+- [x] **M11 (build step 2a): Schema export + validated block tools**
   - Tasks: `manage.py wagtail_ai_schema` emits JSON Schema per block, versioned and stored on `AgentRun`; tools `content.get_schema`, `content.get_page`, `content.search`, `content.propose_edit` validated with `StreamBlock.to_python` + `clean()`.
   - Accept: invalid block JSON is rejected with the error; snapshot test of the schema output.
   - Test: `pytest content/tests/schema -q`
-- [ ] **M12 (build step 2b): Drafter + SEO agents**
+- [x] **M12 (build step 2b): Drafter + SEO agents**
   - Tasks: `AgentDefinition` fixtures for `drafter` (incl. "abc" and "story" profiles ported from `rails/lib/zer0_cms` and drsai) and `seo`; GraphQL `requestAgentRun`, `acceptSuggestion`; REST `/api/v2/agent-runs/` with SSE; both agents start at policy `suggest`.
   - Accept: "Draft with agent" yields a draft revision with provenance; SEO produces meta suggestions; the LLM is mocked in tests (recorded fixtures).
   - Test: `pytest content/tests/agents/test_drafter.py content/tests/agents/test_seo.py -q`
-- [ ] **M13 (build step 3): pgvector + structural edges + related/semanticSearch**
+  - Definitions are YAML (`content/agents/definitions/`), synced by `sync_agents`; besides drafter (profiles `abc` — the Rails generator's offline lexicon path, ported — and `story`) and seo there are editor, review, brand, a11y and enrich. "Draft with agent" at policy `suggest` is suggestions that accept as one draft revision; at `draft` the drafter writes that revision itself.
+- [x] **M13 (build step 3): pgvector + structural edges + related/semanticSearch**
   - Tasks: `graph` app with `Entity`, `Edge` (note §5); embeddings keyed by `content_hash` + `embedding_model`; structural edges from `ReferenceIndex`, page tree, tags, locale on publish; GraphQL `related`, `semanticSearch`, `entities`; REST `/api/v2/graph/` neighbors/path.
   - Accept: publishing builds `child_of` and reference edges; `related` returns kNN + 1-hop results; re-embedding is skipped when the hash is unchanged.
   - Test: `pytest content/tests/graph -q`
-- [ ] **M14 (build step 4): AgentReviewTask + evals in CI**
+  - Embeddings default to a deterministic hashing model (`hashing-256`), so the graph works offline; `EMBEDDING_BACKEND=litellm` swaps in a real one. Internal Markdown links and wikilinks become `links_to` edges, since imported bodies keep their links as Markdown rather than `PageChooserBlock`s.
+- [x] **M14 (build step 4): AgentReviewTask + evals in CI**
   - Tasks: `AgentReviewTask` (brand, a11y, factcheck) writing Wagtail comments; `EvalCase/EvalResult`; `manage.py run_evals --agent <slug>`; CI job runs the evals on mocked or recorded models; publishing an AgentDefinition revision requires a passing suite.
   - Accept: a failing review blocks the workflow; an eval regression fails CI.
   - Test: `pytest content/tests/workflow -q && python manage.py run_evals --all --recorded`
-- [ ] **M15 (build step 5a): MCP server**
+  - Added: an agent review cannot be a workflow's last task (approving the last task publishes as the approver, and an agent never publishes), and a definition with no eval cases can never go live.
+- [x] **M15 (build step 5a): MCP server**
   - Tasks: FastMCP mounted at `/mcp` backed by the same registry (one definition, three surfaces); scoped tokens mapped to agent users; retire `clients/vscode/src/mcp` in favour of a thin proxy or registration that points at Django.
   - Accept: the MCP `tools/list` matches the registry; a token for `agent:seo` cannot call `content.propose_edit` on pages outside its permissions.
   - Test: `pytest content/tests/mcp -q && npm --prefix clients/vscode test`
+  - Deviation: a Django view speaking MCP's Streamable HTTP (JSON responses) plus `manage.py mcp_stdio`, not a mounted FastMCP app (ADR 0001); the app is `mcp_server/` so it never shadows the `mcp` package.
+  - [ ] Retire `src/mcp` in favour of the content plane's server — moved to M18: the extension's server works without a content plane, which is still optional while D1 is open.
 - [ ] **M16 (build step 5b): Rails app plane: content client, MCP client, outbox, personalization**
   - Tasks: Rails stops writing content: remove `PageEditor`, file write-back and `SiteSync` writes; `ContentClient` (graphql-client, persisted queries); `agent_runs/agent_steps` mirror; `McpClient`; `HomepageAgent` (ranker, returns block IDs or variant keys); Rails outbox → Redis Streams; consume `content.page.published` for cache purge and LinkedIn distribution; emit `app.user.interaction`.
   - Accept: no Rails code writes content tables or files (a test greps for it); the homepage returns variant keys; the trace_id propagates.
   - Test: `cd app && bin/rails test && bin/rails zeitwerk:check`
+  - Started: the Rails half of the event contract (`Zer0Cms::Events`, M8). Blocked: removing `PageEditor` and the file write-back is D1 — while the files are canonical, Rails writing them is the design (D16), and the content plane's `import_jekyll` picks those edits up.
 - [ ] **M17 (build step 6): Entity extraction + GraphRAG + behavioral edges**
   - Tasks: enrichment agent on publish (entities, `mentions/about/similar_to` with a confidence threshold → Edge or Suggestion); GraphRAG retrieval (search → 1–2 hops → rerank); nightly Celery job aggregating Rails interaction events into `viewed_together` / affinity edges (aggregates only).
   - Accept: below-threshold edges become Suggestions; no raw user ids are stored in Django.
   - Test: `pytest content/tests/graph/test_enrichment.py content/tests/graph/test_behavioral.py -q`
+  - Mostly done (tests in `content/tests/graph/test_graph.py`): GraphRAG retrieval (`graph_rag`, `graph.search`, GraphQL `graphSearch`); the `enrich` agent proposing `about`/`similar_to` edges, below-threshold ones as Suggestions; `app.user.interaction` aggregated into daily and co-view counts with no reader id stored, and a nightly `viewed_together` build.
+  - [ ] Entity extraction proper: a tool that creates `Entity` rows (people, organisations, topics) from page text, and the publish-time trigger that runs `enrich`.
 
 ### Phase D: Clients and cleanup
 
-- [ ] **M18: VS Code extension as a headless client**: panel/dashboard read via GraphQL, edits go out as `propose_edit`, suggestions shown inline; delete `src/core/harness` and `governance/ledger.ts` duplicates. Test: `npm --prefix clients/vscode test`
-- [ ] **M19: Media pipeline**: image save → event → alt/tags/focal/embedding using `zer0-image-generator`; delete `app/app/services/image_engine.rb` and the vendored Ruby port in the Rails plane. Test: `pytest content/tests/media -q`
-- [ ] **M20: Remove superseded code**: barodybroject `parodynews` models (after the M6 import verifies), React frontend, Azure infra (per D4), Rails `Page/Term/Asset` tables (after the M7 exporter is live), books studio LLM client, dead drsai planning docs → `docs/archive/`. Test: `bin/zer0 run test --all`
+- [ ] **M18: VS Code extension as a headless client** — blocked on D1: deleting the extension's governance queue, ledger and harness only makes sense once content is DB-first; until then they are what works without a server.: panel/dashboard read via GraphQL, edits go out as `propose_edit`, suggestions shown inline; delete `src/core/harness` and `governance/ledger.ts` duplicates. Test: `npm --prefix clients/vscode test`
+- [ ] **M19: Media pipeline** — the fields exist (`ContentImage.ai_alt/ai_caption/ai_tags`, `media.describe`, `media.propose_alt`); the image-save trigger and the image-generator integration are not started, and `image_engine.rb` stays until they replace it.: image save → event → alt/tags/focal/embedding using `zer0-image-generator`; delete `app/app/services/image_engine.rb` and the vendored Ruby port in the Rails plane. Test: `pytest content/tests/media -q`
+- [ ] **M20: Remove superseded code** — blocked by §4.8: nothing is removed until D1 is decided and the round trip has been green for two releases.: barodybroject `parodynews` models (after the M6 import verifies), React frontend, Azure infra (per D4), Rails `Page/Term/Asset` tables (after the M7 exporter is live), books studio LLM client, dead drsai planning docs → `docs/archive/`. Test: `bin/zer0 run test --all`
 
 ## 4. Content and data migration
 

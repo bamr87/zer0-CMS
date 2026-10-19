@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/app.user.interaction.v1.json",
+  "title": "app.user.interaction (v1)",
+  "description": "A reader did something with a page. Published by the Rails app. `anon_id` is an opaque, rotating identifier minted by Rails; the content plane aggregates and never stores it (note §5).",
+  "type": "object",
+  "required": ["anon_id", "page_id", "kind"],
+  "properties": {
+    "anon_id": { "type": "string", "minLength": 8, "maxLength": 64 },
+    "page_id": { "type": "integer", "minimum": 1 },
+    "kind": { "enum": ["view", "click", "share", "convert"] },
+    "session_page_ids": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "maxItems": 50, "description": "Other pages viewed in the same session, for viewed_together edges." }
+  },
+  "additionalProperties": false
+}

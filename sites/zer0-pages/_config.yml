@@ -198,6 +198,7 @@ defaults:
 # _templates/ and .raw/ must never publish. .obsidian/ is a dotdir and is
 # auto-ignored by Jekyll.
 exclude:
+  - AGENTS.md
   - CLAUDE.md
   - _templates
   - _notes/_templates

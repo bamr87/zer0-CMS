@@ -11,7 +11,7 @@ npm run watch     # then press F5 in VS Code to launch the Extension Host
 npm test          # unit + golden + MCP stdio + integration
 ```
 
-The fast inner loop skips the VS Code download: `npx tsc -p . --outDir out`, then `npx mocha --ui tdd` over the fourteen pure-Node suites listed in `CLAUDE.md`. It needs Node >= 22.12, because the engines seam is an ESM package reached through `require(esm)`.
+The fast inner loop skips the VS Code download: `npx tsc -p . --outDir out`, then `npx mocha --ui tdd` over the fourteen pure-Node suites listed in `AGENTS.md`. It needs Node >= 22.12, because the engines seam is an ESM package reached through `require(esm)`.
 
 The Rails `lib/` half needs nothing installed — it is stdlib-only:
 

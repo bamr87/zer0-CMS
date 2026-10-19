@@ -1,0 +1,9 @@
+{% load i18n %}
+{# Pending agent suggestions for this page; decisions happen on the suggestions view. #}
+{% if pending %}
+  <p>{% blocktrans count n=pending|length %}{{ n }} pending agent suggestion.{% plural %}{{ n }} pending agent suggestions.{% endblocktrans %}
+     <a href="{% url 'suggestions_page' page.pk %}">{% trans "Review them" %}</a></p>
+  <ul>{% for s in pending|slice:":5" %}<li><b>{{ s.agent.slug|default:"agent" }}</b> — {{ s.op }}{% if s.field %} {{ s.field }}{% endif %}{% if s.block_id %} (block {{ s.block_id|truncatechars:12 }}){% endif %}: {{ s.rationale|truncatechars:120 }}</li>{% endfor %}</ul>
+{% else %}
+  <p>{% trans "No pending agent suggestions." %}</p>
+{% endif %}

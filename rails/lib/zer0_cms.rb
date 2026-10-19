@@ -24,7 +24,8 @@
 # Beside it: `Zer0Cms::LinkedIn`, a LinkedIn API client whose every call is
 # declared as data, and `Zer0Cms::Distribution`, the governed lane that carries
 # a site's content to LinkedIn and its aggregate response back
-# (docs/DISTRIBUTION.md). Same rule — stdlib only.
+# (docs/DISTRIBUTION.md). Same rule — stdlib only. And `Zer0Cms::Events`, this
+# plane's half of the event contract with the content plane (schemas/events/).
 
 require_relative "zer0_cms/version"
 require_relative "zer0_cms/abc"
@@ -32,6 +33,7 @@ require_relative "zer0_cms/cms"
 require_relative "zer0_cms/doctor"
 require_relative "zer0_cms/linkedin"
 require_relative "zer0_cms/distribution"
+require_relative "zer0_cms/events"
 
 module Zer0Cms
   ROOT = File.expand_path("..", __dir__)

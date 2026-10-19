@@ -75,7 +75,7 @@ export default tseslint.config(
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-throw-literal': 'error',
       'no-unused-expressions': 'error',
-      // CLAUDE.md: don't suppress type errors or leave empty exception handlers.
+      // AGENTS.md: don't suppress type errors or leave empty exception handlers.
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/ban-ts-comment': 'error',
       '@typescript-eslint/no-empty-function': 'error',

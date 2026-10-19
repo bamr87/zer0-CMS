@@ -1,0 +1,21 @@
+{
+  "prompt_digest": "efc5090e3c7614b1",
+  "response": {
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "name": "review.submit_verdict",
+        "arguments": {
+          "passed": true,
+          "summary": "Consistent: thirty days, stated twice the same way.",
+          "comments": []
+        }
+      }
+    ],
+    "tokens_in": 1050,
+    "tokens_out": 160,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5",
+    "text": ""
+  }
+}

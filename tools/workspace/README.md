@@ -14,6 +14,7 @@ The tooling behind `bin/zer0`, the one command that manages every project in thi
 | `bin/zer0 check` | The workspace contract, below. Exit 1 on any finding. |
 | `bin/zer0 vendor [--write]` | Every vendored copy and whether it still matches its source; `--write` re-copies the drifted ones. |
 | `bin/zer0 doctor [project...]` | The CMS's own `zer0 doctor` (`rails/bin/zer0-cms`) on every project with a `site:` root. Report-only unless `--strict`; `--verbose` prints each full report. |
+| `bin/zer0 tags [--remote NAME]` | The tags on a remote (default `origin`), split into this repository's releases (a version with a `## [x.y.z]` heading in `CHANGELOG.md`), tags inherited from the Front Matter CMS fork (a bare semver with no heading) and anything else (component-prefixed tags, never touched). `--delete` removes the inherited ones from the remote and the local clone; `--json` prints the three lists. |
 
 Exit codes: 0 success, 1 a failing check, test or strict doctor, 2 a usage or manifest error.
 
@@ -40,6 +41,7 @@ A file belongs to the project whose glob matches it with the longest literal pre
 | `lib/zer0_workspace/runner.rb` | Runs a task per project; the spawn is injectable for tests. |
 | `lib/zer0_workspace/vendor.rb` | Vendored-copy status and re-copy. |
 | `lib/zer0_workspace/doctor.rb` | `zer0 doctor` over every declared site. |
+| `lib/zer0_workspace/tags.rb` | Release tags vs. tags inherited from the fork, and their deletion. |
 | `lib/zer0_workspace/cli.rb` | The command line; the only file that prints or exits. |
 | `test/test_workspace.rb` | Every class against throwaway workspaces with their own git repository. |
 | `test/test_real_manifest.rb` | The repository's own `workspace.yml` passes every rule, and `docs/MONOREPO.md` mentions every project. |

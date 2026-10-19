@@ -1,0 +1,27 @@
+# The content plane (Django + Wagtail): pytest and ruff settings.
+# Dependencies are pinned in requirements.txt / requirements-dev.txt.
+[project]
+name = "zer0-content"
+version = "0.1.0"
+description = "The zer0-CMS content plane: Wagtail pages, the agent harness, suggestions, the graph, the outbox, GraphQL/REST/MCP."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.testing"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+markers = ["slow: the full-suite tier (round trips of the large in-repo sites)"]
+filterwarnings = ["ignore::DeprecationWarning:graphene.*", "ignore::DeprecationWarning:graphql.*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S110", "BLE"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "B"]

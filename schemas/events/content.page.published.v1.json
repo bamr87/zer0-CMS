@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.page.published.v1.json",
+  "title": "content.page.published (v1)",
+  "description": "A page went live. Published by the content plane in the same transaction as the publish. Rails purges caches and starts distribution from it.",
+  "type": "object",
+  "required": ["page_id", "revision_id", "locale", "content_hash", "url_path", "page_type"],
+  "properties": {
+    "page_id": { "type": "integer", "minimum": 1 },
+    "revision_id": { "type": ["integer", "null"], "minimum": 1 },
+    "locale": { "type": "string", "minLength": 2 },
+    "content_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "url_path": { "type": "string" },
+    "page_type": { "type": "string", "description": "app_label.ModelName, e.g. cms.ArticlePage." }
+  },
+  "additionalProperties": false
+}

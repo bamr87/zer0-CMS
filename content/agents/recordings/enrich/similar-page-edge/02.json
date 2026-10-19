@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "b4121e7f80b94785",
+  "response": {
+    "text": "Proposed one similar_to edge.",
+    "tokens_in": 1200,
+    "tokens_out": 200,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-haiku-5-5",
+    "tool_calls": []
+  }
+}

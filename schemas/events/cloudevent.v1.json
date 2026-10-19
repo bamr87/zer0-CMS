@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/cloudevent.v1.json",
+  "title": "zer0 event envelope (CloudEvents 1.0, structured JSON mode)",
+  "description": "Every event either plane publishes. `data` is validated separately against `<type>.v<N>.json`, which `dataschema` names.",
+  "type": "object",
+  "required": ["specversion", "id", "source", "type", "time", "datacontenttype", "dataschema", "data"],
+  "properties": {
+    "specversion": { "const": "1.0" },
+    "id": { "type": "string", "minLength": 1, "description": "Unique per event; consumers dedupe on it (delivery is at least once)." },
+    "source": { "type": "string", "enum": ["zer0-cms/content", "zer0-cms/app"], "description": "The plane that published it." },
+    "type": { "type": "string", "pattern": "^(content|agent|app)\\.[a-z_]+(\\.[a-z_]+)*$" },
+    "subject": { "type": "string" },
+    "time": { "type": "string", "format": "date-time" },
+    "datacontenttype": { "const": "application/json" },
+    "dataschema": { "type": "string", "pattern": "\\.v[0-9]+\\.json$" },
+    "traceparent": { "type": "string", "pattern": "^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$", "description": "W3C trace context; both planes keep the trace id." },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": false
+}

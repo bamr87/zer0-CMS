@@ -1,0 +1,19 @@
+{
+  "specversion": "1.0",
+  "id": "3f2c0d4e-6a1b-4c58-9e1f-2b7a9d0c4e11",
+  "source": "zer0-cms/content",
+  "type": "content.page.published",
+  "subject": "page:42",
+  "time": "2026-10-19T12:00:00Z",
+  "datacontenttype": "application/json",
+  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.page.published.v1.json",
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000000001-01",
+  "data": {
+    "page_id": 42,
+    "revision_id": 108,
+    "locale": "en",
+    "content_hash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    "url_path": "/drsai/books/it-alphabet/",
+    "page_type": "cms.BookPage"
+  }
+}

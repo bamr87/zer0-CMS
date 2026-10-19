@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.suggestion.created.v1.json",
+  "title": "content.suggestion.created (v1)",
+  "description": "An agent proposed a change an editor has to decide on.",
+  "type": "object",
+  "required": [
+    "suggestion_id",
+    "target",
+    "page_id",
+    "op",
+    "agent",
+    "run_id"
+  ],
+  "properties": {
+    "suggestion_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "target": {
+      "type": "string",
+      "pattern": "^(page|image|entity):[0-9]+$",
+      "description": "What the suggestion changes."
+    },
+    "page_id": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "description": "The page, when the target is one."
+    },
+    "op": {
+      "enum": [
+        "insert",
+        "replace",
+        "delete",
+        "meta",
+        "edge"
+      ]
+    },
+    "block_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "field": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "agent": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

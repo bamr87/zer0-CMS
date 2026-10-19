@@ -1,0 +1,6 @@
+# Tests and lint for the content plane. Tests never reach a network or a model.
+-r requirements.txt
+pytest==9.1.1
+pytest-django==4.14.0
+fakeredis==2.40.0
+ruff==0.17.1

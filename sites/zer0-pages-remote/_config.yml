@@ -35,7 +35,7 @@ markdown: kramdown
 kramdown:
   input: GFM
 
-# Keep tooling and agent docs out of the published demo. Without CLAUDE.md and
+# Keep tooling and agent docs out of the published demo. Without AGENTS.md, CLAUDE.md and
 # tools/ listed here, Jekyll renders them into the site (/CLAUDE.html and
 # /tools/unwrap-prose.py were both being served live).
 exclude:
@@ -44,5 +44,6 @@ exclude:
   - vendor
   - .github
   - docker-compose.yml
+  - AGENTS.md
   - CLAUDE.md
   - tools

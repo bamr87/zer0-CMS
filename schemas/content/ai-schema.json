@@ -1,0 +1,1330 @@
+{
+  "$defs": {
+    "blocks": {
+      "brief": {
+        "additionalProperties": false,
+        "properties": {
+          "audience": {
+            "description": "Who it is for.",
+            "maxLength": 250,
+            "type": "string"
+          },
+          "notes": {
+            "description": "Points to cover, sources, tone, length.",
+            "type": "string"
+          },
+          "topic": {
+            "description": "What the piece is about, in one line.",
+            "maxLength": 250,
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "type": "object"
+      },
+      "code": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The code, verbatim.",
+            "type": "string"
+          },
+          "language": {
+            "description": "Fence language, e.g. python, bash, yaml.",
+            "maxLength": 40,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "heading": {
+        "additionalProperties": false,
+        "properties": {
+          "level": {
+            "description": "Heading level, 2 to 6.",
+            "enum": [
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ],
+            "type": "string"
+          },
+          "text": {
+            "description": "The heading text, plain, without leading #.",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "text"
+        ],
+        "type": "object"
+      },
+      "image": {
+        "additionalProperties": false,
+        "properties": {
+          "alt": {
+            "description": "Alternative text; empty only if decorative.",
+            "maxLength": 250,
+            "type": "string"
+          },
+          "caption": {
+            "description": "Visible caption.",
+            "maxLength": 250,
+            "type": "string"
+          },
+          "image": {
+            "description": "The id of an image in the image library.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "letter": {
+        "additionalProperties": false,
+        "properties": {
+          "alt": {
+            "description": "Accessible description of the intended plate.",
+            "maxLength": 250,
+            "type": "string"
+          },
+          "image": {
+            "description": "The drawn plate, once it exists.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "letter": {
+            "description": "One capital letter, A to Z.",
+            "pattern": "^[A-Z]$",
+            "type": "string"
+          },
+          "subject": {
+            "description": "A concrete, drawable scene with no text in it, for the art model.",
+            "maxLength": 400,
+            "type": "string"
+          },
+          "tagline": {
+            "description": "The line a grown-up reads aloud.",
+            "maxLength": 250,
+            "type": "string"
+          },
+          "word": {
+            "description": "The word the letter stands for.",
+            "maxLength": 80,
+            "type": "string"
+          }
+        },
+        "required": [
+          "letter",
+          "word",
+          "tagline"
+        ],
+        "type": "object"
+      },
+      "markdown": {
+        "description": "A chunk of Markdown kept verbatim: paragraphs, lists, tables, Liquid tags, includes, raw HTML and [[wikilinks]] are all allowed and are never rewritten.",
+        "type": "string"
+      },
+      "page_link": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "description": "The id of the page to link to.",
+            "type": "integer"
+          },
+          "text": {
+            "description": "Link text; defaults to the page title.",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "page"
+        ],
+        "type": "object"
+      },
+      "paragraph": {
+        "contentMediaType": "text/html",
+        "description": "Rich text as Wagtail's HTML subset: <p>, <b>, <i>, <a href>, <ol>, <ul>, <li>, <code>.",
+        "type": "string"
+      },
+      "quote": {
+        "additionalProperties": false,
+        "properties": {
+          "attribution": {
+            "description": "Who said it.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "text": {
+            "description": "The quotation, plain text.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Block JSON an agent proposes must match this schema and is then validated by the blocks themselves. A body is a list of {type, value} blocks; `id` is assigned by the CMS.",
+  "pages": {
+    "cms.ArticlePage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "A post or a document: dated, authored, tagged and categorised.",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    },
+    "cms.BookPage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "A book: a manuscript with chapters (books), an ABC board book (its letters are `letter` blocks in the body) or a picture-book story (drsai).",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    },
+    "cms.ChapterPage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "ChapterPage(id, path, depth, numchild, translation_key, locale, latest_revision, live, has_unpublished_changes, first_published_at, last_published_at, live_revision, go_live_at, expire_at, expired, locked, locked_at, locked_by, title, draft_title, slug, content_type, url_path, owner, seo_title, show_in_menus, search_description, latest_revision_created_at, alias_of, page_ptr, agent_policy, ai_summary, ai_keywords, content_hash, body, legacy_path, front_matter, preview_image, number)",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    },
+    "cms.CollectionPage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "A Jekyll collection (`_posts`, `_docs`, `_books`, …) as an index page.",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    },
+    "cms.SiteRootPage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "The root of one imported Jekyll site: one Wagtail `Site` per Jekyll site.",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    },
+    "cms.StandardPage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "Any other page: about, index, a docs page that is not dated.",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    }
+  },
+  "title": "zer0-CMS content schema for agents",
+  "version": "13990fa9b2d9"
+}

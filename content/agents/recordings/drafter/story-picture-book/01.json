@@ -1,0 +1,51 @@
+{
+  "prompt_digest": "fa6ec98f2fd502ca",
+  "response": {
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "insert",
+          "block": {
+            "type": "markdown",
+            "value": "Dodge found a red kite in the tall grass. Its string was tangled. Its tail was sad."
+          },
+          "rationale": "Scene one: the find."
+        }
+      },
+      {
+        "id": "call_2",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "insert",
+          "block": {
+            "type": "markdown",
+            "value": "He sniffed the string. It smelled like jam and sun. Who loves jam? Little Sam does!"
+          },
+          "rationale": "Scene two: the clue."
+        }
+      },
+      {
+        "id": "call_3",
+        "name": "content.propose_edit",
+        "arguments": {
+          "page_id": "{{target.id}}",
+          "op": "insert",
+          "block": {
+            "type": "markdown",
+            "value": "Dodge ran to Sam's gate with the kite. Sam laughed and hugged him. Then the kite flew high."
+          },
+          "rationale": "Scene three: the return."
+        }
+      }
+    ],
+    "tokens_in": 1050,
+    "tokens_out": 160,
+    "cost_usd": "0.0021",
+    "model": "anthropic/claude-sonnet-5-5",
+    "text": ""
+  }
+}
