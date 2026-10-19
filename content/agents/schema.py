@@ -15,6 +15,7 @@ with this schema: the schema tells a model what to write, `to_python` +
 `clean` decide whether it is acceptable.
 """
 
+import inspect
 import json
 from functools import lru_cache
 
@@ -86,6 +87,13 @@ def stream_child_schema(name: str, block: Block) -> dict:
     }
 
 
+def summary(model) -> str:
+    """A model docstring's first paragraph on one line. Whitespace is collapsed
+    because Python 3.13 strips docstring indentation at compile time and 3.12
+    does not, and the exported schema must not depend on the interpreter."""
+    return " ".join(inspect.cleandoc(model.__doc__ or "").split("\n\n")[0].split())
+
+
 def page_types():
     return sorted(
         (m for m in apps.get_models() if issubclass(m, BasePage) and not m._meta.abstract),
@@ -125,7 +133,7 @@ def export() -> dict:
                 else _field_schema(field)
             )
         pages[model._meta.label] = {
-            "description": (model.__doc__ or "").strip().split("\n\n")[0].replace("\n", " "),
+            "description": summary(model),
             "meta_fields": meta,
             "body": {
                 "type": "array",
