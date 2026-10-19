@@ -1,6 +1,6 @@
 # Architecture
 
-This repository is two products that share a git remote: a **VS Code extension** (`src/`) and a **Rails fleet CMS** (`rails/`). This document is the extension's internal boundary. The browser platform's contract is [`PLATFORM.md`](PLATFORM.md); the pipeline is [`CICD.md`](CICD.md).
+This repository is three products that share a git remote: a **VS Code extension** (`src/`), a **Rails fleet CMS** (`rails/`) and the **content plane** (`content/`, Django + Wagtail), which [ADR 0001](adr/0001-target-architecture.md) makes the centre of the target architecture. This document is the extension's internal boundary; the content plane's is [`content/AGENTS.md`](../content/AGENTS.md). The browser platform's contract is [`PLATFORM.md`](PLATFORM.md); the pipeline is [`CICD.md`](CICD.md).
 
 The extension has a hard internal boundary. This section explains where that boundary is, why it is there, and what it buys.
 

@@ -43,6 +43,14 @@ SITES_DIR=~/github docker compose --profile imagegen up --build   # + zer0-image
 
 Both ports are published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposing the CMS anywhere else. How this repository, the zer0-mistakes theme and zer0-image-generator fit together: [`docs/ZER0-STACK.md`](docs/ZER0-STACK.md).
 
+### The content plane
+
+`content/` is where zer0-CMS is going ([ADR 0001](docs/adr/0001-target-architecture.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share. It imports the Jekyll sites and exports them back byte for byte, so for now the files stay the source of truth. [`content/README.md`](content/README.md)
+
+```bash
+docker compose --profile content up -d --wait db redis content worker beat relay   # → http://localhost:8000/admin/
+```
+
 ### The rest of the stack, in the same repository
 
 The theme, the image generator, the books app, the zer0 sites and the barodybroject app live here too, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.

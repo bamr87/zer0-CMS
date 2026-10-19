@@ -69,11 +69,25 @@ SITES_DIR=$HOME/github docker compose --profile imagegen up --build   # + zer0-i
 
 python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-line CI gate
 
+# ── Content plane (content/) — Django 5.2 + Wagtail 7.4; see content/AGENTS.md ──
+cd content
+pip install -r requirements-dev.txt
+python manage.py migrate && python manage.py sync_agents --publish   # agent users, definitions, evals → live
+python -m pytest -q -m "not slow"                  # the fast tier; drop -m for the big-site round trips
+DATABASE_URL=postgres://… python -m pytest -q      # the same suite on Postgres + pgvector
+python manage.py makemigrations --check --dry-run && ruff check . && ruff format --check .
+python manage.py run_evals --all --recorded        # every agent's eval suite, no network
+python manage.py import_jekyll --site drsai --path ../sites/drsai   # a site → pages (idempotent)
+python manage.py roundtrip_jekyll --path ../sites/drsai             # import → export → byte-compare
+# Docker, from the repository root: http://localhost:8000 (/admin/, /graphql/, /api/v2/, /mcp/)
+docker compose --profile content up -d --wait db redis content worker beat relay
+
 # ── The workspace (every project in the repository) — stdlib Ruby, no installs ──
 bin/zer0 list                     # projects, paths, what each publishes and what gates it
 bin/zer0 run check --affected     # the fast tier of everything this branch touched (+ dependents)
 bin/zer0 check                    # registry, paths, workflows and vendored copies all agree
 bin/zer0 doctor                   # zer0 doctor over every in-repo site
+bin/zer0 tags                     # this repo's release tags vs. those inherited from the Front Matter fork
 ```
 
 `extension.test.ts` and `multiroot.test.ts` need a real extension host (`multiroot` has its own entry in `.vscode-test.mjs`: `npx vscode-test --label multiroot`), and `mcp.test.ts` needs `dist/mcp-server.js`, so the fourteen-suite command above leaves all three out; `out/test/mcp.test.js` does run under plain Mocha once `npm run compile` has built the bundle. On headless Linux `npm test` shells out to `xvfb-run` itself (`test-runner.js`); `ZER0_CMS_NO_XVFB=1` forces the plain path.
