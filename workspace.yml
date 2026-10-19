@@ -144,6 +144,31 @@ projects:
         env: {PYTHONPATH: src}
       test: python3 -m pytest -q && ruff check src tests
 
+  "1987":
+    path: sites/1987
+    kind: site
+    stack: [python]
+    summary: The self-growing knowledge base about the year 1987 — plain-markdown topic pages by category, grown by Claude Code slash commands and published by GitHub Pages from the original repository.
+    upstream: bamr87/1987
+    publishes: [pages]
+    ci: ci.yml
+    tasks:
+      check: python3 tools/unwrap-prose.py --check . || true
+
+  "2005":
+    path: sites/2005
+    kind: site
+    stack: [ruby, jekyll]
+    summary: The year-2005 knowledge base of the year-of-ai lineage — a remote_theme consumer of the zer0 theme, built the way zer0-pages-remote is.
+    upstream: year-of-ai/2005
+    depends_on: [zer0-mistakes]
+    publishes: [pages]
+    ci: sites.yml
+    site: .
+    tasks:
+      setup: bundle install
+      build: bundle exec jekyll build
+
   drsai:
     path: sites/drsai
     kind: site
