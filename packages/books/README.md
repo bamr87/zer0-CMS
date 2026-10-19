@@ -99,4 +99,4 @@ dist/               generated output (gitignored)
 - Markdown is one paragraph per line. Fix with `python3 tools/unwrap-prose.py --write`.
 - Run `python3 -m pytest` and `books validate` before pushing.
 
-More detail in [`CLAUDE.md`](CLAUDE.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+More detail in [`AGENTS.md`](AGENTS.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).

@@ -61,7 +61,7 @@ It also steers the fleet's tooling. The hub's `detect-stack` step reads `package
 
 ## Why the lockfile is committed
 
-Against the hub's `lockfiles: never-commit` posture, and deliberately. Three reasons, in increasing order of importance: `npm ci` needs it, and both `extension.yml` and the `marketplace` job use `npm ci`; the shared release workflow's re-lock step needs one to sync; and `@bamr87/fleet-engines` is exact-pinned because a bump changes generated goldens, which is only reproducible with a lockfile. This is recorded as a standard deviation in `CLAUDE.md`.
+Against the hub's `lockfiles: never-commit` posture, and deliberately. Three reasons, in increasing order of importance: `npm ci` needs it, and both `extension.yml` and the `marketplace` job use `npm ci`; the shared release workflow's re-lock step needs one to sync; and `@bamr87/fleet-engines` is exact-pinned because a bump changes generated goldens, which is only reproducible with a lockfile. This is recorded as a standard deviation in `AGENTS.md`.
 
 ## Operator steps still outstanding
 
@@ -92,4 +92,4 @@ None of these can be done from a pull request. They need somebody with the repos
 - `.github/workflows/release.yml` — the workflow itself, commented.
 - `.vsix-manifest.txt` — the reviewed list of what ships inside the extension.
 - `docs/ARCHITECTURE.md` — why the extension ships zero runtime dependencies, which is what makes `--no-dependencies` honest.
-- `CLAUDE.md` — the standard deviations, including the committed lockfile.
+- `AGENTS.md` — the standard deviations, including the committed lockfile.

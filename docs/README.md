@@ -1,6 +1,6 @@
 # `docs/` — the long-form documentation
 
-Six documents live here, and they answer different questions. Everything shorter than these is in the root [`README.md`](../README.md); everything about *changing* the code is in [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CLAUDE.md`](../CLAUDE.md).
+Six documents live here, and they answer different questions. Everything shorter than these is in the root [`README.md`](../README.md); everything about *changing* the code is in [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`AGENTS.md`](../AGENTS.md).
 
 | Document | Answers |
 |---|---|

@@ -3,7 +3,7 @@
 //     node src/test/fixtures/golden/engines/generate.mjs
 //
 // WHAT THIS IS. `@bamr87/fleet-engines` is an exact-pinned devDependency
-// (a deliberate standard deviation — see CLAUDE.md), and every number the Fleet
+// (a deliberate standard deviation — see AGENTS.md), and every number the Fleet
 // tab shows comes out of it: workflow facts, the audit rulebook, the grade.
 // These goldens are that output, frozen, over the verbatim sister-repo workflow
 // files under `src/test/fixtures/fleet/workflows/`. A `chore(deps)` bump of the

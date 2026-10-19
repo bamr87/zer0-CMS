@@ -25,7 +25,8 @@ coverage: listed
 | `_templates/` | dir | Obsidian Templater templates for wiki page types — excluded from the build | |
 | `assets/` | dir | Site-owned static assets — CSS/JS override hooks, images, background textures | |
 | `wiki/` | dir | The claude-obsidian knowledge base — concepts, entities, sources, plus index/log/hot-cache | |
-| `CLAUDE.md` | file | Vault-scoped Claude guidance (authoring conventions) — excluded from the build | |
+| `AGENTS.md` | file | Vault-scoped agent guidance (authoring conventions) — excluded from the build | |
+| `CLAUDE.md` | file | A pointer that imports `AGENTS.md` for Claude Code — excluded from the build | |
 | `archives.md` | file | /archives/ page — post archives by year | |
 | `categories.md` | file | /categories/ page — posts grouped by category | |
 | `favicon.ico` | file | Site favicon | |

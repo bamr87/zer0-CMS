@@ -45,6 +45,9 @@ bin/**
 # The Rails half's container definition: repository infrastructure, not payload.
 docker-compose.yml
 
+# Repository lint configuration: contributors' tooling, not payload.
+.markdownlint-cli2.jsonc
+
 # Release plumbing and toolchain pins: repository infrastructure, not payload.
 release-please-config.json
 .release-please-manifest.json
