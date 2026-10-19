@@ -29,6 +29,9 @@ module Zer0Workspace
         doctor [project...]          the CMS's zer0 doctor on every zer0 site in the workspace
             --strict                 exit 1 when any site has an error (default: report only)
             --verbose                print each site's full doctor report
+        tags [--remote NAME]         tags on the remote: this repository's releases vs. those inherited from the fork
+            --delete                 delete the inherited ones on the remote and locally
+            --json                   {"own": [...], "inherited": [...], "other": [...]}
     TEXT
 
     def initialize(argv, root:, out: $stdout, err: $stderr)
@@ -51,6 +54,7 @@ module Zer0Workspace
       when "check" then check
       when "vendor" then vendor
       when "doctor" then doctor
+      when "tags" then tags
       else
         @err.puts "bin/zer0: unknown command #{command.inspect}\n\n#{USAGE}"
         2
@@ -186,6 +190,34 @@ module Zer0Workspace
       return 0 unless opts[:strict]
 
       reports.all?(&:ok?) ? 0 : 1
+    end
+
+    def tags
+      opts = parse do |o, h|
+        o.on("--remote NAME") { |v| h[:remote] = v }
+        o.on("--delete") { h[:delete] = true }
+        o.on("--json") { h[:json] = true }
+      end
+      remote = opts[:remote] || "origin"
+      t = Tags.new(@root)
+      groups = t.classify(t.remote_tags(remote))
+      if opts[:json]
+        @out.puts JSON.generate(groups.to_h)
+      else
+        @out.puts "#{remote}: #{groups.own.length} release tag(s) of this repository, #{groups.inherited.length} inherited, #{groups.other.length} other"
+        @out.puts "  own:       #{groups.own.join(" ")}" unless groups.own.empty?
+        @out.puts "  inherited: #{groups.inherited.join(" ")}" unless groups.inherited.empty?
+        @out.puts "  other:     #{groups.other.join(" ")}" unless groups.other.empty?
+      end
+      return 0 unless opts[:delete]
+      return @out.puts("Nothing to delete.") || 0 if groups.inherited.empty?
+
+      failed = t.delete!(remote, groups.inherited)
+      @out.puts "deleted #{groups.inherited.length - failed.length} inherited tag(s) from #{remote} and this clone"
+      return 0 if failed.empty?
+
+      @err.puts "could not delete on #{remote}: #{failed.join(" ")}"
+      1
     end
 
     def with_task(task, opts)

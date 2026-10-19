@@ -303,3 +303,50 @@ class TestDoctor < WorkspaceTestCase
     assert_nil manifest.project("theme").site_root
   end
 end
+
+class TestTags < WorkspaceTestCase
+  CHANGELOG = "# Changelog\n\n## [0.2.0](https://example.test) (2026-09-11)\n\n- é\n\n## [0.1.0] - 2026-07-31\n"
+
+  def setup
+    super
+    write("CHANGELOG.md", CHANGELOG)
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "init")
+    @remote = Dir.mktmpdir("zer0-ws-remote")
+    system("git", "init", "-q", "--bare", @remote, out: File::NULL) or raise "bare init failed"
+    git("remote", "add", "origin", @remote)
+    %w[v0.1.0 v0.2.0 v9.0.0 3.1.0 content-v1.0.0].each { |t| git("tag", t) }
+    git("push", "-q", "origin", "--tags")
+  end
+
+  def teardown
+    FileUtils.remove_entry(@remote)
+    super
+  end
+
+  def test_a_release_is_a_changelog_heading_and_a_bare_semver_without_one_is_inherited
+    groups = Zer0Workspace::Tags.new(@root).classify(%w[v10.0.0 v0.2.0 v2.0.0 3.1.0 content-v1.0.0 v0.1.0])
+    assert_equal %w[v0.1.0 v0.2.0], groups.own
+    assert_equal %w[v2.0.0 3.1.0 v10.0.0], groups.inherited
+    assert_equal %w[content-v1.0.0], groups.other
+  end
+
+  def test_lists_by_default_and_deletes_only_the_inherited_tags_when_asked
+    status, out, = cli("tags", "--json")
+    assert_equal 0, status
+    assert_equal({ "own" => %w[v0.1.0 v0.2.0], "inherited" => %w[3.1.0 v9.0.0], "other" => %w[content-v1.0.0] }, JSON.parse(out))
+
+    status, out, = cli("tags", "--delete")
+    assert_equal 0, status
+    assert_match(/deleted 2 inherited tag/, out)
+    remaining = IO.popen(["git", "-C", @root, "ls-remote", "--tags", "--refs", "origin"], &:read).scan(%r{refs/tags/(\S+)}).flatten.sort
+    assert_equal %w[content-v1.0.0 v0.1.0 v0.2.0], remaining
+    assert_equal %w[content-v1.0.0 v0.1.0 v0.2.0], IO.popen(["git", "-C", @root, "tag", "--list"], &:read).split.sort
+  end
+
+  def test_a_missing_changelog_is_a_usage_error_not_a_guess
+    File.delete(File.join(@root, "CHANGELOG.md"))
+    status, _, err = cli("tags")
+    assert_equal 2, status
+    assert_match(/CHANGELOG.md not found/, err)
+  end
+end
