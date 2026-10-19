@@ -92,6 +92,7 @@ Custom Administrate fields live in `app/fields` + `app/views/fields`: `MarkdownF
 | CLI | `bin/zer0-cms` | Headless ABC driver and `doctor PATH [--format text\|findings] [--schema FILE]` |
 | CMS primitives | `lib/zer0_cms/cms/` | Catalog (Jekyll 4.4 reader rules), front-matter line surgery, confined writer — stdlib; see [`lib/zer0_cms/cms/README.md`](lib/zer0_cms/cms/README.md) |
 | Doctor | `lib/zer0_cms/doctor.rb` | The consumer contract check: theme, image engine, `zer0.json`, `fleet.manifest.yml`, front matter against the theme's schema; findings in lifehacker.dev's `findings.jsonl` shape |
+| Event contract | `lib/zer0_cms/events.rb` | This plane's half of the event contract with the content plane: CloudEvents envelopes (`app.user.interaction`) and a validator for the shared `schemas/events/` (contract test: `test/zer0_cms/test_event_contracts.rb`). The outbox and consumers on top of it are milestone M16 |
 | Parity proofs | `bin/jekyll-parity`, `bin/front-matter-roundtrip`, `test/fixtures/` | The catalog diffed against Jekyll's reader; the front-matter round-trip property over real sites |
 | Web | `app/` + `config/` + `db/` | Fleet CMS on Administrate: `Site`/`Page`/`Asset`/`Term` index, `SiteSync`, `PageEditor`, custom fields, the ABC wizard |
 | Image engine | `app/services/image_engine.rb` | The only file that loads or runs zer0-image-generator: `Zer0ImageGenerator::Facade` when the bundled gem ships it, else the released 0.6.0 gem's Python engine as a confined subprocess |
