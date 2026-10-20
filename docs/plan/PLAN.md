@@ -18,6 +18,7 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 | drsai | `sites/drsai` | bamr87/drsai | Jekyll picture-book site + Python story engine |
 | zer0-pages | `sites/zer0-pages` | bamr87/zer0-pages | Obsidian vault + Jekyll bridge |
 | zer0-pages-remote, zer0-demo-cookbook, zer0-demo-garden | `sites/*` | same-name repos | remote_theme / installer demos |
+| aieo | `apps/aieo` | bamr87/aieo | FastAPI + React AI Engine Optimization app (imported 2026-10-20) |
 | irony-works | `sites/irony-works` | bamr87/irony-works | AI-tended Obsidian vault + Jekyll site, Germinate loop (imported 2026-10-20) |
 | wargames | `sites/wargames` | bamr87/wargames | OverTheWire study site, remote_theme consumer (imported 2026-10-20) |
 

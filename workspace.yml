@@ -324,6 +324,21 @@ projects:
         cwd: src
         env: {DJANGO_SETTINGS_MODULE: barodybroject.settings.testing}
 
+  aieo:
+    path: apps/aieo
+    kind: app
+    stack: [python, node, docker]
+    summary: AI Engine Optimization — a FastAPI + React app that scores and rewrites website content so AI engines like ChatGPT and Claude will cite it.
+    upstream: bamr87/aieo
+    ci: aieo.yml
+    tasks:
+      setup: pip install -r backend/requirements.txt pytest pytest-cov && (cd frontend && npm ci)
+      check: ruff check backend/
+      test: (cd backend && pytest) && (cd frontend && npm run lint && npm test)
+      build:
+        run: npm run build
+        cwd: frontend
+
 vendored:
   - copy: rails/app/assets/stylesheets/zer0-tokens.css
     source: packages/zer0-image-generator/web/app/assets/stylesheets/zer0-tokens.css
