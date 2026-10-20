@@ -1,0 +1,106 @@
+{% comment %} Feature: ZER0-043 {% endcomment %}
+{% comment %} ================================================ {% endcomment %}
+{% comment %} STATS PAGE HEADER                               {% endcomment %}
+{% comment %} Title, description, and metadata display        {% endcomment %}
+{% comment %} ================================================ {% endcomment %}
+<div class="row mb-5">
+  <div class="col-12">
+    <div class="text-center mb-4">
+      {% comment %} Header Icon with Bootstrap classes {% endcomment %}
+      <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle rounded-circle p-4 mb-4 shadow-lg stats-header-icon">
+        <i class="bi bi-graph-up fs-1 text-primary stats-icon-rotate"></i>
+      </div>
+      
+      {% comment %} Title with Bootstrap typography {% endcomment %}
+      <h1 class="display-3 mb-3 fw-bold text-primary">
+        {{ page.title | default: "Site Statistics Portal" }}
+      </h1>
+      
+      {% comment %} Description with Bootstrap lead class {% endcomment %}
+      <p class="lead mb-4 fs-4">
+        {{ page.description | default: "Comprehensive analytics and insights from the knowledge base" }}
+      </p>
+    </div>
+    
+    {% comment %} Last updated reflects build-time stats (generated_at or site.time) {% endcomment %}
+    {% if site.data.content_statistics %}
+      {% assign stats_last_updated = site.data.content_statistics.generated_at | default: site.time %}
+      <div class="alert alert-info shadow-sm d-flex align-items-center justify-content-between" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-clock me-3 fs-4"></i>
+          <span class="fw-medium">
+            <strong>Last updated:</strong>
+            {{ stats_last_updated | date: "%B %d, %Y at %I:%M %p" }}
+          </span>
+        </div>
+        <button type="button"
+                class="btn btn-outline-info btn-sm"
+                onclick="window.location.reload()"
+                title="Reload this page. Statistics refresh automatically on each site build.">
+          <i class="bi bi-arrow-clockwise me-1"></i>
+          Refresh
+        </button>
+      </div>
+    {% else %}
+      <div class="alert alert-warning shadow-sm d-flex align-items-center justify-content-between" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle me-3 fs-4"></i>
+          <span class="fw-medium">
+            <strong>Statistics not yet generated.</strong> 
+            Run <code class="bg-body-secondary px-2 py-1 rounded">ruby _data/generate_statistics.rb</code> to create statistics.
+          </span>
+        </div>
+        <button class="btn btn-outline-warning btn-sm" onclick="window.location.reload()">
+          <i class="bi bi-arrow-clockwise me-1"></i>
+          Check Again
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% comment %} ================================================ {% endcomment %}
+{% comment %} STATS NAVIGATION BREADCRUMBS                    {% endcomment %}
+{% comment %} Quick navigation within the stats page          {% endcomment %}
+{% comment %} ================================================ {% endcomment %}
+<div class="row mb-5">
+  <div class="col-12">
+    {% comment %} Bootstrap breadcrumb {% endcomment %}
+    <nav aria-label="Statistics navigation">
+      <ol class="breadcrumb p-3 rounded shadow-sm">
+        <li class="breadcrumb-item">
+          <a href="{{ '/' | relative_url }}" class="text-decoration-none">
+            <i class="bi bi-house me-1"></i> Home
+          </a>
+        </li>
+        <li class="breadcrumb-item active fw-medium" aria-current="page">
+          <i class="bi bi-graph-up me-1"></i> Statistics
+        </li>
+      </ol>
+    </nav>
+    
+    {% comment %} Quick Jump Navigation using Bootstrap button group {% endcomment %}
+    {% if site.data.content_statistics %}
+      <div class="text-center">
+        <div class="btn-group btn-group-lg shadow-sm d-flex flex-wrap gap-2" role="group" aria-label="Statistics navigation">
+          <a href="#overview" class="btn btn-outline-primary flex-fill">
+            <i class="bi bi-speedometer2 me-1"></i> 
+            <span class="d-none d-sm-inline">Overview</span>
+          </a>
+          <a href="#categories" class="btn btn-outline-success flex-fill">
+            <i class="bi bi-folder me-1"></i> 
+            <span class="d-none d-sm-inline">Categories</span>
+          </a>
+          <a href="#tags" class="btn btn-outline-info flex-fill">
+            <i class="bi bi-tags me-1"></i> 
+            <span class="d-none d-sm-inline">Tags</span>
+          </a>
+          <a href="#metrics" class="btn btn-outline-warning flex-fill">
+            <i class="bi bi-info-circle me-1"></i> 
+            <span class="d-none d-sm-inline">Metrics</span>
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>

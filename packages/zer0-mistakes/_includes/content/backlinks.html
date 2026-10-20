@@ -1,0 +1,137 @@
+{% comment %} Features: ZER0-044, ZER0-059 {% endcomment %}
+{%- comment -%}
+  ===================================================================
+  BACKLINKS — Pages that wiki-link or markdown-link to the current page
+  ===================================================================
+
+  File: backlinks.html
+  Path: _includes/content/backlinks.html
+  Purpose: Render an Obsidian-style "Linked mentions" panel.
+
+  Strategy:
+    - Iterate every collection document + standalone page.
+    - Match either the current page's permalink in the body, or its title /
+      basename inside `[[…]]` wiki-link syntax (case-insensitive, whitespace
+      collapsed — same normalization as _plugins/obsidian_links.rb).
+    - Skip self-references and drafts.
+
+  Toggle:
+    - Set `backlinks: false` in front matter to suppress.
+    - Default: ON for `_layouts/note.html`, OFF for `_layouts/default.html`
+      (opt-in via `backlinks: true`).
+  ===================================================================
+{%- endcomment -%}
+
+{%- if page.backlinks != false and site.obsidian.enabled != false -%}
+  {%- assign _self_url = page.url -%}
+  {%- assign _self_title = page.title | default: "" | downcase | strip -%}
+  {%- assign _self_basename = page.path | split: "/" | last | replace: ".md", "" | replace: ".markdown", "" | downcase -%}
+
+  {%- comment -%}
+    Needles = every name another page could wiki-link this page by: title,
+    file basename, and any frontmatter aliases. Normalized to lowercase + strip
+    to match the resolver. A backlink is a [[needle]] with a terminator
+    (]] | # ^) so [[Foobar]] does NOT match the needle "foo".
+  {%- endcomment -%}
+  {%- assign _needles = "" | split: "" -%}
+  {%- if _self_title != "" -%}{%- assign _needles = _needles | push: _self_title -%}{%- endif -%}
+  {%- if _self_basename != "" -%}{%- assign _needles = _needles | push: _self_basename -%}{%- endif -%}
+  {%- for _alias in page.aliases -%}
+    {%- assign _an = _alias | downcase | strip -%}
+    {%- if _an != "" -%}{%- assign _needles = _needles | push: _an -%}{%- endif -%}
+  {%- endfor -%}
+  {%- assign _needles = _needles | uniq -%}
+
+  {%- assign _candidates = "" | split: "" -%}
+  {%- for _coll in site.collections -%}
+    {%- for _doc in _coll.docs -%}
+      {%- assign _candidates = _candidates | push: _doc -%}
+    {%- endfor -%}
+  {%- endfor -%}
+  {%- for _pg in site.pages -%}
+    {%- if _pg.output_ext == ".html" -%}
+      {%- assign _candidates = _candidates | push: _pg -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- assign _backlinks = "" | split: "" -%}
+  {%- for _doc in _candidates -%}
+    {%- if _doc.url == _self_url -%}{%- continue -%}{%- endif -%}
+    {%- comment -%} Hide draft/unpublished references unless this build includes drafts. {%- endcomment -%}
+    {%- unless site.show_drafts == true -%}
+      {%- if _doc.published == false or _doc.draft == true -%}{%- continue -%}{%- endif -%}
+    {%- endunless -%}
+    {%- assign _body = _doc.content | default: "" -%}
+    {%- assign _matched = false -%}
+
+    {%- comment -%} A markdown link to this page's permalink is a backlink. {%- endcomment -%}
+    {%- if _self_url and _self_url != "" and _self_url != "/" -%}
+      {%- if _body contains _self_url -%}
+        {%- assign _matched = true -%}
+      {%- endif -%}
+    {%- endif -%}
+
+    {%- comment -%}
+      Wiki-link match: strip fenced (```) and inline (`) code first so a page
+      that merely *documents* [[syntax]] doesn't register as a backlink, then
+      require a terminator after the needle.
+    {%- endcomment -%}
+    {%- unless _matched -%}
+      {%- assign _nb = "" -%}
+      {%- assign _fp = _body | split: "```" -%}
+      {%- for _p in _fp -%}
+        {%- assign _m = forloop.index0 | modulo: 2 -%}
+        {%- if _m == 0 -%}{%- assign _nb = _nb | append: _p -%}{%- endif -%}
+      {%- endfor -%}
+      {%- assign _nb2 = "" -%}
+      {%- assign _ip = _nb | split: "`" -%}
+      {%- for _p in _ip -%}
+        {%- assign _m = forloop.index0 | modulo: 2 -%}
+        {%- if _m == 0 -%}{%- assign _nb2 = _nb2 | append: _p -%}{%- endif -%}
+      {%- endfor -%}
+      {%- assign _body_lower = _nb2 | downcase -%}
+      {%- for _n in _needles -%}
+        {%- assign _v1 = "[[" | append: _n | append: "]]" -%}
+        {%- assign _v2 = "[[" | append: _n | append: "|" -%}
+        {%- assign _v3 = "[[" | append: _n | append: "#" -%}
+        {%- assign _v4 = "[[" | append: _n | append: "^" -%}
+        {%- if _body_lower contains _v1 or _body_lower contains _v2 or _body_lower contains _v3 or _body_lower contains _v4 -%}
+          {%- assign _matched = true -%}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endunless -%}
+
+    {%- if _matched -%}
+      {%- assign _backlinks = _backlinks | push: _doc -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- if _backlinks.size > 0 -%}
+    <section class="obsidian-backlinks mt-5 pt-4 border-top" aria-labelledby="backlinks-heading">
+      <h3 id="backlinks-heading" class="h5 mb-3">
+        <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
+        Linked mentions
+        <span class="badge bg-secondary ms-2">{{ _backlinks.size }}</span>
+      </h3>
+      <ul class="list-unstyled obsidian-backlinks-list">
+        {%- for _ref in _backlinks -%}
+          <li class="obsidian-backlink mb-2">
+            <a href="{{ _ref.url | relative_url }}" class="obsidian-backlink-link">
+              <strong>{{ _ref.title | default: _ref.path | split: "/" | last }}</strong>
+            </a>
+            {%- if _ref.collection -%}
+              <span class="badge rounded-pill border text-body-secondary ms-1">{{ _ref.collection }}</span>
+            {%- endif -%}
+            {%- assign _ref_excerpt = _ref.description | default: _ref.excerpt | strip_html | strip | truncate: 160 -%}
+            {%- if _ref_excerpt and _ref_excerpt != "" -%}
+              <div class="obsidian-backlink-excerpt small text-muted">
+                {{ _ref_excerpt }}
+              </div>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+      </ul>
+    </section>
+  {%- endif -%}
+{%- endif -%}

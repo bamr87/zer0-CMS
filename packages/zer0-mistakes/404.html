@@ -1,0 +1,11 @@
+---
+# Feature: ZER0-047
+# The whole 404 experience (including unconfigured-site setup mode) lives in
+# the theme layout _layouts/404.html — consumer sites vendor exactly this
+# stub, nothing more. Anything added to this page's body renders below the
+# standard 404 content. The layout name must be quoted: a bare `layout: 404`
+# is YAML for the NUMBER 404, and Jekyll then can't find the layout.
+permalink: /404.html
+layout: "404"
+sitemap: false
+---
