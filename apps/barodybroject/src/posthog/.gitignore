@@ -1,6 +1,0 @@
-.env
-*.log
-postgres-data/
-clickhouse-data/
-zookeeper-data/
-zookeeper-logs/
