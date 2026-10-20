@@ -7,6 +7,7 @@
 # test/ruby/test_settings.rb differential-tests resolve_settings against it.
 
 require_relative "config"
+require_relative "svg/local_renderer" # BANNER_PALETTES, for palette names
 
 module Zer0ImageGenerator
   # Fully-resolved run settings (before per-file author overrides).
@@ -22,6 +23,9 @@ module Zer0ImageGenerator
       list_only parallel batch file collection enhance enhance_prompt
       enhance_model enhance_quality enhance_fidelity enhance_format
       rasterizer provider_explicit
+      style_card palette claude_plan claude_rounds claude_min_score
+      claude_require_thumbnail svg_text svg_max_kb look_rasterizer
+      claude_budget_usd telemetry changed exclude_re
     ].freeze
 
     attr_accessor(*ATTRIBUTES)
@@ -69,6 +73,21 @@ module Zer0ImageGenerator
       @rasterizer = "auto"
       @provider_explicit = false
 
+      # The `claude` provider's illustration loop (see DEFAULTS).
+      @style_card = DEFAULTS["style_card"]
+      @palette = []
+      @claude_plan = DEFAULTS["claude_plan"]
+      @claude_rounds = DEFAULTS["claude_rounds"]
+      @claude_min_score = DEFAULTS["claude_min_score"].to_f
+      @claude_require_thumbnail = DEFAULTS["claude_require_thumbnail"]
+      @svg_text = DEFAULTS["svg_text"]
+      @svg_max_kb = DEFAULTS["svg_max_kb"].to_f
+      @look_rasterizer = DEFAULTS["look_rasterizer"]
+      @claude_budget_usd = DEFAULTS["claude_budget_usd"].to_f
+      @telemetry = ""
+      @changed = false
+      @exclude_re = ""
+
       overrides.each { |key, value| public_send("#{key}=", value) }
     end
 
@@ -82,6 +101,7 @@ module Zer0ImageGenerator
       copy = dup
       copy.instance_variable_set(:@collections, @collections.dup)
       copy.instance_variable_set(:@collection_styles, @collection_styles.dup)
+      copy.instance_variable_set(:@palette, @palette.dup)
       changes.each { |key, value| copy.public_send("#{key}=", value) }
       copy
     end
@@ -108,7 +128,13 @@ module Zer0ImageGenerator
       enhance_fidelity: nil, enhance_format: nil, prompt_engine: nil,
       review: nil, rasterizer: nil, style: nil, assets_prefix: nil,
       no_auto_prefix: false, collections_dir: nil, front_matter_key: nil,
-      authors_file: nil, batch: 0, log_file: nil, rate_limit: nil
+      authors_file: nil, batch: 0, log_file: nil, rate_limit: nil,
+      # illustration loop
+      style_card: nil, palette: nil, claude_plan: nil, claude_rounds: nil,
+      claude_min_score: nil, claude_require_thumbnail: nil, svg_text: nil,
+      svg_max_kb: nil, look_rasterizer: nil, claude_budget_usd: nil,
+      telemetry: nil, changed: false, exclude_re: nil, inspect: nil, critic: false,
+      shape: nil
     }.freeze
 
     attr_accessor(*DEFAULTS.keys)
@@ -144,6 +170,47 @@ module Zer0ImageGenerator
   end
 
   module_function
+
+  # Truthy spellings for booleans that arrive as strings (env vars, CLI values,
+  # quoted YAML). Port of the oracle's _TRUE_WORDS.
+  TRUE_WORDS = %w[1 true yes on].freeze
+
+  # Port of _setting_bool: real booleans pass through, numbers are != 0, and
+  # anything else is truthy only when it spells one of TRUE_WORDS.
+  def _setting_bool(value)
+    return value if value == true || value == false
+    return value != 0 if value.is_a?(Numeric)
+
+    TRUE_WORDS.include?(python_str(value).strip.downcase)
+  end
+
+  # Port of _setting_number: float(value), falling back to `default` on
+  # anything float() rejects. Booleans are rejected explicitly in the oracle.
+  def _setting_number(value, default)
+    return default if value == true || value == false || value.nil?
+    return value.to_f if value.is_a?(Numeric)
+
+    Float(value.to_s.strip)
+  rescue ArgumentError, TypeError
+    default
+  end
+
+  HEX_TOKEN = /\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\z/.freeze
+
+  # Port of palette_tokens: a YAML list of hex strings, a comma/space separated
+  # string of them, or the name of a banner palette → lowercase hex tokens.
+  def palette_tokens(value)
+    if value.is_a?(String)
+      name = value.strip
+      palettes = Svg::LocalRenderer::BANNER_PALETTES
+      return palettes[name].dup if palettes.key?(name)
+
+      value = name.split(/[\s,]+/).reject(&:empty?)
+    end
+    return [] unless value.is_a?(Array)
+
+    value.map { |v| python_str(v).strip }.select { |t| t.match?(HEX_TOKEN) }.map(&:downcase)
+  end
 
   # Settings fields an override block may replace per file (see constants.rb's
   # OVERRIDE_KEYS). Keep only recognized keys with non-empty stringified values.
@@ -247,6 +314,16 @@ module Zer0ImageGenerator
       python_str(cfg.call(cfg_key, DEFAULTS[cfg_key]))
     end
 
+    # pick() without the str(): CLI > non-empty env > config > default, raw.
+    layered = lambda do |cli_value, env_name, cfg_key|
+      return cli_value unless cli_value.nil?
+
+      env_value = ENV[env_name]
+      return env_value if !env_value.nil? && !env_value.empty?
+
+      cfg.call(cfg_key, DEFAULTS[cfg_key])
+    end
+
     # collections_dir: block override > Jekyll's own top-level key > default.
     collections_dir = cfg.call(
       "collections_dir",
@@ -326,7 +403,33 @@ module Zer0ImageGenerator
       enhance_fidelity: python_first_truthy(args.enhance_fidelity, ENV["ENHANCE_FIDELITY"], ENHANCE_DEFAULTS["fidelity"]),
       enhance_format: python_first_truthy(args.enhance_format, ENV["ENHANCE_FORMAT"], ENHANCE_DEFAULTS["format"]),
       rasterizer: pick.call(args.rasterizer, "IMAGE_RASTERIZER", "rasterizer"),
-      provider_explicit: !args.provider.nil? || python_bool(ENV["AI_PROVIDER"])
+      provider_explicit: !args.provider.nil? || python_bool(ENV["AI_PROVIDER"]),
+      style_card: python_str(pick.call(args.style_card, "IMAGE_STYLE_CARD", "style_card")).strip,
+      palette: palette_tokens(layered.call(args.palette, "IMAGE_PALETTE", "palette")),
+      claude_plan: _setting_bool(layered.call(args.claude_plan, "CLAUDE_PLAN", "claude_plan")),
+      claude_rounds: [0, _setting_number(
+        layered.call(args.claude_rounds, "CLAUDE_ROUNDS", "claude_rounds"),
+        DEFAULTS["claude_rounds"].to_f
+      ).to_i].max,
+      claude_min_score: _setting_number(
+        layered.call(args.claude_min_score, "CLAUDE_MIN_SCORE", "claude_min_score"),
+        DEFAULTS["claude_min_score"].to_f
+      ),
+      claude_require_thumbnail: _setting_bool(layered.call(
+        args.claude_require_thumbnail, "CLAUDE_REQUIRE_THUMBNAIL", "claude_require_thumbnail"
+      )),
+      svg_text: python_str(pick.call(args.svg_text, "SVG_TEXT", "svg_text")).strip.downcase,
+      svg_max_kb: _setting_number(
+        layered.call(args.svg_max_kb, "SVG_MAX_KB", "svg_max_kb"), DEFAULTS["svg_max_kb"].to_f
+      ),
+      look_rasterizer: pick.call(args.look_rasterizer, "LOOK_RASTERIZER", "look_rasterizer"),
+      claude_budget_usd: _setting_number(
+        layered.call(args.claude_budget_usd, "CLAUDE_BUDGET_USD", "claude_budget_usd"),
+        DEFAULTS["claude_budget_usd"].to_f
+      ),
+      telemetry: args.telemetry.nil? ? ENV.fetch("PREVIEW_TELEMETRY", "") : args.telemetry,
+      changed: python_bool(args.changed),
+      exclude_re: args.exclude_re.nil? ? ENV.fetch("PREVIEW_EXCLUDE_RE", "") : args.exclude_re
     )
   end
 

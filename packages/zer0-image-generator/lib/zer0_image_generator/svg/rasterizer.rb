@@ -124,13 +124,36 @@ module Zer0ImageGenerator
         candidates.find { |c| File.file?(c) }
       end
 
+      CHOICES = %w[auto rsvg resvg inkscape magick playwright none].freeze
+
+      # resvg — the closest headless match to browser rendering. Native `resvg`
+      # first, then the `resvg-js` CLI; only an EXPLICIT `resvg` preference may
+      # fall through to `npx -y`, because that downloads a package. Port of
+      # _resvg_attempt.
+      def resvg_attempt(svg_path, png_path, w, explicit)
+        if which("resvg")
+          return run_quiet(["resvg", "-w", w.to_s, svg_path, png_path])
+        end
+        if which("resvg-js")
+          return run_quiet(["resvg-js", "--fit-width", w.to_s, svg_path, png_path])
+        end
+        if explicit && which("npx")
+          return run_quiet(["npx", "-y", "@resvg/resvg-js-cli", "--fit-width", w.to_s,
+                            svg_path, png_path], timeout: 300)
+        end
+        false
+      end
+
       # SVG -> PNG through the first available tool. Returns the tool name used,
-      # or nil when nothing worked (caller keeps the .svg).
-      def rasterize_svg(svg_path, png_path, project_root, preference: "auto")
+      # or nil when nothing worked (caller keeps the .svg). `width` sets the
+      # output pixel width (height follows the banner aspect) — the oracle's
+      # illustration loop renders the same file at 1536px and at 120px.
+      def rasterize_svg(svg_path, png_path, project_root, preference: "auto", width: SVG_WIDTH)
         svg_path = svg_path.to_s
         png_path = png_path.to_s
-        w = SVG_WIDTH
-        h = SVG_HEIGHT
+        w = [1, width.to_i].max
+        # int(round(...)) in the oracle — banker's rounding, hence :even.
+        h = [1, (w * SVG_HEIGHT.to_f / SVG_WIDTH).round(half: :even)].max
         helper = playwright_helper(project_root)
 
         chain = [
@@ -139,6 +162,7 @@ module Zer0ImageGenerator
               ["rsvg-convert", "-w", w.to_s, "-h", h.to_s, "-o", png_path, svg_path]
             )
           }],
+          ["resvg", lambda { resvg_attempt(svg_path, png_path, w, preference == "resvg") }],
           ["inkscape", lambda {
             which("inkscape") && run_quiet(
               ["inkscape", svg_path, "--export-type=png",

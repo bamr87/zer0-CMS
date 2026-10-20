@@ -28,7 +28,8 @@ module Zer0ImageGenerator
     ENHANCE_FORMAT_CHOICES = %w[png jpeg webp].freeze
     PROMPT_ENGINE_CHOICES = %w[template claude xai].freeze
     REVIEW_CHOICES = %w[claude xai none].freeze
-    RASTERIZER_CHOICES = %w[auto rsvg inkscape magick playwright none].freeze
+    RASTERIZER_CHOICES = %w[auto rsvg resvg inkscape magick playwright none].freeze
+    SVG_TEXT_CHOICES = %w[paths keep forbid].freeze
 
     # The argparse Namespace, field-for-field. Booleans default false, parallel
     # defaults nil (resolve_settings then falls back to MAX_PARALLEL/4), batch
@@ -40,6 +41,10 @@ module Zer0ImageGenerator
       :prompt_engine, :review, :rasterizer, :style, :assets_prefix,
       :no_auto_prefix, :collections_dir, :front_matter_key, :authors_file,
       :batch, :log_file, :rate_limit,
+      # illustration loop (provider: claude)
+      :style_card, :palette, :claude_plan, :claude_rounds, :claude_min_score,
+      :claude_require_thumbnail, :svg_text, :svg_max_kb, :look_rasterizer,
+      :claude_budget_usd, :telemetry, :changed, :exclude_re, :inspect, :critic, :shape,
       keyword_init: true
     ) do
       def to_h_sorted
@@ -58,7 +63,12 @@ module Zer0ImageGenerator
         enhance_format: nil, prompt_engine: nil, review: nil, rasterizer: nil,
         style: nil, assets_prefix: nil, no_auto_prefix: false,
         collections_dir: nil, front_matter_key: nil, authors_file: nil,
-        batch: 0, log_file: nil, rate_limit: nil
+        batch: 0, log_file: nil, rate_limit: nil,
+        style_card: nil, palette: nil, claude_plan: nil, claude_rounds: nil,
+        claude_min_score: nil, claude_require_thumbnail: nil, svg_text: nil,
+        svg_max_kb: nil, look_rasterizer: nil, claude_budget_usd: nil,
+        telemetry: nil, changed: false, exclude_re: nil, inspect: nil, critic: false,
+        shape: nil
       )
     end
 
@@ -131,6 +141,31 @@ module Zer0ImageGenerator
              "Author-overrides YAML relative to the site root (default: _data/authors.yml; pass '' to disable)") { |v| args.authors_file = v }
         o.on("--batch N", Base10Int, "Limit number of files processed (0 = no limit)") { |v| args.batch = v }
         o.on("--log-file FILE", "Also write log output to a file") { |v| args.log_file = v }
+        o.separator ""
+        o.separator "illustration loop (provider: claude):"
+        o.on("--style-card NAME", "style card name or path") { |v| args.style_card = v }
+        o.on("--palette TOKENS", "six hex tokens (comma separated) or a palette name") { |v| args.palette = v }
+        # argparse.BooleanOptionalAction: --claude-plan / --no-claude-plan.
+        o.on("--[no-]claude-plan", "plan a JSON scene graph before authoring (default: on)") { |v| args.claude_plan = v }
+        o.on("--rounds N", Base10Int, "critique-driven edit rounds (default 1; 0 = one-shot)") { |v| args.claude_rounds = v }
+        o.on("--min-score SCORE", Float, "critic score that ends the loop (default 7)") { |v| args.claude_min_score = v }
+        o.on("--[no-]require-thumbnail", "the banner must also read at 120px (default: on)") do |v|
+          args.claude_require_thumbnail = v
+        end
+        o.on("--svg-text MODE", "paths (default) | keep | forbid") do |v|
+          args.svg_text = choice!("--svg-text", v, SVG_TEXT_CHOICES)
+        end
+        o.on("--svg-max-kb KB", Float, "strict-lint size budget per banner (default 300)") { |v| args.svg_max_kb = v }
+        o.on("--look-rasterizer TOOL", "tool the loop renders through to LOOK at a draft") do |v|
+          args.look_rasterizer = choice!("--look-rasterizer", v, RASTERIZER_CHOICES)
+        end
+        o.on("--budget-usd USD", Float, "per-run spend cap for the loop (0 = none)") { |v| args.claude_budget_usd = v }
+        o.on("--telemetry PATH", "append one JSON record per banner to PATH ('-' = stdout)") { |v| args.telemetry = v }
+        o.on("--changed", "illustrate git-new/modified markdown files") { args.changed = true }
+        o.on("--exclude-re REGEX", "--changed: skip git status lines matching REGEX") { |v| args.exclude_re = v }
+        o.on("--inspect SVG", "lint (and with --critic, critique) an existing banner") { |v| args.inspect = v }
+        o.on("--critic", "with --inspect: also run the vision critique") { args.critic = true }
+        o.on("--shape SVG", "run the loop's SHAPE step on an SVG in place") { |v| args.shape = v }
         # Back-compat no-op (argparse.SUPPRESS in the oracle): accepted, ignored.
         o.on("--rate-limit N", Base10Int) { |v| args.rate_limit = v }
         o.on("-h", "--help", "Show this help message and exit") do

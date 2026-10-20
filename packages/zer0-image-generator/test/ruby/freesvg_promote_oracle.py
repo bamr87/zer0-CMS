@@ -45,6 +45,11 @@ def main() -> int:
         os.makedirs(os.path.join(tmp, "tools", "svg", "library"))
         shutil.copy(os.path.join(REPO, "tools", "svg", "svg-check.py"),
                     os.path.join(tmp, "tools", "svg", "svg-check.py"))
+        # svg-check.py is a thin CLI over the engine's lint_svg(), found at its
+        # real relative path — give the fake ROOT the same layout.
+        os.makedirs(os.path.join(tmp, "lib", "zer0_image_generator"))
+        shutil.copy(os.path.join(REPO, "lib", "zer0_image_generator", "preview_generator.py"),
+                    os.path.join(tmp, "lib", "zer0_image_generator", "preview_generator.py"))
         manifest = os.path.join(tmp, "tools", "svg", "library", "MANIFEST.json")
         with open(manifest, "w") as f:
             json.dump({"entries": []}, f)

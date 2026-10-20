@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/packages/zer0-image-generator/lib/zer0_image_generator/svg/plan.schema.json",
+  "title": "zer0-image-generator illustration-loop plan",
+  "$comment": "GENERATED from PLAN_SCHEMA in preview_generator.py — edit there; test/test_illustration_loop.py pins this file equal.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "subject",
+    "focal_point",
+    "palette",
+    "layers",
+    "symmetry_break",
+    "headline_placement",
+    "avoid"
+  ],
+  "properties": {
+    "subject": {
+      "type": "string",
+      "description": "one sentence: the concrete scene the banner shows"
+    },
+    "focal_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y",
+        "element"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "0-1 share of the width"
+        },
+        "y": {
+          "type": "number",
+          "description": "0-1 share of the height"
+        },
+        "element": {
+          "type": "string",
+          "description": "what sits there"
+        }
+      }
+    },
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bg",
+        "shadow",
+        "low_mid",
+        "mid",
+        "accent",
+        "highlight"
+      ],
+      "properties": {
+        "bg": {
+          "type": "string",
+          "description": "#rrggbb"
+        },
+        "shadow": {
+          "type": "string",
+          "description": "#rrggbb"
+        },
+        "low_mid": {
+          "type": "string",
+          "description": "#rrggbb"
+        },
+        "mid": {
+          "type": "string",
+          "description": "#rrggbb"
+        },
+        "accent": {
+          "type": "string",
+          "description": "#rrggbb"
+        },
+        "highlight": {
+          "type": "string",
+          "description": "#rrggbb"
+        }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "description": "3-4 layers, back to front",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "description",
+          "tokens"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "background",
+              "midground",
+              "subject",
+              "accent",
+              "text",
+              "veil"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "tokens": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "bg",
+                "shadow",
+                "low_mid",
+                "mid",
+                "accent",
+                "highlight"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "symmetry_break": {
+      "type": "string",
+      "description": "the one deliberate asymmetry, which is the subject"
+    },
+    "headline_placement": {
+      "type": "string",
+      "enum": [
+        "top",
+        "bottom",
+        "left",
+        "right",
+        "none"
+      ]
+    },
+    "avoid": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

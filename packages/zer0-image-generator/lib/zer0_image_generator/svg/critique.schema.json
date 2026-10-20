@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bamr87/zer0-CMS/packages/zer0-image-generator/lib/zer0_image_generator/svg/critique.schema.json",
+  "title": "zer0-image-generator illustration-loop critique",
+  "$comment": "GENERATED from CRITIQUE_SCHEMA in preview_generator.py — edit there; test/test_illustration_loop.py pins this file equal.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "works",
+    "fails",
+    "next_change",
+    "overall",
+    "thumbnail_holds"
+  ],
+  "properties": {
+    "works": {
+      "type": "string"
+    },
+    "fails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_change": {
+      "type": "string",
+      "description": "exactly one actionable edit"
+    },
+    "overall": {
+      "type": "number",
+      "description": "0-10, be stingy: 8+ means shippable as-is"
+    },
+    "thumbnail_holds": {
+      "type": "boolean",
+      "description": "silhouette still reads at 120px"
+    }
+  }
+}

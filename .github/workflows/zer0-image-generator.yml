@@ -37,6 +37,10 @@ jobs:
       - run: python -m pip install pyyaml
       - run: python -m py_compile lib/zer0_image_generator/preview_generator.py
       - run: python test/test_preview_generator.py
+      # The illustration loop LOOKS through resvg; with it on PATH the suite's
+      # TestRealRender renders a shaped banner at 1536px and 120px for real.
+      - run: npm install -g @resvg/resvg-js-cli
+      - run: python test/test_illustration_loop.py
 
   ruby-port:
     name: Ruby port (byte-identity vs Python)
@@ -78,6 +82,13 @@ jobs:
           gem unpack zer0-image-generator-*.gem --target /tmp/unpacked
           test -f /tmp/unpacked/*/lib/zer0_image_generator/preview_generator.py
           test -f /tmp/unpacked/*/lib/zer0_image_generator/rasterize-svg.js
+          # Illustration loop payload: headline fonts, schemas, style cards.
+          test -f /tmp/unpacked/*/lib/zer0_image_generator/fonts/PressStart2P-Regular.ttf
+          test -f /tmp/unpacked/*/lib/zer0_image_generator/fonts/Inter-Bold.ttf
+          test -f /tmp/unpacked/*/lib/zer0_image_generator/fonts/OFL-Inter.txt
+          test -f /tmp/unpacked/*/lib/zer0_image_generator/svg/plan.schema.json
+          test -f /tmp/unpacked/*/lib/zer0_image_generator/svg/critique.schema.json
+          test -f /tmp/unpacked/*/tools/svg/library/styles/retro-pixel.md
 
   integration:
     name: Fixture site (jekyll preview-images, local provider)

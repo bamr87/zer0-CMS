@@ -29,6 +29,7 @@ One framework, many kinds of output — every cell links a real committed file:
 | <img src="variants/banner-hello-world.svg" width="150" alt="engine banner"> | Preview banner, 1536×1024 | The engine's `local` provider template (`banner-seed.py --slug hello-world`) |
 | <img src="../samples/dawn-badge.svg" width="110" alt="badge"> | Flat-geometric badge | Hand loop, [style card](../../tools/svg/library/styles/flat-geometric.md) |
 | <img src="../samples/forge-rocket-emblem.svg" width="110" alt="emblem"> | App-icon emblem | `svg-forge` multi-agent run (walkthrough below) |
+| <img src="illustration-loop/chandrayaan-1-after.svg" width="150" alt="loop-authored banner"> | Article banner, headline outlined | The `claude` provider's illustration loop — plan, author, shape, look, critique ([before/after + telemetry](illustration-loop/), [docs](../ILLUSTRATION-LOOP.md#first-live-runs-2026-10-19)) |
 | <img src="../samples/ridgeline.svg" width="150" alt="atmospheric banner"> | Atmospheric banner | Hand loop, [organic-atmos](../../tools/svg/library/styles/organic-atmos.md) |
 | <img src="../samples/constellation.svg" width="110" alt="night scene"> | Night scene, `<defs>`+`<use>` motif | Hand loop (iteration story below) |
 | <img src="../samples/flowfield-moss-5.svg" width="110" alt="generative"> | Generative field | `flowfield.py`, seed-swept |

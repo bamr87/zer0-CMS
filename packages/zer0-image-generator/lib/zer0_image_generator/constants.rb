@@ -36,10 +36,23 @@ module Zer0ImageGenerator
     "claude_model" => "",              # empty → DEFAULT_CLAUDE_MODEL
     "claude_effort" => "low",          # output_config.effort for brief/review calls
                                        # (short creative tasks; "" sends no effort)
-    "rasterizer" => "auto"             # SVG→PNG tool for the SVG providers (local,
-                                       # claude): auto|rsvg|inkscape|magick|playwright
-                                       # |none. "none" is SVG-only mode — the vector
-                                       # banner IS the deliverable and no PNG is made.
+    "rasterizer" => "auto",            # SVG→PNG tool for the SVG providers (local,
+                                       # claude): auto|rsvg|resvg|inkscape|magick
+                                       # |playwright|none. "none" is SVG-only mode —
+                                       # the vector banner IS the deliverable and no
+                                       # PNG is made.
+    # ---- the `claude` provider's illustration loop (Python-only today; the
+    # settings are ported so resolve_settings stays differential-clean) ----
+    "style_card" => "",                # tools/svg/library/styles/<name>.md or a path
+    "palette" => [].freeze,            # 6 hex tokens, or a BANNER_PALETTES name
+    "claude_plan" => true,             # JSON scene-graph plan before authoring
+    "claude_rounds" => 1,              # critique-driven edit rounds; 0 = one-shot
+    "claude_min_score" => 7,           # critic `overall` that ends the loop
+    "claude_require_thumbnail" => true, # ...and only if it reads at 120px
+    "svg_text" => "paths",             # paths | keep | forbid
+    "svg_max_kb" => 300,               # strict-lint size budget per banner
+    "look_rasterizer" => "auto",       # what the loop LOOKS through
+    "claude_budget_usd" => 0           # per-run spend cap; 0 = uncapped
   }.freeze
 
   # Enhance mode (OpenAI /v1/images/edits — see the OpenAI provider's `edit`).
