@@ -1,0 +1,26 @@
+# zer0.install.yml — your Site Builder answers, replayable by scripts/bin/install.
+# Keys are never read from this file; they live in your environment / .env.
+
+profile: github-pages
+site:
+  title: "Marginalia"
+  description: "A public digital garden about reading, note-taking and how ideas connect — written in the open and revised in place."
+  author: "Iris Vance"
+  email: "iris@marginalia.example"
+  url: "https://bamr87.github.io"
+github:
+  user: "bamr87"
+  repo: "zer0-demo-garden"
+theme:
+  source: remote
+  skin: mint
+  color_mode: auto
+deploy:
+  - github-pages
+collections: [posts, about, notes]
+voice:
+  tone: editorial
+  audience: general
+agents: [copilot, claude]
+ai:
+  provider: auto
