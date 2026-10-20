@@ -1,0 +1,83 @@
+# zer0-image-generator — local web app.
+#
+#   docker compose up --build      # http://localhost:3000
+#   docker compose run --rm web bin/rails test
+#   docker compose run --rm web ruby -Ilib ../test/ruby/test_local_renderer.rb
+#
+# The build context is the repo root because the Rails app loads the image
+# engine from ../lib. Both trees are bind-mounted in development so edits are
+# live without a rebuild.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      target: development
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - ./web:/app/web
+      - ./lib:/app/lib
+      - ./tools:/app/tools:ro
+      - ./docs:/app/docs:ro
+      - ./test:/app/test:ro
+      # Shadow the host's dev-machine artifacts so the bind mount above cannot
+      # leak macOS gems / a dev bundle config into the Linux container. These
+      # anonymous volumes keep the image's own versions in place.
+      - /app/web/vendor
+      - /app/web/.bundle
+      - /app/web/tmp
+      # Jekyll sites to generate previews for. Point SITES_DIR at whatever
+      # holds them (defaults to the parent of this repo, which is how a fleet
+      # checkout is usually laid out). Registered site paths must be the
+      # CONTAINER path — /sites/<name> — not the host path.
+      - ${SITES_DIR:-..}:/sites
+      # Named volumes so the gem bundle and the SQLite databases survive
+      # rebuilds and never collide with anything installed on the host.
+      - bundle:/usr/local/bundle
+      - sqlite:/app/web/storage
+      # Image-forge scratch output (composition versions) — a volume so created
+      # images survive container restarts. /app is the repo root inside the
+      # image, and it is NOT otherwise persisted.
+      - forge:/app/.forge
+    environment:
+      RAILS_ENV: development
+      # Bind to all interfaces so the port publish above actually reaches it.
+      BINDING: 0.0.0.0
+      # Solid Queue runs in-process in development: one container, no worker to
+      # forget to start. Production splits it out (see the `jobs` service).
+      SOLID_QUEUE_IN_PUMA: "true"
+      # Passed through when set, so a key can come from the host environment
+      # instead of the encrypted credential store.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      XAI_OAUTH_TOKEN: ${XAI_OAUTH_TOKEN:-}
+      STABILITY_API_KEY: ${STABILITY_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      # FreeSVG.org sourcing (optional): an account there is email + password,
+      # not an API key, so it comes from the environment rather than the
+      # encrypted credential store.
+      FREESVG_EMAIL: ${FREESVG_EMAIL:-}
+      FREESVG_PASSWORD: ${FREESVG_PASSWORD:-}
+      # ActiveRecord::Encryption keys (for the stored credential secrets). In
+      # development these default to fixed local values; set real ones here to
+      # encrypt the local credential store with your own keys.
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY:-}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY:-}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT:-}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/up"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 40s
+    stdin_open: true
+    tty: true
+
+volumes:
+  bundle:
+  sqlite:
+  forge:

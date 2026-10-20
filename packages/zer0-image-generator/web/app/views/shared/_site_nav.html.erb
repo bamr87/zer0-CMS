@@ -1,0 +1,6 @@
+<nav class="tab-row">
+  <%= link_to "Overview", site, class: site_tab_class(controller_name == "sites" && action_name == "show") %>
+  <%= link_to "Content", site_content_index_path(site), class: site_tab_class(controller_name == "site_content") %>
+  <%= link_to "Config", site_config_path(site), class: site_tab_class(controller_name == "site_configs") %>
+  <%= link_to "Runs", site_runs_path(site), class: site_tab_class(controller_name == "runs") %>
+</nav>
