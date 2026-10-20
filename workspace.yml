@@ -324,7 +324,6 @@ projects:
         cwd: src
         env: {DJANGO_SETTINGS_MODULE: barodybroject.settings.testing}
 
-
 vendored:
   - copy: rails/app/assets/stylesheets/zer0-tokens.css
     source: packages/zer0-image-generator/web/app/assets/stylesheets/zer0-tokens.css
