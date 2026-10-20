@@ -1,0 +1,176 @@
+# theme-mirror — keep bamr87/zer0-mistakes a read-only mirror of packages/zer0-mistakes.
+#
+# ADR 0002: this repository is the zer0 stack's only home, but GitHub Pages loads a
+# `remote_theme` only from the ROOT of a repository, and ~30 sites name
+# `remote_theme: bamr87/zer0-mistakes`. So that one original is not archived: every
+# change to the theme lands here, and this workflow commits the package's tree onto the
+# mirror's `main` as one fast-forward snapshot commit (PLAN C3). On a theme release
+# (tag `jekyll-theme-zer0-v<version>`) it also tags that snapshot `v<version>`, so
+# `remote_theme: bamr87/zer0-mistakes@v<version>` pins keep working.
+#
+# The mirror is written by nothing else. Before each push the job checks that the
+# mirror's `main` is a snapshot this workflow made; a commit made there by hand fails the
+# run instead of being overwritten. The first run against the original's own history
+# needs `bootstrap: true` on a manual dispatch.
+#
+# The mirror's workflows are dropped from each snapshot (a mirror must not release,
+# deploy or open pull requests), except those in KEEP_WORKFLOWS: `pages.yml` keeps
+# zer0-mistakes.com building from the mirror until C4 moves the domain here.
+#
+# Kill switch: vars.THEME_MIRROR_ENABLED must be 'true' for push/tag runs (default OFF:
+# it is armed at the cutover, not before). A manual dispatch bypasses it.
+name: theme-mirror
+
+on:
+  push:
+    branches: [main]
+    paths: ["packages/zer0-mistakes/**"]
+    tags: ["jekyll-theme-zer0-v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build the snapshot and report the diff, push nothing"
+        type: boolean
+        default: true
+      bootstrap:
+        description: "First sync only: allow a mirror main that this workflow did not write"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One sync at a time, never cancelled half-way. Tag runs get their own group, so a
+# release tag never displaces a queued sync (a newer queued sync may replace an older one:
+# it mirrors a superset of it).
+concurrency:
+  group: theme-mirror-${{ github.ref_type }}
+  cancel-in-progress: false
+
+env:
+  MIRROR: bamr87/zer0-mistakes
+  PREFIX: packages/zer0-mistakes
+  KEEP_WORKFLOWS: "pages.yml"
+  MARKER: "sync: zer0-CMS@"
+
+jobs:
+  mirror:
+    if: github.event_name == 'workflow_dispatch' || vars.THEME_MIRROR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Resolve the commit to mirror
+        id: src
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$REF_TYPE" = tag ]; then
+            version="${REF_NAME#jekyll-theme-zer0-v}"
+            echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          fi
+          echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      # Full history but only the theme's blobs: the ancestry check needs every commit, the
+      # snapshot needs only this package's files (fetched in one batch by the sparse checkout).
+      - uses: actions/checkout@v5
+        with:
+          path: cms
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: packages/zer0-mistakes
+          persist-credentials: false
+
+      - name: Probe the token
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::error::FLEET_TOKEN is not set"; exit 1; fi
+          push=$(gh api "repos/$MIRROR" --jq .permissions.push)
+          [ "$push" = true ] || { echo "::error::FLEET_TOKEN cannot push to $MIRROR"; exit 1; }
+
+      - name: Clone the mirror
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_TOKEN }}
+        run: |
+          git clone --quiet --no-tags --single-branch --branch main \
+            "https://x-access-token:${GH_TOKEN}@github.com/${MIRROR}.git" mirror
+          git -C mirror config user.name "github-actions[bot]"
+          git -C mirror config user.email "41898183+github-actions[bot]@users.noreply.github.com"
+
+      - name: Refuse a mirror someone else wrote to
+        env:
+          BOOTSTRAP: ${{ github.event_name == 'workflow_dispatch' && inputs.bootstrap }}
+        run: |
+          subject=$(git -C mirror log -1 --format=%s)
+          case "$subject" in
+            "$MARKER"*) echo "mirror main is snapshot ${subject#"$MARKER"}" ;;
+            *)
+              if [ "$BOOTSTRAP" = true ]; then
+                echo "::warning::bootstrap: replacing a mirror main this workflow did not write ($subject)"
+              else
+                echo "::error::$MIRROR main ($subject) was not written by this workflow. Someone committed to the mirror directly; move that change into $PREFIX here, then re-run (or dispatch with bootstrap: true for the very first sync)."
+                exit 1
+              fi ;;
+          esac
+
+      - name: Build the snapshot
+        id: snap
+        env:
+          SHA: ${{ steps.src.outputs.sha }}
+        run: |
+          cd mirror
+          git rm -rq --cached .
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          git -C ../cms archive --format=tar "HEAD:$PREFIX" | tar -x -C .
+          if [ -d .github/workflows ]; then
+            for f in .github/workflows/*; do
+              case " $KEEP_WORKFLOWS " in *" $(basename "$f") "*) ;; *) rm -f "$f" ;; esac
+            done
+          fi
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "mirror already matches $PREFIX at $SHA"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat | tail -1
+            git commit --quiet -m "${MARKER}${SHA:0:12}" -m "Mirrored from https://github.com/bamr87/zer0-CMS/tree/${SHA}/${PREFIX} (zer0-CMS@${SHA}).
+
+          This repository is a read-only mirror. Make changes in bamr87/zer0-CMS under ${PREFIX}/ — see docs/adr/0002-one-home-cutover.md there."
+          fi
+
+      # Branch runs only. Never move the mirror backwards: if it already holds a snapshot
+      # of a commit this one does not descend from (a run that ran late), do nothing.
+      - name: Push the snapshot
+        if: >-
+          steps.src.outputs.tag == '' && steps.snap.outputs.changed == 'true' &&
+          !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
+        env:
+          SHA: ${{ steps.src.outputs.sha }}
+        run: |
+          last=$(git -C mirror log -1 --skip=1 --format=%B | grep -o 'zer0-CMS@[0-9a-f]\{40\}' | head -1 | cut -d@ -f2 || true)
+          if [ -n "$last" ] && ! git -C cms merge-base --is-ancestor "$last" "$SHA"; then
+            echo "::notice::mirror already holds zer0-CMS@$last, which $SHA does not descend from; not moving it backwards"
+            exit 0
+          fi
+          git -C mirror push --quiet origin HEAD:main
+
+      # Tag runs only, and they never write main: the tag goes on the mirror's snapshot of
+      # exactly the release commit if main has one, else on the snapshot just built (a
+      # commit whose parent is the mirror's main, reachable from the tag alone).
+      - name: Tag the release on the mirror
+        if: steps.src.outputs.tag != '' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run)
+        env:
+          TAG: ${{ steps.src.outputs.tag }}
+          SHA: ${{ steps.src.outputs.sha }}
+          CHANGED: ${{ steps.snap.outputs.changed }}
+        run: |
+          cd mirror
+          target=$(git log origin/main --format=%H --fixed-strings --grep "zer0-CMS@${SHA}" -n 1)
+          if [ -z "$target" ]; then
+            if [ "$CHANGED" = true ]; then target=$(git rev-parse HEAD); else target=$(git rev-parse origin/main); fi
+          fi
+          git tag "$TAG" "$target"
+          git push --quiet origin "refs/tags/$TAG"
+          echo "tagged $TAG at $target"
