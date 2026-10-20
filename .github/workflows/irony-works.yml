@@ -1,0 +1,47 @@
+# sites/irony-works — the perpetual encyclopedia of irony. Its own repository
+# gated pull requests with the hub's standard-ci alone; the real proof the site
+# works is the build half of its publish.yml, so that is the gate here: render
+# the previews, transplant the vault into the _entries/ collection, and build
+# with GitHub Pages' own Jekyll (remote_theme: bamr87/zer0-mistakes). Nothing
+# is deployed — bamr87/irony-works still publishes the live site. Not ported
+# (see docs/MONOREPO.md): the deploy, the advisory Alanis Gate on vault pull
+# requests and the scheduled Germinate loop, all still under
+# sites/irony-works/.github/workflows/ as reference.
+name: irony-works
+
+on:
+  push:
+    branches: [main]
+    paths: ["sites/irony-works/**", ".github/workflows/irony-works.yml"]
+  pull_request:
+    paths: ["sites/irony-works/**", ".github/workflows/irony-works.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irony-works-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Render, transplant and jekyll build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: sites/irony-works
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Render previews + transplant vault → _entries/
+        run: |
+          npm i js-yaml --no-save
+          node engine/scripts/preview.mjs
+          node engine/scripts/transplant.mjs
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./sites/irony-works
+          destination: ./sites/irony-works/_site
