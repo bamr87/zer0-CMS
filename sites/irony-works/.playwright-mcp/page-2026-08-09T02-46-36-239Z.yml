@@ -1,0 +1,214 @@
+- generic [active] [ref=f19e1]:
+  - link "Skip to main content" [ref=f19e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f19e3]:
+    - navigation "Primary navigation" [ref=f19e5]:
+      - generic [ref=f19e6]:
+        - generic [ref=f19e7]:
+          - text: 
+          - link "Home - Irony Works" [ref=f19e8] [cursor=pointer]:
+            - /url: /irony-works/
+            - img "Irony Works logo" [ref=f19e9]
+        - link "Irony Works — Home" [ref=f19e11] [cursor=pointer]:
+          - /url: /irony-works/
+          - text: 
+          - generic [ref=f19e12]: Irony Works
+        - link "The perpetual encyclopedia of irony — Irony Works home" [ref=f19e14] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f19e15]: The perpetual encyclopedia of irony
+      - generic "Main Navigation" [ref=f19e16]:
+        - list [ref=f19e19]:
+          - text: 
+          - listitem [ref=f19e20]:
+            - link "Browse" [ref=f19e21] [cursor=pointer]:
+              - /url: /irony-works/entries/
+            - button "Toggle Browse submenu" [ref=f19e22] [cursor=pointer]
+          - listitem [ref=f19e24]:
+            - link "The Gate" [ref=f19e25] [cursor=pointer]:
+              - /url: /irony-works/entries/alanis-gate/
+          - listitem [ref=f19e26]:
+            - link "How it grows" [ref=f19e27] [cursor=pointer]:
+              - /url: /irony-works/how-it-grows/
+          - listitem [ref=f19e28]:
+            - link "Vault index" [ref=f19e29] [cursor=pointer]:
+              - /url: /irony-works/entries/home/
+          - text:  
+      - group "Utility controls" [ref=f19e30]:
+        - button "Open search" [ref=f19e31] [cursor=pointer]:
+          - generic [ref=f19e32]: 
+        - button "Open settings" [ref=f19e33] [cursor=pointer]:
+          - generic [ref=f19e34]: 
+        - text: 
+  - text:   
+  - main [ref=f19e35]:
+    - generic [ref=f19e37]:
+      - generic [ref=f19e39]:
+        - generic [ref=f19e40]:
+          - heading "How It Grows" [level=1] [ref=f19e41]
+          - paragraph [ref=f19e42]: A scheduled machine proposes candidate ironies, an adversarial gate scores them on five axes, and survivors arrive as a pull request. Merging is the selection pressure — nothing reaches canon without a human hand.
+        - generic [ref=f19e43]:
+          - list "Page metadata" [ref=f19e44]:
+            - listitem [ref=f19e45]:
+              - generic [ref=f19e46]: 
+            - listitem [ref=f19e47]:
+              - generic [ref=f19e48]: 
+              - link "View source" [ref=f19e49] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//how-it-grows.md
+          - generic [ref=f19e50]:
+            - paragraph [ref=f19e51]:
+              - generic [ref=f19e52]: 
+              - text: "Estimated reading time: 2 minutes"
+            - generic [ref=f19e53]:
+              - generic [ref=f19e54]:
+                - button "Share" [ref=f19e55] [cursor=pointer]:
+                  - generic [ref=f19e56]: 
+                - text:    
+              - link "Edit on GitHub" [ref=f19e58] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//how-it-grows.md
+                - generic [ref=f19e59]: 
+      - generic "Table of Contents" [ref=f19e62]:
+        - text: 
+        - navigation "Table of Contents" [ref=f19e64]:
+          - generic [ref=f19e65]:
+            - strong [ref=f19e66]:
+              - generic [ref=f19e67]: 
+              - text: On this page
+            - button "Hide table of contents" [expanded] [ref=f19e68] [cursor=pointer]:
+              - generic [ref=f19e69]: 
+          - list [ref=f19e71]:
+            - listitem [ref=f19e72]:
+              - link "The five roles" [ref=f19e73] [cursor=pointer]:
+                - /url: "#the-five-roles"
+            - listitem [ref=f19e74]:
+              - link "What the gate throws away" [ref=f19e75] [cursor=pointer]:
+                - /url: "#what-the-gate-throws-away"
+            - listitem [ref=f19e76]:
+              - link "Veracity, because good stories lie" [ref=f19e77] [cursor=pointer]:
+                - /url: "#veracity-because-good-stories-lie"
+            - listitem [ref=f19e78]:
+              - link "The guardrails are code, not etiquette" [ref=f19e79] [cursor=pointer]:
+                - /url: "#the-guardrails-are-code-not-etiquette"
+      - generic [ref=f19e80]:
+        - paragraph [ref=f19e81]: The vault grows on a cycle. The machine proposes; the reader disposes.
+        - generic [ref=f19e83]:
+          - generic [ref=f19e84]:
+            - generic [ref=f19e85]: text
+            - button "Copy code to clipboard" [ref=f19e86] [cursor=pointer]:
+              - generic [ref=f19e87]: 
+              - text: Copy
+          - generic [ref=f19e88]:
+            - generic: 1 2 3 4 5 6 7 8 9 10
+            - region "text code block" [ref=f19e89]:
+              - code [ref=f19e90]: idea ──SCOUT──▶ candidate ──▶ ╔═════════════╗ ║ ALANIS GATE ║──fail──▶ compost/ ╚══════╤══════╝ (the merely pass │ unfortunate) ▼ SCRIBE ──▶ nursery/ (pull request) │ human merge = selection ▼ canon
+        - heading "The five roles" [level=2] [ref=f19e91]
+        - paragraph [ref=f19e92]:
+          - strong [ref=f19e93]: Scout
+          - text: proposes candidates for the cycle’s domain — history of science, literature and language, technology, politics, commerce, or the vault itself. It is rewarded for one true irony and penalised for five plausible ones.
+        - paragraph [ref=f19e94]:
+          - strong [ref=f19e95]:
+            - text: The
+            - link "Alanis Gate" [ref=f19e96] [cursor=pointer]:
+              - /url: /irony-works/entries/alanis-gate/
+          - text: scores each candidate 0–2 on five axes — reversal, commentary, inevitability, specificity, and non-substitutability — and rejects anything that reduces to bad luck, coincidence, hypocrisy, or plain tragedy. Threshold is 7 of 10.
+        - paragraph [ref=f19e97]:
+          - strong [ref=f19e98]: Scribe
+          - text: drafts the survivors against the entry schema, with sources, and downgrades
+          - code [ref=f19e99]: veracity
+          - text: when the evidence is thin rather than sharpening the story to match the telling.
+        - paragraph [ref=f19e100]:
+          - strong [ref=f19e101]: Linker
+          - text: weaves new entries into the graph, and
+          - strong [ref=f19e102]: Gardener
+          - text: tends it — deduplicating, chasing orphans, and revisiting
+          - link "futures" [ref=f19e103] [cursor=pointer]:
+            - /url: /irony-works/futures/
+          - text: as they mature.
+        - heading "What the gate throws away" [level=2] [ref=f19e104]
+        - paragraph [ref=f19e105]:
+          - text: The rejects are kept. Every failed candidate is logged in the
+          - link "compost ledger" [ref=f19e106] [cursor=pointer]:
+            - /url: /irony-works/compost/
+          - text: "with its verdict:"
+          - code [ref=f19e107]: MERELY-UNFORTUNATE
+          - text: ","
+          - code [ref=f19e108]: BAD-LUCK
+          - text: ","
+          - code [ref=f19e109]: COINCIDENCE
+          - text: ","
+          - code [ref=f19e110]: HYPOCRISY
+          - text: ", or"
+          - code [ref=f19e111]: NOT-EVEN-WRONG
+          - text: . The negative space of a definition teaches as much as the definition — and history occasionally files an appeal.
+        - heading "Veracity, because good stories lie" [level=2] [ref=f19e112]
+        - paragraph [ref=f19e113]:
+          - text: "Every entry carries a rating:"
+          - code [ref=f19e114]: attested
+          - text: ","
+          - code [ref=f19e115]: contested
+          - text: ","
+          - code [ref=f19e116]: legend
+          - text: ", or"
+          - code [ref=f19e117]: speculative
+          - text: . The better an anecdote, the more likely history has sharpened it. A pipeline that harvests great stories without a veracity axis will launder legends into an encyclopedia at machine speed, so the vault flags uncertainty as first-class metadata rather than quietly inheriting it.
+        - heading "The guardrails are code, not etiquette" [level=2] [ref=f19e118]
+        - paragraph [ref=f19e119]:
+          - text: "The engine may write to exactly two places: the"
+          - link "nursery" [ref=f19e120] [cursor=pointer]:
+            - /url: /irony-works/nursery/
+          - text: and the compost ledger. It cannot modify canon, its own prompts, the workflows, or the configuration — the restriction is a path whitelist enforced by a function that throws, not a sentence in a prompt asking nicely.
+        - paragraph [ref=f19e121]: "Promotion to canon happens one way: a human merges the pull request. That is the whole governance model, and it is the reason this site can be grown by a machine without becoming a landfill."
+        - paragraph [ref=f19e122]:
+          - link "Browse every entry" [ref=f19e123] [cursor=pointer]:
+            - /url: /irony-works/entries/
+          - link "See what's pending" [ref=f19e124] [cursor=pointer]:
+            - /url: /irony-works/nursery/
+  - contentinfo [ref=f19e125]:
+    - generic [ref=f19e126]:
+      - paragraph [ref=f19e127]: © 2026 Irony Works
+      - generic [ref=f19e128]:
+        - generic [ref=f19e129]: "Powered by:"
+        - list "Powered by:" [ref=f19e130]:
+          - listitem [ref=f19e131]:
+            - link "View theme information and system details" [ref=f19e132] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f19e133]: 
+              - generic [ref=f19e134]: Info
+    - generic [ref=f19e136]:
+      - generic [ref=f19e137]:
+        - generic [ref=f19e138]:
+          - heading "Irony Works" [level=2] [ref=f19e139]
+          - paragraph [ref=f19e140]:
+            - link:
+              - /url: "mailto:"
+        - generic [ref=f19e141]:
+          - heading "Quick Links" [level=2] [ref=f19e142]
+          - list "Footer quick links" [ref=f19e143]:
+            - listitem [ref=f19e144]:
+              - link "Home" [ref=f19e145] [cursor=pointer]:
+                - /url: /irony-works/
+            - listitem [ref=f19e146]:
+              - link "Sitemap (XML)" [ref=f19e147] [cursor=pointer]:
+                - /url: /irony-works/sitemap.xml
+        - generic [ref=f19e148]:
+          - heading "Follow Us" [level=2] [ref=f19e149]
+          - list "Social links" [ref=f19e150]:
+            - listitem [ref=f19e151]:
+              - link "Feed" [ref=f19e152] [cursor=pointer]:
+                - /url: /irony-works/feed.xml
+                - generic [ref=f19e153]: 
+      - generic [ref=f19e155]:
+        - form "Newsletter signup" [ref=f19e157]:
+          - generic [ref=f19e158]:
+            - generic [ref=f19e159]: Email
+            - textbox "Email" [disabled] [ref=f19e160]:
+              - /placeholder: Enter your email
+          - generic [ref=f19e161]:
+            - button "Subscribe" [disabled]
+          - paragraph [ref=f19e163]: Newsletter is a placeholder until you connect a provider.
+        - list [ref=f19e165]:
+          - listitem [ref=f19e166]:
+            - link "Cookie Preferences" [ref=f19e167] [cursor=pointer]:
+              - /url: "#"
+      - paragraph [ref=f19e169]: © 2026 Irony Works. All Rights Reserved.
+    - text: 
+  - text:  

@@ -1,0 +1,10 @@
+[     473ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://bamr87.github.io/irony-works/assets/:0
+[     504ms] [LOG] SidebarState: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/sidebar-state.js:48
+[     504ms] [LOG] TocVisibility: Initialized {visible: true} @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/toc-visibility.js:32
+[     506ms] [LOG] ScrollSpy: Observing 5 headings @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/scroll-spy.js:112
+[     506ms] [LOG] SmoothScroll: Initialized with 5 links @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/smooth-scroll.js:53
+[     506ms] [LOG] KeyboardShortcuts: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/keyboard.js:60
+[     506ms] [LOG] SwipeGestures: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/gestures.js:53
+[     506ms] [LOG] FocusManager: Initialized with 2 offcanvas elements @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/focus.js:57
+[     507ms] [LOG] Navigation: Successfully initialized modules: [state, tocVisibility, scrollSpy, smoothScroll, keyboard, gestures, focus, navbar] @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/index.js?v=1786223529:104
+[     816ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://bamr87.github.io/irony-works/favicon.ico:0

@@ -1,0 +1,8 @@
+[     182ms] [LOG] SidebarState: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/sidebar-state.js:48
+[     183ms] [LOG] TocVisibility: Initialized {visible: true} @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/toc-visibility.js:32
+[     183ms] [LOG] ScrollSpy: Observing 1 headings @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/scroll-spy.js:112
+[     183ms] [LOG] SmoothScroll: Initialized with 1 links @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/smooth-scroll.js:53
+[     183ms] [LOG] KeyboardShortcuts: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/keyboard.js:60
+[     183ms] [LOG] SwipeGestures: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/gestures.js:53
+[     183ms] [LOG] FocusManager: Initialized with 2 offcanvas elements @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/focus.js:57
+[     183ms] [LOG] Navigation: Successfully initialized modules: [state, tocVisibility, scrollSpy, smoothScroll, keyboard, gestures, focus, navbar] @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/index.js?v=1786228574:104

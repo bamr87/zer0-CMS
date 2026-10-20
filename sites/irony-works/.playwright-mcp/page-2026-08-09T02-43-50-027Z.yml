@@ -1,0 +1,182 @@
+- generic [active] [ref=f17e1]:
+  - link "Skip to main content" [ref=f17e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f17e3]:
+    - navigation "Primary navigation" [ref=f17e5]:
+      - generic [ref=f17e6]:
+        - generic [ref=f17e7]:
+          - text: 
+          - link "Home - Irony Works" [ref=f17e8] [cursor=pointer]:
+            - /url: /irony-works/
+            - img "Irony Works logo" [ref=f17e9]
+        - link "Irony Works — Home" [ref=f17e11] [cursor=pointer]:
+          - /url: /irony-works/
+          - text: 
+          - generic [ref=f17e12]: Irony Works
+        - link "The perpetual encyclopedia of irony — Irony Works home" [ref=f17e14] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f17e15]: The perpetual encyclopedia of irony
+      - text:    
+      - generic "Main Navigation" [ref=f17e16]:
+        - list [ref=f17e19]:
+          - text: 
+          - listitem [ref=f17e20]:
+            - link "Browse" [ref=f17e21] [cursor=pointer]:
+              - /url: /irony-works/entries/
+              - generic [ref=f17e22]: 
+            - button "Toggle Browse submenu" [ref=f17e23] [cursor=pointer]
+          - listitem [ref=f17e25]:
+            - link "The Gate" [ref=f17e26] [cursor=pointer]:
+              - /url: /irony-works/entries/alanis-gate/
+              - generic [ref=f17e27]: 
+          - listitem [ref=f17e28]:
+            - link "How it grows" [ref=f17e29] [cursor=pointer]:
+              - /url: /irony-works/how-it-grows/
+              - generic [ref=f17e30]: 
+          - listitem [ref=f17e31]:
+            - link "Vault index" [ref=f17e32] [cursor=pointer]:
+              - /url: /irony-works/entries/home/
+              - generic [ref=f17e33]: 
+          - text:  
+      - group "Utility controls" [ref=f17e34]:
+        - button "Open search" [ref=f17e35] [cursor=pointer]:
+          - generic [ref=f17e36]: 
+        - button "Open settings" [ref=f17e37] [cursor=pointer]:
+          - generic [ref=f17e38]: 
+        - text: 
+  - text:   
+  - main [ref=f17e39]:
+    - generic [ref=f17e41]:
+      - generic [ref=f17e43]:
+        - generic [ref=f17e44]:
+          - heading "Forms" [level=1] [ref=f17e45]
+          - paragraph [ref=f17e46]: The taxonomy of irony — one note per form, from verbal to meta. The trunk the rest of the vault branches from.
+        - generic [ref=f17e47]:
+          - list "Page metadata" [ref=f17e48]:
+            - listitem [ref=f17e49]:
+              - generic [ref=f17e50]: 
+            - listitem [ref=f17e51]:
+              - generic [ref=f17e52]: 
+              - link "View source" [ref=f17e53] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//forms.md
+          - generic [ref=f17e54]:
+            - paragraph [ref=f17e55]:
+              - generic [ref=f17e56]: 
+              - text: "Estimated reading time: 1 minute"
+            - generic [ref=f17e57]:
+              - generic [ref=f17e58]:
+                - button "Share" [ref=f17e59] [cursor=pointer]:
+                  - generic [ref=f17e60]: 
+                - text:    
+              - link "Edit on GitHub" [ref=f17e62] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//forms.md
+                - generic [ref=f17e63]: 
+      - generic "Table of Contents" [ref=f17e66]:
+        - text: 
+        - navigation "Table of Contents" [ref=f17e68]:
+          - generic [ref=f17e69]:
+            - strong [ref=f17e70]:
+              - generic [ref=f17e71]: 
+              - text: On this page
+            - button "Hide table of contents" [expanded] [ref=f17e72] [cursor=pointer]:
+              - generic [ref=f17e73]: 
+      - generic [ref=f17e75]:
+        - paragraph [ref=f17e76]: The taxonomy. Every entry names at least one of these, and the forms are where the vault’s definitions live rather than its examples.
+        - paragraph [ref=f17e77]: 8 entries.
+        - generic [ref=f17e78]:
+          - link "Cosmic Irony canon" [ref=f17e79] [cursor=pointer]:
+            - /url: /irony-works/entries/cosmic/
+            - generic [ref=f17e80]:
+              - heading "Cosmic Irony" [level=2] [ref=f17e81]
+              - generic [ref=f17e82]: canon
+          - link "Dramatic Irony canon" [ref=f17e84] [cursor=pointer]:
+            - /url: /irony-works/entries/dramatic/
+            - generic [ref=f17e85]:
+              - heading "Dramatic Irony" [level=2] [ref=f17e86]
+              - generic [ref=f17e87]: canon
+          - link "Historical Irony canon" [ref=f17e89] [cursor=pointer]:
+            - /url: /irony-works/entries/historical/
+            - generic [ref=f17e90]:
+              - heading "Historical Irony" [level=2] [ref=f17e91]
+              - generic [ref=f17e92]: canon
+          - link "Meta-Irony & Post-Irony canon" [ref=f17e94] [cursor=pointer]:
+            - /url: /irony-works/entries/meta-and-post/
+            - generic [ref=f17e95]:
+              - heading "Meta-Irony & Post-Irony" [level=2] [ref=f17e96]
+              - generic [ref=f17e97]: canon
+          - link "Situational Irony canon" [ref=f17e99] [cursor=pointer]:
+            - /url: /irony-works/entries/situational/
+            - generic [ref=f17e100]:
+              - heading "Situational Irony" [level=2] [ref=f17e101]
+              - generic [ref=f17e102]: canon
+          - link "Socratic Irony canon" [ref=f17e104] [cursor=pointer]:
+            - /url: /irony-works/entries/socratic/
+            - generic [ref=f17e105]:
+              - heading "Socratic Irony" [level=2] [ref=f17e106]
+              - generic [ref=f17e107]: canon
+          - link "Structural Irony canon" [ref=f17e109] [cursor=pointer]:
+            - /url: /irony-works/entries/structural/
+            - generic [ref=f17e110]:
+              - heading "Structural Irony" [level=2] [ref=f17e111]
+              - generic [ref=f17e112]: canon
+          - link "Verbal Irony canon" [ref=f17e114] [cursor=pointer]:
+            - /url: /irony-works/entries/verbal/
+            - generic [ref=f17e115]:
+              - heading "Verbal Irony" [level=2] [ref=f17e116]
+              - generic [ref=f17e117]: canon
+        - separator [ref=f17e119]
+        - paragraph [ref=f17e120]:
+          - link "← All entries" [ref=f17e121] [cursor=pointer]:
+            - /url: /irony-works/entries/
+          - text: ·
+          - link "How the vault grows" [ref=f17e122] [cursor=pointer]:
+            - /url: /irony-works/how-it-grows/
+  - contentinfo [ref=f17e123]:
+    - generic [ref=f17e124]:
+      - paragraph [ref=f17e125]: © 2026 Irony Works
+      - generic [ref=f17e126]:
+        - generic [ref=f17e127]: "Powered by:"
+        - list "Powered by:" [ref=f17e128]:
+          - listitem [ref=f17e129]:
+            - link "View theme information and system details" [ref=f17e130] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f17e131]: 
+              - generic [ref=f17e132]: Info
+    - generic [ref=f17e134]:
+      - generic [ref=f17e135]:
+        - generic [ref=f17e136]:
+          - heading "Irony Works" [level=2] [ref=f17e137]
+          - paragraph [ref=f17e138]:
+            - link:
+              - /url: "mailto:"
+        - generic [ref=f17e139]:
+          - heading "Quick Links" [level=2] [ref=f17e140]
+          - list "Footer quick links" [ref=f17e141]:
+            - listitem [ref=f17e142]:
+              - link "Home" [ref=f17e143] [cursor=pointer]:
+                - /url: /irony-works/
+            - listitem [ref=f17e144]:
+              - link "Sitemap (XML)" [ref=f17e145] [cursor=pointer]:
+                - /url: /irony-works/sitemap.xml
+        - generic [ref=f17e146]:
+          - heading "Follow Us" [level=2] [ref=f17e147]
+          - list "Social links" [ref=f17e148]:
+            - listitem [ref=f17e149]:
+              - link "Feed" [ref=f17e150] [cursor=pointer]:
+                - /url: /irony-works/feed.xml
+                - generic [ref=f17e151]: 
+      - generic [ref=f17e153]:
+        - form "Newsletter signup" [ref=f17e155]:
+          - generic [ref=f17e156]:
+            - generic [ref=f17e157]: Email
+            - textbox "Email" [disabled] [ref=f17e158]:
+              - /placeholder: Enter your email
+          - generic [ref=f17e159]:
+            - button "Subscribe" [disabled]
+          - paragraph [ref=f17e161]: Newsletter is a placeholder until you connect a provider.
+        - list [ref=f17e163]:
+          - listitem [ref=f17e164]:
+            - link "Cookie Preferences" [ref=f17e165] [cursor=pointer]:
+              - /url: "#"
+      - paragraph [ref=f17e167]: © 2026 Irony Works. All Rights Reserved.
+    - text: 

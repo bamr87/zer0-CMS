@@ -273,6 +273,39 @@ projects:
       build: bundle exec jekyll build
       pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
+  irony-works:
+    path: sites/irony-works
+    kind: site
+    stack: [node, jekyll]
+    summary: The perpetual encyclopedia of irony — a self-growing, AI-tended Obsidian vault whose engine transplants entries into a Jekyll collection published with the zer0 theme.
+    upstream: bamr87/irony-works
+    depends_on: [zer0-mistakes]
+    publishes: [pages]
+    route: none — it builds with GitHub Pages' own Jekyll (no Gemfile) after its node transplant step, and bamr87/irony-works still deploys it; it routes at /irony-works/ once it has a bundler-based pages task (C4)
+    ci: irony-works.yml
+    site: "."
+    tasks:
+      setup: npm i js-yaml --no-save
+      check: for f in engine/scripts/*.mjs; do node --check "$f" || exit 1; done
+      build: node engine/scripts/preview.mjs && node engine/scripts/transplant.mjs
+
+  wargames:
+    path: sites/wargames
+    kind: site
+    stack: [ruby, jekyll, python]
+    summary: OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site with spoiler-free study guides — a remote_theme consumer of the zer0 theme.
+    upstream: bamr87/wargames
+    depends_on: [zer0-mistakes]
+    publishes: [pages]
+    ci: sites.yml
+    site: "."
+    route: /wargames/
+    tasks:
+      setup: bundle install
+      check: python3 tools/unwrap-prose.py --check
+      build: bundle exec jekyll build
+      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+
   barodybroject:
     path: apps/barodybroject
     kind: app
@@ -327,3 +360,6 @@ vendored:
   - copy: apps/barodybroject/tools/unwrap-prose.py
     source: tools/unwrap-prose.py
     why: The app's own markdown-oneline workflow runs it from the app's root.
+  - copy: sites/wargames/tools/unwrap-prose.py
+    source: tools/unwrap-prose.py
+    why: The site's documented lint, and the first step of its upstream re-sync (README, AGENTS.md).
