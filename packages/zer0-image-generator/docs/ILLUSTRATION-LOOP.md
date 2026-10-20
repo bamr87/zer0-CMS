@@ -89,3 +89,15 @@ The structured critique is the same shape the interactive forge uses (`.claude/w
 ## Rasterizers
 
 The loop's LOOK step and `rasterizer:` both walk `rsvg → resvg → inkscape → magick → playwright`. `resvg` (native binary, or `resvg-js` from `npm i -g @resvg/resvg-js-cli`) is the closest headless match to browser rendering; cairo-based tools mis-render `feTurbulence`. `auto` never reaches for the network — only an explicit `resvg` preference may fall through to `npx -y @resvg/resvg-js-cli`.
+
+## First live runs (2026-10-19)
+
+Three runs on one real article — year-of-ai/2008 `chandrayaan-1.md`, `retro-pixel` card, `claude-sonnet-5-5` through the `claude` CLI login, resvg for LOOK — and the two defects they surfaced, both fixed before the loop shipped:
+
+| Run | Plan | Critic (round 0 → 1) | Finding |
+| --- | --- | --- | --- |
+| 1 | no usable scene graph | 4 → 7, thumbnail fails | The CLI path has no structured outputs, so the planner answered in its own keys. The prompts now quote the literal JSON shape. |
+| 2 | ✓ | 5.5 → 6, thumbnail fails | The edit round received the SHAPED draft — headline already outlined into glyph paths — so "make the title readable at 120px" could only be answered by scaling path soup (`text.converted: 0`). Edits now revise the pre-outline source. |
+| 3 | ✓ | 6 → 6.5, thumbnail fails | Headline set at full size in Press Start 2P, broken at word boundaries, outlined to paths (`converted: 2`); strict-clean, 13.9 KB. |
+
+[`docs/showcase/illustration-loop/`](showcase/illustration-loop/) keeps run 3 beside the banner it would replace: `chandrayaan-1-before.svg` is the production one-shot banner (24 KB, 20 `<text>` elements and a `<filter>` in whatever font the viewer has, unreviewed) and `chandrayaan-1-after.svg` the loop's (13.9 KB, no `<text>`, no filters, two critic passes), with its `banner/v1` telemetry record. The critic stayed stingy — 6.5 with the thumbnail still failing — which is the intended behavior at `claude_min_score: 7`: the loop spent its one edit round, kept the best draft, and reported honestly rather than rounding up.
