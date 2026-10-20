@@ -18,6 +18,9 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 | drsai | `sites/drsai` | bamr87/drsai | Jekyll picture-book site + Python story engine |
 | zer0-pages | `sites/zer0-pages` | bamr87/zer0-pages | Obsidian vault + Jekyll bridge |
 | zer0-pages-remote, zer0-demo-cookbook, zer0-demo-garden | `sites/*` | same-name repos | remote_theme / installer demos |
+| aieo | `apps/aieo` | bamr87/aieo | FastAPI + React AI Engine Optimization app (imported 2026-10-20) |
+| irony-works | `sites/irony-works` | bamr87/irony-works | AI-tended Obsidian vault + Jekyll site, Germinate loop (imported 2026-10-20) |
+| wargames | `sites/wargames` | bamr87/wargames | OverTheWire study site, remote_theme consumer (imported 2026-10-20) |
 
 **Per part: stack, features, models, APIs, tests, CI**
 
@@ -239,7 +242,7 @@ Ordered: each step needs the one before it. A step that needs a credential, a re
   - Tasks: `pages.yml` builds every site under `sites/`, the theme's docs and barodybroject's sidecar into one artifact with each site's sub-path `baseurl` (ADR 0002 §4); `year-of-ai.github.io` builds `sites/2005` into `/2005/` from this repository.
   - Accept: every route answers 200 in a link-checked preview; `bin/zer0 check` fails for a site with no route.
   - Needs the owner: moving the `zer0-mistakes.com` custom domain from the theme repository's Pages to this one.
-  - Built: `.github/workflows/pages.yml`, `route:` + the `pages` task in `workspace.yml`, `bin/zer0 routes [--json]` and the `routes` rule in `bin/zer0 check`. Routed today: `/` (theme docs + examples), `/zer0-pages/`, `/drsai/`, `/zer0-pages-remote/`, `/demos/cookbook/`, `/demos/garden/`. Not routed, each with its reason in `workspace.yml`: barodybroject (its sidecar's `_config.yml` uses an undefined YAML alias — C5), `sites/1987` (no Jekyll config since its repository was deleted), `sites/2005` (year-of-ai.github.io builds it). Deploys only while `PAGES_DEPLOY_ENABLED` is `true`.
+  - Built: `.github/workflows/pages.yml`, `route:` + the `pages` task in `workspace.yml`, `bin/zer0 routes [--json]` and the `routes` rule in `bin/zer0 check`. Routed today: `/` (theme docs + examples), `/zer0-pages/`, `/drsai/`, `/zer0-pages-remote/`, `/demos/cookbook/`, `/demos/garden/`, `/wargames/`. Not routed, each with its reason in `workspace.yml`: barodybroject (its sidecar's `_config.yml` uses an undefined YAML alias — C5), `sites/1987` (no Jekyll config since its repository was deleted), `sites/2005` (year-of-ai.github.io builds it), `sites/irony-works` (no Gemfile: it builds with GitHub Pages' own Jekyll after a node transplant step). Deploys only while `PAGES_DEPLOY_ENABLED` is `true`.
 - [ ] **C5: Port what is left**
   - Tasks: the theme's remaining reference workflows (Docker integration, the 9-skin visual snapshots, nightly, translation) as root workflows filtered to `packages/zer0-mistakes/**`, the issue autopilot and theme propagation only if still wanted; barodybroject's Playwright E2E, container validation and Trivy jobs. barodybroject's Azure deploy waits on D4.
   - Accept: every nested `.github/workflows/` file is ported or deleted with a reason; MONOREPO.md § What still depends on the original repositories is empty.
