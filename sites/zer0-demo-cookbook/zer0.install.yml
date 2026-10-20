@@ -1,0 +1,26 @@
+# zer0.install.yml — your Site Builder answers, replayable by scripts/bin/install.
+# Keys are never read from this file; they live in your environment / .env.
+
+profile: github-pages
+site:
+  title: "The Sunday Braise"
+  description: "A small cookbook of braises, stews and slow-cooked one-pot food, with scalable quantities and timings you can trust."
+  author: "Nour Haddad"
+  email: "nour@sundaybraise.example"
+  url: "https://bamr87.github.io"
+github:
+  user: "bamr87"
+  repo: "zer0-demo-cookbook"
+theme:
+  source: remote
+  skin: dirt
+  color_mode: auto
+deploy:
+  - github-pages
+collections: [posts, about, recipes]
+voice:
+  tone: friendly
+  audience: general
+agents: [copilot, claude]
+ai:
+  provider: auto
