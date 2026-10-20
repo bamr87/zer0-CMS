@@ -3,9 +3,7 @@
 
 _Last rollup: 2026-09-14T16:58:50.383Z_ · **13** model call(s) on record.
 
-Every number is **API-equivalent** — what the tokens would bill at list price.
-Calls on Claude Code subscription auth (OAuth) cost $0 marginal; only the
-metered-key share is real spend. Billed calls so far: **0** ($0.00).
+Every number is **API-equivalent** — what the tokens would bill at list price. Calls on Claude Code subscription auth (OAuth) cost $0 marginal; only the metered-key share is real spend. Billed calls so far: **0** ($0.00).
 
 | window | calls | output tokens | cost (API-equiv) |
 |---|---|---|---|

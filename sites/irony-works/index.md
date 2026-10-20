@@ -15,10 +15,7 @@ description: >
   ============================================================================
   NEWS / MAGAZINE HOMEPAGE
   ----------------------------------------------------------------------------
-  Modeled on lifehacker.dev's news homepage, sourced from this site's real
-  content. Every card teases with the entry's `reversal` — the payload of an
-  irony — rather than a generic excerpt. Branch colours come from
-  _data/sections.yml, which carries the same hexes as the Obsidian graph.
+Modeled on lifehacker.dev's news homepage, sourced from this site's real content. Every card teases with the entry's `reversal` — the payload of an irony — rather than a generic excerpt. Branch colours come from _data/sections.yml, which carries the same hexes as the Obsidian graph.
   Card chrome lives in _includes/home/.
   ============================================================================
 {%- endcomment -%}
@@ -34,8 +31,7 @@ description: >
 {%- assign pick_slugs = "oscar-wilde|the-streisand-effect|thomas-midgley-jr|nobels-obituary" | split: "|" -%}
 
 {%- comment -%}
-  The theme's `home` layout is bare — `<div class="home">{{ content }}</div>`
-  with no Bootstrap container — so this page supplies its own gutters.
+The theme's `home` layout is bare — `<div class="home">{{ content }}</div>` with no Bootstrap container — so this page supplies its own gutters.
 {%- endcomment -%}
 <div class="container py-4">
 
@@ -120,12 +116,12 @@ description: >
       <div class="p-3 rounded-4 border">
         <div class="small text-uppercase text-body-secondary mb-2" style="letter-spacing:.08em;">The schema is the classifier</div>
 <pre class="mb-0 small"><code>expectation: &gt;
-  Kodak would own whatever
-  photography became.
+    Kodak would own whatever
+    photography became.
 reversal: &gt;
-  Kodak invented the digital
-  camera in 1975, shelved it,
-  and was bankrupted by it.</code></pre>
+    Kodak invented the digital
+    camera in 1975, shelved it,
+    and was bankrupted by it.</code></pre>
       </div>
     </div>
   </div>

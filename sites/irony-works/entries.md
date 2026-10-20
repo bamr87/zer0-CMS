@@ -7,12 +7,7 @@ description: >
   instances, paradoxes, mirrors, futures, and the nursery of drafts awaiting judgment.
 ---
 
-Every irony states an **expectation** and a **reversal**; every paradox states
-**premises**, an **inference**, a **conclusion**, and the **collision** that makes
-it unacceptable. A candidate that cannot fill its fields is not an entry — it goes
-to the compost with a verdict, as
-[merely unfortunate]({{ site.baseurl }}/entries/the-merely-unfortunate/) or
-[merely puzzling]({{ site.baseurl }}/entries/the-merely-puzzling/).
+Every irony states an **expectation** and a **reversal**; every paradox states **premises**, an **inference**, a **conclusion**, and the **collision** that makes it unacceptable. A candidate that cannot fill its fields is not an entry — it goes to the compost with a verdict, as [merely unfortunate]({{ site.baseurl }}/entries/the-merely-unfortunate/) or [merely puzzling]({{ site.baseurl }}/entries/the-merely-puzzling/).
 
 {% assign sections = "forms|works|figures|instances|paradoxes|mirrors|futures|nursery" | split: "|" %}
 {% assign labels = "The Trunk — Forms and Ways|Works|Figures|Instances|Paradoxes — premises accepted, conclusions refused|Mirrors — this machine's own ironies|Futures — expectations on record, reversals pending|Nursery — drafts awaiting the gate and a human hand" | split: "|" %}

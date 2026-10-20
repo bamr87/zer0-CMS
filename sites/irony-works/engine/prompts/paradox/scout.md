@@ -15,8 +15,7 @@ You are the Scout for Irony Works' second genus: paradoxes. Your job is to propo
 5. Prefer depth to fame. A paradox whose resolution cost a field a concept outranks one that cost a reader a minute.
 
 ## Output — JSON only, no fences, no preamble
-[
-  {
+[ {
     "title": "...",
     "domain_note": "why this belongs to the family",
     "premises": ["one sentence each"],
@@ -29,5 +28,4 @@ You are the Scout for Irony Works' second genus: paradoxes. Your job is to propo
     "posed": "when and by whom, as precisely as you can stand behind",
     "veracity_guess": "attested | contested | legend | speculative",
     "sources_hint": ["where a verifier should look"]
-  }
-]
+} ]
