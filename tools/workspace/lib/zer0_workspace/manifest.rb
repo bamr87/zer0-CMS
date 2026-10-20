@@ -11,8 +11,8 @@ module Zer0Workspace
   class ManifestError < StandardError; end
 
   KINDS = %w[extension rails gem python site app].freeze
-  TASKS = %w[setup check test build].freeze
-  PROJECT_KEYS = %w[path paths kind stack summary upstream depends_on publishes ci site tasks].freeze
+  TASKS = %w[setup check test build pages].freeze
+  PROJECT_KEYS = %w[path paths kind stack summary upstream depends_on publishes ci site route tasks].freeze
   TASK_KEYS = %w[run cwd env].freeze
 
   # One command a project runs: `run` from `cwd` (relative to the project's
@@ -20,7 +20,7 @@ module Zer0Workspace
   Task = Struct.new(:name, :run, :cwd, :env, keyword_init: true)
 
   Project = Struct.new(:name, :path, :paths, :kind, :stack, :summary, :upstream,
-                       :depends_on, :publishes, :ci, :site, :tasks, keyword_init: true) do
+                       :depends_on, :publishes, :ci, :site, :route, :tasks, keyword_init: true) do
     # The globs this project owns. A project at "." must list them; any other
     # project owns its whole directory.
     def globs
@@ -35,6 +35,14 @@ module Zer0Workspace
 
     def task(name)
       tasks[name]
+    end
+
+    # The URL sub-path the one Pages deploy serves this project at ("/", "/drsai/"), or
+    # nil when it has no route — no `route:`, or `route: none — <reason>` (ADR 0002 §4).
+    def route_path
+      return nil if route.nil? || route.start_with?("none")
+
+      route
     end
 
     # The Jekyll root `zer0 doctor` checks, relative to the repository root,
@@ -122,6 +130,7 @@ module Zer0Workspace
         publishes: string_list(spec, "publishes", name),
         ci: required_string(spec, "ci", name),
         site: optional_string(spec, "site", name),
+        route: optional_string(spec, "route", name),
         tasks: build_tasks(name, spec["tasks"] || {})
       )
     end

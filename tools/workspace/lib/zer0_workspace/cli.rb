@@ -15,7 +15,7 @@ module Zer0Workspace
 
         list                         every project: path, kind, what it publishes, what gates it
         info <project>               one project in full
-        run <task> [project...]      run setup|check|test|build for the named projects
+        run <task> [project...]      run setup|check|test|build|pages for the named projects
             --all                    every project that has the task (the default with no names)
             --affected [--base REF]  only projects changed since REF (default origin/main), plus dependents
             --dry-run                print the commands without running them
@@ -24,7 +24,8 @@ module Zer0Workspace
             --files f1,f2            use these paths instead of asking git
             --json                   {"affected": [...], "direct": [...], "unowned": [...]}
         matrix <task> [--affected]   JSON list of projects that have <task>, for a CI matrix
-        check                        the workspace contract: registration, paths, workflows, vendored copies
+        routes [--json]              where the one Pages deploy serves each site (route, path, pages task)
+        check                        the workspace contract: registration, paths, workflows, routes, vendored copies
         vendor [--write]             vendored copies and whether each still matches its source
         doctor [project...]          the CMS's zer0 doctor on every zer0 site in the workspace
             --strict                 exit 1 when any site has an error (default: report only)
@@ -51,6 +52,7 @@ module Zer0Workspace
       when "run" then run_task
       when "affected" then affected
       when "matrix" then matrix
+      when "routes" then routes
       when "check" then check
       when "vendor" then vendor
       when "doctor" then doctor
@@ -152,6 +154,22 @@ module Zer0Workspace
       0
     end
 
+    # The one Pages deploy's plan: every routed project, root first. pages.yml builds a
+    # matrix from --json and stitches each build into the artifact at its route.
+    def routes
+      json = parse { |o, opts| o.on("--json") { opts[:json] = true } }[:json]
+      routed = manifest.projects.select(&:route_path).sort_by { |p| [p.route_path == "/" ? 0 : 1, p.route_path] }
+      if json
+        @out.puts JSON.generate(routed.map { |p| { name: p.name, path: p.path, route: p.route_path } })
+        return 0
+      end
+
+      unrouted = manifest.projects.select { |p| p.publishes.include?("pages") && p.route_path.nil? }
+      table([%w[ROUTE PROJECT PATH], *routed.map { |p| [p.route_path, p.name, p.path] }])
+      unrouted.each { |p| @out.puts "  (no route) #{p.name}: #{p.route || "—"}" }
+      0
+    end
+
     def check
       findings = Checks.new(manifest).run
       if findings.empty?
@@ -250,7 +268,8 @@ module Zer0Workspace
 
     def summary_hash(p)
       { name: p.name, path: p.path, kind: p.kind, stack: p.stack, summary: p.summary, upstream: p.upstream,
-        depends_on: p.depends_on, publishes: p.publishes, ci: p.ci, site: p.site_root, tasks: p.tasks.keys }
+        depends_on: p.depends_on, publishes: p.publishes, ci: p.ci, site: p.site_root, route: p.route_path,
+        tasks: p.tasks.keys }
     end
 
     def table(rows)

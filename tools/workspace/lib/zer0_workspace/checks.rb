@@ -19,7 +19,7 @@ module Zer0Workspace
 
   class Checks
     CONTAINERS = %w[packages sites apps].freeze
-    RULES = %i[paths_exist containers_registered workflows vendored].freeze
+    RULES = %i[paths_exist containers_registered workflows routes vendored].freeze
 
     def initialize(manifest, files: nil)
       @manifest = manifest
@@ -79,6 +79,38 @@ module Zer0Workspace
         filters.any? { |f| f == "#{p.path}/**" || f.start_with?("#{p.path}/") } ? [] :
           [finding(:workflows, "#{p.name}: #{p.workflow} filters on paths but none is under #{p.path}/")]
       end
+    end
+
+    ROUTE = %r{\A/(?:[a-z0-9][a-z0-9._-]*/)*\z}
+
+    # Every project that publishes `pages` has a place in the one Pages deploy (ADR 0002 §4):
+    # a `route:` that is a sub-path like "/drsai/" — or `none — <reason>` — and a routed
+    # project has the `pages` task that builds it. No two routes are the same, and none but
+    # "/" contains another, so one site can never overwrite part of another.
+    def routes
+      pages = @manifest.projects.select { |p| p.publishes.include?("pages") }
+      problems = pages.flat_map do |p|
+        if p.route.nil?
+          next [finding(:routes, "#{p.name}: publishes pages but has no route — add `route: /<path>/` or `route: none — <reason>`")]
+        end
+        if p.route_path.nil?
+          reason = p.route.sub(/\Anone\s*[—-]?\s*/, "")
+          next reason.empty? ? [finding(:routes, "#{p.name}: route is `none` without a reason — say where it is published instead")] : []
+        end
+        next [finding(:routes, "#{p.name}: route #{p.route.inspect} must look like /name/ (lowercase segments, leading and trailing slash)")] unless ROUTE.match?(p.route)
+        next [finding(:routes, "#{p.name}: has route #{p.route} but no `pages` task to build it")] unless p.task("pages")
+
+        []
+      end
+      routed = @manifest.projects.select(&:route_path)
+      routed.combination(2).each do |a, b|
+        if a.route_path == b.route_path
+          problems << finding(:routes, "#{a.name} and #{b.name} share route #{a.route_path}")
+        elsif a.route_path != "/" && b.route_path != "/" && (a.route_path.start_with?(b.route_path) || b.route_path.start_with?(a.route_path))
+          problems << finding(:routes, "#{a.name} (#{a.route_path}) and #{b.name} (#{b.route_path}) overlap — one would overwrite part of the other")
+        end
+      end
+      problems
     end
 
     # Every vendored copy is byte-identical to its source.

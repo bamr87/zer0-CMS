@@ -208,6 +208,54 @@ class TestChecks < WorkspaceTestCase
     assert(findings.any? { |x| x.include?("\"gone.txt\" matches no tracked file") })
   end
 
+  # The fixture site publishes pages with the given `route:` line (nil = none) and,
+  # unless told otherwise, the `pages` task that builds it.
+  def with_route(route, pages_task: true, theme_route: nil)
+    m = MANIFEST.sub("    ci: none — nothing to test\n", "    publishes: [pages]\n#{route ? "    route: #{route}\n" : ""}    ci: none — nothing to test\n")
+    m = m.sub("      build: \"true\"\n", "      build: \"true\"\n      pages: \"true\"\n") if pages_task
+    m = m.sub("    ci: theme.yml\n", "    publishes: [pages]\n    route: #{theme_route}\n    ci: theme.yml\n").sub("      check: \"true\"\n      test:", "      check: \"true\"\n      pages: \"true\"\n      test:") if theme_route
+    write("workspace.yml", m)
+  end
+
+  def test_a_routed_site_with_a_pages_task_is_green
+    with_route("/site/")
+    assert_empty findings
+  end
+
+  def test_publishing_pages_without_a_route_is_a_finding
+    with_route(nil)
+    assert(findings.any? { |x| x.include?("publishes pages but has no route") })
+  end
+
+  def test_a_none_route_needs_a_reason_and_skips_the_task_requirement
+    with_route("none", pages_task: false)
+    assert(findings.any? { |x| x.include?("route is `none` without a reason") })
+    with_route("none — published elsewhere", pages_task: false)
+    assert_empty findings
+  end
+
+  def test_a_malformed_route_or_a_missing_pages_task_is_a_finding
+    with_route("site")
+    assert(findings.any? { |x| x.include?("must look like /name/") })
+    with_route("/site/", pages_task: false)
+    assert(findings.any? { |x| x.include?("no `pages` task") })
+  end
+
+  def test_shared_or_nested_routes_are_findings_but_the_root_contains_everything
+    with_route("/site/", theme_route: "/site/")
+    assert(findings.any? { |x| x.include?("share route /site/") })
+    with_route("/site/inner/", theme_route: "/site/")
+    assert(findings.any? { |x| x.include?("overlap") })
+    with_route("/site/", theme_route: "/")
+    assert_empty findings
+  end
+
+  def test_routes_lists_the_root_first_as_json
+    with_route("/site/", theme_route: "/")
+    _, out, = cli("routes", "--json")
+    assert_equal [%w[theme /], %w[site /site/]], JSON.parse(out).map { |r| [r["name"], r["route"]] }
+  end
+
   def test_vendored_drift_is_a_finding_and_vendor_write_repairs_it
     write("packages/theme/tokens.css", "--x: 2;")
     assert(findings.any? { |x| x.include?("src/tokens.css has drifted") })

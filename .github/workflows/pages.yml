@@ -1,0 +1,150 @@
+# pages — the one GitHub Pages deploy for every site in this repository (ADR 0002 §4, PLAN C4).
+#
+# A repository has one Pages site, so every in-repo site is built separately and stitched
+# into one artifact at its route: the theme's docs at /, the rest under their own sub-path
+# (/zer0-pages/, /drsai/, /demos/cookbook/, …). The routes live in workspace.yml (`route:`)
+# and `bin/zer0 check` holds them honest; `bin/zer0 routes --json` is this workflow's plan.
+# Each site keeps its own build: its `pages` task, run with a generated config file that
+# sets only `url` and `baseurl` for its route.
+#
+# Pull requests build and verify everything and deploy nothing. A push to main deploys
+# only while vars.PAGES_DEPLOY_ENABLED is 'true' (default OFF: the domain moves at the
+# cutover, C4). Until zer0-mistakes.com points here, vars.PAGES_URL / PAGES_BASE_PATH can
+# aim a preview at https://bamr87.github.io/zer0-CMS (PAGES_BASE_PATH=/zer0-CMS).
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["sites/**", "packages/zer0-mistakes/**", "workspace.yml", ".github/workflows/pages.yml"]
+  pull_request:
+    paths: ["sites/**", "packages/zer0-mistakes/**", "workspace.yml", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PAGES_URL: ${{ vars.PAGES_URL || 'https://zer0-mistakes.com' }}
+  PAGES_BASE_PATH: ${{ vars.PAGES_BASE_PATH || '' }}
+  # The theme's SCSS has multibyte characters; a non-UTF-8 locale breaks the Sass converter.
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      routes: ${{ steps.routes.outputs.routes }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - id: routes
+        run: |
+          routes=$(bin/zer0 routes --json)
+          echo "routes=$routes" >> "$GITHUB_OUTPUT"
+          bin/zer0 routes >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: build ${{ matrix.site.route }} (${{ matrix.site.name }})
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        site: ${{ fromJSON(needs.plan.outputs.routes) }}
+    env:
+      # jekyll-github-metadata aborts without a repository it can infer; a project's own
+      # `pages` task may name a different one (the theme names its mirror).
+      PAGES_REPO_NWO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: ${{ matrix.site.path }}
+      - name: Build at ${{ matrix.site.route }}
+        env:
+          NAME: ${{ matrix.site.name }}
+          ROUTE: ${{ matrix.site.route }}
+        run: |
+          set -euo pipefail
+          # "/" → the base path itself; "/drsai/" → <base>/drsai
+          baseurl="${PAGES_BASE_PATH%/}${ROUTE%/}"
+          printf 'url: "%s"\nbaseurl: "%s"\n' "$PAGES_URL" "$baseurl" > "$RUNNER_TEMP/route.yml"
+          export ZER0_PAGES_CONFIG="$RUNNER_TEMP/route.yml" ZER0_PAGES_DEST="$RUNNER_TEMP/out" ZER0_PAGES_BASEURL="$baseurl"
+          bin/zer0 run pages "$NAME" 2>&1 | tee "$RUNNER_TEMP/build.log"
+          test -f "$RUNNER_TEMP/out/index.html" || { echo "::error::$NAME built no index.html"; exit 1; }
+      # Jekyll 3 reports a broken Liquid expression as a warning, drops it from the page and
+      # exits 0. The theme's own Pages build failed on that; every other site is warned.
+      - name: Liquid warnings
+        env:
+          NAME: ${{ matrix.site.name }}
+        run: |
+          if grep -nE 'Liquid (Warning|Exception)' "$RUNNER_TEMP/build.log"; then
+            if [ "$NAME" = zer0-mistakes ]; then echo "::error::Liquid errors in the theme's docs site"; exit 1; fi
+            echo "::warning::$NAME has Liquid warnings (above): content was dropped from those pages"
+          fi
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pages-${{ matrix.site.name }}
+          path: ${{ runner.temp }}/out
+          retention-days: 3
+          include-hidden-files: true
+
+  assemble:
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: pages-*
+          path: ${{ runner.temp }}/parts
+      - name: Stitch every site in at its route
+        env:
+          ROUTES: ${{ needs.plan.outputs.routes }}
+          PARTS: ${{ runner.temp }}/parts
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          # Root first (the plan sorts it first), so a sub-path site lands on top of it.
+          echo "$ROUTES" | jq -r '.[] | "\(.name) \(.route)"' | while read -r name route; do
+            dest="_site${route}"
+            mkdir -p "$dest"
+            cp -a "$PARTS/pages-$name/." "$dest"
+            test -f "$dest/index.html" || { echo "::error::$route ($name) has no index.html"; exit 1; }
+            echo "ok: $route ← $name"
+          done
+          touch _site/.nojekyll
+          # A custom domain is set in the repository's Pages settings for an Actions deploy;
+          # a stray CNAME from one site's tree would only mislead.
+          rm -f _site/CNAME
+          du -sh _site
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: assemble
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PAGES_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
