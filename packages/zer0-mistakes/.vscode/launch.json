@@ -1,0 +1,62 @@
+// zer0-mistakes · .vscode/launch.json — fleet-vscode/v1 · 2026-09-09. Convention + vocabulary: .vscode/README.md.
+// pathMapping serves / from _site and /assets/ from the source tree so breakpoints in the theme's JS bind to the file you edit. Gem releases: the Release: tasks.
+// The Playwright config launches the CLI as a plain node program (not runtimeExecutable) so breakpoints in test/visual/**/*.spec.js actually hit; append a spec path to args to target one file.
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug: theme in Edge (:4000)",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://localhost:4000",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "Serve",
+      "sourceMaps": true,
+      "pathMapping": {
+        "/": "${workspaceFolder}/_site/",
+        "/assets/": "${workspaceFolder}/assets/"
+      }
+    },
+    {
+      "name": "Debug: live site (zer0-mistakes.com)",
+      "type": "msedge",
+      "request": "launch",
+      "url": "https://zer0-mistakes.com"
+    },
+    {
+      "name": "Debug: Playwright tier (Docker :4000)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/playwright",
+      "args": [
+        "test",
+        "--config=test/playwright.config.js",
+        "--project=${input:playwrightProject}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "BASE_URL": "http://localhost:4000"
+      },
+      "console": "integratedTerminal",
+      "preLaunchTask": "Serve",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "playwrightProject",
+      "type": "pickString",
+      "description": "Which Playwright tier?",
+      "options": [
+        "smoke",
+        "critical",
+        "mobile",
+        "snapshots",
+        "regression"
+      ],
+      "default": "smoke"
+    }
+  ]
+}

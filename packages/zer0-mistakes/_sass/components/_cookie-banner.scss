@@ -1,0 +1,88 @@
+// ============================================================================
+// Cookie consent banner
+// ----------------------------------------------------------------------------
+// Token-aware replacement for the legacy block in _sass/custom.scss (~ln 193).
+// Differences from the legacy version:
+//   - Uses --zer0-layer-cookie-banner so it sits below the skip link but above
+//     the navbar in the unified layer scale (_sass/tokens/_layers.scss).
+//   - Surface and ink colors follow the active color mode instead of a fixed
+//     dark-blue gradient that breaks in light mode.
+//   - Reduced-motion handling is centralised in _sass/utilities/_motion.scss
+//     so we don't need a duplicate @media rule here.
+// ============================================================================
+
+.cookie-consent-banner {
+  z-index: var(--zer0-layer-cookie-banner);
+  background: linear-gradient(
+    135deg,
+    var(--zer0-color-bg-elevated, var(--bs-tertiary-bg)) 0%,
+    var(--zer0-color-bg-muted, var(--bs-secondary-bg)) 100%
+  );
+  color: var(--zer0-color-ink, var(--bs-body-color));
+  border-top: 1px solid var(--zer0-color-border, var(--bs-border-color));
+  backdrop-filter: blur(10px);
+
+  opacity: 0;
+  transform: translateY(100%);
+  transition:
+    transform var(--zer0-motion-duration-slow, 320ms) var(--zer0-motion-ease-standard),
+    opacity var(--zer0-motion-duration-base, 200ms) var(--zer0-motion-ease-standard);
+  will-change: transform, opacity;
+
+  &[hidden] {
+    display: none !important;
+  }
+
+  &.cookie-banner-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Compact bar layout
+// ----------------------------------------------------------------------------
+// The banner must never eat the first screen. Phones get a two-line summary
+// over ONE row of three equal buttons (the old full-width stack was 324px at
+// 400px wide); md+ is a single row, copy left and actions right. Button
+// height is left to .btn-sm and the touch-device 44px minimum in
+// components/_ui-enhancements.scss.
+.cookie-consent-banner__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-block: 0.5rem;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+.cookie-consent-banner__text {
+  line-height: 1.35;
+
+  @media (min-width: 768px) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.cookie-consent-banner__actions {
+  display: flex;
+  gap: 0.5rem;
+
+  .btn {
+    flex: 1 1 0;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 768px) {
+    flex: 0 0 auto;
+
+    .btn {
+      flex: 0 0 auto;
+    }
+  }
+}

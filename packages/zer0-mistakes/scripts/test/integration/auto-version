@@ -1,0 +1,211 @@
+#!/bin/bash
+
+# Test Script for Automated Version Bump System
+# Tests the commit analysis and version bump automation
+# Usage: ./scripts/test/integration/auto-version
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPTS_ROOT/.." && pwd)"
+LIB_DIR="$SCRIPTS_ROOT/lib"
+
+# Source common library for logging and utilities
+source "$LIB_DIR/common.sh"
+
+# Aliases for backward compatibility
+log_info() { info "$@"; }
+log_success() { success "$@"; }
+log_warning() { warn "$@"; }
+log_error() { error "$@"; }
+log_test() { step "$@"; }
+
+# Paths under test (commit analysis lives in scripts/utils/ with the
+# analyze-commits.sh wrapper; releases go through scripts/bin/release). The CI
+# release path is the release-please pipeline in .github/workflows/release.yml,
+# which replaced the retired version-bump.yml.
+ANALYZE_WRAPPER="$SCRIPTS_ROOT/analyze-commits.sh"
+ANALYZE_IMPL="$SCRIPTS_ROOT/utils/analyze-commits"
+RELEASE_BIN="$SCRIPTS_ROOT/bin/release"
+WORKFLOW_FILE="$PROJECT_ROOT/.github/workflows/release.yml"
+
+# Test counter
+TESTS_RUN=0
+TESTS_PASSED=0
+
+run_test() {
+    local test_name="$1"
+    local test_command="$2"
+    local expected_result="${3:-}"
+
+    # Plain arithmetic assignment: ((VAR++)) returns the pre-increment value,
+    # which is non-zero-exit when 0 and aborts the script under `set -e`.
+    TESTS_RUN=$((TESTS_RUN + 1))
+    log_test "Running: $test_name"
+
+    local actual_result
+    if actual_result=$(eval "$test_command" 2>&1); then
+        if [[ -n "$expected_result" ]]; then
+            if [[ "$actual_result" == "$expected_result" ]]; then
+                log_success "✅ $test_name"
+                TESTS_PASSED=$((TESTS_PASSED + 1))
+            else
+                log_error "❌ $test_name - Expected: '$expected_result', Got: '$actual_result'"
+            fi
+        else
+            log_success "✅ $test_name"
+            TESTS_PASSED=$((TESTS_PASSED + 1))
+        fi
+    else
+        log_error "❌ $test_name - Command failed: $actual_result"
+    fi
+}
+
+# Test file permissions and executability
+test_file_permissions() {
+    log_info "Testing file permissions..."
+
+    local scripts=(
+        "$ANALYZE_WRAPPER"
+        "$ANALYZE_IMPL"
+        "$RELEASE_BIN"
+    )
+
+    for script in "${scripts[@]}"; do
+        local script_name=$(basename "$script")
+        run_test "$script_name is executable" "test -x '$script'"
+    done
+}
+
+# Test the commit analysis script
+test_commit_analysis() {
+    log_info "Testing commit analysis functionality..."
+
+    # Test help output
+    run_test "Help output works" "$ANALYZE_IMPL --help | grep -q 'Commit Analysis Script'"
+
+    # Test with sample commit ranges (if we have git history)
+    if git rev-list --count HEAD >/dev/null 2>&1; then
+        local commit_count=$(git rev-list --count HEAD)
+
+        if [[ $commit_count -gt 1 ]]; then
+            # Test analyzing last commit (through the wrapper, like the workflow)
+            run_test "Analyze last commit" "$ANALYZE_WRAPPER HEAD~1..HEAD | grep -E '^(patch|minor|major|none)$'"
+
+            # Test analyzing multiple commits if available
+            if [[ $commit_count -gt 3 ]]; then
+                run_test "Analyze multiple commits" "$ANALYZE_WRAPPER HEAD~3..HEAD | grep -E '^(patch|minor|major|none)$'"
+            fi
+        fi
+    else
+        log_warning "No git history available for commit analysis tests"
+    fi
+}
+
+# Test release command compatibility (replaces the retired gem-publish.sh)
+test_release_command() {
+    log_info "Testing release command compatibility..."
+
+    run_test "Release help works" "$RELEASE_BIN --help | grep -q 'VERSION TYPES'"
+    run_test "Dry-run option documented" "$RELEASE_BIN --help | grep -q -- '--dry-run'"
+    run_test "Skip-publish option documented" "$RELEASE_BIN --help | grep -q -- '--skip-publish'"
+}
+
+# Test workflow files syntax
+test_workflow_syntax() {
+    log_info "Testing GitHub Actions workflow syntax..."
+
+    run_test "release workflow exists" "test -f '$WORKFLOW_FILE'"
+
+    # Check if yamllint is available
+    if command -v yamllint >/dev/null 2>&1; then
+        run_test "release workflow syntax" "yamllint -c '$PROJECT_ROOT/.github/config/.yamllint.yml' '$WORKFLOW_FILE'"
+    else
+        # Basic YAML syntax check with Ruby (always present for this repo)
+        run_test "release workflow syntax" "ruby -ryaml -e 'YAML.safe_load_file(\"$WORKFLOW_FILE\", aliases: true)'"
+    fi
+}
+
+# Test integration between components
+test_integration() {
+    log_info "Testing integration between components..."
+
+    # Validate that the commit-analysis wrapper returns a usable bump type
+    if git rev-list --count HEAD >/dev/null 2>&1; then
+        local commit_count=$(git rev-list --count HEAD)
+        if [[ $commit_count -gt 0 ]]; then
+            run_test "Integration: commit analysis returns valid output" "$ANALYZE_WRAPPER HEAD~1..HEAD | grep -E '^(patch|minor|major|none)$'"
+        fi
+    fi
+}
+
+# Test conventional commit detection
+test_conventional_commits() {
+    log_info "Testing conventional commit detection..."
+
+    # Test that the documented mapping exists in the analyzer
+    run_test "Conventional commit patterns exist" "grep -q 'feat.*minor' '$ANALYZE_IMPL'"
+    run_test "Fix patterns exist" "grep -q 'fix.*patch' '$ANALYZE_IMPL'"
+    run_test "Breaking change patterns exist" "grep -q 'BREAKING.*major' '$ANALYZE_IMPL'"
+}
+
+# Main test execution
+main() {
+    log_info "🧪 Starting Automated Version Bump System Tests"
+    echo "=================================================="
+    echo ""
+
+    # Change to project root
+    cd "$PROJECT_ROOT"
+
+    # Run all test suites
+    test_file_permissions
+    test_commit_analysis
+    test_release_command
+    test_workflow_syntax
+    test_integration
+    test_conventional_commits
+
+    # Test summary
+    echo ""
+    echo "=================================================="
+    log_info "🎯 Test Results Summary"
+    echo "Tests Run: $TESTS_RUN"
+    echo "Tests Passed: $TESTS_PASSED"
+    echo "Tests Failed: $((TESTS_RUN - TESTS_PASSED))"
+
+    if [[ $TESTS_PASSED -eq $TESTS_RUN ]]; then
+        log_success "🎉 All tests passed! Automated version bump system is ready."
+        exit 0
+    else
+        log_error "❌ Some tests failed. Please review the issues above."
+        exit 1
+    fi
+}
+
+# Show usage if requested
+if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+    cat << EOF
+Test Script for Automated Version Bump System
+
+USAGE:
+    $0
+
+DESCRIPTION:
+    This script tests the automated version bump system including:
+    - Commit analysis functionality (scripts/analyze-commits.sh wrapper
+      and scripts/utils/analyze-commits implementation)
+    - Release command compatibility (scripts/bin/release)
+    - Workflow file syntax validation (.github/workflows/release.yml)
+    - Integration between components
+    - Conventional commit detection
+
+REQUIREMENTS:
+    - Git repository with commit history
+    - Bash 3.2+ compatible environment
+EOF
+    exit 0
+fi
+
+main "$@"

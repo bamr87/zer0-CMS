@@ -1,0 +1,1547 @@
+# ================================================================
+# GENERATED FILE — do not edit by hand.
+# Maintained by scripts/translate.rb (see .github/workflows/translate.yml).
+# Maps each English page URL to its generated translations; read by
+# _includes/components/language-toggle.html and _includes/core/hreflang.html.
+# ================================================================
+version: 1
+pages:
+  "/about/":
+    source: pages/_about/index.md
+    sha: 70e0f353668e72a5fe635cab847e09febd20972bd6862fca5d27ba62b3ae556f
+    fr:
+      url: "/fr/about/"
+      path: fr/about/index.md
+      sha: 70e0f353668e72a5fe635cab847e09febd20972bd6862fca5d27ba62b3ae556f
+      translated_at: '2026-08-05T04:49:10Z'
+      prompt_version: 1
+  "/about/bamr87/":
+    source: pages/_about/profile/bamr87.md
+    sha: 42f0ae0cb763f6efd4d83478b7458c95b6f729e684af5e79a57671be423702c0
+    fr:
+      url: "/fr/about/bamr87/"
+      path: fr/about/profile/bamr87.md
+      sha: 42f0ae0cb763f6efd4d83478b7458c95b6f729e684af5e79a57671be423702c0
+      translated_at: '2026-08-05T04:49:17Z'
+      prompt_version: 1
+  "/about/features/":
+    source: pages/_about/features/index.md
+    sha: '059735857124094b9e850d9938cbe0ee124398c430f396c8c684764058d07209'
+    fr:
+      url: "/fr/about/features/"
+      path: fr/about/features/index.md
+      sha: '059735857124094b9e850d9938cbe0ee124398c430f396c8c684764058d07209'
+      translated_at: '2026-08-05T04:47:07Z'
+      prompt_version: 1
+  "/about/features/add-floating-back-to-top-button/":
+    source: pages/_about/features/add-floating-back-to-top-button.md
+    sha: cbc5f327ba288863d6bfc78338b0db2dbf557c1e34c5b60198478b90523e8f51
+    fr:
+      url: "/fr/about/features/add-floating-back-to-top-button/"
+      path: fr/about/features/add-floating-back-to-top-button.md
+      sha: cbc5f327ba288863d6bfc78338b0db2dbf557c1e34c5b60198478b90523e8f51
+      translated_at: '2026-08-05T04:43:44Z'
+      prompt_version: 1
+  "/about/features/ai-development-guide/":
+    source: pages/_about/features/ai-development-guide.md
+    sha: d821810029906d480935dae0dd58ee2bbabf0dfc2a8fada2f7b5a46c64620f21
+    fr:
+      url: "/fr/about/features/ai-development-guide/"
+      path: fr/about/features/ai-development-guide.md
+      sha: d821810029906d480935dae0dd58ee2bbabf0dfc2a8fada2f7b5a46c64620f21
+      translated_at: '2026-08-05T04:44:23Z'
+      prompt_version: 1
+  "/about/features/automated-version-build-system/":
+    source: pages/_about/features/automated-version-build-system.md
+    sha: e093558c8a5e07bdc0eef0e88d84e246913cbb8b577f027d55f8134e62acf479
+    fr:
+      url: "/fr/about/features/automated-version-build-system/"
+      path: fr/about/features/automated-version-build-system.md
+      sha: e093558c8a5e07bdc0eef0e88d84e246913cbb8b577f027d55f8134e62acf479
+      translated_at: '2026-08-05T04:45:05Z'
+      prompt_version: 1
+  "/about/features/comprehensive-gem-automation-system/":
+    source: pages/_about/features/comprehensive-gem-automation-system.md
+    sha: bbc7431d4a786896161b27411022927bd4dfeb5cf44f01275bb0582ec66790f6
+    fr:
+      url: "/fr/about/features/comprehensive-gem-automation-system/"
+      path: fr/about/features/comprehensive-gem-automation-system.md
+      sha: bbc7431d4a786896161b27411022927bd4dfeb5cf44f01275bb0582ec66790f6
+      translated_at: '2026-08-05T04:46:11Z'
+      prompt_version: 1
+  "/about/features/jekyll/":
+    source: pages/_about/features/jekyll-technical-reference.md
+    sha: 445d8224c84e8f635c5600ab0475c36aaca2319e811fb390fa99beeb95022da4
+    fr:
+      url: "/fr/about/features/jekyll/"
+      path: fr/about/features/jekyll-technical-reference.md
+      sha: 445d8224c84e8f635c5600ab0475c36aaca2319e811fb390fa99beeb95022da4
+      translated_at: '2026-08-05T04:47:09Z'
+      prompt_version: 1
+  "/about/features/navigation/sitemap/":
+    source: pages/_about/features/sitemap.md
+    sha: 59933f6864826fb44dc95060f1b9d5325c14f924127158b16e179b0b48496479
+    fr:
+      url: "/fr/about/features/navigation/sitemap/"
+      path: fr/about/features/sitemap.md
+      sha: 59933f6864826fb44dc95060f1b9d5325c14f924127158b16e179b0b48496479
+      translated_at: '2026-08-05T04:47:44Z'
+      prompt_version: 1
+  "/about/features/statistics-dashboard/":
+    source: pages/_about/features/statistics-dashboard.md
+    sha: c42451b6434bcb7ac5895111c737009fca696f02147852e3d277e73d0d1691c5
+    fr:
+      url: "/fr/about/features/statistics-dashboard/"
+      path: fr/about/features/statistics-dashboard.md
+      sha: c42451b6434bcb7ac5895111c737009fca696f02147852e3d277e73d0d1691c5
+      translated_at: '2026-08-05T04:48:30Z'
+      prompt_version: 1
+  "/about/settings/analytics/":
+    source: pages/_about/settings/analytics.md
+    sha: f1b35afd03f85e2ed462eab7d0a669d87c53c9ffefff0da3af3cf177294c8a14
+    fr:
+      url: "/fr/about/settings/analytics/"
+      path: fr/about/settings/analytics.md
+      sha: f1b35afd03f85e2ed462eab7d0a669d87c53c9ffefff0da3af3cf177294c8a14
+      translated_at: '2026-08-05T04:49:19Z'
+      prompt_version: 1
+  "/about/settings/collections/":
+    source: pages/_about/settings/collections.md
+    sha: 9a33715b85d8dcbff7cf5c1e22c4a2288f05666754b476ea13fea05efc3e2569
+    fr:
+      url: "/fr/about/settings/collections/"
+      path: fr/about/settings/collections.md
+      sha: 9a33715b85d8dcbff7cf5c1e22c4a2288f05666754b476ea13fea05efc3e2569
+      translated_at: '2026-08-05T04:49:21Z'
+      prompt_version: 1
+  "/about/settings/components/":
+    source: pages/_about/settings/components.md
+    sha: a775b0ade22f246a36d259244f1f5b943dde204b99abf4b009dc5535f64910e0
+    fr:
+      url: "/fr/about/settings/components/"
+      path: fr/about/settings/components.md
+      sha: a775b0ade22f246a36d259244f1f5b943dde204b99abf4b009dc5535f64910e0
+      translated_at: '2026-08-05T04:49:25Z'
+      prompt_version: 1
+  "/about/settings/environment/":
+    source: pages/_about/settings/environment.md
+    sha: d549e2c4bc76bfa103e4add312ca996bec22a4f4dbcd0cab6f39a52e4c4dd283
+    fr:
+      url: "/fr/about/settings/environment/"
+      path: fr/about/settings/environment.md
+      sha: d549e2c4bc76bfa103e4add312ca996bec22a4f4dbcd0cab6f39a52e4c4dd283
+      translated_at: '2026-08-07T04:21:42Z'
+      prompt_version: 1
+  "/about/settings/navigation/":
+    source: pages/_about/settings/navigation.md
+    sha: b10d3f9a24917ae90aac2fab789030298218fa3b2c7387e86ab76ed7550d6d65
+    fr:
+      url: "/fr/about/settings/navigation/"
+      path: fr/about/settings/navigation.md
+      sha: b10d3f9a24917ae90aac2fab789030298218fa3b2c7387e86ab76ed7550d6d65
+      translated_at: '2026-08-07T04:21:50Z'
+      prompt_version: 1
+  "/about/settings/theme-preview/":
+    source: pages/_about/settings/theme-preview.md
+    sha: e283d9e761c8c119f7da16822be3350cb474165ac7d77f0f19eb131ef8899a1e
+    fr:
+      url: "/fr/about/settings/theme-preview/"
+      path: fr/about/settings/theme-preview.md
+      sha: e283d9e761c8c119f7da16822be3350cb474165ac7d77f0f19eb131ef8899a1e
+      translated_at: '2026-08-07T04:22:01Z'
+      prompt_version: 1
+  "/about/settings/theme/":
+    source: pages/_about/settings/theme.md
+    sha: 227959a1fb26065382267f3f6653cb1054a8e188c6547fcfc3a1653744e62f26
+    fr:
+      url: "/fr/about/settings/theme/"
+      path: fr/about/settings/theme.md
+      sha: 227959a1fb26065382267f3f6653cb1054a8e188c6547fcfc3a1653744e62f26
+      translated_at: '2026-08-07T04:22:21Z'
+      prompt_version: 1
+  "/about/stats-enhancement-summary/":
+    source: pages/_about/features/STATS_ENHANCEMENT_SUMMARY.md
+    sha: f147f2bc3a5485f3c2a7411afa30331ac539266c801ccddc802c678a1f4a7846
+    fr:
+      url: "/fr/about/stats-enhancement-summary/"
+      path: fr/about/features/STATS_ENHANCEMENT_SUMMARY.md
+      sha: f147f2bc3a5485f3c2a7411afa30331ac539266c801ccddc802c678a1f4a7846
+      translated_at: '2026-08-05T04:43:41Z'
+      prompt_version: 1
+  "/about/stats/":
+    source: pages/_about/stats.md
+    sha: 06c9f75195626ba67992484fa0828a5069f3ee3e3bb65554b25eb84c852361c5
+    fr:
+      url: "/fr/about/stats/"
+      path: fr/about/stats.md
+      sha: 06c9f75195626ba67992484fa0828a5069f3ee3e3bb65554b25eb84c852361c5
+      translated_at: '2026-08-07T04:22:24Z'
+      prompt_version: 1
+  "/about/theme/":
+    source: pages/_about/theme.md
+    sha: f1e267f28ce1caf97a711da592946025d3a20d91fabd862a7b214f193af4cec9
+    fr:
+      url: "/fr/about/theme/"
+      path: fr/about/theme.md
+      sha: f1e267f28ce1caf97a711da592946025d3a20d91fabd862a7b214f193af4cec9
+      translated_at: '2026-08-07T04:22:26Z'
+      prompt_version: 1
+  "/authors/":
+    source: pages/_about/authors/index.md
+    sha: 85960b87208d9fae9265f8d9dcc938e86c4c104940a25518c77f7e371bdf30c5
+    fr:
+      url: "/fr/authors/"
+      path: fr/about/authors/index.md
+      sha: 85960b87208d9fae9265f8d9dcc938e86c4c104940a25518c77f7e371bdf30c5
+      translated_at: '2026-08-05T04:42:56Z'
+      prompt_version: 1
+  "/authors/bamr87/":
+    source: pages/_about/authors/bamr87.md
+    sha: f6b87c0064c8a83714f6fc00d94931d047edbbfb1d7f98346fb853f937c38409
+    fr:
+      url: "/fr/authors/bamr87/"
+      path: fr/about/authors/bamr87.md
+      sha: f6b87c0064c8a83714f6fc00d94931d047edbbfb1d7f98346fb853f937c38409
+      translated_at: '2026-08-05T04:42:27Z'
+      prompt_version: 1
+  "/authors/cassandra/":
+    source: pages/_about/authors/cassandra.md
+    sha: e39500a0658229e0728e9f3f7e3554a8fb58596a893162790dccfe88ac4e594d
+    fr:
+      url: "/fr/authors/cassandra/"
+      path: fr/about/authors/cassandra.md
+      sha: e39500a0658229e0728e9f3f7e3554a8fb58596a893162790dccfe88ac4e594d
+      translated_at: '2026-08-05T04:42:30Z'
+      prompt_version: 1
+  "/authors/default/":
+    source: pages/_about/authors/default.md
+    sha: a9a97e4dfce7495627ecf061323b73db7bb85720c744e908357fdcbd2f3ba5a5
+    fr:
+      url: "/fr/authors/default/"
+      path: fr/about/authors/default.md
+      sha: a9a97e4dfce7495627ecf061323b73db7bb85720c744e908357fdcbd2f3ba5a5
+      translated_at: '2026-08-05T04:42:31Z'
+      prompt_version: 1
+  "/authors/guest/":
+    source: pages/_about/authors/guest.md
+    sha: cd27b030744f508e799ba962517e345852e375250bc1f104f90f63b9443a96ad
+    fr:
+      url: "/fr/authors/guest/"
+      path: fr/about/authors/guest.md
+      sha: cd27b030744f508e799ba962517e345852e375250bc1f104f90f63b9443a96ad
+      translated_at: '2026-08-05T04:42:51Z'
+      prompt_version: 1
+  "/authors/vega/":
+    source: pages/_about/authors/vega.md
+    sha: aa231d65673848a7b52a9f8341f56482d844c1c98d24e7f44903ad6f8eb496be
+    fr:
+      url: "/fr/authors/vega/"
+      path: fr/about/authors/vega.md
+      sha: aa231d65673848a7b52a9f8341f56482d844c1c98d24e7f44903ad6f8eb496be
+      translated_at: '2026-08-05T04:42:58Z'
+      prompt_version: 1
+  "/design/":
+    source: pages/_about/design.md
+    sha: 1603b6e4656c1116919a6a8064c332044c4ba95abdcd85f848913b4c80dd4955
+    fr:
+      url: "/fr/design/"
+      path: fr/about/design.md
+      sha: 1603b6e4656c1116919a6a8064c332044c4ba95abdcd85f848913b4c80dd4955
+      translated_at: '2026-08-15T02:30:28Z'
+      prompt_version: 1
+  "/docs/":
+    source: pages/_docs/index.md
+    sha: d43825e9ed60cdfb2a02bb0e4e59a51f16d6474f3f6e09f4506fa4764f75c484
+    fr:
+      url: "/fr/docs/"
+      path: fr/docs/index.md
+      sha: d43825e9ed60cdfb2a02bb0e4e59a51f16d6474f3f6e09f4506fa4764f75c484
+      translated_at: '2026-08-05T04:36:26Z'
+      prompt_version: 1
+  "/docs/analytics/":
+    source: pages/_docs/analytics/index.md
+    sha: 3e75b181bb8459209a06a561aecc47ffef3c1c410451f65bab8ac532a6daf0d0
+    fr:
+      url: "/fr/docs/analytics/"
+      path: fr/docs/analytics/index.md
+      sha: 3e75b181bb8459209a06a561aecc47ffef3c1c410451f65bab8ac532a6daf0d0
+      translated_at: '2026-07-23T17:09:23Z'
+      prompt_version: 1
+  "/docs/analytics/google-analytics/":
+    source: pages/_docs/analytics/google-analytics.md
+    sha: 2ae7ac85b18df61ceee7e9efb0936a3a0bd5fde0159989e1fa4a7478826c72fd
+    fr:
+      url: "/fr/docs/analytics/google-analytics/"
+      path: fr/docs/analytics/google-analytics.md
+      sha: 2ae7ac85b18df61ceee7e9efb0936a3a0bd5fde0159989e1fa4a7478826c72fd
+      translated_at: '2026-07-23T17:08:39Z'
+      prompt_version: 1
+  "/docs/analytics/google-tag-manager/":
+    source: pages/_docs/analytics/google-tag-manager.md
+    sha: bdf0494721472f3c04d0f421ce3721d6543cd7696730b5bf9697b024bddb02d8
+    fr:
+      url: "/fr/docs/analytics/google-tag-manager/"
+      path: fr/docs/analytics/google-tag-manager.md
+      sha: bdf0494721472f3c04d0f421ce3721d6543cd7696730b5bf9697b024bddb02d8
+      translated_at: '2026-07-23T17:09:12Z'
+      prompt_version: 1
+  "/docs/bootstrap/":
+    source: pages/_docs/bootstrap/index.md
+    sha: 3df6221d99c3ee69950624840487fed4308131d34cc7a1e54533e8b5fa5b9496
+    fr:
+      url: "/fr/docs/bootstrap/"
+      path: fr/docs/bootstrap/index.md
+      sha: 3df6221d99c3ee69950624840487fed4308131d34cc7a1e54533e8b5fa5b9496
+      translated_at: '2026-07-23T17:09:41Z'
+      prompt_version: 1
+  "/docs/customization/":
+    source: pages/_docs/customization/index.md
+    sha: b64ef8d39a8632943b11c7c047ae6f7661f06d88f011f62df009be9006414d06
+    fr:
+      url: "/fr/docs/customization/"
+      path: fr/docs/customization/index.md
+      sha: b64ef8d39a8632943b11c7c047ae6f7661f06d88f011f62df009be9006414d06
+      translated_at: '2026-07-23T17:11:13Z'
+      prompt_version: 1
+  "/docs/customization/author-profiles/":
+    source: pages/_docs/customization/author-profiles.md
+    sha: c6ab7cc3db384582798e06b4b299b07d5f7129fab96442efb5d1b1863e4b6beb
+    fr:
+      url: "/fr/docs/customization/author-profiles/"
+      path: fr/docs/customization/author-profiles.md
+      sha: c6ab7cc3db384582798e06b4b299b07d5f7129fab96442efb5d1b1863e4b6beb
+      translated_at: '2026-07-23T17:10:34Z'
+      prompt_version: 1
+  "/docs/customization/includes/":
+    source: pages/_docs/customization/includes.md
+    sha: 85851dc85b902c3e9e6780adf5ccf4a4bca75a17deeec5d03c027139e95d2076
+    fr:
+      url: "/fr/docs/customization/includes/"
+      path: fr/docs/customization/includes.md
+      sha: 85851dc85b902c3e9e6780adf5ccf4a4bca75a17deeec5d03c027139e95d2076
+      translated_at: '2026-09-08T21:55:57Z'
+      prompt_version: 1
+  "/docs/customization/layouts/":
+    source: pages/_docs/customization/layouts.md
+    sha: e61ed6fee0858c71cc42e6ba36342dfe1e2f3847e6c5672aecbee195b61f54a4
+    fr:
+      url: "/fr/docs/customization/layouts/"
+      path: fr/docs/customization/layouts.md
+      sha: e61ed6fee0858c71cc42e6ba36342dfe1e2f3847e6c5672aecbee195b61f54a4
+      translated_at: '2026-09-08T21:56:15Z'
+      prompt_version: 1
+  "/docs/customization/navigation/":
+    source: pages/_docs/customization/navigation.md
+    sha: 3ff754c43c15ee543da7223ca51f50eaff5886b73d839b3beb29662a317b8c43
+    fr:
+      url: "/fr/docs/customization/navigation/"
+      path: fr/docs/customization/navigation.md
+      sha: 3ff754c43c15ee543da7223ca51f50eaff5886b73d839b3beb29662a317b8c43
+      translated_at: '2026-07-23T17:11:38Z'
+      prompt_version: 1
+  "/docs/customization/styles/":
+    source: pages/_docs/customization/styles.md
+    sha: 76ceef73178c00bd52721c0b977aa21e3e79e305277c2bc86386afb2980dc716
+    fr:
+      url: "/fr/docs/customization/styles/"
+      path: fr/docs/customization/styles.md
+      sha: 76ceef73178c00bd52721c0b977aa21e3e79e305277c2bc86386afb2980dc716
+      translated_at: '2026-07-23T17:11:51Z'
+      prompt_version: 1
+  "/docs/deployment/":
+    source: pages/_docs/deployment/index.md
+    sha: e2264346b00dcc258a27e0d2eab98093dd28d00318c3900670f2d038314bc513
+    fr:
+      url: "/fr/docs/deployment/"
+      path: fr/docs/deployment/index.md
+      sha: e2264346b00dcc258a27e0d2eab98093dd28d00318c3900670f2d038314bc513
+      translated_at: '2026-08-05T03:18:09Z'
+      prompt_version: 1
+  "/docs/deployment/build-overlay/":
+    source: pages/_docs/deployment/build-overlay.md
+    sha: fb72cf0bff9e1643c8902c7e756455f0ab4c73811a1d053987a88d540c92c1ef
+    fr:
+      url: "/fr/docs/deployment/build-overlay/"
+      path: fr/docs/deployment/build-overlay.md
+      sha: fb72cf0bff9e1643c8902c7e756455f0ab4c73811a1d053987a88d540c92c1ef
+      translated_at: '2026-07-23T17:12:08Z'
+      prompt_version: 1
+  "/docs/deployment/custom-domain/":
+    source: pages/_docs/deployment/custom-domain.md
+    sha: d2bcbbbf0f5a3cedfb2c2f33eb55af42e0d61138306d0842689b9f402317c950
+    fr:
+      url: "/fr/docs/deployment/custom-domain/"
+      path: fr/docs/deployment/custom-domain.md
+      sha: d2bcbbbf0f5a3cedfb2c2f33eb55af42e0d61138306d0842689b9f402317c950
+      translated_at: '2026-07-23T17:12:40Z'
+      prompt_version: 1
+  "/docs/deployment/github-pages/":
+    source: pages/_docs/deployment/github-pages.md
+    sha: be0523b0bf140bf69ff0242e92ed06de6aa40668692fcbe6dbb5336839b3e17e
+    fr:
+      url: "/fr/docs/deployment/github-pages/"
+      path: fr/docs/deployment/github-pages.md
+      sha: be0523b0bf140bf69ff0242e92ed06de6aa40668692fcbe6dbb5336839b3e17e
+      translated_at: '2026-07-23T17:13:01Z'
+      prompt_version: 1
+  "/docs/deployment/netlify/":
+    source: pages/_docs/deployment/netlify.md
+    sha: c5996bf9900121c7f0e6edcdcc253d824eb653bebdedd7317548252eaf2ec859
+    fr:
+      url: "/fr/docs/deployment/netlify/"
+      path: fr/docs/deployment/netlify.md
+      sha: c5996bf9900121c7f0e6edcdcc253d824eb653bebdedd7317548252eaf2ec859
+      translated_at: '2026-08-05T03:18:38Z'
+      prompt_version: 1
+  "/docs/deployment/remote-theme-checklist/":
+    source: pages/_docs/deployment/remote-theme-checklist.md
+    sha: 5d09a61aea206b665f94f0b084f10ced1c0629ce3766889151dd4cf9f1c01e62
+    fr:
+      url: "/fr/docs/deployment/remote-theme-checklist/"
+      path: fr/docs/deployment/remote-theme-checklist.md
+      sha: 5d09a61aea206b665f94f0b084f10ced1c0629ce3766889151dd4cf9f1c01e62
+      translated_at: '2026-09-08T21:56:51Z'
+      prompt_version: 1
+  "/docs/development/":
+    source: pages/_docs/development/index.md
+    sha: 13bb41961ce9bd95d16195f3e855f7be6b0f9ab3ba7c6507288bbfa855f15275
+    fr:
+      url: "/fr/docs/development/"
+      path: fr/docs/development/index.md
+      sha: 13bb41961ce9bd95d16195f3e855f7be6b0f9ab3ba7c6507288bbfa855f15275
+      translated_at: '2026-08-05T03:21:25Z'
+      prompt_version: 1
+  "/docs/development/agents/":
+    source: pages/_docs/development/agents.md
+    sha: 4edda52c2a189296c0da120c2742dacc1170416e7190be6fb0adee0a5c28bd5f
+    fr:
+      url: "/fr/docs/development/agents/"
+      path: fr/docs/development/agents.md
+      sha: 4edda52c2a189296c0da120c2742dacc1170416e7190be6fb0adee0a5c28bd5f
+      translated_at: '2026-08-05T03:19:31Z'
+      prompt_version: 1
+  "/docs/development/ci-cd/":
+    source: pages/_docs/development/ci-cd.md
+    sha: 33cc91ba86fc22755fd6aa5176f474f2027ebbc2058454b4c32d775821a07ee8
+    fr:
+      url: "/fr/docs/development/ci-cd/"
+      path: fr/docs/development/ci-cd.md
+      sha: 33cc91ba86fc22755fd6aa5176f474f2027ebbc2058454b4c32d775821a07ee8
+      translated_at: '2026-08-05T03:19:51Z'
+      prompt_version: 1
+  "/docs/development/dependency-updates/":
+    source: pages/_docs/development/dependency-updates.md
+    sha: 42c6899a9066d1348816fa82ba469979ba4f91c595ea6f3500e9e4b63a390530
+    fr:
+      url: "/fr/docs/development/dependency-updates/"
+      path: fr/docs/development/dependency-updates.md
+      sha: 42c6899a9066d1348816fa82ba469979ba4f91c595ea6f3500e9e4b63a390530
+      translated_at: '2026-08-05T03:19:56Z'
+      prompt_version: 1
+  "/docs/development/devcontainer/":
+    source: pages/_docs/development/devcontainer.md
+    sha: 4af1a1fd3c5264e6ba68fba968f8060171e7e3a7db8d771f8e97becbc02fb159
+    fr:
+      url: "/fr/docs/development/devcontainer/"
+      path: fr/docs/development/devcontainer.md
+      sha: 4af1a1fd3c5264e6ba68fba968f8060171e7e3a7db8d771f8e97becbc02fb159
+      translated_at: '2026-08-05T03:20:20Z'
+      prompt_version: 1
+  "/docs/development/docker-publishing/":
+    source: pages/_docs/development/docker-publishing.md
+    sha: 2c3546d339fcba8c31a8c062ffbbf5127a40a998c164087032bf370882d365cf
+    fr:
+      url: "/fr/docs/development/docker-publishing/"
+      path: fr/docs/development/docker-publishing.md
+      sha: 2c3546d339fcba8c31a8c062ffbbf5127a40a998c164087032bf370882d365cf
+      translated_at: '2026-08-05T03:20:34Z'
+      prompt_version: 1
+  "/docs/development/documentation/":
+    source: pages/_docs/development/documentation.md
+    sha: 7443f2de6a96a63c988fc418924bb838c4315055348b233b80be3d78c45ca147
+    fr:
+      url: "/fr/docs/development/documentation/"
+      path: fr/docs/development/documentation.md
+      sha: 7443f2de6a96a63c988fc418924bb838c4315055348b233b80be3d78c45ca147
+      translated_at: '2026-08-05T03:20:57Z'
+      prompt_version: 1
+  "/docs/development/frontmatter-validation/":
+    source: pages/_docs/development/frontmatter-validation.md
+    sha: c8e6c41854b175628814a3e1d7cbbe783317b978a8a6804207e5c39c8e573715
+    fr:
+      url: "/fr/docs/development/frontmatter-validation/"
+      path: fr/docs/development/frontmatter-validation.md
+      sha: c8e6c41854b175628814a3e1d7cbbe783317b978a8a6804207e5c39c8e573715
+      translated_at: '2026-08-05T03:21:13Z'
+      prompt_version: 1
+  "/docs/development/prd/":
+    source: pages/_docs/development/prd.md
+    sha: 591ee4d82bd63ebc34435faa1a9006560d653d32213fa3222e1250cac8d0e593
+    fr:
+      url: "/fr/docs/development/prd/"
+      path: fr/docs/development/prd.md
+      sha: 591ee4d82bd63ebc34435faa1a9006560d653d32213fa3222e1250cac8d0e593
+      translated_at: '2026-08-05T03:21:32Z'
+      prompt_version: 1
+  "/docs/development/release-management/":
+    source: pages/_docs/development/release-management.md
+    sha: 7d4039713c7b35ca6ba8c3adbe99d444cb4a026df823859758d6cbb21959144c
+    fr:
+      url: "/fr/docs/development/release-management/"
+      path: fr/docs/development/release-management.md
+      sha: 7d4039713c7b35ca6ba8c3adbe99d444cb4a026df823859758d6cbb21959144c
+      translated_at: '2026-08-05T03:21:37Z'
+      prompt_version: 1
+  "/docs/development/scripts/":
+    source: pages/_docs/development/scripts.md
+    sha: 36431e67c42485998fca3e3d4d57b5d1d355036389912a5f0ccc9c1325654a7c
+    fr:
+      url: "/fr/docs/development/scripts/"
+      path: fr/docs/development/scripts.md
+      sha: 36431e67c42485998fca3e3d4d57b5d1d355036389912a5f0ccc9c1325654a7c
+      translated_at: '2026-08-05T03:21:55Z'
+      prompt_version: 1
+  "/docs/development/security/":
+    source: pages/_docs/development/security.md
+    sha: 2fcdc12799709a90ff761a68789117efcfc1dc36dcf05de7e865ad0ad6f1e622
+    fr:
+      url: "/fr/docs/development/security/"
+      path: fr/docs/development/security.md
+      sha: 2fcdc12799709a90ff761a68789117efcfc1dc36dcf05de7e865ad0ad6f1e622
+      translated_at: '2026-08-05T03:22:19Z'
+      prompt_version: 1
+  "/docs/development/testing/":
+    source: pages/_docs/development/testing.md
+    sha: 61cc694046fe8e58c7e83ed7dbfa6637ed499d1420bfc23feace91a348270bee
+    fr:
+      url: "/fr/docs/development/testing/"
+      path: fr/docs/development/testing.md
+      sha: 61cc694046fe8e58c7e83ed7dbfa6637ed499d1420bfc23feace91a348270bee
+      translated_at: '2026-08-05T03:22:26Z'
+      prompt_version: 1
+  "/docs/development/vendor-assets/":
+    source: pages/_docs/development/vendor-assets.md
+    sha: 7676f7374d66bec9c4b0d66378944a924209b3b644323b769dda883aa73cb36f
+    fr:
+      url: "/fr/docs/development/vendor-assets/"
+      path: fr/docs/development/vendor-assets.md
+      sha: 7676f7374d66bec9c4b0d66378944a924209b3b644323b769dda883aa73cb36f
+      translated_at: '2026-08-05T03:22:39Z'
+      prompt_version: 1
+  "/docs/development/version-bump/":
+    source: pages/_docs/development/version-bump.md
+    sha: 894bc95d515fb9081a52dae8f27f2cd13d1887c179834d2cf8301d8ef996add9
+    fr:
+      url: "/fr/docs/development/version-bump/"
+      path: fr/docs/development/version-bump.md
+      sha: 894bc95d515fb9081a52dae8f27f2cd13d1887c179834d2cf8301d8ef996add9
+      translated_at: '2026-08-05T03:22:46Z'
+      prompt_version: 1
+  "/docs/docker/":
+    source: pages/_docs/docker/index.md
+    sha: cc9ee3edfdce3da5b6b34aba3bc3206dbd3012b9feeb261f2f9a677103deaf0c
+    fr:
+      url: "/fr/docs/docker/"
+      path: fr/docs/docker/index.md
+      sha: cc9ee3edfdce3da5b6b34aba3bc3206dbd3012b9feeb261f2f9a677103deaf0c
+      translated_at: '2026-08-05T03:22:54Z'
+      prompt_version: 1
+  "/docs/features/":
+    source: pages/_docs/features/index.md
+    sha: 5ad1befc459ddd3720ed83db62877f5fc94e66d288974107ff920c3cddf6abab
+    fr:
+      url: "/fr/docs/features/"
+      path: fr/docs/features/index.md
+      sha: 5ad1befc459ddd3720ed83db62877f5fc94e66d288974107ff920c3cddf6abab
+      translated_at: '2026-08-05T03:28:16Z'
+      prompt_version: 1
+  "/docs/features/admin-dashboard/":
+    source: pages/_docs/features/admin-dashboard.md
+    sha: 06e9923ed1a17fdb78ce38cce36a8399ac3d6c59f544f690898326bf598a96cd
+    fr:
+      url: "/fr/docs/features/admin-dashboard/"
+      path: fr/docs/features/admin-dashboard.md
+      sha: 06e9923ed1a17fdb78ce38cce36a8399ac3d6c59f544f690898326bf598a96cd
+      translated_at: '2026-08-05T03:23:10Z'
+      prompt_version: 1
+  "/docs/features/ai-chat-assistant/":
+    source: pages/_docs/features/ai-chat-assistant.md
+    sha: '0957be79c588450c29c12757a1b51cb50dd479c54c123cf901f05d21ae38a31a'
+    fr:
+      url: "/fr/docs/features/ai-chat-assistant/"
+      path: fr/docs/features/ai-chat-assistant.md
+      sha: '0957be79c588450c29c12757a1b51cb50dd479c54c123cf901f05d21ae38a31a'
+      translated_at: '2026-09-08T21:57:41Z'
+      prompt_version: 1
+  "/docs/features/auto-hide-nav/":
+    source: pages/_docs/features/auto-hide-nav.md
+    sha: 1ecda74449355dcdc05cb0e951d00ec946079bc63f755c784bf061da947f177a
+    fr:
+      url: "/fr/docs/features/auto-hide-nav/"
+      path: fr/docs/features/auto-hide-nav.md
+      sha: 1ecda74449355dcdc05cb0e951d00ec946079bc63f755c784bf061da947f177a
+      translated_at: '2026-08-05T03:24:08Z'
+      prompt_version: 1
+  "/docs/features/back-to-top/":
+    source: pages/_docs/features/back-to-top.md
+    sha: 07233eb5a5a3987257a8e849c4234de0a9bc91dfbba2733e7fa38ebbaf39475b
+    fr:
+      url: "/fr/docs/features/back-to-top/"
+      path: fr/docs/features/back-to-top.md
+      sha: 07233eb5a5a3987257a8e849c4234de0a9bc91dfbba2733e7fa38ebbaf39475b
+      translated_at: '2026-08-05T03:24:23Z'
+      prompt_version: 1
+  "/docs/features/book-collection/":
+    source: pages/_docs/features/book-collection.md
+    sha: a058d4ca2e2149564ea0f1c09de4ffb4e836da3e352745bf554a434db3c49689
+    fr:
+      url: "/fr/docs/features/book-collection/"
+      path: fr/docs/features/book-collection.md
+      sha: a058d4ca2e2149564ea0f1c09de4ffb4e836da3e352745bf554a434db3c49689
+      translated_at: '2026-08-05T03:24:46Z'
+      prompt_version: 1
+  "/docs/features/breadcrumbs/":
+    source: pages/_docs/features/breadcrumbs.md
+    sha: 02ed2d34de6a32060b05481031d8f287084b2cf3aa3ce4236142fb0ccda7b23b
+    fr:
+      url: "/fr/docs/features/breadcrumbs/"
+      path: fr/docs/features/breadcrumbs.md
+      sha: 02ed2d34de6a32060b05481031d8f287084b2cf3aa3ce4236142fb0ccda7b23b
+      translated_at: '2026-08-05T03:25:01Z'
+      prompt_version: 1
+  "/docs/features/code-copy/":
+    source: pages/_docs/features/code-copy.md
+    sha: 747017052ef0a78a5bef59e86927fc8f01736f2b9ae6ca30c4846bff76e1203c
+    fr:
+      url: "/fr/docs/features/code-copy/"
+      path: fr/docs/features/code-copy.md
+      sha: 747017052ef0a78a5bef59e86927fc8f01736f2b9ae6ca30c4846bff76e1203c
+      translated_at: '2026-08-05T03:25:18Z'
+      prompt_version: 1
+  "/docs/features/color-modes/":
+    source: pages/_docs/features/color-modes.md
+    sha: 42ea6fdec8a04f27516f5a49f93c53671bf98ea06058945b39495657863a27d6
+    fr:
+      url: "/fr/docs/features/color-modes/"
+      path: fr/docs/features/color-modes.md
+      sha: 42ea6fdec8a04f27516f5a49f93c53671bf98ea06058945b39495657863a27d6
+      translated_at: '2026-08-05T03:25:32Z'
+      prompt_version: 1
+  "/docs/features/cookbook-collection/":
+    source: pages/_docs/features/cookbook-collection.md
+    sha: c36a4d6c97f36473e4742a0461ae17bc40978bf85f924c78b7f43b0c38d6bffa
+    fr:
+      url: "/fr/docs/features/cookbook-collection/"
+      path: fr/docs/features/cookbook-collection.md
+      sha: c36a4d6c97f36473e4742a0461ae17bc40978bf85f924c78b7f43b0c38d6bffa
+      translated_at: '2026-09-01T21:28:41Z'
+      prompt_version: 1
+  "/docs/features/cookie-consent/":
+    source: pages/_docs/features/cookie-consent.md
+    sha: a7054fb3fcc62ff925ae9d257d441afac2b49123608801bea9caa43bf0edcb07
+    fr:
+      url: "/fr/docs/features/cookie-consent/"
+      path: fr/docs/features/cookie-consent.md
+      sha: a7054fb3fcc62ff925ae9d257d441afac2b49123608801bea9caa43bf0edcb07
+      translated_at: '2026-08-05T03:25:56Z'
+      prompt_version: 1
+  "/docs/features/copilot-integration/":
+    source: pages/_docs/features/copilot-integration.md
+    sha: c60a7f9c46b5ce80a856c8612c8ac54956c70359ed04090b9ca12934aa390b94
+    fr:
+      url: "/fr/docs/features/copilot-integration/"
+      path: fr/docs/features/copilot-integration.md
+      sha: c60a7f9c46b5ce80a856c8612c8ac54956c70359ed04090b9ca12934aa390b94
+      translated_at: '2026-08-05T03:26:33Z'
+      prompt_version: 1
+  "/docs/features/dynamic-navigation/":
+    source: pages/_docs/features/dynamic-navigation.md
+    sha: 1224dc4dea333fc57db3250d0d13b219f986cbddc72dc902166434970d2bb031
+    fr:
+      url: "/fr/docs/features/dynamic-navigation/"
+      path: fr/docs/features/dynamic-navigation.md
+      sha: 1224dc4dea333fc57db3250d0d13b219f986cbddc72dc902166434970d2bb031
+      translated_at: '2026-08-05T03:26:44Z'
+      prompt_version: 1
+  "/docs/features/favicon/":
+    source: pages/_docs/features/favicon.md
+    sha: 29f638af91189fd2bd0e90050bfd689b50dab2e21c3ebcae4217eff8ef4e7bd1
+    fr:
+      url: "/fr/docs/features/favicon/"
+      path: fr/docs/features/favicon.md
+      sha: 29f638af91189fd2bd0e90050bfd689b50dab2e21c3ebcae4217eff8ef4e7bd1
+      translated_at: '2026-09-08T21:58:16Z'
+      prompt_version: 1
+  "/docs/features/giscus-comments/":
+    source: pages/_docs/features/giscus-comments.md
+    sha: b2fb5564968e8b895f93d0292a3150e7ff6d46cf59c0a7363b77adad4a302074
+    fr:
+      url: "/fr/docs/features/giscus-comments/"
+      path: fr/docs/features/giscus-comments.md
+      sha: b2fb5564968e8b895f93d0292a3150e7ff6d46cf59c0a7363b77adad4a302074
+      translated_at: '2026-08-15T02:30:10Z'
+      prompt_version: 1
+  "/docs/features/jupyter-notebooks/":
+    source: pages/_docs/features/jupyter-notebooks.md
+    sha: 491318d3fcb33b0d33353bacb6f64d10a225d0e9acde7656fd573da9c4fde2f0
+    fr:
+      url: "/fr/docs/features/jupyter-notebooks/"
+      path: fr/docs/features/jupyter-notebooks.md
+      sha: 491318d3fcb33b0d33353bacb6f64d10a225d0e9acde7656fd573da9c4fde2f0
+      translated_at: '2026-08-05T03:28:36Z'
+      prompt_version: 1
+  "/docs/features/keyboard-navigation/":
+    source: pages/_docs/features/keyboard-navigation.md
+    sha: d0be119d5f6c6d6b177a52157542ba70126fcf3c6bec01dceede24101a9b8ff3
+    fr:
+      url: "/fr/docs/features/keyboard-navigation/"
+      path: fr/docs/features/keyboard-navigation.md
+      sha: d0be119d5f6c6d6b177a52157542ba70126fcf3c6bec01dceede24101a9b8ff3
+      translated_at: '2026-08-05T03:29:11Z'
+      prompt_version: 1
+  "/docs/features/mathjax-math/":
+    source: pages/_docs/features/mathjax-math.md
+    sha: ad2447aad6d4c97c4030c1936b8ae6f5744b192a349c0cbc1fae1f9f4e0cca60
+    fr:
+      url: "/fr/docs/features/mathjax-math/"
+      path: fr/docs/features/mathjax-math.md
+      sha: ad2447aad6d4c97c4030c1936b8ae6f5744b192a349c0cbc1fae1f9f4e0cca60
+      translated_at: '2026-08-05T03:29:38Z'
+      prompt_version: 1
+  "/docs/features/mermaid-diagrams/":
+    source: pages/_docs/features/mermaid-diagrams.md
+    sha: 6c7f9bbc21dd2c8f9b843736b7779c5a8eaee017630e9b4e36ad8ed9c267ee4e
+    fr:
+      url: "/fr/docs/features/mermaid-diagrams/"
+      path: fr/docs/features/mermaid-diagrams.md
+      sha: 6c7f9bbc21dd2c8f9b843736b7779c5a8eaee017630e9b4e36ad8ed9c267ee4e
+      translated_at: '2026-09-08T21:59:38Z'
+      prompt_version: 1
+  "/docs/features/mobile-toc/":
+    source: pages/_docs/features/mobile-toc.md
+    sha: 0e7adef532b1d8346e3fae20e1ca0d2972a93be88f871a779b06fe62fa75bef9
+    fr:
+      url: "/fr/docs/features/mobile-toc/"
+      path: fr/docs/features/mobile-toc.md
+      sha: 0e7adef532b1d8346e3fae20e1ca0d2972a93be88f871a779b06fe62fa75bef9
+      translated_at: '2026-08-05T03:30:38Z'
+      prompt_version: 1
+  "/docs/features/navigation-architecture/":
+    source: pages/_docs/features/navigation-architecture.md
+    sha: 4e083aa40f50b1707a4a2a534867c5d005cea64506fc88fe242bb3548e255e00
+    fr:
+      url: "/fr/docs/features/navigation-architecture/"
+      path: fr/docs/features/navigation-architecture.md
+      sha: 4e083aa40f50b1707a4a2a534867c5d005cea64506fc88fe242bb3548e255e00
+      translated_at: '2026-09-08T21:59:55Z'
+      prompt_version: 1
+  "/docs/features/particles-background/":
+    source: pages/_docs/features/particles-background.md
+    sha: 815b5d59e622c0b6126d114ea29f35c6868d07bae5312e1ef5568e28acb8013d
+    fr:
+      url: "/fr/docs/features/particles-background/"
+      path: fr/docs/features/particles-background.md
+      sha: 815b5d59e622c0b6126d114ea29f35c6868d07bae5312e1ef5568e28acb8013d
+      translated_at: '2026-08-05T03:31:02Z'
+      prompt_version: 1
+  "/docs/features/posthog-analytics/":
+    source: pages/_docs/features/posthog-analytics.md
+    sha: b61e1e545b0decfdc848aec4c4b019e5db3f2c200d4b06492f4cc77ecc288e77
+    fr:
+      url: "/fr/docs/features/posthog-analytics/"
+      path: fr/docs/features/posthog-analytics.md
+      sha: b61e1e545b0decfdc848aec4c4b019e5db3f2c200d4b06492f4cc77ecc288e77
+      translated_at: '2026-08-05T03:31:33Z'
+      prompt_version: 1
+  "/docs/features/preview-image-generator/":
+    source: pages/_docs/features/preview-image-generator.md
+    sha: 9901ab3fc428545bf5891d5f27f373b09946c15367758b1a17766f5dbf3681a8
+    fr:
+      url: "/fr/docs/features/preview-image-generator/"
+      path: fr/docs/features/preview-image-generator.md
+      sha: 9901ab3fc428545bf5891d5f27f373b09946c15367758b1a17766f5dbf3681a8
+      translated_at: '2026-08-05T03:32:12Z'
+      prompt_version: 1
+  "/docs/features/sidebar-navigation/":
+    source: pages/_docs/features/sidebar-navigation.md
+    sha: 7b2f6d514ad2de98951456dfe1e8a94aff24cd162dc910e3671fd17bf2d7b120
+    fr:
+      url: "/fr/docs/features/sidebar-navigation/"
+      path: fr/docs/features/sidebar-navigation.md
+      sha: 7b2f6d514ad2de98951456dfe1e8a94aff24cd162dc910e3671fd17bf2d7b120
+      translated_at: '2026-08-05T03:32:56Z'
+      prompt_version: 1
+  "/docs/features/sidebar-page-tree/":
+    source: pages/_docs/features/sidebar-page-tree.md
+    sha: 78aaa54a3a5ccf0c0fc38bb4ed178e43d764a194358ce5878240f20a88f3c04a
+    fr:
+      url: "/fr/docs/features/sidebar-page-tree/"
+      path: fr/docs/features/sidebar-page-tree.md
+      sha: 78aaa54a3a5ccf0c0fc38bb4ed178e43d764a194358ce5878240f20a88f3c04a
+      translated_at: '2026-08-05T03:33:13Z'
+      prompt_version: 1
+  "/docs/features/site-builder/":
+    source: pages/_docs/features/site-builder.md
+    sha: 198273b3a50974205928b044453a399e524893d6caeb1bee990e67fa04d704c6
+    fr:
+      url: "/fr/docs/features/site-builder/"
+      path: fr/docs/features/site-builder.md
+      sha: 198273b3a50974205928b044453a399e524893d6caeb1bee990e67fa04d704c6
+      translated_at: '2026-09-08T22:01:49Z'
+      prompt_version: 1
+  "/docs/features/site-search/":
+    source: pages/_docs/features/site-search.md
+    sha: 6cec0dc08d9c626a53d5cbe47172eddb1fc7de497a5e2a76616f4e81a6896673
+    fr:
+      url: "/fr/docs/features/site-search/"
+      path: fr/docs/features/site-search.md
+      sha: 6cec0dc08d9c626a53d5cbe47172eddb1fc7de497a5e2a76616f4e81a6896673
+      translated_at: '2026-08-05T03:33:28Z'
+      prompt_version: 1
+  "/docs/features/skip-to-content/":
+    source: pages/_docs/features/skip-to-content.md
+    sha: 10f5ccd2de04d743b6b2fea50d6f0a72b7e958c1e081c47ecf15ce85abd0602b
+    fr:
+      url: "/fr/docs/features/skip-to-content/"
+      path: fr/docs/features/skip-to-content.md
+      sha: 10f5ccd2de04d743b6b2fea50d6f0a72b7e958c1e081c47ecf15ce85abd0602b
+      translated_at: '2026-09-01T21:29:15Z'
+      prompt_version: 1
+  "/docs/features/smart-404/":
+    source: pages/_docs/features/smart-404.md
+    sha: a36e25dd68dc7c46ff1657c0c1e9f56c3f70bd72caacdb4ca4d2499d314ce505
+    fr:
+      url: "/fr/docs/features/smart-404/"
+      path: fr/docs/features/smart-404.md
+      sha: a36e25dd68dc7c46ff1657c0c1e9f56c3f70bd72caacdb4ca4d2499d314ce505
+      translated_at: '2026-08-05T03:34:08Z'
+      prompt_version: 1
+  "/docs/features/statistics-dashboard/":
+    source: pages/_docs/features/statistics-dashboard.md
+    sha: 1c020f7e148c8047442a5f4b202c51a00f261afc9c7f8db161def090cbdca286
+    fr:
+      url: "/fr/docs/features/statistics-dashboard/"
+      path: fr/docs/features/statistics-dashboard.md
+      sha: 1c020f7e148c8047442a5f4b202c51a00f261afc9c7f8db161def090cbdca286
+      translated_at: '2026-08-05T03:34:18Z'
+      prompt_version: 1
+  "/docs/features/theme-version/":
+    source: pages/_docs/features/theme-version.md
+    sha: 6cc8fea4896432aeec5d038fda395f31aa94e67c4df4882b36b1459a003bbd82
+    fr:
+      url: "/fr/docs/features/theme-version/"
+      path: fr/docs/features/theme-version.md
+      sha: 6cc8fea4896432aeec5d038fda395f31aa94e67c4df4882b36b1459a003bbd82
+      translated_at: '2026-08-05T03:34:44Z'
+      prompt_version: 1
+  "/docs/features/toc/":
+    source: pages/_docs/features/toc.md
+    sha: 0560ebf13ef174462eb977b3578ca6f5dbfadfea1052c3c8e5ab4eb1db452ae9
+    fr:
+      url: "/fr/docs/features/toc/"
+      path: fr/docs/features/toc.md
+      sha: 0560ebf13ef174462eb977b3578ca6f5dbfadfea1052c3c8e5ab4eb1db452ae9
+      translated_at: '2026-09-08T22:02:18Z'
+      prompt_version: 1
+  "/docs/features/vendored-assets/":
+    source: pages/_docs/features/vendored-assets.md
+    sha: e2786f28998b0d06c58bd589e8204fa412c581f786886a5a8aa22f43d85f8c71
+    fr:
+      url: "/fr/docs/features/vendored-assets/"
+      path: fr/docs/features/vendored-assets.md
+      sha: e2786f28998b0d06c58bd589e8204fa412c581f786886a5a8aa22f43d85f8c71
+      translated_at: '2026-08-05T04:34:37Z'
+      prompt_version: 1
+  "/docs/front-matter/":
+    source: pages/_docs/front-matter.md
+    sha: ce72cd558f51ad56e1318f8506790a71b04a4eb6a373ad09bcca74531f325673
+    fr:
+      url: "/fr/docs/front-matter/"
+      path: fr/docs/front-matter.md
+      sha: ce72cd558f51ad56e1318f8506790a71b04a4eb6a373ad09bcca74531f325673
+      translated_at: '2026-08-05T04:34:47Z'
+      prompt_version: 1
+  "/docs/getting-started/":
+    source: pages/_docs/getting-started/index.md
+    sha: 5c48cab38677042cb554cbc25796ce9d1b0597adcdc0d9e639fbfa30302a0901
+    fr:
+      url: "/fr/docs/getting-started/"
+      path: fr/docs/getting-started/index.md
+      sha: 5c48cab38677042cb554cbc25796ce9d1b0597adcdc0d9e639fbfa30302a0901
+      translated_at: '2026-08-05T04:34:56Z'
+      prompt_version: 1
+  "/docs/getting-started/quick-start/":
+    source: pages/_docs/getting-started/quick-start.md
+    sha: f48dddacb177a74aac0c221d66e7f99ba2f293c5f254de5d3f1c23e0d2de5d0d
+    fr:
+      url: "/fr/docs/getting-started/quick-start/"
+      path: fr/docs/getting-started/quick-start.md
+      sha: f48dddacb177a74aac0c221d66e7f99ba2f293c5f254de5d3f1c23e0d2de5d0d
+      translated_at: '2026-08-05T04:35:42Z'
+      prompt_version: 1
+  "/docs/getting-started/theme-guide/":
+    source: pages/_docs/getting-started/theme-guide.md
+    sha: 446d47041206cc329ebe36b611b6238b3ccc45228eb7c5200fb4fe2ccbc2bae0
+    fr:
+      url: "/fr/docs/getting-started/theme-guide/"
+      path: fr/docs/getting-started/theme-guide.md
+      sha: 446d47041206cc329ebe36b611b6238b3ccc45228eb7c5200fb4fe2ccbc2bae0
+      translated_at: '2026-08-05T04:36:08Z'
+      prompt_version: 1
+  "/docs/installation/":
+    source: pages/_docs/installation.md
+    sha: d7b38e187a1114b4ad19af628b0bfaa6fb60241f315226cb6b41617739981280
+    fr:
+      url: "/fr/docs/installation/"
+      path: fr/docs/installation.md
+      sha: d7b38e187a1114b4ad19af628b0bfaa6fb60241f315226cb6b41617739981280
+      translated_at: '2026-08-05T04:36:40Z'
+      prompt_version: 1
+  "/docs/jekyll/":
+    source: pages/_docs/jekyll/index.md
+    sha: fa145fad7d0896357ca935efe1ec2a0c9eb436f04368d554cd5fa77a8553e5e1
+    fr:
+      url: "/fr/docs/jekyll/"
+      path: fr/docs/jekyll/index.md
+      sha: fa145fad7d0896357ca935efe1ec2a0c9eb436f04368d554cd5fa77a8553e5e1
+      translated_at: '2026-08-05T04:37:30Z'
+      prompt_version: 1
+  "/docs/jekyll/code-highlighting/":
+    source: pages/_docs/jekyll/code-highlighting.md
+    sha: f7c0497eed727b653d9e3902384e8675f86f82ea59abc55f5deb9026f495c309
+    fr:
+      url: "/fr/docs/jekyll/code-highlighting/"
+      path: fr/docs/jekyll/code-highlighting.md
+      sha: f7c0497eed727b653d9e3902384e8675f86f82ea59abc55f5deb9026f495c309
+      translated_at: '2026-08-05T04:36:52Z'
+      prompt_version: 1
+  "/docs/jekyll/collections/":
+    source: pages/_docs/jekyll/collections.md
+    sha: 031612b6df214b64dc636a5c9314725ba2b027f317f9e9b391aaad55593c8fb4
+    fr:
+      url: "/fr/docs/jekyll/collections/"
+      path: fr/docs/jekyll/collections.md
+      sha: 031612b6df214b64dc636a5c9314725ba2b027f317f9e9b391aaad55593c8fb4
+      translated_at: '2026-08-05T04:37:11Z'
+      prompt_version: 1
+  "/docs/jekyll/pagination/":
+    source: pages/_docs/jekyll/pagination.md
+    sha: da789c476b8ba07ff4f1d55434e1e7220fadbbb14fa2c1495157a5988a74f219
+    fr:
+      url: "/fr/docs/jekyll/pagination/"
+      path: fr/docs/jekyll/pagination.md
+      sha: da789c476b8ba07ff4f1d55434e1e7220fadbbb14fa2c1495157a5988a74f219
+      translated_at: '2026-08-05T04:37:38Z'
+      prompt_version: 1
+  "/docs/liquid/":
+    source: pages/_docs/liquid/index.md
+    sha: ec79a55a9d22945a1ed067b2f718ebb59904765532bfe481f97ff212fd577e20
+    fr:
+      url: "/fr/docs/liquid/"
+      path: fr/docs/liquid/index.md
+      sha: ec79a55a9d22945a1ed067b2f718ebb59904765532bfe481f97ff212fd577e20
+      translated_at: '2026-08-05T04:37:46Z'
+      prompt_version: 1
+  "/docs/obsidian/":
+    source: pages/_docs/obsidian/index.md
+    sha: 1c166b90ed274af3e98c4bd8d3d8d31e57bcaa7e907fcb43a592b882d4d057e0
+    fr:
+      url: "/fr/docs/obsidian/"
+      path: fr/docs/obsidian/index.md
+      sha: 1c166b90ed274af3e98c4bd8d3d8d31e57bcaa7e907fcb43a592b882d4d057e0
+      translated_at: '2026-08-05T04:38:37Z'
+      prompt_version: 1
+  "/docs/obsidian/authoring-workflow/":
+    source: pages/_docs/obsidian/authoring-workflow.md
+    sha: e7a5d08181802b8c82eeef20b26796cc19e2b230e90a5838faabd0bbf2a46cab
+    fr:
+      url: "/fr/docs/obsidian/authoring-workflow/"
+      path: fr/docs/obsidian/authoring-workflow.md
+      sha: e7a5d08181802b8c82eeef20b26796cc19e2b230e90a5838faabd0bbf2a46cab
+      translated_at: '2026-08-05T04:38:03Z'
+      prompt_version: 1
+  "/docs/obsidian/getting-started/":
+    source: pages/_docs/obsidian/getting-started.md
+    sha: 90cee16fcdf6234ac224cc419ea0ec0828a4a3618b41ac89841352ff381fb7a6
+    fr:
+      url: "/fr/docs/obsidian/getting-started/"
+      path: fr/docs/obsidian/getting-started.md
+      sha: 90cee16fcdf6234ac224cc419ea0ec0828a4a3618b41ac89841352ff381fb7a6
+      translated_at: '2026-08-05T04:38:21Z'
+      prompt_version: 1
+  "/docs/obsidian/graph/":
+    source: pages/_docs/obsidian/graph.md
+    sha: f8d79a65ff41a372d00c64fad1bfd12a504d3e4576b5bd75dc8c12205406f1d4
+    fr:
+      url: "/fr/docs/obsidian/graph/"
+      path: fr/docs/obsidian/graph.md
+      sha: f8d79a65ff41a372d00c64fad1bfd12a504d3e4576b5bd75dc8c12205406f1d4
+      translated_at: '2026-08-05T04:38:23Z'
+      prompt_version: 1
+  "/docs/obsidian/performance/":
+    source: pages/_docs/obsidian/performance.md
+    sha: 6586d60c57aa85cb1cd2e2f5985ee714bf32a232edc38de436e19b9850b175a3
+    fr:
+      url: "/fr/docs/obsidian/performance/"
+      path: fr/docs/obsidian/performance.md
+      sha: 6586d60c57aa85cb1cd2e2f5985ee714bf32a232edc38de436e19b9850b175a3
+      translated_at: '2026-08-05T04:38:54Z'
+      prompt_version: 1
+  "/docs/obsidian/syntax-reference/":
+    source: pages/_docs/obsidian/syntax-reference.md
+    sha: ba40d91073b281e70878531a458b0bb714e7cc08ae7f61b2d47d173280485939
+    fr:
+      url: "/fr/docs/obsidian/syntax-reference/"
+      path: fr/docs/obsidian/syntax-reference.md
+      sha: ba40d91073b281e70878531a458b0bb714e7cc08ae7f61b2d47d173280485939
+      translated_at: '2026-08-05T04:39:30Z'
+      prompt_version: 1
+  "/docs/obsidian/troubleshooting/":
+    source: pages/_docs/obsidian/troubleshooting.md
+    sha: 2515b91e8b1add29d8041de299c502940491b02d70b4830d92c61f3cbf3e7aaa
+    fr:
+      url: "/fr/docs/obsidian/troubleshooting/"
+      path: fr/docs/obsidian/troubleshooting.md
+      sha: 2515b91e8b1add29d8041de299c502940491b02d70b4830d92c61f3cbf3e7aaa
+      translated_at: '2026-08-05T04:39:56Z'
+      prompt_version: 1
+  "/docs/quickstart/":
+    source: pages/_docs/quickstart/index.md
+    sha: 2b6514fcc314f0df1a1fd9acdf966b7233e8e5e062b731c38c1e6dbe4edfd7e6
+    fr:
+      url: "/fr/docs/quickstart/"
+      path: fr/docs/quickstart/index.md
+      sha: 2b6514fcc314f0df1a1fd9acdf966b7233e8e5e062b731c38c1e6dbe4edfd7e6
+      translated_at: '2026-08-05T04:40:43Z'
+      prompt_version: 1
+  "/docs/quickstart/bare-minimum/":
+    source: pages/_docs/quickstart/bare-minimum.md
+    sha: abd24f43d4b076e2ea77ff6e01cfa9c5907f16db5885638dcfa3c25a157363d3
+    fr:
+      url: "/fr/docs/quickstart/bare-minimum/"
+      path: fr/docs/quickstart/bare-minimum.md
+      sha: abd24f43d4b076e2ea77ff6e01cfa9c5907f16db5885638dcfa3c25a157363d3
+      translated_at: '2026-08-05T04:40:07Z'
+      prompt_version: 1
+  "/docs/quickstart/fork-and-deploy/":
+    source: pages/_docs/quickstart/fork-and-deploy.md
+    sha: d5c4897cbad956160cabc103026d7358c12ca068a3e5aa32fb4a9d31043f026e
+    fr:
+      url: "/fr/docs/quickstart/fork-and-deploy/"
+      path: fr/docs/quickstart/fork-and-deploy.md
+      sha: d5c4897cbad956160cabc103026d7358c12ca068a3e5aa32fb4a9d31043f026e
+      translated_at: '2026-08-05T04:40:29Z'
+      prompt_version: 1
+  "/docs/ruby-101/":
+    source: pages/_docs/ruby-101.md
+    sha: 43ad3ba65d710012bcc7289fdf641f5a24a736013978504b02a2305320635562
+    fr:
+      url: "/fr/docs/ruby-101/"
+      path: fr/docs/ruby-101.md
+      sha: 43ad3ba65d710012bcc7289fdf641f5a24a736013978504b02a2305320635562
+      translated_at: '2026-08-05T04:41:04Z'
+      prompt_version: 1
+  "/docs/ruby/":
+    source: pages/_docs/ruby/index.md
+    sha: 06536d065d917519bde20566024bca5cea85e751903a805a09b272fe0f9af9cb
+    fr:
+      url: "/fr/docs/ruby/"
+      path: fr/docs/ruby/index.md
+      sha: 06536d065d917519bde20566024bca5cea85e751903a805a09b272fe0f9af9cb
+      translated_at: '2026-08-05T04:41:10Z'
+      prompt_version: 1
+  "/docs/seo/":
+    source: pages/_docs/seo/index.md
+    sha: 56c57c81e52f04d7089e984b4d9f6a043d6c7b70bb2ae817ad8f61e4fd1ec1c5
+    fr:
+      url: "/fr/docs/seo/"
+      path: fr/docs/seo/index.md
+      sha: 56c57c81e52f04d7089e984b4d9f6a043d6c7b70bb2ae817ad8f61e4fd1ec1c5
+      translated_at: '2026-08-05T04:41:36Z'
+      prompt_version: 1
+  "/docs/seo/aieo/":
+    source: pages/_docs/seo/aieo.md
+    sha: 2ca067bf7e91964fa7d06400cd704685754f7191644031bf62e5077949090e4f
+    fr:
+      url: "/fr/docs/seo/aieo/"
+      path: fr/docs/seo/aieo.md
+      sha: 2ca067bf7e91964fa7d06400cd704685754f7191644031bf62e5077949090e4f
+      translated_at: '2026-08-05T04:41:28Z'
+      prompt_version: 1
+  "/docs/seo/meta-tags/":
+    source: pages/_docs/seo/meta-tags.md
+    sha: 697066a7bd7f21e954f05bf5795a1f2cd79be8f0f528eb16df9e017fc96463b1
+    fr:
+      url: "/fr/docs/seo/meta-tags/"
+      path: fr/docs/seo/meta-tags.md
+      sha: 697066a7bd7f21e954f05bf5795a1f2cd79be8f0f528eb16df9e017fc96463b1
+      translated_at: '2026-08-05T04:41:54Z'
+      prompt_version: 1
+  "/docs/seo/sitemap/":
+    source: pages/_docs/seo/sitemap.md
+    sha: c0a70d349c49ed3771b65e9efd2f9370ee780bb42d71cf324a142e90cd44b21b
+    fr:
+      url: "/fr/docs/seo/sitemap/"
+      path: fr/docs/seo/sitemap.md
+      sha: c0a70d349c49ed3771b65e9efd2f9370ee780bb42d71cf324a142e90cd44b21b
+      translated_at: '2026-08-05T04:42:14Z'
+      prompt_version: 1
+  "/docs/troubleshooting/":
+    source: pages/_docs/troubleshooting.md
+    sha: a8990514b26fd2d01d1fda0f81b3c75ddf20f4b38fb890d71cb3f73809f5a5a8
+    fr:
+      url: "/fr/docs/troubleshooting/"
+      path: fr/docs/troubleshooting.md
+      sha: a8990514b26fd2d01d1fda0f81b3c75ddf20f4b38fb890d71cb3f73809f5a5a8
+      translated_at: '2026-08-05T04:42:25Z'
+      prompt_version: 1
+  "/news/":
+    source: pages/_posts/2000-01-01-index.md
+    sha: 1fb552f8be97026448bd1b0b12f2785fbc9251f219e896b4bda2f0d14c6d604f
+    fr:
+      url: "/fr/news/"
+      path: fr/posts/2000-01-01-index.md
+      sha: 1fb552f8be97026448bd1b0b12f2785fbc9251f219e896b4bda2f0d14c6d604f
+      translated_at: '2026-07-23T16:53:09Z'
+      prompt_version: 1
+  "/news/business/":
+    source: pages/_posts/business/2000-01-01-index.md
+    sha: b264f37362cb749fbe9a2f6539dc9de6a112d394f42173a504157f67673344f4
+    fr:
+      url: "/fr/news/business/"
+      path: fr/posts/business/2000-01-01-index.md
+      sha: b264f37362cb749fbe9a2f6539dc9de6a112d394f42173a504157f67673344f4
+      translated_at: '2026-07-23T16:56:35Z'
+      prompt_version: 1
+  "/news/development/":
+    source: pages/_posts/development/2000-01-01-index.md
+    sha: b6388f4cc919d5173e9d445876076bd47adf5a7fe8dd29a6a0c76eb45ee34a54
+    fr:
+      url: "/fr/news/development/"
+      path: fr/posts/development/2000-01-01-index.md
+      sha: b6388f4cc919d5173e9d445876076bd47adf5a7fe8dd29a6a0c76eb45ee34a54
+      translated_at: '2026-07-23T16:57:30Z'
+      prompt_version: 1
+  "/news/science/":
+    source: pages/_posts/science/2000-01-01-index.md
+    sha: f9e7973d0813edaf50eacbfb22562fac1201f56548cf5ae23079dbc840f05f14
+    fr:
+      url: "/fr/news/science/"
+      path: fr/posts/science/2000-01-01-index.md
+      sha: f9e7973d0813edaf50eacbfb22562fac1201f56548cf5ae23079dbc840f05f14
+      translated_at: '2026-07-23T16:58:32Z'
+      prompt_version: 1
+  "/news/technology/":
+    source: pages/_posts/technology/2000-01-01-index.md
+    sha: 77972cfb4365a28e14b94de4574053fe3e0021aed68b8c0298a0a29ffbbeca45
+    fr:
+      url: "/fr/news/technology/"
+      path: fr/posts/technology/2000-01-01-index.md
+      sha: 77972cfb4365a28e14b94de4574053fe3e0021aed68b8c0298a0a29ffbbeca45
+      translated_at: '2026-07-23T16:59:28Z'
+      prompt_version: 1
+  "/news/tutorial/":
+    source: pages/_posts/tutorial/2000-01-01-index.md
+    sha: b9f70e4677bc8b46e1686db4f66cba70404965c59b66230b0bc3953b6ba1a17b
+    fr:
+      url: "/fr/news/tutorial/"
+      path: fr/posts/tutorial/2000-01-01-index.md
+      sha: b9f70e4677bc8b46e1686db4f66cba70404965c59b66230b0bc3953b6ba1a17b
+      translated_at: '2026-07-23T17:04:56Z'
+      prompt_version: 1
+  "/news/world/":
+    source: pages/_posts/world/2000-01-01-index.md
+    sha: 799accfecc9193b3fda568f654a5d92fa7537b76a614965c4fa7e313719f40ea
+    fr:
+      url: "/fr/news/world/"
+      path: fr/posts/world/2000-01-01-index.md
+      sha: 799accfecc9193b3fda568f654a5d92fa7537b76a614965c4fa7e313719f40ea
+      translated_at: '2026-07-23T17:07:12Z'
+      prompt_version: 1
+  "/notes/bash-shortcuts/":
+    source: pages/_notes/bash-shortcuts.md
+    sha: df7e96ad0959b46f3f4ac5187976e99b0f3d0d6a456d7316b186ac1c90aebc51
+    fr:
+      url: "/fr/notes/bash-shortcuts/"
+      path: fr/notes/bash-shortcuts.md
+      sha: df7e96ad0959b46f3f4ac5187976e99b0f3d0d6a456d7316b186ac1c90aebc51
+      translated_at: '2026-08-07T04:26:30Z'
+      prompt_version: 1
+  "/notes/docker-commands/":
+    source: pages/_notes/docker-commands.md
+    sha: 1ba8b6bf9456b044c5201303a845f34bd9e0c725151d361d207f8c92f2cc307b
+    fr:
+      url: "/fr/notes/docker-commands/"
+      path: fr/notes/docker-commands.md
+      sha: 1ba8b6bf9456b044c5201303a845f34bd9e0c725151d361d207f8c92f2cc307b
+      translated_at: '2026-08-07T04:26:39Z'
+      prompt_version: 1
+  "/notes/git-cheatsheet/":
+    source: pages/_notes/git-cheatsheet.md
+    sha: 7bb8c6a3044317fdda365b29fcc422b778bae092d740e0dfbfa3b02cd64b548a
+    fr:
+      url: "/fr/notes/git-cheatsheet/"
+      path: fr/notes/git-cheatsheet.md
+      sha: 7bb8c6a3044317fdda365b29fcc422b778bae092d740e0dfbfa3b02cd64b548a
+      translated_at: '2026-08-07T04:26:49Z'
+      prompt_version: 1
+  "/notes/jekyll-front-matter/":
+    source: pages/_notes/jekyll-front-matter.md
+    sha: ff5f5fc707147f2a55877457befc62a00c7404a38a7e0b2e7ac43b6bdfd8df43
+    fr:
+      url: "/fr/notes/jekyll-front-matter/"
+      path: fr/notes/jekyll-front-matter.md
+      sha: ff5f5fc707147f2a55877457befc62a00c7404a38a7e0b2e7ac43b6bdfd8df43
+      translated_at: '2026-08-07T04:27:07Z'
+      prompt_version: 1
+  "/notes/markdown-tips/":
+    source: pages/_notes/markdown-tips.md
+    sha: 1c8fdb9919a60952661b9a19a92632487fe09e04b7f33dc7e1dce217c70bf1c2
+    fr:
+      url: "/fr/notes/markdown-tips/"
+      path: fr/notes/markdown-tips.md
+      sha: 1c8fdb9919a60952661b9a19a92632487fe09e04b7f33dc7e1dce217c70bf1c2
+      translated_at: '2026-08-07T04:27:26Z'
+      prompt_version: 1
+  "/posts/2024/06/17/wizard-topples-capitalist-dominance-ingeniously/":
+    source: pages/_posts/2024-06-17-wizard-topples-capitalist-dominance-ingeniously.md
+    sha: 5ba30eeebe4fc18de2391258cbf49f96cf529ff1e7b92a2859877f1f87819ecd
+    fr:
+      url: "/fr/posts/2024/06/17/wizard-topples-capitalist-dominance-ingeniously/"
+      path: fr/posts/2024-06-17-wizard-topples-capitalist-dominance-ingeniously.md
+      sha: 5ba30eeebe4fc18de2391258cbf49f96cf529ff1e7b92a2859877f1f87819ecd
+      translated_at: '2026-07-23T16:54:13Z'
+      prompt_version: 1
+  "/posts/2025/01/01/getting-started-jekyll/":
+    source: pages/_posts/2025-01-01-getting-started-jekyll.md
+    sha: 8d3fbba92fb246c61a122267810e654b0c3b3a6f460d93d6ee51d9a5c5b5a24a
+    fr:
+      url: "/fr/posts/2025/01/01/getting-started-jekyll/"
+      path: fr/posts/2025-01-01-getting-started-jekyll.md
+      sha: 8d3fbba92fb246c61a122267810e654b0c3b3a6f460d93d6ee51d9a5c5b5a24a
+      translated_at: '2026-07-23T16:54:22Z'
+      prompt_version: 1
+  "/posts/2025/01/05/web-accessibility-guide/":
+    source: pages/_posts/2025-01-05-web-accessibility-guide.md
+    sha: 9e36acbd9ad4ea79467e9820a7a6344f3b9109f73a733d946700487f063c4433
+    fr:
+      url: "/fr/posts/2025/01/05/web-accessibility-guide/"
+      path: fr/posts/2025-01-05-web-accessibility-guide.md
+      sha: 9e36acbd9ad4ea79467e9820a7a6344f3b9109f73a733d946700487f063c4433
+      translated_at: '2026-07-23T16:54:34Z'
+      prompt_version: 1
+  "/posts/2025/01/10/bootstrap-5-components/":
+    source: pages/_posts/2025-01-10-bootstrap-5-components.md
+    sha: 24af55442ab536c6989a29b073e252a0123a961b9d1a7a94979ad83d8c1ab278
+    fr:
+      url: "/fr/posts/2025/01/10/bootstrap-5-components/"
+      path: fr/posts/2025-01-10-bootstrap-5-components.md
+      sha: 24af55442ab536c6989a29b073e252a0123a961b9d1a7a94979ad83d8c1ab278
+      translated_at: '2026-07-23T16:54:43Z'
+      prompt_version: 1
+  "/posts/2025/01/15/docker-jekyll-guide/":
+    source: pages/_posts/2025-01-15-docker-jekyll-guide.md
+    sha: 5206782e47675994d85d1fafc0bc1661f8fb60479b595efd7b1d51705e821b86
+    fr:
+      url: "/fr/posts/2025/01/15/docker-jekyll-guide/"
+      path: fr/posts/2025-01-15-docker-jekyll-guide.md
+      sha: 5206782e47675994d85d1fafc0bc1661f8fb60479b595efd7b1d51705e821b86
+      translated_at: '2026-09-08T21:55:29Z'
+      prompt_version: 1
+  "/posts/2025/01/18/quantum-computing-explained/":
+    source: pages/_posts/science/2025-01-18-quantum-computing-explained.md
+    sha: 7df0af9b5ebf5a6f94444eb8a888e4bb4c8d0f686e3e682c68feb74bbdedd7ea
+    fr:
+      url: "/fr/posts/2025/01/18/quantum-computing-explained/"
+      path: fr/posts/science/2025-01-18-quantum-computing-explained.md
+      sha: 7df0af9b5ebf5a6f94444eb8a888e4bb4c8d0f686e3e682c68feb74bbdedd7ea
+      translated_at: '2026-07-23T16:58:49Z'
+      prompt_version: 1
+  "/posts/2025/01/20/startup-funding-guide/":
+    source: pages/_posts/business/2025-01-20-startup-funding-guide.md
+    sha: 827630eab154151c3beaeb35c5b3a364d73f5ee9b255b05334fecf15a1119b08
+    fr:
+      url: "/fr/posts/2025/01/20/startup-funding-guide/"
+      path: fr/posts/business/2025-01-20-startup-funding-guide.md
+      sha: 827630eab154151c3beaeb35c5b3a364d73f5ee9b255b05334fecf15a1119b08
+      translated_at: '2026-07-23T16:56:51Z'
+      prompt_version: 1
+  "/posts/2025/01/21/remote-work-revolution/":
+    source: pages/_posts/world/2025-01-21-remote-work-revolution.md
+    sha: eca7d4a2c77752faba20fd092f86ad2c9748aaf2994332deaeb564583fdd61e1
+    fr:
+      url: "/fr/posts/2025/01/21/remote-work-revolution/"
+      path: fr/posts/world/2025-01-21-remote-work-revolution.md
+      sha: eca7d4a2c77752faba20fd092f86ad2c9748aaf2994332deaeb564583fdd61e1
+      translated_at: '2026-09-01T21:27:46Z'
+      prompt_version: 1
+  "/posts/2025/01/22/git-workflow-best-practices/":
+    source: pages/_posts/development/2025-01-22-git-workflow-best-practices.md
+    sha: 935ef23978aa1f12ce1f1d17c647e0946e57936296dfcb4148a854abaa4e964f
+    fr:
+      url: "/fr/posts/2025/01/22/git-workflow-best-practices/"
+      path: fr/posts/development/2025-01-22-git-workflow-best-practices.md
+      sha: 935ef23978aa1f12ce1f1d17c647e0946e57936296dfcb4148a854abaa4e964f
+      translated_at: '2026-07-23T16:57:50Z'
+      prompt_version: 1
+  "/posts/2025/01/23/css-grid-mastery/":
+    source: pages/_posts/tutorial/2025-01-23-css-grid-mastery.md
+    sha: bdc8ce77df057b9084ecad9b438e47c8b5031f21703eb4bbc52d8e8c6b697e59
+    fr:
+      url: "/fr/posts/2025/01/23/css-grid-mastery/"
+      path: fr/posts/tutorial/2025-01-23-css-grid-mastery.md
+      sha: bdc8ce77df057b9084ecad9b438e47c8b5031f21703eb4bbc52d8e8c6b697e59
+      translated_at: '2026-07-23T17:06:40Z'
+      prompt_version: 1
+  "/posts/2025/01/25/ai-tools-productivity/":
+    source: pages/_posts/technology/2025-01-25-ai-tools-productivity.md
+    sha: b64e95aceef7123b7be3260198d79981cffef2a7a26f832f1e5cff7bf55cfa04
+    fr:
+      url: "/fr/posts/2025/01/25/ai-tools-productivity/"
+      path: fr/posts/technology/2025-01-25-ai-tools-productivity.md
+      sha: b64e95aceef7123b7be3260198d79981cffef2a7a26f832f1e5cff7bf55cfa04
+      translated_at: '2026-07-23T16:59:46Z'
+      prompt_version: 1
+  "/posts/2026/04/07/ai-adoption-from-awareness-to-action/":
+    source: pages/_posts/technology/2026-04-07-ai-adoption-from-awareness-to-action.md
+    sha: 25bbccc4ae7ff668b393368b888cb678f5bc05186d2ad49d7a9b13c8cd9907c4
+    fr:
+      url: "/fr/posts/2026/04/07/ai-adoption-from-awareness-to-action/"
+      path: fr/posts/technology/2026-04-07-ai-adoption-from-awareness-to-action.md
+      sha: 25bbccc4ae7ff668b393368b888cb678f5bc05186d2ad49d7a9b13c8cd9907c4
+      translated_at: '2026-07-23T17:01:37Z'
+      prompt_version: 1
+  "/posts/2026/04/07/ai-adoption-imperative-mid-market-manufacturers/":
+    source: pages/_posts/technology/2026-04-07-ai-adoption-imperative-mid-market-manufacturers.md
+    sha: 38b6086a67633236c842a6edaa381b0081af9900a5e9bb4725d6127503ed52b5
+    fr:
+      url: "/fr/posts/2026/04/07/ai-adoption-imperative-mid-market-manufacturers/"
+      path: fr/posts/technology/2026-04-07-ai-adoption-imperative-mid-market-manufacturers.md
+      sha: 38b6086a67633236c842a6edaa381b0081af9900a5e9bb4725d6127503ed52b5
+      translated_at: '2026-07-23T17:02:28Z'
+      prompt_version: 1
+  "/posts/2026/04/07/ai-adoption-map-function-by-function/":
+    source: pages/_posts/technology/2026-04-07-ai-adoption-map-function-by-function.md
+    sha: ec766a3a58a93b79f17d74a644497793c1893190c4669cdb3b42dec552fa29a2
+    fr:
+      url: "/fr/posts/2026/04/07/ai-adoption-map-function-by-function/"
+      path: fr/posts/technology/2026-04-07-ai-adoption-map-function-by-function.md
+      sha: ec766a3a58a93b79f17d74a644497793c1893190c4669cdb3b42dec552fa29a2
+      translated_at: '2026-07-23T17:04:14Z'
+      prompt_version: 1
+  "/posts/2026/04/28/accessible-form-patterns/":
+    source: pages/_posts/tutorial/2026-04-28-accessible-form-patterns.md
+    sha: eae6827443ed29b3c7fc22d07a155c40c51604ffb969632b3b6c9d660dee84a3
+    fr:
+      url: "/fr/posts/2026/04/28/accessible-form-patterns/"
+      path: fr/posts/tutorial/2026-04-28-accessible-form-patterns.md
+      sha: eae6827443ed29b3c7fc22d07a155c40c51604ffb969632b3b6c9d660dee84a3
+      translated_at: '2026-07-23T17:06:54Z'
+      prompt_version: 1
+  "/posts/2026/04/28/building-ai-ready-knowledge-base/":
+    source: pages/_posts/technology/2026-04-28-building-ai-ready-knowledge-base.md
+    sha: 2cd71e27a7b3dfc37dee7deadd1c72972f3e1a3fd506774671c0b906b6af9097
+    fr:
+      url: "/fr/posts/2026/04/28/building-ai-ready-knowledge-base/"
+      path: fr/posts/technology/2026-04-28-building-ai-ready-knowledge-base.md
+      sha: 2cd71e27a7b3dfc37dee7deadd1c72972f3e1a3fd506774671c0b906b6af9097
+      translated_at: '2026-07-23T17:04:32Z'
+      prompt_version: 1
+  "/posts/2026/04/28/climate-data-dashboards/":
+    source: pages/_posts/science/2026-04-28-climate-data-dashboards.md
+    sha: c10375efe992428019b301c0e1947759e265ed923434f4f97ea541a16b33bc01
+    fr:
+      url: "/fr/posts/2026/04/28/climate-data-dashboards/"
+      path: fr/posts/science/2026-04-28-climate-data-dashboards.md
+      sha: c10375efe992428019b301c0e1947759e265ed923434f4f97ea541a16b33bc01
+      translated_at: '2026-07-23T16:59:09Z'
+      prompt_version: 1
+  "/posts/2026/04/28/climate-data-primer/":
+    source: pages/_posts/science/2026-04-28-climate-data-primer.md
+    sha: 90f6bb8478b6329ab89369a05f294ee597587c49bb7e1372a4acdd693033a23f
+    fr:
+      url: "/fr/posts/2026/04/28/climate-data-primer/"
+      path: fr/posts/science/2026-04-28-climate-data-primer.md
+      sha: 90f6bb8478b6329ab89369a05f294ee597587c49bb7e1372a4acdd693033a23f
+      translated_at: '2026-07-23T16:59:26Z'
+      prompt_version: 1
+  "/posts/2026/04/28/customer-onboarding-scorecards/":
+    source: pages/_posts/business/2026-04-28-customer-onboarding-scorecards.md
+    sha: b8028c5a07d3048e555e8f9c1347c2bc717e22723f360cde55aca8904114257a
+    fr:
+      url: "/fr/posts/2026/04/28/customer-onboarding-scorecards/"
+      path: fr/posts/business/2026-04-28-customer-onboarding-scorecards.md
+      sha: b8028c5a07d3048e555e8f9c1347c2bc717e22723f360cde55aca8904114257a
+      translated_at: '2026-07-23T16:57:10Z'
+      prompt_version: 1
+  "/posts/2026/04/28/edge-ai-practical-patterns/":
+    source: pages/_posts/technology/2026-04-28-edge-ai-practical-patterns.md
+    sha: 8a96393b25f7e7cded33f90fc435799c3fad4f68343217968c5f504d8480d1e7
+    fr:
+      url: "/fr/posts/2026/04/28/edge-ai-practical-patterns/"
+      path: fr/posts/technology/2026-04-28-edge-ai-practical-patterns.md
+      sha: 8a96393b25f7e7cded33f90fc435799c3fad4f68343217968c5f504d8480d1e7
+      translated_at: '2026-07-23T17:04:54Z'
+      prompt_version: 1
+  "/posts/2026/04/28/feature-flags-continuous-delivery/":
+    source: pages/_posts/development/2026-04-28-feature-flags-continuous-delivery.md
+    sha: af96deac5ec7a92be2f9fca3b0e1cc7b2959c51cf75281b134fda8c4418c8a6c
+    fr:
+      url: "/fr/posts/2026/04/28/feature-flags-continuous-delivery/"
+      path: fr/posts/development/2026-04-28-feature-flags-continuous-delivery.md
+      sha: af96deac5ec7a92be2f9fca3b0e1cc7b2959c51cf75281b134fda8c4418c8a6c
+      translated_at: '2026-07-23T16:58:10Z'
+      prompt_version: 1
+  "/posts/2026/04/28/local-resilience-networks/":
+    source: pages/_posts/world/2026-04-28-local-resilience-networks.md
+    sha: 0b6a7b5e163627e55821b817b04e1a4bb842b1818a63ef350083f4753ee98a2a
+    fr:
+      url: "/fr/posts/2026/04/28/local-resilience-networks/"
+      path: fr/posts/world/2026-04-28-local-resilience-networks.md
+      sha: 0b6a7b5e163627e55821b817b04e1a4bb842b1818a63ef350083f4753ee98a2a
+      translated_at: '2026-07-23T17:08:00Z'
+      prompt_version: 1
+  "/posts/2026/04/28/observability-for-small-apps/":
+    source: pages/_posts/development/2026-04-28-observability-for-small-apps.md
+    sha: 74c542fe738403afd0b4e87b5c978428ce5c4f7235a8f40219f81bdd8837f1b3
+    fr:
+      url: "/fr/posts/2026/04/28/observability-for-small-apps/"
+      path: fr/posts/development/2026-04-28-observability-for-small-apps.md
+      sha: 74c542fe738403afd0b4e87b5c978428ce5c4f7235a8f40219f81bdd8837f1b3
+      translated_at: '2026-07-23T16:58:29Z'
+      prompt_version: 1
+  "/posts/2026/04/28/responsive-documentation-card-grid/":
+    source: pages/_posts/tutorial/2026-04-28-responsive-documentation-card-grid.md
+    sha: dc8038417e38669fe1e53d094e4acb426feb0fdbf821bad413600b52c13c46d6
+    fr:
+      url: "/fr/posts/2026/04/28/responsive-documentation-card-grid/"
+      path: fr/posts/tutorial/2026-04-28-responsive-documentation-card-grid.md
+      sha: dc8038417e38669fe1e53d094e4acb426feb0fdbf821bad413600b52c13c46d6
+      translated_at: '2026-07-23T17:07:09Z'
+      prompt_version: 1
+  "/posts/2026/04/28/scenario-planning-for-small-teams/":
+    source: pages/_posts/business/2026-04-28-scenario-planning-for-small-teams.md
+    sha: db318c3417b1ca1814aa0709c243e422cf792a4e2a6f223e07bf528f91ebc5a7
+    fr:
+      url: "/fr/posts/2026/04/28/scenario-planning-for-small-teams/"
+      path: fr/posts/business/2026-04-28-scenario-planning-for-small-teams.md
+      sha: db318c3417b1ca1814aa0709c243e422cf792a4e2a6f223e07bf528f91ebc5a7
+      translated_at: '2026-07-23T16:57:28Z'
+      prompt_version: 1
+  "/posts/2026/04/28/urban-resilience-extreme-heat/":
+    source: pages/_posts/world/2026-04-28-urban-resilience-extreme-heat.md
+    sha: 9068abb43e745d0656187dc1847b313e36281b1668e5c57108c56fefde16e3f0
+    fr:
+      url: "/fr/posts/2026/04/28/urban-resilience-extreme-heat/"
+      path: fr/posts/world/2026-04-28-urban-resilience-extreme-heat.md
+      sha: 9068abb43e745d0656187dc1847b313e36281b1668e5c57108c56fefde16e3f0
+      translated_at: '2026-07-23T17:08:22Z'
+      prompt_version: 1
+  "/posts/2026/06/16/favicon-ico-unlocked-door-to-collapse/":
+    source: pages/_posts/2026-06-16-favicon-ico-unlocked-door-to-collapse.md
+    sha: f6d475e173719c97a3da52605c3f0fcd33e61f26e0db442af54cdc682f279569
+    fr:
+      url: "/fr/posts/2026/06/16/favicon-ico-unlocked-door-to-collapse/"
+      path: fr/posts/2026-06-16-favicon-ico-unlocked-door-to-collapse.md
+      sha: f6d475e173719c97a3da52605c3f0fcd33e61f26e0db442af54cdc682f279569
+      translated_at: '2026-07-23T16:55:34Z'
+      prompt_version: 1
+  "/posts/2026/06/17/bayesian-modeled-my-coffee-and-wept-with-joy/":
+    source: pages/_posts/2026-06-17-bayesian-modeled-my-coffee-and-wept-with-joy.md
+    sha: 8d2986743b7f9fc15f48ecaf82a555f28fcd3b20f6b565748270e945a5664c1b
+    fr:
+      url: "/fr/posts/2026/06/17/bayesian-modeled-my-coffee-and-wept-with-joy/"
+      path: fr/posts/2026-06-17-bayesian-modeled-my-coffee-and-wept-with-joy.md
+      sha: 8d2986743b7f9fc15f48ecaf82a555f28fcd3b20f6b565748270e945a5664c1b
+      translated_at: '2026-07-23T16:55:51Z'
+      prompt_version: 1
+  "/posts/2026/06/18/trailing-slash-that-could-end-your-company/":
+    source: pages/_posts/2026-06-18-trailing-slash-that-could-end-your-company.md
+    sha: df6965219e48f18d5725057a792caa2981bd99e570cdbb6f51d0a37f51345ef8
+    fr:
+      url: "/fr/posts/2026/06/18/trailing-slash-that-could-end-your-company/"
+      path: fr/posts/2026-06-18-trailing-slash-that-could-end-your-company.md
+      sha: df6965219e48f18d5725057a792caa2981bd99e570cdbb6f51d0a37f51345ef8
+      translated_at: '2026-07-23T16:56:14Z'
+      prompt_version: 1
+  "/posts/2026/06/19/umap-found-14-hidden-dimensions-in-404-logs/":
+    source: pages/_posts/2026-06-19-umap-found-14-hidden-dimensions-in-404-logs.md
+    sha: 74a066845c5f18d5e97f4ae523fc0cba8ded6a96a2b8c28d9ac874de4b4e5212
+    fr:
+      url: "/fr/posts/2026/06/19/umap-found-14-hidden-dimensions-in-404-logs/"
+      path: fr/posts/2026-06-19-umap-found-14-hidden-dimensions-in-404-logs.md
+      sha: 74a066845c5f18d5e97f4ae523fc0cba8ded6a96a2b8c28d9ac874de4b4e5212
+      translated_at: '2026-07-23T16:56:33Z'
+      prompt_version: 1
+  "/posts/2026/08/15/jekyll-preview-server-from-an-old-pc/":
+    source: pages/_posts/tutorial/2026-08-15-jekyll-preview-server-from-an-old-pc.md
+    sha: 22764b20a0e99bce17af697918e95d38793649977d01833311f71a7714ad93ca
+    fr:
+      url: "/fr/posts/2026/08/15/jekyll-preview-server-from-an-old-pc/"
+      path: fr/posts/tutorial/2026-08-15-jekyll-preview-server-from-an-old-pc.md
+      sha: 22764b20a0e99bce17af697918e95d38793649977d01833311f71a7714ad93ca
+      translated_at: '2026-09-01T21:27:18Z'
+      prompt_version: 1
+  "/quickstart/":
+    source: pages/_quickstart/index.md
+    sha: 66da1a1e9bc53e1036e68d82df4ae7a26d4c466e2efd45b552cec35ae1cb8be2
+    fr:
+      url: "/fr/quickstart/"
+      path: fr/quickstart/index.md
+      sha: 66da1a1e9bc53e1036e68d82df4ae7a26d4c466e2efd45b552cec35ae1cb8be2
+      translated_at: '2026-09-08T22:03:00Z'
+      prompt_version: 1
+  "/quickstart/github-setup/":
+    source: pages/_quickstart/github-setup.md
+    sha: 642910d38e2c34923948b56810db2394f9ad7a392f1937027050df6c52fc11fc
+    fr:
+      url: "/fr/quickstart/github-setup/"
+      path: fr/quickstart/github-setup.md
+      sha: 642910d38e2c34923948b56810db2394f9ad7a392f1937027050df6c52fc11fc
+      translated_at: '2026-09-08T22:02:36Z'
+      prompt_version: 1
+  "/quickstart/jekyll-setup/":
+    source: pages/_quickstart/jekyll-setup.md
+    sha: fe93452700297ca885e8caa97ec46725760852fb9dee4a11f3b8793a2f0a72f6
+    fr:
+      url: "/fr/quickstart/jekyll-setup/"
+      path: fr/quickstart/jekyll-setup.md
+      sha: fe93452700297ca885e8caa97ec46725760852fb9dee4a11f3b8793a2f0a72f6
+      translated_at: '2026-09-08T22:03:15Z'
+      prompt_version: 1
+  "/quickstart/machine-setup/":
+    source: pages/_quickstart/machine-setup.md
+    sha: 75ac6f087cec781f6f897e27bcdb261f7a7ce4b0646432ef577162d40c4a77b3
+    fr:
+      url: "/fr/quickstart/machine-setup/"
+      path: fr/quickstart/machine-setup.md
+      sha: 75ac6f087cec781f6f897e27bcdb261f7a7ce4b0646432ef577162d40c4a77b3
+      translated_at: '2026-09-08T22:03:33Z'
+      prompt_version: 1
+  "/quickstart/personalization/":
+    source: pages/_quickstart/personalization.md
+    sha: '097b8c40314c293ae40e3d7f0e551ba4f83205b0591058f988ae36bacb26e99a'
+    fr:
+      url: "/fr/quickstart/personalization/"
+      path: fr/quickstart/personalization.md
+      sha: '097b8c40314c293ae40e3d7f0e551ba4f83205b0591058f988ae36bacb26e99a'
+      translated_at: '2026-09-08T22:05:54Z'
+      prompt_version: 1
+  "/quickstart/site-builder/":
+    source: pages/_quickstart/site-builder.md
+    sha: 45ea3ac202e149051c0817f258fb8928fa8e808f38b629898fdc4146a591440d
+    fr:
+      url: "/fr/quickstart/site-builder/"
+      path: fr/quickstart/site-builder.md
+      sha: 45ea3ac202e149051c0817f258fb8928fa8e808f38b629898fdc4146a591440d
+      translated_at: '2026-09-08T22:06:33Z'
+      prompt_version: 1
+ui_text:
+  fr:
+    sha: 32096c9ff9e64b0fdf40f167dc8b87c2a1ff551ee1b9df6c4daa81530d60b17f
+    translated_at: '2026-09-08T22:06:57Z'
+    prompt_version: 1
+source_lang: en
+languages:
+- fr
+updated_at: '2026-09-08T22:06:57Z'

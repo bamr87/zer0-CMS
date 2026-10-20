@@ -1,0 +1,241 @@
+{% comment %} Feature: ZER0-001 {% endcomment %}
+{% comment %}
+  ===================================================================
+  HEAD - HTML Document Head Section
+  ===================================================================
+  
+  File: head.html
+  Path: _includes/head.html
+  Purpose: Complete HTML document head section with meta tags, styles, 
+           and essential JavaScript libraries
+  
+  Template Logic:
+  - Loads critical JavaScript libraries before page render
+  - Includes SEO optimization and social media meta tags
+  - Configures third-party integrations (Analytics, MathJax)
+  - Sets up progress bar via components/nanobar.html include
+  
+  Dependencies:
+  - seo.html: SEO meta tags and Open Graph data
+  - google-analytics.html: Google Analytics tracking
+  - google-tag-manager-head.html: GTM head section
+  - (posthog.html is included from _layouts/root.html at the end of <body>, not here)
+  
+  Performance Notes:
+  - Scripts loaded in head for immediate availability
+  - MathJax loaded asynchronously to prevent render blocking
+  - Nanobar provides visual loading feedback (see components/nanobar.html)
+  ===================================================================
+{% endcomment %}
+
+{% comment %} ================================ {% endcomment %}
+{% comment %} ANALYTICS AND TRACKING          {% endcomment %}
+{% comment %} ================================ {% endcomment %}
+{% comment %} Google Tag Manager - Must be in head section for proper tracking {% endcomment %}
+{% comment %} Only load in production builds (JEKYLL_ENV=production); the include also guards against dev hostnames {% endcomment %}
+{% if jekyll.environment == "production" %}{% include analytics/google-tag-manager-head.html %}{% endif %}
+
+{% comment %} Page-feedback: early console/error capture — must run before the theme
+     scripts below so a report can include the logs that led up to it. {% endcomment %}
+{% include core/console-capture.html %}
+
+{% comment %} ================================ {% endcomment %}
+{% comment %} JAVASCRIPT LIBRARIES            {% endcomment %}
+{% comment %} ================================ {% endcomment %}
+{% comment %} Custom theme JavaScript - Deferred for performance {% endcomment %}
+<script defer src="{{ '/assets/js/auto-hide-nav.js' | relative_url }}"></script>
+<script defer src="{{ '/assets/js/back-to-top.js' | relative_url }}"></script>
+<script defer src="{{ '/assets/js/halfmoon.js' | relative_url }}"></script>
+<script defer src="{{ '/assets/js/side-bar-folders.js' | relative_url }}"></script>
+<script defer src="{{ '/assets/js/code-copy.js' | relative_url }}"></script>
+<script defer src="{{ '/assets/js/table-copy.js' | relative_url }}"></script>
+<script defer src="{{ '/assets/js/ui-enhancements.js' | relative_url }}"></script>
+
+{% comment %} Page-view counter — injects its config and loads assets/js/page-views.js.
+     Renders nothing on its own; components/page-views.html places the badge.
+     Gated on site.page_views.enabled inside the include. {% endcomment %}
+{% include components/page-views-init.html %}
+
+{% comment %} ================================ {% endcomment %}
+{% comment %} THIRD PARTY INTEGRATIONS        {% endcomment %}
+{% comment %} ================================ {% endcomment %}
+
+{% comment %} Recipe scaling & unit conversion - Only on pages that render recipe
+     quantities: the `recipe` layout, or any page that opts in with
+     `recipe_tools: true` (e.g. a post embedding components/recipe-*.html). {% endcomment %}
+{% if page.layout == "recipe" or page.recipe_tools %}
+<script defer src="{{ '/assets/js/recipe-scaler.js' | relative_url }}"></script>
+{% endif %}
+
+{% comment %} Mermaid Diagrams - Conditional loading based on page front matter {% endcomment %}
+{% if page.mermaid %}
+  {% include components/mermaid.html %}
+{% endif %}
+
+{% comment %} Nano Progress Bar - Visual loading indicator (config-driven) — page-invariant, cached. {% endcomment %}
+{% include_cached components/nanobar.html %}
+
+{% comment %} MathJax - Conditional loading based on page front matter (like Mermaid) {% endcomment %}
+{% if page.mathjax %}
+{% comment %} MathJax 3 configuration — must appear before the script tag.
+     Enables $...$ inline math (off by default in MathJax 3). {% endcomment %}
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  }
+};
+</script>
+<script id="MathJax-script" async src="{{ '/assets/vendor/mathjax/es5/tex-mml-chtml.js' | relative_url }}"></script>
+{% endif %}
+
+{% comment %} ================================ {% endcomment %}
+{% comment %} HTML DOCUMENT META DATA         {% endcomment %}
+{% comment %} ================================ {% endcomment %}
+{%- comment -%} NOTE: the charset meta is NOT here — it lives at the very top
+     of _layouts/root.html so it lands inside the spec's 1024-byte window
+     (issue #372). Do not re-add it here. {%- endcomment -%}
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+{% comment %} Favicon + browser identity (config-driven via `favicon:`; explicit
+     /favicon.ico fallback so baseurl deployments resolve) — page-invariant, cached. {% endcomment %}
+{% include_cached core/favicon.html %}
+
+{%- comment -%} Feed autodiscovery. jekyll-feed generates /feed.xml but emits
+     no link element unless feed_meta is called, so the feed was undiscoverable
+     to readers and crawlers even though the footer links it (issue #371).
+     Written out by hand rather than via feed_meta so the theme does not
+     hard-fail with "Unknown tag" on a consumer site that has not enabled the
+     plugin; the path matches the footer's own /feed.xml link. {%- endcomment -%}
+{%- assign _feed_path = site.feed.path | default: 'feed.xml' -%}
+<link rel="alternate" type="application/atom+xml"
+      title="{{ site.title | default: site.name | escape }}"
+      href="{{ _feed_path | relative_url }}">
+
+{% comment %} ================================ {% endcomment %}
+{% comment %} SEO SUPPLEMENT                  {% endcomment %}
+{% comment %} ================================ {% endcomment %}
+{% comment %} Additional SEO tags not covered by jekyll-seo-tag plugin ( in root.html).
+     Outputs custom og:image with assets_prefix normalisation and non-Google site verification. {% endcomment %}
+{% include content/seo.html %}
+
+{% comment %} hreflang alternates for machine-generated translations (no-op when the
+     page has none) — see _data/i18n/manifest.yml + scripts/translate.rb {% endcomment %}
+{% include core/hreflang.html %}
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} STRUCTURED DATA MARKUP    {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} No microdata properties here: <head> has no item scope, so a property
+     in it belongs to no item and parsers discard it (#513). headline/description/dates
+     come from jekyll-seo-tag's JSON-LD in root.html, and from the body item on
+     article-type layouts. {% endcomment %}
+
+{% comment %} JSON-LD SoftwareApplication schema (homepage only) {% endcomment %}
+{% include content/jsonld-software.html %}
+
+{% comment %} JSON-LD FAQ schema (pages with faq_items front matter) {% endcomment %}
+{% include content/jsonld-faq.html %}
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} ANALYTICS INTEGRATION     {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} Google Analytics tracking - Configured in _config.yml {% endcomment %}
+{% comment %} Only load in production AND when an ID is configured; the include also guards against dev hostnames {% endcomment %}
+{% if jekyll.environment == "production" and site.google_analytics %}{% include analytics/google-analytics.html %}{% endif %}
+
+{% comment %} PostHog analytics is NOT included here. _layouts/root.html already
+   includes analytics/posthog.html at the end of <body> (since the include was
+   added), so this second copy, added in #317, emitted the snippet twice and
+   called posthog.init() twice on every production page. {% endcomment %}
+
+
+{% comment %} ================================ {% endcomment %}
+{% comment %} CSS FRAMEWORKS AND LIBRARIES   {% endcomment %}
+{% comment %} ================================ {% endcomment %}
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} COLOR MODE INIT (FOUC FIX) {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} Must run BEFORE Bootstrap CSS so the correct data-bs-theme is applied
+     when [data-bs-theme=dark/light] selectors are first evaluated.
+     Reads site.color_mode_default (via data-color-mode-default attr on <html>)
+     and falls back to localStorage["theme"] for the user's explicit preference. {% endcomment %}
+{% include core/color-mode-init.html %}
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} BOOTSTRAP 5 FRAMEWORK     {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} Bootstrap 5.3.3 - bundled locally (GitHub Pages–safe; refresh via scripts/vendor-install.sh) {% endcomment %}
+<link href="{{ '/assets/vendor/bootstrap/css/bootstrap.min.css' | relative_url }}" rel="stylesheet">
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} ICON LIBRARIES             {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} Bootstrap Icons (bundled with theme; fonts use relative paths in CSS) {% endcomment %}
+<link rel="stylesheet" href="{{ '/assets/vendor/bootstrap-icons/font/bootstrap-icons.css' | relative_url }}">
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} CUSTOM THEME STYLES       {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} Primary theme stylesheet - Core styling and layout (SCSS pipeline) {% endcomment %}
+<link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} DESIGN TOKEN OVERRIDES     {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} Inline <style> block emitted AFTER main.css so site-config `theme_color` keys
+     and any per-user Appearance overrides win over compiled defaults. The tokens a
+     palette skin sets are scoped so that the skin still wins (see tokens-inline.html). {% endcomment %}
+{% include core/tokens-inline.html %}
+
+{% comment %} Optional fork overrides: opt-in via `site.user_overrides: true` in _config.yml.
+     Loaded LAST so consumer rules win over both main.css and tokens-inline. {% endcomment %}
+{% if site.user_overrides %}
+<link rel="stylesheet" href="{{ '/assets/css/user-overrides.css' | relative_url }}">
+{% endif %}
+
+{% comment %} Statistics page specific styles {% endcomment %}
+{% if page.layout == 'stats' or page.permalink == '/about/stats/' %}
+<link rel="stylesheet" href="{{ '/assets/css/stats.css' | relative_url }}">
+{% endif %}
+
+{% comment %} Per-page stylesheets from frontmatter (#412):
+
+       ---
+       styles:
+         - /assets/css/notes.css
+         - https://cdn.example.com/x.css
+       ---
+
+     A contract, not a convention. Before this, attaching CSS to one page meant a
+     literal <link> inside the content file or a custom layout — which works, and
+     puts asset tags in prose. A single string is accepted as well as a list.
+     Site-relative paths go through relative_url so a baseurl deployment is
+     correct; absolute URLs are passed through untouched.
+
+     Emits NOTHING when the key is absent — the whitespace control here keeps a
+     page without `styles:` byte-identical to its previous build, which is why
+     the comment and the `endif` both close with `-%}`. {% endcomment -%}
+{% if page.styles %}{% assign page_styles = page.styles %}{% if page_styles.first == nil %}{% assign page_styles = page_styles | split: "||" %}{% endif %}{% for style_href in page_styles %}
+<link rel="stylesheet" href="{% if style_href contains '//' %}{{ style_href }}{% else %}{{ style_href | relative_url }}{% endif %}">
+{%- endfor %}
+{% endif -%}
+
+{% comment %} Consumer hook: end of <head>. Inject JSON-LD, font preloads, verification
+     tags, or extra meta by shadowing _includes/custom/head.html in your site —
+     no fork of this file needed. The theme ships the stub empty. {% endcomment %}
+{% include custom/head.html %}
+
+{% comment %} ========================== {% endcomment %}
+{% comment %} EXPERIMENTAL FRAMEWORKS   {% endcomment %}
+{% comment %} ========================== {% endcomment %}
+{% comment %} Tailwind CSS - Currently disabled, enable for utility-first styling {% endcomment %}
+{% comment %} <script src="https://cdn.tailwindcss.com"></script> {% endcomment %}
+
+{% comment %} Docs CSS - Alternative stylesheet, currently disabled due to scroll spy issues {% endcomment %}
+{% comment %} TODO: Replace with compiled Sass when scroll spy functionality is fixed {% endcomment %}
+{% comment %} Optional docs.css link removed; use _sass/core/_docs-layout.scss → main.css {% endcomment %}

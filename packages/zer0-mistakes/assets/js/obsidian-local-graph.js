@@ -1,0 +1,661 @@
+// Feature: ZER0-045
+/*
+ * obsidian-local-graph.js
+ *
+ * Renders a focused "local graph" (current page + immediate neighbors) into
+ * the element with id `obsidian-local-graph`. Mirrors Obsidian's local
+ * graph view: a focused, page-scoped subgraph instead of the full site map.
+ *
+ * Loaded by _includes/navigation/local-graph.html inside a dedicated
+ * collapsible side panel. Cytoscape.js is loaded lazily (and only once) from
+ * the vendored copy under assets/vendor/cytoscape/ (no CDN), and only when
+ * the panel is first opened: the panel is a closed offcanvas on page load, so
+ * fetching ~118 KB of cytoscape for a graph nobody has asked to see was pure
+ * main-thread cost on every indexed page. Until then the accessible
+ * text list of linked pages is kept up to date.
+ *
+ * Subgraph:
+ *   - center  = current page (matched against entry.url, falling back to
+ *               normalized title/basename/aliases for permalink quirks)
+ *   - depth   = 1–3, user-adjustable in the panel (default from the
+ *               data-depth attribute / `local_graph_depth` front matter)
+ *   - direction = outgoing and/or incoming wiki-links, user-toggleable
+ *
+ * Depth + direction preferences persist to localStorage
+ * (zer0.obsidianLocalGraph.v1) and the graph re-renders in place when they
+ * change — same for Bootstrap color-mode (data-bs-theme) switches.
+ *
+ * If the current page is in the wiki-index but has no local links, the panel
+ * stays available and renders a single-node graph for the current page.
+ * Pages outside the wiki-index still hide the panel.
+ */
+(function () {
+  'use strict';
+
+  var CONTAINER_ID = 'obsidian-local-graph';
+  var PANEL_SELECTOR = '[data-obsidian-local-graph-panel]';
+  var TOGGLE_SELECTOR = '[data-obsidian-local-graph-toggle]';
+  var STATUS_SELECTOR = '[data-obsidian-local-graph-status]';
+  var STORAGE_KEY = 'zer0.obsidianLocalGraph.v1';
+
+  // Cytoscape is vendored under assets/vendor/ (no runtime CDN — matches the
+  // Bootstrap / Icons / Mermaid policy). The path is supplied by Liquid via
+  // window.OBSIDIAN_CONFIG.cytoscapeUrl, with a base-relative fallback.
+  function cytoscapeSrc() {
+    var cfg = window.OBSIDIAN_CONFIG || {};
+    if (cfg.cytoscapeUrl) return cfg.cytoscapeUrl;
+    var base = (document.querySelector('base') || {}).href || '/';
+    return base.replace(/\/$/, '') + '/assets/vendor/cytoscape/cytoscape.min.js';
+  }
+
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function debounce(fn, wait) {
+    var t;
+    return function () {
+      var ctx = this;
+      var args = arguments;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(ctx, args); }, wait);
+    };
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // Depth + direction preferences. Depth falls back to the page's data-depth
+  // (front-matter `local_graph_depth`), directions default to both on.
+  function loadPrefs(defaultDepth) {
+    var prefs = { depth: defaultDepth, outgoing: true, incoming: true };
+    try {
+      var saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
+      if (saved && typeof saved === 'object') {
+        var d = parseInt(saved.depth, 10);
+        if (d >= 1 && d <= 3) prefs.depth = d;
+        if (typeof saved.outgoing === 'boolean') prefs.outgoing = saved.outgoing;
+        if (typeof saved.incoming === 'boolean') prefs.incoming = saved.incoming;
+      }
+    } catch (e) { /* private mode / corrupt payload — use defaults */ }
+    return prefs;
+  }
+
+  function savePrefs(prefs) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    } catch (e) { /* storage unavailable — prefs are session-only */ }
+  }
+
+  function companionElements(container) {
+    return {
+      panel: container.closest(PANEL_SELECTOR),
+      toggle: document.querySelector(TOGGLE_SELECTOR),
+      status: document.querySelector(STATUS_SELECTOR)
+    };
+  }
+
+  function setStatus(container, message, isError) {
+    var status = companionElements(container).status;
+    if (!status) return;
+    status.textContent = message || '';
+    status.hidden = !message;
+    status.classList.toggle('text-danger', !!isError);
+    status.classList.toggle('text-secondary', !isError);
+  }
+
+  function setPanelAvailable(container, available) {
+    var companions = companionElements(container);
+    [companions.panel, companions.toggle].forEach(function (element) {
+      if (!element) return;
+      element.hidden = !available;
+    });
+  }
+
+  function resizeGraph(container) {
+    var cy = container.__obsidianLocalGraph;
+    if (!cy) return;
+    cy.resize();
+    cy.fit(cy.elements(), 24);
+  }
+
+  function normalize(value) {
+    return String(value || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  }
+
+  // Strip trailing slash and any leading site baseurl so we can match
+  // entry.url (which is always relative, with trailing slash).
+  function normalizePath(p) {
+    if (!p) return '';
+    try { p = decodeURIComponent(p); } catch (_) {}
+    p = p.split('#')[0].split('?')[0];
+    if (p.length > 1 && p.charAt(p.length - 1) !== '/') p += '/';
+    return p;
+  }
+
+  function buildLookup(entries) {
+    var byKey = Object.create(null);
+    var byUrl = Object.create(null);
+    entries.forEach(function (entry) {
+      if (!entry || !entry.url) return;
+      byUrl[normalizePath(entry.url)] = entry;
+      var keys = [];
+      if (entry.title) keys.push(entry.title);
+      if (entry.basename) keys.push(entry.basename);
+      (entry.aliases || []).forEach(function (a) { if (a) keys.push(a); });
+      keys.forEach(function (k) {
+        var nk = normalize(k);
+        if (!nk || byKey[nk]) return;
+        byKey[nk] = entry;
+      });
+    });
+    return { byKey: byKey, byUrl: byUrl };
+  }
+
+  function findCurrentEntry(lookup) {
+    var path = normalizePath(window.location.pathname);
+    if (lookup.byUrl[path]) return lookup.byUrl[path];
+    // Fallback: match by last path segment (handles baseurl mismatches).
+    var parts = path.split('/').filter(Boolean);
+    var last = parts[parts.length - 1];
+    if (last && lookup.byKey[normalize(last)]) {
+      return lookup.byKey[normalize(last)];
+    }
+    return null;
+  }
+
+  function collectionColor(name) {
+    var palette = {
+      posts: '#0d6efd', docs: '#198754', notes: '#6f42c1',
+      notebooks: '#d63384', quickstart: '#fd7e14', about: '#20c997',
+      hobbies: '#ffc107', news: '#6610f2', services: '#0dcaf0'
+    };
+    return palette[name] || '#6c757d';
+  }
+
+  // BFS from the current entry up to `depth` hops. Directions are opt-in:
+  // opts.outgoing follows this page's [[links]], opts.incoming follows any
+  // other entry whose `outgoing` includes one of our keys.
+  function buildSubgraph(entries, lookup, current, depth, opts) {
+    opts = opts || { outgoing: true, incoming: true };
+    var visited = Object.create(null);
+    var queue = [{ entry: current, dist: 0 }];
+    var nodes = [];
+    var edges = [];
+    var seenEdge = Object.create(null);
+
+    // Pre-compute reverse adjacency so we can find incoming neighbors
+    // without scanning all entries each hop.
+    var reverse = Object.create(null);
+    entries.forEach(function (entry) {
+      (entry.outgoing || []).forEach(function (target) {
+        var nk = normalize(target);
+        if (!reverse[nk]) reverse[nk] = [];
+        reverse[nk].push(entry);
+      });
+    });
+
+    function keysFor(entry) {
+      var keys = [];
+      if (entry.title) keys.push(normalize(entry.title));
+      if (entry.basename) keys.push(normalize(entry.basename));
+      (entry.aliases || []).forEach(function (a) {
+        if (a) keys.push(normalize(a));
+      });
+      return keys;
+    }
+
+    function addEdge(srcId, tgtId, broken) {
+      var k = srcId + '|' + tgtId;
+      if (seenEdge[k]) return;
+      seenEdge[k] = true;
+      edges.push({
+        group: 'edges',
+        data: { id: 'le:' + k, source: srcId, target: tgtId, broken: !!broken }
+      });
+    }
+
+    while (queue.length) {
+      var item = queue.shift();
+      var entry = item.entry;
+      var nid = entry.url;
+      if (visited[nid]) continue;
+      visited[nid] = true;
+
+      nodes.push({
+        group: 'nodes',
+        data: {
+          id: nid,
+          label: entry.title || entry.basename || nid,
+          url: entry.url,
+          collection: entry.collection || 'page',
+          color: collectionColor(entry.collection),
+          isCurrent: entry.url === current.url
+        }
+      });
+
+      if (item.dist >= depth) continue;
+
+      // Outgoing edges
+      if (opts.outgoing) {
+        (entry.outgoing || []).forEach(function (target) {
+          var nk = normalize(target);
+          var resolved = lookup.byKey[nk];
+          if (resolved) {
+            if (resolved.url === entry.url) return;
+            addEdge(entry.url, resolved.url, false);
+            if (!visited[resolved.url]) {
+              queue.push({ entry: resolved, dist: item.dist + 1 });
+            }
+          } else {
+            var brokenId = '__broken__:' + nk;
+            if (!visited[brokenId]) {
+              visited[brokenId] = true;
+              nodes.push({
+                group: 'nodes',
+                data: {
+                  id: brokenId,
+                  label: target,
+                  url: null,
+                  collection: 'broken',
+                  color: '#dc3545',
+                  broken: true
+                }
+              });
+            }
+            addEdge(entry.url, brokenId, true);
+          }
+        });
+      }
+
+      // Incoming edges (anyone whose outgoing matches one of our keys)
+      if (opts.incoming) {
+        keysFor(entry).forEach(function (k) {
+          (reverse[k] || []).forEach(function (src) {
+            if (src.url === entry.url) return;
+            addEdge(src.url, entry.url, false);
+            if (!visited[src.url]) {
+              queue.push({ entry: src, dist: item.dist + 1 });
+            }
+          });
+        });
+      }
+    }
+
+    return nodes.concat(edges);
+  }
+
+  function readTheme() {
+    var attr = (document.documentElement.getAttribute('data-bs-theme') ||
+      document.body.getAttribute('data-bs-theme') || '').toLowerCase();
+    var dark = attr === 'dark' || (!attr && window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return dark ? {
+      label: '#e9ecef', labelOutline: '#1b1f23',
+      edge: 'rgba(173,181,189,0.45)', edgeArrow: 'rgba(173,181,189,0.65)',
+      canvasBg: '#1b1f23', nodeBorder: 'rgba(255,255,255,0.22)'
+    } : {
+      label: '#1b1f23', labelOutline: '#f8f9fa',
+      edge: 'rgba(73,80,87,0.40)', edgeArrow: 'rgba(73,80,87,0.60)',
+      canvasBg: '#f8f9fa', nodeBorder: 'rgba(0,0,0,0.20)'
+    };
+  }
+
+  // Load cytoscape (vendored, same-origin). Invokes cb(true) on success,
+  // cb(false) on failure so callers can fall back to the text list.
+  function loadCytoscape(cb) {
+    if (typeof window.cytoscape === 'function') return cb(true);
+    // Re-use any in-flight load (e.g. when the full graph page also loads it).
+    if (window.__obsidianCytoscapeLoading) {
+      window.__obsidianCytoscapeLoading.push(cb);
+      return;
+    }
+    var queue = window.__obsidianCytoscapeLoading = [cb];
+    function flush(ok) {
+      window.__obsidianCytoscapeLoading = null;
+      queue.forEach(function (fn) { try { fn(ok); } catch (e) { /* ignore */ } });
+    }
+    var existing = document.querySelector('script[src*="cytoscape"]');
+    if (existing) {
+      if (typeof window.cytoscape === 'function') return flush(true);
+      existing.addEventListener('load', function () { flush(true); });
+      existing.addEventListener('error', function () { flush(false); });
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = cytoscapeSrc();
+    s.defer = true;
+    s.onload = function () { flush(true); };
+    s.onerror = function () {
+      console.warn('[obsidian-local-graph] failed to load cytoscape');
+      flush(false);
+    };
+    document.head.appendChild(s);
+  }
+
+  function render(container, elements, currentUrl) {
+    // Re-renders (depth/direction/theme changes) replace the prior instance.
+    if (container.__obsidianLocalGraph) {
+      try { container.__obsidianLocalGraph.destroy(); } catch (e) { /* ignore */ }
+      container.__obsidianLocalGraph = null;
+    }
+    var theme = readTheme();
+    container.style.backgroundColor = theme.canvasBg;
+    var motion = prefersReducedMotion() ? '0ms' : '160ms';
+
+    var cy = window.cytoscape({
+      container: container,
+      elements: elements,
+      minZoom: 0.3,
+      maxZoom: 3,
+      autoungrabify: false,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'background-color': 'data(color)',
+            'label': 'data(label)',
+            'font-size': '11px',
+            'font-weight': 500,
+            'color': theme.label,
+            'text-outline-color': theme.labelOutline,
+            'text-outline-width': 2,
+            'text-outline-opacity': 0.95,
+            'text-background-opacity': 0,
+            'text-valign': 'bottom',
+            'text-margin-y': 4,
+            'text-wrap': 'ellipsis',
+            'text-max-width': '140px',
+            'width': 16, 'height': 16,
+            'border-width': 1.5,
+            'border-color': theme.nodeBorder,
+            'transition-property': 'background-color, border-color, width, height',
+            'transition-duration': motion
+          }
+        },
+        {
+          // Highlight the current page so users always know "you are here".
+          selector: 'node[?isCurrent]',
+          style: {
+            'width': 22, 'height': 22,
+            'border-width': 3,
+            'border-color': '#fd7e14',
+            'font-size': '11px',
+            'font-weight': 700
+          }
+        },
+        {
+          // `[?broken]` = truthiness, NOT `[broken]` (existence): every edge
+          // carries a broken:false field, so the existence form would paint
+          // all of them dashed-red even when nothing is broken. Mirrors the
+          // selectors in obsidian-graph.js (the full graph).
+          selector: 'node[?broken]',
+          style: {
+            'background-color': '#dc3545',
+            'border-style': 'dashed',
+            'border-color': '#dc3545'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 1,
+            'line-color': theme.edge,
+            'target-arrow-color': theme.edgeArrow,
+            'target-arrow-shape': 'triangle',
+            'arrow-scale': 0.7,
+            'curve-style': 'bezier'
+          }
+        },
+        {
+          selector: 'edge[?broken]',
+          style: { 'line-style': 'dashed', 'line-color': '#dc3545' }
+        }
+      ],
+      layout: {
+        name: 'cose',
+        animate: false,
+        padding: 14,
+        nodeRepulsion: function () { return 6000; },
+        idealEdgeLength: function () { return 60; },
+        edgeElasticity: function () { return 60; },
+        nodeOverlap: 12,
+        gravity: 0.3,
+        numIter: 1200,
+        fit: true
+      }
+    });
+
+    container.__obsidianLocalGraph = cy;
+
+    cy.on('tap', 'node', function (evt) {
+      var d = evt.target.data();
+      if (!d.url || d.broken) return;
+      if (d.url === currentUrl) return;
+      // ⌘/Ctrl-click opens in a new tab, mirroring the full graph page.
+      var oe = evt.originalEvent;
+      if (oe && (oe.metaKey || oe.ctrlKey)) {
+        window.open(d.url, '_blank', 'noopener');
+      } else {
+        window.location.href = d.url;
+      }
+    });
+
+    cy.on('mouseover', 'node', function (evt) {
+      evt.target.style('z-index', 99);
+    });
+
+    requestAnimationFrame(function () {
+      resizeGraph(container);
+    });
+
+    return cy;
+  }
+
+  // Accessible text fallback: a list of linked neighbours rendered as real
+  // <a> links. Always present for screen readers / no-cytoscape users; hidden
+  // (visually) once the interactive graph renders. Returns the element or null.
+  function renderTextFallback(container, elements, current) {
+    var host = container.parentNode;
+    if (!host) return null;
+    var prior = host.querySelector('.obsidian-local-graph-fallback');
+    if (prior) prior.parentNode.removeChild(prior);
+
+    var byId = Object.create(null);
+    var outgoing = [];
+    var incoming = [];
+    var seenOut = Object.create(null);
+    var seenIn = Object.create(null);
+    elements.forEach(function (el) {
+      if (el.group === 'nodes') byId[el.data.id] = el.data;
+    });
+    elements.forEach(function (el) {
+      if (el.group !== 'edges') return;
+      if (el.data.source === current.url && el.data.target !== current.url) {
+        var t = byId[el.data.target];
+        if (t && t.url && !seenOut[t.url]) { seenOut[t.url] = true; outgoing.push(t); }
+      } else if (el.data.target === current.url && el.data.source !== current.url) {
+        var s = byId[el.data.source];
+        if (s && s.url && !seenIn[s.url]) { seenIn[s.url] = true; incoming.push(s); }
+      }
+    });
+    if (!outgoing.length && !incoming.length) return null;
+
+    function section(title, items) {
+      if (!items.length) return '';
+      var lis = items.map(function (d) {
+        return '<li class="list-group-item py-1 px-2 bg-transparent">' +
+          '<a href="' + escapeHtml(d.url) + '">' + escapeHtml(d.label || d.url) + '</a></li>';
+      }).join('');
+      return '<p class="small text-secondary mb-1 mt-2">' + title + '</p>' +
+        '<ul class="list-group list-group-flush small mb-0">' + lis + '</ul>';
+    }
+
+    var nav = document.createElement('nav');
+    nav.className = 'obsidian-local-graph-fallback mt-2';
+    nav.setAttribute('aria-label', 'Pages linked to this page');
+    nav.innerHTML = section('Links from this page', outgoing) +
+      section('Links to this page', incoming);
+    host.insertBefore(nav, container.nextSibling);
+    return nav;
+  }
+
+  // Reflect prefs into the depth radio group + direction switches.
+  function syncControls(prefs) {
+    var radio = document.getElementById('obsidian-lg-depth-' + prefs.depth);
+    if (radio) radio.checked = true;
+    var outgoing = document.getElementById('obsidian-lg-outgoing');
+    if (outgoing) outgoing.checked = prefs.outgoing;
+    var incoming = document.getElementById('obsidian-lg-incoming');
+    if (incoming) incoming.checked = prefs.incoming;
+  }
+
+  function wireControls(prefs, rebuild) {
+    [1, 2, 3].forEach(function (d) {
+      var radio = document.getElementById('obsidian-lg-depth-' + d);
+      if (!radio) return;
+      radio.addEventListener('change', function () {
+        if (!radio.checked) return;
+        prefs.depth = d;
+        savePrefs(prefs);
+        rebuild();
+      });
+    });
+    var outgoing = document.getElementById('obsidian-lg-outgoing');
+    if (outgoing) {
+      outgoing.addEventListener('change', function () {
+        prefs.outgoing = outgoing.checked;
+        savePrefs(prefs);
+        rebuild();
+      });
+    }
+    var incoming = document.getElementById('obsidian-lg-incoming');
+    if (incoming) {
+      incoming.addEventListener('change', function () {
+        prefs.incoming = incoming.checked;
+        savePrefs(prefs);
+        rebuild();
+      });
+    }
+  }
+
+  // Re-render on Bootstrap color-mode changes so canvas colors track the
+  // theme without a reload. Local graphs are small — a full rebuild is cheap.
+  function watchTheme(rebuild) {
+    var restyle = debounce(rebuild, 60);
+    var observer = new MutationObserver(restyle);
+    [document.documentElement, document.body].forEach(function (el) {
+      observer.observe(el, { attributes: true, attributeFilter: ['data-bs-theme'] });
+    });
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq.addEventListener) mq.addEventListener('change', restyle);
+    }
+  }
+
+  function init() {
+    var container = document.getElementById(CONTAINER_ID);
+    if (!container) return;
+    // Panel + FAB start hidden (progressive enhancement): reveal ONLY once the
+    // current page is confirmed in the wiki-index, so unindexed/slow/no-JS pages
+    // never flash a dead button.
+
+    var panel = container.closest(PANEL_SELECTOR);
+    if (panel) {
+      panel.addEventListener('shown.bs.offcanvas', function () {
+        resizeGraph(container);
+      });
+    }
+
+    window.addEventListener('resize', debounce(function () {
+      resizeGraph(container);
+    }, 150));
+
+    var defaultDepth = parseInt(container.getAttribute('data-depth') || '1', 10);
+    if (!isFinite(defaultDepth) || defaultDepth < 1) defaultDepth = 1;
+    var prefs = loadPrefs(Math.min(defaultDepth, 3));
+    var indexUrl = container.getAttribute('data-index-url') ||
+      ((document.querySelector('base') || {}).href || '/') +
+      'assets/data/wiki-index.json';
+
+    fetch(indexUrl, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (data) {
+        var entries = Array.isArray(data && data.entries) ? data.entries : [];
+        if (!entries.length) { setPanelAvailable(container, false); return; }
+        var lookup = buildLookup(entries);
+        var current = findCurrentEntry(lookup);
+        if (!current) { setPanelAvailable(container, false); return; }
+
+        // Confirmed in-index: reveal the panel + FAB now.
+        setPanelAvailable(container, true);
+        setStatus(container, 'Loading graph…', false);
+        syncControls(prefs);
+
+        var graphAvailable = null; // unknown until loadCytoscape resolves
+        var graphRequested = false;
+
+        function rebuild() {
+          var elements = buildSubgraph(entries, lookup, current, prefs.depth, {
+            outgoing: prefs.outgoing,
+            incoming: prefs.incoming
+          });
+          var nodeCount = elements.filter(function (el) { return el.group === 'nodes'; }).length;
+          var edgeCount = elements.filter(function (el) { return el.group === 'edges'; }).length;
+          // Accessible text fallback (also the graceful degradation if
+          // cytoscape can't load): a list of linked neighbours below the canvas.
+          var fallback = renderTextFallback(container, elements, current);
+          if (graphAvailable === null) {
+            // Panel not opened yet: cytoscape is not loaded, keep the list.
+            setStatus(container, nodeCount + ' pages · ' + edgeCount + ' links', false);
+            return;
+          }
+          if (graphAvailable === false) {
+            container.hidden = true;
+            setStatus(container, 'Showing linked pages (interactive graph unavailable).', false);
+            return;
+          }
+          render(container, elements, current.url);
+          setStatus(container, nodeCount + ' pages · ' + edgeCount + ' links', false);
+          // Graph is the visual representation; keep the list for AT only.
+          if (fallback) fallback.classList.add('visually-hidden');
+        }
+
+        wireControls(prefs, rebuild);
+        watchTheme(function () {
+          if (container.__obsidianLocalGraph) rebuild();
+        });
+
+        function requestGraph() {
+          if (graphRequested) return;
+          graphRequested = true;
+          setStatus(container, 'Loading graph…', false);
+          loadCytoscape(function (ok) {
+            graphAvailable = ok !== false;
+            rebuild();
+          });
+        }
+
+        rebuild(); // text list + counts, no cytoscape yet
+        if (!panel || panel.classList.contains('show')) {
+          requestGraph();
+        } else {
+          panel.addEventListener('show.bs.offcanvas', requestGraph);
+        }
+      })
+      .catch(function (err) {
+        // Sidebar panel failing is non-fatal — keep it hidden and stay quiet.
+        console.warn('[obsidian-local-graph] init failed:', err);
+        setPanelAvailable(container, false);
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

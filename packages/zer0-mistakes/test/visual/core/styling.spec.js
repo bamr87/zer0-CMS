@@ -1,0 +1,169 @@
+/**
+ * Frontend styling smoke tests — bundled Bootstrap (assets/vendor) + Jekyll main.css.
+ * Run: ./test/test_playwright.sh   or   npm run test:smoke
+ * Requires a running Jekyll server; BASE_URL overrides the default origin.
+ */
+const { test, expect } = require('@playwright/test');
+const { VIEWPORTS, UI_ROUTES, waitForJekyll } = require('../fixtures');
+
+function isSameOriginStylesheet(url, baseURL) {
+  try {
+    const u = new URL(url);
+    const b = new URL(baseURL);
+    return u.origin === b.origin && u.pathname.endsWith('.css');
+  } catch {
+    return false;
+  }
+}
+
+test.describe('Theme stylesheets', { tag: '@critical' }, () => {
+  test('same-origin CSS assets return 200', async ({ page, baseURL }) => {
+    const failures = [];
+    page.on('response', (res) => {
+      const url = res.url();
+      if (!isSameOriginStylesheet(url, baseURL)) return;
+      if (res.status() !== 200) failures.push(`${res.status()} ${url}`);
+    });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    expect(failures, failures.join('; ')).toEqual([]);
+  });
+
+  test('HTML references compiled main stylesheet', async ({ page }) => {
+    await page.goto('/');
+    const hrefs = await page
+      .locator('link[rel="stylesheet"]')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('href') || ''));
+    const hasMain = hrefs.some((h) => /\.css(\?|$)/.test(h) && /main/i.test(h));
+    expect(hasMain, `Expected a main*.css link, got: ${hrefs.join(', ')}`).toBe(true);
+  });
+
+  test('Bootstrap exposes CSS variables on :root (vendor + theme)', async ({ page }) => {
+    await page.goto('/');
+    const primary = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--bs-primary').trim()
+    );
+    expect(primary.length).toBeGreaterThan(0);
+  });
+
+  // Guards the --zer0-* token layer (_sass/tokens/ ↔ _design-system/tokens/):
+  // tokens must resolve at runtime and components must consume them.
+  test('design tokens (--zer0-*) resolve and are consumed', async ({ page }) => {
+    await page.goto('/');
+    const tokens = await page.evaluate(() => {
+      const cs = getComputedStyle(document.documentElement);
+      const probe = document.createElement('div');
+      probe.className = 'landing-feature-card';
+      document.body.appendChild(probe);
+      const cardRadius = getComputedStyle(probe).borderRadius;
+      probe.remove();
+      return {
+        radius: cs.getPropertyValue('--zer0-radius').trim(),
+        radiusXl: cs.getPropertyValue('--zer0-radius-xl').trim(),
+        space3: cs.getPropertyValue('--zer0-space-3').trim(),
+        primary: cs.getPropertyValue('--zer0-color-primary').trim(),
+        motionBase: cs.getPropertyValue('--zer0-motion-duration-base').trim(),
+        cardRadius,
+      };
+    });
+    expect(tokens.radius).toBe('0.375rem');
+    expect(tokens.radiusXl).toBe('0.75rem');
+    expect(tokens.space3).toBe('1rem');
+    expect(tokens.primary.length).toBeGreaterThan(0);
+    expect(tokens.motionBase.length).toBeGreaterThan(0);
+    // .landing-feature-card consumes --zer0-radius-xl (0.75rem → 12px)
+    expect(tokens.cardRadius).toBe('12px');
+  });
+
+  test('homepage does not reference common third-party CDNs for core assets', async ({ page }) => {
+    await page.goto('/');
+    const html = await page.content();
+    const banned = [
+      'cdn.jsdelivr.net/npm/bootstrap',
+      'cdn.jsdelivr.net/npm/bootstrap-icons',
+      'code.jquery.com/jquery',
+      'cdnjs.cloudflare.com/ajax/libs/font-awesome',
+      'unpkg.com/github-calendar',
+    ];
+    for (const needle of banned) {
+      expect(html.includes(needle), `Unexpected CDN reference: ${needle}`).toBe(false);
+    }
+  });
+});
+
+test.describe('Layout chrome', { tag: '@critical' }, () => {
+  test('desktop header and navbar render', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.desktop);
+    await waitForJekyll(page, UI_ROUTES.home);
+    await expect(page.locator('header#navbar')).toBeVisible();
+    // Bootstrap `.navbar` is on the wrapper div; inner element is `nav.navbar-main`
+    await expect(page.locator('header#navbar .navbar.navbar-expand-lg')).toBeVisible();
+    await expect(page.locator('header#navbar nav.navbar-main')).toBeVisible();
+    // Brand link must exist (visibility can vary with grid/overflow; header chrome is what we guard)
+    const brand = page.locator('header#navbar a.navbar-brand');
+    await expect(brand).toHaveCount(1);
+    await expect(brand).toBeAttached();
+    await expect(brand.locator('img[alt]')).toHaveCount(1);
+  });
+
+  test('mobile main navigation toggle is visible', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.mobile);
+    await waitForJekyll(page, UI_ROUTES.home);
+    // Exclude offcanvas close buttons that also reference #bdNavbar
+    const toggler = page.locator('.bd-navbar-toggle.d-lg-none button.navbar-toggler[data-bs-target="#bdNavbar"]');
+    await expect(toggler).toBeVisible();
+  });
+
+  test('default layout page exposes docs-layout regions', async ({ page }) => {
+    await waitForJekyll(page, UI_ROUTES.faq);
+    await expect(page.locator('.bd-main')).toBeVisible();
+    await expect(page.locator('.bd-content')).toBeVisible();
+  });
+});
+
+test.describe('Design tokens — CSS variables', { tag: '@critical' }, () => {
+  test('--zer0-color-primary resolves on :root', async ({ page }) => {
+    await waitForJekyll(page, UI_ROUTES.home);
+    const value = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--zer0-color-primary').trim()
+    );
+    expect(value.length).toBeGreaterThan(0);
+  });
+
+  test('--zer0-bp-lg resolves to a pixel value', async ({ page }) => {
+    await waitForJekyll(page, UI_ROUTES.home);
+    const value = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--zer0-bp-lg').trim()
+    );
+    expect(value).toMatch(/^\d+px$/);
+  });
+});
+
+// =============================================================================
+// Intro hero banner — background image resolves (issue #293)
+// =============================================================================
+// _includes/content/intro.html resolves the banner image into `preview_path`,
+// applying `relative_url` during assignment. The pre-fix point of use piped it
+// through `relative_url` a SECOND time, so any project site (non-empty
+// baseurl) rendered url('/reponame/reponame/assets/…') — a 404 — and every
+// intro hero lost its background image. The fix applies the filter exactly
+// once. At the dev server's baseurl "" both spellings coincide, so this test
+// pins the observable invariant — the rendered background URL must actually
+// resolve — while the project-site states are captured as real baseurl'd
+// before/after builds in test/visual/evidence/intro-banner-baseurl/.
+test.describe('Intro hero banner (issue #293)', () => {
+  // faq/ exercises the site.info_banner fallback branch; the graph doc page
+  // exercises the page.preview auto-prefix branch.
+  for (const route of [UI_ROUTES.faq, '/docs/obsidian/graph/']) {
+    test(`intro background image URL resolves on ${route}`, async ({ page }) => {
+      await waitForJekyll(page, route);
+      const bg = await page
+        .locator('.bd-intro')
+        .first()
+        .evaluate((el) => getComputedStyle(el).backgroundImage);
+      const match = /url\("([^"]+)"\)/.exec(bg);
+      expect(match, `expected .bd-intro to have a url(...) background, got: ${bg}`).toBeTruthy();
+      const resp = await page.request.get(match[1]);
+      expect(resp.status(), `intro background ${match[1]}`).toBe(200);
+    });
+  }
+});
