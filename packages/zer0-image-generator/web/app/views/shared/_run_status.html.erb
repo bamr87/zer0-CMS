@@ -1,7 +1,0 @@
-<%#
-  Status pill for a Run. Kept as a partial because it appears in the dashboard,
-  the runs table, and the live-updating run page — one source of truth for the
-  status → badge-class mapping.
-%>
-<% cls = { "succeeded" => "ok", "failed" => "err", "cancelled" => "warn", "running" => "running", "pending" => "" }[run.status] %>
-<span class="badge <%= cls %>"><span class="dot"></span><%= run.status %></span>

@@ -1,7 +1,0 @@
-<%# The log so far, rendered once on load. New lines arrive as appended
-    log_chunk partials over Turbo Streams (see RunLogSink). %>
-<% if run.log.present? %>
-  <%= render "runs/log_chunk", text: run.log %>
-<% else %>
-  <span class="ansi-dim">Waiting for the run to start…</span>
-<% end %>
