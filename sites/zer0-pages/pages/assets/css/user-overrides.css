@@ -1,0 +1,53 @@
+/* zer0-pages — user overrides for the jekyll-theme-zer0 gem.
+ * Loaded LAST by the theme's head.html (config `user_overrides: true`), after
+ * main.css and the inline tokens, so rules here win over theme defaults.
+ *
+ * Scope: ONLY styles for markup emitted by the local Obsidian bridge plugins
+ * (pages/_plugins/). Everything generic
+ * (typography, tables, code, blockquotes, Rouge syntax colors) comes from the
+ * theme / Bootstrap and is intentionally NOT duplicated here.
+ */
+
+/* ---- Obsidian callouts ------------------------------------------------- */
+/* The bridge emits Bootstrap alerts: .alert.alert-<ctx>.obsidian-callout
+ * with a .obsidian-callout-title heading line. The theme's own
+ * .obsidian-callout rules target different (toggle-based) markup, so pin
+ * the styling our markup needs. */
+.alert.obsidian-callout {
+  border-left: 4px solid var(--bs-alert-border-color, var(--bs-border-color));
+}
+.alert.obsidian-callout .obsidian-callout-title,
+.alert.obsidian-callout > strong:first-child {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.alert.obsidian-callout > p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Dataview blocks ---------------------------------------------------- */
+/* Bridge emits: <div class="obsidian-dataview table-responsive">
+ *                 <table class="table dataview-table">…  — Bootstrap's .table
+ * provides the base look; these are vault-specific refinements. */
+.dataview-table {
+  vertical-align: top;
+}
+.dataview-table tbody tr:hover {
+  background-color: var(--bs-tertiary-bg);
+}
+.dataview-cell-list {
+  margin-bottom: 0;
+  padding-left: 1.1rem;
+}
+.obsidian-dataview.dataview-fallback {
+  color: var(--bs-secondary-color);
+  font-size: 0.9em;
+}
+
+/* ---- Wikilinks ----------------------------------------------------------- */
+.wikilink-unresolved {
+  color: var(--bs-secondary-color);
+  border-bottom: 1px dashed var(--bs-secondary-color);
+  cursor: help;
+}
+

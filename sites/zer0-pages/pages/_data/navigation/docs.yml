@@ -1,0 +1,183 @@
+# Documentation Navigation Configuration (zer0-pages)
+# Used by: docs sidebar (frontmatter `sidebar: nav: docs`) via the theme gem's
+#          navigation includes.
+# Adapted from the zer0-mistakes theme's docs.yml; every URL below is verified
+# against a real permalink in pages/.
+
+# ============================================================
+# Getting Started
+# ============================================================
+- title: Getting Started
+  icon: bi-rocket-takeoff
+  url: /docs/
+  expanded: true
+  children:
+    - title: Documentation Home
+      url: /docs/
+    - title: Installation
+      url: /docs/installation/
+    - title: Quick Start
+      url: /docs/getting-started/quick-start/
+    - title: Theme Guide
+      url: /docs/getting-started/theme-guide/
+    - title: Front Matter
+      url: /docs/front-matter/
+
+# ============================================================
+# Obsidian (this vault's authoring workflow)
+# ============================================================
+- title: Obsidian
+  icon: bi-diagram-3
+  url: /docs/obsidian/
+  children:
+    - title: Obsidian Overview
+      url: /docs/obsidian/
+    - title: Getting Started
+      url: /docs/obsidian/getting-started/
+    - title: Authoring Workflow
+      url: /docs/obsidian/authoring-workflow/
+    - title: Syntax Reference
+      url: /docs/obsidian/syntax-reference/
+    - title: Graph View
+      url: /docs/obsidian/graph/
+    - title: Performance
+      url: /docs/obsidian/performance/
+    - title: Troubleshooting
+      url: /docs/obsidian/troubleshooting/
+
+# ============================================================
+# Features
+# ============================================================
+- title: Features
+  icon: bi-stars
+  url: /docs/features/
+  children:
+    - title: Features Overview
+      url: /docs/features/
+    - title: Mermaid Diagrams
+      url: /docs/features/mermaid-diagrams/
+    - title: MathJax Math
+      url: /docs/features/mathjax-math/
+    - title: Giscus Comments
+      url: /docs/features/giscus-comments/
+    - title: Keyboard Navigation
+      url: /docs/features/keyboard-navigation/
+    - title: Sidebar Navigation
+      url: /docs/features/sidebar-navigation/
+    - title: Site Search
+      url: /docs/features/site-search/
+
+# ============================================================
+# Customization
+# ============================================================
+- title: Customization
+  icon: bi-palette
+  url: /docs/customization/
+  children:
+    - title: Customization Overview
+      url: /docs/customization/
+    - title: Layouts
+      url: /docs/customization/layouts/
+    - title: Includes
+      url: /docs/customization/includes/
+    - title: Styles
+      url: /docs/customization/styles/
+    - title: Navigation
+      url: /docs/customization/navigation/
+    - title: Author Profiles
+      url: /docs/customization/author-profiles/
+
+# ============================================================
+# Deployment
+# ============================================================
+- title: Deployment
+  icon: bi-cloud-upload
+  url: /docs/deployment/
+  children:
+    - title: Deployment Overview
+      url: /docs/deployment/
+    - title: GitHub Pages
+      url: /docs/deployment/github-pages/
+    - title: Remote-Theme Consumer Checklist
+      url: /docs/deployment/remote-theme-checklist/
+    - title: Safe-Mode Build Overlay
+      url: /docs/deployment/build-overlay/
+    - title: Netlify
+      url: /docs/deployment/netlify/
+    - title: Custom Domain
+      url: /docs/deployment/custom-domain/
+
+# ============================================================
+# Jekyll Reference
+# ============================================================
+- title: Jekyll
+  icon: bi-journal-code
+  url: /docs/jekyll/
+  children:
+    - title: Jekyll Overview
+      url: /docs/jekyll/
+    - title: Collections
+      url: /docs/jekyll/collections/
+    - title: Code Highlighting
+      url: /docs/jekyll/code-highlighting/
+    - title: Pagination
+      url: /docs/jekyll/pagination/
+
+# ============================================================
+# Other Technologies
+# ============================================================
+- title: Ruby & Bundler
+  icon: bi-gem
+  url: /docs/ruby/
+  children:
+    - title: Ruby Overview
+      url: /docs/ruby/
+    - title: Ruby 101
+      url: /docs/ruby-101/
+
+- title: Liquid
+  icon: bi-droplet
+  url: /docs/liquid/
+  children:
+    - title: Liquid Overview
+      url: /docs/liquid/
+
+- title: Docker
+  icon: bi-box-seam
+  url: /docs/docker/
+  children:
+    - title: Docker Overview
+      url: /docs/docker/
+
+- title: Bootstrap
+  icon: bi-bootstrap
+  url: /docs/bootstrap/
+  children:
+    - title: Bootstrap Overview
+      url: /docs/bootstrap/
+
+# ============================================================
+# Development
+# ============================================================
+- title: Development
+  icon: bi-tools
+  url: /docs/development/
+  children:
+    - title: Development Overview
+      url: /docs/development/
+    - title: Testing
+      url: /docs/development/testing/
+    - title: CI/CD
+      url: /docs/development/ci-cd/
+    - title: Vendor Assets
+      url: /docs/development/vendor-assets/
+
+# ============================================================
+# Help
+# ============================================================
+- title: Help
+  icon: bi-question-circle
+  url: /docs/troubleshooting/
+  children:
+    - title: Troubleshooting
+      url: /docs/troubleshooting/
