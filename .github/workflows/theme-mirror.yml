@@ -73,7 +73,7 @@ jobs:
 
       # Full history but only the theme's blobs: the ancestry check needs every commit, the
       # snapshot needs only this package's files (fetched in one batch by the sparse checkout).
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           path: cms
           fetch-depth: 0
