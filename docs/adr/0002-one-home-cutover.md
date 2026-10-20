@@ -29,7 +29,7 @@ A decision no gate defends is a preference, so each part names its gate. The gat
 
 ## Consequences
 
-- The ten-repository history stays readable in one place, and the fleet hub drops eight submodules (C7).
+- The ten-repository history becomes readable in one place — once C0 restores it: the import PRs were squash-merged, so until then `main` carries each imported tree as a single commit and the originals (and `refs/pull/29/head`, `refs/pull/36/head`) are the only full record. That is why no original is archived before C0. The fleet hub drops eight submodules (C7).
 - Release tags change shape. Anything that matched `v*` on an original — Dependabot, a changelog link, a pinned `remote_theme@v…` — is served by the mirror's plain tag for the theme; the gem and PyPI versions themselves continue unchanged.
 - URLs change for every site except the theme's docs. The redirect commit is what keeps an old link alive, which is why it is the last commit an original takes.
 - Publishing credentials (RubyGems, PyPI) move to this repository. They are the owner's to add; the release milestone stops and asks rather than publishing without them.

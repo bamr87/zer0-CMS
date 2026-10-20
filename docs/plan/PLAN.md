@@ -217,6 +217,11 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
 
 Ordered: each step needs the one before it. A step that needs a credential, a repository setting, a DNS change or an archive stops and asks (AGENTS.md § Workflow 5); those are the owner's.
 
+- [ ] **C0: Restore the imported history** — found 2026-10-19: #29 and #36 were *squash*-merged, so `main` holds each imported tree as one commit (`packages/zer0-mistakes`: 3 commits here, 770 in the original) and the rewritten histories survive only in `refs/pull/29/head`, `refs/pull/36/head` and the originals. Nothing is archived before this lands.
+  - Tasks: a branch from `main` that removes the imported paths, merges each rewritten history back (`git merge --allow-unrelated-histories`, the tips taken from the PR refs so the hashes match what was reviewed), then replays every later `main` commit that touched those paths as its own commit, so the branch's tree ends equal to `main`'s.
+  - Accept: `git diff main <branch>` is empty; `git log -- packages/zer0-mistakes/_layouts/default.html` and `git blame` reach the original commits.
+  - Needs the owner: it must land as a **fast-forward** (`git push origin <branch>:main`). A GitHub merge commit keeps the history reachable, but `git log` and `git blame` still stop at the squash, because `main`'s side already carries the same lines. A fast-forward adds commits and rewrites none.
+  - The same applies to law-ai#174 (`lawmode/`), gitorio#136 (`packages/gitnexus`, `packages/git-with-the-program`) and rewind-arcade#36 (`retro-pi/`), all squash-merged the same day — tracked in the hub's `docs/CONSOLIDATION.md`.
 - [ ] **C1: Freeze and final delta**
   - Tasks: land or close every open pull request on the originals (zer0-mistakes, zer0-image-generator, …), re-open drafts here under the package path; re-import what landed since #29/#36 with the MONOREPO.md recipe (the rewrite is deterministic, so the new commits merge onto the earlier import without duplicating it); turn off the originals' scheduled workflows (`*_ENABLED=false`) and disable issues and pull requests on them.
   - Accept: every original's `main` equals what is under its path here (minus the nested workflows removed at import); no original has an open pull request.
