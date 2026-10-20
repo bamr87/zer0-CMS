@@ -108,7 +108,7 @@ Moving `rails/` → `app/` and `src/` → `clients/vscode/` is milestone M2 (pur
 
 Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `docker compose up -d db redis` where noted.
 
-**Status, 2026-10-19.** M0, M3–M15 landed together (one branch, one commit series per area, so the PR can still be split), as the content plane `content/` — additive, because D1 is open (ADR 0001: the Jekyll files stay canonical until it is decided). M1 and M2 are held on decisions, M16–M20 on D1 and on §4.8's two-release rule; each says what is done and what blocks the rest. Test paths are `content/tests/<area>/…` rather than `content/tests/<area>` run from the repository root; `cd content && python -m pytest -q` runs them all, on SQLite and (with `DATABASE_URL`) on Postgres + pgvector.
+**Status, 2026-10-19.** M0, M3–M15 landed together (one branch, one commit series per area, so the PR can still be split), as the content plane `content/` — additive, because no site has cut over yet (ADR 0002: the Jekyll files stay canonical for each site until it does). M1 and M2 are held on decisions, M16–M20 on §4.8's two-release rule, applied per site now that D1 is decided (ADR 0002, Phases E and F); each says what is done and what blocks the rest. Test paths are `content/tests/<area>/…` rather than `content/tests/<area>` run from the repository root; `cd content && python -m pytest -q` runs them all, on SQLite and (with `DATABASE_URL`) on Postgres + pgvector.
 
 ### Phase A: Foundation
 
@@ -132,7 +132,7 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
   - Tasks: services `db` (pgvector/pgvector:pg16), `redis`, `content` (Django), `worker` (Celery), `app` (Rails), `app-jobs` (Solid Queue), `relay` (outbox relay), `imagegen`; delete the per-project compose files that duplicate these (keep the site-preview ones behind profile `sites`).
   - Accept: `docker compose up` gives healthy services; `/healthz` returns 200 on content and app.
   - Test: `docker compose up -d --wait && curl -fsS localhost:8000/healthz && curl -fsS localhost:3000/up`
-  - Done, with three deviations: the content plane's services (`db` on pgvector/pgvector:pg16, `redis`, `content`, `worker`, `beat`, `relay`) are behind `--profile content`, because the Rails CMS needs none of them while D1 is open; the Rails service keeps its name `cms` on :3001 and runs Solid Queue in-process (no `app-jobs` until M16 gives it jobs); and the per-project compose files stay, since they are each project's own dev server. Verified: `docker compose --profile content up -d --wait db redis content worker beat relay` → all healthy, `/healthz` 200, a REST-started run executed by the worker, the relay delivering to the `zer0:content` stream.
+  - Done, with three deviations: the content plane's services (`db` on pgvector/pgvector:pg16, `redis`, `content`, `worker`, `beat`, `relay`) are behind `--profile content`, because the Rails CMS needs none of them while no site has cut over to DB-first yet; the Rails service keeps its name `cms` on :3001 and runs Solid Queue in-process (no `app-jobs` until M16 gives it jobs); and the per-project compose files stay, since they are each project's own dev server. Verified: `docker compose --profile content up -d --wait db redis content worker beat relay` → all healthy, `/healthz` 200, a REST-started run executed by the worker, the relay delivering to the `zer0:content` stream.
 
 ### Phase B: Content plane
 
@@ -194,12 +194,12 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
   - Accept: the MCP `tools/list` matches the registry; a token for `agent:seo` cannot call `content.propose_edit` on pages outside its permissions.
   - Test: `pytest content/tests/mcp -q && npm --prefix clients/vscode test`
   - Deviation: a Django view speaking MCP's Streamable HTTP (JSON responses) plus `manage.py mcp_stdio`, not a mounted FastMCP app (ADR 0001); the app is `mcp_server/` so it never shadows the `mcp` package.
-  - [ ] Retire `src/mcp` in favour of the content plane's server — moved to M18: the extension's server works without a content plane, which is still optional while D1 is open.
+  - [ ] Retire `src/mcp` in favour of the content plane's server — moved to M18: the extension's server works without a content plane, which is still optional while no site has cut over to DB-first yet.
 - [ ] **M16 (build step 5b): Rails app plane: content client, MCP client, outbox, personalization**
   - Tasks: Rails stops writing content: remove `PageEditor`, file write-back and `SiteSync` writes; `ContentClient` (graphql-client, persisted queries); `agent_runs/agent_steps` mirror; `McpClient`; `HomepageAgent` (ranker, returns block IDs or variant keys); Rails outbox → Redis Streams; consume `content.page.published` for cache purge and LinkedIn distribution; emit `app.user.interaction`.
   - Accept: no Rails code writes content tables or files (a test greps for it); the homepage returns variant keys; the trace_id propagates.
   - Test: `cd app && bin/rails test && bin/rails zeitwerk:check`
-  - Started: the Rails half of the event contract (`Zer0Cms::Events`, M8). Blocked: removing `PageEditor` and the file write-back is D1 — while the files are canonical, Rails writing them is the design (D16), and the content plane's `import_jekyll` picks those edits up.
+  - Started: the Rails half of the event contract (`Zer0Cms::Events`, M8). Gated per site (Phase F): removing `PageEditor` and the file write-back for a site waits until that site has cut over — while its files are canonical, Rails writing them is the design (D16), and the content plane's `import_jekyll` picks those edits up.
 - [ ] **M17 (build step 6): Entity extraction + GraphRAG + behavioral edges**
   - Tasks: enrichment agent on publish (entities, `mentions/about/similar_to` with a confidence threshold → Edge or Suggestion); GraphRAG retrieval (search → 1–2 hops → rerank); nightly Celery job aggregating Rails interaction events into `viewed_together` / affinity edges (aggregates only).
   - Accept: below-threshold edges become Suggestions; no raw user ids are stored in Django.
@@ -209,9 +209,48 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
 
 ### Phase D: Clients and cleanup
 
-- [ ] **M18: VS Code extension as a headless client** — blocked on D1: deleting the extension's governance queue, ledger and harness only makes sense once content is DB-first; until then they are what works without a server.: panel/dashboard read via GraphQL, edits go out as `propose_edit`, suggestions shown inline; delete `src/core/harness` and `governance/ledger.ts` duplicates. Test: `npm --prefix clients/vscode test`
+- [ ] **M18: VS Code extension as a headless client** — gated by Phase F: deleting the extension's governance queue, ledger and harness only makes sense once the sites it edits are DB-first; until then they are what works without a server.: panel/dashboard read via GraphQL, edits go out as `propose_edit`, suggestions shown inline; delete `src/core/harness` and `governance/ledger.ts` duplicates. Test: `npm --prefix clients/vscode test`
 - [ ] **M19: Media pipeline** — the fields exist (`ContentImage.ai_alt/ai_caption/ai_tags`, `media.describe`, `media.propose_alt`); the image-save trigger and the image-generator integration are not started, and `image_engine.rb` stays until they replace it.: image save → event → alt/tags/focal/embedding using `zer0-image-generator`; delete `app/app/services/image_engine.rb` and the vendored Ruby port in the Rails plane. Test: `pytest content/tests/media -q`
-- [ ] **M20: Remove superseded code** — blocked by §4.8: nothing is removed until D1 is decided and the round trip has been green for two releases.: barodybroject `parodynews` models (after the M6 import verifies), React frontend, Azure infra (per D4), Rails `Page/Term/Asset` tables (after the M7 exporter is live), books studio LLM client, dead drsai planning docs → `docs/archive/`. Test: `bin/zer0 run test --all`
+- [ ] **M20: Remove superseded code** — gated per site by §4.8 (ADR 0002): nothing a site still depends on is removed before that site has cut over.: barodybroject `parodynews` models (after the M6 import verifies), React frontend, Azure infra (per D4), Rails `Page/Term/Asset` tables (after the M7 exporter is live), books studio LLM client, dead drsai planning docs → `docs/archive/`. Test: `bin/zer0 run test --all`
+
+### Phase E: Cutover — one home ([ADR 0002](../adr/0002-one-home-cutover.md))
+
+Ordered: each step needs the one before it. A step that needs a credential, a repository setting, a DNS change or an archive stops and asks (AGENTS.md § Workflow 5); those are the owner's.
+
+- [ ] **C1: Freeze and final delta**
+  - Tasks: land or close every open pull request on the originals (zer0-mistakes, zer0-image-generator, …), re-open drafts here under the package path; re-import what landed since #29/#36 with the MONOREPO.md recipe (the rewrite is deterministic, so the new commits merge onto the earlier import without duplicating it); turn off the originals' scheduled workflows (`*_ENABLED=false`) and disable issues and pull requests on them.
+  - Accept: every original's `main` equals what is under its path here (minus the nested workflows removed at import); no original has an open pull request.
+  - Test: `bin/zer0 check`, plus a tree comparison per original (`git diff --stat <original>/main HEAD:<path>` after `git fetch`).
+- [ ] **C2: Releases from here** (the rest of M1)
+  - Tasks: release-please manifest mode with components `.` (extension, unchanged), `packages/zer0-mistakes` (`jekyll-theme-zer0`, ruby), `packages/zer0-image-generator` (ruby), `sites/drsai` (the story engine, python); prefixed tags; the manifest seeded from each original's last release (theme `v1.31.2`, image generator `v0.9.0`, …); publish jobs for RubyGems and PyPI; delete the nested release-please configs.
+  - Accept: a release-please dry run lists every component at its continued version; `bin/zer0 check` fails for a `publishes:` project without a component.
+  - Needs the owner: `RUBYGEMS_API_KEY` (or RubyGems trusted publishing) and PyPI trusted publishing pointed at this repository.
+- [ ] **C3: The theme mirror**
+  - Tasks: `mirror-theme.yml` — on a push to `main` that touches `packages/zer0-mistakes/**`, and on a theme release, commit the subtree onto `bamr87/zer0-mistakes` `main` as one fast-forward snapshot commit (`sync: zer0-CMS@<sha>`) and, on a release, tag it `v<version>`; the mirror's `.github/workflows/` is reduced to nothing that deploys, releases or opens pull requests.
+  - Accept: the mirror's tree equals `packages/zer0-mistakes/` (less the workflows); the job refuses when the mirror's `main` is not the commit it last pushed; a consumer pinned to `@v<version>` builds.
+  - Needs the owner: a `FLEET_TOKEN` with `contents:write` on the mirror; disabling its issues and pull requests.
+- [ ] **C4: One Pages deploy**
+  - Tasks: `pages.yml` builds every site under `sites/`, the theme's docs and barodybroject's sidecar into one artifact with each site's sub-path `baseurl` (ADR 0002 §4); `year-of-ai.github.io` builds `sites/2005` into `/2005/` from this repository.
+  - Accept: every route answers 200 in a link-checked preview; `bin/zer0 check` fails for a site with no route.
+  - Needs the owner: moving the `zer0-mistakes.com` custom domain from the theme repository's Pages to this one.
+- [ ] **C5: Port what is left**
+  - Tasks: the theme's remaining reference workflows (Docker integration, the 9-skin visual snapshots, nightly, translation) as root workflows filtered to `packages/zer0-mistakes/**`, the issue autopilot and theme propagation only if still wanted; barodybroject's Playwright E2E, container validation and Trivy jobs. barodybroject's Azure deploy waits on D4.
+  - Accept: every nested `.github/workflows/` file is ported or deleted with a reason; MONOREPO.md § What still depends on the original repositories is empty.
+- [ ] **C6: Redirect and archive**
+  - Tasks: one last commit per original (the mirror excepted) that replaces its Pages site with redirects to the new URL and its README with a pointer here; then archive it.
+  - Accept: each old URL answers with a redirect to the new one.
+  - Needs the owner: the archive itself.
+- [ ] **C7: The fleet hub follows**
+  - Tasks (in `bamr87/bamr87`): point the registry entries at this repository's sub-paths (registry-only rows), remove the eight submodules, and take the originals out of every loop (evolution, issue pipeline, fan-outs); `zer0-mistakes` stays registered as a mirror that is never a fan-out target.
+  - Accept: the hub's drift gate is green; no hub loop opens a pull request on an archived repository or on the mirror.
+
+### Phase F: DB-first, site by site (PLAN-D1, [ADR 0002](../adr/0002-one-home-cutover.md) §5)
+
+One milestone per site, smallest first. A site is eligible once `roundtrip_jekyll` has been green for it for two consecutive releases.
+
+- [ ] **D1-0: The switch** — `workspace.yml` gains `content_source: files | wagtail` per site (default `files`); `pages.yml` builds a `wagtail` site from `export_jekyll` output; a CI check fails when a `wagtail` site's committed Markdown differs from the export. Test: `bin/zer0 check && cd content && python -m pytest -q tests/exporters`
+- [ ] **D1-1: `sites/zer0-pages-remote`** · [ ] **D1-2: `sites/zer0-demo-garden`** · [ ] **D1-3: `sites/zer0-demo-cookbook`** · [ ] **D1-4: `sites/drsai`** · [ ] **D1-5: `sites/zer0-pages`** · [ ] **D1-6: `sites/1987`, `sites/2005`** · [ ] **D1-7: the theme's docs site**
+  - Each: flip `content_source`, publish from the export, unblock that site's share of M16 (Rails stops writing its files), M18 and M20.
 
 ## 4. Content and data migration
 
@@ -252,7 +291,7 @@ They follow the note's §10 order exactly: M9–M10 (step 1), M11–M12 (step 2)
 - Vendored-copy drift checks break during the moves (M2).
 
 **Open decisions**
-- **D1**: Does content become DB-first in Wagtail, with Jekyll repos as exported artifacts, or do Markdown files stay canonical with Wagtail as an index/editor? (The plan assumes DB-first.)
+- **D1** — *decided 2026-10-19 ([ADR 0002](../adr/0002-one-home-cutover.md)): DB-first, one site at a time (Phase F).* Does content become DB-first in Wagtail, with Jekyll repos as exported artifacts, or do Markdown files stay canonical with Wagtail as an index/editor?
 - **D2**: Grapple vs Strawberry-Django for GraphQL.
 - **D3**: LangGraph + Postgres checkpointer vs a hand-rolled state machine for the harness.
 - **D4**: Deployment target: keep Azure Container Apps (barodybroject) or move elsewhere; and whether barodybroject survives as a product (a parody-news site on top of the new CMS) or is absorbed.

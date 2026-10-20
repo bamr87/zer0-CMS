@@ -28,7 +28,7 @@ The rules that follow from it are in [`../../AGENTS.md`](../../AGENTS.md) § The
 
 | # | Question | Status | Interim call (reversible) |
 |---|---|---|---|
-| PLAN-D1 | Does content become DB-first in Wagtail, with the Jekyll repositories as exported artifacts — or do the Markdown files stay canonical, with Wagtail as an index and editor? | **Open** | **The files stay canonical until this is decided.** D16 stays in force: git is the source of truth. The content plane *imports* from the files (`import_jekyll`) and *exports* back to them (`export_jekyll`), and the round-trip test is what keeps both answers possible. Nothing in M16, M18, M19 or M20 that deletes a file writer, a model or a site's Markdown runs before D1 is decided and the round trip has been green for two releases (PLAN §4.8). |
+| PLAN-D1 | Does content become DB-first in Wagtail, with the Jekyll repositories as exported artifacts — or do the Markdown files stay canonical, with Wagtail as an index and editor? | **Decided by [ADR 0002](0002-one-home-cutover.md)** | **DB-first, one site at a time.** A site cuts over once its round trip has been green for two releases (PLAN §4.8); until then D16 stays in force *for that site* — git is its source of truth, the content plane imports from its files (`import_jekyll`) and exports back to them (`export_jekyll`). Nothing in M16, M18, M19 or M20 that deletes a file writer, a model or a site's Markdown runs for a site before that site has cut over. |
 | PLAN-D2 | Grapple or Strawberry-Django for GraphQL? | Decided here | **Grapple.** It derives types from the Wagtail models and their StreamField blocks, so a page type gains its GraphQL shape by declaring `graphql_fields`, and the plan's drift check (`manage.py graphql_schema`) is graphene's command. Nothing outside `content/api/` imports it, so a switch stays local. |
 | PLAN-D3 | LangGraph with a Postgres checkpointer, or a hand-rolled state machine? | Decided here (as M9 already assumed) | **Hand-rolled.** The runner is an explicit loop over `AgentStep` rows, so the run table *is* the checkpoint, a human step is a row in state `waiting`, and replay reads the same rows. Tools stay framework-agnostic, so LangGraph can drive them later without a rewrite. |
 | PLAN-D4 | Deployment target, and whether barodybroject survives as a product | **Open** | Nothing here deploys. The root `docker-compose.yml` runs the stack locally; barodybroject keeps its Azure files until D4 is decided. |
@@ -45,7 +45,7 @@ Three further calls, made while implementing:
 
 | Crossing | Why it is still there | Removed by |
 |---|---|---|
-| Rails writes Jekyll files (`PageEditor`, `Zer0Cms::Cms::Writer`) | D16: the files are canonical until PLAN-D1 | M16, after D1 |
+| Rails writes Jekyll files (`PageEditor`, `Zer0Cms::Cms::Writer`) | D16: the files are canonical for every site that has not cut over (ADR 0002) | M16, per site as each cuts over |
 | The extension keeps its own governance queue, ledger and harness (`src/core/governance`, `src/core/harness`) | It works without a server, and the content plane's `Suggestion` and `AgentRun` are not yet reachable from the editor | M18 |
 | `rails/app/services/image_engine.rb` and the Ruby port of the image engine | The content plane's media pipeline does not exist yet | M19 |
 | Four other LLM clients | Their callers have not moved to the content plane's agents | M12 (ABC, story profiles), M20 |
@@ -54,7 +54,7 @@ Three further calls, made while implementing:
 ## Consequences
 
 - The repository gains a fourth runtime (Python/Django) at its centre, which is ops load for a single maintainer (PLAN §7). The root compose file and `bin/zer0` keep it to one command each.
-- The content plane is additive until PLAN-D1 is decided: removing it would leave every other product working.
+- The content plane is additive until the first site cuts over (ADR 0002): until then, removing it would leave every other product working.
 - A Rails change never needs Python, an extension change never needs Python, and a content-plane change never downloads VS Code: `content.yml` is path-filtered like every other project workflow.
 
 ## Progress
