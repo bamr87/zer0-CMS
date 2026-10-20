@@ -1,0 +1,15 @@
+- title: News
+  url: /posts
+  sublinks:
+    - title: Pages
+      url: /pages
+- title: About
+  url: /about/
+  sublinks:
+    - title: Config
+      url: /about/config
+    - title: Contributing
+      url: /about/contributing
+    - title: Sitemap
+      url: /about/sitemap
+
