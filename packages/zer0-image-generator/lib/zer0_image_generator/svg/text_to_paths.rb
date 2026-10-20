@@ -293,8 +293,7 @@ module Zer0ImageGenerator
       def resolve_font_family(css_family, weight, default_family)
         chosen = BUNDLED_FONTS.key?(default_family) ? default_family : DEFAULT_FONT_FAMILY
         css_family.to_s.split(",").each do |name|
-          # str.strip("'\"") — any run of either quote, both ends.
-          wanted = name.strip.gsub(/\A['"]+|['"]+\z/, "").downcase
+          wanted = strip_chars(name.strip, "'\"").downcase
           hit = BUNDLED_FONTS.find { |_key, (_file, names)| names.include?(wanted) }
           next unless hit
 
@@ -303,6 +302,17 @@ module Zer0ImageGenerator
         end
         chosen = "inter-bold" if chosen == "inter" && bold?(weight)
         chosen
+      end
+
+      # Python's str.strip/lstrip/rstrip(chars): drop any run of `chars` from
+      # the chosen ends. Index scans, not anchored regexes — `/ +\z/` style
+      # patterns rescan from every start position (polynomial on long runs).
+      def strip_chars(text, chars, left: true, right: true)
+        first = 0
+        last = text.length
+        first += 1 while left && first < last && chars.include?(text[first])
+        last -= 1 while right && last > first && chars.include?(text[last - 1])
+        text[first...last]
       end
 
       def bold?(weight)
@@ -712,8 +722,8 @@ module Zer0ImageGenerator
           runs = chunk[:runs]
           next if runs.empty?
 
-          runs[0][:text] = runs[0][:text].sub(/\A +/, "")
-          runs[-1][:text] = runs[-1][:text].sub(/ +\z/, "")
+          runs[0][:text] = strip_chars(runs[0][:text], " ", right: false)
+          runs[-1][:text] = strip_chars(runs[-1][:text], " ", left: false)
           measured = []
           total = 0.0
           runs.each do |run|
