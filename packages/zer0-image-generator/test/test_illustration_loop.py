@@ -202,6 +202,9 @@ class TestLoopRounds(LoopCase):
         edit_prompt = client.text_calls[2]["user"]
         self.assertIn("REQUIRED NEXT CHANGE: enlarge the probe", edit_prompt)
         self.assertIn("does NOT hold", edit_prompt)
+        # The editor revises the pre-outline SOURCE: the headline is live text.
+        self.assertIn(">Chandrayaan-1 Reaches the Moon</text>", edit_prompt)
+        self.assertEqual(result.meta["text"]["converted"], 1)
 
     def test_a_worse_edit_loses_best_of(self):
         edited = GOOD_SVG.replace('r="220"', 'r="20"')

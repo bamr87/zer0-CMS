@@ -3638,8 +3638,10 @@ class Headline:
                 f"lines verbatim, one <text> per line or one <text> with <tspan>s):\n"
                 f"  font-family=\"{self.css_family}\" font-size=\"{_fmt2(self.size)}\" "
                 f"text-anchor=\"{self.anchor}\" x=\"{_fmt2(self.x)}\"\n{rows}\n"
-                "Give it a backing plate or clear field so it reads at thumbnail size. "
-                "No other lettering anywhere in the banner.")
+                "Set it at exactly this size: no scale() transform on it or its parents, "
+                "no shrinking to fit a box — make the box fit the headline. Give it a "
+                "backing plate or clear field so it reads at thumbnail size. No other "
+                "lettering anywhere in the banner.")
 
 
 HEADLINE_SIZES: Dict[str, Tuple[float, float]] = {
@@ -3714,10 +3716,14 @@ def ensure_accessible(svg: str, title: str) -> str:
 
 @dataclass
 class ShapedSvg:
-    svg: str
+    svg: str                    # what would be committed (text outlined)
     lint: SvgLintReport
     text: TextToPathsResult
     sanitizer_notes: List[str]
+    source: str = ""            # sanitized, BEFORE text→paths: what an edit
+                                # round revises, so the headline is still
+                                # live <text> the editor can re-set — not
+                                # glyph outlines it can only scale
 
 
 def shape_svg(raw: str, title: str, settings: Settings, default_family: str) -> ShapedSvg:
@@ -3733,7 +3739,7 @@ def shape_svg(raw: str, title: str, settings: Settings, default_family: str) -> 
     report = lint_svg(svg.encode("utf-8"), "banner", max_kb=settings.svg_max_kb, strict=True)
     if settings.svg_text == "keep":
         report.warnings = [w for w in report.warnings if w != LINT_TEXT_WARNING]
-    return ShapedSvg(svg=svg, lint=report, text=text, sanitizer_notes=notes)
+    return ShapedSvg(svg=svg, lint=report, text=text, sanitizer_notes=notes, source=clean)
 
 
 def look_svg(svg: str, workdir: Path, stem: str, settings: Settings,
@@ -3943,7 +3949,7 @@ class IllustrationLoop:
             self.meta["fix_round"] = True
             try:
                 shaped = shape_svg(extract_svg_document(
-                    self.fix(shaped.svg, shaped.lint.findings())), title, self.settings,
+                    self.fix(shaped.source, shaped.lint.findings())), title, self.settings,
                     self.family)
             except Exception as exc:  # noqa: BLE001
                 warn(f"  ↳ fix round failed: {exc}")
@@ -3980,7 +3986,7 @@ class IllustrationLoop:
                 if round_no >= self.settings.claude_rounds or self._over_budget("edit"):
                     break
                 try:
-                    edited = shape_svg(extract_svg_document(self.edit(current.svg, critique)),
+                    edited = shape_svg(extract_svg_document(self.edit(current.source, critique)),
                                        title, self.settings, self.family)
                 except Exception as exc:  # noqa: BLE001
                     warn(f"  ↳ edit round failed: {exc}")
