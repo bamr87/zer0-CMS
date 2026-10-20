@@ -78,3 +78,11 @@ exclude:
   - CLAUDE.md
   - .claude/
   - telemetry/
+  # A custom exclude list replaces Jekyll's defaults, so restate them: CI's
+  # bundler-cache installs gems into vendor/bundle, which Jekyll would otherwise
+  # read (its site_template .erb posts fail the build).
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .bundle/
+  - node_modules/

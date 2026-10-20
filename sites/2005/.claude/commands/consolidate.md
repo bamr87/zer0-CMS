@@ -5,9 +5,7 @@ argument-hint: "[--dry-run] — optional; plan the merge without creating or arc
 
 Run the **consolidation routine** for this lineage of self-growing knowledge bases.
 
-Canonical playbook: read `.github/prompts/consolidate.prompt.md` and follow it exactly. The
-lineage, `consolidation.naming_rule`, and `consolidation.layout` in `lifecycle.yml` parameterize
-everything — read it first; never assume subjects or a repo name.
+Canonical playbook: read `.github/prompts/consolidate.prompt.md` and follow it exactly. The lineage, `consolidation.naming_rule`, and `consolidation.layout` in `lifecycle.yml` parameterize everything — read it first; never assume subjects or a repo name.
 
 Outline:
 
@@ -23,8 +21,6 @@ Outline:
 6. **Retire members** — status `consolidated`, README banner pointing to the new repo, push, then
    archive on GitHub. Never delete.
 
-Honor `--dry-run`: plan only, no writes. In CI the ambient token is repo-scoped — use
-`GH_TOKEN="$LIFECYCLE_PAT" gh …` for repo creation, member pushes, and archival. End with the
-`## Consolidation Summary` block from the canonical prompt.
+Honor `--dry-run`: plan only, no writes. In CI the ambient token is repo-scoped — use `GH_TOKEN="$LIFECYCLE_PAT" gh …` for repo creation, member pushes, and archival. End with the `## Consolidation Summary` block from the canonical prompt.
 
 Arguments: $ARGUMENTS
