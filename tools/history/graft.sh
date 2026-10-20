@@ -35,14 +35,21 @@ then replay every later change, ending on a tree identical to the one before thi
 commit. See docs/plan/PLAN.md C0."
 rm -rf -- "${paths[@]}"   # run it in a throwaway worktree: ignored-but-tracked files (assets/vendor) survive git clean
 
-# 2. Graft each rewritten history.
+# 2. Graft each rewritten history. The merge commit is built by hand (commit-tree) rather
+#    than with `git merge`, which refuses with "Already up to date" once a tip is already an
+#    ancestor of <base-ref> — the state after a graft branch was merged with a merge commit.
 for i in "${!tips[@]}"; do
-  git -c user.email=$E merge -q --allow-unrelated-histories --no-edit \
-    -m "chore(history): graft the history of ${paths[$i]} (C0)" "${tips[$i]}"
+  git checkout "${tips[$i]}" -- "${paths[$i]}"
+  git checkout "$BASE" -- .gitmodules 2>/dev/null || true
+  m=$(git -c user.email=$E commit-tree "$(git write-tree)" -p HEAD -p "${tips[$i]}" \
+        -m "chore(history): graft the history of ${paths[$i]} (C0)")
+  git reset -q "$m"
 done
 
-# 3. Replay the later commits that touched an imported path.
-for c in $(git rev-list --reverse "$SQUASH^..$BASE" -- "${paths[@]}"); do
+# 3. Replay the later commits that touched an imported path. First-parent only: once a
+#    graft has been merged (even as a merge commit), the grafted histories are ancestors
+#    of <base-ref> too, and walking into them would replay every original commit again.
+for c in $(git rev-list --reverse --first-parent "$SQUASH^..$BASE" -- "${paths[@]}"); do
   touched=()
   for p in "${paths[@]}"; do
     if ! git diff --quiet "$c^" "$c" -- "$p"; then touched+=("$p"); fi
