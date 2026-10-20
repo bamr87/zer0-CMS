@@ -1,0 +1,77 @@
+services:
+  # ---------- AIEO MCP Server + Audit Client ----------
+  mcp-server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./reports:/app/reports
+      - ./sites.txt:/app/sites.txt:ro
+    # Default: runs the MCP server on stdio (for MCP clients to connect)
+    command: ["python", "-m", "app.mcp_server"]
+    stdin_open: true
+
+  mcp-audit:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - ./reports:/app/reports
+      - ./sites.txt:/app/sites.txt:ro
+      - ./mcp_client_audit.py:/app/mcp_client_audit.py:ro
+    command: ["python", "/app/mcp_client_audit.py", "--sites", "/app/sites.txt", "--output", "/app/reports"]
+
+  # ---------- Infrastructure Services ----------
+  postgres:
+    image: timescale/timescaledb:latest-pg18
+    environment:
+      POSTGRES_USER: aieo
+      POSTGRES_PASSWORD: aieo
+      POSTGRES_DB: aieo
+    ports:
+      - "127.0.0.1:${AIEO_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aieo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "127.0.0.1:${AIEO_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "127.0.0.1:${AIEO_QDRANT_PORT:-6333}:6333"
+      - "127.0.0.1:${AIEO_QDRANT_6334_PORT:-6334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+
+
