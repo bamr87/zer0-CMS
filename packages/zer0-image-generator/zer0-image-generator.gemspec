@@ -36,6 +36,12 @@ Gem::Specification.new do |spec|
     "lib/**/*.rb",
     "lib/**/*.py",
     "lib/**/*.js", # Playwright SVG→PNG rasterizer fallback (local provider)
+    # Illustration loop (provider: claude): headline fonts for text→paths,
+    # the plan/critique JSON Schemas, and the style cards the loop resolves
+    # by name. The engine degrades without them (prose style, no lettering).
+    "lib/zer0_image_generator/fonts/*",
+    "lib/zer0_image_generator/svg/*.schema.json",
+    "tools/svg/library/styles/*.md",
     "LICENSE",
     "README.md",
     "CHANGELOG.md",
