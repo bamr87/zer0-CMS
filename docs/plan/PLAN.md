@@ -234,6 +234,7 @@ Ordered: each step needs the one before it. A step that needs a credential, a re
   - Tasks: `mirror-theme.yml` — on a push to `main` that touches `packages/zer0-mistakes/**`, and on a theme release, commit the subtree onto `bamr87/zer0-mistakes` `main` as one fast-forward snapshot commit (`sync: zer0-CMS@<sha>`) and, on a release, tag it `v<version>`; the mirror's `.github/workflows/` is reduced to nothing that deploys, releases or opens pull requests.
   - Accept: the mirror's tree equals `packages/zer0-mistakes/` (less the workflows); the job refuses when the mirror's `main` is not the commit it last pushed; a consumer pinned to `@v<version>` builds.
   - Needs the owner: a `FLEET_TOKEN` with `contents:write` on the mirror; disabling its issues and pull requests.
+  - Built: `.github/workflows/theme-mirror.yml` (kill switch `THEME_MIRROR_ENABLED`, default off). Armed only after C1: a local dry run of the first snapshot against today's mirror changes 99 files outside `.github/workflows/` (−5,981 lines) — the theme's own commits since the import, which this repository does not have yet, so a sync before C1 would revert them on the mirror.
 - [ ] **C4: One Pages deploy**
   - Tasks: `pages.yml` builds every site under `sites/`, the theme's docs and barodybroject's sidecar into one artifact with each site's sub-path `baseurl` (ADR 0002 §4); `year-of-ai.github.io` builds `sites/2005` into `/2005/` from this repository.
   - Accept: every route answers 200 in a link-checked preview; `bin/zer0 check` fails for a site with no route.
