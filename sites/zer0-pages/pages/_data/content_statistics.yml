@@ -1,0 +1,22 @@
+# Content statistics (zer0-pages)
+# Read by the theme gem's stats layout/includes (site.data.content_statistics).
+# This is a valid-structure stub: auto-generation is disabled in _config.yml
+# (content_statistics.auto_generate: false), so values stay zeroed until
+# regenerated deliberately. Schema mirrors the zer0-mistakes theme:
+#   overview:   scalar totals
+#   categories: list of [name, count] pairs
+#   tags:       list of [name, count] pairs
+generated_at: '2026-07-05'
+overview:
+  total_posts: 0
+  total_pages: 0
+  total_content: 0
+  total_categories: 0
+  total_tags: 0
+  total_authors: 0
+  total_words: 0
+  average_words_per_post: 0
+  published: 0
+  drafts: 0
+categories: []
+tags: []

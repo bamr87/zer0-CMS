@@ -1,0 +1,45 @@
+# Main Navigation Configuration (zer0-pages)
+# Used by: _includes/navigation/navbar.html and
+#          _includes/navigation/navbar-mobile-quicklinks.html (theme gem)
+# Purpose: Primary site navigation with dropdown children.
+# Note: Jekyll never loads _data from theme gems, so this file (not the theme
+#       repo's copy) is the live navbar. Every URL below corresponds to a real
+#       permalink of a kept page in pages/ (docs/posts/notes scope).
+
+- title: Home
+  icon: bi-house
+  url: /
+
+- title: Docs
+  icon: bi-journal-bookmark
+  url: /docs/
+  children:
+    - title: Getting Started
+      url: /docs/obsidian/getting-started/
+    - title: Authoring
+      url: /docs/obsidian/authoring-workflow/
+    - title: Graph
+      url: /docs/obsidian/graph/
+
+- title: Posts
+  icon: bi-newspaper
+  url: /posts/
+  children:
+    - title: Categories
+      url: /categories/
+    - title: Tags
+      url: /tags/
+    - title: Archives
+      url: /archives/
+
+- title: Notes
+  icon: bi-journal-text
+  url: /notes/
+
+- title: Wiki
+  icon: bi-diagram-3
+  url: /wiki/
+
+- title: Graph
+  icon: bi-share
+  url: /docs/obsidian/graph/

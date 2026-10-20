@@ -1,0 +1,60 @@
+# =============================================================================
+# .theme-overrides.yml — the theme files zer0-pages intentionally forks
+# =============================================================================
+#
+# Read by the theme repo's auditor:
+#
+#   ./scripts/bin/audit-consumer --consumer-path /path/to/zer0-pages
+#   ./scripts/bin/audit-consumer --consumer-path /path/to/zer0-pages --strict
+#
+# It detects this repo's Jekyll `source:` (pages/) and classifies every file
+# under it that also exists in jekyll-theme-zer0:
+#
+#   IDENTICAL            byte-for-byte the theme's → delete it, use the theme's
+#   DIFFERS_JUSTIFIED    differs AND listed below → intentional, no action
+#   DIFFERS_UNJUSTIFIED  differs and NOT listed below → flagged (--strict fails)
+#   UNIQUE               ours alone → ignored
+#
+# `path` is theme-relative, i.e. how the file appears inside the theme gem —
+# `_includes/…`, not `pages/_includes/…`.
+#
+# Keep `reason` current. An override whose reason has gone away is the signal to
+# retire the fork and take the theme's version back.
+# =============================================================================
+
+overrides:
+  - path: "_includes/content/intro.html"
+    reason: >-
+      Keeps the "Copilot Agent" prompt dropdown driven by pages/_data/prompts.yml.
+      The theme replaced it with the page-feedback "Improve" button, which renders
+      only when `site.page_feedback.enabled` is set — this site does not set it, so
+      the theme's copy would leave the intro with no prompt/report button at all.
+      The fork also predates the theme's i18n integration (no core/i18n.html
+      include, no `ui.*` lookups), so its labels are hard-coded English.
+    upstream: >-
+      NOT a bug workaround any more. bamr87/zer0-mistakes#293 (preview_path
+      double-`relative_url`) was fixed in theme v1.26.0 and this fork's
+      preview_path block is now byte-identical to the theme's. Retiring the fork
+      means accepting the page-feedback widget (and enabling `page_feedback:` in
+      _config.yml) plus the i18n labels — a product decision, not a cleanup.
+
+  - path: "_includes/obsidian/full-graph.html"
+    reason: >-
+      Site-specific trim of the theme's graph page: drops the theme's H1/intro
+      (pages/_docs/obsidian/graph.md supplies its own) and its "See also"
+      wikilinks (five theme-only targets that would render broken in this vault),
+      credits the local generator pages/_plugins/obsidian_graph_index.rb in the
+      "How it's built" table, and reduces the legend to the collections this vault
+      keeps (posts/docs/notes/pages). Also still pins
+      window.OBSIDIAN_WIKI_INDEX_URL — redundant now that the Gemfile is
+      unconstrained and resolves 1.26.0+ (see `upstream:`), but harmless.
+    upstream: >-
+      bamr87/zer0-mistakes#294 (OBSIDIAN_WIKI_INDEX_URL global-name mismatch) was
+      fixed in theme v1.26.0 — obsidian-graph.js now reads
+      window.OBSIDIAN_CONFIG.wikiIndexUrl and falls back to the legacy global — so
+      that pin is redundant on 1.26.0+, though harmless. The fork's real cost is
+      that it is frozen at a pre-1.26 snapshot: the theme has since redesigned the
+      page (Graph settings accordion, per-collection toggles, display/force
+      sliders, zoom button-group, hover preview card, tag:/path: search,
+      localStorage persistence) and none of that reaches this site. Re-syncing
+      means porting the three site-specific edits onto the theme's current copy.
