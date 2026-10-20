@@ -34,7 +34,7 @@ module Zer0ImageGenerator
       ["--enhance-format",   [:enhance_format, "--enhance-format FMT", "png|jpeg|webp (implies --enhance)"]],
       ["--prompt-engine",    [:prompt_engine, "--prompt-engine ENGINE", "claude | xai | template"]],
       ["--review",           [:review, "--review ENGINE", "claude | xai | none"]],
-      ["--rasterizer",       [:rasterizer, "--rasterizer TOOL", "auto|rsvg|inkscape|magick|playwright|none"]],
+      ["--rasterizer",       [:rasterizer, "--rasterizer TOOL", "auto|rsvg|resvg|inkscape|magick|playwright|none"]],
       ["--style",            [:style, "--style TEXT", "Override the image style prompt"]],
       ["--assets-prefix",    [:assets_prefix, "--assets-prefix PREFIX", "Assets prefix for path normalization"]],
       ["--no-auto-prefix",   [:no_auto_prefix, "--no-auto-prefix", "Disable automatic assets-prefix prepending"]],
@@ -43,9 +43,20 @@ module Zer0ImageGenerator
       ["--collections-dir",  [:collections_dir, "--collections-dir DIR", "Directory holding _<collection> dirs"]],
       ["--front-matter-key", [:front_matter_key, "--front-matter-key KEY", "Front-matter key (default preview; seo-tag sites: image)"]],
       ["--authors-file",     [:authors_file, "--authors-file FILE", "Author-overrides YAML ('' disables)"]],
+      # illustration loop (provider: claude)
+      ["--style-card",       [:style_card, "--style-card NAME", "Style card name or path"]],
+      ["--palette",          [:palette, "--palette TOKENS", "Six hex tokens or a palette name"]],
+      ["--rounds",           [:rounds, "--rounds N", "Critique-driven edit rounds (0 = one-shot)"]],
+      ["--min-score",        [:min_score, "--min-score SCORE", "Critic score that ends the loop"]],
+      ["--svg-text",         [:svg_text, "--svg-text MODE", "paths | keep | forbid"]],
+      ["--look-rasterizer",  [:look_rasterizer, "--look-rasterizer TOOL", "Tool the loop looks through"]],
+      ["--budget-usd",       [:budget_usd, "--budget-usd USD", "Per-run spend cap for the loop"]],
+      ["--telemetry",        [:telemetry, "--telemetry PATH", "Append one JSON record per banner"]],
+      ["--changed",          [:changed, "--changed", "Illustrate git-new/modified markdown"]],
+      ["--exclude-re",       [:exclude_re, "--exclude-re REGEX", "--changed: skip matching status lines"]],
     ].freeze
 
-    BOOLEANS = %w[--dry-run --verbose --force --list-missing --enhance --no-auto-prefix].freeze
+    BOOLEANS = %w[--dry-run --verbose --force --list-missing --enhance --no-auto-prefix --changed].freeze
 
     class << self
       def init_with_program(prog)

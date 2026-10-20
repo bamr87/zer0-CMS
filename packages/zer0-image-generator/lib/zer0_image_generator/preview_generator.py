@@ -80,6 +80,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import uuid
@@ -134,9 +135,29 @@ DEFAULTS: Dict[str, Any] = {
     "claude_effort": "low",      # output_config.effort for brief/review calls
                                  # (short creative tasks; "" sends no effort)
     "rasterizer": "auto",        # SVG→PNG tool for the SVG providers (local,
-                                 # claude): auto|rsvg|inkscape|magick|playwright
-                                 # |none. "none" is SVG-only mode — the vector
-                                 # banner IS the deliverable and no PNG is made.
+                                 # claude): auto|rsvg|resvg|inkscape|magick
+                                 # |playwright|none. "none" is SVG-only mode —
+                                 # the vector banner IS the deliverable and no
+                                 # PNG is made.
+    # ---- the `claude` provider's illustration loop -------------------------
+    # plan → author → shape → look → critique → (edit → look → critique)* →
+    # commit best. See ClaudeSvgProvider and docs/ILLUSTRATION-LOOP.md.
+    "style_card": "",            # tools/svg/library/styles/<name>.md (or a
+                                 # path); "" = the prose style string only
+    "palette": [],               # 6 tokens [bg, shadow, low-mid, mid, accent,
+                                 # highlight], or a BANNER_PALETTES name; [] =
+                                 # let the plan/card choose
+    "claude_plan": True,         # JSON scene-graph plan before authoring
+    "claude_rounds": 1,          # critique-driven edit rounds; 0 = one-shot
+                                 # (no render, no vision call)
+    "claude_min_score": 7,       # critic `overall` (0-10) that ends the loop
+    "claude_require_thumbnail": True,  # ...and only if it reads at 120px
+    "svg_text": "paths",         # paths: <text> → <path> with a bundled font;
+                                 # keep: leave <text>; forbid: strip it
+    "svg_max_kb": 300,           # strict-lint size budget for a committed banner
+    "look_rasterizer": "auto",   # the tool the loop LOOKS through (independent
+                                 # of `rasterizer`, which decides the OUTPUT)
+    "claude_budget_usd": 0,      # per-run spend cap for the loop; 0 = uncapped
 }
 
 # Enhance mode (OpenAI /v1/images/edits — see OpenAIProvider.edit)
@@ -727,6 +748,67 @@ class Settings:
     rasterizer: str = "auto"
     provider_explicit: bool = False
 
+    # The `claude` provider's illustration loop (see DEFAULTS).
+    style_card: str = DEFAULTS["style_card"]
+    palette: List[str] = field(default_factory=list)
+    claude_plan: bool = DEFAULTS["claude_plan"]
+    claude_rounds: int = DEFAULTS["claude_rounds"]
+    claude_min_score: float = float(DEFAULTS["claude_min_score"])
+    claude_require_thumbnail: bool = DEFAULTS["claude_require_thumbnail"]
+    svg_text: str = DEFAULTS["svg_text"]
+    svg_max_kb: float = float(DEFAULTS["svg_max_kb"])
+    look_rasterizer: str = DEFAULTS["look_rasterizer"]
+    claude_budget_usd: float = float(DEFAULTS["claude_budget_usd"])
+    telemetry: str = ""               # JSONL path ("-" = stdout); "" = off
+    changed: bool = False             # illustrate git-new/modified markdown
+    exclude_re: str = ""              # --changed: skip matching status lines
+
+
+# Truthy spellings for booleans that arrive as strings (env vars, CLI values,
+# quoted YAML). Anything else — including "" — is false.
+_TRUE_WORDS = ("1", "true", "yes", "on")
+
+
+def _setting_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    return str(value).strip().lower() in _TRUE_WORDS
+
+
+def _setting_number(value: Any, default: float) -> float:
+    """A float from config/env/CLI; unparseable values fall back to default
+    rather than aborting the run (a typo in _config.yml must not cost the
+    tick its banners)."""
+    if isinstance(value, bool):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+_HEX_TOKEN = re.compile(r"\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\Z")
+
+
+def palette_tokens(value: Any) -> List[str]:
+    """Normalize a palette setting to a list of hex tokens.
+
+    Accepts a YAML list of hex strings, a comma/space separated string of hex
+    tokens, or the NAME of one of the engine's BANNER_PALETTES. Invalid
+    entries are dropped; an unusable value yields [] (no palette constraint).
+    """
+    if isinstance(value, str):
+        name = value.strip()
+        if name in BANNER_PALETTES:
+            return list(BANNER_PALETTES[name])
+        value = [part for part in re.split(r"[\s,]+", name) if part]
+    if not isinstance(value, list):
+        return []
+    tokens = [str(v).strip() for v in value]
+    return [t.lower() for t in tokens if _HEX_TOKEN.match(t)]
+
 
 def resolve_settings(args: argparse.Namespace, config: Dict[str, Any]) -> Settings:
     """Merge CLI > env > _config.yml `preview_images:` > DEFAULTS into a
@@ -749,6 +831,16 @@ def resolve_settings(args: argparse.Namespace, config: Dict[str, Any]) -> Settin
         if env_value:
             return env_value
         return str(cfg(cfg_key, DEFAULTS[cfg_key]))
+
+    def layered(cli_value: Any, env_name: str, cfg_key: str) -> Any:
+        """pick() without the str(): CLI > non-empty env > config > default,
+        returning the raw value so lists, numbers and booleans survive."""
+        if cli_value is not None:
+            return cli_value
+        env_value = os.environ.get(env_name)
+        if env_value:
+            return env_value
+        return cfg(cfg_key, DEFAULTS[cfg_key])
 
     # collections_dir: block override > Jekyll's own top-level key > default.
     collections_dir = cfg(
@@ -837,6 +929,31 @@ def resolve_settings(args: argparse.Namespace, config: Dict[str, Any]) -> Settin
         ),
         rasterizer=pick(args.rasterizer, "IMAGE_RASTERIZER", "rasterizer"),
         provider_explicit=args.provider is not None or bool(os.environ.get("AI_PROVIDER")),
+        style_card=pick(args.style_card, "IMAGE_STYLE_CARD", "style_card").strip(),
+        palette=palette_tokens(layered(args.palette, "IMAGE_PALETTE", "palette")),
+        claude_plan=_setting_bool(layered(args.claude_plan, "CLAUDE_PLAN", "claude_plan")),
+        claude_rounds=max(0, int(_setting_number(
+            layered(args.claude_rounds, "CLAUDE_ROUNDS", "claude_rounds"),
+            float(DEFAULTS["claude_rounds"])))),
+        claude_min_score=_setting_number(
+            layered(args.claude_min_score, "CLAUDE_MIN_SCORE", "claude_min_score"),
+            float(DEFAULTS["claude_min_score"])),
+        claude_require_thumbnail=_setting_bool(layered(
+            args.claude_require_thumbnail, "CLAUDE_REQUIRE_THUMBNAIL",
+            "claude_require_thumbnail")),
+        svg_text=pick(args.svg_text, "SVG_TEXT", "svg_text").strip().lower(),
+        svg_max_kb=_setting_number(
+            layered(args.svg_max_kb, "SVG_MAX_KB", "svg_max_kb"),
+            float(DEFAULTS["svg_max_kb"])),
+        look_rasterizer=pick(args.look_rasterizer, "LOOK_RASTERIZER", "look_rasterizer"),
+        claude_budget_usd=_setting_number(
+            layered(args.claude_budget_usd, "CLAUDE_BUDGET_USD", "claude_budget_usd"),
+            float(DEFAULTS["claude_budget_usd"])),
+        telemetry=(args.telemetry if args.telemetry is not None
+                   else os.environ.get("PREVIEW_TELEMETRY", "")),
+        changed=bool(args.changed),
+        exclude_re=(args.exclude_re if args.exclude_re is not None
+                    else os.environ.get("PREVIEW_EXCLUDE_RE", "")),
     )
     return settings
 
@@ -1892,16 +2009,44 @@ def _playwright_helper(project_root: Path) -> Optional[Path]:
     return None
 
 
+RASTERIZER_CHOICES: List[str] = [
+    "auto", "rsvg", "resvg", "inkscape", "magick", "playwright", "none",
+]
+
+
+def _resvg_attempt(svg_path: Path, png_path: Path, w: int, explicit: bool) -> bool:
+    """resvg — the closest headless match to browser rendering (cairo-based
+    tools mis-render feTurbulence, for one). Native `resvg` first, then the
+    `resvg-js` CLI (`npm i -g @resvg/resvg-js-cli`). Only an EXPLICIT
+    `resvg` preference may fall through to `npx -y`, because that downloads a
+    package — `auto` must never reach for the network on its own."""
+    if _which("resvg"):
+        return _run_quiet(["resvg", "-w", str(w), str(svg_path), str(png_path)])
+    if _which("resvg-js"):
+        return _run_quiet(["resvg-js", "--fit-width", str(w), str(svg_path), str(png_path)])
+    if explicit and _which("npx"):
+        return _run_quiet(["npx", "-y", "@resvg/resvg-js-cli", "--fit-width", str(w),
+                           str(svg_path), str(png_path)], timeout=300)
+    return False
+
+
 def rasterize_svg(
-    svg_path: Path, png_path: Path, project_root: Path, preference: str = "auto"
+    svg_path: Path, png_path: Path, project_root: Path, preference: str = "auto",
+    width: int = SVG_WIDTH,
 ) -> Optional[str]:
     """SVG → PNG through the first available tool. Returns the tool name used,
-    or None when nothing worked (caller keeps the .svg)."""
-    w, h = SVG_WIDTH, SVG_HEIGHT
+    or None when nothing worked (caller keeps the .svg).
+
+    `width` sets the output pixel width (height follows the banner's aspect),
+    so the illustration loop can render the same file at full size and at
+    card-thumbnail size."""
+    w = max(1, int(width))
+    h = max(1, int(round(w * SVG_HEIGHT / SVG_WIDTH)))
     helper = _playwright_helper(project_root)
     chain: List[Tuple[str, Any]] = [
         ("rsvg", lambda: _which("rsvg-convert") and _run_quiet(
             ["rsvg-convert", "-w", str(w), "-h", str(h), "-o", str(png_path), str(svg_path)])),
+        ("resvg", lambda: _resvg_attempt(svg_path, png_path, w, preference == "resvg")),
         ("inkscape", lambda: _which("inkscape") and _run_quiet(
             ["inkscape", str(svg_path), "--export-type=png",
              f"--export-filename={png_path}", "-w", str(w), "-h", str(h)])),
@@ -1935,8 +2080,989 @@ def rasterize_svg(
 
 
 # =============================================================================
+# SVG lint (deterministic) — the checks not worth a model token
+# =============================================================================
+# This is the ONE Python implementation: tools/svg/svg-check.py is a thin CLI
+# over lint_svg(), and lib/zer0_image_generator/svg/lint.rb is pinned to that
+# CLI's output by test/ruby/test_svg_lint.rb. Message wording and finding
+# order are contract — the authoring loop feeds them back to the model as the
+# reason to fix, so rewording one changes what Claude is told.
+
+LINT_NUM = re.compile(r"-?\d*\.?\d+(?:[eE][-+]?\d+)?")
+LINT_DEFAULT_MAX_KB = 250.0
+LINT_TEXT_WARNING = ("<text> present — fonts are not guaranteed at render "
+                     "time. Convert to paths for distribution.")
+
+
+@dataclass
+class SvgLintReport:
+    label: str
+    kilobytes: float = 0.0
+    errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    fatal: Optional[str] = None
+    strict: bool = False
+
+    @property
+    def clean(self) -> bool:
+        if self.fatal:
+            return False
+        return not self.errors and not (self.strict and self.warnings)
+
+    def stderr_lines(self) -> List[str]:
+        if self.fatal:
+            return [f"ERROR {self.fatal}"]
+        return ([f"WARN  {w}" for w in self.warnings]
+                + [f"ERROR {e}" for e in self.errors])
+
+    def stdout_lines(self) -> List[str]:
+        if not self.clean:
+            return []
+        return [f"svg-check: {self.label} clean ({self.kilobytes:.1f}KB)"]
+
+    def findings(self) -> List[str]:
+        """Every problem as one list — what a fix round is told."""
+        if self.fatal:
+            return [self.fatal]
+        return list(self.errors) + (list(self.warnings) if self.strict else [])
+
+
+def _lint_tag(el: ET.Element) -> str:
+    return el.tag.split("}")[-1] if "}" in el.tag else el.tag
+
+
+def _lint_href(el: ET.Element) -> Optional[str]:
+    return el.get("href") or el.get(f"{{{XLINK_NS}}}href")
+
+
+def _lint_viewbox(root: ET.Element) -> Optional[Tuple[float, ...]]:
+    vb = root.get("viewBox")
+    if not vb:
+        return None
+    parts = [float(n) for n in LINT_NUM.findall(vb)]
+    return tuple(parts[:4]) if len(parts) == 4 else None
+
+
+def _lint_path_coords(d: str) -> List[Tuple[float, float]]:
+    """Rough absolute-coordinate sample. Ignores relative commands on purpose —
+    we only want a cheap 'is this wildly outside the canvas' signal."""
+    out: List[Tuple[float, float]] = []
+    for seg in re.findall(r"[MLHVCSQTA][^A-Za-z]*", d):
+        nums = [float(n) for n in LINT_NUM.findall(seg[1:])]
+        cmd = seg[0]
+        if cmd in "ML" and len(nums) >= 2:
+            out += list(zip(nums[0::2], nums[1::2]))
+        elif cmd == "C":
+            out += list(zip(nums[4::6], nums[5::6]))
+    return out
+
+
+def lint_svg(raw: bytes, label: str = "svg", max_kb: float = LINT_DEFAULT_MAX_KB,
+             strict: bool = False) -> SvgLintReport:
+    """Lint SVG bytes. `strict` treats warnings as failures (and is the only
+    mode that flags <text>). Never raises — an unparseable file is a `fatal`
+    finding, which (like svg-check.py's early return) discards the rest."""
+    report = SvgLintReport(label=label, strict=strict)
+    errors, warnings = report.errors, report.warnings
+    kb = len(raw) / 1024
+    report.kilobytes = kb
+    if kb > max_kb:
+        errors.append(f"file is {kb:.0f}KB, budget is {max_kb:.0f}KB "
+                      f"(run svgo, or reduce path precision)")
+
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError as e:
+        return SvgLintReport(label=label, kilobytes=kb, strict=strict,
+                             fatal=f"not well-formed XML: {e}")
+
+    if _lint_tag(root) != "svg":
+        errors.append(f"root element is <{_lint_tag(root)}>, expected <svg>")
+
+    vb = _lint_viewbox(root)
+    if vb is None:
+        errors.append("no viewBox on root — the art will not scale. "
+                      'Add viewBox="0 0 W H".')
+
+    kids = [_lint_tag(c) for c in root]
+    if "title" not in kids:
+        warnings.append("no <title> as first child (screen readers, and it "
+                        "shows as a tooltip)")
+    if root.get("role") != "img":
+        warnings.append('missing role="img" on root')
+
+    ids, dupes = set(), set()
+    used_refs = set()
+    ext_refs: List[str] = []
+
+    for el in root.iter():
+        t = _lint_tag(el)
+        _id = el.get("id")
+        if _id:
+            (dupes.add(_id) if _id in ids else ids.add(_id))
+
+        h = _lint_href(el)
+        if h:
+            if h.startswith("#"):
+                used_refs.add(h[1:])
+            elif h.startswith(("http://", "https://", "//")):
+                ext_refs.append(h)
+            elif h.startswith("data:image") and t == "image":
+                errors.append("embedded raster <image> — that is a PNG in a "
+                              "trenchcoat, not vector art")
+            elif t == "image":
+                errors.append(f"external <image> reference: {h}")
+
+        for _attr, val in el.attrib.items():
+            m = re.match(r"url\(#([^)]+)\)", (val or "").strip())
+            if m:
+                used_refs.add(m.group(1))
+
+        if vb and t == "path" and el.get("d"):
+            minx, miny, w, h_ = vb
+            pad = max(w, h_) * 2
+            for x, y in _lint_path_coords(el.get("d")):
+                if not (minx - pad <= x <= minx + w + pad and
+                        miny - pad <= y <= miny + h_ + pad):
+                    warnings.append(
+                        f"path coordinate ({x:g},{y:g}) is far outside the "
+                        f"viewBox — likely a stray control point")
+                    break
+
+        if t == "path" and el.get("d"):
+            long_decimals = re.findall(r"\d+\.\d{5,}", el.get("d"))
+            if len(long_decimals) > 20:
+                warnings.append("path data carries 5+ decimal places; round "
+                                "to 2-3 to cut file size ~40%")
+
+        if t == "text" and strict:
+            warnings.append(LINT_TEXT_WARNING)
+
+    if ext_refs:
+        errors.append(f"external network references: {', '.join(ext_refs[:3])}")
+    if dupes:
+        errors.append(f"duplicate id(s): {', '.join(sorted(dupes))}")
+    dangling = used_refs - ids
+    if dangling:
+        errors.append(f"reference(s) to missing id(s): "
+                      f"{', '.join(sorted(dangling))} — gradient or clipPath "
+                      f"will silently render as black/none")
+    return report
+
+
+# =============================================================================
+# SVG text → paths (bundled fonts, stdlib TrueType reader)
+# =============================================================================
+# Claude lays out a headline far better with <text> than by hand-authoring
+# glyph outlines, and the title is the most useful thing on a banner — but a
+# committed <text> renders in whatever font the viewer happens to have. So the
+# loop AUTHORS with <text> and SHIPS paths: every <text> is converted here
+# using a font bundled with the engine (fonts/, all OFL), and strict lint then
+# holds its no-<text> rule.
+#
+# The reader handles exactly what the bundled fonts use — TrueType outlines
+# (glyf/loca, simple + composite glyphs), cmap format 4, hmtx — and nothing
+# else (no kerning, no shaping, no hinting). It is stdlib-only by policy and
+# pinned byte-for-byte by the Ruby twin (svg/text_to_paths.rb): every number
+# that reaches a path goes through _fmt2, which rounds with floor(x*100+0.5)
+# on IEEE doubles so both languages print the same digits.
+
+FONTS_DIR = Path(__file__).resolve().parent / "fonts"
+
+# Family key → (file, CSS family names that select it). The first family in a
+# font-family list that names a bundled font wins; anything else (serif,
+# monospace, a font Claude imagined) resolves to the style card's default.
+BUNDLED_FONTS: Dict[str, Tuple[str, Tuple[str, ...]]] = {
+    "press-start-2p": ("PressStart2P-Regular.ttf", ("press start 2p", "press start", "pressstart2p")),
+    "inter": ("Inter-Regular.ttf", ("inter",)),
+    "inter-bold": ("Inter-Bold.ttf", ()),
+}
+DEFAULT_FONT_FAMILY = "inter"
+# Style card → the family its headline is set in.
+CARD_FONTS: Dict[str, str] = {"retro-pixel": "press-start-2p"}
+
+_FONT_CACHE: Dict[str, "TrueTypeFont"] = {}
+_FONT_LOCK = threading.Lock()
+
+
+def _fmt2(value: float) -> str:
+    """Two-decimal fixed format with trailing zeros dropped ("12.5", "-3",
+    "0.07"). Deterministic across Python and Ruby — see the section note."""
+    n = int(math.floor(value * 100 + 0.5))
+    sign = "-" if n < 0 else ""
+    n = abs(n)
+    whole, frac = divmod(n, 100)
+    if frac == 0:
+        return f"{sign}{whole}" if whole else "0"
+    digits = f"{frac:02d}".rstrip("0")
+    return f"{sign}{whole}.{digits}"
+
+
+class TrueTypeFont:
+    """Just enough of a TrueType font to draw Latin headlines."""
+
+    def __init__(self, path: Path):
+        self.path = Path(path)
+        self.data = self.path.read_bytes()
+        self.tables: Dict[str, Tuple[int, int]] = {}
+        num_tables = self._u16(4)
+        for i in range(num_tables):
+            rec = 12 + 16 * i
+            tag = self.data[rec:rec + 4].decode("latin-1")
+            self.tables[tag] = (self._u32(rec + 8), self._u32(rec + 12))
+        for required in ("head", "hhea", "hmtx", "maxp", "cmap", "loca", "glyf"):
+            if required not in self.tables:
+                raise ValueError(f"{self.path.name}: missing {required} table")
+        head = self.tables["head"][0]
+        self.units_per_em = self._u16(head + 18)
+        self.long_loca = self._s16(head + 50) == 1
+        hhea = self.tables["hhea"][0]
+        self.ascender = self._s16(hhea + 4)
+        self.descender = self._s16(hhea + 6)
+        self.num_hmetrics = self._u16(hhea + 34)
+        self.num_glyphs = self._u16(self.tables["maxp"][0] + 4)
+        self.x_height = self.units_per_em // 2
+        if "OS/2" in self.tables:
+            os2, os2_len = self.tables["OS/2"]
+            if self._u16(os2) >= 2 and os2_len >= 88:
+                self.x_height = self._s16(os2 + 86) or self.x_height
+        self.cmap = self._read_cmap()
+        self._glyph_cache: Dict[int, List[List[Tuple[float, float, bool]]]] = {}
+
+    # -- binary helpers -------------------------------------------------------
+    def _u16(self, off: int) -> int:
+        return (self.data[off] << 8) | self.data[off + 1]
+
+    def _s16(self, off: int) -> int:
+        v = self._u16(off)
+        return v - 0x10000 if v >= 0x8000 else v
+
+    def _u32(self, off: int) -> int:
+        return (self._u16(off) << 16) | self._u16(off + 2)
+
+    # -- tables ---------------------------------------------------------------
+    def _read_cmap(self) -> Dict[int, int]:
+        base = self.tables["cmap"][0]
+        chosen = None
+        for i in range(self._u16(base + 2)):
+            rec = base + 4 + 8 * i
+            platform, encoding = self._u16(rec), self._u16(rec + 2)
+            sub = base + self._u32(rec + 4)
+            if self._u16(sub) != 4:
+                continue
+            if (platform, encoding) == (3, 1) or (platform == 0 and chosen is None):
+                chosen = sub
+        if chosen is None:
+            raise ValueError(f"{self.path.name}: no cmap format 4 subtable")
+        seg_x2 = self._u16(chosen + 6)
+        ends = chosen + 14
+        starts = ends + seg_x2 + 2
+        deltas = starts + seg_x2
+        ranges = deltas + seg_x2
+        mapping: Dict[int, int] = {}
+        for seg in range(seg_x2 // 2):
+            end = self._u16(ends + 2 * seg)
+            start = self._u16(starts + 2 * seg)
+            delta = self._u16(deltas + 2 * seg)
+            range_off = self._u16(ranges + 2 * seg)
+            if start == 0xFFFF:
+                continue
+            for cp in range(start, end + 1):
+                if range_off == 0:
+                    gid = (cp + delta) & 0xFFFF
+                else:
+                    addr = ranges + 2 * seg + range_off + 2 * (cp - start)
+                    gid = self._u16(addr)
+                    if gid:
+                        gid = (gid + delta) & 0xFFFF
+                if gid:
+                    mapping[cp] = gid
+        return mapping
+
+    def glyph_id(self, char: str) -> int:
+        return self.cmap.get(ord(char), 0)
+
+    def advance(self, gid: int) -> int:
+        hmtx = self.tables["hmtx"][0]
+        index = gid if gid < self.num_hmetrics else self.num_hmetrics - 1
+        return self._u16(hmtx + 4 * index)
+
+    def _glyph_range(self, gid: int) -> Tuple[int, int]:
+        loca = self.tables["loca"][0]
+        if self.long_loca:
+            start, end = self._u32(loca + 4 * gid), self._u32(loca + 4 * gid + 4)
+        else:
+            start, end = 2 * self._u16(loca + 2 * gid), 2 * self._u16(loca + 2 * gid + 2)
+        glyf = self.tables["glyf"][0]
+        return glyf + start, end - start
+
+    def contours(self, gid: int, depth: int = 0) -> List[List[Tuple[float, float, bool]]]:
+        """Contours as lists of (x, y, on_curve) in font units (y up)."""
+        if gid in self._glyph_cache:
+            return self._glyph_cache[gid]
+        if gid >= self.num_glyphs or depth > 8:
+            return []
+        off, length = self._glyph_range(gid)
+        if length == 0:
+            result: List[List[Tuple[float, float, bool]]] = []
+        elif self._s16(off) >= 0:
+            result = self._simple_glyph(off)
+        else:
+            result = self._composite_glyph(off, depth)
+        self._glyph_cache[gid] = result
+        return result
+
+    def _simple_glyph(self, off: int) -> List[List[Tuple[float, float, bool]]]:
+        n_contours = self._s16(off)
+        p = off + 10
+        end_pts = [self._u16(p + 2 * i) for i in range(n_contours)]
+        p += 2 * n_contours
+        n_points = (end_pts[-1] + 1) if end_pts else 0
+        p += 2 + self._u16(p)  # skip instructions
+        flags: List[int] = []
+        while len(flags) < n_points:
+            flag = self.data[p]
+            p += 1
+            flags.append(flag)
+            if flag & 0x08:
+                repeat = self.data[p]
+                p += 1
+                flags.extend([flag] * repeat)
+        flags = flags[:n_points]
+
+        def coords(short_bit: int, same_bit: int) -> List[int]:
+            nonlocal p
+            values: List[int] = []
+            value = 0
+            for flag in flags:
+                if flag & short_bit:
+                    delta = self.data[p]
+                    p += 1
+                    value += delta if flag & same_bit else -delta
+                elif not flag & same_bit:
+                    value += self._s16(p)
+                    p += 2
+                values.append(value)
+            return values
+
+        xs = coords(0x02, 0x10)
+        ys = coords(0x04, 0x20)
+        contours: List[List[Tuple[float, float, bool]]] = []
+        start = 0
+        for end in end_pts:
+            contours.append([(float(xs[i]), float(ys[i]), bool(flags[i] & 0x01))
+                             for i in range(start, end + 1)])
+            start = end + 1
+        return contours
+
+    def _composite_glyph(self, off: int, depth: int) -> List[List[Tuple[float, float, bool]]]:
+        p = off + 10
+        result: List[List[Tuple[float, float, bool]]] = []
+        while True:
+            flags = self._u16(p)
+            gid = self._u16(p + 2)
+            p += 4
+            if flags & 0x0001:  # ARG_1_AND_2_ARE_WORDS
+                a1, a2 = self._s16(p), self._s16(p + 2)
+                p += 4
+            else:
+                a1, a2 = self.data[p], self.data[p + 1]
+                a1 = a1 - 256 if a1 >= 128 else a1
+                a2 = a2 - 256 if a2 >= 128 else a2
+                p += 2
+            dx, dy = (float(a1), float(a2)) if flags & 0x0002 else (0.0, 0.0)
+            xx, xy, yx, yy = 1.0, 0.0, 0.0, 1.0
+            if flags & 0x0008:  # WE_HAVE_A_SCALE
+                xx = yy = self._s16(p) / 16384.0
+                p += 2
+            elif flags & 0x0040:  # WE_HAVE_AN_X_AND_Y_SCALE
+                xx, yy = self._s16(p) / 16384.0, self._s16(p + 2) / 16384.0
+                p += 4
+            elif flags & 0x0080:  # WE_HAVE_A_TWO_BY_TWO
+                xx, yx = self._s16(p) / 16384.0, self._s16(p + 2) / 16384.0
+                xy, yy = self._s16(p + 4) / 16384.0, self._s16(p + 6) / 16384.0
+                p += 8
+            for contour in self.contours(gid, depth + 1):
+                result.append([(xx * x + xy * y + dx, yx * x + yy * y + dy, on)
+                               for (x, y, on) in contour])
+            if not flags & 0x0020:  # MORE_COMPONENTS
+                break
+        return result
+
+
+def load_bundled_font(family: str) -> Optional[TrueTypeFont]:
+    """The bundled font for a family key, or None when fonts/ is absent (the
+    standalone single-file install)."""
+    entry = BUNDLED_FONTS.get(family)
+    if entry is None:
+        return None
+    path = FONTS_DIR / entry[0]
+    with _FONT_LOCK:
+        if family not in _FONT_CACHE:
+            if not path.is_file():
+                return None
+            _FONT_CACHE[family] = TrueTypeFont(path)
+        return _FONT_CACHE[family]
+
+
+def fonts_available() -> bool:
+    return all((FONTS_DIR / entry[0]).is_file() for entry in BUNDLED_FONTS.values())
+
+
+def resolve_font_family(css_family: str, weight: str, default_family: str) -> str:
+    """Map a CSS font-family list + weight onto a bundled family key."""
+    chosen = default_family if default_family in BUNDLED_FONTS else DEFAULT_FONT_FAMILY
+    for name in str(css_family or "").split(","):
+        wanted = name.strip().strip("'\"").lower()
+        hit = next((key for key, (_f, names) in BUNDLED_FONTS.items() if wanted in names), None)
+        if hit:
+            chosen = hit
+            break
+    if chosen == "inter" and _is_bold(weight):
+        chosen = "inter-bold"
+    return chosen
+
+
+def _is_bold(weight: str) -> bool:
+    w = str(weight or "").strip().lower()
+    if w in ("bold", "bolder"):
+        return True
+    return w.isdigit() and int(w) >= 600
+
+
+def _contour_path(contour: List[Tuple[float, float, bool]], ox: float, oy: float,
+                  scale: float) -> str:
+    """One closed TrueType contour → absolute SVG path commands."""
+    if not contour:
+        return ""
+
+    def pt(x: float, y: float) -> str:
+        return f"{_fmt2(ox + x * scale)} {_fmt2(oy - y * scale)}"
+
+    if contour[0][2]:
+        start = contour[0]
+        seq = contour[1:] + [contour[0]]
+    elif contour[-1][2]:
+        start = contour[-1]
+        seq = list(contour)
+    else:
+        first, last = contour[0], contour[-1]
+        start = ((first[0] + last[0]) / 2.0, (first[1] + last[1]) / 2.0, True)
+        seq = list(contour) + [start]
+    out = [f"M{pt(start[0], start[1])}"]
+    ctrl: Optional[Tuple[float, float, bool]] = None
+    for point in seq:
+        if point[2]:
+            if ctrl is not None:
+                out.append(f"Q{pt(ctrl[0], ctrl[1])} {pt(point[0], point[1])}")
+                ctrl = None
+            else:
+                out.append(f"L{pt(point[0], point[1])}")
+        else:
+            if ctrl is not None:
+                mid = ((ctrl[0] + point[0]) / 2.0, (ctrl[1] + point[1]) / 2.0)
+                out.append(f"Q{pt(ctrl[0], ctrl[1])} {pt(mid[0], mid[1])}")
+            ctrl = point
+    # A closing straight segment back to the start is implied by Z.
+    if len(out) > 1 and out[-1] == f"L{pt(start[0], start[1])}":
+        out.pop()
+    out.append("Z")
+    return "".join(out)
+
+
+def text_advance(font: TrueTypeFont, text: str, size: float,
+                 letter_spacing: float = 0.0) -> float:
+    """Rendered width of `text` at `size` (letter-spacing between glyphs)."""
+    if not text:
+        return 0.0
+    scale = size / font.units_per_em
+    width = sum(font.advance(font.glyph_id(ch)) * scale for ch in text)
+    return width + letter_spacing * (len(text) - 1)
+
+
+def glyph_run_path(font: TrueTypeFont, text: str, x: float, y: float, size: float,
+                   letter_spacing: float = 0.0) -> Tuple[str, float, int]:
+    """Path data for `text` with its baseline-left at (x, y).
+
+    Returns (d, advance, missing) — `missing` counts characters the font has
+    no glyph for (drawn as empty space of the .notdef advance)."""
+    scale = size / font.units_per_em
+    pen = x
+    parts: List[str] = []
+    missing = 0
+    for i, ch in enumerate(text):
+        gid = font.glyph_id(ch)
+        if gid == 0 and not ch.isspace():
+            missing += 1
+        else:
+            for contour in font.contours(gid):
+                parts.append(_contour_path(contour, pen, y, scale))
+        pen += font.advance(gid) * scale
+        if i < len(text) - 1:
+            pen += letter_spacing
+    return "".join(parts), pen - x, missing
+
+
+def baseline_shift(font: TrueTypeFont, baseline: str, size: float) -> float:
+    """Offset (user units, +down) that moves a dominant-baseline onto the
+    alphabetic baseline the outlines are drawn from."""
+    scale = size / font.units_per_em
+    mode = str(baseline or "").strip().lower()
+    if mode == "middle":
+        return font.x_height * scale / 2.0
+    if mode == "central":
+        return (font.ascender + font.descender) * scale / 2.0
+    if mode in ("hanging", "text-before-edge", "text-top"):
+        return font.ascender * scale
+    if mode in ("text-after-edge", "text-bottom", "ideographic"):
+        return font.descender * scale
+    return 0.0
+
+
+def fit_headline(font: TrueTypeFont, text: str, max_width: float, max_lines: int,
+                 max_size: float, min_size: float, max_height: float = 0.0,
+                 leading: float = 1.25, step: float = 2.0) -> Tuple[List[str], float]:
+    """Break `text` into at most `max_lines` lines at WORD boundaries, at the
+    largest size in [min_size, max_size] (stepping down by `step`) where every
+    line fits `max_width` and (when `max_height` > 0) the block of lines at
+    `leading` × size stays within `max_height` — a headline is a caption, not
+    the picture.
+
+    Never hyphenates or splits a word — "CHAN-/DRAYA/AN-1" is exactly the
+    defect this exists to prevent. When nothing fits even at min_size, the
+    words are packed into max_lines at min_size and text_to_paths' overflow
+    guard scales the long line down at conversion time."""
+    words = [w for w in re.split(r"\s+", str(text or "").strip()) if w]
+    if not words:
+        return [], float(max_size)
+    size = float(max_size)
+    while size >= min_size - 1e-9:
+        lines = _greedy_lines(font, words, size, max_width)
+        fits_height = max_height <= 0 or len(lines) * size * leading <= max_height
+        if fits_height and len(lines) <= max_lines and all(
+                text_advance(font, line, size) <= max_width for line in lines):
+            return lines, size
+        size -= step
+    lines = _greedy_lines(font, words, float(min_size), max_width)
+    if len(lines) > max_lines:
+        lines = lines[:max_lines - 1] + [" ".join(lines[max_lines - 1:])]
+    return lines, float(min_size)
+
+
+def _greedy_lines(font: TrueTypeFont, words: List[str], size: float,
+                  max_width: float) -> List[str]:
+    """Fill each line with as many words as fit (a lone overlong word still
+    takes its own line)."""
+    lines: List[str] = []
+    current = ""
+    for word in words:
+        trial = f"{current} {word}" if current else word
+        if not current or text_advance(font, trial, size) <= max_width:
+            current = trial
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
+
+
+# --- the document walk -------------------------------------------------------
+
+# Properties that only mean something to text layout — consumed here, never
+# carried onto the replacement <g>/<path>.
+_TEXT_LAYOUT_PROPS = frozenset((
+    "font", "font-family", "font-size", "font-weight", "font-style", "font-variant",
+    "font-stretch", "text-anchor", "letter-spacing", "word-spacing",
+    "dominant-baseline", "alignment-baseline", "baseline-shift", "writing-mode",
+    "text-rendering", "white-space", "text-decoration",
+    "x", "y", "dx", "dy", "rotate", "textLength", "lengthAdjust",
+    "{http://www.w3.org/XML/1998/namespace}space",
+))
+_INHERITED_TEXT_PROPS = ("font-family", "font-size", "font-weight", "text-anchor",
+                         "letter-spacing", "dominant-baseline")
+_CSS_RULE = re.compile(r"([^{}]+)\{([^{}]*)\}")
+_CSS_SELECTOR = re.compile(r"\A(text|tspan)?(?:\.([A-Za-z_][\w-]*))?\Z")
+DEFAULT_TEXT_SIZE = 16.0
+TEXT_FIT_FRACTION = 0.94   # a line may span at most this share of the frame
+
+
+@dataclass
+class TextToPathsResult:
+    svg: str
+    converted: int = 0
+    stripped: int = 0
+    fitted: int = 0
+    missing_glyphs: int = 0
+    notes: List[str] = field(default_factory=list)
+
+
+def _style_decls(style: str) -> Dict[str, str]:
+    decls: Dict[str, str] = {}
+    for part in str(style or "").split(";"):
+        if ":" in part:
+            key, value = part.split(":", 1)
+            if key.strip():
+                decls[key.strip().lower()] = value.strip()
+    return decls
+
+
+def _css_rules(root: ET.Element) -> List[Tuple[Optional[str], Optional[str], Dict[str, str]]]:
+    """(tag, class, declarations) for the simple selectors a model writes for
+    text — `text`, `tspan`, `.cls`, `text.cls`. Anything fancier is ignored."""
+    rules: List[Tuple[Optional[str], Optional[str], Dict[str, str]]] = []
+    for el in root.iter():
+        if _localname(el.tag) != "style" or not el.text:
+            continue
+        css = re.sub(r"/\*.*?\*/", "", el.text, flags=re.S)
+        for selectors, body in _CSS_RULE.findall(css):
+            decls = _style_decls(body)
+            for selector in selectors.split(","):
+                match = _CSS_SELECTOR.match(selector.strip())
+                if match and (match.group(1) or match.group(2)):
+                    rules.append((match.group(1), match.group(2), decls))
+    return rules
+
+
+def _css_matches(el: ET.Element, tag: Optional[str], cls: Optional[str]) -> bool:
+    if tag and _localname(el.tag) != tag:
+        return False
+    return not cls or cls in str(el.get("class") or "").split()
+
+
+def _length(value: str, reference: float) -> Optional[float]:
+    raw = str(value or "").strip().lower()
+    match = re.match(r"\A(-?\d*\.?\d+(?:e[-+]?\d+)?)\s*(px|pt|em|rem|%)?\Z", raw)
+    if not match:
+        return None
+    number = float(match.group(1))
+    unit = match.group(2) or ""
+    if unit == "pt":
+        return number * 4.0 / 3.0
+    if unit == "em":
+        return number * reference
+    if unit == "rem":
+        return number * DEFAULT_TEXT_SIZE
+    if unit == "%":
+        return number * reference / 100.0
+    return number
+
+
+def _first_number(value: Optional[str]) -> Optional[float]:
+    if value is None:
+        return None
+    match = LINT_NUM.search(str(value))
+    return float(match.group(0)) if match else None
+
+
+class _TextStyler:
+    """Computed text properties: inline style > CSS rule > attribute > parent."""
+
+    def __init__(self, root: ET.Element):
+        self.rules = _css_rules(root)
+        self.parents = {child: parent for parent in root.iter() for child in parent}
+
+    def own(self, el: ET.Element, prop: str) -> Optional[str]:
+        inline = _style_decls(el.get("style") or "")
+        if prop in inline:
+            return inline[prop]
+        value = None
+        for tag, cls, decls in self.rules:
+            if prop in decls and _css_matches(el, tag, cls):
+                value = decls[prop]
+        if value is not None:
+            return value
+        return el.get(prop)
+
+    def computed(self, el: Optional[ET.Element], prop: str) -> Optional[str]:
+        while el is not None:
+            value = self.own(el, prop)
+            if value is not None and value != "inherit":
+                return value
+            el = self.parents.get(el)
+        return None
+
+    def font_size(self, el: Optional[ET.Element]) -> float:
+        chain: List[ET.Element] = []
+        while el is not None:
+            chain.append(el)
+            el = self.parents.get(el)
+        size = DEFAULT_TEXT_SIZE
+        for node in reversed(chain):
+            value = self.own(node, "font-size")
+            if value is not None:
+                parsed = _length(value, size)
+                if parsed is not None and parsed > 0:
+                    size = parsed
+        return size
+
+    def transformed(self, el: ET.Element) -> bool:
+        node: Optional[ET.Element] = el
+        while node is not None and node in self.parents:
+            if node.get("transform"):
+                return True
+            node = self.parents.get(node)
+        return False
+
+    def tag_rule_decls(self, el: ET.Element) -> Dict[str, str]:
+        """Declarations from rules that select by ELEMENT name — those stop
+        matching once <text> becomes <g>, so they are copied across."""
+        decls: Dict[str, str] = {}
+        for tag, cls, rule in self.rules:
+            if tag and _css_matches(el, tag, cls):
+                decls.update(rule)
+        return decls
+
+
+def _carry_attributes(el: ET.Element, styler: _TextStyler) -> Dict[str, str]:
+    """Attributes the replacement element keeps: everything that is not text
+    layout, plus the paint an element-name CSS rule used to supply."""
+    carried: Dict[str, str] = {}
+    for key, value in el.attrib.items():
+        if key in _TEXT_LAYOUT_PROPS:
+            continue
+        if key == "style":
+            kept = {k: v for k, v in _style_decls(value).items()
+                    if k not in _TEXT_LAYOUT_PROPS}
+            if kept:
+                carried["style"] = ";".join(f"{k}:{v}" for k, v in kept.items())
+            continue
+        carried[key] = value
+    for key, value in styler.tag_rule_decls(el).items():
+        if key not in _TEXT_LAYOUT_PROPS and key not in carried:
+            carried[key] = value
+    return carried
+
+
+def _collapse_ws(text: Optional[str]) -> str:
+    return re.sub(r" {2,}", " ", re.sub(r"[\t\r\n]", " ", text or ""))
+
+
+def svg_text_to_paths(svg_text: str, mode: str = "paths",
+                      default_family: str = DEFAULT_FONT_FAMILY,
+                      frame_width: float = SVG_WIDTH) -> TextToPathsResult:
+    """Convert (mode `paths`), strip (`forbid`), or leave (`keep`) every
+    <text> in a SANITIZED banner. Returns the re-serialized SVG plus counts.
+
+    paths without bundled fonts degrades to forbid, with a note: a banner
+    without its headline is still a banner, a banner in a fallback font is a
+    coin flip — which is the defect this step exists to remove."""
+    result = TextToPathsResult(svg=svg_text)
+    if mode == "keep":
+        return result
+    if mode == "paths" and not fonts_available():
+        result.notes.append("bundled fonts not found — <text> stripped instead of converted")
+        mode = "forbid"
+    root = ET.fromstring(svg_text)
+    styler = _TextStyler(root)
+    texts = [el for el in root.iter() if _localname(el.tag) == "text"]
+    if not texts:
+        return result
+    for text_el in texts:
+        parent = styler.parents.get(text_el)
+        if parent is None:
+            continue
+        index = list(parent).index(text_el)
+        replacement = None
+        if mode == "paths":
+            replacement = _convert_text(text_el, styler, default_family, frame_width, result)
+        if replacement is None:
+            result.stripped += 1
+        else:
+            result.converted += 1
+            replacement.tail = text_el.tail
+            parent.insert(index, replacement)
+        if replacement is None and text_el.tail:
+            # Keep surrounding whitespace in the right place.
+            if index > 0:
+                prev = parent[index - 1]
+                prev.tail = (prev.tail or "") + text_el.tail
+            else:
+                parent.text = (parent.text or "") + text_el.tail
+        parent.remove(text_el)
+    ET.register_namespace("", SVG_NS)
+    ET.register_namespace("xlink", XLINK_NS)
+    result.svg = ET.tostring(root, encoding="unicode")
+    if result.converted:
+        result.notes.append(f"converted {result.converted} <text> to paths")
+    if result.stripped:
+        result.notes.append(f"stripped {result.stripped} <text>")
+    if result.fitted:
+        result.notes.append(f"scaled {result.fitted} overlong line(s) to fit the frame")
+    if result.missing_glyphs:
+        result.notes.append(f"{result.missing_glyphs} character(s) had no glyph in the bundled font")
+    return result
+
+
+def _convert_text(text_el: ET.Element, styler: _TextStyler, default_family: str,
+                  frame_width: float, result: TextToPathsResult) -> Optional[ET.Element]:
+    def font_for(el: ET.Element) -> Tuple[str, TrueTypeFont]:
+        family = resolve_font_family(styler.computed(el, "font-family") or "",
+                                     styler.computed(el, "font-weight") or "",
+                                     default_family)
+        font = load_bundled_font(family)
+        if font is None:
+            raise ValueError(f"bundled font {family} unavailable")
+        return family, font
+
+    size0 = styler.font_size(text_el)
+    x0 = (_first_number(text_el.get("x")) or 0.0) + (_first_number(text_el.get("dx")) or 0.0)
+    y0 = (_first_number(text_el.get("y")) or 0.0) + (_length(text_el.get("dy") or "", size0) or 0.0)
+    chunks: List[Dict[str, Any]] = []
+
+    def anchor_of(el: ET.Element) -> str:
+        value = (styler.computed(el, "text-anchor") or "start").strip().lower()
+        return value if value in ("start", "middle", "end") else "start"
+
+    def start_chunk(x: float, y: float, el: ET.Element) -> None:
+        chunks.append({"x": x, "y": y, "anchor": anchor_of(el), "runs": []})
+
+    def chunk_end(chunk: Dict[str, Any]) -> float:
+        width = 0.0
+        for run in chunk["runs"]:
+            _fam, font = font_for(run["el"])
+            width += text_advance(font, run["text"], styler.font_size(run["el"]))
+        return chunk["x"] + width
+
+    def add_run(owner: ET.Element, raw: Optional[str]) -> None:
+        text = _collapse_ws(raw)
+        if text:
+            chunks[-1]["runs"].append({"el": owner, "text": text})
+
+    def walk(el: ET.Element) -> None:
+        add_run(el, el.text)
+        for child in list(el):
+            tag = _localname(child.tag)
+            if tag == "tspan":
+                size = styler.font_size(child)
+                cx, cy = child.get("x"), child.get("y")
+                dx = _first_number(child.get("dx")) or 0.0
+                dy = _length(child.get("dy") or "", size) or 0.0
+                current = chunks[-1]
+                if cx is not None or cy is not None or dx or dy:
+                    nx = _first_number(cx) if cx is not None else chunk_end(current)
+                    ny = _first_number(cy) if cy is not None else current["y"]
+                    start_chunk((nx or 0.0) + dx, (ny or 0.0) + dy, child)
+                walk(child)
+            elif tag == "textPath":
+                result.notes.append("<textPath> is not supported — its text was dropped")
+            add_run(el, child.tail)
+
+    start_chunk(x0, y0, text_el)
+    walk(text_el)
+
+    group = ET.Element(f"{{{SVG_NS}}}g", _carry_attributes(text_el, styler))
+    label_parts: List[str] = []
+    fittable = not styler.transformed(text_el)
+    for chunk in chunks:
+        runs = chunk["runs"]
+        if not runs:
+            continue
+        runs[0]["text"] = runs[0]["text"].lstrip(" ")
+        runs[-1]["text"] = runs[-1]["text"].rstrip(" ")
+        measured = []
+        total = 0.0
+        for run in runs:
+            _fam, font = font_for(run["el"])
+            size = styler.font_size(run["el"])
+            spacing = _length(styler.computed(run["el"], "letter-spacing") or "", size) or 0.0
+            width = text_advance(font, run["text"], size, spacing)
+            measured.append((run, font, size, spacing))
+            total += width
+        if total <= 0:
+            continue
+        factor = 1.0
+        limit = frame_width * TEXT_FIT_FRACTION
+        if fittable and total > limit:
+            factor = limit / total
+            result.fitted += 1
+        span = total * factor
+        start = chunk["x"] - span * {"start": 0.0, "middle": 0.5, "end": 1.0}[chunk["anchor"]]
+        if fittable and (start < 0 or start + span > frame_width):
+            # Only text that actually leaves the frame is moved — and then
+            # inside the same margin the fit uses.
+            margin = (frame_width - limit) / 2.0
+            start = min(max(start, margin), frame_width - margin - span)
+        pen = start
+        for run, font, size, spacing in measured:
+            if not run["text"]:
+                continue
+            scaled = size * factor
+            shift = baseline_shift(font, styler.computed(run["el"], "dominant-baseline") or "", scaled)
+            d, advance, missing = glyph_run_path(font, run["text"], pen, chunk["y"] + shift,
+                                                 scaled, spacing * factor)
+            pen += advance
+            result.missing_glyphs += missing
+            label_parts.append(run["text"])
+            if not d:
+                continue
+            attrs = {} if run["el"] is text_el else _carry_attributes(run["el"], styler)
+            path = ET.SubElement(group, f"{{{SVG_NS}}}path", attrs)
+            path.set("d", d)
+    if not len(group):
+        return None
+    group.set("aria-label", " ".join(part.strip() for part in label_parts if part.strip()))
+    return group
+
+
+_PRECISION_ATTR = re.compile(r'(\s(?:d|points)=")([^"]*)(")')
+_LONG_DECIMAL = re.compile(r"-?\d+\.\d{3,}")
+
+
+def round_svg_precision(svg_text: str) -> str:
+    """Round path/points numbers carrying 3+ decimals to 2. Sub-pixel precision
+    is invisible at banner scale and is the cheapest size win there is — a
+    mechanical fix that should never cost a model round."""
+    def fix_number(match: "re.Match[str]") -> str:
+        return _fmt2(float(match.group(0)))
+
+    def fix_attr(match: "re.Match[str]") -> str:
+        return match.group(1) + _LONG_DECIMAL.sub(fix_number, match.group(2)) + match.group(3)
+
+    return _PRECISION_ATTR.sub(fix_attr, svg_text)
+
+
+# =============================================================================
 # Anthropic client (Claude Code OAuth → API key → claude CLI)
 # =============================================================================
+
+# List prices, USD per million tokens (input, output), by model-id prefix.
+# Used only to SHADOW-price the illustration loop for its budget cap and its
+# telemetry: under a Claude Code OAuth token nothing is invoiced per token, but
+# the cap still bounds how much work one run may do. Unknown models are priced
+# at the Sonnet rate rather than as free, so a cap never silently stops binding.
+CLAUDE_PRICES_PER_MTOK: List[Tuple[str, float, float]] = [
+    ("claude-opus-5-5", 4.00, 20.00),
+    ("claude-sonnet-5-5", 2.00, 10.00),
+    ("claude-haiku-5-5", 0.10, 0.50),
+    ("claude-opus", 5.00, 25.00),
+    ("claude-sonnet", 2.00, 10.00),
+    ("claude-haiku", 1.00, 5.00),
+]
+CACHE_READ_PRICE_FACTOR = 0.1
+
+
+def usage_cost_usd(record: Dict[str, Any]) -> float:
+    model = str(record.get("model") or "")
+    rate_in, rate_out = 2.00, 10.00
+    for prefix, price_in, price_out in CLAUDE_PRICES_PER_MTOK:
+        if model.startswith(prefix):
+            rate_in, rate_out = price_in, price_out
+            break
+    billed_in = (int(record.get("input_tokens") or 0)
+                 + int(record.get("cache_creation_input_tokens") or 0)
+                 + CACHE_READ_PRICE_FACTOR * int(record.get("cache_read_input_tokens") or 0))
+    out = int(record.get("output_tokens") or 0)
+    return round((billed_in * rate_in + out * rate_out) / 1_000_000, 6)
+
+
+def _output_config(effort: str, json_schema: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    config: Dict[str, Any] = {}
+    if effort:
+        config["effort"] = effort
+    if json_schema:
+        config["format"] = {"type": "json_schema", "schema": json_schema}
+    return config
+
 
 class ClaudeRefusal(Exception):
     def __init__(self, category: Optional[str]):
@@ -2003,8 +3129,15 @@ class AnthropicClient:
         model: str = DEFAULT_CLAUDE_MODEL,
         max_tokens: int = CLAUDE_MAX_TOKENS,
         effort: str = "",
+        json_schema: Optional[Dict[str, Any]] = None,
+        usage: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
         """One Messages-API turn (or CLI run); returns concatenated text blocks.
+
+        `json_schema` asks for structured output (`output_config.format`) —
+        callers still parse defensively, because the CLI mode and the
+        unsupported-parameter retry both drop it. `usage`, when given, gets
+        one record appended per billed call (see _record_usage).
 
         Raises ClaudeRefusal / ClaudeTruncated / HttpStatusError / RuntimeError.
         """
@@ -2027,8 +3160,9 @@ class AnthropicClient:
             "system": system_blocks,
             "messages": [{"role": "user", "content": user_text}],
         }
-        if effort:
-            payload["output_config"] = {"effort": effort}
+        output_config = _output_config(effort, json_schema)
+        if output_config:
+            payload["output_config"] = output_config
 
         def call(body: Dict[str, Any]) -> dict:
             return with_retries(
@@ -2057,6 +3191,7 @@ class AnthropicClient:
             else:
                 raise
 
+        self._record_usage(data, model, usage)
         stop_reason = data.get("stop_reason")
         if stop_reason == "refusal":
             details = data.get("stop_details") or {}
@@ -2075,17 +3210,25 @@ class AnthropicClient:
         self,
         system_text: str,
         user_text: str,
-        image_path: Path,
+        image_path: Any,
         model: str = DEFAULT_CLAUDE_MODEL,
         max_tokens: int = 2048,
         effort: str = "",
+        json_schema: Optional[Dict[str, Any]] = None,
+        usage: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
-        """One vision turn over a local PNG (review stage). CLI mode passes the
-        file path and lets `claude -p` read it; API modes embed base64."""
+        """One vision turn over local PNG(s) (review/critique stages).
+
+        `image_path` is one Path or a list of Paths, sent in order ahead of the
+        text. CLI mode passes the file paths and lets `claude -p` read them;
+        API modes embed base64."""
+        paths = list(image_path) if isinstance(image_path, (list, tuple)) else [image_path]
         if self.mode == "cli":
+            listing = ", then ".join(str(Path(p).resolve()) for p in paths)
+            noun = "image file" if len(paths) == 1 else "image files, in order"
             prompt = (
                 f"{system_text}\n\n---\n\nFirst use the Read tool to view the "
-                f"image file at {image_path.resolve()} — then respond.\n\n{user_text}"
+                f"{noun} at {listing} — then respond.\n\n{user_text}"
             )
             return self._run_cli(prompt, model, allowed_tools="Read")
         if self.mode is None:
@@ -2094,25 +3237,24 @@ class AnthropicClient:
         system_blocks = [{"type": "text", "text": system_text}]
         if self.mode == "oauth":
             system_blocks.insert(0, {"type": "text", "text": CLAUDE_CODE_SYSTEM_PROMPT})
-        image_bytes = image_path.read_bytes()
+        content: List[Dict[str, Any]] = []
+        for path in paths:
+            image_bytes = Path(path).read_bytes()
+            content.append({"type": "image", "source": {
+                "type": "base64", "media_type": image_media_type(image_bytes),
+                "data": base64.b64encode(image_bytes).decode("ascii"),
+            }})
+        content.append({"type": "text", "text": user_text})
         payload: Dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
             "thinking": {"type": "adaptive"},
             "system": system_blocks,
-            "messages": [{
-                "role": "user",
-                "content": [
-                    {"type": "image", "source": {
-                        "type": "base64", "media_type": image_media_type(image_bytes),
-                        "data": base64.b64encode(image_bytes).decode("ascii"),
-                    }},
-                    {"type": "text", "text": user_text},
-                ],
-            }],
+            "messages": [{"role": "user", "content": content}],
         }
-        if effort:
-            payload["output_config"] = {"effort": effort}
+        output_config = _output_config(effort, json_schema)
+        if output_config:
+            payload["output_config"] = output_config
 
         def call(body: Dict[str, Any]) -> dict:
             return with_retries(
@@ -2130,6 +3272,7 @@ class AnthropicClient:
                 data = call(payload)
             else:
                 raise
+        self._record_usage(data, model, usage)
         if data.get("stop_reason") == "refusal":
             details = data.get("stop_details") or {}
             raise ClaudeRefusal(details.get("category") if isinstance(details, dict) else None)
@@ -2138,6 +3281,28 @@ class AnthropicClient:
             for block in data.get("content", [])
             if isinstance(block, dict) and block.get("type") == "text"
         )
+
+    @staticmethod
+    def _record_usage(data: Dict[str, Any], model: str,
+                      sink: Optional[List[Dict[str, Any]]]) -> None:
+        """Append this call's token usage (and its list-price cost) to `sink`.
+
+        The CLI mode reports no usage, so a CLI run's records simply never
+        appear — telemetry shows tokens as unknown rather than as zero."""
+        if sink is None:
+            return
+        raw = data.get("usage") if isinstance(data, dict) else None
+        if not isinstance(raw, dict):
+            return
+        record = {
+            "model": model,
+            "input_tokens": int(raw.get("input_tokens") or 0),
+            "output_tokens": int(raw.get("output_tokens") or 0),
+            "cache_read_input_tokens": int(raw.get("cache_read_input_tokens") or 0),
+            "cache_creation_input_tokens": int(raw.get("cache_creation_input_tokens") or 0),
+        }
+        record["cost_usd"] = usage_cost_usd(record)
+        sink.append(record)
 
     def _complete_cli(self, system_text: str, user_text: str, model: str) -> str:
         return self._run_cli(f"{system_text}\n\n---\n\n{user_text}", model)
@@ -2177,6 +3342,665 @@ CLAUDE_CREDENTIAL_HINT = (
 
 
 # =============================================================================
+# Illustration loop (provider: claude)
+# =============================================================================
+#   [1] PLAN      Claude → JSON scene graph (palette tokens, focal point, layers)
+#   [2] AUTHOR    Claude → SVG from the plan + style card (headline as <text>)
+#   [3] SHAPE     text→paths · sanitize · round · strict lint   (no model)
+#                 └ lint fails → one targeted fix round, then the `local` art
+#   [4] LOOK      rasterize at 1536px and 120px                 (no model)
+#   [5] CRITIQUE  Claude vision → {works, fails, next_change, overall,
+#                 thumbnail_holds}
+#                 └ below claude_min_score (or thumbnail fails) → [2'] a
+#                   targeted EDIT of the current SVG, up to claude_rounds
+#   [6] COMMIT    best-of by score · front matter · one telemetry record
+#
+# Steps 3, 4 and 6 are deterministic. `claude_rounds: 0` is the rollback: one
+# authored draft, shaped and linted, never rendered or reviewed.
+
+STYLE_CARDS_DIR = Path(__file__).resolve().parents[2] / "tools" / "svg" / "library" / "styles"
+# Card sections the AUTHOR follows / the CRITIC grades against. The rest
+# (seed recipes, library references) describe the dev toolkit, not the look.
+STYLE_CARD_AUTHOR_SECTIONS = ("Signature", "Geometry & grid", "Palette", "Do / Don't")
+STYLE_CARD_CRITIC_SECTIONS = ("Signature", "Critique add-ons")
+PALETTE_ROLES: List[str] = ["bg", "shadow", "low_mid", "mid", "accent", "highlight"]
+PLAN_LAYER_ROLES: List[str] = ["background", "midground", "subject", "accent", "text", "veil"]
+HEADLINE_PLACEMENTS: List[str] = ["top", "bottom", "left", "right", "none"]
+MAX_SVG_CHARS = 400_000          # refuse pathological replies before parsing
+SVG_AUTHOR_MAX_TOKENS = 32000    # an authored banner + adaptive thinking
+THUMBNAIL_WIDTH = 120            # card size — what the thumbnail test looks at
+TEXT_TO_PATHS_HEADROOM_KB = 80   # converted glyphs grow a titled banner
+
+# JSON Schemas (structured outputs: every object closed, no numeric bounds —
+# the validators below clamp). svg/plan.schema.json and
+# svg/critique.schema.json are generated from these; a test pins them equal,
+# and .claude/workflows/svg-forge.js carries the same CRITIQUE shape.
+PLAN_SCHEMA: Dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["subject", "focal_point", "palette", "layers", "symmetry_break",
+                 "headline_placement", "avoid"],
+    "properties": {
+        "subject": {"type": "string",
+                    "description": "one sentence: the concrete scene the banner shows"},
+        "focal_point": {
+            "type": "object", "additionalProperties": False,
+            "required": ["x", "y", "element"],
+            "properties": {
+                "x": {"type": "number", "description": "0-1 share of the width"},
+                "y": {"type": "number", "description": "0-1 share of the height"},
+                "element": {"type": "string", "description": "what sits there"},
+            },
+        },
+        "palette": {
+            "type": "object", "additionalProperties": False,
+            "required": list(PALETTE_ROLES),
+            "properties": {role: {"type": "string", "description": "#rrggbb"}
+                           for role in PALETTE_ROLES},
+        },
+        "layers": {
+            "type": "array",
+            "description": "3-4 layers, back to front",
+            "items": {
+                "type": "object", "additionalProperties": False,
+                "required": ["role", "description", "tokens"],
+                "properties": {
+                    "role": {"type": "string", "enum": list(PLAN_LAYER_ROLES)},
+                    "description": {"type": "string"},
+                    "tokens": {"type": "array",
+                               "items": {"type": "string", "enum": list(PALETTE_ROLES)}},
+                },
+            },
+        },
+        "symmetry_break": {"type": "string",
+                           "description": "the one deliberate asymmetry, which is the subject"},
+        "headline_placement": {"type": "string", "enum": list(HEADLINE_PLACEMENTS)},
+        "avoid": {"type": "array", "items": {"type": "string"}},
+    },
+}
+
+CRITIQUE_SCHEMA: Dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["works", "fails", "next_change", "overall", "thumbnail_holds"],
+    "properties": {
+        "works": {"type": "string"},
+        "fails": {"type": "array", "items": {"type": "string"}},
+        "next_change": {"type": "string", "description": "exactly one actionable edit"},
+        "overall": {"type": "number",
+                    "description": "0-10, be stingy: 8+ means shippable as-is"},
+        "thumbnail_holds": {"type": "boolean",
+                            "description": "silhouette still reads at 120px"},
+    },
+}
+
+PLANNER_SYSTEM = """You are the art director planning ONE preview banner (1536x1024) for an
+article. You do not draw; you decide. Return a scene graph as JSON:
+- subject: the article's actual subject as one concrete scene — specific
+  objects and actions, never a generic technology collage.
+- focal_point: where the eye lands (x, y as 0-1 shares) and what is there.
+- palette: six hex tokens by role. When fixed tokens are given, return
+  exactly those.
+- layers: 3-4 layers back to front, each naming the palette roles it uses.
+  One layer's role is "text" unless headline_placement is "none".
+- symmetry_break: the single deliberate asymmetry — it should BE the subject.
+- headline_placement: where the title block goes, keeping the focal point
+  clear of it.
+- avoid: specific failure modes for this subject (clutter, tiny detail that
+  dies at thumbnail size, lettering besides the headline...).
+The banner must read as a 120px-wide card thumbnail as well as full size:
+plan big silhouettes, strong value contrast and few elements."""
+
+AUTHOR_SYSTEM = ("You are an SVG illustrator. You reply with ONE complete, standalone SVG "
+                 "document and nothing else — no prose, no code fence.")
+
+CRITIC_SYSTEM = """You are a stingy art director critiquing a preview banner for an article.
+You are shown the banner twice: IMAGE 1 at full size (1536px wide) and
+IMAGE 2 at card-thumbnail size (120px wide), exactly as a reader meets it in
+a list of posts. Judge:
+1. Subject — does it depict THIS article's subject, specifically?
+2. Style — does it obey the style card's signature rules?
+3. Craft — composition, value structure, focal point; any overlap, clipping,
+   broken or off-grid shapes, garbled or mis-wrapped lettering.
+4. Thumbnail — at IMAGE 2, do the main silhouette and the headline (if any)
+   still read? Fine detail that turns to mush there is a failure.
+Score `overall` from 0 to 10; 8+ means shippable as-is, 7 is acceptable,
+below that something specific is wrong. `next_change` is exactly ONE
+concrete edit to the SVG that would raise the score most. Reply with JSON
+only."""
+
+# Literal reply shapes, quoted in the prompts. Structured outputs enforce the
+# schemas on the API path; the `claude -p` CLI path has no such parameter, and
+# without the shape spelled out a CLI planner answers in its own keys (seen in
+# the first live run: "no usable scene graph").
+PLAN_SKELETON = json.dumps({
+    "subject": "...", "focal_point": {"x": 0.6, "y": 0.4, "element": "..."},
+    "palette": {role: "#rrggbb" for role in PALETTE_ROLES},
+    "layers": [{"role": "background", "description": "...", "tokens": ["bg", "shadow"]}],
+    "symmetry_break": "...", "headline_placement": "bottom", "avoid": ["..."],
+})
+CRITIQUE_SKELETON = json.dumps({
+    "works": "...", "fails": ["..."], "next_change": "...", "overall": 6.5,
+    "thumbnail_holds": False,
+})
+
+EDITOR_SYSTEM = ("You are an SVG illustrator revising your own banner after an art "
+                 "director's critique. You reply with the COMPLETE revised SVG document "
+                 "and nothing else — no prose, no code fence.")
+
+
+@dataclass
+class StyleCard:
+    name: str
+    title: str
+    sections: Dict[str, str]
+
+    def text_for(self, wanted: Tuple[str, ...]) -> str:
+        blocks = [f"## {name}\n{self.sections[name].strip()}"
+                  for name in wanted if self.sections.get(name, "").strip()]
+        return "\n\n".join(blocks)
+
+    @property
+    def font_family(self) -> str:
+        return CARD_FONTS.get(self.name, DEFAULT_FONT_FAMILY)
+
+
+def load_style_card(name: str, project_root: Optional[Path] = None) -> Optional[StyleCard]:
+    """Resolve a style card by name (bundled cards) or by path (site-local)."""
+    name = str(name or "").strip()
+    if not name:
+        return None
+    candidates: List[Path] = []
+    if name.endswith(".md") or "/" in name:
+        candidates.append(Path(name) if Path(name).is_absolute()
+                          else (project_root or Path.cwd()) / name)
+    candidates.append(STYLE_CARDS_DIR / f"{name}.md")
+    for path in candidates:
+        if path.is_file():
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            return parse_style_card(path.stem, text)
+    warn(f"style card '{name}' not found — using the prose style only")
+    return None
+
+
+def parse_style_card(name: str, text: str) -> StyleCard:
+    title_match = re.search(r"^#\s+(.+)$", text, re.M)
+    sections: Dict[str, str] = {}
+    current = None
+    for line in text.splitlines():
+        heading = re.match(r"^##\s+(.+?)\s*$", line)
+        if heading:
+            current = heading.group(1)
+            sections[current] = ""
+        elif current is not None:
+            sections[current] += line + "\n"
+    return StyleCard(name=name, title=title_match.group(1).strip() if title_match else name,
+                     sections=sections)
+
+
+def _clamp(value: Any, low: float, high: float, default: float) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    if number != number:  # NaN
+        return default
+    return min(high, max(low, number))
+
+
+def validate_plan(data: Any, palette: List[str]) -> Optional[Dict[str, Any]]:
+    """Normalize a planner reply, or None when it is not a usable plan.
+    Fixed palette tokens (policy) always override whatever the model chose."""
+    if not isinstance(data, dict) or not str(data.get("subject") or "").strip():
+        return None
+    focal = data.get("focal_point") if isinstance(data.get("focal_point"), dict) else {}
+    plan_palette: Dict[str, str] = {}
+    raw_palette = data.get("palette") if isinstance(data.get("palette"), dict) else {}
+    for i, role in enumerate(PALETTE_ROLES):
+        if len(palette) == len(PALETTE_ROLES):
+            plan_palette[role] = palette[i]
+        else:
+            value = str(raw_palette.get(role) or "").strip().lower()
+            plan_palette[role] = value if _HEX_TOKEN.match(value) else ""
+    layers = []
+    for layer in data.get("layers") or []:
+        if not isinstance(layer, dict):
+            continue
+        role = str(layer.get("role") or "").strip().lower()
+        if role not in PLAN_LAYER_ROLES:
+            continue
+        tokens = [t for t in (layer.get("tokens") or []) if t in PALETTE_ROLES]
+        layers.append({"role": role, "description": str(layer.get("description") or "").strip(),
+                       "tokens": tokens})
+    if not layers:
+        return None
+    placement = str(data.get("headline_placement") or "bottom").strip().lower()
+    return {
+        "subject": str(data["subject"]).strip(),
+        "focal_point": {"x": _clamp(focal.get("x"), 0.0, 1.0, 0.5),
+                        "y": _clamp(focal.get("y"), 0.0, 1.0, 0.5),
+                        "element": str(focal.get("element") or "").strip()},
+        "palette": plan_palette,
+        "layers": layers[:6],
+        "symmetry_break": str(data.get("symmetry_break") or "").strip(),
+        "headline_placement": placement if placement in HEADLINE_PLACEMENTS else "bottom",
+        "avoid": [str(a).strip() for a in (data.get("avoid") or []) if str(a).strip()][:8],
+    }
+
+
+def validate_critique(data: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(data, dict) or "overall" not in data:
+        return None
+    fails = data.get("fails")
+    holds = data.get("thumbnail_holds")
+    return {
+        "works": str(data.get("works") or "").strip(),
+        "fails": [str(f).strip() for f in fails if str(f).strip()] if isinstance(fails, list) else [],
+        "next_change": str(data.get("next_change") or "").strip(),
+        "overall": round(_clamp(data.get("overall"), 0.0, 10.0, 0.0), 2),
+        "thumbnail_holds": holds if isinstance(holds, bool) else _setting_bool(holds),
+    }
+
+
+def critique_passes(critique: Optional[Dict[str, Any]], settings: Settings) -> bool:
+    if not critique:
+        return False
+    if critique["overall"] < settings.claude_min_score:
+        return False
+    return critique["thumbnail_holds"] or not settings.claude_require_thumbnail
+
+
+def critique_rank(critique: Optional[Dict[str, Any]]) -> float:
+    """Best-of ordering: the score, with a half-point for a thumbnail that
+    reads (an unreviewed draft ranks below any reviewed one)."""
+    if not critique:
+        return -1.0
+    return critique["overall"] + (0.5 if critique["thumbnail_holds"] else 0.0)
+
+
+@dataclass
+class Headline:
+    lines: List[str]
+    size: float
+    family: str
+    css_family: str
+    anchor: str
+    x: float
+    baselines: List[float]
+
+    def brief(self) -> str:
+        rows = "\n".join(f'  {i + 1}. "{line}" — baseline y={_fmt2(y)}'
+                         for i, (line, y) in enumerate(zip(self.lines, self.baselines)))
+        return (f"HEADLINE (the article title, pre-broken at word boundaries — use these "
+                f"lines verbatim, one <text> per line or one <text> with <tspan>s):\n"
+                f"  font-family=\"{self.css_family}\" font-size=\"{_fmt2(self.size)}\" "
+                f"text-anchor=\"{self.anchor}\" x=\"{_fmt2(self.x)}\"\n{rows}\n"
+                "Set it at exactly this size: no scale() transform on it or its parents, "
+                "no shrinking to fit a box — make the box fit the headline. Give it a "
+                "backing plate or clear field so it reads at thumbnail size. No other "
+                "lettering anywhere in the banner.")
+
+
+HEADLINE_SIZES: Dict[str, Tuple[float, float]] = {
+    "press-start-2p": (64.0, 24.0),
+    "inter": (96.0, 40.0),
+}
+HEADLINE_LEADING = 1.25
+HEADLINE_MAX_HEIGHT = 0.30   # share of the banner height the title block may take
+HEADLINE_CSS_FAMILY: Dict[str, str] = {"press-start-2p": "Press Start 2P", "inter": "Inter"}
+
+
+def plan_headline(title: str, placement: str, family: str) -> Optional[Headline]:
+    """Deterministic headline layout for the author: lines, size, baselines.
+    None when the placement is `none` or the bundled fonts are absent."""
+    if placement == "none" or not str(title or "").strip():
+        return None
+    base = "press-start-2p" if family == "press-start-2p" else "inter"
+    font = load_bundled_font(base if base == "press-start-2p" else "inter-bold")
+    if font is None:
+        return None
+    max_size, min_size = HEADLINE_SIZES[base]
+    side = placement in ("left", "right")
+    width = SVG_WIDTH * (0.42 if side else 0.86)
+    lines, size = fit_headline(font, title, width, 3, max_size, min_size,
+                               max_height=SVG_HEIGHT * (0.5 if side else HEADLINE_MAX_HEIGHT),
+                               leading=HEADLINE_LEADING)
+    leading = size * HEADLINE_LEADING
+    block = leading * (len(lines) - 1)
+    if placement == "top":
+        first = SVG_HEIGHT * 0.08 + size
+    elif placement == "bottom":
+        first = SVG_HEIGHT * 0.92 - block
+    else:
+        first = SVG_HEIGHT / 2.0 - block / 2.0 + size * 0.35
+    if placement == "left":
+        anchor, x = "start", SVG_WIDTH * 0.06
+    elif placement == "right":
+        anchor, x = "end", SVG_WIDTH * 0.94
+    else:
+        anchor, x = "middle", SVG_WIDTH / 2.0
+    return Headline(lines=lines, size=size, family=base, css_family=HEADLINE_CSS_FAMILY[base],
+                    anchor=anchor, x=x, baselines=[first + leading * i for i in range(len(lines))])
+
+
+def _body_excerpt(text: str, limit: int = 1500) -> str:
+    body = re.sub(r"```.*?```", "", text or "", flags=re.S)
+    body = re.sub(r"\n{3,}", "\n\n", body).strip()
+    return body[:limit]
+
+
+def extract_svg_document(text: str) -> str:
+    """The <svg>…</svg> in a model reply, fenced or bare; '' when absent."""
+    fenced = re.search(r"```(?:svg|xml)?\s*\n(.*?)```", str(text or ""), re.S)
+    if fenced and "<svg" in fenced.group(1):
+        text = fenced.group(1)
+    match = re.search(r"<svg\b.*</svg\s*>", str(text or ""), re.S | re.I)
+    return match.group(0) if match else ""
+
+
+def ensure_accessible(svg: str, title: str) -> str:
+    """Guarantee role="img" + a first-child <title>. Attribute-aware: a naive
+    substring test would inject a duplicate role and break the parse."""
+    root_tag = svg.split(">", 1)[0]
+    if not re.search(r"""\brole\s*=\s*["']img["']""", root_tag):
+        svg = svg.replace("<svg", '<svg role="img"', 1)
+    if not re.search(r"<title[\s>]", svg):
+        safe = (title or "banner").replace("&", "&amp;").replace("<", "&lt;")
+        head, sep, tail = svg.partition(">")
+        svg = f"{head}{sep}<title>{safe}</title>{tail}"
+    return svg
+
+
+@dataclass
+class ShapedSvg:
+    svg: str                    # what would be committed (text outlined)
+    lint: SvgLintReport
+    text: TextToPathsResult
+    sanitizer_notes: List[str]
+    source: str = ""            # sanitized, BEFORE text→paths: what an edit
+                                # round revises, so the headline is still
+                                # live <text> the editor can re-set — not
+                                # glyph outlines it can only scale
+
+
+def shape_svg(raw: str, title: str, settings: Settings, default_family: str) -> ShapedSvg:
+    """[3] SHAPE — deterministic: accessibility → sanitize → text→paths →
+    precision → strict lint. Raises SvgError when the markup is unusable."""
+    if not raw:
+        raise SvgError("reply contained no SVG markup")
+    if len(raw) > MAX_SVG_CHARS:
+        raise SvgError(f"SVG reply is {len(raw)} characters (limit {MAX_SVG_CHARS})")
+    clean, notes = sanitize_svg(ensure_accessible(raw, title))
+    text = svg_text_to_paths(clean, settings.svg_text, default_family)
+    svg = round_svg_precision(text.svg)
+    report = lint_svg(svg.encode("utf-8"), "banner", max_kb=settings.svg_max_kb, strict=True)
+    if settings.svg_text == "keep":
+        report.warnings = [w for w in report.warnings if w != LINT_TEXT_WARNING]
+    return ShapedSvg(svg=svg, lint=report, text=text, sanitizer_notes=notes, source=clean)
+
+
+def look_svg(svg: str, workdir: Path, stem: str, settings: Settings,
+             project_root: Path) -> Optional[Tuple[Path, Path, str]]:
+    """[4] LOOK — render one draft at full and thumbnail size. None when no
+    rasterizer is reachable (the loop then commits unreviewed)."""
+    if settings.look_rasterizer == "none":
+        return None
+    svg_path = workdir / f"{stem}.svg"
+    svg_path.write_text(svg, encoding="utf-8")
+    full, thumb = workdir / f"{stem}.png", workdir / f"{stem}-thumb.png"
+    tool = rasterize_svg(svg_path, full, project_root, settings.look_rasterizer, SVG_WIDTH)
+    if not tool:
+        return None
+    if not rasterize_svg(svg_path, thumb, project_root, tool, THUMBNAIL_WIDTH):
+        return None
+    return full, thumb, tool
+
+
+@dataclass
+class BudgetMeter:
+    """Run-wide list-price spend of the loop, shared by every worker."""
+    cap_usd: float = 0.0
+    spent_usd: float = 0.0
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+
+    def add(self, records: List[Dict[str, Any]]) -> None:
+        with self._lock:
+            self.spent_usd += sum(float(r.get("cost_usd") or 0.0) for r in records)
+
+    def exhausted(self) -> bool:
+        with self._lock:
+            return self.cap_usd > 0 and self.spent_usd >= self.cap_usd
+
+
+class IllustrationLoop:
+    """One banner's trip through the loop. Holds the per-banner usage so the
+    telemetry record and the run budget see the same numbers."""
+
+    def __init__(self, provider: "ClaudeSvgProvider", settings: Settings, ctx: "RunContext"):
+        self.provider = provider
+        self.settings = settings
+        self.ctx = ctx
+        self.article = ctx.article or {}
+        self.client = ctx.claude()
+        self.model = provider.authoring_model(settings)
+        self.card = load_style_card(settings.style_card, ctx.project_root)
+        self.family = self.card.font_family if self.card else DEFAULT_FONT_FAMILY
+        self.usage: List[Dict[str, Any]] = []
+        self.calls = 0
+        self.meta: Dict[str, Any] = {
+            "provider": "claude", "model": self.model,
+            "style_card": self.card.name if self.card else None,
+            "plan": False, "rounds_used": 0, "fix_round": False,
+            "fallback": None, "critic": None, "rasterizer": None,
+        }
+
+    # -- model calls ----------------------------------------------------------
+    def _call(self, fn, *args, **kwargs) -> str:
+        before = len(self.usage)
+        self.calls += 1
+        try:
+            return fn(*args, usage=self.usage, **kwargs)
+        finally:
+            self.ctx.budget.add(self.usage[before:])
+
+    def _over_budget(self, stage: str) -> bool:
+        if self.ctx.budget.exhausted():
+            info(f"  ↳ loop budget (${self.settings.claude_budget_usd:g}) spent — skipping {stage}")
+            self.meta.setdefault("budget_skipped", []).append(stage)
+            return True
+        return False
+
+    def article_block(self) -> str:
+        a = self.article
+        return (f"ARTICLE\nTitle: {a.get('title', '')}\nSection: {a.get('section', '')}\n"
+                f"Tags: {a.get('categories', '')}\nDescription: {a.get('description', '')}\n"
+                f"Body excerpt:\n---\n{_body_excerpt(a.get('body', ''))}\n---")
+
+    def style_block(self, prompt: str) -> str:
+        s = self.settings
+        parts = [f"ART DIRECTION\nStyle: {s.style}\nModifiers: {s.style_modifiers or '(none)'}"]
+        if prompt and prompt.strip() and prompt.strip() != s.style:
+            parts.append(f"Brief: {prompt.strip()}")
+        if len(s.palette) == len(PALETTE_ROLES):
+            pairs = ", ".join(f"{role}={tok}" for role, tok in zip(PALETTE_ROLES, s.palette))
+            parts.append(f"FIXED PALETTE (use these tokens, no others besides #000 for a "
+                         f"scanline veil): {pairs}")
+        if self.card:
+            parts.append(
+                f"STYLE CARD — {self.card.title}. Its rules are constraints, not suggestions. "
+                "It was written for the engine's generator toolkit: where it mentions scripts, "
+                "pixelkit or seeds, reproduce the LOOK those produce by hand.\n"
+                + self.card.text_for(STYLE_CARD_AUTHOR_SECTIONS))
+        return "\n\n".join(parts)
+
+    # -- stages ---------------------------------------------------------------
+    def plan(self, prompt: str) -> Optional[Dict[str, Any]]:
+        if not self.settings.claude_plan or self._over_budget("plan"):
+            return None
+        fixed = (", ".join(self.settings.palette)
+                 if len(self.settings.palette) == len(PALETTE_ROLES) else "none — choose")
+        request = (f"{self.article_block()}\n\n{self.style_block(prompt)}\n\n"
+                   f"Fixed palette tokens: {fixed}\n\nReply with ONLY a JSON object of "
+                   f"exactly this shape (layer roles: {', '.join(PLAN_LAYER_ROLES)}; "
+                   f"headline_placement: {', '.join(HEADLINE_PLACEMENTS)}):\n{PLAN_SKELETON}")
+        try:
+            reply = self._call(self.client.complete, PLANNER_SYSTEM, request, model=self.model,
+                               max_tokens=4096, effort=self.settings.claude_effort,
+                               json_schema=PLAN_SCHEMA)
+        except Exception as exc:  # noqa: BLE001 - planning is an enhancement
+            warn(f"  ↳ plan stage failed ({exc}); authoring without a plan")
+            return None
+        plan = validate_plan(_extract_json_object(reply or ""), self.settings.palette)
+        if plan is None:
+            warn("  ↳ plan stage returned no usable scene graph; authoring without a plan")
+        self.meta["plan"] = plan is not None
+        return plan
+
+    def author(self, plan: Optional[Dict[str, Any]], prompt: str) -> str:
+        s = self.settings
+        placement = plan["headline_placement"] if plan else "bottom"
+        headline = (plan_headline(self.article.get("title", ""), placement, self.family)
+                    if s.svg_text != "forbid" else None)
+        budget_kb = max(60, int(s.svg_max_kb - (TEXT_TO_PATHS_HEADROOM_KB if headline else 0)))
+        lettering = (headline.brief() if headline else
+                     "No lettering of any kind — no <text>, no glyph paths.")
+        request = (
+            "Author the preview banner as a single SVG document.\n\n"
+            "HARD REQUIREMENTS\n"
+            f'- Root: <svg xmlns="{SVG_NS}" viewBox="0 0 {SVG_WIDTH} {SVG_HEIGHT}" '
+            f'width="{SVG_WIDTH}" height="{SVG_HEIGHT}" role="img">\n'
+            "- A <title> as the FIRST child describing the image.\n"
+            "- Vector shapes only: no <script>, <foreignObject>, <image>, external href, or "
+            "data: payloads. Every url(#id) must point at an id defined in the file.\n"
+            "- Fill the whole frame; no large empty regions.\n"
+            f"- Coordinates rounded to at most 2 decimals; under {budget_kb} KB.\n"
+            "- Readable as a 120px-wide card thumbnail: big silhouettes, strong value "
+            "contrast, no detail that only works large.\n\n"
+            f"{lettering}\n\n"
+            + (f"PLAN (follow it)\n{json.dumps(plan, indent=1)}\n\n" if plan else "")
+            + f"{self.style_block(prompt)}\n\n{self.article_block()}\n"
+        )
+        return self._call(self.client.complete, AUTHOR_SYSTEM, request, model=self.model,
+                          max_tokens=SVG_AUTHOR_MAX_TOKENS, effort=s.claude_effort)
+
+    def fix(self, shaped_svg: str, findings: List[str]) -> str:
+        request = (
+            "This SVG banner failed a deterministic lint. Fix ONLY these problems with "
+            "minimal edits — do not re-art-direct — and reply with the complete SVG:\n"
+            + "\n".join(f"- {f}" for f in findings) + f"\n\nSVG:\n{shaped_svg}\n")
+        return self._call(self.client.complete, EDITOR_SYSTEM, request, model=self.model,
+                          max_tokens=SVG_AUTHOR_MAX_TOKENS, effort=self.settings.claude_effort)
+
+    def critique(self, images: Tuple[Path, Path]) -> Optional[Dict[str, Any]]:
+        if self._over_budget("critique"):
+            return None
+        card = (self.card.text_for(STYLE_CARD_CRITIC_SECTIONS) if self.card else
+                f"Style: {self.settings.style}")
+        request = (f"{self.article_block()}\n\nSTYLE TO GRADE AGAINST\n{card}\n\n"
+                   "IMAGE 1 is the banner at full size; IMAGE 2 is the same banner at "
+                   "120px. Reply with ONLY a JSON object of exactly this shape:\n"
+                   f"{CRITIQUE_SKELETON}")
+        try:
+            reply = self._call(self.client.complete_vision, CRITIC_SYSTEM, request,
+                               list(images), model=self.model, max_tokens=4096,
+                               effort=self.settings.claude_effort, json_schema=CRITIQUE_SCHEMA)
+        except Exception as exc:  # noqa: BLE001 - review never blocks a banner
+            warn(f"  ↳ critique failed ({exc}); keeping the best draft so far")
+            return None
+        critique = validate_critique(_extract_json_object(reply or ""))
+        if critique is None:
+            warn("  ↳ critique returned no parseable verdict")
+        return critique
+
+    def edit(self, svg: str, critique: Dict[str, Any]) -> str:
+        fails = "\n".join(f"- {f}" for f in critique["fails"]) or "- (none listed)"
+        request = (
+            "Revise this banner. Keep everything the critique says works; apply the "
+            "required change and fix what fails, changing as little else as possible. Keep "
+            "any headline <text>/paths exactly as they are unless the critique names them.\n\n"
+            f"WORKS: {critique['works']}\nFAILS:\n{fails}\n"
+            f"REQUIRED NEXT CHANGE: {critique['next_change']}\n"
+            f"SCORE: {critique['overall']}/10 — thumbnail "
+            f"{'holds' if critique['thumbnail_holds'] else 'does NOT hold'} at 120px.\n\n"
+            f"{self.article_block()}\n\nCURRENT SVG:\n{svg}\n")
+        return self._call(self.client.complete, EDITOR_SYSTEM, request, model=self.model,
+                          max_tokens=SVG_AUTHOR_MAX_TOKENS, effort=self.settings.claude_effort)
+
+    # -- driver ---------------------------------------------------------------
+    def run(self, prompt: str) -> Optional[ShapedSvg]:
+        """Returns the shaped SVG to commit, or None (caller falls back)."""
+        title = self.article.get("title", "") or self.ctx.slug
+        if self._over_budget("authoring"):
+            self.meta["fallback"] = "budget"
+            return None
+        plan = self.plan(prompt)
+        try:
+            shaped = shape_svg(extract_svg_document(self.author(plan, prompt)), title,
+                               self.settings, self.family)
+        except Exception as exc:  # noqa: BLE001 - every failure degrades
+            warn(f"  ↳ authoring failed: {exc}")
+            self.meta["fallback"] = "author_failed"
+            return None
+        if not shaped.lint.clean:
+            info(f"  ↳ strict lint: {len(shaped.lint.findings())} finding(s) — one fix round")
+            self.meta["fix_round"] = True
+            try:
+                shaped = shape_svg(extract_svg_document(
+                    self.fix(shaped.source, shaped.lint.findings())), title, self.settings,
+                    self.family)
+            except Exception as exc:  # noqa: BLE001
+                warn(f"  ↳ fix round failed: {exc}")
+                self.meta["fallback"] = "lint"
+                return None
+            if not shaped.lint.clean:
+                warn("  ↳ still not strict-clean after the fix round: "
+                     + "; ".join(shaped.lint.findings()[:3]))
+                self.meta["fallback"] = "lint"
+                return None
+        if self.settings.claude_rounds <= 0:
+            return shaped
+
+        best: Tuple[ShapedSvg, Optional[Dict[str, Any]]] = (shaped, None)
+        current = shaped
+        with tempfile.TemporaryDirectory(prefix="zer0-look-") as tmp:
+            for round_no in range(self.settings.claude_rounds + 1):
+                look = look_svg(current.svg, Path(tmp), f"r{round_no}", self.settings,
+                                self.ctx.project_root)
+                if look is None:
+                    info("  ↳ no rasterizer to look through — committing unreviewed")
+                    break
+                self.meta["rasterizer"] = look[2]
+                critique = self.critique((look[0], look[1]))
+                if critique is None:
+                    break
+                info(f"  ↳ critic: {critique['overall']:g}/10, thumbnail "
+                     f"{'holds' if critique['thumbnail_holds'] else 'fails'}"
+                     + (f" (round {round_no})" if round_no else ""))
+                if critique_rank(critique) >= critique_rank(best[1]):
+                    best = (current, critique)
+                if critique_passes(critique, self.settings):
+                    break
+                if round_no >= self.settings.claude_rounds or self._over_budget("edit"):
+                    break
+                try:
+                    edited = shape_svg(extract_svg_document(self.edit(current.source, critique)),
+                                       title, self.settings, self.family)
+                except Exception as exc:  # noqa: BLE001
+                    warn(f"  ↳ edit round failed: {exc}")
+                    break
+                self.meta["rounds_used"] = round_no + 1
+                if not edited.lint.clean:
+                    warn("  ↳ edit broke strict lint — keeping the previous draft")
+                    break
+                current = edited
+        self.meta["critic"] = best[1]
+        return best[0]
+
+
+# =============================================================================
 # Providers
 # =============================================================================
 
@@ -2186,6 +4010,7 @@ class ImageResult:
     kind: str = "png"                 # png | svg
     path: Optional[Path] = None
     error: Optional[str] = None
+    meta: Optional[Dict[str, Any]] = None   # loop facts for the telemetry record
 
 
 class EditUnsupported(Exception):
@@ -2246,6 +4071,13 @@ class RunContext:
     # and palette from it, which is what makes a banner about its article
     # instead of about its filename.
     article: Optional[Dict[str, str]] = None
+    # Shared by every per-file copy (dataclasses.replace is shallow), so the
+    # illustration loop's spend cap is enforced across workers. Typed Any, not
+    # "BudgetMeter": a string annotation on a dataclass field makes dataclasses
+    # look the module up in sys.modules, which breaks every loader that execs
+    # this file via spec_from_file_location (svg-check.py, the Ruby oracles,
+    # site companions).
+    budget: Any = field(default_factory=lambda: BudgetMeter())
 
     def claude(self) -> AnthropicClient:
         if self.anthropic is None:
@@ -3203,16 +5035,19 @@ class DefaultProvider(Provider, SvgProviderMixin):
 
 
 class ClaudeSvgProvider(Provider, SvgProviderMixin):
-    """Claude authors the banner as SVG, from the article.
+    """Claude authors the banner as SVG, from the article — and LOOKS at it.
 
     Claude cannot render pixels — the Anthropic API has no image endpoint — but
     it can WRITE vector markup, which is the one image format a language model
     can emit directly. That makes it the rung between "no credential at all"
     and "a raster image API": genuinely per-article art, no image-model spend.
 
-    The output goes through the same sanitizer as every other SVG, so a model
-    that emits a <script>, a remote href, or a raster data: payload gets it
-    stripped rather than committed.
+    Since 0.10 the one-shot call is a loop (IllustrationLoop): plan → author →
+    shape → look → critique → edit, so the model sees the banner at full and
+    thumbnail size before the run commits it. Every draft goes through the
+    same sanitizer as every other SVG and a strict lint gate; a banner that
+    cannot be made strict-clean is replaced by the deterministic `local` art
+    rather than committed broken (degrade, never block, never ship broken).
     """
 
     name = "claude"
@@ -3226,40 +5061,35 @@ class ClaudeSvgProvider(Provider, SvgProviderMixin):
     def default_model(self) -> str:
         return DEFAULT_CLAUDE_MODEL
 
+    def authoring_model(self, settings: Settings) -> str:
+        """--model when it is a Claude model, else claude_model, else default."""
+        if model_family(settings.model or "") == "claude":
+            return settings.model.strip()
+        return claude_model_for(settings)
+
     def generate(self, prompt, settings, out_base, ctx) -> ImageResult:
-        article = ctx.article or {}
-        instruction = (
-            "Author a single SVG banner for this article. Reply with ONLY the "
-            f"SVG markup, no prose and no code fence.\n\n"
-            f"HARD REQUIREMENTS\n"
-            f'- Root: <svg xmlns="{SVG_NS}" viewBox="0 0 {SVG_WIDTH} {SVG_HEIGHT}" '
-            f'width="{SVG_WIDTH}" height="{SVG_HEIGHT}" role="img">\n'
-            "- A <title> as the FIRST child describing the image.\n"
-            "- Vector shapes only: no <script>, no <foreignObject>, no <image>, "
-            "no external href, no data: payloads, no <text> (fonts will not "
-            "resolve — convert lettering to paths or leave it out).\n"
-            "- Fill the whole frame. No large empty regions.\n"
-            "- Round coordinates to at most 2 decimals; stay under 200 KB.\n\n"
-            f"ART DIRECTION\n{prompt}\n\n"
-            f"ARTICLE\nTitle: {article.get('title', '')}\n"
-            f"Section: {article.get('section', '')}\n"
-            f"Tags: {article.get('categories', '')}\n"
-            f"Description: {article.get('description', '')}\n"
-        )
-        try:
-            reply = ctx.claude().complete(
-                "You are an SVG illustrator. You reply with SVG markup only.",
-                instruction,
-                model=claude_model_for(settings),
-                max_tokens=CLAUDE_MAX_TOKENS,
-                effort=settings.claude_effort,
-            )
-        except Exception as exc:  # noqa: BLE001 - any transport failure degrades
-            return ImageResult(False, error=f"claude SVG authoring failed: {exc}")
-        svg_text = _extract_svg(reply)
-        if not svg_text:
-            return ImageResult(False, error="claude returned no SVG markup")
-        return self.finish_svg(svg_text, out_base, settings, ctx)
+        loop = IllustrationLoop(self, settings, ctx)
+        shaped = loop.run(prompt)
+        meta = dict(loop.meta)
+        meta["calls"] = loop.calls
+        meta["usage"] = loop.usage
+        if shaped is None:
+            info("  ↳ falling back to the deterministic local banner")
+            result = LOCAL_FALLBACK.generate(prompt, settings, out_base, ctx)
+            meta["fallback"] = meta.get("fallback") or "failed"
+            meta["lint"] = None
+            result.meta = meta
+            return result
+        meta["lint"] = {"clean": shaped.lint.clean, "errors": shaped.lint.errors,
+                        "warnings": shaped.lint.warnings}
+        meta["text"] = {"mode": settings.svg_text, "converted": shaped.text.converted,
+                        "stripped": shaped.text.stripped, "fitted": shaped.text.fitted,
+                        "missing_glyphs": shaped.text.missing_glyphs}
+        for note in shaped.text.notes:
+            debug(f"text→paths: {note}")
+        result = self.finish_svg(shaped.svg, out_base, settings, ctx)
+        result.meta = meta
+        return result
 
 
 def _extract_svg(text: str) -> str:
@@ -3280,6 +5110,7 @@ PROVIDERS: Dict[str, Provider] = {
         ClaudeSvgProvider(),
     )
 }
+LOCAL_FALLBACK: Provider = PROVIDERS["local"]
 
 
 # =============================================================================
@@ -3298,6 +5129,193 @@ class Stats:
     def inc(self, name: str) -> None:
         with self._lock:
             setattr(self, name, getattr(self, name) + 1)
+
+
+def _unquote_git_path(path: str) -> str:
+    """Undo git's C-style quoting (`"p\\303\\244ge.md"`) so non-ASCII names
+    survive --changed mode instead of being silently dropped."""
+    if not (path.startswith('"') and path.endswith('"')):
+        return path
+    inner = path[1:-1]
+    try:
+        return (inner.encode("latin-1", "backslashreplace")
+                .decode("unicode_escape")
+                .encode("latin-1")
+                .decode("utf-8"))
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        return inner
+
+
+def git_changed_markdown(root: Path, exclude_re: str = "") -> List[Tuple[Path, bool]]:
+    """(path, is_new) for every new/modified markdown file under `root`.
+
+    `-uall` matters: plain --porcelain collapses a brand-new directory to one
+    `?? dir/` line, hiding every article inside it. `exclude_re` is matched
+    against the raw status line (callers use it to skip files they staged
+    themselves)."""
+    try:
+        out = subprocess.run(["git", "status", "--porcelain", "-uall"], cwd=str(root),
+                             capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        warn(f"git status failed: {exc}")
+        return []
+    if out.returncode != 0:
+        warn(f"git status failed: {(out.stderr or '').strip()[:200]}")
+        return []
+    pattern = re.compile(exclude_re) if exclude_re else None
+    seen: Dict[Path, bool] = {}
+    for line in out.stdout.splitlines():
+        if len(line) < 4 or "D" in line[:2]:
+            continue
+        status, rel = line[:2], line[3:]
+        if " -> " in rel:  # rename: take the new side
+            rel = rel.split(" -> ", 1)[1]
+        rel = _unquote_git_path(rel.strip())
+        if not rel.endswith((".md", ".markdown")):
+            continue
+        if pattern is not None and pattern.search(line):
+            continue
+        candidate = root / rel
+        if candidate.is_file():
+            is_new = status == "??" or status.startswith("A")
+            seen[candidate] = seen.get(candidate, False) or is_new
+    return list(seen.items())
+
+
+def banner_telemetry_record(root: Path, article: Path, slug: str, result: ImageResult,
+                            settings: Settings) -> Dict[str, Any]:
+    """One banner's telemetry: the shape `telemetry/banners.jsonl` carries
+    (schema `banner/v1`; additive changes only)."""
+    meta = dict(result.meta or {})
+    usage = meta.pop("usage", None)
+    tokens = None
+    cost = None
+    if usage:
+        tokens = {"input": sum(u["input_tokens"] + u["cache_creation_input_tokens"]
+                               + u["cache_read_input_tokens"] for u in usage),
+                  "output": sum(u["output_tokens"] for u in usage)}
+        cost = round(sum(u["cost_usd"] for u in usage), 6)
+
+    def rel(path: Path) -> str:
+        try:
+            return str(Path(path).resolve().relative_to(root.resolve()))
+        except ValueError:
+            return str(path)
+
+    size_kb = None
+    try:
+        size_kb = round(result.path.stat().st_size / 1024, 1)
+    except (OSError, AttributeError):
+        pass
+    critic = meta.get("critic")
+    record = {
+        "schema": "banner/v1",
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "slug": slug,
+        "article": rel(article),
+        "banner": rel(result.path),
+        "kind": result.kind,
+        "kb": size_kb,
+        "provider": meta.get("provider") or settings.provider,
+        "model": meta.get("model"),
+        "style_card": meta.get("style_card"),
+        "plan": meta.get("plan", False),
+        "calls": meta.get("calls", 0),
+        "rounds_used": meta.get("rounds_used", 0),
+        "fix_round": meta.get("fix_round", False),
+        "fallback": meta.get("fallback"),
+        "rasterizer": meta.get("rasterizer"),
+        "lint": meta.get("lint"),
+        "text": meta.get("text"),
+        "critic": ({"overall": critic["overall"], "thumbnail_holds": critic["thumbnail_holds"],
+                    "fails": critic["fails"], "next_change": critic["next_change"]}
+                   if critic else None),
+        "tokens": tokens,
+        "cost_usd": cost,
+    }
+    if meta.get("budget_skipped"):
+        record["budget_skipped"] = meta["budget_skipped"]
+    return record
+
+
+def shape_file(svg_path: Path, settings: Settings, project_root: Path) -> Dict[str, Any]:
+    """--shape: the loop's SHAPE step over a file, written back in place.
+
+    This is how the interactive dev loop (.claude/workflows/svg-forge.js)
+    finalizes a piece: through the same code the production loop commits
+    with, so the two can never disagree about what "clean" means."""
+    raw = svg_path.read_text(encoding="utf-8")
+    title_match = re.search(r"<title[^>]*>(.*?)</title>", raw, re.S)
+    card = load_style_card(settings.style_card, project_root)
+    family = card.font_family if card else DEFAULT_FONT_FAMILY
+    out: Dict[str, Any] = {"schema": "banner-shape/v1", "banner": str(svg_path)}
+    try:
+        shaped = shape_svg(extract_svg_document(raw) or raw,
+                           title_match.group(1).strip() if title_match else svg_path.stem,
+                           settings, family)
+    except SvgError as exc:
+        out["lint"] = {"clean": False, "fatal": str(exc), "errors": [], "warnings": []}
+        return out
+    svg_path.write_text(shaped.svg, encoding="utf-8")
+    out.update({
+        "kb": round(len(shaped.svg.encode("utf-8")) / 1024, 1),
+        "lint": {"clean": shaped.lint.clean, "fatal": shaped.lint.fatal,
+                 "errors": shaped.lint.errors, "warnings": shaped.lint.warnings},
+        "text": {"mode": settings.svg_text, "converted": shaped.text.converted,
+                 "stripped": shaped.text.stripped, "fitted": shaped.text.fitted,
+                 "notes": shaped.text.notes},
+        "sanitizer": shaped.sanitizer_notes,
+    })
+    return out
+
+
+def inspect_banner(svg_path: Path, settings: Settings, ctx: "RunContext",
+                   article_path: Optional[Path] = None, critic: bool = False) -> Dict[str, Any]:
+    """--inspect: strict-lint an existing banner, optionally render + critique
+    it. The audit and backfill tooling read this one JSON object, so it is the
+    same lint and the same critic the loop itself uses."""
+    raw = svg_path.read_bytes()
+    report = lint_svg(raw, svg_path.name, max_kb=settings.svg_max_kb, strict=True)
+    text = raw.decode("utf-8", "replace")
+    out: Dict[str, Any] = {
+        "schema": "banner-inspect/v1",
+        "banner": str(svg_path),
+        "kb": round(len(raw) / 1024, 1),
+        "lint": {"clean": report.clean, "fatal": report.fatal, "errors": report.errors,
+                 "warnings": report.warnings},
+        "features": {
+            "text": len(re.findall(r"<text\b", text)),
+            "filter": len(re.findall(r"<filter\b", text)),
+            "gradient": len(re.findall(r"<(?:linear|radial)Gradient\b", text)),
+        },
+        "critic": None,
+    }
+    if not critic:
+        return out
+    article: Dict[str, str] = {"title": "", "section": "", "categories": "",
+                               "description": "", "body": ""}
+    if article_path is not None:
+        cf = parse_front_matter(article_path, settings.front_matter_key)
+        if cf is not None:
+            article = article_art_context(cf, generate_filename(cf.title))
+    if not article["title"]:
+        match = re.search(r"<title[^>]*>(.*?)</title>", text, re.S)
+        article["title"] = match.group(1).strip() if match else svg_path.stem
+    if not ctx.claude().available():
+        out["critic_error"] = "no Claude credential"
+        return out
+    loop = IllustrationLoop(PROVIDERS["claude"], settings,
+                            replace(ctx, slug=svg_path.stem, article=article))
+    with tempfile.TemporaryDirectory(prefix="zer0-inspect-") as tmp:
+        look = look_svg(text, Path(tmp), "inspect", settings, ctx.project_root)
+        if look is None:
+            out["critic_error"] = f"no rasterizer ({settings.look_rasterizer})"
+            return out
+        out["rasterizer"] = look[2]
+        out["critic"] = loop.critique((look[0], look[1]))
+    if loop.usage:
+        out["cost_usd"] = round(sum(u["cost_usd"] for u in loop.usage), 6)
+    return out
 
 
 class Runner:
@@ -3328,7 +5346,7 @@ class Runner:
 
     # -- per-file processing --------------------------------------------------
 
-    def process_file(self, path: Path) -> None:
+    def process_file(self, path: Path, is_new: bool = False) -> None:
         if _interrupted:
             return
         settings = self.settings
@@ -3345,7 +5363,18 @@ class Runner:
             return
 
         # Generate mode -------------------------------------------------------
-        if cf.preview and check_preview_exists(cf.preview, settings, self.root):
+        # A NEW article (--changed) may arrive stamped with its section's
+        # shared placeholder banner, which exists on disk. Treating that as
+        # "already illustrated" would skip exactly the articles the grow tick
+        # exists to illustrate — so a new file is re-illustrated unless it
+        # already points at its OWN slug-named banner or an external URL.
+        replace_placeholder = False
+        if is_new and cf.preview:
+            external = str(cf.preview).startswith(("http://", "https://"))
+            own = Path(str(cf.preview)).stem == generate_filename(cf.title or "")
+            replace_placeholder = not external and not own
+        if (cf.preview and not replace_placeholder
+                and check_preview_exists(cf.preview, settings, self.root)):
             if not settings.force:
                 debug(f"Preview already exists and is valid: {cf.preview}")
                 self.stats.inc("skipped")
@@ -3384,8 +5413,11 @@ class Runner:
         base_prompt = build_prompt(cf, file_settings)
         prompt = base_prompt
         orchestrated = settings.provider != "local"  # local is deterministic
+        # The claude provider's loop PLANS its own scene; a raster-model brief
+        # in front of it would be one more call whose output the plan replaces.
+        loop_plans = settings.provider == "claude" and file_settings.claude_plan
         if (orchestrated and file_settings.prompt_engine in ("claude", "xai")
-                and not settings.dry_run):
+                and not settings.dry_run and not loop_plans):
             prompt = claude_article_brief(
                 self.ctx.orchestrator(file_settings.prompt_engine),
                 cf, file_settings, base_prompt)
@@ -3400,6 +5432,12 @@ class Runner:
             if orchestrated and file_settings.review_engine in ("claude", "xai"):
                 print(f"  Review: {file_settings.review_engine} "
                       "(image review runs at generation time)")
+            if settings.provider == "claude":
+                print(f"  Loop: plan={'on' if file_settings.claude_plan else 'off'} "
+                      f"rounds={file_settings.claude_rounds} "
+                      f"min_score={file_settings.claude_min_score:g} "
+                      f"text={file_settings.svg_text} "
+                      f"style_card={file_settings.style_card or '(prose style)'}")
             print(f"  Output: {out_base.with_suffix('.png')}")
             print(f"  Preview path: {preview_front_matter_path(file_settings, slug + '.png')}")
             print(f"  Prompt: {prompt[:400]}...")
@@ -3442,6 +5480,7 @@ class Runner:
             if update_front_matter(path, fm_value, dry_run=False,
                                    key=settings.front_matter_key):
                 self.stats.inc("generated")
+                self.emit_telemetry(path, slug, result, file_settings)
                 # Serial-mode pacing between paid API calls (historical
                 # behavior). In parallel mode a per-worker sleep throttles
                 # nothing — it only burns worker capacity — so skip it.
@@ -3454,6 +5493,31 @@ class Runner:
             if result.error:
                 warn(f"  {result.error}")
             self.stats.inc("errors")
+
+    # -- telemetry ------------------------------------------------------------
+
+    _telemetry_lock = threading.Lock()
+
+    def emit_telemetry(self, path: Path, slug: str, result: ImageResult,
+                       settings: Settings) -> None:
+        """Append one JSON record per committed banner (settings.telemetry)."""
+        if not self.settings.telemetry or not result.path:
+            return
+        record = banner_telemetry_record(self.root, path, slug, result, settings)
+        line = json.dumps(record, sort_keys=True, ensure_ascii=False)
+        with self._telemetry_lock:
+            if self.settings.telemetry == "-":
+                print(f"TELEMETRY {line}", flush=True)
+                return
+            target = Path(self.settings.telemetry)
+            if not target.is_absolute():
+                target = Path.cwd() / target
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with target.open("a", encoding="utf-8") as fh:
+                    fh.write(line + "\n")
+            except OSError as exc:
+                warn(f"telemetry not written ({exc})")
 
     def _enhance_file(self, cf: ContentFile) -> None:
         settings = self.settings
@@ -3564,7 +5628,25 @@ class Runner:
 
     def run(self) -> int:
         settings = self.settings
-        if settings.file:
+        if settings.changed:
+            targets = git_changed_markdown(self.root, settings.exclude_re)
+            step(f"Processing {len(targets)} new/modified markdown file(s)...")
+            if settings.batch > 0:
+                targets = targets[: settings.batch]
+            if settings.parallel <= 1 or settings.dry_run or settings.list_only:
+                for target, is_new in targets:
+                    if _interrupted:
+                        break
+                    self.process_file(target, is_new=is_new)
+            else:
+                with ThreadPoolExecutor(max_workers=settings.parallel) as pool:
+                    for future in as_completed(
+                            [pool.submit(self.process_file, t, n) for t, n in targets]):
+                        exc = future.exception()
+                        if exc:
+                            warn(f"Worker failed: {exc}")
+                            self.stats.inc("errors")
+        elif settings.file:
             target = Path(settings.file)
             if not target.is_absolute():
                 # Source-relative first; then cwd-relative, so repo-root paths
@@ -3664,10 +5746,56 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--review", choices=["claude", "xai", "none"],
                         help="Post-render review: claude or xai inspects the image "
                              "and may request one refined regeneration (default: claude)")
-    parser.add_argument("--rasterizer",
-                        choices=["auto", "rsvg", "inkscape", "magick", "playwright", "none"],
+    parser.add_argument("--rasterizer", choices=RASTERIZER_CHOICES,
                         help="SVG→PNG tool for claude/local providers (default: "
                              "auto; `none` keeps the .svg and writes no PNG)")
+    loop = parser.add_argument_group(
+        "illustration loop (provider: claude)",
+        "plan → author → shape → look → critique → edit; see "
+        "docs/ILLUSTRATION-LOOP.md")
+    loop.add_argument("--style-card", dest="style_card", metavar="NAME",
+                      help="style card name (tools/svg/library/styles/<NAME>.md) "
+                           "or a path to one")
+    loop.add_argument("--palette", metavar="TOKENS",
+                      help="six hex tokens (comma separated) or a palette name")
+    loop.add_argument("--claude-plan", dest="claude_plan",
+                      action=argparse.BooleanOptionalAction, default=None,
+                      help="plan a JSON scene graph before authoring (default: on)")
+    loop.add_argument("--rounds", dest="claude_rounds", type=int, metavar="N",
+                      help="critique-driven edit rounds (default 1; 0 = one-shot)")
+    loop.add_argument("--min-score", dest="claude_min_score", type=float,
+                      metavar="SCORE", help="critic score that ends the loop (default 7)")
+    loop.add_argument("--require-thumbnail", dest="claude_require_thumbnail",
+                      action=argparse.BooleanOptionalAction, default=None,
+                      help="the banner must also read at 120px (default: on)")
+    loop.add_argument("--svg-text", dest="svg_text", choices=["paths", "keep", "forbid"],
+                      help="what happens to <text>: converted to paths with a "
+                           "bundled font (default), kept, or stripped")
+    loop.add_argument("--svg-max-kb", dest="svg_max_kb", type=float, metavar="KB",
+                      help="strict-lint size budget per banner (default 300)")
+    loop.add_argument("--look-rasterizer", dest="look_rasterizer",
+                      choices=RASTERIZER_CHOICES,
+                      help="tool the loop renders through to LOOK at a draft "
+                           "(default auto; none disables the critique)")
+    loop.add_argument("--budget-usd", dest="claude_budget_usd", type=float,
+                      metavar="USD", help="per-run spend cap for the loop (0 = none)")
+    loop.add_argument("--telemetry", metavar="PATH",
+                      help="append one JSON record per banner to PATH ('-' = stdout)")
+    loop.add_argument("--changed", action="store_true",
+                      help="illustrate git-new/modified markdown files")
+    loop.add_argument("--exclude-re", dest="exclude_re", metavar="REGEX",
+                      help="--changed: skip `git status --porcelain` lines "
+                           "matching REGEX")
+    loop.add_argument("--inspect", metavar="SVG",
+                      help="lint (and with --critic, render + critique) an "
+                           "existing banner; prints one JSON object and exits")
+    loop.add_argument("--critic", action="store_true",
+                      help="with --inspect: also run the vision critique "
+                           "(needs a Claude credential and a rasterizer)")
+    loop.add_argument("--shape", metavar="SVG",
+                      help="run the loop's deterministic SHAPE step on an SVG in "
+                           "place (sanitize, text→paths, precision, strict lint); "
+                           "prints one JSON object, exits 1 unless strict-clean")
     parser.add_argument("--style", help="Override image style prompt")
     parser.add_argument("--assets-prefix", help="Assets prefix for path normalization")
     parser.add_argument("--no-auto-prefix", action="store_true",
@@ -3829,15 +5957,45 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     explicitly_targeted = (
         settings.file or settings.collection or settings.enhance
-        or settings.provider_explicit
+        or settings.provider_explicit or args.inspect or args.shape
     )
     if not settings.enabled and not explicitly_targeted:
         info("preview_images.enabled is false in _config.yml — nothing to do "
              "(pass --provider, --file or --collection to override).")
         return 0
 
+    if args.shape:
+        target = Path(args.shape)
+        if not target.is_file():
+            error_exit(f"File not found: {args.shape}")
+        real_stdout = sys.stdout
+        sys.stdout = sys.stderr
+        try:
+            report = shape_file(target, settings, project_root)
+        finally:
+            sys.stdout = real_stdout
+        print(json.dumps(report, sort_keys=True, ensure_ascii=False))
+        return 0 if report["lint"]["clean"] else 1
+
+    if args.inspect:
+        ctx = RunContext(project_root=project_root, env=dict(os.environ))
+        target = Path(args.inspect)
+        if not target.is_file():
+            error_exit(f"File not found: {args.inspect}")
+        article = Path(settings.file) if settings.file else None
+        # stdout carries exactly one JSON object; progress logging goes to stderr.
+        real_stdout = sys.stdout
+        sys.stdout = sys.stderr
+        try:
+            report = inspect_banner(target, settings, ctx, article, critic=args.critic)
+        finally:
+            sys.stdout = real_stdout
+        print(json.dumps(report, sort_keys=True, ensure_ascii=False))
+        return 0
+
     print_header("🎨 Preview Image Generator")
     ctx = RunContext(project_root=project_root, env=dict(os.environ))
+    ctx.budget.cap_usd = settings.claude_budget_usd
     settings = resolve_auto_provider(settings, ctx.env)
     validate_credentials(settings, ctx)
 

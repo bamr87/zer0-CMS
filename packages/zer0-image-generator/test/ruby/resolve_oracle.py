@@ -33,6 +33,11 @@ ARG_DEFAULTS = {
     "review": None, "rasterizer": None, "style": None, "assets_prefix": None,
     "no_auto_prefix": False, "collections_dir": None, "front_matter_key": None,
     "authors_file": None, "batch": 0,
+    # illustration loop
+    "style_card": None, "palette": None, "claude_plan": None, "claude_rounds": None,
+    "claude_min_score": None, "claude_require_thumbnail": None, "svg_text": None,
+    "svg_max_kb": None, "look_rasterizer": None, "claude_budget_usd": None,
+    "telemetry": None, "changed": False, "exclude_re": None,
 }
 
 

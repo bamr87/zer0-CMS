@@ -23,7 +23,9 @@ module SettingsTestHelpers
     AI_PROVIDER IMAGE_MODEL IMAGE_SIZE IMAGE_QUALITY IMAGE_STYLE
     IMAGE_STYLE_MODIFIERS OUTPUT_DIR PROMPT_ENGINE REVIEW_ENGINE IMAGE_RASTERIZER MAX_PARALLEL
     DRY_RUN VERBOSE FORCE LIST_ONLY ENHANCE ENHANCE_MODEL ENHANCE_QUALITY
-    ENHANCE_FIDELITY ENHANCE_FORMAT
+    ENHANCE_FIDELITY ENHANCE_FORMAT IMAGE_STYLE_CARD IMAGE_PALETTE CLAUDE_PLAN
+    CLAUDE_ROUNDS CLAUDE_MIN_SCORE CLAUDE_REQUIRE_THUMBNAIL SVG_TEXT SVG_MAX_KB
+    LOOK_RASTERIZER CLAUDE_BUDGET_USD PREVIEW_TELEMETRY PREVIEW_EXCLUDE_RE
   ].freeze
 
   def python_available?
@@ -144,6 +146,29 @@ class TestResolveSettingsDifferential < Minitest::Test
     "rasterizer_config_svg_only" => [{}, { "preview_images" => { "rasterizer" => "none" } }, {}],
     "rasterizer_env_beats_config" => [{}, { "preview_images" => { "rasterizer" => "none" } },
                                      { "IMAGE_RASTERIZER" => "rsvg" }],
+    "loop_defaults_from_config" => [
+      {}, { "preview_images" => { "style_card" => " retro-pixel ", "palette" => "dusk",
+                                  "claude_plan" => false, "claude_rounds" => 2,
+                                  "claude_min_score" => 7.5, "claude_require_thumbnail" => "no",
+                                  "svg_text" => "KEEP", "svg_max_kb" => "280",
+                                  "look_rasterizer" => "resvg", "claude_budget_usd" => 0.5 } }, {}
+    ],
+    "loop_palette_list_and_junk" => [
+      {}, { "preview_images" => { "palette" => ["#ABCDEF", "nope", 7, "#123"],
+                                  "claude_rounds" => "not-a-number", "svg_max_kb" => true } }, {}
+    ],
+    "loop_env_beats_config" => [
+      {}, { "preview_images" => { "claude_rounds" => 2, "claude_plan" => true } },
+      { "CLAUDE_ROUNDS" => "3", "CLAUDE_PLAN" => "off", "IMAGE_PALETTE" => "#000, #111",
+        "PREVIEW_TELEMETRY" => "t.jsonl", "PREVIEW_EXCLUDE_RE" => "seed\\.md" }
+    ],
+    "loop_cli_wins" => [
+      { claude_rounds: 0, claude_plan: true, palette: "ember", svg_text: "forbid",
+        claude_min_score: 8.5, claude_require_thumbnail: false, telemetry: "-",
+        changed: true, exclude_re: "x", look_rasterizer: "none", claude_budget_usd: 1.25,
+        style_card: "flat-geometric", svg_max_kb: 200.0 },
+      { "preview_images" => { "claude_rounds" => 2 } }, { "CLAUDE_ROUNDS" => "3" }
+    ],
     "full_cli_surface" => [
       { provider: "stability", model: "sd3-large", style: "cli", output_dir: "out",
         prompt_engine: "template", review: "none", batch: 5, file: "x.md",

@@ -248,10 +248,16 @@ The run's config banner names the credential it picked (`xai auth: XAI_OAUTH_TOK
 -f/--file FILE          --collection NAME|all       --provider NAME
 --model NAME            --output-dir DIR            -j/--parallel N
 --style TEXT            --prompt-engine claude|template
---review claude|none    --rasterizer auto|rsvg|inkscape|magick|playwright|none
+--review claude|none    --rasterizer auto|rsvg|resvg|inkscape|magick|playwright|none
 -e/--enhance            --enhance-prompt/-model/-quality/-fidelity/-format
 --collections-dir DIR   --front-matter-key KEY      --authors-file FILE
 --assets-prefix PREFIX  --no-auto-prefix            --batch N  --log-file FILE
+# illustration loop (provider: claude) — docs/ILLUSTRATION-LOOP.md
+--style-card NAME       --palette TOKENS            --rounds N  --min-score S
+--[no-]claude-plan      --[no-]require-thumbnail    --svg-text paths|keep|forbid
+--svg-max-kb KB         --look-rasterizer TOOL      --budget-usd USD
+--telemetry PATH        --changed --exclude-re RE   --inspect SVG [--critic]
+--shape SVG             (Python CLI only: --inspect/--critic/--shape)
 ```
 
 ### `provider: auto` — the capability ladder
@@ -267,6 +273,22 @@ Why a shared default rather than per-page procedural art: with no credential any
 Auto requires a real Claude *credential* (`CLAUDE_CODE_OAUTH_TOKEN` / `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_API_KEY`) to leave rung 3 — deliberately not the same test as `AnthropicClient.available()`, which also accepts a `claude` binary on `PATH`. An installed CLI is not proof of a working login, and promoting an unauthenticated machine off the default rung would fail every page at generation time instead of quietly shipping the shared banner. An explicit `--provider claude` still rides the CLI, because that is a human asserting it works.
 
 An explicitly configured provider is always honored as written; only `auto` walks the ladder.
+
+### The `claude` provider's illustration loop
+
+The `claude` rung is not one blind call. It **plans** a JSON scene graph, **authors** the SVG from that plan and an optional style card (the headline as `<text>`, pre-broken at word boundaries with real font metrics), **shapes** it deterministically (sanitize, `<text>` → `<path>` with a bundled font, precision, strict lint — one fix round, then the `local` banner), **looks** at it at 1536px and at 120px card size, and lets a vision **critic** drive up to `claude_rounds` targeted edits before committing the best draft. `claude_rounds: 0` is the one-shot rollback; `--telemetry PATH` writes one `banner/v1` record per banner. Full reference: [docs/ILLUSTRATION-LOOP.md](docs/ILLUSTRATION-LOOP.md).
+
+```yaml
+preview_images:
+  provider: auto            # a Claude credential alone → the loop
+  rasterizer: none          # commit SVG…
+  look_rasterizer: auto     # …but still LOOK through resvg/rsvg before committing
+  style_card: retro-pixel   # tools/svg/library/styles/<name>.md
+  palette: [ "#0b132b", "#1c2541", "#1c7293", "#5bc0be", "#9fd8d6", "#e8f1f2" ]
+  claude_rounds: 1
+  claude_min_score: 7
+  claude_budget_usd: 1.50   # per run, at list prices
+```
 
 ### Content-aware local banners
 
