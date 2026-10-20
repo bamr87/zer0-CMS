@@ -1,0 +1,23 @@
+<% status_cls = { "ready" => "ok", "failed" => "err", "working" => "running", "draft" => "" }[composition.status] %>
+<div class="page-head" style="margin-bottom:0;">
+  <div>
+    <h1 style="display:flex; align-items:center; gap:.6rem;">
+      <%= composition.title %>
+      <span class="badge <%= status_cls %>"><span class="dot"></span><%= composition.working? ? "working…" : composition.status %></span>
+    </h1>
+    <div class="sub">
+      <%= composition.provider %> · art direction: <%= composition.prompt_engine %> · review: <%= composition.review_engine %>
+    </div>
+  </div>
+  <div class="btn-row">
+    <%= button_to "Regenerate", compose_composition_path(composition), class: "btn",
+                  disabled: composition.working?,
+                  form: { data: { turbo_confirm: "Re-run the pipeline on this brief?" } } %>
+    <%= link_to "New image", new_composition_path, class: "btn" %>
+    <%= button_to "Delete", composition, method: :delete, class: "btn danger",
+                  form: { data: { turbo_confirm: "Delete this composition and its images?" } } %>
+  </div>
+</div>
+<% if composition.error.present? %>
+  <div class="flash alert" style="margin-top:1rem;"><%= composition.error %></div>
+<% end %>

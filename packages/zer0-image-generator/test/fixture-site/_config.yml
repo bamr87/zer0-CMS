@@ -1,0 +1,13 @@
+# Minimal standard-layout Jekyll site (no collections_dir) used by CI to
+# prove the gem + engine end-to-end with the free deterministic provider.
+title: Fixture Site
+description: zer0-image-generator integration fixture
+
+collections:
+  docs:
+    output: true
+
+preview_images:
+  enabled: true
+  provider: local # no API key, no network; deterministic SVG → PNG
+  collections: auto # discover: posts + docs (from the map above)

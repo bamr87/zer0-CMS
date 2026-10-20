@@ -1,0 +1,22 @@
+<% if artifacts.any? %>
+  <div class="grid cols-2">
+    <% artifacts.each do |artifact| %>
+      <div>
+        <div class="preview-frame" style="min-height:110px;">
+          <% if artifact.exists? %>
+            <img src="<%= file_path(path: artifact.path.sub(%r{\A/}, "")) %>" alt="<%= artifact.filename %>" loading="lazy">
+          <% else %>
+            <span class="faint">file moved or removed</span>
+          <% end %>
+        </div>
+        <div class="mono faint" style="font-size:.78rem; margin-top:.3rem; word-break:break-all;">
+          <%= artifact.filename %> · <%= number_to_human_size(artifact.byte_size) if artifact.byte_size %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="empty" style="padding:1.5rem;">
+    <% if run.finished? %>No image artifacts recorded for this run.<% else %>Artifacts appear here as the run writes them.<% end %>
+  </div>
+<% end %>

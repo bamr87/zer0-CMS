@@ -1,0 +1,21 @@
+#!/bin/bash -e
+
+# Enable jemalloc for reduced memory usage and latency.
+if [ -z "${LD_PRELOAD+x}" ]; then
+  LD_PRELOAD=$(find /usr/lib -name libjemalloc.so.2 -print -quit)
+  export LD_PRELOAD
+fi
+
+# Prepare all databases on boot whenever we're launching the server. db:prepare
+# is create-or-migrate, so it is safe on both a fresh volume and an existing one
+# — which matters because the SQLite files live in a named volume that outlives
+# the container, and because Solid Queue (running in Puma) dies immediately if
+# its tables are absent. Match "rails server" in the command, however it's
+# spelled, rather than an exact string.
+case "$*" in
+  *"rails server"* | *"rails s"*)
+    ./bin/rails db:prepare
+    ;;
+esac
+
+exec "${@}"
