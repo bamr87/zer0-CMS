@@ -1,0 +1,9 @@
+[     238ms] [ERROR] Failed to load resource: the server responded with a status of 503 () @ https://bamr87.github.io/irony-works/assets/js/obsidian-local-graph.js?v=1786228821:0
+[     239ms] [LOG] SidebarState: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/sidebar-state.js:48
+[     239ms] [LOG] TocVisibility: Initialized {visible: true} @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/toc-visibility.js:32
+[     239ms] [LOG] ScrollSpy: Observing 7 headings @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/scroll-spy.js:112
+[     239ms] [LOG] SmoothScroll: Initialized with 7 links @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/smooth-scroll.js:53
+[     239ms] [LOG] KeyboardShortcuts: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/keyboard.js:60
+[     239ms] [LOG] SwipeGestures: Initialized @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/gestures.js:53
+[     239ms] [LOG] FocusManager: Initialized with 2 offcanvas elements @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/focus.js:57
+[     240ms] [LOG] Navigation: Successfully initialized modules: [state, tocVisibility, scrollSpy, smoothScroll, keyboard, gestures, focus, navbar] @ https://bamr87.github.io/irony-works/assets/js/modules/navigation/index.js?v=1786228821:104
