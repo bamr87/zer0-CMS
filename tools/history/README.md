@@ -21,4 +21,4 @@ tools/history/graft.sh /tmp/c0 origin/main 5bd4bd18 \
   aabf7ed47ca785cc9303833bb728281dc824dfd3:sites/2005
 ```
 
-If `main` moves before the branch lands, run it again on the new `main` instead of rebasing: a rebase flattens the merges that carry the history.
+If `main` moves before the branch lands, run it again on the new `main` instead of rebasing: a rebase flattens the merges that carry the history. It also works after a graft branch was merged with a merge commit (zer0-CMS #39): the tips are already ancestors of `main` then, so it builds each graft merge with `git commit-tree` and replays `main`'s first-parent commits only — the result is a short branch (16 commits here) that makes `log` and `blame` follow the history `main` already holds.
