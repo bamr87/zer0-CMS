@@ -11,6 +11,7 @@ AI preview/social-image generation for any Jekyll site. It ships in three forms 
 ruby -Ilib test/ruby/test_*.rb          # 327 tests / 9.6k assertions
 # original Python engine tests:
 python3 test/test_preview_generator.py  # zero network
+python3 test/test_illustration_loop.py  # the claude provider's loop (zero network)
 # the gem's CLI translation layer:
 ruby test/test_command.rb
 # the web app:
@@ -43,6 +44,7 @@ the same `Runner` the CLI drives, through the single seam `web/app/services/engi
   directory, and update it after.
 - Don't suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`) or
   leave empty exception handlers.
+- The `claude` provider is an illustration LOOP (plan → author → shape → look → critique → edit; `docs/ILLUSTRATION-LOOP.md`), Python-only like the provider itself. Its deterministic pieces are ported: `svg/text_to_paths.rb` is byte-pinned to the oracle's TrueType reader + glyph geometry by `test/ruby/test_text_to_paths.rb`, and the loop's settings/flags live in `settings.rb`/`cli.rb` so the differential tests stay clean. `lint_svg()` in the engine is the ONE Python lint — `tools/svg/svg-check.py` is a CLI over it.
 - SVG work (banner template, sanitizer, any `.svg`): use the authoring loop in `tools/svg/` — the PostToolUse hook lints + renders every `.svg` write; read the PNG before editing further. Playbook: `.claude/skills/svg-art`.
 
 ## Fleet context

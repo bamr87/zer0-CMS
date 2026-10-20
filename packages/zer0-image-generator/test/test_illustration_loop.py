@@ -605,6 +605,36 @@ class TestTelemetryAndChanged(unittest.TestCase):
         self.assertIsNone(report["critic"])
 
 
+class TestShapeCli(unittest.TestCase):
+    """--shape is the dev forge's finalize step: the production SHAPE, in place."""
+
+    def run_engine(self, *argv, cwd):
+        engine = REPO_ROOT / "lib" / "zer0_image_generator" / "preview_generator.py"
+        return subprocess.run([sys.executable, str(engine), *argv], cwd=cwd,
+                              capture_output=True, text=True)
+
+    def test_shape_converts_in_place_and_reports_clean(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "_config.yml").write_text("preview_images:\n  enabled: false\n")
+            draft = Path(tmp) / "draft.svg"
+            draft.write_text(GOOD_SVG)
+            proc = self.run_engine("--shape", str(draft), "--style-card", "retro-pixel", cwd=tmp)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            report = json.loads(proc.stdout)
+            self.assertEqual(report["schema"], "banner-shape/v1")
+            self.assertTrue(report["lint"]["clean"])
+            self.assertEqual(report["text"]["converted"], 1)
+            self.assertNotIn("<text", draft.read_text())
+
+    def test_shape_exits_1_on_lint_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            draft = Path(tmp) / "draft.svg"
+            draft.write_text(DANGLING_SVG)
+            proc = self.run_engine("--shape", str(draft), cwd=tmp)
+            self.assertEqual(proc.returncode, 1)
+            self.assertFalse(json.loads(proc.stdout)["lint"]["clean"])
+
+
 class TestClientWire(unittest.TestCase):
     def client(self):
         with mock.patch.object(pg.shutil, "which", return_value=None):

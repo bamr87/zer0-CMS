@@ -11,11 +11,17 @@ export const meta = {
   ],
 }
 
-const ROOT = '/Users/bamr87/github/zer0-image-generator'
 let A = args
 if (typeof A === 'string') {
   try { A = JSON.parse(A) } catch (e) { throw new Error('svg-forge args arrived as a non-JSON string') }
 }
+// The package root, relative to the session's working directory. No machine
+// path is baked in: pass args.root when the session does not start there
+// (e.g. 'packages/zer0-image-generator' from the zer0-CMS monorepo root).
+const ROOT = (A && A.root) || '.'
+// The production loop's engine. Finalize runs its SHAPE step (`--shape`) so
+// the dev forge and the grow tick's illustration loop gate on ONE code path.
+const ENGINE = `${ROOT}/lib/zer0_image_generator/preview_generator.py`
 const brief = A && A.brief
 if (!brief) throw new Error('svg-forge needs args.brief (a one-paragraph art brief)')
 const OUT = (A && A.out) || '.sweep/forge/final.svg'
@@ -42,6 +48,9 @@ const DRAFT_SCHEMA = {
   properties: { file: { type: 'string' }, notes: { type: 'string' } },
 }
 
+// Same shape as CRITIQUE_SCHEMA in the engine (lib/zer0_image_generator/
+// svg/critique.schema.json) — the production loop's critic returns exactly
+// this; test/test_illustration_loop.py pins the required keys equal.
 const CRITIQUE_SCHEMA = {
   type: 'object', required: ['works', 'fails', 'next_change', 'overall', 'thumbnail_holds'],
   properties: {
@@ -132,9 +141,11 @@ phase('Finalize')
 const fin = await agent(
   `Finalize an SVG for hand-off. Work from ${ROOT}.
 Source: ${current.file} -> destination: ${OUT} (mkdir -p its directory).
-1. Run python3 tools/svg/svg-check.py ${current.file} --strict. Fix ONLY mechanical failures (missing title/role, precision, size budget) with minimal edits — do not re-art-direct.
-2. If npx is available, try npx -y svgo on a COPY; keep the optimized copy only if it still passes strict svg-check and renders identically at a glance (render both, Read both).
-3. cp the final file to ${OUT}, render it once more, and report size_kb and strict_clean.`,
+1. cp ${current.file} ${OUT}, then run the production loop's SHAPE step on it: python3 ${ENGINE} --shape ${OUT}${FORCED_STYLE ? ` --style-card ${FORCED_STYLE.replace(/^.*\//, '').replace(/\.md$/, '')}` : ''}
+   It sanitizes, converts every <text> to paths with the bundled fonts, rounds precision and runs the strict lint, rewriting the file in place and printing one JSON object. Exit 0 means strict-clean.
+2. If it exits 1, fix ONLY the mechanical failures it lists in ${current.file} with minimal edits — do not re-art-direct — and repeat step 1.
+3. If npx is available, try npx -y svgo on a COPY of ${OUT}; keep the optimized copy only if --shape still exits 0 on it and it renders identically at a glance (render both, Read both).
+4. Render ${OUT} once more, and report size_kb and strict_clean (from the --shape JSON).`,
   { label: 'finalize', phase: 'Finalize', schema: FINAL_SCHEMA },
 )
 

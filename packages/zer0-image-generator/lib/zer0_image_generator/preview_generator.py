@@ -5232,6 +5232,37 @@ def banner_telemetry_record(root: Path, article: Path, slug: str, result: ImageR
     return record
 
 
+def shape_file(svg_path: Path, settings: Settings, project_root: Path) -> Dict[str, Any]:
+    """--shape: the loop's SHAPE step over a file, written back in place.
+
+    This is how the interactive dev loop (.claude/workflows/svg-forge.js)
+    finalizes a piece: through the same code the production loop commits
+    with, so the two can never disagree about what "clean" means."""
+    raw = svg_path.read_text(encoding="utf-8")
+    title_match = re.search(r"<title[^>]*>(.*?)</title>", raw, re.S)
+    card = load_style_card(settings.style_card, project_root)
+    family = card.font_family if card else DEFAULT_FONT_FAMILY
+    out: Dict[str, Any] = {"schema": "banner-shape/v1", "banner": str(svg_path)}
+    try:
+        shaped = shape_svg(extract_svg_document(raw) or raw,
+                           title_match.group(1).strip() if title_match else svg_path.stem,
+                           settings, family)
+    except SvgError as exc:
+        out["lint"] = {"clean": False, "fatal": str(exc), "errors": [], "warnings": []}
+        return out
+    svg_path.write_text(shaped.svg, encoding="utf-8")
+    out.update({
+        "kb": round(len(shaped.svg.encode("utf-8")) / 1024, 1),
+        "lint": {"clean": shaped.lint.clean, "fatal": shaped.lint.fatal,
+                 "errors": shaped.lint.errors, "warnings": shaped.lint.warnings},
+        "text": {"mode": settings.svg_text, "converted": shaped.text.converted,
+                 "stripped": shaped.text.stripped, "fitted": shaped.text.fitted,
+                 "notes": shaped.text.notes},
+        "sanitizer": shaped.sanitizer_notes,
+    })
+    return out
+
+
 def inspect_banner(svg_path: Path, settings: Settings, ctx: "RunContext",
                    article_path: Optional[Path] = None, critic: bool = False) -> Dict[str, Any]:
     """--inspect: strict-lint an existing banner, optionally render + critique
@@ -5755,6 +5786,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
     loop.add_argument("--critic", action="store_true",
                       help="with --inspect: also run the vision critique "
                            "(needs a Claude credential and a rasterizer)")
+    loop.add_argument("--shape", metavar="SVG",
+                      help="run the loop's deterministic SHAPE step on an SVG in "
+                           "place (sanitize, text→paths, precision, strict lint); "
+                           "prints one JSON object, exits 1 unless strict-clean")
     parser.add_argument("--style", help="Override image style prompt")
     parser.add_argument("--assets-prefix", help="Assets prefix for path normalization")
     parser.add_argument("--no-auto-prefix", action="store_true",
@@ -5916,12 +5951,25 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     explicitly_targeted = (
         settings.file or settings.collection or settings.enhance
-        or settings.provider_explicit
+        or settings.provider_explicit or args.inspect or args.shape
     )
     if not settings.enabled and not explicitly_targeted:
         info("preview_images.enabled is false in _config.yml — nothing to do "
              "(pass --provider, --file or --collection to override).")
         return 0
+
+    if args.shape:
+        target = Path(args.shape)
+        if not target.is_file():
+            error_exit(f"File not found: {args.shape}")
+        real_stdout = sys.stdout
+        sys.stdout = sys.stderr
+        try:
+            report = shape_file(target, settings, project_root)
+        finally:
+            sys.stdout = real_stdout
+        print(json.dumps(report, sort_keys=True, ensure_ascii=False))
+        return 0 if report["lint"]["clean"] else 1
 
     if args.inspect:
         ctx = RunContext(project_root=project_root, env=dict(os.environ))
