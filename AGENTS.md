@@ -2,7 +2,7 @@
 
 This is the canonical agent file for the whole repository. It applies to every coding agent (Claude Code, Copilot, Cursor, Codex). Every `CLAUDE.md` in the tree is a pointer that imports the `AGENTS.md` beside it; edit the `AGENTS.md`, never the pointer. Each project under `packages/`, `sites/` and `apps/` has its own `AGENTS.md`, which governs work inside that tree — read it before touching the tree.
 
-zer0-CMS is moving to one architecture: an agent-native, headless CMS with a **content plane** (Django + Wagtail, `content/`) and an **experience plane** (Rails, `rails/`), with the VS Code extension and the Jekyll sites as clients and frontends of it. The decision is [ADR 0001](docs/adr/0001-target-architecture.md); the build order is [`docs/plan/PLAN.md`](docs/plan/PLAN.md) (milestones M0–M20); the design note it implements is [`docs/plan/agent-native-design.md`](docs/plan/agent-native-design.md) ("the note"). Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's code are enforced by today's build.
+zer0-CMS is moving to one architecture: an agent-native, headless CMS with a **content plane** (Django + Wagtail, `content/`) and an **experience plane** (Rails, `rails/`), with the VS Code extension and the Jekyll sites as clients and frontends of it. The decision is [ADR 0001](docs/adr/0001-target-architecture.md), with content going DB-first site by site and this repository as the stack's only home per [ADR 0002](docs/adr/0002-one-home-cutover.md); the build order is [`docs/plan/PLAN.md`](docs/plan/PLAN.md) (milestones M0–M20); the design note it implements is [`docs/plan/agent-native-design.md`](docs/plan/agent-native-design.md) ("the note"). Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's code are enforced by today's build.
 
 Today the repository holds three products of its own and the imported zer0 stack:
 
@@ -151,7 +151,7 @@ Ten repositories live here, each imported with full history: the theme (`package
 - **Nothing under `packages/`, `sites/` or `apps/` may assume it is the git root.** `git rev-parse --show-toplevel` is zer0-CMS; resolve paths from the file instead.
 - **A file that must exist in two projects is `vendored:` in `workspace.yml`**, with its one source. Edit the source, then run `bin/zer0 vendor --write` and read the diff. `bin/zer0 check` fails while a copy differs.
 - **A Jekyll site excludes its agent files.** A site's `_config.yml` lists `AGENTS.md` and `CLAUDE.md` under `exclude:`, or Jekyll publishes them.
-- The original repositories still publish the gems, the Pages sites, the Azure deploy and the `remote_theme`, so do not archive them until `docs/MONOREPO.md` § What still depends on the original repositories is empty.
+- **This repository is the only home** ([ADR 0002](docs/adr/0002-one-home-cutover.md)): make every change to an imported project here, never in its original. The originals still publish the gems, the Pages sites, the Azure deploy and the `remote_theme` until cutover milestones C1–C7 move each one, so do not archive one while `docs/MONOREPO.md` § What still depends on the original repositories still lists it. `bamr87/zer0-mistakes` becomes a read-only mirror fed from `packages/zer0-mistakes/` — never commit to it directly.
 
 ## Conventions
 
