@@ -1,5 +1,5 @@
-# The three remote_theme sites under sites/ — zer0-pages-remote and the two
-# installer demos — built the way the hub's standard-ci built them in their
+# The four remote_theme sites under sites/ — zer0-pages-remote, the two
+# installer demos and 2005 — built the way the hub's standard-ci built them in their
 # own repositories: `bundle install` and `bundle exec jekyll build`, one matrix
 # leg per site, each only when its own tree changes. They load the theme from
 # GitHub (`remote_theme: bamr87/zer0-mistakes`), not from packages/, so a
@@ -14,12 +14,14 @@ on:
       - "sites/zer0-pages-remote/**"
       - "sites/zer0-demo-cookbook/**"
       - "sites/zer0-demo-garden/**"
+      - "sites/2005/**"
       - ".github/workflows/sites.yml"
   pull_request:
     paths:
       - "sites/zer0-pages-remote/**"
       - "sites/zer0-demo-cookbook/**"
       - "sites/zer0-demo-garden/**"
+      - "sites/2005/**"
       - ".github/workflows/sites.yml"
 
 permissions:
@@ -46,7 +48,7 @@ jobs:
         env:
           BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
         run: |
-          all='["zer0-pages-remote","zer0-demo-cookbook","zer0-demo-garden"]'
+          all='["zer0-pages-remote","zer0-demo-cookbook","zer0-demo-garden","2005"]'
           if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
             echo "sites=$all" >> "$GITHUB_OUTPUT"; exit 0
           fi
