@@ -1,0 +1,49 @@
+# Manifest for one book. Schema: docs/SCHEMA.md
+slug: impairment
+title: The Impairment
+subtitle: A financial thriller about the wars fought on a balance sheet
+alt_titles: [Goodwill, The Valuation]
+status: drafting
+genre: Financial thriller / geopolitical drama
+logline: A laid-off systems engineer discovers that the goodwill impairment that cost him his job was cover for a covert transfer of technology to a foreign military regime -- one his own work helped arm.
+comparables: [Succession, Syriana]
+
+pov: Third person limited
+tense: Past
+era: Early 2020s
+protagonist: Kareem Hassan
+
+acts: 3
+planned_chapters: 14
+target_word_count: 90000
+
+tags: [narrative, corporate ethics, identity, globalization, environmental justice]
+
+themes:
+  - Economic colonialism
+  - Corporate dehumanization
+  - Identity and guilt
+  - Environmental injustice
+  - Weaponization of finance
+  - Moral conflict
+  - Personal sacrifice
+  - Legacy and betrayal
+
+# Every name a chapter may list under `characters`. Entries in Title Case that
+# read as a role rather than a name are placeholders the draft has not resolved
+# yet -- see docs/reviews/impairment.md, finding 1.
+cast:
+  - Kareem Hassan
+  - Sarah
+  - Elena
+  - Omar
+  - Aisha
+  - Uncle Farid
+  - Mother
+  - Big Mike
+  - The CFO
+  - Board Members
+  - HR Manager
+  - Old Colleague
+  - Former Colleagues
+  - Laid-off Workers
