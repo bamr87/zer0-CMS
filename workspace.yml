@@ -23,11 +23,17 @@
 #     site:        (optional) the Jekyll root, relative to `path`, of a zer0
 #                  site — `bin/zer0 doctor` checks every project that has one
 #                  against the zer0 stack with the CMS's own `zer0 doctor`
+#     route:       (required when it publishes `pages`) the sub-path the one
+#                  Pages deploy serves it at — "/" or "/name/" — or
+#                  `none — <reason>` (ADR 0002 §4; checked by `bin/zer0 check`)
 #     tasks.<task>: a command run from `path` — or {run:, cwd:, env:}
 #       setup  installs dependencies (may use the network)
 #       check  fast, offline, no installs beyond the language runtime
 #       test   the full suite (assumes `setup` ran)
 #       build  produces the project's artifact
+#       pages  builds the site for its route: pages.yml runs it with
+#              ZER0_PAGES_CONFIG (a config file setting url/baseurl),
+#              ZER0_PAGES_DEST (where to write) and ZER0_PAGES_BASEURL
 #
 # vendored: byte-identical copies one project keeps of another's file. The
 # copy is what ships (a Docker context or a stdlib-only library cannot reach
@@ -106,11 +112,19 @@ projects:
     publishes: ["gem:jekyll-theme-zer0", pages]
     ci: zer0-mistakes.yml
     site: "."
+    route: /
     tasks:
       setup: bundle install && npm ci
       check: ./scripts/bin/test lib
       test: ./scripts/bin/test
       build: gem build jekyll-theme-zer0.gemspec
+      pages:
+        run: >-
+          bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST" &&
+          for ex in examples/*/; do ex="${ex%/}"; [ -f "$ex/_config_deploy.yml" ] || continue;
+          printf 'baseurl: "%s/%s"\n' "$ZER0_PAGES_BASEURL" "$ex" > "$ZER0_PAGES_DEST.$(basename "$ex").yml" &&
+          bundle exec jekyll build --source "$ex" --config "$ex/_config.yml,$ex/_config_deploy.yml,$ZER0_PAGES_DEST.$(basename "$ex").yml" --destination "$ZER0_PAGES_DEST/$ex" || exit 1; done
+        env: {LANG: C.UTF-8, LC_ALL: C.UTF-8, PAGES_REPO_NWO: bamr87/zer0-mistakes}
 
   zer0-image-generator:
     path: packages/zer0-image-generator
@@ -151,6 +165,7 @@ projects:
     summary: The self-growing knowledge base about the year 1987 — plain-markdown topic pages by category, grown by Claude Code slash commands and published by GitHub Pages from the original repository.
     upstream: bamr87/1987
     publishes: [pages]
+    route: none — a plain-markdown repository with no Jekyll config of its own; its GitHub Pages site went with the deleted bamr87/1987, and it gets a route once it has a _config.yml
     ci: ci.yml
     tasks:
       check: python3 tools/unwrap-prose.py --check . || true
@@ -163,6 +178,7 @@ projects:
     upstream: year-of-ai/2005
     depends_on: [zer0-mistakes]
     publishes: [pages]
+    route: none — published by year-of-ai.github.io at /2005/, which builds it from this repository (ADR 0002 §4)
     ci: sites.yml
     site: .
     tasks:
@@ -179,6 +195,7 @@ projects:
     publishes: [pages, "pypi:drsai"]
     ci: drsai.yml
     site: "."
+    route: /drsai/
     tasks:
       setup:
         run: bundle install && (cd drsai && pip install -e ".[dev]")
@@ -189,6 +206,7 @@ projects:
       build:
         run: bundle exec jekyll build --config _config.yml,_config_dev.yml
         env: {ZER0_THEME_LOCAL: ../../packages/zer0-mistakes}
+      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
   zer0-pages:
     path: sites/zer0-pages
@@ -200,10 +218,12 @@ projects:
     publishes: [pages]
     ci: zer0-pages.yml
     site: "."
+    route: /zer0-pages/
     tasks:
       setup: bundle install
       check: ruby -Ipages/_plugins tests/test_obsidian_bridge.rb && ruby -Ipages/_plugins tests/test_graph_index.rb && python3 tools/schema_lint.py check .
       build: bundle exec jekyll build
+      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
   zer0-pages-remote:
     path: sites/zer0-pages-remote
@@ -215,9 +235,11 @@ projects:
     publishes: [pages]
     ci: sites.yml
     site: "."
+    route: /zer0-pages-remote/
     tasks:
       setup: bundle install
       build: bundle exec jekyll build
+      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
   zer0-demo-cookbook:
     path: sites/zer0-demo-cookbook
@@ -229,9 +251,11 @@ projects:
     publishes: [pages]
     ci: sites.yml
     site: "."
+    route: /demos/cookbook/
     tasks:
       setup: bundle install
       build: bundle exec jekyll build
+      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
   zer0-demo-garden:
     path: sites/zer0-demo-garden
@@ -243,9 +267,11 @@ projects:
     publishes: [pages]
     ci: sites.yml
     site: "."
+    route: /demos/garden/
     tasks:
       setup: bundle install
       build: bundle exec jekyll build
+      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
   barodybroject:
     path: apps/barodybroject
@@ -254,6 +280,7 @@ projects:
     summary: A Django 5.2 + React app that generates and manages parody news with a provider-agnostic AI layer, deployed to Azure Container Apps.
     upstream: bamr87/barodybroject
     publishes: [azure, pages]
+    route: none — its Jekyll sidecar's _config.yml uses an undefined YAML alias (*site_domain) that Jekyll refuses; fixing that is PLAN C5, then it routes at /barodybroject/
     ci: barodybroject.yml
     site: "src/pages"
     tasks:
