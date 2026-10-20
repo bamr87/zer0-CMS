@@ -1,0 +1,250 @@
+- generic [active] [ref=f7e1]:
+  - link "Skip to main content" [ref=f7e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f7e3]:
+    - navigation "Primary navigation" [ref=f7e5]:
+      - generic [ref=f7e6]:
+        - generic [ref=f7e7]:
+          - text: 
+          - link "Home - Irony Works" [ref=f7e8] [cursor=pointer]:
+            - /url: /irony-works/
+            - img "Irony Works logo" [ref=f7e9]
+        - link "Irony Works — Home" [ref=f7e11] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f7e12]: Irony Works
+        - link "The perpetual encyclopedia of irony — Irony Works home" [ref=f7e14] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f7e15]: The perpetual encyclopedia of irony
+      - generic "Main Navigation" [ref=f7e16]:
+        - list [ref=f7e19]:
+          - text: 
+          - listitem [ref=f7e20]:
+            - link "Entries" [ref=f7e21] [cursor=pointer]:
+              - /url: /irony-works/entries/
+          - text:  
+      - group "Utility controls" [ref=f7e22]:
+        - button "Open search" [ref=f7e23] [cursor=pointer]:
+          - generic [ref=f7e24]: 
+        - button "Open settings" [ref=f7e25] [cursor=pointer]:
+          - generic [ref=f7e26]: 
+        - text: 
+  - text:   
+  - main [ref=f7e27]:
+    - generic [ref=f7e29]:
+      - generic [ref=f7e31]:
+        - generic [ref=f7e32]:
+          - heading "Irony Works" [level=1] [ref=f7e33]
+          - paragraph [ref=f7e34]: The perpetual encyclopedia of irony. Start anywhere; every path loops back. Verbal Irony · Situational Irony · Dramatic Irony · Socratic Irony · Cosmic…
+        - generic [ref=f7e35]:
+          - list "Page metadata" [ref=f7e36]:
+            - listitem [ref=f7e37]:
+              - generic [ref=f7e38]: 
+            - listitem [ref=f7e39]:
+              - generic [ref=f7e40]: 
+              - time [ref=f7e41]: Published Aug 08, 2026
+            - listitem [ref=f7e42]:
+              - generic [ref=f7e43]: 
+              - link "Entries" [ref=f7e44] [cursor=pointer]:
+                - /url: /irony-works/entries/
+            - listitem [ref=f7e45]:
+              - generic [ref=f7e46]: 
+              - link "View source" [ref=f7e47] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//_entries/Home.md
+          - generic [ref=f7e48]:
+            - paragraph [ref=f7e49]:
+              - generic [ref=f7e50]: 
+              - text: "Estimated reading time: 1 minute"
+            - generic [ref=f7e51]:
+              - generic [ref=f7e52]:
+                - button "Share" [ref=f7e53] [cursor=pointer]:
+                  - generic [ref=f7e54]: 
+                - text:    
+              - link "Edit on GitHub" [ref=f7e56] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//_entries/Home.md
+                - generic [ref=f7e57]: 
+      - generic "Table of Contents" [ref=f7e60]:
+        - text: 
+        - navigation "Table of Contents" [ref=f7e62]:
+          - generic [ref=f7e63]:
+            - strong [ref=f7e64]:
+              - generic [ref=f7e65]: 
+              - text: On this page
+            - button "Hide table of contents" [expanded] [ref=f7e66] [cursor=pointer]:
+              - generic [ref=f7e67]: 
+          - list [ref=f7e69]:
+            - listitem [ref=f7e70]:
+              - link "The Trunk — Forms" [ref=f7e71] [cursor=pointer]:
+                - /url: "#the-trunk--forms"
+            - listitem [ref=f7e72]:
+              - link "The Branches" [ref=f7e73] [cursor=pointer]:
+                - /url: "#the-branches"
+            - listitem [ref=f7e74]:
+              - link "The Reflections" [ref=f7e75] [cursor=pointer]:
+                - /url: "#the-reflections"
+            - listitem [ref=f7e76]:
+              - link "The Understory" [ref=f7e77] [cursor=pointer]:
+                - /url: "#the-understory"
+      - generic [ref=f7e78]:
+        - paragraph [ref=f7e79]:
+          - emphasis [ref=f7e80]: The perpetual encyclopedia of irony. Start anywhere; every path loops back.
+        - alert [ref=f7e81]:
+          - 'heading "Quote: Founding intent" [level=3] [ref=f7e82]':
+            - generic [ref=f7e83]: 
+            - generic [ref=f7e84]: "Quote:"
+            - text: Founding intent
+          - paragraph [ref=f7e86]: “Life’s manufactured play on words through the weights of AI.” — The Founding Prompt, preserved as the seed’s seed.
+        - heading "The Trunk — Forms" [level=2] [ref=f7e87]
+        - paragraph [ref=f7e88]:
+          - link "Verbal Irony" [ref=f7e89] [cursor=pointer]:
+            - /url: /irony-works/entries/verbal/
+          - text: ·
+          - link "Situational Irony" [ref=f7e90] [cursor=pointer]:
+            - /url: /irony-works/entries/situational/
+          - text: ·
+          - link "Dramatic Irony" [ref=f7e91] [cursor=pointer]:
+            - /url: /irony-works/entries/dramatic/
+          - text: ·
+          - link "Socratic Irony" [ref=f7e92] [cursor=pointer]:
+            - /url: /irony-works/entries/socratic/
+          - text: ·
+          - link "Cosmic Irony" [ref=f7e93] [cursor=pointer]:
+            - /url: /irony-works/entries/cosmic/
+          - text: ·
+          - link "Structural Irony" [ref=f7e94] [cursor=pointer]:
+            - /url: /irony-works/entries/structural/
+          - text: ·
+          - link "Historical Irony" [ref=f7e95] [cursor=pointer]:
+            - /url: /irony-works/entries/historical/
+          - text: ·
+          - link "Meta-Irony & Post-Irony" [ref=f7e96] [cursor=pointer]:
+            - /url: /irony-works/entries/meta-and-post/
+        - heading "The Branches" [level=2] [ref=f7e97]
+        - list [ref=f7e98]:
+          - listitem [ref=f7e99]:
+            - strong [ref=f7e100]: Works
+            - text: —
+            - link "Oedipus Rex" [ref=f7e101] [cursor=pointer]:
+              - /url: /irony-works/entries/oedipus-rex/
+            - text: ·
+            - link "A Modest Proposal" [ref=f7e102] [cursor=pointer]:
+              - /url: /irony-works/entries/a-modest-proposal/
+            - text: ·
+            - link "The Gift of the Magi" [ref=f7e103] [cursor=pointer]:
+              - /url: /irony-works/entries/the-gift-of-the-magi/
+            - text: ·
+            - link "Ozymandias" [ref=f7e104] [cursor=pointer]:
+              - /url: /irony-works/entries/ozymandias/
+            - text: ·
+            - link "Ironies of Automation" [ref=f7e105] [cursor=pointer]:
+              - /url: /irony-works/entries/ironies-of-automation/
+          - listitem [ref=f7e106]:
+            - strong [ref=f7e107]: Figures
+            - text: —
+            - link "Socrates" [ref=f7e108] [cursor=pointer]:
+              - /url: /irony-works/entries/socrates/
+            - text: ·
+            - link "Oscar Wilde" [ref=f7e109] [cursor=pointer]:
+              - /url: /irony-works/entries/oscar-wilde/
+          - listitem [ref=f7e110]:
+            - strong [ref=f7e111]: Instances
+            - text: —
+            - link "Thomas Midgley Jr." [ref=f7e112] [cursor=pointer]:
+              - /url: /irony-works/entries/thomas-midgley-jr/
+            - text: ·
+            - link "Nobel’s Obituary" [ref=f7e113] [cursor=pointer]:
+              - /url: /irony-works/entries/nobels-obituary/
+            - text: ·
+            - link "The Streisand Effect" [ref=f7e114] [cursor=pointer]:
+              - /url: /irony-works/entries/the-streisand-effect/
+            - text: ·
+            - link "The Kodak Moment" [ref=f7e115] [cursor=pointer]:
+              - /url: /irony-works/entries/the-kodak-moment/
+            - text: ·
+            - link "The CAPTCHA Toll" [ref=f7e116] [cursor=pointer]:
+              - /url: /irony-works/entries/the-captcha-toll/
+            - text: ·
+            - link "Curie’s Notebooks" [ref=f7e117] [cursor=pointer]:
+              - /url: /irony-works/entries/curies-notebooks/
+        - heading "The Reflections" [level=2] [ref=f7e118]
+        - list [ref=f7e119]:
+          - listitem [ref=f7e120]:
+            - strong [ref=f7e121]: Mirrors
+            - text: (this machine’s own ironies) —
+            - link "The Unfeeling Curator" [ref=f7e122] [cursor=pointer]:
+              - /url: /irony-works/entries/the-unfeeling-curator/
+            - text: ·
+            - link "Zero Mistakes" [ref=f7e123] [cursor=pointer]:
+              - /url: /irony-works/entries/zero-mistakes/
+            - text: ·
+            - link "The Borges Condition" [ref=f7e124] [cursor=pointer]:
+              - /url: /irony-works/entries/the-borges-condition/
+            - text: ·
+            - link "The Bainbridge Clause" [ref=f7e125] [cursor=pointer]:
+              - /url: /irony-works/entries/the-bainbridge-clause/
+          - listitem [ref=f7e126]:
+            - strong [ref=f7e127]: Futures
+            - text: (open positions) —
+            - 'link "Open Position: The Comprehensiveness Wager" [ref=f7e128] [cursor=pointer]':
+              - /url: /irony-works/entries/the-comprehensiveness-wager/
+        - heading "The Understory" [level=2] [ref=f7e129]
+        - list [ref=f7e130]:
+          - listitem [ref=f7e131]:
+            - 'link "Compost: The Merely Unfortunate" [ref=f7e132] [cursor=pointer]':
+              - /url: /irony-works/entries/the-merely-unfortunate/
+            - text: — rejected candidates, with verdicts
+          - listitem [ref=f7e133]:
+            - code [ref=f7e134]: nursery/
+            - text: — drafts awaiting the gate and your judgment
+        - separator [ref=f7e135]
+        - paragraph [ref=f7e136]:
+          - emphasis [ref=f7e137]: "How to read the graph: forms are red, works green, instances orange, mirrors violet, futures gold, compost brown. A healthy vault is dense at the trunk and reaching at the edges."
+  - contentinfo [ref=f7e138]:
+    - generic [ref=f7e139]:
+      - paragraph [ref=f7e140]: © 2026 Irony Works
+      - generic [ref=f7e141]:
+        - generic [ref=f7e142]: "Powered by:"
+        - list "Powered by:" [ref=f7e143]:
+          - listitem [ref=f7e144]:
+            - link "View theme information and system details" [ref=f7e145] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f7e146]: 
+              - generic [ref=f7e147]: Info
+    - generic [ref=f7e149]:
+      - generic [ref=f7e150]:
+        - generic [ref=f7e151]:
+          - heading "Irony Works" [level=2] [ref=f7e152]
+          - paragraph [ref=f7e153]:
+            - link:
+              - /url: "mailto:"
+        - generic [ref=f7e154]:
+          - heading "Quick Links" [level=2] [ref=f7e155]
+          - list "Footer quick links" [ref=f7e156]:
+            - listitem [ref=f7e157]:
+              - link "Home" [ref=f7e158] [cursor=pointer]:
+                - /url: /irony-works/
+            - listitem [ref=f7e159]:
+              - link "Sitemap (XML)" [ref=f7e160] [cursor=pointer]:
+                - /url: /irony-works/sitemap.xml
+        - generic [ref=f7e161]:
+          - heading "Follow Us" [level=2] [ref=f7e162]
+          - list "Social links" [ref=f7e163]:
+            - listitem [ref=f7e164]:
+              - link "Feed" [ref=f7e165] [cursor=pointer]:
+                - /url: /irony-works/feed.xml
+                - generic [ref=f7e166]: 
+      - generic [ref=f7e168]:
+        - form "Newsletter signup" [ref=f7e170]:
+          - generic [ref=f7e171]:
+            - generic [ref=f7e172]: Email
+            - textbox "Email" [disabled] [ref=f7e173]:
+              - /placeholder: Enter your email
+          - generic [ref=f7e174]:
+            - button "Subscribe" [disabled]
+          - paragraph [ref=f7e176]: Newsletter is a placeholder until you connect a provider.
+        - list [ref=f7e178]:
+          - listitem [ref=f7e179]:
+            - link "Cookie Preferences" [ref=f7e180] [cursor=pointer]:
+              - /url: "#"
+      - paragraph [ref=f7e182]: © 2026 Irony Works. All Rights Reserved.
+    - text: 
+  - text:  

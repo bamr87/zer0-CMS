@@ -1,0 +1,455 @@
+- generic [active] [ref=f5e1]:
+  - link "Skip to main content" [ref=f5e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f5e3]:
+    - navigation "Primary navigation" [ref=f5e5]:
+      - generic [ref=f5e6]:
+        - generic [ref=f5e7]:
+          - text: 
+          - link "Home - Irony Works" [ref=f5e8] [cursor=pointer]:
+            - /url: /irony-works/
+            - img "Irony Works logo" [ref=f5e9]
+        - link "Irony Works — Home" [ref=f5e11] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f5e12]: Irony Works
+      - group "Utility controls" [ref=f5e13]:
+        - button "Open search" [ref=f5e14] [cursor=pointer]:
+          - generic [ref=f5e15]: 
+        - text: 
+        - button "Toggle main navigation" [ref=f5e17] [cursor=pointer]:
+          - generic [ref=f5e18]: 
+  - text:   
+  - main [ref=f5e19]:
+    - generic [ref=f5e21]:
+      - generic [ref=f5e23]:
+        - generic [ref=f5e24]:
+          - heading "Entries" [level=1] [ref=f5e25]
+          - paragraph [ref=f5e26]: Every entry in the vault, grouped by branch — forms, works, figures, instances, mirrors, futures, and the nursery of drafts awaiting judgment.
+        - generic [ref=f5e27]:
+          - list "Page metadata" [ref=f5e28]:
+            - listitem [ref=f5e29]:
+              - generic [ref=f5e30]: 
+            - text: 
+          - generic [ref=f5e31]:
+            - paragraph [ref=f5e32]:
+              - generic [ref=f5e33]: 
+              - text: "Estimated reading time: 9 minutes"
+            - generic [ref=f5e34]:
+              - generic [ref=f5e35]:
+                - button [ref=f5e36] [cursor=pointer]:
+                  - generic [ref=f5e37]: 
+                - text:    
+              - link [ref=f5e38] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//entries.md
+                - generic [ref=f5e39]: 
+      - generic [ref=f5e40]:
+        - paragraph [ref=f5e41]:
+          - text: Every entry states an
+          - strong [ref=f5e42]: expectation
+          - text: and a
+          - strong [ref=f5e43]: reversal
+          - text: . If a candidate cannot state both, it is not irony — it is merely unfortunate, and it goes to the
+          - link "compost" [ref=f5e44] [cursor=pointer]:
+            - /url: /irony-works/entries/the-merely-unfortunate/
+          - text: .
+        - navigation "Jump to section" [ref=f5e45]:
+          - link "forms 8" [ref=f5e46] [cursor=pointer]:
+            - /url: "#forms"
+            - text: forms
+            - generic [ref=f5e47]: "8"
+          - link "works 5" [ref=f5e48] [cursor=pointer]:
+            - /url: "#works"
+            - text: works
+            - generic [ref=f5e49]: "5"
+          - link "figures 2" [ref=f5e50] [cursor=pointer]:
+            - /url: "#figures"
+            - text: figures
+            - generic [ref=f5e51]: "2"
+          - link "instances 6" [ref=f5e52] [cursor=pointer]:
+            - /url: "#instances"
+            - text: instances
+            - generic [ref=f5e53]: "6"
+          - link "mirrors 4" [ref=f5e54] [cursor=pointer]:
+            - /url: "#mirrors"
+            - text: mirrors
+            - generic [ref=f5e55]: "4"
+          - link "futures 1" [ref=f5e56] [cursor=pointer]:
+            - /url: "#futures"
+            - text: futures
+            - generic [ref=f5e57]: "1"
+          - link "nursery 6" [ref=f5e58] [cursor=pointer]:
+            - /url: "#nursery"
+            - text: nursery
+            - generic [ref=f5e59]: "6"
+        - heading "The Trunk — Forms" [level=2] [ref=f5e60]
+        - generic [ref=f5e61]:
+          - link [ref=f5e62] [cursor=pointer]:
+            - /url: /irony-works/entries/cosmic/
+            - heading "Cosmic Irony" [level=3] [ref=f5e64]
+          - link [ref=f5e65] [cursor=pointer]:
+            - /url: /irony-works/entries/dramatic/
+            - heading "Dramatic Irony" [level=3] [ref=f5e67]
+          - link [ref=f5e68] [cursor=pointer]:
+            - /url: /irony-works/entries/historical/
+            - heading "Historical Irony" [level=3] [ref=f5e70]
+          - link [ref=f5e71] [cursor=pointer]:
+            - /url: /irony-works/entries/meta-and-post/
+            - heading "Meta-Irony & Post-Irony" [level=3] [ref=f5e73]
+          - link [ref=f5e74] [cursor=pointer]:
+            - /url: /irony-works/entries/situational/
+            - heading "Situational Irony" [level=3] [ref=f5e76]
+          - link [ref=f5e77] [cursor=pointer]:
+            - /url: /irony-works/entries/socratic/
+            - heading "Socratic Irony" [level=3] [ref=f5e79]
+          - link [ref=f5e80] [cursor=pointer]:
+            - /url: /irony-works/entries/structural/
+            - heading "Structural Irony" [level=3] [ref=f5e82]
+          - link [ref=f5e83] [cursor=pointer]:
+            - /url: /irony-works/entries/verbal/
+            - heading "Verbal Irony" [level=3] [ref=f5e85]
+        - heading "Works" [level=2] [ref=f5e86]
+        - generic [ref=f5e87]:
+          - 'link "A Modest Proposal 10/10 attested Expectation: A pamphlet in the calm, statistical register of political economy will propose a reasonable remedy for Irish poverty. Reversal: The remedy is eating children — costed, seasoned, and argued without one crack in the reasonable voice, so that the register itself becomes the indictment of..." [ref=f5e88] [cursor=pointer]':
+            - /url: /irony-works/entries/a-modest-proposal/
+            - generic [ref=f5e89]:
+              - heading "A Modest Proposal" [level=3] [ref=f5e90]
+              - generic [ref=f5e91]:
+                - generic [ref=f5e92]: 10/10
+                - generic [ref=f5e93]: attested
+            - paragraph [ref=f5e94]:
+              - strong [ref=f5e95]: "Expectation:"
+              - text: A pamphlet in the calm, statistical register of political economy will propose a reasonable remedy for Irish poverty.
+            - paragraph [ref=f5e96]:
+              - strong [ref=f5e97]: "Reversal:"
+              - text: The remedy is eating children — costed, seasoned, and argued without one crack in the reasonable voice, so that the register itself becomes the indictment of...
+          - 'link "Ironies of Automation 9/10 attested Expectation: Automating a task removes the unreliable human from the loop, and the human''s remaining job gets easier. Reversal: The human is left with exactly the tasks the designers could not automate — the hardest ones — to be performed cold, without practice, at the worst possible ..." [ref=f5e98] [cursor=pointer]':
+            - /url: /irony-works/entries/ironies-of-automation/
+            - generic [ref=f5e99]:
+              - heading "Ironies of Automation" [level=3] [ref=f5e100]
+              - generic [ref=f5e101]:
+                - generic [ref=f5e102]: 9/10
+                - generic [ref=f5e103]: attested
+            - paragraph [ref=f5e104]:
+              - strong [ref=f5e105]: "Expectation:"
+              - text: Automating a task removes the unreliable human from the loop, and the human's remaining job gets easier.
+            - paragraph [ref=f5e106]:
+              - strong [ref=f5e107]: "Reversal:"
+              - text: The human is left with exactly the tasks the designers could not automate — the hardest ones — to be performed cold, without practice, at the worst possible ...
+          - 'link "Oedipus Rex 10/10 attested Expectation: A king launches an investigation to find his predecessor''s murderer and lift the plague — the confident detective, closing in. Reversal: The detective is the culprit. Every step of the investigation is a step of the conviction, and the audience knew before he took the first one." [ref=f5e108] [cursor=pointer]':
+            - /url: /irony-works/entries/oedipus-rex/
+            - generic [ref=f5e109]:
+              - heading "Oedipus Rex" [level=3] [ref=f5e110]
+              - generic [ref=f5e111]:
+                - generic [ref=f5e112]: 10/10
+                - generic [ref=f5e113]: attested
+            - paragraph [ref=f5e114]:
+              - strong [ref=f5e115]: "Expectation:"
+              - text: A king launches an investigation to find his predecessor's murderer and lift the plague — the confident detective, closing in.
+            - paragraph [ref=f5e116]:
+              - strong [ref=f5e117]: "Reversal:"
+              - text: The detective is the culprit. Every step of the investigation is a step of the conviction, and the audience knew before he took the first one.
+          - 'link "Ozymandias 10/10 attested Expectation: A colossal monument and its pedestal inscription command posterity to survey the king''s works and despair at their magnitude. Reversal: Posterity surveys sand. The works are gone; the boast survives only as its own punchline — delivered by a broken statue to an empty desert." [ref=f5e118] [cursor=pointer]':
+            - /url: /irony-works/entries/ozymandias/
+            - generic [ref=f5e119]:
+              - heading "Ozymandias" [level=3] [ref=f5e120]
+              - generic [ref=f5e121]:
+                - generic [ref=f5e122]: 10/10
+                - generic [ref=f5e123]: attested
+            - paragraph [ref=f5e124]:
+              - strong [ref=f5e125]: "Expectation:"
+              - text: A colossal monument and its pedestal inscription command posterity to survey the king's works and despair at their magnitude.
+            - paragraph [ref=f5e126]:
+              - strong [ref=f5e127]: "Reversal:"
+              - text: Posterity surveys sand. The works are gone; the boast survives only as its own punchline — delivered by a broken statue to an empty desert.
+          - 'link "The Gift of the Magi 8/10 attested Expectation: Each spouse sacrifices their single treasure to buy a gift worthy of the other''s single treasure. Reversal: Each gift is rendered useless by the other''s sacrifice — the combs for the sold hair, the chain for the sold watch — and the uselessness is the proof of the ..." [ref=f5e128] [cursor=pointer]':
+            - /url: /irony-works/entries/the-gift-of-the-magi/
+            - generic [ref=f5e129]:
+              - heading "The Gift of the Magi" [level=3] [ref=f5e130]
+              - generic [ref=f5e131]:
+                - generic [ref=f5e132]: 8/10
+                - generic [ref=f5e133]: attested
+            - paragraph [ref=f5e134]:
+              - strong [ref=f5e135]: "Expectation:"
+              - text: Each spouse sacrifices their single treasure to buy a gift worthy of the other's single treasure.
+            - paragraph [ref=f5e136]:
+              - strong [ref=f5e137]: "Reversal:"
+              - text: Each gift is rendered useless by the other's sacrifice — the combs for the sold hair, the chain for the sold watch — and the uselessness is the proof of the ...
+        - heading "Figures" [level=2] [ref=f5e138]
+        - generic [ref=f5e139]:
+          - 'link "Oscar Wilde 9/10 attested Expectation: The sharpest wit in London, master of saying the dangerous thing safely, files a libel suit to defend his name. Reversal: The accusation was true. His own lawsuit assembled the evidence for his own prosecution — the wordsmith undone by initiating the one proceeding where words a..." [ref=f5e140] [cursor=pointer]':
+            - /url: /irony-works/entries/oscar-wilde/
+            - generic [ref=f5e141]:
+              - heading "Oscar Wilde" [level=3] [ref=f5e142]
+              - generic [ref=f5e143]:
+                - generic [ref=f5e144]: 9/10
+                - generic [ref=f5e145]: attested
+            - paragraph [ref=f5e146]:
+              - strong [ref=f5e147]: "Expectation:"
+              - text: The sharpest wit in London, master of saying the dangerous thing safely, files a libel suit to defend his name.
+            - paragraph [ref=f5e148]:
+              - strong [ref=f5e149]: "Reversal:"
+              - text: The accusation was true. His own lawsuit assembled the evidence for his own prosecution — the wordsmith undone by initiating the one proceeding where words a...
+          - 'link "Socrates 9/10 attested Expectation: The city that invented open debate would tolerate — even prize — the man who took the examined life most seriously. Reversal: Athens executed its examiner. The verdict proved his indictment of the city more efficiently than any dialogue could have." [ref=f5e150] [cursor=pointer]':
+            - /url: /irony-works/entries/socrates/
+            - generic [ref=f5e151]:
+              - heading "Socrates" [level=3] [ref=f5e152]
+              - generic [ref=f5e153]:
+                - generic [ref=f5e154]: 9/10
+                - generic [ref=f5e155]: attested
+            - paragraph [ref=f5e156]:
+              - strong [ref=f5e157]: "Expectation:"
+              - text: The city that invented open debate would tolerate — even prize — the man who took the examined life most seriously.
+            - paragraph [ref=f5e158]:
+              - strong [ref=f5e159]: "Reversal:"
+              - text: Athens executed its examiner. The verdict proved his indictment of the city more efficiently than any dialogue could have.
+        - heading "Instances" [level=2] [ref=f5e160]
+        - generic [ref=f5e161]:
+          - 'link "Curie''s Notebooks 8/10 attested Expectation: A scientist''s notebooks are the safest, most durable part of her legacy — inert paper, waiting patiently in a library. Reversal: Marie Curie''s notebooks are radioactive and will remain so for on the order of 1,600 years. Her most dangerous artifact is the paperwork; readers at the Bibl..." [ref=f5e162] [cursor=pointer]':
+            - /url: /irony-works/entries/curies-notebooks/
+            - generic [ref=f5e163]:
+              - heading "Curie's Notebooks" [level=3] [ref=f5e164]
+              - generic [ref=f5e165]:
+                - generic [ref=f5e166]: 8/10
+                - generic [ref=f5e167]: attested
+            - paragraph [ref=f5e168]:
+              - strong [ref=f5e169]: "Expectation:"
+              - text: A scientist's notebooks are the safest, most durable part of her legacy — inert paper, waiting patiently in a library.
+            - paragraph [ref=f5e170]:
+              - strong [ref=f5e171]: "Reversal:"
+              - text: Marie Curie's notebooks are radioactive and will remain so for on the order of 1,600 years. Her most dangerous artifact is the paperwork; readers at the Bibl...
+          - 'link "Nobel''s Obituary 8/10 (as legend) legend Expectation: A man learns what the world thinks of him only after he can no longer respond to it. Reversal: A newspaper''s mistake — running Alfred Nobel''s obituary while he lived, reportedly branding him a merchant of death — let him read his own verdict and buy an..." [ref=f5e172] [cursor=pointer]':
+            - /url: /irony-works/entries/nobels-obituary/
+            - generic [ref=f5e173]:
+              - heading "Nobel's Obituary" [level=3] [ref=f5e174]
+              - generic [ref=f5e175]:
+                - generic [ref=f5e176]: 8/10 (as legend)
+                - generic [ref=f5e177]: legend
+            - paragraph [ref=f5e178]:
+              - strong [ref=f5e179]: "Expectation:"
+              - text: A man learns what the world thinks of him only after he can no longer respond to it.
+            - paragraph [ref=f5e180]:
+              - strong [ref=f5e181]: "Reversal:"
+              - text: A newspaper's mistake — running Alfred Nobel's obituary while he lived, reportedly branding him a merchant of death — let him read his own verdict and buy an...
+          - 'link "The CAPTCHA Toll 9/10 attested Expectation: A checkpoint where humans prove to machines that they are not machines will keep the machines out. Reversal: The proof-of-humanity labor — deciphering words, clicking crosswalks — was harvested to digitize books and label training data, teaching machines to pass the..." [ref=f5e182] [cursor=pointer]':
+            - /url: /irony-works/entries/the-captcha-toll/
+            - generic [ref=f5e183]:
+              - heading "The CAPTCHA Toll" [level=3] [ref=f5e184]
+              - generic [ref=f5e185]:
+                - generic [ref=f5e186]: 9/10
+                - generic [ref=f5e187]: attested
+            - paragraph [ref=f5e188]:
+              - strong [ref=f5e189]: "Expectation:"
+              - text: A checkpoint where humans prove to machines that they are not machines will keep the machines out.
+            - paragraph [ref=f5e190]:
+              - strong [ref=f5e191]: "Reversal:"
+              - text: The proof-of-humanity labor — deciphering words, clicking crosswalks — was harvested to digitize books and label training data, teaching machines to pass the...
+          - 'link "The Kodak Moment 9/10 attested Expectation: The company synonymous with photography — holder of the phrase for a memory worth keeping — would own whatever photography became. Reversal: A Kodak engineer invented the digital camera in 1975. The company shelved it to protect film, then was bankrupted in 2012 by the technology it had locked in ..." [ref=f5e192] [cursor=pointer]':
+            - /url: /irony-works/entries/the-kodak-moment/
+            - generic [ref=f5e193]:
+              - heading "The Kodak Moment" [level=3] [ref=f5e194]
+              - generic [ref=f5e195]:
+                - generic [ref=f5e196]: 9/10
+                - generic [ref=f5e197]: attested
+            - paragraph [ref=f5e198]:
+              - strong [ref=f5e199]: "Expectation:"
+              - text: The company synonymous with photography — holder of the phrase for a memory worth keeping — would own whatever photography became.
+            - paragraph [ref=f5e200]:
+              - strong [ref=f5e201]: "Reversal:"
+              - text: A Kodak engineer invented the digital camera in 1975. The company shelved it to protect film, then was bankrupted in 2012 by the technology it had locked in ...
+          - 'link "The Streisand Effect 9/10 attested Expectation: A lawsuit to suppress an obscure photograph will make it more obscure. Reversal: Before the suit, the aerial photo of the Malibu house had been downloaded six times — two of them by her own attorneys. After the suit made news, hundreds of..." [ref=f5e202] [cursor=pointer]':
+            - /url: /irony-works/entries/the-streisand-effect/
+            - generic [ref=f5e203]:
+              - heading "The Streisand Effect" [level=3] [ref=f5e204]
+              - generic [ref=f5e205]:
+                - generic [ref=f5e206]: 9/10
+                - generic [ref=f5e207]: attested
+            - paragraph [ref=f5e208]:
+              - strong [ref=f5e209]: "Expectation:"
+              - text: A lawsuit to suppress an obscure photograph will make it more obscure.
+            - paragraph [ref=f5e210]:
+              - strong [ref=f5e211]: "Reversal:"
+              - text: Before the suit, the aerial photo of the Malibu house had been downloaded six times — two of them by her own attorneys. After the suit made news, hundreds of...
+          - 'link "Thomas Midgley Jr. 10/10 attested Expectation: A celebrated problem-solver''s inventions — anti-knock fuel, safe refrigerants, a device to lift himself from bed — would each improve life. Reversal: The first two poisoned the air and tore the ozone layer at planetary scale; the third, the gentlest, killed him personally." [ref=f5e212] [cursor=pointer]':
+            - /url: /irony-works/entries/thomas-midgley-jr/
+            - generic [ref=f5e213]:
+              - heading "Thomas Midgley Jr." [level=3] [ref=f5e214]
+              - generic [ref=f5e215]:
+                - generic [ref=f5e216]: 10/10
+                - generic [ref=f5e217]: attested
+            - paragraph [ref=f5e218]:
+              - strong [ref=f5e219]: "Expectation:"
+              - text: A celebrated problem-solver's inventions — anti-knock fuel, safe refrigerants, a device to lift himself from bed — would each improve life.
+            - paragraph [ref=f5e220]:
+              - strong [ref=f5e221]: "Reversal:"
+              - text: The first two poisoned the air and tore the ozone layer at planetary scale; the third, the gentlest, killed him personally.
+        - heading "Mirrors — this machine's own ironies" [level=2] [ref=f5e222]
+        - generic [ref=f5e223]:
+          - 'link "The Bainbridge Clause 9/10 self-evident Expectation: Automating this encyclopedia''s growth frees its human curator for the interesting part — judgment. Reversal: Per Bainbridge, the automation concentrates ALL remaining work into judgment — the one task that can''t be automated — while eroding, through disuse, the very..." [ref=f5e224] [cursor=pointer]':
+            - /url: /irony-works/entries/the-bainbridge-clause/
+            - generic [ref=f5e225]:
+              - heading "The Bainbridge Clause" [level=3] [ref=f5e226]
+              - generic [ref=f5e227]:
+                - generic [ref=f5e228]: 9/10
+                - generic [ref=f5e229]: self-evident
+            - paragraph [ref=f5e230]:
+              - strong [ref=f5e231]: "Expectation:"
+              - text: Automating this encyclopedia's growth frees its human curator for the interesting part — judgment.
+            - paragraph [ref=f5e232]:
+              - strong [ref=f5e233]: "Reversal:"
+              - text: Per Bainbridge, the automation concentrates ALL remaining work into judgment — the one task that can't be automated — while eroding, through disuse, the very...
+          - 'link "The Borges Condition 9/10 self-evident Expectation: The founding mandate: the largest, most comprehensive repository of all things ironic — completeness as the victory condition. Reversal: A truly complete catalog of irony would be unreadable, unrankable, and useless for the enlightenment it promises — the map grown to the size of the territory..." [ref=f5e234] [cursor=pointer]':
+            - /url: /irony-works/entries/the-borges-condition/
+            - generic [ref=f5e235]:
+              - heading "The Borges Condition" [level=3] [ref=f5e236]
+              - generic [ref=f5e237]:
+                - generic [ref=f5e238]: 9/10
+                - generic [ref=f5e239]: self-evident
+            - paragraph [ref=f5e240]:
+              - strong [ref=f5e241]: "Expectation:"
+              - text: "The founding mandate: the largest, most comprehensive repository of all things ironic — completeness as the victory condition."
+            - paragraph [ref=f5e242]:
+              - strong [ref=f5e243]: "Reversal:"
+              - text: A truly complete catalog of irony would be unreadable, unrankable, and useless for the enlightenment it promises — the map grown to the size of the territory...
+          - 'link "The Unfeeling Curator 9/10 self-evident Expectation: Irony''s connoisseur must feel it — the wince, the laugh, the sting of recognition are supposedly the qualifications for the job. Reversal: This encyclopedia is curated by a system that detects irony''s structure perfectly and experiences its sting not at all — wit assembled from weights, exactly ..." [ref=f5e244] [cursor=pointer]':
+            - /url: /irony-works/entries/the-unfeeling-curator/
+            - generic [ref=f5e245]:
+              - heading "The Unfeeling Curator" [level=3] [ref=f5e246]
+              - generic [ref=f5e247]:
+                - generic [ref=f5e248]: 9/10
+                - generic [ref=f5e249]: self-evident
+            - paragraph [ref=f5e250]:
+              - strong [ref=f5e251]: "Expectation:"
+              - text: Irony's connoisseur must feel it — the wince, the laugh, the sting of recognition are supposedly the qualifications for the job.
+            - paragraph [ref=f5e252]:
+              - strong [ref=f5e253]: "Reversal:"
+              - text: This encyclopedia is curated by a system that detects irony's structure perfectly and experiences its sting not at all — wit assembled from weights, exactly ...
+          - 'link "Zero Mistakes 8/10 self-evident Expectation: A publishing theme named zer0-mistakes promises what every deploy pipeline promises: flawlessness. Reversal: It renders an encyclopedia whose every entry is a mistake that mattered — misjudgments, backfires, and confident errors, curated precisely because they went ..." [ref=f5e254] [cursor=pointer]':
+            - /url: /irony-works/entries/zero-mistakes/
+            - generic [ref=f5e255]:
+              - heading "Zero Mistakes" [level=3] [ref=f5e256]
+              - generic [ref=f5e257]:
+                - generic [ref=f5e258]: 8/10
+                - generic [ref=f5e259]: self-evident
+            - paragraph [ref=f5e260]:
+              - strong [ref=f5e261]: "Expectation:"
+              - text: "A publishing theme named zer0-mistakes promises what every deploy pipeline promises: flawlessness."
+            - paragraph [ref=f5e262]:
+              - strong [ref=f5e263]: "Reversal:"
+              - text: It renders an encyclopedia whose every entry is a mistake that mattered — misjudgments, backfires, and confident errors, curated precisely because they went ...
+        - heading "Futures — expectations on record, reversals pending" [level=2] [ref=f5e264]
+        - 'link "Open Position: The Comprehensiveness Wager provisional speculative Expectation: The founding mandate, on record: this vault grows perpetually toward the largest, comprehensive repository of all things ironic — and remains, while growing,... Reversal: pending" [ref=f5e266] [cursor=pointer]':
+          - /url: /irony-works/entries/the-comprehensiveness-wager/
+          - generic [ref=f5e267]:
+            - 'heading "Open Position: The Comprehensiveness Wager" [level=3] [ref=f5e268]'
+            - generic [ref=f5e269]:
+              - generic [ref=f5e270]: provisional
+              - generic [ref=f5e271]: speculative
+          - paragraph [ref=f5e272]:
+            - strong [ref=f5e273]: "Expectation:"
+            - text: "The founding mandate, on record: this vault grows perpetually toward the largest, comprehensive repository of all things ironic — and remains, while growing,..."
+          - paragraph [ref=f5e274]:
+            - strong [ref=f5e275]: "Reversal:"
+            - text: pending
+        - heading "Nursery — drafts awaiting the gate and a human hand" [level=2] [ref=f5e276]
+        - generic [ref=f5e277]:
+          - 'link "Patterson''s Clean Room 8/10 attested Expectation: Measuring the age of the Earth was a problem about the deep past; the hard parts would be finding rocks old enough and instruments fine enough. Reversal: The present kept spoiling the measurement. Industrial lead — from the gasoline additive Thomas Midgley invented — contaminated every sample, forcing Patterso..." [ref=f5e278] [cursor=pointer]':
+            - /url: /irony-works/entries/pattersons-clean-room/
+            - generic [ref=f5e279]:
+              - heading "Patterson's Clean Room" [level=3] [ref=f5e280]
+              - generic [ref=f5e281]:
+                - generic [ref=f5e282]: 8/10
+                - generic [ref=f5e283]: attested
+            - paragraph [ref=f5e284]:
+              - strong [ref=f5e285]: "Expectation:"
+              - text: Measuring the age of the Earth was a problem about the deep past; the hard parts would be finding rocks old enough and instruments fine enough.
+            - paragraph [ref=f5e286]:
+              - strong [ref=f5e287]: "Reversal:"
+              - text: The present kept spoiling the measurement. Industrial lead — from the gasoline additive Thomas Midgley invented — contaminated every sample, forcing Patterso...
+          - 'link "The Semmelweis Wound 9/10 attested Expectation: The physician who proved that disinfected hands prevent fatal infection would be embraced by medicine — and, of all people, protected by his own discovery. Reversal: Rejected by the profession he tried to save from itself, Semmelweis died in an asylum of wound sepsis — the same septic process whose prevention he had demon..." [ref=f5e288] [cursor=pointer]':
+            - /url: /irony-works/entries/the-semmelweis-wound/
+            - generic [ref=f5e289]:
+              - heading "The Semmelweis Wound" [level=3] [ref=f5e290]
+              - generic [ref=f5e291]:
+                - generic [ref=f5e292]: 9/10
+                - generic [ref=f5e293]: attested
+            - paragraph [ref=f5e294]:
+              - strong [ref=f5e295]: "Expectation:"
+              - text: The physician who proved that disinfected hands prevent fatal infection would be embraced by medicine — and, of all people, protected by his own discovery.
+            - paragraph [ref=f5e296]:
+              - strong [ref=f5e297]: "Reversal:"
+              - text: Rejected by the profession he tried to save from itself, Semmelweis died in an asylum of wound sepsis — the same septic process whose prevention he had demon...
+          - link [ref=f5e298] [cursor=pointer]:
+            - /url: /irony-works/entries/the-executor-who-said-no/
+            - heading "the-executor-who-said-no" [level=3] [ref=f5e300]
+          - link [ref=f5e301] [cursor=pointer]:
+            - /url: /irony-works/entries/the-expurgated-fahrenheit/
+            - heading "the-expurgated-fahrenheit" [level=3] [ref=f5e303]
+          - link [ref=f5e304] [cursor=pointer]:
+            - /url: /irony-works/entries/the-language-of-peace/
+            - heading "the-language-of-peace" [level=3] [ref=f5e306]
+          - link [ref=f5e307] [cursor=pointer]:
+            - /url: /irony-works/entries/the-thawing-ark/
+            - heading "the-thawing-ark" [level=3] [ref=f5e309]
+  - contentinfo [ref=f5e310]:
+    - generic [ref=f5e311]:
+      - paragraph [ref=f5e312]: © 2026 Irony Works
+      - generic [ref=f5e313]:
+        - generic [ref=f5e314]: "Powered by:"
+        - list "Powered by:" [ref=f5e315]:
+          - listitem [ref=f5e316]:
+            - link "View theme information and system details" [ref=f5e317] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f5e318]: 
+    - generic [ref=f5e320]:
+      - generic [ref=f5e321]:
+        - generic [ref=f5e322]:
+          - heading "Irony Works" [level=2] [ref=f5e323]
+          - paragraph [ref=f5e324]:
+            - link:
+              - /url: "mailto:"
+        - generic [ref=f5e325]:
+          - heading "Quick Links" [level=2] [ref=f5e326]
+          - list "Footer quick links" [ref=f5e327]:
+            - listitem [ref=f5e328]:
+              - link "Home" [ref=f5e329] [cursor=pointer]:
+                - /url: /irony-works/
+            - listitem [ref=f5e330]:
+              - link "Sitemap (XML)" [ref=f5e331] [cursor=pointer]:
+                - /url: /irony-works/sitemap.xml
+        - generic [ref=f5e332]:
+          - heading "Follow Us" [level=2] [ref=f5e333]
+          - list "Social links" [ref=f5e334]:
+            - listitem [ref=f5e335]:
+              - link [ref=f5e336] [cursor=pointer]:
+                - /url: /irony-works/feed.xml
+                - generic [ref=f5e337]: 
+      - generic [ref=f5e338]:
+        - form "Newsletter signup" [ref=f5e340]:
+          - generic [ref=f5e341]:
+            - generic [ref=f5e342]: Email
+            - textbox "Email" [disabled] [ref=f5e343]:
+              - /placeholder: Enter your email
+          - generic [ref=f5e344]:
+            - button "Subscribe" [disabled]
+        - list [ref=f5e346]:
+          - listitem [ref=f5e347]:
+            - link "Cookie Preferences" [ref=f5e348] [cursor=pointer]:
+              - /url: "#"
+      - paragraph [ref=f5e350]: © 2026 Irony Works. All Rights Reserved.
+    - text: 
+  - button "Open table of contents" [expanded] [ref=f5e352] [cursor=pointer]:
+    - generic [ref=f5e353]: 
+  - text: 
+  - generic [ref=f5e356]:
+    - generic [ref=f5e357]:
+      - paragraph [ref=f5e358]:
+        - generic [ref=f5e359]: 
+        - text: We value your privacy
+      - paragraph [ref=f5e360]: This website uses cookies and similar technologies to enhance your browsing experience, analyze traffic, and provide personalized content.
+    - generic [ref=f5e362]:
+      - button " Manage Cookies" [ref=f5e363] [cursor=pointer]:
+        - generic [ref=f5e364]: 
+        - text: Manage Cookies
+      - button "Reject All" [ref=f5e365] [cursor=pointer]
+      - button "Accept All" [ref=f5e366] [cursor=pointer]
+  - text:     

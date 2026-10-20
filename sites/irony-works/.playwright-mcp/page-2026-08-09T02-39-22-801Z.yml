@@ -1,0 +1,228 @@
+- generic [active] [ref=f16e1]:
+  - link "Skip to main content" [ref=f16e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f16e3]:
+    - navigation "Primary navigation" [ref=f16e5]:
+      - generic [ref=f16e6]:
+        - generic [ref=f16e7]:
+          - text: 
+          - link "Home - Irony Works" [ref=f16e8] [cursor=pointer]:
+            - /url: /irony-works/
+            - img "Irony Works logo" [ref=f16e9]
+        - link "Irony Works — Home" [ref=f16e11] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f16e12]: Irony Works
+        - link "The perpetual encyclopedia of irony — Irony Works home" [ref=f16e14] [cursor=pointer]:
+          - /url: /irony-works/
+          - generic [ref=f16e15]: The perpetual encyclopedia of irony
+      - text:    
+      - generic "Main Navigation" [ref=f16e16]:
+        - list [ref=f16e19]:
+          - text: 
+          - listitem [ref=f16e20]:
+            - link "Browse" [ref=f16e21] [cursor=pointer]:
+              - /url: /irony-works/entries/
+              - generic [ref=f16e22]: 
+            - button "Toggle Browse submenu" [ref=f16e23] [cursor=pointer]
+          - listitem [ref=f16e25]:
+            - link "The Gate" [ref=f16e26] [cursor=pointer]:
+              - /url: /irony-works/entries/alanis-gate/
+              - generic [ref=f16e27]: 
+          - listitem [ref=f16e28]:
+            - link "How it grows" [ref=f16e29] [cursor=pointer]:
+              - /url: /irony-works/how-it-grows/
+              - generic [ref=f16e30]: 
+          - listitem [ref=f16e31]:
+            - link "Vault index" [ref=f16e32] [cursor=pointer]:
+              - /url: /irony-works/entries/home/
+              - generic [ref=f16e33]: 
+          - text:  
+      - group "Utility controls" [ref=f16e34]:
+        - button "Open search" [ref=f16e35] [cursor=pointer]:
+          - generic [ref=f16e36]: 
+        - button "Open settings" [ref=f16e37] [cursor=pointer]:
+          - generic [ref=f16e38]: 
+        - text: 
+  - text:   
+  - main [ref=f16e39]:
+    - generic [ref=f16e41]:
+      - generic [ref=f16e43]:
+        - generic [ref=f16e44]:
+          - heading "Irony Works" [level=1] [ref=f16e45]
+          - paragraph [ref=f16e46]: Irony is not a mood. It is a structure — an expectation, and a reversal that comments on it. A self-growing encyclopedia that requires every entry to state both, so that irony becomes machine-checkable.
+        - generic [ref=f16e47]:
+          - list "Page metadata" [ref=f16e48]:
+            - listitem [ref=f16e49]:
+              - generic [ref=f16e50]: 
+            - listitem [ref=f16e51]:
+              - generic [ref=f16e52]: 
+              - link "View source" [ref=f16e53] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//index.md
+          - generic [ref=f16e54]:
+            - paragraph [ref=f16e55]:
+              - generic [ref=f16e56]: 
+              - text: "Estimated reading time: 2 minutes"
+            - generic [ref=f16e57]:
+              - generic [ref=f16e58]:
+                - button "Share" [ref=f16e59] [cursor=pointer]:
+                  - generic [ref=f16e60]: 
+                - text:    
+              - link "Edit on GitHub" [ref=f16e62] [cursor=pointer]:
+                - /url: https://github.com/bamr87/irony-works/blob/main//index.md
+                - generic [ref=f16e63]: 
+      - generic "Table of Contents" [ref=f16e66]:
+        - text: 
+        - navigation "Table of Contents" [ref=f16e68]:
+          - generic [ref=f16e69]:
+            - strong [ref=f16e70]:
+              - generic [ref=f16e71]: 
+              - text: On this page
+            - button "Hide table of contents" [expanded] [ref=f16e72] [cursor=pointer]:
+              - generic [ref=f16e73]: 
+          - list [ref=f16e75]:
+            - listitem [ref=f16e76]:
+              - link "Irony has a structure, so it can be checked" [ref=f16e77] [cursor=pointer]:
+                - /url: "#irony-has-a-structure-so-it-can-be-checked"
+            - listitem [ref=f16e78]:
+              - link "Start anywhere" [ref=f16e79] [cursor=pointer]:
+                - /url: "#start-anywhere"
+            - listitem [ref=f16e80]:
+              - link "Three entries, if you want the flavour" [ref=f16e81] [cursor=pointer]:
+                - /url: "#three-entries-if-you-want-the-flavour"
+            - listitem [ref=f16e82]:
+              - link "The vault is the product" [ref=f16e83] [cursor=pointer]:
+                - /url: "#the-vault-is-the-product"
+      - generic [ref=f16e84]:
+        - paragraph [ref=f16e85]:
+          - text: Rain on a wedding day is weather. A meteorologist rained out of her own wedding is closer. A meteorologist rained out of the wedding she scheduled
+          - strong [ref=f16e86]: using her own forecast
+          - text: — that’s an entry.
+        - heading "Irony has a structure, so it can be checked" [level=2] [ref=f16e87]
+        - paragraph [ref=f16e88]:
+          - text: Irony is not a mood. It is an
+          - strong [ref=f16e89]: expectation
+          - text: ", articulated or assumed, and a"
+          - strong [ref=f16e90]: reversal
+          - text: "that comments on it. Because that structure is mechanical, it can be required. Every entry here states both as frontmatter fields:"
+        - generic [ref=f16e92]:
+          - generic [ref=f16e93]:
+            - generic [ref=f16e94]: yaml
+            - button "Copy code to clipboard" [ref=f16e95] [cursor=pointer]:
+              - generic [ref=f16e96]: 
+              - text: Copy
+          - generic [ref=f16e97]:
+            - generic: 1 2 3 4 5
+            - region "yaml code block" [ref=f16e98]:
+              - code [ref=f16e99]: "expectation: > Kodak, synonymous with photography, would own whatever photography became. reversal: > Kodak invented the digital camera in 1975, shelved it to protect film, and was bankrupted by it in 2012."
+        - paragraph [ref=f16e100]:
+          - text: If a candidate cannot fill both fields, it is not irony — it is merely unfortunate, and it goes to the
+          - link "compost" [ref=f16e101] [cursor=pointer]:
+            - /url: /irony-works/compost/
+          - text: "with a verdict. That pair is the load-bearing wall: it makes irony deduplicable, queryable, and gradeable."
+        - paragraph [ref=f16e102]:
+          - link "Browse every entry" [ref=f16e103] [cursor=pointer]:
+            - /url: /irony-works/entries/
+          - link "How it grows" [ref=f16e104] [cursor=pointer]:
+            - /url: /irony-works/how-it-grows/
+          - link "The Alanis Gate" [ref=f16e105] [cursor=pointer]:
+            - /url: /irony-works/entries/alanis-gate/
+        - heading "Start anywhere" [level=2] [ref=f16e106]
+        - generic [ref=f16e107]:
+          - generic [ref=f16e109]:
+            - heading [level=3] [ref=f16e110]:
+              - link "Forms" [ref=f16e111] [cursor=pointer]:
+                - /url: /irony-works/forms/
+            - paragraph [ref=f16e112]: The taxonomy — verbal, situational, dramatic, Socratic, cosmic, structural, historical, meta. The trunk everything else branches from.
+          - generic [ref=f16e114]:
+            - heading [level=3] [ref=f16e115]:
+              - link "Instances" [ref=f16e116] [cursor=pointer]:
+                - /url: /irony-works/instances/
+            - paragraph [ref=f16e117]: "The specimens: history and the present, dated, sourced, and rated for how well the evidence holds."
+          - generic [ref=f16e119]:
+            - heading [level=3] [ref=f16e120]:
+              - link "Works" [ref=f16e121] [cursor=pointer]:
+                - /url: /irony-works/works/
+              - text: "&"
+              - link "Figures" [ref=f16e122] [cursor=pointer]:
+                - /url: /irony-works/figures/
+            - paragraph [ref=f16e123]: Texts that use irony as an instrument, and the practitioners whose lives enacted what they described.
+          - generic [ref=f16e125]:
+            - heading [level=3] [ref=f16e126]:
+              - link "Mirrors" [ref=f16e127] [cursor=pointer]:
+                - /url: /irony-works/mirrors/
+            - paragraph [ref=f16e128]: This machine's own ironies. An encyclopedia of irony that exempted itself would fail its own gate.
+        - heading "Three entries, if you want the flavour" [level=2] [ref=f16e129]
+        - generic [ref=f16e130]:
+          - link [ref=f16e131] [cursor=pointer]:
+            - /url: /irony-works/entries/the-kodak-moment/
+            - heading "The Kodak Moment" [level=3] [ref=f16e132]
+            - paragraph [ref=f16e133]: A Kodak engineer invented the digital camera in 1975. The company shelved it to protect film, then was bankrupted in 2012 by the technology it had locked in its own drawer.
+          - link [ref=f16e134] [cursor=pointer]:
+            - /url: /irony-works/entries/ozymandias/
+            - heading "Ozymandias" [level=3] [ref=f16e135]
+            - paragraph [ref=f16e136]: Posterity surveys sand. The works are gone; the boast survives only as its own punchline — delivered by a broken statue to an empty desert.
+          - link [ref=f16e137] [cursor=pointer]:
+            - /url: /irony-works/entries/the-streisand-effect/
+            - heading "The Streisand Effect" [level=3] [ref=f16e138]
+            - paragraph [ref=f16e139]: Before the suit, the aerial photo of the Malibu house had been downloaded six times — two of them by her own attorneys. After the suit made news, hundreds of thousands. The suppression was the publ...
+        - heading "The vault is the product" [level=2] [ref=f16e140]
+        - paragraph [ref=f16e141]:
+          - text: The source of truth is an
+          - link "Obsidian" [ref=f16e142] [cursor=pointer]:
+            - /url: https://obsidian.md
+          - text: vault of Markdown files. This site is a pressing of it — wikilinks converted to permalinks at build time, nothing authored here that isn’t authored there. The full graph, including the drafts and the rejects, is
+          - link "public on GitHub" [ref=f16e143] [cursor=pointer]:
+            - /url: https://github.com/bamr87/irony-works
+          - text: .
+        - blockquote [ref=f16e144]:
+          - paragraph [ref=f16e145]: An encyclopedia of irony compiled by a machine that cannot be embarrassed is either the death of the form or its final proof. This repository exists to find out.
+  - contentinfo [ref=f16e146]:
+    - generic [ref=f16e147]:
+      - paragraph [ref=f16e148]: © 2026 Irony Works
+      - generic [ref=f16e149]:
+        - generic [ref=f16e150]: "Powered by:"
+        - list "Powered by:" [ref=f16e151]:
+          - listitem [ref=f16e152]:
+            - link "View theme information and system details" [ref=f16e153] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f16e154]: 
+              - generic [ref=f16e155]: Info
+    - generic [ref=f16e157]:
+      - generic [ref=f16e158]:
+        - generic [ref=f16e159]:
+          - heading "Irony Works" [level=2] [ref=f16e160]
+          - paragraph [ref=f16e161]:
+            - link:
+              - /url: "mailto:"
+        - generic [ref=f16e162]:
+          - heading "Quick Links" [level=2] [ref=f16e163]
+          - list "Footer quick links" [ref=f16e164]:
+            - listitem [ref=f16e165]:
+              - link "Home" [ref=f16e166] [cursor=pointer]:
+                - /url: /irony-works/
+            - listitem [ref=f16e167]:
+              - link "Sitemap (XML)" [ref=f16e168] [cursor=pointer]:
+                - /url: /irony-works/sitemap.xml
+        - generic [ref=f16e169]:
+          - heading "Follow Us" [level=2] [ref=f16e170]
+          - list "Social links" [ref=f16e171]:
+            - listitem [ref=f16e172]:
+              - link "Feed" [ref=f16e173] [cursor=pointer]:
+                - /url: /irony-works/feed.xml
+                - generic [ref=f16e174]: 
+      - generic [ref=f16e176]:
+        - form "Newsletter signup" [ref=f16e178]:
+          - generic [ref=f16e179]:
+            - generic [ref=f16e180]: Email
+            - textbox "Email" [disabled] [ref=f16e181]:
+              - /placeholder: Enter your email
+          - generic [ref=f16e182]:
+            - button "Subscribe" [disabled]
+          - paragraph [ref=f16e184]: Newsletter is a placeholder until you connect a provider.
+        - list [ref=f16e186]:
+          - listitem [ref=f16e187]:
+            - link "Cookie Preferences" [ref=f16e188] [cursor=pointer]:
+              - /url: "#"
+      - paragraph [ref=f16e190]: © 2026 Irony Works. All Rights Reserved.
+    - text: 
+  - text:  
