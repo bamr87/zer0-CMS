@@ -15,6 +15,7 @@ with this schema: the schema tells a model what to write, `to_python` +
 `clean` decide whether it is acceptable.
 """
 
+import inspect
 import json
 from functools import lru_cache
 
@@ -125,7 +126,10 @@ def export() -> dict:
                 else _field_schema(field)
             )
         pages[model._meta.label] = {
-            "description": (model.__doc__ or "").strip().split("\n\n")[0].replace("\n", " "),
+            # cleandoc, not strip: Python 3.13 dedents docstrings at compile time
+            # and 3.12 does not, so a raw `__doc__` makes the snapshot differ by
+            # interpreter version.
+            "description": inspect.cleandoc(model.__doc__ or "").split("\n\n")[0].replace("\n", " "),
             "meta_fields": meta,
             "body": {
                 "type": "array",
