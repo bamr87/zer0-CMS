@@ -294,18 +294,61 @@ class TestBannerSeed < Minitest::Test
     assert_equal "5x", BS.montage_argv(pngs, out: "o.png", columns: 5)[8]
   end
 
-  # The REQUIRED absent-ImageMagick path: this machine has no `montage`.
-  def test_contact_sheet_without_montage_fails_actionably
-    refute BS.montage_available?, "test host is expected to lack ImageMagick"
-    err = assert_raises(BS::MontageMissing) do
-      BS.contact_sheet([".preview/seed-1.png"], out: ".sweep/contact-sheet.png")
-    end
-    assert_match(/montage/i, err.message)
-    assert_match(/ImageMagick/i, err.message, "message must name the missing dependency")
+  # The contact-sheet branches are tested with the `montage` lookup stubbed,
+  # never read from the host: a developer machine with ImageMagick and a CI
+  # runner without it must run the same assertions. montage_path is a
+  # module_function, so swapping the module's singleton (as test_rasterizer.rb
+  # does for `which`) is exactly what contact_sheet dispatches to.
+  def with_montage(path)
+    original = BS.method(:montage_path)
+    BS.define_singleton_method(:montage_path) { path }
+    yield
+  ensure
+    BS.define_singleton_method(:montage_path, original)
   end
 
+  # `system` is reached through the module too (contact_sheet runs as
+  # BS.contact_sheet), so a singleton stub intercepts the subprocess; it is
+  # removed afterwards rather than restored, as the module never defined one.
+  def with_system(impl)
+    BS.define_singleton_method(:system, &impl)
+    yield
+  ensure
+    BS.singleton_class.send(:remove_method, :system)
+  end
+
+  def test_montage_available_follows_the_lookup
+    with_montage(nil) { refute BS.montage_available? }
+    with_montage("/fake/bin/montage") { assert BS.montage_available? }
+  end
+
+  # The absent-ImageMagick path fails actionably, naming the dependency.
+  def test_contact_sheet_without_montage_fails_actionably
+    with_montage(nil) do
+      err = assert_raises(BS::MontageMissing) do
+        BS.contact_sheet([".preview/seed-1.png"], out: ".sweep/contact-sheet.png")
+      end
+      assert_match(/montage/i, err.message)
+      assert_match(/ImageMagick/i, err.message, "message must name the missing dependency")
+    end
+  end
+
+  # With montage present the empty-input guard fires before anything runs.
   def test_contact_sheet_rejects_empty_when_montage_present
-    skip "montage present — empty-input guard is only reachable with ImageMagick" unless BS.montage_available?
-    assert_raises(ArgumentError) { BS.contact_sheet([], out: "o.png") }
+    with_montage("/fake/bin/montage") do
+      assert_raises(ArgumentError) { BS.contact_sheet([], out: "o.png") }
+    end
+  end
+
+  # With montage present, contact_sheet runs the RESOLVED binary (not the bare
+  # name) with the svg-sweep.sh argv and returns the output path.
+  def test_contact_sheet_runs_the_resolved_montage
+    calls = []
+    with_montage("/fake/bin/montage") do
+      with_system(->(*cmd) { calls << cmd; true }) do
+        assert_equal "o.png", BS.contact_sheet(%w[a.png b.png], out: "o.png")
+      end
+    end
+    assert_equal [BS.montage_argv(%w[a.png b.png], out: "o.png", bin: "/fake/bin/montage")], calls
   end
 end

@@ -9,7 +9,7 @@ import pytest
 
 from bookshelf.build import manuscript
 from bookshelf.cli import main
-from bookshelf.library import Library, LibraryError
+from bookshelf.library import Library, LibraryError, find_root
 from bookshelf.scaffold import ScaffoldError, new_book, slugify
 
 
@@ -182,6 +182,22 @@ def test_missing_library_is_reported(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(empty)
     with pytest.raises(LibraryError, match="no library/ directory"):
         Library.load()
+
+
+def test_root_is_found_from_inside_a_book(repo: Path, monkeypatch):
+    monkeypatch.chdir(repo / "library" / "sample" / "chapters")
+    assert find_root() == repo
+
+
+def test_a_folder_spelled_like_the_library_is_not_one(tmp_path: Path, monkeypatch):
+    # macOS has /Library and ~/Library on a case-insensitive filesystem, which
+    # Path.is_dir() cannot tell from library/. Only the exact spelling counts.
+    (tmp_path / "Library").mkdir()
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    with pytest.raises(LibraryError, match="no library/ directory"):
+        find_root()
 
 
 def test_slugify():

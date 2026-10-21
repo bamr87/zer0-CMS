@@ -36,7 +36,7 @@ These are enforced by the build, so you will find out quickly, but knowing them 
 - **Conventional Commits**: `type(scope): description` — `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `style`.
 - Branch from `main` and open a PR. Never push to `main`.
 - **README-First, README-Last**: read the nearest `README.md` before changing a directory, and update it after.
-- One paragraph per line in markdown — CI enforces it (`tools/unwrap-prose.py`).
+- One paragraph per line in markdown — CI enforces it with `tools/unwrap-prose.py`, skipping `SCHEMA.md` and `CHANGELOG.md`; the matching local gate is `python3 tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'`.
 - Every source file opens with a short block comment saying what it is and why it exists.
 
 ## Tests
