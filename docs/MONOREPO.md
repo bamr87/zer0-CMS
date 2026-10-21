@@ -1,6 +1,6 @@
 # The zer0 monorepo
 
-zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension and the Rails fleet CMS it started with, the Django + Wagtail content plane that is becoming its centre ([ADR 0001](adr/0001-target-architecture.md)), plus the theme, the image generator, the books app, nine Jekyll sites, the barodybroject Django app and the aieo FastAPI app. Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
+zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension and the Rails fleet CMS it started with, the Django + Wagtail content plane that is becoming its centre ([ADR 0001](adr/0001-target-architecture.md)), plus the theme, the image generator, the books app, nine Jekyll sites, the parodynews Django app and the aieo FastAPI app. Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
 
 ## Layout
 
@@ -21,7 +21,7 @@ zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension a
 | `sites/2005/` | `year-of-ai/2005` | The year-2005 knowledge base of the year-of-ai lineage, a `remote_theme` consumer built by `sites.yml` like the installer demos. |
 | `sites/irony-works/` | `bamr87/irony-works` | The perpetual encyclopedia of irony: an Obsidian vault (`vault/`) grown by an AI germination engine (`engine/`), gated by the Alanis and Epimenides rubrics, and transplanted into a Jekyll collection published with the zer0 theme. |
 | `sites/wargames/` | `bamr87/wargames` | OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site with spoiler-free study guides, re-synced from upstream by `scripts/docs-aggregator/`; a `remote_theme` consumer. |
-| `apps/barodybroject/` | `bamr87/barodybroject` | A Django 5.2 + React app that generates parody news with AI, with a Jekyll sidecar (`src/pages`) and an Azure Container Apps deploy. |
+| `apps/parodynews/` | `bamr87/barodybroject` | A Django 5.2 + React app that generates parody news with AI, with a Jekyll sidecar (`src/pages`) and an Azure Container Apps deploy. |
 | `apps/aieo/` | `bamr87/aieo` | AI Engine Optimization: a FastAPI backend (PostgreSQL, Redis, Celery) and a React + Vite frontend that score website content against what AI engines cite and rewrite it, plus a CLI, WordPress REST snippets and a reusable content-scoring workflow. |
 
 `packages/` holds libraries and tools, `sites/` holds what gets published as a website, and `apps/` holds deployed applications; the plan's eventual layout (`clients/`, `frontends/`, PLAN §2) is milestone M2 and has not been applied. Each imported directory keeps its own `README.md`, `AGENTS.md` (with a `CLAUDE.md` pointer) and tooling, and its own commands still run from inside it.
@@ -58,7 +58,7 @@ bin/zer0 doctor [--strict]          # the CMS's zer0 doctor over every zer0 site
 
 "Affected" follows the dependency graph: a change to `packages/zer0-mistakes/` affects the theme and every site that builds on it, and a change to a root workflow affects the projects it gates.
 
-**3. One CI, split by project.** GitHub only runs workflows in the root `.github/workflows/`, so each project has a root workflow filtered to its own tree — `extension.yml`, `rails-app.yml`, `content.yml`, `zer0-mistakes.yml`, `zer0-image-generator.yml`, `books.yml`, `drsai.yml`, `zer0-pages.yml`, `sites.yml` (the `remote_theme` sites, one matrix leg each), `irony-works.yml`, `barodybroject.yml` and `aieo.yml`. A pull request pays only for what it touches. [`CICD.md`](CICD.md) says what each one runs. `zer0-workspace.yml` runs on every pull request: the tool's own tests, then `bin/zer0 check`, which fails when
+**3. One CI, split by project.** GitHub only runs workflows in the root `.github/workflows/`, so each project has a root workflow filtered to its own tree — `extension.yml`, `rails-app.yml`, `content.yml`, `zer0-mistakes.yml`, `zer0-image-generator.yml`, `books.yml`, `drsai.yml`, `zer0-pages.yml`, `sites.yml` (the `remote_theme` sites, one matrix leg each), `irony-works.yml`, `parodynews.yml` and `aieo.yml`. A pull request pays only for what it touches. [`CICD.md`](CICD.md) says what each one runs. `zer0-workspace.yml` runs on every pull request: the tool's own tests, then `bin/zer0 check`, which fails when
 - a directory under `packages/`, `sites/` or `apps/` is not registered;
 - a project's path or claimed glob matches nothing;
 - a project's workflow is missing or no longer filters on its path;
@@ -75,7 +75,7 @@ It also writes the affected projects and a report-only `zer0 doctor` of every si
 
 `bin/zer0 doctor` is report-only because two sites carry errors that predate the merge, both visible in their original repositories:
 - `packages/zer0-mistakes` keeps its in-repo ancestor engine (`scripts/lib/preview_generator.py`), which the doctor reports as a vendored preview fork until the theme retires it.
-- `apps/barodybroject/src/pages` has one error of its own.
+- `apps/parodynews/src/pages` has one error of its own.
 
 Make the step `--strict` once both are clean.
 
@@ -101,7 +101,8 @@ cd - && git fetch /tmp/<repo> main:refs/import/<repo> && git merge --allow-unrel
 - **drsai** builds against `../../packages/zer0-mistakes`, and the ABC wizard's `--out` is `../sites/drsai` from `rails/`. `tools/import_dodge_and_reena.py` still defaults to a sibling `../Dodge-and-Reena-Book` checkout, which was not imported; pass `--source`.
 - **The `claude-obsidian` submodule** is declared in the root `.gitmodules`, because git reads it nowhere else.
 - **The vsix** excludes `packages/**`, `sites/**` and `apps/**`; `extension.yml` ignores them too.
-- **Nested workflows.** Imported `.github/workflows/` directories never run here. The ones the root workflows replace completely were removed (30 files across books, the image generator, drsai, zer0-pages, zer0-pages-remote, 1987, 2005, aieo, irony-works and wargames). The ones not ported yet stay as reference: the theme's 29, barodybroject's 6, the image generator's `release.yml`, drsai's `ci.yml` (for its PyPI publish job) and `pages.yml`, zer0-pages' `pages.yml`, aieo's `release.yml`, `aieo-content-reusable.yml` and `aieo-it-journey-pilot.yml` (with its inert `dependabot.yml`), irony-works' `publish.yml`, `alanis-gate.yml` and `germinate.yml`, and wargames' `jekyll-gh-pages.yml`.
+- **Names.** `apps/parodynews/` was imported as `bamr87/barodybroject` and de-branded by [ADR 0003](adr/0003-framework-rebuild.md): its Django project package is `config`, its workflow is `parodynews.yml`, and only the `upstream:` field and this page still say where it came from.
+- **Nested workflows.** Imported `.github/workflows/` directories never run here. The ones the root workflows replace completely were removed (30 files across books, the image generator, drsai, zer0-pages, zer0-pages-remote, 1987, 2005, aieo, irony-works and wargames). The ones not ported yet stay as reference: the theme's 29, parodynews's 6, the image generator's `release.yml`, drsai's `ci.yml` (for its PyPI publish job) and `pages.yml`, zer0-pages' `pages.yml`, aieo's `release.yml`, `aieo-content-reusable.yml` and `aieo-it-journey-pilot.yml` (with its inert `dependabot.yml`), irony-works' `publish.yml`, `alanis-gate.yml` and `germinate.yml`, and wargames' `jekyll-gh-pages.yml`.
 
 ## What still depends on the original repositories
 
@@ -113,7 +114,7 @@ The direction is decided ([ADR 0002](adr/0002-one-home-cutover.md)): this reposi
 | `bamr87/zer0-image-generator` | The release-please → RubyGems release of the gem. | A second package in the root `release-please-config.json`, with a prefixed tag. |
 | `bamr87/zer0-pages` | The GitHub Pages deploy to `bamr87.github.io/zer0-pages/`. | Port `pages.yml`. A repository has one Pages site, so this one would publish under `/zer0-CMS/` unless a custom domain is set. |
 | `bamr87/drsai` | The GitHub Pages deploy and the tag-triggered PyPI publish of the story engine. | Port `pages.yml`, and the publish job with a prefixed tag (`drsai-v*`). |
-| `bamr87/barodybroject` | The Playwright E2E, container validation and Trivy jobs, the Azure deploy (`deploy.yml`, `azure.yaml`, `infra/`) and its Jekyll Pages site. | Port them the way `barodybroject.yml` ports the rest of its CI. The deploy needs the Azure credentials as secrets of this repository. |
+| `bamr87/barodybroject` | The Playwright E2E, container validation and Trivy jobs, the Azure deploy (`deploy.yml`, `azure.yaml`, `infra/`) and its Jekyll Pages site. | Port them the way `parodynews.yml` ports the rest of its CI. The deploy needs the Azure credentials as secrets of this repository. |
 | `bamr87/books` | Nothing — its CI is ported (`books.yml`). | Archive once the hub entry moves. |
 | `bamr87/zer0-pages-remote`, `zer0-demo-cookbook`, `zer0-demo-garden` | Native GitHub Pages builds from each repository's root. | One Pages site per repository is a GitHub limit, so these need one Actions deploy to sub-paths or a mirror each. |
 | `bamr87/aieo` | The tag-triggered GitHub Release of the frontend build, the reusable content-scoring workflow other repositories can call (`bamr87/aieo/.github/workflows/aieo-content-reusable.yml`) and its it-journey pilot, and Dependabot (18 open update PRs at import). | A root `release.yml` component with an `aieo-v*` tag; the reusable workflow re-homed as a root `workflow_call` (callers repointed); a root `dependabot.yml` for `apps/aieo/backend` and `apps/aieo/frontend`, or nothing under the fleet's always-latest policy. |

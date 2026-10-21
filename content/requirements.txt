@@ -1,5 +1,5 @@
 # The content plane's runtime dependencies, pinned (docs/adr/0001-target-architecture.md).
-# Django 5.2 is the LTS barodybroject already runs; Wagtail 7.4 supports it.
+# Django 5.2 is the LTS parodynews already runs; Wagtail 7.4 supports it.
 Django==5.2.18
 wagtail==7.4.3
 # GraphQL (PLAN-D2: Grapple). It brings graphene-django and wagtail-headless-preview.

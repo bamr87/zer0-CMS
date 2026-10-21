@@ -1,6 +1,6 @@
 """Settings shared by every environment of the content plane.
 
-The layout follows barodybroject's (base / development / production / testing),
+The layout follows parodynews's (base / development / production / testing),
 and every value that differs between machines comes from the environment
 through django-environ, so the same image runs in compose, CI and production.
 Nothing here names a model provider or holds a key: the LLM and embedding

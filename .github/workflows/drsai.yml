@@ -57,7 +57,7 @@ jobs:
           python-version: "3.12"
       - run: python3 -m pip install pyyaml
       - run: python3 tools/import_abc_book.py --check
-      - run: python3 tools/unwrap-prose.py --check
+      - run: python3 ../../tools/unwrap-prose.py --check .
 
   site:
     name: Jekyll build against packages/zer0-mistakes

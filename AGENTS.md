@@ -58,7 +58,7 @@ npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or 
 # ── Fleet CMS (rails/) — Rails 8.1 on Administrate; rails/lib stays stdlib-only ──
 cd rails
 bash bin/test-stdlib                              # rails/lib: catalog, front matter, writer, doctor, ABC — no bundler
-ruby bin/zer0-cms doctor ../../lifehacker.dev      # zer0 stack alignment; exit 1 on any error
+ruby bin/zer0-cms doctor ../sites/drsai              # zer0 stack alignment; exit 1 on any error
 ruby bin/zer0-cms new --theme "IT systems" --out ../sites/drsai   # an ABC book, headless
 bundle install && bin/rails db:prepare
 SITES_DIR=$HOME/github bin/rails server            # http://localhost:3000/admin
@@ -143,7 +143,7 @@ Declare it in `package.json` under `contributes.commands` (with any `when` claus
 
 ## The monorepo (`packages/`, `sites/`, `apps/`) — `workspace.yml` and `bin/zer0`
 
-Fifteen repositories live here, each imported with full history: the theme (`packages/zer0-mistakes/`), the image generator (`packages/zer0-image-generator/`), the books app (`packages/books/`), nine sites (`sites/drsai/`, `sites/zer0-pages/`, `sites/zer0-pages-remote/`, `sites/zer0-demo-cookbook/`, `sites/zer0-demo-garden/`, `sites/1987/`, `sites/2005/`, `sites/irony-works/`, `sites/wargames/`) and two apps (`apps/barodybroject/`, `apps/aieo/`), next to this repository's own extension, Rails app and content plane. `docs/MONOREPO.md` explains the design; `tools/workspace/README.md` documents the tool.
+Fifteen repositories live here, each imported with full history: the theme (`packages/zer0-mistakes/`), the image generator (`packages/zer0-image-generator/`), the books app (`packages/books/`), nine sites (`sites/drsai/`, `sites/zer0-pages/`, `sites/zer0-pages-remote/`, `sites/zer0-demo-cookbook/`, `sites/zer0-demo-garden/`, `sites/1987/`, `sites/2005/`, `sites/irony-works/`, `sites/wargames/`) and two apps (`apps/parodynews/`, `apps/aieo/`), next to this repository's own extension, Rails app and content plane. `docs/MONOREPO.md` explains the design; `tools/workspace/README.md` documents the tool.
 
 - **`workspace.yml` is the registry, and `bin/zer0` reads it.** Every project is an entry: its path, kind, dependencies, what it publishes, the root workflow that gates it, its zer0 site root, and its `setup`/`check`/`test`/`build` commands. Run a project's commands with `bin/zer0 run <task> <project>`, or from inside its directory; never restate them in a second place. `bin/zer0 run check --affected` is the fast loop for a branch.
 - **A new directory under `packages/`, `sites/` or `apps/` — or a new top-level project such as `content/` — is a new entry in `workspace.yml` in the same change**, with a root workflow (or `ci: none — <reason>`). `bin/zer0 check` fails otherwise, and so does `zer0-workspace.yml` on every pull request.

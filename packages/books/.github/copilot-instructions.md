@@ -36,7 +36,7 @@ Chapter files are zero-padded (`ch01.md`) so they sort in reading order. `book.y
 ```bash
 python3 -m pytest
 books validate                      # or: PYTHONPATH=src python3 -m bookshelf validate
-python3 tools/unwrap-prose.py --check
+python3 ../../tools/unwrap-prose.py --check
 ```
 
 Markdown in this repository is **one paragraph per line** — no soft wrapping. CI enforces it; `--write` fixes it.

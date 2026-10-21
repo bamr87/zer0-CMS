@@ -156,11 +156,17 @@ module Zer0Workspace
 
     # The one Pages deploy's plan: every routed project, root first. pages.yml builds a
     # matrix from --json and stitches each build into the artifact at its route.
+    # Where a site's Gemfile lives: its site root (already relative to the repository
+    # root), or the project directory when it declares none. pages.yml bundles there.
+    def bundle_dir(project)
+      project.site_root || project.path
+    end
+
     def routes
       json = parse { |o, opts| o.on("--json") { opts[:json] = true } }[:json]
       routed = manifest.projects.select(&:route_path).sort_by { |p| [p.route_path == "/" ? 0 : 1, p.route_path] }
       if json
-        @out.puts JSON.generate(routed.map { |p| { name: p.name, path: p.path, route: p.route_path } })
+        @out.puts JSON.generate(routed.map { |p| { name: p.name, path: p.path, route: p.route_path, bundle_dir: bundle_dir(p) } })
         return 0
       end
 

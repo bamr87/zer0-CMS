@@ -1,1 +1,1 @@
-"""Importers into the content plane: Jekyll/Obsidian sites and barodybroject (PLAN §4)."""
+"""Importers into the content plane: Jekyll/Obsidian sites and parodynews (PLAN §4)."""

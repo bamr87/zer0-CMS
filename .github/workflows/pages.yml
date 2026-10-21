@@ -73,7 +73,7 @@ jobs:
         with:
           ruby-version: "3.3"
           bundler-cache: true
-          working-directory: ${{ matrix.site.path }}
+          working-directory: ${{ matrix.site.bundle_dir }}
       - name: Build at ${{ matrix.site.route }}
         env:
           NAME: ${{ matrix.site.name }}

@@ -14,7 +14,7 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 | zer0-mistakes | `packages/zer0-mistakes` | bamr87/zer0-mistakes | Jekyll theme gem `jekyll-theme-zer0`, own AGENTS.md + release-please |
 | zer0-image-generator | `packages/zer0-image-generator` | bamr87/zer0-image-generator | Python engine + byte-identical Ruby port + web panel; own release-please + compose |
 | books | `packages/books` | bamr87/books | Python bookshelf app + Claude studio |
-| barodybroject | `apps/barodybroject` | bamr87/barodybroject | Django 5.2 + React, Azure Container Apps |
+| parodynews | `apps/parodynews` | bamr87/barodybroject | Django 5.2 + React, Azure Container Apps |
 | drsai | `sites/drsai` | bamr87/drsai | Jekyll picture-book site + Python story engine |
 | zer0-pages | `sites/zer0-pages` | bamr87/zer0-pages | Obsidian vault + Jekyll bridge |
 | zer0-pages-remote, zer0-demo-cookbook, zer0-demo-garden | `sites/*` | same-name repos | remote_theme / installer demos |
@@ -29,7 +29,7 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 | Extension | TS, esbuild, no runtime deps | front-matter panel, dashboard, SEO insights, governance (drafts/guard/approval/ledger), harness lanes (`src/core/harness`), catering/distribution, analytics, portfolio, Claude agent panel (`src/agent`), MCP server (`src/mcp`, tools.ts ≈2.3k lines) | files + `zer0.json`, `.cms/` contract, `schemas/zer0.schema.json` | VS Code commands `zer0Cms.*`, MCP tools | `src/test` via vscode-test | extension.yml, release.yml (release-please, node) |
 | Rails | Rails 8.1, Ruby | indexes every registered site, writes edits back to files, ABC book wizard, LinkedIn distribution, image engine | `Site, Page, Term, Asset, Channel` (schema.rb) | HTML admin, `files`, `abc_books`, `linkedin_callbacks` | minitest (integration, services, zer0_cms) + `bin/test-stdlib` | rails-app.yml, zer0-doctor.yml, zer0-linkedin.yml |
 | rails/lib/zer0_cms | stdlib Ruby | catalog, doctor, ABC generator with `ContentProvider` (Deterministic, Anthropic) | — | CLI | stdlib tests | rails-app.yml |
-| barodybroject | Django 5.2, DRF, React/Vite, Postgres, Azure | AI parody news generation, assistants, threads, posts with front matter + versions | `JSONSchema, AIModel, Assistant, AssistantGroup(+Membership), AIProviderConfig, AppConfig, FieldDefaults, ContentItem, ContentDetail, Post, PostFrontMatter, PostVersion, Thread, Message, PoweredBy` | DRF `parodynews/api/urls.py` | pytest + Vitest (frontend) | barodybroject.yml |
+| parodynews | Django 5.2, DRF, React/Vite, Postgres, Azure | AI parody news generation, assistants, threads, posts with front matter + versions | `JSONSchema, AIModel, Assistant, AssistantGroup(+Membership), AIProviderConfig, AppConfig, FieldDefaults, ContentItem, ContentDetail, Post, PostFrontMatter, PostVersion, Thread, Message, PoweredBy` | DRF `parodynews/api/urls.py` | pytest + Vitest (frontend) | parodynews.yml |
 | books | Python | validate/compile/edit book projects, Claude studio | `library/<slug>/` files | CLI/local app | pytest | books.yml |
 | image-generator | Python + Ruby gem + web | AI preview/social images | files | CLI, Jekyll plugin | py + ruby tests | zer0-image-generator.yml |
 | zer0-mistakes | Jekyll, Ruby, Node, Docker | theme, installer, propagation | — | — | `scripts/bin/test` | zer0-mistakes.yml |
@@ -38,26 +38,26 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 
 **Duplication and dead code**
 
-1. **Five LLM clients**: extension `src/agent`, `rails/lib/zer0_cms` Anthropic provider, barodybroject provider layer (`AIProviderConfig`/`AIModel`), books studio, drsai story engine (plus image-generator). Target: one Django tool registry + LiteLLM, and `ruby_llm` only for Rails app agents.
+1. **Five LLM clients**: extension `src/agent`, `rails/lib/zer0_cms` Anthropic provider, parodynews provider layer (`AIProviderConfig`/`AIModel`), books studio, drsai story engine (plus image-generator). Target: one Django tool registry + LiteLLM, and `ruby_llm` only for Rails app agents.
 2. **Two ledgers**: `src/core/governance/ledger.ts` and `src/core/harness/ledger.ts`, both idempotency/run records. They become `AgentRun/AgentStep` in Django.
-3. **Two content models**: Rails `Page/Term/Asset` vs barodybroject `Post/PostFrontMatter/PostVersion/ContentItem`, both shadowing Markdown files. Both are replaced by Wagtail pages, revisions and snippets.
+3. **Two content models**: Rails `Page/Term/Asset` vs parodynews `Post/PostFrontMatter/PostVersion/ContentItem`, both shadowing Markdown files. Both are replaced by Wagtail pages, revisions and snippets.
 4. **Two MCP surfaces in waiting**: extension `src/mcp` (TS) vs the note's Django MCP server.
 5. **Image engine twice**: Python engine + "byte-identical Ruby port" + `rails/app/services/image_engine.rb` + vendored copies tracked by `bin/zer0 vendor`.
-6. **Per-package infra leftovers from the subtree imports**: 3 nested `release-please-config.json` (root, zer0-mistakes, image-generator), 10+ `docker-compose.yml` (incl. `apps/barodybroject/src/posthog/`), 9 `CLAUDE.md`, but only one `AGENTS.md` (zer0-mistakes).
+6. **Per-package infra leftovers from the subtree imports**: 3 nested `release-please-config.json` (root, zer0-mistakes, image-generator), 10+ `docker-compose.yml` (incl. `apps/parodynews/src/posthog/`), 9 `CLAUDE.md`, but only one `AGENTS.md` (zer0-mistakes).
 7. **CI is not on hub conventions**: 18 workflows, none call `standard-ci@v2`; release-please covers only the root node package.
-8. **Dead/obsolete**: pre-rewrite estruyf history (keep it in git, but nothing in-tree depends on it); commented-out reusable-workflow calls (`zer0-doctor.yml`, `zer0-linkedin.yml` refs); barodybroject Azure `infra/` and `azure.yaml` if Azure is dropped; `sites/drsai` planning docs (`PRD*.md`, `IMPLEMENTATION_PLAN.md`, `newsletter_seuss.md`, `reena_poem.md`, `Family newsletter.md`) at the site root; `src/test/fixtures/sites/wikijs/docker-compose.yml` is a fixture, so keep it.
+8. **Dead/obsolete**: pre-rewrite estruyf history (keep it in git, but nothing in-tree depends on it); commented-out reusable-workflow calls (`zer0-doctor.yml`, `zer0-linkedin.yml` refs); parodynews Azure `infra/` and `azure.yaml` if Azure is dropped; `sites/drsai` planning docs (`PRD*.md`, `IMPLEMENTATION_PLAN.md`, `newsletter_seuss.md`, `reena_poem.md`, `Family newsletter.md`) at the site root; `src/test/fixtures/sites/wikijs/docker-compose.yml` is a fixture, so keep it.
 
 ## 1. Inventory → target mapping
 
 | Source | Features | Lands in | Action |
 |---|---|---|---|
-| barodybroject Django project | Django settings, DRF, Postgres, auth | `content/` (Django + Wagtail project base) | **Evolve**: becomes the content plane skeleton |
-| barodybroject `Post/PostFrontMatter/PostVersion/ContentItem/ContentDetail` | posts, versions | Wagtail `ArticlePage` + `Revision` | Migrate data, then drop the models |
-| barodybroject `Assistant/AssistantGroup/AIModel/AIProviderConfig` | agent config | `content/agents`: `AgentDefinition` (snippet + RevisionMixin), LiteLLM config | Migrate, then drop |
-| barodybroject `Thread/Message` | chat history | `AgentRun/AgentStep` (kind=llm) | Migrate if needed, otherwise archive |
-| barodybroject `JSONSchema/FieldDefaults` | content schemas | `wagtail_ai_schema` export (note §2.1) | Replace |
-| barodybroject React frontend | admin UI | — | **Drop** (Wagtail admin replaces it); keep it only as a reference in git history |
-| barodybroject Azure infra | deploy | — | **Drop** (open decision D4) |
+| parodynews Django project | Django settings, DRF, Postgres, auth | `content/` (Django + Wagtail project base) | **Evolve**: becomes the content plane skeleton |
+| parodynews `Post/PostFrontMatter/PostVersion/ContentItem/ContentDetail` | posts, versions | Wagtail `ArticlePage` + `Revision` | Migrate data, then drop the models |
+| parodynews `Assistant/AssistantGroup/AIModel/AIProviderConfig` | agent config | `content/agents`: `AgentDefinition` (snippet + RevisionMixin), LiteLLM config | Migrate, then drop |
+| parodynews `Thread/Message` | chat history | `AgentRun/AgentStep` (kind=llm) | Migrate if needed, otherwise archive |
+| parodynews `JSONSchema/FieldDefaults` | content schemas | `wagtail_ai_schema` export (note §2.1) | Replace |
+| parodynews React frontend | admin UI | — | **Drop** (Wagtail admin replaces it); keep it only as a reference in git history |
+| parodynews Azure infra | deploy | — | **Drop** (open decision D4) |
 | Rails `Site/Page/Term/Asset` + `site_sync`, `page_editor`, `files_controller` | file index + write-back | Content → Wagtail (importer + Jekyll exporter); Rails keeps `Site` only as an app-side registry | Rails **stops writing content** (boundary) |
 | Rails `Channel`, `linkedin_gateway`, LinkedIn callbacks | distribution | Rails `app/` (app-domain: OAuth, channels); triggered by the `content.page.published` event | Keep in Rails |
 | Rails ABC wizard + `rails/lib/zer0_cms` ABC generator | book generation | Django `drafter` agent profile "abc"; export target becomes a Jekyll exporter | Port the logic to Django tools, then drop the Ruby provider |
@@ -89,7 +89,7 @@ content/                 # Django 5.2 + Wagtail 6 — system of record, agent ru
   api/                   # Grapple/Strawberry schema, REST viewsets, SSE
   mcp/                   # FastMCP server backed by agents.registry
   outbox/                # transactional outbox + relay to Redis Streams
-  importers/             # jekyll, barodybroject, books, drsai
+  importers/             # jekyll, parodynews, books, drsai
   exporters/             # jekyll exporter (static frontends)
   tests/
 app/                     # Rails 8 (moved from rails/) — experience plane
@@ -122,7 +122,7 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
   - Test: `bin/zer0 check && npx markdownlint-cli2 AGENTS.md`
   - Done: the draft was already at `AGENTS.md`, so "promote" became "merge": the root `CLAUDE.md`'s invariants moved into it and every `CLAUDE.md` is now a pointer whose `@AGENTS.md` line imports it (so Claude Code reads the same text other agents do); project `CLAUDE.md` files became their own `AGENTS.md` (the theme's was folded into its existing one), and Jekyll sites exclude `AGENTS.md` from their builds. A root `.markdownlint-cli2.jsonc` relaxes the two rules that contradict the one-paragraph-per-line gate, so the test passes.
 - [ ] **M1: CI on standard-ci@v2 + monorepo release-please**
-  - Tasks: add `.github/workflows/ci.yml` calling `bamr87/<hub>/.github/workflows/standard-ci.yml@v2` (the exact hub path is open decision D5) with a matrix from `bin/zer0 affected`; convert the root `release-please-config.json` to multi-package (`.`, `rails`, `apps/barodybroject`, `packages/*`) with a `.release-please-manifest.json`; delete the nested release-please configs; fold the per-project workflows into the matrix (keep codeql and claude.yml).
+  - Tasks: add `.github/workflows/ci.yml` calling `bamr87/<hub>/.github/workflows/standard-ci.yml@v2` (the exact hub path is open decision D5) with a matrix from `bin/zer0 affected`; convert the root `release-please-config.json` to multi-package (`.`, `rails`, `apps/parodynews`, `packages/*`) with a `.release-please-manifest.json`; delete the nested release-please configs; fold the per-project workflows into the matrix (keep codeql and claude.yml).
   - Accept: one PR run executes check/test for affected projects only; release-please dry-run lists every package.
   - Test: `bin/zer0 affected --base origin/main && npx release-please release-pr --dry-run --repo-url=bamr87/zer0-CMS --token=$GITHUB_TOKEN` (dry-run, read-only); `actionlint`
   - Partly done, rest held: the root `ci.yml` already calls `bamr87/bamr87/.github/workflows/standard-ci.yml@v2` (D5's hub path), and every project — `content/` included, via the new `content.yml` — has one path-filtered root workflow, so a PR already runs only what it touches. Not done: multi-package release-please. The original repositories still release `jekyll-theme-zer0` and `zer0-image-generator` (docs/MONOREPO.md), so a second release line here would double-version them; how tags are prefixed once packages share this repository is the decision MONOREPO.md lists. Folding the per-project workflows into one matrix is left until then too: each carries setup (services, xvfb, Ruby/Python matrices) a generic matrix would lose.
@@ -139,20 +139,20 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
 
 ### Phase B: Content plane
 
-- [x] **M4: Wagtail skeleton from barodybroject**
-  - Tasks: create `content/` from `apps/barodybroject/src` settings; add Wagtail 6, Postgres + pgvector extension, `cms` app with `BasePage`, `ArticlePage`, `BookPage`, the `AgentManagedMixin` (note §2.2), custom `AbstractImage` with `ai_alt`, `ai_tags`, `embedding`, `embedding_model`; keep the parodynews app mounted read-only for now.
-  - Accept: migrations apply; Wagtail admin loads; existing barodybroject tests still pass.
+- [x] **M4: Wagtail skeleton from config**
+  - Tasks: create `content/` from `apps/parodynews/src` settings; add Wagtail 6, Postgres + pgvector extension, `cms` app with `BasePage`, `ArticlePage`, `BookPage`, the `AgentManagedMixin` (note §2.2), custom `AbstractImage` with `ai_alt`, `ai_tags`, `embedding`, `embedding_model`; keep the parodynews app mounted read-only for now.
+  - Accept: migrations apply; Wagtail admin loads; existing parodynews tests still pass.
   - Test: `cd content && pytest -q && python manage.py makemigrations --check --dry-run`
-  - Deviations: Wagtail 7.4, not 6 (Wagtail 6 does not support the Django 5.2 LTS barodybroject runs); barodybroject's settings *shape* is kept (base/development/production/testing, all from the environment) but `parodynews` is not mounted — its data comes in through `import_barodybroject` from a `dumpdata`, so the content plane carries none of barodybroject's dependencies and barodybroject's own suite is untouched; `ai_keywords` is JSON (SQLite and Postgres share one schema); vectors live in `graph.Embedding`, not on the page or image row (a revision would copy them); `front_matter` is an order-preserving JSON text field (Postgres `jsonb` sorts keys).
+  - Deviations: Wagtail 7.4, not 6 (Wagtail 6 does not support the Django 5.2 LTS parodynews runs); parodynews's settings *shape* is kept (base/development/production/testing, all from the environment) but `parodynews` is not mounted — its data comes in through `import_parodynews` from a `dumpdata`, so the content plane carries none of parodynews's dependencies and parodynews's own suite is untouched; `ai_keywords` is JSON (SQLite and Postgres share one schema); vectors live in `graph.Embedding`, not on the page or image row (a revision would copy them); `front_matter` is an order-preserving JSON text field (Postgres `jsonb` sorts keys).
 - [x] **M5: Headless APIs**
   - Tasks: Grapple (or Strawberry, D2) schema for the page types; Wagtail API v2 `/api/v2/pages/`; export `schemas/graphql/schema.graphql`; CI check for drift.
   - Accept: a GraphQL query for an `ArticlePage` returns StreamField JSON; the schema file is committed and checked.
   - Test: `pytest content/tests/api -q && python manage.py graphql_schema --out /tmp/s.graphql && diff /tmp/s.graphql schemas/graphql/schema.graphql`
   - D2 decided as Grapple (ADR 0001). StreamField JSON is `bodyJson` (Grapple's `rawValue` cannot represent a struct block); mutations sit behind a GraphQL view that authenticates agent tokens and enforces CSRF for browser sessions.
-- [x] **M6: Importers (see §4)**: Jekyll → Wagtail, barodybroject posts → ArticlePage.
-  - Done: `import_jekyll` (idempotent; refuses to overwrite a page edited in Wagtail; links indexed in a second pass; front-matter `preview` images into a collection per site; ABC `alphabet:` → `letter` blocks) and `import_barodybroject` (posts, `PostVersion` history as dated revisions by `legacy:import`, assistants as legacy definitions that cannot run). drsai's books import through `import_jekyll`.
+- [x] **M6: Importers (see §4)**: Jekyll → Wagtail, parodynews posts → ArticlePage.
+  - Done: `import_jekyll` (idempotent; refuses to overwrite a page edited in Wagtail; links indexed in a second pass; front-matter `preview` images into a collection per site; ABC `alphabet:` → `letter` blocks) and `import_parodynews` (posts, `PostVersion` history as dated revisions by `legacy:import`, assistants as legacy definitions that cannot run). drsai's books import through `import_jekyll`.
   - [ ] `packages/books` `library/<slug>/` → `BookPage` + chapters (§4.5) — not started.
-  - Found: `apps/barodybroject/src/pages/_config.yml` refers to an undefined YAML alias (`*site_domain`), which Jekyll's YAML loader refuses as well; the importer reports it instead of guessing.
+  - Found: `apps/parodynews/src/pages/_config.yml` refers to an undefined YAML alias (`*site_domain`), which Jekyll's YAML loader refuses as well; the importer reports it instead of guessing.
 - [x] **M7: Jekyll exporter** so the static sites keep building from Wagtail (§4).
   - Done: `export_jekyll` and `roundtrip_jekyll`. An unchanged page exports its source byte for byte; an edited one renders typed fields over its original front matter, in its original key order. Every Jekyll site in the repository round-trips byte for byte — the theme (376 files), zer0-pages (210), drsai, the two demos and zer0-pages-remote — on SQLite and on Postgres (`test_the_real_sites_round_trip_byte_for_byte`). The build-time switch to exporter output (§4.8) waits on D1.
 - [x] **M8: Outbox + event schemas**
@@ -214,7 +214,7 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
 
 - [ ] **M18: VS Code extension as a headless client** — gated by Phase F: deleting the extension's governance queue, ledger and harness only makes sense once the sites it edits are DB-first; until then they are what works without a server.: panel/dashboard read via GraphQL, edits go out as `propose_edit`, suggestions shown inline; delete `src/core/harness` and `governance/ledger.ts` duplicates. Test: `npm --prefix clients/vscode test`
 - [ ] **M19: Media pipeline** — the fields exist (`ContentImage.ai_alt/ai_caption/ai_tags`, `media.describe`, `media.propose_alt`); the image-save trigger and the image-generator integration are not started, and `image_engine.rb` stays until they replace it.: image save → event → alt/tags/focal/embedding using `zer0-image-generator`; delete `app/app/services/image_engine.rb` and the vendored Ruby port in the Rails plane. Test: `pytest content/tests/media -q`
-- [ ] **M20: Remove superseded code** — gated per site by §4.8 (ADR 0002): nothing a site still depends on is removed before that site has cut over.: barodybroject `parodynews` models (after the M6 import verifies), React frontend, Azure infra (per D4), Rails `Page/Term/Asset` tables (after the M7 exporter is live), books studio LLM client, dead drsai planning docs → `docs/archive/`. Test: `bin/zer0 run test --all`
+- [ ] **M20: Remove superseded code** — gated per site by §4.8 (ADR 0002): nothing a site still depends on is removed before that site has cut over.: the news app's `parodynews` models (after the M6 import verifies), its React frontend, its Azure infra (D4 is decided: drop once a deployment target exists), Rails `Page/Term/Asset` tables (after the M7 exporter is live), books studio LLM client, dead drsai planning docs → `docs/archive/`. Test: `bin/zer0 run test --all`
 
 ### Phase E: Cutover — one home ([ADR 0002](../adr/0002-one-home-cutover.md))
 
@@ -239,12 +239,12 @@ Ordered: each step needs the one before it. A step that needs a credential, a re
   - Needs the owner: a `FLEET_TOKEN` with `contents:write` on the mirror; disabling its issues and pull requests.
   - Built: `.github/workflows/theme-mirror.yml` (kill switch `THEME_MIRROR_ENABLED`, default off). Armed only after C1: a local dry run of the first snapshot against today's mirror changes 99 files outside `.github/workflows/` (−5,981 lines) — the theme's own commits since the import, which this repository does not have yet, so a sync before C1 would revert them on the mirror.
 - [ ] **C4: One Pages deploy**
-  - Tasks: `pages.yml` builds every site under `sites/`, the theme's docs and barodybroject's sidecar into one artifact with each site's sub-path `baseurl` (ADR 0002 §4); `year-of-ai.github.io` builds `sites/2005` into `/2005/` from this repository.
+  - Tasks: `pages.yml` builds every site under `sites/`, the theme's docs and parodynews's sidecar into one artifact with each site's sub-path `baseurl` (ADR 0002 §4); `year-of-ai.github.io` builds `sites/2005` into `/2005/` from this repository.
   - Accept: every route answers 200 in a link-checked preview; `bin/zer0 check` fails for a site with no route.
   - Needs the owner: moving the `zer0-mistakes.com` custom domain from the theme repository's Pages to this one.
-  - Built: `.github/workflows/pages.yml`, `route:` + the `pages` task in `workspace.yml`, `bin/zer0 routes [--json]` and the `routes` rule in `bin/zer0 check`. Routed today: `/` (theme docs + examples), `/zer0-pages/`, `/drsai/`, `/zer0-pages-remote/`, `/demos/cookbook/`, `/demos/garden/`, `/wargames/`. Not routed, each with its reason in `workspace.yml`: barodybroject (its sidecar's `_config.yml` uses an undefined YAML alias — C5), `sites/1987` (no Jekyll config since its repository was deleted), `sites/2005` (year-of-ai.github.io builds it), `sites/irony-works` (no Gemfile: it builds with GitHub Pages' own Jekyll after a node transplant step). Deploys only while `PAGES_DEPLOY_ENABLED` is `true`.
-- [ ] **C5: Port what is left**
-  - Tasks: the theme's remaining reference workflows (Docker integration, the 9-skin visual snapshots, nightly, translation) as root workflows filtered to `packages/zer0-mistakes/**`, the issue autopilot and theme propagation only if still wanted; barodybroject's Playwright E2E, container validation and Trivy jobs. barodybroject's Azure deploy waits on D4.
+  - Built: `.github/workflows/pages.yml`, `route:` + the `pages` task in `workspace.yml`, `bin/zer0 routes [--json]` and the `routes` rule in `bin/zer0 check`. Routed today: `/` (theme docs + examples), `/zer0-pages/`, `/drsai/`, `/zer0-pages-remote/`, `/demos/cookbook/`, `/demos/garden/`, `/wargames/`. Not routed, each with its reason in `workspace.yml`: parodynews (its sidecar's `_config.yml` uses an undefined YAML alias — C5), `sites/1987` (no Jekyll config since its repository was deleted), `sites/2005` (year-of-ai.github.io builds it), `sites/irony-works` (no Gemfile: it builds with GitHub Pages' own Jekyll after a node transplant step). Deploys only while `PAGES_DEPLOY_ENABLED` is `true`.
+- [ ] **C5: Port what is left** — done so far: the news app's Jekyll sidecar is routed at `/parodynews/` (ADR 0003).
+  - Tasks: the theme's remaining reference workflows (Docker integration, the 9-skin visual snapshots, nightly, translation) as root workflows filtered to `packages/zer0-mistakes/**`, the issue autopilot and theme propagation only if still wanted; parodynews's Playwright E2E, container validation and Trivy jobs. parodynews's Azure deploy waits on D4.
   - Accept: every nested `.github/workflows/` file is ported or deleted with a reason; MONOREPO.md § What still depends on the original repositories is empty.
 - [ ] **C6: Redirect and archive**
   - Tasks: one last commit per original (the mirror excepted) that replaces its Pages site with redirects to the new URL and its README with a pointer here; then archive it.
@@ -264,10 +264,10 @@ One milestone per site, smallest first. A site is eligible once `roundtrip_jekyl
 
 ## 4. Content and data migration
 
-1. **Freeze**: tag `pre-migration` (via the PR merge, not a manual push); record counts of files per site and rows per barodybroject table.
+1. **Freeze**: tag `pre-migration` (via the PR merge, not a manual push); record counts of files per site and rows per parodynews table.
 2. **Jekyll/Obsidian → Wagtail (M6)**: `manage.py import_jekyll --site <name> --path frontends/sites/<name>`: one Wagtail `Site` + root per Jekyll site; collections/`_posts` → `ArticlePage`; front matter → typed fields per `schemas/zer0.schema.json` (title, date, tags → taggit, categories → snippet, `seo_title`, `search_description`); body Markdown → StreamField `markdown`/`rich_text` blocks (paragraph split); images → Wagtail Images in a collection per site; internal links → `PageChooserBlock` after a second pass; the original path is kept in `legacy_path` for redirects. Obsidian wikilinks resolve the same way.
 3. **Governance state**: extension `.cms/` drafts, approvals and ledger → `Suggestion` (pending/accepted) and `AgentRun` rows with `legacy_ref`.
-4. **barodybroject DB**: `Post`+`PostFrontMatter` → `ArticlePage`; `PostVersion` → Revisions (ordered, authored by a `legacy:import` user); `Assistant`/`AIModel` → `AgentDefinition`; `Thread`/`Message` → archived JSON or `AgentRun` (D-open); dumped with `dumpdata` first.
+4. **parodynews DB**: `Post`+`PostFrontMatter` → `ArticlePage`; `PostVersion` → Revisions (ordered, authored by a `legacy:import` user); `Assistant`/`AIModel` → `AgentDefinition`; `Thread`/`Message` → archived JSON or `AgentRun` (D-open); dumped with `dumpdata` first.
 5. **books / drsai**: `library/<slug>/` → `BookPage` with chapter children; drsai stories → `BookPage` (profile `story`).
 6. **Rails DB**: `Site` rows stay in Rails as the registry (with a `wagtail_site_id`); `Page/Term/Asset` are derived caches, so drop them rather than migrate after verifying they match the files; `Channel` and LinkedIn tokens stay.
 7. **Verification**: an idempotent importer (re-run = no changes); a round-trip test `import → export → diff` against the original Jekyll tree (allow whitespace/front-matter key order); count parity report; redirect map from `legacy_path`.
@@ -295,7 +295,7 @@ They follow the note's §10 order exactly: M9–M10 (step 1), M11–M12 (step 2)
 **Risks**
 - Markdown → StreamField is lossy (Liquid tags, includes, raw HTML). Mitigation: a raw `markdown` block + round-trip tests.
 - Files-as-truth to DB-as-truth is a philosophy change for the extension and the Jekyll users (git history no longer holds content). Mitigation: the exporter keeps git snapshots.
-- barodybroject's Django version and settings may not fit Wagtail 6 plus the monorepo layout; upgrading is possible churn.
+- parodynews's Django version and settings may not fit Wagtail 6 plus the monorepo layout; upgrading is possible churn.
 - The scope (20 PRs) and two runtimes add ops load for a single maintainer.
 - Prompt injection via imported content; LLM cost in CI (use recorded fixtures only).
 - Vendored-copy drift checks break during the moves (M2).
@@ -304,6 +304,6 @@ They follow the note's §10 order exactly: M9–M10 (step 1), M11–M12 (step 2)
 - **D1** — *decided 2026-10-19 ([ADR 0002](../adr/0002-one-home-cutover.md)): DB-first, one site at a time (Phase F).* Does content become DB-first in Wagtail, with Jekyll repos as exported artifacts, or do Markdown files stay canonical with Wagtail as an index/editor?
 - **D2**: Grapple vs Strawberry-Django for GraphQL.
 - **D3**: LangGraph + Postgres checkpointer vs a hand-rolled state machine for the harness.
-- **D4**: Deployment target: keep Azure Container Apps (barodybroject) or move elsewhere; and whether barodybroject survives as a product (a parody-news site on top of the new CMS) or is absorbed.
+- **D4**: **Decided by [ADR 0003](../adr/0003-framework-rebuild.md).** barodybroject does not survive as a product or a brand: the app continues as `apps/parodynews/` until M20 absorbs its models; its Azure files stay de-branded (`parodynews` defaults) and deploy nothing from here until a deployment target is chosen.
 - **D5**: The exact hub repo/path for `standard-ci@v2`, and whether the VS Code extension stays in this monorepo or splits out.
 - **D6**: Event bus: Redis Streams (default) vs NATS.

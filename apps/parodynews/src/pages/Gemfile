@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+# The news app's Jekyll sidecar — a remote_theme consumer of the zer0 theme, built the way
+# sites/zer0-pages-remote is: the GitHub Pages gem set, the theme fetched by
+# jekyll-remote-theme from bamr87/zer0-mistakes, and no theme gem of its own (a gem pinned
+# to Jekyll 3 by github-pages would shadow the remote theme).
+source "https://rubygems.org"
+
+gem "github-pages", ">= 228", "< 232", group: :jekyll_plugins
+gem "jekyll-remote-theme"
+gem "jekyll-feed"
+gem "jekyll-sitemap"
+gem "jekyll-seo-tag"
+gem "jekyll-include-cache"
+gem "jekyll-paginate"
+gem "ffi", "~> 1.17.0"
+gem "webrick", "~> 1.7"
+gem "commonmarker", "~> 0.23"

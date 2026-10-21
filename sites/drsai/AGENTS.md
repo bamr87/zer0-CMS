@@ -21,7 +21,7 @@ python3 tools/import_abc_book.py --check            # ABC books match their spec
 
 # lint:
 cd drsai && ruff check src/ && black --check src/ tests/
-python3 tools/unwrap-prose.py --check               # markdown one-paragraph-per-line
+python3 ../../tools/unwrap-prose.py --check               # markdown one-paragraph-per-line
 ```
 
 Content rule: `pages/_books/**` is GENERATED — never hand-edit the generated pages. Story books come from the Dodge-and-Reena-Book repo via `tools/import_dodge_and_reena.py`. **ABC books** (`book-abc` layout, the "ABC & Language" series) come from the [zer0-CMS](https://github.com/bamr87/zer0-CMS) ABC wizard, which writes `pages/_books/<slug>/index.md` plus the canonical spec sidecar `_data/abc_books/<slug>.json`; `tools/import_abc_book.py --check` guards the page against its spec. Missing illustrations render via `tools/generate_illustrations.py` (OpenAI Images API, needs `OPENAI_API_KEY`) — it handles story `illustrations:`, book covers, and ABC `alphabet:` plates.

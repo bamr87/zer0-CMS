@@ -52,6 +52,7 @@ teaser: /assets/images/favicon_gpt_computer_retro.png   # fallback card/og image
 info_banner: /assets/images/info-banner-mountain-wizard.png   # intro hero fallback
 
 author:
+  key                    : "bamr87" # the _data/authors.yml entry bylines and E-E-A-T cards use by default
   name: Amr
   github_username: bamr87
   email: amr.abdel@gmail.com
