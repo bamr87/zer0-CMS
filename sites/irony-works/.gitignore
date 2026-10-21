@@ -25,3 +25,6 @@ assets/images/previews/
 
 # Playwright MCP scratch output from UI review sessions
 .playwright-mcp/
+
+# Browser-session screenshots are never committed.
+.playwright-mcp/

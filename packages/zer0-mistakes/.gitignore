@@ -93,3 +93,6 @@ _config_secrets_local.yml
 vendor/
 node_modules/
 chrome-debug-profile/
+
+# Visual PR evidence is a pull-request artifact, not tree content (docs/adr/0003).
+test/visual/evidence/
