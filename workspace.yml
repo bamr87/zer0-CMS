@@ -313,16 +313,19 @@ projects:
     summary: A Django 5.2 + React app that generates and manages parody news with a provider-agnostic AI layer, deployed to Azure Container Apps.
     upstream: bamr87/barodybroject
     publishes: [azure, pages]
-    route: none — its Jekyll sidecar's _config.yml uses an undefined YAML alias (*site_domain) that Jekyll refuses; fixing that is PLAN C5, then it routes at /parodynews/
+    route: /parodynews/
     ci: parodynews.yml
     site: "src/pages"
     tasks:
-      setup: pip install -r requirements-dev.txt
+      setup: pip install -r requirements-dev.txt && (cd src/pages && bundle install)
       check: ruff check src/ && black --check src/
       test:
         run: python -m pytest
         cwd: src
         env: {DJANGO_SETTINGS_MODULE: config.settings.testing}
+      pages:
+        run: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+        cwd: src/pages
 
   aieo:
     path: apps/aieo

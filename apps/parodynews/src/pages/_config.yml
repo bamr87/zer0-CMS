@@ -51,9 +51,9 @@ subtitle_url             : "/parodynews/posts/"
 subtitle_icon            : "code"
 title_separator          : "|" # Appears in the web browser tab name
 domain                   : &domain "zer0-mistakes"
-domain_ext               : ".com"
+domain_ext               : &domain_ext ".com"
 sub_domain               : &sub_domain ""
-baseurl                  : "/parodynews" # the subpath of your site, e.g. /blog - Use this if you want this whole repo to be a domain branch
+baseurl                  : &baseurl "/parodynews" # the subpath of your site, e.g. /blog - Use this if you want this whole repo to be a domain branch
 url_dev                  : ['https://', *sub_domain, '.', *domain, *domain_ext ] # the base hostname & protocol for your site, e.g. http://example.com
 url                      : &url 'https://zer0-mistakes.com' # the base hostname & protocol for your site, e.g. http://example.com
 public_folder            : "/parodynews/assets"
@@ -99,7 +99,7 @@ _posts_file_structure    : "year-month-day-title.md"
 author:
   name                   : *name # *name is a YAML reference pointing to the &anchor earlier
   avatar                 : "/assets/images/gravatar-small.png"
-  email_hash             : '71d7a4fc9712df49e13d606e620f89c7' # https://en.gravatar.com/site/check/{ site.email }
+  email_hash             : &email_hash '71d7a4fc9712df49e13d606e620f89c7' # https://en.gravatar.com/site/check/{ site.email }
   gravatar               : [ 'https://s.gravatar.com/avatar/', *email_hash, '?s=80' ]
   bio                    : "IT nerd trying to be an IT hero"
   location               : "Denver, CO"
@@ -233,7 +233,7 @@ kramdown: # https://kramdown.gettalong.org/options.html
   # Permalinks: https://jekyllrb.com/docs/permalinks/
 
 # collections_dir: &collections_dir ""
-local_repo_path: [ '/', *local_repo ]
+local_repo_path: [ '/', *github_repository ]
 
 collections:
   pages:
