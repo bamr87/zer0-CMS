@@ -7,6 +7,7 @@ counts as a book when it contains a ``book.yml``; names starting with ``_`` or
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,15 +25,32 @@ class LibraryError(Exception):
 
 
 def find_root(start: Path | None = None) -> Path:
-    """Walk up from *start* looking for a directory that contains ``library/``."""
+    """Walk up from *start*, stopping short of the filesystem root, to the nearest directory holding ``library/``.
+
+    The name is matched against the directory's real entries, case-sensitively: ``Path.is_dir()`` alone
+    accepts ``/Library`` and ``~/Library`` on macOS's case-insensitive filesystem, and the CLI would then
+    adopt the operating system's folder as a book repository whenever it runs outside one.
+    """
     current = (start or Path.cwd()).resolve()
     for candidate in (current, *current.parents):
-        if (candidate / LIBRARY_DIRNAME).is_dir():
+        if candidate == candidate.parent:
+            break  # the filesystem root is never a repository
+        if _holds_library(candidate):
             return candidate
     raise LibraryError(
         f"no {LIBRARY_DIRNAME}/ directory found in {current} or any parent; "
         "run from inside the repository or pass --root"
     )
+
+
+def _holds_library(directory: Path) -> bool:
+    """True when *directory* has an entry spelled exactly ``library`` and it is a directory."""
+    try:
+        names = os.listdir(directory)
+    except OSError:
+        # An ancestor that cannot be read cannot be the repository; keep walking up.
+        return False
+    return LIBRARY_DIRNAME in names and (directory / LIBRARY_DIRNAME).is_dir()
 
 
 @dataclass
