@@ -25,7 +25,7 @@ Every project in this repository is gated on its own terms: the VS Code extensio
 | `zer0-doctor.yml` | `workflow_call` from a content repository; `workflow_dispatch` here | The zer0 stack consumer contract check on the caller's site (below); fails only when asked to |
 | `zer0-linkedin.yml` | `workflow_call` from a content repository | The LinkedIn distribution lane on the caller's site at its branch tip, with no bundle: `publish` (a rehearsal, or live with `ZER0_LINKEDIN_PUBLISH=1` set for that one step; `ZER0_LINKEDIN_MERGED=1` on the default branch), `status` (fails on a dead token or one within `warn-days` of expiry) or `stats`; commits the ledger, the queue and `performance.json` back with `[skip ci]` and uploads them as `zer0-linkedin-results`; skips with a notice when the caller has no LinkedIn credential. Contract: [`DISTRIBUTION.md`](DISTRIBUTION.md#ci-the-reusable-workflow) |
 | `ci.yml` | every PR and push to `main` | The hub's shared `standard-ci.yml` (a thin caller; the logic lives in bamr87/bamr87) |
-| `markdown-oneline.yml` | PR and push to `main` touching markdown | On a same-repo PR it runs `tools/unwrap-prose.py --write` and pushes the repair to the PR branch; on a fork PR or a push to `main` it fails with the fix command instead |
+| `markdown-oneline.yml` | PR and push to `main` touching markdown | On a same-repo PR it runs `tools/unwrap-prose.py --write` (skipping `SCHEMA.md` and `CHANGELOG.md`) and pushes the repair to the PR branch; on a fork PR or a push to `main` it fails with the fix command instead |
 | `codeql-analysis.yml` | push and PR to `main`, weekly (Fridays 14:24 UTC) | CodeQL over `javascript-typescript` and `ruby`, both `build-mode: none` |
 | `release.yml` | push to `main` | The hub's release-please workflow maintains the release PR; when that PR merges, the repo-owned `marketplace` job packages the vsix at the tag, attaches it to the GitHub Release, and publishes to the Marketplace and Open VSX when their tokens exist (see [`RELEASING.md`](RELEASING.md)) |
 | `claude.yml` | `@claude` in an issue, comment or review | The mention handler (`anthropics/claude-code-action@v1`), one run per thread; it never merges |
@@ -80,8 +80,8 @@ docker compose --profile content up -d --build --wait db redis content worker be
 curl -fsS http://localhost:8000/healthz
 docker compose --profile content down -v
 
-# one paragraph per line
-python3 tools/unwrap-prose.py --check
+# one paragraph per line, with the two excludes markdown-oneline.yml passes
+python3 tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'
 ```
 
 The image-engine tests run the locked `zer0-image-generator` gem's Python engine and skip without python3 and PyYAML. With `ZER0_IMAGE_GENERATOR_LIB` pointing at an image generator checkout's `lib/` that ships `Zer0ImageGenerator::Facade`, the facade path runs too.

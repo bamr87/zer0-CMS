@@ -67,7 +67,7 @@ bin/rails test && bin/rails zeitwerk:check         # the app; image-engine tests
 SITES_DIR=$HOME/github docker compose up --build
 SITES_DIR=$HOME/github docker compose --profile imagegen up --build   # + zer0-image-generator on :3000
 
-python3 tools/unwrap-prose.py --write   # fix the markdown one-paragraph-per-line CI gate
+python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'   # fix the markdown one-paragraph-per-line CI gate (its two excludes)
 
 # ── Content plane (content/) — Django 5.2 + Wagtail 7.4; see content/AGENTS.md ──
 cd content
@@ -158,7 +158,7 @@ Fifteen repositories live here, each imported with full history: the theme (`pac
 - Conventional Commits: `type(scope): description` (`feat`/`fix`/`docs`/`refactor`/`test`/`chore`/`ci`/`style`).
 - Default branch is `main` — branch from it and open a PR; never push to it directly.
 - README-First, README-Last: read the nearest `README.md` before changing a directory, and update it after. The dense ones are `src/README.md`, `src/core/README.md`, `src/test/README.md` and `docs/ARCHITECTURE.md`.
-- One paragraph per line in markdown — CI enforces it (`tools/unwrap-prose.py`).
+- One paragraph per line in markdown — CI enforces it (`tools/unwrap-prose.py`, skipping `SCHEMA.md` and `CHANGELOG.md`; pass the same two `--exclude` patterns locally, as the command above does).
 - Every source file opens with a short block comment (or module docstring) saying what it is and why it exists.
 - Don't suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`) or leave empty exception handlers — eslint errors on all four.
 - CI goes through the hub's `standard-ci@v2` (root `ci.yml`) plus one path-filtered root workflow per project; releases go through release-please in manifest mode. Don't add nested release-please configs. Docs that change behaviour are updated in the same PR.

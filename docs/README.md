@@ -23,7 +23,7 @@ Two places make that concrete for `CONFIG.md`: every `zer0Cms.*` id it names exi
 
 ## Writing conventions
 
-Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it; run `python3 tools/unwrap-prose.py --write` after editing, or `--check` to see what would change.
+Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it, skipping `SCHEMA.md` and `CHANGELOG.md`; run `python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'` after editing, or `--check` with the same excludes to see what would change.
 
 ## Nearby documentation
 

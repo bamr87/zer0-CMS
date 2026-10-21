@@ -168,7 +168,7 @@ projects:
     route: none — a plain-markdown repository with no Jekyll config of its own; its GitHub Pages site went with the deleted bamr87/1987, and it gets a route once it has a _config.yml
     ci: ci.yml
     tasks:
-      check: python3 tools/unwrap-prose.py --check . || true
+      check: python3 tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$' . || true
 
   "2005":
     path: sites/2005
@@ -302,7 +302,7 @@ projects:
     route: /wargames/
     tasks:
       setup: bundle install
-      check: python3 tools/unwrap-prose.py --check
+      check: python3 tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'
       build: bundle exec jekyll build
       pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
