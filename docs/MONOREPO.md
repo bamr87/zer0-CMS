@@ -1,6 +1,6 @@
 # The zer0 monorepo
 
-zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension and the Rails fleet CMS it started with, the Django + Wagtail content plane that is becoming its centre ([ADR 0001](adr/0001-target-architecture.md)), plus the theme, the image generator, the books app, nine Jekyll sites, the parodynews Django app and the aieo FastAPI app. Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
+zer0-CMS carries the whole zer0 stack in one repository: the Django + Wagtail platform that is its centre ([ADR 0001](adr/0001-target-architecture.md), [ADR 0004](adr/0004-one-platform.md)), the VS Code extension that is its editor client, the Rails fleet CMS the platform is absorbing, plus the theme, the image generator, the books app, nine Jekyll sites, the parodynews Django app and the aieo FastAPI app — the last four being absorbed into the platform function by function (PLAN Phase G). Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
 
 ## Layout
 
@@ -8,7 +8,7 @@ zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension a
 |---|---|---|
 | `src/`, `media/`, … (root) | `bamr87/zer0-CMS` | The VS Code extension (`cms-extension`). |
 | `rails/` | `bamr87/zer0-CMS` | The fleet CMS and the stdlib-only zer0 library — catalog, `zer0 doctor`, the ABC generator (`cms-rails`). |
-| `content/` | new (2026-10) | The content plane (`content`): Wagtail pages and revisions, the agent harness and its tool registry, suggestions, the graph, the outbox, GraphQL/REST/MCP. It imports the Jekyll sites below and exports them back byte for byte ([`content/README.md`](../content/README.md)). |
+| `content/` | new (2026-10) | The platform (`content`): Wagtail pages and revisions, the agent harness and its tool registry, suggestions, the graph, the outbox, GraphQL/REST/MCP, and the ops baseline (probes, request ids, the error envelope, logging, OpenAPI). It imports the Jekyll sites below and exports them back byte for byte ([`content/README.md`](../content/README.md)). |
 | `packages/zer0-mistakes/` | `bamr87/zer0-mistakes` | The Jekyll theme, published as the `jekyll-theme-zer0` gem, with its docs site and installer. |
 | `packages/zer0-image-generator/` | `bamr87/zer0-image-generator` | The preview-image engine, published as the `zer0-image-generator` gem, plus its Rails web panel. |
 | `packages/books/` | `bamr87/books` | The book projects (`library/<slug>/`) and the `bookshelf` Python app that validates, compiles and edits them. |
