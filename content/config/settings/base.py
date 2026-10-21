@@ -8,10 +8,12 @@ backends are chosen by `LLM_BACKEND` / `EMBEDDING_BACKEND`, and tests pin them
 to offline backends (`config.settings.testing`).
 """
 
+import tomllib
 from pathlib import Path
 
 import environ
 from celery.schedules import crontab
+from corsheaders.defaults import default_headers as cors_default_headers
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # content/
 REPO_ROOT = BASE_DIR.parent  # the zer0-CMS checkout
@@ -29,6 +31,15 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
+# ── Identity (ops/README.md): what /version reports and every log line and
+# response header carries. The version is the one release-please maintains in
+# pyproject.toml; the commit and build time come from the image build.
+APP_NAME = "zer0-content"
+with (BASE_DIR / "pyproject.toml").open("rb") as _pyproject:
+    APP_VERSION = tomllib.load(_pyproject)["project"]["version"]
+GIT_SHA = env("GIT_SHA", default="unknown")
+BUILT_AT = env("BUILT_AT", default="unknown")
+
 INSTALLED_APPS = [
     # The content plane's own apps. `cms` first: it owns the image model the
     # rest of Wagtail is configured to use.
@@ -42,6 +53,7 @@ INSTALLED_APPS = [
     "mcp_server",
     "importers",
     "exporters",
+    "ops",
     # Wagtail.
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
@@ -60,6 +72,8 @@ INSTALLED_APPS = [
     "taggit",
     # Headless APIs.
     "rest_framework",
+    "drf_spectacular",
+    "corsheaders",
     "graphene_django",
     "grapple",
     # Django.
@@ -71,8 +85,16 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 ]
 
+# Outermost first. The request id is bound before anything else runs, so a
+# static file, a security redirect or a crash deep inside all carry it; the
+# access line is measured just inside it; CORS sits above WhiteNoise and
+# CommonMiddleware because both can answer a request before it gets further.
 MIDDLEWARE = [
+    "ops.middleware.RequestIdMiddleware",
+    "ops.middleware.AccessLogMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "ops.middleware.SecurityHeadersMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -153,13 +175,71 @@ GRAPPLE = {
 }
 
 # ── REST ────────────────────────────────────────────────────────────────────
+# Every non-2xx is the envelope in ops/errors.py; rates are per anonymous
+# address, per person and per agent token (ops/throttling.py), and an empty
+# rate turns a scope off.
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "agents.auth.AgentTokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "EXCEPTION_HANDLER": "ops.errors.drf_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_THROTTLE_CLASSES": ["ops.throttling.AnonThrottle", "ops.throttling.PrincipalThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": env("THROTTLE_ANON_RATE", default="120/min") or None,
+        "principal": env("THROTTLE_PRINCIPAL_RATE", default="600/min") or None,
+    },
+    # How many proxies sit in front, so the anonymous bucket keys on the client
+    # address rather than the load balancer's.
+    "NUM_PROXIES": env.int("NUM_PROXIES", default=None),
 }
+
+# ── OpenAPI (ops/openapi.py) ────────────────────────────────────────────────
+# The document covers the platform's own REST endpoints (SERVE_URLCONF); the
+# surface version is "2" as in the path, so a release bump never makes the
+# committed schemas/openapi/openapi.json stale.
+SPECTACULAR_SETTINGS = {
+    "TITLE": "zer0-CMS platform API",
+    "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry. "
+    "Wagtail's pages, images and documents endpoints live beside these at /api/v2/ and are documented by Wagtail.",
+    "VERSION": "2",
+    "OAS_VERSION": "3.1.0",
+    "SCHEMA_PATH_PREFIX": r"/api/v2",
+    "SERVE_URLCONF": "ops.openapi",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
+}
+API_DOCS_ENABLED = env.bool("API_DOCS_ENABLED", default=True)
+
+# ── Browser origins (UPS-BE-06) ─────────────────────────────────────────────
+# An allowlist, never `*` with credentials (the `ops.E001` check refuses it).
+# Only the API paths answer cross-origin; the admin stays same-origin.
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+CORS_ALLOW_CREDENTIALS = env.bool("CORS_ALLOW_CREDENTIALS", default=False)
+CORS_URLS_REGEX = r"^/(api|graphql|mcp)/.*$"
+CORS_ALLOW_HEADERS = [*cors_default_headers, "traceparent", "x-request-id", "mcp-protocol-version"]
+CORS_EXPOSE_HEADERS = ["X-Request-Id", "X-App-Version", "traceparent", "Retry-After"]
+
+# ── Security headers (UPS-OPS-23) ───────────────────────────────────────────
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+PERMISSIONS_POLICY = env("PERMISSIONS_POLICY", default="camera=(), microphone=(), geolocation=(), payment=(), usb=()")
+# Report-only to start: the Wagtail admin inlines scripts and styles, so an
+# enforced policy is a later step, taken once the reports have been read.
+CSP_REPORT_ONLY = env(
+    "CSP_REPORT_ONLY",
+    default="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'",
+)
+CSP_REPORT_URI = env("CSP_REPORT_URI", default="")
+CSRF_FAILURE_VIEW = "ops.errors.csrf_failure"
+
+# ── Error reporting (UPS-OPS-13): on only when a DSN is set ─────────────────
+SENTRY_DSN = env("SENTRY_DSN", default="")
+SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default="development")
+SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0)
 
 # ── Celery: the agent runner and the outbox relay ───────────────────────────
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
@@ -167,6 +247,8 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = None
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 CELERY_TASK_ACKS_LATE = True
+# The worker, beat and relay log through LOGGING below, not Celery's own setup.
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # The outbox relay runs as its own process (`manage.py relay_outbox`, the
 # compose `relay` service); beat schedules the nightly graph job.
 CELERY_BEAT_SCHEDULE = {
@@ -208,15 +290,40 @@ OUTBOX_RELAY = env("OUTBOX_RELAY", default="redis")
 # a CLI, an IDE, the Rails app — is allowed.
 MCP_ALLOWED_ORIGINS = env.list("MCP_ALLOWED_ORIGINS", default=["http://localhost:8000", "http://127.0.0.1:8000"])
 
+# ── Logging (UPS-OPS-10..12; ops/logging.py) ────────────────────────────────
+# LOG_FORMAT=json writes one object per line with ts/level/msg/logger/
+# request_id/trace_id/app/version; text is the human format. Both redact
+# tokens and Authorization values, and every record carries the request id.
+LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+LOG_FORMAT = env("LOG_FORMAT", default="text")
+if LOG_FORMAT not in ("json", "text"):
+    LOG_FORMAT = "text"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
-    # Wagtail logs every page action and every background task at INFO; the
-    # audit trail is in the database (log entries, agent runs), not stdout.
+    "filters": {
+        "context": {"()": "ops.logging.ContextFilter"},
+        "redact": {"()": "ops.logging.RedactionFilter"},
+    },
+    "formatters": {
+        "text": {
+            "()": "ops.logging.TextFormatter",
+            "fmt": "%(asctime)s %(levelname)s %(name)s [%(request_id)s] %(message)s",
+        },
+        "json": {"()": "ops.logging.JsonFormatter", "app": APP_NAME, "version": APP_VERSION},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "filters": ["context", "redact"], "formatter": LOG_FORMAT}
+    },
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
-        name: {"level": env("WAGTAIL_LOG_LEVEL", default="WARNING")}
-        for name in ("wagtail", "django_tasks", "modelsearch")
+        # Wagtail logs every page action and every background task at INFO; the
+        # audit trail is in the database (log entries, agent runs), not stdout.
+        **{
+            name: {"level": env("WAGTAIL_LOG_LEVEL", default="WARNING")}
+            for name in ("wagtail", "django_tasks", "modelsearch")
+        },
+        # One line per request (ops.middleware.AccessLogMiddleware).
+        "ops.access": {"level": "INFO"},
     },
 }

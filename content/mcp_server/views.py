@@ -10,6 +10,7 @@
 """
 
 import json
+import logging
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
@@ -18,7 +19,9 @@ from django.views.decorators.csrf import csrf_exempt
 from agents.auth import bearer
 from agents.models import AgentToken
 
-from .protocol import PARSE_ERROR, SUPPORTED_VERSIONS, Principal, error, handle
+from .protocol import INTERNAL_ERROR, PARSE_ERROR, SUPPORTED_VERSIONS, Principal, error, handle
+
+log = logging.getLogger("mcp_server")
 
 
 @csrf_exempt
@@ -45,7 +48,12 @@ def mcp_endpoint(request):
         return JsonResponse(error(None, PARSE_ERROR, "the body is not JSON"), status=400)
     if isinstance(message, list):
         return JsonResponse(error(None, -32600, "batches are not supported"), status=400)
-    reply = handle(message, Principal.for_user(token.user, token=token))
+    try:
+        reply = handle(message, Principal.for_user(token.user, token=token))
+    except Exception:  # noqa: BLE001 — JSON-RPC: a crash is an error response with the request id, never a traceback
+        log.exception("mcp request failed")
+        id_ = message.get("id") if isinstance(message, dict) else None
+        return JsonResponse(error(id_, INTERNAL_ERROR, "internal error"), status=500)
     if reply is None:
         return HttpResponse(status=202)
     return JsonResponse(reply)

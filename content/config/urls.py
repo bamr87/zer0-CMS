@@ -1,35 +1,53 @@
-"""URL map of the content plane.
+"""URL map of the platform.
 
-/healthz          liveness + database (compose and CI wait on it)
+/healthz          liveness: the process answers, touching nothing
+/readyz           readiness: database, cache and Redis, 503 when one is down
+/version          name, version, commit, built_at
 /admin/           Wagtail admin (pages, snippets, suggestions, agent runs)
-/django-admin/    Django admin (users, tokens)
+/django-admin/    Django admin
 /api/v2/          Wagtail API v2 + agent runs, graph, suggestions, tools
+/api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
 /                 Wagtail page serving (preview; the sites are headless)
+
+Errors Django answers itself — an unknown path, a CSRF failure, a crash — use
+the same JSON envelope as the APIs on the API paths (ops/errors.py).
 """
 
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
+from drf_spectacular.views import SpectacularJSONAPIView, SpectacularSwaggerView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from api.urls import router
-from api.views import ContentGraphQLView, healthz
+from api.views import ContentGraphQLView
 from mcp_server.views import mcp_endpoint
+from ops.views import healthz, readyz, version
+
+handler400 = "ops.errors.bad_request"
+handler403 = "ops.errors.permission_denied"
+handler404 = "ops.errors.not_found"
+handler500 = "ops.errors.server_error"
 
 urlpatterns = [
     path("healthz", healthz, name="healthz"),
+    path("readyz", readyz, name="readyz"),
+    path("version", version, name="version"),
     path("django-admin/", admin.site.urls),
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
+    path("api/v2/openapi.json", SpectacularJSONAPIView.as_view(), name="openapi"),
     path("api/v2/", include("api.urls")),
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),
     path("mcp/", mcp_endpoint, name="mcp"),
 ]
+if settings.API_DOCS_ENABLED:
+    urlpatterns.append(path("api/v2/docs/", SpectacularSwaggerView.as_view(url_name="openapi"), name="api-docs"))
 if settings.DEBUG:
     urlpatterns.append(path("graphiql/", ContentGraphQLView.as_view(graphiql=True), name="graphiql"))
 urlpatterns.append(path("", include(wagtail_urls)))
