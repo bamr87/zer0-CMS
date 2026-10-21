@@ -96,7 +96,7 @@ dist/               generated output (gitignored)
 - Read the nearest `README.md` before changing a directory, and update it after.
 - Conventional Commits: `type(scope): description`.
 - Branch from `main` and open a PR; never push to `main` directly.
-- Markdown is one paragraph per line. Fix with `python3 tools/unwrap-prose.py --write`.
+- Markdown is one paragraph per line. Fix with `python3 ../../tools/unwrap-prose.py --write`.
 - Run `python3 -m pytest` and `books validate` before pushing.
 
 More detail in [`AGENTS.md`](AGENTS.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).

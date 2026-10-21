@@ -168,7 +168,7 @@ projects:
     route: none — a plain-markdown repository with no Jekyll config of its own; its GitHub Pages site went with the deleted bamr87/1987, and it gets a route once it has a _config.yml
     ci: ci.yml
     tasks:
-      check: python3 tools/unwrap-prose.py --check . || true
+      check: python3 ../../tools/unwrap-prose.py --check . || true
 
   "2005":
     path: sites/2005
@@ -302,27 +302,30 @@ projects:
     route: /wargames/
     tasks:
       setup: bundle install
-      check: python3 tools/unwrap-prose.py --check
+      check: python3 ../../tools/unwrap-prose.py --check .
       build: bundle exec jekyll build
       pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
 
-  barodybroject:
-    path: apps/barodybroject
+  parodynews:
+    path: apps/parodynews
     kind: app
     stack: [python, node, docker]
     summary: A Django 5.2 + React app that generates and manages parody news with a provider-agnostic AI layer, deployed to Azure Container Apps.
     upstream: bamr87/barodybroject
     publishes: [azure, pages]
-    route: none — its Jekyll sidecar's _config.yml uses an undefined YAML alias (*site_domain) that Jekyll refuses; fixing that is PLAN C5, then it routes at /barodybroject/
-    ci: barodybroject.yml
+    route: /parodynews/
+    ci: parodynews.yml
     site: "src/pages"
     tasks:
-      setup: pip install -r requirements-dev.txt
+      setup: pip install -r requirements-dev.txt && (cd src/pages && bundle install)
       check: ruff check src/ && black --check src/
       test:
         run: python -m pytest
         cwd: src
-        env: {DJANGO_SETTINGS_MODULE: barodybroject.settings.testing}
+        env: {DJANGO_SETTINGS_MODULE: config.settings.testing}
+      pages:
+        run: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+        cwd: src/pages
 
   aieo:
     path: apps/aieo
@@ -352,29 +355,11 @@ vendored:
   - copy: rails/lib/zer0_cms/data/frontmatter_schema.yml
     source: packages/zer0-mistakes/.github/config/frontmatter_schema.yml
     why: zer0 doctor checks a site's front matter against the theme's schema without loading the theme.
-  # The hub-seeded one-paragraph-per-line fixer. The root copy is the source:
-  # the root markdown-oneline.yml runs it over the whole repository. Each
-  # project keeps its own copy because its own code, docs or CI call it by a
-  # project-relative path (the theme's scripts/translate.rb and
-  # test/test_i18n.sh among them).
+  # The hub-seeded one-paragraph-per-line fixer. The root copy is the source
+  # and the root markdown-oneline.yml runs it over the whole repository; every
+  # project here calls it as ../../tools/unwrap-prose.py. The theme keeps the
+  # one remaining copy because its scripts/translate.rb and test/test_i18n.sh
+  # must also run in the read-only mirror (ADR 0002), which has no root tools/.
   - copy: packages/zer0-mistakes/tools/unwrap-prose.py
     source: tools/unwrap-prose.py
     why: scripts/translate.rb and test/test_i18n.sh run it from the theme's root.
-  - copy: packages/books/tools/unwrap-prose.py
-    source: tools/unwrap-prose.py
-    why: books documents `python3 tools/unwrap-prose.py --check` as its prose gate.
-  - copy: sites/drsai/tools/unwrap-prose.py
-    source: tools/unwrap-prose.py
-    why: drsai.yml runs it inside the site.
-  - copy: sites/zer0-pages/tools/unwrap-prose.py
-    source: tools/unwrap-prose.py
-    why: Registered in the site's tools/SCHEMA.md pyramid.
-  - copy: sites/zer0-pages-remote/tools/unwrap-prose.py
-    source: tools/unwrap-prose.py
-    why: The site's documented lint command; excluded from its Jekyll build in _config.yml.
-  - copy: apps/barodybroject/tools/unwrap-prose.py
-    source: tools/unwrap-prose.py
-    why: The app's own markdown-oneline workflow runs it from the app's root.
-  - copy: sites/wargames/tools/unwrap-prose.py
-    source: tools/unwrap-prose.py
-    why: The site's documented lint, and the first step of its upstream re-sync (README, AGENTS.md).

@@ -14,7 +14,7 @@
 bundle install                             # Install dependencies
 bundle exec jekyll serve                   # Dev server at http://localhost:4000/wargames/
 bundle exec jekyll build                   # Build site
-python3 tools/unwrap-prose.py --check      # Lint: one paragraph per line (--write to fix)
+python3 ../../tools/unwrap-prose.py --check      # Lint: one paragraph per line (--write to fix)
 ```
 
 ## Conventions

@@ -160,7 +160,7 @@ The pipeline stages its output under `pages/_docs/wargames/overthewire/` rather 
 ```bash
 ./scripts/docs-aggregator/aggregate_docs.sh
 STAGED=pages/_docs/wargames/overthewire
-python3 tools/unwrap-prose.py --write $STAGED      # the repo keeps one paragraph per line; fresh upstream text is soft-wrapped
+python3 ../../tools/unwrap-prose.py --write $STAGED      # the repo keeps one paragraph per line; fresh upstream text is soft-wrapped
 python3 tools/carry-study-guides.py $STAGED        # re-attach the study guides and the site-owned front matter
 diff -r $STAGED overthewire                         # review what changed upstream
 cp -R $STAGED/. overthewire/                        # move the refreshed pages over
