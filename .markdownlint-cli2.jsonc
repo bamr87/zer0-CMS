@@ -3,14 +3,20 @@
 // Markdown here is one paragraph per line (tools/unwrap-prose.py, enforced by
 // markdown-oneline.yml), so the 80-column rule would flag every paragraph and
 // an aligned-pipe table rule would flag every one-row-per-line table, and the
-// README uses inline HTML on purpose. Those three are relaxed; everything else is markdownlint's default. Projects under
-// packages/, sites/ and apps/ keep their own lint configuration.
+// README uses inline HTML on purpose; bare URLs and bold lead-ins are house style
+// and kit files open with prose, so MD034, MD036 and MD041 are off too (the hub
+// disables MD013/MD033/MD041 the same way). Everything else is markdownlint's
+// default. CHANGELOG.md is release-please's, media/ is the extension's, and
+// projects under packages/, sites/ and apps/ keep their own lint configuration.
 {
   "config": {
     "default": true,
     "MD013": false,
     "MD033": false,
+    "MD034": false,
+    "MD036": false,
+    "MD041": false,
     "MD060": false
   },
-  "ignores": ["node_modules/**", "packages/**", "sites/**", "apps/**", "content/**/templates/**"]
+  "ignores": ["node_modules/**", "packages/**", "sites/**", "apps/**", "content/**/templates/**", "CHANGELOG.md", "media/**", ".cache/**", "**/fixtures/**", "content/agents/recordings/**"]
 }

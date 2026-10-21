@@ -30,7 +30,7 @@ zer0-CMS carries the whole zer0 stack in one repository: the Django + Wagtail pl
 
 The design has five parts. Each one replaces something that used to be repeated, by hand, in every repository.
 
-```
+```text
 workspace.yml ──► bin/zer0 ──► list · info · run <task> · affected · check · vendor · doctor
      │                │
      │                ├─► root CI: one workflow per project, path-filtered to its tree
@@ -59,6 +59,7 @@ bin/zer0 doctor [--strict]          # the CMS's zer0 doctor over every zer0 site
 "Affected" follows the dependency graph: a change to `packages/zer0-mistakes/` affects the theme and every site that builds on it, and a change to a root workflow affects the projects it gates.
 
 **3. One CI, split by project.** GitHub only runs workflows in the root `.github/workflows/`, so each project has a root workflow filtered to its own tree — `extension.yml`, `rails-app.yml`, `content.yml`, `zer0-mistakes.yml`, `zer0-image-generator.yml`, `books.yml`, `drsai.yml`, `zer0-pages.yml`, `sites.yml` (the `remote_theme` sites, one matrix leg each), `irony-works.yml`, `parodynews.yml` and `aieo.yml`. A pull request pays only for what it touches. [`CICD.md`](CICD.md) says what each one runs. `zer0-workspace.yml` runs on every pull request: the tool's own tests, then `bin/zer0 check`, which fails when
+
 - a directory under `packages/`, `sites/` or `apps/` is not registered;
 - a project's path or claimed glob matches nothing;
 - a project's workflow is missing or no longer filters on its path;
@@ -74,6 +75,7 @@ It also writes the affected projects and a report-only `zer0 doctor` of every si
 ### Today's doctor baseline
 
 `bin/zer0 doctor` is report-only because two sites carry errors that predate the merge, both visible in their original repositories:
+
 - `packages/zer0-mistakes` keeps its in-repo ancestor engine (`scripts/lib/preview_generator.py`), which the doctor reports as a vendored preview fork until the theme retires it.
 - `apps/parodynews/src/pages` has one error of its own.
 

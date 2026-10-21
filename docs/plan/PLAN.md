@@ -78,7 +78,7 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 
 ## 2. Target layout
 
-```
+```text
 content/                 # Django 5.2 + Wagtail 6 — system of record, agent runtime
   config/                # settings, celery, urls (GraphQL, /api/v2, MCP mount)
   cms/                   # page models (ArticlePage, BookPage, SitePage...), AgentManagedMixin, StreamField blocks, custom Image
@@ -105,6 +105,7 @@ tools/                   # bin/zer0, workspace lib
 docs/  AGENTS.md  CLAUDE.md -> AGENTS.md (one line pointer)
 docker-compose.yml  workspace.yml  release-please-config.json  .release-please-manifest.json
 ```
+
 Moving `rails/` → `app/` and `src/` → `clients/vscode/` was milestone M2; [ADR 0004](../adr/0004-one-platform.md) closes it. The tree keeps its layout — `content/` is the platform, `src/` the extension, `rails/` and the apps retire in place (Phase G) — and only the names in the docs change.
 
 ## 3. Milestones
@@ -304,6 +305,7 @@ One branch `g<N>-<slug>`, one PR per milestone. Every absorption ends in a parit
 ## 5. Agent, harness and graph phases
 
 They follow the note's §10 order exactly: M9–M10 (step 1), M11–M12 (step 2), M13 (step 3), M14 (step 4), M15–M16 (step 5), M17 (step 6). Invariants checked in every phase:
+
 - Every tool resolves to an agent Django user; no superuser service account.
 - Agents start at `suggest`; promotion to `draft`/`auto` needs the accept rate + evals above a threshold (recorded in the ADR).
 - One revision per accepted outcome; intermediate work stays in the run/checkpointer.
@@ -321,6 +323,7 @@ They follow the note's §10 order exactly: M9–M10 (step 1), M11–M12 (step 2)
 ## 7. Risks and open decisions
 
 **Risks**
+
 - Markdown → StreamField is lossy (Liquid tags, includes, raw HTML). Mitigation: a raw `markdown` block + round-trip tests.
 - Files-as-truth to DB-as-truth is a philosophy change for the extension and the Jekyll users (git history no longer holds content). Mitigation: the exporter keeps git snapshots.
 - parodynews's Django version and settings may not fit Wagtail 6 plus the monorepo layout; upgrading is possible churn.
@@ -329,6 +332,7 @@ They follow the note's §10 order exactly: M9–M10 (step 1), M11–M12 (step 2)
 - Vendored-copy drift checks break during the moves (M2).
 
 **Open decisions**
+
 - **D1** — *decided 2026-10-19 ([ADR 0002](../adr/0002-one-home-cutover.md)): DB-first, one site at a time (Phase F).* Does content become DB-first in Wagtail, with Jekyll repos as exported artifacts, or do Markdown files stay canonical with Wagtail as an index/editor?
 - **D2**: Grapple vs Strawberry-Django for GraphQL.
 - **D3**: LangGraph + Postgres checkpointer vs a hand-rolled state machine for the harness.
