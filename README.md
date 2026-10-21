@@ -55,11 +55,10 @@ Every port is published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposi
 
 ### The rest of the stack, in the same repository
 
-The theme, the image generator, the books app, the zer0 sites and the parodynews and aieo apps live here too, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
+The image generator, the books app, the zer0 sites and the parodynews and aieo apps live here too, imported with their full history. The zer0-mistakes theme the sites build with is developed in its own repository, [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes), with its Rails theme studio, and consumed here as the gem or `remote_theme` each site declares ([ADR 0005](docs/adr/0005-theme-goes-home.md)). One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
 
 | Path | What it is |
 |---|---|
-| `packages/zer0-mistakes/` | The Jekyll theme (`jekyll-theme-zer0` gem). |
 | `packages/zer0-image-generator/` | The preview-image engine (`zer0-image-generator` gem) and its web panel. |
 | `packages/books/` | The book projects and the `bookshelf` app that validates, compiles and edits them. |
 | `sites/drsai/` | The children's picture-book site and its story engine; the ABC wizard exports here. |

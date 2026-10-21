@@ -6,7 +6,7 @@
 
 | Version | Supported |
 | --- | --- |
-| The latest release of each component (the extension, `jekyll-theme-zer0`, `zer0-image-generator`) and the `main` branch | ✅ |
+| The latest release of each component (the extension, `zer0-image-generator`) and the `main` branch | ✅ |
 | Anything older | ❌ |
 
 Security fixes ship as patch releases through release-please.
