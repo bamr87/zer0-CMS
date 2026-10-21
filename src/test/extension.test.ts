@@ -508,12 +508,12 @@ suite('extension: the context keys the when-clauses depend on', function () {
  * inside the host without restarting it. So a real folderless window is
  * started instead.
  *
- * `process.execPath` inside the extension host *is* the VS Code binary running
- * these tests, so the child is by construction the same build — no download, no
- * version constant to keep in step with `.vscode-test.mjs`. The environment is
- * scrubbed of `ELECTRON_RUN_AS_NODE` and every `VSCODE_*` variable, which are
- * what make this process behave as node and would otherwise stop the child from
- * starting as an editor at all.
+ * The child is the editor binary running these tests (`editorBinary`), so it is
+ * by construction the same build — no download, no version constant to keep in
+ * step with `.vscode-test.mjs`. The environment is scrubbed of
+ * `ELECTRON_RUN_AS_NODE` and every `VSCODE_*` variable, which are what make this
+ * process behave as node and would otherwise stop the child from starting as an
+ * editor at all.
  */
 function runFolderlessWindow(): Promise<{ code: number | null; output: string }> {
   // A deliberately short prefix: VS Code's IPC socket lives under
@@ -574,7 +574,7 @@ function runFolderlessWindow(): Promise<{ code: number | null; output: string }>
   ];
 
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(editorBinary(), args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     child.stdout.on('data', (chunk: Buffer) => {
       output += chunk.toString('utf8');
@@ -588,6 +588,45 @@ function runFolderlessWindow(): Promise<{ code: number | null; output: string }>
       resolve({ code, output });
     });
   });
+}
+
+/**
+ * The editor binary running these tests, as something that can open a window.
+ *
+ * On Linux and Windows `process.execPath` inside the extension host is the VS
+ * Code executable itself, started as node through `ELECTRON_RUN_AS_NODE`. On
+ * macOS the extension host is a helper bundle instead —
+ * `…/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)` — which
+ * crashes when asked to be the editor. There the main binary is derived from
+ * `vscode.env.appRoot` (`<bundle>/Contents/Resources/app`) as
+ * `<bundle>/Contents/MacOS/Electron`, with the outermost `.app` ancestor of
+ * `process.execPath` as the fallback.
+ */
+function editorBinary(): string {
+  if (process.platform !== 'darwin') {
+    return process.execPath;
+  }
+  const candidates = [path.resolve(vscode.env.appRoot, '..', '..', 'MacOS', 'Electron')];
+  const bundle = outermostAppBundle(process.execPath);
+  if (bundle) {
+    candidates.push(path.join(bundle, 'Contents', 'MacOS', 'Electron'));
+  }
+  const found = candidates.find((candidate) => fs.existsSync(candidate));
+  assert.ok(found, `no editor binary at ${candidates.join(' or ')}`);
+  return found;
+}
+
+/** The outermost `*.app` directory on *file*'s path, or `undefined` when there is none. */
+function outermostAppBundle(file: string): string | undefined {
+  let bundle: string | undefined;
+  let current = path.dirname(file);
+  while (current !== path.dirname(current)) {
+    if (current.endsWith('.app')) {
+      bundle = current;
+    }
+    current = path.dirname(current);
+  }
+  return bundle;
 }
 
 // ---------------------------------------------------------------------------

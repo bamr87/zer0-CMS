@@ -19,7 +19,7 @@ Seventeen suites, three execution contexts, one command: `npm test`. The runner 
 | `harness.test.ts` | plain Node | One harness vocabulary over verbatim copies of four sibling repositories' agents, skills, workflows and AI configuration: the inventory, the joins and the profile. |
 | `lanes.test.ts` | plain Node | Lane generation: drift against the hub's reusable `ai-lane.yml`, and the rendered files against the `golden/lanes/` fixtures. |
 | `mcp.test.ts` | child process | Spawns the bundled `dist/mcp-server.js` over stdio with a scrubbed environment. |
-| `extension.test.ts` | extension host | Activation, the contributed commands, the context keys, and the fixture workspace's live settings. |
+| `extension.test.ts` | extension host | Activation, the contributed commands, the context keys, and the fixture workspace's live settings — plus, by launching a second editor with no folder (the bundle's `Contents/MacOS/Electron` on macOS, `process.execPath` elsewhere), that activation survives a folderless window. |
 | `multiroot.test.ts` | extension host, its own `multiroot` entry | The two-folder window: per-site stores, the active-site rule, per-site MCP servers. See below. |
 
 ## The two rules every test here obeys
