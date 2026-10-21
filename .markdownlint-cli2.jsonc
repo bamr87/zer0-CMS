@@ -2,13 +2,14 @@
 //
 // Markdown here is one paragraph per line (tools/unwrap-prose.py, enforced by
 // markdown-oneline.yml), so the 80-column rule would flag every paragraph and
-// an aligned-pipe table rule would flag every one-row-per-line table. Both are
-// relaxed; everything else is markdownlint's default. Projects under
+// an aligned-pipe table rule would flag every one-row-per-line table, and the
+// README uses inline HTML on purpose. Those three are relaxed; everything else is markdownlint's default. Projects under
 // packages/, sites/ and apps/ keep their own lint configuration.
 {
   "config": {
     "default": true,
     "MD013": false,
+    "MD033": false,
     "MD060": false
   },
   "ignores": ["node_modules/**", "packages/**", "sites/**", "apps/**", "content/**/templates/**"]

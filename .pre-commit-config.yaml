@@ -1,0 +1,45 @@
+# The same checks CI runs, locally and before a commit (UPS-QA-06).
+#   pip install pre-commit && pre-commit install
+# Scoped to the platform, the docs and the repository's root files: the
+# imported projects under packages/, sites/ and apps/ and the extension under
+# src/ carry their own gates (eslint, the vsix manifest, their own CI); the
+# generated schemas are compared byte for byte in CI; test fixtures and
+# recordings are bytes a test pins; fleet.manifest.yml is the fleet's.
+exclude: ^(packages|sites|apps|src)/|^schemas/(openapi|graphql|content)/|(^|/)fixtures/|^content/agents/recordings/|^fleet\.manifest\.yml$
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+        exclude: ^\.vscode/|tsconfig\.json$|\.vscode-test\.mjs$
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # The platform (content/): the one Python linter and formatter.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^content/
+      - id: ruff-format
+        files: ^content/
+
+  # One paragraph per line and the rest of markdownlint's defaults
+  # (.markdownlint-cli2.jsonc relaxes the two rules that contradict it).
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.24.0
+    hooks:
+      - id: markdownlint-cli2
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1-1
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
