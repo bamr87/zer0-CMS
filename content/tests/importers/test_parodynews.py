@@ -10,8 +10,8 @@ from wagtail.models import Revision
 
 from agents.models import AgentDefinition
 from cms.models import ArticlePage
-from importers.parodynews import import_dump
 from importers.models import ImportedSource
+from importers.parodynews import import_dump
 
 DUMP = Path(__file__).resolve().parent.parent / "fixtures" / "parodynews" / "dumpdata.json"
 
