@@ -78,7 +78,7 @@ Read it on the [live site](https://bamr87.github.io/1987/) or browse the categor
 ## Development
 
 ```bash
-python3 tools/unwrap-prose.py --check   # one-paragraph-per-line rule that CI enforces
+python3 ../../tools/unwrap-prose.py --check   # one-paragraph-per-line rule that CI enforces
 ```
 
 Full commands, conventions and gotchas for humans and AI agents live in [CLAUDE.md](CLAUDE.md).

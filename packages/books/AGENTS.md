@@ -20,7 +20,7 @@ python3 -m pytest
 ruff check src tests
 # content checks:
 books validate                 # schema + continuity across every book
-python3 tools/unwrap-prose.py --check
+python3 ../../tools/unwrap-prose.py --check
 ```
 
 ## Conventions

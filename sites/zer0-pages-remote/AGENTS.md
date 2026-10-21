@@ -12,7 +12,7 @@ This is the **minimal reference consumer** of the [bamr87/zer0-mistakes](https:/
 #                         bundle exec jekyll serve   # non-Docker alternative
 # build:                  bundle exec jekyll build
 # run tests:              none — there is no test suite; CI is the safety net
-# lint:                   python3 tools/unwrap-prose.py --check   # --write to fix
+# lint:                   python3 ../../tools/unwrap-prose.py --check   # --write to fix
 ```
 
 This repo now lives in the zer0-CMS monorepo at `sites/zer0-pages-remote/`, where the root `sites.yml` runs `bundle exec jekyll build` on any pull request touching it, and the root `markdown-oneline.yml` and `claude.yml` cover prose and `@claude` mentions. There is **no deploy workflow**: GitHub Pages builds and publishes this repo natively, which means production runs the `github-pages` gem in **safe mode** (the live site reports `Jekyll v3.10.0`). `docker-compose.yml` and the `Gemfile` deliberately use that same gem so local output matches what GitHub publishes.
@@ -31,7 +31,7 @@ Every plugin gem in the `Gemfile` must ALSO be listed under `plugins:` in `_conf
 
 - Conventional Commits: `type(scope): description` (`feat`/`fix`/`docs`/`refactor`/`test`/`chore`/`ci`).
 - Default branch is `main` — branch from it and open a PR; never push to it directly.
-- Markdown prose is one paragraph per line (CI-enforced); run `python3 tools/unwrap-prose.py --write` after authoring.
+- Markdown prose is one paragraph per line (CI-enforced); run `python3 ../../tools/unwrap-prose.py --write` after authoring.
 - Don't suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`) or leave empty exception handlers.
 
 ## Fleet context
