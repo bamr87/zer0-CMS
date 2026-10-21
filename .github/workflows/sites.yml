@@ -2,9 +2,8 @@
 # installer demos, 2005 and wargames — built the way the hub's standard-ci built them in their
 # own repositories: `bundle install` and `bundle exec jekyll build`, one matrix
 # leg per site, each only when its own tree changes. They load the theme from
-# GitHub (`remote_theme: bamr87/zer0-mistakes`), not from packages/, so a
-# theme pull request does not rebuild them; drsai.yml is the gate that builds
-# a site against the in-repo theme.
+# GitHub (`remote_theme: bamr87/zer0-mistakes`, the theme's own repository per
+# ADR 0005); drsai.yml is the gate that builds a site against the theme's main.
 name: sites
 
 on:

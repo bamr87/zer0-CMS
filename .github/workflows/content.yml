@@ -62,6 +62,15 @@ jobs:
         run: ruff check . && ruff format --check .
       - name: Migrations are complete
         run: python manage.py makemigrations --check --dry-run
+      # The theme's docs site is the largest round-trip fixture (376 files). It lives in
+      # its own repository (ADR 0005), so the suite reads it from a pinned checkout under
+      # ZER0_THEME_CHECKOUT and skips that one case when the directory is absent.
+      - uses: actions/checkout@v7
+        with:
+          repository: bamr87/zer0-mistakes
+          ref: v1.31.3
+          path: .cache/zer0-mistakes
+          persist-credentials: false
       - name: Tests (full suite)
         run: python -m pytest -q
       - name: The committed GraphQL schema is current
