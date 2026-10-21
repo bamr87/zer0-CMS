@@ -34,7 +34,7 @@ With Docker, from the repository root: `docker compose --profile content up -d -
 | `outbox/` | `OutboxEvent`, `ProcessedEvent`, `emit()`, the relay to Redis Streams, deduplicating consumers | [`outbox/README.md`](outbox/README.md) |
 | `api/` | GraphQL additions (Grapple), REST endpoints, the CSRF-aware GraphQL view, `/healthz` | `api/views.py` |
 | `mcp_server/` | MCP over Streamable HTTP (`/mcp/`) and stdio, over the one registry | [`mcp_server/README.md`](mcp_server/README.md) |
-| `importers/` | Jekyll sites and barodybroject's dump → pages; `ImportedSource` | `importers/jekyll.py` |
+| `importers/` | Jekyll sites and parodynews's dump → pages; `ImportedSource` | `importers/jekyll.py` |
 | `exporters/` | pages → Jekyll files | `exporters/jekyll.py` |
 
 ## How a change travels

@@ -53,7 +53,7 @@ docker compose --profile content up -d --wait db redis content worker beat relay
 
 ### The rest of the stack, in the same repository
 
-The theme, the image generator, the books app, the zer0 sites and the barodybroject and aieo apps live here too, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
+The theme, the image generator, the books app, the zer0 sites and the parodynews and aieo apps live here too, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
 
 | Path | What it is |
 |---|---|
@@ -61,7 +61,7 @@ The theme, the image generator, the books app, the zer0 sites and the barodybroj
 | `packages/zer0-image-generator/` | The preview-image engine (`zer0-image-generator` gem) and its web panel. |
 | `packages/books/` | The book projects and the `bookshelf` app that validates, compiles and edits them. |
 | `sites/drsai/` | The children's picture-book site and its story engine; the ABC wizard exports here. |
-| `apps/barodybroject/` | The Django + React parody-news app; its integration is still to be decided. |
+| `apps/parodynews/` | The Django + React parody-news app (imported as barodybroject, de-branded in ADR 0003); its models are absorbed by the content plane under PLAN M20. |
 | `apps/aieo/` | AI Engine Optimization — the FastAPI + React app that scores content for AI-engine citation. |
 | `sites/zer0-pages/` | The Obsidian vault + Jekyll site. |
 | `sites/zer0-pages-remote/` | The minimal `remote_theme` consumer demo. |

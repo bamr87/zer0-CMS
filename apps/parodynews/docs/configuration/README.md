@@ -1,0 +1,57 @@
+# Django Configuration Documentation
+
+This directory contains comprehensive documentation for Django application configuration, settings optimization, deployment strategies, and ecosystem integration.
+
+## Contents
+
+### Core Configuration
+- **[Settings Optimization Guide](./settings-optimization.md)** - Complete guide to Django settings optimization for production and development
+- **[Environment Configuration](./environment-config.md)** - Environment variables and configuration management
+- **[Security Configuration](./settings-optimization.md#security-configuration)** - Security settings and best practices
+- **[Performance Configuration](./settings-optimization.md#performance-optimization)** - Performance optimization settings
+- **[Database Configuration](./settings-optimization.md#database-optimization)** - Database setup and optimization
+- **[Deployment Configuration](./settings-optimization.md#deployment-configuration)** - Deployment-specific settings and configurations
+- **[Error Reporting](./error-reporting.md)** - Filing unhandled exceptions as deduplicated GitHub issues. **Off by default**; read the data-handling section before enabling it, since this repository is public
+
+### Ecosystem Integration
+- **[Ecosystem Integration Configuration](./ecosystem-integration-config.md)** - IT-Journey ecosystem integration settings and standards
+
+## Configuration Categories
+
+### Development Configuration
+- Environment setup for local development
+- VS Code workspace optimization
+- Docker container configuration
+- Database development settings
+
+### Production Configuration  
+- Security hardening and best practices
+- Performance optimization settings
+- Deployment automation configuration
+- Monitoring and logging setup
+
+### Ecosystem Integration Configuration
+- Cross-repository integration standards
+- VS Code Copilot optimization settings
+- Instruction file harmonization
+- README workflow automation
+
+## Quick Reference
+
+### Environment Variables
+See [Environment Configuration](./environment-config.md) for complete variable reference.
+
+### Security Settings
+See [Security Configuration](./settings-optimization.md#security-configuration) for production security requirements.
+
+### Performance Optimization
+See [Performance Configuration](./settings-optimization.md#performance-optimization) for scaling and optimization guidance.
+
+### Ecosystem Integration
+See [Ecosystem Integration Configuration](./ecosystem-integration-config.md) for IT-Journey ecosystem integration settings.
+
+---
+
+**Last Updated**: October 28, 2025  
+**Maintainer**: Parody News Team  
+**Related**: [Features](../features/README.md) | [Changelog](../changelog/CHANGELOG.md) | [Project README](../../README.md)
