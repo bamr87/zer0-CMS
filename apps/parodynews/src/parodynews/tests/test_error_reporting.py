@@ -155,7 +155,7 @@ class DefaultsTests(SimpleTestCase):
         """
         with open(error_reporting.__file__.replace(".pyc", ".py")) as fh:
             text = fh.read()
-        for slug in ("bamr87/", "parodynews/"):
+        for slug in ("bamr87/", "zer0-CMS/"):
             self.assertNotIn(slug, text)
 
     def test_disabled_reporter_does_nothing(self):

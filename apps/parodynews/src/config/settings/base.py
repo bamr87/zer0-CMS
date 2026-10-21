@@ -621,11 +621,6 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        "parodynews": {
-            "handlers": ["console", "file"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
         "django.utils.autoreload": {
             "handlers": ["file"],  # Only log to file, not console
             "level": "INFO",  # Hide DEBUG messages from autoreload
