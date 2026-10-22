@@ -1,6 +1,7 @@
 // Review: the inbox shows each suggestion's change as a diff, and accept,
 // reject-with-a-reason and accept-all-of-a-run each make the one request the
-// platform defines for them; DiffView marks words or lines as <ins>/<del>.
+// platform defines for them — accepting "all" of a run sends the ids of what
+// the inbox shows, never more; DiffView marks words or lines as <ins>/<del>.
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -82,8 +83,27 @@ describe('<SuggestionInbox>', () => {
       expect(rejected?.csrf).toBe('test-csrf');
     });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Accept all of run #7' }));
-    await waitFor(() => expect(platform.calls.some((c) => c.method === 'POST' && c.path === '/api/v2/review/runs/7/accept/')).toBe(true));
+    await userEvent.click(screen.getByRole('button', { name: 'Accept all 2 shown of run #7' }));
+    await waitFor(() => {
+      const accepted = platform.calls.find((c) => c.method === 'POST' && c.path === '/api/v2/review/runs/7/accept/');
+      expect(accepted?.body).toEqual({ ids: [1, 2] });
+    });
+  });
+
+  it('accepts only what a filtered view shows, and never a stale suggestion', async () => {
+    const shown = {
+      ...INBOX,
+      count: 2,
+      results: [suggestion(4, { before: 'a', after: 'b' }), suggestion(5, { stale: true, before: 'x', after: 'y' })],
+    };
+    const platform = fakePlatform({
+      'GET /api/v2/review/suggestions/': () => shown,
+      'POST /api/v2/review/runs/7/accept/': () => ({ accepted: [4], revision_ids: [44] }),
+    });
+    renderUi(<SuggestionInbox pageId={5} />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Accept all 1 shown of run #7' }));
+    await waitFor(() => expect(platform.calls.find((c) => c.method === 'POST')?.body).toEqual({ ids: [4] }));
+    expect(platform.calls.find((c) => c.method === 'GET')?.query.get('page_id')).toBe('5');
   });
 
   it('will not accept a stale suggestion, and says when there is nothing to review', async () => {

@@ -1,11 +1,15 @@
 // The editor: it saves only what changed, against the revision it loaded;
-// publish saves pending edits first; revisions compare with the latest and
-// revert as a new draft; the page list filters through the platform.
+// publish saves pending edits first; a schedule takes a time to go live and
+// a time to come down; a locked page opens read-only and says why; new blocks
+// keep their own text through removes and moves; revisions compare with the
+// latest and revert as a new draft; the page list filters through the platform.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Block } from '@zer0/api';
+import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { PageEditor, PageList, RevisionHistory } from '../src';
+import { BodyEditor, PageEditor, PageList, RevisionHistory } from '../src';
 import { fakePlatform, pageDetail, renderUi, Reply } from '../../../test/harness';
 
 describe('<PageEditor>', () => {
@@ -48,8 +52,13 @@ describe('<PageEditor>', () => {
     expect(order).toEqual(['PATCH', 'POST']);
   });
 
-  it('schedules, cancels a schedule, and unpublishes — each one request', async () => {
-    const scheduled = pageDetail({ status: 'scheduled', go_live_at: '2030-01-02T09:30:00.000Z' });
+  it('schedules a time to go live and one to come down, cancels the schedule, and unpublishes — each one request', async () => {
+    const scheduled = pageDetail({
+      status: 'scheduled',
+      go_live_at: '2030-01-02T09:30:00.000Z',
+      expire_at: '2030-02-01T17:00:00.000Z',
+      lock: "Page 'Nightly backups' is locked and has been scheduled to go live at 2 Jan 2030",
+    });
     const platform = fakePlatform({
       'GET /api/v2/content/pages/5/': () => pageDetail(),
       'POST /api/v2/content/pages/5/schedule/': () => scheduled,
@@ -59,12 +68,16 @@ describe('<PageEditor>', () => {
     renderUi(<PageEditor pageId={5} />, { api: platform.api });
     await userEvent.click(await screen.findByRole('button', { name: 'Schedule…' }));
     await userEvent.type(screen.getByLabelText('Publish at'), '2030-01-02T09:30');
+    await userEvent.type(screen.getByLabelText('Take down at'), '2030-02-01T17:00');
     await userEvent.click(screen.getByRole('button', { name: 'Schedule' }));
     expect(await screen.findByText(/Goes live/)).toBeInTheDocument();
-    const sent = platform.calls.find((c) => c.path.endsWith('/schedule/'))?.body as { go_live_at: string };
+    expect(screen.getByText(/Comes down/)).toBeInTheDocument();
+    const sent = platform.calls.find((c) => c.path.endsWith('/schedule/'))?.body as { go_live_at: string; expire_at: string };
     expect(new Date(sent.go_live_at).getTime()).toBe(new Date(2030, 0, 2, 9, 30).getTime());
+    expect(new Date(sent.expire_at).getTime()).toBe(new Date(2030, 1, 1, 17, 0).getTime());
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeDisabled(); // a scheduled page is locked …
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel schedule' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel schedule' })); // … until this
     await waitFor(() => expect(platform.calls.some((c) => c.path.endsWith('/unschedule/'))).toBe(true));
     await userEvent.click(await screen.findByRole('button', { name: 'Unpublish' }));
     expect(await screen.findByText('Draft')).toBeInTheDocument();
@@ -106,7 +119,33 @@ describe('<PageEditor>', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Suggestions (1)' }));
     expect(await screen.findByText(/save them before accepting/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Accept all of run #7' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Accept all 1 shown of run #7' })).toBeDisabled();
+  });
+
+  it('takes down a live page on a schedule without a go-live time', async () => {
+    const platform = fakePlatform({
+      'GET /api/v2/content/pages/5/': () => pageDetail(),
+      'POST /api/v2/content/pages/5/schedule/': () => pageDetail({ expire_at: '2030-02-01T17:00:00.000Z' }),
+    });
+    renderUi(<PageEditor pageId={5} />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Schedule…' }));
+    await userEvent.type(screen.getByLabelText('Take down at'), '2030-02-01T17:00');
+    await userEvent.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(await screen.findByText(/Comes down/)).toBeInTheDocument();
+    const sent = platform.calls.find((c) => c.path.endsWith('/schedule/'))?.body as { go_live_at: unknown; expire_at: string };
+    expect(sent.go_live_at).toBeNull();
+    expect(new Date(sent.expire_at).getTime()).toBe(new Date(2030, 1, 1, 17, 0).getTime());
+  });
+
+  it('opens a page someone else has locked read-only, and says why', async () => {
+    const lock = "'Nightly backups' was locked by Ada on 21 Oct 2026.";
+    const platform = fakePlatform({ 'GET /api/v2/content/pages/5/': () => pageDetail({ lock, pending_suggestions: 1 }) });
+    renderUi(<PageEditor pageId={5} />, { api: platform.api });
+    expect(await screen.findByText(lock)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Title/)).toBeDisabled();
+    expect(within(screen.getByLabelText('Block 1: heading')).getByLabelText('text')).toBeDisabled();
+    for (const name of ['Save draft', 'Publish', 'Schedule…']) expect(screen.getByRole('button', { name })).toBeDisabled();
+    expect(platform.calls.every((c) => c.method === 'GET')).toBe(true);
   });
 
   it('shows the platform’s refusal of a stale save', async () => {
@@ -119,6 +158,46 @@ describe('<PageEditor>', () => {
     await userEvent.type(await screen.findByLabelText(/^Title/), '!');
     await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
     expect(await screen.findByText('page 5 has a newer revision')).toBeInTheDocument();
+  });
+});
+
+describe('<BodyEditor>', () => {
+  // Blocks a person added and has not saved yet carry no id.
+  const NEW_BLOCKS: Block[] = [
+    { type: 'markdown', value: 'FIRST block' },
+    { type: 'markdown', value: 'SECOND block' },
+    { type: 'markdown', value: 'THIRD block' },
+  ];
+
+  function Body() {
+    const [blocks, setBlocks] = useState(NEW_BLOCKS);
+    return (
+      <>
+        <BodyEditor blocks={blocks} onChange={setBlocks} />
+        <output aria-label="Saved">{blocks.map((b) => String(b.value)).join(' | ')}</output>
+      </>
+    );
+  }
+  const shown = () => screen.getAllByRole('textbox', { name: 'Markdown block' }).map((editor) => editor.textContent);
+
+  it('keeps each new block’s own text in its editor after a remove and a move', async () => {
+    renderUi(<Body />, { api: fakePlatform({}).api });
+    expect(shown()).toEqual(['FIRST block', 'SECOND block', 'THIRD block']);
+    await userEvent.click(within(screen.getByLabelText('Block 1: markdown')).getByRole('button', { name: 'Remove block' }));
+    expect(screen.getByLabelText('Saved')).toHaveTextContent('SECOND block | THIRD block');
+    expect(shown()).toEqual(['SECOND block', 'THIRD block']);
+    await userEvent.click(within(screen.getByLabelText('Block 1: markdown')).getByRole('button', { name: 'Move down' }));
+    expect(screen.getByLabelText('Saved')).toHaveTextContent('THIRD block | SECOND block');
+    expect(shown()).toEqual(['THIRD block', 'SECOND block']);
+  });
+
+  it('keeps an edited new block in its place when a block above it goes', async () => {
+    renderUi(<Body />, { api: fakePlatform({}).api });
+    await userEvent.click(within(screen.getByLabelText('Block 3: markdown')).getByText('Markdown'));
+    await userEvent.type(within(screen.getByLabelText('Block 3: markdown')).getByRole('textbox'), ' edited');
+    await userEvent.click(within(screen.getByLabelText('Block 1: markdown')).getByRole('button', { name: 'Remove block' }));
+    expect(screen.getByLabelText('Saved')).toHaveTextContent('SECOND block | THIRD block edited');
+    expect(within(screen.getByLabelText('Block 2: markdown')).getByRole('textbox')).toHaveValue('THIRD block edited');
   });
 });
 

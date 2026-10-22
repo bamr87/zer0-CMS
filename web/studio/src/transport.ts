@@ -21,5 +21,11 @@ export const openStream: OpenStream = (path, events, onEvent) => {
     if (event.type === 'end') source.close();
   };
   for (const name of events) source.addEventListener(name, relay);
+  // The browser reconnects by itself after a dropped connection; a response it
+  // cannot use (an error status, a page instead of a stream) closes the source
+  // for good, which the component hears as `error`.
+  source.addEventListener('error', () => {
+    if (source.readyState === EventSource.CLOSED) onEvent('error', null);
+  });
   return () => source.close();
 };

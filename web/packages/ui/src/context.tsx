@@ -15,7 +15,11 @@ export type Destination =
   | { to: 'run'; id: number }
   | { to: 'review'; runId?: number };
 
-/** Follow a server-sent event stream's named events; returns what closes it. */
+/**
+ * Follow a server-sent event stream's named events; returns what closes it.
+ * A host relays a stream it can no longer follow (refused, or not a stream)
+ * as the event `error`, so the component decides when to try again.
+ */
 export type OpenStream = (
   path: string,
   events: readonly string[],

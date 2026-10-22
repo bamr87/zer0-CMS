@@ -117,6 +117,7 @@ export function pageDetail(overrides: Record<string, unknown> = {}) {
     ],
     markdown: '## How it works\n\nWe copy the site to a second disk every night.\n',
     permissions: PERMISSIONS,
+    lock: null,
     pending_suggestions: 0,
     preview_url: '/admin/pages/5/view_draft/',
     live_url: '/nightly-backups/',

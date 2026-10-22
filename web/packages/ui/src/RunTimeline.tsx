@@ -1,21 +1,26 @@
 // Agent runs: the newest runs a person may see, and one run's steps as a
 // timeline that grows live while the run works — the host opens the run's
 // server-sent event stream (/api/v2/agent-runs/<id>/stream/) and this
-// component only merges what arrives. A finished run links to its suggestions.
+// component only merges what arrives. The stream ends when the run is final
+// or after its time limit; a live run's stream is opened again after a short
+// pause, and one that broke after a pause that grows with each failure.
+// A finished run links to its suggestions.
 import { Alert, Anchor, Badge, Button, Code, Group, Loader, Stack, Table, Text, Timeline, Title } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Step } from '@zer0/api';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { call, errorText } from './call';
 import { useApi, useGo, useStream } from './context';
 
-const FINAL = new Set(['succeeded', 'failed', 'refused', 'cancelled']);
 const COLOR: Record<string, string> = { succeeded: 'teal', failed: 'red', refused: 'orange', cancelled: 'gray' };
 const STREAM_EVENTS = ['step', 'status', 'end'] as const;
+const PAUSE_MS = 1000;
+const LONGEST_PAUSE_MS = 30_000;
 
 const isStep = (data: unknown): data is Step =>
   typeof data === 'object' && data !== null && typeof (data as { idx?: unknown }).idx === 'number';
+const isFinal = (data: unknown) => typeof data === 'object' && data !== null && (data as { is_final?: unknown }).is_final === true;
 
 export function RunStatus({ status }: { status: string }) {
   return (
@@ -36,17 +41,31 @@ export function RunTimeline({ runId }: { runId: number }) {
   });
   const [arrived, setArrived] = useState<Step[]>([]);
   const [round, setRound] = useState(0);
-  const final = run.data ? FINAL.has(run.data.status) : true;
+  const failures = useRef(0);
+  const final = run.data?.is_final ?? true;
 
   useEffect(() => {
     if (final) return undefined;
-    return stream(`/api/v2/agent-runs/${runId}/stream/`, STREAM_EVENTS, (event, data) => {
+    let finished = false;
+    let again: ReturnType<typeof setTimeout> | undefined;
+    const refresh = () => void qc.invalidateQueries({ queryKey: ['run', runId] });
+    const close = stream(`/api/v2/agent-runs/${runId}/stream/`, STREAM_EVENTS, (event, data) => {
+      if (event === 'step' || event === 'status') failures.current = 0;
       if (event === 'step' && isStep(data)) setArrived((steps) => [...steps.filter((s) => s.idx !== data.idx), data]);
-      if (event === 'end') {
-        void qc.invalidateQueries({ queryKey: ['run', runId] });
-        setRound((n) => n + 1); // a stream that timed out on a live run is opened again
+      if (event === 'status') {
+        finished = isFinal(data);
+        refresh();
+      }
+      if (event === 'error' || (event === 'end' && !finished)) {
+        refresh();
+        const pause = event === 'error' ? Math.min(PAUSE_MS * 2 ** failures.current++, LONGEST_PAUSE_MS) : PAUSE_MS;
+        again = setTimeout(() => setRound((n) => n + 1), pause);
       }
     });
+    return () => {
+      close();
+      clearTimeout(again);
+    };
   }, [final, runId, stream, qc, round]);
 
   if (run.isPending) return <Loader />;

@@ -187,7 +187,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish the latest revision at `go_live_at` */
+        /** Publish the latest revision at `go_live_at` (or now) and take it down at `expire_at` */
         post: operations["content_pages_schedule"];
         delete?: never;
         options?: never;
@@ -357,7 +357,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Accept every pending suggestion of a run, one revision per page */
+        /** Accept the suggestions of a run the caller saw, one revision per page */
         post: operations["review_runs_accept"];
         delete?: never;
         options?: never;
@@ -493,6 +493,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcceptRun: {
+            /** @description The run's pending suggestions the caller saw and accepts — only these, never the rest of the run. */
+            ids: number[];
+        };
         AcceptedRun: {
             accepted: number[];
             revision_ids: number[];
@@ -627,6 +631,8 @@ export interface components {
             /** @description The body as Markdown, as the exporter writes it. */
             markdown: string;
             permissions: components["schemas"]["PagePermissions"];
+            /** @description Why the caller cannot change the page now — a Wagtail lock: another person's, a workflow task's, or a scheduled publish's (cancelling the schedule lifts it) — or null. */
+            lock: string | null;
             pending_suggestions: number;
             /** @description The latest revision rendered by the platform. */
             preview_url: string;
@@ -725,7 +731,7 @@ export interface components {
             results: components["schemas"]["Suggestion"][];
         };
         PatchedPageUpdate: {
-            /** @description The revision edited; a newer one makes the save a 409. */
+            /** @description The revision edited (null only for a page without one); a newer one makes the save a 409. */
             base_revision_id?: number | null;
             fields?: {
                 [key: string]: unknown | null;
@@ -770,6 +776,8 @@ export interface components {
             id: number;
             agent: string;
             status: string;
+            /** @description It has finished (succeeded, failed, refused or cancelled). */
+            is_final: boolean;
             trigger: string;
             target: components["schemas"]["RunTarget"];
             input: unknown;
@@ -798,9 +806,15 @@ export interface components {
             id: number | null;
         };
         Schedule: {
-            /** Format: date-time */
-            go_live_at: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description When the latest revision goes live; leave it out to publish now.
+             */
+            go_live_at?: string | null;
+            /**
+             * Format: date-time
+             * @description When the page comes down again. Give one of the two, or both.
+             */
             expire_at?: string | null;
         };
         Site: {
@@ -1934,7 +1948,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["Schedule"];
                 "application/x-www-form-urlencoded": components["schemas"]["Schedule"];
@@ -2809,7 +2823,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptRun"];
+                "application/x-www-form-urlencoded": components["schemas"]["AcceptRun"];
+                "multipart/form-data": components["schemas"]["AcceptRun"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -2891,13 +2911,13 @@ export interface operations {
                 agent?: string;
                 /** @description A page number within the paginated result set. */
                 page?: number;
+                /** @description A page id: the suggestions on that page. */
+                page_id?: number;
                 /** @description Number of results to return per page. */
                 page_size?: number;
                 run?: number;
                 /** @description A site id: suggestions on its pages. */
                 site?: number;
-                /** @description A page (or image) id. */
-                target?: number;
             };
             header?: never;
             path?: never;

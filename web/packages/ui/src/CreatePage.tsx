@@ -29,17 +29,19 @@ export function CreatePage({ siteId }: { siteId?: number }) {
     queryFn: () => call(api.GET('/api/v2/content/pages/{id}/types/', { params: { path: { id: parentId ?? 0 } } })),
   });
   const chosenType = type ?? (types.data?.length === 1 ? (types.data[0]?.type ?? null) : null);
+  // The drafter writes from the brief: no topic, no run — whatever the box said before the topic was cleared.
+  const drafting = draft && brief.topic.trim() !== '';
   const create = useMutation({
     mutationFn: async (): Promise<Destination> => {
       const body = brief.topic ? [{ type: 'brief', value: brief }] : [];
       const page = await call(
         api.POST('/api/v2/content/pages/', { body: { parent: parentId ?? 0, type: chosenType ?? '', fields: { title }, body } }),
       );
-      if (!draft) return { to: 'page', id: page.id };
+      if (!drafting) return { to: 'page', id: page.id };
       const run = await call(api.POST('/api/v2/agent-runs/', { body: { agent: 'drafter', page_id: page.id } }));
       return { to: 'run', id: run.id };
     },
-    onSuccess: go,
+    onSuccess: (to) => go(to),
   });
 
   if (parents.isPending) return <Loader />;
@@ -88,7 +90,7 @@ export function CreatePage({ siteId }: { siteId?: number }) {
       {create.isError ? <Alert color="red">{errorText(create.error)}</Alert> : null}
       <Group>
         <Button disabled={!title.trim() || !chosenType || !parentId} loading={create.isPending} onClick={() => create.mutate()}>
-          {draft && brief.topic ? 'Create and draft' : 'Create draft'}
+          {drafting ? 'Create and draft' : 'Create draft'}
         </Button>
       </Group>
     </Stack>

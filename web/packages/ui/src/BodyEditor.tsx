@@ -4,6 +4,11 @@
 // still find it after a save; a new block has none until the platform gives
 // it one. The platform validates every block a person changed
 // (cms.services.clean_body), so this stays a thin view of the data.
+//
+// Each block is keyed by its id, or — new in this session — by a client key
+// that follows the block through edits, moves and removals. Never by its
+// position: the rich editor reads its content once, so a positional key would
+// hand one block's editor to another block's data after a remove or a move.
 import { ActionIcon, Badge, Button, Group, NumberInput, Paper, Select, Stack, Textarea, TextInput } from '@mantine/core';
 import type { Block } from '@zer0/api';
 
@@ -20,6 +25,15 @@ const NEW_BLOCKS: Record<string, Block['value']> = {
 const LONG = new Set(['code', 'notes', 'text', 'tagline', 'subject']);
 const isRecord = (value: unknown): value is Value => typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const clientKeys = new WeakMap<Block, string>();
+let made = 0;
+function keyOf(block: Block): string {
+  if (block.id) return block.id;
+  const key = clientKeys.get(block) ?? `new-${(made += 1)}`;
+  clientKeys.set(block, key);
+  return key;
+}
+
 interface Props {
   blocks: Block[];
   onChange: (blocks: Block[]) => void;
@@ -27,7 +41,11 @@ interface Props {
 }
 
 export function BodyEditor({ blocks, onChange, disabled }: Props) {
-  const set = (at: number, block: Block) => onChange(blocks.map((b, i) => (i === at ? block : b)));
+  const set = (at: number, block: Block, value: unknown) => {
+    const next = { ...block, value };
+    clientKeys.set(next, keyOf(block));
+    onChange(blocks.map((b, i) => (i === at ? next : b)));
+  };
   const move = (at: number, by: number) => {
     const next = [...blocks];
     next.splice(at + by, 0, ...next.splice(at, 1));
@@ -36,7 +54,7 @@ export function BodyEditor({ blocks, onChange, disabled }: Props) {
   return (
     <Stack>
       {blocks.map((block, i) => (
-        <Paper key={block.id ?? `new-${i}`} p="sm" aria-label={`Block ${i + 1}: ${block.type}`} component="section">
+        <Paper key={keyOf(block)} p="sm" aria-label={`Block ${i + 1}: ${block.type}`} component="section">
           <Group justify="space-between" mb="xs">
             <Badge variant="outline">{block.type}</Badge>
             <Group gap={4}>
@@ -62,7 +80,7 @@ export function BodyEditor({ blocks, onChange, disabled }: Props) {
               </ActionIcon>
             </Group>
           </Group>
-          <BlockFields block={block} disabled={disabled} onChange={(value) => set(i, { ...block, value })} />
+          <BlockFields block={block} disabled={disabled} onChange={(value) => set(i, block, value)} />
         </Paper>
       ))}
       <Group gap="xs">
