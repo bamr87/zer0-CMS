@@ -4,7 +4,8 @@ Thin views: each validates, calls one function in `ai/services.py` and
 serializes. Rows come from `visible_to(user, site)` only, so a row the
 requester may not see is a 404; changing one is its owner's or staff's (a
 403); running a visible assistant or pipeline is anyone's who can see it, and
-configuring providers is staff's. Anything that reaches a model answers `202`
+so is applying a brief an agent asked for; configuring providers needs the
+`ai.change_providerconfig` permission. Anything that reaches a model answers `202`
 with the agent run, followed on `/api/v2/agent-runs/<id>/stream/`, and honours
 an `Idempotency-Key` (a repeat within a day replays the first answer). Every
 failure is the platform's error envelope (ops/errors.py).
@@ -124,13 +125,20 @@ class BySeq(CursorPagination):
 
 
 class CanEdit(BasePermission):
-    """A visible row is readable (and, for `open_actions`, runnable); changing
-    it is its owner's or staff's."""
+    """A visible row is readable (and, for `open_actions`, runnable — the
+    service decides the rest); changing it is its owner's or staff's."""
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS or view.action in getattr(view, "open_actions", ()):
             return True
         return obj.can_edit(request.user)
+
+
+class ConfiguresProviders(BasePermission):
+    """Provider configuration: a person granted `ai.change_providerconfig` (superusers have every permission)."""
+
+    def has_permission(self, request, view):
+        return request.user.has_perm("ai.change_providerconfig")
 
 
 @extend_schema_view(list=extend_schema(parameters=[SITE]))
@@ -170,10 +178,12 @@ class ProviderFilter(filters.FilterSet):
 
 
 @extend_schema_view(
-    list=extend_schema(summary="Providers (every adapter in the registry)"),
+    list=extend_schema(summary="Providers (every adapter in the registry); configuration for those who configure them"),
     retrieve=extend_schema(summary="One provider"),
-    update=extend_schema(summary="Configure a provider (staff); the credential is write-only"),
-    partial_update=extend_schema(summary="Configure a provider (staff); the credential is write-only"),
+    update=extend_schema(summary="Configure a provider; the credential is write-only, and a new base URL drops it"),
+    partial_update=extend_schema(
+        summary="Configure a provider; the credential is write-only, and a new base URL drops it"
+    ),
 )
 class ProviderViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet
@@ -187,14 +197,14 @@ class ProviderViewSet(
     ordering_fields = ["slug", "updated_at"]
 
     def get_permissions(self):
-        staff = self.action not in ("list", "retrieve")
-        return [IsAuthenticated(), IsAdminUser()] if staff else [IsAuthenticated()]
+        reading = self.action in ("list", "retrieve")
+        return [IsAuthenticated()] if reading else [IsAuthenticated(), ConfiguresProviders()]
 
     def get_queryset(self):
         return ProviderConfig.objects.visible_to(self.request.user)
 
     @extend_schema(
-        summary="Check a provider's health (staff): a one-word completion, as a run",
+        summary="Check a provider's health: a one-word completion, as a run",
         request=None,
         parameters=[IDEMPOTENCY],
         responses={202: s.RunAcceptedSerializer, **ERROR_RESPONSES},
@@ -205,7 +215,7 @@ class ProviderViewSet(
         return accepted(run=s.RunRefSerializer(services.check_health(self.get_object(), user=request.user)).data)
 
     @extend_schema(
-        summary="Sync the provider's models into the catalog (staff), as a run",
+        summary="Sync the provider's models into the catalog, as a run",
         request=None,
         parameters=[IDEMPOTENCY],
         responses={202: s.RunAcceptedSerializer, **ERROR_RESPONSES},
@@ -216,13 +226,14 @@ class ProviderViewSet(
         return accepted(run=s.RunRefSerializer(services.sync_models(self.get_object(), user=request.user)).data)
 
     @extend_schema(
-        summary="Make this the default provider (staff)",
+        summary="Make this the default provider",
         request=None,
         responses={200: s.ProviderSerializer, **ERROR_RESPONSES},
     )
     @action(detail=True, methods=["post"], url_path="set-default")
     def set_default(self, request, public_id=None):
-        return Response(s.ProviderSerializer(services.set_default(self.get_object())).data)
+        row = services.set_default(self.get_object())
+        return Response(s.ProviderSerializer(row, context=self.get_serializer_context()).data)
 
 
 class ModelFilter(filters.FilterSet):
@@ -250,6 +261,9 @@ class ModelEntryViewSet(viewsets.ReadOnlyModelViewSet):
 # ── output schemas, assistants, pipelines ──────────────────────────────────
 
 
+@extend_schema_view(
+    create=extend_schema(summary="Create a schema — or import one: post the document `export/` returned")
+)
 class OutputSchemaViewSet(OwnedViewSet):
     queryset = OutputSchema.objects.select_related("owner")
     serializer_class = s.OutputSchemaSerializer
@@ -376,6 +390,7 @@ class BriefViewSet(OwnedViewSet):
     serializer_class = s.BriefSerializer
     filterset_class = BriefFilter
     ordering_fields = ["created_at", "updated_at", "status"]
+    open_actions = ("apply",)  # the service lets the owner, staff, or anyone shown an agent's brief apply it
 
     @extend_schema(
         summary="Generate: a structured result, rendered, then its metadata — as a run",
@@ -393,7 +408,8 @@ class BriefViewSet(OwnedViewSet):
         )
 
     @extend_schema(
-        summary="Apply a ready brief: a draft page, its text as suggestions to accept (never published)",
+        summary="Apply a ready brief (yours, or one an agent asked for): a draft page, its text as suggestions to "
+        "accept (never published)",
         request=s.ApplyBriefSerializer,
         responses={201: s.AppliedBriefSerializer, **ERROR_RESPONSES},
     )

@@ -645,6 +645,16 @@ def test_a_shipped_agent_runs_on_the_anthropic_backend(monkeypatch, agent, artic
     assert sent["tools"] and run.llm_backend == "anthropic"
 
 
+@pytest.mark.django_db
+def test_a_tool_using_agent_is_refused_on_a_backend_without_tool_calls(agent, article):
+    class NoTools(FakeProvider):
+        capabilities = frozenset({"complete"})
+
+    with llm.use_llm(NoTools([{"text": "never asked"}])) as client:
+        run = execute(start_run(agent("seo"), trigger="manual", target=article, enqueue=False))
+    assert run.status == "failed" and "no tool calls" in run.error and client.calls == []
+
+
 def test_validation_never_fetches_a_reference(monkeypatch):
     fetched = []
 

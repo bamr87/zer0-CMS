@@ -6,8 +6,10 @@ Anything that calls a model or the network is a run of the `assistant` agent
 request's transaction commits: these functions check what they can before
 queuing — the rows are the caller's to use, the provider is enabled and inside
 its budget — then return the `AgentRun` the caller follows on
-`/api/v2/agent-runs/<id>/stream/`. Applying a brief and promoting a message
-write rows and propose suggestions, and never publish.
+`/api/v2/agent-runs/<id>/stream/`. The worker checks the same again when the
+run executes, because a run can be started from more than one surface and
+things change while it waits. Applying a brief and promoting a message write
+rows and propose suggestions, and never publish.
 """
 
 import json
@@ -23,7 +25,8 @@ from django.db.models import Max, Sum
 from django.utils import timezone
 from django.utils.text import slugify
 
-from agents.models import AgentDefinition, AgentRun
+from agents.models import AgentDefinition, AgentRun, AgentStep
+from agents.principals import is_agent_user
 from agents.runner import RunRefused, start_run
 from cms.models import BasePage
 from cms.services import save_draft
@@ -32,8 +35,8 @@ from importers.markdown import to_blocks
 from ops.errors import ApiError, Conflict, Forbidden, Invalid, Unavailable
 from suggestions.services import SuggestionError, propose
 
-from . import crypto, providers
-from .models import Assistant, Brief, Message, ModelEntry, OutputSchema, ProviderConfig, Visibility
+from . import providers
+from .models import Assistant, Brief, Message, ModelEntry, OutputSchema, ProviderConfig, Visibility, usable
 
 AGENT = "assistant"
 DATA = Path(__file__).resolve().parent / "data"
@@ -62,32 +65,48 @@ def start(user, input: dict, *, target=None, parent=None, trigger="rest") -> Age
         raise Conflict(str(e)) from e
 
 
-def provider_slug(assistant=None) -> str:
-    """The provider a generation uses — the assistant's, its model's, then the
-    default — refused when it is disabled or out of budget."""
-    slug = None
-    if assistant is not None:
-        slug = (
-            assistant.provider.slug
-            if assistant.provider_id
-            else (assistant.model.provider.slug if assistant.model_id else None)
-        )
-    slug = slug or providers.default_slug()
+def spent(slug: str):
+    """This month's spend through provider `slug`: each model call once, on the run that made it (a pipeline's
+    parent adds its steps' costs to its own total, so summing runs would count them twice)."""
+    month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    calls = AgentStep.objects.filter(kind=AgentStep.LLM, run__llm_backend=slug, created_at__gte=month)
+    return calls.aggregate(s=Sum("cost_usd"))["s"] or 0
+
+
+def check_provider(slug: str) -> str:
+    """`slug`, if the registry has it and its row is enabled and inside its monthly budget."""
     if slug not in providers.available():
         raise Invalid(f"no provider {slug!r} in the registry")
     row = ProviderConfig.objects.filter(slug=slug).first()
     if row is not None and not row.enabled:
         raise Conflict(f"the {slug} provider is disabled")
-    if row is not None and row.monthly_budget_usd is not None:
-        month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        spent = AgentRun.objects.filter(llm_backend=slug, created_at__gte=month).aggregate(s=Sum("cost_usd"))["s"]
-        if (spent or 0) >= row.monthly_budget_usd:
-            raise ApiError(
-                f"the {slug} provider has spent its ${row.monthly_budget_usd} budget this month",
-                code="budget.exceeded",
-                status=429,
-            )
+    if row is not None and row.monthly_budget_usd is not None and spent(slug) >= row.monthly_budget_usd:
+        raise ApiError(
+            f"the {slug} provider has spent its ${row.monthly_budget_usd} budget this month",
+            code="budget.exceeded",
+            status=429,
+        )
     return slug
+
+
+def slug_of(assistant) -> str:
+    """The provider an assistant names — its own, else its model's — or '' for the default."""
+    if assistant is None:
+        return ""
+    if assistant.provider_id:
+        return assistant.provider.slug
+    return assistant.model.provider.slug if assistant.model_id else ""
+
+
+def provider_slug(assistant=None) -> str:
+    """The provider a generation uses, refused when it is disabled or out of budget."""
+    return check_provider(slug_of(assistant) or providers.default_slug())
+
+
+def _usable(row, user):
+    if not usable(row, user):
+        raise Forbidden(f"{type(row).__name__.lower()} {row.public_id} is not one {user} may use")
+    return row
 
 
 def _may_read_page(user, page):
@@ -104,13 +123,19 @@ def run_assistant(assistant, *, user, prompt: str, page=None, parent=None, trigg
     return start(user, data | ({"page_id": page.pk} if page else {}), target=page, parent=parent, trigger=trigger)
 
 
-def run_pipeline(pipeline, *, user, prompt="", conversation=None, page=None, trigger="rest") -> AgentRun:
+def _check_steps(pipeline, user):
     steps = list(pipeline.steps.select_related("assistant__provider", "assistant__model__provider"))
     if not steps:
         raise Invalid("the pipeline has no steps")
-    _may_read_page(user, page)
     for step in steps:
+        _usable(step.assistant, user)
         provider_slug(step.assistant)
+
+
+def run_pipeline(pipeline, *, user, prompt="", conversation=None, page=None, trigger="rest") -> AgentRun:
+    """A pipeline run; on a conversation a prompt is posted there first (in the worker), for every step to read."""
+    _check_steps(pipeline, user)
+    _may_read_page(user, page)
     data = {"kind": "pipeline", "pipeline": str(pipeline.public_id), "prompt": prompt}
     if conversation is not None:
         data["conversation"] = str(conversation.public_id)
@@ -128,14 +153,15 @@ def check_health(row: ProviderConfig, *, user) -> AgentRun:
 # ── providers ──────────────────────────────────────────────────────────────
 
 
-def ensure_providers() -> None:
-    """A row for every adapter in the registry (after every migrate)."""
+def ensure_providers(state=apps) -> None:
+    """A row for every adapter in the registry (after every migrate, with the migrated models in `state`)."""
+    rows = state.get_model("ai", "ProviderConfig").objects
     for slug in providers.available():
         try:
             name = providers.provider_class(slug).display_name
         except ImportError:
             name = slug  # a misconfigured AI_PROVIDERS entry still gets a row to fix it on
-        ProviderConfig.objects.get_or_create(slug=slug, defaults={"display_name": name})
+        rows.get_or_create(slug=slug, defaults={"display_name": name})
 
 
 @transaction.atomic
@@ -148,11 +174,13 @@ def set_default(row: ProviderConfig) -> ProviderConfig:
     return row
 
 
+@transaction.atomic
 def rotate_credentials() -> int:
-    """Re-encrypt every stored credential with the first key; returns how many."""
+    """Re-encrypt every stored credential with the first key; returns how many. One no key can read stops it
+    (`NotConfigured`, naming the provider) and nothing is changed."""
     rows = list(ProviderConfig.objects.exclude(credential_encrypted=""))
     for row in rows:
-        row.credential_encrypted = crypto.rotate(row.credential_encrypted)
+        row.set_credential(row.get_credential())
         row.save(update_fields=["credential_encrypted", "updated_at"])
     return len(rows)
 
@@ -197,13 +225,15 @@ def bundled_schema(name: str) -> dict:
     return json.loads(_bundled_schema(name))
 
 
-def import_bundled() -> dict:
+def import_bundled(state=apps) -> dict:
     """Create the bundled schemas and assistant that do not exist yet; one a
-    person already edited is left as it is."""
+    person already edited is left as it is. `state` is the model registry —
+    after a migrate, the migrated one."""
     spec = yaml.safe_load((DATA / "bundled.yaml").read_text(encoding="utf-8"))
+    schema_rows, assistant_rows = (state.get_model("ai", name).objects for name in ("OutputSchema", "Assistant"))
     schemas, assistants = {}, []
     for item in spec["schemas"]:
-        schemas[item["key"]], _ = OutputSchema.objects.get_or_create(
+        schemas[item["key"]], _ = schema_rows.get_or_create(
             public_id=stable_id("bundled-schema", item["key"]),
             defaults={
                 "name": item["name"],
@@ -215,7 +245,7 @@ def import_bundled() -> dict:
             },
         )
     for item in spec["assistants"]:
-        row, _ = Assistant.objects.get_or_create(
+        row, _ = assistant_rows.get_or_create(
             public_id=stable_id("bundled-assistant", item["key"]),
             defaults={
                 "name": item["name"],
@@ -287,9 +317,10 @@ def generate_brief(brief: Brief, *, user, trigger="rest") -> AgentRun:
         raise Invalid("a brief needs a prompt or a source text")
     if not (brief.source_text.strip() or brief.assistant_id or brief.pipeline_id):
         raise Invalid("a brief needs an assistant or a pipeline to write it")
+    for row in (brief.assistant, brief.pipeline, brief.output_schema):
+        _usable(row, user)
     if brief.pipeline_id:
-        for step in brief.pipeline.steps.select_related("assistant__provider", "assistant__model__provider"):
-            provider_slug(step.assistant)
+        _check_steps(brief.pipeline, user)
     provider_slug(brief.assistant)
     run = start(user, {"kind": "brief", "brief": str(brief.public_id)}, trigger=trigger)
     brief.status, brief.run, brief.error = Brief.GENERATING, run, ""
@@ -302,8 +333,12 @@ def apply_brief(brief: Brief, *, user, parent=None, page_type: str = ""):
     """A draft page from a ready brief: the person who applies it creates the
     page (its title and slug), and everything the model wrote — the body, the
     description, the keywords — arrives as suggestions from the assistant agent,
-    on the brief's run, for the editor to accept. Nothing is published."""
+    on the brief's run, for the editor to accept. Nothing is published. A brief
+    an agent asked for (`ai.generate_brief`) is for the people it is shown to:
+    anyone who sees it may apply it where they may add a page."""
     brief = Brief.objects.select_for_update().get(pk=brief.pk)
+    if not (brief.can_edit(user) or is_agent_user(brief.owner)):
+        raise Forbidden(f"brief {brief.public_id} is not {user}'s to apply")
     if brief.status != Brief.READY:
         raise Conflict(f"a brief is applied once it is ready; this one is {brief.status}")
     parent = parent or brief.parent or (brief.site.root_page if brief.site_id else None)
@@ -384,7 +419,7 @@ def reply(conversation, assistant, *, user, trigger="rest"):
     """Queue `assistant`'s reply: a placeholder message and the run that fills it."""
     if assistant is None:
         raise Invalid("choose an assistant to reply")
-    provider_slug(assistant)
+    provider_slug(_usable(assistant, user))
     answer = append(conversation, role=Message.ASSISTANT, assistant=assistant, status=Message.QUEUED)
     run = start(user, {"kind": "message", "message": str(answer.public_id)}, trigger=trigger)
     answer.run = run
@@ -392,8 +427,10 @@ def reply(conversation, assistant, *, user, trigger="rest"):
     return answer, run
 
 
+@transaction.atomic
 def post_message(conversation, *, user, text: str, assistant=None, answer=True, trigger="rest"):
-    """A person's message; with an assistant (or the conversation's), its reply is queued."""
+    """A person's message; with an assistant (or the conversation's), its reply is queued — or, when that
+    assistant is not theirs to use, nothing is."""
     if not text.strip():
         raise Invalid("a message needs text")
     message = append(conversation, role=Message.USER, text=text)
@@ -413,7 +450,8 @@ def rerun(message: Message, *, user, assistant=None, trigger="rest"):
 def promote(message: Message, *, user, to: str, parent=None, page_type: str = "", trigger="rest"):
     """A message → a brief to write from (its text is the prompt), or → a draft:
     its text kept as written, the metadata step queued; applying the ready brief
-    makes the draft page."""
+    makes the draft page. The brief keeps the message's (or the conversation's)
+    assistant only if the person may still use it."""
     if not message.text.strip():
         raise Invalid("the message has no text")
     conversation = message.conversation
@@ -422,7 +460,7 @@ def promote(message: Message, *, user, to: str, parent=None, page_type: str = ""
         "site": conversation.site,
         "conversation": conversation,
         "source_message": message,
-        "assistant": message.assistant or conversation.assistant,
+        "assistant": next((a for a in (message.assistant, conversation.assistant) if a and usable(a, user)), None),
         "parent": parent,
         "page_type": page_type or "cms.ArticlePage",
         "title": conversation.title[:255],

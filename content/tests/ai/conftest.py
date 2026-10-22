@@ -1,7 +1,8 @@
 """Fixtures for the AI content layer's tests: people with and without page
-rights, a scripted `fake` provider in place of the default, runs executed the
-way the worker would after the request commits, and an API client. No test
-reaches a provider: the fake answers, or a test-made SDK stand-in does."""
+rights (and staff who configure providers), a scripted `fake` provider in place
+of the default, runs executed the way the worker would after the request
+commits, and an API client. No test reaches a provider: the fake answers, or a
+test-made SDK stand-in does."""
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -13,8 +14,9 @@ from ai import providers
 from ai.providers.fake import FakeProvider
 
 
-def _person(username, *, staff=False, editor=False):
+def _person(username, *, staff=False, editor=False, perms=()):
     user = get_user_model().objects.create_user(username, password="pw", is_staff=staff)
+    user.user_permissions.add(*(Permission.objects.get(content_type__app_label="ai", codename=c) for c in perms))
     if editor:
         group, _ = Group.objects.get_or_create(name="AI test editors")
         from wagtail.models import Page
@@ -43,7 +45,8 @@ def bob(db):
 
 @pytest.fixture
 def staff(db):
-    return _person("staff", staff=True)
+    """Staff who configure providers (`ai.change_providerconfig`); plain staff do not."""
+    return _person("staff", staff=True, perms=["change_providerconfig"])
 
 
 @pytest.fixture

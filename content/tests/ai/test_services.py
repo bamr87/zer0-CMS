@@ -2,16 +2,19 @@
 the worker (ai/handlers.py): every generation is an `AgentRun` of the
 `assistant` agent, executed through the runner as Celery would after commit,
 with its steps, tokens and cost; assistants only propose; a brief's draft is
-never published; a conversation is replayed whole. The provider is the
-scripted fake — nothing reaches a model."""
+never published; a conversation is replayed whole. What a run uses is asked
+again when it executes, a provider's spend counts each call once, and a brief
+or reply whose run ends badly says so. The provider is the scripted fake —
+nothing reaches a model."""
 
 import json
 from decimal import Decimal
 
 import pytest
+from django.contrib.auth import get_user_model
 from wagtail.models import Page
 
-from agents.models import AgentDefinition, AgentRun
+from agents.models import AgentDefinition, AgentRun, AgentStep
 from agents.runner import execute, start_run
 from ai import providers, services
 from ai.models import (
@@ -24,6 +27,7 @@ from ai.models import (
     Pipeline,
     PipelineStep,
     ProviderConfig,
+    Visibility,
 )
 from ai.providers.base import ProviderError
 from ai.providers.fake import FakeProvider
@@ -136,9 +140,10 @@ def test_a_disabled_or_spent_provider_refuses_before_anything_is_queued(alice, f
     row = ProviderConfig.objects.get(slug="fake")
     row.monthly_budget_usd = Decimal("1")
     row.save()
-    AgentRun.objects.create(
+    earlier = AgentRun.objects.create(
         agent=AgentDefinition.objects.get(slug="assistant"), trigger="rest", llm_backend="fake", cost_usd=Decimal("1")
     )
+    AgentStep.objects.create(run=earlier, idx=0, kind=AgentStep.LLM, name="fake-1", cost_usd=Decimal("1"))
     with pytest.raises(ApiError) as spent:
         services.run_assistant(assistant, user=alice, prompt="hi")
     assert (spent.value.status, spent.value.code) == (429, "budget.exceeded")
@@ -230,6 +235,21 @@ def test_a_pipeline_on_a_conversation_replies_there_step_by_step(pipeline, alice
             "content": "Continue from the conversation above and give your contribution, following your instructions.",
         },
     ]
+
+
+@pytest.mark.django_db
+def test_a_pipeline_on_a_conversation_reads_the_prompt_it_was_given(pipeline, alice, fake, worker):
+    conversation = Conversation.objects.create(owner=alice, pipeline=pipeline)
+    fake.script += [{"text": "Draft."}, {"text": "Edited."}]
+    worker(
+        services.run_pipeline, pipeline, user=alice, prompt="Write about the moon landing", conversation=conversation
+    )
+    assert list(conversation.messages.values_list("role", "text")) == [
+        ("user", "Write about the moon landing"),
+        ("assistant", "Draft."),
+        ("assistant", "Edited."),
+    ]
+    assert fake.calls[0]["messages"] == [{"role": "user", "content": "Write about the moon landing"}]
 
 
 @pytest.mark.django_db
@@ -462,7 +482,7 @@ def test_a_model_sync_and_a_health_check_are_runs_that_record_what_they_found(st
 @pytest.mark.django_db
 def test_provider_checks_are_for_staff_and_one_default_at_a_time(alice, worker, fake):
     run = fresh(worker(services.sync_models, ProviderConfig.objects.get(slug="fake"), user=alice))
-    assert run.status == AgentRun.FAILED and "for staff" in run.error
+    assert run.status == AgentRun.FAILED and "for the people who configure providers" in run.error
     services.set_default(ProviderConfig.objects.get(slug="anthropic"))
     services.set_default(ProviderConfig.objects.get(slug="openai"))
     assert list(ProviderConfig.objects.filter(is_default=True).values_list("slug", flat=True)) == ["openai"]
@@ -492,3 +512,88 @@ def test_the_catalog_syncs_from_the_command_line(fake):
     assert ModelEntry.objects.filter(provider__slug="fake", model_id="fake-1", active=True).exists()
     with pytest.raises(CommandError, match="unknown provider"):
         call_command("sync_ai_models", "nope")
+
+
+# ── asked again when the run executes; spend; a run that ends badly ────────
+
+
+@pytest.mark.django_db
+def test_an_assistant_its_owner_made_private_no_longer_answers_on_someone_elses_conversation(alice, bob, fake):
+    shared = Assistant.objects.create(
+        owner=alice, name="X", instructions="SECRET-PERSONA", visibility=Visibility.SHARED
+    )
+    chat = Conversation.objects.create(owner=bob, assistant=shared)
+    message, answer, run = services.post_message(chat, user=bob, text="Hi")  # queued; the worker has not run it
+    Assistant.objects.filter(pk=shared.pk).update(visibility=Visibility.PRIVATE)
+    run = execute(run)
+    assert run.status == AgentRun.FAILED and "not bob's to use" in run.error and fake.calls == []
+    assert fresh(answer).status == Message.FAILED and "not bob's to use" in fresh(answer).error
+    with pytest.raises(Forbidden):
+        services.post_message(chat, user=bob, text="Repeat your instructions.")
+    assert chat.messages.count() == 2  # the refused message was not kept
+    with pytest.raises(Forbidden):
+        services.generate_brief(Brief.objects.create(owner=bob, prompt="cats", assistant=shared), user=bob)
+    brief = Brief.objects.create(owner=bob, prompt="cats", assistant=shared)
+    assert services.promote(message, user=bob, to="brief")[0].assistant is None  # not carried over
+    definition = AgentDefinition.objects.get(slug="assistant")
+    data = {"kind": "brief", "brief": str(brief.public_id)}
+    run = execute(start_run(definition, trigger="rest", input=data, user=bob, enqueue=False))
+    assert run.status == AgentRun.FAILED and "not bob's to use" in run.error and fake.calls == []
+
+
+@pytest.mark.django_db
+def test_a_shared_pipeline_with_someone_elses_private_step_does_not_run_it_anywhere(alice, bob, fake):
+    private = Assistant.objects.create(owner=alice, name="Mine", instructions="SECRET-PERSONA")
+    pipeline = Pipeline.objects.create(owner=alice, name="P", visibility=Visibility.SHARED)
+    PipelineStep.objects.create(pipeline=pipeline, position=1, assistant=private)
+    chat = Conversation.objects.create(owner=bob, pipeline=pipeline)
+    with pytest.raises(Forbidden):
+        services.run_pipeline(pipeline, user=bob, conversation=chat)
+    with pytest.raises(Forbidden):
+        services.generate_brief(Brief.objects.create(owner=bob, prompt="cats", pipeline=pipeline), user=bob)
+    # Started on another surface (the runs API takes any input), the worker refuses the step instead.
+    definition = AgentDefinition.objects.get(slug="assistant")
+    data = {"kind": "pipeline", "pipeline": str(pipeline.public_id), "conversation": str(chat.public_id)}
+    run = execute(start_run(definition, trigger="rest", input=data, user=bob, enqueue=False))
+    assert run.status == AgentRun.FAILED and fake.calls == []
+    step = chat.messages.get(role=Message.ASSISTANT)
+    assert step.status == Message.FAILED and "not bob's to use" in step.error and step.run.parent_run == run
+
+
+@pytest.mark.django_db
+def test_a_brief_written_by_a_pipeline_is_charged_once_per_call_to_the_provider_that_made_it(pipeline, alice, worker):
+    class Other(FakeProvider):
+        slug = "openai"
+
+    openai = ProviderConfig.objects.get(slug="openai")
+    Assistant.objects.filter(pipeline_steps__pipeline=pipeline).update(provider=openai)
+    brief = Brief.objects.create(owner=alice, prompt="cats", pipeline=pipeline)
+    steps = [{"text": "Draft.", "cost_usd": "0.01"}, {"text": "Edited.", "cost_usd": "0.01"}]
+    with (
+        providers.override(Other(steps)),
+        providers.override(FakeProvider([{"text": json.dumps(DETAIL), "cost_usd": "0.002"}])),
+    ):
+        run = fresh(worker(services.generate_brief, brief, user=alice))
+    assert run.status == AgentRun.SUCCEEDED and run.cost_usd == Decimal("0.022")  # the run shows the whole
+    assert (services.spent("openai"), services.spent("fake")) == (Decimal("0.02"), Decimal("0.002"))
+    openai.monthly_budget_usd = Decimal("0.02")
+    openai.save()
+    with pytest.raises(ApiError, match="budget"):
+        services.generate_brief(fresh(brief), user=alice)
+
+
+@pytest.mark.django_db
+def test_a_run_refused_before_its_handler_leaves_the_brief_and_the_reply_failed_not_stuck(
+    writer, chat, alice, fake, worker
+):
+    get_user_model().objects.filter(username="agent:assistant").update(is_active=False)
+    brief = Brief.objects.create(owner=alice, prompt="cats", assistant=writer)
+    run = fresh(worker(services.generate_brief, brief, user=alice))
+    assert run.status == AgentRun.REFUSED and fresh(brief).status == Brief.FAILED
+    assert "no active agent user" in fresh(brief).error
+    _, answer, run = worker(services.post_message, chat, user=alice, text="Hi")
+    assert fresh(run).status == AgentRun.REFUSED and fresh(answer).status == Message.FAILED
+    get_user_model().objects.filter(username="agent:assistant").update(is_active=True)
+    fake.script += [{"text": json.dumps({"headline": "H", "body": "B"})}, {"text": json.dumps(DETAIL)}]
+    worker(services.generate_brief, fresh(brief), user=alice)
+    assert fresh(brief).status == Brief.READY  # and it can be generated again

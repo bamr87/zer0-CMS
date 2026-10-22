@@ -4,8 +4,12 @@ Rows are addressed by their UUID public id (`id`), never by their integer key;
 a related row is named by its public id too, and only a row the requester may
 see can be named (`Visible`). A provider is named by its slug, a page and a
 site by Wagtail's own ids. A provider's credential is write-only: it goes in,
-is encrypted, and only `has_credential` ever comes back. Validation is the
-models' own (`clean()`), so the API, the importer and a shell agree.
+is encrypted, and only `has_credential` ever comes back; changing the base URL
+without sending a credential drops the stored one, since it was entered for the
+old host. A provider's configuration (base URL, organization, project, `extra`,
+the health check's details) is shown only to people who configure providers.
+Validation is the models' own (`clean()`), so the API, the importer and a shell
+agree.
 """
 
 import copy
@@ -80,6 +84,8 @@ class RunAcceptedSerializer(serializers.Serializer):
 
 # ── providers and models ───────────────────────────────────────────────────
 
+CONFIGURATION = ("base_url", "organization", "project", "extra")  # and last_health's details
+
 
 class ProviderSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source="public_id", read_only=True)
@@ -118,6 +124,13 @@ class ProviderSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["slug", "is_default", "last_health", "checked_at", "created_at", "updated_at"]
+        extra_kwargs = {
+            "extra": {"help_text": "The adapter's options (its declared keys only). Shown to those who configure."},
+            "base_url": {"help_text": "Shown to those who configure; a row with its own needs its own credential."},
+            "organization": {"help_text": "Shown to those who configure providers."},
+            "project": {"help_text": "Shown to those who configure providers."},
+            "last_health": {"help_text": "The last check; only `ok` for those who do not configure providers."},
+        }
 
     def get_credential_source(self, row) -> str:
         """`database`, the environment variable the adapter would read, or ''."""
@@ -138,12 +151,24 @@ class ProviderSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if self.instance is not None and self.instance.is_default and attrs.get("enabled") is False:
             raise serializers.ValidationError({"enabled": "the default provider stays enabled; choose another first"})
+        _clean(ProviderConfig, self.instance, {k: v for k, v in attrs.items() if k != "credential"})
         return attrs
 
     def update(self, instance, validated_data):
         if "credential" in validated_data:
             instance.set_credential(validated_data.pop("credential"))
+        elif validated_data.get("base_url", instance.base_url) != instance.base_url:
+            instance.set_credential("")
         return super().update(instance, validated_data)
+
+    def to_representation(self, row):
+        data = super().to_representation(row)
+        user = getattr(self.context.get("request"), "user", None)
+        if user is None or not user.has_perm("ai.change_providerconfig"):
+            for key in CONFIGURATION:
+                data.pop(key, None)
+            data["last_health"] = {"ok": row.last_health["ok"]} if "ok" in (row.last_health or {}) else {}
+        return data
 
 
 class ModelEntrySerializer(serializers.ModelSerializer):
@@ -175,10 +200,14 @@ OWNED = ["id", "owner", "site", "visibility", "created_at", "updated_at"]
 class OwnedSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source="public_id", read_only=True)
     owner = serializers.CharField(source="owner.username", read_only=True, allow_null=True)
-    site = serializers.PrimaryKeyRelatedField(queryset=Site.objects.all(), allow_null=True, required=False)
+    site = serializers.PrimaryKeyRelatedField(
+        queryset=Site.objects.all(), allow_null=True, required=False, help_text="A site its owner edits."
+    )
 
     def validate(self, attrs):
-        _clean(self.Meta.model, self.instance, {k: v for k, v in attrs.items() if k != "steps"})
+        # A new row is the requester's: its owner is known before it is saved, for the rules that need it.
+        owner = {"owner": getattr(self.context.get("request"), "user", None)} if self.instance is None else {}
+        _clean(self.Meta.model, self.instance, {**owner, **{k: v for k, v in attrs.items() if k != "steps"}})
         return attrs
 
 

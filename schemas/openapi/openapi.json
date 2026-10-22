@@ -1613,7 +1613,7 @@
         "/api/v2/ai/briefs/{public_id}/apply/": {
             "post": {
                 "operationId": "ai_briefs_apply_create",
-                "summary": "Apply a ready brief: a draft page, its text as suggestions to accept (never published)",
+                "summary": "Apply a ready brief (yours, or one an agent asked for): a draft page, its text as suggestions to accept (never published)",
                 "parameters": [
                     {
                         "in": "path",
@@ -3295,6 +3295,7 @@
             },
             "post": {
                 "operationId": "ai_output_schemas_create",
+                "summary": "Create a schema — or import one: post the document `export/` returned",
                 "tags": [
                     "ai"
                 ],
@@ -4127,7 +4128,7 @@
         "/api/v2/ai/providers/": {
             "get": {
                 "operationId": "ai_providers_list",
-                "summary": "Providers (every adapter in the registry)",
+                "summary": "Providers (every adapter in the registry); configuration for those who configure them",
                 "parameters": [
                     {
                         "in": "query",
@@ -4237,7 +4238,7 @@
             },
             "put": {
                 "operationId": "ai_providers_update",
-                "summary": "Configure a provider (staff); the credential is write-only",
+                "summary": "Configure a provider; the credential is write-only, and a new base URL drops it",
                 "parameters": [
                     {
                         "in": "path",
@@ -4294,7 +4295,7 @@
             },
             "patch": {
                 "operationId": "ai_providers_partial_update",
-                "summary": "Configure a provider (staff); the credential is write-only",
+                "summary": "Configure a provider; the credential is write-only, and a new base URL drops it",
                 "parameters": [
                     {
                         "in": "path",
@@ -4353,7 +4354,7 @@
         "/api/v2/ai/providers/{public_id}/set-default/": {
             "post": {
                 "operationId": "ai_providers_set_default_create",
-                "summary": "Make this the default provider (staff)",
+                "summary": "Make this the default provider",
                 "parameters": [
                     {
                         "in": "path",
@@ -4473,7 +4474,7 @@
         "/api/v2/ai/providers/{public_id}/sync-models/": {
             "post": {
                 "operationId": "ai_providers_sync_models_create",
-                "summary": "Sync the provider's models into the catalog (staff), as a run",
+                "summary": "Sync the provider's models into the catalog, as a run",
                 "parameters": [
                     {
                         "in": "header",
@@ -4601,7 +4602,7 @@
         "/api/v2/ai/providers/{public_id}/test/": {
             "post": {
                 "operationId": "ai_providers_test_create",
-                "summary": "Check a provider's health (staff): a one-word completion, as a run",
+                "summary": "Check a provider's health: a one-word completion, as a run",
                 "parameters": [
                     {
                         "in": "header",
@@ -5707,7 +5708,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -5851,7 +5853,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -6060,7 +6063,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -6439,7 +6443,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -6778,7 +6783,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -6861,7 +6867,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -7001,7 +7008,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -7153,7 +7161,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -7211,7 +7220,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -7269,14 +7279,17 @@
                     },
                     "base_url": {
                         "type": "string",
+                        "description": "Shown to those who configure; a row with its own needs its own credential.",
                         "maxLength": 255
                     },
                     "organization": {
                         "type": "string",
+                        "description": "Shown to those who configure providers.",
                         "maxLength": 255
                     },
                     "project": {
                         "type": "string",
+                        "description": "Shown to those who configure providers.",
                         "maxLength": 255
                     },
                     "default_model": {
@@ -7284,7 +7297,7 @@
                         "maxLength": 255
                     },
                     "extra": {
-                        "description": "Adapter options (effort, max_turns, timeout, …)."
+                        "description": "The adapter's options (its declared keys only). Shown to those who configure."
                     },
                     "monthly_budget_usd": {
                         "type": [
@@ -7317,7 +7330,8 @@
                         "readOnly": true
                     },
                     "last_health": {
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "The last check; only `ok` for those who do not configure providers."
                     },
                     "checked_at": {
                         "type": [
@@ -7358,7 +7372,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "A site its owner edits."
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
@@ -7487,14 +7502,17 @@
                     },
                     "base_url": {
                         "type": "string",
+                        "description": "Shown to those who configure; a row with its own needs its own credential.",
                         "maxLength": 255
                     },
                     "organization": {
                         "type": "string",
+                        "description": "Shown to those who configure providers.",
                         "maxLength": 255
                     },
                     "project": {
                         "type": "string",
+                        "description": "Shown to those who configure providers.",
                         "maxLength": 255
                     },
                     "default_model": {
@@ -7502,7 +7520,7 @@
                         "maxLength": 255
                     },
                     "extra": {
-                        "description": "Adapter options (effort, max_turns, timeout, …)."
+                        "description": "The adapter's options (its declared keys only). Shown to those who configure."
                     },
                     "monthly_budget_usd": {
                         "type": [
@@ -7535,7 +7553,8 @@
                         "readOnly": true
                     },
                     "last_health": {
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "The last check; only `ok` for those who do not configure providers."
                     },
                     "checked_at": {
                         "type": [

@@ -1,20 +1,24 @@
 """The AI content layer's tables (TARGET.md § The AI content layer): credentials
-encrypted at rest and rotatable, one default provider by constraint, schemas
-and personas validated on save, one `visible_to` that scopes every row, and the
-bundled barodybroject schemas seeded by migrate."""
+encrypted at rest and rotatable — through the move to explicit keys and a new
+`SECRET_KEY` — one default provider by constraint, schemas (local references
+only) and personas validated on save, one `visible_to` that scopes every row,
+and the bundled barodybroject schemas seeded by migrate once the tables are
+there."""
 
+import io
 import json
 from pathlib import Path
 
 import pytest
 from cryptography.fernet import Fernet
 from django.core.exceptions import ValidationError
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from django.db import IntegrityError, transaction
+from django.db.migrations.state import ProjectState
 from django.test import override_settings
 from wagtail.models import Page, Site
 
-from ai import crypto
+from ai.apps import _seed
 from ai.models import (
     Assistant,
     Conversation,
@@ -26,6 +30,7 @@ from ai.models import (
     ProviderConfig,
     Visibility,
 )
+from ai.providers import NotConfigured
 from ai.services import DATA, bundled_schema, import_bundled, stable_id
 
 PARODYNEWS_SCHEMAS = Path(__file__).resolve().parents[3] / "apps" / "parodynews" / "src" / "parodynews" / "schema"
@@ -47,19 +52,36 @@ def test_a_credential_is_encrypted_at_rest_and_round_trips():
 
 
 @pytest.mark.django_db
-def test_credentials_rotate_to_a_new_key():
+def test_credentials_survive_the_move_to_explicit_keys_and_rotate_to_a_new_one():
+    row = ProviderConfig.objects.get(slug="openai")
+    row.set_credential("sk-openai")  # no AI_CREDENTIAL_KEYS yet: the key derived from SECRET_KEY
+    row.save()
     old, new = Fernet.generate_key().decode(), Fernet.generate_key().decode()
+    out = io.StringIO()
     with override_settings(AI_CREDENTIAL_KEYS=[old]):
-        row = ProviderConfig.objects.get(slug="openai")
-        row.set_credential("sk-openai")
-        row.save()
+        assert ProviderConfig.objects.get(pk=row.pk).get_credential() == "sk-openai"  # the derived key still reads
+        call_command("rotate_ai_credentials", stdout=out)
     with override_settings(AI_CREDENTIAL_KEYS=[new, old]):
-        call_command("rotate_ai_credentials", verbosity=0)
-    with override_settings(AI_CREDENTIAL_KEYS=[new]):
-        row.refresh_from_db()
-        assert row.get_credential() == "sk-openai"
-    with override_settings(AI_CREDENTIAL_KEYS=[old]), pytest.raises(crypto.InvalidToken):
-        row.get_credential()
+        call_command("rotate_ai_credentials", stdout=out)
+    with override_settings(AI_CREDENTIAL_KEYS=[new], SECRET_KEY="a-new-secret"):
+        assert ProviderConfig.objects.get(pk=row.pk).get_credential() == "sk-openai"
+    with override_settings(AI_CREDENTIAL_KEYS=[old]):
+        with pytest.raises(NotConfigured, match="rotate_ai_credentials"):
+            ProviderConfig.objects.get(pk=row.pk).get_credential()
+        with pytest.raises(CommandError, match="the openai credential"):
+            call_command("rotate_ai_credentials", stdout=out)
+
+
+@pytest.mark.django_db
+def test_a_credential_survives_a_new_secret_key_through_its_fallbacks():
+    with override_settings(SECRET_KEY="first"):
+        row = ProviderConfig.objects.get(slug="anthropic")
+        row.set_credential("sk-ant-api-x")
+        row.save()
+    with override_settings(SECRET_KEY="second", SECRET_KEY_FALLBACKS=["first"]):
+        assert ProviderConfig.objects.get(pk=row.pk).get_credential() == "sk-ant-api-x"
+    with override_settings(SECRET_KEY="second"), pytest.raises(NotConfigured):
+        ProviderConfig.objects.get(pk=row.pk).settings()
 
 
 @pytest.mark.django_db
@@ -108,6 +130,40 @@ def test_an_output_schema_is_validated_on_save_and_versioned():
     assert OutputSchema(name="g", schema={}).to_markdown({"Content": {"Body": ["a", "b"]}, "summary": "c"}) == (
         "## Content\n\n### Body\n\n- a\n- b\n\n## Summary\n\nc"
     )
+
+
+@pytest.mark.django_db
+def test_a_schema_that_refers_outside_itself_is_refused():
+    for ref in ("http://169.254.169.254/latest/meta-data", "other.json#/x", "/etc/passwd"):
+        with pytest.raises(ValidationError, match="refers only to itself"):
+            OutputSchema.objects.create(name="away", schema={"type": "object", "properties": {"a": {"$ref": ref}}})
+    with pytest.raises(ValidationError, match="refers only to itself"):
+        OutputSchema.objects.create(
+            name="away", schema={"prefixItems": [{"$dynamicRef": "https://elsewhere.example/s"}]}
+        )
+    local = {"$defs": {"a": {"type": "string"}}, "type": "object", "properties": {"a": {"$ref": "#/$defs/a"}}}
+    assert OutputSchema.objects.create(name="local", schema=local).version == 1
+
+
+@pytest.mark.django_db
+def test_a_provider_takes_only_the_options_its_adapter_reads():
+    claude_code = ProviderConfig.objects.get(slug="claude_code")
+    for extra in ({"cli_path": "/tmp/x"}, {"env": {"LD_PRELOAD": "x"}}, {"cwd": "/"}, {"max_turns": "lots"}):
+        claude_code.extra = extra
+        with pytest.raises(ValidationError, match="extra"):
+            claude_code.clean()
+    claude_code.extra = {"max_turns": 5, "effort": "low"}
+    claude_code.clean()
+    ProviderConfig(slug="litellm", extra={"models": ["gemini/flash"]}).clean()
+
+
+@pytest.mark.django_db
+def test_seeding_after_migrate_waits_for_the_ai_tables():
+    ProviderConfig.objects.all().delete()
+    _seed(None, apps=ProjectState().apps)  # what `migrate ai zero` leaves: no AI models
+    assert not ProviderConfig.objects.exists()
+    _seed(None)
+    assert ProviderConfig.objects.count() == 6
 
 
 @pytest.mark.django_db

@@ -14,7 +14,10 @@ and views manageable).
 
 Every row has a UUID `public_id` (the integer key stays internal) and every
 owned row carries `owner`, `site` and `visibility`; `visible_to(user, site)` is
-the one place rows are scoped, and every view, tool and service uses it.
+the one place rows are scoped, and every view, tool and service uses it —
+`usable(row, user)` asks it again when a run executes, since what a person
+could see when they asked may have changed by then. A row belongs only to a
+site its owner edits.
 Generation itself is an `agents.AgentRun` (ai/handlers.py), so its cost,
 tokens, steps and trace live where every other run's do.
 """
@@ -29,6 +32,7 @@ from django.db.models import Q
 from jsonschema import Draft202012Validator, SchemaError, validators
 
 from . import crypto, rendering
+from .providers.base import EFFORT, NotConfigured
 
 USER = settings.AUTH_USER_MODEL
 PARAMS_SCHEMA = {
@@ -37,10 +41,17 @@ PARAMS_SCHEMA = {
         "temperature": {"type": "number", "minimum": 0, "maximum": 2},
         "top_p": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
         "max_tokens": {"type": "integer", "minimum": 1, "maximum": 128000},
-        "effort": {"enum": ["low", "medium", "high", "xhigh", "max"]},
+        "effort": EFFORT,
     },
     "additionalProperties": False,
 }
+REFS = ("$ref", "$dynamicRef", "$recursiveRef")
+
+
+def first_error(schema: dict, data) -> str:
+    """The first way `data` fails `schema` (a fixed schema of ours), or ''."""
+    errors = sorted(Draft202012Validator(schema).iter_errors(data), key=lambda e: list(e.path))
+    return f"{'/'.join(map(str, errors[0].path)) or '(root)'}: {errors[0].message}" if errors else ""
 
 
 class Visibility(models.TextChoices):
@@ -81,6 +92,11 @@ class OwnedQuerySet(models.QuerySet):
         )
 
 
+def usable(row, user) -> bool:
+    """Whether `user` may use `row` (an assistant, a pipeline, a schema …) now: `visible_to` asked again."""
+    return row is None or type(row).objects.visible_to(user).filter(pk=row.pk).exists()
+
+
 class Owned(models.Model):
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     owner = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
@@ -97,6 +113,14 @@ class Owned(models.Model):
     def clean(self):
         if self.visibility == Visibility.SITE and self.site_id is None:
             raise ValidationError({"visibility": "site visibility needs a site"})
+        owner = self.owner if self.owner_id else None
+        if (
+            self.site_id is not None
+            and owner is not None
+            and not is_staff(owner)
+            and self.site_id not in sites_for(owner)
+        ):
+            raise ValidationError({"site": "a row belongs only to a site its owner edits"})
 
     def can_edit(self, user) -> bool:
         return is_staff(user) or (self.owner_id is not None and self.owner_id == getattr(user, "pk", None))
@@ -153,6 +177,9 @@ class ProviderConfig(models.Model):
             raise ValidationError({"slug": f"no adapter {self.slug!r} in the provider registry"})
         if self.is_default and not self.enabled:
             raise ValidationError({"is_default": "the default provider must be enabled"})
+        problem = first_error(providers.provider_class(self.slug).options_schema(), self.extra or {})
+        if problem:
+            raise ValidationError({"extra": problem})
 
     @property
     def has_credential(self) -> bool:
@@ -162,7 +189,14 @@ class ProviderConfig(models.Model):
         self.credential_encrypted = crypto.encrypt(raw or "")
 
     def get_credential(self) -> str:
-        return crypto.decrypt(self.credential_encrypted)
+        try:
+            return crypto.decrypt(self.credential_encrypted)
+        except crypto.InvalidToken as e:
+            raise NotConfigured(
+                f"the {self.slug} credential was encrypted with a key that is gone: add that key to AI_CREDENTIAL_KEYS "
+                "(or its SECRET_KEY to SECRET_KEY_FALLBACKS) and run manage.py rotate_ai_credentials, or set it again",
+                provider=self.slug,
+            ) from e
 
     def settings(self):
         """The adapter's configuration: this row, its credential and the catalog's prices."""
@@ -220,13 +254,27 @@ class ModelEntry(models.Model):
 # ── what assistants produce ────────────────────────────────────────────────
 
 
+def _refs(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield from [value] if key in REFS and isinstance(value, str) else _refs(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _refs(value)
+
+
 def check_json_schema(schema) -> None:
+    """A valid JSON Schema that refers only to itself: a `$ref` elsewhere would
+    have the worker fetch it (a URL inside the network, say) while validating."""
     if not isinstance(schema, dict):
         raise ValidationError({"schema": "a JSON Schema is an object"})
     try:
         validators.validator_for(schema, default=Draft202012Validator).check_schema(schema)
     except SchemaError as e:
         raise ValidationError({"schema": f"not a valid JSON Schema: {e.message}"}) from e
+    elsewhere = next((ref for ref in _refs(schema) if not ref.startswith("#")), None)
+    if elsewhere is not None:
+        raise ValidationError({"schema": f"a schema refers only to itself ('#/…'), not to {elsewhere!r}"})
 
 
 class OutputSchema(Owned):
@@ -292,9 +340,9 @@ class Assistant(Owned):
         super().clean()
         from agents.registry import registry
 
-        errors = sorted(Draft202012Validator(PARAMS_SCHEMA).iter_errors(self.params or {}), key=lambda e: list(e.path))
-        if errors:
-            raise ValidationError({"params": errors[0].message})
+        problem = first_error(PARAMS_SCHEMA, self.params or {})
+        if problem:
+            raise ValidationError({"params": problem})
         readable = {t.name for t in registry.all() if t.effect == "read"}
         if not isinstance(self.tools, list) or not set(self.tools) <= readable:
             raise ValidationError(

@@ -3,14 +3,18 @@
 a 403); providers configured by staff with a write-only credential; anything
 that reaches a model answers 202 with the run to follow on the existing
 `/api/v2/agent-runs/<id>/stream/`, executed here as the worker would after
-commit; an `Idempotency-Key` replays the first answer. The fake provider
-answers; nothing reaches a model."""
+commit; an `Idempotency-Key` replays the first answer. A run's tools read only
+pages the person who ran it may edit, a row belongs only to a site its owner
+edits, and a provider's configuration is for the people who configure
+providers. The fake provider answers; nothing reaches a model."""
 
 import json
 from datetime import timedelta
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.utils import timezone
+from wagtail.models import Page, Site
 
 from agents.models import AgentRun
 from ai.models import (
@@ -26,6 +30,7 @@ from ai.models import (
 )
 from suggestions.models import Suggestion
 
+from ..conftest import make_article
 from .test_services import DETAIL, STORY
 
 BASE = "/api/v2/ai"
@@ -76,6 +81,27 @@ def test_providers_are_listed_for_everyone_and_configured_by_staff_with_a_write_
     assert row.get_credential() == "sk-ant-api-secret" and "secret" not in row.credential_encrypted
     assert "secret" not in api(staff).get(url).content.decode()
     assert api(staff).patch(url, {"credential": ""}, format="json").json()["has_credential"] is False
+    plain = get_user_model().objects.create_user("plain-staff", is_staff=True)  # staff, without the permission
+    assert api(plain).patch(url, {"enabled": False}, format="json").status_code == 403
+    assert api(plain).post(f"{url}test/").status_code == 403
+
+
+@pytest.mark.django_db
+def test_a_providers_configuration_is_validated_and_shown_only_to_those_who_configure_it(api, alice, staff):
+    url = f"{BASE}/providers/{ProviderConfig.objects.get(slug='claude_code').public_id}/"
+    for extra in ({"cli_path": "/tmp/anything"}, {"env": {"PROXY_PASSWORD": "hunter2"}}, {"max_turns": "lots"}):
+        refused = api(staff).patch(url, {"extra": extra}, format="json")
+        assert refused.status_code == 422 and "extra" in json.dumps(refused.json()), extra
+    body = {"extra": {"max_turns": 5}, "base_url": "https://proxy.example", "credential": "sk-ant-oat01-x"}
+    configured = api(staff).patch(url, body, format="json").json()
+    assert configured["extra"] == {"max_turns": 5} and configured["has_credential"]
+    moved = api(staff).patch(url, {"base_url": "https://elsewhere.example"}, format="json").json()
+    assert moved["has_credential"] is False  # a credential stays with the host it was entered for
+    ProviderConfig.objects.filter(slug="claude_code").update(last_health={"ok": False, "error": "proxy said hunter2"})
+    seen = api(alice).get(url).json()
+    assert not {"extra", "base_url", "organization", "project"} & set(seen) and seen["last_health"] == {"ok": False}
+    assert "hunter2" not in api(alice).get(f"{BASE}/providers/").content.decode()
+    assert api(staff).get(url).json()["last_health"]["error"] == "proxy said hunter2"
 
 
 @pytest.mark.django_db
@@ -105,13 +131,33 @@ def test_staff_test_a_provider_sync_its_models_and_set_the_default(
 
 
 @pytest.mark.django_db
-def test_output_schemas_are_validated_exported_and_bundled(api, alice, staff):
+def test_output_schemas_are_validated_edited_exported_imported_and_bundled(api, alice, bob, staff):
     created = api(alice).post(f"{BASE}/output-schemas/", {"name": "Story", "schema": STORY}, format="json")
     assert created.status_code == 201 and created.json()["owner"] == "alice" and created.json()["version"] == 1
     bad = api(alice).post(f"{BASE}/output-schemas/", {"name": "Bad", "schema": {"type": 7}}, format="json")
     assert bad.status_code == 422 and "not a valid JSON Schema" in json.dumps(bad.json())
-    exported = api(alice).get(f"{BASE}/output-schemas/{created.json()['id']}/export/").json()
-    assert exported == {"name": "Story", "description": "", "version": 1, "schema": STORY, "render_template": ""}
+    url = f"{BASE}/output-schemas/{created.json()['id']}/"
+    edited = api(alice).patch(url, {"schema": {**STORY, "required": ["headline"]}}, format="json")
+    assert edited.status_code == 200 and edited.json()["version"] == 2
+    api(alice).patch(
+        url, {"schema": STORY, "visibility": "shared", "render_template": "# {{ headline }}"}, format="json"
+    )
+    exported = api(bob).get(f"{url}export/").json()
+    assert exported == {
+        "name": "Story",
+        "description": "",
+        "version": 3,
+        "schema": STORY,
+        "render_template": "# {{ headline }}",
+    }
+    imported = api(bob).post(f"{BASE}/output-schemas/", exported, format="json")  # importing is posting the export
+    assert imported.status_code == 201, imported.content
+    assert (imported.json()["owner"], imported.json()["visibility"], imported.json()["version"]) == (
+        "bob",
+        "private",
+        1,
+    )
+    assert imported.json()["schema"] == STORY and imported.json()["render_template"] == "# {{ headline }}"
     listed = api(alice).get(f"{BASE}/output-schemas/", {"bundled": "true"}).json()["results"]
     assert sorted(s["name"] for s in listed) == ["Content detail", "News article", "Parody news article"]
     bundled = listed[0]["id"]
@@ -250,7 +296,7 @@ def test_a_brief_is_generated_as_a_run_and_applied_as_a_draft_with_suggestions(
 
 @pytest.mark.django_db
 def test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one(
-    api, alice, bob, fake, django_capture_on_commit_callbacks
+    api, alice, bob, fake, site_root, django_capture_on_commit_callbacks
 ):
     chat = Assistant.objects.create(owner=alice, name="Chat")
     created = api(alice).post(
@@ -283,6 +329,13 @@ def test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one(
         drafted = api(alice).post(f"{BASE}/messages/{note}/promote/", {"to": "draft"}, format="json")
     ran(drafted)
     assert Brief.objects.get(public_id=drafted.json()["brief"]["id"]).status == "ready"
+    applied = api(alice).post(
+        f"{BASE}/briefs/{drafted.json()['brief']['id']}/apply/", {"parent": site_root.pk}, format="json"
+    )
+    assert applied.status_code == 201, applied.content
+    post = Page.objects.get(pk=applied.json()["page_id"])
+    assert post.title == "Cats Rule the Sofa" and not post.live  # the draft post, its front matter from the model
+    assert Suggestion.objects.filter(pk__in=applied.json()["suggestions"], field="search_description").exists()
     other = Assistant.objects.create(owner=alice, name="Other")
     assigned = api(alice).patch(
         f"{BASE}/messages/{note}/", {"assistant": str(other.public_id), "text": "ignored"}, format="json"
@@ -312,8 +365,12 @@ def test_a_conversation_runs_its_pipeline(api, alice, fake, django_capture_on_co
     url = f"{BASE}/conversations/{conversation.public_id}/run-pipeline/"
     fake.script.append({"text": "Step one."})
     with django_capture_on_commit_callbacks(execute=True):
-        ran(api(alice).post(url, {"prompt": ""}, format="json"))
-    assert list(conversation.messages.values_list("text", flat=True)) == ["Step one."]
+        ran(api(alice).post(url, {"prompt": "Write about the moon landing"}, format="json"))
+    assert list(conversation.messages.values_list("role", "text")) == [
+        ("user", "Write about the moon landing"),
+        ("assistant", "Step one."),
+    ]
+    assert fake.calls[0]["messages"] == [{"role": "user", "content": "Write about the moon landing"}]
     bare = Conversation.objects.create(owner=alice)
     assert api(alice).post(f"{BASE}/conversations/{bare.public_id}/run-pipeline/", {}, format="json").status_code == 422
 
@@ -393,3 +450,70 @@ def test_a_conversation_starts_from_a_brief_and_its_messages_filter_and_delete(a
     assert api(bob).delete(f"{BASE}/messages/{first.public_id}/").status_code == 404
     assert api(alice).delete(f"{BASE}/messages/{first.public_id}/").status_code == 204
     assert list(conversation.messages.values_list("seq", flat=True)) == [2]
+
+
+# ── what a run may read, where a row may go, who applies, every route ───────
+
+
+@pytest.mark.django_db
+def test_an_assistants_tools_read_only_pages_the_person_running_it_may_edit(
+    api, alice, bob, fake, site_root, django_capture_on_commit_callbacks
+):
+    draft = make_article(
+        site_root, "Embargoed", body=[{"type": "markdown", "value": "TOP-SECRET-DRAFT-BODY"}], publish=False
+    )
+    created = api(bob).post(f"{BASE}/assistants/", {"name": "Reader", "tools": ["content.get_page"]}, format="json")
+    assert created.status_code == 201
+    url = f"{BASE}/assistants/{created.json()['id']}/run/"
+    read = {"tool_calls": [{"name": "content.get_page", "arguments": {"page_id": draft.pk}}]}
+    fake.script += [read, {"text": "Nothing to see."}]
+    with django_capture_on_commit_callbacks(execute=True):
+        run = ran(api(bob).post(url, {"prompt": "What is in the draft?"}, format="json"))
+    detail = api(bob).get(f"/api/v2/agent-runs/{run.pk}/")
+    assert "TOP-SECRET-DRAFT-BODY" not in detail.content.decode()
+    assert [s["result"]["error"] for s in detail.json()["steps"] if s["kind"] == "tool"] == ["permission_denied"]
+    Assistant.objects.filter(public_id=created.json()["id"]).update(visibility=Visibility.SHARED)
+    fake.script += [read, {"text": "A secret."}]
+    with django_capture_on_commit_callbacks(execute=True):
+        run = ran(api(alice).post(url, {"prompt": "What is in the draft?"}, format="json"))  # alice edits it
+    assert "TOP-SECRET-DRAFT-BODY" in api(alice).get(f"/api/v2/agent-runs/{run.pk}/").content.decode()
+
+
+@pytest.mark.django_db
+def test_a_row_belongs_only_to_a_site_its_owner_edits(api, alice, bob, staff, root_page):
+    site = Site.objects.create(hostname="news.example", root_page=root_page, site_name="News")
+    persona = {"name": "Official newsroom writer", "instructions": "x", "site": site.pk, "visibility": "site"}
+    for path, body in (("assistants", persona), ("conversations", {"site": site.pk}), ("briefs", {"site": site.pk})):
+        planted = api(bob).post(f"{BASE}/{path}/", body, format="json")
+        assert planted.status_code == 422 and "a site its owner edits" in json.dumps(planted.json()), path
+    assert api(alice).post(f"{BASE}/assistants/", persona, format="json").status_code == 201
+    assert api(staff).post(f"{BASE}/conversations/", {"site": site.pk}, format="json").status_code == 201
+    mine = api(bob).post(f"{BASE}/assistants/", {"name": "Mine"}, format="json").json()
+    assert api(bob).patch(f"{BASE}/assistants/{mine['id']}/", {"site": site.pk}, format="json").status_code == 422
+
+
+@pytest.mark.django_db
+def test_a_brief_is_applied_by_its_owner_not_by_others_who_see_it(api, alice, bob, site_root):
+    ready = {"status": Brief.READY, "markdown": "Dogs are fine.", "parent": site_root, "visibility": Visibility.SHARED}
+    bobs = Brief.objects.create(owner=bob, prompt="dogs", **ready)
+    assert api(alice).post(f"{BASE}/briefs/{bobs.public_id}/apply/", {}, format="json").status_code == 403
+    assert Brief.objects.get(pk=bobs.pk).status == Brief.READY
+
+
+@pytest.mark.django_db
+def test_the_generic_runs_api_meets_the_same_provider_checks(
+    api, alice, fake, article, django_capture_on_commit_callbacks
+):
+    shared = Assistant.objects.create(owner=alice, name="A", visibility=Visibility.SHARED)
+    body = {
+        "agent": "assistant",
+        "page_id": article.pk,
+        "input": {"kind": "assistant", "assistant": str(shared.public_id), "prompt": "hi"},
+    }
+    for change, why in (({"enabled": False}, "disabled"), ({"monthly_budget_usd": 0}, "budget")):
+        ProviderConfig.objects.filter(slug="fake").update(**{"enabled": True, "monthly_budget_usd": None, **change})
+        with django_capture_on_commit_callbacks(execute=True):
+            created = api(alice).post("/api/v2/agent-runs/", body, format="json")
+        assert created.status_code == 201, created.content
+        run = AgentRun.objects.get(pk=created.json()["id"])
+        assert run.status == "failed" and why in run.error and fake.calls == [], change

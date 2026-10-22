@@ -7,10 +7,19 @@ runner's own loop (`agents.runner.model_loop`) with the persona's provider,
 so each call is a step with its tokens and cost, under the definition's step
 limit and budget. The tools an assistant may use are its own list narrowed to
 the definition's read-only allowlist, and none at all on a provider without the
-runner's tool protocol. A pipeline is a parent run with one child run per step,
-each fed the one before. The rows a run names are re-checked against the person
-who started it, because a run can be requested from more than one surface.
-Evals run the same code against recordings (`agents.llm.get_llm`).
+runner's tool protocol; they run on behalf of the person who started the run,
+so they read only pages that person may edit. A pipeline is a parent run with
+one child run per step, each fed the one before.
+
+A run can be requested from more than one surface, and what it names can change
+while it waits, so the worker asks again: the row the run is about must be its
+starter's to use (else the run fails and that row is left alone), every row it
+uses — the assistant, the pipeline, the output schema, each step's assistant —
+must still be visible to them, and the provider must be enabled and inside its
+budget. A brief or reply a run was bound to takes the run's outcome when the run
+ends without succeeding, even when it was refused before reaching this handler
+(`settle`, on `agents.runner.run_finished`). Evals run the same code against
+recordings (`agents.llm.get_llm`).
 """
 
 import copy
@@ -27,9 +36,9 @@ from agents.runner import BudgetExceeded, execute, model_loop, start_run
 from importers.markdown import from_blocks
 
 from . import providers, rendering
-from .models import Assistant, Brief, Conversation, Message, Pipeline, PipelineStep, ProviderConfig, is_staff
+from .models import Assistant, Brief, Conversation, Message, Pipeline, PipelineStep, ProviderConfig, usable
 from .providers.base import InvalidOutput, ProviderError, validate
-from .services import append, bundled_schema, record_models
+from .services import append, bundled_schema, check_provider, record_models, slug_of
 
 METADATA_INSTRUCTIONS = (
     "You extract publication metadata from a piece of writing. Read it and return the metadata as JSON matching "
@@ -59,12 +68,11 @@ class Persona:
         if assistant is None:
             return cls()
         output_schema = output_schema or assistant.output_schema
-        model = assistant.model
         return cls(
             instructions=assistant.instructions,
             prompt_template=assistant.prompt_template,
-            provider=(assistant.provider.slug if assistant.provider_id else model.provider.slug if model else ""),
-            model=model.model_id if model else "",
+            provider=slug_of(assistant),
+            model=assistant.model.model_id if assistant.model_id else "",
             params=dict(assistant.params or {}),
             schema=output_schema.schema if output_schema else None,
             render_template=output_schema.render_template if output_schema else "",
@@ -80,30 +88,36 @@ def run(run: AgentRun, ctx: ToolContext) -> dict:
     job = JOBS.get(kind)
     if job is None:
         raise ValueError(f"unknown kind {kind!r} (one of {', '.join(JOBS)})")
-    try:
-        return job(run, ctx)
-    except Exception as e:
-        # The run records the failure (agents/runner.py); the row it was filling says so too —
-        # unless the run was refused that row, which is then not the run's to touch.
-        if not isinstance(e, PermissionError):
-            _failed(run, e)
-        raise
+    return job(run, ctx)
 
 
-def _failed(run: AgentRun, error: Exception) -> None:
-    text = f"{type(error).__name__}: {error}"
-    if run.input.get("kind") == "message":
-        Message.objects.filter(public_id=run.input.get("message")).update(status=Message.FAILED, error=text)
-    elif run.input.get("kind") == "brief":
-        Brief.objects.filter(public_id=run.input.get("brief")).update(status=Brief.FAILED, error=text)
+def settle(sender, run: AgentRun, **kwargs) -> None:
+    """When a run ends without succeeding, the brief or reply bound to it (by the
+    service that queued it) is failed with the run's error — never left
+    generating or queued. A row a run merely names is not bound to it."""
+    if run.status == AgentRun.SUCCEEDED:
+        return
+    Brief.objects.filter(run=run, status=Brief.GENERATING).update(
+        status=Brief.FAILED, error=run.error, updated_at=timezone.now()
+    )
+    Message.objects.filter(run=run, status__in=(Message.QUEUED, Message.RUNNING)).update(
+        status=Message.FAILED, error=run.error
+    )
 
 
 def _row(model, public_id, run: AgentRun, *, edit=False):
-    """The row the run names, if the person who started the run may use it."""
+    """The row the run is about, if the person who started the run may use it."""
     user = run.started_by
     row = model.objects.visible_to(user).filter(public_id=public_id).first() if user else None
     if row is None or (edit and not row.can_edit(user)):
         raise PermissionError(f"{model.__name__} {public_id} is not {run.started_by}'s to use")
+    return row
+
+
+def _use(row, run: AgentRun):
+    """A row the run uses, if its starter may still use it."""
+    if not usable(row, run.started_by):
+        raise PermissionError(f"{type(row).__name__} {row.public_id} is not {run.started_by}'s to use")
     return row
 
 
@@ -113,12 +127,17 @@ def _row(model, public_id, run: AgentRun, *, edit=False):
 def generate(run: AgentRun, ctx: ToolContext, persona: Persona, messages: list[dict]) -> dict:
     """One answer from the persona's provider: text, and — with a schema — the
     validated JSON (`json`) rendered to Markdown."""
-    llm = get_llm() if run.trigger == "eval" else providers.get(persona.provider or None)
+    if run.trigger == "eval":
+        llm = get_llm()
+    else:
+        llm = providers.get(check_provider(persona.provider or providers.default_slug()))
     config = ctx.agent
     narrowed = copy.copy(config)
     capable = "tools" in getattr(llm, "capabilities", {"tools"})
     narrowed.tools = [t for t in persona.tools if t in (config.tools or [])] if capable else []
-    tool_ctx = ToolContext(user=ctx.user, agent=narrowed, run=run, trigger=ctx.trigger, extra=ctx.extra)
+    tool_ctx = ToolContext(
+        user=ctx.user, agent=narrowed, run=run, trigger=ctx.trigger, extra=ctx.extra, on_behalf_of=run.started_by
+    )
     model = persona.model or (llm.model_for() if hasattr(llm, "model_for") else "") or config.model
     out = model_loop(
         run,
@@ -173,11 +192,11 @@ def _assistant(run: AgentRun, ctx: ToolContext) -> dict:
 
 
 def _message(run: AgentRun, ctx: ToolContext) -> dict:
-    message = Message.objects.select_related("conversation").get(public_id=run.input.get("message"))
+    message = Message.objects.select_related("conversation", "assistant").get(public_id=run.input.get("message"))
     conversation = _row(Conversation, message.conversation.public_id, run, edit=True)
     Message.objects.filter(pk=message.pk).update(status=Message.RUNNING, run=run)
     earlier = list(conversation.messages.filter(seq__lt=message.seq, status=Message.COMPLETED))
-    persona = Persona.of(message.assistant)
+    persona = Persona.of(_use(message.assistant, run))
     notes = [m.text for m in earlier if m.role == Message.SYSTEM]
     persona.instructions = "\n\n".join(p for p in [persona.instructions, *notes] if p)
     turns = [{"role": m.role, "content": m.text} for m in earlier if m.role != Message.SYSTEM]
@@ -200,7 +219,10 @@ def _pipeline(run: AgentRun, ctx: ToolContext) -> dict:
     conversation = (
         _row(Conversation, run.input["conversation"], run, edit=True) if run.input.get("conversation") else None
     )
-    return run_steps(run, ctx, pipeline, prompt=run.input.get("prompt", ""), conversation=conversation)
+    prompt = run.input.get("prompt", "")
+    if conversation is not None and prompt.strip():
+        append(conversation, role=Message.USER, text=prompt)  # every step replays the conversation, the prompt in it
+    return run_steps(run, ctx, pipeline, prompt=prompt, conversation=conversation)
 
 
 def run_steps(run: AgentRun, ctx: ToolContext, pipeline, *, prompt="", conversation=None, brief=None) -> dict:
@@ -234,6 +256,8 @@ def run_steps(run: AgentRun, ctx: ToolContext, pipeline, *, prompt="", conversat
             revision=run.revision,
             enqueue=False,
         )
+        if message is not None:
+            Message.objects.filter(pk=message.pk).update(run=child)  # so the step's reply takes its run's outcome
         execute(child)
         children.append(child.pk)
         run.tokens += child.tokens
@@ -262,6 +286,8 @@ def _source(step: PipelineStep, turns, last, brief, page) -> list[dict]:
 
 def _brief(run: AgentRun, ctx: ToolContext) -> dict:
     brief = _row(Brief, run.input.get("brief"), run, edit=True)
+    for row in (brief.assistant, brief.output_schema, brief.pipeline):
+        _use(row, run)
     persona = Persona.of(brief.assistant, brief.output_schema)
     if brief.source_text.strip():
         out = {"text": brief.source_text, "markdown": brief.source_text.strip()}
@@ -311,8 +337,8 @@ def extract_metadata(run: AgentRun, ctx: ToolContext, text: str, persona: Person
 
 
 def _provider(run: AgentRun) -> ProviderConfig:
-    if not is_staff(run.started_by):
-        raise PermissionError("provider checks and model syncs are for staff")
+    if run.started_by is None or not run.started_by.has_perm("ai.change_providerconfig"):
+        raise PermissionError("provider checks and model syncs are for the people who configure providers")
     return ProviderConfig.objects.get(slug=run.input.get("provider"))
 
 

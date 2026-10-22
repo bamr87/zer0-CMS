@@ -17,7 +17,10 @@ every check below is written once and holds on every surface:
    anything but `off`; `propose` needs `suggest`; `write` needs `draft` and a
    live (eval-passed) definition; `publish` needs `auto`.
 5. **The permissions hold** — as that user, through Wagtail's own page
-   permission tester when the tool targets a page.
+   permission tester when the tool targets a page; and when the call acts for
+   a person (`ToolContext.on_behalf_of`: a run a person asked for, whose
+   prompt and tools they chose), that person must be able to edit the page
+   too, so a run never reads a draft its starter could not.
 6. **The rate holds** — per agent user and tool, in the cache.
 
 The call then runs in its own transaction and is recorded as an `AgentStep`
@@ -93,6 +96,7 @@ class ToolContext:
     trigger: str = "manual"
     token: object = None
     extra: dict = field(default_factory=dict)
+    on_behalf_of: object = None  # the person whose request this is; a page tool then needs their edit right too
 
     @property
     def policy(self) -> str:
@@ -179,6 +183,9 @@ class Registry:
         page = self._target_page(t, args)
         self._check_policy(t, ctx, page)
         self._check_perms(t, ctx.user, page)
+        person = ctx.on_behalf_of
+        if person is not None and page is not None and not page.permissions_for_user(person).can_edit():
+            raise ToolError("permission_denied", f"page {page.pk} is not one {person} may edit, and the run is theirs")
         self._check_rate(t, ctx.user)
 
     @staticmethod

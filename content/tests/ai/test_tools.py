@@ -68,7 +68,9 @@ def test_the_tools_see_only_what_the_agent_may_see(ctx, alice, article):
 
 
 @pytest.mark.django_db
-def test_an_agent_asks_for_a_brief_that_people_of_the_site_can_review(ctx, alice, bob, fake, worker, site_root):
+def test_an_agent_asks_for_a_brief_that_people_of_the_site_review_and_apply(
+    ctx, api, alice, bob, fake, worker, site_root
+):
     site = Site.objects.get(root_page=site_root)
     writer = Assistant.objects.create(owner=alice, name="Writer", visibility=Visibility.SHARED)
     fake.script += [{"text": "Cats rule."}, {"text": json.dumps(DETAIL)}]
@@ -79,6 +81,11 @@ def test_an_agent_asks_for_a_brief_that_people_of_the_site_can_review(ctx, alice
     assert (brief.site, brief.visibility, brief.parent_id) == (site, Visibility.SITE, site_root.pk)
     assert Brief.objects.visible_to(alice).filter(pk=brief.pk).exists()  # alice edits the site
     assert not Brief.objects.visible_to(bob).filter(pk=brief.pk).exists()
+    url = f"/api/v2/ai/briefs/{brief.public_id}/apply/"
+    assert api(bob).post(url, {}, format="json").status_code == 404
+    applied = api(alice).post(url, {}, format="json")  # not hers, but an agent's, shown to her site's editors
+    assert applied.status_code == 201, applied.content
+    assert Brief.objects.get(pk=brief.pk).status == Brief.APPLIED and applied.json()["page_id"]
     unwritable = {"prompt": "cats"}
     with pytest.raises(ToolError) as refused:
         registry.call("ai.generate_brief", unwritable, ctx)

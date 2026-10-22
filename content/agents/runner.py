@@ -15,6 +15,11 @@ can be read back step by step, and nothing a step did is lost.
 
 Nothing here writes content. Writing is what tools do, under the registry's
 checks; the runner only decides which tool the model asked for.
+
+`run_finished` is sent when a run reaches a final status, in the transaction
+that records it, whether or not its handler ever ran — so whatever the run was
+filling (an AI layer brief or reply) can take the run's outcome even when the
+run was refused before the handler started.
 """
 
 import copy
@@ -25,6 +30,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.dispatch import Signal
 from django.utils import timezone
 from django.utils.module_loading import import_string
 
@@ -33,6 +39,8 @@ from .models import AgentRun, AgentStep
 from .principals import is_agent_user
 from .registry import ToolContext, ToolError, registry
 from .tracing import current_trace_id, new_trace_id, span, trace
+
+run_finished = Signal()  # sender=AgentRun, run=<the run, final>
 
 
 class RunRefused(Exception):
@@ -169,6 +177,8 @@ def model_loop(
     run.llm_backend = getattr(llm, "name", type(llm).__name__)
     run.save(update_fields=["llm_backend"])
     tools = [t.spec() for t in registry.for_context(ctx)]
+    if tools and "tools" not in getattr(llm, "capabilities", {"tools"}):
+        raise ValueError(f"{run.llm_backend} has no tool calls and {config.slug} uses tools: choose another backend")
     messages = list(messages) if messages is not None else [{"role": "user", "content": first_message(run)}]
     model = model or config.model
     system = config.system_prompt if system is None else system
@@ -269,6 +279,7 @@ def _finish(run: AgentRun, status: str, output=None, error="") -> AgentRun:
                 "suggestions": Suggestion.objects.filter(run=run).count(),
             },
         )
+        run_finished.send(sender=AgentRun, run=run)
     if run.trigger == "workflow":
         from workflow.services import finish_review
 
