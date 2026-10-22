@@ -96,7 +96,6 @@ class NewBookSerializer(serializers.Serializer):
     slug = serializers.SlugField(required=False, allow_blank=True, help_text="Its directory; else from the title.")
     logline = serializers.CharField(required=False, allow_blank=True)
     genre = serializers.CharField(required=False, allow_blank=True)
-    parent = serializers.IntegerField(required=False, help_text="Where it goes; else the library.")
 
 
 class NewChapterSerializer(serializers.Serializer):
@@ -117,7 +116,6 @@ class AssistSerializer(serializers.Serializer):
 
 class PremiseSerializer(serializers.Serializer):
     premise = serializers.CharField(max_length=8000, help_text="One or two sentences: premise, protagonist or theme.")
-    parent = serializers.IntegerField(required=False, help_text="Where the book will go; else the library.")
     assistant = serializers.UUIDField(required=False, help_text="An outliner of yours; else the bundled one.")
 
 
@@ -131,8 +129,22 @@ class PremiseAcceptedSerializer(serializers.Serializer):
     run = RunRefSerializer()
 
 
-class CreateFromBriefSerializer(serializers.Serializer):
-    parent = serializers.IntegerField(required=False, help_text="Where the book goes; else the brief's.")
+class DocumentSerializer(serializers.Serializer):
+    path = serializers.CharField(help_text="Inside the book, e.g. guides/act-1-chapters-01-05.md.")
+    text = serializers.CharField(allow_blank=True, trim_whitespace=False)
+
+
+class BookDocumentsSerializer(serializers.Serializer):
+    revision = serializers.IntegerField(allow_null=True, help_text="The revision they are from: send it back to save.")
+    documents = DocumentSerializer(many=True)
+
+
+class SetDocumentSerializer(serializers.Serializer):
+    base_revision_id = serializers.IntegerField(allow_null=True, help_text="The revision edited; a newer one is a 409.")
+    path = serializers.CharField(max_length=500)
+    text = serializers.CharField(
+        allow_blank=True, allow_null=True, trim_whitespace=False, help_text="The file's text; null removes it."
+    )
 
 
 class ManuscriptSerializer(serializers.Serializer):

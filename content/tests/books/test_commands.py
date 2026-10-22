@@ -7,7 +7,9 @@ import json
 import pytest
 from django.core.management import call_command
 
+from agents.principals import ensure_legacy_import_user
 from cms.models import ChapterPage
+from cms.services import publish
 
 
 def run(capsys, *args) -> str:
@@ -61,3 +63,12 @@ def test_import_and_export_commands(library_dir, tmp_path, capsys):
     assert "library: 10 written, 0 unchanged" in out
     assert (tmp_path / "sample" / "book.yml").read_bytes() == (library_dir / "sample" / "book.yml").read_bytes()
     assert "0 written, 10 unchanged" in run(capsys, "export_books", "--out", str(tmp_path))
+    chapter = tmp_path / "sample" / "chapters" / "ch01.md"
+    chapter.write_text(chapter.read_text() + "A hand edit.\n")
+    edited = ChapterPage.objects.get(number=1).get_latest_revision_as_object()
+    edited.chapter_status = "final"
+    publish(edited, ensure_legacy_import_user())
+    with pytest.raises(SystemExit):  # the hand edit is kept, and the export says so
+        call_command("export_books", "--out", str(tmp_path))
+    assert "changed on disk since the platform last read or wrote it" in capsys.readouterr().err
+    assert "A hand edit." in chapter.read_text()

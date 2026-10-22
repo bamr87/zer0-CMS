@@ -4777,16 +4777,8 @@
         "/api/v2/books/": {
             "get": {
                 "operationId": "books_list",
-                "summary": "The shelf: every book the caller may open, with its status and progress",
+                "summary": "The library's shelf: every book the caller may open, with its status and progress",
                 "parameters": [
-                    {
-                        "in": "query",
-                        "name": "site",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "description": "Only this site's books."
-                    },
                     {
                         "in": "query",
                         "name": "templates",
@@ -5579,6 +5571,262 @@
                 }
             }
         },
+        "/api/v2/books/{id}/documents/": {
+            "get": {
+                "operationId": "books_documents",
+                "summary": "A book's other files — act guides, README — as its latest revision holds them",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDocuments"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "books_documents_set",
+                "summary": "Add, change or (text null) remove one of a book's other files, as a draft revision",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetDocument"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetDocument"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetDocument"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDocuments"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/books/{id}/issues/": {
             "get": {
                 "operationId": "books_issues",
@@ -5985,25 +6233,6 @@
                 "tags": [
                     "books"
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CreateFromBrief"
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CreateFromBrief"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CreateFromBrief"
-                            }
-                        }
-                    }
-                },
                 "security": [
                     {
                         "agentToken": []
@@ -9730,6 +9959,28 @@
                     "word_count"
                 ]
             },
+            "BookDocuments": {
+                "type": "object",
+                "properties": {
+                    "revision": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The revision they are from: send it back to save."
+                    },
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Document"
+                        }
+                    }
+                },
+                "required": [
+                    "documents",
+                    "revision"
+                ]
+            },
             "BookStats": {
                 "type": "object",
                 "properties": {
@@ -10286,14 +10537,21 @@
                     "updated_at"
                 ]
             },
-            "CreateFromBrief": {
+            "Document": {
                 "type": "object",
                 "properties": {
-                    "parent": {
-                        "type": "integer",
-                        "description": "Where the book goes; else the brief's."
+                    "path": {
+                        "type": "string",
+                        "description": "Inside the book, e.g. guides/act-1-chapters-01-05.md."
+                    },
+                    "text": {
+                        "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "path",
+                    "text"
+                ]
             },
             "Error": {
                 "type": "object",
@@ -10804,10 +11062,6 @@
                     },
                     "genre": {
                         "type": "string"
-                    },
-                    "parent": {
-                        "type": "integer",
-                        "description": "Where it goes; else the library."
                     }
                 },
                 "required": [
@@ -12394,10 +12648,6 @@
                         "description": "One or two sentences: premise, protagonist or theme.",
                         "maxLength": 8000
                     },
-                    "parent": {
-                        "type": "integer",
-                        "description": "Where the book will go; else the library."
-                    },
                     "assistant": {
                         "type": "string",
                         "format": "uuid",
@@ -12941,6 +13191,34 @@
                 "required": [
                     "name",
                     "schema"
+                ]
+            },
+            "SetDocument": {
+                "type": "object",
+                "properties": {
+                    "base_revision_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The revision edited; a newer one is a 409."
+                    },
+                    "path": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "text": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The file's text; null removes it."
+                    }
+                },
+                "required": [
+                    "base_revision_id",
+                    "path",
+                    "text"
                 ]
             },
             "Site": {

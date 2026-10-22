@@ -1,21 +1,29 @@
 """The book assistant (books/handlers.py, agents/definitions/books.yaml): every
 bookshelf task as a run of the `books` agent through the AI layer, on the
 scripted fake provider — draft, continue and revise arrive as suggestions on
-the chapter that a person accepts; the continuity check (structured findings),
-the critique and the outline are the run's output; a book from a premise is an
-outline brief a person turns into a draft book and its chapter stubs. What a run
-is given is the book's own material; who may ask is checked when it is asked
-and again when it runs. Nothing reaches a model."""
+the chapter that a person accepts — only the prose, however the chapter's
+sections are marked, and judged by the brand guard on what they add; the
+continuity check (structured findings), the critique and the outline are the
+run's output; a book from a premise is an outline brief a person turns into a
+draft book and its chapter stubs, whichever endpoint applies it. What a run is
+given is the book's own material; who may ask is checked when it is asked and
+again when it runs; a book's notes are not copied into the agents' memory.
+Nothing reaches a model."""
 
 import json
+from pathlib import Path
 
 import pytest
+import yaml
+from django.conf import settings
 
 from agents.models import AgentRun, Memory
 from ai.models import Assistant, Brief
+from ai.services import apply_brief
 from books import files, services
-from books.handlers import plan, prose_blocks
+from books.handlers import plan, prose_regions
 from cms.models import BookPage, ChapterPage
+from cms.services import save_draft
 from ops.errors import Forbidden, Invalid
 from suggestions.models import Suggestion
 from suggestions.services import accept
@@ -253,15 +261,47 @@ def test_a_premise_becomes_an_outline_a_person_turns_into_a_draft_book(sample, a
         services.create_from_brief(brief, alice)
 
 
+@pytest.mark.django_db
+def test_a_long_or_empty_value_from_the_model_never_costs_the_book(sample, alice, fake, worker):
+    wordy = {**OUTLINE, "genre": "Satire " * 60, "tense": "Past " * 30}
+    wordy["chapters"] = [{**OUTLINE["chapters"][0], "title": "  "}, *OUTLINE["chapters"][1:]]
+    fake.script += [{"text": json.dumps(wordy)}, {"text": json.dumps(DETAIL)}]
+    brief, _run = worker(services.outline_from_premise, alice, premise="A speechwriter starts telling the truth.")
+    book = fresh(services.create_from_brief(Brief.objects.get(pk=brief.pk), alice))
+    assert len(book.genre) == 255 and len(book.tense) == 80
+    assert [fresh(c).title for c in ChapterPage.objects.child_of(book).order_by("path")][0] == "Chapter 1"
+
+
+@pytest.mark.django_db
+def test_an_outline_applied_as_any_brief_still_becomes_the_book(sample, alice, fake, worker):
+    """The AI layer's generic apply (/api/v2/ai/briefs/<id>/apply/) makes the same book, not a page of suggestions."""
+    fake.script += [{"text": json.dumps(OUTLINE)}, {"text": json.dumps(DETAIL)}]
+    brief, _run = worker(services.outline_from_premise, alice, premise="A speechwriter starts telling the truth.")
+    book, proposed = apply_brief(Brief.objects.get(pk=brief.pk), user=alice)
+    assert isinstance(book, BookPage) and proposed == [] and not book.live
+    assert [fresh(c).title for c in ChapterPage.objects.child_of(book).order_by("path")] == [
+        "Opening Remarks",
+        "The Leak",
+        "Closing Remarks",
+    ]
+    assert Brief.objects.get(pk=brief.pk).status == Brief.APPLIED
+
+
 # ── the pieces ─────────────────────────────────────────────────────────────
 
 
-def test_prose_blocks_follow_the_chapter_body_or_skip_the_scaffolding():
-    heading = lambda level, text: {"id": text, "type": "heading", "value": {"level": str(level), "text": text}}  # noqa: E731
-    md = lambda i, text: {"id": i, "type": "markdown", "value": text}  # noqa: E731
+def heading(level, text):
+    return {"id": text, "type": "heading", "value": {"level": str(level), "text": text}}
+
+
+def md(block_id, text):
+    return {"id": block_id, "type": "markdown", "value": text}
+
+
+def test_the_prose_follows_the_chapter_body_or_skips_the_scaffolding():
     skeleton = [heading(2, "Outline and Contextual Alignment"), md("a", "plan"), heading(2, "Chapter Body")]
     skeleton += [md("b", "one"), heading(3, "A scene"), md("c", "two\n\n---"), heading(2, "Links and References")]
-    assert prose_blocks(skeleton) == (2, [3, 4, 5])
+    assert [i for i, _s, _e in prose_regions(skeleton)] == [3, 4, 5]
     assert plan("draft", skeleton, "New.") == [
         ("replace", "b", {"type": "markdown", "value": "New.\n\n---"}),
         ("delete", "A scene", None),
@@ -269,29 +309,81 @@ def test_prose_blocks_follow_the_chapter_body_or_skip_the_scaffolding():
     ]
     plain = [heading(2, "Outline and Contextual Alignment"), md("a", "plan"), heading(2, "Chapter 1: Arrival")]
     plain += [md("b", "prose"), heading(2, "Links and References"), md("c", "- [x](y)")]
-    assert prose_blocks(plain) == (None, [3])
+    assert [i for i, _s, _e in prose_regions(plain)] == [3]
     assert plan("continue", plain, "More.") == [("replace", "b", {"type": "markdown", "value": "prose\n\nMore."})]
     assert plan("draft", [heading(2, "Chapter Body")], "First.") == [
         ("insert", "Chapter Body", {"type": "markdown", "value": "First."})
     ]
 
 
+# A chapter whose sections are `#` headings: Markdown keeps it as one block.
+H1 = (
+    "# Outline and Contextual Alignment\n\n- The letter arrives.\n\n---\n\n# Chapter Body\n\n"
+    "Kareem read the letter twice.\n\n---\n\n# Links and References\n\n- [Next Chapter: X](ch02.md)\n\n---"
+)
+
+
+def test_draft_and_continue_find_the_prose_inside_a_block_with_h1_sections():
+    blocks = [md("a", H1)]
+    assert plan("draft", blocks, "He did not read it again.") == [
+        (
+            "replace",
+            "a",
+            {"type": "markdown", "value": H1.replace("Kareem read the letter twice.", "He did not read it again.")},
+        )
+    ]
+    [(op, block_id, block)] = plan("continue", blocks, "He folded it.")
+    assert (op, block_id) == ("replace", "a")
+    assert block["value"] == H1.replace("twice.", "twice.\n\nHe folded it.")
+    empty = [md("a", H1.replace("Kareem read the letter twice.\n\n", ""))]  # a body with nothing but its rule
+    assert plan("draft", empty, "First.")[0][2]["value"] == H1.replace("Kareem read the letter twice.", "First.")
+    nested = [heading(2, "Chapter Body"), md("b", "one"), heading(3, "Body language"), md("c", "two")]
+    assert [i for i, _s, _e in prose_regions(nested)] == [1, 2, 3]  # one region per block, though two headings match
+
+
 @pytest.mark.django_db
-def test_the_continuity_ledger_is_the_agents_memory_of_the_book(sample):
-    memory = Memory.objects.get(scope="page", scope_id=str(sample.pk), key="book.continuity")
-    assert memory.value == {
-        "book": "sample",
-        "title": "A Sample Book",
-        "text": "# Ledger\n\nThe door is always green.\n",
-    }
+def test_drafting_a_chapter_of_the_real_book_keeps_its_outline_and_links(impairment, alice, fake, worker):
+    """impairment's ch05 has its sections as `#` headings: only its prose is replaced."""
+    fake.script.append({"text": "The invite came at seven."})
+    fifth = chapter(impairment, 5)
+    run = run_of(worker, impairment, alice, task="draft", chapter=fifth)
+    [suggestion] = Suggestion.objects.filter(run=run)
+    accept([suggestion], alice)
+    text = files.chapter_text(fresh(fifth))
+    assert "# Outline and Contextual Alignment\n\n**Purpose of the Chapter:**" in text
+    assert "# Chapter Body\n\nThe invite came at seven.\n\n---\n\n# References & Contextual Alignment" in text
+    assert "- [Next Chapter: Dirt in the Water](ch06.md)" in text and "The email arrived" not in text
+
+
+@pytest.mark.django_db
+def test_a_phrase_the_author_wrote_never_blocks_continue_or_revise(impairment, alice, fake, worker):
+    """impairment's ch03 says "unlocking value" — a built-in ban — in its own prose."""
+    third = chapter(impairment, 3)
+    fake.script += [
+        {"text": "Nobody in the room asked a question."},
+        {"text": "of finding efficiencies"},
+        {"text": "They were unlocking value again."},
+    ]
+    more = run_of(worker, impairment, alice, task="continue", chapter=third)
+    assert more.status == AgentRun.SUCCEEDED, more.error
+    accept(list(Suggestion.objects.filter(run=more)), alice)
+    revised = run_of(worker, impairment, alice, task="revise", chapter=third, selection="of unlocking value")
+    assert revised.status == AgentRun.SUCCEEDED, revised.error
+    accept(list(Suggestion.objects.filter(run=revised)), alice)
+    text = files.chapter_text(fresh(third))
+    assert "Nobody in the room asked a question." in text and "of finding efficiencies" in text
+    again = run_of(worker, impairment, alice, task="continue", chapter=third)  # the model's own banned phrase
+    assert again.status == AgentRun.FAILED and "unlocking value" in again.error
+
+
+@pytest.mark.django_db
+def test_a_books_notes_are_not_copied_into_the_agents_memory(sample):
     draft = sample.get_latest_revision_as_object()
     draft.continuity_notes = "# Ledger\n\nThe door is red now.\n"
-    from cms.services import save_draft
-
     save_draft(draft, user=None)
-    memory.refresh_from_db()
-    assert memory.value["text"] == "# Ledger\n\nThe door is red now.\n"
-    assert Memory.objects.filter(scope="page", scope_id=str(sample.pk), key="book.characters").exists()
+    assert not Memory.objects.filter(scope="page", scope_id=str(sample.pk)).exists()
+    definition = Path(settings.BASE_DIR) / "agents" / "definitions" / "books.yaml"
+    assert "memory.recall" not in yaml.safe_load(definition.read_text(encoding="utf-8"))["tools"]
 
 
 @pytest.mark.django_db

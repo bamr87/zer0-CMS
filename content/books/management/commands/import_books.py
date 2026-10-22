@@ -1,8 +1,10 @@
 """`manage.py import_books [--path DIR] [--site KEY] [--book SLUG …] [--force]`:
 read a library's books (`<DIR>/<slug>/`, templates included) into the platform
-(books/files.py). Re-running it changes nothing that did not change on disk and
-never overwrites what was changed in the platform (a conflict, unless
-`--force`); exit status 1 on any conflict or error."""
+(books/files.py). Re-running it changes nothing that did not change on disk; it
+never overwrites what was changed in the platform since the files were last
+read or written (a conflict, unless `--force`), never brings back a page
+deleted there, and publishes a change only over a live page with no draft;
+exit status 1 on any conflict or error."""
 
 from django.conf import settings
 from django.core.management.base import BaseCommand

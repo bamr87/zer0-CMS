@@ -13,6 +13,7 @@ urlpatterns = [
     path("<int:pk>/", views.book, name="book"),
     path("<int:pk>/issues/", views.issues, name="book-issues"),
     path("<int:pk>/chapters/", views.add_chapter, name="book-chapters"),
+    path("<int:pk>/documents/", views.Documents.as_view(), name="book-documents"),
     path("<int:pk>/manuscript/", views.manuscript, name="book-manuscript"),
     path("<int:pk>/context/", views.book_context, name="book-context"),
     path("<int:pk>/assist/", views.Assist.as_view(), name="book-assist"),

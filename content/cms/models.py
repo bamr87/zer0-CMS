@@ -112,6 +112,10 @@ class BasePage(AgentManagedMixin, Page):
 
     # The typed fields a subclass adds to the hash, beyond the shared ones.
     hashed_fields: tuple[str, ...] = ()
+    # Of those, the ones that joined the hash after pages were imported with it:
+    # left out while at their default, so such a page keeps the hash it was
+    # imported with (importers.ImportedSource.import_hash) and is still unchanged.
+    sparse_hashed_fields: tuple[str, ...] = ()
     # What a person edits in the studio and the extension (api/pages.py): the
     # shared fields, then the typed fields each subclass adds. The body is
     # edited block by block, not as a field.
@@ -179,7 +183,9 @@ class BasePage(AgentManagedMixin, Page):
             "front_matter": self.front_matter,
         }
         for name in self.hashed_fields:
-            data[name] = self.hashed_value(name)
+            value = self.hashed_value(name)
+            if name not in self.sparse_hashed_fields or value != self._meta.get_field(name).get_default():
+                data[name] = value
         return data
 
     def hashed_value(self, name):
@@ -363,7 +369,7 @@ class BookPage(BasePage):
     )
     character_notes = models.TextField("character bible", blank=True, help_text="Who everyone is, in Markdown.")
     continuity_notes = models.TextField(
-        "continuity ledger", blank=True, help_text="Settled facts and open questions; agents recall it as memory."
+        "continuity ledger", blank=True, help_text="Settled facts and open questions; every book task reads it."
     )
     style_guide = models.TextField(blank=True, help_text="The book's voice, register and house rules, in Markdown.")
     documents = models.JSONField(
@@ -403,6 +409,8 @@ class BookPage(BasePage):
         *manuscript_fields,
         "documents",
     )
+    sparse_hashed_fields = (*manuscript_fields, "documents")  # new in cms/0002
+    # `documents` is edited file by file in the Books workspace (/api/v2/books/<id>/documents/).
     editor_fields = ("subtitle", "author", "series", "profile", "audience", "art_style", *manuscript_fields)
 
     content_panels = Page.content_panels + [
@@ -426,6 +434,15 @@ class BookPage(BasePage):
         GraphQLString("series"),
         GraphQLString("profile"),
     ]
+
+    @classmethod
+    def from_brief(cls, brief, *, user):
+        """A brief whose result is a book outline becomes a book of the library
+        with a stub per planned chapter (books/services.py), however it is
+        applied; any other brief is made the generic way (None)."""
+        from books.services import create_from_brief, is_outline
+
+        return create_from_brief(brief, user) if is_outline(brief) else None
 
 
 class ChapterPage(BasePage):
@@ -465,6 +482,7 @@ class ChapterPage(BasePage):
         "tone",
         "style",
     )
+    sparse_hashed_fields = hashed_fields[1:]  # all but the number are new in cms/0002
     editor_fields = hashed_fields
     content_panels = Page.content_panels + [
         FieldPanel("number"),

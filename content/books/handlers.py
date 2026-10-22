@@ -12,8 +12,12 @@ validated). The assistant's tools are none: the book comes in the request.
 
 What the result becomes:
 
-- **draft** — replaces the chapter's prose (the blocks under "Chapter Body"),
-- **continue** — is added after where the prose stops,
+- **draft** — replaces the chapter's prose: what is under "Chapter Body", else
+  what is outside the outline scaffolding — found in the text as the read model
+  finds it (`library.prose_spans`), so a chapter whose sections are `#` headings
+  inside one Markdown block has only its prose replaced, never its outline,
+  references or navigation;
+- **continue** — is added where the prose stops, before its closing rule,
 - **revise** — replaces the selected passage in the block that holds it,
 
 each as suggestions proposed through the tool registry (`content.propose_edit`,
@@ -32,9 +36,10 @@ from ai.handlers import Persona, generate
 from ai.models import Assistant, usable
 from ai.services import stable_id
 from cms.models import BookPage, ChapterPage
+from importers.markdown import block_to_markdown
 
 from . import context, files, library
-from .services import chapter_in
+from .services import chapter_in, read
 
 RULE = re.compile(r"\n*^(?:-{3,}|\*{3,}|_{3,})[ \t]*\Z", re.M)
 
@@ -57,8 +62,7 @@ def run(run, ctx) -> dict:
         page = chapter or book
         if run.started_by is None or not page.permissions_for_user(run.started_by).can_edit():
             raise PermissionError(f"page {page.pk} is not one {run.started_by} may edit")
-    rm = library.Book.read(files.book_dir(book), files.book_tree(book))
-    rm_chapter = chapter_in(rm, chapter) if chapter is not None else None
+    rm, rm_chapter = chapter_in(book, chapter) if chapter is not None else (read(book), None)
     prompt = context.request(
         rm, rm_chapter, task, instruction=data.get("instruction", ""), selection=data.get("selection", "")
     )
@@ -87,36 +91,43 @@ def target(run, task) -> tuple[BookPage, ChapterPage | None]:
 # ── the result as suggestions ──────────────────────────────────────────────
 
 
-def _heading(block, starts: tuple[str, ...]) -> bool:
-    return block["type"] == "heading" and block["value"]["text"].strip().lower().startswith(starts)
-
-
-def prose_blocks(blocks: list[dict]) -> tuple[int | None, list[int]]:
-    """The "Chapter Body" heading's index and the blocks under it; with no such
-    heading, None and the blocks outside the scaffolding (library.prose_spans, by block)."""
-    for i, block in enumerate(blocks):
-        if _heading(block, library.PROSE_HEADINGS):
-            level, under = int(block["value"]["level"]), []
-            for j in range(i + 1, len(blocks)):
-                if blocks[j]["type"] == "heading" and int(blocks[j]["value"]["level"]) <= level:
-                    break
-                under.append(j)
-            return i, under
-    prose, skipping = [], None
-    for i, block in enumerate(blocks):
-        if block["type"] == "heading":
-            level = int(block["value"]["level"])
-            if skipping is None or level <= skipping:
-                skipping = level if _heading(block, library.SCAFFOLD_HEADINGS) else None
-        elif skipping is None:
-            prose.append(i)
-    return None, prose
+def prose_regions(blocks: list[dict]) -> list[tuple[int, int, int]]:
+    """Where the chapter's prose is, as (block index, start, end) in each
+    block's Markdown: the read model's prose spans (`library.prose_spans`, which
+    reads `#` headings too) over the body as `from_blocks` joins it."""
+    texts = [block_to_markdown(b["type"], b["value"]) for b in blocks]
+    starts, at = [], 0
+    for text in texts:
+        starts.append(at)
+        at += len(text) + 2  # from_blocks joins blocks with a blank line
+    spans = []  # merged where they overlap (a "Body …" heading nested under "Chapter Body")
+    for start, end in sorted(library.prose_spans("\n\n".join(texts))):
+        if spans and start <= spans[-1][1]:
+            spans[-1] = (spans[-1][0], max(end, spans[-1][1]))
+        else:
+            spans.append((start, end))
+    regions = []
+    for start, end in spans:
+        for i, text in enumerate(texts):
+            lo, hi = max(start, starts[i]), min(end, starts[i] + len(text))
+            if lo < hi and text[lo - starts[i] : hi - starts[i]].strip():
+                regions.append((i, lo - starts[i], hi - starts[i]))
+    return regions
 
 
 def _rule(text: str) -> tuple[str, str]:
     """`text` without a closing horizontal rule, and the rule (with its blank line) or ''."""
     match = RULE.search(text)
     return (text[: match.start()], "\n\n" + match.group(0).strip()) if match else (text, "")
+
+
+def _put(value: str, start: int, end: int, text: str) -> str:
+    """`value` with its [start, end) replaced by `text`, the blank lines around that span kept."""
+    span = value[start:end]
+    lead, trail = span[: len(span) - len(span.lstrip())], span[len(span.rstrip()) :]
+    if not text:  # cut: keep one of the separators, so what was either side stays apart
+        return value[:start] + (trail or lead) + value[end:]
+    return value[:start] + lead + text + trail + value[end:]
 
 
 def plan(task: str, blocks: list[dict], text: str, selection: str = "") -> list[tuple[str, str, dict | None]]:
@@ -132,21 +143,34 @@ def plan(task: str, blocks: list[dict], text: str, selection: str = "") -> list[
                     ("replace", block["id"], {"type": "markdown", "value": block["value"].replace(passage, text, 1)})
                 ]
         raise ValueError("the passage to revise is not in the chapter's latest revision")
-    heading, prose = prose_blocks(blocks)
-    after = blocks[heading]["id"] if heading is not None else (blocks[-1]["id"] if blocks else "")
-    if not prose:
+    regions = prose_regions(blocks)
+    if not regions:
+        heading = next((b for b in blocks if _heading(b, library.PROSE_HEADINGS)), None)
+        after = heading["id"] if heading else (blocks[-1]["id"] if blocks else "")
         return [("insert", after, {"type": "markdown", "value": text})]
+    values = {i: blocks[i]["value"] for i, _s, _e in regions if blocks[i]["type"] == "markdown"}
+    first, last = regions[0], regions[-1]
     if task == "draft":
-        _kept, rule = _rule(blocks[prose[-1]]["value"]) if blocks[prose[-1]]["type"] == "markdown" else ("", "")
-        first = blocks[prose[0]]
-        return [("replace", first["id"], {"type": "markdown", "value": text + rule})] + [
-            ("delete", blocks[i]["id"], None) for i in prose[1:]
-        ]
-    last = blocks[prose[-1]]
-    if last["type"] != "markdown":
-        return [("insert", last["id"], {"type": "markdown", "value": text})]
-    kept, rule = _rule(last["value"])
-    return [("replace", last["id"], {"type": "markdown", "value": f"{kept.rstrip()}\n\n{text}{rule}"})]
+        closing = _rule(values[last[0]][last[1] : last[2]].rstrip())[1] if last[0] in values else ""
+        edits = [(region, text + closing if region == first else "") for region in regions]
+    else:  # continue: after the prose, before the rule that closes it
+        if last[0] not in values:
+            return [("insert", blocks[last[0]]["id"], {"type": "markdown", "value": text})]
+        kept, closing = _rule(values[last[0]][last[1] : last[2]].strip())
+        edits = [(last, f"{kept.rstrip()}\n\n{text}{closing}".lstrip())]
+    for (i, start, end), new in reversed(edits):  # back to front, so a block's earlier offsets stay right
+        whole = i not in values or (start, end) == (0, len(values[i]))
+        values[i] = None if whole and not new else new if whole else _put(values[i], start, end, new)
+    return [
+        ("delete", blocks[i]["id"], None)
+        if values[i] is None
+        else ("replace", blocks[i]["id"], {"type": "markdown", "value": values[i]})
+        for i in sorted({i for (i, _s, _e), _new in edits})
+    ]
+
+
+def _heading(block, starts: tuple[str, ...]) -> bool:
+    return block["type"] == "heading" and block["value"]["text"].strip().lower().startswith(starts)
 
 
 def propose(run, ctx, chapter: ChapterPage, task: str, text: str, selection: str) -> list[int]:

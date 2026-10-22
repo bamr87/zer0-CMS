@@ -94,12 +94,15 @@ def clean_meta(field: str, value):
     return value
 
 
-def guard(value, block_type=None):
+def guard(value, block_type=None, before=None):
     """The checks every agent-proposed value passes, at propose time and again
-    at accept time: the brand guard, and — outside a code block, which shows
-    markup rather than running it — no active markup."""
+    at accept time: the brand guard — on what a replace adds to the block it
+    replaces (`before`), so the author's own words never block it — and,
+    outside a code block, which shows markup rather than running it, no active
+    markup at all."""
     text = text_of(value)
-    findings = page_findings(text) + ([] if block_type == "code" else markup_findings(text))
+    old = None if before is None else text_of(before)
+    findings = page_findings(text, before=old) + ([] if block_type == "code" else markup_findings(text))
     if has_errors(findings):
         raise SuggestionError("brand guard: " + "; ".join(f["message"] for f in findings if f["level"] == "error"))
     return findings
@@ -107,6 +110,11 @@ def guard(value, block_type=None):
 
 def _block_ids(page) -> list[str]:
     return [b.id for b in page.body]
+
+
+def _block_value(page, block_id):
+    """The stored value of one of `page`'s blocks (None when it has no such block)."""
+    return next((b["value"] for b in page.body.get_prep_value() if b.get("id") == block_id), None)
 
 
 def apply_op(page, op: str, *, block_id="", payload=None, field="") -> str | None:
@@ -170,7 +178,9 @@ def validate_proposal(target, op, block_id, payload, field):
         raise SuggestionError(f"block {block_id!r} is not in page {target.pk}")
     if op in (Suggestion.INSERT, Suggestion.REPLACE):
         block = clean_block(payload)
-        guard(block["value"], block["type"])
+        guard(
+            block["value"], block["type"], before=_block_value(latest, block_id) if op == Suggestion.REPLACE else None
+        )
         return block
     if op == Suggestion.DELETE:
         return {}
@@ -280,7 +290,8 @@ def accept(suggestions, user):
             if s.op == Suggestion.META:
                 guard(payload.get("value"))
             elif s.op in (Suggestion.INSERT, Suggestion.REPLACE):
-                guard(payload.get("value"), payload.get("type"))
+                before = _block_value(page, s.block_id) if s.op == Suggestion.REPLACE else None
+                guard(payload.get("value"), payload.get("type"), before=before)
             block = apply_op(page, s.op, block_id=s.block_id, payload=payload, field=s.field)
             if block:
                 written.append((s, block))

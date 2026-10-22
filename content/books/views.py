@@ -1,6 +1,6 @@
 """`/api/v2/books/`: the studio's Books area over REST (books/README.md).
 
-    GET  /api/v2/books/                        the shelf (`?templates=true` for the templates)
+    GET  /api/v2/books/                        the library's shelf (`?templates=true` for the templates)
     POST /api/v2/books/                        a new book from the template, as a draft
     GET  /api/v2/books/tasks/                  what the book assistant can do
     POST /api/v2/books/premise/                a premise → an outline brief, generated as a run (202)
@@ -8,15 +8,17 @@
     GET  /api/v2/books/<id>/                   a book's overview: facts, chapters in order, statistics, findings
     GET  /api/v2/books/<id>/issues/            its validation findings
     POST /api/v2/books/<id>/chapters/          the next chapter, as a draft stub
+    GET  /api/v2/books/<id>/documents/         its other files (act guides, README) and the revision they are from
+    POST /api/v2/books/<id>/documents/         add, change or remove one of them, as a draft revision
     GET  /api/v2/books/<id>/manuscript/        the compiled manuscript
     GET  /api/v2/books/<id>/context/           what a task's model would be given
     POST /api/v2/books/<id>/assist/            run a book task (202); draft, continue and revise come back as suggestions
 
 Thin views over books/services.py, for people only (`IsPerson`): a book is
-found among the pages the person may open (else a 404), every write is a draft
-revision under their page permissions, and a run-creating request honours an
-`Idempotency-Key`. A book's own fields are edited through the generic page
-endpoints. Every failure is the error envelope.
+found among the library's books the person may open (else a 404), every write
+is a draft revision under their page permissions, and a run-creating request
+honours an `Idempotency-Key`. A book's own fields and a chapter's are edited
+through the generic page endpoints. Every failure is the error envelope.
 """
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -24,14 +26,12 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from wagtail.models import Site
 
 from ai.models import Assistant, Brief
 from ai.serializers import RunAcceptedSerializer, RunRefSerializer
 from ai.views import IDEMPOTENCY, idempotent
 from api.pages import IsPerson, service_errors
 from cms.models import ChapterPage
-from cms.services import visible_pages
 from ops.errors import NotFound
 from ops.openapi import ERROR_RESPONSES
 
@@ -43,16 +43,6 @@ def _valid(serializer_class, request) -> dict:
     serializer = serializer_class(data=request.data)
     serializer.is_valid(raise_exception=True)
     return serializer.validated_data
-
-
-def _parent(request, pk):
-    """A page the person can find to create under; whether they may is the service's question."""
-    if pk is None:
-        return services.library_root()
-    page = visible_pages(request.user).filter(pk=pk).first()
-    if page is None:
-        raise NotFound(f"no page {pk}")
-    return page.specific
 
 
 def _chapter(book, pk):
@@ -80,18 +70,13 @@ class Shelf(APIView):
 
     @extend_schema(
         operation_id="books_list",
-        summary="The shelf: every book the caller may open, with its status and progress",
-        parameters=[
-            OpenApiParameter("site", int, description="Only this site's books."),
-            OpenApiParameter("templates", bool, description="The templates new books start from instead."),
-        ],
+        summary="The library's shelf: every book the caller may open, with its status and progress",
+        parameters=[OpenApiParameter("templates", bool, description="The templates new books start from instead.")],
         responses={200: s.BookSummarySerializer(many=True), **ERROR_RESPONSES},
     )
     def get(self, request):
-        site_id = request.query_params.get("site")
-        site = Site.objects.filter(pk=site_id).first() if site_id and site_id.isdigit() else None
         templates = request.query_params.get("templates") in ("true", "1")
-        books = services.shelf(request.user, site=site, templates=templates)
+        books = services.shelf(request.user, templates=templates)
         return Response(s.BookSummarySerializer([services.summary(b) for b in books], many=True).data)
 
     @extend_schema(
@@ -102,10 +87,9 @@ class Shelf(APIView):
     )
     def post(self, request):
         data = _valid(s.NewBookSerializer, request)
-        parent = _parent(request, data.get("parent"))
         with service_errors():
             book = services.new_book(
-                parent,
+                services.library_root(),
                 request.user,
                 title=data["title"],
                 slug=data.get("slug") or "",
@@ -147,9 +131,8 @@ class Premise(APIView):
     @idempotent
     def post(self, request):
         data = _valid(s.PremiseSerializer, request)
-        parent = _parent(request, data.get("parent"))
         brief, run = services.outline_from_premise(
-            request.user, premise=data["premise"], parent=parent, assistant=_assistant(request, data.get("assistant"))
+            request.user, premise=data["premise"], assistant=_assistant(request, data.get("assistant"))
         )
         body = {"brief": s.OutlineBriefSerializer(brief).data, "run": RunRefSerializer(run).data}
         return Response(body, status=status.HTTP_202_ACCEPTED)
@@ -158,19 +141,17 @@ class Premise(APIView):
 @extend_schema(
     operation_id="books_premise_create",
     summary="Accept a ready outline: a draft book with its facts, outline and a stub per planned chapter",
-    request=s.CreateFromBriefSerializer,
+    request=None,
     responses={201: s.BookDetailSerializer, **ERROR_RESPONSES},
 )
 @api_view(["POST"])
 @permission_classes([IsPerson])
 def create_from_brief(request, brief):
-    data = _valid(s.CreateFromBriefSerializer, request)
     found = Brief.objects.visible_to(request.user).filter(public_id=brief).first()
     if found is None:
         raise NotFound(f"no brief {brief}")
-    parent = _parent(request, data["parent"]) if data.get("parent") is not None else None
     with service_errors():
-        book = services.create_from_brief(found, request.user, parent=parent)
+        book = services.create_from_brief(found, request.user)
     return _detail(request, book, status.HTTP_201_CREATED)
 
 
@@ -213,6 +194,33 @@ def add_chapter(request, pk):
     return _detail(request, found, status.HTTP_201_CREATED)
 
 
+class Documents(APIView):
+    permission_classes = [IsPerson]
+
+    @extend_schema(
+        operation_id="books_documents",
+        summary="A book's other files — act guides, README — as its latest revision holds them",
+        responses={200: s.BookDocumentsSerializer, **ERROR_RESPONSES},
+    )
+    def get(self, request, pk):
+        return Response(s.BookDocumentsSerializer(services.documents(services.find(request.user, pk))).data)
+
+    @extend_schema(
+        operation_id="books_documents_set",
+        summary="Add, change or (text null) remove one of a book's other files, as a draft revision",
+        request=s.SetDocumentSerializer,
+        responses={200: s.BookDocumentsSerializer, **ERROR_RESPONSES},
+    )
+    def post(self, request, pk):
+        data = _valid(s.SetDocumentSerializer, request)
+        found = services.find(request.user, pk)
+        with service_errors():
+            saved = services.set_document(
+                found, request.user, base_revision_id=data["base_revision_id"], path=data["path"], text=data["text"]
+            )
+        return Response(s.BookDocumentsSerializer(saved).data)
+
+
 @extend_schema(
     operation_id="books_manuscript",
     summary="The compiled manuscript (`books build`)",
@@ -247,8 +255,7 @@ def book_context(request, pk):
     task = context.TASKS.get(request.query_params.get("task") or ("draft" if chapter else "outline"))
     if task is None:
         raise NotFound("no such task")
-    rm = services.read(found)
-    rm_chapter = services.chapter_in(rm, chapter) if chapter else None
+    rm, rm_chapter = services.chapter_in(found, chapter) if chapter else (services.read(found), None)
     return Response(s.ContextSerializer({"text": context.request(rm, rm_chapter, task)}).data)
 
 

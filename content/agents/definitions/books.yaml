@@ -16,7 +16,6 @@ budget_usd: "2.00"
 tools:
   - content.get_page
   - content.propose_edit
-  - memory.recall
   - brand.rules
 evals:
   - name: draft-a-chapter

@@ -1,17 +1,21 @@
 """`/api/v2/books/` (books/views.py): the studio's Books area over REST — the
-shelf, a book's overview, new books and chapters, validation, the manuscript,
-what a task's model reads, running a task (202, idempotent) and a book from a
-premise — for people with the page rights, and a 404 for anyone else."""
+library's shelf, a book's overview, new books and chapters, its other files,
+validation, the manuscript, what a task's model reads, running a task (202,
+idempotent) and a book from a premise — for people with the page rights, and a
+404 for anyone else, or for a book that is not the library's."""
 
 import json
+from pathlib import Path
 
 import pytest
+from django.conf import settings
 
 from agents.models import AgentRun
 from agents.principals import ensure_principal
 from ai.models import Brief
 from books import services
 from cms.models import BookPage, ChapterPage
+from importers.jekyll import import_site
 
 from .test_ai import DETAIL, OUTLINE
 
@@ -123,3 +127,56 @@ def test_a_book_from_a_premise_over_the_api(sample, api, alice, fake, worker):
 @pytest.mark.django_db
 def test_the_shelf_reads_the_library_through_the_service(sample, alice):
     assert [services.summary(b)["slug"] for b in services.shelf(alice)] == ["sample"]
+
+
+@pytest.mark.django_db
+def test_a_jekyll_sites_books_are_not_the_librarys(sample, api, alice):
+    """drsai's picture books and ABC books stay their site's pages until they are book types (books.abc)."""
+    import_site(Path(settings.REPO_ROOT) / "content" / "tests" / "fixtures" / "jekyll" / "site", "fixture")
+    theirs = BookPage.objects.exclude(pk__in=[b.pk for b in services.shelf(alice, templates=True)]).exclude(
+        pk=sample.pk
+    )
+    assert theirs.exists()
+    assert [b["slug"] for b in api(alice).get("/api/v2/books/").json()] == ["sample"]
+    for book in theirs:
+        assert api(alice).get(f"/api/v2/books/{book.pk}/").status_code == 404
+        assert (
+            api(alice).post(f"/api/v2/books/{book.pk}/assist/", {"task": "outline"}, format="json").status_code == 404
+        )
+
+
+@pytest.mark.django_db
+def test_a_books_other_files_are_edited_one_by_one_as_draft_revisions(sample, api, alice, bob):
+    url = f"/api/v2/books/{sample.pk}/documents/"
+    got = api(alice).get(url).json()
+    assert got["documents"] == [{"path": "guides/act-1-chapters-01-02.md", "text": "# Act I guide\n\nOpen cold.\n"}]
+    guide = {
+        "base_revision_id": got["revision"],
+        "path": "guides/act-1-chapters-01-02.md",
+        "text": "# Act I\n\nOpen warm.\n",
+    }
+    saved = api(alice).post(url, guide, format="json")
+    assert saved.status_code == 200, saved.json()
+    assert (
+        saved.json()["documents"][0]["text"] == "# Act I\n\nOpen warm.\n"
+        and saved.json()["revision"] != got["revision"]
+    )
+    assert api(alice).post(url, guide, format="json").status_code == 409  # edited from an older revision
+    book = BookPage.objects.get(pk=sample.pk)
+    assert book.has_unpublished_changes and book.documents[0]["text"] == "# Act I guide\n\nOpen cold.\n"  # a draft
+    first = ChapterPage.objects.child_of(sample).get(number=1)
+    task = api(alice).get(f"/api/v2/books/{sample.pk}/context/?chapter={first.pk}").json()["text"]
+    assert "## Drafting guide covering chapter 1\n\n# Act I\n\nOpen warm." in task  # what the AI reads
+    revision = saved.json()["revision"]
+    for path in ("book.yml", "outline.md", "notes/continuity.md", "chapters/ch09.md", "../escape.md"):
+        refused = api(alice).post(url, {"base_revision_id": revision, "path": path, "text": "x"}, format="json")
+        assert refused.status_code == 422, path
+    added = api(alice).post(
+        url, {"base_revision_id": revision, "path": "guides/act-2.md", "text": "Act II."}, format="json"
+    )
+    assert [d["path"] for d in added.json()["documents"]] == ["guides/act-1-chapters-01-02.md", "guides/act-2.md"]
+    gone = {"base_revision_id": added.json()["revision"], "path": "guides/act-2.md", "text": None}
+    assert [d["path"] for d in api(alice).post(url, gone, format="json").json()["documents"]] == [
+        "guides/act-1-chapters-01-02.md"
+    ]
+    assert api(bob).get(url).status_code == 404

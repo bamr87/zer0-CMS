@@ -5,6 +5,11 @@ agent's handler stay thin (TARGET.md § Rules that keep models and views
 manageable). The bookshelf CLI's commands map one to one: `list`, `show`, `new`,
 `add-chapter`, `validate`, `stats`, `build`, `dashboard`, `context`.
 
+The Books workspace holds the library's books: the children of the
+`BOOKS_SITE_KEY` site root (`library_root`). A Jekyll site's books (drsai's
+picture books, the ABC books) stay that site's pages until the ABC wizard and
+the story engine become book types (`books.abc`).
+
 Everything a book reports is computed from its rendered file set
 (`files.book_tree`, read by `library.Book`), the text `export_books` writes:
 what the studio shows is what `library/<slug>/` says. Every write is a draft
@@ -30,12 +35,12 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
 
-from agents.models import AgentDefinition, AgentRun, Memory
+from agents.models import AgentDefinition, AgentRun
 from agents.runner import RunRefused, start_run
 from ai.models import Assistant, Brief, OutputSchema, first_error, usable
 from ai.services import generate_brief, provider_slug, stable_id
 from cms.models import BookPage, ChapterPage, SiteRootPage
-from cms.services import creatable_types, save_draft, visible_pages
+from cms.services import StaleRevision, creatable_types, save_draft, visible_pages, writable
 from importers.jekyll import _unique_slug
 from importers.markdown import to_blocks
 from ops.errors import Conflict, Forbidden, Invalid, NotFound, Unavailable
@@ -103,25 +108,30 @@ def can_open(book, user) -> bool:
     return perms.can_edit() or perms.can_publish()
 
 
-def shelf(user, *, site=None, templates=False) -> list[BookPage]:
-    """The books a person may open, in tree order (templates only when asked)."""
-    pages = visible_pages(user).type(BookPage).order_by("path")
-    if site is not None:
-        pages = pages.descendant_of(site.root_page, inclusive=True)
+def _library_pages(user):
+    """The library's books (and templates) the person can find."""
+    root = library_root(create=False)
+    return visible_pages(user).type(BookPage).child_of(root) if root else BookPage.objects.none()
+
+
+def shelf(user, *, templates=False) -> list[BookPage]:
+    """The library's books a person may open, in tree order (templates only when asked)."""
+    pages = _library_pages(user).order_by("path")
     return [b for b in (p.specific for p in pages) if can_open(b, user) and is_template(b) == templates]
 
 
 def find(user, pk) -> BookPage:
-    """A book the person may open, else a 404."""
-    page = visible_pages(user).type(BookPage).filter(pk=pk).first()
+    """A book of the library the person may open, else a 404."""
+    page = _library_pages(user).filter(pk=pk).first()
     if page is None or not can_open(page.specific, user):
         raise NotFound(f"no book {pk}")
     return page.specific
 
 
-def library_root() -> SiteRootPage:
+def library_root(*, create=True) -> SiteRootPage | None:
+    """The site root the library's books live under (made on first use, unless `create` is off)."""
     root = SiteRootPage.objects.filter(site_key=settings.BOOKS_SITE_KEY).first()
-    return root or files.ensure_library(settings.BOOKS_SITE_KEY)
+    return root if root is not None or not create else files.ensure_library(settings.BOOKS_SITE_KEY)
 
 
 def by_slug(slug: str, site_key: str | None = None) -> BookPage:
@@ -139,10 +149,19 @@ def read(book: BookPage) -> library.Book:
     return library.Book.read(files.book_dir(book), files.book_tree(book))
 
 
-def chapter_in(rm: library.Book, chapter: ChapterPage) -> library.Chapter | None:
-    """A chapter page's file in the read model, found by its path (its latest revision's)."""
-    path = f"{rm.slug}/{files.chapter_path(chapter.get_latest_revision_as_object())}"
-    return next((c for c in rm.chapters if c.path == path), None)
+def read_placed(book: BookPage) -> tuple[library.Book, dict[int, str]]:
+    """The book as its files say it, and each chapter page's file in it (by page id)."""
+    tree, placed = files.render_book(book.get_latest_revision_as_object(), files.book_chapters(book))
+    rm = library.Book.read(files.book_dir(book), tree)
+    return rm, {chapter.pk: f"{rm.slug}/{rel}" for rel, chapter in placed.items()}
+
+
+def chapter_in(book: BookPage, chapter: ChapterPage) -> tuple[library.Book, library.Chapter | None]:
+    """The book as its files say it, and the file of one of its chapter pages:
+    found by the path the chapter has there, never by its number, which two
+    chapters may share while a person renumbers them."""
+    rm, paths = read_placed(book)
+    return rm, next((c for c in rm.chapters if c.path == paths.get(chapter.pk)), None)
 
 
 def stats(rm: library.Book) -> dict:
@@ -194,8 +213,8 @@ def summary(book: BookPage, rm: library.Book | None = None) -> dict:
 def detail(book: BookPage, user) -> dict:
     """A book's overview: its shelf row, its chapters in order, statistics,
     findings counts, its other files, and what the person may do."""
-    rm = read(book)
-    pages = {f"{rm.slug}/{files.chapter_path(c)}": c for c in files.book_chapters(book)}
+    rm, paths = read_placed(book)
+    ids = {path: pk for pk, path in paths.items()}
     issues = library.validate(rm)
     perms = book.permissions_for_user(user)
     return {
@@ -203,7 +222,7 @@ def detail(book: BookPage, user) -> dict:
         "stats": stats(rm),
         "chapter_list": [
             {
-                "id": pages[c.path].pk if c.path in pages else None,
+                "id": ids.get(c.path),
                 "number": c.number,
                 "title": c.title,
                 "subtitle": c.subtitle,
@@ -328,6 +347,7 @@ def add_chapter(
     _require(not check or ChapterPage in creatable_types(book, user), f"{user} may not add a chapter to this book")
     if not title.strip():
         raise ValidationError({"title": ["a chapter needs a title"]})
+    book = writable(book, user)  # one chapter added at a time, so two never take the same number
     latest = book.get_latest_revision_as_object()
     numbers = [c.number for c in files.book_chapters(book) if c.number]
     number = number or (max(numbers) + 1 if numbers else 1)
@@ -401,7 +421,7 @@ def run_task(book: BookPage, user, *, task: str, chapter=None, instruction="", s
         raise Conflict(str(e)) from e
 
 
-def outline_from_premise(user, *, premise: str, parent=None, assistant=None) -> tuple[Brief, AgentRun]:
+def outline_from_premise(user, *, premise: str, assistant=None) -> tuple[Brief, AgentRun]:
     """A brief that the bundled outliner turns into a structured outline —
     synopsis, themes, the three acts' beats, the arc, the cast, the chapter
     plan — as a run; `create_from_brief` makes the book from it."""
@@ -415,31 +435,42 @@ def outline_from_premise(user, *, premise: str, parent=None, assistant=None) -> 
         assistant=outliner,
         output_schema=outliner.output_schema,
         page_type="cms.BookPage",
-        parent=parent or library_root(),
+        parent=library_root(),
     )
     return brief, generate_brief(brief, user=user)
 
 
-def outline_schema() -> dict:
-    return OutputSchema.objects.get(public_id=stable_id("bundled-schema", OUTLINE_SCHEMA_KEY)).schema
+def is_outline(brief: Brief) -> bool:
+    """Whether a brief's result is a book outline (the bundled book-outline schema)."""
+    schema = OutputSchema.objects.filter(public_id=stable_id("bundled-schema", OUTLINE_SCHEMA_KEY)).first()
+    return schema is not None and isinstance(brief.result, dict) and not first_error(schema.schema, brief.result)
 
 
 @transaction.atomic
-def create_from_brief(brief: Brief, user, *, parent=None) -> BookPage:
-    """The person accepts an outline: a draft book with its facts, the
-    outline, and a stub per planned chapter, under `parent` (else the brief's).
-    Nothing is published."""
+def create_from_brief(brief: Brief, user) -> BookPage:
+    """The person accepts an outline: a draft book in the library with its
+    facts, the outline, and a stub per planned chapter. Nothing is published.
+
+    The model's values are written into the person's draft revisions (they
+    read the outline before asking), not proposed as suggestions: a
+    suggestion's `meta` op sets the title and the SEO fields only. Each value is
+    cut to its field, and an empty chapter title is "Chapter N", so one long or
+    empty value never costs the person the whole book. The brief is the
+    provenance: it records the book it made."""
     brief = Brief.objects.select_for_update().get(pk=brief.pk)
     if not brief.can_edit(user):
         raise Forbidden(f"brief {brief.public_id} is not {user}'s to use")
     if brief.status != Brief.READY:
         raise Conflict(f"a book is made from a ready outline; this one is {brief.status}")
-    data = brief.result if isinstance(brief.result, dict) else None
-    if data is None or first_error(outline_schema(), data):
+    if not is_outline(brief):
         raise Invalid("the brief's result is not a book outline")
-    parent = (parent or brief.parent or library_root()).specific
+    data, parent = brief.result, library_root()
     _require(BookPage in creatable_types(parent, user), f"{user} may not create a book here")
-    title = (data["title"] or brief.metadata.get("title") or brief.title).strip()[:255]
+
+    def cut(value, limit=255) -> str:
+        return str(value or "").strip()[:limit]
+
+    title = cut(data["title"]) or cut(brief.metadata.get("title")) or cut(brief.title) or "Untitled book"
     book = BookPage(
         owner=user,
         live=False,
@@ -447,16 +478,16 @@ def create_from_brief(brief: Brief, user, *, parent=None) -> BookPage:
         title=title,
         slug=_unique_slug(parent, slugify(title)[:200] or "book"),
         book_status="outlining",
-        logline=data["logline"],
-        genre=data["genre"],
-        pov=data["pov"],
-        tense=data["tense"],
-        era=data["era"],
-        protagonist=data["protagonist"],
-        acts=len(data["acts"]) or 3,
+        logline=str(data["logline"] or "").strip(),
+        genre=cut(data["genre"]),
+        pov=cut(data["pov"]),
+        tense=cut(data["tense"], 80),
+        era=cut(data["era"]),
+        protagonist=cut(data["protagonist"]),
+        acts=min(len(data["acts"]), 32) or 3,
         planned_chapters=len(data["chapters"]) or None,
-        themes=[t["name"] for t in data["themes"] if t["name"].strip()],
-        cast=[name for name in data["cast"] if name.strip()],
+        themes=[cut(t["name"]) for t in data["themes"] if cut(t["name"])],
+        cast=[cut(name) for name in data["cast"] if cut(name)],
         outline=brief.markdown,
     )
     book.front_matter = {"slug": book.slug, "title": title, "created": date.today().isoformat()}
@@ -464,30 +495,51 @@ def create_from_brief(brief: Brief, user, *, parent=None) -> BookPage:
     save_draft(book, user, log_action="wagtail.create")
     for number, plan in enumerate(sorted(data["chapters"], key=lambda c: c["number"]), start=1):
         act = min(max(plan["act"], 1), book.acts)
-        add_chapter(book, user, title=plan["title"], number=number, act=act, purpose=plan["beat"])
+        title = cut(plan["title"]) or f"Chapter {number}"
+        add_chapter(book, user, title=title, number=number, act=act, purpose=plan["beat"])
     Brief.objects.filter(pk=brief.pk).update(
         page=book, status=Brief.APPLIED, applied_at=timezone.now(), updated_at=timezone.now()
     )
     return book
 
 
-# ── memory and the bundled AI setup ────────────────────────────────────────
+# ── a book's other files ───────────────────────────────────────────────────
 
 
-def remember(book: BookPage) -> None:
-    """The continuity ledger and the character bible of `book` (a revision's
-    content) as the agents' memory of it — scope `page`, the book's id, keys
-    `book.continuity` and `book.characters`: `memory.recall` reads them."""
-    for key, text in (("book.continuity", book.continuity_notes), ("book.characters", book.character_notes)):
-        if text.strip():
-            Memory.objects.update_or_create(
-                scope="page",
-                scope_id=str(book.pk),
-                key=key,
-                defaults={"value": {"book": files.book_dir(book), "title": book.title, "text": text}},
-            )
-        else:
-            Memory.objects.filter(scope="page", scope_id=str(book.pk), key=key).delete()
+def documents(book: BookPage) -> dict:
+    """A book's other files (act guides, its README …) in its latest revision,
+    and that revision's id; an empty outline or notes file the book keeps among
+    them is its field's, and is edited there."""
+    latest = book.get_latest_revision_as_object()
+    shown = [d for d in latest.documents or [] if d["path"] not in files.TEXTS]
+    return {"revision": book.latest_revision_id, "documents": shown}
+
+
+@transaction.atomic
+def set_document(book: BookPage, user, *, base_revision_id, path: str, text: str | None) -> dict:
+    """Add or change one of the book's other files — an act guide, the README
+    — or (`text` None) remove it, as a draft revision over the revision the
+    person edited (`StaleRevision` when a newer one exists). The manifest, the
+    outline, the notes and the chapters are edited as fields and pages instead."""
+    _require(book.permissions_for_user(user).can_edit(), f"{user} may not edit {book}")
+    path = path.strip()
+    if path == library.CONFIG or path in files.TEXTS or library.is_chapter(path):
+        raise ValidationError({"path": [f"{path} is the book's own field or a chapter: edit it there"]})
+    page = writable(book, user)
+    if page.latest_revision_id != base_revision_id:
+        raise StaleRevision(f"book {page.pk} has a newer revision ({page.latest_revision_id}) than the one edited")
+    draft = page.get_latest_revision_as_object()
+    kept = [d for d in draft.documents or [] if d["path"] != path]
+    if text is None and len(kept) == len(draft.documents or []):
+        raise ValidationError({"path": [f"the book has no file {path}"]})
+    draft.documents = sorted(
+        kept + ([{"path": path, "text": text}] if text is not None else []), key=lambda d: d["path"]
+    )
+    save_draft(draft, user)
+    return documents(type(book).objects.get(pk=book.pk))
+
+
+# ── the bundled AI setup ───────────────────────────────────────────────────
 
 
 def import_bundled(state=apps) -> dict:
