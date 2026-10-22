@@ -2,6 +2,78 @@
 
 All notable changes to zer0-CMS are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0](https://github.com/bamr87/zer0-CMS/compare/v0.3.0...v1.0.0) (2026-10-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **theme:** land "the theme goes home" on main (ADR 0005, PLAN Phase T)
+* **theme:** `bin/zer0` no longer knows a `zer0-mistakes` project; a site that wants a local theme checkout names it with `ZER0_THEME_LOCAL` (drsai) or its own Gemfile `path:`.
+* **parodynews:** DJANGO_SETTINGS_MODULE for the news app is config.settings.<env>; the workflow, compose files and docs in the tree are updated, external deployments must follow.
+
+### Features
+
+* **ai:** /api/v2/ai/ and the ai.* tools ([6e3e94c](https://github.com/bamr87/zer0-CMS/commit/6e3e94c9bf5c5e90fbd53f3792cc84e334c4e99e))
+* **ai:** the AI content layer's provider registry, tables and runs ([cd7da10](https://github.com/bamr87/zer0-CMS/commit/cd7da10a0017e282dc7f35948117f333f1bb3822))
+* **content:** one platform — ADR 0004, PLAN Phase G/H, and the ops baseline (G0 + G1) ([48d5276](https://github.com/bamr87/zer0-CMS/commit/48d52764f78ae365b54bc8a2e64bda7fde7344d7))
+* **content:** the ops baseline — probes, request ids, the error envelope, JSON logging, throttling, CORS, OpenAPI ([5f8c9a9](https://github.com/bamr87/zer0-CMS/commit/5f8c9a92de6662a5426fc7276cec66a16e078b3c))
+* **content:** the studio's API — session, sites, pages, revisions, publishing, review inbox (P4) ([30cc910](https://github.com/bamr87/zer0-CMS/commit/30cc910f5f018185252e04ccf2aaf4344520d812))
+* **docs:** generate the installer reference from its help text ([c769d7b](https://github.com/bamr87/zer0-CMS/commit/c769d7be916db63652f9e7ce8e36d311fb7cfbb3))
+* **docs:** generate the theme's command, workflow and agent-guidance reference ([43776eb](https://github.com/bamr87/zer0-CMS/commit/43776ebd3c726ce2d907131f6301ebca1e93fe8d))
+* **feedback:** adopt the universal page-feedback widget (kit v0.2.0) ([81ff49d](https://github.com/bamr87/zer0-CMS/commit/81ff49d2696a66969be5db77b0a8beb9cbe0f4f3))
+* **image-gen:** illustration loop for the claude provider (plan → author → shape → look → critique) ([6519af6](https://github.com/bamr87/zer0-CMS/commit/6519af697374553be1e4406537d01e2f3c1ac788))
+* **image-gen:** plan → author → shape → look → critique loop for the claude provider (WIP) ([34b2bcd](https://github.com/bamr87/zer0-CMS/commit/34b2bcdea87d3bbb52556c61eb422103d8832313))
+* **image-gen:** Ruby twins, --shape, forge on the production path, CI + docs ([285fb6c](https://github.com/bamr87/zer0-CMS/commit/285fb6c7aebf6b8669d9648e71d4dcb0cbd02eb2))
+* **importers:** barodybroject's AI tables onto the AI content layer ([235d857](https://github.com/bamr87/zer0-CMS/commit/235d85778d1a071b82db2ae530ecb25edd82095b))
+* **parodynews:** route the news app's Jekyll sidecar at /parodynews/ (PLAN C5) ([8c83b76](https://github.com/bamr87/zer0-CMS/commit/8c83b7648fd6aa56a545f9f62d31ff1807f50090))
+* **site:** improve the frontend and fix production-only remote-theme defects (bamr87/wargames[#14](https://github.com/bamr87/zer0-CMS/issues/14)) ([0d34252](https://github.com/bamr87/zer0-CMS/commit/0d34252f0feeed5db470b8ccc88e1b16d8c82f3d))
+* the agent-native content plane (PLAN M0, M3–M15) + fork-tag tooling ([#34](https://github.com/bamr87/zer0-CMS/issues/34)) ([31a308a](https://github.com/bamr87/zer0-CMS/commit/31a308a30eadbe0974bcb62beaea939244060f1a))
+* the agent-native content plane (PLAN M0, M3–M15) + fork-tag tooling ([#34](https://github.com/bamr87/zer0-CMS/issues/34)) ([df8fe42](https://github.com/bamr87/zer0-CMS/commit/df8fe42c43ae70525fbfe7137e537f56c7891fa0))
+* the agent-native content plane (PLAN M0, M3–M15) + fork-tag tooling ([#34](https://github.com/bamr87/zer0-CMS/issues/34)) ([54eb759](https://github.com/bamr87/zer0-CMS/commit/54eb7590fcb1e9684d1676e9da52c09bf344c8ed))
+* **tools:** ratchet zer0-mistakes dependencies down to the Jekyll-theme option ([32cc380](https://github.com/bamr87/zer0-CMS/commit/32cc3801767adcc561b4475b33674a9ff1872880))
+* **tools:** site_manifest.py records and compares what a site builds (PLAN P1) ([bd0b486](https://github.com/bamr87/zer0-CMS/commit/bd0b4864f5e3d0a0a5873c935ac521cae26d1706))
+* **tools:** the absorption gate — the Ruby ratchet and the capability ledger (ADR 0006) ([87fb9e5](https://github.com/bamr87/zer0-CMS/commit/87fb9e5a1af20a1fbef05a19d47597c666901327))
+* **tools:** the theme ratchet does not count recorded site builds ([6a6c45e](https://github.com/bamr87/zer0-CMS/commit/6a6c45ee9ff517a8402b4d81f06ecc0cad81c591))
+* **web:** re-record every routed site as site-manifest/v2, and record 2005 and irony-works ([0422bc6](https://github.com/bamr87/zer0-CMS/commit/0422bc630c783f8a2acdebe476baab2a7c1cb1bb))
+* **web:** record every routed site's Jekyll build (PLAN P1) ([0745eb0](https://github.com/bamr87/zer0-CMS/commit/0745eb0b0e3d0d1f367482794af10fbdf10185cb))
+* **web:** the studio and its shared packages (P4) ([4e166a7](https://github.com/bamr87/zer0-CMS/commit/4e166a77fa252891e99c56d9da6740999c4a6e4d))
+* **workspace:** bin/zer0 in Python, with the same commands, output and exit codes (P5) ([4bf8afe](https://github.com/bamr87/zer0-CMS/commit/4bf8afeac3795d32764f24a76403d628fb3f05a1))
+
+
+### Bug Fixes
+
+* **ai:** provider adapters keep a row's settings away from the worker ([60f8a2a](https://github.com/bamr87/zer0-CMS/commit/60f8a2a80b1102c74f08d6f1d9fcf1c9a58103dc))
+* **ai:** runs act for the person who started them and recheck what they use ([4adf6bb](https://github.com/bamr87/zer0-CMS/commit/4adf6bb8b77b95dd92c3cfebeede0f98ac6dd255))
+* **books:** match library/ case-sensitively and stop at the filesystem root ([9b1aab9](https://github.com/bamr87/zer0-CMS/commit/9b1aab900b165b2c554dae2e0b1aae7b21f53cf2))
+* **content:** serve the platform on threaded workers, so a run's stream survives ([6495188](https://github.com/bamr87/zer0-CMS/commit/64951883556bef0207a495ea24d6482d511e2f6f))
+* **content:** the studio API's review findings — links, access, locks, the save guard, one scope ([1c42baa](https://github.com/bamr87/zer0-CMS/commit/1c42baa9e2064ec3e1b2324fe5440b74b2ad96f4))
+* **docs:** escape backslashes as well as pipes in reference table cells ([16c1c13](https://github.com/bamr87/zer0-CMS/commit/16c1c13c881da72a70de2c5589ddb963e2285f3b))
+* **drsai:** floor github-pages at 228 so Liquid renders on Ruby 3.2+ ([02a65a9](https://github.com/bamr87/zer0-CMS/commit/02a65a9b49adb41324fcf00c824455a38ec00698))
+* **extension:** keep web/ out of the vsix ([e8c7128](https://github.com/bamr87/zer0-CMS/commit/e8c712875de860ea1dba9ca2f31569e265be13b8))
+* github-pages floor for drsai and the installer demos' latest_posts Liquid ([96edc00](https://github.com/bamr87/zer0-CMS/commit/96edc0013b16f8fc22eb171aa2cc20e949db820a))
+* **image-gen:** edit rounds revise the pre-outline source, not glyph paths ([8b2e285](https://github.com/bamr87/zer0-CMS/commit/8b2e2854686d58d2d5643bbaec54619b2a563cde))
+* **image-gen:** trim spaces/quotes by index scan in text_to_paths.rb (CodeQL rb/polynomial-redos) ([7754de6](https://github.com/bamr87/zer0-CMS/commit/7754de6af00c55f68c8091b0723162c666108e19))
+* **importers:** re-importing barodybroject leaves what people changed here ([f9a2fb5](https://github.com/bamr87/zer0-CMS/commit/f9a2fb5a50625cf712994224a727286049c77535))
+* **parodynews:** repair what the rename surfaced ([8862d54](https://github.com/bamr87/zer0-CMS/commit/8862d54ab7f780c452c6fe3ca408f45f2b4e13a5))
+* **schema:** dedent page docstrings with inspect.cleandoc ([#37](https://github.com/bamr87/zer0-CMS/issues/37)) ([5da1418](https://github.com/bamr87/zer0-CMS/commit/5da14182d083389c5431b5e7e5086ad270722186))
+* the four off-Linux defects from the 2026-10-20 validation ([9a5e44f](https://github.com/bamr87/zer0-CMS/commit/9a5e44f832e4cad6407cdd7e522f90231e2f6822))
+* **tools:** check_absorption --tighten keeps the comments inside a ratchet block ([ffdd157](https://github.com/bamr87/zer0-CMS/commit/ffdd1576cefbb40a012d7d0edc1cb60c9ec65bf4))
+* **tools:** graft.sh works on a main that already holds a merged graft ([b08585d](https://github.com/bamr87/zer0-CMS/commit/b08585d9be312831af8500b9ff5a20ccb783598a))
+* **tools:** re-vendor docs_index.py with multi-line comment stripping ([fa111bd](https://github.com/bamr87/zer0-CMS/commit/fa111bd8789c5eb0e648dc48fcb079497084c4d0))
+* **tools:** site_manifest records a page's own content, feed dates and what the build resolved ([3614b94](https://github.com/bamr87/zer0-CMS/commit/3614b94a1c79d2ca10a760a585b391e724b6df20))
+* **web:** the studio's review findings — block keys, drafting, locks, expiry, accept-all, the live timeline ([a539de8](https://github.com/bamr87/zer0-CMS/commit/a539de8f984f3a70c02ceb34f7fdfa7de14f3b57))
+* **workspace:** affected reads git's paths with -z, tested on every kind of change (P5) ([a0b7740](https://github.com/bamr87/zer0-CMS/commit/a0b77407be90b68e7fc270dd566cbab662d0b79d))
+* **workspace:** every path the manifest names stays inside the repository (P5) ([ae96f65](https://github.com/bamr87/zer0-CMS/commit/ae96f650935e4f765e0d2225258e66892735ffe6))
+* **workspace:** without PyYAML, bin/zer0 runs on the repository's .venv and names routes that work (P5) ([a6d3c68](https://github.com/bamr87/zer0-CMS/commit/a6d3c68b37d1f52b5090cb4e8f0746e6c7b151b4))
+* **zer0-mistakes:** assign the latest-posts limit before the for loop ([927f434](https://github.com/bamr87/zer0-CMS/commit/927f43466e904d8889a345294966d5c9161b8aec))
+
+
+### Code Refactoring
+
+* **parodynews:** rename barodybroject to parodynews and strip the brand (ADR 0003) ([19e838f](https://github.com/bamr87/zer0-CMS/commit/19e838f98876c9ef6017b792a8e9667abe8a2a22))
+* **theme:** land "the theme goes home" on main (ADR 0005, PLAN Phase T) ([be7b2a1](https://github.com/bamr87/zer0-CMS/commit/be7b2a1b7ee1c8359e13a4a78a2d163debe1f122))
+* **theme:** the theme returns to bamr87/zer0-mistakes — remove packages/zer0-mistakes ([bf03bf6](https://github.com/bamr87/zer0-CMS/commit/bf03bf6e0eff277c5c955c98c63227d2f5b71231))
+
 ## [0.3.0](https://github.com/bamr87/zer0-CMS/compare/v0.2.0...v0.3.0) (2026-10-18)
 
 
