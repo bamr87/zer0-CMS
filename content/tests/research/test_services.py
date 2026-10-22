@@ -558,3 +558,14 @@ def test_a_research_brief_and_a_briefs_writer_read_the_sources_closest_to_their_
         services.cite(alice, source, brief=brief)
     read = services.brief_sources(Brief, brief)
     assert "Restore drills" in read and sum(f"Bread {i}" in read for i in range(7)) == 5  # six in all
+
+
+def test_a_correction_changes_only_its_words_whatever_the_blocks_shape():
+    heading = {"level": "2", "text": "Back up weekly"}
+    assert services.corrected("heading", heading, "weekly", "nightly") == {"level": "2", "text": "Back up nightly"}
+    rich = "<p>Tom &amp; <b>Jerry</b> back up weekly.</p><ul><li>Keep one copy</li></ul>"
+    assert services.corrected("paragraph", rich, "one copy", "two copies") == rich.replace("one copy", "two copies")
+    with pytest.raises(services.Uncorrectable, match="more than once"):
+        services.corrected("markdown", "Weekly is not weekly enough.", "eekly", "nightly")
+    with pytest.raises(services.Uncorrectable, match="run across a link or emphasis"):
+        services.corrected("paragraph", rich, "Tom & Jerry", "Tom and Jerry")
