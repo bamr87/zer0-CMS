@@ -13,6 +13,7 @@ request queued after it commits (`worker`).
 import io
 import json
 import shutil
+from datetime import timedelta
 
 import pytest
 from cryptography.fernet import Fernet
@@ -21,6 +22,7 @@ from django.contrib.auth.models import Permission
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import override_settings
+from django.utils import timezone
 from wagtail.models import Page
 
 from agents.models import AgentDefinition, AgentRun
@@ -30,6 +32,7 @@ from distribution.lane.pipeline import Pipeline
 from distribution.lane.site import Config
 from distribution.ledger import Ledger, entry_for, serialize
 from distribution.models import Channel, DistributionPost, LedgerEntry, Statistic
+from ops.errors import Conflict
 from outbox.consumers import handle_envelope
 from outbox.models import OutboxEvent
 
@@ -293,6 +296,25 @@ def test_an_unconfirmed_publish_blocks_until_a_person_records_it_or_forces_past_
     recorded = api(alice).post(f"{API}/posts/{post.public_id}/record/", {"urn": "urn:li:share:42"}, format="json")
     assert recorded.json()["status"] == "published"
     assert LedgerEntry.objects.get(channel=channel).urn == "urn:li:share:42"
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_a_delivery_never_sends_a_post_another_delivery_claimed(alice, channel, article, web):
+    """Acks are late, so the task of a worker that died mid-send is delivered again: the claim committed before the
+    send keeps a second delivery from sending the post twice."""
+    route = web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:5"})
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Nightly, always."), alice)
+    services.request_publish(post, alice)  # queued; no worker runs it here
+    DistributionPost.objects.filter(pk=post.pk).update(attempted_at=timezone.now())  # a worker is sending it now
+    assert services.deliver(post.pk).status == "publishing" and route.call_count == 0
+    with pytest.raises(Conflict, match="being sent now"):
+        services.request_publish(post, alice)
+    DistributionPost.objects.filter(pk=post.pk).update(attempted_at=timezone.now() - timedelta(hours=1))  # it died
+    dead = services.deliver(post.pk)
+    assert (dead.status, route.call_count) == ("failed", 0) and "may have published" in dead.error
+    assert LedgerEntry.objects.get(channel=channel).state == "unconfirmed"
+    blocked = [b.kind for b in services.preview(dead).blockers]
+    assert "publish_unconfirmed" in blocked, "nothing sends it again until a person records it or forces"
 
 
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})

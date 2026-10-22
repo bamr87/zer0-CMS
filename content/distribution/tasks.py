@@ -13,8 +13,11 @@ from .models import Channel, Kind
 
 log = logging.getLogger(__name__)
 
+# A send never outlives this, so `services.deliver` reads an older claim as a worker that died mid-send.
+SEND_TIME_LIMIT = 600
 
-@shared_task
+
+@shared_task(time_limit=SEND_TIME_LIMIT)
 def publish_post(post_id: int) -> str:
     from .services import deliver
 

@@ -758,6 +758,8 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
         force = False
     elif not may_publish(post, user):
         raise PermissionDenied("publishing a post is the right of someone who may publish its page")
+    if post.status == DistributionPost.Status.PUBLISHING and post.attempted_at is not None:
+        raise Conflict("it is being sent now: wait for it to finish", code="distribution.sending")
     if post.status == DistributionPost.Status.FAILED:
         post.status = (
             DistributionPost.Status.APPROVED
@@ -766,16 +768,34 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
     if blockers:
         raise Conflict("; ".join(f"{b.kind}: {b.message}" for b in blockers), code="distribution.blocked")
     post.status, post.published_by, post.force, post.error = DistributionPost.Status.PUBLISHING, user, force, ""
+    post.attempted_at = None  # a new attempt: `deliver` claims it before anything is sent
     post.save()
     transaction.on_commit(lambda: publish_post.delay(post.pk))
     return post
 
 
 def deliver(post_id: int) -> DistributionPost:
-    """In the worker: the gates again, then the channel's transport, then the ledger."""
+    """In the worker: the gates again, then the channel's transport, then the ledger. The attempt is claimed
+    (`attempted_at`, committed) before anything is sent, so a second delivery of one request — a task redelivered
+    after its worker died (acks are late), or a duplicate — never sends the post twice: within the send's time limit
+    it leaves the post to the worker that claimed it; after that, that worker is gone and the post may exist, so it
+    is ledgered unconfirmed for a person to check."""
+    from .tasks import SEND_TIME_LIMIT
+
     with transaction.atomic():
         post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post_id)
         if post.status != DistributionPost.Status.PUBLISHING:
+            return post
+        if post.attempted_at is not None:
+            if (timezone.now() - post.attempted_at).total_seconds() < SEND_TIME_LIMIT:
+                return post
+            message = (
+                "an earlier attempt to send this never finished, so it may have published: check, then record the "
+                "post if it did, or publish again with force if it did not"
+            )
+            _doubt(post, message)
+            post.status, post.error = DistributionPost.Status.FAILED, message
+            post.save()
             return post
         blockers = gates.lifted(preview(post).blockers, force=post.force)
         if blockers:
