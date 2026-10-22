@@ -119,7 +119,7 @@ platform:
   - id: content.publish
     what: Publish and unpublish now or on a schedule.
     # P4: publish now, unpublish now, a go-live time and an expiry (each carried out by beat, one page per transaction); the studio's editor offers all four.
-    # G10: the extension's editor offers the same four, and its host asks modally before each live-site change (src/test/webview.test.ts); file mode keeps the governed path.
+    # G10: the extension's editor offers the same four, and its host asks modally before each live-site change, gating the URL it sends so no spelling of a publish path skips the question (src/test/webview.test.ts); file mode keeps the governed path.
     surfaces: {api: done, studio: done, extension: done, mcp: partial}
     proof:
       api: content/tests/api/test_pages.py::test_publish_and_unpublish_now_or_on_a_schedule
@@ -374,7 +374,7 @@ platform:
     surfaces: {api: partial, studio: partial, extension: missing}
   - id: platform.tokens
     what: Personal API tokens and agent tokens, issued and revoked.
-    # G10: accounts.UserToken (hashed, optionally expiring, revoked; manage.py user_token) authenticates a person over REST; the extension sets and clears one in SecretStorage, per platform origin. Issuing from the account menu, scopes and GraphQL are G3's.
+    # G10: accounts.UserToken (hashed, 90 days unless the issuer says otherwise, a superuser's only with --superuser, revoked; accounts.services and manage.py user_token) authenticates a person over REST, sharing accounts.tokens.HashedToken with AgentToken; the extension sets and clears one in SecretStorage, per platform origin. Issuing from the account menu, scopes and GraphQL are G3's.
     surfaces: {api: partial, studio: missing, extension: partial}
   - id: platform.permissions
     what: Roles, groups, per-site permissions, and per-person ownership and sharing.
@@ -421,6 +421,7 @@ platform:
     what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
     # P4: the studio renders @zer0/ui's workspaces through the host contract (StudioProvider), and ESLint keeps routers, transports and page globals out of them.
     # G10: the extension's webviews render them from WORKSPACES (dist/studio.js, built from web/packages/webview) over a postMessage transport whose host re-checks every request and holds the token.
+    # Gap: the transport carries JSON bodies (with Idempotency-Key and If-Match) and text replies; an upload is refused in the extension (extension.unsupported_body), so a workspace that uploads a file (research.capture, media.library) is done in the studio and a gap in the extension until the transport carries files.
     surfaces: {studio: done, extension: done}
     proof:
       studio: web/studio/test/app.test.tsx

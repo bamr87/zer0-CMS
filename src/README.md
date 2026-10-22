@@ -83,16 +83,16 @@ When publishing is off, `ZER0_CMS_MCP_ALLOW_PUBLISH` is set to `null`, which the
 
 ### 6. Platform mode is a different webview, not a different panel
 
-With `zer0Cms.platform.url` set (settings layer only, trusted workspaces only), `zer0Cms.dashboard` opens the studio panel, `zer0Cms.agent.open` the AI panel, and the Metadata view mounts the studio's page editor for the open file — `PanelProvider` remounts in place when the setting flips. The webview is the studio's code (`web/packages/webview`), so a feature for it goes into `@zer0/ui`, never into `src/`. What the host owns is the gate: `StudioBridge` re-checks every request (the path, the method, a modal before a live-site change) and is the only thing that ever holds the token. The file-mode dashboard still opens from the fleet, audit, harness and monitor commands in either mode.
+With `zer0Cms.platform.url` set (settings layer only, trusted workspaces only; https, or http on this machine), `zer0Cms.dashboard` opens the studio panel and `zer0Cms.agent.open` the AI panel. The Metadata view decides per file: the studio's page editor for a file the platform has a page for (`Studio.modeFor` asks `?source=` with the file's path from its folder, the folder's name first), file mode for any other — a site still on files, a file never imported, a platform that cannot be reached — and `PanelProvider` remounts in place when the answer changes. The webview is the studio's code (`web/packages/webview`), so a feature for it goes into `@zer0/ui`, never into `src/`. What the host owns is the gate: `sendToPlatform` re-checks every request on the URL it sends (the path as the platform routes it, the method, the two headers the platform reads, a modal before a live-site change) and is the only thing that ever holds the token. `zer0Cms.dashboard.files` always opens the file-mode dashboard, and the fleet, monitor, audit, harness and draft commands open it through that command, so they reach file mode in either mode.
 
 ## Adding a command
 
 1. Declare it in `package.json` under `contributes.commands`, with any `when`
    clause it needs in `contributes.menus`.
 2. Implement it in the matching `commands/*.ts`, taking the `Zer0Shell`.
-3. Add the id to `ALL_COMMAND_IDS` in `commands/index.ts`, and to `ALL_COMMANDS` in `src/test/extension.test.ts` with its `56` count bumped. An id inside an existing module needs no `extension.ts` change; a new command module also needs its `register*Commands(shell)` call in `activate()`.
+3. Add the id to `ALL_COMMAND_IDS` in `commands/index.ts`, and to `ALL_COMMANDS` in `src/test/extension.test.ts` with its `57` count bumped. An id inside an existing module needs no `extension.ts` change; a new command module also needs its `register*Commands(shell)` call in `activate()`.
 
-The only two commands `extension.ts` registers itself are `zer0Cms.dashboard` and `zer0Cms.dashboard.close`, because the dashboard panel is a singleton the shell owns and no command module does.
+The only three commands `extension.ts` registers itself are `zer0Cms.dashboard`, `zer0Cms.dashboard.close` and `zer0Cms.dashboard.files`, because the dashboard panel is a singleton the shell owns and no command module does.
 
 ## Adding a privileged action
 
