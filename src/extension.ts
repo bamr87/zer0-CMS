@@ -87,7 +87,9 @@ import { registerFleetCommands, type FleetActions } from './commands/fleet';
 import { registerGovernanceCommands, type GovernanceActions } from './commands/governance';
 import { registerProjectCommands } from './commands/project';
 import { registerSiteCommands, type SiteActions } from './commands/site';
+import { registerPlatformCommands } from './commands/platform';
 import { AgentPanel } from './agent/agentPanel';
+import { Studio } from './studio/studio';
 import { DashboardPanel } from './dashboard/dashboardPanel';
 import { PanelProvider } from './panel/panelProvider';
 import { CateringTreeProvider } from './views/cateringTree';
@@ -113,6 +115,11 @@ export interface Zer0Shell {
   ui: UiState;
   diagnostics: DiagnosticsManager;
   log: ExtensionLog;
+  /**
+   * The studio's workspaces in the webviews, when `zer0Cms.platform.url` is set
+   * (PLAN G10). Constructing it reads nothing and opens no socket.
+   */
+  studio: Studio;
 }
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -157,6 +164,11 @@ export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = new DiagnosticsManager();
   context.subscriptions.push(diagnostics);
 
+  // The studio in the webviews (PLAN G10): constructed, not shown. Nothing
+  // reaches the platform until a person opens a view that asks (D11).
+  const studio = new Studio(context);
+  context.subscriptions.push(studio);
+
   const shell: Zer0Shell = {
     context,
     get store(): WorkspaceStore {
@@ -166,6 +178,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ui,
     diagnostics,
     log,
+    studio,
   };
 
   // --- 5. Tree views -------------------------------------------------------
@@ -217,6 +230,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // lane's files on disk — behind the same injected-actions shape, so the
   // dashboard's Write button goes through the function the palette calls.
   const harness: HarnessActions = registerHarnessCommands(shell);
+  // Setting and clearing the platform token — nothing else, and no socket.
+  registerPlatformCommands(shell);
 
   // --- 7. The metadata panel ----------------------------------------------
   context.subscriptions.push(
@@ -229,10 +244,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // --- 8. The dashboard and the agent panel --------------------------------
   // Constructed, not shown: the panel is created on first `open()`.
+  // With a platform configured the dashboard is the studio's workspaces; the
+  // file-mode dashboard keeps the fleet console, the audit and the harness,
+  // whose own commands still open it.
   const dashboard = new DashboardPanel(shell, governance, fleet, audit, site, harness);
   context.subscriptions.push(
     dashboard,
-    vscode.commands.registerCommand('zer0Cms.dashboard', () => dashboard.open()),
+    vscode.commands.registerCommand('zer0Cms.dashboard', () =>
+      studio.configured() ? studio.openDashboard() : dashboard.open(),
+    ),
     vscode.commands.registerCommand('zer0Cms.dashboard.close', () => dashboard.close()),
   );
 
@@ -300,7 +320,8 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   // --- 12. Optional startup dashboard --------------------------------------
-  if (hasProjectConfig() && currentConfig().dashboard.openOnStartup) {
+  // File mode only: the studio's opens on a person's act, never at activation (D11).
+  if (hasProjectConfig() && currentConfig().dashboard.openOnStartup && !studio.configured()) {
     dashboard.open();
   }
   log.info(`activated in ${Date.now() - started}ms`);

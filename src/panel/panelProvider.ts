@@ -347,6 +347,32 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
 
   resolveWebviewView(view: vscode.WebviewView): void {
     this.view = view;
+    view.onDidDispose(() => {
+      this.teardown();
+    });
+    this.mount(view);
+  }
+
+  /**
+   * File mode, or — with a platform configured — the studio's page editor for
+   * the page behind the open file, rendered by the studio host (PLAN G10).
+   * Setting or clearing `zer0Cms.platform.url` mounts the other one in place.
+   */
+  private mount(view: vscode.WebviewView): void {
+    const platform = this.shell.studio.configured();
+    this.disposables.push(
+      onConfigChange(() => {
+        if (this.shell.studio.configured() !== platform && this.view === view) {
+          this.unmount();
+          this.mount(view);
+        }
+      }),
+    );
+    if (platform) {
+      view.title = 'Page';
+      this.disposables.push(this.shell.studio.attachView(view));
+      return;
+    }
     const extensionUri = this.shell.context.extensionUri;
     const developer = this.shell.context.extensionMode !== vscode.ExtensionMode.Production;
 
@@ -393,9 +419,6 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
         }
       }),
     );
-    view.onDidDispose(() => {
-      this.teardown();
-    });
 
     this.updateTitle();
     this.schedule();
@@ -405,7 +428,7 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
     this.teardown();
   }
 
-  private teardown(): void {
+  private unmount(): void {
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
       this.timer = undefined;
@@ -413,6 +436,10 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
     for (const disposable of this.disposables.splice(0)) {
       disposable.dispose();
     }
+  }
+
+  private teardown(): void {
+    this.unmount();
     this.view = undefined;
   }
 

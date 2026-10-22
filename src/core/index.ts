@@ -103,6 +103,12 @@ export * from './fleet/cost';
 export * from './fleet/policy';
 export * from './fleet/client';
 
+// --- the studio in a webview (PLAN G10) --------------------------------------
+// The host side of the studio's postMessage transport — the gates every request
+// a webview asks for passes — and the page those webviews load.
+export * from './studio/bridge';
+export * from './studio/page';
+
 // --- the module that is deliberately NOT here -------------------------------
 //
 // `./fleet/engines` is NEVER exported from this file, and that is a rule rather

@@ -305,6 +305,11 @@ export async function hasProjectAgentSettings(root: string): Promise<boolean> {
 export function registerAgentCommands(shell: Zer0Shell): void {
   // --- Open the agent view -------------------------------------------------
   register(shell, 'agent.open', async () => {
+    // With a platform configured, the agent view is the studio's AI workspace (PLAN G10).
+    if (shell.studio.configured()) {
+      shell.studio.openAi();
+      return;
+    }
     const host = await readyHost(shell);
     if (host !== undefined) {
       await host.open();

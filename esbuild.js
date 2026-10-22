@@ -1,11 +1,14 @@
 /**
- * zer0-CMS build. Five bundles, one tool, no webpack.
+ * zer0-CMS build. Six bundles, one tool, no webpack.
  *
  *   dist/extension.js   the VS Code host    (node, `vscode` external)
  *   dist/mcp-server.js  the bundled MCP server (node, NOTHING external)
- *   dist/panel.js       the sidebar webview (browser, iife)
- *   dist/dashboard.js   the dashboard webview (browser, iife)
- *   dist/agent.js       the agent webview   (browser, iife)
+ *   dist/panel.js       the sidebar webview, file mode (browser, iife)
+ *   dist/dashboard.js   the dashboard webview, file mode (browser, iife)
+ *   dist/agent.js       the agent webview, file mode (browser, iife)
+ *   dist/studio.js      the studio's workspaces from web/packages, in every
+ *                       webview when a platform is configured (browser, iife;
+ *                       its styles land beside it as dist/studio.css)
  *
  * The MCP bundle's empty `external` list is the layering gate: src/mcp and
  * src/core must stay pure Node, so a stray `import 'vscode'` anywhere in that
@@ -54,6 +57,13 @@ const problemMatcherPlugin = {
  *     that is a declaration that the bundle does not contain it;
  *   - anything else must be named in this target's allow-list, by package name.
  *
+ * The gate reads what *our* code imports — `src/` and `web/packages/` — and
+ * not what a bundled library imports in turn: the allow-list names the
+ * libraries this code depends on, each of which brings its own (React brings
+ * `scheduler`, Mantine brings `@floating-ui/react`). Listing a library's
+ * dependencies here would make every upgrade of it an edit to this file
+ * without making the bundle any easier to audit; the metafile is that list.
+ *
  * `dist/mcp-server.js` is built with `external: []` **and** an empty allow-list.
  * Both halves matter: the empty `external` keeps `import 'vscode'` a build
  * error, and the empty allow-list keeps the engines package — and every other
@@ -71,7 +81,7 @@ function bareImportGate(allow) {
     setup(build) {
       const external = new Set(build.initialOptions.external ?? []);
       build.onResolve({ filter: /.*/ }, (args) => {
-        if (args.kind === 'entry-point') {
+        if (args.kind === 'entry-point' || args.importer.includes(`${path.sep}node_modules${path.sep}`)) {
           return null;
         }
         const spec = args.path;
@@ -223,6 +233,58 @@ const copyMediaPlugin = {
 
 const DEFINES = buildDefines();
 
+/**
+ * What the studio bundle may import from its own code: the shared web packages
+ * and the libraries the studio is built on (web/README.md), by package name.
+ * The same list, read from the studio's side, is the dependencies of the
+ * package.json files under web/packages.
+ */
+const STUDIO_LIBRARIES = [
+  '@zer0/api',
+  '@zer0/tokens',
+  '@zer0/ui',
+  'react',
+  'react-dom',
+  '@mantine/core',
+  '@mantine/hooks',
+  '@mantine/notifications',
+  '@mantine/tiptap',
+  '@tanstack/react-query',
+  '@tiptap/core',
+  '@tiptap/extension-link',
+  '@tiptap/markdown',
+  '@tiptap/pm',
+  '@tiptap/react',
+  '@tiptap/starter-kit',
+  'diff',
+  'openapi-fetch',
+];
+
+/**
+ * The studio bundle is built from web/, whose libraries web/'s own lockfile
+ * installs (the root `postinstall` runs `npm ci` there). Without them every
+ * import fails one by one; this says the one thing to do instead.
+ */
+const webInstalled = {
+  name: 'web-installed',
+  setup(build) {
+    build.onStart(() => {
+      if (!fs.existsSync(path.join(__dirname, 'web', 'node_modules', '@mantine', 'core'))) {
+        return {
+          errors: [
+            {
+              text:
+                'dist/studio.js is built from web/packages, and web/ has no node_modules. ' +
+                "Run 'npm ci' at the repository root (its postinstall installs web/) or 'npm ci' in web/.",
+            },
+          ],
+        };
+      }
+      return null;
+    });
+  },
+};
+
 /** @type {import('esbuild').BuildOptions[]} */
 const targets = [
   {
@@ -239,7 +301,9 @@ const targets = [
     plugins: [
       problemMatcherPlugin,
       // Bundled, by decision D-A. `vscode` and the agent SDK stay external.
-      bareImportGate(['@bamr87/fleet-engines', 'yaml']),
+      // `eventsource` follows a run's event stream with the person's token
+      // as a header, which the browser's EventSource cannot send (PLAN G10).
+      bareImportGate(['@bamr87/fleet-engines', 'yaml', 'eventsource']),
       metafilePlugin,
       copyMediaPlugin,
     ],
@@ -283,6 +347,21 @@ const targets = [
     format: 'iife',
     external: [],
     plugins: [problemMatcherPlugin, bareImportGate([])],
+  },
+  {
+    // The studio's workspaces in every webview once a platform is configured
+    // (PLAN G10, ADR 0006 decision 9): web/packages/webview's entry, with the
+    // same libraries the studio uses bundled at build time — never shipped as
+    // dependencies — and its CSS (Mantine's, the tokens', the editor theme's)
+    // written beside it as dist/studio.css.
+    entryPoints: ['web/packages/webview/src/main.tsx'],
+    outfile: 'dist/studio.js',
+    platform: 'browser',
+    target: 'es2022',
+    format: 'iife',
+    jsx: 'automatic',
+    external: [],
+    plugins: [problemMatcherPlugin, webInstalled, bareImportGate(STUDIO_LIBRARIES)],
   },
 ];
 

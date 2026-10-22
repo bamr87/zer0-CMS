@@ -125,6 +125,8 @@ export const SETTING_IDS: readonly string[] = [
   'zer0Cms.fleet.gitfactoryUrl',
   // Logging
   'zer0Cms.logging.level',
+  // Platform
+  'zer0Cms.platform.url',
 ];
 
 // ---------------------------------------------------------------------------
@@ -434,6 +436,24 @@ export function settingsFleetScaffoldAllow(scope?: vscode.ConfigurationScope): b
     explicit<boolean>(vscode.workspace.getConfiguration(CONFIG_SECTION, scope), 'fleet.scaffoldAllow') ===
     true
   );
+}
+
+/**
+ * `zer0Cms.platform.url` **as a human set it**, else `undefined` (PLAN G10).
+ *
+ * It decides where the person's platform token is sent, so it is read the way
+ * the arming settings are: the settings layer only — no `zer0.json` key can
+ * point the extension at a server — and nothing at all in an untrusted
+ * workspace. A trusted workspace's own `.vscode/settings.json` may name a
+ * platform (a team's), and that is safe for a second reason: the token is kept
+ * per origin (`tokenKey`), so a URL changed under you finds no token to send.
+ */
+export function settingsPlatformUrl(): string | undefined {
+  if (!workspaceTrusted()) {
+    return undefined;
+  }
+  const value = explicit<string>(vscode.workspace.getConfiguration(CONFIG_SECTION), 'platform.url');
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
 }
 
 /**

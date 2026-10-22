@@ -71,6 +71,15 @@ import {
 } from '../webview/shared/protocol';
 import { svgEl } from '../webview/shared/svg';
 import type { DashboardContext, DashboardUi } from '../webview/dashboard/main';
+import {
+  apiUrl,
+  linkTarget,
+  platformOrigin,
+  StudioBridge,
+  studioPage,
+  tokenKey,
+  type BridgeDeps,
+} from '../core';
 
 // ---------------------------------------------------------------------------
 // Fixtures — the emptiest honest snapshot the host could send
@@ -543,5 +552,251 @@ suite('webview: a run list GitHub refused renders unknown', () => {
     resetDom();
     const read = renderFleetState(fleetState('2026-09-14T00:00:00Z', true, true));
     assert.match(text(read), /no run on record/, 'a 200 with no runs is a real answer');
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// The studio in a webview (PLAN G10): the host side of its transport
+// ---------------------------------------------------------------------------
+
+/**
+ * `StudioBridge` is everything between a studio webview and the platform, so
+ * these are the gates decisions D5, D11 and D13 ask of it, proved from outside
+ * with a fetch that records instead of connecting: the token reaches the
+ * configured platform and nothing else, a request that could leave the API is
+ * refused before a socket opens, a live-site change asks the person every
+ * time, and nothing the webview hears carries the token.
+ */
+suite('studio: the host side of the webview transport (G10)', () => {
+  const ORIGIN = 'https://cms.test';
+  const TOKEN = 'zer0u_secret-token';
+
+  interface FakeStream {
+    url: string;
+    headers: Record<string, string>;
+    events: readonly string[];
+    emit: (event: string, data: string | null) => void;
+    closed: boolean;
+  }
+
+  interface Fake {
+    deps: BridgeDeps;
+    posted: Record<string, unknown>[];
+    sent: Array<{ url: string; init: RequestInit }>;
+    asked: string[];
+    went: Record<string, unknown>[];
+    opened: string[];
+    streams: FakeStream[];
+  }
+
+  interface FakeOptions {
+    origin?: string | undefined;
+    answer?: boolean;
+    respond?: () => Promise<Response>;
+  }
+
+  function fake(options: FakeOptions = {}): Fake {
+    const posted: Record<string, unknown>[] = [];
+    const sent: Array<{ url: string; init: RequestInit }> = [];
+    const asked: string[] = [];
+    const went: Record<string, unknown>[] = [];
+    const opened: string[] = [];
+    const streams: FakeStream[] = [];
+    const origin = 'origin' in options ? options.origin : ORIGIN;
+    const deps: BridgeDeps = {
+      post: (message) => void posted.push(message as Record<string, unknown>),
+      origin: () => origin,
+      token: (asked) => Promise.resolve(asked === ORIGIN ? TOKEN : undefined),
+      confirm: (question) => {
+        asked.push(question);
+        return Promise.resolve(options.answer ?? true);
+      },
+      fetch: (url, init) => {
+        sent.push({ url, init });
+        return (
+          options.respond?.() ??
+          Promise.resolve(new Response('{"ok":true}', { status: 200, headers: { 'Content-Type': 'application/json' } }))
+        );
+      },
+      openStream: (url, headers, events, onEvent) => {
+        const stream: FakeStream = { url, headers, events, emit: onEvent, closed: false };
+        streams.push(stream);
+        return () => {
+          stream.closed = true;
+        };
+      },
+      go: (to) => void went.push(to),
+      openExternal: (url) => void opened.push(url),
+    };
+    return { deps, posted, sent, asked, went, opened, streams };
+  }
+
+  const api = (path: string, method = 'GET', body?: string) => ({
+    type: 'api',
+    id: 1,
+    method,
+    path,
+    ...(body === undefined ? {} : { body }),
+  });
+
+  test('a request goes to the configured platform with the token, and the webview hears only the status and the body', async () => {
+    const f = fake();
+    await new StudioBridge(f.deps).receive(api('/api/v2/content/pages/?source=_posts%2Fbackups.md'));
+    assert.equal(f.sent.length, 1);
+    assert.equal(f.sent[0]?.url, `${ORIGIN}/api/v2/content/pages/?source=_posts%2Fbackups.md`);
+    assert.deepEqual(f.sent[0]?.init.headers, { Accept: 'application/json', Authorization: `Bearer ${TOKEN}` });
+    assert.equal(f.sent[0]?.init.redirect, 'error', 'a redirect could carry the token to another origin');
+    assert.deepEqual(f.posted, [{ type: 'api', id: 1, status: 200, body: '{"ok":true}', contentType: 'application/json' }]);
+
+    await new StudioBridge(f.deps).receive(api('/api/v2/content/pages/5/', 'PATCH', '{"fields":{}}'));
+    assert.equal(f.sent[1]?.init.body, '{"fields":{}}');
+    assert.equal((f.sent[1]?.init.headers as Record<string, string>)['Content-Type'], 'application/json');
+    assert.ok(!JSON.stringify(f.posted).includes(TOKEN), 'the token reached the webview');
+  });
+
+  test('a request that could leave the API is refused before a socket opens', async () => {
+    const paths: unknown[] = [
+      '/admin/pages/5/',
+      '/api/v2/../admin/',
+      '/api/v2/%2e%2e/admin/',
+      '/api/v2/a%2Fb/',
+      'https://evil.test/api/v2/me',
+      '//evil.test/api/v2/me',
+      '/api/v2/session/login',
+      '/api/v2/me#x',
+      '/api/v2\\..\\admin',
+      42,
+    ];
+    for (const path of paths) {
+      const f = fake();
+      await new StudioBridge(f.deps).receive({ type: 'api', id: 1, method: 'GET', path });
+      assert.equal(f.sent.length, 0, `${String(path)} reached the network`);
+      assert.equal(f.posted[0]?.status, 403, String(path));
+    }
+    for (const method of ['TRACE', 'OPTIONS', 'CONNECT', '']) {
+      const f = fake();
+      await new StudioBridge(f.deps).receive(api('/api/v2/me', method));
+      assert.equal(f.sent.length, 0, method);
+    }
+    const withBody = fake();
+    await new StudioBridge(withBody.deps).receive(api('/api/v2/me', 'GET', '{}'));
+    assert.equal(withBody.posted[0]?.status, 422);
+    assert.equal(withBody.sent.length, 0);
+  });
+
+  test('no platform, or no token for this platform, is said plainly and sends nothing', async () => {
+    const none = fake({ origin: undefined });
+    await new StudioBridge(none.deps).receive(api('/api/v2/me'));
+    assert.equal(none.posted[0]?.status, 503);
+    assert.match(String(none.posted[0]?.body), /zer0Cms\.platform\.url/);
+
+    // The token is kept per origin: a platform URL changed under the person finds none.
+    const elsewhere = fake({ origin: 'https://elsewhere.test' });
+    await new StudioBridge(elsewhere.deps).receive(api('/api/v2/me'));
+    assert.equal(elsewhere.posted[0]?.status, 401);
+    assert.match(String(elsewhere.posted[0]?.body), /Set platform token/);
+    assert.equal(none.sent.length + elsewhere.sent.length, 0);
+  });
+
+  test('publishing, unpublishing and scheduling ask the person every time, whatever the webview showed', async () => {
+    const declined = fake({ answer: false });
+    await new StudioBridge(declined.deps).receive(api('/api/v2/content/pages/5/publish/', 'POST'));
+    assert.deepEqual(declined.asked, [`Publish page 5 on ${ORIGIN}?`]);
+    assert.equal(declined.sent.length, 0, 'a declined publish reached the platform');
+    assert.equal(declined.posted[0]?.status, 409);
+
+    const agreed = fake({ answer: true });
+    const bridge = new StudioBridge(agreed.deps);
+    await bridge.receive(api('/api/v2/content/pages/5/unpublish/', 'POST'));
+    await bridge.receive(api('/api/v2/content/pages/5/schedule/', 'POST', '{"go_live_at":null}'));
+    await bridge.receive(api('/api/v2/content/pages/5/', 'PATCH', '{}'));
+    await bridge.receive(api('/api/v2/review/runs/7/accept/', 'POST', '{}'));
+    assert.equal(agreed.asked.length, 2, 'only the live-site changes ask');
+    assert.equal(agreed.sent.length, 4);
+  });
+
+  test('a platform the network cannot reach is a 503 naming the platform, never the token', async () => {
+    const f = fake({ respond: () => Promise.reject(new Error(`ECONNREFUSED while sending Bearer ${TOKEN}`)) });
+    await new StudioBridge(f.deps).receive(api('/api/v2/me'));
+    assert.equal(f.posted[0]?.status, 503);
+    assert.match(String(f.posted[0]?.body), /cms\.test/);
+    assert.ok(!JSON.stringify(f.posted).includes(TOKEN));
+  });
+
+  test('a stream is followed with the token, relayed by its id, closed at its end, and refused off the API', async () => {
+    const f = fake();
+    const bridge = new StudioBridge(f.deps);
+    await bridge.receive({ type: 'stream', id: 3, path: '/api/v2/agent-runs/7/stream/', events: ['step', 'status', 'end'] });
+    const stream = f.streams[0];
+    assert.ok(stream !== undefined);
+    assert.equal(stream.url, `${ORIGIN}/api/v2/agent-runs/7/stream/`);
+    assert.deepEqual(stream.headers, { Authorization: `Bearer ${TOKEN}` });
+    stream.emit('step', '{"idx":0}');
+    stream.emit('end', null);
+    assert.deepEqual(f.posted, [
+      { type: 'event', id: 3, event: 'step', data: '{"idx":0}' },
+      { type: 'event', id: 3, event: 'end', data: null },
+    ]);
+    assert.equal(stream.closed, true);
+
+    await bridge.receive({ type: 'stream', id: 4, path: '/admin/', events: ['step'] });
+    assert.equal(f.streams.length, 1);
+    assert.deepEqual(f.posted.at(-1), { type: 'event', id: 4, event: 'error', data: null });
+
+    await bridge.receive({ type: 'stream', id: 5, path: '/api/v2/agent-runs/8/stream/', events: ['step'] });
+    bridge.dispose();
+    assert.equal(f.streams[1]?.closed, true, 'a closed webview leaves no stream open');
+  });
+
+  test('a destination is handed on as data, and a link opens against the platform or not at all', async () => {
+    const f = fake();
+    const bridge = new StudioBridge(f.deps);
+    await bridge.receive({ type: 'go', to: { to: 'page', id: 5 } });
+    await bridge.receive({ type: 'go', to: 'page' });
+    await bridge.receive({ type: 'go', to: { to: 'x', pad: 'y'.repeat(600) } });
+    assert.deepEqual(f.went, [{ to: 'page', id: 5 }]);
+    const hrefs = ['/admin/pages/5/view_draft/', 'https://example.org/a', 'javascript:alert(1)', '//evil.test/x', 'file:///etc/passwd'];
+    for (const href of hrefs) {
+      await bridge.receive({ type: 'open', href });
+    }
+    assert.deepEqual(f.opened, [`${ORIGIN}/admin/pages/5/view_draft/`, 'https://example.org/a']);
+    await bridge.receive({ type: 'nonsense' });
+    await bridge.receive(null);
+    assert.equal(f.sent.length, 0);
+  });
+
+  test('the platform is an http(s) origin, its token is kept per origin, and a path cannot leave it', () => {
+    assert.equal(platformOrigin('https://cms.test/studio/'), ORIGIN);
+    assert.equal(platformOrigin('http://127.0.0.1:8000'), 'http://127.0.0.1:8000');
+    for (const bad of ['', 'cms.test', 'ftp://cms.test', 'javascript:alert(1)', undefined]) {
+      assert.equal(platformOrigin(bad), undefined, String(bad));
+    }
+    assert.notEqual(tokenKey(ORIGIN), tokenKey('https://other.test'));
+    assert.equal(apiUrl(ORIGIN, '/api/v2/me'), `${ORIGIN}/api/v2/me`);
+    assert.equal(apiUrl(ORIGIN, '/api/v2/../me'), undefined);
+    assert.equal(linkTarget('/x', undefined), undefined);
+  });
+
+  test('the page a studio webview loads: no connection, scripts and styles by nonce only, the editor theme first', () => {
+    const html = studioPage({
+      cspSource: 'vscode-webview://abc',
+      nonce: 'N0nce',
+      asset: (...parts) => `vscode-webview://abc/${parts.join('/')}`,
+      view: 'page',
+      surface: 'sidebar',
+      origin: ORIGIN,
+    });
+    const policy = /Content-Security-Policy" content="([^"]+)"/.exec(html)?.[1] ?? '';
+    assert.match(policy, /^default-src 'none'; /);
+    assert.match(policy, /script-src 'nonce-N0nce'/);
+    assert.match(policy, /style-src vscode-webview:\/\/abc 'nonce-N0nce'/);
+    assert.match(policy, /img-src [^;]*https:\/\/cms\.test/);
+    assert.ok(!/unsafe-inline|unsafe-eval|connect-src/.test(policy), policy);
+    assert.ok(html.indexOf('dist/media/tokens.css') < html.indexOf('dist/studio.css'), 'the theme map loads first');
+    assert.match(html, /<script nonce="N0nce" src="vscode-webview:\/\/abc\/dist\/studio\.js"><\/script>/);
+    assert.match(html, /data-view="page"/);
+    assert.match(html, /<meta property="csp-nonce" nonce="N0nce">/);
+    assert.ok(!/<script>|<style>/.test(html), 'no inline script or style');
   });
 });

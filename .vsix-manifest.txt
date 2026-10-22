@@ -13,6 +13,8 @@ dist/media/dashboard.css
 dist/media/panel.css
 dist/media/tokens.css
 dist/panel.js
+dist/studio.css
+dist/studio.js
 media/base.css
 media/dashboard.css
 media/panel.css
