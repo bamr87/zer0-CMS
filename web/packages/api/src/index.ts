@@ -21,3 +21,17 @@ export type Suggestion = Schemas['Suggestion'];
 export type Run = Schemas['Run'];
 export type Step = Schemas['Step'];
 export type ErrorEnvelope = Schemas['ErrorEnvelope'];
+// The AI content layer (/api/v2/ai/, PLAN G8).
+export type Provider = Schemas['Provider'];
+export type ModelEntry = Schemas['ModelEntry'];
+export type OutputSchema = Schemas['OutputSchema'];
+export type Assistant = Schemas['Assistant'];
+export type Pipeline = Schemas['Pipeline'];
+export type PipelineStep = Schemas['PipelineStep'];
+export type StepSource = Schemas['SourceEnum'];
+export type Brief = Schemas['Brief'];
+export type BriefStatus = Schemas['BriefStatusEnum'];
+export type Conversation = Schemas['Conversation'];
+export type Message = Schemas['Message'];
+export type Visibility = Schemas['VisibilityEnum'];
+export type RunRef = Schemas['RunRef'];

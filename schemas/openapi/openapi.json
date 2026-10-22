@@ -785,17 +785,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         }
                     },
@@ -881,17 +881,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         }
                     },
@@ -938,17 +938,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAssistant"
+                                "$ref": "#/components/schemas/PatchedAssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAssistant"
+                                "$ref": "#/components/schemas/PatchedAssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAssistant"
+                                "$ref": "#/components/schemas/PatchedAssistantRequest"
                             }
                         }
                     }
@@ -1075,17 +1075,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunAssistant"
+                                "$ref": "#/components/schemas/RunAssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunAssistant"
+                                "$ref": "#/components/schemas/RunAssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunAssistant"
+                                "$ref": "#/components/schemas/RunAssistantRequest"
                             }
                         }
                     },
@@ -1204,17 +1204,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AssistantDocument"
+                                "$ref": "#/components/schemas/AssistantDocumentRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/AssistantDocument"
+                                "$ref": "#/components/schemas/AssistantDocumentRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/AssistantDocument"
+                                "$ref": "#/components/schemas/AssistantDocumentRequest"
                             }
                         }
                     },
@@ -1551,17 +1551,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         }
                     }
@@ -1646,17 +1646,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         }
                     }
@@ -1702,17 +1702,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBrief"
+                                "$ref": "#/components/schemas/PatchedBriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBrief"
+                                "$ref": "#/components/schemas/PatchedBriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBrief"
+                                "$ref": "#/components/schemas/PatchedBriefRequest"
                             }
                         }
                     }
@@ -1791,17 +1791,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ApplyBrief"
+                                "$ref": "#/components/schemas/ApplyBriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/ApplyBrief"
+                                "$ref": "#/components/schemas/ApplyBriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/ApplyBrief"
+                                "$ref": "#/components/schemas/ApplyBriefRequest"
                             }
                         }
                     }
@@ -2138,17 +2138,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         }
                     }
@@ -2233,17 +2233,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         }
                     }
@@ -2289,17 +2289,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedConversation"
+                                "$ref": "#/components/schemas/PatchedConversationRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedConversation"
+                                "$ref": "#/components/schemas/PatchedConversationRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedConversation"
+                                "$ref": "#/components/schemas/PatchedConversationRequest"
                             }
                         }
                     }
@@ -2547,17 +2547,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PostMessage"
+                                "$ref": "#/components/schemas/PostMessageRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PostMessage"
+                                "$ref": "#/components/schemas/PostMessageRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PostMessage"
+                                "$ref": "#/components/schemas/PostMessageRequest"
                             }
                         }
                     },
@@ -2705,17 +2705,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ConversationPipeline"
+                                "$ref": "#/components/schemas/ConversationPipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/ConversationPipeline"
+                                "$ref": "#/components/schemas/ConversationPipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/ConversationPipeline"
+                                "$ref": "#/components/schemas/ConversationPipelineRequest"
                             }
                         }
                     }
@@ -2882,17 +2882,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMessage"
+                                "$ref": "#/components/schemas/PatchedMessageRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMessage"
+                                "$ref": "#/components/schemas/PatchedMessageRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMessage"
+                                "$ref": "#/components/schemas/PatchedMessageRequest"
                             }
                         }
                     }
@@ -2980,17 +2980,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Promote"
+                                "$ref": "#/components/schemas/PromoteRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Promote"
+                                "$ref": "#/components/schemas/PromoteRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Promote"
+                                "$ref": "#/components/schemas/PromoteRequest"
                             }
                         }
                     },
@@ -3138,17 +3138,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Rerun"
+                                "$ref": "#/components/schemas/RerunRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Rerun"
+                                "$ref": "#/components/schemas/RerunRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Rerun"
+                                "$ref": "#/components/schemas/RerunRequest"
                             }
                         }
                     }
@@ -3462,17 +3462,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         }
                     },
@@ -3558,17 +3558,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         }
                     },
@@ -3615,17 +3615,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedOutputSchema"
+                                "$ref": "#/components/schemas/PatchedOutputSchemaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedOutputSchema"
+                                "$ref": "#/components/schemas/PatchedOutputSchemaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedOutputSchema"
+                                "$ref": "#/components/schemas/PatchedOutputSchemaRequest"
                             }
                         }
                     }
@@ -3917,17 +3917,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         }
                     },
@@ -4013,17 +4013,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         }
                     },
@@ -4070,17 +4070,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPipeline"
+                                "$ref": "#/components/schemas/PatchedPipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPipeline"
+                                "$ref": "#/components/schemas/PatchedPipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPipeline"
+                                "$ref": "#/components/schemas/PatchedPipelineRequest"
                             }
                         }
                     }
@@ -4167,17 +4167,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         }
                     }
@@ -4416,17 +4416,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Provider"
+                                "$ref": "#/components/schemas/ProviderRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Provider"
+                                "$ref": "#/components/schemas/ProviderRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Provider"
+                                "$ref": "#/components/schemas/ProviderRequest"
                             }
                         }
                     }
@@ -4473,17 +4473,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedProvider"
+                                "$ref": "#/components/schemas/PatchedProviderRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedProvider"
+                                "$ref": "#/components/schemas/PatchedProviderRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedProvider"
+                                "$ref": "#/components/schemas/PatchedProviderRequest"
                             }
                         }
                     }
@@ -5007,17 +5007,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PageCreate"
+                                "$ref": "#/components/schemas/PageCreateRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PageCreate"
+                                "$ref": "#/components/schemas/PageCreateRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PageCreate"
+                                "$ref": "#/components/schemas/PageCreateRequest"
                             }
                         }
                     },
@@ -5263,17 +5263,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPageUpdate"
+                                "$ref": "#/components/schemas/PatchedPageUpdateRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPageUpdate"
+                                "$ref": "#/components/schemas/PatchedPageUpdateRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPageUpdate"
+                                "$ref": "#/components/schemas/PatchedPageUpdateRequest"
                             }
                         }
                     }
@@ -5841,17 +5841,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Schedule"
+                                "$ref": "#/components/schemas/ScheduleRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Schedule"
+                                "$ref": "#/components/schemas/ScheduleRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Schedule"
+                                "$ref": "#/components/schemas/ScheduleRequest"
                             }
                         }
                     }
@@ -7102,17 +7102,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AcceptRun"
+                                "$ref": "#/components/schemas/AcceptRunRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/AcceptRun"
+                                "$ref": "#/components/schemas/AcceptRunRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/AcceptRun"
+                                "$ref": "#/components/schemas/AcceptRunRequest"
                             }
                         }
                     },
@@ -7310,17 +7310,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Login"
+                                "$ref": "#/components/schemas/LoginRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Login"
+                                "$ref": "#/components/schemas/LoginRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Login"
+                                "$ref": "#/components/schemas/LoginRequest"
                             }
                         }
                     },
@@ -7800,17 +7800,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SuggestionDecision"
+                                "$ref": "#/components/schemas/SuggestionDecisionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/SuggestionDecision"
+                                "$ref": "#/components/schemas/SuggestionDecisionRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/SuggestionDecision"
+                                "$ref": "#/components/schemas/SuggestionDecisionRequest"
                             }
                         }
                     }
@@ -8031,7 +8031,7 @@
     },
     "components": {
         "schemas": {
-            "AcceptRun": {
+            "AcceptRunRequest": {
                 "type": "object",
                 "properties": {
                     "ids": {
@@ -8092,7 +8092,7 @@
                     "suggestions"
                 ]
             },
-            "ApplyBrief": {
+            "ApplyBriefRequest": {
                 "type": "object",
                 "properties": {
                     "parent": {
@@ -8101,6 +8101,7 @@
                     },
                     "page_type": {
                         "type": "string",
+                        "minLength": 1,
                         "description": "e.g. cms.ArticlePage; else the brief's."
                     }
                 }
@@ -8256,6 +8257,125 @@
                     "name"
                 ]
             },
+            "AssistantDocumentRequest": {
+                "type": "object",
+                "description": "An assistant as a portable document (export, import).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "instructions": {
+                        "type": "string"
+                    },
+                    "prompt_template": {
+                        "type": "string"
+                    },
+                    "params": {},
+                    "tools": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1
+                        }
+                    },
+                    "provider": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "A provider's slug."
+                    },
+                    "model": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "The provider's model id."
+                    },
+                    "output_schema": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SchemaDocumentRequest"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "AssistantRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "description": "The system prompt."
+                    },
+                    "prompt_template": {
+                        "type": "string",
+                        "description": "A Django template around the request: {{ prompt }}."
+                    },
+                    "provider": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "The adapter's key in the provider registry."
+                    },
+                    "model": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "params": {
+                        "description": "temperature, top_p, max_tokens, effort."
+                    },
+                    "output_schema": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "tools": {
+                        "description": "Read-only registry tools it may use."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
             "Block": {
                 "type": "object",
                 "properties": {
@@ -8265,6 +8385,25 @@
                     },
                     "type": {
                         "type": "string"
+                    },
+                    "value": {}
+                },
+                "required": [
+                    "type",
+                    "value"
+                ]
+            },
+            "BlockRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Absent on a block that is new in this request."
+                    },
+                    "type": {
+                        "type": "string",
+                        "minLength": 1
                     },
                     "value": {}
                 },
@@ -8440,6 +8579,77 @@
                     "updated_at"
                 ]
             },
+            "BriefRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "source_text": {
+                        "type": "string",
+                        "description": "A text to turn into content as it is (metadata only)."
+                    },
+                    "assistant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "pipeline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "output_schema": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "page_type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                    },
+                    "parent": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "markdown": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "description": "title, slug, description, keywords, tags (and what else it found)."
+                    },
+                    "conversation": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    }
+                }
+            },
             "BriefRun": {
                 "type": "object",
                 "properties": {
@@ -8611,12 +8821,6 @@
                             "integer",
                             "null"
                         ]
-                    },
-                    "from_brief": {
-                        "type": "string",
-                        "format": "uuid",
-                        "writeOnly": true,
-                        "description": "On create: start from this brief's text, its first turn."
                     }
                 },
                 "required": [
@@ -8627,13 +8831,59 @@
                     "updated_at"
                 ]
             },
-            "ConversationPipeline": {
+            "ConversationPipelineRequest": {
                 "type": "object",
                 "properties": {
                     "prompt": {
                         "type": "string",
                         "default": "",
                         "maxLength": 50000
+                    }
+                }
+            },
+            "ConversationRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                    },
+                    "assistant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "pipeline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "page": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "from_brief": {
+                        "type": "string",
+                        "format": "uuid",
+                        "writeOnly": true,
+                        "description": "On create: start from this brief's text, its first turn."
                     }
                 }
             },
@@ -8779,14 +9029,16 @@
                     "required"
                 ]
             },
-            "Login": {
+            "LoginRequest": {
                 "type": "object",
                 "properties": {
                     "username": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                     },
                     "password": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                     }
                 },
                 "required": [
@@ -9164,7 +9416,41 @@
                     "version"
                 ]
             },
-            "PageCreate": {
+            "OutputSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "schema": {
+                        "description": "The JSON Schema a result must match."
+                    },
+                    "render_template": {
+                        "type": "string",
+                        "description": "A Django template that turns a result into Markdown; empty renders generically."
+                    }
+                },
+                "required": [
+                    "name",
+                    "schema"
+                ]
+            },
+            "PageCreateRequest": {
                 "type": "object",
                 "properties": {
                     "parent": {
@@ -9172,6 +9458,7 @@
                     },
                     "type": {
                         "type": "string",
+                        "minLength": 1,
                         "description": "One of the parent's creatable types, e.g. `cms.ArticlePage`."
                     },
                     "fields": {
@@ -9188,7 +9475,7 @@
                     "body": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Block"
+                            "$ref": "#/components/schemas/BlockRequest"
                         }
                     }
                 },
@@ -9877,21 +10164,9 @@
                     }
                 }
             },
-            "PatchedAssistant": {
+            "PatchedAssistantRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -9902,23 +10177,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "can_edit": {
-                        "type": "boolean",
-                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -9937,6 +10198,7 @@
                             "string",
                             "null"
                         ],
+                        "minLength": 1,
                         "description": "The adapter's key in the provider registry."
                     },
                     "model": {
@@ -9958,29 +10220,12 @@
                     },
                     "tools": {
                         "description": "Read-only registry tools it may use."
-                    },
-                    "effect": {
-                        "type": "string",
-                        "description": "Always `propose`: an assistant's results are reviewed, never written.",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedBrief": {
+            "PatchedBriefRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -9990,21 +10235,6 @@
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
-                    },
-                    "can_edit": {
-                        "type": "boolean",
-                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
                     },
                     "title": {
                         "type": "string",
@@ -10040,6 +10270,7 @@
                     },
                     "page_type": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 80
                     },
                     "parent": {
@@ -10048,51 +10279,11 @@
                             "null"
                         ]
                     },
-                    "status": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/BriefStatusEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "result": {
-                        "oneOf": [
-                            {},
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
                     "markdown": {
                         "type": "string"
                     },
                     "metadata": {
                         "description": "title, slug, description, keywords, tags (and what else it found)."
-                    },
-                    "page": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
-                        "readOnly": true,
-                        "description": "The draft it made."
-                    },
-                    "run": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/RunRef"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "error": {
-                        "type": "string",
-                        "readOnly": true
                     },
                     "conversation": {
                         "type": [
@@ -10100,40 +10291,12 @@
                             "null"
                         ],
                         "format": "uuid"
-                    },
-                    "source_message": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "applied_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedConversation": {
+            "PatchedConversationRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -10144,23 +10307,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "can_edit": {
-                        "type": "boolean",
-                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "title": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 200
                     },
                     "assistant": {
@@ -10191,107 +10340,21 @@
                     }
                 }
             },
-            "PatchedMessage": {
+            "PatchedMessageRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "conversation": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "seq": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "role": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/RoleEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "text": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "result": {
-                        "oneOf": [
-                            {},
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
                     "assistant": {
                         "type": [
                             "string",
                             "null"
                         ],
                         "format": "uuid"
-                    },
-                    "run": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/RunRef"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "status": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/MessageStatusEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "provider": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "model": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "usage": {
-                        "readOnly": true
-                    },
-                    "error": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedOutputSchema": {
+            "PatchedOutputSchemaRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -10302,23 +10365,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "can_edit": {
-                        "type": "boolean",
-                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -10327,21 +10376,13 @@
                     "schema": {
                         "description": "The JSON Schema a result must match."
                     },
-                    "version": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
                     "render_template": {
                         "type": "string",
                         "description": "A Django template that turns a result into Markdown; empty renders generically."
-                    },
-                    "bundled": {
-                        "type": "boolean",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedPageUpdate": {
+            "PatchedPageUpdateRequest": {
                 "type": "object",
                 "properties": {
                     "base_revision_id": {
@@ -10365,26 +10406,14 @@
                     "body": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Block"
+                            "$ref": "#/components/schemas/BlockRequest"
                         }
                     }
                 }
             },
-            "PatchedPipeline": {
+            "PatchedPipelineRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -10395,23 +10424,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "can_edit": {
-                        "type": "boolean",
-                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -10420,36 +10435,21 @@
                     "steps": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/PipelineStep"
+                            "$ref": "#/components/schemas/PipelineStepRequest"
                         },
                         "description": "In order; replaced as a whole on update."
                     }
                 }
             },
-            "PatchedProvider": {
+            "PatchedProviderRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "slug": {
-                        "type": "string",
-                        "readOnly": true,
-                        "description": "The adapter's key in the provider registry.",
-                        "pattern": "^[-a-zA-Z0-9_]+$"
-                    },
                     "display_name": {
                         "type": "string",
                         "maxLength": 120
                     },
                     "enabled": {
                         "type": "boolean"
-                    },
-                    "is_default": {
-                        "type": "boolean",
-                        "readOnly": true
                     },
                     "base_url": {
                         "type": "string",
@@ -10486,44 +10486,6 @@
                         "type": "string",
                         "writeOnly": true,
                         "description": "Write-only; encrypted at rest. An empty string removes it (the environment is used again)."
-                    },
-                    "has_credential": {
-                        "type": "boolean",
-                        "readOnly": true
-                    },
-                    "credential_source": {
-                        "type": "string",
-                        "description": "`database`, the environment variable the adapter would read, or ''.",
-                        "readOnly": true
-                    },
-                    "capabilities": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "readOnly": true
-                    },
-                    "last_health": {
-                        "readOnly": true,
-                        "description": "The last check; only `ok` for those who do not configure providers."
-                    },
-                    "checked_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
                     }
                 }
             },
@@ -10591,6 +10553,39 @@
                     "updated_at"
                 ]
             },
+            "PipelineRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "steps": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PipelineStepRequest"
+                        },
+                        "description": "In order; replaced as a whole on update."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
             "PipelineStep": {
                 "type": "object",
                 "properties": {
@@ -10616,11 +10611,32 @@
                     "position"
                 ]
             },
-            "PostMessage": {
+            "PipelineStepRequest": {
+                "type": "object",
+                "properties": {
+                    "assistant": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceEnum"
+                    },
+                    "source_field": {
+                        "type": "string",
+                        "description": "For source=page: the field to read.",
+                        "maxLength": 64
+                    }
+                },
+                "required": [
+                    "assistant"
+                ]
+            },
+            "PostMessageRequest": {
                 "type": "object",
                 "properties": {
                     "text": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 50000
                     },
                     "assistant": {
@@ -10638,7 +10654,7 @@
                     "text"
                 ]
             },
-            "Promote": {
+            "PromoteRequest": {
                 "type": "object",
                 "properties": {
                     "to": {
@@ -10648,7 +10664,8 @@
                         "type": "integer"
                     },
                     "page_type": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                     }
                 },
                 "required": [
@@ -10711,11 +10728,6 @@
                         "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
                         "description": "Refuse new runs once spent this month."
                     },
-                    "credential": {
-                        "type": "string",
-                        "writeOnly": true,
-                        "description": "Write-only; encrypted at rest. An empty string removes it (the environment is used again)."
-                    },
                     "has_credential": {
                         "type": "boolean",
                         "readOnly": true
@@ -10768,7 +10780,55 @@
                     "updated_at"
                 ]
             },
-            "Rerun": {
+            "ProviderRequest": {
+                "type": "object",
+                "properties": {
+                    "display_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "base_url": {
+                        "type": "string",
+                        "description": "Shown to those who configure; a row with its own needs its own credential.",
+                        "maxLength": 255
+                    },
+                    "organization": {
+                        "type": "string",
+                        "description": "Shown to those who configure providers.",
+                        "maxLength": 255
+                    },
+                    "project": {
+                        "type": "string",
+                        "description": "Shown to those who configure providers.",
+                        "maxLength": 255
+                    },
+                    "default_model": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "extra": {
+                        "description": "The adapter's options (its declared keys only). Shown to those who configure."
+                    },
+                    "monthly_budget_usd": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                        "description": "Refuse new runs once spent this month."
+                    },
+                    "credential": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "description": "Write-only; encrypted at rest. An empty string removes it (the environment is used again)."
+                    }
+                }
+            },
+            "RerunRequest": {
                 "type": "object",
                 "properties": {
                     "assistant": {
@@ -11008,7 +11068,7 @@
                     "run"
                 ]
             },
-            "RunAssistant": {
+            "RunAssistantRequest": {
                 "type": "object",
                 "description": "A run on a page whose answer lands there as suggestions (`suggest`).",
                 "properties": {
@@ -11034,6 +11094,7 @@
                     },
                     "prompt": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 50000
                     }
                 },
@@ -11073,7 +11134,7 @@
                     "results"
                 ]
             },
-            "RunPipeline": {
+            "RunPipelineRequest": {
                 "type": "object",
                 "description": "A run on a page whose answer lands there as suggestions (`suggest`).",
                 "properties": {
@@ -11129,6 +11190,23 @@
                     "status"
                 ]
             },
+            "RunRefRequest": {
+                "type": "object",
+                "description": "An agent run to follow on the existing runs API.",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "id",
+                    "status"
+                ]
+            },
             "RunTarget": {
                 "type": "object",
                 "properties": {
@@ -11150,7 +11228,7 @@
                     "type"
                 ]
             },
-            "Schedule": {
+            "ScheduleRequest": {
                 "type": "object",
                 "properties": {
                     "go_live_at": {
@@ -11176,6 +11254,29 @@
                 "properties": {
                     "name": {
                         "type": "string",
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string",
+                        "default": ""
+                    },
+                    "schema": {},
+                    "render_template": {
+                        "type": "string",
+                        "default": ""
+                    }
+                },
+                "required": [
+                    "name",
+                    "schema"
+                ]
+            },
+            "SchemaDocumentRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -11346,7 +11447,7 @@
                     }
                 }
             },
-            "SuggestionDecision": {
+            "SuggestionDecisionRequest": {
                 "type": "object",
                 "properties": {
                     "with": {

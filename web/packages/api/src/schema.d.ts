@@ -1016,7 +1016,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        AcceptRun: {
+        AcceptRunRequest: {
             /** @description The run's pending suggestions the caller saw and accepts — only these, never the rest of the run. */
             ids: number[];
         };
@@ -1031,7 +1031,7 @@ export interface components {
             /** @description To accept on the draft. */
             suggestions: number[];
         };
-        ApplyBrief: {
+        ApplyBriefRequest: {
             /** @description Where the draft goes; else the brief's parent. */
             parent?: number;
             /** @description e.g. cms.ArticlePage; else the brief's. */
@@ -1083,7 +1083,48 @@ export interface components {
             model?: string | null;
             output_schema?: components["schemas"]["SchemaDocument"] | null;
         };
+        /** @description An assistant as a portable document (export, import). */
+        AssistantDocumentRequest: {
+            name: string;
+            description?: string;
+            instructions?: string;
+            prompt_template?: string;
+            params?: unknown;
+            tools?: string[];
+            /** @description A provider's slug. */
+            provider?: string | null;
+            /** @description The provider's model id. */
+            model?: string | null;
+            output_schema?: components["schemas"]["SchemaDocumentRequest"] | null;
+        };
+        AssistantRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name: string;
+            description?: string;
+            /** @description The system prompt. */
+            instructions?: string;
+            /** @description A Django template around the request: {{ prompt }}. */
+            prompt_template?: string;
+            /** @description The adapter's key in the provider registry. */
+            provider?: string | null;
+            /** Format: uuid */
+            model?: string | null;
+            /** @description temperature, top_p, max_tokens, effort. */
+            params?: unknown;
+            /** Format: uuid */
+            output_schema?: string | null;
+            /** @description Read-only registry tools it may use. */
+            tools?: unknown;
+        };
         Block: {
+            /** @description Absent on a block that is new in this request. */
+            id?: string;
+            type: string;
+            value: unknown;
+        };
+        BlockRequest: {
             /** @description Absent on a block that is new in this request. */
             id?: string;
             type: string;
@@ -1129,6 +1170,28 @@ export interface components {
             readonly source_message: string | null;
             /** Format: date-time */
             readonly applied_at: string | null;
+        };
+        BriefRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            title?: string;
+            prompt?: string;
+            /** @description A text to turn into content as it is (metadata only). */
+            source_text?: string;
+            /** Format: uuid */
+            assistant?: string | null;
+            /** Format: uuid */
+            pipeline?: string | null;
+            /** Format: uuid */
+            output_schema?: string | null;
+            page_type?: string;
+            parent?: number | null;
+            markdown?: string;
+            /** @description title, slug, description, keywords, tags (and what else it found). */
+            metadata?: unknown;
+            /** Format: uuid */
+            conversation?: string | null;
         };
         BriefRun: {
             brief: components["schemas"]["Brief"];
@@ -1185,15 +1248,26 @@ export interface components {
             /** Format: uuid */
             pipeline?: string | null;
             page?: number | null;
+        };
+        ConversationPipelineRequest: {
+            /** @default  */
+            prompt: string;
+        };
+        ConversationRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            title?: string;
+            /** Format: uuid */
+            assistant?: string | null;
+            /** Format: uuid */
+            pipeline?: string | null;
+            page?: number | null;
             /**
              * Format: uuid
              * @description On create: start from this brief's text, its first turn.
              */
             from_brief?: string;
-        };
-        ConversationPipeline: {
-            /** @default  */
-            prompt: string;
         };
         Error: {
             /** @description `<domain>.<reason>`, stable across releases (ops/README.md). */
@@ -1241,7 +1315,7 @@ export interface components {
             max_length: number | null;
             choices: components["schemas"]["Choice"][];
         };
-        Login: {
+        LoginRequest: {
             username: string;
             password: string;
         };
@@ -1339,14 +1413,25 @@ export interface components {
             /** @description A Django template that turns a result into Markdown; empty renders generically. */
             render_template?: string;
         };
-        PageCreate: {
+        OutputSchemaRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name: string;
+            description?: string;
+            /** @description The JSON Schema a result must match. */
+            schema: unknown;
+            /** @description A Django template that turns a result into Markdown; empty renders generically. */
+            render_template?: string;
+        };
+        PageCreateRequest: {
             parent: number;
             /** @description One of the parent's creatable types, e.g. `cms.ArticlePage`. */
             type: string;
             fields: {
                 [key: string]: unknown | null;
             };
-            body?: components["schemas"]["Block"][];
+            body?: components["schemas"]["BlockRequest"][];
         };
         PageDetail: {
             id: number;
@@ -1603,19 +1688,10 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Suggestion"][];
         };
-        PatchedAssistant: {
-            /** Format: uuid */
-            readonly id?: string;
-            readonly owner?: string | null;
+        PatchedAssistantRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
-            /** @description Whether the requester may change or delete the row (its owner, or staff). */
-            readonly can_edit?: boolean;
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
             name?: string;
             description?: string;
             /** @description The system prompt. */
@@ -1632,22 +1708,11 @@ export interface components {
             output_schema?: string | null;
             /** @description Read-only registry tools it may use. */
             tools?: unknown;
-            /** @description Always `propose`: an assistant's results are reviewed, never written. */
-            readonly effect?: string;
         };
-        PatchedBrief: {
-            /** Format: uuid */
-            readonly id?: string;
-            readonly owner?: string | null;
+        PatchedBriefRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
-            /** @description Whether the requester may change or delete the row (its owner, or staff). */
-            readonly can_edit?: boolean;
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
             title?: string;
             prompt?: string;
             /** @description A text to turn into content as it is (metadata only). */
@@ -1660,35 +1725,16 @@ export interface components {
             output_schema?: string | null;
             page_type?: string;
             parent?: number | null;
-            readonly status?: components["schemas"]["BriefStatusEnum"];
-            readonly result?: unknown | null;
             markdown?: string;
             /** @description title, slug, description, keywords, tags (and what else it found). */
             metadata?: unknown;
-            /** @description The draft it made. */
-            readonly page?: number | null;
-            readonly run?: components["schemas"]["RunRef"] | null;
-            readonly error?: string;
             /** Format: uuid */
             conversation?: string | null;
-            /** Format: uuid */
-            readonly source_message?: string | null;
-            /** Format: date-time */
-            readonly applied_at?: string | null;
         };
-        PatchedConversation: {
-            /** Format: uuid */
-            readonly id?: string;
-            readonly owner?: string | null;
+        PatchedConversationRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
-            /** @description Whether the requester may change or delete the row (its owner, or staff). */
-            readonly can_edit?: boolean;
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
             title?: string;
             /** Format: uuid */
             assistant?: string | null;
@@ -1701,82 +1747,41 @@ export interface components {
              */
             from_brief?: string;
         };
-        PatchedMessage: {
-            /** Format: uuid */
-            readonly id?: string;
-            /** Format: uuid */
-            readonly conversation?: string;
-            readonly seq?: number;
-            readonly role?: components["schemas"]["RoleEnum"];
-            readonly text?: string;
-            readonly result?: unknown | null;
+        PatchedMessageRequest: {
             /** Format: uuid */
             assistant?: string | null;
-            readonly run?: components["schemas"]["RunRef"] | null;
-            readonly status?: components["schemas"]["MessageStatusEnum"];
-            readonly provider?: string;
-            readonly model?: string;
-            readonly usage?: unknown;
-            readonly error?: string;
-            /** Format: date-time */
-            readonly created_at?: string;
         };
-        PatchedOutputSchema: {
-            /** Format: uuid */
-            readonly id?: string;
-            readonly owner?: string | null;
+        PatchedOutputSchemaRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
-            /** @description Whether the requester may change or delete the row (its owner, or staff). */
-            readonly can_edit?: boolean;
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
             name?: string;
             description?: string;
             /** @description The JSON Schema a result must match. */
             schema?: unknown;
-            readonly version?: number;
             /** @description A Django template that turns a result into Markdown; empty renders generically. */
             render_template?: string;
-            readonly bundled?: boolean;
         };
-        PatchedPageUpdate: {
+        PatchedPageUpdateRequest: {
             /** @description The revision edited (null only for a page without one); a newer one makes the save a 409. */
             base_revision_id?: number | null;
             fields?: {
                 [key: string]: unknown | null;
             };
-            body?: components["schemas"]["Block"][];
+            body?: components["schemas"]["BlockRequest"][];
         };
-        PatchedPipeline: {
-            /** Format: uuid */
-            readonly id?: string;
-            readonly owner?: string | null;
+        PatchedPipelineRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
-            /** @description Whether the requester may change or delete the row (its owner, or staff). */
-            readonly can_edit?: boolean;
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
             name?: string;
             description?: string;
             /** @description In order; replaced as a whole on update. */
-            steps?: components["schemas"]["PipelineStep"][];
+            steps?: components["schemas"]["PipelineStepRequest"][];
         };
-        PatchedProvider: {
-            /** Format: uuid */
-            readonly id?: string;
-            /** @description The adapter's key in the provider registry. */
-            readonly slug?: string;
+        PatchedProviderRequest: {
             display_name?: string;
             enabled?: boolean;
-            readonly is_default?: boolean;
             /** @description Shown to those who configure; a row with its own needs its own credential. */
             base_url?: string;
             /** @description Shown to those who configure providers. */
@@ -1793,18 +1798,6 @@ export interface components {
             monthly_budget_usd?: string | null;
             /** @description Write-only; encrypted at rest. An empty string removes it (the environment is used again). */
             credential?: string;
-            readonly has_credential?: boolean;
-            /** @description `database`, the environment variable the adapter would read, or ''. */
-            readonly credential_source?: string;
-            readonly capabilities?: string[];
-            /** @description The last check; only `ok` for those who do not configure providers. */
-            readonly last_health?: unknown;
-            /** Format: date-time */
-            readonly checked_at?: string | null;
-            /** Format: date-time */
-            readonly created_at?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
         };
         Pipeline: {
             /** Format: uuid */
@@ -1824,6 +1817,15 @@ export interface components {
             /** @description In order; replaced as a whole on update. */
             steps?: components["schemas"]["PipelineStep"][];
         };
+        PipelineRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name: string;
+            description?: string;
+            /** @description In order; replaced as a whole on update. */
+            steps?: components["schemas"]["PipelineStepRequest"][];
+        };
         PipelineStep: {
             readonly position: number;
             /** Format: uuid */
@@ -1832,7 +1834,14 @@ export interface components {
             /** @description For source=page: the field to read. */
             source_field?: string;
         };
-        PostMessage: {
+        PipelineStepRequest: {
+            /** Format: uuid */
+            assistant: string;
+            source?: components["schemas"]["SourceEnum"];
+            /** @description For source=page: the field to read. */
+            source_field?: string;
+        };
+        PostMessageRequest: {
             text: string;
             /**
              * Format: uuid
@@ -1845,7 +1854,7 @@ export interface components {
              */
             answer: boolean;
         };
-        Promote: {
+        PromoteRequest: {
             to: components["schemas"]["ToEnum"];
             parent?: number;
             page_type?: string;
@@ -1872,8 +1881,6 @@ export interface components {
              * @description Refuse new runs once spent this month.
              */
             monthly_budget_usd?: string | null;
-            /** @description Write-only; encrypted at rest. An empty string removes it (the environment is used again). */
-            credential?: string;
             readonly has_credential: boolean;
             /** @description `database`, the environment variable the adapter would read, or ''. */
             readonly credential_source: string;
@@ -1887,7 +1894,27 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
-        Rerun: {
+        ProviderRequest: {
+            display_name?: string;
+            enabled?: boolean;
+            /** @description Shown to those who configure; a row with its own needs its own credential. */
+            base_url?: string;
+            /** @description Shown to those who configure providers. */
+            organization?: string;
+            /** @description Shown to those who configure providers. */
+            project?: string;
+            default_model?: string;
+            /** @description The adapter's options (its declared keys only). Shown to those who configure. */
+            extra?: unknown;
+            /**
+             * Format: decimal
+             * @description Refuse new runs once spent this month.
+             */
+            monthly_budget_usd?: string | null;
+            /** @description Write-only; encrypted at rest. An empty string removes it (the environment is used again). */
+            credential?: string;
+        };
+        RerunRequest: {
             /** Format: uuid */
             assistant?: string;
         };
@@ -1958,7 +1985,7 @@ export interface components {
             run: components["schemas"]["RunRef"];
         };
         /** @description A run on a page whose answer lands there as suggestions (`suggest`). */
-        RunAssistant: {
+        RunAssistantRequest: {
             /** @description A page the run may read, which you can edit. */
             page_id?: number;
             /**
@@ -1989,7 +2016,7 @@ export interface components {
             results: components["schemas"]["Run"][];
         };
         /** @description A run on a page whose answer lands there as suggestions (`suggest`). */
-        RunPipeline: {
+        RunPipelineRequest: {
             /** @description A page the run may read, which you can edit. */
             page_id?: number;
             /**
@@ -2016,11 +2043,16 @@ export interface components {
             status: string;
             readonly links: components["schemas"]["RunLinks"];
         };
+        /** @description An agent run to follow on the existing runs API. */
+        RunRefRequest: {
+            id: number;
+            status: string;
+        };
         RunTarget: {
             type: string | null;
             id: number | null;
         };
-        Schedule: {
+        ScheduleRequest: {
             /**
              * Format: date-time
              * @description When the latest revision goes live; leave it out to publish now.
@@ -2033,6 +2065,14 @@ export interface components {
             expire_at?: string | null;
         };
         SchemaDocument: {
+            name: string;
+            /** @default  */
+            description: string;
+            schema: unknown;
+            /** @default  */
+            render_template: string;
+        };
+        SchemaDocumentRequest: {
             name: string;
             /** @default  */
             description: string;
@@ -2086,7 +2126,7 @@ export interface components {
             rejected?: boolean;
             revision_id?: number | null;
         };
-        SuggestionDecision: {
+        SuggestionDecisionRequest: {
             with?: number[];
             reason?: string;
         };
@@ -2637,9 +2677,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Assistant"];
-                "application/x-www-form-urlencoded": components["schemas"]["Assistant"];
-                "multipart/form-data": components["schemas"]["Assistant"];
+                "application/json": components["schemas"]["AssistantRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssistantRequest"];
+                "multipart/form-data": components["schemas"]["AssistantRequest"];
             };
         };
         responses: {
@@ -2685,9 +2725,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Assistant"];
-                "application/x-www-form-urlencoded": components["schemas"]["Assistant"];
-                "multipart/form-data": components["schemas"]["Assistant"];
+                "application/json": components["schemas"]["AssistantRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssistantRequest"];
+                "multipart/form-data": components["schemas"]["AssistantRequest"];
             };
         };
         responses: {
@@ -2732,9 +2772,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedAssistant"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedAssistant"];
-                "multipart/form-data": components["schemas"]["PatchedAssistant"];
+                "application/json": components["schemas"]["PatchedAssistantRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAssistantRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAssistantRequest"];
             };
         };
         responses: {
@@ -2783,9 +2823,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RunAssistant"];
-                "application/x-www-form-urlencoded": components["schemas"]["RunAssistant"];
-                "multipart/form-data": components["schemas"]["RunAssistant"];
+                "application/json": components["schemas"]["RunAssistantRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RunAssistantRequest"];
+                "multipart/form-data": components["schemas"]["RunAssistantRequest"];
             };
         };
         responses: {
@@ -2872,9 +2912,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AssistantDocument"];
-                "application/x-www-form-urlencoded": components["schemas"]["AssistantDocument"];
-                "multipart/form-data": components["schemas"]["AssistantDocument"];
+                "application/json": components["schemas"]["AssistantDocumentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssistantDocumentRequest"];
+                "multipart/form-data": components["schemas"]["AssistantDocumentRequest"];
             };
         };
         responses: {
@@ -3088,9 +3128,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Brief"];
-                "application/x-www-form-urlencoded": components["schemas"]["Brief"];
-                "multipart/form-data": components["schemas"]["Brief"];
+                "application/json": components["schemas"]["BriefRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BriefRequest"];
+                "multipart/form-data": components["schemas"]["BriefRequest"];
             };
         };
         responses: {
@@ -3136,9 +3176,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Brief"];
-                "application/x-www-form-urlencoded": components["schemas"]["Brief"];
-                "multipart/form-data": components["schemas"]["Brief"];
+                "application/json": components["schemas"]["BriefRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BriefRequest"];
+                "multipart/form-data": components["schemas"]["BriefRequest"];
             };
         };
         responses: {
@@ -3183,9 +3223,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedBrief"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedBrief"];
-                "multipart/form-data": components["schemas"]["PatchedBrief"];
+                "application/json": components["schemas"]["PatchedBriefRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedBriefRequest"];
+                "multipart/form-data": components["schemas"]["PatchedBriefRequest"];
             };
         };
         responses: {
@@ -3210,9 +3250,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ApplyBrief"];
-                "application/x-www-form-urlencoded": components["schemas"]["ApplyBrief"];
-                "multipart/form-data": components["schemas"]["ApplyBrief"];
+                "application/json": components["schemas"]["ApplyBriefRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ApplyBriefRequest"];
+                "multipart/form-data": components["schemas"]["ApplyBriefRequest"];
             };
         };
         responses: {
@@ -3424,9 +3464,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Conversation"];
-                "application/x-www-form-urlencoded": components["schemas"]["Conversation"];
-                "multipart/form-data": components["schemas"]["Conversation"];
+                "application/json": components["schemas"]["ConversationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ConversationRequest"];
+                "multipart/form-data": components["schemas"]["ConversationRequest"];
             };
         };
         responses: {
@@ -3472,9 +3512,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Conversation"];
-                "application/x-www-form-urlencoded": components["schemas"]["Conversation"];
-                "multipart/form-data": components["schemas"]["Conversation"];
+                "application/json": components["schemas"]["ConversationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ConversationRequest"];
+                "multipart/form-data": components["schemas"]["ConversationRequest"];
             };
         };
         responses: {
@@ -3519,9 +3559,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedConversation"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedConversation"];
-                "multipart/form-data": components["schemas"]["PatchedConversation"];
+                "application/json": components["schemas"]["PatchedConversationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedConversationRequest"];
+                "multipart/form-data": components["schemas"]["PatchedConversationRequest"];
             };
         };
         responses: {
@@ -3641,9 +3681,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PostMessage"];
-                "application/x-www-form-urlencoded": components["schemas"]["PostMessage"];
-                "multipart/form-data": components["schemas"]["PostMessage"];
+                "application/json": components["schemas"]["PostMessageRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PostMessageRequest"];
+                "multipart/form-data": components["schemas"]["PostMessageRequest"];
             };
         };
         responses: {
@@ -3743,9 +3783,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ConversationPipeline"];
-                "application/x-www-form-urlencoded": components["schemas"]["ConversationPipeline"];
-                "multipart/form-data": components["schemas"]["ConversationPipeline"];
+                "application/json": components["schemas"]["ConversationPipelineRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ConversationPipelineRequest"];
+                "multipart/form-data": components["schemas"]["ConversationPipelineRequest"];
             };
         };
         responses: {
@@ -3875,9 +3915,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedMessage"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedMessage"];
-                "multipart/form-data": components["schemas"]["PatchedMessage"];
+                "application/json": components["schemas"]["PatchedMessageRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedMessageRequest"];
+                "multipart/form-data": components["schemas"]["PatchedMessageRequest"];
             };
         };
         responses: {
@@ -3905,9 +3945,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Promote"];
-                "application/x-www-form-urlencoded": components["schemas"]["Promote"];
-                "multipart/form-data": components["schemas"]["Promote"];
+                "application/json": components["schemas"]["PromoteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PromoteRequest"];
+                "multipart/form-data": components["schemas"]["PromoteRequest"];
             };
         };
         responses: {
@@ -4007,9 +4047,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Rerun"];
-                "application/x-www-form-urlencoded": components["schemas"]["Rerun"];
-                "multipart/form-data": components["schemas"]["Rerun"];
+                "application/json": components["schemas"]["RerunRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RerunRequest"];
+                "multipart/form-data": components["schemas"]["RerunRequest"];
             };
         };
         responses: {
@@ -4181,9 +4221,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OutputSchema"];
-                "application/x-www-form-urlencoded": components["schemas"]["OutputSchema"];
-                "multipart/form-data": components["schemas"]["OutputSchema"];
+                "application/json": components["schemas"]["OutputSchemaRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OutputSchemaRequest"];
+                "multipart/form-data": components["schemas"]["OutputSchemaRequest"];
             };
         };
         responses: {
@@ -4229,9 +4269,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OutputSchema"];
-                "application/x-www-form-urlencoded": components["schemas"]["OutputSchema"];
-                "multipart/form-data": components["schemas"]["OutputSchema"];
+                "application/json": components["schemas"]["OutputSchemaRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OutputSchemaRequest"];
+                "multipart/form-data": components["schemas"]["OutputSchemaRequest"];
             };
         };
         responses: {
@@ -4276,9 +4316,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedOutputSchema"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedOutputSchema"];
-                "multipart/form-data": components["schemas"]["PatchedOutputSchema"];
+                "application/json": components["schemas"]["PatchedOutputSchemaRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedOutputSchemaRequest"];
+                "multipart/form-data": components["schemas"]["PatchedOutputSchemaRequest"];
             };
         };
         responses: {
@@ -4439,9 +4479,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Pipeline"];
-                "application/x-www-form-urlencoded": components["schemas"]["Pipeline"];
-                "multipart/form-data": components["schemas"]["Pipeline"];
+                "application/json": components["schemas"]["PipelineRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PipelineRequest"];
+                "multipart/form-data": components["schemas"]["PipelineRequest"];
             };
         };
         responses: {
@@ -4487,9 +4527,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Pipeline"];
-                "application/x-www-form-urlencoded": components["schemas"]["Pipeline"];
-                "multipart/form-data": components["schemas"]["Pipeline"];
+                "application/json": components["schemas"]["PipelineRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PipelineRequest"];
+                "multipart/form-data": components["schemas"]["PipelineRequest"];
             };
         };
         responses: {
@@ -4534,9 +4574,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedPipeline"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedPipeline"];
-                "multipart/form-data": components["schemas"]["PatchedPipeline"];
+                "application/json": components["schemas"]["PatchedPipelineRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPipelineRequest"];
+                "multipart/form-data": components["schemas"]["PatchedPipelineRequest"];
             };
         };
         responses: {
@@ -4564,9 +4604,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["RunPipeline"];
-                "application/x-www-form-urlencoded": components["schemas"]["RunPipeline"];
-                "multipart/form-data": components["schemas"]["RunPipeline"];
+                "application/json": components["schemas"]["RunPipelineRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RunPipelineRequest"];
+                "multipart/form-data": components["schemas"]["RunPipelineRequest"];
             };
         };
         responses: {
@@ -4704,9 +4744,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Provider"];
-                "application/x-www-form-urlencoded": components["schemas"]["Provider"];
-                "multipart/form-data": components["schemas"]["Provider"];
+                "application/json": components["schemas"]["ProviderRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProviderRequest"];
+                "multipart/form-data": components["schemas"]["ProviderRequest"];
             };
         };
         responses: {
@@ -4731,9 +4771,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedProvider"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedProvider"];
-                "multipart/form-data": components["schemas"]["PatchedProvider"];
+                "application/json": components["schemas"]["PatchedProviderRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProviderRequest"];
+                "multipart/form-data": components["schemas"]["PatchedProviderRequest"];
             };
         };
         responses: {
@@ -5060,9 +5100,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PageCreate"];
-                "application/x-www-form-urlencoded": components["schemas"]["PageCreate"];
-                "multipart/form-data": components["schemas"]["PageCreate"];
+                "application/json": components["schemas"]["PageCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PageCreateRequest"];
+                "multipart/form-data": components["schemas"]["PageCreateRequest"];
             };
         };
         responses: {
@@ -5236,9 +5276,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedPageUpdate"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedPageUpdate"];
-                "multipart/form-data": components["schemas"]["PatchedPageUpdate"];
+                "application/json": components["schemas"]["PatchedPageUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPageUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedPageUpdateRequest"];
             };
         };
         responses: {
@@ -5614,9 +5654,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Schedule"];
-                "application/x-www-form-urlencoded": components["schemas"]["Schedule"];
-                "multipart/form-data": components["schemas"]["Schedule"];
+                "application/json": components["schemas"]["ScheduleRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ScheduleRequest"];
+                "multipart/form-data": components["schemas"]["ScheduleRequest"];
             };
         };
         responses: {
@@ -6489,9 +6529,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AcceptRun"];
-                "application/x-www-form-urlencoded": components["schemas"]["AcceptRun"];
-                "multipart/form-data": components["schemas"]["AcceptRun"];
+                "application/json": components["schemas"]["AcceptRunRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AcceptRunRequest"];
+                "multipart/form-data": components["schemas"]["AcceptRunRequest"];
             };
         };
         responses: {
@@ -6608,9 +6648,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Login"];
-                "application/x-www-form-urlencoded": components["schemas"]["Login"];
-                "multipart/form-data": components["schemas"]["Login"];
+                "application/json": components["schemas"]["LoginRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["LoginRequest"];
+                "multipart/form-data": components["schemas"]["LoginRequest"];
             };
         };
         responses: {
@@ -6953,9 +6993,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["SuggestionDecision"];
-                "application/x-www-form-urlencoded": components["schemas"]["SuggestionDecision"];
-                "multipart/form-data": components["schemas"]["SuggestionDecision"];
+                "application/json": components["schemas"]["SuggestionDecisionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SuggestionDecisionRequest"];
+                "multipart/form-data": components["schemas"]["SuggestionDecisionRequest"];
             };
         };
         responses: {

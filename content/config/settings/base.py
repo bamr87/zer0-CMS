@@ -229,6 +229,9 @@ SPECTACULAR_SETTINGS = {
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
+    # A request body is its own component (`…Request`), without the read-only fields a response carries, so the
+    # generated client (openapi-typescript) does not ask a request for an id or a timestamp the platform assigns.
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 API_DOCS_ENABLED = env.bool("API_DOCS_ENABLED", default=True)
 
