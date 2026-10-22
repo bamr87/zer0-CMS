@@ -33,8 +33,8 @@ drsai/ (Python story engine) ─ new verse/stories            zer0-mistakes them
 
 ```bash
 # against the released theme gem is not enough while book layouts are
-# unreleased — point at the theme in this monorepo (packages/zer0-mistakes):
-ZER0_THEME_LOCAL=../../packages/zer0-mistakes bundle install
+# unreleased — point at a sibling checkout of bamr87/zer0-mistakes:
+ZER0_THEME_LOCAL=../../../zer0-mistakes bundle install
 bundle exec jekyll serve --config _config.yml,_config_dev.yml
 # → http://localhost:4000
 ```

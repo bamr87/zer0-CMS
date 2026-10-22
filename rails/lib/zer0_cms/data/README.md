@@ -1,7 +1,5 @@
 # `lib/zer0_cms/data/` — bundled data
 
-> The data files bundled into `rails/lib` — the ABC art styles and the theme's vendored front-matter schema — with where each comes from and what reads it.
-
 | File | Source | Used by |
 |---|---|---|
 | `abc_art_styles.yml` | this repository | `Zer0Cms::Abc::ArtStyles` |

@@ -33,7 +33,7 @@ Exit codes: 0 success, 1 a failing check, test or strict doctor, 2 a usage or ma
 
 ## Ownership
 
-A file belongs to the project whose glob matches it with the longest literal prefix, so `packages/zer0-mistakes/x` is the theme's even though nothing claims `packages/`. A project at `.` (the extension) must list the globs it owns. A root workflow belongs to every project whose `ci:` names it. Anything else, such as `docs/`, `workspace.yml` or `tools/`, is workspace infrastructure and affects no project on its own.
+A file belongs to the project whose glob matches it with the longest literal prefix, so `packages/zer0-image-generator/x` is the image generator's even though nothing claims `packages/`. A project at `.` (the extension) must list the globs it owns. A root workflow belongs to every project whose `ci:` names it. Anything else, such as `docs/`, `workspace.yml` or `tools/`, is workspace infrastructure and affects no project on its own.
 
 ## Layout
 

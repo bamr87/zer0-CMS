@@ -1,7 +1,5 @@
 # `Zer0Cms::LinkedIn` — the API client
 
-> The stdlib LinkedIn API client — every call declared as data, with its scopes and retry rules — and nothing that decides what to publish.
-
 A LinkedIn client in stdlib Ruby, and nothing that decides what to publish. The lane that does is `../distribution/`; the design of record is [`docs/DISTRIBUTION.md`](../../../../docs/DISTRIBUTION.md).
 
 | File | What it holds |

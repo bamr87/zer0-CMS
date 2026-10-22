@@ -17,7 +17,7 @@ zer0-CMS becomes one agent-native, headless CMS with two planes and a set of cli
 | **Content plane** | `content/` — Django 5.2 + Wagtail | pages, revisions, workflow, the content graph, embeddings, the agent harness (definitions, runs, steps, memory, evals), the tool registry, suggestions, the outbox | GraphQL (`/graphql/`), REST (`/api/v2/`), MCP (`/mcp/`), events (`schemas/events/`) |
 | **Experience plane** | `rails/` — Rails 8.1 | users, sessions, personalization, app data, distribution channels (LinkedIn), agents that act on app state | the content plane's APIs and MCP tools; its own outbox |
 | **Clients** | `src/` — the VS Code extension | editor UX: panel, dashboard, SEO insights | the content plane's APIs and MCP server (from M18); the files on disk until then |
-| **Frontends** | `packages/zer0-mistakes`, `sites/*` — Jekyll | static rendering | exported files (M7) |
+| **Frontends** | `sites/*` — Jekyll, built with the `jekyll-theme-zer0` theme from `bamr87/zer0-mistakes` (ADR 0005) | static rendering | exported files (M7) |
 | **Shared** | `schemas/`, `tools/`, `bin/zer0`, `workspace.yml` | contracts and the workspace | — |
 
 The rules that follow from it are in [`../../AGENTS.md`](../../AGENTS.md) § The planes and their boundary and § Agent safety rules in code. In one sentence each: an agent lives next to the data it writes; every tool declares its effect and runs as a named agent user; every agent starts at `suggest`; one revision per accepted outcome; cross-plane side effects travel as versioned events through a transactional outbox.

@@ -1,6 +1,6 @@
 # ADR 0002 — One home: zer0-CMS is where the zer0 stack lives, and content goes DB-first site by site
 
-- **Status:** accepted 2026-10-19; not yet implemented — the cutover milestones C1–C7 in [`../plan/PLAN.md`](../plan/PLAN.md) carry it out, in order.
+- **Status:** accepted 2026-10-19; not yet implemented — the cutover milestones C1–C7 in [`../plan/PLAN.md`](../plan/PLAN.md) carry it out, in order. **Amended by [ADR 0005](0005-theme-goes-home.md)** for the theme: `bamr87/zer0-mistakes` is the theme's home, not a mirror; decisions 2–5 below no longer apply to it, and the Pages deploy here targets this repository's own project site.
 - **Amends:** [ADR 0001](0001-target-architecture.md) — decides PLAN-D1, which ADR 0001 left open. [`../MONOREPO.md`](../MONOREPO.md) § What still depends on the original repositories becomes the cutover checklist below.
 
 ## Context
