@@ -43,3 +43,7 @@ charset-normalizer==3.5.2
 beautifulsoup4==4.15.0
 # The newsroom's newsletters and subscription email (newsroom/README.md): any ESP behind Django's mail API.
 django-anymail==15.2
+# Distribution (distribution/README.md): pull requests to a site's repository (barodybroject's client), and a
+# site's zer0.json — JSONC, comments and trailing commas — read by the LinkedIn lane's CLI.
+PyGithub==2.10.0
+json5==0.17.3

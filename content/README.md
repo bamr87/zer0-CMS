@@ -35,6 +35,7 @@ With Docker, from the repository root: `docker compose --profile content up -d -
 | `ideas/` | boards of ideas: capture from anywhere, votes, brainstorms through the AI layer's conversations, clusters and duplicates by meaning, merging, promotion to a brief, an article or a book | [`ideas/README.md`](ideas/README.md) |
 | `newsroom/` | operating a news site: desks, stories (the budget and the calendar), assignments, the newsroom workflow on Wagtail's (editing and copy stages, embargoes, the breaking-news fast path), fronts, bylines and author pages, the corrections and updates log, newsletters with double opt-in through django-anymail, AI help through the AI layer, and parodynews's Parody desk (`manage.py seed_parody_desk`) | [`newsroom/README.md`](newsroom/README.md) |
 | `books/` | books in the platform: a book's `library/<slug>/` as a generated file set (`import_books`, `export_books`, `roundtrip_books`), the bookshelf's commands (`manage.py books …`: validation with its codes, statistics, manuscripts, the dashboard), and AI-assisted outlining and writing as runs of the `books` agent whose results are suggestions | [`books/README.md`](books/README.md) |
+| `distribution/` | channels (LinkedIn with OAuth and PKCE, WordPress, GitHub pull requests, newsletters; credentials encrypted and write-only), the queue (compose → brand guard → a person's approval → publish on the worker, every gate checked twice, a channel armed by a person and the deployment), the ledger keyed by canonical URL in the extension's byte format, statistics on beat, the `distribution.*` tools and the published-page consumer; and `manage.py linkedin`, the LinkedIn lane over a site's own files for its CI | [`distribution/README.md`](distribution/README.md) |
 | `suggestions/` | `Suggestion` (and `Suggestion.objects.visible_to`, the one scope every surface reads suggestions through), `BlockProvenance`, the accept/reject flow, the brand guard (ported from the extension), the editor panel and views | `suggestions/services.py` |
 | `graph/` | `Entity`, `Edge`, `Embedding`, behavioural counts; structural edges, kNN, related, semantic search, GraphRAG | [`graph/README.md`](graph/README.md) |
 | `workflow/` | `AgentReviewTask`, a Wagtail workflow task a review agent decides | `workflow/models.py` |
@@ -53,7 +54,7 @@ editor or agent ──► tool (registry: schema, effect, policy, permission, ra
                                                                                    ▼
                                      page revision ──► publish ──► graph index + outbox event (one transaction)
                                                                          │
-                                       relay ──► Redis Stream zer0:content ──► Rails (cache purge, LinkedIn), …
+                                       relay ──► Redis Stream zer0:content ──► consumers (distribution's drafts), …
 ```
 
 ## Surfaces
@@ -69,6 +70,7 @@ editor or agent ──► tool (registry: schema, effect, policy, permission, ra
 | `/api/v2/research/` | `collections/`, `sources/` (`upload/`, `search/`, and per source `refetch/`, `summarize/`), `quotes/`, `citations/`, `feeds/`, `questions/`, `fact-checks/` ([`research/README.md`](research/README.md)) |
 | `/api/v2/newsroom/` | the newsroom: `desks/`, `stories/` (the budget and the calendar; `move/`, `assign/`, `ai/`, `apply-draft/`), `authors/`, `fronts/`, `newsletters/`, `issues/` (`preview/`, `send/`), and the public `subscribe/`, `subscriptions/confirm/` and `subscriptions/unsubscribe/` ([`newsroom/README.md`](newsroom/README.md)); the Wagtail page API carries every page's `bylines` and `corrections`. The pages a newsletter's emailed links open are `/newsletters/confirm/` and `/newsletters/unsubscribe/` |
 | `/api/v2/books/` | books: the library's shelf, a book's overview, chapters, its other files, findings, the manuscript, what a task's model reads, `assist/` (a task, `202`) and a book from a premise ([`books/README.md`](books/README.md)) |
+| `/api/v2/distribution/` | `channels/` (`connect/`, `disconnect/`, `check/`, `statistics/`, `ledger-file/`), `posts/` (the queue: `approve/`, `reject/`, `publish/` answering `202`, `record/`), `ledger/` with statistics, and LinkedIn's `oauth/linkedin/` callback ([`distribution/README.md`](distribution/README.md)) |
 | `/mcp/` | MCP, bearer-token authenticated (`manage.py agent_token <slug> --name …`) |
 | `/healthz`, `/readyz`, `/version` | liveness (touches nothing), readiness (database, cache, Redis — 503 with `checks` when one is down), the build (`name`, `version`, `commit`, `built_at`) |
 | `/api/v2/openapi.json`, `/api/v2/docs/` | the OpenAPI document (committed at [`schemas/openapi/openapi.json`](../schemas/openapi/openapi.json), drift-checked) and its UI where `API_DOCS_ENABLED` |
@@ -77,4 +79,4 @@ Every response carries `X-Request-Id` (echoed when a client sent one) and `X-App
 
 ## Tests
 
-`tests/` mirrors the plan's milestones: `cms/` (M4; P4: `test_tasks.py`), `api/` (M5, M12; P4: `test_session.py`, `test_pages.py`, `test_review.py`, `test_studio.py`), `importers/` (M6, M7, G8), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1; P4: `test_server.py`), `ai/` (G8), `books/` (G9), `newsroom/` (G15), `research/` and `ideas/` (G14). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider.
+`tests/` mirrors the plan's milestones: `cms/` (M4; P4: `test_tasks.py`), `api/` (M5, M12; P4: `test_session.py`, `test_pages.py`, `test_review.py`, `test_studio.py`), `importers/` (M6, M7, G8), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1; P4: `test_server.py`), `ai/` (G8), `books/` (G9), `newsroom/` (G15), `research/` and `ideas/` (G14), `distribution/` (G5). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider.

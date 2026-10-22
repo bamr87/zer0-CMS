@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "ideas",
     "newsroom",
     "books",
+    "distribution",
     "suggestions",
     "graph",
     "workflow",
@@ -261,6 +262,7 @@ SPECTACULAR_SETTINGS = {
         "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
         "IdeaStatusEnum": "ideas.models.Idea.STATUSES",
+        "OriginEnum": "ideas.models.Idea.ORIGINS",
         "BrainstormKindEnum": "ideas.services.KINDS",
         "PromotionEnum": "ideas.serializers.PROMOTIONS",
         "SourceKindEnum": "research.models.Source.KINDS",
@@ -277,6 +279,12 @@ SPECTACULAR_SETTINGS = {
         "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
         "IssueLevelEnum": "books.serializers.ISSUE_LEVELS",
         "BookTaskEnum": "books.serializers.TASK_CHOICES",
+        "DistributionKindEnum": "distribution.models.Kind",
+        "DistributionPostKindEnum": "distribution.models.POST_KINDS",
+        "DistributionPostStatusEnum": "distribution.models.DistributionPost.Status",
+        "DistributionOriginEnum": "distribution.models.DistributionPost.Origin",
+        "LedgerStateEnum": "distribution.models.LEDGER_STATES",
+        "GuardLevelEnum": "distribution.serializers.LEVELS",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -326,6 +334,8 @@ CELERY_BEAT_SCHEDULE = {
     "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
     # The research library's feed subscriptions that are due (research/tasks.py).
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
+    # Aggregate statistics for every LinkedIn channel's published posts, once a day (distribution/tasks.py).
+    "distribution-statistics": {"task": "distribution.tasks.ingest_statistics", "schedule": crontab(hour=4, minute=23)},
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
@@ -360,6 +370,26 @@ AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
 # decides its permanent home — and the site key of the site root they live under.
 BOOKS_LIBRARY_DIR = Path(env("BOOKS_LIBRARY_DIR", default=str(REPO_ROOT / "packages" / "books" / "library")))
 BOOKS_SITE_KEY = env("BOOKS_SITE_KEY", default="library")
+
+# ── Distribution (distribution/README.md) ───────────────────────────────────
+# A publish needs a person's approval, an armed channel (its own setting) and the deployment's switch for the
+# channel's kind — the environment of the process doing it, never a file or a row: ZER0_LINKEDIN_PUBLISH (as the
+# LinkedIn lane always had), ZER0_WORDPRESS_PUBLISH, ZER0_GITHUB_PR_PUBLISH, ZER0_EMAIL_PUBLISH.
+DISTRIBUTION_ARMED = {
+    kind
+    for kind, variable in (
+        ("linkedin", "ZER0_LINKEDIN_PUBLISH"),
+        ("wordpress", "ZER0_WORDPRESS_PUBLISH"),
+        ("github_pr", "ZER0_GITHUB_PR_PUBLISH"),
+        ("email", "ZER0_EMAIL_PUBLISH"),
+    )
+    if env.bool(variable, default=False)
+}
+# The platform's LinkedIn app (connecting an account, refreshing and introspecting its token), and the address
+# LinkedIn returns the account's owner to when it is not this request's origin + /api/v2/distribution/oauth/linkedin/.
+LINKEDIN_CLIENT_ID = env("LINKEDIN_CLIENT_ID", default="")
+LINKEDIN_CLIENT_SECRET = env("LINKEDIN_CLIENT_SECRET", default="")
+LINKEDIN_REDIRECT_URI = env("ZER0_CMS_LINKEDIN_REDIRECT_URI", default="")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)

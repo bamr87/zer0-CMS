@@ -12,6 +12,7 @@
 /api/v2/newsroom/ the newsroom: desks, stories, authors, fronts, newsletters, issues, subscriptions
 /newsletters/     the pages a newsletter email's links open: confirm, unsubscribe (newsroom/urls.py)
 /api/v2/books/    books: the shelf, a book's overview, chapters, validation, manuscripts, the book assistant
+/api/v2/distribution/ channels, the publishing queue, the ledger and statistics, LinkedIn's OAuth callback
 /api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
@@ -56,6 +57,7 @@ urlpatterns = [
     path("api/v2/newsroom/", include("newsroom.urls")),
     path("newsletters/", include(subscription_pages)),
     path("api/v2/books/", include("books.urls")),
+    path("api/v2/distribution/", include("distribution.urls")),
     path("api/v2/", include("api.urls")),
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),
