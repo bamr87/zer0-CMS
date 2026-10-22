@@ -220,7 +220,7 @@ platform:
   # ── The AI content layer (TARGET.md § The AI content layer) ─────────────────
   - id: ai.providers
     what: Provider adapters behind one registry, per-provider configuration with an encrypted credential, the default provider, and a health test.
-    # G8 screens: AI → Providers — status and health for everyone, configuration (the credential write-only, shown as set or not set), test, model sync and the default for those with ai.change_providerconfig; the default's status on Home.
+    # G8 screens: AI → Providers — status and health for everyone, configuration (the credential write-only, shown as set or not set), test, model sync and the default for those with ai.change_providerconfig (one check at a time); the default's status on Home; verify/scenarios/studio-ai-workspace.yml opens it in a browser.
     surfaces: {api: done, studio: done, extension: missing}
     proof:
       api: content/tests/ai/test_api.py::test_providers_are_listed_for_everyone_and_configured_by_staff_with_a_write_only_credential
@@ -234,21 +234,21 @@ platform:
       studio: web/packages/ui/test/ai/providers.test.tsx
   - id: ai.assistants
     what: User-managed assistants (persona, instructions, model, parameters, output schema), propose-only, run on demand.
-    # G8 screens: AI → Assistants — create, edit, try on a prompt (the run followed live), export and import; and the editor's AI panel runs one on the open page, its answer landing as suggestions (api: test_on_page.py).
+    # G8 screens: AI → Assistants — create, edit (the form read again from the saved row), try on a prompt (the run followed live), export and import; and the editor's AI panel runs one on the open page — the whole page, a block, or a selection placed by its field and occurrence — its answer landing as suggestions proposed through the registry (api: test_on_page.py).
     surfaces: {api: done, studio: done, extension: missing, mcp: partial}
     proof:
       api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
       studio: web/packages/ui/test/ai/assistants.test.tsx
   - id: ai.pipelines
     what: Ordered pipelines of assistants, each step reading the one before.
-    # G8 screens: AI → Pipelines — steps reordered by dragging (pointer or keyboard, @dnd-kit) or the move buttons, each step's assistant and source; run and follow; also on a conversation and from the editor's AI panel.
+    # G8 screens: AI → Pipelines — created from steps, reordered by dragging (pointer or keyboard, @dnd-kit) or the move buttons, each step's assistant and source; run and follow; also on a conversation and from the editor's AI panel; verify/scenarios/studio-ai-workspace.yml builds one and drags its steps from the keyboard in a browser.
     surfaces: {api: done, studio: done, extension: missing, mcp: missing}
     proof:
       api: content/tests/ai/test_api.py::test_a_pipeline_is_written_with_its_steps_and_run
       studio: web/packages/ui/test/ai/pipelines.test.tsx
   - id: ai.schemas
     what: The output-schema library (bundled schemas seeded), export and import, and schema-validated structured generation.
-    # G8 screens: AI → Output schemas — edited with feedback as typed and the platform's verdict on save, exported, imported, the bundled ones added by staff; an assistant's structured answer shown as its JSON.
+    # G8 screens: AI → Output schemas — edited with feedback as typed and the platform's verdict on save, exported, imported, the bundled ones added by staff; an assistant's structured answer shown as its JSON; verify/scenarios/studio-ai-workspace.yml writes one in a browser.
     surfaces: {api: done, studio: done}
     proof:
       api: content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled
@@ -262,7 +262,7 @@ platform:
       studio: web/packages/ui/test/ai/briefs.test.tsx
   - id: ai.conversations
     what: Conversations — threads and messages replayed to any provider, run an assistant or a pipeline, assign, re-run, promote a message to a brief or a draft.
-    # G8 screens: AI → Conversations (and Create) — send and follow the reply's run, filter, ask again (or another assistant), run the pipeline, promote to a brief or a draft, delete; verify/scenarios/studio-ai-chat.yml in a browser.
+    # G8 screens: AI → Conversations (and Create) — send and follow the reply's run, filter, ask again (or another assistant), run the pipeline, promote to a brief or a draft, delete; the newest messages first, earlier ones loaded on request; verify/scenarios/studio-ai-chat.yml in a browser.
     surfaces: {api: done, studio: done, extension: missing}
     proof:
       api: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one
@@ -287,7 +287,7 @@ platform:
     surfaces: {api: partial, studio: partial}
   - id: ai.streaming
     what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
-    # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource on gthread workers (it outlives gunicorn's worker timeout), and the studio's timeline follows it live — stopping at a final status, reopening after a pause, backing off from a broken stream. G8: every screen that starts a run (202) follows it the same way (useLiveRun) and reads its result when it ends; idempotent creation is the API's (an Idempotency-Key replays the first answer) — the studio never retries a run-creating request, so it sends none.
+    # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource on gthread workers (it outlives gunicorn's worker timeout), and the studio's timeline follows it live — stopping at a final status, reopening after a pause, backing off from a broken stream. G8: every screen that starts a run (202) follows it the same way (useLiveRun) and reads its result when it ends, and every request that starts a run carries an Idempotency-Key made when the person acts (the API replays the first answer to a repeat); its control waits while the request is out and a double click asks once — conversations.test.tsx (keys, Ctrl+Enter sends once, a message's actions held), providers.test.tsx (one check per double click), briefs.test.tsx and aipanel.test.tsx.
     surfaces: {api: done, studio: done, extension: missing}
     proof:
       api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
@@ -469,7 +469,7 @@ sources:
       - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_from_a_pipeline_and_a_brief_from_text; studio: a message promoted to a draft, and a brief written as 'Use my text as it is' (G8)"}
       - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_message_queues_a_reply_and_the_whole_conversation_is_replayed; studio: AI or Create → Conversations, started by hand or from a brief ('Talk it over'), each reply followed live (G8); verify/scenarios/studio-ai-chat.yml"}
       - {id: parodynews.run-group, what: "Run a whole assistant group on a thread in one action.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_pipeline_on_a_conversation_reads_the_prompt_it_was_given; studio: 'Run the pipeline' in a conversation (G8)"}
-      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_api.py::test_a_conversation_starts_from_a_brief_and_its_messages_filter_and_delete and content/tests/ai/test_services.py::test_a_failed_reply_records_its_error_and_is_left_out_of_the_replay; studio: the thread — filtered by side or failure, ask again or another assistant, delete; each reply's error, provider, model, tokens and cost (G8)"}
+      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: partial, note: "API done (content/tests/ai/test_api.py::test_a_conversation_starts_from_a_brief_and_its_messages_filter_and_delete, content/tests/ai/test_services.py::test_a_failed_reply_records_its_error_and_is_left_out_of_the_replay). Studio (G8, web/packages/ui/test/ai/conversations.test.tsx): within one thread — filtered by side or failure, ask again or another assistant, delete; each reply's error, provider, model, tokens and cost. Open: barodybroject's Messages screen lists every message across threads with per-message assignment — the studio has no cross-conversation list (the API has none either: messages are read per conversation) and never assigns (PATCH messages/<id>/ assistant)"}
       - {id: parodynews.message-to-post, what: "Promote a message to a draft post with AI-generated front matter.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one; studio: a message promoted to a draft opens as a brief to apply (G8)"}
       - {id: parodynews.post-editing, what: "Edit a post's Markdown body (with a rendered preview), front matter and status.", target: content.edit, status: partial}
       - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
@@ -496,7 +496,7 @@ sources:
       - {id: parodynews.field-defaults, what: "Stored default field values per model.", target: content.types, status: missing}
       - {id: parodynews.cloud-deploy, what: "Azure deployment (azd, Bicep: Container Apps, Postgres, Key Vault, registry, monitoring).", target: platform.deploy, status: missing}
       - {id: parodynews.newsroom, what: "Run a news site — posts move draft → review → published → archived, generated by assistant pipelines and published to the site.", target: news.workflow, status: partial}
-      - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: done, proof: web/studio/test/ai.test.tsx, note: "The studio (web/): Home with the providers' status, Write (posts are pages, P4), Create and AI → Conversations (threads, messages), AI → Assistants, Pipelines (groups), Output schemas, Providers and Models (settings), light and dark from the platform's tokens (P4, G8)"}
+      - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: partial, note: "The studio (web/, web/studio/test/ai.test.tsx): Home with the providers' status, Create and AI → Conversations (threads and their messages), AI → Assistants, Pipelines (groups), Output schemas, Providers and Models (settings), light and dark from the platform's tokens (P4, G8). Open, with their own rows: the posts screens — a post's Markdown with its rendered preview, its versions, publishing as a pull request (parodynews.post-editing, render-preview, post-versions, publish-pr) — and the cross-thread messages list (parodynews.messages)"}
 
   - id: rails-app
     path: rails/app
