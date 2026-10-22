@@ -142,6 +142,22 @@ describe('a story’s panel', () => {
     expect(go).toHaveBeenCalledWith({ to: 'page', id: 5 });
   });
 
+  it('asks the AI for a draft from the pitch and makes it the story’s page', async () => {
+    const draftRun = { kind: 'draft', run: { id: 13, status: 'succeeded', links: { self: '', stream: '' } }, result: null, text: '# Draft', error: '' };
+    const platform = fakePlatform({
+      [`GET ${STORIES}s1/`]: () => detail({ status: 'assigned', moves: ['drafting'], ai_runs: [draftRun] }),
+      [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 14, status: 'queued', links: { self: '', stream: '' } } }),
+      [`POST ${STORIES}s1/apply-draft/`]: () => new Reply(201, { story: detail({ status: 'drafting' }), page_id: 7, suggestions: [1, 2] }),
+      'GET /api/v2/newsroom/desks/d1/people/': () => PEOPLE,
+      'GET /api/v2/newsroom/authors/': () => listOf([]),
+    });
+    renderUi(<StoryPanel storyId="s1" />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Draft it from the pitch' }));
+    await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.body).toEqual({ kind: 'draft' }));
+    await userEvent.click(screen.getByRole('button', { name: "Make the AI's draft the story's page" }));
+    await waitFor(() => expect(platform.calls.some((c) => c.method === 'POST' && c.path.endsWith('/apply-draft/'))).toBe(true));
+  });
+
   it('drafts a correction note with the AI and posts the one the editor keeps', async () => {
     const noteRun = { kind: 'correction', run: { id: 11, status: 'succeeded', links: { self: '', stream: '' } }, result: { text: 'An earlier version misstated the day.' }, text: '', error: '' };
     const platform = fakePlatform({
@@ -216,6 +232,30 @@ describe('fronts and newsletters', () => {
     expect(await screen.findByText(/1\. Bridge closes/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send to 2 confirmed subscribers' }));
     await waitFor(() => expect(platform.calls.some((c) => c.path === '/api/v2/newsroom/issues/i1/send/')).toBe(true));
+  });
+});
+
+describe('authors', () => {
+  it('adds an author and shows an author’s page of published stories', async () => {
+    const ada = { id: 'a1', name: 'Ada Reporter', slug: 'ada-reporter', bio: 'Covers the city.', email: '', user: null, created_at: '' };
+    const platform = fakePlatform({
+      'GET /api/v2/newsroom/desks/': () => listOf([DESK]),
+      [`GET ${STORIES}`]: () => listOf([]),
+      'GET /api/v2/newsroom/authors/': () => listOf([ada]),
+      'POST /api/v2/newsroom/authors/': () => new Reply(201, { ...ada, id: 'a2', name: 'Bo Writer', slug: 'bo-writer' }),
+      'GET /api/v2/newsroom/authors/a1/': () => ({ ...ada, stories: [{ id: 's1', headline: 'Bridge closes', url_path: '/news/bridge/', published_at: null }] }),
+      'GET /api/v2/newsroom/authors/a2/': () => ({ ...ada, id: 'a2', name: 'Bo Writer', stories: [] }),
+    });
+    renderUi(<Newsroom siteId={1} />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('tab', { name: 'Authors' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Ada Reporter' }));
+    expect(await within(await screen.findByLabelText('Author page')).findByText('Bridge closes')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Name'), 'Bo Writer');
+    await userEvent.click(screen.getByRole('button', { name: 'Add the author' }));
+    await waitFor(() =>
+      expect(platform.calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Bo Writer', bio: '', email: '' }),
+    );
+    expect(await within(screen.getByLabelText('Author page')).findByText('Bo Writer')).toBeInTheDocument();
   });
 });
 

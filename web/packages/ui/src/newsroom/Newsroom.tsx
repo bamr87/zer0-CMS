@@ -1,6 +1,7 @@
 // The Newsroom workspace (TARGET.md § The newsroom): a site's desks, the story
-// budget as a board by status, the editorial calendar, assignments, fronts and
-// newsletters — with a story's panel beside them and pitching a new story.
+// budget as a board by status, the editorial calendar, assignments, fronts,
+// newsletters and authors — with a story's panel beside them and pitching a
+// new story.
 // Opening a story asks the host to go to it ({ to: 'story' }), so a story's
 // panel has an address; the host renders this workspace with its `storyId`.
 import { Alert, Button, Drawer, Group, Modal, Select, Stack, Tabs } from '@mantine/core';
@@ -8,6 +9,7 @@ import { useState } from 'react';
 
 import { useGo } from '../context';
 import { Assignments } from './Assignments';
+import { Authors } from './Authors';
 import { Board } from './Board';
 import { Calendar } from './Calendar';
 import { Fronts } from './Fronts';
@@ -56,6 +58,7 @@ export function Newsroom({ siteId, storyId }: { siteId?: number; storyId?: strin
           <Tabs.Tab value="assignments">Assignments</Tabs.Tab>
           <Tabs.Tab value="fronts">Fronts</Tabs.Tab>
           <Tabs.Tab value="newsletters">Newsletters</Tabs.Tab>
+          <Tabs.Tab value="authors">Authors</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="budget" pt="md">
           <Board query={query} onOpen={open} />
@@ -71,6 +74,9 @@ export function Newsroom({ siteId, storyId }: { siteId?: number; storyId?: strin
         </Tabs.Panel>
         <Tabs.Panel value="newsletters" pt="md">
           <Newsletters siteId={siteId} />
+        </Tabs.Panel>
+        <Tabs.Panel value="authors" pt="md">
+          <Authors />
         </Tabs.Panel>
       </Tabs>
       <Drawer
