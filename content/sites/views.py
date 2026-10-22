@@ -53,7 +53,8 @@ def managed_of(site) -> ManagedSite | None:
     return getattr(site, "managed", None)  # a reverse one-to-one with no row reads as missing
 
 
-def site_json(site, user) -> dict:
+def site_json(site, user, manageable: set | None = None) -> dict:
+    """A site as the API shows it; `manageable` is the ids the caller manages, when already known."""
     managed = managed_of(site)
     return {
         "id": site.pk,
@@ -63,7 +64,7 @@ def site_json(site, user) -> dict:
         "is_default": site.is_default_site,
         "root_page_id": site.root_page_id,
         "managed": managed,
-        "can_manage": access.may_manage(user, site),
+        "can_manage": site.pk in manageable if manageable is not None else access.may_manage(user, site),
     }
 
 
@@ -101,7 +102,9 @@ class Sites(APIView):
     @extend_schema(operation_id="sites_list", responses={200: s.SiteSerializer(many=True), **ERROR_RESPONSES})
     def get(self, request):
         rows = access.visible_sites(request.user).select_related("managed").order_by("site_name", "hostname")
-        return Response(s.SiteSerializer([site_json(site, request.user) for site in rows], many=True).data)
+        manageable = set(access.manageable_sites(request.user).values_list("pk", flat=True))
+        data = [site_json(site, request.user, manageable) for site in rows]
+        return Response(s.SiteSerializer(data, many=True).data)
 
     @extend_schema(
         operation_id="sites_register",

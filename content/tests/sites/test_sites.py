@@ -82,6 +82,11 @@ def test_a_checkout_must_be_a_jekyll_site_inside_the_repository_or_sites_dir(api
     assert refused.status_code == 422 and "outside" in refused.json()["error"]["message"]
     not_jekyll = api.post("/api/v2/sites/", {"checkout": "content"}, format="json")
     assert not_jekyll.status_code == 422 and "_config.yml" in not_jekyll.json()["error"]["message"]
+    broken = checkout / "pages" / "broken"
+    broken.mkdir()
+    (broken / "_config.yml").write_text("title: [unclosed\n")
+    unreadable = api.post("/api/v2/sites/", {"checkout": str(broken)}, format="json")
+    assert unreadable.status_code == 422 and "not YAML Jekyll can read" in unreadable.json()["error"]["message"]
 
 
 def test_the_list_carries_what_the_platform_manages(api, registered):

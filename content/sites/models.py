@@ -18,6 +18,7 @@ site and who may manage it is sites/access.py.
 """
 
 import uuid
+from pathlib import Path
 
 from django.conf import settings
 from django.db import models
@@ -75,8 +76,6 @@ class ManagedSite(models.Model):
     @property
     def root(self):
         """The checkout's absolute path."""
-        from pathlib import Path
-
         path = Path(self.checkout)
         return path if path.is_absolute() else Path(settings.REPO_ROOT) / path
 

@@ -159,8 +159,12 @@ def register(checkout: str, *, user=None, key: str = "") -> tuple[ManagedSite, o
         raise SiteError("the site needs a key: letters, digits and hyphens")
     if ManagedSite.objects.filter(key=key).exists():
         raise SiteError(f"a site with the key {key} is already registered")
+    try:
+        config = read_config(root)
+    except ValueError as e:  # a _config.yml Jekyll could not read either
+        raise SiteError(str(e)) from e
     with transaction.atomic():
-        site_root = ensure_site_root(key, root, read_config(root), Path(settings.REPO_ROOT))
+        site_root = ensure_site_root(key, root, config, Path(settings.REPO_ROOT))
         site = Site.objects.filter(root_page=site_root).first()
         if site is None:
             raise SiteError(f"{key}.localhost already serves another site")

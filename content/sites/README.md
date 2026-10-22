@@ -42,7 +42,7 @@ What a write-back writes is recorded both ways, the digest on the site and the t
 | `GET /api/v2/sites/<id>/findings/` | The last doctor run's findings, `?severity=`, `?check=` |
 | `POST /api/v2/sites/<id>/sync/`, `export/`, `doctor/` | Start a job (202 with it; `Idempotency-Key`); follow it at `/api/v2/jobs/<id>/` (jobs/README.md) |
 
-Commands: `manage.py doctor PATH [--format findings]` (or `--site KEY`, recorded), `manage.py site_job sync|export|doctor --site KEY`. Tests: `tests/sites/`.
+Commands: `manage.py doctor PATH [--format findings]` (or `--site KEY`, recorded), `manage.py site_job sync|export|doctor --site KEY`. Setting: `SITES_DIR` (environment), where checkouts outside this repository may be registered from — unset, only the repository's own sites can be; compose mounts it at `/sites`, writable for the worker that runs the jobs. Tests: `tests/sites/`.
 
 ## Not here yet
 
