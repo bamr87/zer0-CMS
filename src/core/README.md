@@ -28,6 +28,7 @@ The second rule: **zero *shipped* runtime dependencies, and libraries over hand-
 | `media/` | Resolving the preview image a page already has, or emitting the generator's brief. |
 | `platform/` | What kind of site this is (decision D12): seven profiles as data, the zer0-mistakes overlay on Jekyll, marker-file detection over injected readers, the site's own config, and the permalink and content-root derivations. See `platform/README.md`. |
 | `fleet/` | The Fleet console's pure half: `fleet.manifest.yml` → typed lanes, the switch/dispatch gate, and the GitHub surface declared as data over an injected `fetch`. See `fleet/README.md`. |
+| `studio/` | The studio in a webview (PLAN G10): `bridge.ts`, the host side of the studio webviews' postMessage transport — every gate on a request a webview asks for (the path, the method, a modal before a live-site change, the token added for the configured origin only) over an injected `fetch` — and `page.ts`, the strict-CSP page those webviews load. |
 | `harness/` | One vocabulary for the editor agent and CI: the agent, skill and `_data/ai.yml` readers, the harness profile (model precedence, permission-mode clamp, SDK and CI projections), the inventory and its joins, the `wtd fleet adopt` port, the usage ledger, and lane generation. See `harness/README.md`. |
 | `index.ts` | The barrel. Import from `../core`, not from individual files, outside of core itself. |
 

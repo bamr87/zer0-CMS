@@ -638,7 +638,7 @@ A content type's `template` seeds front-matter *values*, which are placeholder-e
 
 ## 5. VS Code settings
 
-All 44, exactly as `package.json` contributes them, in the same eleven titled sections the manifest declares. None of these describe the project — that is what the split in §6 is about.
+All 45, exactly as `package.json` contributes them, in the same twelve titled sections the manifest declares. None of these describe the project — that is what the split in §6 is about.
 
 Most are `resource`-scoped, so a multi-root workspace can answer them per folder; the ones that describe you rather than a site (the panel and dashboard preferences, the agent, the log level) stay `window`-scoped, and `zer0Cms.cms.pythonPath` is `machine-overridable` so a machine-wide interpreter can still be overridden for one workspace. `tools/check-config-docs.py` fails the build if this section and the manifest ever disagree.
 
@@ -740,6 +740,12 @@ Most are `resource`-scoped, so a multi-root workspace can answer them per folder
 | Setting | Default | What it does |
 |---|---|---|
 | `zer0Cms.logging.level` | `"info"` | Verbosity of the zer0-CMS output channel: `error`, `warn`, `info`, `verbose`. |
+
+### Platform
+
+| Setting | Default | What it does |
+|---|---|---|
+| `zer0Cms.platform.url` | `""` | The zer0-CMS platform to work with, e.g. `https://cms.example.org` (PLAN G10). When set, the dashboard, the Metadata view and the agent view render the studio's workspaces from the platform — the dashboard every workspace, the Metadata view the page behind the open file, the agent view the AI workspace — instead of this folder's files; the file-mode dashboard keeps the fleet console, the audit and the harness under their own commands. Read from **your settings only** (no `zer0.json` key can point the extension at a server), restricted and ignored in an untrusted workspace, and nothing reaches the platform until you open one of those views. Your token for it is kept in the editor's secret storage, one per platform origin: **zer0-CMS: Set platform token** and **zer0-CMS: Clear platform token**. |
 
 ### Settings the UI writes for you
 

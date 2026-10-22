@@ -38,7 +38,8 @@ zer0-CMS's VS Code extension turns a repository of markdown into something you c
 - a **front-matter audit** of every page against the site's own schema, whose fixes you see as a diff before any of them lands,
 - **platform profiles** — Jekyll (with the zer0-mistakes theme as an overlay), MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback — so a site is read the way its own generator reads it,
 - **many sites in one window**, each with its own configuration, draft queue and MCP server,
-- and a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs.
+- a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs,
+- and, pointed at a zer0-CMS platform (`zer0Cms.platform.url`, with your token in the editor's secret storage), the **studio's own workspaces** in its webviews — the dashboard, the page behind the open file, the AI view — built from the same React code as the studio, with every request sent by the extension host so the token never reaches a page.
 
 It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
@@ -108,7 +109,7 @@ Five rules hold this together:
 4. Open a markdown file — the panel fills in.
 5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
 
-Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 44 settings here instead of 89, and why most of them are folder-scoped so one window can hold several sites.
+Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 45 settings here instead of 89, and why most of them are folder-scoped so one window can hold several sites.
 
 ## Configuration
 

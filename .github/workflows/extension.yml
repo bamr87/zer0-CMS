@@ -12,11 +12,12 @@
 # `rails/` or the compose file no longer downloads VS Code: hence the
 # `paths-ignore` below. The same goes for the imported `packages/`, `sites/` and
 # `apps/` trees, the content plane (`content/` and the schemas it owns,
-# gated by content.yml) the React frontend (`web/`, gated by web.yml, including the recordings of each site's Jekyll build in `web/site/fixtures/`, compared by pages.yml),
-# which have workflows of their own (see docs/MONOREPO.md). Until PLAN G10
-# builds the extension's webviews from `web/packages/`, a studio change cannot
-# change the vsix. `main` is not branch-protected, so a skipped run here is not a
-# required check left pending.
+# gated by content.yml), the studio app and the site renderer (`web/studio/` and
+# `web/site/`, gated by web.yml and pages.yml), which have workflows of their own
+# (see docs/MONOREPO.md). `web/packages/` and web's lockfile are NOT ignored: the
+# extension's studio webviews are built from them into dist/studio.js (PLAN G10),
+# so a change there changes the vsix. `main` is not branch-protected, so a
+# skipped run here is not a required check left pending.
 name: extension
 
 on:
@@ -31,7 +32,8 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
-      - "web/**"
+      - "web/studio/**"
+      - "web/site/**"
   push:
     branches: [main]
     paths-ignore:
@@ -44,7 +46,8 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
-      - "web/**"
+      - "web/studio/**"
+      - "web/site/**"
 
 permissions:
   contents: read
@@ -69,7 +72,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
 
+      # Installs web/ too (the root postinstall), which dist/studio.js is built from.
       - run: npm ci
 
       - name: Type-check

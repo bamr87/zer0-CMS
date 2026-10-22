@@ -6,8 +6,8 @@ Three layers, and the boundary between them is enforced by the build rather than
 |---|---|---|
 | **Core** | `core/` | **No.** Pure Node, unit-testable, reused by the MCP server. |
 | **MCP** | `mcp/` | **No.** Bundled with an empty `external` list, so a stray import is a build error. |
-| **Webview** | `webview/` | **No.** Runs in a browser context; talks to the host over `postMessage`. |
-| **Shell** | this directory, `commands/`, `views/`, `panel/`, `dashboard/`, `agent/` | Yes — and only here. |
+| **Webview** | `webview/` (file mode); `../web/packages/` (platform mode, built into `dist/studio.js`) | **No.** Runs in a browser context; talks to the host over `postMessage`. |
+| **Shell** | this directory, `commands/`, `views/`, `panel/`, `dashboard/`, `agent/`, `studio/` | Yes — and only here. |
 
 `eslint.config.mjs` blocks the import; `esbuild.js` turns it into a build failure for the MCP graph. See `core/README.md` for why.
 
@@ -26,12 +26,13 @@ Three layers, and the boundary between them is enforced by the build rather than
 | `uiState.ts` | The eleven context keys, the status bar item, the notification helpers. |
 | `diagnostics.ts` | Required-field diagnostics, drawn inside the front-matter block. |
 | `mcpRegistration.ts` | The two-phase MCP server definition provider, plus the `.vscode/mcp.json` fallback. |
+| `studio/studio.ts` | Platform mode (PLAN G10): the studio's workspaces in the dashboard panel, the Metadata view and the AI panel — the page each loads (`core/studio/page.ts`), one `StudioBridge` per webview (`core/studio/bridge.ts`), the open file's path for the page view, the person's token in SecretStorage per platform origin, event streams with the token as a header. Nothing per workspace: `@zer0/ui`'s `WORKSPACES` decides what the dashboard shows. |
 
 Everything above is called by `commands/`, `views/`, `panel/`, `dashboard/` and `agent/`. Nothing above imports them, except `extension.ts`, which imports everything and is imported by nothing.
 
 ---
 
-## Five things that are easy to get wrong
+## Six things that are easy to get wrong
 
 ### 1. `currentConfig()` is not cached, `explicit()` is why the three layers work, and the scope is the site
 
@@ -80,12 +81,16 @@ When publishing is off, `ZER0_CMS_MCP_ALLOW_PUBLISH` is set to `null`, which the
 
 ---
 
+### 6. Platform mode is a different webview, not a different panel
+
+With `zer0Cms.platform.url` set (settings layer only, trusted workspaces only), `zer0Cms.dashboard` opens the studio panel, `zer0Cms.agent.open` the AI panel, and the Metadata view mounts the studio's page editor for the open file — `PanelProvider` remounts in place when the setting flips. The webview is the studio's code (`web/packages/webview`), so a feature for it goes into `@zer0/ui`, never into `src/`. What the host owns is the gate: `StudioBridge` re-checks every request (the path, the method, a modal before a live-site change) and is the only thing that ever holds the token. The file-mode dashboard still opens from the fleet, audit, harness and monitor commands in either mode.
+
 ## Adding a command
 
 1. Declare it in `package.json` under `contributes.commands`, with any `when`
    clause it needs in `contributes.menus`.
 2. Implement it in the matching `commands/*.ts`, taking the `Zer0Shell`.
-3. Add the id to `ALL_COMMAND_IDS` in `commands/index.ts`, and to `ALL_COMMANDS` in `src/test/extension.test.ts` with its `54` count bumped. An id inside an existing module needs no `extension.ts` change; a new command module also needs its `register*Commands(shell)` call in `activate()`.
+3. Add the id to `ALL_COMMAND_IDS` in `commands/index.ts`, and to `ALL_COMMANDS` in `src/test/extension.test.ts` with its `56` count bumped. An id inside an existing module needs no `extension.ts` change; a new command module also needs its `register*Commands(shell)` call in `activate()`.
 
 The only two commands `extension.ts` registers itself are `zer0Cms.dashboard` and `zer0Cms.dashboard.close`, because the dashboard panel is a singleton the shell owns and no command module does.
 
