@@ -1048,7 +1048,7 @@
         "/api/v2/ai/assistants/{public_id}/run/": {
             "post": {
                 "operationId": "ai_assistants_run_create",
-                "summary": "Run the assistant on a prompt; follow the run for its answer",
+                "summary": "Run the assistant on a prompt — or on a page, its answer proposed there as suggestions; follow the run for its answer",
                 "parameters": [
                     {
                         "in": "header",
@@ -1234,6 +1234,118 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Assistant"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/ai/assistants/tools/": {
+            "get": {
+                "operationId": "ai_assistants_tools_list",
+                "summary": "The read-only tools an assistant may list, which its runs use",
+                "tags": [
+                    "ai"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Tool"
+                                    }
                                 }
                             }
                         },
@@ -2593,17 +2705,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/ConversationPipeline"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/ConversationPipeline"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/ConversationPipeline"
                             }
                         }
                     }
@@ -4028,7 +4140,7 @@
         "/api/v2/ai/pipelines/{public_id}/run/": {
             "post": {
                 "operationId": "ai_pipelines_run_create",
-                "summary": "Run the pipeline: a parent run with one child run per step",
+                "summary": "Run the pipeline — a parent run with one child run per step — on a prompt, or on a page with its answer proposed there as suggestions",
                 "parameters": [
                     {
                         "in": "header",
@@ -8018,6 +8130,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -8077,6 +8194,7 @@
                     }
                 },
                 "required": [
+                    "can_edit",
                     "created_at",
                     "effect",
                     "id",
@@ -8180,6 +8298,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -8256,8 +8379,12 @@
                         "description": "title, slug, description, keywords, tags (and what else it found)."
                     },
                     "page": {
-                        "type": "integer",
-                        "readOnly": true
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "readOnly": true,
+                        "description": "The draft it made."
                     },
                     "run": {
                         "oneOf": [
@@ -8282,7 +8409,10 @@
                         "format": "uuid"
                     },
                     "source_message": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "format": "uuid",
                         "readOnly": true
                     },
@@ -8297,6 +8427,7 @@
                 },
                 "required": [
                     "applied_at",
+                    "can_edit",
                     "created_at",
                     "error",
                     "id",
@@ -8442,6 +8573,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -8484,11 +8620,22 @@
                     }
                 },
                 "required": [
+                    "can_edit",
                     "created_at",
                     "id",
                     "owner",
                     "updated_at"
                 ]
+            },
+            "ConversationPipeline": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 50000
+                    }
+                }
             },
             "Error": {
                 "type": "object",
@@ -8939,6 +9086,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -8974,6 +9126,7 @@
                 },
                 "required": [
                     "bundled",
+                    "can_edit",
                     "created_at",
                     "id",
                     "name",
@@ -9749,6 +9902,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -9833,6 +9991,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -9909,8 +10072,12 @@
                         "description": "title, slug, description, keywords, tags (and what else it found)."
                     },
                     "page": {
-                        "type": "integer",
-                        "readOnly": true
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "readOnly": true,
+                        "description": "The draft it made."
                     },
                     "run": {
                         "oneOf": [
@@ -9935,7 +10102,10 @@
                         "format": "uuid"
                     },
                     "source_message": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "format": "uuid",
                         "readOnly": true
                     },
@@ -9973,6 +10143,11 @@
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
                     },
                     "created_at": {
                         "type": "string",
@@ -10127,6 +10302,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -10214,6 +10394,11 @@
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
                     },
                     "created_at": {
                         "type": "string",
@@ -10367,6 +10552,11 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Whether the requester may change or delete the row (its owner, or staff).",
+                        "readOnly": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -10393,6 +10583,7 @@
                     }
                 },
                 "required": [
+                    "can_edit",
                     "created_at",
                     "id",
                     "name",
@@ -10819,14 +11010,31 @@
             },
             "RunAssistant": {
                 "type": "object",
+                "description": "A run on a page whose answer lands there as suggestions (`suggest`).",
                 "properties": {
+                    "page_id": {
+                        "type": "integer",
+                        "description": "A page the run may read, which you can edit."
+                    },
+                    "suggest": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Propose the answer on the page (`page_id`) as suggestions to accept or reject: in place of `block_id`, or as new blocks at the end. The run reads that block, else the whole page."
+                    },
+                    "block_id": {
+                        "type": "string",
+                        "default": "",
+                        "description": "With `suggest`: the block it reads and replaces."
+                    },
+                    "selection": {
+                        "type": "string",
+                        "default": "",
+                        "description": "With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.",
+                        "maxLength": 50000
+                    },
                     "prompt": {
                         "type": "string",
                         "maxLength": 50000
-                    },
-                    "page_id": {
-                        "type": "integer",
-                        "description": "A page the assistant may read, which you can edit."
                     }
                 },
                 "required": [
@@ -10867,14 +11075,32 @@
             },
             "RunPipeline": {
                 "type": "object",
+                "description": "A run on a page whose answer lands there as suggestions (`suggest`).",
                 "properties": {
+                    "page_id": {
+                        "type": "integer",
+                        "description": "A page the run may read, which you can edit."
+                    },
+                    "suggest": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Propose the answer on the page (`page_id`) as suggestions to accept or reject: in place of `block_id`, or as new blocks at the end. The run reads that block, else the whole page."
+                    },
+                    "block_id": {
+                        "type": "string",
+                        "default": "",
+                        "description": "With `suggest`: the block it reads and replaces."
+                    },
+                    "selection": {
+                        "type": "string",
+                        "default": "",
+                        "description": "With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.",
+                        "maxLength": 50000
+                    },
                     "prompt": {
                         "type": "string",
                         "default": "",
                         "maxLength": 50000
-                    },
-                    "page_id": {
-                        "type": "integer"
                     }
                 }
             },
@@ -11168,6 +11394,21 @@
                 ],
                 "type": "string",
                 "description": "* `brief` - brief\n* `draft` - draft"
+            },
+            "Tool": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "description",
+                    "name"
+                ]
             },
             "User": {
                 "type": "object",

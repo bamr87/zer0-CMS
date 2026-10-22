@@ -9,7 +9,9 @@ its budget — then return the `AgentRun` the caller follows on
 `/api/v2/agent-runs/<id>/stream/`. The worker checks the same again when the
 run executes, because a run can be started from more than one surface and
 things change while it waits. Applying a brief and promoting a message write
-rows and propose suggestions, and never publish.
+rows and propose suggestions, and never publish; so does an assistant or a
+pipeline run on a page from the editor (`suggest_on_page`), whose answer the
+worker proposes there (`propose_answer`).
 """
 
 import json
@@ -23,12 +25,14 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Max, Sum
 from django.utils import timezone
+from django.utils.html import escape
 from django.utils.text import slugify
 
 from agents.models import AgentDefinition, AgentRun, AgentStep
 from agents.principals import is_agent_user
+from agents.registry import registry
 from agents.runner import RunRefused, start_run
-from cms.models import BasePage
+from cms.models import POLICY_ORDER, POLICY_SUGGEST, BasePage
 from cms.services import save_draft
 from importers.jekyll import _unique_slug
 from importers.markdown import to_blocks
@@ -36,7 +40,7 @@ from ops.errors import ApiError, Conflict, Forbidden, Invalid, Unavailable
 from suggestions.services import SuggestionError, propose
 
 from . import providers
-from .models import Assistant, Brief, Message, ModelEntry, OutputSchema, ProviderConfig, Visibility, usable
+from .models import Assistant, Brief, Message, ModelEntry, OutputSchema, Pipeline, ProviderConfig, Visibility, usable
 
 AGENT = "assistant"
 DATA = Path(__file__).resolve().parent / "data"
@@ -140,6 +144,135 @@ def run_pipeline(pipeline, *, user, prompt="", conversation=None, page=None, tri
     if conversation is not None:
         data["conversation"] = str(conversation.public_id)
     return start(user, data, target=page, trigger=trigger)
+
+
+def assistant_tools() -> list:
+    """The read-only tools an assistant may list that its runs will use: the
+    registry's `read` tools in the `assistant` definition's live allowlist."""
+    definition = agent()
+    live = definition.live_revision.as_object() if definition.live_revision_id else definition
+    return [t for t in registry.all() if t.effect == "read" and t.name in set(live.tools or [])]
+
+
+# ── runs on a page: the answer proposed there ──────────────────────────────
+
+
+def check_page(user, page) -> None:
+    """A run may land suggestions on `page`: a content page `user` may edit,
+    whose agent policy lets agents suggest. Asked when the run is requested
+    and again when its answer is proposed."""
+    if not isinstance(page, BasePage):
+        raise Invalid(f"page {page.pk} is not a content page")
+    if user is None or not user.is_authenticated:
+        raise Forbidden("suggestions on a page are asked for by a person")
+    _may_read_page(user, page)
+    if POLICY_ORDER.index(page.effective_policy(agent().policy)) < POLICY_ORDER.index(POLICY_SUGGEST):
+        raise Conflict(f"agents may not suggest on page {page.pk}: its agent policy is {page.agent_policy}")
+
+
+def block_of(page, block_id: str) -> dict | None:
+    """A block of the page's latest revision as {id, type, value}, or None."""
+    blocks = page.get_latest_revision_as_object().body.get_prep_value()
+    return next((b for b in blocks if b.get("id") == block_id), None)
+
+
+def suggest_on_page(
+    source, *, user, page, prompt: str = "", block_id: str = "", selection: str = "", trigger="rest"
+) -> AgentRun:
+    """Run an assistant or a pipeline on a page — the whole page, one block of
+    it, or text selected in that block — and have the run propose its answer
+    there as suggestions (ai/handlers.py `_page`, then `propose_answer`)."""
+    check_page(user, page)
+    if selection and not block_id:
+        raise Invalid("a selection is text in one block: name the block")
+    if block_id:
+        aimed = block_of(page, block_id)
+        if aimed is None:
+            raise Invalid(f"block {block_id!r} is not on the page's latest revision: save the page first")
+        if selection and _swap(aimed["value"], selection, "") is None:
+            raise Invalid("the selection is not in that block as saved: save the page, or work on the whole block")
+    if isinstance(source, Pipeline):
+        _check_steps(source, user)
+    elif not prompt.strip():
+        raise Invalid("say what the assistant should do with the page")
+    else:
+        provider_slug(source)
+    key = "pipeline" if isinstance(source, Pipeline) else "assistant"
+    data = {"kind": "page", key: str(source.public_id), "prompt": prompt, "block_id": block_id, "selection": selection}
+    return start(user, data, target=page, trigger=trigger)
+
+
+def _swap(value, selection: str, answer: str):
+    """`value` (a block's stored value) with the first string that holds the
+    selection swapped for the answer, everything else as it was; None when
+    no string holds it as written."""
+    if isinstance(value, str):
+        return value.replace(selection, answer, 1) if selection in value else None
+    if isinstance(value, dict):
+        for key, item in value.items():
+            swapped = _swap(item, selection, answer)
+            if swapped is not None:
+                return {**value, key: swapped}
+    return None
+
+
+def in_place_of(aimed: dict, answer: str, selection: str = "") -> dict | None:
+    """The block that takes `aimed`'s place: the same block with the selection
+    swapped for the answer (None when the selection is no longer in it), or
+    the answer — a one-line answer for a heading stays that heading — as the
+    one block it reads as, else as Markdown."""
+    answer = answer.strip()
+    if selection:
+        value = _swap(aimed["value"], selection, escape(answer) if aimed["type"] == "paragraph" else answer)
+        return None if value is None else {"type": aimed["type"], "value": value}
+    if aimed["type"] == "heading" and "\n" not in answer:
+        return {"type": "heading", "value": {**aimed["value"], "text": answer.lstrip("#").strip()}}
+    blocks = to_blocks(answer)
+    return blocks[0] if len(blocks) == 1 else {"type": "markdown", "value": answer}
+
+
+@transaction.atomic
+def propose_answer(run: AgentRun, page, answer: str, *, block_id: str = "", selection: str = "", rationale: str = ""):
+    """A run's answer on the page it was asked about, as suggestions from the
+    assistant agent on that run — all of them or none: in place of the aimed
+    block, or as new blocks at the end of the page. A selection no longer in
+    its block as written gets its answer as a new block after it, so nothing
+    the person did not ask about is replaced."""
+    check_page(run.started_by, page)
+    if not answer.strip():
+        raise Invalid("the answer is empty: nothing to suggest")
+    aimed = block_of(page, block_id) if block_id else None
+    if block_id and aimed is None:
+        raise Invalid(f"block {block_id!r} is no longer on the page")
+    if aimed is None:
+        proposals = [("insert", "", "", block) for block in to_blocks(answer)]
+    elif (block := in_place_of(aimed, answer, selection)) is None:
+        proposals = [("insert", block_id, "", {"type": "markdown", "value": answer.strip()})]
+    else:
+        proposals = [("replace", block_id, "", block)]
+    return _propose(page, run, proposals, rationale)
+
+
+def _propose(page, run, proposals, rationale: str) -> list:
+    """Each `(op, block_id, field, payload)` as a suggestion from the assistant agent on `run`."""
+    definition = agent()
+    try:
+        return [
+            propose(
+                target=page,
+                op=op,
+                user=definition.user,
+                run=run,
+                agent=definition,
+                block_id=block_id,
+                field=field,
+                payload=payload,
+                rationale=rationale[:2000],
+            )
+            for op, block_id, field, payload in proposals
+        ]
+    except SuggestionError as e:
+        raise Invalid(f"the text was refused: {e}") from e
 
 
 def sync_models(row: ProviderConfig, *, user) -> AgentRun:
@@ -362,30 +495,14 @@ def apply_brief(brief: Brief, *, user, parent=None, page_type: str = ""):
     parent.add_child(instance=page)
     save_draft(page, user=user)
 
-    definition = agent()
-    proposals = [("insert", "", {"type": b["type"], "value": b["value"]}) for b in to_blocks(brief.markdown)]
+    proposals = [("insert", "", "", block) for block in to_blocks(brief.markdown)]
     if meta.get("description"):
-        proposals.append(("meta", "search_description", {"value": str(meta["description"])[:1000]}))
+        proposals.append(("meta", "", "search_description", {"value": str(meta["description"])[:1000]}))
     keywords = [str(k).strip()[:64] for k in [*meta.get("keywords", []), *meta.get("tags", [])] if str(k).strip()]
     if keywords:
-        proposals.append(("meta", "ai_keywords", {"value": list(dict.fromkeys(keywords))[:20]}))
+        proposals.append(("meta", "", "ai_keywords", {"value": list(dict.fromkeys(keywords))[:20]}))
     rationale = f"From brief {brief.public_id}" + (f": {brief.prompt[:200]}" if brief.prompt else "")
-    try:
-        suggestions = [
-            propose(
-                target=page,
-                op=op,
-                user=definition.user,
-                run=brief.run,
-                agent=definition,
-                field=field,
-                payload=payload,
-                rationale=rationale,
-            )
-            for op, field, payload in proposals
-        ]
-    except SuggestionError as e:
-        raise Invalid(f"the brief's text was refused: {e}") from e
+    suggestions = _propose(page, brief.run, proposals, rationale)
     brief.page, brief.status, brief.applied_at = page, Brief.APPLIED, timezone.now()
     brief.save(update_fields=["page", "status", "applied_at", "updated_at"])
     return page, suggestions

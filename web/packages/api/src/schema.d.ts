@@ -132,7 +132,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Run the assistant on a prompt; follow the run for its answer */
+        /** Run the assistant on a prompt — or on a page, its answer proposed there as suggestions; follow the run for its answer */
         post: operations["ai_assistants_run_create"];
         delete?: never;
         options?: never;
@@ -151,6 +151,23 @@ export interface paths {
         put?: never;
         /** A new private assistant (and its output schema) from an exported document */
         post: operations["ai_assistants_import_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ai/assistants/tools/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The read-only tools an assistant may list, which its runs use */
+        get: operations["ai_assistants_tools_list"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -485,7 +502,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Run the pipeline: a parent run with one child run per step */
+        /** Run the pipeline — a parent run with one child run per step — on a prompt, or on a page with its answer proposed there as suggestions */
         post: operations["ai_pipelines_run_create"];
         delete?: never;
         options?: never;
@@ -1027,6 +1044,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -1077,6 +1096,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -1098,13 +1119,14 @@ export interface components {
             markdown?: string;
             /** @description title, slug, description, keywords, tags (and what else it found). */
             metadata?: unknown;
-            readonly page: number;
+            /** @description The draft it made. */
+            readonly page: number | null;
             readonly run: components["schemas"]["RunRef"] | null;
             readonly error: string;
             /** Format: uuid */
             conversation?: string | null;
             /** Format: uuid */
-            readonly source_message: string;
+            readonly source_message: string | null;
             /** Format: date-time */
             readonly applied_at: string | null;
         };
@@ -1151,6 +1173,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -1166,6 +1190,10 @@ export interface components {
              * @description On create: start from this brief's text, its first turn.
              */
             from_brief?: string;
+        };
+        ConversationPipeline: {
+            /** @default  */
+            prompt: string;
         };
         Error: {
             /** @description `<domain>.<reason>`, stable across releases (ops/README.md). */
@@ -1287,6 +1315,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -1580,6 +1610,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit?: boolean;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -1610,6 +1642,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit?: boolean;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -1631,13 +1665,14 @@ export interface components {
             markdown?: string;
             /** @description title, slug, description, keywords, tags (and what else it found). */
             metadata?: unknown;
-            readonly page?: number;
+            /** @description The draft it made. */
+            readonly page?: number | null;
             readonly run?: components["schemas"]["RunRef"] | null;
             readonly error?: string;
             /** Format: uuid */
             conversation?: string | null;
             /** Format: uuid */
-            readonly source_message?: string;
+            readonly source_message?: string | null;
             /** Format: date-time */
             readonly applied_at?: string | null;
         };
@@ -1648,6 +1683,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit?: boolean;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -1691,6 +1728,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit?: boolean;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -1719,6 +1758,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit?: boolean;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -1772,6 +1813,8 @@ export interface components {
             /** @description A site its owner edits. */
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -1914,10 +1957,26 @@ export interface components {
         RunAccepted: {
             run: components["schemas"]["RunRef"];
         };
+        /** @description A run on a page whose answer lands there as suggestions (`suggest`). */
         RunAssistant: {
-            prompt: string;
-            /** @description A page the assistant may read, which you can edit. */
+            /** @description A page the run may read, which you can edit. */
             page_id?: number;
+            /**
+             * @description Propose the answer on the page (`page_id`) as suggestions to accept or reject: in place of `block_id`, or as new blocks at the end. The run reads that block, else the whole page.
+             * @default false
+             */
+            suggest: boolean;
+            /**
+             * @description With `suggest`: the block it reads and replaces.
+             * @default
+             */
+            block_id: string;
+            /**
+             * @description With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.
+             * @default
+             */
+            selection: string;
+            prompt: string;
         };
         /** @description Where to follow a run: the AI layer's `202` answers and the runs API share this shape. */
         RunLinks: {
@@ -1929,10 +1988,27 @@ export interface components {
         RunList: {
             results: components["schemas"]["Run"][];
         };
+        /** @description A run on a page whose answer lands there as suggestions (`suggest`). */
         RunPipeline: {
+            /** @description A page the run may read, which you can edit. */
+            page_id?: number;
+            /**
+             * @description Propose the answer on the page (`page_id`) as suggestions to accept or reject: in place of `block_id`, or as new blocks at the end. The run reads that block, else the whole page.
+             * @default false
+             */
+            suggest: boolean;
+            /**
+             * @description With `suggest`: the block it reads and replaces.
+             * @default
+             */
+            block_id: string;
+            /**
+             * @description With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.
+             * @default
+             */
+            selection: string;
             /** @default  */
             prompt: string;
-            page_id?: number;
         };
         /** @description An agent run to follow on the existing runs API. */
         RunRef: {
@@ -2031,6 +2107,10 @@ export interface components {
          * @enum {string}
          */
         ToEnum: "brief" | "draft";
+        Tool: {
+            name: string;
+            description: string;
+        };
         User: {
             id: number;
             username: string;
@@ -2872,6 +2952,89 @@ export interface operations {
             };
         };
     };
+    ai_assistants_tools_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tool"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     ai_briefs_list: {
         parameters: {
             query?: {
@@ -3580,9 +3743,9 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["RunPipeline"];
-                "application/x-www-form-urlencoded": components["schemas"]["RunPipeline"];
-                "multipart/form-data": components["schemas"]["RunPipeline"];
+                "application/json": components["schemas"]["ConversationPipeline"];
+                "application/x-www-form-urlencoded": components["schemas"]["ConversationPipeline"];
+                "multipart/form-data": components["schemas"]["ConversationPipeline"];
             };
         };
         responses: {
