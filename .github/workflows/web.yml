@@ -1,0 +1,56 @@
+# web/ — the React frontend (the studio and the shared packages its
+# workspaces are built from, ADR 0006): lint, types, the Vitest suites, the
+# generated API client against the committed OpenAPI document, and the
+# production build. Filtered to web/ and to the document the client is
+# generated from, so a platform change that moves the API runs this too; the
+# platform itself is gated by content.yml, and the extension by extension.yml.
+name: web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "schemas/openapi/**"
+      - ".github/workflows/web.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "schemas/openapi/**"
+      - ".github/workflows/web.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  web:
+    name: lint, types, tests, API drift, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      # 24: jsdom (the test environment) and Vite 8 need Node 22.22+ or 24.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Types
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: The generated client matches schemas/openapi/openapi.json
+        run: npm run check:api
+      - name: Build the studio
+        run: npm run build

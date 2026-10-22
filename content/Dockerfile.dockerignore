@@ -1,8 +1,10 @@
 # Used when building content/Dockerfile from the repository root (BuildKit
-# reads <Dockerfile>.dockerignore). Send only content/ and schemas/.
+# reads <Dockerfile>.dockerignore). Send only content/, schemas/ and web/ —
+# web/ without its installs and builds, which the image's Node stage makes.
 *
 !content
 !schemas
+!web
 content/**/__pycache__
 content/**/*.pyc
 content/db.sqlite3
@@ -10,3 +12,5 @@ content/media
 content/static
 content/.test-media
 content/.env
+web/**/node_modules
+web/**/dist

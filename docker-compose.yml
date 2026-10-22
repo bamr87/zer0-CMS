@@ -7,9 +7,10 @@
 #   docker compose --profile imagegen up --build  # + zer0-image-generator on :3000
 #
 # The content profile is Postgres with pgvector, Redis, the Django app
-# (/healthz, /readyz, /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery
-# worker and beat (agent runs, the nightly graph job) and the outbox relay to
-# Redis Streams.
+# (/studio/ — the React studio its image builds from web/ —, /healthz, /readyz,
+# /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery worker and beat
+# (agent runs, scheduled publishing, the nightly graph job) and the outbox
+# relay to Redis Streams.
 #
 # SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
 # the zer0 sites — discovery finds them two levels down, e.g.
