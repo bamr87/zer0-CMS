@@ -1,5 +1,7 @@
 # scripts/lib/install/deploy/
 
+> The pluggable deploy-target modules behind `install deploy`, the contract each implements, and how to add a target.
+
 Pluggable deploy-target modules consumed by `scripts/bin/install deploy` (Phase 4 of the installer refactor). Each module configures one target; the registry coordinates discovery, dispatch, and verification.
 
 ## Files

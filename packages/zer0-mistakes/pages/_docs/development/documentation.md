@@ -1,5 +1,5 @@
 ---
-lastmod: 2026-04-18T19:29:55.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 title: Documentation
 description: Guide to the dual documentation architecture with technical docs, public docs, and AI instructions.
 preview: /images/previews/documentation.png
@@ -50,10 +50,17 @@ Documentation Architecture
 
 | Directory | Content |
 |-----------|---------|
-| `/docs/systems/` | Infrastructure and automation |
-| `/docs/features/` | Component implementation |
-| `/docs/releases/` | Release notes and changelogs |
 | `/docs/architecture/` | System design documents |
+| `/docs/development/` | Contributor setup, testing and conventions |
+| `/docs/features/` | Component implementation |
+| `/docs/implementation/` | Implementation notes for shipped features |
+| `/docs/installation/` | The installer's internals |
+| `/docs/reference/` | Generated command, installer, workflow and agent-guidance reference |
+| `/docs/systems/` | Infrastructure and automation |
+| `/docs/templates/` | Templates for new documents |
+| `/docs/ui/` | The styling and component reference |
+
+`docs/README.md` is the generated index of every file under `docs/` (`python3 tools/docs_index.py --write`). Release history lives in `CHANGELOG.md`.
 
 ### Front Matter Template
 

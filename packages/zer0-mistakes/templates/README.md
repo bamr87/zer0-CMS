@@ -1,5 +1,7 @@
 # Templates Directory
 
+> The template files behind installation, fork setup and cleanup: the directory layout, the `{{VAR_NAME}}` placeholders, the scenarios that use them, and how they stay out of the site build.
+
 This directory contains the template engine files that power the theme's installation, fork setup, and cleanup workflows. Templates use `{{VAR_NAME}}` placeholder syntax, which is rendered by the template library at [scripts/lib/template.sh](../scripts/lib/template.sh).
 
 ## Directory Structure

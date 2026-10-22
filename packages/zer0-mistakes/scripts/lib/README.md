@@ -1,5 +1,7 @@
 # Release Script Libraries
 
+> The shared Bash libraries behind the release automation: what each module provides, how to test them, and how to build a script on them.
+
 Modular, tested, and reusable libraries for the zer0-mistakes release automation system.
 
 ## Overview

@@ -1,5 +1,7 @@
 # Deploy target: docker-prod (self-hosted production)
 
+> The self-hosted production deploy target: a two-stage Ruby and Nginx Docker build plus a compose file for any container host.
+
 Generates a two-stage Docker build (Ruby + Nginx) and a production compose file you can run on any container host (Fly.io, Render, a VPS, Kubernetes via Kompose, etc.).
 
 ## Files installed

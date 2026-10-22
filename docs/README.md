@@ -21,12 +21,13 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 | Document | What it covers |
 | --- | --- |
-| [`AGENTS.md`](../AGENTS.md) | How to work in zer0-CMS, the zer0 stack's agent-native headless CMS and monorepo: commands, layout, conventions, the plane boundary and the invariants the build enforces. |
+| [`AGENTS.md`](../AGENTS.md) | How to work in zer0-CMS, the zer0 stack's agent-native headless CMS and monorepo: commands, layout, conventions, the platform boundary and the invariants the build enforces. |
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | How to set up, the rules the build enforces, style, tests, and how to report a problem — for anyone sending a change to zer0-CMS. |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Release history: the notable changes in each version, newest first. |
+| [`SECURITY.md`](../SECURITY.md) | Supported versions and how to report a vulnerability privately. |
 | [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) | The standards of behaviour for everyone taking part. |
 | [`ATTRIBUTION.md`](../ATTRIBUTION.md) | Where zer0-CMS came from — a fork of Front Matter CMS, since rewritten from scratch — what of its design remains, and the MIT notice that covers it. |
-| [`content/`](../content/README.md) | The Django 5.2 + Wagtail 7.4 content plane — pages and revisions, the agent harness and tool registry, suggestions, the graph, the outbox, and its GraphQL, REST and MCP surfaces — and how to run it. |
+| [`content/`](../content/README.md) | The Django 5.2 + Wagtail 7.4 platform — pages and revisions, the agent harness and tool registry, suggestions, the graph, the outbox, the operational baseline, and its GraphQL, REST and MCP surfaces — and how to run it. |
 | [`media/`](../media/README.md) | The extension's design system: four stylesheets, the `--z-*` token layer, themes, metrics and icons, and the rules for adding a style. |
 | [`rails/`](../rails/README.md) | The fleet CMS half of zer0-CMS — a Rails app that indexes, edits and previews every zer0-themed Jekyll site — and the stdlib-only ABC book generator with its CLI. |
 | [`src/`](../src/README.md) | The VS Code extension's layers — the pure core, the MCP server, the webviews and the `vscode` shell — the shell's files, and the five things in it that are easy to get wrong. |

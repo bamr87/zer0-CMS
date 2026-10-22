@@ -2,13 +2,13 @@
 
 # zer0-CMS
 
-> How to work in zer0-CMS, the zer0 stack's agent-native headless CMS and monorepo: commands, layout, conventions, the plane boundary and the invariants the build enforces.
+> How to work in zer0-CMS, the zer0 stack's agent-native headless CMS and monorepo: commands, layout, conventions, the platform boundary and the invariants the build enforces.
 
 ## What this repo is
 
-zer0-CMS is becoming one agent-native, headless CMS: a **content plane** (Django + Wagtail, `content/`), an **experience plane** (Rails, `rails/`), and the VS Code extension (`src/`) and the Jekyll sites as clients and frontends ([ADR 0001](docs/adr/0001-target-architecture.md); one home, DB-first site by site, [ADR 0002](docs/adr/0002-one-home-cutover.md)). The build order is [`docs/plan/PLAN.md`](docs/plan/PLAN.md) (M0–M20), implementing [`docs/plan/agent-native-design.md`](docs/plan/agent-native-design.md) ("the note"); **until a milestone lands, the code as it is wins over the plan.** Where a project under `packages/`, `sites/`, `apps/` or `content/` has its own `AGENTS.md`, it governs that tree — read it first. Rails is never "the content engine" — that is `.cms/` (`src/core/contract/`).
+zer0-CMS is becoming **one platform**: an agent-native, headless CMS (Django + Wagtail, `content/`), with the VS Code extension (`src/`) as its editor client and the Jekyll sites and theme as its frontends ([ADR 0004](docs/adr/0004-one-platform.md); the design and safety rules, [ADR 0001](docs/adr/0001-target-architecture.md); one home, DB-first site by site, [ADR 0002](docs/adr/0002-one-home-cutover.md)). Rails, the image generator's panel and the imported apps move into it function by function, each running until its parity gate is green. The build order is [`docs/plan/PLAN.md`](docs/plan/PLAN.md) (M0–M20, Phase G "one platform", Phase H "enterprise"), implementing [`docs/plan/agent-native-design.md`](docs/plan/agent-native-design.md) ("the note"); **until a milestone lands, the code as it is wins over the plan.** Where a project under `packages/`, `sites/`, `apps/` or `content/` has its own `AGENTS.md`, it governs that tree — read it first. Never call Rails "the content engine": that is `.cms/` (`src/core/contract/`).
 
-"Done": extension — `npm run compile`, `npm test`; `rails/lib` — `rails/bin/test-stdlib`, no bundler; Rails app — `bin/rails test`, `bin/rails zeitwerk:check`, and after a `rails/Dockerfile` or `docker-compose.yml` change the image builds, boots and answers `/up`; `content/` — `pytest -q`, `makemigrations --check --dry-run`, no GraphQL schema drift.
+"Done": extension — `npm run compile`, `npm test`; `rails/lib` — `rails/bin/test-stdlib`, no bundler; Rails app — `bin/rails test`, `bin/rails zeitwerk:check`, and after a `rails/Dockerfile` or `docker-compose.yml` change the image builds, boots and answers `/up`; `content/` — `pytest -q`, `makemigrations --check`, ruff, the recorded evals and its three committed schemas unchanged ([`content/AGENTS.md`](content/AGENTS.md)).
 
 ## Stack & commands
 
@@ -18,7 +18,7 @@ npm run compile          # check-types + lint + all five bundles
 npm run watch            # rebuild on change, then F5 in VS Code to launch the Extension Host
 npm test                 # unit, golden, MCP stdio and integration suites
 SITES_DIR=$HOME/github docker compose up --build                                   # fleet CMS → http://localhost:3001/admin
-docker compose --profile content up -d --wait db redis content worker beat relay  # content plane → http://localhost:8000/admin/
+docker compose --profile content up -d --wait db redis content worker beat relay  # the platform → http://localhost:8000/admin/
 bin/zer0 run check --affected                                                      # fast checks of every project this branch touched
 ```
 
@@ -38,15 +38,17 @@ bundle install && bin/rails db:prepare && SITES_DIR=$HOME/github bin/rails serve
 bin/rails test && bin/rails zeitwerk:check                             # image-engine tests need python3 + PyYAML
 SITES_DIR=$HOME/github docker compose --profile imagegen up --build    # (repo root) + zer0-image-generator on :3000
 
-# ── Content plane (content/) — Django 5.2 + Wagtail 7.4; see content/AGENTS.md ──
+# ── The platform (content/) — Django 5.2 + Wagtail 7.4; see content/AGENTS.md ──
 cd content && pip install -r requirements-dev.txt
 python manage.py migrate && python manage.py sync_agents --publish     # agent users, definitions, evals → live
 python -m pytest -q -m "not slow"                                      # fast tier; drop -m for big-site round trips
 python manage.py makemigrations --check --dry-run && ruff check . && ruff format --check .
 python manage.py run_evals --all --recorded                            # every agent's evals, no network
+python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json   # the committed OpenAPI document
 DATABASE_URL=postgres://… python -m pytest -q                          # the same suite on Postgres + pgvector
 python manage.py import_jekyll --site drsai --path ../sites/drsai      # a site → pages (idempotent)
 python manage.py roundtrip_jekyll --path ../sites/drsai                # import → export → byte-compare
+# Docker, from the repository root: http://localhost:8000 (/admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
 
 # ── Workspace and docs (stdlib Ruby / Python, no installs) ──
 bin/zer0 list && bin/zer0 check && bin/zer0 doctor
@@ -61,10 +63,10 @@ The fourteen-suite line omits the three suites that need an extension host or a 
 
 | Path | What lives there |
 |---|---|
-| `src/` | The extension: `core/` (pure Node), `mcp/`, `webview/`, the `vscode` shell, `test/` ([`src/README.md`](src/README.md)). |
-| `media/`, `schemas/` | Stylesheets, icons and lane templates; `zer0.schema.json` and the content plane's schemas. |
-| `rails/` | The fleet CMS; `rails/lib` is the stdlib-only zer0 library. |
-| `content/` | The content plane. |
+| `src/` | The extension (the platform's client from PLAN G10): `core/` (pure Node), `mcp/`, `webview/`, the `vscode` shell, `test/` ([`src/README.md`](src/README.md)). |
+| `media/`, `schemas/` | Stylesheets, icons and lane templates; `zer0.schema.json` and the platform's schemas. |
+| `rails/` | The fleet CMS, being absorbed by the platform (PLAN G4, G5, G9); `rails/lib` is the stdlib-only zer0 library. |
+| `content/` | The platform; `content/ops/` is its operational baseline (probes, request ids, errors, logs, throttling, OpenAPI). |
 | `packages/`, `sites/`, `apps/` | Imported projects ([`docs/MONOREPO.md`](docs/MONOREPO.md)). |
 | `bin/`, `tools/`, `workspace.yml` | `bin/zer0` and its registry, the docs gates, vendored `unwrap-prose.py`, `tools/history/` (cutover C0). |
 | `docs/` | Guides, ADRs and the plan, indexed in [`docs/README.md`](docs/README.md). |
@@ -80,14 +82,14 @@ The fourteen-suite line omits the three suites that need an extension host or a 
 - **Never:** push to `main`, force-push, rewrite shared history, amend pushed commits, `--no-verify`, change repo settings, branch protection, secrets or workflow permissions, suppress type errors (`as any`, `@ts-ignore`, `# type: ignore`), leave an empty exception handler, or hand-edit a generated or vendored file.
 - **README-First, README-Last:** read the nearest `README.md` first, update it (and any behaviour doc) in the same PR. Every source file opens with a short block comment saying what it is and why. Markdown is one paragraph per line.
 
-## The planes and their boundary
+## The platform and its boundary
 
-Non-negotiable; ADR 0001 records where today's code still crosses it and which milestone ends that.
+Non-negotiable; ADRs 0001 and 0004 record where today's code still crosses it and which milestone ends that.
 
-- **`content/` owns** content, revisions, workflow, the graph, embeddings, the agent harness, the tool registry, the MCP server and the agents that write content. **`rails/` owns** users, sessions, personalization, app/commerce data, distribution channels and the agents that act on app state.
-- Rails **never** writes content tables: it reads through GraphQL/REST or MCP and changes content only by calling content-plane tools (`content.propose_edit`) with a scoped agent token. *Transitional:* until M16 and decision D1, `PageEditor` and `Zer0Cms::Cms::Writer` still write Jekyll files (D16) — don't add a third Rails writer.
-- Django never reads the Rails database; Rails data arrives as aggregated events (`app.user.interaction`) or via Rails MCP tools.
-- Cross-plane side effects go through the transactional outbox and `schemas/events/`. Changing a schema means bumping its version and updating the contract tests on both sides.
+- **The platform (`content/`) owns** content, revisions, workflow, the graph, embeddings, the agent harness, the tool registry, MCP, users and sign-in, every API and admin screen, and, as Phase G lands, the site registry, distribution, media, scoring, conversations and books.
+- **Rails is being retired** and **never** writes content tables: it changes content only through a site's still-canonical files (`PageEditor`, `Zer0Cms::Cms::Writer`, D16) or platform tools with a scoped agent token. Add no third Rails writer and no Rails feature Phase G would have to move.
+- A new capability is a platform app on the one registry, agent users, Suggestions, outbox and admin; a second LLM client, ledger or registry is federation, not absorption.
+- Side effects leaving the platform go through the transactional outbox and `schemas/events/`. Changing a schema means bumping its version and updating the contract tests on both sides.
 - Frontends (the Jekyll sites, the theme) and clients (the extension) are headless: APIs, exported files and stored outputs, never a database.
 
 ## Agent safety rules in code
@@ -116,13 +118,13 @@ Why each exists: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (decisions D1–
 - **Front matter is edited by line surgery** (`updateFrontMatterKeys()`): untouched lines stay byte-identical, and dates stay strings end to end.
 - **The ledger is keyed by canonical URL** and written byte-compatible with Python's `json.dump` (`sort_keys`, `ensure_ascii`, indent 2, trailing newline).
 - **The fleet plan is data:** every GitHub call is a `FLEET_PLAN` entry, guarded both ways by `fleetSurfaceIsRepoScopedOnly` (whole-segment allow-list) and `fleetPlanHasNoMergeVerbs`. The console never merges, approves, closes, removes a review label or reads a secret.
-- **The Fleet console** takes only `{repo, lane}` from the webview; `src/commands/fleet.ts` re-reads the manifest, re-runs `evaluateFleetGates()` and derives a toggle from GitHub's value. `zer0Cms.fleet.dispatchAllow` is settings-layer only; network follows only a user action, through the injected `fetch` (D11).
+- **The Fleet console** takes only `{repo, lane}` from the webview; `src/commands/fleet.ts` re-reads the manifest, re-runs `evaluateFleetGates()` and derives toggles from GitHub's value. `zer0Cms.fleet.dispatchAllow` is settings-only; network follows a user action, through the injected `fetch` (D11).
 - **Unknown is not off:** `listVariables`, `listWorkflows`, `recentRuns` and `openPulls` return `null`, not `[]`, on 403/404, and an unread cell says so.
-- **A generated lane is files, never an armed loop:** no `*_ENABLED` variable created, no kill switch omitted, no guardrail weakened, no `factory--*.yml` targeted; `bespoke` from `classifyExpressibility` is a refusal with reasons.
+- **A generated lane is files, never an armed loop:** it creates no `*_ENABLED` variable, omits no kill switch, weakens no guardrail and targets no `factory--*.yml`; `bespoke` from `classifyExpressibility` is a refusal with reasons.
 - **A command acts on the site it was given:** `Zer0Shell.store` is the *active* site; never resolve `workspaceFolders[0]`; one `WorkspaceStore` per folder.
 - **The platform is a profile:** nothing platform-specific outside `src/core/platform/profiles/`; `src/test/fixtures/golden/platform/` pins Jekyll's answers.
 - **`.cms/` absence is normal:** the page index supplies `health: -1`, `freshness: 'unknown'`; never invent a score.
-- **MCP registration is two-phase:** `provideMcpServerDefinitions` returns an empty `env`; `resolveMcpServerDefinition` reads the publish flag from the **settings** layer and sets a disabled flag to `null`. `ZER0_CMS_MCP_ALLOW_EXEC` (trusted only) gates `zer0_contract`, `ZER0_CMS_MCP_ALLOW_SCAFFOLD` gates `zer0_lane_scaffold`; a hand-started server only reads and drafts, and the server never opens a socket ([`docs/CONFIG.md`](docs/CONFIG.md) §6).
+- **MCP registration is two-phase:** `provideMcpServerDefinitions` returns an empty `env`; `resolveMcpServerDefinition` reads the publish flag from the **settings** layer (disabled → `null`). `ZER0_CMS_MCP_ALLOW_EXEC` (trusted only) and `ZER0_CMS_MCP_ALLOW_SCAFFOLD` gate `zer0_contract` and `zer0_lane_scaffold`; otherwise the server only reads and drafts, and never opens a socket ([`docs/CONFIG.md`](docs/CONFIG.md) §6).
 - **`src/core/harness/` is one vocabulary** for the editor agent and CI: `resolveHarnessProfile` alone decides roles, skills and model ([`src/core/harness/README.md`](src/core/harness/README.md)).
 - **Eleven context keys, each gating something:** grep `package.json` before adding one; a key is a rendering hint, so every spawn re-asks `workspaceTrusted()`.
 - **Adding a command:** `contributes.commands` (+ `menus`), `register(shell, id, …)` in its `src/commands/*.ts`, `ALL_COMMAND_IDS`, and `ALL_COMMANDS` in `src/test/extension.test.ts` with its `54` bumped ([`src/README.md`](src/README.md#adding-a-command)). Anything that writes, publishes or approves re-reads disk and re-runs `evaluateGates()` in the palette's function.
@@ -155,11 +157,11 @@ Explained in [`docs/MONOREPO.md`](docs/MONOREPO.md) and [`tools/workspace/README
 
 ## Fleet context
 
-One of ~40 repositories managed by the [bamr87/bamr87 hub](https://github.com/bamr87/bamr87) (registry `_data/projects.yml`, standards in `specs/`), as a submodule: commit and push here first; the hub bumps its pointer afterwards. Prefer the hub's `templates/` kits; `ci.yml` (`standard-ci@v2`) and `markdown-oneline.yml` are hub-seeded callers — don't edit their logic. The other workflows are in [`docs/CICD.md`](docs/CICD.md); `claude.yml` (`@claude`) is the only one that calls a model and the one lane `fleet.manifest.yml` declares. Hub loops reach it by PR or label: the `fleet-pulse` doctor, the `issue-pipeline`, the fan-outs and `token-rotation`.
+One of ~40 repositories managed by the [bamr87/bamr87 hub](https://github.com/bamr87/bamr87) (registry `_data/projects.yml`, standards in `specs/`), as a submodule: commit and push here first; the hub bumps its pointer afterwards. Prefer the hub's `templates/` kits; don't edit the logic of the hub-seeded `ci.yml` (`standard-ci@v2`) and `markdown-oneline.yml`. Every workflow is in [`docs/CICD.md`](docs/CICD.md); `claude.yml` (`@claude`) is the only one that calls a model, and the one lane in `fleet.manifest.yml`. Hub loops reach it by PR or label: the `fleet-pulse` doctor, the `issue-pipeline`, the fan-outs and `token-rotation`.
 
 ## Standard deviations
 
 - **Lockfile committed** (2026-09-09), against `lockfiles: never-commit`: `npm ci` and the relock job need it, and the exact-pinned engines are only reproducible with one.
 - **`@bamr87/fleet-engines` exact-pinned** (2026-09-09), against always-latest: a bump changes goldens, so it is a deliberate `chore(deps)` PR.
 - **`yaml` bundled** (2026-09-09): the hand-rolled subset in `src/core/shared/config.ts` cannot read Actions workflows (anchors, merge keys, multi-line flows); extension host only, never the MCP server.
-- **UPS-DOC-08:** four products' commands blocks sit on top of the 2,000-word prose budget.
+- **UPS-DOC-08:** the prose runs about 2,070 words, just over the 2,000-word budget, because it carries four products' build-enforced rules and the platform boundary of ADR 0004; their commands blocks come on top.

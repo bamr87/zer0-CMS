@@ -2,7 +2,7 @@
 title: "Local Development Setup"
 description: "Set up a local Zer0-Mistakes development environment with Docker or a native Ruby toolchain, then run the dev server and validate your changes."
 date: 2026-01-25T03:38:33.000Z
-lastmod: 2026-05-25T19:58:49.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 categories: [docs]
 tags: [development, contributing]
 author: bamr87
@@ -201,4 +201,4 @@ bundle exec jekyll build
 
 - [Testing](testing.md) — Validate your changes
 - [Code Style](code-style.md) — Follow coding conventions
-- [Architecture](../architecture/README.md) — Understand the codebase
+- [Project structure](../architecture/project-structure.md) — Understand the codebase

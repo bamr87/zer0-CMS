@@ -13,6 +13,8 @@ Three layers, and the boundary between them is enforced by the build rather than
 
 `eslint.config.mjs` blocks the import; `esbuild.js` turns it into a build failure for the MCP graph. See `core/README.md` for why.
 
+## Directory guides
+
 Each directory keeps its own guide; this index is generated from their summary lines (`python3 tools/check-config-docs.py --write` refreshes it).
 
 <!-- AUTO:docs-index:start roots=src root=no -->

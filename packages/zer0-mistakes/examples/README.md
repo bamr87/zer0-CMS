@@ -1,5 +1,7 @@
 # Examples
 
+> The self-contained demo sites built on jekyll-theme-zer0, what they show the theme can do, and how to run or add one.
+
 Self-contained demo sites built on `jekyll-theme-zer0`. Each one is a complete Jekyll site with its own `_config.yml`, `Gemfile`, content, and skin — they are **not** part of the theme's own site build (`examples/` is in the root `_config.yml` `exclude:` list) and they are not shipped in the gem.
 
 They exist to answer "can the theme do *this* kind of site?" with a running answer rather than a paragraph.

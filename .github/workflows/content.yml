@@ -13,9 +13,21 @@ name: content
 on:
   push:
     branches: [main]
-    paths: ["content/**", "schemas/events/**", "schemas/graphql/**", "schemas/content/**", ".github/workflows/content.yml"]
+    paths:
+      - "content/**"
+      - "schemas/events/**"
+      - "schemas/graphql/**"
+      - "schemas/content/**"
+      - "schemas/openapi/**"
+      - ".github/workflows/content.yml"
   pull_request:
-    paths: ["content/**", "schemas/events/**", "schemas/graphql/**", "schemas/content/**", ".github/workflows/content.yml"]
+    paths:
+      - "content/**"
+      - "schemas/events/**"
+      - "schemas/graphql/**"
+      - "schemas/content/**"
+      - "schemas/openapi/**"
+      - ".github/workflows/content.yml"
 
 permissions:
   contents: read
@@ -58,6 +70,10 @@ jobs:
           diff -u ../schemas/graphql/schema.graphql "$RUNNER_TEMP/schema.graphql"
       - name: The committed agent schema is current
         run: python manage.py wagtail_ai_schema --check ../schemas/content/ai-schema.json
+      - name: The committed OpenAPI document is current
+        run: |
+          python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file "$RUNNER_TEMP/openapi.json"
+          diff -u ../schemas/openapi/openapi.json "$RUNNER_TEMP/openapi.json"
       - name: Eval suites (recorded models)
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development

@@ -2,7 +2,7 @@
 
 > Every project under `packages/`, `sites/` and `apps/`, how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs from the originals.
 
-zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension and the Rails fleet CMS it started with, the Django + Wagtail content plane that is becoming its centre ([ADR 0001](adr/0001-target-architecture.md)), plus the theme, the image generator, the books app, nine Jekyll sites, the parodynews Django app and the aieo FastAPI app. Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
+zer0-CMS carries the whole zer0 stack in one repository: the Django + Wagtail platform that is its centre ([ADR 0001](adr/0001-target-architecture.md), [ADR 0004](adr/0004-one-platform.md)), the VS Code extension that is its editor client, the Rails fleet CMS the platform is absorbing, plus the theme, the image generator, the books app, nine Jekyll sites, the parodynews Django app and the aieo FastAPI app — the last four being absorbed into the platform function by function (PLAN Phase G). Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
 
 ## Layout
 
@@ -10,7 +10,7 @@ zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension a
 |---|---|---|
 | `src/`, `media/`, … (root) | `bamr87/zer0-CMS` | The VS Code extension (`cms-extension`). |
 | `rails/` | `bamr87/zer0-CMS` | The fleet CMS and the stdlib-only zer0 library — catalog, `zer0 doctor`, the ABC generator (`cms-rails`). |
-| `content/` | new (2026-10) | The content plane (`content`): Wagtail pages and revisions, the agent harness and its tool registry, suggestions, the graph, the outbox, GraphQL/REST/MCP. It imports the Jekyll sites below and exports them back byte for byte ([`content/README.md`](../content/README.md)). |
+| `content/` | new (2026-10) | The platform (`content`): Wagtail pages and revisions, the agent harness and its tool registry, suggestions, the graph, the outbox, GraphQL/REST/MCP, and the ops baseline (probes, request ids, the error envelope, logging, OpenAPI). It imports the Jekyll sites below and exports them back byte for byte ([`content/README.md`](../content/README.md)). |
 | `packages/zer0-mistakes/` | `bamr87/zer0-mistakes` | The Jekyll theme, published as the `jekyll-theme-zer0` gem, with its docs site and installer. |
 | `packages/zer0-image-generator/` | `bamr87/zer0-image-generator` | The preview-image engine, published as the `zer0-image-generator` gem, plus its Rails web panel. |
 | `packages/books/` | `bamr87/books` | The book projects (`library/<slug>/`) and the `bookshelf` Python app that validates, compiles and edits them. |
@@ -32,7 +32,7 @@ zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension a
 
 The design has five parts. Each one replaces something that used to be repeated, by hand, in every repository.
 
-```
+```text
 workspace.yml ──► bin/zer0 ──► list · info · run <task> · affected · check · vendor · doctor
      │                │
      │                ├─► root CI: one workflow per project, path-filtered to its tree
@@ -61,6 +61,7 @@ bin/zer0 doctor [--strict]          # the CMS's zer0 doctor over every zer0 site
 "Affected" follows the dependency graph: a change to `packages/zer0-mistakes/` affects the theme and every site that builds on it, and a change to a root workflow affects the projects it gates.
 
 **3. One CI, split by project.** GitHub only runs workflows in the root `.github/workflows/`, so each project has a root workflow filtered to its own tree — `extension.yml`, `rails-app.yml`, `content.yml`, `zer0-mistakes.yml`, `zer0-image-generator.yml`, `books.yml`, `drsai.yml`, `zer0-pages.yml`, `sites.yml` (the `remote_theme` sites, one matrix leg each), `irony-works.yml`, `parodynews.yml` and `aieo.yml`. A pull request pays only for what it touches. [`CICD.md`](CICD.md) says what each one runs. `zer0-workspace.yml` runs on every pull request: the tool's own tests, then `bin/zer0 check`, which fails when
+
 - a directory under `packages/`, `sites/` or `apps/` is not registered;
 - a project's path or claimed glob matches nothing;
 - a project's workflow is missing or no longer filters on its path;
@@ -76,6 +77,7 @@ It also writes the affected projects and a report-only `zer0 doctor` of every si
 ### Today's doctor baseline
 
 `bin/zer0 doctor` is report-only because two sites carry errors that predate the merge, both visible in their original repositories:
+
 - `packages/zer0-mistakes` keeps its in-repo ancestor engine (`scripts/lib/preview_generator.py`), which the doctor reports as a vendored preview fork until the theme retires it.
 - `apps/parodynews/src/pages` has one error of its own.
 

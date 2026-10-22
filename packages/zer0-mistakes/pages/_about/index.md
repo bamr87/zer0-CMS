@@ -17,7 +17,7 @@ tags:
   - getting-started
 draft: false
 date: 2024-05-31T01:35:49.414Z
-lastmod: 2026-06-14T00:00:00.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 permalink: /about/
 slug: about
 collection: about
@@ -163,7 +163,7 @@ If you have any questions, comments, or suggestions, please feel free to reach o
 | Site builds but theme styles are missing on GitHub Pages | `remote_theme` not enabled | Confirm `remote_theme: bamr87/zer0-mistakes` is set in `_config.yml` and that the `jekyll-remote-theme` plugin is in your `Gemfile`. |
 | Pages 404 after deploy | `baseurl` mismatch | If your repo is *not* a `<user>.github.io` repo, set `baseurl: "/<repo-name>"` in `_config.yml`. |
 
-For more, see the project [README](https://github.com/bamr87/zer0-mistakes#troubleshooting) and the [self-healing installer documentation](https://github.com/bamr87/zer0-mistakes/blob/main/install.sh).
+For more, see the [troubleshooting guide](/docs/troubleshooting/) and the [self-healing installer documentation](https://github.com/bamr87/zer0-mistakes/blob/main/install.sh).
 
 ## Next Steps
 
@@ -185,7 +185,7 @@ Now that you know what Zer0-Mistakes is, here's where to go next:
     </p>
   </div>
   <div class="d-flex flex-wrap gap-2">
-    <a class="btn btn-primary" href="https://github.com/bamr87/zer0-mistakes#quick-start">
+    <a class="btn btn-primary" href="https://github.com/bamr87/zer0-mistakes#-quick-start">
       Get started
     </a>
     <a class="btn btn-outline-primary" href="https://github.com/bamr87/zer0-mistakes">

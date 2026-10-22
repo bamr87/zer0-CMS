@@ -2,7 +2,7 @@
 title: "Forking Guide: From Fork to Personalized Site"
 description: "A progressive guide to deploying your own site from a Zer0-Mistakes fork: repository cleanup, configuration, and personalization, phase by phase."
 date: 2026-05-31T20:54:51.000Z
-lastmod: 2026-05-31T20:54:51.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 categories: [docs]
 tags: [installation, setup]
 author: bamr87
@@ -207,6 +207,14 @@ _config.yml                 ← Base config (identity, collections, plugins, url
 - **Bundled assets** (Bootstrap, MathJax, Mermaid in `assets/vendor/`) — no CDN dependencies; works offline and avoids CORS issues on Pages
 
 ---
+
+## The workflows that come with the fork
+
+A fork brings the theme's `.github/workflows/` with it ([inventory](../reference/workflows.md)). To keep them safe and useful there:
+
+1. Configure gem publishing if you will publish your own gem (`release.yml` calls the [`bamr87/.github`](https://github.com/bamr87/.github) reusable workflows); otherwise disable `release.yml`.
+2. Tune the schedule in `update-dependencies.yml` (weekly by default).
+3. GitHub Pages turns on by itself when the fork is named `<username>.github.io` and you push to `main`.
 
 ## Troubleshooting
 

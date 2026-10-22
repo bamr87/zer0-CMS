@@ -1,5 +1,7 @@
 # Docker Configuration
 
+> The Docker files behind the zero-pin dependency strategy: what each file builds, how to use them, and the secrets their CI publishing needs.
+
 This directory contains Docker-related files for the zero-pin dependency strategy.
 
 ## Files

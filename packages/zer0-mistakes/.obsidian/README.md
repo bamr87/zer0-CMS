@@ -1,5 +1,7 @@
 # Obsidian vault config
 
+> The shared Obsidian vault configuration: what is committed, what stays local, and how to open the repository as a vault.
+
 This directory is the **shared, version-controlled** Obsidian vault configuration for the `zer0-mistakes` repository. Open the repo root in [Obsidian](https://obsidian.md) and these settings apply automatically.
 
 ## What is committed

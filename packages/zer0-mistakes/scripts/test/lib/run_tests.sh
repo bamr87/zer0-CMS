@@ -133,6 +133,7 @@ main() {
     source "$TEST_DIR/test_content_review.sh"
     source "$TEST_DIR/test_agent_review_result.sh"
     source "$TEST_DIR/test_visual_evidence_autogen.sh"
+    source "$TEST_DIR/test_generated_docs.sh"
 
     # Summary
     echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
