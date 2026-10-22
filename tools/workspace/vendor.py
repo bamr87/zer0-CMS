@@ -10,7 +10,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from .manifest import Manifest, Vendored
+from .manifest import Manifest, Vendored, WorkspaceError
 
 
 @dataclass(frozen=True)
@@ -47,4 +47,11 @@ class Vendor:
         return written
 
     def _path(self, rel: str) -> Path:
-        return Path(self.manifest.root, rel)
+        """`rel` under the root, which the manifest already holds to a relative path with no
+        `..`; resolved, so a symlink that leads out of the repository is refused too, and
+        `write` can never copy over a file outside the checkout."""
+        root = Path(self.manifest.root).resolve()
+        path = (root / rel).resolve()
+        if not path.is_relative_to(root):
+            raise WorkspaceError(f"vendored {rel} leads outside the repository (through a symlink, to {path})")
+        return path

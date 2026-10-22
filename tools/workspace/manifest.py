@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from functools import cached_property
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import yaml
 
@@ -183,11 +183,11 @@ def _project(name: str, spec) -> Project:
     unknown = [k for k in spec if k not in PROJECT_KEYS]
     if unknown:
         raise WorkspaceError(f"projects.{name}: unknown key(s) {', '.join(map(to_s, unknown))}")
-    path = _string(spec, "path", name)
+    path = _inside(_string(spec, "path", name), f"projects.{name}.path")
     kind = _string(spec, "kind", name)
     if kind not in KINDS:
         raise WorkspaceError(f"projects.{name}.kind must be one of {', '.join(KINDS)} (got {kind})")
-    paths = _strings(spec, "paths", name)
+    paths = [_inside(glob, f"projects.{name}.paths") for glob in _strings(spec, "paths", name)]
     if path == "." and not paths:
         raise WorkspaceError(f'projects.{name}: a project at "." must list the paths it owns')
     return Project(
@@ -201,7 +201,7 @@ def _project(name: str, spec) -> Project:
         depends_on=_strings(spec, "depends_on", name),
         publishes=_strings(spec, "publishes", name),
         ci=_string(spec, "ci", name),
-        site=_string(spec, "site", name, required=False),
+        site=_inside(_string(spec, "site", name, required=False), f"projects.{name}.site"),
         route=_string(spec, "route", name, required=False),
         tasks=_tasks(name, spec["tasks"] if present(spec.get("tasks")) else {}),
     )
@@ -232,7 +232,7 @@ def _task(name: str, task: str, value) -> Task:
     env = value["env"] if present(value.get("env")) else {}
     if not isinstance(env, dict):
         raise WorkspaceError(f"projects.{name}.tasks.{task}.env must be a mapping")
-    cwd = to_s(value["cwd"] if present(value.get("cwd")) else ".")
+    cwd = _inside(to_s(value["cwd"] if present(value.get("cwd")) else "."), f"projects.{name}.tasks.{task}.cwd")
     return Task(task, run, cwd, {to_s(k): to_s(v) for k, v in env.items()})
 
 
@@ -242,7 +242,8 @@ def _vendored(spec, index: int) -> Vendored:
     copy, source = to_s(spec.get("copy")), to_s(spec.get("source"))
     if not copy or not source:
         raise WorkspaceError(f"vendored[{index}] needs both copy and source")
-    return Vendored(copy, source, to_s(spec.get("why")))
+    where = f"vendored[{index}]"
+    return Vendored(_inside(copy, f"{where}.copy"), _inside(source, f"{where}.source"), to_s(spec.get("why")))
 
 
 def _string(spec: dict, key: str, name: str, required: bool = True) -> str | None:
@@ -261,3 +262,12 @@ def _strings(spec: dict, key: str, name: str) -> list:
     if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
         raise WorkspaceError(f"projects.{name}.{key} must be a list of strings")
     return list(value)
+
+
+def _inside(value: str | None, key: str) -> str | None:
+    """`value`, a path or glob the manifest names, unless it could leave the repository: an
+    absolute path (os.path.join and pathlib drop the root before one, where Ruby's File.join
+    kept it) or a `..` segment."""
+    if value is not None and (PurePosixPath(value).is_absolute() or ".." in PurePosixPath(value).parts):
+        raise WorkspaceError(f"{key} must be a relative path inside the repository (got {inspect(value)})")
+    return value

@@ -98,6 +98,21 @@ class ManifestTest(WorkspaceCase):
         with self.assertRaisesRegex(WorkspaceError, "cycle"):
             self.manifest()
 
+    def test_every_path_it_names_stays_inside_the_repository(self):  # beyond the Ruby suite
+        for old, new, key in (
+            ("path: packages/theme", "path: /etc", "projects.theme.path"),
+            ('"package.json"]', '"package.json", "../x"]', "projects.root-app.paths"),
+            ('site: "."', "site: docs/../..", "projects.site.site"),
+            ("cwd: lib", "cwd: /tmp", "projects.theme.tasks.test.cwd"),
+            ("copy: src/tokens.css", "copy: /tmp/victim.txt", "vendored[0].copy"),
+            ("source: packages/theme/tokens.css", "source: ../tokens.css", "vendored[0].source"),
+        ):
+            with self.subTest(key):
+                self.write("workspace.yml", fixtures.MANIFEST.replace(old, new, 1))
+                with self.assertRaisesRegex(WorkspaceError, rf"^{re.escape(key)} must be a relative path inside"):
+                    self.manifest()
+
+
 class OwnershipTest(WorkspaceCase):
     def test_most_specific_glob_wins_and_workflows_map_to_their_project(self):
         o = Ownership(self.manifest())
@@ -209,6 +224,19 @@ class ChecksTest(WorkspaceCase):
         self.assertEqual([v.copy for v in Vendor(self.manifest()).write()], ["src/tokens.css"])
         self.assertEqual((self.root / "src/tokens.css").read_text(), "--x: 2;")
         self.assertEqual(self.findings(), [])
+
+    def test_vendor_never_writes_through_a_symlink_out_of_the_repository(self):  # beyond the Ruby suite
+        victim = self.root.parent / "victim.css"
+        victim.write_text("theirs")
+        (self.root / "src/tokens.css").unlink()
+        (self.root / "src/tokens.css").symlink_to(victim)
+        for argv in (("vendor", "--write"), ("check",)):
+            with self.subTest(argv=argv):
+                status, out, err = self.cli(*argv)
+                self.assertEqual((status, out), (2, ""))
+                self.assertIn("bin/zer0: vendored src/tokens.css leads outside the repository", err)
+        self.assertEqual(victim.read_text(), "theirs")
+
 
 class RunnerTest(WorkspaceCase):
     def test_runs_in_the_task_directory_with_its_env_and_skips_projects_without_it(self):

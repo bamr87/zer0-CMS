@@ -2,7 +2,7 @@
 
 The tooling behind `bin/zer0`, the one command that manages every project in this repository from the root `workspace.yml`. Python 3.9+ with PyYAML and nothing else (`python3 -m pip install pyyaml`; without it `bin/zer0` says so), so it runs in a bare checkout and in any CI job before a project's own dependencies are installed. Why it exists and how it fits the rest of the repository: [`docs/MONOREPO.md`](../../docs/MONOREPO.md).
 
-It was stdlib Ruby until PLAN P5 ([ADR 0006](../../docs/adr/0006-one-python-platform.md) decision 12). The port keeps every command, flag, message and exit code, and its tests prove it against recordings of the Ruby tool (§ Tests). One thing it does that the Ruby tool did not: `affected` reads git's paths NUL-separated, so a file whose name git would quote (a non-ASCII name, a quote) still counts for its project instead of landing among the unowned files.
+It was stdlib Ruby until PLAN P5 ([ADR 0006](../../docs/adr/0006-one-python-platform.md) decision 12). The port keeps every command, flag, message and exit code, and its tests prove it against recordings of the Ruby tool (§ Tests). Two things it does that the Ruby tool did not: `affected` reads git's paths NUL-separated, so a file whose name git would quote (a non-ASCII name, a quote) still counts for its project instead of landing among the unowned files; and every path the manifest names (`path`, `paths`, `site`, a task's `cwd`, a vendored `copy` and `source`) must be relative with no `..`, and a vendored path that leads out through a symlink is refused, so `vendor --write` can never write outside the checkout.
 
 ## Commands
 
@@ -40,7 +40,7 @@ A file belongs to the project whose glob matches it with the longest literal pre
 | File | What it is |
 |---|---|
 | `__init__.py` | The package, and `puts`, Ruby's `puts`, which the tool's output was written with. |
-| `manifest.py` | Loads and validates `workspace.yml` into `Project`, `Task` and `Vendored` values; dependency names and cycles are checked here. Its `to_s` and `inspect` render values the way the Ruby tool's messages quoted them. |
+| `manifest.py` | Loads and validates `workspace.yml` into `Project`, `Task` and `Vendored` values; dependency names and cycles are checked here, and every path it names is held inside the repository. Its `to_s` and `inspect` render values the way the Ruby tool's messages quoted them. |
 | `ownership.py` | File → project, and the affected set with dependents. |
 | `checks.py` | The five `check` rules. |
 | `runner.py` | Runs a task per project; the spawn is injectable for tests. |
@@ -58,7 +58,7 @@ python3 -m unittest discover tools/workspace
 
 | File | What it proves |
 |---|---|
-| `tests/test_workspace.py` | Every class against throwaway workspaces with their own git repository: the Ruby suite's tests, ported one for one, and the ones it lacked (longest-prefix ownership, the glob semantics, the real `bash` spawn, the doctor without Ruby, a remote that refuses a tag delete, and `affected` from git itself — committed, uncommitted and untracked changes, each file once, names git would quote). |
+| `tests/test_workspace.py` | Every class against throwaway workspaces with their own git repository: the Ruby suite's tests, ported one for one, and the ones it lacked (longest-prefix ownership, the glob semantics, the real `bash` spawn, the doctor without Ruby, a remote that refuses a tag delete, paths held inside the repository, and `affected` from git itself — committed, uncommitted and untracked changes, each file once, names git would quote). |
 | `tests/test_real_manifest.py` | The repository's own `workspace.yml` passes every rule, `docs/MONOREPO.md` mentions every project, and the `bin/zer0` script itself runs. |
 | `tests/test_golden.py` | The Python tool prints what the Ruby one printed: every recorded step, replayed and compared byte for byte (stdout, stderr and exit status). |
 | `tests/fixtures.py` | Builds every scenario the tests and the recordings use. |
