@@ -1,11 +1,21 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/usr/bin/env python3
+"""bin/zer0 — one command for every project in this repository. It reads
+workspace.yml; `bin/zer0 --help` lists the commands, and
+tools/workspace/README.md explains them. Python 3.9+ with PyYAML.
+"""
 
-# bin/zer0 — one command for every project in this repository. It reads
-# workspace.yml; `bin/zer0 --help` lists the commands, and
-# tools/workspace/README.md explains them.
+import sys
+from pathlib import Path
 
-root = File.expand_path("..", __dir__)
-require File.join(root, "tools/workspace/lib/zer0_workspace")
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
 
-exit Zer0Workspace::CLI.new(ARGV, root: root).run
+try:
+    from workspace.cli import main
+except ModuleNotFoundError as error:
+    if error.name != "yaml":
+        raise
+    sys.stderr.write("bin/zer0: needs PyYAML — python3 -m pip install pyyaml\n")
+    sys.exit(2)
+
+sys.exit(main(sys.argv[1:], ROOT))

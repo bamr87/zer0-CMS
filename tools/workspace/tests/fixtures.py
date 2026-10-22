@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import os
 import subprocess
+import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO = Path(__file__).resolve().parents[3]
 
@@ -51,6 +53,15 @@ IDENTITY = ("-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=f
 def git_env() -> dict[str, str]:
     env = {k: v for k, v in os.environ.items() if k not in GIT_UNSET}
     return {**env, **GIT_ENV}
+
+
+def isolate_git(case: unittest.TestCase) -> None:
+    """For the rest of the test, the tool's own git calls run under GIT_ENV too."""
+    patcher = mock.patch.dict(os.environ, GIT_ENV)
+    patcher.start()
+    case.addCleanup(patcher.stop)
+    for name in GIT_UNSET:
+        os.environ.pop(name, None)
 
 
 def git(cwd: Path | str, *args: str) -> str:
@@ -138,7 +149,9 @@ def with_route(route: str | None, pages_task: bool = True, theme_route: str | No
     if pages_task:
         m = m.replace('      build: "true"\n', '      build: "true"\n      pages: "true"\n', 1)
     if theme_route:
-        m = m.replace("    ci: theme.yml\n", f"    publishes: [pages]\n    route: {theme_route}\n    ci: theme.yml\n", 1)
+        m = m.replace(
+            "    ci: theme.yml\n", f"    publishes: [pages]\n    route: {theme_route}\n    ci: theme.yml\n", 1
+        )
         m = m.replace('      check: "true"\n      test:', '      check: "true"\n      pages: "true"\n      test:', 1)
     return m
 
