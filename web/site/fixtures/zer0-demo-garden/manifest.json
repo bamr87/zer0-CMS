@@ -1,15 +1,69 @@
 {
+  "built_with": {
+    "gems": {
+      "addressable": "2.9.0",
+      "base64": "0.3.0",
+      "bigdecimal": "4.1.3",
+      "colorator": "1.1.0",
+      "concurrent-ruby": "1.3.8",
+      "csv": "3.3.6",
+      "em-websocket": "0.5.3",
+      "eventmachine": "1.2.7",
+      "ffi": "1.17.4",
+      "forwardable-extended": "2.6.0",
+      "google-protobuf": "4.36.2",
+      "http_parser.rb": "0.8.1",
+      "i18n": "1.15.2",
+      "jekyll": "4.4.1",
+      "jekyll-feed": "0.18.0",
+      "jekyll-include-cache": "0.3.1",
+      "jekyll-paginate": "1.1.0",
+      "jekyll-remote-theme": "0.6.2",
+      "jekyll-sass-converter": "3.1.0",
+      "jekyll-seo-tag": "2.9.1",
+      "jekyll-sitemap": "1.4.0",
+      "jekyll-watch": "2.2.1",
+      "json": "2.21.2",
+      "kramdown": "2.5.2",
+      "kramdown-parser-gfm": "1.1.0",
+      "liquid": "4.0.4",
+      "listen": "3.10.1",
+      "logger": "1.7.0",
+      "mercenary": "0.4.0",
+      "openssl": "4.0.2",
+      "pathutil": "0.16.2",
+      "public_suffix": "7.0.5",
+      "rake": "13.4.2",
+      "rb-fsevent": "0.11.2",
+      "rb-inotify": "0.11.1",
+      "rexml": "3.4.4",
+      "rouge": "4.7.0",
+      "rubyzip": "3.7.0",
+      "safe_yaml": "1.0.5",
+      "sass-embedded": "1.106.1",
+      "terminal-table": "3.0.2",
+      "unicode-display_width": "2.6.0",
+      "webrick": "1.9.2"
+    },
+    "remote_theme": {
+      "bamr87/zer0-mistakes": "98e978d21f2d071a45cba3d018369c0fc2b6c828"
+    }
+  },
   "feeds": {
     "feed.xml": [
       {
         "id": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening",
         "link": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening/",
-        "title": "Six months of gardening in public"
+        "published": "2026-09-08T01:00:11+00:00",
+        "title": "Six months of gardening in public",
+        "updated": "2026-09-08T01:00:11+00:00"
       },
       {
         "id": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome",
         "link": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome/",
-        "title": "This is a garden, not a blog"
+        "published": "2026-09-08T01:00:11+00:00",
+        "title": "This is a garden, not a blog",
+        "updated": "2026-09-08T01:00:11+00:00"
       }
     ]
   },
@@ -18,7 +72,14 @@
       "type": "application/octet-stream"
     },
     "about/index.html": {
-      "text_sha256": "be5f40e8f5ec72e812ed9cf2af2e4f17055671356c21d6515c5e5b0fdebaad16",
+      "text": [
+        "About",
+        "I read a lot and forget most of it, so I started writing notes that link to each other. This is that pile, in public.",
+        "The notes are deliberately short. When one grows past a screen it usually means it contains two ideas and wants splitting, which is the only real rule here.",
+        "Nothing is finished. If a note contradicts another note, both are staying up until I work out which one is wrong.",
+        "Contact: iris@marginalia.example"
+      ],
+      "text_sha256": "9502517a0cc26b2853eda76a0540f9937eab7d4eac37d276a49a15494ad263e1",
       "title": "About | Marginalia",
       "type": "text/html"
     },
@@ -1049,57 +1110,161 @@
       "type": "application/xml"
     },
     "index.html": {
+      "text": [
+        "Digital garden",
+        "Ideas are worth more connected than collected",
+        "Short notes, revised in place, each one showing what links to it. Start anywhere and follow the links.",
+        "Wander the notes Why a garden",
+        "Recently tended",
+        "September 8, 2026",
+        "This is a garden, not a blog",
+        "A public digital garden about reading, note-taking and how ideas connect — written in the open and revised in place.",
+        "September 8, 2026",
+        "Six months of gardening in public",
+        "What changed after moving from a blog to a set of interlinked notes: fewer posts, more revisiting, and one surprise.",
+        "How to read this",
+        "There is no order. The notes point at each other with [[wiki-links]], and every note lists its backlinks at the bottom — the notes that needed it.",
+        "If you want a path: start at Evergreen notes, follow it to Notes should be atomic, and let the links take you sideways from there. Most of the value is in the sideways.",
+        "Growing your own?",
+        "This whole site is a folder of Markdown files. Open it in Obsidian and the links work identically.",
+        "See how it is built"
+      ],
       "text_sha256": "8f15bbb3ff0a71515bd77237eec680c1793ab80987843f497b42155a927b2013",
       "title": "Marginalia | A garden of half-finished thoughts, cross-referenced",
       "type": "text/html"
     },
     "notes/backlinks-change-what-you-write/index.html": {
-      "text_sha256": "01504cc4716c3061b074216a30567ae3e00b65b51d8c7ebd799cedb629502e49",
+      "text": [
+        "A backlink list is not navigation. It is feedback.",
+        "The first time a note shows you four other notes that needed it, you learn something you could not have known while writing it: which of your ideas is load-bearing. Notes with many backlinks are the ones your thinking actually rests on, and they are usually not the ones you thought were important.",
+        "It changes the writing, too. Knowing a note will be arrived at from somewhere else, you stop writing openings. No context-setting, no “as I mentioned” — the reader came from a link that already gave them the context.",
+        "The tooling matters less than the habit, but it has to be automatic. A backlink you maintain by hand is a backlink you stop maintaining.",
+        "Related: [[Notes should be atomic]], [[Evergreen notes]]."
+      ],
+      "text_sha256": "a066093732053a3d3781d13b68f751136604e5f95ded00271dff1fc0a91af44d",
       "title": "Backlinks change what you write | Marginalia",
       "type": "text/html"
     },
     "notes/evergreen-notes/index.html": {
-      "text_sha256": "6628a8b4b1f5471d5047dbf622621a74230b589b398841d43112ba4b8b424694",
+      "text": [
+        "An evergreen note is written to be edited. That single decision changes how you write it.",
+        "A post is addressed to a reader at a moment: it has an occasion, a hook, and a shelf life. A note is addressed to you in two years, and its job is to still be true then. So it drops the occasion, states the claim, and expects to be rewritten when the claim stops holding.",
+        "The practical difference is what you do when you learn something new. With posts you write another post. With notes you go back and change the note — which means the pile gets better over time instead of just longer.",
+        "This only works if notes are small enough to revise. See [[Notes should be atomic]].",
+        "[!tip] Rule of thumb If revising a note feels like rewriting an essay, it is too big.",
+        "Related: [[Backlinks change what you write]], [[Why gardens beat blogs]]."
+      ],
+      "text_sha256": "ec3a201a4f9a0c050e5185f990eff5de447ccda0b8542fd55361f44a9b606790",
       "title": "Evergreen notes | Marginalia",
       "type": "text/html"
     },
     "notes/index.html": {
-      "text_sha256": "a0e6e7ce97bae506fcb4ca9c49f85f0d409a75b0173bae559b42404b9024a777",
+      "text": [
+        "Notes",
+        "Everything in pages/_notes/, newest first.",
+        "Collection Index - notes",
+        "Why gardens beat blogs",
+        "Reverse chronology answers one question — what is new? — and organises everything else badly.",
+        "Last updated September 08, 2026",
+        "Welcome Note",
+        "Notes are short, evergreen and interlinked. Link to another note with a wiki-link, like [[Getting Started]], and the theme resolves it and shows backlinks on...",
+        "Last updated September 08, 2026",
+        "Posts and notes do different jobs",
+        "Choosing between a blog and a garden is a false choice; they answer different questions.",
+        "Last updated September 08, 2026",
+        "Notes should be atomic",
+        "One note, one idea. Not one note per source, per session, or per topic.",
+        "Last updated September 08, 2026",
+        "Evergreen notes",
+        "An evergreen note is written to be edited. That single decision changes how you write it.",
+        "Last updated September 08, 2026",
+        "Backlinks change what you write",
+        "A backlink list is not navigation. It is feedback.",
+        "Last updated September 08, 2026"
+      ],
+      "text_sha256": "a0abc6fc26d0ca386a3c5a0e6c6baaf281baa658a11e6a4a3c23e008ddf996c4",
       "title": "Notes | Marginalia",
       "type": "text/html"
     },
     "notes/notes-should-be-atomic/index.html": {
-      "text_sha256": "0953995b5fe1c61cd922b36a5b95f5c0c918a10e904220695f3b7d4fbb520352",
+      "text": [
+        "One note, one idea. Not one note per source, per session, or per topic.",
+        "The reason is mechanical rather than aesthetic. Links connect notes, so the note is your unit of connection. If a note holds three ideas, anything linking to it links to all three, and the link stops meaning something specific. The graph fills with edges that say “these are vaguely related”, which is the same as saying nothing.",
+        "The test is whether you can title the note as a claim. “Reading notes — March” is a container. “Backlinks change what you write” is a claim, and other notes can agree or disagree with it.",
+        "Splitting is cheap and merging is expensive, so split early. See [[Evergreen notes]] for why revision matters, and [[Backlinks change what you write]] for what you get back."
+      ],
+      "text_sha256": "8182dce893390be9a827e00a2cf7c3bef4e90f6dacc39174c74caa6e123828cc",
       "title": "Notes should be atomic | Marginalia",
       "type": "text/html"
     },
     "notes/posts-and-notes-do-different-jobs/index.html": {
-      "text_sha256": "fd3ba8ea0bb2f0244736c66bc55a1431813039019157c3457b8bc8ae4e717fc9",
+      "text": [
+        "Choosing between a blog and a garden is a false choice; they answer different questions.",
+        "A post is an event. It has a date because the date matters — this is what I thought in March, here is a thing I built, here is an argument aimed at a moment. Posts are how anything gets announced, and how anyone arrives.",
+        "A note is a position. It has a date only so you know how stale it might be, and it gets rewritten when the position changes.",
+        "So: write the post when there is an occasion, and let it link into the notes for the claims it leans on. The post ages; the notes it points at stay current. See [[Why gardens beat blogs]] and [[Evergreen notes]]."
+      ],
+      "text_sha256": "7d39c33a86c2eab1d1abb6a3a7e07de979f374ebc2e3f6138d379297f69892f8",
       "title": "Posts and notes do different jobs | Marginalia",
       "type": "text/html"
     },
     "notes/welcome-note/index.html": {
-      "text_sha256": "dfe47af2e251ec559201295ca1a2cd87d6d7a174d5a11bbd23dc917f9ec862c8",
+      "text": [
+        "Notes are short, evergreen and interlinked. Link to another note with a wiki-link, like [[Getting Started]], and the theme resolves it and shows backlinks on both pages.",
+        "[!tip] Obsidian users Open pages/_notes/ as a vault; callouts, embeds and [[links]] render the same on the site."
+      ],
+      "text_sha256": "49e396b251dcc1235ed2305a8cacfcce577cdd125ee3c97d00a4ac2531a6a867",
       "title": "Welcome Note | Marginalia",
       "type": "text/html"
     },
     "notes/why-gardens-beat-blogs/index.html": {
-      "text_sha256": "83286a37a37d8c2a7665990ecc3f77b0f0ea2af4ca61d3cac19d51c2035b5ea7",
+      "text": [
+        "Reverse chronology answers one question — what is new? — and organises everything else badly.",
+        "Most of what I want to write does not expire. A note about how to think about note-taking is as true in three years as today, but a blog buries it under everything published since, and the only way back is search or a tag page nobody maintains.",
+        "A garden inverts that. Notes sit at stable URLs, get revised rather than replaced, and are found by following links from whatever you were already reading. The date becomes metadata rather than structure.",
+        "The cost is real: there is no feed of new things, and a garden is harder to arrive at cold. That is why this one still has a few posts — see [[Posts and notes do different jobs]]."
+      ],
+      "text_sha256": "5882556d5dfe2a80de940d7828a672c51513ada6dbd2e47e6f74a9017b897791",
       "title": "Why gardens beat blogs | Marginalia",
       "type": "text/html"
     },
     "posts/index.html": {
-      "text_sha256": "5a96e32fb21b0e75501d0b75eee98e8e7266a135a321e5be992dda1920466974",
+      "text": [
+        "Posts",
+        "Everything in pages/_posts/, newest first.",
+        "Collection Index - posts",
+        "Six months of gardening in public",
+        "I moved this site from a blog to a garden six months ago. Here is what actually changed.",
+        "Last updated September 08, 2026",
+        "This is a garden, not a blog",
+        "A blog is a stack of finished things in date order. A garden is a set of unfinished things that point at each other, and the pointing is the useful part.",
+        "Last updated September 08, 2026"
+      ],
+      "text_sha256": "22a94290286bd51e40d97f9c6b2030a8a82e2f0a273d3e0e73f172e2590e77a5",
       "title": "Posts | Marginalia",
       "type": "text/html"
     },
     "posts/six-months-of-gardening/index.html": {
-      "text_sha256": "ec415f43537a2d185c3bb2a37e6b16d11760cb3b58e4634443dc5bb7daeb658e",
+      "text": [
+        "I moved this site from a blog to a garden six months ago. Here is what actually changed.",
+        "I write less and revise more",
+        "Post count went down by roughly two thirds. Edit count went up by a lot more than that. The pile is smaller and better, which is the trade I wanted, but it does feel unproductive in a way a publishing schedule never did.",
+        "The links do the organising",
+        "I have not made a single tag decision in six months. Notes find each other because I link them while writing, and the backlink lists surface structure I did not plan — see [[Backlinks change what you write]].",
+        "The surprise",
+        "The most-linked note is the most boring one: [[Notes should be atomic]]. It is four paragraphs of mechanics with no insight in it at all, and nearly everything else leans on it. Apparently load-bearing ideas are rarely the interesting ones."
+      ],
+      "text_sha256": "6b739c3bd3097c49208e3c08337afcaae50696b960f13f7f2f4f40fb54c99887",
       "title": "Six months of gardening in public | Marginalia",
       "type": "text/html"
     },
     "posts/welcome/index.html": {
-      "text_sha256": "86de8ee08a343468be0b24d47bf5db60703317be7c3f8f3efcdcb701661e663f",
+      "text": [
+        "A blog is a stack of finished things in date order. A garden is a set of unfinished things that point at each other, and the pointing is the useful part.",
+        "Notes here get revised in place rather than superseded by a newer post. If a note changes your mind, it will also have changed itself since you last read it.",
+        "Every note shows what links to it. That list is usually more interesting than the note, because it tells you which other ideas needed this one."
+      ],
+      "text_sha256": "d58beffd78b2ae3da8d9e3e88b07b6334acd45eed11c91ae016696ca026dca90",
       "title": "This is a garden, not a blog | Marginalia",
       "type": "text/html"
     },
@@ -1111,7 +1276,7 @@
     }
   },
   "redirects": {},
-  "schema": "site-manifest/v1",
+  "schema": "site-manifest/v2",
   "site": "zer0-demo-garden",
   "sitemaps": {
     "sitemap.xml": [
