@@ -46,11 +46,13 @@ Today the repository holds three products of its own and the imported sources st
 
 ## Workflow
 
-1. **One milestone per PR.** Pick the first milestone in `docs/plan/PLAN.md` § 3 **Order of work** that is not done and whose predecessors have merged — not the first unchecked box in the file. Branch `<milestone>-<slug>` (e.g. `p4-studio`, `g8-ai-layer`) from an up-to-date `main`, and open the pull request against `main`, never against another branch. Don't mix milestones; spin unrelated fixes into their own PR. When one branch has to carry several, keep one commit series per milestone so the PR can be split.
-2. **Run the tests.** Before you open the PR, run that milestone's test commands from `docs/plan/PLAN.md` plus `bin/zer0 check` and `python3 tools/check_absorption.py`, and run `bin/zer0 run test` for every affected project. Paste the commands and results into the PR description. Never mark a box done with red or skipped tests.
-3. **Keep PLAN checkboxes and the ledger updated** in the same PR: tick the tasks you finished, add sub-tasks you discovered, add a note under the milestone if you deviated and why, and set the status (and proof) of every `capabilities.yml` row the PR moved.
+**During the overhaul, work lands directly on `main`** (the owner's direction of 2026-10-21: "these are breaking changes and a complete overhaul. no need for PRs until there's a working system"). Until the owner says the system works: no pull requests and no long-lived branches; commit each milestone to `main` as its own series of Conventional Commits, run its tests (rule 2) before every push, and put the commands and results in the commit message body instead of a PR description. Parallel work happens in short-lived worktrees that are merged into `main` and deleted the same day. History is still never rewritten (rule 4).
+
+1. **One milestone at a time.** Pick the first milestone in `docs/plan/PLAN.md` § 3 **Order of work** that is not done and whose predecessors have landed — not the first unchecked box in the file. Work on `main` (or in a worktree merged back into `main` the same day). Don't mix milestones in one commit; spin unrelated fixes into their own commits.
+2. **Run the tests.** Before every push to `main`, run that milestone's test commands from `docs/plan/PLAN.md` plus `bin/zer0 check` and `python3 tools/check_absorption.py`, and run `bin/zer0 run test` for every affected project. Put the commands and results in the commit message body. Never mark a box done with red or skipped tests.
+3. **Keep PLAN checkboxes and the ledger updated** in the same commits: tick the tasks you finished, add sub-tasks you discovered, add a note under the milestone if you deviated and why, and set the status (and proof) of every `capabilities.yml` row the PR moved.
 4. **Git hygiene.** No force-push, no history rewrites on shared branches, no `--no-verify`, no amending pushed commits. Conventional commit messages (`feat(content): …`, `fix(rails): …`) because release-please reads them. Don't change repo settings, branch protection, secrets or workflow permissions.
-5. **Stop and ask** (comment in the PR, leave the box unchecked) when a milestone needs an open decision from PLAN §7, a destructive data step, or a credential.
+5. **Stop and ask** (tell the owner, leave the box unchecked) when a milestone needs an open decision from PLAN §7, a destructive data step, or a credential.
 
 ## The platform and its boundary
 
@@ -188,7 +190,7 @@ Fourteen repositories live here, each imported with full history and each a **so
 ## Conventions
 
 - Conventional Commits: `type(scope): description` (`feat`/`fix`/`docs`/`refactor`/`test`/`chore`/`ci`/`style`).
-- Default branch is `main` — branch from it and open a PR; never push to it directly.
+- Default branch is `main`. During the overhaul commits go straight to it (see § Workflow); once the owner declares a working system, changes return to branches and pull requests.
 - README-First, README-Last: read the nearest `README.md` before changing a directory, and update it after. The dense ones are `src/README.md`, `src/core/README.md`, `src/test/README.md` and `docs/ARCHITECTURE.md`.
 - One paragraph per line in markdown — CI enforces it (`tools/unwrap-prose.py`, skipping `SCHEMA.md` and `CHANGELOG.md`; pass the same two `--exclude` patterns locally, as the command above does).
 - Every source file opens with a short block comment (or module docstring) saying what it is and why it exists.
