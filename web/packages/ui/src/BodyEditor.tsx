@@ -9,6 +9,8 @@
 // that follows the block through edits, moves and removals. Never by its
 // position: the rich editor reads its content once, so a positional key would
 // hand one block's editor to another block's data after a remove or a move.
+// A saved block carries its id in the page (`data-block-id`), so the editor's
+// AI panel knows which block a selection is in.
 import { ActionIcon, Badge, Button, Group, NumberInput, Paper, Select, Stack, Textarea, TextInput } from '@mantine/core';
 import type { Block } from '@zer0/api';
 
@@ -54,7 +56,7 @@ export function BodyEditor({ blocks, onChange, disabled }: Props) {
   return (
     <Stack>
       {blocks.map((block, i) => (
-        <Paper key={keyOf(block)} p="sm" aria-label={`Block ${i + 1}: ${block.type}`} component="section">
+        <Paper key={keyOf(block)} p="sm" aria-label={`Block ${i + 1}: ${block.type}`} component="section" data-block-id={block.id}>
           <Group justify="space-between" mb="xs">
             <Badge variant="outline">{block.type}</Badge>
             <Group gap={4}>

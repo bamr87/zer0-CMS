@@ -4,7 +4,8 @@
 // component only merges what arrives. The stream ends when the run is final
 // or after its time limit; a live run's stream is opened again after a short
 // pause, and one that broke after a pause that grows with each failure.
-// A finished run links to its suggestions.
+// A finished run links to its suggestions. `useLiveRun` is that following, for
+// every screen that starts a run and shows it working (the AI workspaces).
 import { Alert, Anchor, Badge, Button, Code, Group, Loader, Stack, Table, Text, Timeline, Title } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Step } from '@zer0/api';
@@ -30,9 +31,14 @@ export function RunStatus({ status }: { status: string }) {
   );
 }
 
-export function RunTimeline({ runId }: { runId: number }) {
+/**
+ * A run with its steps, kept live while it works: the steps the stream
+ * delivers are merged into the ones the run was read with, a final status
+ * reads the run again, and a stream that ended or broke on a live run is
+ * opened again after a pause.
+ */
+export function useLiveRun(runId: number) {
   const api = useApi();
-  const go = useGo();
   const stream = useStream();
   const qc = useQueryClient();
   const run = useQuery({
@@ -68,10 +74,17 @@ export function RunTimeline({ runId }: { runId: number }) {
     };
   }, [final, runId, stream, qc, round]);
 
+  const known = run.data?.steps ?? [];
+  const steps = [...known, ...arrived.filter((s) => !known.some((k) => k.idx === s.idx))].sort((a, b) => a.idx - b.idx);
+  return { run, steps, final };
+}
+
+export function RunTimeline({ runId }: { runId: number }) {
+  const go = useGo();
+  const { run, steps, final } = useLiveRun(runId);
+
   if (run.isPending) return <Loader />;
   if (run.isError) return <Alert color="red">{errorText(run.error)}</Alert>;
-  const known = run.data.steps ?? [];
-  const steps = [...known, ...arrived.filter((s) => !known.some((k) => k.idx === s.idx))].sort((a, b) => a.idx - b.idx);
 
   return (
     <Stack>
