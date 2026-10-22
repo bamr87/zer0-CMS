@@ -2,20 +2,17 @@
 
 Guidance for AI coding agents (Claude Code, Copilot, Cursor) working in **zer0-pages-remote**.
 
-This is the **minimal reference consumer** of the [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes) remote theme — a demo proving how few files a working GitHub Pages site needs: `_config.yml`, `Gemfile`, `index.md`. Its value is being small, so "done" here means the site still builds and the file count did not grow. Do not turn it into a real content site.
+This is the **minimal reference consumer** of the [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes) remote theme — a demo proving how few files a working GitHub Pages site needs: `_config.yml` and `index.md`. Its value is being small, so "done" here means the site still builds and the file count did not grow. Do not turn it into a real content site.
 
 ## Stack & commands
 
 ```bash
-# install dependencies:  bundle install
-# run the dev server:     docker compose up          # http://localhost:4000 (ruby:3.2-slim, livereload)
-#                         bundle exec jekyll serve   # non-Docker alternative
-# build:                  bundle exec jekyll build
+# build:                  python3 ../../tools/jekyll_theme.py build zer0-pages-remote   # → _site/ (Docker, no Ruby)
 # run tests:              none — there is no test suite; CI is the safety net
 # lint:                   python3 ../../tools/unwrap-prose.py --check   # --write to fix
 ```
 
-This repo now lives in the zer0-CMS monorepo at `sites/zer0-pages-remote/`, where the root `sites.yml` runs `bundle exec jekyll build` on any pull request touching it, and the root `markdown-oneline.yml` and `claude.yml` cover prose and `@claude` mentions. There is **no deploy workflow**: GitHub Pages builds and publishes this repo natively, which means production runs the `github-pages` gem in **safe mode** (the live site reports `Jekyll v3.10.0`). `docker-compose.yml` and the `Gemfile` deliberately use that same gem so local output matches what GitHub publishes.
+This repo now lives in the zer0-CMS monorepo at `sites/zer0-pages-remote/`, where it renders with the Jekyll-theme option: the root `sites.yml` and `pages.yml` build it on any pull request touching it with GitHub Pages' own builder (the `github-pages` gem in **safe mode**, Jekyll 3.10.0 — what GitHub Pages publishes) in a container, with the theme at the tag the root `workspace.yml` pins, and the root `markdown-oneline.yml` and `claude.yml` cover prose and `@claude` mentions. There is no Gemfile and no `docker-compose.yml` any more: the builder's image carries Jekyll and its plugins, so nothing Ruby lives here.
 
 ## What is deliberately absent
 
@@ -25,7 +22,7 @@ This repo now lives in the zer0-CMS monorepo at `sites/zer0-pages-remote/`, wher
 
 ## The safe-mode plugin invariant
 
-Every plugin gem in the `Gemfile` must ALSO be listed under `plugins:` in `_config.yml`. GitHub Pages builds in safe mode and registers only whitelisted plugins named there, so a gem present in one file and missing from the other is dead weight at best and a build failure at worst — that is exactly how the `Unknown tag 'include_cached'` outage happened (PR #8, commit `c4666ff`). Check both files whenever you touch either.
+Every plugin the theme needs must be listed under `plugins:` in `_config.yml`. GitHub Pages builds in safe mode and registers only whitelisted plugins named there, so a plugin missing from that list is a build failure — that is exactly how the `Unknown tag 'include_cached'` outage happened (PR #8, commit `c4666ff`). The builder's image has every whitelisted plugin installed; the list is what turns one on.
 
 ## Conventions
 

@@ -94,7 +94,20 @@ class LedgerTest(unittest.TestCase):
 
     def test_done_needs_existing_proof(self):
         self.assertIn("without a proof", ca.check_ledger([source(status="done")], lambda p: True)[0])
-        self.assertIn("does not exist", ca.check_ledger([source(status="done", proof="nope.py")], lambda p: p == "apps/x")[0])
+        self.assertIn("does not exist", ca.check_ledger([source(status="done", proof="tests/test_nope.py")], lambda p: p == "apps/x")[0])
+
+    def test_a_proof_is_a_test_not_a_tool_or_a_command(self):
+        for proof in ("tools/site_manifest.py::--check --site drsai", "tools/site_manifest.py", ".github/workflows/pages.yml::build",
+                      "content/tests/test_x.py::run it by hand", "content/tests/test_x.py::"):  # fmt: skip
+            with self.subTest(proof=proof):
+                self.assertIn("is not a test", ca.check_ledger([source(status="done", proof=proof)], lambda p: True)[0])
+        for proof in ("content/tests/api/test_pages.py::test_publish", "tools/workspace/tests/test_golden.py::FrozenTreeTest",
+                      "content/tests/x.py::SomeTest::test_it[case-1]", "web/packages/ui/test/editor.test.tsx", "src/x_test.py"):  # fmt: skip
+            with self.subTest(proof=proof):
+                self.assertEqual(ca.check_ledger([source(status="done", proof=proof)], lambda p: True), [])
+        cap = platform_cap(ops="done")
+        cap["proof"] = {"ops": "tools/site_manifest.py::--check --site drsai"}
+        self.assertIn("ops proof 'tools/site_manifest.py::--check --site drsai' is not a test", ca.check_platform([cap], lambda p: True)[0])
 
     def test_dropped_needs_owner(self):
         self.assertIn("decided_by", ca.check_ledger([source(status="dropped")], lambda p: True)[0])

@@ -133,6 +133,8 @@ class CLI:
         ]
         if p.site_root:
             lines.append(f"  site:       {p.site_root} (checked by bin/zer0 doctor)")
+        if p.render:
+            lines.append(f"  render:     {p.render['as']} {p.render['theme']}, built by the {p.render['server']} server")
         for spec in filter(None, map(p.task, TASKS)):
             where = "" if spec.cwd == "." else f" (in {spec.cwd})"
             env = f" [{' '.join(f'{k}={v}' for k, v in spec.env.items())}]" if spec.env else ""
@@ -180,14 +182,22 @@ class CLI:
 
     def _routes(self) -> int:
         """The one Pages deploy's plan: every routed project, root first. pages.yml builds a matrix
-        from --json and stitches each build into the artifact at its route; `bundle_dir` is where
-        the site's Gemfile lives (its site root, or the project directory when it declares none)."""
+        from --json and stitches each build into the artifact at its route; `bundle_dir` is the
+        site's root (its `site:`, or the project directory when it declares none), and `render` is
+        how a site that renders with the Jekyll-theme option is built (its `render:` setting)."""
         opts = self._options("--json")
         routed = [p for p in self.manifest.projects if p.route_path]
         routed.sort(key=lambda p: (p.route_path != "/", p.route_path))
         if opts.json:
             plan = [
-                dict(name=p.name, path=p.path, route=p.route_path, bundle_dir=p.site_root or p.path) for p in routed
+                dict(
+                    name=p.name,
+                    path=p.path,
+                    route=p.route_path,
+                    bundle_dir=p.site_root or p.path,
+                    **({"render": p.render} if p.render else {}),
+                )
+                for p in routed
             ]
             puts(self.out, _compact(plan))
             return 0
@@ -300,6 +310,11 @@ class CLI:
 
     @staticmethod
     def _summary(p: Project) -> dict:
-        """A project for `list --json`: its fields but `paths`, with the computed site, route and task names."""
-        listed = {f.name: getattr(p, f.name) for f in dataclasses.fields(p) if f.name != "paths"}
+        """A project for `list --json`: its fields but `paths` (and `render` unless set), with the computed
+        site, route and task names."""
+        listed = {
+            f.name: getattr(p, f.name)
+            for f in dataclasses.fields(p)
+            if f.name != "paths" and not (f.name == "render" and p.render is None)
+        }
         return {**listed, "site": p.site_root, "route": p.route_path, "tasks": list(p.tasks)}

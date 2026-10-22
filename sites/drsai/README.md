@@ -27,19 +27,17 @@ drsai/ (Python story engine) ─ new verse/stories            zer0-mistakes them
 | Importer | [`tools/import_dodge_and_reena.py`](./tools/import_dodge_and_reena.py) | Converts the content repo into the site's books collection; matches plates to scenes; idempotent (`--check` runs in CI) |
 | Illustrator | [`tools/generate_illustrations.py`](./tools/generate_illustrations.py) | Renders missing scenes/covers with the OpenAI Images API from front-matter prompts |
 | Theme | [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes) | `books` collection, `book`/`book-story` layouts, bookshelf/plate/TOC components |
-| Preview banners | [bamr87/zer0-image-generator](https://github.com/bamr87/zer0-image-generator) | `bundle exec jekyll preview-images` — OpenAI-rendered social banners per story |
+| Preview banners | [bamr87/zer0-image-generator](https://github.com/bamr87/zer0-image-generator) | Its Python engine (`preview_generator.py`, no Ruby) — OpenAI-rendered social banners per story |
 
 ## Run the site locally
 
+In zer0-CMS the site builds with the Jekyll-theme option, with Docker and no Ruby: the theme at the tag the root `workspace.yml` pins, built by GitHub Pages' own builder in a container.
+
 ```bash
-# against the released theme gem is not enough while book layouts are
-# unreleased — point at a sibling checkout of bamr87/zer0-mistakes:
-ZER0_THEME_LOCAL=../../../zer0-mistakes bundle install
-bundle exec jekyll serve --config _config.yml,_config_dev.yml
-# → http://localhost:4000
+python3 ../../tools/jekyll_theme.py build drsai    # → _site/
 ```
 
-Production (GitHub Pages) builds use `remote_theme` instead — see `.github/workflows/pages.yml`. Enable **Settings → Pages → Source: GitHub Actions** once per fork.
+Production (GitHub Pages) builds use `remote_theme` too — see `.github/workflows/pages.yml`. Enable **Settings → Pages → Source: GitHub Actions** once per fork.
 
 ## Refresh the book from its content repo
 
@@ -60,7 +58,7 @@ python3 tools/generate_illustrations.py --dry-run          # list the gaps
 python3 tools/generate_illustrations.py --book dodge-and-reena --limit 2
 ```
 
-Renders land at each scene's declared path (landscape plates, portrait covers) using the book's `illustration_style` so the cast stays consistent. Approve a render by embedding it in the story in the content repo (and `--save-to-source` copies it there); the next import closes the loop. Story-page **preview banners** come from the zer0-image-generator gem: `bundle exec jekyll preview-images --dry-run`.
+Renders land at each scene's declared path (landscape plates, portrait covers) using the book's `illustration_style` so the cast stays consistent. Approve a render by embedding it in the story in the content repo (and `--save-to-source` copies it there); the next import closes the loop. Story-page **preview banners** come from the zer0-image-generator's Python engine, run from this directory: `python3 ../../packages/zer0-image-generator/lib/zer0_image_generator/preview_generator.py --dry-run` (the gem's `jekyll preview-images` left with the Gemfile; PLAN G6 makes it a platform command).
 
 ## Write new stories
 

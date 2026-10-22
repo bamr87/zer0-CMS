@@ -1,20 +1,30 @@
 # sites/irony-works — the perpetual encyclopedia of irony. Its own repository
 # gated pull requests with the hub's standard-ci alone; the real proof the site
-# works is the build half of its publish.yml, so that is the gate here: render
-# the previews, transplant the vault into the _entries/ collection, and build
-# with GitHub Pages' own Jekyll (remote_theme: bamr87/zer0-mistakes). Nothing
-# is deployed — bamr87/irony-works still publishes the live site. Not ported
-# (see docs/MONOREPO.md): the deploy, the advisory Alanis Gate on vault pull
-# requests and the scheduled Germinate loop, all still under
+# works is the build half of its publish.yml, so that is the gate here, through
+# the Jekyll-theme option (PLAN P2): the site's `build` task (tools/jekyll_theme.py)
+# exports the site, runs its `before:` step there — install js-yaml at the
+# version the recording published, render the previews, transplant the vault
+# into the _entries/ collection — and builds it with the zer0 theme at its
+# pinned tag and GitHub Pages' own builder (the image actions/jekyll-build-pages
+# runs), so no Ruby is installed. The build is then compared with the recording
+# of it (web/site/fixtures/irony-works/, PLAN P1): every input is pinned, so a
+# difference fails; when it is intended, commit the uploaded
+# site-manifest-irony-works artifact over web/site/fixtures/ in the same pull
+# request. It runs when anything that builds the site changes: the site, its
+# `render:` setting (workspace.yml), the workspace tool that reads it, the
+# option and its server, the comparison or the recording. Nothing is deployed —
+# bamr87/irony-works still publishes the live site. Not ported (see
+# docs/MONOREPO.md): the deploy, the advisory Alanis Gate on vault pull requests
+# and the scheduled Germinate loop, all still under
 # sites/irony-works/.github/workflows/ as reference.
 name: irony-works
 
 on:
   push:
     branches: [main]
-    paths: ["sites/irony-works/**", ".github/workflows/irony-works.yml"]
+    paths: ["sites/irony-works/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "tools/site_manifest.py", "web/site/fixtures/irony-works/**", ".github/workflows/irony-works.yml"]
   pull_request:
-    paths: ["sites/irony-works/**", ".github/workflows/irony-works.yml"]
+    paths: ["sites/irony-works/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "tools/site_manifest.py", "web/site/fixtures/irony-works/**", ".github/workflows/irony-works.yml"]
 
 permissions:
   contents: read
@@ -23,25 +33,51 @@ concurrency:
   group: irony-works-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+  TZ: UTC
+
 jobs:
   build:
     name: Render, transplant and jekyll build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: sites/irony-works
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - name: Render previews + transplant vault → _entries/
-        run: |
-          npm i js-yaml --no-save
-          node engine/scripts/preview.mjs
-          node engine/scripts/transplant.mjs
-      - uses: actions/jekyll-build-pages@v1
+      - uses: actions/setup-python@v7
         with:
-          source: ./sites/irony-works
-          destination: ./sites/irony-works/_site
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
+      - name: Build with the Jekyll-theme option
+        env:
+          ZER0_PAGES_DEST: ${{ runner.temp }}/site
+          ZER0_PAGES_BUILT_WITH: ${{ runner.temp }}/built-with.json
+        run: |
+          bin/zer0 run build irony-works
+          test -f "$ZER0_PAGES_DEST/index.html" || { echo "::error::irony-works built no index.html"; exit 1; }
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Record what the build wrote
+        run: python3 tools/site_manifest.py build "$RUNNER_TEMP/site" --site irony-works --built-with "$RUNNER_TEMP/built-with.json" --out "$RUNNER_TEMP/manifests/irony-works/manifest.json"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site-manifest-irony-works
+          path: ${{ runner.temp }}/manifests
+          retention-days: 30
+      - name: Compare with the recorded build
+        run: |
+          set -euo pipefail
+          status=0
+          python3 tools/site_manifest.py compare web/site/fixtures/irony-works/manifest.json "$RUNNER_TEMP/manifests/irony-works/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
+          if [ "$status" -ne 0 ]; then
+            { echo "### irony-works differs from its recording"; echo '```'; head -n 200 "$RUNNER_TEMP/compare.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::irony-works's build differs from web/site/fixtures/irony-works/manifest.json (the job summary says how); if that is intended, commit the site-manifest-irony-works artifact over web/site/fixtures/ in the same pull request"
+            exit 1
+          fi

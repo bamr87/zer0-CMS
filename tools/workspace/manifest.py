@@ -18,8 +18,13 @@ import yaml
 
 KINDS = tuple("extension rails gem python site app".split())
 TASKS = tuple("setup check test build pages".split())
-PROJECT_KEYS = tuple("path paths kind stack summary upstream depends_on publishes ci site route tasks".split())
+PROJECT_KEYS = tuple("path paths kind stack summary upstream depends_on publishes ci site route render tasks".split())
 TASK_KEYS = tuple("run cwd env".split())
+# How a site renders (ADR 0006 decision 4): `jekyll-theme` is the Jekyll-theme option
+# (tools/jekyll_theme.py); the React renderer arrives with PLAN P6.
+RENDERS = ("jekyll-theme",)
+SERVERS = ("github-pages", "jekyll-4")
+RENDER_KEYS = tuple("as theme server before obsidian".split())
 
 
 class WorkspaceError(Exception):
@@ -83,6 +88,7 @@ class Project:
     site: str | None
     route: str | None
     tasks: dict
+    render: dict | None = None  # {as, theme, server, before?, obsidian?} — see RENDER_KEYS
 
     @property
     def globs(self) -> list:
@@ -204,7 +210,34 @@ def _project(name: str, spec) -> Project:
         site=_inside(_string(spec, "site", name, required=False), f"projects.{name}.site"),
         route=_string(spec, "route", name, required=False),
         tasks=_tasks(name, spec["tasks"] if present(spec.get("tasks")) else {}),
+        render=_render(name, spec.get("render")),
     )
+
+
+def _render(name: str, render) -> dict | None:
+    """A site's `render:` setting: `as: jekyll-theme`, the theme's `theme:` tag, the Jekyll `server:` that
+    builds it, and optionally a `before:` command run in the exported tree and `obsidian: true` for a vault."""
+    if render is None:
+        return None
+    where = f"projects.{name}.render"
+    if not isinstance(render, dict):
+        raise WorkspaceError(f"{where} must be a mapping ({', '.join(RENDER_KEYS)})")
+    unknown = [k for k in render if k not in RENDER_KEYS]
+    if unknown:
+        raise WorkspaceError(f"{where}: unknown key(s) {', '.join(map(to_s, unknown))}")
+    if render.get("as") not in RENDERS:
+        raise WorkspaceError(f"{where}.as must be one of {', '.join(RENDERS)}")
+    if render.get("server") not in SERVERS:
+        raise WorkspaceError(f"{where}.server must be one of {', '.join(SERVERS)}")
+    theme = render.get("theme")
+    if not isinstance(theme, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", theme):
+        raise WorkspaceError(f"{where}.theme must be the theme's tag or commit, such as v1.31.3")
+    before = render.get("before")
+    if before is not None and (not isinstance(before, str) or not before.strip()):
+        raise WorkspaceError(f"{where}.before must be a command")
+    if not isinstance(render.get("obsidian", False), bool):
+        raise WorkspaceError(f"{where}.obsidian must be true or false")
+    return {"as": render["as"], "theme": theme, "server": render["server"], "before": before, "obsidian": render.get("obsidian", False)}
 
 
 def _tasks(name: str, tasks) -> dict:

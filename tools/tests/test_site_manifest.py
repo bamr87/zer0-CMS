@@ -6,8 +6,9 @@ every path is listed with its type; a page's text is its own content — the
 words, not the markup, and not the layout a theme puts around them, so a
 renderer in another design system can match it; feeds keep their entries and
 dates in order; sitemaps and redirects are read; the same tree always gives the
-same bytes; a comparison names exactly what moved; and the rebuild is
-pages.yml's, in its time zone and without the caller's build variables. No test
+same bytes; a comparison names exactly what moved; the rebuild is pages.yml's,
+in its time zone and without the caller's build variables; and in CI a
+difference fails a pull request for every site on the Jekyll-theme option. No test
 runs Jekyll or touches the network: the rebuild's commands are replaced by
 functions that write a tree. Run: `python3 -m unittest tools/tests/test_site_manifest.py`.
 """
@@ -473,6 +474,19 @@ class CommandLineTest(TempTree):
             json.loads((self.tmp / "m.json").read_text(encoding="utf-8"))["built_with"]["gems"]["jekyll"], "4.4.1"
         )
 
+    def test_build_records_what_the_jekyll_theme_option_reported(self):
+        site = tree(self.tmp / "_site", SITE)
+        facts = {"remote_theme": {"owner/theme@v1.31.3": "98e978d"}, "server": {"github-pages": "image:v1"}}
+        (self.tmp / "built-with.json").write_text(json.dumps(facts), encoding="utf-8")
+        self.run_main("build", site, "--site", "demo", "--out", self.tmp / "m.json", "--built-with", self.tmp / "built-with.json")
+        self.assertEqual(json.loads((self.tmp / "m.json").read_text(encoding="utf-8"))["built_with"], facts)
+        # Against a recording whose bundle floated, the theme pin is a note, the gems are not compared.
+        recorded = {"built_with": {"gems": {"jekyll": "3.10.0"}, "remote_theme": {"owner/theme": "98e978d"}}}
+        notes = sm.resolved_differently(recorded, json.loads((self.tmp / "m.json").read_text(encoding="utf-8")))
+        self.assertEqual(
+            notes, ["remote_theme: owner/theme 98e978d → (none)", "remote_theme: owner/theme@v1.31.3 (none) → 98e978d"]
+        )
+
     def test_check_and_write_rebuild_each_routed_site(self):
         plan = [
             {"name": "alpha", "path": "sites/alpha", "route": "/alpha/", "bundle_dir": "sites/alpha"},
@@ -590,6 +604,50 @@ class RebuildTest(TempTree):
         self.rebuild(lockfile_committed=True)
         self.assertTrue((self.tmp / "sites/drsai/Gemfile.lock").exists())
 
+    def option_rebuild(self, route: dict) -> tuple[dict | None, list]:
+        """The rebuild of a site on the Jekyll-theme option, whose task reports what it resolved."""
+        calls = []
+        facts = {"remote_theme": {"owner/theme@v1": "abc123"}, "server": {"jekyll-4": "zer0-cms-jekyll:x"}}
+
+        def fake_run(cmd, **kwargs):
+            env = kwargs["env"]
+            calls.append((cmd, dict(env)))
+            Path(env["ZER0_PAGES_BUILT_WITH"]).write_text(json.dumps(facts), encoding="utf-8")
+            tree(Path(env["ZER0_PAGES_DEST"]), {"index.html": page("<main>x</main>")})
+            return mock.Mock(returncode=0)
+
+        with mock.patch.object(sm, "ROOT", self.tmp), mock.patch.object(sm.subprocess, "run", side_effect=fake_run):
+            return sm.rebuild(route, self.tmp / "out"), calls
+
+    def test_a_site_on_the_option_is_built_by_its_pages_task_alone(self):
+        render = {"as": "jekyll-theme", "theme": "v1", "server": "jekyll-4"}
+        route = {"name": "demo", "path": "sites/demo", "route": "/demo/", "bundle_dir": "sites/demo", "render": render}
+        resolved, calls = self.option_rebuild(route)
+        self.assertEqual([cmd[1:] for cmd, _ in calls], [["run", "pages", "demo"]], "no bundle install")
+        self.assertEqual(resolved["remote_theme"], {"owner/theme@v1": "abc123"})
+        self.assertIn("ZER0_PAGES_CONFIG", calls[0][1])
+
+    def test_a_site_nothing_routes_is_built_by_its_build_task_with_its_own_config(self):
+        render = {"as": "jekyll-theme", "theme": "v1", "server": "github-pages"}
+        route = {"name": "2005", "path": "sites/2005", "route": None, "bundle_dir": "sites/2005", "render": render}
+        resolved, calls = self.option_rebuild(route)
+        self.assertEqual([cmd[1:] for cmd, _ in calls], [["run", "build", "2005"]])
+        self.assertNotIn("ZER0_PAGES_CONFIG", calls[0][1])
+        self.assertIsNotNone(resolved)
+
+    def test_the_plan_adds_the_option_sites_nothing_routes(self):
+        routed = [{"name": "drsai", "path": "sites/drsai", "route": "/drsai/", "bundle_dir": "sites/drsai"}]
+        listed = [
+            {"name": "drsai", "path": "sites/drsai", "site": "sites/drsai", "route": "/drsai/", "render": {"server": "github-pages"}},
+            {"name": "2005", "path": "sites/2005", "site": "sites/2005", "route": None, "render": {"server": "github-pages"}},
+            {"name": "1987", "path": "sites/1987", "site": None, "route": None},
+        ]
+        answers = iter([json.dumps(routed), json.dumps(listed)])
+        with mock.patch.object(sm.subprocess, "run", side_effect=lambda *a, **k: mock.Mock(stdout=next(answers))):
+            plan = sm.routes()
+        self.assertEqual([p["name"] for p in plan], ["drsai", "2005"])
+        self.assertEqual((plan[1]["route"], plan[1]["bundle_dir"]), (None, "sites/2005"))
+
     def test_pages_yml_builds_and_records_the_same_way(self):
         """The rebuild restates pages.yml's build step; this holds the two together."""
         workflow = (sm.ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
@@ -600,14 +658,32 @@ class RebuildTest(TempTree):
             'baseurl="${PAGES_BASE_PATH%/}${ROUTE%/}"',
             """printf 'url: "%s"\\nbaseurl: "%s"\\n' "$PAGES_URL" "$baseurl" > "$RUNNER_TEMP/route.yml\"""",
             'export ZER0_PAGES_CONFIG="$RUNNER_TEMP/route.yml" ZER0_PAGES_DEST="$RUNNER_TEMP/out"',
+            'export ZER0_PAGES_BUILT_WITH="$RUNNER_TEMP/built-with.json"',
             'bin/zer0 run pages "$NAME"',
             "LC_ALL: C.UTF-8",
             "TZ: UTC",
+            'tools/site_manifest.py build "$RUNNER_TEMP/out" --site "$NAME" --built-with "$RUNNER_TEMP/built-with.json"',
             'tools/site_manifest.py build "$RUNNER_TEMP/out" --site "$NAME" --source "$SOURCE"',
             'tools/site_manifest.py compare "web/site/fixtures/$NAME/manifest.json"',
         ):
             self.assertIn(fragment, workflow)
         self.assertNotIn("JEKYLL_ENV", workflow)
+
+    def test_a_difference_fails_a_pull_request_for_every_site_on_the_option(self):
+        """PLAN P2: an option build pins every input, so a difference from the recording is a change that the
+        pull request making it re-records. pages.yml fails such a leg on a pull request (a push only warns, so a
+        deploy is never blocked); sites.yml (2005) and irony-works.yml fail on any difference."""
+        workflows = sm.ROOT / ".github" / "workflows"
+        pages = (workflows / "pages.yml").read_text(encoding="utf-8")
+        self.assertIn("PARITY_GATE: ${{ inputs.check || (matrix.site.render && github.event_name == 'pull_request') }}", pages)
+        self.assertEqual(2, pages.count("continue-on-error: ${{ env.PARITY_GATE != 'true' }}"), "the record and compare steps")
+        self.assertIn('test "$PARITY_GATE" != "true"', pages)
+        for name in ("sites.yml", "irony-works.yml"):
+            text = (workflows / name).read_text(encoding="utf-8")
+            compare = text[text.index("- name: Compare with the recorded build") :]
+            with self.subTest(workflow=name):
+                self.assertNotIn("continue-on-error", compare)
+                self.assertIn("exit 1", compare)
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from workspace import cli  # noqa: E402
-from workspace.checks import Checks  # noqa: E402
+from workspace.checks import OPTION_INPUTS, Checks  # noqa: E402
 from workspace.doctor import Doctor  # noqa: E402
 from workspace.manifest import Manifest, WorkspaceError  # noqa: E402
 from workspace.ownership import Ownership, match  # noqa: E402
@@ -217,6 +217,31 @@ class ChecksTest(WorkspaceCase):
         self.with_route("/site/", theme_route="/")
         _, out, _ = self.cli("routes", "--json")
         self.assertEqual([(r["name"], r["route"]) for r in json.loads(out)], [("theme", "/"), ("site", "/site/")])
+
+    def test_a_sites_render_setting_reaches_routes_list_and_info(self):  # PLAN P2, beyond the Ruby suite
+        render = "    render: {as: jekyll-theme, theme: v1.31.3, server: jekyll-4}\n"
+        self.write("workspace.yml", fixtures.with_route("/site/").replace('    site: "."\n', '    site: "."\n' + render, 1))
+        setting = {"as": "jekyll-theme", "theme": "v1.31.3", "server": "jekyll-4", "before": None, "obsidian": False}
+        _, out, _ = self.cli("routes", "--json")
+        self.assertEqual([r.get("render") for r in json.loads(out)], [setting])
+        _, out, _ = self.cli("list", "--json")
+        self.assertEqual({p["name"]: p.get("render") for p in json.loads(out)}, {"root-app": None, "theme": None, "site": setting})
+        self.assertNotIn("render", json.loads(out)[0], "a project without the setting lists as before")
+        _, out, _ = self.cli("info", "site")
+        self.assertIn("  render:     jekyll-theme v1.31.3, built by the jekyll-4 server\n", out)
+        self.assertEqual(self.findings(), [])
+
+    def test_a_workflow_building_a_site_on_the_option_filters_on_what_builds_it(self):  # PLAN P2, beyond the Ruby suite
+        render = "    render: {as: jekyll-theme, theme: v1.31.3, server: jekyll-4}\n"
+        self.write("workspace.yml", fixtures.MANIFEST.replace("    ci: none — nothing to test\n", "    ci: site.yml\n" + render, 1))
+        self.write(".github/workflows/site.yml", 'on:\n  pull_request:\n    paths: ["sites/site/**", "tools/jekyll_theme.py"]\n')
+        self.assertFinding(
+            "site: site.yml builds it with the Jekyll-theme option but does not filter on "
+            "workspace.yml, bin/zer0, tools/workspace/**, tools/jekyll/**, tools/obsidian/**"
+        )
+        paths = ", ".join(f'"{p}"' for p in ("sites/site/**", *OPTION_INPUTS))
+        self.write(".github/workflows/site.yml", f"on:\n  pull_request:\n    paths: [{paths}]\n")
+        self.assertEqual(self.findings(), [])
 
     def test_vendored_drift_is_a_finding_and_vendor_write_repairs_it(self):
         self.write("packages/theme/tokens.css", "--x: 2;")
