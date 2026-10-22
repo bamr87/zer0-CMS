@@ -14,15 +14,27 @@
 # only while vars.PAGES_DEPLOY_ENABLED is 'true' (default OFF). The default target is this
 # repository's project site, https://bamr87.github.io/zer0-CMS; vars.PAGES_URL and
 # PAGES_BASE_PATH aim it elsewhere (a custom domain sets PAGES_BASE_PATH to '').
+#
+# Every build is also compared with the recording of that site's Jekyll build (PLAN P1,
+# web/site/fixtures/README.md): `tools/site_manifest.py` records what it wrote — paths, each
+# page's title and text, feed entries, sitemap URLs, redirects, the gems and theme commit it
+# resolved — and a difference warns, with the fresh recording uploaded as the
+# site-manifest-<site> artifact to commit when the change is intended. A dispatch with
+# `check` fails on a difference instead.
 name: pages
 
 on:
   push:
     branches: [main]
-    paths: ["sites/**", "workspace.yml", ".github/workflows/pages.yml"]
+    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "tools/site_manifest.py", "web/site/fixtures/**", ".github/workflows/pages.yml"]
   pull_request:
-    paths: ["sites/**", "workspace.yml", ".github/workflows/pages.yml"]
+    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "tools/site_manifest.py", "web/site/fixtures/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
+    inputs:
+      check:
+        description: Fail when a site's build differs from its recording in web/site/fixtures/
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -37,6 +49,9 @@ env:
   # The theme's SCSS has multibyte characters; a non-UTF-8 locale breaks the Sass converter.
   LANG: C.UTF-8
   LC_ALL: C.UTF-8
+  # Jekyll dates a post — and so its URL — in the process's time zone; the runners' zone, and
+  # the one every recording in web/site/fixtures/ was made in.
+  TZ: UTC
 
 jobs:
   plan:
@@ -97,6 +112,41 @@ jobs:
         run: |
           if grep -nE 'Liquid (Warning|Exception)' "$RUNNER_TEMP/build.log"; then
             echo "::warning::$NAME has Liquid warnings (above): content was dropped from those pages"
+          fi
+      # PLAN P1: what this build wrote, against the recording of the site's Jekyll build. It
+      # never stands between a site and its deploy — the two steps continue on an error unless a
+      # dispatch asked for `check` — and the interpreter is the one the recordings were written
+      # with, so a parser change in another Python release cannot pass for a change to a site.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Record what the build wrote
+        id: record
+        continue-on-error: ${{ inputs.check != true }}
+        env:
+          NAME: ${{ matrix.site.name }}
+          SOURCE: ${{ matrix.site.bundle_dir }}
+        run: python3 tools/site_manifest.py build "$RUNNER_TEMP/out" --site "$NAME" --source "$SOURCE" --out "$RUNNER_TEMP/manifests/$NAME/manifest.json"
+      - uses: actions/upload-artifact@v7
+        if: steps.record.outcome == 'success'
+        with:
+          name: site-manifest-${{ matrix.site.name }}
+          path: ${{ runner.temp }}/manifests
+          retention-days: 30
+      - name: Compare with the recorded build
+        if: steps.record.outcome == 'success'
+        continue-on-error: ${{ inputs.check != true }}
+        env:
+          NAME: ${{ matrix.site.name }}
+          CHECK: ${{ inputs.check }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 tools/site_manifest.py compare "web/site/fixtures/$NAME/manifest.json" "$RUNNER_TEMP/manifests/$NAME/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
+          if [ "$status" -ne 0 ]; then
+            { echo "### $NAME differs from its recording"; echo '```'; head -n 200 "$RUNNER_TEMP/compare.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::$NAME's build differs from web/site/fixtures/$NAME/manifest.json (the job summary says how); if that is intended, commit the site-manifest-$NAME artifact over web/site/fixtures/"
+            test "$CHECK" != "true"
           fi
       - uses: actions/upload-artifact@v7
         with:
