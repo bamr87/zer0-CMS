@@ -10,7 +10,7 @@
 - `Memory` — scoped long-term memory that editors can read and change.
 - `EvalCase` / `EvalResult` — the suite a definition must pass.
 - `AgentToken` — a scoped bearer token that maps an MCP or REST caller to one
-  agent user. Only a hash is stored.
+  agent user. Only a hash is stored (`accounts.tokens.HashedToken`).
 
 `AgentRun.objects.visible_to(user)` is the one scope every surface reads runs
 through (TARGET.md § Rules): REST, GraphQL and the run's event stream.
@@ -20,8 +20,6 @@ and its own `agent:<slug>` group, which holds its Wagtail page and collection
 permissions (agents/principals.py). There is no superuser path.
 """
 
-import hashlib
-import secrets
 from decimal import Decimal
 
 from django.conf import settings
@@ -32,6 +30,7 @@ from django.utils import timezone
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.models import DraftStateMixin, RevisionMixin
 
+from accounts.tokens import HashedToken
 from cms.models import POLICY_CHOICES, POLICY_ORDER, POLICY_SUGGEST, stable_hash
 
 ROLE_AUTHOR = "author"
@@ -304,40 +303,20 @@ class EvalResult(models.Model):
         ordering = ["-created_at", "-id"]
 
 
-class AgentToken(models.Model):
+class AgentToken(HashedToken):
     """`Authorization: Bearer zer0_<…>` → one agent user. The raw token is
-    shown once, at issue time."""
+    shown once, at issue time; the hash, issuing and authentication are
+    `accounts.tokens.HashedToken`, shared with a person's token."""
 
-    name = models.CharField(max_length=120)
+    PREFIX = "zer0_"
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="agent_tokens")
-    prefix = models.CharField(max_length=12, db_index=True)
-    key_hash = models.CharField(max_length=64, unique=True)
     tools = models.JSONField(
         default=list, blank=True, help_text="If set, the only tools this token may call (narrows the agent's own list)."
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_used_at = models.DateTimeField(null=True, blank=True)
-    revoked_at = models.DateTimeField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.prefix}…)"
-
-    @staticmethod
-    def digest(raw: str) -> str:
-        return hashlib.sha256(raw.encode()).hexdigest()
 
     @classmethod
     def issue(cls, user, name: str, tools=None) -> tuple["AgentToken", str]:
         if not user.username.startswith("agent:") or user.is_superuser:
             raise ValueError("tokens are issued to agent users only")
-        raw = "zer0_" + secrets.token_urlsafe(32)
-        token = cls.objects.create(name=name, user=user, prefix=raw[:12], key_hash=cls.digest(raw), tools=tools or [])
-        return token, raw
-
-    @classmethod
-    def authenticate(cls, raw: str):
-        token = cls.objects.select_related("user").filter(key_hash=cls.digest(raw), revoked_at__isnull=True).first()
-        if token is None or not token.user.is_active:
-            return None
-        cls.objects.filter(pk=token.pk).update(last_used_at=timezone.now())
-        return token
+        return cls.mint(name=name, user=user, tools=tools or [])

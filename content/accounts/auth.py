@@ -6,6 +6,7 @@ request is then the token's person, with their Wagtail permissions; no CSRF
 applies, because nothing a browser sends by itself carries this header.
 """
 
+from django.views.decorators.debug import sensitive_variables
 from rest_framework import authentication, exceptions
 
 from agents.auth import bearer
@@ -14,6 +15,7 @@ from .models import UserToken
 
 
 class UserTokenAuthentication(authentication.BaseAuthentication):
+    @sensitive_variables("raw")
     def authenticate(self, request):
         raw = bearer(request.headers.get("Authorization"))
         if raw is None or not raw.startswith(UserToken.PREFIX):
