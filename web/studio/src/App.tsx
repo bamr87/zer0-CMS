@@ -5,6 +5,7 @@
 import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
 import {
+  AieoWorkspace,
   BookShelf,
   BookView,
   ChapterWriter,
@@ -17,6 +18,7 @@ import {
   SourceView,
   StudioProvider,
   SuggestionInbox,
+  type AieoSection,
   type Destination,
   type OpenStream,
 } from '@zer0/ui';
@@ -72,6 +74,8 @@ export function pathFor(to: Destination): string {
       return `/books/${to.id}`;
     case 'chapter':
       return `/books/${to.book}/chapters/${to.id}`;
+    case 'aieo':
+      return to.section && to.section !== 'audit' ? `/sites/aieo/${to.section}` : '/sites/aieo';
   }
 }
 
@@ -99,6 +103,7 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="books" element={<Books />} />
                 <Route path="books/:id" element={<BookPage />} />
                 <Route path="books/:book/chapters/:id" element={<ChapterPage />} />
+                <Route path="sites/aieo/:section?" element={<Aieo />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -214,6 +219,16 @@ function BookPage() {
 function ChapterPage() {
   const { book, id } = useParams();
   return <ChapterWriter key={id} bookId={Number(book)} chapterId={Number(id)} />;
+}
+
+function Aieo() {
+  const { siteId } = useSite();
+  const { section } = useParams();
+  return (
+    <Section title="AIEO">
+      <AieoWorkspace siteId={siteId} section={(section as AieoSection | undefined) ?? 'audit'} />
+    </Section>
+  );
 }
 
 function Planned({ area }: { area: Area }) {

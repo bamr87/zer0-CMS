@@ -10,6 +10,9 @@ import { createContext, use, type ReactNode } from 'react';
 /** A section of the AI area (G8). */
 export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models';
 
+/** A section of the AIEO workspace (G7). */
+export type AieoSection = 'audit' | 'optimize' | 'patterns' | 'agents' | 'citations' | 'connectors' | 'priorities' | 'reports' | 'context';
+
 /** Where a workspace asks to go; the host maps it to a route or a panel. */
 export type Destination =
   | { to: 'page'; id: number; tab?: 'suggestions' }
@@ -29,7 +32,8 @@ export type Destination =
   | { to: 'story'; id: string }
   | { to: 'books' }
   | { to: 'book'; id: number }
-  | { to: 'chapter'; book: number; id: number };
+  | { to: 'chapter'; book: number; id: number }
+  | { to: 'aieo'; section?: AieoSection };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.
