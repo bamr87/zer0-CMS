@@ -47,9 +47,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/setup-python@v7
         with:
-          ruby-version: "3.3"
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
       - id: routes
         run: |
           routes=$(bin/zer0 routes --json)
@@ -72,6 +73,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      # bin/zer0 runs the site's `pages` task (Python); the task itself is a Jekyll
+      # build, whose Ruby goes when the site moves to the Jekyll-theme option (PLAN P2).
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
