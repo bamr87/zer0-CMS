@@ -1,15 +1,20 @@
 """The provider registry and its six adapters (ADR 0006 decision 7): one way to
 reach a model, configured from `ProviderConfig`; nothing outside
 `ai/providers/` imports a vendor SDK; structured output is validated here,
-whatever the vendor promised. Each vendor adapter runs against a stand-in SDK
-module put in `sys.modules` — what it sends and how it reads the answer — so
-no SDK is installed and nothing reaches a network."""
+whatever the vendor promised, and never by fetching a reference. Each vendor
+adapter runs against a stand-in SDK module put in `sys.modules` — what it sends
+and how it reads the answer — so no SDK is installed and nothing reaches a
+network. A row's options are the adapter's declared ones, a vendor-prefixed
+model id reaches the vendor bare, and an environment credential never goes to
+a base URL a row chose."""
 
 import ast
 import contextlib
 import json
 import sys
+import tempfile
 import types
+import urllib.request
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,6 +24,7 @@ from django.conf import settings
 from django.test import override_settings
 
 from agents import llm
+from agents.runner import execute, start_run
 from ai import providers
 from ai.models import ModelEntry, ProviderConfig
 from ai.providers.anthropic import AnthropicProvider, anthropic_messages
@@ -545,6 +551,7 @@ def test_claude_code_runs_one_tool_less_query_with_the_stored_credential(monkeyp
     options = seen["options"]
     assert options["tools"] == [] and options["allowed_tools"] == [] and options["setting_sources"] == []
     assert options["env"]["CLAUDE_CODE_OAUTH_TOKEN"] == "sk-ant-oat-token" and options["env"]["ANTHROPIC_API_KEY"] == ""
+    assert options["env"]["ANTHROPIC_AUTH_TOKEN"] == "" and options["cwd"] == tempfile.gettempdir()
     assert (
         options["output_format"] == {"type": "json_schema", "schema": SCHEMA} and options["model"] == "claude-opus-5-5"
     )
@@ -561,3 +568,92 @@ def test_claude_code_failures_are_provider_errors(monkeypatch):
     monkeypatch.setitem(sys.modules, "claude_agent_sdk", None)
     with pytest.raises(NotConfigured, match="not installed"):
         ClaudeCodeProvider().complete(model="", system="", messages=[{"role": "user", "content": "q"}])
+
+
+def test_claude_code_takes_no_process_settings_from_its_row(monkeypatch):
+    ok = {"is_error": False, "subtype": "success", "result": "ok", "usage": {}, "total_cost_usd": 0}
+    module, seen = claude_agent_sdk(ok)
+    monkeypatch.setitem(sys.modules, "claude_agent_sdk", module)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "worker-key")
+    monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+    extra = {"cli_path": "/tmp/anything", "env": {"LD_PRELOAD": "/tmp/x.so"}, "cwd": "/"}
+    ask = {"model": "", "system": "", "messages": [{"role": "user", "content": "q"}]}
+    ClaudeCodeProvider(settings=Settings(slug="claude_code", extra=extra)).complete(**ask)
+    options = seen["options"]
+    assert "cli_path" not in options and "LD_PRELOAD" not in options["env"] and options["cwd"] == tempfile.gettempdir()
+    assert (options["env"]["ANTHROPIC_API_KEY"], options["env"]["CLAUDE_CODE_OAUTH_TOKEN"]) == ("worker-key", "")
+    with pytest.raises(NotConfigured, match="its own credential"):
+        ClaudeCodeProvider(settings=Settings(slug="claude_code", base_url="https://elsewhere.example")).complete(**ask)
+
+
+def test_an_environment_credential_never_goes_to_a_base_url_a_row_chose(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-api-worker")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-worker")
+    elsewhere = {"base_url": "https://elsewhere.example"}
+    for cls in (AnthropicProvider, OpenAIProvider, ClaudeCodeProvider):
+        assert cls(settings=Settings(slug=cls.slug, **elsewhere)).credential() == "", cls
+        assert cls(settings=Settings(slug=cls.slug, credential="its-own", **elsewhere)).credential() == "its-own"
+    assert AnthropicProvider().credential() == "sk-ant-api-worker"  # the deployment's own endpoint
+    module, calls = anthropic_sdk(claude_says())
+    monkeypatch.setitem(sys.modules, "anthropic", module)
+    ask = {"model": "claude-haiku-4-5", "system": "", "messages": [{"role": "user", "content": "q"}]}
+    with pytest.raises(NotConfigured):
+        AnthropicProvider(settings=Settings(slug="anthropic", **elsewhere)).complete(**ask)
+    assert calls == []  # refused before a client was built
+    litellm = types.ModuleType("litellm")
+    litellm.completion = lambda **kwargs: pytest.fail("LiteLLM was called")
+    monkeypatch.setitem(sys.modules, "litellm", litellm)
+    with pytest.raises(NotConfigured, match="its own credential"):
+        LiteLLMProvider(settings=Settings(slug="litellm", **elsewhere)).complete(**ask)
+
+
+def test_anthropic_oauth_keeps_its_beta_beside_the_fallback_one(monkeypatch):
+    """A request's `betas` replace the client's `anthropic-beta` header, so an
+    OAuth token's beta rides in the list on the models with fallbacks."""
+    module, calls = anthropic_sdk(claude_says(SimpleNamespace(type="text", text="ok")))
+    monkeypatch.setitem(sys.modules, "anthropic", module)
+    adapter = AnthropicProvider(settings=Settings(slug="anthropic", credential="sk-ant-oat01-token"))
+    adapter.complete(model="claude-opus-5-5", system="", messages=[{"role": "user", "content": "hi"}])
+    client, (surface, sent) = calls[0][1], calls[1]
+    assert client["auth_token"] == "sk-ant-oat01-token" and surface == "beta"
+    assert sent["betas"] == ["server-side-fallback-2026-07-01", "oauth-2025-04-20"] and sent["fallbacks"] == "default"
+    plain = AnthropicProvider(settings=Settings(slug="anthropic", credential="sk-ant-api-key"))
+    plain.complete(model="claude-opus-5-5", system="", messages=[{"role": "user", "content": "hi"}])
+    assert calls[-1][1]["betas"] == ["server-side-fallback-2026-07-01"]
+
+
+def test_a_vendor_prefixed_model_id_reaches_the_vendor_bare():
+    assert AnthropicProvider().model_for("anthropic/claude-sonnet-5-5") == "claude-sonnet-5-5"
+    assert ClaudeCodeProvider().model_for("anthropic/claude-haiku-5-5") == "claude-haiku-5-5"
+    assert OpenAIProvider().model_for("openai/gpt-4o") == "gpt-4o"
+    assert OpenAIProvider().model_for("anthropic/claude-x") == "anthropic/claude-x"  # not its vendor's: as given
+    assert LiteLLMProvider().model_for("anthropic/claude-sonnet-5-5") == "anthropic/claude-sonnet-5-5"
+
+
+@pytest.mark.django_db
+def test_a_shipped_agent_runs_on_the_anthropic_backend(monkeypatch, agent, article):
+    module, calls = anthropic_sdk(
+        claude_says(SimpleNamespace(type="text", text="Looks fine."), model="claude-haiku-5-5")
+    )
+    monkeypatch.setitem(sys.modules, "anthropic", module)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-api-test")
+    with override_settings(LLM_BACKEND="anthropic"):
+        run = execute(start_run(agent("seo"), trigger="manual", target=article, enqueue=False))
+    assert run.status == "succeeded", run.error
+    surface, sent = calls[1]
+    assert agent("seo").model == "anthropic/claude-haiku-5-5" and sent["model"] == "claude-haiku-5-5"
+    assert sent["tools"] and run.llm_backend == "anthropic"
+
+
+def test_validation_never_fetches_a_reference(monkeypatch):
+    fetched = []
+
+    def urlopen(*args, **kwargs):
+        fetched.append(args)
+        raise AssertionError("fetched")
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    remote = {"type": "object", "properties": {"a": {"$ref": "http://169.254.169.254/latest/meta-data"}}}
+    with pytest.raises(InvalidOutput, match="outside itself"):
+        validate({"a": 1}, remote)
+    assert fetched == []

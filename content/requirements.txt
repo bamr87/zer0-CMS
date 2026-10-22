@@ -12,8 +12,10 @@ redis==8.1.0
 # Postgres + pgvector in compose and CI; SQLite needs neither.
 psycopg[binary]==3.3.6
 pgvector==0.5.1
-# Tool input validation, event schemas, front matter, markdown blocks.
+# Tool input validation, event schemas, front matter, markdown blocks. `referencing` is jsonschema's
+# own reference registry: the AI layer validates with an empty one, so a schema's $ref is never fetched.
 jsonschema==4.26.0
+referencing==0.37.0
 PyYAML==6.0.3
 Markdown==3.11.1
 # Serving.

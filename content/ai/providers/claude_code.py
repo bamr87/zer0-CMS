@@ -7,9 +7,15 @@ is one `query()` with every built-in tool off, no settings files read and
 permission prompts denied, so it behaves like a stateless chat completion; a
 multi-turn conversation is folded into the one prompt the SDK takes. It has no
 tool protocol of the runner's kind (`tools` is not among its capabilities), so
-an assistant run on it answers without reading tools. Structured output uses
-the SDK's `output_format`; the result is validated locally like every other
-provider's. The SDK is imported lazily (`requirements-providers.txt`).
+an assistant run on it answers without reading tools, and a tool-using agent
+definition is refused on it. Structured output uses the SDK's `output_format`;
+the result is validated locally like every other provider's. The SDK is
+imported lazily (`requirements-providers.txt`).
+
+The subprocess inherits the worker's environment, so the adapter sets every
+credential variable itself: the one it resolved, the others blank. What runs
+(the `claude` CLI the SDK finds) and where (a temporary directory) are the
+deployment's, never a provider row's.
 """
 
 import asyncio
@@ -19,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
 from .anthropic import AnthropicProvider
-from .base import Completion, NotConfigured, Provider, ProviderError
+from .base import EFFORT, Completion, NotConfigured, Provider, ProviderError
 
 API_KEY_PREFIX = "sk-ant-api"
 
@@ -52,21 +58,24 @@ class ClaudeCodeProvider(Provider):
     credential_env = ("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")
     default_model = "claude-opus-5-5"
     static_models = AnthropicProvider.static_models
+    options = {"max_turns": {"type": "integer", "minimum": 1, "maximum": 50}, "effort": EFFORT}
+    model_prefixes = ("anthropic",)
 
     def _options(self, model, system, schema, params):
         try:
             from claude_agent_sdk import ClaudeAgentOptions  # noqa: PLC0415 — optional, deployment-time dependency
         except ImportError as e:
             raise NotConfigured("claude-agent-sdk is not installed: pip install -r requirements-providers.txt") from e
-        extra, token = self.settings.extra, self.settings.credential
+        extra, token = self.settings.extra, self.credential()
+        if self.settings.base_url and not token:
+            raise NotConfigured("a claude_code row with its own base URL needs its own credential", provider=self.slug)
+        is_key = token.startswith(API_KEY_PREFIX) or self.credential_source() == "ANTHROPIC_API_KEY"
         env = {
             "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-            **{str(k): str(v) for k, v in extra.get("env", {}).items()},
+            "ANTHROPIC_API_KEY": token if is_key else "",
+            "CLAUDE_CODE_OAUTH_TOKEN": "" if is_key else token,
+            "ANTHROPIC_AUTH_TOKEN": "",
         }
-        if token:
-            # The stored credential wins over the process environment; the competing variable is blanked.
-            is_key = token.startswith(API_KEY_PREFIX)
-            env.update(ANTHROPIC_API_KEY=token if is_key else "", CLAUDE_CODE_OAUTH_TOKEN="" if is_key else token)
         if self.settings.base_url:
             env["ANTHROPIC_BASE_URL"] = self.settings.base_url
         kwargs = {
@@ -77,13 +86,11 @@ class ClaudeCodeProvider(Provider):
             "permission_mode": "dontAsk",
             "max_turns": int(extra.get("max_turns", 3)),
             "setting_sources": [],
-            "cwd": extra.get("cwd") or tempfile.gettempdir(),
+            "cwd": tempfile.gettempdir(),
             "env": env,
         }
         if (params or {}).get("effort") or extra.get("effort"):
             kwargs["effort"] = (params or {}).get("effort") or extra["effort"]
-        if extra.get("cli_path"):
-            kwargs["cli_path"] = extra["cli_path"]
         if schema is not None:
             kwargs["output_format"] = {"type": "json_schema", "schema": schema}
         return ClaudeAgentOptions(**kwargs)

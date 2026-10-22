@@ -13,7 +13,13 @@ arrives (one chunk unless the adapter can do better), `structured` is a
 completion whose JSON is parsed and validated against a JSON Schema with
 `jsonschema` here, whatever the vendor promised, `list_models` returns the
 catalog `ModelEntry` is synced from, and `health` is a one-word completion.
-Each adapter declares what it can do in `capabilities`.
+Each adapter declares what it can do in `capabilities`, the `extra` options
+it reads in `options` (a row's `extra` is validated against them — nothing
+else reaches the adapter), and the vendor prefixes a LiteLLM-style model id
+may carry (`anthropic/claude-sonnet-5-5` is `claude-sonnet-5-5` here).
+
+An environment credential is the deployment's: it is never sent to a base URL
+a provider row chose — such a row needs its own credential.
 
 Vendor SDKs are imported inside each adapter's methods, never at module
 level, so none of them is needed to import, configure or test the platform.
@@ -31,11 +37,18 @@ from decimal import Decimal
 from typing import Any, ClassVar
 
 from jsonschema import Draft202012Validator, validators
+from referencing import Registry
+from referencing.exceptions import Unresolvable
 
 # What an adapter can declare: plain completions, streaming, native structured
 # output, the runner's tool calls, a live model catalog, embeddings.
 CAPABILITIES = ("complete", "stream", "structured", "tools", "models", "embed")
 FENCED = re.compile(r"^```[\w-]*\s*\n?(.*?)\n?```$", re.DOTALL)
+EFFORT = {"enum": ["low", "medium", "high", "xhigh", "max"]}
+CLIENT_OPTIONS = {
+    "max_retries": {"type": "integer", "minimum": 0, "maximum": 10},
+    "timeout": {"type": "number", "exclusiveMinimum": 0, "maximum": 3600},
+}
 
 
 class ProviderError(Exception):
@@ -115,6 +128,10 @@ class Provider:
     default_model: ClassVar[str] = ""
     # The models known to work, for when the vendor cannot be asked.
     static_models: ClassVar[tuple[ModelInfo, ...]] = ()
+    # The `extra` keys this adapter reads, as JSON Schema properties.
+    options: ClassVar[dict] = {}
+    # Vendor prefixes a LiteLLM-style model id may carry (`anthropic/…`), stripped by `model_for`.
+    model_prefixes: ClassVar[tuple[str, ...]] = ()
 
     def __init__(self, *, settings: Settings | None = None):
         self.settings = settings or Settings(slug=self.slug)
@@ -124,20 +141,31 @@ class Provider:
         """What a run records as its backend (`AgentRun.llm_backend`)."""
         return self.slug
 
+    @classmethod
+    def options_schema(cls) -> dict:
+        return {"type": "object", "properties": cls.options, "additionalProperties": False}
+
     # ── configuration ──────────────────────────────────────────────────────
     def credential(self) -> str:
+        """The row's credential; else, unless the row chose its own base URL, the environment's."""
         if self.settings.credential:
             return self.settings.credential
+        if self.settings.base_url:
+            return ""
         return next((os.environ[name] for name in self.credential_env if os.environ.get(name)), "")
 
     def credential_source(self) -> str:
         """`database`, the environment variable it came from, or ''."""
         if self.settings.credential:
             return "database"
+        if self.settings.base_url:
+            return ""
         return next((name for name in self.credential_env if os.environ.get(name)), "")
 
     def model_for(self, requested: str = "") -> str:
-        return requested or self.settings.default_model or self.default_model
+        model = requested or self.settings.default_model or self.default_model
+        vendor, _, bare = model.partition("/")
+        return bare if bare and vendor in self.model_prefixes else model
 
     def cost(self, model: str, tokens_in: int, tokens_out: int) -> Decimal:
         """Dollars for a call, from the catalog's prices or the static list; 0 when unpriced."""
@@ -202,9 +230,14 @@ def parse_json(text: str):
 
 
 def validate(data, schema: dict):
-    """`data`, if it matches `schema` (the draft the schema names, else 2020-12)."""
+    """`data`, if it matches `schema` (the draft the schema names, else 2020-12).
+    The validator gets an empty registry, so a `$ref` outside the schema is an
+    error here rather than a request the worker makes."""
     cls = validators.validator_for(schema, default=Draft202012Validator)
-    errors = sorted(cls(schema).iter_errors(data), key=lambda e: list(e.path))
+    try:
+        errors = sorted(cls(schema, registry=Registry()).iter_errors(data), key=lambda e: list(e.path))
+    except Unresolvable as e:
+        raise InvalidOutput(f"the schema refers to {e} outside itself") from e
     if errors:
         where = "/".join(str(p) for p in errors[0].path) or "(root)"
         raise InvalidOutput(f"the result does not match its schema at {where}: {errors[0].message}")

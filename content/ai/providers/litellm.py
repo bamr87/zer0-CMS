@@ -2,10 +2,12 @@
 
 Model ids are LiteLLM's (`anthropic/claude-sonnet-5-5`, `gemini/…`, `ollama/…`);
 the vendor's key comes from the row's credential or LiteLLM's own environment
-variables. LiteLLM has no single catalog, so `list_models` offers the ids a
-person listed in the row's `extra.models`, priced from LiteLLM's cost map.
-LiteLLM is imported lazily and is not a platform requirement (installing it
-is a deployment decision: `requirements-providers.txt`).
+variables — except for a row with its own base URL, which must hold its key,
+since LiteLLM would send the environment's there. LiteLLM has no single
+catalog, so `list_models` offers the ids a person listed in the row's
+`extra.models`, priced from LiteLLM's cost map. LiteLLM is imported lazily and
+is not a platform requirement (installing it is a deployment decision:
+`requirements-providers.txt`).
 """
 
 from decimal import Decimal
@@ -36,8 +38,11 @@ class LiteLLMProvider(Provider):
     display_name = "LiteLLM (any other vendor)"
     capabilities = frozenset({"complete", "stream", "structured", "tools", "models", "embed"})
     default_model = "anthropic/claude-sonnet-5-5"
+    options = {"models": {"type": "array", "items": {"type": "string", "minLength": 1}}}
 
     def _request(self, model, system, messages, tools, schema, params) -> dict:
+        if self.settings.base_url and not self.settings.credential:
+            raise NotConfigured("a litellm row with its own base URL needs its own credential", provider=self.slug)
         params = params or {}
         kwargs = {"model": self.model_for(model), "messages": openai_messages(system, messages)}
         if tools:

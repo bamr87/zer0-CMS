@@ -6,16 +6,29 @@ Tool calls travel as `tool_use` / `tool_result` blocks. On the models that run
 safety classifiers (Opus 5+, Sonnet 5.5, Fable) a decline is retried on
 Anthropic's recommended fallback model inside the same call
 (`fallbacks="default"`), unless the row's `extra.server_side_fallbacks` is
-false; a decline that survives is a `ProviderError`. Current models reject
-sampling parameters and the SDK no longer takes them, so `temperature` and
-`top_p` reach only the older models that accept them, in the request body. The
-SDK is imported lazily (`requirements-providers.txt`).
+false; a decline that survives is a `ProviderError`. An OAuth token needs its
+own beta, which a request's `betas` would replace, so it rides in that list
+too. Current models reject sampling parameters and the SDK no longer takes
+them, so `temperature` and `top_p` reach only the older models that accept
+them, in the request body. The SDK is imported lazily
+(`requirements-providers.txt`).
 """
 
 import re
 from decimal import Decimal
 
-from .base import Completion, ModelInfo, NotConfigured, Provider, ProviderError, ToolCall, tool_name, wire_name
+from .base import (
+    CLIENT_OPTIONS,
+    EFFORT,
+    Completion,
+    ModelInfo,
+    NotConfigured,
+    Provider,
+    ProviderError,
+    ToolCall,
+    tool_name,
+    wire_name,
+)
 
 OAUTH_PREFIX = "sk-ant-oat"
 OAUTH_BETA = "oauth-2025-04-20"
@@ -37,6 +50,16 @@ class AnthropicProvider(Provider):
         ModelInfo("claude-haiku-5-5", "Claude Haiku 5.5", CAPS, Decimal("0.10"), Decimal("0.50")),
         ModelInfo("claude-fable-5-1", "Claude Fable 5.1", CAPS, Decimal("10"), Decimal("50")),
     )
+    options = {
+        **CLIENT_OPTIONS,
+        "max_tokens": {"type": "integer", "minimum": 1, "maximum": 128000},
+        "effort": EFFORT,
+        "server_side_fallbacks": {"type": "boolean"},
+    }
+    model_prefixes = ("anthropic",)
+
+    def _oauth(self) -> bool:
+        return self.credential().startswith(OAUTH_PREFIX) or self.credential_source() == "ANTHROPIC_AUTH_TOKEN"
 
     def _client(self):
         try:
@@ -46,11 +69,13 @@ class AnthropicProvider(Provider):
         credential = self.credential()
         if not credential:
             raise NotConfigured(
-                "no Anthropic credential: set one on the provider or ANTHROPIC_API_KEY", provider=self.slug
+                "no Anthropic credential: set one on the provider (a row with its own base URL needs one) "
+                "or ANTHROPIC_API_KEY",
+                provider=self.slug,
             )
         extra = self.settings.extra
         kwargs = {"max_retries": int(extra.get("max_retries", 2)), "timeout": float(extra.get("timeout", 600))}
-        if credential.startswith(OAUTH_PREFIX) or self.credential_source() == "ANTHROPIC_AUTH_TOKEN":
+        if self._oauth():
             kwargs.update(auth_token=credential, default_headers={"anthropic-beta": OAUTH_BETA})
         else:
             kwargs["api_key"] = credential
@@ -84,7 +109,8 @@ class AnthropicProvider(Provider):
         if sampling and not NO_SAMPLING.match(model):
             kwargs["extra_body"] = sampling
         if FALLBACKS.match(model) and extra.get("server_side_fallbacks", True):
-            kwargs.update(betas=[FALLBACK_BETA], fallbacks="default")
+            # A request's betas replace the client's anthropic-beta header, the OAuth beta with it.
+            kwargs.update(betas=[FALLBACK_BETA, *([OAUTH_BETA] if self._oauth() else [])], fallbacks="default")
         return kwargs
 
     @staticmethod

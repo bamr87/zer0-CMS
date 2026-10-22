@@ -5,6 +5,7 @@ imported lazily (`requirements-providers.txt`).
 """
 
 from .base import (
+    CLIENT_OPTIONS,
     Completion,
     ModelInfo,
     NotConfigured,
@@ -27,6 +28,8 @@ class OpenAIProvider(Provider):
         ModelInfo("gpt-4o-mini", "GPT-4o mini", {"structured_output": True, "tools": True}),
         ModelInfo("gpt-4o", "GPT-4o", {"structured_output": True, "tools": True, "vision": True}),
     )
+    options = CLIENT_OPTIONS
+    model_prefixes = ("openai",)
 
     def _client(self):
         try:
@@ -35,7 +38,11 @@ class OpenAIProvider(Provider):
             raise NotConfigured("openai is not installed: pip install -r requirements-providers.txt") from e
         credential = self.credential()
         if not credential:
-            raise NotConfigured("no OpenAI credential: set one on the provider or OPENAI_API_KEY", provider=self.slug)
+            raise NotConfigured(
+                "no OpenAI credential: set one on the provider (a row with its own base URL needs one) "
+                "or OPENAI_API_KEY",
+                provider=self.slug,
+            )
         extra = self.settings.extra
         kwargs = {
             "api_key": credential,
