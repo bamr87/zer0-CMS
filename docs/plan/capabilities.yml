@@ -207,25 +207,32 @@ platform:
   # ── The AI content layer (TARGET.md § The AI content layer) ─────────────────
   - id: ai.providers
     what: Provider adapters behind one registry, per-provider configuration with an encrypted credential, the default provider, and a health test.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    surfaces: {api: done, studio: missing, extension: missing}
+    proof: {api: content/tests/ai/test_api.py::test_providers_are_listed_for_everyone_and_configured_by_staff_with_a_write_only_credential}
   - id: ai.models
     what: The model catalog, synced from each provider.
-    surfaces: {api: missing, studio: missing}
+    surfaces: {api: done, studio: missing}
+    proof: {api: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default}
   - id: ai.assistants
     what: User-managed assistants (persona, instructions, model, parameters, output schema), propose-only, run on demand.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    surfaces: {api: done, studio: missing, extension: missing, mcp: partial}
+    proof: {api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it}
   - id: ai.pipelines
     what: Ordered pipelines of assistants, each step reading the one before.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    surfaces: {api: done, studio: missing, extension: missing, mcp: missing}
+    proof: {api: content/tests/ai/test_api.py::test_a_pipeline_is_written_with_its_steps_and_run}
   - id: ai.schemas
     what: The output-schema library (bundled schemas seeded), export and import, and schema-validated structured generation.
-    surfaces: {api: missing, studio: missing}
+    surfaces: {api: done, studio: missing}
+    proof: {api: content/tests/ai/test_api.py::test_output_schemas_are_validated_exported_and_bundled}
   - id: ai.briefs
     what: A brief turns a prompt or a text into a structured draft with extracted metadata (title, slug, description, keywords, tags).
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    surfaces: {api: done, studio: missing, extension: missing, mcp: partial}
+    proof: {api: content/tests/ai/test_api.py::test_a_brief_is_generated_as_a_run_and_applied_as_a_draft_with_suggestions}
   - id: ai.conversations
     what: Conversations — threads and messages replayed to any provider, run an assistant or a pipeline, assign, re-run, promote a message to a brief or a draft.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    surfaces: {api: done, studio: missing, extension: missing}
+    proof: {api: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one}
   - id: ai.agents
     what: Tool-using agents — GitOps definitions, policies, runs with step timelines and cancel, agent tokens.
     surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
@@ -240,7 +247,8 @@ platform:
     surfaces: {api: partial, studio: missing}
   - id: ai.streaming
     what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    surfaces: {api: done, studio: missing, extension: missing}
+    proof: {api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it}
 
   # ── Sites: manage, monitor, improve ─────────────────────────────────────────
   - id: sites.registry
@@ -393,32 +401,35 @@ sources:
     summary: barodybroject — a Django + DRF + React app that generates (parody) news with AI assistants, runs them as pipelines over chat threads, and publishes posts as GitHub pull requests to a Jekyll sidecar site.
     content: The database (posts, front matter, versions, assistants, groups, schemas, content details and items, threads, messages, provider and model rows — dumped with dumpdata); the bundled schemas and prompt in parodynews/schema/; the sidecar site's 59 posts and its pages in src/pages/.
     capabilities:
-      - {id: parodynews.providers, what: "Four providers (Claude Code over OAuth, Anthropic, OpenAI, mock), pluggable by setting.", target: ai.providers, status: partial}
-      - {id: parodynews.provider-config, what: "Staff set each provider's key, base URL, organization, project, default model and extras in the UI, enable it and pick the default; the database overrides the environment.", target: ai.providers, status: missing}
-      - {id: parodynews.provider-test, what: "Send a test prompt to a provider.", target: ai.providers, status: missing}
-      - {id: parodynews.model-sync, what: "List a vendor's models live and sync them into the catalog (UI, admin action, sync_models).", target: ai.models, status: missing}
-      - {id: parodynews.structured-output, what: "Generation enforces an assistant's JSON Schema (parse and validate).", target: ai.schemas, status: partial}
-      - {id: parodynews.assistants, what: "Create and edit assistants — instructions, prompt, model, temperature, top_p, JSON schema — with import/export.", target: ai.assistants, status: partial}
-      - {id: parodynews.assistant-groups, what: "Ordered groups of assistants that run in sequence, each seeing the earlier output.", target: ai.pipelines, status: partial}
-      - {id: parodynews.schema-library, what: "Create, edit, export and import JSON schemas; one-click import of the bundled parody-article, news-article and content-detail schemas and the parody prompt.", target: ai.schemas, status: missing}
-      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: partial}
-      - {id: parodynews.extract-metadata, what: "A second call fills title, author, description, slug, keywords and tags.", target: ai.briefs, status: partial}
-      - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: missing}
-      - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: missing}
-      - {id: parodynews.run-group, what: "Run a whole assistant group on a thread in one action.", target: ai.conversations, status: missing}
-      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: partial}
-      - {id: parodynews.message-to-post, what: "Promote a message to a draft post with AI-generated front matter.", target: ai.conversations, status: partial}
+    # G8 (2026-10-22): a row is done where the platform does it through its API (and MCP) with a test that
+    # proves it. The screens are parodynews.spa, missing until the studio (P4, G10), and a row that names a
+    # screen ("in the UI") stays partial until then — so apps/parodynews stays until the studio has them.
+      - {id: parodynews.providers, what: "Four providers (Claude Code over OAuth, Anthropic, OpenAI, mock), pluggable by setting.", target: ai.providers, status: done, proof: content/tests/ai/test_providers.py::test_the_registry_has_six_adapters_and_takes_more_from_settings}
+      - {id: parodynews.provider-config, what: "Staff set each provider's key, base URL, organization, project, default model and extras in the UI, enable it and pick the default; the database overrides the environment.", target: ai.providers, status: partial}
+      - {id: parodynews.provider-test, what: "Send a test prompt to a provider.", target: ai.providers, status: done, proof: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default}
+      - {id: parodynews.model-sync, what: "List a vendor's models live and sync them into the catalog (UI, admin action, sync_models).", target: ai.models, status: partial}
+      - {id: parodynews.structured-output, what: "Generation enforces an assistant's JSON Schema (parse and validate).", target: ai.schemas, status: done, proof: content/tests/ai/test_services.py::test_a_structured_answer_is_validated_and_rendered_or_the_run_fails}
+      - {id: parodynews.assistants, what: "Create and edit assistants — instructions, prompt, model, temperature, top_p, JSON schema — with import/export.", target: ai.assistants, status: done, proof: content/tests/ai/test_api.py::test_an_assistant_exports_as_a_document_and_imports_as_a_new_private_one}
+      - {id: parodynews.assistant-groups, what: "Ordered groups of assistants that run in sequence, each seeing the earlier output.", target: ai.pipelines, status: done, proof: content/tests/ai/test_services.py::test_a_pipeline_is_a_parent_run_with_a_child_run_per_step_each_fed_the_last}
+      - {id: parodynews.schema-library, what: "Create, edit, export and import JSON schemas; one-click import of the bundled parody-article, news-article and content-detail schemas and the parody prompt.", target: ai.schemas, status: done, proof: content/tests/ai/test_api.py::test_output_schemas_are_validated_exported_and_bundled}
+      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: done, proof: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata}
+      - {id: parodynews.extract-metadata, what: "A second call fills title, author, description, slug, keywords and tags.", target: ai.briefs, status: done, proof: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata}
+      - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: done, proof: content/tests/ai/test_services.py::test_a_brief_from_a_pipeline_and_a_brief_from_text}
+      - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: done, proof: content/tests/ai/test_services.py::test_a_message_queues_a_reply_and_the_whole_conversation_is_replayed}
+      - {id: parodynews.run-group, what: "Run a whole assistant group on a thread in one action.", target: ai.conversations, status: done, proof: content/tests/ai/test_services.py::test_a_pipeline_on_a_conversation_replies_there_step_by_step}
+      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: done, proof: content/tests/ai/test_api.py::test_a_conversation_starts_from_a_brief_and_its_messages_filter_and_delete}
+      - {id: parodynews.message-to-post, what: "Promote a message to a draft post with AI-generated front matter.", target: ai.conversations, status: done, proof: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one}
       - {id: parodynews.post-editing, what: "Edit a post's Markdown body (with a rendered preview), front matter and status.", target: content.edit, status: partial}
       - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
       - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
       - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: missing}
       - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render, status: missing}
-      - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: partial}
+      - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: done, proof: content/tests/importers/test_parodynews.py}
       - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: missing}
       - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: missing}
       - {id: parodynews.mfa, what: "TOTP, WebAuthn passkeys (passkey login and sign-up) and recovery codes.", target: platform.accounts, status: missing}
       - {id: parodynews.sessions, what: "List and end one's other sessions.", target: platform.accounts, status: missing}
-      - {id: parodynews.ownership, what: "People see their own rows and shared ones; staff see all.", target: platform.permissions, status: partial}
+      - {id: parodynews.ownership, what: "People see their own rows and shared ones; staff see all.", target: platform.permissions, status: done, proof: content/tests/ai/test_models.py::test_visible_to_is_the_one_scope}
       - {id: parodynews.install-wizard, what: "First-run setup on the web or the CLI (headless with an expiring token), admin creation, status and health, the redirect until installed.", target: platform.install, status: missing}
       - {id: parodynews.ops-commands, what: "ensure_admin, ensure_e2e_user, reset_db, refreshmigrations.", target: platform.install, status: partial}
       - {id: parodynews.admin-import-export, what: "A back office for every model, with import/export of assistants, models, schemas and posts and a sync-from-provider action.", target: content.bulk, status: partial}
