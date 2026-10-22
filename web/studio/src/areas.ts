@@ -40,7 +40,7 @@ export const AREAS: Area[] = [
     summary: 'Desks, the story budget, the calendar, assignments, fronts, corrections, newsletters.',
     icon: IconNews,
   },
-  { path: '/books', label: 'Books', summary: 'Books, outlines, chapters, characters, continuity, manuscripts.', icon: IconBook, milestone: 'G9' },
+  { path: '/books', label: 'Books', summary: 'Books, outlines, chapters, characters, continuity, manuscripts.', icon: IconBook },
   { path: '/review', label: 'Review', summary: 'Suggestions with their diffs: accept, reject, accept a whole run.', icon: IconChecklist },
   {
     path: '/ai',

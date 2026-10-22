@@ -590,7 +590,9 @@ def apply_brief(brief: Brief, *, user, parent=None, page_type: str = ""):
     proposes for them, on the brief's run, for the editor to accept. Nothing is
     published, and only a person applies a brief. A brief an agent asked for
     (`ai.generate_brief`) is for the people it is shown to: anyone who sees it
-    may apply it where they may add a page."""
+    may apply it where they may add a page. A page type may make itself from a
+    brief (`from_brief`): a book outline becomes a draft book with its chapter
+    stubs, whichever endpoint applies it."""
     if user.username.startswith("agent:"):
         raise Forbidden(f"a person applies a brief; an agent proposes with {PROPOSE}")
     brief = Brief.objects.select_for_update().get(pk=brief.pk)
@@ -611,6 +613,9 @@ def apply_brief(brief: Brief, *, user, parent=None, page_type: str = ""):
         raise Invalid(f"a {page_type} cannot go under {parent.title!r}")
     if not parent.permissions_for_user(user).can_add_subpage():
         raise Forbidden(f"{user} may not add a page under {parent.title!r}")
+    made = model.from_brief(brief, user=user) if hasattr(model, "from_brief") else None
+    if made is not None:  # a page type made its own way from a brief (a book outline: books/services.py)
+        return made, []
 
     meta = brief.metadata or {}
     title = (meta.get("title") or brief.title or "Untitled draft").strip()[:255]

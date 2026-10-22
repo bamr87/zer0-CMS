@@ -4898,6 +4898,1599 @@
                 }
             }
         },
+        "/api/v2/books/": {
+            "get": {
+                "operationId": "books_list",
+                "summary": "The library's shelf: every book the caller may open, with its status and progress",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "templates",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "The templates new books start from instead."
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/BookSummary"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "books_create",
+                "summary": "A new book from the template, as a draft (`books new`)",
+                "tags": [
+                    "books"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewBookRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewBookRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewBookRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/{id}/": {
+            "get": {
+                "operationId": "books_retrieve",
+                "summary": "A book's overview: facts, chapters in order, statistics and findings",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/{id}/assist/": {
+            "post": {
+                "operationId": "books_assist",
+                "summary": "Run a book task as a run of the book assistant; draft, continue and revise propose suggestions",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssistRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssistRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssistRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RunAccepted"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/{id}/chapters/": {
+            "post": {
+                "operationId": "books_chapters_create",
+                "summary": "Add the next chapter, as a draft stub (`books add-chapter`)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewChapterRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewChapterRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewChapterRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/{id}/context/": {
+            "get": {
+                "operationId": "books_context",
+                "summary": "What a book task's model would be given, without calling it (`books context`)",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "chapter",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A chapter's page id."
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "task",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "check",
+                                "continue",
+                                "critique",
+                                "draft",
+                                "outline",
+                                "revise"
+                            ]
+                        },
+                        "description": "Default: draft (or outline)."
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Context"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/{id}/documents/": {
+            "get": {
+                "operationId": "books_documents",
+                "summary": "A book's other files — act guides, README — as its latest revision holds them",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDocuments"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "books_documents_set",
+                "summary": "Add, change or (text null) remove one of a book's other files, as a draft revision",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetDocumentRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetDocumentRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetDocumentRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDocuments"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/{id}/issues/": {
+            "get": {
+                "operationId": "books_issues",
+                "summary": "A book's validation findings, with the books package's codes",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/BookIssue"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/{id}/manuscript/": {
+            "get": {
+                "operationId": "books_manuscript",
+                "summary": "The compiled manuscript (`books build`)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "include_outline",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Put the outline after the title page."
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Manuscript"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/premise/": {
+            "post": {
+                "operationId": "books_premise",
+                "summary": "Outline a book from a premise: a brief the bundled outliner generates, as a run",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PremiseRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PremiseRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PremiseRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PremiseAccepted"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/premise/{brief}/create/": {
+            "post": {
+                "operationId": "books_premise_create",
+                "summary": "Accept a ready outline: a draft book with its facts, outline and a stub per planned chapter",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "brief",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/books/tasks/": {
+            "get": {
+                "operationId": "books_tasks",
+                "summary": "The book assistant's tasks",
+                "tags": [
+                    "books"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/BookTask"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/content/pages/": {
             "get": {
                 "operationId": "content_pages_list",
@@ -15266,6 +16859,35 @@
                     "assignee"
                 ]
             },
+            "AssistRequest": {
+                "type": "object",
+                "properties": {
+                    "task": {
+                        "$ref": "#/components/schemas/BookTaskEnum"
+                    },
+                    "chapter": {
+                        "type": "integer",
+                        "description": "The chapter's page id (every task but outline)."
+                    },
+                    "instruction": {
+                        "type": "string",
+                        "maxLength": 4000
+                    },
+                    "selection": {
+                        "type": "string",
+                        "description": "For revise: the passage.",
+                        "maxLength": 20000
+                    },
+                    "assistant": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "An assistant of yours; else the task's bundled one."
+                    }
+                },
+                "required": [
+                    "task"
+                ]
+            },
             "Assistant": {
                 "type": "object",
                 "properties": {
@@ -15883,6 +17505,429 @@
                     "name"
                 ]
             },
+            "BookChapter": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The chapter's page id."
+                    },
+                    "number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "subtitle": {
+                        "type": "string"
+                    },
+                    "act": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "stub, outline, draft, revised or final."
+                    },
+                    "pov": {
+                        "type": "string"
+                    },
+                    "word_count": {
+                        "type": "integer"
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Its file, relative to the library."
+                    },
+                    "errors": {
+                        "type": "integer"
+                    },
+                    "warnings": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "act",
+                    "errors",
+                    "id",
+                    "number",
+                    "path",
+                    "pov",
+                    "status",
+                    "subtitle",
+                    "title",
+                    "warnings",
+                    "word_count"
+                ]
+            },
+            "BookDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "The book's page id."
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "Its directory in the library."
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "idea, outlining, drafting, revising, complete or archived."
+                    },
+                    "page_status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/PageStatusEnum"
+                            }
+                        ],
+                        "description": "Where the book's page stands.\n\n* `draft` - draft\n* `live` - live\n* `changed` - changed\n* `scheduled` - scheduled\n* `expired` - expired"
+                    },
+                    "profile": {
+                        "type": "string",
+                        "description": "book, abc or story."
+                    },
+                    "logline": {
+                        "type": "string"
+                    },
+                    "genre": {
+                        "type": "string"
+                    },
+                    "chapters": {
+                        "type": "integer"
+                    },
+                    "planned_chapters": {
+                        "type": "integer"
+                    },
+                    "word_count": {
+                        "type": "integer",
+                        "description": "Narrative prose only: the outline scaffolding is not counted."
+                    },
+                    "target_word_count": {
+                        "type": "integer"
+                    },
+                    "progress": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "0–1: words against the target, else chapters against the plan."
+                    },
+                    "site_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "template": {
+                        "type": "boolean",
+                        "description": "A template new books start from, not on the shelf."
+                    },
+                    "stats": {
+                        "$ref": "#/components/schemas/BookStats"
+                    },
+                    "chapter_list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BookChapter"
+                        },
+                        "description": "In reading order."
+                    },
+                    "errors": {
+                        "type": "integer"
+                    },
+                    "warnings": {
+                        "type": "integer"
+                    },
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Its files besides the chapters."
+                    },
+                    "can_edit": {
+                        "type": "boolean"
+                    },
+                    "can_add_chapter": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "can_add_chapter",
+                    "can_edit",
+                    "chapter_list",
+                    "chapters",
+                    "documents",
+                    "errors",
+                    "genre",
+                    "id",
+                    "logline",
+                    "page_status",
+                    "planned_chapters",
+                    "profile",
+                    "progress",
+                    "site_id",
+                    "slug",
+                    "stats",
+                    "status",
+                    "target_word_count",
+                    "template",
+                    "title",
+                    "warnings",
+                    "word_count"
+                ]
+            },
+            "BookDocuments": {
+                "type": "object",
+                "properties": {
+                    "revision": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The revision they are from: send it back to save."
+                    },
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Document"
+                        }
+                    }
+                },
+                "required": [
+                    "documents",
+                    "revision"
+                ]
+            },
+            "BookIssue": {
+                "type": "object",
+                "properties": {
+                    "level": {
+                        "$ref": "#/components/schemas/IssueLevelEnum"
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "The validation code (the books package's docs/SCHEMA.md)."
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "The file, relative to the library."
+                    },
+                    "line": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "code",
+                    "level",
+                    "line",
+                    "message",
+                    "path"
+                ]
+            },
+            "BookStats": {
+                "type": "object",
+                "properties": {
+                    "chapters": {
+                        "type": "integer"
+                    },
+                    "status_counts": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer"
+                        },
+                        "description": "Chapters per status."
+                    },
+                    "word_count": {
+                        "type": "integer"
+                    },
+                    "target_word_count": {
+                        "type": "integer"
+                    },
+                    "planned_chapters": {
+                        "type": "integer"
+                    },
+                    "average": {
+                        "type": "integer",
+                        "description": "Words per chapter."
+                    },
+                    "longest": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ChapterBrief"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "shortest": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ChapterBrief"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "progress": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                },
+                "required": [
+                    "average",
+                    "chapters",
+                    "longest",
+                    "planned_chapters",
+                    "progress",
+                    "shortest",
+                    "status_counts",
+                    "target_word_count",
+                    "word_count"
+                ]
+            },
+            "BookSummary": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "The book's page id."
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "Its directory in the library."
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "idea, outlining, drafting, revising, complete or archived."
+                    },
+                    "page_status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/PageStatusEnum"
+                            }
+                        ],
+                        "description": "Where the book's page stands.\n\n* `draft` - draft\n* `live` - live\n* `changed` - changed\n* `scheduled` - scheduled\n* `expired` - expired"
+                    },
+                    "profile": {
+                        "type": "string",
+                        "description": "book, abc or story."
+                    },
+                    "logline": {
+                        "type": "string"
+                    },
+                    "genre": {
+                        "type": "string"
+                    },
+                    "chapters": {
+                        "type": "integer"
+                    },
+                    "planned_chapters": {
+                        "type": "integer"
+                    },
+                    "word_count": {
+                        "type": "integer",
+                        "description": "Narrative prose only: the outline scaffolding is not counted."
+                    },
+                    "target_word_count": {
+                        "type": "integer"
+                    },
+                    "progress": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "0–1: words against the target, else chapters against the plan."
+                    },
+                    "site_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "template": {
+                        "type": "boolean",
+                        "description": "A template new books start from, not on the shelf."
+                    }
+                },
+                "required": [
+                    "chapters",
+                    "genre",
+                    "id",
+                    "logline",
+                    "page_status",
+                    "planned_chapters",
+                    "profile",
+                    "progress",
+                    "site_id",
+                    "slug",
+                    "status",
+                    "target_word_count",
+                    "template",
+                    "title",
+                    "word_count"
+                ]
+            },
+            "BookTask": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "$ref": "#/components/schemas/BookTaskEnum"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "chapter": {
+                        "type": "boolean",
+                        "description": "Works on a chapter (else on the book)."
+                    },
+                    "suggests": {
+                        "type": "boolean",
+                        "description": "Its result arrives as suggestions on the chapter."
+                    }
+                },
+                "required": [
+                    "chapter",
+                    "description",
+                    "key",
+                    "label",
+                    "suggests"
+                ]
+            },
+            "BookTaskEnum": {
+                "enum": [
+                    "draft",
+                    "continue",
+                    "revise",
+                    "check",
+                    "critique",
+                    "outline"
+                ],
+                "type": "string",
+                "description": "* `draft` - Draft\n* `continue` - Continue\n* `revise` - Revise\n* `check` - Continuity check\n* `critique` - Critique\n* `outline` - Outline"
+            },
             "BrainstormKindEnum": {
                 "enum": [
                     "angles",
@@ -16366,6 +18411,28 @@
                 "type": "string",
                 "description": "* `block` - block\n* `field` - field\n* `edge` - edge"
             },
+            "ChapterBrief": {
+                "type": "object",
+                "properties": {
+                    "number": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "word_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "number",
+                    "title",
+                    "word_count"
+                ]
+            },
             "CheckedSource": {
                 "type": "object",
                 "properties": {
@@ -16703,6 +18770,18 @@
                     "name"
                 ]
             },
+            "Context": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The request a task's model would be given, without calling it."
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
             "Conversation": {
                 "type": "object",
                 "properties": {
@@ -17026,6 +19105,22 @@
                     "section",
                     "site",
                     "slug"
+                ]
+            },
+            "Document": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Inside the book, e.g. guides/act-1-chapters-01-05.md."
+                    },
+                    "text": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "path",
+                    "text"
                 ]
             },
             "Duplicate": {
@@ -18096,6 +20191,14 @@
                     "updated_at"
                 ]
             },
+            "IssueLevelEnum": {
+                "enum": [
+                    "error",
+                    "warning"
+                ],
+                "type": "string",
+                "description": "* `error` - error\n* `warning` - warning"
+            },
             "IssuePreview": {
                 "type": "object",
                 "properties": {
@@ -18216,6 +20319,26 @@
                 "required": [
                     "password",
                     "username"
+                ]
+            },
+            "Manuscript": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string"
+                    },
+                    "markdown": {
+                        "type": "string",
+                        "description": "The compiled manuscript: title page, acts, chapters, no scaffolding."
+                    },
+                    "word_count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "filename",
+                    "markdown",
+                    "word_count"
                 ]
             },
             "Me": {
@@ -18538,6 +20661,61 @@
                     "status"
                 ]
             },
+            "NewBookRequest": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "slug": {
+                        "description": "Its directory; else from the title.",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "logline": {
+                        "type": "string"
+                    },
+                    "genre": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "title"
+                ]
+            },
+            "NewChapterRequest": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "number": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Else the next one."
+                    },
+                    "act": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Else spread over the acts."
+                    }
+                },
+                "required": [
+                    "title"
+                ]
+            },
             "Newsletter": {
                 "type": "object",
                 "properties": {
@@ -18638,6 +20816,23 @@
                 ],
                 "type": "string",
                 "description": "* `pending` - pending\n* `ready` - ready\n* `failed` - failed"
+            },
+            "OutlineBrief": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Follow it on /api/v2/ai/briefs/<id>/."
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "status"
+                ]
             },
             "OutputSchema": {
                 "type": "object",
@@ -20928,6 +23123,40 @@
                     "text"
                 ]
             },
+            "PremiseAccepted": {
+                "type": "object",
+                "properties": {
+                    "brief": {
+                        "$ref": "#/components/schemas/OutlineBrief"
+                    },
+                    "run": {
+                        "$ref": "#/components/schemas/RunRef"
+                    }
+                },
+                "required": [
+                    "brief",
+                    "run"
+                ]
+            },
+            "PremiseRequest": {
+                "type": "object",
+                "properties": {
+                    "premise": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "One or two sentences: premise, protagonist or theme.",
+                        "maxLength": 8000
+                    },
+                    "assistant": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "An outliner of yours; else the bundled one."
+                    }
+                },
+                "required": [
+                    "premise"
+                ]
+            },
             "PromoteIdeaRequest": {
                 "type": "object",
                 "properties": {
@@ -21957,6 +24186,35 @@
                 },
                 "required": [
                     "query"
+                ]
+            },
+            "SetDocumentRequest": {
+                "type": "object",
+                "properties": {
+                    "base_revision_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The revision edited; a newer one is a 409."
+                    },
+                    "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                    },
+                    "text": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The file's text; null removes it."
+                    }
+                },
+                "required": [
+                    "base_revision_id",
+                    "path",
+                    "text"
                 ]
             },
             "Site": {

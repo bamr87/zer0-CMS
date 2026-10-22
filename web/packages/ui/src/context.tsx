@@ -26,7 +26,10 @@ export type Destination =
   | { to: 'research' }
   | { to: 'source'; id: string }
   | { to: 'newsroom' }
-  | { to: 'story'; id: string };
+  | { to: 'story'; id: string }
+  | { to: 'books' }
+  | { to: 'book'; id: number }
+  | { to: 'chapter'; book: number; id: number };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

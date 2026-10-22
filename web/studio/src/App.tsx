@@ -5,6 +5,9 @@
 import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
 import {
+  BookShelf,
+  BookView,
+  ChapterWriter,
   IdeasWorkspace,
   Newsroom,
   Overview,
@@ -63,6 +66,12 @@ export function pathFor(to: Destination): string {
       return '/newsroom';
     case 'story':
       return `/newsroom/stories/${to.id}`;
+    case 'books':
+      return '/books';
+    case 'book':
+      return `/books/${to.id}`;
+    case 'chapter':
+      return `/books/${to.book}/chapters/${to.id}`;
   }
 }
 
@@ -87,6 +96,9 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="research/sources/:id" element={<SourcePage />} />
                 <Route path="newsroom" element={<NewsroomArea />} />
                 <Route path="newsroom/stories/:id" element={<NewsroomArea />} />
+                <Route path="books" element={<Books />} />
+                <Route path="books/:id" element={<BookPage />} />
+                <Route path="books/:book/chapters/:id" element={<ChapterPage />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -184,6 +196,24 @@ function NewsroomArea() {
       <Newsroom siteId={siteId} storyId={id} />
     </Section>
   );
+}
+
+function Books() {
+  return (
+    <Section title="Books">
+      <BookShelf />
+    </Section>
+  );
+}
+
+function BookPage() {
+  const { id } = useParams();
+  return <BookView key={id} bookId={Number(id)} />;
+}
+
+function ChapterPage() {
+  const { book, id } = useParams();
+  return <ChapterWriter key={id} bookId={Number(book)} chapterId={Number(id)} />;
 }
 
 function Planned({ area }: { area: Area }) {

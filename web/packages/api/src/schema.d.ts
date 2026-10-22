@@ -597,6 +597,195 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/books/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The library's shelf: every book the caller may open, with its status and progress */
+        get: operations["books_list"];
+        put?: never;
+        /** A new book from the template, as a draft (`books new`) */
+        post: operations["books_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A book's overview: facts, chapters in order, statistics and findings */
+        get: operations["books_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/{id}/assist/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run a book task as a run of the book assistant; draft, continue and revise propose suggestions */
+        post: operations["books_assist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/{id}/chapters/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add the next chapter, as a draft stub (`books add-chapter`) */
+        post: operations["books_chapters_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/{id}/context/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a book task's model would be given, without calling it (`books context`) */
+        get: operations["books_context"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/{id}/documents/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A book's other files — act guides, README — as its latest revision holds them */
+        get: operations["books_documents"];
+        put?: never;
+        /** Add, change or (text null) remove one of a book's other files, as a draft revision */
+        post: operations["books_documents_set"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/{id}/issues/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A book's validation findings, with the books package's codes */
+        get: operations["books_issues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/{id}/manuscript/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The compiled manuscript (`books build`) */
+        get: operations["books_manuscript"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/premise/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Outline a book from a premise: a brief the bundled outliner generates, as a run */
+        post: operations["books_premise"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/premise/{brief}/create/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a ready outline: a draft book with its facts, outline and a stub per planned chapter */
+        post: operations["books_premise_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/books/tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The book assistant's tasks */
+        get: operations["books_tasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/content/pages/": {
         parameters: {
             query?: never;
@@ -2138,6 +2327,19 @@ export interface components {
             assignee: number;
             note?: string;
         };
+        AssistRequest: {
+            task: components["schemas"]["BookTaskEnum"];
+            /** @description The chapter's page id (every task but outline). */
+            chapter?: number;
+            instruction?: string;
+            /** @description For revise: the passage. */
+            selection?: string;
+            /**
+             * Format: uuid
+             * @description An assistant of yours; else the task's bundled one.
+             */
+            assistant?: string;
+        };
         Assistant: {
             /** Format: uuid */
             readonly id: string;
@@ -2310,6 +2512,152 @@ export interface components {
             name: string;
             description?: string;
         };
+        BookChapter: {
+            /** @description The chapter's page id. */
+            id: number | null;
+            number: number | null;
+            title: string;
+            subtitle: string;
+            act: number | null;
+            /** @description stub, outline, draft, revised or final. */
+            status: string;
+            pov: string;
+            word_count: number;
+            /** @description Its file, relative to the library. */
+            path: string;
+            errors: number;
+            warnings: number;
+        };
+        BookDetail: {
+            /** @description The book's page id. */
+            id: number;
+            /** @description Its directory in the library. */
+            slug: string;
+            title: string;
+            /** @description idea, outlining, drafting, revising, complete or archived. */
+            status: string;
+            /**
+             * @description Where the book's page stands.
+             *
+             *     * `draft` - draft
+             *     * `live` - live
+             *     * `changed` - changed
+             *     * `scheduled` - scheduled
+             *     * `expired` - expired
+             */
+            page_status: components["schemas"]["PageStatusEnum"];
+            /** @description book, abc or story. */
+            profile: string;
+            logline: string;
+            genre: string;
+            chapters: number;
+            planned_chapters: number;
+            /** @description Narrative prose only: the outline scaffolding is not counted. */
+            word_count: number;
+            target_word_count: number;
+            /**
+             * Format: double
+             * @description 0–1: words against the target, else chapters against the plan.
+             */
+            progress: number;
+            site_id: number | null;
+            /** @description A template new books start from, not on the shelf. */
+            template: boolean;
+            stats: components["schemas"]["BookStats"];
+            /** @description In reading order. */
+            chapter_list: components["schemas"]["BookChapter"][];
+            errors: number;
+            warnings: number;
+            /** @description Its files besides the chapters. */
+            documents: string[];
+            can_edit: boolean;
+            can_add_chapter: boolean;
+        };
+        BookDocuments: {
+            /** @description The revision they are from: send it back to save. */
+            revision: number | null;
+            documents: components["schemas"]["Document"][];
+        };
+        BookIssue: {
+            level: components["schemas"]["IssueLevelEnum"];
+            /** @description The validation code (the books package's docs/SCHEMA.md). */
+            code: string;
+            message: string;
+            /** @description The file, relative to the library. */
+            path: string;
+            line: number | null;
+        };
+        BookStats: {
+            chapters: number;
+            /** @description Chapters per status. */
+            status_counts: {
+                [key: string]: number;
+            };
+            word_count: number;
+            target_word_count: number;
+            planned_chapters: number;
+            /** @description Words per chapter. */
+            average: number;
+            longest: components["schemas"]["ChapterBrief"] | null;
+            shortest: components["schemas"]["ChapterBrief"] | null;
+            /** Format: double */
+            progress: number;
+        };
+        BookSummary: {
+            /** @description The book's page id. */
+            id: number;
+            /** @description Its directory in the library. */
+            slug: string;
+            title: string;
+            /** @description idea, outlining, drafting, revising, complete or archived. */
+            status: string;
+            /**
+             * @description Where the book's page stands.
+             *
+             *     * `draft` - draft
+             *     * `live` - live
+             *     * `changed` - changed
+             *     * `scheduled` - scheduled
+             *     * `expired` - expired
+             */
+            page_status: components["schemas"]["PageStatusEnum"];
+            /** @description book, abc or story. */
+            profile: string;
+            logline: string;
+            genre: string;
+            chapters: number;
+            planned_chapters: number;
+            /** @description Narrative prose only: the outline scaffolding is not counted. */
+            word_count: number;
+            target_word_count: number;
+            /**
+             * Format: double
+             * @description 0–1: words against the target, else chapters against the plan.
+             */
+            progress: number;
+            site_id: number | null;
+            /** @description A template new books start from, not on the shelf. */
+            template: boolean;
+        };
+        BookTask: {
+            key: components["schemas"]["BookTaskEnum"];
+            label: string;
+            description: string;
+            /** @description Works on a chapter (else on the book). */
+            chapter: boolean;
+            /** @description Its result arrives as suggestions on the chapter. */
+            suggests: boolean;
+        };
+        /**
+         * @description * `draft` - Draft
+         *     * `continue` - Continue
+         *     * `revise` - Revise
+         *     * `check` - Continuity check
+         *     * `critique` - Critique
+         *     * `outline` - Outline
+         * @enum {string}
+         */
+        BookTaskEnum: "draft" | "continue" | "revise" | "check" | "critique" | "outline";
         /**
          * @description * `angles` - angles
          *     * `headlines` - headlines
@@ -2469,6 +2817,11 @@ export interface components {
          * @enum {string}
          */
         ChangeKindEnum: "block" | "field" | "edge";
+        ChapterBrief: {
+            number: number | null;
+            title: string;
+            word_count: number;
+        };
         CheckedSource: {
             /** Format: uuid */
             id: string;
@@ -2570,6 +2923,10 @@ export interface components {
             name: string;
             description?: string;
         };
+        Context: {
+            /** @description The request a task's model would be given, without calling it. */
+            text: string;
+        };
         Conversation: {
             /** Format: uuid */
             readonly id: string;
@@ -2661,6 +3018,11 @@ export interface components {
             assistant?: string | null;
             /** Format: uuid */
             pipeline?: string | null;
+        };
+        Document: {
+            /** @description Inside the book, e.g. guides/act-1-chapters-01-05.md. */
+            path: string;
+            text: string;
         };
         Duplicate: {
             a: components["schemas"]["IdeaRef"];
@@ -2981,6 +3343,12 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
+        /**
+         * @description * `error` - error
+         *     * `warning` - warning
+         * @enum {string}
+         */
+        IssueLevelEnum: "error" | "warning";
         IssuePreview: {
             subject: string;
             text: string;
@@ -3022,6 +3390,12 @@ export interface components {
         LoginRequest: {
             username: string;
             password: string;
+        };
+        Manuscript: {
+            filename: string;
+            /** @description The compiled manuscript: title page, acts, chapters, no scaffolding. */
+            markdown: string;
+            word_count: number;
         };
         Me: {
             authenticated: boolean;
@@ -3122,6 +3496,20 @@ export interface components {
             /** @description To corrected or updated: the note. */
             text?: string;
         };
+        NewBookRequest: {
+            title: string;
+            /** @description Its directory; else from the title. */
+            slug?: string;
+            logline?: string;
+            genre?: string;
+        };
+        NewChapterRequest: {
+            title: string;
+            /** @description Else the next one. */
+            number?: number;
+            /** @description Else spread over the acts. */
+            act?: number;
+        };
         Newsletter: {
             /** Format: uuid */
             readonly id: string;
@@ -3157,6 +3545,14 @@ export interface components {
          * @enum {string}
          */
         OutcomeEnum: "pending" | "ready" | "failed";
+        OutlineBrief: {
+            /**
+             * Format: uuid
+             * @description Follow it on /api/v2/ai/briefs/<id>/.
+             */
+            id: string;
+            status: string;
+        };
         OutputSchema: {
             /** Format: uuid */
             readonly id: string;
@@ -4008,6 +4404,19 @@ export interface components {
              */
             answer: boolean;
         };
+        PremiseAccepted: {
+            brief: components["schemas"]["OutlineBrief"];
+            run: components["schemas"]["RunRef"];
+        };
+        PremiseRequest: {
+            /** @description One or two sentences: premise, protagonist or theme. */
+            premise: string;
+            /**
+             * Format: uuid
+             * @description An outliner of yours; else the bundled one.
+             */
+            assistant?: string;
+        };
         PromoteIdeaRequest: {
             /**
              * @description What the idea becomes.
@@ -4348,6 +4757,13 @@ export interface components {
             max_results?: number;
             /** @description A provider's slug. */
             provider?: string;
+        };
+        SetDocumentRequest: {
+            /** @description The revision edited; a newer one is a 409. */
+            base_revision_id: number | null;
+            path: string;
+            /** @description The file's text; null removes it. */
+            text: string | null;
         };
         Site: {
             id: number;
@@ -7693,6 +8109,1086 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_list: {
+        parameters: {
+            query?: {
+                /** @description The templates new books start from instead. */
+                templates?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookSummary"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewBookRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["NewBookRequest"];
+                "multipart/form-data": components["schemas"]["NewBookRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_assist: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssistRequest"];
+                "multipart/form-data": components["schemas"]["AssistRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_chapters_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewChapterRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["NewChapterRequest"];
+                "multipart/form-data": components["schemas"]["NewChapterRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_context: {
+        parameters: {
+            query?: {
+                /** @description A chapter's page id. */
+                chapter?: number;
+                /** @description Default: draft (or outline). */
+                task?: "check" | "continue" | "critique" | "draft" | "outline" | "revise";
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Context"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_documents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookDocuments"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_documents_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetDocumentRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SetDocumentRequest"];
+                "multipart/form-data": components["schemas"]["SetDocumentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookDocuments"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_issues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookIssue"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_manuscript: {
+        parameters: {
+            query?: {
+                /** @description Put the outline after the title page. */
+                include_outline?: boolean;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Manuscript"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_premise: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PremiseRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PremiseRequest"];
+                "multipart/form-data": components["schemas"]["PremiseRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PremiseAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_premise_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                brief: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    books_tasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookTask"][];
                 };
             };
         };

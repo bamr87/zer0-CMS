@@ -42,3 +42,9 @@
 .ProseMirror-hideselection *::selection {
   background: transparent;
 }
+
+/* Text a model or a writer wrote, kept as written: line breaks and long words. */
+.zer0-prose {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

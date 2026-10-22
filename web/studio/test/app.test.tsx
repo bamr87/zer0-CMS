@@ -132,5 +132,15 @@ describe('the shell and its routes', () => {
     expect(pathFor({ to: 'ideas' })).toBe('/ideas');
     expect(pathFor({ to: 'research' })).toBe('/research');
     expect(pathFor({ to: 'source', id: 's1' })).toBe('/research/sources/s1');
+    expect(pathFor({ to: 'books' })).toBe('/books');
+    expect(pathFor({ to: 'book', id: 20 })).toBe('/books/20');
+    expect(pathFor({ to: 'chapter', book: 20, id: 31 })).toBe('/books/20/chapters/31');
+  });
+
+  it('opens the shelf at /books', async () => {
+    renderStudio('/books', platformFor({ 'GET /api/v2/books/': () => [] }));
+    expect(await screen.findByRole('heading', { name: 'Books' })).toBeInTheDocument();
+    expect(await screen.findByText('No books yet.')).toBeInTheDocument();
+    expect(screen.queryByText(/arrives with PLAN G9/)).toBeNull();
   });
 });

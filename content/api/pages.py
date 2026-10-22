@@ -208,7 +208,7 @@ def read_fields(page) -> dict:
 def _spec(model, name) -> dict:
     field = model._meta.get_field(name)
     choices = [{"value": str(v), "label": str(label)} for v, label in (field.choices or [])]
-    if name in ("tags", "ai_keywords"):
+    if name == "tags" or isinstance(field, models.JSONField):  # a list of names: ai_keywords, a cast, themes
         kind = "tags"
     elif field.many_to_many:
         kind = "multichoice"

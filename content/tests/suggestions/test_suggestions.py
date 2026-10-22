@@ -117,6 +117,42 @@ def test_the_brand_guard_refuses_a_banned_phrase_at_propose_time(article, run):
         proposal(article, run, op="meta", field="seo_title", payload={"value": "Our cutting-edge backups"})
 
 
+@pytest.mark.django_db
+def test_a_replace_is_judged_on_the_banned_phrases_it_adds(site_root, run, editor):
+    """A phrase the author already wrote does not block an agent's edit of that
+    block; the agent writing it (again) does, and so does any active markup."""
+    from tests.conftest import make_article
+
+    page = make_article(site_root, "Quoted", body=[{"type": "markdown", "value": "He spoke of unlocking value."}])
+    block = page.body[0].id
+    kept = proposal(
+        page,
+        run,
+        op="replace",
+        block_id=block,
+        payload={"type": "markdown", "value": "He spoke, at length, of unlocking value."},
+    )
+    accept([kept], editor)
+    with pytest.raises(SuggestionError, match="unlock value"):
+        proposal(
+            page,
+            run,
+            op="replace",
+            block_id=block,
+            payload={"type": "markdown", "value": "Unlocking value, unlocking value."},
+        )
+    with pytest.raises(SuggestionError, match="unlock value"):
+        proposal(page, run, op="insert", payload={"type": "markdown", "value": "He spoke of unlocking value."})
+    with pytest.raises(SuggestionError, match="active markup"):
+        proposal(
+            page,
+            run,
+            op="replace",
+            block_id=block,
+            payload={"type": "markdown", "value": "<script>x()</script> unlocking value"},
+        )
+
+
 def test_the_guard_matches_the_extensions_rule_counts_and_dedupes():
     assert len(BANNED_PATTERNS) == 13 and len(FILLER) == 9
     clean = guard_text("A plain sentence that says what it means and then keeps going for a while.")

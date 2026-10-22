@@ -65,7 +65,7 @@ The image generator, the books app, the zer0 sites and the parodynews and aieo a
 | Path | What it is |
 |---|---|
 | `packages/zer0-image-generator/` | The preview-image engine (`zer0-image-generator` gem) and its web panel. |
-| `packages/books/` | The book projects and the `bookshelf` app that validates, compiles and edits them. |
+| `packages/books/` | The book projects and the `bookshelf` app that validates, compiles and edits them, being absorbed: the platform holds the books now (`content/books/`, PLAN G9) and `library/<slug>/` is the file set it generates. |
 | `sites/drsai/` | The children's picture-book site and its story engine; the ABC wizard exports here. |
 | `apps/parodynews/` | The Django + React parody-news app (imported as barodybroject, de-branded in ADR 0003); its models are absorbed by the content plane under PLAN M20. |
 | `apps/aieo/` | AI Engine Optimization — the FastAPI + React app that scores content for AI-engine citation. |
