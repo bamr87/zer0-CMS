@@ -129,9 +129,9 @@ describe('the budget board', () => {
 
   it('maps a drop to a move, and a drop in the same column to none', () => {
     const stories = [story()] as Parameters<typeof dropTarget>[1];
-    expect(dropTarget({ draggableId: 's1', destination: { droppableId: 'editing', index: 0 } }, stories)?.to).toBe('editing');
-    expect(dropTarget({ draggableId: 's1', destination: { droppableId: 'drafting', index: 0 } }, stories)).toBeNull();
-    expect(dropTarget({ draggableId: 's1', destination: null }, stories)).toBeNull();
+    expect(dropTarget({ story: 's1', column: 'editing' }, stories)?.to).toBe('editing');
+    expect(dropTarget({ story: 's1', column: 'drafting' }, stories)).toBeNull();
+    expect(dropTarget({ story: 's1', column: null }, stories)).toBeNull();
   });
 });
 

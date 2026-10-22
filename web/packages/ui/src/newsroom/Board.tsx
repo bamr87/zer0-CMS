@@ -3,17 +3,18 @@
 // in the making by priority and deadline, the published ones most recently
 // changed first — with its true count, and "Show more" while it has more, so a
 // story is never dropped from the board without a word. Drag a card to another
-// column to move it (@hello-pangea/dnd, its <style> carrying the page's CSP
-// nonce), or use the card's "Move" menu — the same move, for a keyboard or a
-// single pointer. A move the workflow does not allow from where the story
+// column to move it (@dnd-kit, the library the pipelines' steps use too), or
+// use the card's "Move" menu — the same move, for a keyboard or a single
+// pointer. A move the workflow does not allow from where the story
 // stands is refused here before anything is sent; one that needs a word from
 // the person (an assignee, a reason, a time, a note) or that publishes asks
 // first; and the platform has the last say.
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { ActionIcon, Alert, Anchor, Badge, Button, Card, Group, Loader, Menu, Paper, ScrollArea, Stack, Text, useMantineStyleNonce } from '@mantine/core';
+import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import { ActionIcon, Alert, Anchor, Badge, Button, Card, Group, Loader, Menu, Paper, ScrollArea, Stack, Text } from '@mantine/core';
 import { useQueries } from '@tanstack/react-query';
 import type { Story, StoryStatus } from '@zer0/api';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { errorText } from '../call';
 import { useApi } from '../context';
@@ -23,17 +24,37 @@ import { IN_PROGRESS, moveLabel, needOf, PRIORITIES, PUBLISHED, STATUSES, status
 const PAGE = 50;
 const MOST = 200; // the platform's largest page
 
-/** Where a drop on the board asks a story to go, if anywhere. */
-export function dropTarget(result: Pick<DropResult, 'draggableId' | 'destination'>, stories: Story[]) {
-  const story = stories.find((s) => s.id === result.draggableId);
-  const to = STATUSES.find((s) => s.value === result.destination?.droppableId)?.value;
+/** Where a drop on the board asks a story to go, if anywhere: the card dropped, and the column under it. */
+export function dropTarget(drop: { story: string; column: string | null }, stories: Story[]) {
+  const story = stories.find((s) => s.id === drop.story);
+  const to = STATUSES.find((s) => s.value === drop.column)?.value;
   return story && to && to !== story.status ? { story, to } : null;
+}
+
+/** A column a card can be dropped on. */
+function Column({ status, label, children }: { status: StoryStatus; label: string; children: ReactNode }) {
+  const { setNodeRef } = useDroppable({ id: status });
+  return (
+    <Paper ref={setNodeRef} withBorder p="xs" w={230} miw={230} mih={240} aria-label={`${label} column`}>
+      {children}
+    </Paper>
+  );
+}
+
+/** A card that can be picked up; a click on its headline or its menu still works (the pointer has to travel first). */
+function DraggableCard({ id, children }: { id: string; children: ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
+  return (
+    <Card ref={setNodeRef} {...attributes} {...listeners} withBorder padding="xs" style={{ transform: CSS.Translate.toString(transform), zIndex: isDragging ? 2 : undefined }}>
+      {children}
+    </Card>
+  );
 }
 
 export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: string) => void }) {
   const api = useApi();
   const move = useMove();
-  const nonce = useMantineStyleNonce()?.();
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const [sizes, setSizes] = useState<Partial<Record<StoryStatus, number>>>({});
   const [asking, setAsking] = useState<{ story: Story; to: StoryStatus } | null>(null);
   const [refused, setRefused] = useState('');
@@ -57,8 +78,8 @@ export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: str
       move.mutate({ story: story.id, body: { status: to } });
     }
   };
-  const onDragEnd = (result: DropResult) => {
-    const target = dropTarget(result, all);
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    const target = dropTarget({ story: String(active.id), column: over ? String(over.id) : null }, all);
     if (target) request(target.story, target.to);
   };
 
@@ -68,7 +89,7 @@ export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: str
       {refused ? <Alert color="orange">{refused}</Alert> : null}
       {move.error ? <Alert color="red">{errorText(move.error)}</Alert> : null}
       <ScrollArea type="auto" offsetScrollbars>
-        <DragDropContext onDragEnd={onDragEnd} nonce={nonce}>
+        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <Group align="flex-start" wrap="nowrap" gap="sm">
             {STATUSES.map((status, at) => {
               const page = columns[at]?.data;
@@ -76,9 +97,7 @@ export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: str
               const size = sizes[status.value] ?? PAGE;
               const more = (page?.count ?? 0) - column.length;
               return (
-                <Droppable key={status.value} droppableId={status.value}>
-                  {(drop) => (
-                    <Paper ref={drop.innerRef} {...drop.droppableProps} withBorder p="xs" w={230} miw={230} mih={240} aria-label={`${status.label} column`}>
+                <Column key={status.value} status={status.value} label={status.label}>
                       <Group justify="space-between" mb="xs">
                         <Text fw={600}>{status.label}</Text>
                         {page ? (
@@ -90,16 +109,11 @@ export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: str
                         )}
                       </Group>
                       <Stack gap="xs">
-                        {column.map((story, index) => (
-                          <Draggable key={story.id} draggableId={story.id} index={index}>
-                            {(drag) => (
-                              <Card ref={drag.innerRef} {...drag.draggableProps} {...drag.dragHandleProps} withBorder padding="xs">
-                                <StoryCard story={story} onOpen={onOpen} onMove={request} />
-                              </Card>
-                            )}
-                          </Draggable>
+                        {column.map((story) => (
+                          <DraggableCard key={story.id} id={story.id}>
+                            <StoryCard story={story} onOpen={onOpen} onMove={request} />
+                          </DraggableCard>
                         ))}
-                        {drop.placeholder}
                         {more > 0 ? (
                           <Stack gap={2}>
                             <Text size="xs" c="dimmed">
@@ -113,13 +127,11 @@ export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: str
                           </Stack>
                         ) : null}
                       </Stack>
-                    </Paper>
-                  )}
-                </Droppable>
+                </Column>
               );
             })}
           </Group>
-        </DragDropContext>
+        </DndContext>
       </ScrollArea>
       {asking ? <MoveDialog story={asking.story} to={asking.to} onClose={() => setAsking(null)} /> : null}
     </Stack>
