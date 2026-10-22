@@ -446,7 +446,9 @@ def test_a_file_finds_the_pages_its_import_recorded(site_root, article, editor):
     site, or from a folder above it that ends with the site's recorded folder."""
     site_root.source_root = "sites/demo"
     site_root.save()
-    ImportedSource.objects.create(page=article, site_key="test-site", legacy_path="_posts/backups.md", source_digest="x", import_hash="y")
+    ImportedSource.objects.create(
+        page=article, site_key="test-site", legacy_path="_posts/backups.md", source_digest="x", import_hash="y"
+    )
     client = signed_in(editor)
 
     def found(source):
@@ -457,5 +459,9 @@ def test_a_file_finds_the_pages_its_import_recorded(site_root, article, editor):
     assert found("code/zer0-cms/sites/demo/_posts/backups.md") == [article.pk]  # a folder above it
     assert found("demo/_posts/backups.md") == [article.pk]  # the site checked out on its own
     assert found("other/_posts/backups.md") == []  # another site's file of the same name
-    assert found("_posts/elsewhere.md") == [] and found("/abs/_posts/backups.md") == [] and found("../_posts/backups.md") == []
+    assert (
+        found("_posts/elsewhere.md") == []
+        and found("/abs/_posts/backups.md") == []
+        and found("../_posts/backups.md") == []
+    )
     assert signed_in(person("stranger")).get(PAGES, {"source": "_posts/backups.md"}).json()["count"] == 0

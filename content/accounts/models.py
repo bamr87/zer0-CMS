@@ -41,7 +41,9 @@ class UserToken(models.Model):
         if user.username.startswith("agent:"):
             raise ValueError("an agent's token is an AgentToken (manage.py agent_token)")
         raw = cls.PREFIX + secrets.token_urlsafe(32)
-        token = cls.objects.create(name=name, user=user, prefix=raw[:14], key_hash=cls.digest(raw), expires_at=expires_at)
+        token = cls.objects.create(
+            name=name, user=user, prefix=raw[:14], key_hash=cls.digest(raw), expires_at=expires_at
+        )
         return token, raw
 
     @classmethod

@@ -30,7 +30,9 @@ def test_a_token_is_its_person_on_the_studio_endpoints(editor, article):
     assert listing.status_code == 200 and article.pk in {p["id"] for p in listing.json()["results"]}
     # A write needs no CSRF token: nothing a browser sends by itself carries the header.
     client = Client(enforce_csrf_checks=True)
-    saved = client.post(f"/api/v2/content/pages/{article.pk}/unpublish/", content_type="application/json", **bearer(raw))
+    saved = client.post(
+        f"/api/v2/content/pages/{article.pk}/unpublish/", content_type="application/json", **bearer(raw)
+    )
     assert saved.status_code == 200 and saved.json()["live"] is False
     token.refresh_from_db()
     assert token.last_used_at is not None

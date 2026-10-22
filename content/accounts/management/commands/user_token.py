@@ -28,7 +28,13 @@ class Command(BaseCommand):
             raise CommandError(f"no user {username}")
         if show:
             for token in user.user_tokens.order_by("-created_at"):
-                state = "revoked" if token.revoked_at else f"expires {token.expires_at:%Y-%m-%d}" if token.expires_at else "active"
+                state = (
+                    "revoked"
+                    if token.revoked_at
+                    else f"expires {token.expires_at:%Y-%m-%d}"
+                    if token.expires_at
+                    else "active"
+                )
                 self.stdout.write(f"{token.prefix}…  {token.name}  {state}  last used {token.last_used_at or 'never'}")
             return
         if revoke:
@@ -41,7 +47,9 @@ class Command(BaseCommand):
         if not name:
             raise CommandError("--name is required to issue a token")
         try:
-            token, raw = UserToken.issue(user, name=name, expires_at=timezone.now() + timedelta(days=days) if days else None)
+            token, raw = UserToken.issue(
+                user, name=name, expires_at=timezone.now() + timedelta(days=days) if days else None
+            )
         except ValueError as e:
             raise CommandError(str(e)) from e
         self.stdout.write(raw)

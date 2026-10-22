@@ -40,5 +40,7 @@ def pages_imported_from(path: str) -> list[int]:
     parts = pure.parts
     above = {"/".join(parts[i:]): "/".join(parts[:i]) for i in range(len(parts))}
     rows = list(ImportedSource.objects.filter(legacy_path__in=above).values_list("page_id", "site_key", "legacy_path"))
-    roots = dict(SiteRootPage.objects.filter(site_key__in={key for _, key, _ in rows}).values_list("site_key", "source_root"))
+    roots = dict(
+        SiteRootPage.objects.filter(site_key__in={key for _, key, _ in rows}).values_list("site_key", "source_root")
+    )
     return [page for page, key, legacy in rows if _same_folder(above[legacy], roots.get(key, ""))]
