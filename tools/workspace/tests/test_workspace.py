@@ -218,6 +218,19 @@ class ChecksTest(WorkspaceCase):
         _, out, _ = self.cli("routes", "--json")
         self.assertEqual([(r["name"], r["route"]) for r in json.loads(out)], [("theme", "/"), ("site", "/site/")])
 
+    def test_a_sites_render_setting_reaches_routes_list_and_info(self):  # PLAN P2, beyond the Ruby suite
+        render = "    render: {as: jekyll-theme, theme: v1.31.3, server: jekyll-4}\n"
+        self.write("workspace.yml", fixtures.with_route("/site/").replace('    site: "."\n', '    site: "."\n' + render, 1))
+        setting = {"as": "jekyll-theme", "theme": "v1.31.3", "server": "jekyll-4", "before": None, "obsidian": False}
+        _, out, _ = self.cli("routes", "--json")
+        self.assertEqual([r.get("render") for r in json.loads(out)], [setting])
+        _, out, _ = self.cli("list", "--json")
+        self.assertEqual({p["name"]: p.get("render") for p in json.loads(out)}, {"root-app": None, "theme": None, "site": setting})
+        self.assertNotIn("render", json.loads(out)[0], "a project without the setting lists as before")
+        _, out, _ = self.cli("info", "site")
+        self.assertIn("  render:     jekyll-theme v1.31.3, built by the jekyll-4 server\n", out)
+        self.assertEqual(self.findings(), [])
+
     def test_vendored_drift_is_a_finding_and_vendor_write_repairs_it(self):
         self.write("packages/theme/tokens.css", "--x: 2;")
         self.assertFinding("src/tokens.css has drifted")

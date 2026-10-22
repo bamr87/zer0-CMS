@@ -39,9 +39,10 @@ media types from the table below rather than Python's `mimetypes`, whose
 built-in table grows with each release (3.13 added .webp, 3.14 .woff2 and
 .ttf), so a manifest written by one interpreter would not match another's.
 
-  build <dir> --site <name> --out <file> [--source <dir>]
+  build <dir> --site <name> --out <file> [--source <dir> | --built-with <file>]
                                     write the manifest of a built site; --source is the
-                                    directory it was built from (its Gemfile.lock, _config.yml)
+                                    directory it was built from (its Gemfile.lock, _config.yml),
+                                    --built-with what the Jekyll-theme option says it resolved
   compare [--pages] <recorded> <candidate>
                                     list what differs; exit 1 if anything does. --pages
                                     compares only what a reader reaches: the HTML pages,
@@ -51,10 +52,12 @@ built-in table grows with each release (3.13 added .webp, 3.14 .woff2 and
                                     compare it with its recording
   --write [--site <name>]...        rebuild and (re)write the recordings
 
-`--check` and `--write` need what pages.yml needs — Ruby, each site's bundle and
-the network (gems, remote themes) — and read the route plan from
-`bin/zer0 routes --json`. Wherever they run, they build as pages.yml's runners
-do: in UTC, and without the caller's build variables (NOT_INHERITED below).
+`--check` and `--write` need what pages.yml needs — Docker for a site on the
+Jekyll-theme option (tools/jekyll_theme.py, PLAN P2), Ruby and its bundle for a
+site still on its Gemfile, and the network (the server's image or the gems, the
+theme) — and read the route plan from `bin/zer0 routes --json`. Wherever they
+run, they build as pages.yml's runners do: in UTC, and without the caller's
+build variables (NOT_INHERITED below).
 Stdlib only. Tests: tools/tests/test_site_manifest.py; the recordings and how
 to refresh them: web/site/fixtures/README.md.
 """
@@ -409,44 +412,55 @@ def resolved_differently(recorded: dict, candidate: dict) -> list[str]:
 
 
 def routes() -> list[dict]:
-    """The routed sites, as pages.yml plans them (`bin/zer0 routes --json`)."""
-    out = subprocess.run(
-        [str(ROOT / "bin" / "zer0"), "routes", "--json"], cwd=ROOT, check=True, capture_output=True, text=True
-    )
-    return json.loads(out.stdout)
+    """Every site `--check` can rebuild: the routed ones, as pages.yml plans them (`bin/zer0 routes --json`),
+    then those on the Jekyll-theme option that nothing routes (2005, irony-works), with `route` None —
+    each recorded as its own `build` task builds it, with its own url and baseurl."""
+    zer0 = str(ROOT / "bin" / "zer0")
+    routed = json.loads(subprocess.run([zer0, "routes", "--json"], cwd=ROOT, check=True, capture_output=True, text=True).stdout)
+    listed = json.loads(subprocess.run([zer0, "list", "--json"], cwd=ROOT, check=True, capture_output=True, text=True).stdout)
+    names = {r["name"] for r in routed}
+    return routed + [
+        {"name": p["name"], "path": p["path"], "route": None, "bundle_dir": p["site"] or p["path"], "render": p["render"]}
+        for p in listed
+        if p.get("render") and p["name"] not in names
+    ]
 
 
 def rebuild(route: dict, dest: Path) -> dict | None:
     """Build one routed site into `dest` the way pages.yml's build job does.
 
     Returns what the build resolved (`built_with`), or None when it failed or wrote no index.html. A
-    Gemfile.lock the bundle writes where none is committed is removed again, so the next run resolves
-    afresh as CI does.
+    site on the Jekyll-theme option (`render` in its route) is built by its `pages` task alone, which
+    reports what it resolved — or, when nothing routes it, by its `build` task with its own url and
+    baseurl; one still on its Gemfile is bundled first, and a Gemfile.lock the bundle writes where none
+    is committed is removed again, so the next run resolves afresh as CI does.
     """
     source = ROOT / route["bundle_dir"]
     lock = source / "Gemfile.lock"
     locked = lock.exists()
-    baseurl = PAGES_BASE_PATH.rstrip("/") + route["route"].rstrip("/")
     with tempfile.TemporaryDirectory() as tmp:
-        config = Path(tmp) / "route.yml"
-        config.write_text(f'url: "{PAGES_URL}"\nbaseurl: "{baseurl}"\n', encoding="utf-8")
+        facts = Path(tmp) / "built-with.json"
         env = {key: value for key, value in os.environ.items() if not key.startswith(NOT_INHERITED)}
         env.update(
             TZ="UTC",  # pages.yml's runners' zone: Jekyll dates a post, and so its URL, in the process's zone
             LANG="C.UTF-8",
             LC_ALL="C.UTF-8",
             PAGES_REPO_NWO=PAGES_REPO_NWO,
-            ZER0_PAGES_CONFIG=str(config),
             ZER0_PAGES_DEST=str(dest),
-            ZER0_PAGES_BASEURL=baseurl,
+            ZER0_PAGES_BUILT_WITH=str(facts),
         )
-        steps = (
-            (["bundle", "install"], source),
-            ([str(ROOT / "bin" / "zer0"), "run", "pages", route["name"]], ROOT),
-        )
+        task = "build"
+        if route["route"] is not None:
+            task, baseurl, config = "pages", PAGES_BASE_PATH.rstrip("/") + route["route"].rstrip("/"), Path(tmp) / "route.yml"
+            config.write_text(f'url: "{PAGES_URL}"\nbaseurl: "{baseurl}"\n', encoding="utf-8")
+            env.update(ZER0_PAGES_CONFIG=str(config), ZER0_PAGES_BASEURL=baseurl)
+        steps = [] if route.get("render") else [(["bundle", "install"], source)]
+        steps.append(([str(ROOT / "bin" / "zer0"), "run", task, route["name"]], ROOT))
         try:
             built = all(subprocess.run(cmd, cwd=cwd, env=env, check=False).returncode == 0 for cmd, cwd in steps)
-            return built_with(source) if built and (dest / "index.html").is_file() else None
+            if not built or not (dest / "index.html").is_file():
+                return None
+            return load(facts) if route.get("render") else built_with(source)
         finally:
             if not locked:
                 lock.unlink(missing_ok=True)
@@ -480,7 +494,9 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("dir", type=Path)
     build.add_argument("--site", required=True, dest="name")
     build.add_argument("--out", type=Path, required=True)
-    build.add_argument("--source", type=Path, help="the directory it was built from: record what it resolved")
+    resolved = build.add_mutually_exclusive_group()
+    resolved.add_argument("--source", type=Path, help="the directory it was built from: record what it resolved")
+    resolved.add_argument("--built-with", type=Path, help="what the Jekyll-theme option reported it resolved (JSON)")
     comparison = commands.add_parser(
         "compare", help="list what differs between two manifests (exit 1 when anything does)"
     )
@@ -492,7 +508,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build":
         if not args.dir.is_dir():
             parser.error(f"{args.dir} is not a directory")
-        write(args.out, manifest(args.dir, args.name, built_with(args.source) if args.source else None))
+        facts = built_with(args.source) if args.source else load(args.built_with) if args.built_with else None
+        write(args.out, manifest(args.dir, args.name, facts))
         return 0
     if args.command == "compare":
         if not args.recorded.is_file():
@@ -509,7 +526,7 @@ def main(argv: list[str] | None = None) -> int:
     plan = routes()
     unknown = sorted(set(args.site) - {r["name"] for r in plan})
     if unknown:
-        parser.error(f"not a routed site: {', '.join(unknown)} (bin/zer0 routes)")
+        parser.error(f"no recipe rebuilds {', '.join(unknown)}: not routed (bin/zer0 routes) nor on the Jekyll-theme option")
     failed = False
     for route in plan:
         name = route["name"]

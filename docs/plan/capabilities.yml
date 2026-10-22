@@ -68,7 +68,10 @@ theme_ratchet:
 
 theme_allowed:
   # The only files that may name the theme for good: the Jekyll-theme option's
-  # own (PLAN P2 adds them here) and this gate.
+  # own (PLAN P2: the option, its tests and its jekyll-4 server's image) and this gate.
+  - tools/jekyll_theme.py
+  - tools/tests/test_jekyll_theme.py
+  - tools/jekyll/Dockerfile
   - tools/check_absorption.py
   - tools/tests/test_check_absorption.py
 

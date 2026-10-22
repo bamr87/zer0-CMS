@@ -11,11 +11,11 @@ It was stdlib Ruby until PLAN P5 ([ADR 0006](../../docs/adr/0006-one-python-plat
 | Command | What it does |
 |---|---|
 | `bin/zer0 list [--json]` | Every project: path, kind, what it publishes, the workflow that gates it. |
-| `bin/zer0 info <project>` | One project in full: summary, tasks with their directory and environment, dependencies and dependents, site root. |
+| `bin/zer0 info <project>` | One project in full: summary, tasks with their directory and environment, dependencies and dependents, site root, and how the site renders (its `render:` setting). |
 | `bin/zer0 run <task> [project...]` | Runs `setup`, `check`, `test`, `build` or `pages` for the named projects (default: every project that has the task), each in its own directory through `bash -c`. `--affected [--base REF]` narrows to what changed, `--dry-run` prints the commands, `--keep-going` does not stop at the first failure. A project without the task is reported as skipped, never as passed. |
 | `bin/zer0 affected [--base REF]` | The projects changed since the merge base with `REF` (default `origin/main`), uncommitted and untracked files included, plus every project that depends on them. `--files a,b` takes paths instead of asking git; `--json` adds the direct set and the files no project owns. |
 | `bin/zer0 matrix <task> [--affected]` | The projects that have `<task>`, as a JSON list for a CI matrix. |
-| `bin/zer0 routes [--json]` | Where the one Pages deploy serves each site (`route:` in `workspace.yml`), root first; `--json` is `pages.yml`'s build plan. Sites that publish pages without a route are listed with their reason. |
+| `bin/zer0 routes [--json]` | Where the one Pages deploy serves each site (`route:` in `workspace.yml`), root first; `--json` is `pages.yml`'s build plan, with each site's `render:` setting when it renders with the Jekyll-theme option (so a leg knows its Jekyll server). Sites that publish pages without a route are listed with their reason. |
 | `bin/zer0 check` | The workspace contract, below. Exit 1 on any finding. |
 | `bin/zer0 vendor [--write]` | Every vendored copy and whether it still matches its source; `--write` re-copies the drifted ones. |
 | `bin/zer0 doctor [project...]` | The CMS's own `zer0 doctor` (`rails/bin/zer0-cms`) on every project with a `site:` root. Report-only unless `--strict`; `--verbose` prints each full report. That doctor is still Ruby until PLAN G4 ports it to the platform: with no `ruby` on `PATH`, this command says so and exits 2. |
@@ -42,7 +42,7 @@ A file belongs to the project whose glob matches it with the longest literal pre
 | File | What it is |
 |---|---|
 | `__init__.py` | The package, and `puts`, Ruby's `puts`, which the tool's output was written with. |
-| `manifest.py` | Loads and validates `workspace.yml` into `Project`, `Task` and `Vendored` values; dependency names and cycles are checked here, and every path it names is held inside the repository. Its `to_s` and `inspect` render values the way the Ruby tool's messages quoted them. |
+| `manifest.py` | Loads and validates `workspace.yml` into `Project`, `Task` and `Vendored` values; dependency names and cycles are checked here, and every path it names is held inside the repository. A site's `render:` setting is checked here too — `as: jekyll-theme`, the theme's tag, a known Jekyll `server:`, an optional `before:` command and `obsidian:` flag — and read by the Jekyll-theme option (`tools/jekyll_theme.py`, PLAN P2); `list --json` shows it only for a project that has it, so the golden recordings of the tree before it hold. Its `to_s` and `inspect` render values the way the Ruby tool's messages quoted them. |
 | `ownership.py` | File → project, and the affected set with dependents. |
 | `checks.py` | The five `check` rules. |
 | `runner.py` | Runs a task per project; the spawn is injectable for tests. |
