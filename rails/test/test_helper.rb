@@ -10,10 +10,11 @@ require "rails/test_help"
 require "fileutils"
 require "tmpdir"
 
-# A private, writable copy of test/fixtures/jekyll-site — the fixture whose
-# expected reader output Jekyll 4.4.1 itself generated — registered and synced.
+# A private, writable copy of content/tests/fixtures/jekyll-site — the fixture
+# whose expected reader output Jekyll 4.4.1 itself generated (it moved to the
+# platform's tests with the catalog's Python port, PLAN G4) — registered and synced.
 module FixtureSite
-  SOURCE = Rails.root.join("test/fixtures/jekyll-site")
+  SOURCE = Rails.root.join("../content/tests/fixtures/jekyll-site")
   PNG = ["89504e470d0a1a0a0000000d4948445200000001000000010806000000" \
          "1f15c4890000000d4944415478da63f8cfc0f01f0005000201a5f3b9a90000000049454e44ae426082"].pack("H*")
 
