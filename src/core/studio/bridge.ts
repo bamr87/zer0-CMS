@@ -6,40 +6,53 @@
  * When a platform is configured, the extension's webviews render the studio's
  * workspaces from `web/packages/` (`dist/studio.js`), and their API client
  * speaks postMessage (`web/packages/webview/src/transport.ts`). A webview names
- * a method, a path and a JSON body; this turns the message into a request to
- * the platform with the URL from the settings layer and the person's token
- * from SecretStorage, both read fresh for each request, and posts back the
- * status and the body. The rules (decisions D5, D11, D13):
+ * a method, a path, a JSON body and the few headers the platform reads;
+ * `sendToPlatform` turns that into a request to the platform with the URL from
+ * the settings layer and the person's token from SecretStorage, both read fresh
+ * for each request, and answers with the status, the body and the headers a
+ * workspace reads. The rules (decisions D5, D11, D13):
  *
  *   - **The webview never sees the token.** It is added here, to a request
  *     whose origin is the configured platform's, and never posted, logged or
- *     put in an error.
- *   - **The webview is UI, never the gate.** Only a path under `/api/v2/`,
- *     with no way out of it (`..`, a scheme, a second origin), and only
- *     `GET`, `POST`, `PATCH`, `PUT` and `DELETE`; never the session endpoints
- *     (the extension signs in with a token). A request that changes the live
- *     site — publish, unpublish, schedule — asks the person modally first,
- *     whatever the webview showed; the platform then checks their permissions.
+ *     put in an error. The platform is https, or plain http on this machine
+ *     only, so the token never crosses a network in clear text.
+ *   - **The webview is UI, never the gate.** Only a path under `/api/v2/` that
+ *     is exactly the path the platform routes — no `%`, no `.`, `..` or empty
+ *     segment, nothing the URL parser would rewrite — and only `GET`, `POST`,
+ *     `PATCH`, `PUT` and `DELETE`; never the session endpoints (the extension
+ *     signs in with a token). A request that changes the live site — publish,
+ *     unpublish, schedule — asks the person modally first, whatever the
+ *     webview showed; the platform then checks their permissions.
  *   - **Network only from an explicit act.** Nothing here runs until a webview
- *     the person opened asks; `fetch` and the stream opener are injected.
+ *     the person opened asks, or the Metadata view asks which file is a page;
+ *     `fetch` and the stream opener are injected.
  *
  * A refusal answers like the platform would — the error envelope with a status
- * and a code — so the workspace shows it where the request was made.
+ * and a code — so the workspace shows it where the request was made. A body is
+ * JSON text and a reply is text: the platform's API answers JSON and event
+ * streams, and an upload (multipart) is refused by the webview's transport.
  */
 
 /** A path the webview may ask for: the platform's API, nothing else. */
 const API_PREFIX = '/api/v2/';
 const METHODS: ReadonlySet<string> = new Set(['GET', 'POST', 'PATCH', 'PUT', 'DELETE']);
 /** A session belongs to a browser; the extension authenticates with a token. */
-const SESSION_PREFIX = '/api/v2/session/';
+const SESSION = /^\/api\/v2\/session(?:\/|$)/;
+/** The request headers a workspace may set, because the platform reads them; every other header is the host's. */
+const REQUEST_HEADERS: readonly string[] = ['Idempotency-Key', 'If-Match'];
+/** The response headers a workspace may read, beside the status and the body. */
+const RESPONSE_HEADERS: readonly string[] = ['Content-Type', 'Location', 'Retry-After', 'X-Request-Id'];
+/** Hosts the token may reach over plain http: this machine. */
+const LOOPBACK = /^(?:localhost|127(?:\.\d{1,3}){3}|\[::1\])$/;
 const MAX_BODY = 1_000_000;
 const MAX_PATH = 2048;
+const MAX_HEADER = 255;
 const MAX_STREAMS = 8;
-/** The three requests that change what the live site shows, and how to ask. */
+/** The three requests that change what the live site shows, and how to ask. A page id is any one segment. */
 const LIVE_CHANGES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/^\/api\/v2\/content\/pages\/(\d+)\/publish\/$/, 'Publish page $1 on $origin?'],
-  [/^\/api\/v2\/content\/pages\/(\d+)\/unpublish\/$/, 'Take page $1 off the live site on $origin?'],
-  [/^\/api\/v2\/content\/pages\/(\d+)\/schedule\/$/, 'Schedule page $1 to go live (or come down) on $origin?'],
+  [/^\/api\/v2\/content\/pages\/([^/]+)\/publish\/$/, 'Publish page $1 on $origin?'],
+  [/^\/api\/v2\/content\/pages\/([^/]+)\/unpublish\/$/, 'Take page $1 off the live site on $origin?'],
+  [/^\/api\/v2\/content\/pages\/([^/]+)\/schedule\/$/, 'Schedule page $1 to go live (or come down) on $origin?'],
 ];
 
 export interface BridgeDeps {
@@ -66,14 +79,16 @@ export interface BridgeDeps {
   openExternal(url: string): void;
 }
 
-/** The platform's origin for a configured URL, or undefined when it is not an http(s) URL. */
+/**
+ * The platform's origin for a configured URL, or undefined when the token may
+ * not be sent there: an https URL, or http on this machine (`localhost`,
+ * `127.0.0.0/8`, `[::1]`) — never plain http across a network.
+ */
 export function platformOrigin(url: string | undefined): string | undefined {
-  if (!url) {
-    return undefined;
-  }
   try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.origin : undefined;
+    const parsed = new URL(url ?? '');
+    const safe = parsed.protocol === 'https:' || (parsed.protocol === 'http:' && LOOPBACK.test(parsed.hostname));
+    return safe ? parsed.origin : undefined;
   } catch {
     return undefined; // not a URL at all: there is no platform to talk to
   }
@@ -85,34 +100,38 @@ export function tokenKey(origin: string): string {
 }
 
 /**
- * `path` as a request to `origin`, or undefined when it could leave the API:
- * not under `/api/v2/`, a `..` or an encoded one, a backslash, a fragment, a
- * control character, or anything that resolves to another origin or path.
+ * `path` as a request to `origin`, or undefined when it is not plainly a path
+ * of the platform's API. The gates read the path the platform will route, so
+ * the path part must be sent as written: no `%` (the platform decodes
+ * `%70ublish` into `publish` before routing), no `.`, `..` or empty segment (a
+ * URL parser drops the first two, a proxy merges the third), no backslash,
+ * fragment or white space, nothing the URL parser rewrites, and never the
+ * session endpoints. The query may encode anything (`?source=a%2Fb.md`).
  */
-export function apiUrl(origin: string, path: unknown): string | undefined {
-  if (typeof path !== 'string' || path.length > MAX_PATH || !path.startsWith(API_PREFIX)) {
+export function apiUrl(origin: string, path: unknown): URL | undefined {
+  if (typeof path !== 'string' || path.length > MAX_PATH || !path.startsWith(API_PREFIX) || /[\\#\s]/.test(path)) {
     return undefined;
   }
-  // The query may encode anything (`?source=_posts%2Fa.md`); the path may not.
-  const query = path.indexOf('?');
-  const pathname = query < 0 ? path : path.slice(0, query);
-  if (/[\\#\s]/.test(path) || /%2e|%2f|%5c/i.test(pathname) || pathname.split('/').includes('..')) {
+  const pathname = path.split('?', 1)[0] ?? '';
+  const segments = pathname.slice(API_PREFIX.length).split('/');
+  const odd = segments.some((s, i) => s === '.' || s === '..' || (s === '' && i < segments.length - 1));
+  if (pathname.includes('%') || odd || SESSION.test(pathname)) {
     return undefined;
   }
   const url = new URL(path, origin);
-  return url.origin === origin && url.pathname.startsWith(API_PREFIX) ? url.toString() : undefined;
+  return url.origin === origin && url.pathname === pathname ? url : undefined;
 }
 
-/** The question a person answers before `method path` changes the live site, or undefined. */
-export function liveChange(method: string, path: string, origin: string): string | undefined {
+/** The question a person answers before `method pathname` changes the live site, or undefined. */
+export function liveChange(method: string, pathname: string, origin: string): string | undefined {
   if (method !== 'POST') {
     return undefined;
   }
-  const bare = path.split('?')[0] ?? '';
   for (const [pattern, question] of LIVE_CHANGES) {
-    const match = pattern.exec(bare);
+    const match = pattern.exec(pathname);
     if (match) {
-      return question.replace('$1', match[1] ?? '').replace('$origin', origin);
+      // Replaced by function, so a `$` in the path is text, not a replacement pattern.
+      return question.replace('$1', () => match[1] ?? '').replace('$origin', () => origin);
     }
   }
   return undefined;
@@ -132,6 +151,96 @@ export function linkTarget(href: unknown, origin: string | undefined): string | 
 /** The platform's error envelope, as the host answers a refusal. */
 export function envelope(status: number, code: string, message: string): string {
   return JSON.stringify({ error: { code, message, status, details: [], request_id: null, retry_after: null } });
+}
+
+/** A reply to a request: what the webview hears, and all the host passes on. */
+export interface PlatformReply {
+  status: number;
+  body: string;
+  /** Only `RESPONSE_HEADERS`, each the platform sent. */
+  headers: Record<string, string>;
+}
+
+/** What `sendToPlatform` needs: `BridgeDeps` without the webview. */
+export type PlatformDeps = Pick<BridgeDeps, 'origin' | 'token' | 'confirm' | 'fetch'>;
+
+function refusal(status: number, code: string, message: string): PlatformReply {
+  return { status, body: envelope(status, code, message), headers: { 'Content-Type': 'application/json' } };
+}
+
+/** The request headers asked for, when each is one the platform reads and short visible text; otherwise undefined. */
+function forwarded(asked: unknown): Record<string, string> | undefined {
+  const names = asked === undefined ? {} : record(asked);
+  if (names === undefined) {
+    return undefined;
+  }
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(names)) {
+    const known = REQUEST_HEADERS.find((header) => header.toLowerCase() === name.toLowerCase());
+    if (known === undefined || typeof value !== 'string' || value.length > MAX_HEADER || !/^[\x21-\x7e]+$/.test(value)) {
+      return undefined;
+    }
+    out[known] = value;
+  }
+  return out;
+}
+
+/**
+ * One request — `{method, path, body?, headers?}`, from a webview or from the
+ * host itself — through every gate above, sent with the platform's URL and the
+ * person's token; or refused, the way the platform refuses. Never throws, and
+ * no reply carries the token.
+ */
+export async function sendToPlatform(deps: PlatformDeps, request: Record<string, unknown>): Promise<PlatformReply> {
+  const method = typeof request.method === 'string' ? request.method.toUpperCase() : '';
+  const origin = deps.origin();
+  if (origin === undefined) {
+    return refusal(503, 'extension.no_platform', 'No platform is configured: set zer0Cms.platform.url.');
+  }
+  const url = apiUrl(origin, request.path);
+  if (!METHODS.has(method) || url === undefined) {
+    return refusal(403, 'extension.refused', `The extension does not send ${method || 'that'} ${String(request.path)}.`);
+  }
+  const body = request.body;
+  if (body !== undefined && (typeof body !== 'string' || body.length > MAX_BODY || method === 'GET')) {
+    return refusal(422, 'extension.refused', 'A request body is JSON text, sent only with a write.');
+  }
+  const extra = forwarded(request.headers);
+  if (extra === undefined) {
+    return refusal(422, 'extension.refused', `The extension forwards only ${REQUEST_HEADERS.join(' and ')}, as short text.`);
+  }
+  const token = await deps.token(origin);
+  if (token === undefined) {
+    return refusal(401, 'auth.no_token', `No token for ${origin}: run “zer0-CMS: Set platform token”.`);
+  }
+  const question = liveChange(method, url.pathname, origin);
+  if (question !== undefined && !(await deps.confirm(question))) {
+    return refusal(409, 'extension.cancelled', 'Cancelled: nothing was sent to the platform.');
+  }
+  const headers: Record<string, string> = { ...extra, Accept: 'application/json', Authorization: `Bearer ${token}` };
+  if (typeof body === 'string') {
+    headers['Content-Type'] = 'application/json';
+  }
+  try {
+    const response = await deps.fetch(url.toString(), {
+      method,
+      headers,
+      ...(typeof body === 'string' ? { body } : {}),
+      redirect: 'error',
+    });
+    const kept: Record<string, string> = {};
+    for (const name of RESPONSE_HEADERS) {
+      const value = response.headers.get(name);
+      if (value !== null) {
+        kept[name] = value;
+      }
+    }
+    return { status: response.status, body: await response.text(), headers: kept };
+  } catch {
+    // The reason is the network's (refused, a TLS failure, a redirect); the
+    // message says where, never with what credential.
+    return refusal(503, 'platform.unreachable', `The platform at ${origin} did not answer.`);
+  }
 }
 
 function record(value: unknown): Record<string, unknown> | undefined {
@@ -195,56 +304,9 @@ export class StudioBridge {
     }
   }
 
-  private reply(id: number, status: number, body: string, contentType = 'application/json'): void {
-    this.deps.post({ type: 'api', id, status, body, contentType });
-  }
-
   private async api(m: Record<string, unknown>): Promise<void> {
-    const id = m.id;
-    if (typeof id !== 'number') {
-      return;
-    }
-    const method = typeof m.method === 'string' ? m.method.toUpperCase() : '';
-    const origin = this.deps.origin();
-    if (origin === undefined) {
-      return this.reply(id, 503, envelope(503, 'extension.no_platform', 'No platform is configured: set zer0Cms.platform.url.'));
-    }
-    const url = apiUrl(origin, m.path);
-    const body = m.body;
-    if (!METHODS.has(method) || url === undefined || String(m.path).startsWith(SESSION_PREFIX)) {
-      return this.reply(id, 403, envelope(403, 'extension.refused', `The extension does not send ${method || 'that'} ${String(m.path)}.`));
-    }
-    if (body !== undefined && (typeof body !== 'string' || body.length > MAX_BODY || method === 'GET')) {
-      return this.reply(id, 422, envelope(422, 'extension.refused', 'A request body is JSON text, sent only with a write.'));
-    }
-    const token = await this.deps.token(origin);
-    if (token === undefined) {
-      return this.reply(
-        id,
-        401,
-        envelope(401, 'auth.no_token', `No token for ${origin}: run “zer0-CMS: Set platform token”.`),
-      );
-    }
-    const question = liveChange(method, String(m.path), origin);
-    if (question !== undefined && !(await this.deps.confirm(question))) {
-      return this.reply(id, 409, envelope(409, 'extension.cancelled', 'Cancelled: nothing was sent to the platform.'));
-    }
-    const headers: Record<string, string> = { Accept: 'application/json', Authorization: `Bearer ${token}` };
-    if (typeof body === 'string') {
-      headers['Content-Type'] = 'application/json';
-    }
-    try {
-      const response = await this.deps.fetch(url, {
-        method,
-        headers,
-        ...(typeof body === 'string' ? { body } : {}),
-        redirect: 'error',
-      });
-      this.reply(id, response.status, await response.text(), response.headers.get('Content-Type') ?? 'application/json');
-    } catch {
-      // The reason is the network's (refused, a TLS failure, a redirect); the
-      // message says where, never with what credential.
-      this.reply(id, 503, envelope(503, 'platform.unreachable', `The platform at ${origin} did not answer.`));
+    if (typeof m.id === 'number') {
+      this.deps.post({ type: 'api', id: m.id, ...(await sendToPlatform(this.deps, m)) });
     }
   }
 
@@ -264,7 +326,7 @@ export class StudioBridge {
     if (token === undefined) {
       return failed();
     }
-    const close = this.deps.openStream(url, { Authorization: `Bearer ${token}` }, events, (event, data) => {
+    const close = this.deps.openStream(url.toString(), { Authorization: `Bearer ${token}` }, events, (event, data) => {
       this.deps.post({ type: 'event', id, event, data });
       if (event === 'end') {
         this.close(id);

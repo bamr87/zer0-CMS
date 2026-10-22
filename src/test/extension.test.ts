@@ -938,7 +938,7 @@ suite('extension: the studio in the webviews, once a platform is configured (G10
       await until(() => posted.length > 1, 'the reply');
       assert.equal(sent[0]?.url, `${ORIGIN}/api/v2/content/pages/?source=pages%2F_posts%2Ftech%2Fa.md`);
       assert.equal((sent[0]?.init.headers as Record<string, string>).Authorization, `Bearer ${TOKEN}`);
-      assert.deepEqual(posted[1], { type: 'api', id: 1, status: 200, body: '{"count":0,"results":[]}', contentType: 'application/json' });
+      assert.deepEqual(posted[1], { type: 'api', id: 1, status: 200, body: '{"count":0,"results":[]}', headers: { 'Content-Type': 'application/json' } });
 
       send({ type: 'api', id: 2, method: 'GET', path: '/admin/' });
       await until(() => posted.length > 2, 'the refusal');

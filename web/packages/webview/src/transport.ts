@@ -2,9 +2,12 @@
 // VS Code extension: the generated API client and the event streams, both
 // over postMessage. The webview never reaches the platform itself — its CSP
 // allows no connection — and never holds a credential: it names a method, a
-// path and a JSON body, and the extension host (src/core/studio/bridge.ts)
-// re-checks the request, adds the platform URL and the person's token from
-// SecretStorage, sends it, and posts back the status and the body.
+// path, a JSON body and the headers the platform reads (`FORWARDED`), and the
+// extension host (src/core/studio/bridge.ts) re-checks the request, adds the
+// platform URL and the person's token from SecretStorage, sends it, and posts
+// back the status, the body and the headers a workspace reads. A body that is
+// not JSON — an upload — is refused here, with the platform's envelope, rather
+// than sent as text it is not.
 import { createSessionClient, type ApiClient } from '@zer0/api';
 import type { Destination, OpenStream } from '@zer0/ui';
 
@@ -33,10 +36,12 @@ export interface Connection {
 interface Reply {
   status: number;
   body: string;
-  contentType?: string;
+  headers: Record<string, string>;
 }
 
 const BODILESS = new Set([101, 204, 205, 304]);
+/** The request headers the platform reads (`Idempotency-Key` on a run): the host forwards these and nothing else. */
+const FORWARDED = ['Idempotency-Key', 'If-Match'];
 // Request URLs are built against this and never leave the webview: the host
 // reads the path and query, and adds the platform's own origin.
 const NOWHERE = 'https://platform.invalid';
@@ -64,7 +69,8 @@ export function connect(port: Port): Connection {
     const m = record(message);
     if (m === undefined || typeof m.type !== 'string') return;
     if (m.type === 'api' && typeof m.id === 'number') {
-      replies.get(m.id)?.({ status: Number(m.status), body: String(m.body ?? ''), contentType: typeof m.contentType === 'string' ? m.contentType : undefined });
+      const headers = Object.entries(record(m.headers) ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === 'string');
+      replies.get(m.id)?.({ status: Number(m.status), body: String(m.body ?? ''), headers: Object.fromEntries(headers) });
       replies.delete(m.id);
     } else if (m.type === 'event' && typeof m.id === 'number' && typeof m.event === 'string') {
       // The host relays each event's text as it came; read it as the studio's EventSource does.
@@ -83,12 +89,25 @@ export function connect(port: Port): Connection {
     const id = ++next;
     const url = new URL(request.url);
     const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text();
+    const type = request.headers.get('Content-Type');
+    if (body && type !== null && !/^application\/json\b/i.test(type)) {
+      const message = `The editor sends JSON to the platform, not ${type.split(';')[0]}: do this in the studio in your browser.`;
+      const error = { code: 'extension.unsupported_body', message, status: 415, details: [], request_id: null, retry_after: null };
+      return new Response(JSON.stringify({ error }), { status: 415, headers: { 'Content-Type': 'application/json' } });
+    }
+    const headers = Object.fromEntries(FORWARDED.flatMap((name) => (request.headers.has(name) ? [[name, request.headers.get(name) ?? '']] : [])));
     const reply = await new Promise<Reply>((resolve) => {
       replies.set(id, resolve);
-      port.post({ type: 'api', id, method: request.method, path: url.pathname + url.search, ...(body ? { body } : {}) });
+      port.post({
+        type: 'api',
+        id,
+        method: request.method,
+        path: url.pathname + url.search,
+        ...(body ? { body } : {}),
+        ...(Object.keys(headers).length ? { headers } : {}),
+      });
     });
-    const headers = reply.contentType ? { 'Content-Type': reply.contentType } : undefined;
-    return new Response(BODILESS.has(reply.status) ? null : reply.body, { status: reply.status, headers });
+    return new Response(BODILESS.has(reply.status) ? null : reply.body, { status: reply.status, headers: reply.headers });
   };
 
   const stream: OpenStream = (path, events, onEvent) => {

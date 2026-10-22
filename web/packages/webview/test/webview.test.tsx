@@ -3,15 +3,16 @@
 // that answers the postMessage transport from a fake platform. It proves the
 // extension renders the studio's workspaces from the registry — the dashboard's
 // tabs, the page behind the open file, the AI view — that every request it
-// sends names a method, a path and a body and never a credential, and that a
-// destination a view does not show, a stream and a link go to the host.
+// sends names a method, a path, a body and only the headers the platform reads,
+// never a credential; that an upload is refused rather than sent as text; and
+// that a destination a view does not show, a stream and a link go to the host.
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WORKSPACES } from '@zer0/ui';
 import { describe, expect, it } from 'vitest';
 
 import { App, type View } from '../src/App';
-import type { Port } from '../src/transport';
+import { connect, type Port } from '../src/transport';
 import { pageDetail, Reply, type Handler } from '../../../test/harness';
 
 type Message = Record<string, unknown>;
@@ -32,7 +33,8 @@ function fakeHost(routes: Record<string, Handler>) {
         ? handler({ body: m.body ? JSON.parse(String(m.body)) : undefined, url })
         : new Reply(404, { error: { code: 'resource.not_found', message: `no fake for ${String(m.method)} ${url.pathname}`, status: 404, details: [] } });
       const reply = out instanceof Reply ? out : new Reply(200, out);
-      queueMicrotask(() => void deliver({ type: 'api', id: m.id, status: reply.status, body: JSON.stringify(reply.body), contentType: 'application/json' }));
+      const headers = { 'Content-Type': 'application/json', 'X-Request-Id': `req-${String(m.id)}` };
+      queueMicrotask(() => void deliver({ type: 'api', id: m.id, status: reply.status, body: JSON.stringify(reply.body), headers }));
     },
     listen: (handler) => {
       listeners.add(handler);
@@ -208,6 +210,32 @@ describe('the extension webviews', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Review its suggestions' }));
     expect(host.sent).toContainEqual({ type: 'go', to: { to: 'review', runId: 7 } });
+  });
+
+  it('sends an Idempotency-Key with a run, refuses an upload, and reads the headers the host passes on', async () => {
+    const host = fakeHost({ 'POST /api/v2/ai/pipelines/p-1/run/': () => new Reply(202, { run: 7 }) });
+    const { api } = connect(host.port);
+    const started = await api.POST('/api/v2/ai/pipelines/{public_id}/run/', {
+      params: { path: { public_id: 'p-1' }, header: { 'Idempotency-Key': 'k-1' } },
+      body: { input: {} } as never,
+      headers: { 'X-Forwarded-For': '10.0.0.1' },
+    });
+    expect(started.response.status).toBe(202);
+    expect(started.response.headers.get('X-Request-Id')).toBe('req-1');
+    const sent = host.sent.find((m) => m.type === 'api');
+    expect(sent).toMatchObject({ method: 'POST', path: '/api/v2/ai/pipelines/p-1/run/', headers: { 'Idempotency-Key': 'k-1' } });
+    expect(Object.keys(sent?.headers as object)).toEqual(['Idempotency-Key']);
+
+    const form = new FormData();
+    form.append('file', new Blob(['%PDF-1.7'], { type: 'application/pdf' }), 'paper.pdf');
+    const upload = await api.POST('/api/v2/ai/pipelines/{public_id}/run/', {
+      params: { path: { public_id: 'p-1' } },
+      body: form as never,
+      bodySerializer: (body: unknown) => body as FormData,
+    });
+    expect(upload.response.status).toBe(415);
+    expect(upload.error).toMatchObject({ error: { code: 'extension.unsupported_body' } });
+    expect(host.sent.filter((m) => m.type === 'api')).toHaveLength(1);
   });
 
   it('hands a link to the host instead of following it', async () => {

@@ -564,9 +564,11 @@ suite('webview: a run list GitHub refused renders unknown', () => {
  * `StudioBridge` is everything between a studio webview and the platform, so
  * these are the gates decisions D5, D11 and D13 ask of it, proved from outside
  * with a fetch that records instead of connecting: the token reaches the
- * configured platform and nothing else, a request that could leave the API is
- * refused before a socket opens, a live-site change asks the person every
- * time, and nothing the webview hears carries the token.
+ * configured platform and nothing else, a request that could leave the API —
+ * or reach a route other than the one the gates read — is refused before a
+ * socket opens, a live-site change asks the person every time, only the
+ * headers the platform reads pass either way, and nothing the webview hears
+ * carries the token.
  */
 suite('studio: the host side of the webview transport (G10)', () => {
   const ORIGIN = 'https://cms.test';
@@ -640,14 +642,14 @@ suite('studio: the host side of the webview transport (G10)', () => {
     ...(body === undefined ? {} : { body }),
   });
 
-  test('a request goes to the configured platform with the token, and the webview hears only the status and the body', async () => {
+  test('a request goes to the configured platform with the token, and the webview hears only the status, the body and the headers it reads', async () => {
     const f = fake();
-    await new StudioBridge(f.deps).receive(api('/api/v2/content/pages/?source=_posts%2Fbackups.md'));
+    await new StudioBridge(f.deps).receive(api("/api/v2/content/pages/?source=demo%2F_posts%2Fbackups.md&q=don't"));
     assert.equal(f.sent.length, 1);
-    assert.equal(f.sent[0]?.url, `${ORIGIN}/api/v2/content/pages/?source=_posts%2Fbackups.md`);
+    assert.equal(f.sent[0]?.url, `${ORIGIN}/api/v2/content/pages/?source=demo%2F_posts%2Fbackups.md&q=don%27t`);
     assert.deepEqual(f.sent[0]?.init.headers, { Accept: 'application/json', Authorization: `Bearer ${TOKEN}` });
     assert.equal(f.sent[0]?.init.redirect, 'error', 'a redirect could carry the token to another origin');
-    assert.deepEqual(f.posted, [{ type: 'api', id: 1, status: 200, body: '{"ok":true}', contentType: 'application/json' }]);
+    assert.deepEqual(f.posted, [{ type: 'api', id: 1, status: 200, body: '{"ok":true}', headers: { 'Content-Type': 'application/json' } }]);
 
     await new StudioBridge(f.deps).receive(api('/api/v2/content/pages/5/', 'PATCH', '{"fields":{}}'));
     assert.equal(f.sent[1]?.init.body, '{"fields":{}}');
@@ -655,7 +657,7 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.ok(!JSON.stringify(f.posted).includes(TOKEN), 'the token reached the webview');
   });
 
-  test('a request that could leave the API is refused before a socket opens', async () => {
+  test('a request that could leave the API, or reach another route than the gates read, is refused before a socket opens', async () => {
     const paths: unknown[] = [
       '/admin/pages/5/',
       '/api/v2/../admin/',
@@ -664,15 +666,33 @@ suite('studio: the host side of the webview transport (G10)', () => {
       'https://evil.test/api/v2/me',
       '//evil.test/api/v2/me',
       '/api/v2/session/login',
+      '/api/v2/session',
       '/api/v2/me#x',
       '/api/v2\\..\\admin',
       42,
+      // Spellings the URL parser, a proxy or the platform would turn into a
+      // publish, an unpublish or a sign-in that the gates never saw.
+      '/api/v2/content/./pages/9/unpublish/',
+      '/api/v2/./content/pages/5/publish/',
+      '/api/v2/content/pages/5/./publish/',
+      '/api/v2/content/pages/9/publish/.',
+      '/api/v2/content/pages/9/%70ublish/',
+      '/api/v2/content/pages/%35/publish/',
+      '/api/v2/content/pages/5//publish/',
+      '/api/v2//content/pages/5/publish/',
+      '/api/v2/./session/login',
+      '/api/v2/%73ession/login',
+      '/api/v2/content/pages/5/pub\tlish/',
+      '/api/v2/content/pages/5/pub\u00e9/',
     ];
-    for (const path of paths) {
-      const f = fake();
-      await new StudioBridge(f.deps).receive({ type: 'api', id: 1, method: 'GET', path });
-      assert.equal(f.sent.length, 0, `${String(path)} reached the network`);
-      assert.equal(f.posted[0]?.status, 403, String(path));
+    for (const method of ['GET', 'POST']) {
+      for (const path of paths) {
+        const f = fake({ answer: false });
+        await new StudioBridge(f.deps).receive({ type: 'api', id: 1, method, path });
+        assert.equal(f.sent.length, 0, `${method} ${String(path)} reached the network`);
+        assert.equal(f.posted[0]?.status, 403, `${method} ${String(path)}`);
+        assert.deepEqual(f.asked, [], `${method} ${String(path)} was asked about instead of refused`);
+      }
     }
     for (const method of ['TRACE', 'OPTIONS', 'CONNECT', '']) {
       const f = fake();
@@ -705,6 +725,12 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.deepEqual(declined.asked, [`Publish page 5 on ${ORIGIN}?`]);
     assert.equal(declined.sent.length, 0, 'a declined publish reached the platform');
     assert.equal(declined.posted[0]?.status, 409);
+    // A page id that is a UUID (P-D6) still asks; it does not slip past the pattern.
+    const uuid = '0b9f6f4e-1c2d-4e5f-8a9b-0c1d2e3f4a5b';
+    const byUuid = fake({ answer: false });
+    await new StudioBridge(byUuid.deps).receive(api(`/api/v2/content/pages/${uuid}/unpublish/?next=1`, 'POST'));
+    assert.deepEqual(byUuid.asked, [`Take page ${uuid} off the live site on ${ORIGIN}?`]);
+    assert.equal(byUuid.sent.length, 0);
 
     const agreed = fake({ answer: true });
     const bridge = new StudioBridge(agreed.deps);
@@ -714,6 +740,40 @@ suite('studio: the host side of the webview transport (G10)', () => {
     await bridge.receive(api('/api/v2/review/runs/7/accept/', 'POST', '{}'));
     assert.equal(agreed.asked.length, 2, 'only the live-site changes ask');
     assert.equal(agreed.sent.length, 4);
+  });
+
+  test('only the headers the platform reads cross, each way', async () => {
+    const f = fake({
+      respond: () =>
+        Promise.resolve(
+          new Response('{"run":7}', {
+            status: 202,
+            headers: { 'Content-Type': 'application/json', Location: '/api/v2/agent-runs/7/', 'Retry-After': '3', 'Set-Cookie': 'sessionid=x', 'X-Request-Id': 'r-1' },
+          }),
+        ),
+    });
+    const bridge = new StudioBridge(f.deps);
+    const run = { ...api('/api/v2/ai/pipelines/p-1/run/', 'POST', '{}'), headers: { 'idempotency-key': 'k-1' } };
+    await bridge.receive(run);
+    assert.deepEqual(f.sent[0]?.init.headers, {
+      'Idempotency-Key': 'k-1',
+      Accept: 'application/json',
+      Authorization: `Bearer ${TOKEN}`,
+      'Content-Type': 'application/json',
+    });
+    assert.deepEqual(f.posted[0], {
+      type: 'api',
+      id: 1,
+      status: 202,
+      body: '{"run":7}',
+      headers: { 'Content-Type': 'application/json', Location: '/api/v2/agent-runs/7/', 'Retry-After': '3', 'X-Request-Id': 'r-1' },
+    });
+    for (const headers of [{ Authorization: 'Bearer other' }, { Cookie: 'sessionid=x' }, { 'Idempotency-Key': 'a\r\nX-Evil: 1' }, { 'Idempotency-Key': 7 }, 'k-1']) {
+      const refused = fake();
+      await new StudioBridge(refused.deps).receive({ ...run, headers });
+      assert.equal(refused.sent.length, 0, JSON.stringify(headers));
+      assert.equal(refused.posted[0]?.status, 422, JSON.stringify(headers));
+    }
   });
 
   test('a platform the network cannot reach is a 503 naming the platform, never the token', async () => {
@@ -766,14 +826,18 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.equal(f.sent.length, 0);
   });
 
-  test('the platform is an http(s) origin, its token is kept per origin, and a path cannot leave it', () => {
+  test('the platform is https, or http on this machine; its token is kept per origin, and a path cannot leave it', () => {
     assert.equal(platformOrigin('https://cms.test/studio/'), ORIGIN);
-    assert.equal(platformOrigin('http://127.0.0.1:8000'), 'http://127.0.0.1:8000');
-    for (const bad of ['', 'cms.test', 'ftp://cms.test', 'javascript:alert(1)', undefined]) {
+    for (const local of ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://[::1]:8000', 'http://127.1.2.3']) {
+      assert.equal(platformOrigin(local), new URL(local).origin, local);
+    }
+    // Plain http anywhere else would carry the token across a network in clear text.
+    for (const bad of ['', 'cms.test', 'ftp://cms.test', 'javascript:alert(1)', undefined, 'http://cms.test', 'http://10.0.0.5:8000', 'http://localhost.evil.test', 'http://127.0.0.1.evil.test']) {
       assert.equal(platformOrigin(bad), undefined, String(bad));
     }
     assert.notEqual(tokenKey(ORIGIN), tokenKey('https://other.test'));
-    assert.equal(apiUrl(ORIGIN, '/api/v2/me'), `${ORIGIN}/api/v2/me`);
+    assert.equal(apiUrl(ORIGIN, '/api/v2/me')?.toString(), `${ORIGIN}/api/v2/me`);
+    assert.equal(apiUrl(ORIGIN, '/api/v2/')?.toString(), `${ORIGIN}/api/v2/`);
     assert.equal(apiUrl(ORIGIN, '/api/v2/../me'), undefined);
     assert.equal(linkTarget('/x', undefined), undefined);
   });
@@ -791,7 +855,9 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.match(policy, /^default-src 'none'; /);
     assert.match(policy, /script-src 'nonce-N0nce'/);
     assert.match(policy, /style-src vscode-webview:\/\/abc 'nonce-N0nce'/);
-    assert.match(policy, /img-src [^;]*https:\/\/cms\.test/);
+    assert.match(policy, /img-src vscode-webview:\/\/abc https:\/\/cms\.test data: blob:(;|$)/);
+    // An image is a request: from any other host it could carry what the page shows anywhere.
+    assert.ok(!/(^|\s)(https?:|\*)(\s|;|$)/.test(policy), policy);
     assert.ok(!/unsafe-inline|unsafe-eval|connect-src/.test(policy), policy);
     assert.ok(html.indexOf('dist/media/tokens.css') < html.indexOf('dist/studio.css'), 'the theme map loads first');
     assert.match(html, /<script nonce="N0nce" src="vscode-webview:\/\/abc\/dist\/studio\.js"><\/script>/);
