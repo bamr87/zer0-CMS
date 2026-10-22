@@ -9,9 +9,14 @@ export { StudioProvider, useApi, useGo, useStream, type Destination, type Host, 
 export { CreatePage } from './CreatePage';
 export { DiffView } from './DiffView';
 export { FieldsPanel, fromLocalInput, toLocalInput, type FieldValues } from './FieldsPanel';
+export { CaptureIdea } from './ideas/CaptureIdea';
+export { IdeasWorkspace } from './ideas/IdeasWorkspace';
 export { Overview } from './Overview';
 export { PageEditor, type PageAction } from './PageEditor';
 export { PageList } from './PageList';
+export { PageResearch } from './research/PageResearch';
+export { ResearchWorkspace } from './research/ResearchWorkspace';
+export { SourceView } from './research/SourceView';
 export { RevisionHistory } from './RevisionHistory';
 export { RichText, roundTrips, throughEditor, type TextFormat } from './RichText';
 export { RunList, RunStatus, RunTimeline } from './RunTimeline';

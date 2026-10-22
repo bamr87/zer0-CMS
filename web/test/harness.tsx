@@ -28,12 +28,21 @@ export interface Call {
   csrf: string | null;
 }
 
+/** A JSON body as data; anything else (a multipart upload) as its text. */
+function parsed(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 export function fakePlatform(routes: Record<string, Handler>) {
   const calls: Call[] = [];
   const fetch = async (request: Request) => {
     const url = new URL(request.url);
     const text = request.method === 'GET' ? '' : await request.text();
-    const body: unknown = text ? JSON.parse(text) : undefined;
+    const body: unknown = text ? parsed(text) : undefined;
     calls.push({ method: request.method, path: url.pathname, query: url.searchParams, body, csrf: request.headers.get('X-CSRFToken') });
     const handler = routes[`${request.method} ${url.pathname}`];
     const out = handler

@@ -32,14 +32,8 @@ export const AREAS: Area[] = [
   { path: '/', label: 'Home', summary: 'What needs attention.', icon: IconHome },
   { path: '/write', label: 'Write', summary: 'Pages across your sites, the editor, revisions.', icon: IconPencil },
   { path: '/create', label: 'Create', summary: 'A new page of any type, from a brief if you like.', icon: IconFilePlus },
-  { path: '/ideas', label: 'Ideas', summary: 'Boards, brainstorm sessions, and promoting an idea to a brief.', icon: IconBulb, milestone: 'G14' },
-  {
-    path: '/research',
-    label: 'Research',
-    summary: 'Sources and collections, capture, questions over sources, fact-checks.',
-    icon: IconSearch,
-    milestone: 'G14',
-  },
+  { path: '/ideas', label: 'Ideas', summary: 'Boards, brainstorm sessions, and promoting an idea to a brief.', icon: IconBulb },
+  { path: '/research', label: 'Research', summary: 'Sources and collections, capture, questions over sources, fact-checks.', icon: IconSearch },
   {
     path: '/newsroom',
     label: 'Newsroom',

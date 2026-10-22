@@ -6,11 +6,14 @@ import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
 import {
   CreatePage,
+  IdeasWorkspace,
   Overview,
   PageEditor,
   PageList,
+  ResearchWorkspace,
   RunList,
   RunTimeline,
+  SourceView,
   StudioProvider,
   SuggestionInbox,
   type Destination,
@@ -36,6 +39,12 @@ export function pathFor(to: Destination): string {
       return `/ai/runs/${to.id}`;
     case 'review':
       return to.runId ? `/review?run=${to.runId}` : '/review';
+    case 'ideas':
+      return '/ideas';
+    case 'research':
+      return '/research';
+    case 'source':
+      return `/research/sources/${to.id}`;
   }
 }
 
@@ -56,6 +65,9 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="review" element={<Review />} />
                 <Route path="ai" element={<Ai />} />
                 <Route path="ai/runs/:id" element={<RunPage />} />
+                <Route path="ideas" element={<Ideas />} />
+                <Route path="research" element={<Research />} />
+                <Route path="research/sources/:id" element={<SourcePage />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -139,6 +151,29 @@ function Ai() {
 function RunPage() {
   const { id } = useParams();
   return <RunTimeline key={id} runId={Number(id)} />;
+}
+
+function Ideas() {
+  const { siteId } = useSite();
+  return (
+    <Section title="Ideas">
+      <IdeasWorkspace siteId={siteId} />
+    </Section>
+  );
+}
+
+function Research() {
+  const { siteId } = useSite();
+  return (
+    <Section title="Research">
+      <ResearchWorkspace siteId={siteId} />
+    </Section>
+  );
+}
+
+function SourcePage() {
+  const { id = '' } = useParams();
+  return <SourceView key={id} sourceId={id} />;
 }
 
 function Planned({ area }: { area: Area }) {

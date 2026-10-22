@@ -78,11 +78,30 @@ describe('signing in', () => {
 
 describe('the shell and its routes', () => {
   it('puts every area in the navigation and names the milestone of an unbuilt one', async () => {
-    renderStudio('/ideas');
+    const planned = AREAS.find((area) => area.milestone);
+    if (!planned) throw new Error('every area is built: this test can go');
+    renderStudio(planned.path);
     const nav = await screen.findByRole('navigation', { name: 'Areas' });
     for (const area of AREAS) expect(within(nav).getByText(area.label)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: planned.label })).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`arrives with PLAN ${planned.milestone}`))).toBeInTheDocument();
+  });
+
+  it('opens the Ideas and Research workspaces and a source at /research/sources/:id', async () => {
+    const routes = {
+      'GET /api/v2/ideas/boards/': () => EMPTY,
+      'GET /api/v2/ideas/': () => EMPTY,
+      'GET /api/v2/research/collections/': () => EMPTY,
+      'GET /api/v2/research/sources/': () => EMPTY,
+    };
+    renderStudio('/ideas', platformFor(routes));
     expect(await screen.findByRole('heading', { name: 'Ideas' })).toBeInTheDocument();
-    expect(screen.getByText(/arrives with PLAN G14/)).toBeInTheDocument();
+    expect(await screen.findByText('Inbox')).toBeInTheDocument();
+    renderStudio('/research', platformFor(routes));
+    expect(await screen.findByRole('heading', { name: 'Research' })).toBeInTheDocument();
+    expect(await screen.findByText('All sources')).toBeInTheDocument();
+    renderStudio('/research/sources/s1', platformFor({ 'GET /api/v2/research/sources/s1/': () => new Reply(404, { error: { code: 'resource.not_found', message: 'no source s1', status: 404, details: [] } }) }));
+    expect(await screen.findByText('no source s1')).toBeInTheDocument();
   });
 
   it('opens the editor at /write/:id and the inbox for one run at /review?run=', async () => {
@@ -99,5 +118,8 @@ describe('the shell and its routes', () => {
     expect(pathFor({ to: 'run', id: 9 })).toBe('/ai/runs/9');
     expect(pathFor({ to: 'review', runId: 9 })).toBe('/review?run=9');
     expect(pathFor({ to: 'review' })).toBe('/review');
+    expect(pathFor({ to: 'ideas' })).toBe('/ideas');
+    expect(pathFor({ to: 'research' })).toBe('/research');
+    expect(pathFor({ to: 'source', id: 's1' })).toBe('/research/sources/s1');
   });
 });
