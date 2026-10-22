@@ -11,7 +11,9 @@ imports parodynews's code or connects to its database.
 | the post's current content           | the latest revision; published if the post's status is `published` |
 | providers, models, schemas, assistants, groups, content details and items, threads and messages | the AI content layer (importers/parodynews_ai.py) |
 
-Re-running the import changes nothing that did not change in the dump.
+Re-running the import changes nothing that did not change in the dump, and
+leaves alone what a person changed here since the last import — a post's page
+or an AI row — reporting it as a conflict (`force` overwrites it).
 """
 
 import hashlib
@@ -48,6 +50,7 @@ class Report:
     conversations: int = 0
     messages: int = 0
     skipped: list = field(default_factory=list)
+    conflicts: list = field(default_factory=list)
 
     def summary(self) -> str:
         return (
@@ -55,7 +58,9 @@ class Report:
             f"{self.revisions} historical revision(s); {len(self.providers)} provider(s) (credentials not "
             f"imported), {len(self.assistants)} assistant(s), {self.schemas} schema(s), {self.pipelines} "
             f"pipeline(s), {self.briefs} brief(s), {self.conversations} conversation(s) with {self.messages} "
-            f"message(s)" + (f"; skipped: {'; '.join(self.skipped)}" if self.skipped else "")
+            f"message(s)"
+            + (f"; skipped: {'; '.join(self.skipped)}" if self.skipped else "")
+            + (f"; {len(self.conflicts)} conflict(s): {'; '.join(self.conflicts)}" if self.conflicts else "")
         )
 
 
@@ -113,7 +118,7 @@ def _apply(page, *, title, description, author, date, slug, body, extra):
     }
 
 
-def import_dump(path_or_rows) -> Report:
+def import_dump(path_or_rows, *, force=False) -> Report:
     rows = path_or_rows if isinstance(path_or_rows, list) else json.loads(open(path_or_rows, encoding="utf-8").read())
     posts = _index(rows, "parodynews.post")
     front = _index(rows, "parodynews.postfrontmatter")
@@ -139,6 +144,12 @@ def import_dump(path_or_rows) -> Report:
                 report.pages_unchanged.append(legacy)
                 pages_by_post[pk] = existing.page
                 continue
+            if existing is not None and not force:
+                current = existing.page.specific.get_latest_revision_as_object()
+                if current.compute_content_hash() != existing.import_hash:
+                    report.conflicts.append(f"{legacy}: changed here since the last import (pass --force to overwrite)")
+                    pages_by_post[pk] = existing.page
+                    continue
             fm = front.get(post.get("postfrontmatter")) or next((f for f in front.values() if f.get("post") == pk), {})
             detail = details.get(post.get("content_detail"), {})
             title = fm.get("title") or detail.get("title")
@@ -199,5 +210,5 @@ def import_dump(path_or_rows) -> Report:
             )
             report.pages_created.append(legacy)
             pages_by_post[pk] = page
-        import_ai(rows, report, pages_by_post)
+        import_ai(rows, report, pages_by_post, force=force)
     return report

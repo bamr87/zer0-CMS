@@ -2,8 +2,9 @@
 and their version history revisions in order; every AI table maps onto the AI
 content layer (ADR 0006 decision 7) — providers without their credentials,
 models, schemas, assistants, groups as pipelines, content details as briefs,
-threads and messages as conversations — owned as parodynews owned them; and a
-re-run changes nothing."""
+threads and messages as conversations — owned as parodynews owned them; a
+re-run changes nothing, and a re-run on a fresh dump leaves alone what people
+changed here (`--force` aside; an applied brief keeps its draft even then)."""
 
 import json
 from pathlib import Path
@@ -13,6 +14,7 @@ from django.contrib.auth import get_user_model
 from wagtail.models import Revision
 
 from agents.models import AgentDefinition
+from ai import services
 from ai.models import (
     Assistant,
     Brief,
@@ -26,6 +28,7 @@ from ai.models import (
 )
 from ai.services import stable_id
 from cms.models import ArticlePage
+from cms.services import save_draft
 from importers.models import ImportedSource
 from importers.parodynews import import_dump
 
@@ -129,3 +132,78 @@ def test_a_second_import_changes_nothing():
     assert again.pages_created == [] and len(again.pages_unchanged) == 2 and Revision.objects.count() == revisions
     assert snapshot() == before
     assert Brief.objects.get(public_id=stable_id("parodynews.contentdetail", 1)).status == Brief.APPLIED
+
+
+def fresh(row):
+    row.refresh_from_db()
+    return row
+
+
+@pytest.mark.django_db
+def test_a_re_import_leaves_what_people_changed_here_and_force_overwrites_all_but_an_applied_brief(editor):
+    import_dump(str(DUMP))
+    writer = Assistant.objects.get(public_id=stable_id("parodynews.assistant", "asst_1"))
+    Assistant.objects.filter(pk=writer.pk).update(instructions="Edited here.")
+    ProviderConfig.objects.filter(slug="anthropic").update(default_model="claude-opus-5-5")
+    dogs = Brief.objects.get(public_id=stable_id("parodynews.contentdetail", 2))
+    posts = ImportedSource.objects.get(legacy_path="parodynews.post:1").page.get_parent()
+    page, _ = services.apply_brief(dogs, user=editor, parent=posts)
+    again = import_dump(str(DUMP))
+    assert sorted(c.split(":")[0] for c in again.conflicts) == ["assistant", "contentdetail", "provider"]
+    assert fresh(writer).instructions == "Edited here."
+    assert ProviderConfig.objects.get(slug="anthropic").default_model == "claude-opus-5-5"
+    assert (fresh(dogs).status, fresh(dogs).page_id) == (Brief.APPLIED, page.pk)  # not to be applied twice
+    forced = import_dump(str(DUMP), force=True)
+    assert (
+        forced.conflicts == []
+        and fresh(writer).instructions == "You write gentle parody news.\n\nWrite a short article."
+    )
+    assert ProviderConfig.objects.get(slug="anthropic").default_model == "claude-sonnet-5-5"
+    assert (fresh(dogs).status, fresh(dogs).page_id) == (Brief.APPLIED, page.pk)
+    assert import_dump(str(DUMP)).conflicts == []
+
+
+@pytest.mark.django_db
+def test_a_message_new_in_the_dump_goes_after_what_people_added_here():
+    get_user_model().objects.create_user("alice")
+    rows = json.loads(DUMP.read_text())
+    import_dump(rows)
+    chat = Conversation.objects.get(public_id=stable_id("parodynews.thread", "thread_1"))
+    services.append(chat, role=Message.USER, text="Added here.")
+    item = {"line_number": 3, "content_type": "message", "content_text": "A new reply.", "assistant": "asst_1"}
+    message = {"role": "assistant", "created_at": "2025-07-01T12:04:00Z", "contentitem": 6, "thread": "thread_1"}
+    rows += [
+        {"model": "parodynews.contentitem", "pk": 6, "fields": {**item, "prompt": "", "detail": 3}},
+        {
+            "model": "parodynews.message",
+            "pk": "msg_5",
+            "fields": {**message, "assistant": "asst_1", "status": "completed"},
+        },
+    ]
+    report = import_dump(rows)
+    assert report.conflicts == []
+    assert list(chat.messages.values_list("seq", "text"))[-2:] == [(5, "Added here."), (6, "A new reply.")]
+    deleted = chat.messages.get(seq=1)
+    deleted.delete()
+    assert [c.split(":")[0] for c in import_dump(rows).conflicts] == ["message"]  # a deletion here stands
+    assert not chat.messages.filter(seq=1).exists()
+
+
+@pytest.mark.django_db
+def test_a_post_edited_here_is_not_overwritten_by_a_changed_dump(editor):
+    rows = json.loads(DUMP.read_text())
+    import_dump(rows)
+    page = ImportedSource.objects.get(legacy_path="parodynews.post:1").page.specific
+    page.title = "Edited here"
+    save_draft(page, user=editor)
+    post = next(r for r in rows if r["model"] == "parodynews.post" and r["pk"] == 1)
+    post["fields"]["post_content"] = "# Breaking\n\nChanged in barodybroject."
+    report = import_dump(rows)
+    assert report.conflicts == ["parodynews.post:1: changed here since the last import (pass --force to overwrite)"]
+
+    def title():
+        return ArticlePage.objects.get(pk=page.pk).get_latest_revision_as_object().title
+
+    assert title() == "Edited here"
+    assert "parodynews.post:1" in import_dump(rows, force=True).pages_created
+    assert title() == "Local Cat Declares Independence"
