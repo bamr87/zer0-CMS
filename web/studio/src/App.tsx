@@ -9,11 +9,14 @@ import {
   BookView,
   ChapterWriter,
   IdeasWorkspace,
+  JobLog,
   Newsroom,
   Overview,
   PageEditor,
   PageList,
   ResearchWorkspace,
+  SitesWorkspace,
+  SiteView,
   SourceView,
   StudioProvider,
   SuggestionInbox,
@@ -72,6 +75,12 @@ export function pathFor(to: Destination): string {
       return `/books/${to.id}`;
     case 'chapter':
       return `/books/${to.book}/chapters/${to.id}`;
+    case 'sites':
+      return '/sites';
+    case 'site':
+      return `/sites/${to.id}`;
+    case 'job':
+      return `/sites/jobs/${to.id}`;
   }
 }
 
@@ -99,6 +108,9 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="books" element={<Books />} />
                 <Route path="books/:id" element={<BookPage />} />
                 <Route path="books/:book/chapters/:id" element={<ChapterPage />} />
+                <Route path="sites" element={<Sites />} />
+                <Route path="sites/jobs/:id" element={<JobPage />} />
+                <Route path="sites/:id" element={<SitePage />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -214,6 +226,24 @@ function BookPage() {
 function ChapterPage() {
   const { book, id } = useParams();
   return <ChapterWriter key={id} bookId={Number(book)} chapterId={Number(id)} />;
+}
+
+function Sites() {
+  return (
+    <Section title="Sites">
+      <SitesWorkspace />
+    </Section>
+  );
+}
+
+function SitePage() {
+  const { id } = useParams();
+  return <SiteView key={id} siteId={Number(id)} />;
+}
+
+function JobPage() {
+  const { id = '' } = useParams();
+  return <JobLog key={id} jobId={id} />;
 }
 
 function Planned({ area }: { area: Area }) {

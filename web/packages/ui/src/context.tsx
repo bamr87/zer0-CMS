@@ -29,7 +29,11 @@ export type Destination =
   | { to: 'story'; id: string }
   | { to: 'books' }
   | { to: 'book'; id: number }
-  | { to: 'chapter'; book: number; id: number };
+  | { to: 'chapter'; book: number; id: number }
+  // Sites and their jobs (G4).
+  | { to: 'sites' }
+  | { to: 'site'; id: number }
+  | { to: 'job'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

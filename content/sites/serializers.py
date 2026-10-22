@@ -14,6 +14,7 @@ HOSTNAME = re.compile(r"^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-
 
 
 class ManagedSiteSerializer(serializers.ModelSerializer):
+    domains = serializers.ListField(child=serializers.CharField(), help_text="The host names it is published at.")
     errors = serializers.SerializerMethodField(help_text="Errors in the last doctor run.")
     warnings = serializers.SerializerMethodField(help_text="Warnings in the last doctor run.")
 

@@ -22632,6 +22632,10 @@
                         ]
                     },
                     "domains": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
                         "description": "The host names it is published at."
                     },
                     "deploy_target": {
@@ -22673,6 +22677,7 @@
                 },
                 "required": [
                     "checkout",
+                    "domains",
                     "errors",
                     "key",
                     "warnings"

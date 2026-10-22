@@ -3742,7 +3742,7 @@ export interface components {
              */
             server?: components["schemas"]["JekyllServerEnum"] | components["schemas"]["BlankEnum"];
             /** @description The host names it is published at. */
-            domains?: unknown;
+            domains: string[];
             /** @description Where its build goes: a Pages route (`/drsai/`), a repository, a host. */
             deploy_target?: string;
             /** Format: date-time */

@@ -15,14 +15,16 @@ An app registers what a kind does, and starts it where its subject lives (the si
 ```python
 from jobs import services as jobs
 
+
 @jobs.handler("sync", exclusive=True)
 def run_sync(job, ctx):
-    ctx.log("Reading …")                  # a JobLine, committed as it is written
-    ctx.check()                           # raises Cancelled once someone asked the job to stop
-    ctx.artifact("report.txt", text)      # a JobArtifact
-    return {"created": 3}                 # the job's result
+    ctx.log("Reading …")  # a JobLine, committed as it is written
+    ctx.check()  # raises Cancelled once someone asked the job to stop
+    ctx.artifact("report.txt", text)  # a JobArtifact
+    return {"created": 3}  # the job's result
 
-job = jobs.start("sync", user=person, site=site, params={})   # queued; runs after the transaction commits
+
+job = jobs.start("sync", user=person, site=site, params={})  # queued; runs after the transaction commits
 ```
 
 `jobs.services.execute` is the worker's half (`jobs.tasks.run_job`): it marks the job running, calls the handler, and records how it ended — `Failed` ends it as failed with its reason, any other exception as failed with the exception (logged), `Cancelled` as cancelled. A command runs a job in-process with `start(..., enqueue=False)` and `execute` (`manage.py site_job`). An `exclusive` kind runs one at a time per site together with every other exclusive kind (sync and write-back are), so two of them never race on one checkout: starting one while another is queued or running is `Busy` (409 `job.busy`).

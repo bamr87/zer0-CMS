@@ -63,3 +63,12 @@ export type FrontSlot = Schemas['FrontSlot'];
 export type ResolvedSlot = Schemas['ResolvedSlot'];
 export type Newsletter = Schemas['Newsletter'];
 export type Issue = Schemas['Issue'];
+// Sites and jobs (PLAN G4).
+export type ManagedSite = Schemas['ManagedSite'];
+export type SiteDetail = Schemas['SiteDetail'];
+export type SiteCandidate = Schemas['SiteCandidate'];
+export type SiteSettings = Schemas['SiteSettings'];
+export type DoctorFinding = Schemas['DoctorFinding'];
+export type Job = Schemas['Job'];
+export type JobDetail = Schemas['JobDetail'];
+export type JobLine = Schemas['JobLine'];
