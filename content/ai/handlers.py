@@ -6,12 +6,13 @@ A run's `input.kind` says which job it is — `assistant`, `pipeline`, `page`,
 runner's own loop (`agents.runner.model_loop`) with the persona's provider,
 so each call is a step with its tokens and cost, under the definition's step
 limit and budget. The tools an assistant may use are its own list narrowed to
-the definition's read-only allowlist, and none at all on a provider without the
-runner's tool protocol; they run on behalf of the person who started the run,
-so they read only pages that person may edit. A pipeline is a parent run with
-one child run per step, each fed the one before. A `page` run is an assistant
-or a pipeline asked about a page from the editor; its answer is proposed on
-that page as suggestions, never written.
+the read tools of the definition's allowlist, and none at all on a provider
+without the runner's tool protocol; they run on behalf of the person who
+started the run, so they read only pages that person may edit. A pipeline is a
+parent run with one child run per step, each fed the one before. A `page` run
+is an assistant or a pipeline asked about a page from the editor; its answer is
+proposed on that page as suggestions — `content.propose_edit` through the
+registry, this agent acting for that person — never written.
 
 A run can be requested from more than one surface, and what it names can change
 while it waits, so the worker asks again: the row the run is about must be its
@@ -33,7 +34,7 @@ from django.utils.text import slugify
 
 from agents.llm import get_llm
 from agents.models import AgentRun, AgentStep
-from agents.registry import ToolContext
+from agents.registry import ToolContext, registry
 from agents.runner import BudgetExceeded, execute, model_loop, start_run
 from importers.markdown import block_to_markdown, from_blocks
 
@@ -41,6 +42,7 @@ from . import providers, rendering
 from .models import Assistant, Brief, Conversation, Message, Pipeline, PipelineStep, ProviderConfig, usable
 from .providers.base import InvalidOutput, ProviderError, validate
 from .services import (
+    acting_for,
     append,
     block_of,
     bundled_schema,
@@ -146,7 +148,9 @@ def generate(run: AgentRun, ctx: ToolContext, persona: Persona, messages: list[d
     config = ctx.agent
     narrowed = copy.copy(config)
     capable = "tools" in getattr(llm, "capabilities", {"tools"})
-    narrowed.tools = [t for t in persona.tools if t in (config.tools or [])] if capable else []
+    # The model only reads: the definition's propose tool is this handler's, for answers on a page (`_page`).
+    reads = {t.name for t in registry.all() if t.effect == "read"}
+    narrowed.tools = [t for t in persona.tools if t in (config.tools or []) and t in reads] if capable else []
     tool_ctx = ToolContext(
         user=ctx.user, agent=narrowed, run=run, trigger=ctx.trigger, extra=ctx.extra, on_behalf_of=run.started_by
     )
@@ -244,7 +248,8 @@ def _page(run: AgentRun, ctx: ToolContext) -> dict:
     page = run.target
     if page is None:
         raise ValueError("a page run is about a page")
-    check_page(run.started_by, page)
+    person = acting_for(ctx)
+    check_page(run.started_by, page, person)
     block_id, selection = run.input.get("block_id", ""), run.input.get("selection", "")
     aimed = block_of(page, block_id) if block_id else None
     if block_id and aimed is None:
@@ -260,7 +265,16 @@ def _page(run: AgentRun, ctx: ToolContext) -> dict:
         prompt = rendering.prompt(persona.prompt_template, request)
         out = generate(run, ctx, persona, [{"role": "user", "content": prompt}])
     why = f"{source}: {run.input.get('prompt', '').strip() or 'asked in the editor'}"
-    proposed = propose_answer(run, page, out["markdown"], block_id=block_id, selection=selection, rationale=why)
+    proposed = propose_answer(
+        person,
+        page,
+        out["markdown"],
+        block_id=block_id,
+        selection=selection,
+        field=run.input.get("field", ""),
+        start=run.input.get("selection_start"),
+        rationale=why,
+    )
     return {**out, "suggestions": [s.pk for s in proposed]}
 
 

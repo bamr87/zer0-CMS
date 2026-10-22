@@ -279,7 +279,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The conversation's messages, oldest first (cursor-paginated) */
+        /** The conversation's messages, oldest first or newest first (cursor-paginated) */
         get: operations["ai_conversations_messages_list"];
         put?: never;
         /** Post a message; with an assistant its reply is queued as a run */
@@ -1999,10 +1999,14 @@ export interface components {
              */
             block_id: string;
             /**
-             * @description With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.
+             * @description With `block_id`: text in that block, as saved and as a person sees it (a paragraph's without its markup), that it reads and whose place its answer takes — only that text changes.
              * @default
              */
             selection: string;
+            /** @description With `selection` in a structured block: the field it is in (`text` of a heading, `code` of a code block); else any of its text fields. */
+            field?: string;
+            /** @description With `selection`: the character it starts at in that text (code points, a paragraph's counted without its markup). Without it, the selection must appear in the block exactly once. */
+            selection_start?: number | null;
             prompt: string;
         };
         /** @description Where to follow a run: the AI layer's `202` answers and the runs API share this shape. */
@@ -2030,10 +2034,14 @@ export interface components {
              */
             block_id: string;
             /**
-             * @description With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.
+             * @description With `block_id`: text in that block, as saved and as a person sees it (a paragraph's without its markup), that it reads and whose place its answer takes — only that text changes.
              * @default
              */
             selection: string;
+            /** @description With `selection` in a structured block: the field it is in (`text` of a heading, `code` of a code block); else any of its text fields. */
+            field?: string;
+            /** @description With `selection`: the character it starts at in that text (code points, a paragraph's counted without its markup). Without it, the selection must appear in the block exactly once. */
+            selection_start?: number | null;
             /** @default  */
             prompt: string;
         };
@@ -3580,6 +3588,8 @@ export interface operations {
             query?: {
                 /** @description The pagination cursor value. */
                 cursor?: string;
+                /** @description `-seq` for the newest first. */
+                ordering?: "-seq" | "seq";
                 /** @description Number of results to return per page. */
                 page_size?: number;
                 role?: "assistant" | "system" | "user";

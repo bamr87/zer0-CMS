@@ -1,13 +1,16 @@
 # The assistant runner: the AI content layer's one agent (content/ai/, ADR 0006
 # decision 7). People write assistants, pipelines, briefs and conversations; every
 # generation they ask for is a run of this definition, whose handler runs their
-# persona through the provider registry. Its tools are read-only, and an
-# assistant may use only those of them it lists, so a run only ever proposes — a
-# brief, a message, suggestions on a draft — and a person decides.
+# persona through the provider registry. The model is offered only the read
+# tools an assistant lists. content.propose_edit is the handler's own: an answer
+# on a page, or a brief applied as a draft, arrives as suggestions this agent
+# proposes through the registry for the person who asked — under its policy, its
+# group's page permissions, the page's policy and the tool's rate. A run only
+# ever proposes — a brief, a message, suggestions on a page — and a person decides.
 slug: assistant
 name: Assistant runner
 role: author
-description: Runs user-managed assistants, pipelines, briefs and conversations through the provider registry, with read-only tools; every result is reviewed by a person.
+description: Runs user-managed assistants, pipelines, briefs and conversations through the provider registry, with read-only tools; every result is a proposal a person reviews.
 handler: ai.handlers.run
 policy: suggest
 max_steps: 6
@@ -20,6 +23,7 @@ tools:
   - graph.related
   - brand.rules
   - memory.recall
+  - content.propose_edit
 evals:
   - name: headline-plain
     input:

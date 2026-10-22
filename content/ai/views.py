@@ -126,6 +126,8 @@ def run_from(source, request, serializer):
             prompt=data["prompt"],
             block_id=data["block_id"],
             selection=data["selection"],
+            field=data.get("field", ""),
+            selection_start=data.get("selection_start"),
         )
     if isinstance(source, Pipeline):
         return services.run_pipeline(source, user=request.user, prompt=data["prompt"], page=page)
@@ -139,10 +141,16 @@ class Paged(PageNumberPagination):
 
 
 class BySeq(CursorPagination):
+    """A conversation's messages in order: oldest first, or newest first (`ordering=-seq`) for a screen that
+    shows the latest and loads earlier ones when asked."""
+
     ordering = "seq"
     page_size = 50
     page_size_query_param = "page_size"
     max_page_size = 200
+
+    def get_ordering(self, request, queryset, view):
+        return ("-seq",) if request.query_params.get("ordering") == "-seq" else ("seq",)
 
 
 class CanEdit(BasePermission):
@@ -484,10 +492,13 @@ class ConversationViewSet(OwnedViewSet):
 
     @extend_schema(
         methods=["GET"],
-        summary="The conversation's messages, oldest first (cursor-paginated)",
+        summary="The conversation's messages, oldest first or newest first (cursor-paginated)",
         parameters=[
             OpenApiParameter("role", OpenApiTypes.STR, enum=[r for r, _ in Message.ROLES]),
             OpenApiParameter("status", OpenApiTypes.STR, enum=[st for st, _ in Message.STATUSES]),
+            OpenApiParameter(
+                "ordering", OpenApiTypes.STR, enum=["seq", "-seq"], description="`-seq` for the newest first."
+            ),
         ],
         responses={200: s.MessageSerializer(many=True), **ERROR_RESPONSES},
     )

@@ -429,7 +429,22 @@ class OnPageSerializer(serializers.Serializer):
         allow_blank=True,
         default="",
         max_length=50_000,
-        help_text="With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.",
+        help_text="With `block_id`: text in that block, as saved and as a person sees it (a paragraph's without its "
+        "markup), that it reads and whose place its answer takes — only that text changes.",
+    )
+    field = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=64,
+        help_text="With `selection` in a structured block: the field it is in (`text` of a heading, `code` of a code "
+        "block); else any of its text fields.",
+    )
+    selection_start = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=0,
+        help_text="With `selection`: the character it starts at in that text (code points, a paragraph's counted "
+        "without its markup). Without it, the selection must appear in the block exactly once.",
     )
 
     def validate(self, attrs):
@@ -437,6 +452,8 @@ class OnPageSerializer(serializers.Serializer):
             raise serializers.ValidationError({"page_id": "suggestions land on a page: name it"})
         if (attrs["block_id"] or attrs["selection"]) and not attrs["suggest"]:
             raise serializers.ValidationError({"suggest": "a block or a selection is for a run that suggests"})
+        if (attrs.get("field") or attrs.get("selection_start") is not None) and not attrs["selection"]:
+            raise serializers.ValidationError({"selection": "a field or a start says where a selection is: send it"})
         return attrs
 
 

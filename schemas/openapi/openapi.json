@@ -2359,7 +2359,7 @@
         "/api/v2/ai/conversations/{public_id}/messages/": {
             "get": {
                 "operationId": "ai_conversations_messages_list",
-                "summary": "The conversation's messages, oldest first (cursor-paginated)",
+                "summary": "The conversation's messages, oldest first or newest first (cursor-paginated)",
                 "parameters": [
                     {
                         "name": "cursor",
@@ -2369,6 +2369,18 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "ordering",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "-seq",
+                                "seq"
+                            ]
+                        },
+                        "description": "`-seq` for the newest first."
                     },
                     {
                         "name": "page_size",
@@ -11089,8 +11101,21 @@
                     "selection": {
                         "type": "string",
                         "default": "",
-                        "description": "With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.",
+                        "description": "With `block_id`: text in that block, as saved and as a person sees it (a paragraph's without its markup), that it reads and whose place its answer takes — only that text changes.",
                         "maxLength": 50000
+                    },
+                    "field": {
+                        "type": "string",
+                        "description": "With `selection` in a structured block: the field it is in (`text` of a heading, `code` of a code block); else any of its text fields.",
+                        "maxLength": 64
+                    },
+                    "selection_start": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "description": "With `selection`: the character it starts at in that text (code points, a paragraph's counted without its markup). Without it, the selection must appear in the block exactly once."
                     },
                     "prompt": {
                         "type": "string",
@@ -11155,8 +11180,21 @@
                     "selection": {
                         "type": "string",
                         "default": "",
-                        "description": "With `block_id`: text in that block, as saved, that it reads and whose place its answer takes.",
+                        "description": "With `block_id`: text in that block, as saved and as a person sees it (a paragraph's without its markup), that it reads and whose place its answer takes — only that text changes.",
                         "maxLength": 50000
+                    },
+                    "field": {
+                        "type": "string",
+                        "description": "With `selection` in a structured block: the field it is in (`text` of a heading, `code` of a code block); else any of its text fields.",
+                        "maxLength": 64
+                    },
+                    "selection_start": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "description": "With `selection`: the character it starts at in that text (code points, a paragraph's counted without its markup). Without it, the selection must appear in the block exactly once."
                     },
                     "prompt": {
                         "type": "string",
