@@ -2,10 +2,17 @@
 to a private, loopback or link-local address — or a redirect to one — is
 refused before any connection; the connection goes to the address that was
 checked, with the name in `Host` and in TLS SNI; a body over the limit is
-refused; robots.txt is read; and pages, PDFs, text and feeds are extracted
-from bytes. Every request is recorded (respx) and every name resolves from a
-table: nothing reaches a network."""
+refused, and the whole exchange ends at its deadline however slowly a server
+answers; robots.txt is read; and pages, PDFs, text and feeds are extracted
+from bytes. Every request is recorded (respx) or answered by a stand-in on
+loopback, and every name resolves from a table: nothing reaches a network."""
 
+import asyncio
+import socket
+import threading
+import time
+
+import httpx
 import pytest
 from django.test import override_settings
 
@@ -61,6 +68,46 @@ def test_redirects_are_followed_and_every_hop_is_checked_again(web):
     web.get(at("/loop")).respond(302, headers={"Location": "/loop"})
     with pytest.raises(fetch.FetchError, match="more than 5 redirects"):
         fetch.get("https://example.com/loop")
+
+
+@override_settings(RESEARCH_FETCH_TIMEOUT=0.3)
+def test_the_whole_exchange_ends_at_the_deadline_however_late_the_answer(web):
+    async def late(request):
+        await asyncio.sleep(5)
+        return httpx.Response(200, text="late")
+
+    web.get(at("/slow")).mock(side_effect=late)
+    started = time.monotonic()
+    with pytest.raises(fetch.FetchError, match="longer than 0.3 seconds"):
+        fetch.get("https://example.com/slow")
+    assert time.monotonic() - started < 2
+
+
+@override_settings(RESEARCH_FETCH_TIMEOUT=0.5)
+def test_a_server_that_sends_its_headers_a_byte_at_a_time_is_cut_off_at_the_deadline(monkeypatch):
+    """Each byte arrives well inside httpx's per-read timeout, so only a deadline over the whole exchange ends it
+    (a stand-in server on loopback, in this process: nothing leaves the machine)."""
+    server = socket.create_server(("127.0.0.1", 0))
+    done = threading.Event()
+
+    def trickle():
+        conn, _ = server.accept()
+        conn.recv(4096)
+        for byte in b"HTTP/1.1 200 OK\r\nX-Slow: " + b"a" * 200:
+            if done.is_set():
+                break
+            conn.send(bytes([byte]))
+            time.sleep(0.05)  # ten seconds for the whole status line and header
+        conn.close()
+
+    threading.Thread(target=trickle, daemon=True).start()
+    monkeypatch.setattr(fetch, "public", lambda address: True)  # the stand-in is on loopback; the guard is not tested
+    started = time.monotonic()
+    with pytest.raises(fetch.FetchError, match="longer than 0.5 seconds"):
+        fetch.get(f"http://127.0.0.1:{server.getsockname()[1]}/")
+    assert time.monotonic() - started < 3
+    done.set()
+    server.close()
 
 
 @override_settings(RESEARCH_MAX_BYTES=100)

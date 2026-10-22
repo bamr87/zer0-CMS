@@ -19,7 +19,8 @@ Thin views: validate, call research/services.py, serialize. People only
 (`IsPerson`): an agent works through the tool registry. Rows come from
 `visible_to` alone, so one the person cannot see is a 404 and changing one they
 may not change a 403. What reaches the network or a model answers 202 and
-honours an `Idempotency-Key`; every failure is the error envelope.
+honours an `Idempotency-Key`; what makes the platform reach the web is also
+throttled per person (`FetchThrottle`); every failure is the error envelope.
 """
 
 from django.db.models import Q
@@ -30,6 +31,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import CursorPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 
 from ai.serializers import RunAcceptedSerializer, RunRefSerializer
 from ai.views import IDEMPOTENCY, CanEdit, OwnedViewSet, accepted, idempotent, page_or_404
@@ -46,6 +48,13 @@ def valid(serializer_class, request) -> dict:
     body = serializer_class(data=request.data, context={"request": request})
     body.is_valid(raise_exception=True)
     return body.validated_data
+
+
+class FetchThrottle(UserRateThrottle):
+    """Per person: how often they may make the platform reach the web — a page captured or fetched again, a web
+    search, a feed subscribed to or read now (`THROTTLE_RESEARCH_FETCH_RATE`)."""
+
+    scope = "research_fetch"
 
 
 class Newest(CursorPagination):
@@ -110,6 +119,11 @@ class SourceViewSet(PeopleViewSet):
 
     def get_serializer_class(self):
         return s.SourceListSerializer if self.action == "list" else s.SourceSerializer
+
+    def get_throttles(self):
+        data = self.request.data if self.action == "create" else {}
+        fetches = self.action in ("refetch", "search") or (isinstance(data, dict) and data.get("kind") == Source.URL)
+        return [*super().get_throttles(), FetchThrottle()] if fetches else super().get_throttles()
 
     def _out(self, source, code):
         return Response(s.SourceSerializer(source, context=self.get_serializer_context()).data, status=code)
@@ -259,6 +273,10 @@ class FeedViewSet(PeopleViewSet):
     serializer_class = s.FeedSerializer
     filterset_fields = ["active", "visibility"]
     ordering_fields = ["title", "created_at", "updated_at"]
+
+    def get_throttles(self):
+        fetches = self.action in ("create", "refresh")
+        return [*super().get_throttles(), FetchThrottle()] if fetches else super().get_throttles()
 
     @extend_schema(summary="Subscribe to an RSS or Atom feed: its new items become sources, on a schedule")
     def create(self, request):

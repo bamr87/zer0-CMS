@@ -158,6 +158,34 @@ def test_a_feed_is_subscribed_refreshed_and_listed(api, alice, web, django_captu
 
 
 @pytest.mark.django_db
+def test_what_reaches_the_web_is_throttled_per_person_and_runs_on_its_own_queue(api, alice, bob, web, monkeypatch):
+    from django.conf import settings
+    from django.core.cache import cache
+
+    from config.celery import app
+    from research.tasks import fetch_source, refresh_feed
+    from research.views import FetchThrottle
+
+    cache.clear()
+    monkeypatch.setattr(FetchThrottle, "rate", "2/min", raising=False)  # the tests' rates are off; this one is on, low
+    page = {"kind": "url", "url": "https://example.com/backups"}
+    assert [api(alice).post(f"{BASE}/sources/", page, format="json").status_code for _ in range(2)] == [202, 202]
+    assert api(alice).post(f"{BASE}/sources/", page, format="json").status_code == 429
+    feed = {"url": "https://example.com/feed.xml"}
+    assert api(alice).post(f"{BASE}/feeds/", feed, format="json").status_code == 429  # the same allowance
+    assert (
+        api(alice).post(f"{BASE}/sources/", {"kind": "note", "text": "Not a fetch."}, format="json").status_code == 201
+    )
+    assert api(bob).post(f"{BASE}/sources/", page, format="json").status_code == 202  # per person
+    for task in (fetch_source, refresh_feed):
+        assert app.amqp.router.route({}, task.name)["queue"].name == "research"
+        assert (task.soft_time_limit, task.time_limit) == (
+            settings.RESEARCH_TASK_TIME_LIMIT,
+            settings.RESEARCH_TASK_TIME_LIMIT + 30,
+        )
+
+
+@pytest.mark.django_db
 def test_a_question_answers_with_its_citations_and_a_key_replays_it(
     api, alice, fake, django_capture_on_commit_callbacks
 ):

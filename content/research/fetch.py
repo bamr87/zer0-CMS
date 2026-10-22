@@ -10,8 +10,10 @@
   and TLS SNI carry the name), so a DNS answer that changes between the check
   and the connection cannot move it; environment proxies are not used;
 * redirects followed by hand, every hop checked again, at most five;
-* the body read up to `RESEARCH_MAX_BYTES`, within `RESEARCH_FETCH_TIMEOUT`
-  seconds in all.
+* the body read up to `RESEARCH_MAX_BYTES`, and the whole exchange — every
+  hop's connection, headers and body — cancelled once it has taken
+  `RESEARCH_FETCH_TIMEOUT` seconds, however slowly the server answers (only
+  resolving a name is left to the resolver's own timeout).
 
 `robots(url)` asks the site's robots.txt — through `get`, under the same guard —
 whether our user agent may fetch the page: `allowed`, `disallowed`, or
@@ -22,11 +24,11 @@ already fetched, handed over as a stream, so neither library opens a URL or a
 file itself.
 """
 
+import asyncio
 import html
 import ipaddress
 import re
 import socket
-import time
 from dataclasses import asdict, dataclass, field
 from io import BytesIO
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -134,41 +136,48 @@ def pinned(url: str) -> tuple[str, str, str]:
     return urlunsplit((parts.scheme, netloc, parts.path or "/", parts.query, "")), parts.netloc, host
 
 
-def _read(response, deadline: float) -> bytes:
+def get(url: str, *, headers: dict | None = None) -> Fetched:
+    """GET `url` under the guard and the limits, following redirects; any HTTP status comes back.
+
+    The whole exchange — every hop's connection, status line, headers and body — runs under one deadline,
+    `RESEARCH_FETCH_TIMEOUT` seconds, by cancelling it (httpx's own timeouts bound each read, so a server sending a
+    byte at a time would never trip them). Only resolving a name is outside it: that is bounded by the resolver."""
+    limit = settings.RESEARCH_FETCH_TIMEOUT
+    try:
+        return asyncio.run(asyncio.wait_for(_get(url, headers or {}), limit))
+    except TimeoutError as e:
+        raise FetchError(f"the page took longer than {limit:g} seconds") from e
+    except httpx.HTTPError as e:
+        raise FetchError(f"could not fetch {url[:200]}: {e}") from e
+
+
+async def _get(url: str, headers: dict) -> Fetched:
+    limit = settings.RESEARCH_FETCH_TIMEOUT
+    async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=httpx.Timeout(limit)) as client:
+        for _ in range(MAX_REDIRECTS + 1):
+            target, host, name = pinned(url)
+            sent = {"User-Agent": settings.RESEARCH_USER_AGENT, **headers, "Host": host}
+            async with client.stream("GET", target, headers=sent, extensions={"sni_hostname": name}) as response:
+                if response.has_redirect_location:
+                    url = urljoin(url, response.headers["location"])
+                    continue
+                body = await _read(response)
+                kind = response.headers.get("content-type", "")
+                charset = response.charset_encoding or ""
+                return Fetched(url, response.status_code, kind, body, dict(response.headers), charset)
+    raise FetchError(f"more than {MAX_REDIRECTS} redirects")
+
+
+async def _read(response) -> bytes:
     limit = settings.RESEARCH_MAX_BYTES
     if int(response.headers.get("content-length") or 0) > limit:
         raise FetchError(f"the page is larger than {limit} bytes")
     body = bytearray()
-    for chunk in response.iter_bytes():
+    async for chunk in response.aiter_bytes():
         body += chunk
         if len(body) > limit:
             raise FetchError(f"the page is larger than {limit} bytes")
-        if time.monotonic() > deadline:
-            raise FetchError(f"the page took longer than {settings.RESEARCH_FETCH_TIMEOUT:g} seconds")
     return bytes(body)
-
-
-def get(url: str, *, headers: dict | None = None) -> Fetched:
-    """GET `url` under the guard and the limits, following redirects; any HTTP status comes back."""
-    deadline = time.monotonic() + settings.RESEARCH_FETCH_TIMEOUT
-    timeout = httpx.Timeout(settings.RESEARCH_FETCH_TIMEOUT, connect=min(5.0, settings.RESEARCH_FETCH_TIMEOUT))
-    try:
-        with httpx.Client(trust_env=False, follow_redirects=False, timeout=timeout) as client:
-            for _ in range(MAX_REDIRECTS + 1):
-                target, host, name = pinned(url)
-                sent = {"User-Agent": settings.RESEARCH_USER_AGENT, **(headers or {}), "Host": host}
-                with client.stream("GET", target, headers=sent, extensions={"sni_hostname": name}) as response:
-                    if response.has_redirect_location:
-                        url = urljoin(url, response.headers["location"])
-                        continue
-                    body = _read(response, deadline)
-                    kind = response.headers.get("content-type", "")
-                    return Fetched(
-                        url, response.status_code, kind, body, dict(response.headers), response.charset_encoding or ""
-                    )
-    except httpx.HTTPError as e:
-        raise FetchError(f"could not fetch {url[:200]}: {e}") from e
-    raise FetchError(f"more than {MAX_REDIRECTS} redirects")
 
 
 def robots(url: str) -> str:

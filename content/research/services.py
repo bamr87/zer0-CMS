@@ -229,7 +229,10 @@ def refresh(feed: FeedSubscription) -> int:
             raise fetch.FetchError(f"the feed answered HTTP {got.status}")
         if got.status != 304:
             title, items = fetch.entries(got.body)
-            validators = {"etag": got.headers.get("etag", "")[:255], "modified": got.headers.get("last-modified", "")[:64]}
+            validators = {
+                "etag": got.headers.get("etag", "")[:255],
+                "modified": got.headers.get("last-modified", "")[:64],
+            }
     except fetch.FetchError as e:
         error = str(e)
     with transaction.atomic():

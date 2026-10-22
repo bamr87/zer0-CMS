@@ -21,7 +21,7 @@ python manage.py wagtail_ai_schema --out ../schemas/content/ai-schema.json
 ruff check . && ruff format --check .
 ```
 
-With Docker, from the repository root: `docker compose --profile content up -d --wait` starts Postgres (pgvector), Redis, this app on <http://localhost:8000>, a Celery worker and beat, and the outbox relay. The web role is gunicorn on threaded workers, configured once in [`gunicorn.conf.py`](gunicorn.conf.py) (gunicorn reads it from the working directory): a run's event stream holds a request for up to five minutes, which a sync worker cannot do — gunicorn kills it at its 30 s timeout mid-stream.
+With Docker, from the repository root: `docker compose --profile content up -d --wait` starts Postgres (pgvector), Redis, this app on <http://localhost:8000>, a Celery worker and beat, a second worker for the research library's fetches (the `research` queue, so a slow site never holds the worker that runs agents and publishes), and the outbox relay. The web role is gunicorn on threaded workers, configured once in [`gunicorn.conf.py`](gunicorn.conf.py) (gunicorn reads it from the working directory): a run's event stream holds a request for up to five minutes, which a sync worker cannot do — gunicorn kills it at its 30 s timeout mid-stream.
 
 ## Apps
 

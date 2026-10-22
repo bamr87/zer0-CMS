@@ -202,6 +202,9 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": env("THROTTLE_ANON_RATE", default="120/min") or None,
         "principal": env("THROTTLE_PRINCIPAL_RATE", default="600/min") or None,
+        # Per person, what makes the research library reach the web: a page captured or fetched again, a search,
+        # a feed subscribed to or read now (research/views.py).
+        "research_fetch": env("THROTTLE_RESEARCH_FETCH_RATE", default="30/min") or None,
     },
     # How many proxies sit in front, so the anonymous bucket keys on the client
     # address rather than the load balancer's.
@@ -291,6 +294,10 @@ CELERY_BEAT_SCHEDULE = {
     # The research library's feed subscriptions that are due (research/tasks.py).
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
 }
+# A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
+# `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
+# publishes pages.
+CELERY_TASK_ROUTES = {f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")}
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
 # LLM_BACKEND: recorded (fixtures; the test default) | fake | litellm
@@ -333,6 +340,9 @@ RESEARCH_USER_AGENT = env("RESEARCH_USER_AGENT", default="zer0-cms-research/1.0 
 RESEARCH_MAX_BYTES = env.int("RESEARCH_MAX_BYTES", default=5 * 1024 * 1024)
 RESEARCH_FETCH_TIMEOUT = env.float("RESEARCH_FETCH_TIMEOUT", default=20.0)
 RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 1024 * 1024)
+# How long one fetch task may run in all — robots.txt and the page, each within RESEARCH_FETCH_TIMEOUT, and the
+# extraction — before Celery stops it (soft; the hard limit is 30 seconds later).
+RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
 
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"
