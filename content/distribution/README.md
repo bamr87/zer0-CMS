@@ -14,7 +14,7 @@ going live                   the page
 
 | File | What |
 |---|---|
-| `models.py` | `Channel` (a site's LinkedIn page or profile, WordPress site, GitHub repository or newsletter; its credential encrypted with the AI layer's keys, `ai/crypto.py`, and write-only), `DistributionPost` (a page or a story going to a channel), `LedgerEntry` (what a channel published, keyed by canonical URL), `Statistic` (a post's counts on a day); `visible_to(user, site)` |
+| `models.py` | `Channel` (a site's LinkedIn page or profile, WordPress site, GitHub repository or newsletter; its credential encrypted with the AI layer's keys, `ai/crypto.py`, rotated with them by `manage.py rotate_ai_credentials`, and write-only), `DistributionPost` (a page or a story going to a channel), `LedgerEntry` (what a channel published, keyed by canonical URL), `Statistic` (a post's counts on a day); `visible_to(user, site)` |
 | `services.py` | Every command: channels and their connections, the canonical URL, composing, the brand guard, approving and rejecting, the gates (`preview`), publishing on the worker (`deliver`), recording a post by hand, the ledger as a file, statistics |
 | `gates.py` | The publish gates in their fixed order, shared with the site's own lane |
 | `ledger.py` | The ledger as a file — Python's `json.dump(indent=2, sort_keys=True)` plus a newline, the extension's and every lane's byte format, written under a lock and atomically; an unreadable ledger is never read as empty |

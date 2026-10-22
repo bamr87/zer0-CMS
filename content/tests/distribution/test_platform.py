@@ -10,12 +10,16 @@ Every LinkedIn request is recorded HTTP (respx); the worker runs what a
 request queued after it commits (`worker`).
 """
 
+import io
 import json
 import shutil
 
 import pytest
+from cryptography.fernet import Fernet
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import override_settings
 from wagtail.models import Page
 
@@ -110,6 +114,26 @@ def test_a_credential_is_encrypted_write_only_and_forgotten_when_the_channel_poi
         f"{API}/channels/", {"site": site, "kind": "github_pr", "name": "x", "settings": {"author": "y"}}, format="json"
     )
     assert wrong.status_code == 422
+
+
+def test_rotating_the_ai_keys_carries_every_channels_credential(channel):
+    """A channel's credential is under the AI layer's keys: the one command that rotates them rotates it too, and
+    one no key can read stops the rotation, named."""
+    old, new = Fernet.generate_key().decode(), Fernet.generate_key().decode()
+    with override_settings(AI_CREDENTIAL_KEYS=[old]):
+        channel.set_credentials({"access_token": "under-the-old-key"})
+        channel.set_pending({"code": "c", "verifier": "v", "redirect_uri": "http://127.0.0.1/"})
+        channel.save()
+    out = io.StringIO()
+    with override_settings(AI_CREDENTIAL_KEYS=[new, old]):
+        call_command("rotate_ai_credentials", stdout=out)
+    assert "1 credential(s) re-encrypted" in out.getvalue()
+    with override_settings(AI_CREDENTIAL_KEYS=[new], SECRET_KEY="another-secret"):
+        rotated = Channel.objects.get(pk=channel.pk)
+        assert rotated.credentials() == {"access_token": "under-the-old-key"} and rotated.pending()["code"] == "c"
+    with override_settings(AI_CREDENTIAL_KEYS=[old], SECRET_KEY="another-secret"):
+        with pytest.raises(CommandError, match="the channel 'The page'"):
+            call_command("rotate_ai_credentials", stdout=io.StringIO())
 
 
 def test_only_people_who_manage_channels_set_them_up_and_everyone_on_the_site_sees_them(api, alice, bob, channel):

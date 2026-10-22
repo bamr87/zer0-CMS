@@ -34,6 +34,8 @@ from django.db import transaction
 from django.utils import timezone
 from wagtail.models import Page
 
+from ai import crypto
+from ai.providers import NotConfigured
 from ops.errors import Conflict, Forbidden, Invalid, NotFound
 from suggestions.guard import extra_patterns, guard_text
 
@@ -173,6 +175,28 @@ def set_credentials(channel, user, values: dict) -> Channel:
 
 
 @transaction.atomic
+def rotate_credentials(**_signal) -> int:
+    """Every channel's credential and pending OAuth code under the AI layer's first key, for `manage.py
+    rotate_ai_credentials` (it sends `ai.crypto.credentials_rotated` in its transaction). One no key can read stops
+    the rotation, naming the channel, before anything is written."""
+    rows = list(Channel.objects.exclude(credential_encrypted="", pending_encrypted=""))
+    fresh = []
+    for channel in rows:
+        try:
+            fresh.append(
+                [crypto.encrypt(crypto.decrypt(v)) for v in (channel.credential_encrypted, channel.pending_encrypted)]
+            )
+        except crypto.InvalidToken as e:
+            raise NotConfigured(
+                f"the credential of the channel {channel.name!r} was encrypted with a key that is gone: add that key to "
+                "AI_CREDENTIAL_KEYS (or its SECRET_KEY to SECRET_KEY_FALLBACKS) and rotate again, or connect the "
+                "channel again"
+            ) from e
+    for channel, (credential, pending) in zip(rows, fresh, strict=True):
+        Channel.objects.filter(pk=channel.pk).update(credential_encrypted=credential, pending_encrypted=pending)
+    return len(rows)
+
+
 def disconnect(channel, user) -> Channel:
     if not manages_channels(user):
         raise Forbidden("disconnecting a channel needs the right to manage channels")

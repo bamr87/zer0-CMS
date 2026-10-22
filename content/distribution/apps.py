@@ -9,5 +9,10 @@ class DistributionConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
 
     def ready(self):
+        from ai.crypto import credentials_rotated
+
         # The registry's tools and the outbox consumer register themselves on import.
-        from . import consumers, tools  # noqa: F401
+        from . import consumers, services, tools  # noqa: F401
+
+        # A channel's credential is under the AI layer's keys, so rotating those keys rotates it too.
+        credentials_rotated.connect(services.rotate_credentials, dispatch_uid="distribution.channels")
