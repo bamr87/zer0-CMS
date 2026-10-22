@@ -83,9 +83,15 @@ def oneline(value)
   value.to_s.gsub(/\s+/, ' ').strip
 end
 
+# A table cell may not hold a bare pipe. Escape backslashes too, so an input
+# that already ends in one cannot turn the escaped pipe back into a delimiter.
+def escape_pipes(text)
+  text.to_s.gsub(/[\\|]/) { |ch| "\\#{ch}" }
+end
+
 def cell(value)
   text = oneline(value)
-  text.empty? ? '—' : text.gsub('|', '\|')
+  text.empty? ? '—' : escape_pipes(text)
 end
 
 def code(text)
@@ -108,7 +114,7 @@ end
 def agent_guidance
   instructions = files('.github/instructions/*.instructions.md').map do |rel|
     fm = front_matter(rel)
-    [link(rel, File.basename(rel)), globs(fm['applyTo']).map { |g| code(g.gsub('|', '\|')) }.join(', '), cell(fm['description'])]
+    [link(rel, File.basename(rel)), globs(fm['applyTo']).map { |g| code(escape_pipes(g)) }.join(', '), cell(fm['description'])]
   end
 
   cursor = files('.cursor/commands/*.md').map { |rel| File.basename(rel, '.md') }
@@ -226,7 +232,7 @@ end
 
 def npm_scripts
   JSON.parse(read('package.json')).fetch('scripts', {}).sort.map do |name, cmd|
-    [code("npm run #{name}"), code(cmd.gsub('|', '\|'))]
+    [code("npm run #{name}"), code(escape_pipes(cmd))]
   end
 end
 
@@ -324,7 +330,7 @@ end
 def installer
   help = installer_help
   pairs = lambda do |key|
-    (help[key] || []).map { |l| l.split(/\s{2,}/, 2) }.map { |a, b| [code(a.gsub('|', '\|')), cell(b)] }
+    (help[key] || []).map { |l| l.split(/\s{2,}/, 2) }.map { |a, b| [code(escape_pipes(a)), cell(b)] }
   end
   subcommands = pairs.call('Subcommands').map { |c, d| [c.sub('`', '`./scripts/bin/install '), d] }
 
