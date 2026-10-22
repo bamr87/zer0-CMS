@@ -800,6 +800,12 @@ suite('core: shared primitives', () => {
     assert.equal(parseDate('not a date'), null);
   });
 
+  test('readJsonc reads comments and trailing commas, and names where it stopped', () => {
+    const text = '{\n  // a comment\n  "a": [1, 2,], /* another */\n  "b": "x // not a comment",\n}\n';
+    assert.deepEqual(readJsonc(text), { a: [1, 2], b: 'x // not a comment' });
+    assert.throws(() => readJsonc('{\n  "a": 1\n  "b": 2\n}'), /^Error: Invalid JSON at line 3, column 3: CommaExpected$/);
+  });
+
   test('the number and timestamp formatters agree with Python', () => {
     assert.equal(roundHalfEven(0.5, 0), 0);
     assert.equal(roundHalfEven(1.5, 0), 2);

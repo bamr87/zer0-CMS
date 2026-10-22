@@ -1,18 +1,18 @@
 /**
- * JSON in, JSON out — both halves hand-rolled, both for the same reason:
- * this extension has zero runtime dependencies.
+ * JSON in, JSON out.
  *
  * Reading: `zer0.json` and `.vscode/settings.json` are JSON *with comments*
- * (line and block) and trailing commas. `readJsonc` sanitises those without a
- * parser dependency, preserving byte offsets so the error it throws can still
- * point at a line and column in the original text.
+ * (line and block) and trailing commas. `readJsonc` reads them with
+ * `jsonc-parser` — the parser VS Code itself reads its settings with, bundled
+ * at build time (ADR 0006 decision 9) — and throws an error naming the line
+ * and column of the first problem in the original text.
  *
  * Writing: the ledger and everything under `.cms/distribution/` are written by
  * BOTH this extension and the stdlib-Python lane. If the two serialisers
  * disagree by a byte, every publish becomes a spurious git diff. `pyJsonDump`
  * reproduces `json.dumps` exactly: `sort_keys` ordering, `ensure_ascii`
  * escaping that starts at U+007F (not U+0080), Python's separators, and
- * Python's `Infinity`/`NaN` spellings.
+ * Python's `Infinity`/`NaN` spellings. No library does that, so it stays here.
  *
  * The one unavoidable difference: JavaScript has a single number type, so a
  * Python float that happens to be integral (`2.0`) round-trips as `2`.
@@ -20,142 +20,26 @@
 
 import * as fs from 'node:fs/promises';
 
+import { parse, printParseErrorCode, type ParseError } from 'jsonc-parser';
+
 // ---------------------------------------------------------------------------
 // Reading
 // ---------------------------------------------------------------------------
 
 /**
- * Blank out line comments, block comments and trailing commas, replacing each
- * removed character with a space (and keeping newlines) so every offset in the
- * result still matches the input.
- */
-function sanitize(text: string): string {
-  const out = text.split('');
-  let i = 0;
-  let inString = false;
-  let escaped = false;
-  // Offsets of commas that might be trailing, most recent last.
-  let pendingComma = -1;
-
-  while (i < text.length) {
-    const ch = text.charAt(i);
-
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-      } else if (ch === '\\') {
-        escaped = true;
-      } else if (ch === '"') {
-        inString = false;
-      }
-      i += 1;
-      continue;
-    }
-
-    if (ch === '"') {
-      inString = true;
-      pendingComma = -1;
-      i += 1;
-      continue;
-    }
-
-    if (ch === '/' && text.charAt(i + 1) === '/') {
-      while (i < text.length && text.charAt(i) !== '\n') {
-        out[i] = ' ';
-        i += 1;
-      }
-      continue;
-    }
-
-    if (ch === '/' && text.charAt(i + 1) === '*') {
-      const end = text.indexOf('*/', i + 2);
-      const stop = end === -1 ? text.length : end + 2;
-      for (let j = i; j < stop; j += 1) {
-        if (text.charAt(j) !== '\n') {
-          out[j] = ' ';
-        }
-      }
-      i = stop;
-      continue;
-    }
-
-    if (ch === ',') {
-      pendingComma = i;
-      i += 1;
-      continue;
-    }
-
-    if (ch === '}' || ch === ']') {
-      if (pendingComma !== -1) {
-        out[pendingComma] = ' ';
-      }
-      pendingComma = -1;
-      i += 1;
-      continue;
-    }
-
-    if (ch.trim() !== '') {
-      pendingComma = -1;
-    }
-    i += 1;
-  }
-
-  return out.join('');
-}
-
-function lineColumn(text: string, offset: number): { line: number; column: number } {
-  const upto = text.slice(0, Math.max(0, Math.min(offset, text.length)));
-  const lines = upto.split('\n');
-  const line = lines.length;
-  const last = lines[lines.length - 1] ?? '';
-  return { line, column: last.length + 1 };
-}
-
-/**
- * Where did the parser give up? V8 words this three different ways depending
- * on the input, so try all three: an explicit line/column, a byte position, or
- * (for very short documents) a quoted snippet we can locate ourselves. Because
- * `sanitize` preserves offsets, every answer is valid for the original text.
- */
-function locate(source: string, message: string): { line: number; column: number } | undefined {
-  const lineCol = /line (\d+) column (\d+)/.exec(message);
-  if (lineCol?.[1] !== undefined && lineCol[2] !== undefined) {
-    return { line: Number(lineCol[1]), column: Number(lineCol[2]) };
-  }
-
-  const position = /at position (\d+)/.exec(message);
-  if (position?.[1] !== undefined) {
-    return lineColumn(source, Number(position[1]));
-  }
-
-  const snippet = /(?:\.\.\.)?"([\s\S]+)"(?:\.\.\.)? is not valid JSON$/.exec(message);
-  if (snippet?.[1] !== undefined) {
-    const start = source.indexOf(snippet[1]);
-    if (start !== -1) {
-      const token = /Unexpected token '(.)'/.exec(message)?.[1];
-      const at = token !== undefined ? source.indexOf(token, start) : start;
-      return lineColumn(source, at === -1 ? start : at);
-    }
-  }
-  return undefined;
-}
-
-/**
  * Parse JSON with comments and trailing commas. Throws an `Error` naming the
- * line and column in the *original* text — the whole reason for the
- * offset-preserving sanitiser above.
+ * line and column, in the original text, of the first thing it could not read.
  */
 export function readJsonc<T>(text: string): T {
-  const source = sanitize(text);
-  try {
-    return JSON.parse(source) as T;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const at = locate(source, message);
-    throw new Error(
-      at ? `Invalid JSON at line ${at.line}, column ${at.column}: ${message}` : `Invalid JSON: ${message}`,
-    );
+  const errors: ParseError[] = [];
+  const value = parse(text, errors, { allowTrailingComma: true }) as T;
+  const first = errors[0];
+  if (first !== undefined) {
+    const lines = text.slice(0, first.offset).split('\n');
+    const column = (lines[lines.length - 1] ?? '').length + 1;
+    throw new Error(`Invalid JSON at line ${lines.length}, column ${column}: ${printParseErrorCode(first.error)}`);
   }
+  return value;
 }
 
 /**

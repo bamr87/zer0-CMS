@@ -234,6 +234,23 @@ const copyMediaPlugin = {
 const DEFINES = buildDefines();
 
 /**
+ * The libraries src/core reads its inputs with (ADR 0006 decision 9, which
+ * amends D3 and D14): YAML, JSON with comments, globs and dates, each the
+ * maintained library rather than a hand-rolled subset. Core runs in both
+ * node bundles — the extension host and the MCP server — so both bundle these.
+ * The MCP server still bundles nothing else: never `vscode` (its empty
+ * `external`) and never the engines package (eslint's NO_ENGINES_FROM_MCP).
+ */
+const CORE_LIBRARIES = ['yaml', 'jsonc-parser', 'picomatch', 'date-fns', '@date-fns/tz'];
+
+/**
+ * A package's ESM build before its `main` for the node bundles (a package
+ * with an `exports` map is unaffected): `jsonc-parser`'s `main` is a UMD build
+ * whose factory takes `require` as a parameter, which a bundler cannot follow.
+ */
+const NODE_MAIN_FIELDS = ['module', 'main'];
+
+/**
  * What the studio bundle may import from its own code: the shared web packages
  * and the libraries the studio is built on (web/README.md), by package name.
  * The same list, read from the studio's side, is the dependencies of the
@@ -293,6 +310,7 @@ const targets = [
     platform: 'node',
     target: 'node20',
     format: 'cjs',
+    mainFields: NODE_MAIN_FIELDS,
     // The agent SDK is an optionalDependency loaded through a dynamic import at
     // runtime; it must not be pulled into the bundle.
     external: ['vscode', '@anthropic-ai/claude-agent-sdk'],
@@ -303,7 +321,7 @@ const targets = [
       // Bundled, by decision D-A. `vscode` and the agent SDK stay external.
       // `eventsource` follows a run's event stream with the person's token
       // as a header, which the browser's EventSource cannot send (PLAN G10).
-      bareImportGate(['@bamr87/fleet-engines', 'yaml', 'eventsource']),
+      bareImportGate(['@bamr87/fleet-engines', 'eventsource', ...CORE_LIBRARIES]),
       metafilePlugin,
       copyMediaPlugin,
     ],
@@ -314,12 +332,14 @@ const targets = [
     platform: 'node',
     target: 'node20',
     format: 'cjs',
+    mainFields: NODE_MAIN_FIELDS,
     external: [], // ← the layering gate. Do not add 'vscode' here.
     define: DEFINES,
     metafile: true,
-    // ← the other half of the layering gate: no bare import at all, so the
-    // engines package can never reach the MCP process.
-    plugins: [problemMatcherPlugin, bareImportGate([]), metafilePlugin],
+    // ← the other half of the layering gate: only the libraries core reads
+    // with, so the engines package — and anything else — never reaches the
+    // MCP process.
+    plugins: [problemMatcherPlugin, bareImportGate(CORE_LIBRARIES), metafilePlugin],
   },
   {
     entryPoints: ['src/webview/panel/main.ts'],

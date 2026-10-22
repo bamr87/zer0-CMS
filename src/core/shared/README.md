@@ -7,7 +7,7 @@ Eight files with no domain knowledge and no dependencies. Everything else in the
 | `types.ts` | `Zer0Config`, `Field`, `FieldType`, `ContentType`, `ContentFolder`, `FieldGroup`, `PageEntry`, `ContentRecord`, `CmsIssue`, `PerfStats`, `LogSink`, `NOOP_LOG`, … | The vocabulary. Types only, plus the null log sink. |
 | `config.ts` | `defaultConfig`, `resolveConfig`, `absPath`, `relPath`, `configPath`, `require*` | Three-layer merge and `[[workspace]]` expansion. |
 | `atomic.ts` | `atomicWriteFile`, `atomicWriteText` | Temp file in the same directory, then `rename`. |
-| `jsonio.ts` | `readJsonc`, `readJsonFile`, `pyJsonDump` | JSON-with-comments in, Python-identical JSON out. |
+| `jsonio.ts` | `readJsonc`, `readJsonFile`, `pyJsonDump` | JSON-with-comments in (`jsonc-parser`), Python-identical JSON out. |
 | `timestamp.ts` | `utcStamp`, `utcDate` | Second precision, no milliseconds — a byte contract. |
 | `dates.ts` | `formatDate`, `parseDate`, `normalizePattern`, `timezoneOffset` | date-fns token subset via `Intl`. |
 | `glob.ts` | `compileGlob`, `globMatches`, `walkGlobs`, `SKIP_DIRS` | Single-pass translation, static base, sorted output. |
@@ -23,7 +23,7 @@ Eight files with no domain knowledge and no dependencies. Everything else in the
 
 **`utcStamp()`** — `2026-07-31T14:05:22Z`. Second precision, no milliseconds. Machine-read fields only; anything a human reads goes through `dates.ts`.
 
-**`readJsonc`** — comments and trailing commas are blanked with *spaces*, not deleted, so byte offsets survive and the thrown error can name a real line and column in the original text.
+**`readJsonc`** — `jsonc-parser`, the parser VS Code reads its own settings with, with trailing commas allowed; the thrown error names the line and column of the first problem in the original text.
 
 **`withPlatformDefaults(cfg, resolved)`** — fills in what the *site* already says, for a workspace that has not said it. When `contentFolders` is empty, the folders are derived from the site's own config (`collections_dir` + `collections:` in `_config.yml`, `docs_dir` in `mkdocs.yml`, `contentDir` in `hugo.toml`) through `core/platform`'s `contentRootsFor`. It only ever fills a **gap**: a workspace that registered its own folders keeps every one of them, because a derived value must never overrule a stated one. Pure and separate from `resolveConfig`, which merges values already in memory and does no I/O — the caller detects first, then merges.
 
