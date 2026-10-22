@@ -8,9 +8,9 @@ Definitions, runs and the one tool registry every surface dispatches through (no
 |---|---|
 | `models.py` | `AgentDefinition` (a snippet with revisions and a draft/live state), `AgentRun`, `AgentStep`, `Memory`, `EvalCase`, `EvalResult`, `AgentToken` |
 | `principals.py` | `agent:<slug>` users, the `Agents` group and each agent's own group with its Wagtail page and collection permissions |
-| `registry.py` | `@tool`, `Registry.call()` and the six checks it runs on every call |
-| `llm.py` | the model client the runner uses (`get_llm`, `use_llm`): a thin front over the provider registry in `ai/providers/`, which `LLM_BACKEND` names a slug of (`recorded`, `fake`, `litellm`, `anthropic`, `openai`, `claude_code`); `RecordingLLM` |
-| `runner.py` | `start_run` / `execute`: the state machine over runs and steps; `model_loop`, which a handler may call with its own client, persona and history (the AI content layer's assistants do) |
+| `registry.py` | `@tool`, `Registry.call()` and the six checks it runs on every call — for a call that acts for a person (`ToolContext.on_behalf_of`, set by the AI content layer's runs), a page the tool targets must also be one that person may edit |
+| `llm.py` | the model client the runner uses (`get_llm`, `use_llm`): a thin front over the provider registry in `ai/providers/`, which `LLM_BACKEND` names a slug of (`recorded`, `fake`, `litellm`, `anthropic`, `openai`, `claude_code`) — the definitions' LiteLLM-style ids (`anthropic/claude-sonnet-5-5`) reach a vendor adapter bare, and `claude_code`, which has no tool calls, refuses a definition that uses tools; `RecordingLLM` |
+| `runner.py` | `start_run` / `execute`: the state machine over runs and steps; `model_loop`, which a handler may call with its own client, persona and history (the AI content layer's assistants do); `run_finished`, sent in the transaction that records a final status — also for a run refused before its handler ran |
 | `schema.py` | the JSON Schema export of every page type and block; `validate_block` |
 | `evals.py` | scoring, the publish gate and the promotion rule |
 | `sync.py` | `definitions/*.yaml` → definitions and eval cases |

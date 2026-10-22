@@ -36,7 +36,7 @@ With Docker, from the repository root: `docker compose --profile content up -d -
 | `outbox/` | `OutboxEvent`, `ProcessedEvent`, `emit()`, the relay to Redis Streams, deduplicating consumers | [`outbox/README.md`](outbox/README.md) |
 | `api/` | GraphQL additions (Grapple), REST endpoints, the CSRF-aware GraphQL view | `api/views.py` |
 | `mcp_server/` | MCP over Streamable HTTP (`/mcp/`) and stdio, over the one registry | [`mcp_server/README.md`](mcp_server/README.md) |
-| `importers/` | Jekyll sites and parodynews's dump → pages and the AI content layer; `ImportedSource` | `importers/jekyll.py` |
+| `importers/` | Jekyll sites and parodynews's dump → pages and the AI content layer; `ImportedSource` (a page's file) and `ImportedRecord` (an AI row's digest), so a re-import never overwrites what was changed here (`--force` aside) | `importers/jekyll.py` |
 | `exporters/` | pages → Jekyll files | `exporters/jekyll.py` |
 | `ops/` | the probes, the request id, JSON logging and redaction, the error envelope, throttling, CORS, security headers, the OpenAPI document, error reporting | [`ops/README.md`](ops/README.md) |
 

@@ -22,18 +22,20 @@ An adapter implements `complete` (a model id, a system prompt, the runner's prov
 
 | Slug | Reaches | Credential (row, else environment) |
 |---|---|---|
-| `claude_code` | Claude through the Claude Agent SDK, one tool-less query per completion | `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`) or `ANTHROPIC_API_KEY` |
-| `anthropic` | the Messages API: `output_config.format`, tool use, server-side refusal fallbacks on the models that need them | `ANTHROPIC_API_KEY` or an OAuth token |
+| `claude_code` | Claude through the Claude Agent SDK, one tool-less query per completion; every credential variable set by the adapter, the CLI and its directory the deployment's | `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`) or `ANTHROPIC_API_KEY` |
+| `anthropic` | the Messages API: `output_config.format`, tool use, server-side refusal fallbacks on the models that need them (an OAuth token's beta sent beside the fallback one) | `ANTHROPIC_API_KEY` or an OAuth token |
 | `openai` | chat completions: function calling, `response_format` | `OPENAI_API_KEY` |
 | `litellm` | any other vendor, and embeddings for the graph (`EMBEDDING_BACKEND=litellm`) | the vendor's own variables |
 | `recorded` | replays `agents/recordings/<agent>/<scenario>/<step>.json` (CI, evals) | none |
 | `fake` | a scripted list (unit tests) | none |
 
-Each slug has a `ProviderConfig` row (created after every migrate): enabled, the default (one at most, by a database constraint), base URL, organization, project, default model, `extra` options (`effort`, `max_turns`, `timeout`, `server_side_fallbacks`, LiteLLM's `models`), a monthly budget, the last health check, and the credential — encrypted with `AI_CREDENTIAL_KEYS` (or a key derived from `SECRET_KEY`), write-only over the API, never logged. Without a row flagged default, `AI_DEFAULT_PROVIDER` is the default. `settings.AI_PROVIDERS` (slug → dotted path) adds an adapter or, mapped to `""`, removes one. `agents/llm.py`, the tool-using agents' client, is a thin front over the same registry (`LLM_BACKEND` names a slug).
+Each slug has a `ProviderConfig` row (created after every migrate): enabled, the default (one at most, by a database constraint), base URL, organization, project, default model, `extra` options — only the ones its adapter declares in `options` (`max_retries`, `timeout`, `max_tokens`, `effort`, `server_side_fallbacks`, `max_turns`, LiteLLM's `models`), validated on save, so nothing a row holds chooses what the worker runs — a monthly budget, the last health check, and the credential — encrypted at rest, write-only over the API, never logged, and dropped when the base URL changes without a new one. An environment credential is the deployment's and never goes to a base URL a row chose: such a row needs its own. Without a row flagged default, `AI_DEFAULT_PROVIDER` is the default. `settings.AI_PROVIDERS` (slug → dotted path) adds an adapter or, mapped to `""`, removes one. `agents/llm.py`, the tool-using agents' client, is a thin front over the same registry (`LLM_BACKEND` names a slug; a definition's `anthropic/…` or `openai/…` model id reaches that vendor's adapter bare, and `claude_code`, without tool calls, refuses a definition that uses tools).
+
+Credentials are encrypted with the first of `AI_CREDENTIAL_KEYS`, else a key derived from `SECRET_KEY`; every key decrypts, and the keys derived from `SECRET_KEY` and `SECRET_KEY_FALLBACKS` always stay among them, so setting `AI_CREDENTIAL_KEYS` (or rotating `SECRET_KEY` with the old one as a fallback) loses nothing. `manage.py rotate_ai_credentials` moves every credential to the first key; one no current key can read is named (`NotConfigured`), never silently lost.
 
 ## Rows and who sees them
 
-Every row has a UUID `public_id`; the integer key never leaves the platform. Assistants, pipelines, output schemas, briefs and conversations carry `owner`, `site` and `visibility`: `private` (the owner), `site` (everyone with page rights in that site) or `shared` (everyone signed in); staff see everything. `visible_to(user, site=None)` is the one place rows are scoped — every view, tool, service and handler uses it — and with a site it returns that site's rows and the rows that belong to no site. Changing a row is its owner's or staff's (`can_edit`); running a visible assistant or pipeline is anyone's who can see it.
+Every row has a UUID `public_id`; the integer key never leaves the platform. Assistants, pipelines, output schemas, briefs and conversations carry `owner`, `site` and `visibility`: `private` (the owner), `site` (everyone with page rights in that site) or `shared` (everyone signed in); staff see everything. A row belongs only to a site its owner edits (staff: any), so nobody plants a persona in another site's shared space. `visible_to(user, site=None)` is the one place rows are scoped — every view, tool, service and handler uses it, and `usable(row, user)` asks it again — and with a site it returns that site's rows and the rows that belong to no site. Changing a row is its owner's or staff's (`can_edit`); running a visible assistant or pipeline is anyone's who can see it; a brief an agent asked for (`ai.generate_brief`) is applied by the people it is shown to. Configuring providers needs the `ai.change_providerconfig` permission, and only those who have it see a provider's configuration (the others see whether its last check was ok).
 
 ## Runs
 
@@ -45,7 +47,7 @@ Every row has a UUID `public_id`; the integer key never leaves the platform. Ass
 | `message` | `post_message`, `rerun`, a pipeline on a conversation | the conversation replayed whole (system messages folded into the instructions; it always opens and ends with a person's turn), the answer written to the placeholder message |
 | `sync_models`, `health` | staff, from the provider endpoints | the catalog upserted from `list_models`; a one-word completion stored as the provider's last health |
 
-The handler runs every model call through the runner's own loop (`agents.runner.model_loop`), so each call is a step with tokens and cost, under the definition's step limit and budget (a pipeline's total included); a provider row's monthly budget refuses new runs once spent (`429 budget.exceeded`). An assistant may use only the read-only tools it lists, narrowed again to the `assistant` definition's allowlist, and none on a provider without the runner's tool protocol (`claude_code`). The rows a run names are re-checked against the person who started it. The definition's evals replay recordings (`run_evals --all --recorded`).
+The handler runs every model call through the runner's own loop (`agents.runner.model_loop`), so each call is a step with tokens and cost, under the definition's step limit and budget (a pipeline's total included); a provider row's monthly budget — this month's model calls through it, each counted once on the run that made it — refuses new runs once spent (`429 budget.exceeded`). An assistant may use only the read-only tools it lists, narrowed again to the `assistant` definition's allowlist, and none on a provider without the runner's tool protocol (`claude_code`); its tools act for the person who started the run, so they read only pages that person may edit. A run can be started from more than one surface (the generic `/api/v2/agent-runs/` too), so the worker asks again when it executes: the row the run is about must be its starter's to use, every row it uses — the assistant, the pipeline and each step's assistant, the output schema — must still be visible to them, and the provider must be enabled and inside its budget. A brief left generating or a reply left queued by a run that ended without succeeding — even one refused before the handler ran — takes the run's error (`settle`, on `agents.runner.run_finished`), and can be asked for again. A pipeline run on a conversation posts its prompt there first, for every step to read. The definition's evals replay recordings (`run_evals --all --recorded`).
 
 ## Briefs become drafts, never pages
 
@@ -55,11 +57,11 @@ Applying a ready brief (`apply_brief`) creates the page as a draft under the cho
 
 | Path | |
 |---|---|
-| `providers/` | list, retrieve; staff: update (the credential write-only), `test/`, `sync-models/`, `set-default/` |
+| `providers/` | list, retrieve; with `ai.change_providerconfig`: update (the credential write-only), `test/`, `sync-models/`, `set-default/` |
 | `models/` | the catalog; filter `provider`, `active` |
-| `output-schemas/` | CRUD (the schema validated, a changed schema a new version), `export/`; staff: `import-bundled/` |
+| `output-schemas/` | CRUD (the schema validated — referring only to itself — and a changed schema a new version), `export/`; importing a schema is posting the document `export/` returned; staff: `import-bundled/` |
 | `assistants/`, `pipelines/` | CRUD (pipelines with their steps, replaced as a whole), `run/`; an assistant's `export/` as a portable document and `import/` of one |
-| `briefs/` | CRUD, `generate/`, `apply/` (201: the draft's id and the suggestions to accept) |
+| `briefs/` | CRUD, `generate/`, `apply/` (201: the draft's id and the suggestions to accept; the owner's, staff's, or — for a brief an agent asked for — anyone's who sees it) |
 | `conversations/` | CRUD (`from_brief` on create: the brief's text is the first turn), `messages/` (GET by cursor, filtered by `role` and `status`; POST a message), `run-pipeline/` |
 | `messages/<id>/` | retrieve, PATCH the assistant, DELETE, `rerun/`, `promote/` (to a brief or a draft) |
 
@@ -67,11 +69,11 @@ Lists are paginated (`page`, `page_size`), filtered with django-filter, ordered 
 
 ## Bundled data and barodybroject's data
 
-After every migrate the three bundled schemas (parody news article, news article, content detail — a local `$ref` inlined) and the parody news writer assistant are created if they do not exist; one a person has edited is left alone. `manage.py import_parodynews --dump FILE` maps barodybroject's own dump onto this app (`importers/parodynews_ai.py`): providers without their credentials, models, schemas, assistants, groups as pipelines, content details as briefs, threads as conversations — owned as barodybroject owned them, idempotently.
+After every migrate the three bundled schemas (parody news article, news article, content detail — a local `$ref` inlined) and the parody news writer assistant are created if they do not exist, with the models as migrated (and not at all while the AI tables are unapplied, `migrate ai zero`); one a person has edited is left alone. `manage.py import_parodynews --dump FILE [--force]` maps barodybroject's own dump onto this app (`importers/parodynews_ai.py`): providers without their credentials, models, schemas, assistants, groups as pipelines, content details as briefs, threads as conversations — owned as barodybroject owned them. barodybroject keeps running until its gate is green, so the import is re-run: it changes nothing that did not change in the dump, and a row a person changed or deleted here since is reported as a conflict and left alone (`--force` overwrites it; an applied brief keeps its draft even then); a message new in the dump goes after the conversation's last one.
 
 ## Settings
 
-`AI_DEFAULT_PROVIDER`, `AI_PROVIDERS`, `AI_CREDENTIAL_KEYS` (rotate with `manage.py rotate_ai_credentials`), and each adapter's environment variables — all in `content/.env.example`. `manage.py sync_ai_models [SLUG …]` syncs the catalog from the command line.
+`AI_DEFAULT_PROVIDER`, `AI_PROVIDERS`, `AI_CREDENTIAL_KEYS` (rotate with `manage.py rotate_ai_credentials`), and each adapter's environment variables — all in `content/.env.example`. `manage.py sync_ai_models [SLUG …]` syncs the catalog from the command line. Who configures providers is a Django permission (`ai.change_providerconfig`), granted like any other.
 
 ## Tests
 
