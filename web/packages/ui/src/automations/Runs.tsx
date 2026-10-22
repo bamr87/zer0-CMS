@@ -3,6 +3,8 @@
 // the payload it got and each action's outcome: what it was asked (its
 // templates rendered) and what it made, with a link to the agent run, the
 // brief, the idea or the story. A run that was limited or skipped says why.
+// Runs are their automation's owner's (and staff's): what it heard, it heard
+// with the owner's permissions, so someone it is shared with is told so.
 import { Accordion, Alert, Anchor, Badge, Button, Group, Loader, Stack, Text } from '@mantine/core';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { AutomationRun, AutomationRunStatus } from '@zer0/api';
@@ -36,11 +38,14 @@ export function useAutomationRuns(automation: string) {
   });
 }
 
-export function AutomationRuns({ automation }: { automation: string }) {
+export function AutomationRuns({ automation, owner }: { automation: string; owner?: string | null }) {
   const runs = useAutomationRuns(automation);
   if (runs.isPending) return <Loader aria-label="Loading the runs" />;
   if (runs.isError) return <Alert color="red">{errorText(runs.error)}</Alert>;
   const shown = runs.data.pages.flatMap((page) => page.results);
+  if (shown.length === 0 && owner !== undefined) {
+    return <Text c="dimmed">Its runs are {owner ?? 'its owner'}’s to see: what it hears and does, it hears and does as them.</Text>;
+  }
   if (shown.length === 0) return <Text c="dimmed">No runs yet: enable it, or test it with a sample payload.</Text>;
   return (
     <Stack gap="xs">

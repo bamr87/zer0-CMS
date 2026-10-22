@@ -278,7 +278,7 @@ function AutomationForm(props: { automation?: Automation; options: AutomationOpt
           <Title order={4} mb="xs">
             Runs
           </Title>
-          <AutomationRuns automation={automation.id} />
+          <AutomationRuns automation={automation.id} {...(automation.can_edit ? {} : { owner: automation.owner })} />
         </Card>
       ) : null}
     </Stack>
@@ -359,7 +359,7 @@ function TriggerFields(props: { trigger: AutomationTrigger; options: AutomationO
       {trigger.kind === 'hook' ? (
         <TextInput
           label="Hook"
-          description="A name the platform's apps fire (monitor.finding), or an agent's tool."
+          description="A name the platform's apps fire (monitor.finding), or agent.<slug>.<name> for one an agent's tool fires."
           styles={MONO}
           value={trigger.hook}
           disabled={disabled}

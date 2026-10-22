@@ -264,7 +264,7 @@ describe('<AutomationEditor>', () => {
     expect(screen.getByRole('link', { name: 'Download findings-to-ideas.yaml' })).toHaveAttribute('download', 'findings-to-ideas.yaml');
   });
 
-  it('is read-only for someone it is shared with', async () => {
+  it('is read-only for someone it is shared with, whose runs stay its owner’s', async () => {
     const { api } = platform({ 'GET /api/v2/automations/au1/': () => automation({ owner: 'alice', can_edit: false, visibility: 'shared' }) });
     renderUi(<AutomationEditor id="au1" />, { api });
     expect(await screen.findByText(/alice shares this with you/)).toBeInTheDocument();
@@ -272,5 +272,7 @@ describe('<AutomationEditor>', () => {
     for (const name of ['Save', 'Delete', 'Enable', 'Fire it now', 'Dry run']) {
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     }
+    expect(await screen.findByText(/Its runs are alice’s to see/)).toBeInTheDocument();
+    expect(screen.queryByText(/No runs yet/)).not.toBeInTheDocument();
   });
 });

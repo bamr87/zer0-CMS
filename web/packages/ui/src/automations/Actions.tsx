@@ -74,14 +74,28 @@ export const KINDS: Record<ActionKind, { label: string; fields: Field[] }> = {
   email: {
     label: 'Send an email',
     fields: [
-      { name: 'to', label: 'To', input: 'emails', required: true, description: 'Addresses, typed here: a payload never chooses them' },
+      {
+        name: 'to',
+        label: 'To',
+        input: 'emails',
+        required: true,
+        description: 'People on the platform, by the address on their account (anyone’s, with the permission) — typed here: a payload never chooses them',
+      },
       { name: 'subject', label: 'Subject', input: 'text', required: true },
       { name: 'body', label: 'Body', input: 'long' },
     ],
   },
   webhook: {
     label: 'Call a webhook',
-    fields: [{ name: 'url', label: 'URL', input: 'text', required: true, description: 'Gets the run as JSON, signed with this automation’s secret' }],
+    fields: [
+      {
+        name: 'url',
+        label: 'URL',
+        input: 'text',
+        required: true,
+        description: 'Gets the run as JSON, signed with this automation’s secret (X-Zer0-Signature: t=…,v1=…); never an automation’s webhook',
+      },
+    ],
   },
   story: {
     label: 'Move a newsroom story',
