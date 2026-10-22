@@ -92,7 +92,19 @@ const PLATFORM: Record<string, Handler> = {
     return list([summary(5, 'Nightly backups')]);
   },
   'GET /api/v2/content/pages/5/': () => pageDetail(),
-  'GET /api/v2/content/pages/5/revisions/': () => list([{ id: 41, created_at: '2026-10-20T10:00:00Z', user: 'editor', live: true, latest: true }]),
+  'POST /api/v2/content/pages/5/publish/': () => pageDetail(),
+  'GET /api/v2/content/pages/5/revisions/': () =>
+    list([
+      { id: 42, created_at: '2026-10-21T10:00:00Z', user: 'editor', approved_go_live_at: null, is_live: false, is_latest: true },
+      { id: 41, created_at: '2026-10-20T10:00:00Z', user: 'editor', approved_go_live_at: null, is_live: true, is_latest: false },
+    ]),
+  'GET /api/v2/content/pages/5/revisions/compare/': () => ({
+    a: { id: 41, created_at: '2026-10-20T10:00:00Z', user: 'editor', fields: { title: 'Backups' }, body: [], markdown: 'One.\n' },
+    b: { id: 42, created_at: '2026-10-21T10:00:00Z', user: 'editor', fields: { title: 'Nightly backups' }, body: [], markdown: 'One.\n' },
+    changed: ['title'],
+  }),
+  'POST /api/v2/content/pages/5/revisions/41/revert/': () => pageDetail({ status: 'changed' }),
+  'POST /api/v2/suggestions/1/accept/': () => ({ ...suggestion, status: 'accepted' }),
 };
 
 function open(view: View) {
@@ -132,6 +144,28 @@ describe('the extension webviews', () => {
       expect(Object.keys(request).every((key) => ['body', 'id', 'method', 'path', 'type'].includes(key))).toBe(true);
       expect(String(request.path)).toMatch(/^\/api\/v2\//);
     }
+  });
+
+  it('compares and reverts revisions, publishes and accepts a suggestion — each a request the host sends', async () => {
+    const host = open('page');
+    await host.deliver({ type: 'file', file: { path: '_posts/backups.md', name: 'backups.md' } });
+    await screen.findByDisplayValue('Nightly backups');
+    await userEvent.click(screen.getByRole('tab', { name: /Revisions/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Compare with latest' }));
+    expect(await screen.findByText('Changes since revision #41')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Revert to this' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await waitFor(() =>
+      expect(host.sent.filter((m) => m.type === 'api' && m.method === 'POST').map((m) => m.path)).toEqual([
+        '/api/v2/content/pages/5/revisions/41/revert/',
+        '/api/v2/content/pages/5/publish/',
+      ]),
+    );
+
+    const dashboard = open('dashboard');
+    await userEvent.click(await screen.findByRole('tab', { name: 'Review' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
+    await waitFor(() => expect(dashboard.sent).toContainEqual(expect.objectContaining({ type: 'api', method: 'POST', path: '/api/v2/suggestions/1/accept/' })));
   });
 
   it('opens the destination the host hands the dashboard', async () => {
