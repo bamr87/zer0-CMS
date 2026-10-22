@@ -13,8 +13,9 @@
 #
 #   platform — the target: every capability the one platform must have, and its
 #     status on each surface that must offer it (api, studio, extension, mcp,
-#     site, ops). A surface is `done` only with a `proof:` path (a test) that
-#     exists. TARGET.md describes the same catalog in prose.
+#     site, ops). A surface is `done` only with a `proof:` that is a test: a
+#     test file that exists, optionally `::<test id>` (never a tool, a command
+#     line or a CI job). TARGET.md describes the same catalog in prose.
 #
 #   sources — every repository merged into zer0-CMS, every capability it had,
 #     and the platform capability it lands in (`target:`, a platform id). A row
@@ -455,8 +456,8 @@ sources:
       - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
       - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
       - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: missing}
-      # P2: built by the Jekyll-theme option, reproducing its P1 recording (the React renderer is P6/P7).
-      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site parodynews"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and choosing its renderer and following its build from the studio are G4's"}
       - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: done, proof: content/tests/importers/test_parodynews.py}
       - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: missing}
       - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: missing}
@@ -577,16 +578,16 @@ sources:
     content: Every page.
     capabilities:
       - {id: site-2005.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: the site renders with the Jekyll-theme option, reproducing its P1 recording (P7 may move it to the React renderer).
-      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site 2005"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site 2005 identical; sites.yml fails a pull request whose build differs from the recording). Partial: year-of-ai.github.io still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
   - id: site-drsai
     path: sites/drsai
     summary: The children's picture-book site, its Python story engine (PyPI drsai) and the ABC books the wizard exports into it.
     content: Every page and book, _data/abc_books/*.json, images.
     capabilities:
       - {id: site-drsai.content, what: "Its pages and books import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: the site renders with the Jekyll-theme option, reproducing its P1 recording (P7 may move it to the React renderer).
-      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site drsai"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site drsai identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/drsai still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
       - {id: site-drsai.story-engine, what: "The Dr. Seuss-style poem and story generator.", target: ai.briefs, status: partial}
       - {id: site-drsai.abc-import, what: "Validate and import an ABC book against its spec sidecar.", target: books.abc, status: partial}
   - id: site-irony-works
@@ -595,8 +596,8 @@ sources:
     content: Every page.
     capabilities:
       - {id: site-irony-works.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: the site renders with the Jekyll-theme option, reproducing its P1 recording (P7 may move it to the React renderer).
-      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site irony-works"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site irony-works identical; irony-works.yml fails a pull request whose build differs from the recording). Partial: bamr87/irony-works still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
       - {id: site-irony-works.wikilinks, what: "Wikilinks resolved before the build.", target: sites.obsidian, status: partial}
   - id: site-wargames
     path: sites/wargames
@@ -604,24 +605,24 @@ sources:
     content: Every page.
     capabilities:
       - {id: site-wargames.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: the site renders with the Jekyll-theme option, reproducing its P1 recording (P7 may move it to the React renderer).
-      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site wargames"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site wargames identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/wargames still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
   - id: site-zer0-demo-cookbook
     path: sites/zer0-demo-cookbook
     summary: The cookbook demo site.
     content: Every page and recipe.
     capabilities:
       - {id: site-cookbook.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: the site renders with the Jekyll-theme option, reproducing its P1 recording (P7 may move it to the React renderer).
-      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site zer0-demo-cookbook"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-cookbook identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-cookbook still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
   - id: site-zer0-demo-garden
     path: sites/zer0-demo-garden
     summary: The garden demo site.
     content: Every page.
     capabilities:
       - {id: site-garden.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: the site renders with the Jekyll-theme option, reproducing its P1 recording (P7 may move it to the React renderer).
-      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site zer0-demo-garden"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-garden identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-garden still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
   - id: site-zer0-pages
     path: sites/zer0-pages
     summary: One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge.
@@ -644,8 +645,8 @@ sources:
     content: Every page.
     capabilities:
       - {id: site-zer0-pages-remote.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
-      # P2: the site renders with the Jekyll-theme option, reproducing its P1 recording (P7 may move it to the React renderer).
-      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render-jekyll, status: done, proof: "tools/site_manifest.py::--check --site zer0-pages-remote"}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-pages-remote identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-pages-remote still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
 
   - id: aieo
     path: apps/aieo

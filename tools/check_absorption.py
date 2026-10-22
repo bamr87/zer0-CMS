@@ -34,9 +34,11 @@ It asserts:
     whose paths include the theme's own asset names) is not counted — it is
     content, and content is kept;
   * **the platform catalog** — unique ids, a known surface and status for each
-    surface, and a `proof` path that exists for every surface marked `done`;
+    surface, and for every surface marked `done` a `proof` that is a test: a
+    test file that exists, optionally `::` a test id in it — not a tool, a
+    command line or a CI job, which prove nothing by existing;
   * **the sources** — every capability has a unique id, a known status and a
-    `target` that is a platform capability id; a `done` capability names a `proof` path that exists; a `dropped`
+    `target` that is a platform capability id; a `done` capability names a `proof` that is such a test; a `dropped`
     one names the owner's decision in `decided_by`;
   * **the deletion gate** — a source whose `path` no longer exists has no
     capability left `missing` or `partial`. Deleting a directory before its
@@ -73,6 +75,10 @@ THEME_TERMS = re.compile(rb"zer0-mistakes|jekyll-theme-zer0|ZER0_THEME_")
 THEME_SUFFIXES = (".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".rb", ".yml", ".yaml", ".json", ".gemspec", ".toml")
 THEME_NAMES = {"Gemfile", "Gemfile.lock", "Dockerfile"}
 THEME_SKIP_PREFIXES = ("docs/", "src/test/fixtures/", "features/", "tools/workspace/tests/golden/", "web/site/fixtures/")
+# A proof is a test: a test file (under tests/ or test/, test_*, *.test.ts, *_test.py), optionally
+# followed by `::` and a test id in it (`test_x`, `SomeTest`, `SomeTest::test_x`, `test_x[case]`).
+TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*$|[._]test\.[a-z]+$")
+TEST_ID = re.compile(r"[A-Za-z_]\w*(\[[^\]]*\])?(::[A-Za-z_]\w*(\[[^\]]*\])?)*")
 STATUSES = ("missing", "partial", "done", "dropped")
 OPEN = ("missing", "partial")
 SURFACES = ("api", "studio", "extension", "mcp", "site", "ops")
@@ -137,6 +143,19 @@ def check_ratchet(
     return errors, counts
 
 
+def proof_problem(proof: str, exists: Callable[[str], bool]) -> str | None:
+    """What is wrong with a `done` row's proof, or None: it must name a test file that exists and, after
+    `::`, a test in it — not a tool, a command line or a CI job, which can pass without proving anything."""
+    path, named, test = proof.partition("::")
+    if not path:
+        return "done without a proof"
+    if not TEST_FILE.search(path) or (named and not TEST_ID.fullmatch(test)):
+        return f"proof {proof!r} is not a test (a test file, optionally ::<test id>)"
+    if not exists(path):
+        return f"proof {path} does not exist"
+    return None
+
+
 def check_platform(platform: list[dict], exists: Callable[[str], bool]) -> list[str]:
     errors: list[str] = []
     seen: set[str] = set()
@@ -156,12 +175,8 @@ def check_platform(platform: list[dict], exists: Callable[[str], bool]) -> list[
                 errors.append(f"platform/{cid}: unknown surface {surface!r} (one of {', '.join(SURFACES)})")
             if status not in SURFACE_STATUSES:
                 errors.append(f"platform/{cid}: {surface} status {status!r} is not one of {', '.join(SURFACE_STATUSES)}")
-            if status == "done":
-                proof = str(proofs.get(surface) or "").split("::", 1)[0]
-                if not proof:
-                    errors.append(f"platform/{cid}: {surface} done without a proof")
-                elif not exists(proof):
-                    errors.append(f"platform/{cid}: {surface} proof {proof} does not exist")
+            if status == "done" and (problem := proof_problem(str(proofs.get(surface) or ""), exists)):
+                errors.append(f"platform/{cid}: {surface} {problem}")
     return errors
 
 
@@ -201,12 +216,8 @@ def check_ledger(sources: list[dict], exists: Callable[[str], bool], targets: se
                 errors.append(f"{where}: no target (where in the platform it goes)")
             elif targets is not None and status != "dropped" and cap["target"] not in targets:
                 errors.append(f"{where}: target {cap['target']!r} is not a platform capability")
-            if status == "done":
-                proof = str(cap.get("proof") or "").split("::", 1)[0]
-                if not proof:
-                    errors.append(f"{where}: done without a proof")
-                elif not exists(proof):
-                    errors.append(f"{where}: proof {proof} does not exist")
+            if status == "done" and (problem := proof_problem(str(cap.get("proof") or ""), exists)):
+                errors.append(f"{where}: {problem}")
             if status == "dropped" and not cap.get("decided_by"):
                 errors.append(f"{where}: dropped without decided_by (only the owner drops a capability)")
             if status in OPEN:
