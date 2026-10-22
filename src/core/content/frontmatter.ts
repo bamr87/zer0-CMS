@@ -656,9 +656,13 @@ function frontMatterTags(tags: Tags): Tags {
 /**
  * A YAML block read by the `yaml` package: its mapping (front matter is a
  * mapping, so anything else is `{}`) and one `line <n>: …` per problem — each
- * error and warning the package reported, and each alias that names no anchor,
- * whose value is then unknown (`null`, or no merge at all) rather than the
- * reason the rest of the block is lost. Never throws.
+ * error and warning the package reported, and each alias that names no anchor
+ * or sits inside the node it names (`seo: &seo {again: *seo}`), whose value is
+ * then unknown (`null`, or no merge at all) rather than the reason the rest of
+ * the block is lost. The second kind would make data that contains itself,
+ * which every caller that walks or serialises front matter — `postMessage`,
+ * the ledger's JSON, the audit — would follow until the stack ran out.
+ * Never throws, and never returns a cycle.
  */
 export function readYaml(raw: string): { data: FrontMatter; warnings: string[] } {
   const lines = new LineCounter();
@@ -674,24 +678,33 @@ export function readYaml(raw: string): { data: FrontMatter; warnings: string[] }
   const warnings = [...doc.errors, ...doc.warnings].map(
     (problem) => `line ${problem.linePos?.[0].line ?? 1}: ${problem.message.split(' at line ')[0] ?? problem.message}`,
   );
-  const dangling = (node: unknown): node is Alias => isAlias(node) && node.resolve(doc) === undefined;
-  const note = (alias: Alias, outcome: string) =>
-    warnings.push(`line ${lines.linePos(alias.range?.[0] ?? 0).line}: the alias *${alias.source} names no anchor, ${outcome}`);
+  /** Why an alias's value cannot be read — it names no anchor, or a node it is inside of — or undefined. */
+  const unreadable = (alias: Alias, ancestors: readonly unknown[]): string | undefined => {
+    const target = alias.resolve(doc);
+    return target === undefined ? 'names no anchor' : ancestors.includes(target) ? 'is inside the node it names' : undefined;
+  };
+  const note = (alias: Alias, why: string, outcome: string) =>
+    warnings.push(`line ${lines.linePos(alias.range?.[0] ?? 0).line}: the alias *${alias.source} ${why}, ${outcome}`);
   visit(doc, {
-    Pair: (_, pair) => {
+    Pair: (_, pair, ancestors) => {
       // With `merge` on, the package reads a `<<` key as a scalar holding `Symbol('<<')`.
       const merge = isScalar(pair.key) && String(pair.key.value) === String(Symbol('<<'));
-      if (!(merge && dangling(pair.value))) {
+      if (!merge || !isAlias(pair.value)) {
         return undefined;
       }
-      note(pair.value, 'so nothing is merged');
+      const why = unreadable(pair.value, ancestors);
+      if (why === undefined) {
+        return undefined;
+      }
+      note(pair.value, why, 'so nothing is merged');
       return visit.REMOVE;
     },
-    Alias: (_, alias) => {
-      if (!dangling(alias)) {
+    Alias: (_, alias, ancestors) => {
+      const why = unreadable(alias, ancestors);
+      if (why === undefined) {
         return undefined;
       }
-      note(alias, 'so its value is unknown');
+      note(alias, why, 'so its value is unknown');
       return new Scalar(null);
     },
   });

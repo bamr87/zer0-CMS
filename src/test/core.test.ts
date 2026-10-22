@@ -1408,6 +1408,24 @@ suite("core: the parser's warnings channel — what YAML could not read (WP2.3, 
     assert.match(tagged.warnings[0] ?? '', /^line 1: .*!Custom/);
   });
 
+  test('an alias inside the node it names is unknown, so front matter never contains itself', () => {
+    // YAML allows it; reading it builds an object that contains itself, which
+    // every walker and serialiser downstream (postMessage, the ledger, the
+    // audit) follows until the stack runs out. A cloned repository can ship it.
+    const recursive = block(
+      ['seo: &seo', '  title: x', '  again: *seo', 'list: &list [1, *list]', 'base: &base', '  <<: *base', '  b: 1', 'title: ok'].join('\n'),
+    );
+    assert.deepEqual(recursive.data, { seo: { title: 'x', again: null }, list: [1, null], base: { b: 1 }, title: 'ok' });
+    assert.deepEqual(recursive.warnings, [
+      'line 3: the alias *seo is inside the node it names, so its value is unknown',
+      'line 4: the alias *list is inside the node it names, so its value is unknown',
+      'line 6: the alias *base is inside the node it names, so nothing is merged',
+    ]);
+    assert.doesNotThrow(() => JSON.stringify(recursive.data));
+    // An alias to a node it is not inside of is an ordinary alias.
+    assert.deepEqual(block(['a: &a {x: 1}', 'b: {c: *a}'].join('\n')).data, { a: { x: 1 }, b: { c: { x: 1 } } });
+  });
+
   test('a quoted scalar wrapped onto later lines reads whole, the way PyYAML reads it', () => {
     // Every expectation below is what `yaml.safe_load` returns for the same
     // text (PyYAML 6), recorded when this was written; the first case is an
