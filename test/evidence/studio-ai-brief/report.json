@@ -5,7 +5,7 @@
     "ZER0-044"
   ],
   "path": "verify/scenarios/studio-ai-brief.yml",
-  "started": "2026-10-22T10:23:29.704Z",
+  "started": "2026-10-22T15:55:08.160Z",
   "viewports": [
     {
       "name": "desktop",
@@ -17,7 +17,7 @@
           "step": "goto",
           "arg": "/studio/",
           "ok": true,
-          "ms": 596
+          "ms": 625
         },
         {
           "step": "fill",
@@ -35,13 +35,13 @@
             "value": "zer0-demo"
           },
           "ok": true,
-          "ms": 31
+          "ms": 25
         },
         {
           "step": "click",
           "arg": "button[type=submit]",
           "ok": true,
-          "ms": 27
+          "ms": 35
         },
         {
           "step": "wait",
@@ -49,25 +49,25 @@
             "selector": "role=heading[name='Home']"
           },
           "ok": true,
-          "ms": 180
+          "ms": 184
         },
         {
           "step": "click",
           "arg": "role=link[name='AI']",
           "ok": true,
-          "ms": 19
+          "ms": 26
         },
         {
           "step": "click",
           "arg": "role=tab[name='Assistants']",
           "ok": true,
-          "ms": 99
+          "ms": 100
         },
         {
           "step": "click",
           "arg": "role=button[name='New assistant']",
           "ok": true,
-          "ms": 53
+          "ms": 50
         },
         {
           "step": "fill",
@@ -76,7 +76,7 @@
             "value": "Plain writer"
           },
           "ok": true,
-          "ms": 46
+          "ms": 48
         },
         {
           "step": "fill",
@@ -91,7 +91,7 @@
           "step": "click",
           "arg": "role=button[name='Create']",
           "ok": true,
-          "ms": 29
+          "ms": 28
         },
         {
           "step": "wait",
@@ -99,13 +99,13 @@
             "selector": "role=heading[name='Plain writer']"
           },
           "ok": true,
-          "ms": 79
+          "ms": 78
         },
         {
           "step": "click",
           "arg": "role=link[name='Create']",
           "ok": true,
-          "ms": 36
+          "ms": 37
         },
         {
           "step": "click",
@@ -117,7 +117,7 @@
           "step": "click",
           "arg": "role=button[name='New brief']",
           "ok": true,
-          "ms": 50
+          "ms": 49
         },
         {
           "step": "fill",
@@ -126,44 +126,44 @@
             "value": "Why a small site needs nightly backups"
           },
           "ok": true,
-          "ms": 35
+          "ms": 40
         },
         {
           "step": "click",
           "arg": "role=combobox[name='Assistant']",
           "ok": true,
-          "ms": 33
+          "ms": 30
         },
         {
           "step": "click",
           "arg": "role=option[name='Plain writer']",
           "ok": true,
-          "ms": 36
+          "ms": 34
         },
         {
           "step": "click",
           "arg": "role=combobox[name='Where the draft goes']",
           "ok": true,
-          "ms": 32
+          "ms": 31
         },
         {
           "step": "click",
           "arg": "role=option[name='Posts (Collection page)']",
           "ok": true,
-          "ms": 36
+          "ms": 37
         },
         {
           "step": "screenshot",
           "arg": "brief-written",
           "ok": true,
           "file": "test/evidence/studio-ai-brief/desktop-brief-written.png",
-          "ms": 26
+          "ms": 28
         },
         {
           "step": "click",
           "arg": "role=button[name='Save and generate']",
           "ok": true,
-          "ms": 36
+          "ms": 33
         },
         {
           "step": "wait",
@@ -171,7 +171,7 @@
             "selector": "role=document[name=\"The brief's Markdown, rendered\"]"
           },
           "ok": true,
-          "ms": 86
+          "ms": 186
         },
         {
           "step": "expect",
@@ -179,7 +179,7 @@
             "visible": "role=heading[name='Backups, explained']"
           },
           "ok": true,
-          "ms": 1
+          "ms": 2
         },
         {
           "step": "expect",
@@ -195,14 +195,14 @@
             "text": "nightly-backups-explained"
           },
           "ok": true,
-          "ms": 2
+          "ms": 1
         },
         {
           "step": "screenshot",
           "arg": "brief-ready",
           "ok": true,
           "file": "test/evidence/studio-ai-brief/desktop-brief-ready.png",
-          "ms": 24
+          "ms": 26
         },
         {
           "step": "click",
@@ -216,7 +216,7 @@
             "url": "/studio/write/"
           },
           "ok": true,
-          "ms": 29
+          "ms": 43
         },
         {
           "step": "expect",
@@ -248,7 +248,7 @@
             "text": "Draft"
           },
           "ok": true,
-          "ms": 1
+          "ms": 0
         },
         {
           "step": "expect",
@@ -263,7 +263,7 @@
           "arg": "draft-with-suggestions",
           "ok": true,
           "file": "test/evidence/studio-ai-brief/desktop-draft-with-suggestions.png",
-          "ms": 24
+          "ms": 30
         }
       ],
       "console_errors": [],
@@ -273,10 +273,10 @@
         "test/evidence/studio-ai-brief/desktop-draft-with-suggestions.png"
       ],
       "evals": {},
-      "final_url": "http://127.0.0.1:62073/studio/write/12?tab=suggestions"
+      "final_url": "http://127.0.0.1:62349/studio/write/7?tab=suggestions"
     }
   ],
   "ok": true,
-  "finished": "2026-10-22T10:23:31.588Z",
-  "base": "http://127.0.0.1:62073"
+  "finished": "2026-10-22T15:55:10.272Z",
+  "base": "http://127.0.0.1:62349"
 }

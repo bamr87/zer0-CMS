@@ -5,7 +5,7 @@
     "ZER0-044"
   ],
   "path": "verify/scenarios/studio-ai-chat.yml",
-  "started": "2026-10-22T10:23:31.588Z",
+  "started": "2026-10-22T15:55:10.273Z",
   "viewports": [
     {
       "name": "desktop",
@@ -17,7 +17,7 @@
           "step": "goto",
           "arg": "/studio/",
           "ok": true,
-          "ms": 594
+          "ms": 592
         },
         {
           "step": "fill",
@@ -26,7 +26,7 @@
             "value": "editor"
           },
           "ok": true,
-          "ms": 14
+          "ms": 18
         },
         {
           "step": "fill",
@@ -35,13 +35,13 @@
             "value": "zer0-demo"
           },
           "ok": true,
-          "ms": 27
+          "ms": 28
         },
         {
           "step": "click",
           "arg": "button[type=submit]",
           "ok": true,
-          "ms": 33
+          "ms": 32
         },
         {
           "step": "wait",
@@ -49,25 +49,25 @@
             "selector": "role=heading[name='Home']"
           },
           "ok": true,
-          "ms": 180
+          "ms": 178
         },
         {
           "step": "click",
           "arg": "role=link[name='AI']",
           "ok": true,
-          "ms": 36
+          "ms": 35
         },
         {
           "step": "click",
           "arg": "role=tab[name='Assistants']",
           "ok": true,
-          "ms": 99
+          "ms": 100
         },
         {
           "step": "click",
           "arg": "role=button[name='New assistant']",
           "ok": true,
-          "ms": 50
+          "ms": 51
         },
         {
           "step": "fill",
@@ -76,7 +76,7 @@
             "value": "Chat partner"
           },
           "ok": true,
-          "ms": 49
+          "ms": 82
         },
         {
           "step": "fill",
@@ -91,7 +91,7 @@
           "step": "click",
           "arg": "role=button[name='Create']",
           "ok": true,
-          "ms": 27
+          "ms": 28
         },
         {
           "step": "wait",
@@ -99,13 +99,13 @@
             "selector": "role=heading[name='Chat partner']"
           },
           "ok": true,
-          "ms": 80
+          "ms": 76
         },
         {
           "step": "click",
           "arg": "role=tab[name='Conversations']",
           "ok": true,
-          "ms": 36
+          "ms": 22
         },
         {
           "step": "fill",
@@ -114,13 +114,13 @@
             "value": "Backup ideas"
           },
           "ok": true,
-          "ms": 24
+          "ms": 25
         },
         {
           "step": "click",
           "arg": "role=combobox[name='With']",
           "ok": true,
-          "ms": 29
+          "ms": 28
         },
         {
           "step": "click",
@@ -132,7 +132,7 @@
           "step": "click",
           "arg": "role=button[name='Start']",
           "ok": true,
-          "ms": 33
+          "ms": 32
         },
         {
           "step": "wait",
@@ -140,7 +140,7 @@
             "selector": "role=heading[name='Backup ideas']"
           },
           "ok": true,
-          "ms": 74
+          "ms": 75
         },
         {
           "step": "fill",
@@ -149,20 +149,20 @@
             "value": "How often should a small site back up?"
           },
           "ok": true,
-          "ms": 5
+          "ms": 3
         },
         {
           "step": "screenshot",
           "arg": "message-written",
           "ok": true,
           "file": "test/evidence/studio-ai-chat/desktop-message-written.png",
-          "ms": 33
+          "ms": 34
         },
         {
           "step": "click",
           "arg": "role=button[name='Send']",
           "ok": true,
-          "ms": 38
+          "ms": 21
         },
         {
           "step": "wait",
@@ -170,7 +170,7 @@
             "selector": "role=document[name=\"Chat partner's answer\"]"
           },
           "ok": true,
-          "ms": 72
+          "ms": 75
         },
         {
           "step": "expect",
@@ -193,7 +193,7 @@
           "arg": "answered",
           "ok": true,
           "file": "test/evidence/studio-ai-chat/desktop-answered.png",
-          "ms": 38
+          "ms": 37
         },
         {
           "step": "click",
@@ -221,7 +221,7 @@
             "visible": "role=heading[name='Backup ideas']"
           },
           "ok": true,
-          "ms": 37
+          "ms": 35
         },
         {
           "step": "expect",
@@ -244,7 +244,7 @@
           "arg": "promoted-to-a-brief",
           "ok": true,
           "file": "test/evidence/studio-ai-chat/desktop-promoted-to-a-brief.png",
-          "ms": 27
+          "ms": 28
         }
       ],
       "console_errors": [],
@@ -254,10 +254,10 @@
         "test/evidence/studio-ai-chat/desktop-promoted-to-a-brief.png"
       ],
       "evals": {},
-      "final_url": "http://127.0.0.1:62073/studio/create/briefs/a595414d-0513-48aa-9cda-277326bb13c9"
+      "final_url": "http://127.0.0.1:62349/studio/create/briefs/cd7940d1-3e93-43c5-bbc4-cf5d79fda733"
     }
   ],
   "ok": true,
-  "finished": "2026-10-22T10:23:33.403Z",
-  "base": "http://127.0.0.1:62073"
+  "finished": "2026-10-22T15:55:12.086Z",
+  "base": "http://127.0.0.1:62349"
 }

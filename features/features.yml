@@ -256,9 +256,9 @@ features:
       - content/tests/ai/test_api.py
       - content/tests/ai/test_on_page.py
     scenarios:
-      - verify/scenarios/studio-ai-brief.yml
+      - verify/scenarios/studio-ai-workspace.yml
     evidence:
-      - test/evidence/studio-ai-brief/
+      - test/evidence/studio-ai-workspace/
   - id: ZER0-044
     title: "Briefs, conversations and the editor's AI panel"
     description: "An editor asks AI for content and reviews everything it gives: writes a brief in Create (a prompt or a text, an assistant or a pipeline, a schema, where the draft goes), generates it as a run followed live, reviews the rendered draft, its metadata and the structured result, and applies it — the draft opens in the editor with its text as suggestions; holds conversations whose replies arrive as their runs finish, asks again or another assistant, and promotes an answer to a brief or a draft; and in the editor runs an assistant or a pipeline on the whole page, one block or a selection, whose answer lands on the page as suggestions."
