@@ -269,14 +269,14 @@ Releases are automated: release-please turns Conventional Commits on `main` into
 Contributions of every size are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md); agents start at [AGENTS.md](AGENTS.md). The short version:
 
 ```bash
-gh repo fork bamr87/zer0-mistakes --clone && cd zer0-mistakes
+gh repo fork bamr87/zer0-CMS --clone && cd zer0-CMS/packages/zer0-mistakes   # the theme's home (ADR 0002)
 git checkout -b feature/awesome-feature
 docker-compose up        # iterate locally
 ./scripts/bin/test       # verify
-git push origin feature/awesome-feature
+git push origin feature/awesome-feature   # then open a pull request against bamr87/zer0-CMS
 ```
 
-Questions go to [GitHub Discussions](https://github.com/bamr87/zer0-mistakes/discussions), bugs to [GitHub Issues](https://github.com/bamr87/zer0-mistakes/issues), and security reports follow [SECURITY.md](SECURITY.md).
+Questions go to [GitHub Discussions](https://github.com/bamr87/zer0-mistakes/discussions), bugs to [zer0-CMS issues](https://github.com/bamr87/zer0-CMS/issues), and security reports follow [SECURITY.md](SECURITY.md).
 
 ## 📝 Changelog
 
