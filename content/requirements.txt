@@ -32,8 +32,9 @@ sentry-sdk==2.72.0
 django-filter==26.2
 cryptography==50.0.2
 # The research library (research/README.md): fetching pages behind an SSRF guard, their main text and metadata,
-# RSS/Atom feeds, and PDFs.
+# RSS/Atom feeds, PDFs, and the encoding of a text file that does not declare one.
 httpx==0.28.1
 trafilatura==2.3.1
 feedparser==6.0.14
 pypdf==6.21.2
+charset-normalizer==3.5.2

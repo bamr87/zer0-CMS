@@ -77,6 +77,9 @@ def test_a_page_off_the_public_web_or_closed_by_robots_txt_is_refused_and_says_w
     web.get(at("/gone")).respond(404)
     missing = fresh(worker(services.capture_url, alice, "https://example.com/gone"))
     assert missing.status == "failed" and missing.error == "the site answered HTTP 404" and missing.robots == "allowed"
+    web.get(at("/notes.txt")).respond(200, content=b"Plain\x00 notes.", headers={"Content-Type": "text/plain"})
+    plain = fresh(worker(services.capture_url, alice, "https://example.com/notes.txt"))
+    assert (plain.status, plain.text) == ("ready", "Plain notes.")  # a NUL would fail the save on Postgres
 
 
 @pytest.mark.django_db
@@ -95,6 +98,9 @@ def test_a_document_is_read_on_upload_and_a_note_kept_as_written(alice):
         services.upload(alice, SimpleUploadedFile("photo.png", b"\x89PNG", content_type="image/png"))
     with override_settings(RESEARCH_UPLOAD_MAX_BYTES=10), pytest.raises(Invalid, match="at most 10 bytes"):
         services.upload(alice, SimpleUploadedFile("big.txt", b"x" * 11, content_type="text/plain"))
+    unicode = SimpleUploadedFile("notepad.txt", "Restore drills\r\nOnce a quarter.".encode("utf-16"), "text/plain")
+    saved = services.upload(alice, unicode)  # stored on Postgres too, which refuses a NUL in text
+    assert (saved.title, saved.text) == ("Restore drills", "Restore drills\r\nOnce a quarter.")
     note = services.add_note(alice, "\n  Call the hosting company\nabout restores.")
     assert (note.kind, note.title, note.status) == ("note", "Call the hosting company", "ready")
     with pytest.raises(Invalid):

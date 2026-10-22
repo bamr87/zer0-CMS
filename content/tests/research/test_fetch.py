@@ -99,6 +99,17 @@ def test_a_page_a_pdf_and_text_are_extracted_with_their_metadata():
             fetch.extract(body, kind)
 
 
+def test_text_is_read_in_its_own_encoding_and_kept_free_of_control_characters():
+    words = "Back up nightly.\nKeep two copies."
+    for body in (words.encode("utf-16"), words.encode("utf-16-le"), words.encode("utf-32"), words.encode("utf-8-sig")):
+        assert fetch.extract(body, filename="notes.txt").text == words  # Notepad's "Unicode" is UTF-16 with a mark
+    assert fetch.extract("Café".encode("latin-1"), "text/plain", charset="latin-1").text == "Café"
+    assert fetch.extract(b"Caf\xc3\xa9", "text/plain", charset="no-such-charset").text == "Café"
+    noisy = fetch.extract(b"Back\x00 up\x07 nightly.\tKeep\r\ntwo\x1b copies.", "text/plain")
+    assert noisy.text == "Back up nightly.\tKeep\r\ntwo copies." and noisy.title == "Back up nightly.\tKeep"
+    assert fetch.clean({"tags": ["a\x00b"], "pages": 2}) == {"tags": ["ab"], "pages": 2}
+
+
 def test_a_feed_is_read_into_items_with_plain_text():
     title, items = fetch.entries(FEED.encode())
     assert title == "Example News" and [i["guid"] for i in items] == ["a-1", "a-2"]

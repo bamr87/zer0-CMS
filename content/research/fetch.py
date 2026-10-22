@@ -27,13 +27,14 @@ import ipaddress
 import re
 import socket
 import time
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from io import BytesIO
 from urllib.parse import urljoin, urlsplit, urlunsplit
 from urllib.robotparser import RobotFileParser
 
 import feedparser
 import httpx
+from charset_normalizer import from_bytes
 from django.conf import settings
 from django.utils.html import strip_tags
 
@@ -42,6 +43,7 @@ MAX_REDIRECTS = 5
 MAX_PDF_PAGES = 500
 HTML_TYPES = ("text/html", "application/xhtml+xml")
 HEADING = re.compile(r"^#{1,6}\s+(.+)$", re.MULTILINE)
+CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
 class FetchError(Exception):
@@ -187,16 +189,49 @@ def robots(url: str) -> str:
 
 
 def extract(body: bytes, content_type: str = "", *, url: str = "", filename: str = "", charset: str = "") -> Extracted:
-    """Text and metadata from a page, a PDF, or plain text or Markdown."""
+    """Text and metadata from a page, a PDF, or plain text or Markdown, without the control characters a database
+    refuses (`clean`)."""
     kind = content_type.split(";", 1)[0].strip().lower()
     name = filename.lower()
     if kind == "application/pdf" or name.endswith(".pdf"):
-        return _pdf(body)
-    if kind in HTML_TYPES or name.endswith((".html", ".htm")):
-        return _html(body, url)
-    if kind.startswith("text/") or name.endswith((".txt", ".md", ".markdown")):
-        return _text(body.decode(charset or "utf-8", errors="replace"))
-    raise FetchError(f"{kind or name or 'this file'} is not a web page, a PDF or text")
+        found = _pdf(body)
+    elif kind in HTML_TYPES or name.endswith((".html", ".htm")):
+        found = _html(body, url)
+    elif kind.startswith("text/") or name.endswith((".txt", ".md", ".markdown")):
+        found = _text(decode(body, charset))
+    else:
+        raise FetchError(f"{kind or name or 'this file'} is not a web page, a PDF or text")
+    return Extracted(**clean(asdict(found)))
+
+
+def clean(value):
+    """A string — or the strings in a dict or a list — without NUL and the other control characters but tab and line
+    breaks: Postgres keeps no NUL in text or JSON, and a page or a file can carry any byte."""
+    if isinstance(value, str):
+        return CONTROL.sub("", value)
+    if isinstance(value, dict):
+        return {key: clean(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [clean(item) for item in value]
+    return value
+
+
+def decode(body: bytes, charset: str = "") -> str:
+    """Text from bytes: in the charset the server declared; else UTF-8 (a byte-order mark dropped); else what
+    charset-normalizer reads in them — UTF-16 or UTF-32 by their mark or without one, a legacy code page."""
+    if charset:
+        try:
+            return body.decode(charset, errors="replace")
+        except LookupError:
+            pass  # a charset Python does not know: read the bytes for what they are
+    try:
+        text = body.decode("utf-8-sig")
+        if "\x00" not in text:  # UTF-16 without a mark is valid UTF-8, with a NUL beside every letter
+            return text
+    except UnicodeDecodeError:
+        pass
+    best = from_bytes(body).best()
+    return str(best) if best is not None else body.decode("utf-8", errors="replace")
 
 
 def _html(body: bytes, url: str) -> Extracted:
@@ -275,4 +310,4 @@ def entries(body: bytes) -> tuple[str, list[dict]]:
                 "text": plain(markup),
             }
         )
-    return parsed.feed.get("title", ""), items
+    return clean(parsed.feed.get("title", "")), clean(items)

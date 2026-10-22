@@ -127,18 +127,18 @@ def upload(user, file, *, collection=None, title: str = "") -> Source:
     """A document — PDF, plain text or Markdown — read now, kept as its text."""
     if file.size > settings.RESEARCH_UPLOAD_MAX_BYTES:
         raise Invalid(f"a document is at most {settings.RESEARCH_UPLOAD_MAX_BYTES} bytes")
-    body = file.read()
+    body, name = file.read(), fetch.clean(file.name or "")
     try:
-        found = fetch.extract(body, file.content_type or "", filename=file.name or "")
+        found = fetch.extract(body, file.content_type or "", filename=name)
     except fetch.FetchError as e:
         raise Invalid(str(e)) from e
     return Source.objects.create(
         owner=user,
         kind=Source.DOCUMENT,
-        title=(title or found.title or file.name or "Document")[:500],
+        title=(title or found.title or name or "Document")[:500],
         author=found.author[:255],
         text=found.text,
-        metadata={**found.metadata, "file_name": file.name, "bytes": len(body), "content_type": file.content_type},
+        metadata={**found.metadata, "file_name": name, "bytes": len(body), "content_type": file.content_type},
         fetched_at=timezone.now(),
         collection=collection,
         **placement(user, collection),
