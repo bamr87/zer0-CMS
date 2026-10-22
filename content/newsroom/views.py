@@ -51,6 +51,7 @@ class Scoped(viewsets.ModelViewSet):
     permission_classes = [IsPerson]
     pagination_class = Paged
     filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
+    http_method_names = ["get", "post", "patch", "delete"]  # a change is a PATCH
 
     def get_queryset(self):
         site = None
@@ -78,7 +79,10 @@ class ManagesDesks(BasePermission):
         return request.user.has_perm(f"newsroom.{verb}_desk")
 
 
-@extend_schema_view(list=extend_schema(summary="The desks of the sites a person works on", parameters=[SITE]))
+@extend_schema_view(
+    list=extend_schema(summary="The desks of the sites a person works on", parameters=[SITE]),
+    create=extend_schema(request=s.writable(s.DeskSerializer)),
+)
 class DeskViewSet(Scoped):
     queryset = Desk.objects.select_related("site", "section", "assistant", "pipeline").prefetch_related(
         "editors", "copy_editors"
@@ -135,7 +139,10 @@ def _person(pk):
 
 @extend_schema_view(
     list=extend_schema(summary="The story budget and the calendar: stories, filtered", parameters=[SITE]),
-    create=extend_schema(summary="Pitch a story — by hand, or from a wire or feed item (`source`)"),
+    create=extend_schema(
+        summary="Pitch a story — by hand, or from a wire or feed item (`source`)",
+        request=s.writable(s.StorySerializer),
+    ),
     destroy=extend_schema(summary="Spike a pitch (only a pitch, by the desk's editors)"),
 )
 class StoryViewSet(Scoped):
@@ -145,7 +152,6 @@ class StoryViewSet(Scoped):
     serializer_class = s.StorySerializer
     filterset_class = StoryFilter
     ordering_fields = ["priority", "deadline", "slot_date", "created_at", "updated_at"]
-    http_method_names = ["get", "post", "patch", "delete"]
 
     def get_serializer_class(self):
         return s.StoryDetailSerializer if self.action == "retrieve" else s.StorySerializer
@@ -257,8 +263,12 @@ class WritesAuthors(BasePermission):
         return request.method in SAFE_METHODS or services.edits_a_desk(request.user)
 
 
-@extend_schema_view(retrieve=extend_schema(summary="An author page: the author and their published stories"))
+@extend_schema_view(
+    retrieve=extend_schema(summary="An author page: the author and their published stories"),
+    create=extend_schema(request=s.writable(s.AuthorSerializer)),
+)
 class AuthorViewSet(viewsets.ModelViewSet):
+    http_method_names = ["get", "post", "patch", "delete"]
     queryset = Author.objects.all()
     serializer_class = s.AuthorSerializer
     lookup_field = "public_id"
@@ -275,7 +285,10 @@ class AuthorViewSet(viewsets.ModelViewSet):
 # ── fronts ─────────────────────────────────────────────────────────────────
 
 
-@extend_schema_view(list=extend_schema(summary="Home and section fronts", parameters=[SITE]))
+@extend_schema_view(
+    list=extend_schema(summary="Home and section fronts", parameters=[SITE]),
+    create=extend_schema(request=s.writable(s.FrontSerializer)),
+)
 class FrontViewSet(Scoped):
     queryset = Front.objects.select_related("site", "desk").prefetch_related("slots__story", "slots__desk")
     serializer_class = s.FrontSerializer
@@ -310,7 +323,10 @@ class FrontViewSet(Scoped):
 # ── newsletters ────────────────────────────────────────────────────────────
 
 
-@extend_schema_view(list=extend_schema(summary="Newsletters, with their subscriber counts", parameters=[SITE]))
+@extend_schema_view(
+    list=extend_schema(summary="Newsletters, with their subscriber counts", parameters=[SITE]),
+    create=extend_schema(request=s.writable(s.NewsletterSerializer)),
+)
 class NewsletterViewSet(Scoped):
     queryset = Newsletter.objects.select_related("site")
     serializer_class = s.NewsletterSerializer
@@ -338,7 +354,9 @@ class IssueFilter(filters.FilterSet):
         fields = ["newsletter", "status"]
 
 
-@extend_schema_view(create=extend_schema(summary="Compose an issue from stories"))
+@extend_schema_view(
+    create=extend_schema(summary="Compose an issue from stories", request=s.writable(s.IssueSerializer))
+)
 class IssueViewSet(Scoped):
     queryset = Issue.objects.select_related("newsletter__site")
     serializer_class = s.IssueSerializer

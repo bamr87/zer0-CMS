@@ -38,6 +38,15 @@ class Visible(serializers.SlugRelatedField):
         return rows.visible_to(user) if hasattr(rows, "visible_to") else rows.all()
 
 
+def writable(serializer_class):
+    """`serializer_class` without its read-only fields: what a client sends to create a row. One component
+    serves requests and responses in the document, so without this a create's body would have to carry the
+    id and timestamps the generated client marks required."""
+    fields = [name for name, field in serializer_class().fields.items() if not field.read_only]
+    meta = type("Meta", (serializer_class.Meta,), {"fields": fields})
+    return type(serializer_class.__name__.replace("Serializer", "WriteSerializer"), (serializer_class,), {"Meta": meta})
+
+
 class PersonSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField()
