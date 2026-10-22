@@ -1,5 +1,7 @@
 # `src/test/` — the test suite
 
+> The test suite: seventeen suites in three execution contexts behind `npm test`, the fixtures and generated goldens, and the fast plain-Mocha loop.
+
 Seventeen suites, three execution contexts, one command: `npm test`. The runner is `@vscode/test-cli` driving Mocha's **tdd** interface (`suite` / `test`) over the plain `tsc` output in `out/test/`, configured by `.vscode-test.mjs` at the repository root. `npm run pretest` compiles that output, builds the five esbuild bundles and runs eslint first, so a green `npm test` means the tests, the types, the lint gate and the shipped artifacts all agree.
 
 | File | Runs in | Covers |

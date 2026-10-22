@@ -1,5 +1,7 @@
 # `src/webview` — the vanilla TypeScript UI
 
+> The vanilla TypeScript UI: three framework-free bundles for the panel, dashboard and agent, the shared kernel they are built from, and the two rules every surface keeps.
+
 Three bundles, no framework: `dist/panel.js`, `dist/dashboard.js` and `dist/agent.js`, each an esbuild IIFE with **zero** dependencies. What React, Recoil, Tailwind, Headless UI, Radix and Downshift did in the fork this replaces, seven files in `shared/` do here.
 
 ```
@@ -8,6 +10,8 @@ panel/       the sidebar sections + 18 fields
 dashboard/   the six served routes, of eleven declared
 agent/       the transcript and approval cards
 ```
+
+The [`panel/`](panel/README.md) (with its [`fields/`](panel/fields/README.md)) and [`dashboard/`](dashboard/README.md) directories keep their own guides.
 
 ## The two rules
 

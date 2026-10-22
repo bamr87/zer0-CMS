@@ -1,5 +1,7 @@
 # SDLC / CI
 
+> Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins.
+
 Every project in this repository is gated on its own terms: the VS Code extension (`src/`), the Rails fleet CMS (`rails/`), the platform (`content/`), and the image generator, books app, sites and the parodynews and aieo apps imported under `packages/`, `sites/` and `apps/`. The zer0-mistakes theme the sites build with is gated in its own repository ([ADR 0005](adr/0005-theme-goes-home.md)). Each has one root workflow filtered to its own tree (named in its `ci:` entry in `workspace.yml`), and `zer0-workspace.yml` checks on every pull request that the registry and the tree still agree ([`MONOREPO.md`](MONOREPO.md)). `main` is not branch-protected and no check is required; still never push to it — branch and open a PR. Every workflow here declares `permissions: contents: read` at the top (a job widens it only where it must write) and a `concurrency` group — except the called `zer0-linkedin.yml`, which declares no permissions so that its caller's grant applies (`contents: write` to publish or read statistics, `contents: read` to check a token), and sets its concurrency per job.
 
 ## The workflows

@@ -1,5 +1,7 @@
 # Contributing to zer0-CMS
 
+> How to set up, the rules the build enforces, style, tests, and how to report a problem — for anyone sending a change to zer0-CMS.
+
 Thanks for wanting to help.
 
 ## Getting set up
@@ -46,19 +48,7 @@ These are enforced by the build, so you will find out quickly, but knowing them 
 
 ## Where things live
 
-| Path | |
-|---|---|
-| `src/core/` | The domain. Pure Node, fully testable. |
-| `src/core/platform/` | Platform profiles: what kind of site a folder is, and its conventions as data. |
-| `src/core/harness/` | One vocabulary for the editor agent and CI, and lane generation. |
-| `src/mcp/` | The standalone MCP server. |
-| `src/webview/` | Vanilla TS + CSS UI for the panel, dashboard and agent. |
-| `src/` (top level) | The thin `vscode` shell: activation, commands, views, providers. |
-| `media/` | Stylesheets and branding. |
-| `media/templates/` | The vendored caller template a generated lane is written from; shipped in the vsix. |
-| `tools/` | Repository gates: `check-config-docs.py` (settings against `docs/CONFIG.md`) and `unwrap-prose.py` (one paragraph per line). |
-| `schemas/` | The JSON Schema for `zer0.json`. |
-| `rails/` | The fleet CMS (Rails 8.1 on Administrate) + ABC generator. `lib/` is stdlib-only. |
+The top-level layout is in [`AGENTS.md`](AGENTS.md#layout), and [`docs/README.md`](docs/README.md) indexes every document, including each product directory's own `README.md`. The repository gates under `tools/` are `check-config-docs.py` (the generated settings tables in `docs/CONFIG.md` and the docs index), `docs_index.py` (the index itself, vendored from the hub) and `unwrap-prose.py` (one paragraph per line).
 
 ## Reporting things
 

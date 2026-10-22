@@ -1,5 +1,7 @@
 # tools/workspace — `bin/zer0`
 
+> The tooling behind `bin/zer0`: every command, the contract `bin/zer0 check` enforces, ownership of files, and the library's layout.
+
 The tooling behind `bin/zer0`, the one command that manages every project in this repository from the root `workspace.yml`. Stdlib-only Ruby (3.3+), like `rails/lib`, so it runs in a bare checkout and in any CI job before a single dependency is installed. Why it exists and how it fits the rest of the repository: [`docs/MONOREPO.md`](../../docs/MONOREPO.md).
 
 ## Commands

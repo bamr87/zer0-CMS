@@ -1,5 +1,7 @@
 # Fleet CMS platform (`rails/`)
 
+> The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it.
+
 The VS Code extension in `src/` edits one workspace. The Rails app in `rails/` is the **fleet CMS**: it indexes every registered zer0-themed Jekyll site, lets you search, edit, create, duplicate and delete content across all of them in a browser, draws a missing preview through zer0-image-generator, and hosts the ABC book wizard. This document is its contract. The extension's architecture (D1–D14) and the two decisions that govern this half — D15 (the two surfaces share files, not a process) and D16 (Administrate over a disk-synced index) — are in [`ARCHITECTURE.md`](ARCHITECTURE.md); how this repository fits with the theme and the image generator is in [`ZER0-STACK.md`](ZER0-STACK.md).
 
 ## Two surfaces, one disk

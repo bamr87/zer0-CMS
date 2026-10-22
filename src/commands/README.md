@@ -1,5 +1,7 @@
 # `src/commands/` — the command layer
 
+> The command layer: every command by file, the gates only `governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold, the Workspace Trust re-checks, and how to add a command.
+
 Fifty-four commands, ten files, and one rule that matters more than the other fifty-three: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.

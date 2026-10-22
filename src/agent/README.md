@@ -1,5 +1,7 @@
 # `src/agent/` — the optional AI layer
 
+> The optional AI layer: the Claude Agent SDK runner and its panel, off by default, with every mutating tool call routed through a person.
+
 Two files, one capability, and it is **off by default**.
 
 | File | What it is |
