@@ -1,4 +1,7 @@
-"""`manage.py consume_events`: handle the Rails plane's events (`zer0:app`).
+"""`manage.py consume_events`: handle the Rails plane's events (`zer0:app`) —
+or, with `--stream zer0:content --group automations`, this plane's own, for the
+automations an event fires (automations/consumers.py; the compose `events`
+service).
 
 Each handler runs once per event (outbox/consumers.py); the command loops
 until interrupted.
@@ -23,6 +26,9 @@ class Command(BaseCommand):
         import redis
 
         import graph.consumers  # noqa: F401 — registers the handlers
+        from automations.consumers import register
+
+        register()
 
         client = redis.Redis.from_url(settings.REDIS_URL)
         while True:

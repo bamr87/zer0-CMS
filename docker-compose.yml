@@ -11,8 +11,9 @@
 # stream holds a thread, not a worker)
 # (/studio/ — the React studio its image builds from web/ —, /healthz, /readyz,
 # /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery worker and beat
-# (agent runs, scheduled publishing, the nightly graph job) and the outbox
-# relay to Redis Streams.
+# (agent runs, scheduled publishing, the nightly graph job, automations'
+# schedules), the outbox relay to Redis Streams, and the consumer that hands
+# the platform's own events to the automations waiting for them (`events`).
 #
 # SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
 # the zer0 sites — discovery finds them two levels down, e.g.
@@ -271,6 +272,20 @@ services:
     profiles: ["content"]
     build: *content-build
     command: python manage.py relay_outbox
+    environment: *content-env
+    labels: *content-labels
+    logging: *fleet-logging
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      disable: true
+
+  # The platform's own events, read back from the stream the relay writes by the consumer group of the automations an
+  # event fires (content/automations/README.md); each event is handled once (ProcessedEvent).
+  events:
+    profiles: ["content"]
+    build: *content-build
+    command: python manage.py consume_events --stream zer0:content --group automations --name automations-1
     environment: *content-env
     labels: *content-labels
     logging: *fleet-logging

@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "ideas",
     "newsroom",
     "books",
+    "automations",
     "suggestions",
     "graph",
     "workflow",
@@ -277,6 +278,9 @@ SPECTACULAR_SETTINGS = {
         "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
         "IssueLevelEnum": "books.serializers.ISSUE_LEVELS",
         "BookTaskEnum": "books.serializers.TASK_CHOICES",
+        "AutomationOnErrorEnum": "automations.models.Automation.ON_ERROR",
+        "AutomationRunStatusEnum": "automations.models.AutomationRun.STATUSES",
+        "AutomationRunTriggerEnum": "automations.models.AutomationRun.TRIGGERS",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -326,6 +330,8 @@ CELERY_BEAT_SCHEDULE = {
     "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
     # The research library's feed subscriptions that are due (research/tasks.py).
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
+    # The automations whose schedule came due: one dispatcher reads every cron line (automations/tasks.py).
+    "automations-schedule": {"task": "automations.tasks.tick", "schedule": 60.0},
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and

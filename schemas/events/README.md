@@ -4,9 +4,9 @@ Every event the content plane (`content/`) or the experience plane (`rails/`) pu
 
 | Type | Published by | Data schema | Consumed by |
 |---|---|---|---|
-| `content.page.published` | content | [`content.page.published.v1.json`](content.page.published.v1.json) | Rails: cache purge, LinkedIn distribution |
-| `content.suggestion.created` | content | [`content.suggestion.created.v1.json`](content.suggestion.created.v1.json) | editor notifications |
-| `agent.run.completed` | both | [`agent.run.completed.v1.json`](agent.run.completed.v1.json) | run dashboards; the other plane's trace view |
+| `content.page.published` | content | [`content.page.published.v1.json`](content.page.published.v1.json) | Rails: cache purge, LinkedIn distribution; content: the automations it fires |
+| `content.suggestion.created` | content | [`content.suggestion.created.v1.json`](content.suggestion.created.v1.json) | editor notifications; content: the automations it fires |
+| `agent.run.completed` | both | [`agent.run.completed.v1.json`](agent.run.completed.v1.json) | run dashboards; the other plane's trace view; content: the automations its own runs fire |
 | `app.user.interaction` | Rails | [`app.user.interaction.v1.json`](app.user.interaction.v1.json) | content: nightly behavioural edges (aggregates only — `anon_id` is never stored) |
 
 `examples/` holds one valid envelope per type. Both planes' contract tests validate their own events against these schemas and parse every example: `content/tests/outbox/test_contracts.py` and `rails/test/zer0_cms/test_event_contracts.rb`.

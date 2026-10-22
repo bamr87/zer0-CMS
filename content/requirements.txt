@@ -43,3 +43,6 @@ charset-normalizer==3.5.2
 beautifulsoup4==4.15.0
 # The newsroom's newsletters and subscription email (newsroom/README.md): any ESP behind Django's mail API.
 django-anymail==15.2
+# Automations' conditions (automations/README.md): JMESPath expressions over a trigger's payload, evaluated by the
+# maintained library rather than an evaluator of our own. Schedules use Celery's own crontab, above.
+jmespath==1.1.0
