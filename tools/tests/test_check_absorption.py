@@ -173,6 +173,13 @@ class ThemeDependencyTest(unittest.TestCase):
             ca.write_ratchet(p, {"b/": 2}, "theme_ratchet")
             self.assertEqual(p.read_text(), "ruby_ratchet:\n  a/: 1\ntheme_ratchet:\n  b/: 2\nsources: []\n")
 
+    def test_write_ratchet_keeps_the_blocks_comments(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "l.yml"
+            p.write_text("theme_ratchet:\n  # why it exists\n  b/: 4\n  c/: 1\nsources: []\n")
+            ca.write_ratchet(p, {"b/": 2}, "theme_ratchet")
+            self.assertEqual(p.read_text(), "theme_ratchet:\n  # why it exists\n  b/: 2\nsources: []\n")
+
 
 class FixtureTest(unittest.TestCase):
     def test_listed_fixture_must_exist(self):

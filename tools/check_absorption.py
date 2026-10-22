@@ -248,7 +248,7 @@ def tighten(ratchet: dict[str, int], counts: Counter) -> dict[str, int]:
 
 
 def write_ratchet(ledger_path: Path, ratchet: dict[str, int], key: str = "ruby_ratchet") -> None:
-    """Rewrite only one ratchet block, leaving the rest of the file's bytes alone."""
+    """Rewrite only one ratchet block, leaving the rest of the file's bytes alone (the block's comments too)."""
     lines = ledger_path.read_text().splitlines(keepends=True)
     start = next(i for i, line in enumerate(lines) if line.startswith(f"{key}:"))
     end = start + 1
@@ -256,9 +256,10 @@ def write_ratchet(ledger_path: Path, ratchet: dict[str, int], key: str = "ruby_r
         end += 1
     while end > start + 1 and not lines[end - 1].strip():
         end -= 1
+    comments = [line for line in lines[start + 1 : end] if line.lstrip().startswith("#")]
     body = [f"  {p}: {c}\n" for p, c in ratchet.items()] or []
     head = f"{key}:\n" if body else f"{key}: {{}}\n"
-    ledger_path.write_text("".join(lines[:start] + [head] + body + lines[end:]))
+    ledger_path.write_text("".join(lines[:start] + [head] + comments + body + lines[end:]))
 
 
 def main(argv: list[str] | None = None) -> int:
