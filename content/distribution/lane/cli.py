@@ -108,7 +108,7 @@ def parser() -> Parser:
 
 def main(argv, *, out=sys.stdout, err=sys.stderr, env=None, transport=send, sleeper=time.sleep) -> int:
     try:
-        opts = parser().parse_args(argv)
+        opts = parser().parse_intermixed_args(argv)  # a draft id may come after the options, as CI passes it
     except Usage as e:
         err.write(f"error: {e}\n\n{USAGE}")
         return 2

@@ -566,6 +566,8 @@ def test_the_command_line_walks_the_governed_path(checkout, web):
     assert code == 0 and "REHEARSED" in out
     code, out, _ = run(["publish", "--site", str(checkout), "--live"])
     assert code == 1 and "not armed" in out
+    code, out, _ = run(["publish", "--site", str(checkout), draft, "--live"], env=ARMED)
+    assert code == 1 and "no LinkedIn credential" in out, "the workflow names the draft after the options"
     code, out, _ = run(["status", "--site", str(checkout), "--json"], env={"LINKEDIN_ACCESS_TOKEN": TOKEN})
     report = json.loads(out)
     assert (code, report["drafts"]["approved"], report["armed"]) == (0, 1, False)
