@@ -372,6 +372,14 @@ def test_a_site_ledger_file_is_read_before_and_written_after_a_publish(tmp_path,
     assert (tmp_path / "site" / ".github" / "linkedin-log.json").read_text() == serialize(file.raw())
     (tmp_path / "site" / ".github" / "linkedin-log.json").write_text("{ broken")
     assert "ledger_unreadable" in [b.kind for b in services.preview(post).blockers]
+    # A file that cannot take an entry never undoes the platform's own: the post exists at the target.
+    services.record(post, "urn:li:share:3")
+    assert LedgerEntry.objects.get(channel=channel, key=post.ledger_key).urn == "urn:li:share:3"
+    assert (tmp_path / "site" / ".github" / "linkedin-log.json").read_text() == "{ broken"
+    # A ledger file the channel names but cannot reach is refused too, never read as "nothing published".
+    shutil.rmtree(tmp_path / "site")
+    [blocker] = [b for b in services.preview(post).blockers if b.kind == "ledger_unreadable"]
+    assert "checkout is not here" in blocker.message
 
 
 # ── statistics ──────────────────────────────────────────────────────────────

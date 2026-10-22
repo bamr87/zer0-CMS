@@ -51,7 +51,7 @@ A **post** is a page — or a story, whose page it is — going to one channel: 
 | `config_error` | the channel is not connected, or misses a setting its kind needs | the channel |
 | `no_author` | a LinkedIn channel has no author URN | the channel |
 | `source_missing` | the page is gone or not live, has no public URL, or (LinkedIn) no title and description for the card; an email's story is not published | the page or the story |
-| `ledger_unreadable` | the channel's site ledger file is not JSON | repairing the file — never by reading it as empty |
+| `ledger_unreadable` | the channel's site ledger file is not JSON, or cannot be reached from the machine doing the work (the site's checkout is not there) | repairing the file, or running where the checkout is — never by reading it as empty |
 | `guard_error` | the brand guard has an error | editing the text, or `force` |
 | `already_published` | the ledger has the post's key with a post id (the channel's rows, or the site's ledger file) | `force` |
 | `publish_unconfirmed` | an earlier attempt ended in a 5xx, a dropped connection or a success without an id, so it may have published | **Record** (a person found the post), or `force` once they checked it did not post |
@@ -63,7 +63,7 @@ A failure is a sentence a person can act on: LinkedIn's error body with every cr
 
 ## The ledger
 
-`LedgerEntry` rows, one per channel and key: the canonical URL of an article, or `draft:<post id>` for a text update. **Download** gives a channel's ledger as the file every lane reads (`services.ledger_file`, byte for byte the extension's format: `urn`, and `linkedin_urn` for LinkedIn, `posted_at`, `type`, `target`, `author`, `source_file`, `image_urn`; an unconfirmed attempt as `state`, `attempted_at`, `error`); **Import** reads one in — the extension's, a site's CI's — so what another lane published is never published again from here, keeping the keys it does not model. A LinkedIn channel may also name its site's own `ledger_file` (inside the site's checkout): the platform then reads it before publishing and writes what it published into it, under the same lock and atomic rename the lane uses.
+`LedgerEntry` rows, one per channel and key: the canonical URL of an article, or `draft:<post id>` for a text update. **Download** gives a channel's ledger as the file every lane reads (`services.ledger_file`, byte for byte the extension's format: `urn`, and `linkedin_urn` for LinkedIn, `posted_at`, `type`, `target`, `author`, `source_file`, `image_urn`; an unconfirmed attempt as `state`, `attempted_at`, `error`); **Import** reads one in — the extension's, a site's CI's — so what another lane published is never published again from here, keeping the keys it does not model. A LinkedIn channel may also name its site's own `ledger_file` (inside the site's checkout): the platform then reads it before publishing and writes what it published into it, under the same lock and atomic rename the lane uses. A file that cannot take the entry after a post went out never undoes the channel's row: the post exists, and the row is what keeps the platform from sending it again (the warning is logged; **Download** gives the entry for the site).
 
 ## Statistics
 

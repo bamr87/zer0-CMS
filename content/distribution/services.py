@@ -572,18 +572,37 @@ class Preview:
         return gates.problems(self.blockers)
 
 
-def site_ledger(channel) -> Ledger | None:
-    """The site's own ledger file, where the extension and the site's CI record what they published — when the
-    channel names one and the site's checkout is here to read."""
+class AbsentLedger:
+    """A ledger file a channel names that cannot be reached from here — the site's checkout is not on this machine,
+    or the path leaves it. Refused like an unreadable file, never read as "nothing published"."""
+
+    readable = False
+
+    def __init__(self, problem: str):
+        self.problem = problem
+
+    def entry(self, key):
+        return None
+
+    def record(self, *args, **kwargs):
+        raise LedgerError(self.problem)
+
+    mark_unconfirmed = record
+
+
+def site_ledger(channel) -> Ledger | AbsentLedger | None:
+    """The site's own ledger file, where the extension and the site's CI record what they published — None when the
+    channel names none."""
     relative = channel.setting("ledger_file")
-    root_page = channel.site.root_page.specific
-    source_root = getattr(root_page, "source_root", "")
-    if not relative or not source_root:
+    if not relative:
         return None
-    base = (Path(settings.REPO_ROOT) / source_root).resolve()
+    source_root = getattr(channel.site.root_page.specific, "source_root", "")
+    base = (Path(settings.REPO_ROOT) / source_root).resolve() if source_root else None
+    if base is None or not base.is_dir():
+        return AbsentLedger(f"the site's checkout is not here to read its ledger file {relative}")
     path = (base / relative).resolve()
-    if not base.is_dir() or not path.is_relative_to(base):
-        return None
+    if not path.is_relative_to(base):
+        return AbsentLedger(f"the ledger file {relative} is outside the site's checkout")
     return Ledger(path)
 
 
@@ -657,9 +676,12 @@ def preview(post, *, live: bool = True) -> Preview:
     ledger = site_ledger(channel)
     entry = find_entry(channel, post.ledger_key) if (ledger is None or ledger.readable) else None
     if ledger is not None and not ledger.readable:
-        blockers.append(
-            Blocker("ledger_unreadable", f"{channel.setting('ledger_file')} is not valid JSON — fix it first")
+        problem = (
+            ledger.problem
+            if isinstance(ledger, AbsentLedger)
+            else f"{channel.setting('ledger_file')} is not valid JSON — fix it first"
         )
+        blockers.append(Blocker("ledger_unreadable", problem))
     elif entry is not None and entry.urn:
         blockers.append(Blocker("already_published", f"already published as {entry.urn}"))
     elif entry is not None:
@@ -872,18 +894,23 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
     )
     ledger = site_ledger(channel)
     if ledger is not None:
-        ledger.record(
-            post.ledger_key,
-            entry_for(
-                urn=urn,
-                kind=post.kind,
-                target=channel.kind,
-                author=channel.setting("author") or None,
-                source_file=_source_file(post) or None,
-                image_urn=image_urn or None,
-                now=now,
-            ),
-        )
+        try:
+            ledger.record(
+                post.ledger_key,
+                entry_for(
+                    urn=urn,
+                    kind=post.kind,
+                    target=channel.kind,
+                    author=channel.setting("author") or None,
+                    source_file=_source_file(post) or None,
+                    image_urn=image_urn or None,
+                    now=now,
+                ),
+            )
+        except (OSError, LedgerError) as e:
+            # The post exists at the target: the row above must survive a file that cannot take it, or the
+            # platform would send the post again. The site's lane keeps its own copy (Download gives this one).
+            log.warning("distribution: %s is recorded here but not in the site's ledger file: %s", post.ledger_key, e)
     return entry
 
 
