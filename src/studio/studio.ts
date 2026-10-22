@@ -9,8 +9,9 @@
  * the dashboard shows:
  *
  *   - **where it renders**: the dashboard panel (every workspace), the Metadata
- *     view (the page behind the open file; the webview is told the file's path
- *     in its folder and nothing else) and the AI panel (the agent view);
+ *     view when the open file is a page on the platform (`modeFor`; the webview
+ *     is told the file's path from its folder and nothing else — any other
+ *     file keeps file mode) and the AI panel (the agent view);
  *   - **the page** each webview loads (`studioPage`: a strict CSP with a nonce);
  *   - **one `StudioBridge` per webview**, which re-checks every request and adds
  *     the platform URL (`settingsPlatformUrl`, the settings layer only) and the
@@ -28,12 +29,32 @@ import * as path from 'node:path';
 import { EventSource } from 'eventsource';
 import * as vscode from 'vscode';
 
-import { onConfigChange, settingsPlatformUrl } from '../config';
-import { platformOrigin, StudioBridge, studioPage, tokenKey, type StudioView } from '../core';
+import { currentConfig, onConfigChange, settingsPlatformUrl } from '../config';
+import { platformOrigin, sendToPlatform, StudioBridge, studioPage, tokenKey, type StudioView } from '../core';
 import { describeError, log } from '../logger';
-import { confirm, notifyError, notifyInfo } from '../uiState';
+import { confirm, isEditableDocument, notifyError, notifyInfo } from '../uiState';
 
 type PanelView = Exclude<StudioView, 'page'>;
+
+/**
+ * A file as the platform knows it: its path from the workspace folder it is
+ * in, starting with that folder's name (`drsai/_posts/a.md`), which is what
+ * tells two sites' `_posts/a.md` apart (`?source=`, `importers/services.py`).
+ * Undefined for a file in no folder, which no site can claim.
+ */
+export function sourcePath(uri: vscode.Uri): string | undefined {
+  const folder = vscode.workspace.getWorkspaceFolder(uri);
+  if (folder === undefined) {
+    return undefined;
+  }
+  const inside = path.relative(folder.uri.fsPath, uri.fsPath).split(path.sep).join('/');
+  return `${path.posix.basename(folder.uri.path)}/${inside}`;
+}
+
+/** A file the Metadata view would edit: a supported content file of its own site. */
+function editable(document: vscode.TextDocument): boolean {
+  return isEditableDocument(currentConfig(document.uri), document);
+}
 
 const TITLES: Record<PanelView, string> = { dashboard: 'zer0 studio', ai: 'zer0 AI' };
 
@@ -84,10 +105,55 @@ export class Studio implements vscode.Disposable {
     return this.connect(view.webview, 'page', 'sidebar');
   }
 
+  /**
+   * What the Metadata view shows for `document` (PLAN G10): the studio's page
+   * editor when the platform has a page imported from the file; file mode with
+   * no platform, for a file in no folder, and when the platform has no page
+   * for it — a site still on files, a file never imported — or cannot be
+   * reached. Any other answer (no token, a refusal) is the page view, which
+   * says why. Undefined for an editor the view would not edit (output, code):
+   * it keeps what it shows. One request, because a person opened the file with
+   * the view showing.
+   */
+  async modeFor(document: vscode.TextDocument | undefined): Promise<'page' | 'files' | undefined> {
+    if (!this.configured()) {
+      return 'files';
+    }
+    if (document === undefined || !editable(document)) {
+      return undefined;
+    }
+    const source = sourcePath(document.uri);
+    if (source === undefined) {
+      return 'files';
+    }
+    const reply = await sendToPlatform(
+      {
+        origin: () => this.origin(),
+        token: async (origin) => this.context.secrets.get(tokenKey(origin)),
+        confirm: () => Promise.resolve(false), // a GET changes nothing
+        fetch: this.network,
+      },
+      { method: 'GET', path: `/api/v2/content/pages/?${new URLSearchParams({ source }).toString()}` },
+    );
+    if (reply.status === 503) {
+      return 'files';
+    }
+    try {
+      return reply.status !== 200 || (JSON.parse(reply.body) as { count?: unknown }).count !== 0 ? 'page' : 'files';
+    } catch {
+      return 'page'; // a platform that answers something else: the page view shows what it said
+    }
+  }
+
   async setToken(): Promise<void> {
     const origin = this.origin();
     if (origin === undefined) {
-      const choice = await notifyError('set zer0Cms.platform.url to your platform (an http or https URL) first.', 'Open settings');
+      const choice = await notifyError(
+        settingsPlatformUrl() === undefined
+          ? 'set zer0Cms.platform.url to your platform first.'
+          : 'zer0Cms.platform.url must be an https URL, or http on this machine (localhost, 127.0.0.1, [::1]): your token goes with every request, and over plain http it would cross the network in clear text.',
+        'Open settings',
+      );
       if (choice !== undefined) {
         await vscode.commands.executeCommand('workbench.action.openSettings', 'zer0Cms.platform.url');
       }
@@ -263,16 +329,17 @@ class Session implements vscode.Disposable {
   }
 
   /**
-   * The open file, as its path in its folder. A file outside every folder is
-   * sent as its absolute path, which the platform answers with no page; an
-   * editor that is not a file (output, settings) leaves the last one shown.
+   * The open file, as its path from its folder (`sourcePath`). An editor that
+   * is not a content file (output, settings, code) leaves the last one shown;
+   * a file in no folder is no file at all.
    */
   private postFile(): void {
-    const uri = vscode.window.activeTextEditor?.document.uri;
-    if (uri === undefined || uri.scheme !== 'file') {
+    const document = vscode.window.activeTextEditor?.document;
+    if (document === undefined || !editable(document)) {
       return;
     }
-    this.post({ type: 'file', file: { path: vscode.workspace.asRelativePath(uri, false), name: path.basename(uri.fsPath) } });
+    const source = sourcePath(document.uri);
+    this.post({ type: 'file', file: source === undefined ? null : { path: source, name: path.basename(document.uri.fsPath) } });
   }
 }
 

@@ -271,8 +271,15 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
   static readonly viewType = 'zer0Cms.panel';
 
   private view: vscode.WebviewView | undefined;
+  /** What the mounted mode subscribed to; disposed when the other mode mounts. */
   private readonly disposables: vscode.Disposable[] = [];
+  /** What the view itself subscribes to, across modes. */
+  private readonly watchers: vscode.Disposable[] = [];
   private readonly handlers: Partial<Record<CommandId, Handler>>;
+  /** File mode, or the studio's page editor (PLAN G10); undefined until the first choice. */
+  private mode: 'files' | 'page' | undefined;
+  /** Bumped by every choice, so an answer that comes back late is dropped. */
+  private asked = 0;
 
   /** The active editable file, tracked rather than read: focus inside the
    *  webview can leave `activeTextEditor` undefined for a frame. */
@@ -287,7 +294,8 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
     this.handlers = {
       // --- project ---------------------------------------------------------
       init: () => this.run('init'),
-      dashboard: () => this.run('dashboard'),
+      // File mode's own dashboard, whatever `zer0Cms.dashboard` opens (PLAN G10).
+      dashboard: () => this.run('dashboard.files'),
       refresh: () => this.run('refresh'),
       showOutput: () => this.run('showOutput'),
       // --- content ---------------------------------------------------------
@@ -347,32 +355,47 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
 
   resolveWebviewView(view: vscode.WebviewView): void {
     this.view = view;
-    view.onDidDispose(() => {
-      this.teardown();
-    });
-    this.mount(view);
+    this.watchers.push(
+      view.onDidDispose(() => {
+        this.teardown();
+      }),
+      // A platform set or cleared, another file open, or the view shown again: decided again.
+      onConfigChange(() => void this.choose(view)),
+      vscode.window.onDidChangeActiveTextEditor(() => void this.choose(view)),
+      view.onDidChangeVisibility(() => void this.choose(view)),
+    );
+    void this.choose(view);
   }
 
   /**
-   * File mode, or — with a platform configured — the studio's page editor for
-   * the page behind the open file, rendered by the studio host (PLAN G10).
-   * Setting or clearing `zer0Cms.platform.url` mounts the other one in place.
+   * File mode, or the studio's page editor when a platform is configured and
+   * the open file is a page on it (PLAN G10; `Studio.modeFor` asks). Decided per
+   * file, so a site still on files keeps file mode in the same window — beside
+   * a platform site, in a multi-root window — and an editor that is no content
+   * file keeps what the view shows. The other mode mounts in place. A hidden
+   * view decides when it is shown, so it asks the platform nothing meanwhile.
    */
-  private mount(view: vscode.WebviewView): void {
-    const platform = this.shell.studio.configured();
-    this.disposables.push(
-      onConfigChange(() => {
-        if (this.shell.studio.configured() !== platform && this.view === view) {
-          this.unmount();
-          this.mount(view);
-        }
-      }),
-    );
-    if (platform) {
-      view.title = 'Page';
-      this.disposables.push(this.shell.studio.attachView(view));
+  private async choose(view: vscode.WebviewView): Promise<void> {
+    if (!view.visible && this.mode !== undefined) {
       return;
     }
+    const asked = ++this.asked;
+    const mode = (await this.shell.studio.modeFor(vscode.window.activeTextEditor?.document)) ?? this.mode ?? 'files';
+    if (asked !== this.asked || this.view !== view || mode === this.mode) {
+      return;
+    }
+    this.unmount();
+    this.mode = mode;
+    if (mode === 'page') {
+      view.title = 'Page';
+      this.disposables.push(this.shell.studio.attachView(view));
+    } else {
+      this.mountFiles(view);
+    }
+  }
+
+  /** File mode: front matter as controls, SEO insights, the governed publish path. */
+  private mountFiles(view: vscode.WebviewView): void {
     const extensionUri = this.shell.context.extensionUri;
     const developer = this.shell.context.extensionMode !== vscode.ExtensionMode.Production;
 
@@ -440,7 +463,11 @@ export class PanelProvider implements vscode.WebviewViewProvider, PanelBridge, v
 
   private teardown(): void {
     this.unmount();
+    for (const disposable of this.watchers.splice(0)) {
+      disposable.dispose();
+    }
     this.view = undefined;
+    this.mode = undefined;
   }
 
   /**

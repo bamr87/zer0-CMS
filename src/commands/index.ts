@@ -93,14 +93,15 @@ export {
 
 /**
  * Every id `package.json` contributes, without the `zer0Cms.` prefix, grouped
- * the way the manifest groups them. Fifty-six — and the number is asserted
+ * the way the manifest groups them. Fifty-seven — and the number is asserted
  * against the manifest rather than trusted, in `src/test/extension.test.ts`.
  */
 export const ALL_COMMAND_IDS: readonly string[] = [
-  // project — src/commands/project.ts (+ dashboard pair in src/extension.ts)
+  // project — src/commands/project.ts (+ the three dashboard commands in src/extension.ts)
   'init',
   'dashboard',
   'dashboard.close',
+  'dashboard.files',
   'refresh',
   'cache.clear',
   'showOutput',

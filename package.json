@@ -153,6 +153,12 @@
         "icon": "$(close)"
       },
       {
+        "command": "zer0Cms.dashboard.files",
+        "title": "Open the file dashboard",
+        "category": "zer0-CMS",
+        "icon": "$(files)"
+      },
+      {
         "command": "zer0Cms.refresh",
         "title": "Refresh content index",
         "category": "zer0-CMS",
@@ -1144,7 +1150,7 @@
             "default": "",
             "scope": "window",
             "format": "uri",
-            "markdownDescription": "The zer0-CMS platform to work with, e.g. `https://cms.example.org`. When set, the dashboard, the Metadata view and the agent view render the studio's workspaces from the platform instead of this folder's files, and nothing reaches the platform until you open one of them. Read from **your settings only** — a `zer0.json` cannot point the extension at a server — and ignored in an untrusted workspace. Your token for it is kept in the editor's secret storage: run **zer0-CMS: Set platform token**."
+            "markdownDescription": "The zer0-CMS platform to work with, e.g. `https://cms.example.org` — https, or plain http on this machine only (`localhost`, `127.0.0.1`, `[::1]`), because your token goes with every request. When set, the dashboard and the agent view render the studio's workspaces from the platform, and the Metadata view the studio's page editor for a file the platform has a page for; any other file keeps file mode, and **zer0-CMS: Open the file dashboard** opens the file-mode dashboard. Nothing reaches the platform until you open one of those views, or a file with the Metadata view showing. Read from **your settings only** — a `zer0.json` cannot point the extension at a server — and ignored in an untrusted workspace. Your token for it is kept in the editor's secret storage: run **zer0-CMS: Set platform token**."
           }
         }
       }

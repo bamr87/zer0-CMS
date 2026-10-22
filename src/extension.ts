@@ -244,9 +244,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // --- 8. The dashboard and the agent panel --------------------------------
   // Constructed, not shown: the panel is created on first `open()`.
-  // With a platform configured the dashboard is the studio's workspaces; the
-  // file-mode dashboard keeps the fleet console, the audit and the harness,
-  // whose own commands still open it.
+  // With a platform configured `zer0Cms.dashboard` is the studio's workspaces;
+  // `zer0Cms.dashboard.files` is always the file-mode dashboard, which the
+  // fleet console, the audit, the harness, the drafts and the file-mode
+  // Metadata view open through it — so a site still on files keeps it.
   const dashboard = new DashboardPanel(shell, governance, fleet, audit, site, harness);
   context.subscriptions.push(
     dashboard,
@@ -254,6 +255,7 @@ export function activate(context: vscode.ExtensionContext): void {
       studio.configured() ? studio.openDashboard() : dashboard.open(),
     ),
     vscode.commands.registerCommand('zer0Cms.dashboard.close', () => dashboard.close()),
+    vscode.commands.registerCommand('zer0Cms.dashboard.files', () => dashboard.open()),
   );
 
   // The agent panel installs itself as the agent host in its constructor, which
