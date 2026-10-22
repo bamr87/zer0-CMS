@@ -11,7 +11,7 @@ role: author
 description: Drafts, continues and revises chapters, checks continuity, critiques and outlines — from the book's own outline, notes, act guide and neighbouring chapters — as suggestions a person reviews.
 handler: books.handlers.run
 policy: suggest
-max_steps: 2
+max_steps: 4
 budget_usd: "2.00"
 tools:
   - content.get_page

@@ -139,6 +139,12 @@ def read(book: BookPage) -> library.Book:
     return library.Book.read(files.book_dir(book), files.book_tree(book))
 
 
+def chapter_in(rm: library.Book, chapter: ChapterPage) -> library.Chapter | None:
+    """A chapter page's file in the read model, found by its path (its latest revision's)."""
+    path = f"{rm.slug}/{files.chapter_path(chapter.get_latest_revision_as_object())}"
+    return next((c for c in rm.chapters if c.path == path), None)
+
+
 def stats(rm: library.Book) -> dict:
     chapters = rm.chapters
     longest = max(chapters, key=lambda c: c.word_count, default=None)
@@ -189,7 +195,7 @@ def detail(book: BookPage, user) -> dict:
     """A book's overview: its shelf row, its chapters in order, statistics,
     findings counts, its other files, and what the person may do."""
     rm = read(book)
-    pages = {c.number: c for c in files.book_chapters(book)}
+    pages = {f"{rm.slug}/{files.chapter_path(c)}": c for c in files.book_chapters(book)}
     issues = library.validate(rm)
     perms = book.permissions_for_user(user)
     return {
@@ -197,7 +203,7 @@ def detail(book: BookPage, user) -> dict:
         "stats": stats(rm),
         "chapter_list": [
             {
-                "id": pages[c.number].pk if c.number in pages else None,
+                "id": pages[c.path].pk if c.path in pages else None,
                 "number": c.number,
                 "title": c.title,
                 "subtitle": c.subtitle,

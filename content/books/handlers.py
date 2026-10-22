@@ -34,6 +34,7 @@ from ai.services import stable_id
 from cms.models import BookPage, ChapterPage
 
 from . import context, files, library
+from .services import chapter_in
 
 RULE = re.compile(r"\n*^(?:-{3,}|\*{3,}|_{3,})[ \t]*\Z", re.M)
 
@@ -57,7 +58,7 @@ def run(run, ctx) -> dict:
         if run.started_by is None or not page.permissions_for_user(run.started_by).can_edit():
             raise PermissionError(f"page {page.pk} is not one {run.started_by} may edit")
     rm = library.Book.read(files.book_dir(book), files.book_tree(book))
-    rm_chapter = rm.chapter(chapter.number) if chapter is not None else None
+    rm_chapter = chapter_in(rm, chapter) if chapter is not None else None
     prompt = context.request(
         rm, rm_chapter, task, instruction=data.get("instruction", ""), selection=data.get("selection", "")
     )

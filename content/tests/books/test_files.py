@@ -5,6 +5,7 @@ what was changed in the platform, an edit renders by line surgery so every
 untouched line stays, and a book made here renders a manifest of its own."""
 
 import filecmp
+import re
 import shutil
 from pathlib import Path
 
@@ -48,8 +49,11 @@ def test_the_real_library_round_trips_byte_for_byte(capsys):
         pytest.skip("packages/books/library is not in this checkout")
     call_command("roundtrip_books")
     out = capsys.readouterr().out
-    assert "differs" not in out
-    assert "26/26 file(s) identical after the round trip" in out
+    identical = re.search(r"(\d+)/(\d+) file\(s\) identical after the round trip", out)
+    assert "differs" not in out and identical and identical.group(1) == identical.group(2), out
+    assert (
+        int(identical.group(1)) >= 26
+    )  # impairment (book.yml, outline, 14 chapters, guides, notes, README) and _template
 
 
 @pytest.mark.django_db

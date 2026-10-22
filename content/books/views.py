@@ -248,7 +248,7 @@ def book_context(request, pk):
     if task is None:
         raise NotFound("no such task")
     rm = services.read(found)
-    rm_chapter = rm.chapter(chapter.get_latest_revision_as_object().number) if chapter else None
+    rm_chapter = services.chapter_in(rm, chapter) if chapter else None
     return Response(s.ContextSerializer({"text": context.request(rm, rm_chapter, task)}).data)
 
 
