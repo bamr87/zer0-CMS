@@ -5,7 +5,7 @@
     "ZER0-041"
   ],
   "path": "verify/scenarios/studio-accept-suggestion.yml",
-  "started": "2026-10-22T06:30:26.310Z",
+  "started": "2026-10-22T07:49:48.800Z",
   "viewports": [
     {
       "name": "desktop",
@@ -17,7 +17,7 @@
           "step": "goto",
           "arg": "/studio/",
           "ok": true,
-          "ms": 646
+          "ms": 653
         },
         {
           "step": "fill",
@@ -26,7 +26,7 @@
             "value": "editor"
           },
           "ok": true,
-          "ms": 60
+          "ms": 104
         },
         {
           "step": "fill",
@@ -35,7 +35,7 @@
             "value": "zer0-demo"
           },
           "ok": true,
-          "ms": 30
+          "ms": 29
         },
         {
           "step": "click",
@@ -63,7 +63,7 @@
             "selector": "role=article"
           },
           "ok": true,
-          "ms": 74
+          "ms": 75
         },
         {
           "step": "expect",
@@ -79,20 +79,20 @@
             "visible": "ins"
           },
           "ok": true,
-          "ms": 0
+          "ms": 1
         },
         {
           "step": "screenshot",
           "arg": "inbox-with-diff",
           "ok": true,
           "file": "test/evidence/studio-accept-suggestion/desktop-inbox-with-diff.png",
-          "ms": 38
+          "ms": 39
         },
         {
           "step": "click",
           "arg": "role=button[name='Accept']",
           "ok": true,
-          "ms": 34
+          "ms": 32
         },
         {
           "step": "wait",
@@ -100,7 +100,7 @@
             "selector": "text=Accepted as a draft revision"
           },
           "ok": true,
-          "ms": 24
+          "ms": 27
         },
         {
           "step": "expect",
@@ -124,10 +124,10 @@
         "test/evidence/studio-accept-suggestion/desktop-accepted.png"
       ],
       "evals": {},
-      "final_url": "http://127.0.0.1:50754/studio/review"
+      "final_url": "http://127.0.0.1:55144/studio/review"
     }
   ],
   "ok": true,
-  "finished": "2026-10-22T06:30:27.631Z",
-  "base": "http://127.0.0.1:50754"
+  "finished": "2026-10-22T07:49:50.199Z",
+  "base": "http://127.0.0.1:55144"
 }

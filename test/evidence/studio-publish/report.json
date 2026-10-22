@@ -5,7 +5,7 @@
     "ZER0-040"
   ],
   "path": "verify/scenarios/studio-publish.yml",
-  "started": "2026-10-22T06:30:28.833Z",
+  "started": "2026-10-22T07:49:51.478Z",
   "viewports": [
     {
       "name": "desktop",
@@ -17,7 +17,7 @@
           "step": "goto",
           "arg": "/studio/",
           "ok": true,
-          "ms": 594
+          "ms": 599
         },
         {
           "step": "fill",
@@ -26,7 +26,7 @@
             "value": "editor"
           },
           "ok": true,
-          "ms": 15
+          "ms": 20
         },
         {
           "step": "fill",
@@ -35,13 +35,13 @@
             "value": "zer0-demo"
           },
           "ok": true,
-          "ms": 25
+          "ms": 34
         },
         {
           "step": "click",
           "arg": "button[type=submit]",
           "ok": true,
-          "ms": 36
+          "ms": 35
         },
         {
           "step": "wait",
@@ -49,13 +49,13 @@
             "selector": "role=heading[name='Home']"
           },
           "ok": true,
-          "ms": 179
+          "ms": 180
         },
         {
           "step": "click",
           "arg": "role=link[name='Write']",
           "ok": true,
-          "ms": 18
+          "ms": 17
         },
         {
           "step": "fill",
@@ -64,13 +64,13 @@
             "value": "Nightly"
           },
           "ok": true,
-          "ms": 27
+          "ms": 29
         },
         {
           "step": "click",
           "arg": "role=button[name='Nightly backups']",
           "ok": true,
-          "ms": 57
+          "ms": 54
         },
         {
           "step": "wait",
@@ -84,7 +84,7 @@
           "step": "click",
           "arg": "role=tab[name='SEO']",
           "ok": true,
-          "ms": 106
+          "ms": 105
         },
         {
           "step": "fill",
@@ -93,20 +93,20 @@
             "value": "Nightly backups, in plain words"
           },
           "ok": true,
-          "ms": 6
+          "ms": 4
         },
         {
           "step": "screenshot",
           "arg": "editing",
           "ok": true,
           "file": "test/evidence/studio-publish/desktop-editing.png",
-          "ms": 36
+          "ms": 22
         },
         {
           "step": "click",
           "arg": "role=button[name='Publish']",
           "ok": true,
-          "ms": 35
+          "ms": 37
         },
         {
           "step": "wait",
@@ -114,7 +114,7 @@
             "selector": "text=Published"
           },
           "ok": true,
-          "ms": 74
+          "ms": 78
         },
         {
           "step": "expect",
@@ -137,7 +137,7 @@
           "arg": "published",
           "ok": true,
           "file": "test/evidence/studio-publish/desktop-published.png",
-          "ms": 21
+          "ms": 34
         }
       ],
       "console_errors": [],
@@ -146,10 +146,10 @@
         "test/evidence/studio-publish/desktop-published.png"
       ],
       "evals": {},
-      "final_url": "http://127.0.0.1:50754/studio/write/6"
+      "final_url": "http://127.0.0.1:55144/studio/write/6"
     }
   ],
   "ok": true,
-  "finished": "2026-10-22T06:30:30.095Z",
-  "base": "http://127.0.0.1:50754"
+  "finished": "2026-10-22T07:49:52.765Z",
+  "base": "http://127.0.0.1:55144"
 }

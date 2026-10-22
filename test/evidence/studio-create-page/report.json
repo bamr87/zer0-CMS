@@ -5,7 +5,7 @@
     "ZER0-040"
   ],
   "path": "verify/scenarios/studio-create-page.yml",
-  "started": "2026-10-22T06:30:27.631Z",
+  "started": "2026-10-22T07:49:50.200Z",
   "viewports": [
     {
       "name": "desktop",
@@ -17,7 +17,7 @@
           "step": "goto",
           "arg": "/studio/",
           "ok": true,
-          "ms": 599
+          "ms": 591
         },
         {
           "step": "fill",
@@ -26,7 +26,7 @@
             "value": "editor"
           },
           "ok": true,
-          "ms": 29
+          "ms": 31
         },
         {
           "step": "fill",
@@ -35,13 +35,13 @@
             "value": "zer0-demo"
           },
           "ok": true,
-          "ms": 34
+          "ms": 45
         },
         {
           "step": "click",
           "arg": "button[type=submit]",
           "ok": true,
-          "ms": 27
+          "ms": 35
         },
         {
           "step": "wait",
@@ -49,13 +49,13 @@
             "selector": "role=heading[name='Home']"
           },
           "ok": true,
-          "ms": 181
+          "ms": 180
         },
         {
           "step": "click",
           "arg": "role=link[name='Create']",
           "ok": true,
-          "ms": 17
+          "ms": 35
         },
         {
           "step": "wait",
@@ -69,13 +69,13 @@
           "step": "click",
           "arg": "role=combobox[name='Type']",
           "ok": true,
-          "ms": 87
+          "ms": 102
         },
         {
           "step": "click",
           "arg": "role=option[name='Article page']",
           "ok": true,
-          "ms": 33
+          "ms": 36
         },
         {
           "step": "fill",
@@ -84,20 +84,20 @@
             "value": "A page from the studio scenario"
           },
           "ok": true,
-          "ms": 3
+          "ms": 5
         },
         {
           "step": "screenshot",
           "arg": "create-form",
           "ok": true,
           "file": "test/evidence/studio-create-page/desktop-create-form.png",
-          "ms": 23
+          "ms": 21
         },
         {
           "step": "click",
           "arg": "role=button[name='Create draft']",
           "ok": true,
-          "ms": 38
+          "ms": 37
         },
         {
           "step": "wait",
@@ -105,7 +105,7 @@
             "url": "/studio/write/"
           },
           "ok": true,
-          "ms": 40
+          "ms": 51
         },
         {
           "step": "expect",
@@ -113,7 +113,7 @@
             "visible": "role=heading[name='A page from the studio scenario']"
           },
           "ok": true,
-          "ms": 30
+          "ms": 43
         },
         {
           "step": "expect",
@@ -121,7 +121,7 @@
             "text": "Draft"
           },
           "ok": true,
-          "ms": 1
+          "ms": 3
         },
         {
           "step": "expect",
@@ -136,7 +136,7 @@
           "arg": "created-draft",
           "ok": true,
           "file": "test/evidence/studio-create-page/desktop-created-draft.png",
-          "ms": 23
+          "ms": 31
         }
       ],
       "console_errors": [],
@@ -145,10 +145,10 @@
         "test/evidence/studio-create-page/desktop-created-draft.png"
       ],
       "evals": {},
-      "final_url": "http://127.0.0.1:50754/studio/write/7"
+      "final_url": "http://127.0.0.1:55144/studio/write/7"
     }
   ],
   "ok": true,
-  "finished": "2026-10-22T06:30:28.833Z",
-  "base": "http://127.0.0.1:50754"
+  "finished": "2026-10-22T07:49:51.478Z",
+  "base": "http://127.0.0.1:55144"
 }
