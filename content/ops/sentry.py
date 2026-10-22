@@ -6,17 +6,18 @@ the logs before they leave the process."""
 from django.conf import settings
 
 
-def _scrub(event, hint):
+def _scrub(event, hint=None):
+    """Every string in the event through the logs' redaction: the message, each
+    exception's value, and the variables of every frame, which carry what a
+    function held when it failed — a token it was checking, for one."""
     from .logging import redact
 
-    if isinstance(event.get("message"), str):
-        event["message"] = redact(event["message"])
-    entry = event.get("logentry") or {}
-    if isinstance(entry.get("message"), str):
-        entry["message"] = redact(entry["message"])
-    for value in (event.get("exception") or {}).get("values") or []:
-        if isinstance(value.get("value"), str):
-            value["value"] = redact(value["value"])
+    if isinstance(event, str):
+        return redact(event)
+    if isinstance(event, dict):
+        return {key: _scrub(value) for key, value in event.items()}
+    if isinstance(event, list):
+        return [_scrub(value) for value in event]
     return event
 
 

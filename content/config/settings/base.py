@@ -332,6 +332,9 @@ LOG_LEVEL = env("LOG_LEVEL", default="INFO")
 LOG_FORMAT = env("LOG_FORMAT", default="text")
 if LOG_FORMAT not in ("json", "text"):
     LOG_FORMAT = "text"
+# Django's error reports (the technical 500 page, the mails to admins) redact
+# token shapes in frame variables and hide `sensitive_variables` in development too.
+DEFAULT_EXCEPTION_REPORTER_FILTER = "ops.logging.ExceptionReporterFilter"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
