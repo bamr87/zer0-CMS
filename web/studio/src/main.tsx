@@ -11,6 +11,7 @@ import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { resolver, theme } from '@zer0/tokens';
 import { ApiError } from '@zer0/ui';
+import { setNonce } from 'get-nonce';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
@@ -20,7 +21,10 @@ import { api, openStream } from './transport';
 
 // The platform replaces the placeholder in this meta's nonce on every request
 // (content/api/studio.py); `.nonce` is the attribute browsers keep readable.
+// Mantine's modals and drawers lock scrolling with a <style> that
+// react-style-singleton writes, and it takes its nonce from get-nonce.
 const nonce = document.querySelector<HTMLMetaElement>('meta[property="csp-nonce"]')?.nonce || undefined;
+if (nonce) setNonce(nonce);
 
 const queryClient = new QueryClient({
   defaultOptions: {

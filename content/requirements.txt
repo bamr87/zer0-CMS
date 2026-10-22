@@ -41,3 +41,5 @@ feedparser==6.0.14
 pypdf==6.21.2
 charset-normalizer==3.5.2
 beautifulsoup4==4.15.0
+# The newsroom's newsletters and subscription email (newsroom/README.md): any ESP behind Django's mail API.
+django-anymail==15.2

@@ -2,7 +2,7 @@
   "name": "@zer0/ui",
   "private": true,
   "version": "0.0.0",
-  "description": "The studio's workspaces and components — page list, editor, fields, review inbox, revisions, run timeline — router- and transport-agnostic, so the extension's webviews render the same ones.",
+  "description": "The studio's workspaces and components — page list, editor, fields, review inbox, revisions, run timeline, the newsroom — router- and transport-agnostic, so the extension's webviews render the same ones.",
   "type": "module",
   "license": "MIT",
   "exports": {
@@ -13,6 +13,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@hello-pangea/dnd": "^18.0.1",
     "@mantine/core": "^9.7.3",
     "@mantine/hooks": "^9.7.3",
     "@mantine/notifications": "^9.7.3",

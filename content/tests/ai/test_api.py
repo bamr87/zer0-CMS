@@ -159,9 +159,10 @@ def test_output_schemas_are_validated_edited_exported_imported_and_bundled(api, 
     )
     assert imported.json()["schema"] == STORY and imported.json()["render_template"] == "# {{ headline }}"
     listed = api(alice).get(f"{BASE}/output-schemas/", {"bundled": "true"}).json()["results"]
-    # This layer's three, among those the apps built on it bundle (ideas, research).
-    assert {"Content detail", "News article", "Parody news article"} <= {s["name"] for s in listed}
-    bundled = listed[0]["id"]
+    # This layer's three, among those the apps built on it bundle (ideas, research, the newsroom).
+    ours = ["Content detail", "News article", "Parody news article"]
+    assert set(ours) <= {s["name"] for s in listed}
+    bundled = next(s["id"] for s in listed if s["name"] == "Content detail")
     assert api(alice).patch(f"{BASE}/output-schemas/{bundled}/", {"name": "mine now"}, format="json").status_code == 403
     assert api(alice).post(f"{BASE}/output-schemas/import-bundled/").status_code == 403
     before = OutputSchema.objects.filter(bundled=True).count()

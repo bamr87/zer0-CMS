@@ -6,6 +6,7 @@ import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
 import {
   IdeasWorkspace,
+  Newsroom,
   Overview,
   PageEditor,
   PageList,
@@ -58,6 +59,10 @@ export function pathFor(to: Destination): string {
       return '/research';
     case 'source':
       return `/research/sources/${to.id}`;
+    case 'newsroom':
+      return '/newsroom';
+    case 'story':
+      return `/newsroom/stories/${to.id}`;
   }
 }
 
@@ -80,6 +85,8 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="ideas" element={<Ideas />} />
                 <Route path="research" element={<Research />} />
                 <Route path="research/sources/:id" element={<SourcePage />} />
+                <Route path="newsroom" element={<NewsroomArea />} />
+                <Route path="newsroom/stories/:id" element={<NewsroomArea />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -167,6 +174,16 @@ function Research() {
 function SourcePage() {
   const { id = '' } = useParams();
   return <SourceView key={id} sourceId={id} />;
+}
+
+function NewsroomArea() {
+  const { siteId } = useSite();
+  const { id } = useParams();
+  return (
+    <Section title="Newsroom">
+      <Newsroom siteId={siteId} storyId={id} />
+    </Section>
+  );
 }
 
 function Planned({ area }: { area: Area }) {

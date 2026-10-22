@@ -234,8 +234,8 @@ def test_the_bundled_schemas_are_seeded_once_from_byte_copies():
     for name in ("content_detail_schema.json", "news_article_schema.json", "parody_news_article_schema.json"):
         assert (DATA / name).read_bytes() == (PARODYNEWS_SCHEMAS / name).read_bytes()
     assert (DATA / "parody_prompt.md").read_bytes() == (PARODYNEWS_SCHEMAS / "parody_prompt.md").read_bytes()
-    keys = ("content-detail", "news-article", "parody-news-article")  # this layer's; ideas and research bundle theirs
-    bundled = OutputSchema.objects.filter(public_id__in=[stable_id("bundled-schema", k) for k in keys]).order_by("name")
+    ours = [stable_id("bundled-schema", key) for key in ("content-detail", "news-article", "parody-news-article")]
+    bundled = OutputSchema.objects.filter(bundled=True, public_id__in=ours).order_by("name")  # other apps bundle theirs
     assert [s.name for s in bundled] == ["Content detail", "News article", "Parody news article"]
     assert all(s.bundled and s.visibility == Visibility.SHARED and s.owner is None for s in bundled)
     parody = OutputSchema.objects.get(public_id=stable_id("bundled-schema", "parody-news-article"))
@@ -246,9 +246,9 @@ def test_the_bundled_schemas_are_seeded_once_from_byte_copies():
     assert writer.output_schema == parody and writer.instructions.startswith("**Role:**")
     parody.render_template = "edited by a person"
     parody.save()
-    counts = (OutputSchema.objects.count(), Assistant.objects.count())
+    counts = (OutputSchema.objects.filter(bundled=True).count(), Assistant.objects.count())
     again = import_bundled()
-    assert (OutputSchema.objects.count(), Assistant.objects.count()) == counts and len(again["assistants"]) == 1
+    assert (OutputSchema.objects.filter(bundled=True).count(), Assistant.objects.count()) == counts
     parody.refresh_from_db()
     assert parody.render_template == "edited by a person" and len(again["schemas"]) == 3
 

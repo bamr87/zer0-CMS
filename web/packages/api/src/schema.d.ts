@@ -1096,6 +1096,478 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/newsroom/authors/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The authors of the stories a person may see, and those no story carries yet
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
+        get: operations["newsroom_authors_list"];
+        put?: never;
+        /**
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
+        post: operations["newsroom_authors_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/authors/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * An author page: the author and their published stories
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
+        get: operations["newsroom_authors_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an author no story carries
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
+        delete: operations["newsroom_authors_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
+        patch: operations["newsroom_authors_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/newsroom/desks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The desks of the sites a person works on
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        get: operations["newsroom_desks_list"];
+        put?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        post: operations["newsroom_desks_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/desks/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        get: operations["newsroom_desks_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        delete: operations["newsroom_desks_destroy"];
+        options?: never;
+        head?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        patch: operations["newsroom_desks_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/newsroom/desks/{public_id}/people/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The people a desk's stories may be assigned to
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        get: operations["newsroom_desks_people_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/fronts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Home and section fronts
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        get: operations["newsroom_fronts_list"];
+        put?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        post: operations["newsroom_fronts_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/fronts/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        get: operations["newsroom_fronts_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        delete: operations["newsroom_fronts_destroy"];
+        options?: never;
+        head?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        patch: operations["newsroom_fronts_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/newsroom/fronts/{public_id}/stories/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The front as a reader sees it: each slot's story, pinned or filled by its rule
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        get: operations["newsroom_fronts_stories_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/issues/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        get: operations["newsroom_issues_list"];
+        put?: never;
+        /**
+         * Compose an issue from stories
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        post: operations["newsroom_issues_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/issues/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        get: operations["newsroom_issues_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        delete: operations["newsroom_issues_destroy"];
+        options?: never;
+        head?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        patch: operations["newsroom_issues_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/newsroom/issues/{public_id}/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The issue as it is sent: subject, text and HTML
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        get: operations["newsroom_issues_preview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/issues/{public_id}/send/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the issue to the confirmed subscribers, as a job
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        post: operations["newsroom_issues_send_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/newsletters/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Newsletters, with their subscriber counts
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        get: operations["newsroom_newsletters_list"];
+        put?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        post: operations["newsroom_newsletters_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/newsletters/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        get: operations["newsroom_newsletters_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        delete: operations["newsroom_newsletters_destroy"];
+        options?: never;
+        head?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        patch: operations["newsroom_newsletters_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/newsroom/newsletters/{public_id}/subscribe/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Subscribe an address: a confirmation link is emailed to it (the same answer either way) */
+        post: operations["newsroom_newsletters_subscribe_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/stories/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The story budget and the calendar: stories, filtered
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        get: operations["newsroom_stories_list"];
+        put?: never;
+        /**
+         * Pitch a story — by hand, or from a wire or feed item (`source`)
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        post: operations["newsroom_stories_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/stories/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        get: operations["newsroom_stories_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * Spike a pitch (only a pitch, by the desk's editors)
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        delete: operations["newsroom_stories_destroy"];
+        options?: never;
+        head?: never;
+        /** @description A site-scoped newsroom table: rows by public id, `visible_to` only. */
+        patch: operations["newsroom_stories_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/newsroom/stories/{public_id}/ai/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask the AI: a pitch from the wire item, a draft from the pitch, headlines, or a correction note
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        post: operations["newsroom_stories_ai_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/stories/{public_id}/apply-draft/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The AI draft becomes the story's page: a draft whose text arrives as suggestions
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        post: operations["newsroom_stories_apply_draft_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/stories/{public_id}/assign/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign (or reassign) a story; a pitch becomes assigned
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        post: operations["newsroom_stories_assign_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/stories/{public_id}/move/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move a story through the newsroom workflow (the budget board's drag)
+         * @description A site-scoped newsroom table: rows by public id, `visible_to` only.
+         */
+        post: operations["newsroom_stories_move_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/subscriptions/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm a subscription with the token from its emailed link (only while it waits to confirm) */
+        post: operations["newsroom_subscriptions_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/newsroom/subscriptions/unsubscribe/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unsubscribe with the token from an issue's link */
+        post: operations["newsroom_subscriptions_unsubscribe_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/research/citations/": {
         parameters: {
             query?: never;
@@ -1646,11 +2118,25 @@ export interface components {
             /** @description To accept on the draft. */
             suggestions: number[];
         };
+        AppliedDraft: {
+            story: components["schemas"]["StoryDetail"];
+            page_id: number;
+            suggestions: number[];
+        };
         ApplyBriefRequest: {
             /** @description Where the draft goes; else the brief's parent. */
             parent?: number;
             /** @description e.g. cms.ArticlePage; else the brief's. */
             page_type?: string;
+        };
+        AskAIRequest: {
+            kind: components["schemas"]["StoryAiKindEnum"];
+            /** @description For a correction: what changed. */
+            text?: string;
+        };
+        AssignRequest: {
+            assignee: number;
+            note?: string;
         };
         Assistant: {
             /** Format: uuid */
@@ -1732,6 +2218,54 @@ export interface components {
             output_schema?: string | null;
             /** @description Read-only registry tools it may use. */
             tools?: unknown;
+        };
+        Author: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            /** @description Made from the name when left empty. */
+            slug?: string;
+            bio?: string;
+            email?: string;
+            user?: number | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /** @description An author page: the author and their published stories, newest first. */
+        AuthorPage: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            /** @description Made from the name when left empty. */
+            slug?: string;
+            bio?: string;
+            email?: string;
+            user?: number | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly stories: components["schemas"]["AuthorStory"][];
+        };
+        AuthorRef: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+        };
+        AuthorStory: {
+            /** Format: uuid */
+            id: string;
+            headline: string;
+            url_path: string;
+            /** Format: date-time */
+            published_at: string | null;
+        };
+        AuthorWriteRequest: {
+            name: string;
+            /** @description Made from the name when left empty. */
+            slug?: string;
+            bio?: string;
+            email?: string;
+            user?: number | null;
         };
         Block: {
             /** @description Absent on a block that is new in this request. */
@@ -2076,6 +2610,58 @@ export interface components {
              */
             from_brief?: string;
         };
+        Correction: {
+            /** Format: uuid */
+            readonly id: string;
+            kind: components["schemas"]["CorrectionKindEnum"];
+            text: string;
+            /** Format: date-time */
+            created_at?: string;
+            readonly created_by: components["schemas"]["Person"] | null;
+        };
+        /**
+         * @description * `correction` - Correction
+         *     * `update` - Update
+         * @enum {string}
+         */
+        CorrectionKindEnum: "correction" | "update";
+        Desk: {
+            /** Format: uuid */
+            readonly id: string;
+            site: number;
+            name: string;
+            slug: string;
+            description?: string;
+            /** @description Its stories' pages go here. */
+            section: number;
+            readonly section_title: string;
+            readonly editors: components["schemas"]["Person"][];
+            readonly copy_editors: components["schemas"]["Person"][];
+            /** Format: uuid */
+            assistant?: string | null;
+            /** Format: uuid */
+            pipeline?: string | null;
+            /** @description Whether the requester edits this desk. */
+            readonly is_editor: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        DeskWriteRequest: {
+            site: number;
+            name: string;
+            slug: string;
+            description?: string;
+            /** @description Its stories' pages go here. */
+            section: number;
+            editor_ids?: number[];
+            copy_editor_ids?: number[];
+            /** Format: uuid */
+            assistant?: string | null;
+            /** Format: uuid */
+            pipeline?: string | null;
+        };
         Duplicate: {
             a: components["schemas"]["IdeaRef"];
             b: components["schemas"]["IdeaRef"];
@@ -2240,6 +2826,56 @@ export interface components {
             id: string;
             title: string;
         };
+        Front: {
+            /** Format: uuid */
+            readonly id: string;
+            site: number;
+            /**
+             * Format: uuid
+             * @description A section front's desk; none for the home front.
+             */
+            desk?: string | null;
+            name: string;
+            slug: string;
+            /** @description In order; replaced as a whole. */
+            slots?: components["schemas"]["FrontSlot"][];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description * `pinned` - Pinned
+         *     * `latest` - Latest
+         * @enum {string}
+         */
+        FrontRuleEnum: "pinned" | "latest";
+        FrontSlot: {
+            rule?: components["schemas"]["FrontRuleEnum"];
+            /** Format: uuid */
+            story?: string | null;
+            /** Format: uuid */
+            desk?: string | null;
+        };
+        FrontSlotRequest: {
+            rule?: components["schemas"]["FrontRuleEnum"];
+            /** Format: uuid */
+            story?: string | null;
+            /** Format: uuid */
+            desk?: string | null;
+        };
+        FrontWriteRequest: {
+            site: number;
+            /**
+             * Format: uuid
+             * @description A section front's desk; none for the home front.
+             */
+            desk?: string | null;
+            name: string;
+            slug: string;
+            /** @description In order; replaced as a whole. */
+            slots?: components["schemas"]["FrontSlotRequest"][];
+        };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
          *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
@@ -2327,6 +2963,45 @@ export interface components {
          * @enum {string}
          */
         IdeaStatusEnum: "new" | "exploring" | "planned" | "promoted" | "archived";
+        Issue: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            newsletter: string;
+            subject: string;
+            intro?: string;
+            readonly stories: components["schemas"]["StoryCard"][];
+            readonly status: components["schemas"]["IssueStatusEnum"];
+            readonly recipients: number;
+            /** Format: date-time */
+            readonly sent_at: string | null;
+            readonly error: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        IssuePreview: {
+            subject: string;
+            text: string;
+            html: string;
+        };
+        /**
+         * @description * `draft` - Draft
+         *     * `sending` - Sending
+         *     * `sent` - Sent
+         *     * `failed` - Failed
+         * @enum {string}
+         */
+        IssueStatusEnum: "draft" | "sending" | "sent" | "failed";
+        IssueWriteRequest: {
+            /** Format: uuid */
+            newsletter: string;
+            subject: string;
+            intro?: string;
+            /** @description Its stories, in order. */
+            story_ids?: string[];
+        };
         KeepRequest: {
             /**
              * Format: uuid
@@ -2417,6 +3092,56 @@ export interface components {
             readonly active: boolean;
             /** Format: date-time */
             readonly synced_at: string | null;
+        };
+        MoveRequest: {
+            /**
+             * @description Where the story goes.
+             *
+             *     * `pitch` - Pitch
+             *     * `assigned` - Assigned
+             *     * `drafting` - Drafting
+             *     * `editing` - Editing
+             *     * `copy` - Copy
+             *     * `scheduled` - Scheduled
+             *     * `published` - Published
+             *     * `updated` - Updated
+             *     * `corrected` - Corrected
+             */
+            status: components["schemas"]["StoryStatusEnum"];
+            /** @description To assigned: the person. */
+            assignee?: number;
+            /** @description To copy, or back to drafting. */
+            comment?: string;
+            /** @description Editing to published: why copy is skipped. */
+            reason?: string;
+            /**
+             * Format: date-time
+             * @description To scheduled: when.
+             */
+            go_live_at?: string | null;
+            /** @description To corrected or updated: the note. */
+            text?: string;
+        };
+        Newsletter: {
+            /** Format: uuid */
+            readonly id: string;
+            site: number;
+            name: string;
+            slug: string;
+            description?: string;
+            /** @description Empty: DEFAULT_FROM_EMAIL. */
+            from_email?: string;
+            readonly subscribers: components["schemas"]["SubscriberCounts"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        NewsletterWriteRequest: {
+            site: number;
+            name: string;
+            slug: string;
+            description?: string;
+            /** @description Empty: DEFAULT_FROM_EMAIL. */
+            from_email?: string;
         };
         /**
          * @description * `written` - written
@@ -2590,6 +3315,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Assistant"][];
         };
+        PaginatedAuthorList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Author"][];
+        };
         PaginatedBoardList: {
             /**
              * Format: uri
@@ -2659,6 +3399,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Conversation"][];
         };
+        PaginatedDeskList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Desk"][];
+        };
         PaginatedFactCheckList: {
             /**
              * Format: uri
@@ -2685,6 +3440,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Feed"][];
         };
+        PaginatedFrontList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Front"][];
+        };
         PaginatedIdeaList: {
             /**
              * Format: uri
@@ -2697,6 +3467,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Idea"][];
+        };
+        PaginatedIssueList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Issue"][];
         };
         PaginatedMessageList: {
             /**
@@ -2725,6 +3510,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["ModelEntry"][];
+        };
+        PaginatedNewsletterList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Newsletter"][];
         };
         PaginatedOutputSchemaList: {
             /** @example 123 */
@@ -2840,6 +3640,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["SourceList"][];
         };
+        PaginatedStoryList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Story"][];
+        };
         PaginatedSuggestionList: {
             /** @example 123 */
             count: number;
@@ -2875,6 +3690,14 @@ export interface components {
             output_schema?: string | null;
             /** @description Read-only registry tools it may use. */
             tools?: unknown;
+        };
+        PatchedAuthorRequest: {
+            name?: string;
+            /** @description Made from the name when left empty. */
+            slug?: string;
+            bio?: string;
+            email?: string;
+            user?: number | null;
         };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
@@ -2936,6 +3759,20 @@ export interface components {
              */
             from_brief?: string;
         };
+        PatchedDeskRequest: {
+            site?: number;
+            name?: string;
+            slug?: string;
+            description?: string;
+            /** @description Its stories' pages go here. */
+            section?: number;
+            editor_ids?: number[];
+            copy_editor_ids?: number[];
+            /** Format: uuid */
+            assistant?: string | null;
+            /** Format: uuid */
+            pipeline?: string | null;
+        };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
          *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
@@ -2952,6 +3789,18 @@ export interface components {
             active?: boolean;
             /** @description How often to look. */
             interval_minutes?: number;
+        };
+        PatchedFrontRequest: {
+            site?: number;
+            /**
+             * Format: uuid
+             * @description A section front's desk; none for the home front.
+             */
+            desk?: string | null;
+            name?: string;
+            slug?: string;
+            /** @description In order; replaced as a whole. */
+            slots?: components["schemas"]["FrontSlotRequest"][];
         };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
@@ -2971,9 +3820,25 @@ export interface components {
             url?: string;
             source_ids?: string[];
         };
+        PatchedIssueRequest: {
+            /** Format: uuid */
+            newsletter?: string;
+            subject?: string;
+            intro?: string;
+            /** @description Its stories, in order. */
+            story_ids?: string[];
+        };
         PatchedMessageRequest: {
             /** Format: uuid */
             assistant?: string | null;
+        };
+        PatchedNewsletterRequest: {
+            site?: number;
+            name?: string;
+            slug?: string;
+            description?: string;
+            /** @description Empty: DEFAULT_FROM_EMAIL. */
+            from_email?: string;
         };
         PatchedOutputSchemaRequest: {
             /** @description A site its owner edits. */
@@ -3050,6 +3915,43 @@ export interface components {
             /** @description The extracted text. */
             text?: string;
             summary?: string;
+        };
+        PatchedStoryRequest: {
+            /** Format: uuid */
+            desk?: string;
+            slug?: string;
+            headline?: string;
+            /** @description The pitch: the angle, and why it matters now. */
+            summary?: string;
+            priority?: components["schemas"]["StoryPriorityEnum"];
+            /**
+             * Format: date-time
+             * @description When the draft is due.
+             */
+            deadline?: string | null;
+            /**
+             * Format: date
+             * @description The day it is planned to run.
+             */
+            slot_date?: string | null;
+            /**
+             * Format: date-time
+             * @description It may not go live before this (go_live_at).
+             */
+            embargo?: string | null;
+            /** @description Pitch it from a wire or feed item. */
+            source?: components["schemas"]["WireItemRequest"];
+            /** @description Authors, in byline order. */
+            byline_ids?: string[];
+        };
+        Person: {
+            id: number;
+            username: string;
+            readonly name: string;
+        };
+        PersonRequest: {
+            id: number;
+            username: string;
         };
         Pipeline: {
             /** Format: uuid */
@@ -3262,6 +4164,11 @@ export interface components {
         };
         ResearchBriefRequest: {
             topic: string;
+        };
+        ResolvedSlot: {
+            position: number;
+            rule: components["schemas"]["FrontRuleEnum"];
+            story: components["schemas"]["StoryCard"] | null;
         };
         Revision: {
             id: number;
@@ -3584,6 +4491,228 @@ export interface components {
             latency_ms: number;
             tokens: number;
         };
+        Story: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            desk: string;
+            readonly desk_name: string;
+            slug?: string;
+            headline?: string;
+            /** @description The pitch: the angle, and why it matters now. */
+            summary?: string;
+            readonly status: components["schemas"]["StoryStatusEnum"];
+            priority?: components["schemas"]["StoryPriorityEnum"];
+            readonly assignee: components["schemas"]["Person"] | null;
+            /**
+             * Format: date-time
+             * @description When the draft is due.
+             */
+            deadline?: string | null;
+            /**
+             * Format: date
+             * @description The day it is planned to run.
+             */
+            slot_date?: string | null;
+            /**
+             * Format: date-time
+             * @description It may not go live before this (go_live_at).
+             */
+            embargo?: string | null;
+            readonly page: components["schemas"]["StoryPage"] | null;
+            /** Format: uuid */
+            readonly brief: string | null;
+            /** @description The item it was pitched from. */
+            readonly wire_item: unknown;
+            /** @description Published by the fast path, skipping copy. */
+            readonly breaking: boolean;
+            readonly fast_path_reason: string;
+            readonly bylines: components["schemas"]["AuthorRef"][];
+            /** @description The statuses it may move to next. */
+            readonly moves: components["schemas"]["StoryStatusEnum"][];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        StoryAIRun: {
+            kind: components["schemas"]["StoryAiKindEnum"];
+            run: components["schemas"]["RunRef"];
+            /** @description The structured answer, once the run has succeeded. */
+            result: unknown | null;
+            /** @description The answer as Markdown, once the run has succeeded. */
+            text: string;
+            error: string;
+        };
+        /**
+         * @description * `pitch` - pitch
+         *     * `draft` - draft
+         *     * `headlines` - headlines
+         *     * `correction` - correction
+         * @enum {string}
+         */
+        StoryAiKindEnum: "pitch" | "draft" | "headlines" | "correction";
+        StoryCard: {
+            /** Format: uuid */
+            id: string;
+            headline: string;
+            summary: string;
+            status: components["schemas"]["StoryStatusEnum"];
+            desk_name: string;
+            /** @description Null until it has a page. */
+            url_path: string | null;
+            /** Format: date-time */
+            published_at: string | null;
+        };
+        StoryDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            desk: string;
+            readonly desk_name: string;
+            slug?: string;
+            headline?: string;
+            /** @description The pitch: the angle, and why it matters now. */
+            summary?: string;
+            readonly status: components["schemas"]["StoryStatusEnum"];
+            priority?: components["schemas"]["StoryPriorityEnum"];
+            readonly assignee: components["schemas"]["Person"] | null;
+            /**
+             * Format: date-time
+             * @description When the draft is due.
+             */
+            deadline?: string | null;
+            /**
+             * Format: date
+             * @description The day it is planned to run.
+             */
+            slot_date?: string | null;
+            /**
+             * Format: date-time
+             * @description It may not go live before this (go_live_at).
+             */
+            embargo?: string | null;
+            readonly page: components["schemas"]["StoryPage"] | null;
+            /** Format: uuid */
+            readonly brief: string | null;
+            /** @description The item it was pitched from. */
+            readonly wire_item: unknown;
+            /** @description Published by the fast path, skipping copy. */
+            readonly breaking: boolean;
+            readonly fast_path_reason: string;
+            readonly bylines: components["schemas"]["AuthorRef"][];
+            /** @description The statuses it may move to next. */
+            readonly moves: components["schemas"]["StoryStatusEnum"][];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly events: components["schemas"]["StoryEvent"][];
+            readonly corrections: components["schemas"]["Correction"][];
+            /** @description The latest AI run of each kind and its answer. */
+            readonly ai_runs: components["schemas"]["StoryAIRun"][];
+            /** @description Whether the requester edits the story's desk: its priority, deadline, slot and embargo are theirs. */
+            readonly is_editor: boolean;
+        };
+        StoryEvent: {
+            /** Format: date-time */
+            created_at?: string;
+            readonly actor: components["schemas"]["Person"] | null;
+            action: string;
+            from_status?: string;
+            to_status?: string;
+            readonly assignee: components["schemas"]["Person"] | null;
+            note?: string;
+        };
+        StoryPage: {
+            id: number;
+            title: string;
+            live: boolean;
+            /** @description A draft saved since it last went live. */
+            has_unpublished_changes: boolean;
+            url_path: string;
+            /** Format: date-time */
+            first_published_at: string | null;
+        };
+        StoryPageRequest: {
+            id: number;
+            title: string;
+            live: boolean;
+            /** @description A draft saved since it last went live. */
+            has_unpublished_changes: boolean;
+            url_path: string;
+            /** Format: date-time */
+            first_published_at: string | null;
+        };
+        /**
+         * @description * `1` - Top
+         *     * `2` - High
+         *     * `3` - Normal
+         *     * `4` - Low
+         * @enum {integer}
+         */
+        StoryPriorityEnum: 1 | 2 | 3 | 4;
+        /**
+         * @description * `pitch` - Pitch
+         *     * `assigned` - Assigned
+         *     * `drafting` - Drafting
+         *     * `editing` - Editing
+         *     * `copy` - Copy
+         *     * `scheduled` - Scheduled
+         *     * `published` - Published
+         *     * `updated` - Updated
+         *     * `corrected` - Corrected
+         * @enum {string}
+         */
+        StoryStatusEnum: "pitch" | "assigned" | "drafting" | "editing" | "copy" | "scheduled" | "published" | "updated" | "corrected";
+        StoryWriteRequest: {
+            /** Format: uuid */
+            desk: string;
+            slug?: string;
+            headline?: string;
+            /** @description The pitch: the angle, and why it matters now. */
+            summary?: string;
+            priority?: components["schemas"]["StoryPriorityEnum"];
+            /**
+             * Format: date-time
+             * @description When the draft is due.
+             */
+            deadline?: string | null;
+            /**
+             * Format: date
+             * @description The day it is planned to run.
+             */
+            slot_date?: string | null;
+            /**
+             * Format: date-time
+             * @description It may not go live before this (go_live_at).
+             */
+            embargo?: string | null;
+            /** @description Pitch it from a wire or feed item. */
+            source?: components["schemas"]["WireItemRequest"];
+            /** @description Authors, in byline order. */
+            byline_ids?: string[];
+        };
+        SubscribeRequest: {
+            /** Format: email */
+            email: string;
+        };
+        SubscriberCounts: {
+            pending: number;
+            confirmed: number;
+            unsubscribed: number;
+        };
+        Subscription: {
+            status: components["schemas"]["SubscriptionStatusEnum"];
+            newsletter: string;
+        };
+        /**
+         * @description * `pending` - Pending
+         *     * `confirmed` - Confirmed
+         *     * `unsubscribed` - Unsubscribed
+         * @enum {string}
+         */
+        SubscriptionStatusEnum: "pending" | "confirmed" | "unsubscribed";
         Suggestion: {
             id: number;
             op: string;
@@ -3625,6 +4754,9 @@ export interface components {
          * @enum {string}
          */
         ToEnum: "brief" | "draft";
+        TokenRequest: {
+            token: string;
+        };
         Tool: {
             name: string;
             description: string;
@@ -3661,6 +4793,26 @@ export interface components {
          * @enum {string}
          */
         VisibilityEnum: "private" | "site" | "shared";
+        /** @description A wire story, a feed entry or a page to pitch from (`services.WireItem`). */
+        WireItem: {
+            /** Format: uri */
+            url: string;
+            title?: string;
+            summary?: string;
+            text?: string;
+            feed?: string;
+            published_at?: string;
+        };
+        /** @description A wire story, a feed entry or a page to pitch from (`services.WireItem`). */
+        WireItemRequest: {
+            /** Format: uri */
+            url: string;
+            title?: string;
+            summary?: string;
+            text?: string;
+            feed?: string;
+            published_at?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -8835,6 +9987,1558 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_authors_list: {
+        parameters: {
+            query?: {
+                name__icontains?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only this Wagtail site's rows. */
+                site?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAuthorList"];
+                };
+            };
+        };
+    };
+    newsroom_authors_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AuthorWriteRequest"];
+                "multipart/form-data": components["schemas"]["AuthorWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Author"];
+                };
+            };
+        };
+    };
+    newsroom_authors_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorPage"];
+                };
+            };
+        };
+    };
+    newsroom_authors_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    newsroom_authors_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAuthorRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAuthorRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAuthorRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Author"];
+                };
+            };
+        };
+    };
+    newsroom_desks_list: {
+        parameters: {
+            query?: {
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only this Wagtail site's rows. */
+                site?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDeskList"];
+                };
+            };
+        };
+    };
+    newsroom_desks_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeskWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DeskWriteRequest"];
+                "multipart/form-data": components["schemas"]["DeskWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Desk"];
+                };
+            };
+        };
+    };
+    newsroom_desks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Desk"];
+                };
+            };
+        };
+    };
+    newsroom_desks_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    newsroom_desks_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDeskRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedDeskRequest"];
+                "multipart/form-data": components["schemas"]["PatchedDeskRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Desk"];
+                };
+            };
+        };
+    };
+    newsroom_desks_people_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Person"][];
+                };
+            };
+        };
+    };
+    newsroom_fronts_list: {
+        parameters: {
+            query?: {
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only this Wagtail site's rows. */
+                site?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedFrontList"];
+                };
+            };
+        };
+    };
+    newsroom_fronts_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FrontWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FrontWriteRequest"];
+                "multipart/form-data": components["schemas"]["FrontWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Front"];
+                };
+            };
+        };
+    };
+    newsroom_fronts_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Front"];
+                };
+            };
+        };
+    };
+    newsroom_fronts_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    newsroom_fronts_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFrontRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFrontRequest"];
+                "multipart/form-data": components["schemas"]["PatchedFrontRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Front"];
+                };
+            };
+        };
+    };
+    newsroom_fronts_stories_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolvedSlot"][];
+                };
+            };
+        };
+    };
+    newsroom_issues_list: {
+        parameters: {
+            query?: {
+                newsletter?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /**
+                 * @description * `draft` - Draft
+                 *     * `sending` - Sending
+                 *     * `sent` - Sent
+                 *     * `failed` - Failed
+                 */
+                status?: "draft" | "failed" | "sending" | "sent";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedIssueList"];
+                };
+            };
+        };
+    };
+    newsroom_issues_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["IssueWriteRequest"];
+                "multipart/form-data": components["schemas"]["IssueWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    newsroom_issues_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    newsroom_issues_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    newsroom_issues_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedIssueRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedIssueRequest"];
+                "multipart/form-data": components["schemas"]["PatchedIssueRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+        };
+    };
+    newsroom_issues_preview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuePreview"];
+                };
+            };
+        };
+    };
+    newsroom_issues_send_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_newsletters_list: {
+        parameters: {
+            query?: {
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only this Wagtail site's rows. */
+                site?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedNewsletterList"];
+                };
+            };
+        };
+    };
+    newsroom_newsletters_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewsletterWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["NewsletterWriteRequest"];
+                "multipart/form-data": components["schemas"]["NewsletterWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Newsletter"];
+                };
+            };
+        };
+    };
+    newsroom_newsletters_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Newsletter"];
+                };
+            };
+        };
+    };
+    newsroom_newsletters_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    newsroom_newsletters_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedNewsletterRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedNewsletterRequest"];
+                "multipart/form-data": components["schemas"]["PatchedNewsletterRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Newsletter"];
+                };
+            };
+        };
+    };
+    newsroom_newsletters_subscribe_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscribeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SubscribeRequest"];
+                "multipart/form-data": components["schemas"]["SubscribeRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_stories_list: {
+        parameters: {
+            query?: {
+                /** @description A person's id, or `me`. */
+                assignee?: string;
+                breaking?: boolean;
+                deadline_after?: string;
+                deadline_before?: string;
+                desk?: string;
+                /** @description Stories of the desks the requester edits. */
+                my_desks?: boolean;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /**
+                 * @description * `1` - Top
+                 *     * `2` - High
+                 *     * `3` - Normal
+                 *     * `4` - Low
+                 */
+                priority?: 1 | 2 | 3 | 4;
+                q?: string;
+                /** @description Only this Wagtail site's rows. */
+                site?: number;
+                slot_after?: string;
+                slot_before?: string;
+                /**
+                 * @description One or more statuses.
+                 *
+                 *     * `pitch` - Pitch
+                 *     * `assigned` - Assigned
+                 *     * `drafting` - Drafting
+                 *     * `editing` - Editing
+                 *     * `copy` - Copy
+                 *     * `scheduled` - Scheduled
+                 *     * `published` - Published
+                 *     * `updated` - Updated
+                 *     * `corrected` - Corrected
+                 */
+                status?: ("assigned" | "copy" | "corrected" | "drafting" | "editing" | "pitch" | "published" | "scheduled" | "updated")[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedStoryList"];
+                };
+            };
+        };
+    };
+    newsroom_stories_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryWriteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["StoryWriteRequest"];
+                "multipart/form-data": components["schemas"]["StoryWriteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Story"];
+                };
+            };
+        };
+    };
+    newsroom_stories_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryDetail"];
+                };
+            };
+        };
+    };
+    newsroom_stories_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    newsroom_stories_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedStoryRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedStoryRequest"];
+                "multipart/form-data": components["schemas"]["PatchedStoryRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Story"];
+                };
+            };
+        };
+    };
+    newsroom_stories_ai_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskAIRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AskAIRequest"];
+                "multipart/form-data": components["schemas"]["AskAIRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_stories_apply_draft_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppliedDraft"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_stories_assign_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AssignRequest"];
+                "multipart/form-data": components["schemas"]["AssignRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_stories_move_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["MoveRequest"];
+                "multipart/form-data": components["schemas"]["MoveRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoryDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_subscriptions_confirm_create: {
+        parameters: {
+            query?: {
+                /** @description The token from the emailed link. */
+                token?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TokenRequest"];
+                "multipart/form-data": components["schemas"]["TokenRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    newsroom_subscriptions_unsubscribe_create: {
+        parameters: {
+            query?: {
+                /** @description The token from the emailed link. */
+                token?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TokenRequest"];
+                "multipart/form-data": components["schemas"]["TokenRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
                 };
             };
             401: {

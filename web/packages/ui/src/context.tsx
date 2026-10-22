@@ -24,7 +24,9 @@ export type Destination =
   | { to: 'conversation'; id: string }
   | { to: 'ideas' }
   | { to: 'research' }
-  | { to: 'source'; id: string };
+  | { to: 'source'; id: string }
+  | { to: 'newsroom' }
+  | { to: 'story'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

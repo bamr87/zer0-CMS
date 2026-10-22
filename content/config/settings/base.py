@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "ai",
     "research",
     "ideas",
+    "newsroom",
     "suggestions",
     "graph",
     "workflow",
@@ -81,6 +82,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "graphene_django",
     "grapple",
+    # Email through an ESP (newsroom/README.md).
+    "anymail",
     # Django.
     "django.contrib.admin",
     "django.contrib.auth",
@@ -175,6 +178,25 @@ WAGTAILIMAGES_IMAGE_MODEL = "cms.ContentImage"
 WAGTAILSEARCH_BACKENDS = {"default": {"BACKEND": "wagtail.search.backends.database"}}
 WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "txt", "xlsx", "zip"]
 WAGTAIL_I18N_ENABLED = False
+# Approving a workflow's last task publishes the page, except in the newsroom's
+# workflow, where the newsroom publishes or schedules it (newsroom/workflow.py).
+WAGTAIL_FINISH_WORKFLOW_ACTION = "newsroom.workflow.finish_workflow"
+# Wagtail mails a workflow's submissions to every superuser unless told not to;
+# people follow review in the studio, and the newsroom's stages send none of
+# Wagtail's workflow email at all (newsroom/workflow.py).
+WAGTAILADMIN_NOTIFICATION_INCLUDE_SUPERUSERS = False
+
+# ── Email (newsroom/README.md) ──────────────────────────────────────────────
+# Django's mail API to EMAIL_BACKEND: a django-anymail ESP backend in production
+# (e.g. anymail.backends.amazon_ses.EmailBackend), configured by ANYMAIL_*
+# variables (ANYMAIL_MAILGUN_API_KEY → ANYMAIL["MAILGUN_API_KEY"]). Unset, it is
+# Django's own SMTP backend, which fails loudly when there is no server — never
+# the console, which would print every address and signed link into the logs
+# and mark an issue sent that nobody received. Development sets the console
+# (development.py); tests use Django's locmem backend.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="zer0-CMS <noreply@localhost>")
+ANYMAIL = {key.removeprefix("ANYMAIL_"): value for key, value in env.ENVIRON.items() if key.startswith("ANYMAIL_")}
 
 # ── GraphQL (Grapple) ───────────────────────────────────────────────────────
 GRAPHENE = {"SCHEMA": "grapple.schema.schema"}
@@ -226,8 +248,9 @@ SPECTACULAR_SETTINGS = {
     "SERVE_URLCONF": "ops.openapi",
     "SERVE_INCLUDE_SCHEMA": False,
     # A request body is its own component (`…Request`), without the read-only
-    # fields a response carries, so the generated client asks only for what a
-    # caller sends (G14: the studio's first create forms on owned rows).
+    # fields a response carries, so the generated client (openapi-typescript)
+    # asks only for what a caller sends — never an id or a timestamp the
+    # platform assigns (G8's and G14's create forms on owned rows).
     "COMPONENT_SPLIT_REQUEST": True,
     # Named enums, so the generated client's types read well (api/serializers.py).
     "ENUM_NAME_OVERRIDES": {
@@ -244,11 +267,15 @@ SPECTACULAR_SETTINGS = {
         "CapturedKindEnum": "research.serializers.CAPTURED",
         "OutcomeEnum": "research.serializers.OUTCOMES",
         "VerdictEnum": "research.serializers.VERDICTS",
+        "StoryStatusEnum": "newsroom.models.Story.Status",
+        "StoryPriorityEnum": "newsroom.models.Story.Priority",
+        "StoryAiKindEnum": "newsroom.services.AI_KINDS",
+        "CorrectionKindEnum": "newsroom.models.Correction.Kind",
+        "FrontRuleEnum": "newsroom.models.FrontSlot.Rule",
+        "IssueStatusEnum": "newsroom.models.Issue.Status",
+        "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
-    # A request body is its own component (`…Request`), without the read-only fields a response carries, so the
-    # generated client (openapi-typescript) does not ask a request for an id or a timestamp the platform assigns.
-    "COMPONENT_SPLIT_REQUEST": True,
 }
 API_DOCS_ENABLED = env.bool("API_DOCS_ENABLED", default=True)
 

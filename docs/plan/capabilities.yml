@@ -192,22 +192,54 @@ platform:
   # ── The newsroom (TARGET.md § The newsroom) ─────────────────────────────────
   - id: news.desk
     what: Desks and sections, the story budget, the editorial calendar, assignments and deadlines.
-    surfaces: {api: missing, studio: missing}
+    # G15: desks (site, section, editors, copy editors, writer), the budget and the calendar as the story list's
+    # filters, assignments with their history; the studio's board, calendar and assignments. Setting a desk up is
+    # the API's (a Django permission) and the seed's until the Admin area (G3): the studio picks a desk, it does
+    # not make one.
+    surfaces: {api: done, studio: partial}
+    proof: {api: content/tests/newsroom/test_api.py::test_a_pitch_from_a_wire_item_and_the_budget_and_calendar_as_filters}
   - id: news.workflow
     what: The newsroom workflow (pitch → assigned → drafting → editing → copy → scheduled → published → updated or corrected), embargoes, a breaking-news fast path.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    # G15: editing and copy are Wagtail's workflow (newsroom.StageTask); publishing only through cms.services,
+    # and every other publish path (Write, the Wagtail admin, an agent's tool, the scheduled publish) refused for a
+    # story still being made or under embargo; the board's drag and menu (a confirmation before anything goes live),
+    # the panel's moves. The extension's move-a-stage comes with G10.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/newsroom/test_workflow.py
+      studio: web/packages/ui/test/newsroom.test.tsx
   - id: news.fronts
     what: Home and section fronts — featured, pinned and related stories, curated by hand or by rule.
-    surfaces: {api: missing, studio: missing, site: missing}
+    # G15: ordered slots, pinned or filled by "the latest of a desk" (content/tests/newsroom/test_fronts_and_newsletters.py,
+    # web/packages/ui/test/newsroom.test.tsx); "related" and "most read" rules are to come (the graph's related
+    # query, analytics in G12), and the renderer shows fronts in P6.
+    surfaces: {api: partial, studio: partial, site: missing}
   - id: news.corrections
     what: A corrections and updates log on a published story, shown on the story.
-    surfaces: {api: missing, studio: missing, extension: missing, site: missing}
+    # G15: a note on the page's log that publishes nothing else (content/tests/newsroom/test_workflow.py). Site
+    # partial — the page API carries `corrections` and export_jekyll writes them into the front matter
+    # (content/tests/newsroom/test_export.py); showing them is the renderer's (P6) or the Jekyll-theme option's (P2).
+    # The extension's add-a-correction comes with G10.
+    surfaces: {api: done, studio: done, extension: missing, site: partial}
+    proof:
+      api: content/tests/newsroom/test_api.py::test_bylines_and_corrections_are_in_the_page_api
+      studio: web/packages/ui/test/newsroom.test.tsx
   - id: news.newsletters
     what: Newsletters assembled from stories and sent by email, with subscribers.
-    surfaces: {api: missing, studio: missing}
+    # G15: double opt-in subscriptions (emailed links open a page that changes nothing on GET), issues from published
+    # stories, the preview as sent, a send job through django-anymail (locmem in tests) that mails each subscriber
+    # once and resumes a failed or stalled send for the rest.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/newsroom/test_fronts_and_newsletters.py
+      studio: web/packages/ui/test/newsroom.test.tsx
   - id: news.bylines
     what: Bylines, author pages and contributor profiles.
-    surfaces: {api: missing, studio: missing, site: missing}
+    # G15: site partial — `bylines` in the page API and `authors` in the export (content/tests/newsroom/test_export.py).
+    surfaces: {api: done, studio: done, site: partial}
+    proof:
+      api: content/tests/newsroom/test_api.py::test_an_author_page_lists_the_authors_published_stories
+      studio: web/packages/ui/test/newsroom.test.tsx
 
   # ── Pipelines and workflows (TARGET.md § Pipelines and workflows) ───────────
   - id: workflows.automations
@@ -488,7 +520,7 @@ sources:
       - {id: parodynews.assistants, what: "Create and edit assistants — instructions, prompt, model, temperature, top_p, JSON schema — with import/export.", target: ai.assistants, status: done, proof: web/packages/ui/test/ai/assistants.test.tsx, note: "API: content/tests/ai/test_api.py::test_an_assistant_exports_as_a_document_and_imports_as_a_new_private_one; studio: AI → Assistants — create, edit, export, import (G8)"}
       - {id: parodynews.assistant-groups, what: "Ordered groups of assistants that run in sequence, each seeing the earlier output.", target: ai.pipelines, status: done, proof: web/packages/ui/test/ai/pipelines.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_pipeline_is_a_parent_run_with_a_child_run_per_step_each_fed_the_last; studio: AI → Pipelines, built by dragging and run (G8)"}
       - {id: parodynews.schema-library, what: "Create, edit, export and import JSON schemas; one-click import of the bundled parody-article, news-article and content-detail schemas and the parody prompt.", target: ai.schemas, status: done, proof: web/packages/ui/test/ai/schemas.test.tsx, note: "API: content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled; studio: AI → Output schemas — edit, export, import, and staff add the bundled schemas with the parody writer (G8)"}
-      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/briefs.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata; studio: Create → Briefs, generated and reviewed (G8); verify/scenarios/studio-ai-brief.yml"}
+      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/briefs.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata; studio: Create → Briefs, generated and reviewed (G8); verify/scenarios/studio-ai-brief.yml; also from the Newsroom's AI draft with a desk's writer (G15, content/tests/newsroom/test_ai_and_seed.py)"}
       - {id: parodynews.extract-metadata, what: "A second call fills title, author, description, slug, keywords and tags.", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/briefs.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata; studio: the brief review shows the metadata the second call extracted (G8)"}
       - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_from_a_pipeline_and_a_brief_from_text; studio: a message promoted to a draft, and a brief written as 'Use my text as it is' (G8)"}
       - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_message_queues_a_reply_and_the_whole_conversation_is_replayed; studio: AI or Create → Conversations, started by hand or from a brief ('Talk it over'), each reply followed live (G8); verify/scenarios/studio-ai-chat.yml"}
@@ -513,14 +545,14 @@ sources:
       - {id: parodynews.error-issues, what: "Unhandled exceptions filed as deduplicated, rate-limited, redacted GitHub issues (off by default; refuses public repositories unless allowed).", target: platform.observability, status: partial}
       - {id: parodynews.report-issue, what: "A navigation link to the repository's GitHub issue templates.", target: platform.feedback, status: missing}
       - {id: parodynews.powered-by, what: "Admin-managed powered-by links in the footer.", target: content.navigation, status: missing}
-      - {id: parodynews.email, what: "Email through AWS SES in production, the console in development, optional DKIM signing.", target: platform.notifications, status: missing}
+      - {id: parodynews.email, what: "Email through AWS SES in production, the console in development, optional DKIM signing.", target: platform.notifications, status: partial, note: "G15: EMAIL_BACKEND through django-anymail (its Amazon SES backend among others, configured by ANYMAIL_* variables), Django's SMTP backend when unset and the console in development (content/config/settings/), used by the newsroom's newsletters (content/tests/newsroom/test_fronts_and_newsletters.py, locmem); DKIM is the ESP's, and email to people about their work is platform.notifications'"}
       - {id: parodynews.secrets, what: "Production settings read from AWS Secrets Manager.", target: platform.deploy, status: missing}
       - {id: parodynews.telemetry, what: "Azure Monitor OpenTelemetry, rotating file logs, mail to admins on errors.", target: platform.observability, status: partial}
       - {id: parodynews.docs-site, what: "User, developer and API docs built with Sphinx and served from a container.", target: platform.docs, status: partial}
       - {id: parodynews.posthog, what: "An optional self-hosted PostHog stack (not wired into the app).", target: sites.analytics, status: missing}
       - {id: parodynews.field-defaults, what: "Stored default field values per model.", target: content.types, status: missing}
       - {id: parodynews.cloud-deploy, what: "Azure deployment (azd, Bicep: Container Apps, Postgres, Key Vault, registry, monitoring).", target: platform.deploy, status: missing}
-      - {id: parodynews.newsroom, what: "Run a news site — posts move draft → review → published → archived, generated by assistant pipelines and published to the site.", target: news.workflow, status: partial}
+      - {id: parodynews.newsroom, what: "Run a news site — posts move draft → review → published → archived, generated by assistant pipelines and published to the site.", target: news.workflow, status: partial, note: "G15: generate → review → publish runs as the Parody desk (manage.py seed_parody_desk; its writer barodybroject's parody writer and schema; a story's AI draft → editing → copy → published, from the studio's Newsroom — content/tests/newsroom/test_ai_and_seed.py::test_parodynews_runs_as_a_newsroom_with_a_parody_desk). Open: 'archived' has no newsroom status (the page is taken down in Write, and its story still reads published), and the sidecar site is P2's"}
       - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: partial, note: "The studio (web/, web/studio/test/ai.test.tsx): Home with the providers' status, Create and AI → Conversations (threads and their messages), AI → Assistants, Pipelines (groups), Output schemas, Providers and Models (settings), light and dark from the platform's tokens (P4, G8). Open, with their own rows: the posts screens — a post's Markdown with its rendered preview, its versions, publishing as a pull request (parodynews.post-editing, render-preview, post-versions, publish-pr) — and the cross-thread messages list (parodynews.messages)"}
 
   - id: rails-app

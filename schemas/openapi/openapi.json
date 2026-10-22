@@ -8615,6 +8615,2822 @@
                 }
             }
         },
+        "/api/v2/newsroom/authors/": {
+            "get": {
+                "operationId": "newsroom_authors_list",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
+                "summary": "The authors of the stories a person may see, and those no story carries yet",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "name__icontains",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "site",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Only this Wagtail site's rows."
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedAuthorList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "newsroom_authors_create",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthorWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthorWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthorWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Author"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/authors/{public_id}/": {
+            "get": {
+                "operationId": "newsroom_authors_retrieve",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
+                "summary": "An author page: the author and their published stories",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthorPage"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "newsroom_authors_partial_update",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAuthorRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAuthorRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedAuthorRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Author"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "newsroom_authors_destroy",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
+                "summary": "Delete an author no story carries",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/desks/": {
+            "get": {
+                "operationId": "newsroom_desks_list",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "The desks of the sites a person works on",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "site",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Only this Wagtail site's rows."
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedDeskList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "newsroom_desks_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeskWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeskWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeskWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Desk"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/desks/{public_id}/": {
+            "get": {
+                "operationId": "newsroom_desks_retrieve",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Desk"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "newsroom_desks_partial_update",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedDeskRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedDeskRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedDeskRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Desk"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "newsroom_desks_destroy",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/desks/{public_id}/people/": {
+            "get": {
+                "operationId": "newsroom_desks_people_list",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "The people a desk's stories may be assigned to",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Person"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/fronts/": {
+            "get": {
+                "operationId": "newsroom_fronts_list",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Home and section fronts",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "site",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Only this Wagtail site's rows."
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedFrontList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "newsroom_fronts_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FrontWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FrontWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FrontWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Front"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/fronts/{public_id}/": {
+            "get": {
+                "operationId": "newsroom_fronts_retrieve",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Front"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "newsroom_fronts_partial_update",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFrontRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFrontRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFrontRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Front"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "newsroom_fronts_destroy",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/fronts/{public_id}/stories/": {
+            "get": {
+                "operationId": "newsroom_fronts_stories_list",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "The front as a reader sees it: each slot's story, pinned or filled by its rule",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ResolvedSlot"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/issues/": {
+            "get": {
+                "operationId": "newsroom_issues_list",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "newsletter",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "failed",
+                                "sending",
+                                "sent"
+                            ]
+                        },
+                        "description": "* `draft` - Draft\n* `sending` - Sending\n* `sent` - Sent\n* `failed` - Failed"
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedIssueList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "newsroom_issues_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Compose an issue from stories",
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IssueWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IssueWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IssueWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Issue"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/issues/{public_id}/": {
+            "get": {
+                "operationId": "newsroom_issues_retrieve",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Issue"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "newsroom_issues_partial_update",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedIssueRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedIssueRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedIssueRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Issue"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "newsroom_issues_destroy",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/issues/{public_id}/preview/": {
+            "get": {
+                "operationId": "newsroom_issues_preview_retrieve",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "The issue as it is sent: subject, text and HTML",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IssuePreview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/issues/{public_id}/send/": {
+            "post": {
+                "operationId": "newsroom_issues_send_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Send the issue to the confirmed subscribers, as a job",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    },
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Issue"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/newsletters/": {
+            "get": {
+                "operationId": "newsroom_newsletters_list",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Newsletters, with their subscriber counts",
+                "parameters": [
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "site",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Only this Wagtail site's rows."
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedNewsletterList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "newsroom_newsletters_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewsletterWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewsletterWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NewsletterWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Newsletter"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/newsletters/{public_id}/": {
+            "get": {
+                "operationId": "newsroom_newsletters_retrieve",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Newsletter"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "newsroom_newsletters_partial_update",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedNewsletterRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedNewsletterRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedNewsletterRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Newsletter"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "newsroom_newsletters_destroy",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/newsletters/{public_id}/subscribe/": {
+            "post": {
+                "operationId": "newsroom_newsletters_subscribe_create",
+                "summary": "Subscribe an address: a confirmation link is emailed to it (the same answer either way)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubscribeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubscribeRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubscribeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/stories/": {
+            "get": {
+                "operationId": "newsroom_stories_list",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "The story budget and the calendar: stories, filtered",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "assignee",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "A person's id, or `me`."
+                    },
+                    {
+                        "in": "query",
+                        "name": "breaking",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "deadline_after",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "deadline_before",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "desk",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "my_desks",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Stories of the desks the requester edits."
+                    },
+                    {
+                        "name": "ordering",
+                        "required": false,
+                        "in": "query",
+                        "description": "Which field to use when ordering the results.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "priority",
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                1,
+                                2,
+                                3,
+                                4
+                            ]
+                        },
+                        "description": "* `1` - Top\n* `2` - High\n* `3` - Normal\n* `4` - Low"
+                    },
+                    {
+                        "in": "query",
+                        "name": "q",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "site",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Only this Wagtail site's rows."
+                    },
+                    {
+                        "in": "query",
+                        "name": "slot_after",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "slot_before",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "assigned",
+                                    "copy",
+                                    "corrected",
+                                    "drafting",
+                                    "editing",
+                                    "pitch",
+                                    "published",
+                                    "scheduled",
+                                    "updated"
+                                ]
+                            }
+                        },
+                        "description": "One or more statuses.\n\n* `pitch` - Pitch\n* `assigned` - Assigned\n* `drafting` - Drafting\n* `editing` - Editing\n* `copy` - Copy\n* `scheduled` - Scheduled\n* `published` - Published\n* `updated` - Updated\n* `corrected` - Corrected",
+                        "explode": true,
+                        "style": "form"
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedStoryList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "newsroom_stories_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Pitch a story — by hand, or from a wire or feed item (`source`)",
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoryWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoryWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoryWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Story"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/stories/{public_id}/": {
+            "get": {
+                "operationId": "newsroom_stories_retrieve",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoryDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "newsroom_stories_partial_update",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedStoryRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedStoryRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedStoryRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Story"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "newsroom_stories_destroy",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Spike a pitch (only a pitch, by the desk's editors)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/stories/{public_id}/ai/": {
+            "post": {
+                "operationId": "newsroom_stories_ai_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Ask the AI: a pitch from the wire item, a draft from the pitch, headlines, or a correction note",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    },
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AskAIRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AskAIRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AskAIRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RunAccepted"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/stories/{public_id}/apply-draft/": {
+            "post": {
+                "operationId": "newsroom_stories_apply_draft_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "The AI draft becomes the story's page: a draft whose text arrives as suggestions",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AppliedDraft"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/stories/{public_id}/assign/": {
+            "post": {
+                "operationId": "newsroom_stories_assign_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Assign (or reassign) a story; a pitch becomes assigned",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssignRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssignRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssignRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoryDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/stories/{public_id}/move/": {
+            "post": {
+                "operationId": "newsroom_stories_move_create",
+                "description": "A site-scoped newsroom table: rows by public id, `visible_to` only.",
+                "summary": "Move a story through the newsroom workflow (the budget board's drag)",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MoveRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MoveRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MoveRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoryDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/subscriptions/confirm/": {
+            "post": {
+                "operationId": "newsroom_subscriptions_confirm_create",
+                "summary": "Confirm a subscription with the token from its emailed link (only while it waits to confirm)",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "token",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The token from the emailed link."
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/newsroom/subscriptions/unsubscribe/": {
+            "post": {
+                "operationId": "newsroom_subscriptions_unsubscribe_create",
+                "summary": "Unsubscribe with the token from an issue's link",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "token",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The token from the emailed link."
+                    }
+                ],
+                "tags": [
+                    "newsroom"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/research/citations/": {
             "get": {
                 "operationId": "research_citations_list",
@@ -12385,6 +15201,28 @@
                     "suggestions"
                 ]
             },
+            "AppliedDraft": {
+                "type": "object",
+                "properties": {
+                    "story": {
+                        "$ref": "#/components/schemas/StoryDetail"
+                    },
+                    "page_id": {
+                        "type": "integer"
+                    },
+                    "suggestions": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "required": [
+                    "page_id",
+                    "story",
+                    "suggestions"
+                ]
+            },
             "ApplyBriefRequest": {
                 "type": "object",
                 "properties": {
@@ -12398,6 +15236,35 @@
                         "description": "e.g. cms.ArticlePage; else the brief's."
                     }
                 }
+            },
+            "AskAIRequest": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/StoryAiKindEnum"
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "For a correction: what changed."
+                    }
+                },
+                "required": [
+                    "kind"
+                ]
+            },
+            "AssignRequest": {
+                "type": "object",
+                "properties": {
+                    "assignee": {
+                        "type": "integer"
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "assignee"
+                ]
             },
             "Assistant": {
                 "type": "object",
@@ -12663,6 +15530,232 @@
                     },
                     "tools": {
                         "description": "Read-only registry tools it may use."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "Author": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "description": "Made from the name when left empty.",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 120,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "bio": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "user": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "name"
+                ]
+            },
+            "AuthorPage": {
+                "type": "object",
+                "description": "An author page: the author and their published stories, newest first.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "description": "Made from the name when left empty.",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 120,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "bio": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "user": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "stories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AuthorStory"
+                        },
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "name",
+                    "stories"
+                ]
+            },
+            "AuthorRef": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "slug"
+                ]
+            },
+            "AuthorStory": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "headline": {
+                        "type": "string"
+                    },
+                    "url_path": {
+                        "type": "string"
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "headline",
+                    "id",
+                    "published_at",
+                    "url_path"
+                ]
+            },
+            "AuthorWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "description": "Made from the name when left empty.",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 120,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "bio": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "user": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -13739,6 +16832,202 @@
                     }
                 }
             },
+            "Correction": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/CorrectionKindEnum"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "created_by": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Person"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_by",
+                    "id",
+                    "kind",
+                    "text"
+                ]
+            },
+            "CorrectionKindEnum": {
+                "enum": [
+                    "correction",
+                    "update"
+                ],
+                "type": "string",
+                "description": "* `correction` - Correction\n* `update` - Update"
+            },
+            "Desk": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "site": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "section": {
+                        "type": "integer",
+                        "description": "Its stories' pages go here."
+                    },
+                    "section_title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "editors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Person"
+                        },
+                        "readOnly": true
+                    },
+                    "copy_editors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Person"
+                        },
+                        "readOnly": true
+                    },
+                    "assistant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "pipeline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "is_editor": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Whether the requester edits this desk."
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "copy_editors",
+                    "created_at",
+                    "editors",
+                    "id",
+                    "is_editor",
+                    "name",
+                    "section",
+                    "section_title",
+                    "site",
+                    "slug",
+                    "updated_at"
+                ]
+            },
+            "DeskWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "section": {
+                        "type": "integer",
+                        "description": "Its stories' pages go here."
+                    },
+                    "editor_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "writeOnly": true
+                        },
+                        "writeOnly": true
+                    },
+                    "copy_editor_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "writeOnly": true
+                        },
+                        "writeOnly": true
+                    },
+                    "assistant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "pipeline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "name",
+                    "section",
+                    "site",
+                    "slug"
+                ]
+            },
             "Duplicate": {
                 "type": "object",
                 "properties": {
@@ -14277,6 +17566,152 @@
                     "title"
                 ]
             },
+            "Front": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "site": {
+                        "type": "integer"
+                    },
+                    "desk": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid",
+                        "description": "A section front's desk; none for the home front."
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "slots": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FrontSlot"
+                        },
+                        "description": "In order; replaced as a whole."
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "name",
+                    "site",
+                    "slug",
+                    "updated_at"
+                ]
+            },
+            "FrontRuleEnum": {
+                "enum": [
+                    "pinned",
+                    "latest"
+                ],
+                "type": "string",
+                "description": "* `pinned` - Pinned\n* `latest` - Latest"
+            },
+            "FrontSlot": {
+                "type": "object",
+                "properties": {
+                    "rule": {
+                        "$ref": "#/components/schemas/FrontRuleEnum"
+                    },
+                    "story": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "desk": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    }
+                }
+            },
+            "FrontSlotRequest": {
+                "type": "object",
+                "properties": {
+                    "rule": {
+                        "$ref": "#/components/schemas/FrontRuleEnum"
+                    },
+                    "story": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "desk": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    }
+                }
+            },
+            "FrontWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": "integer"
+                    },
+                    "desk": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid",
+                        "description": "A section front's desk; none for the home front."
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "slots": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FrontSlotRequest"
+                        },
+                        "description": "In order; replaced as a whole."
+                    }
+                },
+                "required": [
+                    "name",
+                    "site",
+                    "slug"
+                ]
+            },
             "Idea": {
                 "type": "object",
                 "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
@@ -14586,6 +18021,139 @@
                 ],
                 "type": "string",
                 "description": "* `new` - new\n* `exploring` - exploring\n* `planned` - planned\n* `promoted` - promoted\n* `archived` - archived"
+            },
+            "Issue": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "newsletter": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "intro": {
+                        "type": "string"
+                    },
+                    "stories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StoryCard"
+                        },
+                        "readOnly": true
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/IssueStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "recipients": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "error": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "error",
+                    "id",
+                    "newsletter",
+                    "recipients",
+                    "sent_at",
+                    "status",
+                    "stories",
+                    "subject",
+                    "updated_at"
+                ]
+            },
+            "IssuePreview": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "html": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "html",
+                    "subject",
+                    "text"
+                ]
+            },
+            "IssueStatusEnum": {
+                "enum": [
+                    "draft",
+                    "sending",
+                    "sent",
+                    "failed"
+                ],
+                "type": "string",
+                "description": "* `draft` - Draft\n* `sending` - Sending\n* `sent` - Sent\n* `failed` - Failed"
+            },
+            "IssueWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "newsletter": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                    },
+                    "intro": {
+                        "type": "string"
+                    },
+                    "story_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "writeOnly": true,
+                        "description": "Its stories, in order."
+                    }
+                },
+                "required": [
+                    "newsletter",
+                    "subject"
+                ]
             },
             "KeepRequest": {
                 "type": "object",
@@ -14928,6 +18496,129 @@
                     "output_usd_per_mtok",
                     "provider",
                     "synced_at"
+                ]
+            },
+            "MoveRequest": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StoryStatusEnum"
+                            }
+                        ],
+                        "description": "Where the story goes.\n\n* `pitch` - Pitch\n* `assigned` - Assigned\n* `drafting` - Drafting\n* `editing` - Editing\n* `copy` - Copy\n* `scheduled` - Scheduled\n* `published` - Published\n* `updated` - Updated\n* `corrected` - Corrected"
+                    },
+                    "assignee": {
+                        "type": "integer",
+                        "description": "To assigned: the person."
+                    },
+                    "comment": {
+                        "type": "string",
+                        "description": "To copy, or back to drafting."
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Editing to published: why copy is skipped."
+                    },
+                    "go_live_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "To scheduled: when."
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "To corrected or updated: the note."
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "Newsletter": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "site": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "from_email": {
+                        "type": "string",
+                        "description": "Empty: DEFAULT_FROM_EMAIL.",
+                        "maxLength": 254
+                    },
+                    "subscribers": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/SubscriberCounts"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "id",
+                    "name",
+                    "site",
+                    "slug",
+                    "subscribers"
+                ]
+            },
+            "NewsletterWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "from_email": {
+                        "type": "string",
+                        "description": "Empty: DEFAULT_FROM_EMAIL.",
+                        "maxLength": 254
+                    }
+                },
+                "required": [
+                    "name",
+                    "site",
+                    "slug"
                 ]
             },
             "OriginEnum": {
@@ -15494,6 +19185,37 @@
                     }
                 }
             },
+            "PaginatedAuthorList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Author"
+                        }
+                    }
+                }
+            },
             "PaginatedBoardList": {
                 "type": "object",
                 "required": [
@@ -15634,6 +19356,37 @@
                     }
                 }
             },
+            "PaginatedDeskList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Desk"
+                        }
+                    }
+                }
+            },
             "PaginatedFactCheckList": {
                 "type": "object",
                 "required": [
@@ -15686,6 +19439,37 @@
                     }
                 }
             },
+            "PaginatedFrontList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Front"
+                        }
+                    }
+                }
+            },
             "PaginatedIdeaList": {
                 "type": "object",
                 "required": [
@@ -15708,6 +19492,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Idea"
+                        }
+                    }
+                }
+            },
+            "PaginatedIssueList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Issue"
                         }
                     }
                 }
@@ -15765,6 +19580,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/ModelEntry"
+                        }
+                    }
+                }
+            },
+            "PaginatedNewsletterList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Newsletter"
                         }
                     }
                 }
@@ -16002,6 +19848,37 @@
                     }
                 }
             },
+            "PaginatedStoryList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Story"
+                        }
+                    }
+                }
+            },
             "PaginatedSuggestionList": {
                 "type": "object",
                 "required": [
@@ -16089,6 +19966,52 @@
                     },
                     "tools": {
                         "description": "Read-only registry tools it may use."
+                    }
+                }
+            },
+            "PatchedAuthorRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "description": "Made from the name when left empty.",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 120,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "bio": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "user": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     }
                 }
             },
@@ -16257,6 +20180,62 @@
                     }
                 }
             },
+            "PatchedDeskRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "section": {
+                        "type": "integer",
+                        "description": "Its stories' pages go here."
+                    },
+                    "editor_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "writeOnly": true
+                        },
+                        "writeOnly": true
+                    },
+                    "copy_editor_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "writeOnly": true
+                        },
+                        "writeOnly": true
+                    },
+                    "assistant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "pipeline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    }
+                }
+            },
             "PatchedFeedRequest": {
                 "type": "object",
                 "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
@@ -16296,6 +20275,40 @@
                         "maximum": 10080,
                         "minimum": 15,
                         "description": "How often to look."
+                    }
+                }
+            },
+            "PatchedFrontRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": "integer"
+                    },
+                    "desk": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid",
+                        "description": "A section front's desk; none for the home front."
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "slots": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FrontSlotRequest"
+                        },
+                        "description": "In order; replaced as a whole."
                     }
                 }
             },
@@ -16364,6 +20377,32 @@
                     }
                 }
             },
+            "PatchedIssueRequest": {
+                "type": "object",
+                "properties": {
+                    "newsletter": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                    },
+                    "intro": {
+                        "type": "string"
+                    },
+                    "story_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "writeOnly": true,
+                        "description": "Its stories, in order."
+                    }
+                }
+            },
             "PatchedMessageRequest": {
                 "type": "object",
                 "properties": {
@@ -16373,6 +20412,33 @@
                             "null"
                         ],
                         "format": "uuid"
+                    }
+                }
+            },
+            "PatchedNewsletterRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "slug": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80,
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "from_email": {
+                        "type": "string",
+                        "description": "Empty: DEFAULT_FROM_EMAIL.",
+                        "maxLength": 254
                     }
                 }
             },
@@ -16584,6 +20650,118 @@
                         "type": "string"
                     }
                 }
+            },
+            "PatchedStoryRequest": {
+                "type": "object",
+                "properties": {
+                    "desk": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "slug": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "headline": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "The pitch: the angle, and why it matters now."
+                    },
+                    "priority": {
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
+                    },
+                    "deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "When the draft is due."
+                    },
+                    "slot_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date",
+                        "description": "The day it is planned to run."
+                    },
+                    "embargo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "It may not go live before this (go_live_at)."
+                    },
+                    "source": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/WireItemRequest"
+                            }
+                        ],
+                        "writeOnly": true,
+                        "description": "Pitch it from a wire or feed item."
+                    },
+                    "byline_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "writeOnly": true,
+                        "description": "Authors, in byline order."
+                    }
+                }
+            },
+            "Person": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "username"
+                ]
+            },
+            "PersonRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "id",
+                    "username"
+                ]
             },
             "Pipeline": {
                 "type": "object",
@@ -17240,6 +21418,32 @@
                 },
                 "required": [
                     "topic"
+                ]
+            },
+            "ResolvedSlot": {
+                "type": "object",
+                "properties": {
+                    "position": {
+                        "type": "integer"
+                    },
+                    "rule": {
+                        "$ref": "#/components/schemas/FrontRuleEnum"
+                    },
+                    "story": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/StoryCard"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "position",
+                    "rule",
+                    "story"
                 ]
             },
             "Revision": {
@@ -18196,6 +22400,726 @@
                     "tokens"
                 ]
             },
+            "Story": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "desk": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "desk_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "slug": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "headline": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "The pitch: the angle, and why it matters now."
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StoryStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "priority": {
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
+                    },
+                    "assignee": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Person"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "When the draft is due."
+                    },
+                    "slot_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date",
+                        "description": "The day it is planned to run."
+                    },
+                    "embargo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "It may not go live before this (go_live_at)."
+                    },
+                    "page": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/StoryPage"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "brief": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "wire_item": {
+                        "readOnly": true,
+                        "description": "The item it was pitched from."
+                    },
+                    "breaking": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Published by the fast path, skipping copy."
+                    },
+                    "fast_path_reason": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "bylines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AuthorRef"
+                        },
+                        "readOnly": true
+                    },
+                    "moves": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StoryStatusEnum"
+                        },
+                        "readOnly": true,
+                        "description": "The statuses it may move to next."
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "assignee",
+                    "breaking",
+                    "brief",
+                    "bylines",
+                    "created_at",
+                    "desk",
+                    "desk_name",
+                    "fast_path_reason",
+                    "id",
+                    "moves",
+                    "page",
+                    "status",
+                    "updated_at",
+                    "wire_item"
+                ]
+            },
+            "StoryAIRun": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/StoryAiKindEnum"
+                    },
+                    "run": {
+                        "$ref": "#/components/schemas/RunRef"
+                    },
+                    "result": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "The structured answer, once the run has succeeded."
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "The answer as Markdown, once the run has succeeded."
+                    },
+                    "error": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error",
+                    "kind",
+                    "result",
+                    "run",
+                    "text"
+                ]
+            },
+            "StoryAiKindEnum": {
+                "enum": [
+                    "pitch",
+                    "draft",
+                    "headlines",
+                    "correction"
+                ],
+                "type": "string",
+                "description": "* `pitch` - pitch\n* `draft` - draft\n* `headlines` - headlines\n* `correction` - correction"
+            },
+            "StoryCard": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "headline": {
+                        "type": "string"
+                    },
+                    "summary": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/StoryStatusEnum"
+                    },
+                    "desk_name": {
+                        "type": "string"
+                    },
+                    "url_path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Null until it has a page."
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "desk_name",
+                    "headline",
+                    "id",
+                    "published_at",
+                    "status",
+                    "summary",
+                    "url_path"
+                ]
+            },
+            "StoryDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "desk": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "desk_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "slug": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "headline": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "The pitch: the angle, and why it matters now."
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StoryStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "priority": {
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
+                    },
+                    "assignee": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Person"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "When the draft is due."
+                    },
+                    "slot_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date",
+                        "description": "The day it is planned to run."
+                    },
+                    "embargo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "It may not go live before this (go_live_at)."
+                    },
+                    "page": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/StoryPage"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "brief": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "wire_item": {
+                        "readOnly": true,
+                        "description": "The item it was pitched from."
+                    },
+                    "breaking": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Published by the fast path, skipping copy."
+                    },
+                    "fast_path_reason": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "bylines": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AuthorRef"
+                        },
+                        "readOnly": true
+                    },
+                    "moves": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StoryStatusEnum"
+                        },
+                        "readOnly": true,
+                        "description": "The statuses it may move to next."
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StoryEvent"
+                        },
+                        "readOnly": true
+                    },
+                    "corrections": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Correction"
+                        },
+                        "readOnly": true
+                    },
+                    "ai_runs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StoryAIRun"
+                        },
+                        "readOnly": true,
+                        "description": "The latest AI run of each kind and its answer."
+                    },
+                    "is_editor": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Whether the requester edits the story's desk: its priority, deadline, slot and embargo are theirs."
+                    }
+                },
+                "required": [
+                    "ai_runs",
+                    "assignee",
+                    "breaking",
+                    "brief",
+                    "bylines",
+                    "corrections",
+                    "created_at",
+                    "desk",
+                    "desk_name",
+                    "events",
+                    "fast_path_reason",
+                    "id",
+                    "is_editor",
+                    "moves",
+                    "page",
+                    "status",
+                    "updated_at",
+                    "wire_item"
+                ]
+            },
+            "StoryEvent": {
+                "type": "object",
+                "properties": {
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "actor": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Person"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "action": {
+                        "type": "string",
+                        "maxLength": 24
+                    },
+                    "from_status": {
+                        "type": "string",
+                        "maxLength": 12
+                    },
+                    "to_status": {
+                        "type": "string",
+                        "maxLength": 12
+                    },
+                    "assignee": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Person"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "action",
+                    "actor",
+                    "assignee"
+                ]
+            },
+            "StoryPage": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "live": {
+                        "type": "boolean"
+                    },
+                    "has_unpublished_changes": {
+                        "type": "boolean",
+                        "description": "A draft saved since it last went live."
+                    },
+                    "url_path": {
+                        "type": "string"
+                    },
+                    "first_published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "first_published_at",
+                    "has_unpublished_changes",
+                    "id",
+                    "live",
+                    "title",
+                    "url_path"
+                ]
+            },
+            "StoryPageRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "live": {
+                        "type": "boolean"
+                    },
+                    "has_unpublished_changes": {
+                        "type": "boolean",
+                        "description": "A draft saved since it last went live."
+                    },
+                    "url_path": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "first_published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "first_published_at",
+                    "has_unpublished_changes",
+                    "id",
+                    "live",
+                    "title",
+                    "url_path"
+                ]
+            },
+            "StoryPriorityEnum": {
+                "enum": [
+                    1,
+                    2,
+                    3,
+                    4
+                ],
+                "type": "integer",
+                "description": "* `1` - Top\n* `2` - High\n* `3` - Normal\n* `4` - Low"
+            },
+            "StoryStatusEnum": {
+                "enum": [
+                    "pitch",
+                    "assigned",
+                    "drafting",
+                    "editing",
+                    "copy",
+                    "scheduled",
+                    "published",
+                    "updated",
+                    "corrected"
+                ],
+                "type": "string",
+                "description": "* `pitch` - Pitch\n* `assigned` - Assigned\n* `drafting` - Drafting\n* `editing` - Editing\n* `copy` - Copy\n* `scheduled` - Scheduled\n* `published` - Published\n* `updated` - Updated\n* `corrected` - Corrected"
+            },
+            "StoryWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "desk": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "slug": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200,
+                                "pattern": "^[-a-zA-Z0-9_]+$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "headline": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "The pitch: the angle, and why it matters now."
+                    },
+                    "priority": {
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
+                    },
+                    "deadline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "When the draft is due."
+                    },
+                    "slot_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date",
+                        "description": "The day it is planned to run."
+                    },
+                    "embargo": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "It may not go live before this (go_live_at)."
+                    },
+                    "source": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/WireItemRequest"
+                            }
+                        ],
+                        "writeOnly": true,
+                        "description": "Pitch it from a wire or feed item."
+                    },
+                    "byline_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "writeOnly": true,
+                        "description": "Authors, in byline order."
+                    }
+                },
+                "required": [
+                    "desk"
+                ]
+            },
+            "SubscribeRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "SubscriberCounts": {
+                "type": "object",
+                "properties": {
+                    "pending": {
+                        "type": "integer"
+                    },
+                    "confirmed": {
+                        "type": "integer"
+                    },
+                    "unsubscribed": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "confirmed",
+                    "pending",
+                    "unsubscribed"
+                ]
+            },
+            "Subscription": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "$ref": "#/components/schemas/SubscriptionStatusEnum"
+                    },
+                    "newsletter": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "newsletter",
+                    "status"
+                ]
+            },
+            "SubscriptionStatusEnum": {
+                "enum": [
+                    "pending",
+                    "confirmed",
+                    "unsubscribed"
+                ],
+                "type": "string",
+                "description": "* `pending` - Pending\n* `confirmed` - Confirmed\n* `unsubscribed` - Unsubscribed"
+            },
             "Suggestion": {
                 "type": "object",
                 "properties": {
@@ -18322,6 +23246,18 @@
                 "type": "string",
                 "description": "* `brief` - brief\n* `draft` - draft"
             },
+            "TokenRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
             "Tool": {
                 "type": "object",
                 "properties": {
@@ -18409,6 +23345,69 @@
                 ],
                 "type": "string",
                 "description": "* `private` - Private — its owner\n* `site` - Site — everyone who edits its site\n* `shared` - Shared — everyone signed in"
+            },
+            "WireItem": {
+                "type": "object",
+                "description": "A wire story, a feed entry or a page to pitch from (`services.WireItem`).",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "summary": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "feed": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "maxLength": 40
+                    }
+                },
+                "required": [
+                    "url"
+                ]
+            },
+            "WireItemRequest": {
+                "type": "object",
+                "description": "A wire story, a feed entry or a page to pitch from (`services.WireItem`).",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "minLength": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "summary": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "feed": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "maxLength": 40
+                    }
+                },
+                "required": [
+                    "url"
+                ]
             }
         },
         "securitySchemes": {

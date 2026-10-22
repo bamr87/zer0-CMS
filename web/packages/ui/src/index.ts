@@ -12,6 +12,8 @@ export { DiffView } from './DiffView';
 export { FieldsPanel, fromLocalInput, toLocalInput, type FieldValues } from './FieldsPanel';
 export { CaptureIdea } from './ideas/CaptureIdea';
 export { IdeasWorkspace } from './ideas/IdeasWorkspace';
+export { Newsroom } from './newsroom/Newsroom';
+export { StoryPanel } from './newsroom/StoryPanel';
 export { Overview } from './Overview';
 export { PageEditor, type PageAction } from './PageEditor';
 export { PageList } from './PageList';

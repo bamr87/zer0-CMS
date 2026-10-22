@@ -266,10 +266,10 @@ def _page(run: AgentRun, ctx: ToolContext) -> dict:
     text = selection or (block_to_markdown(aimed["type"], aimed["value"]) if aimed else page_text(page, "body"))
     request = "\n\n".join(part for part in (run.input.get("prompt", "").strip(), TEXT, text) if part)
     if run.input.get("pipeline"):
-        source = _row(Pipeline, run.input["pipeline"], run)
+        source = owned(Pipeline, run.input["pipeline"], run)
         out = run_steps(run, ctx, source, prompt=request)
     else:
-        source = _row(Assistant, run.input.get("assistant"), run)
+        source = owned(Assistant, run.input.get("assistant"), run)
         persona = Persona.of(source)
         prompt = rendering.prompt(persona.prompt_template, request)
         out = generate(run, ctx, persona, [{"role": "user", "content": prompt}])
