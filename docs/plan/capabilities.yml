@@ -147,13 +147,15 @@ platform:
     surfaces: {api: missing, studio: missing, ops: missing}
   - id: content.import
     what: Importers (Jekyll and Obsidian sites, parodynews, books, WordPress) that are idempotent and round-trip byte for byte.
-    # G9: import_books (idempotent, never over a platform change, round trip proven on packages/books/library); WordPress to come.
+    # G9: import_books (idempotent; never over a platform change, never publishing over a draft, never bringing back a
+    # page deleted here; round trip proven on packages/books/library); WordPress to come.
     surfaces: {ops: partial}
   - id: content.export
     what: Every site and book also exists as a generated file tree (a site's source, a book's library/<slug>/) — exported byte-stably, committed by a job, re-importable; a hand edit to it comes back as a suggestion.
-    # G9, books' half: export_books byte-stable and re-importable (content/tests/books/test_files.py); not yet
-    # committed by a job (G4's jobs), and a hand edit updates its page (or is a conflict) rather than arriving as a
-    # suggestion. Sites' trees are G4.
+    # G9, books' half: export_books byte-stable and re-importable, and a hand edit is never lost or silently
+    # overwritten — the export keeps it as a conflict (content/tests/books/test_files.py); not yet committed by a job
+    # (G4's jobs), and a hand edit updates its page (or is a conflict) rather than arriving as a suggestion. Sites'
+    # trees are G4.
     surfaces: {api: missing, studio: missing, ops: partial}
   - id: content.repurpose
     what: Turn one piece into others — an article into a newsletter item, a social thread, a summary, a landing page.
@@ -350,10 +352,11 @@ platform:
   # ── Books ───────────────────────────────────────────────────────────────────
   - id: books.manage
     what: Books in the database — parts and chapters, outline, characters, continuity notes, style guide, order and status, validation, statistics, compiled manuscripts — with library/<slug>/ as the generated file set.
-    # G9: BookPage/ChapterPage hold the library format (a book's parts are its acts: book.yml `acts`, a chapter's
-    # `act`, the manuscript's act headings); /api/v2/books/ and the studio's Books area (shelf, overview, chapters,
-    # findings, manuscript). The extension is G10; no MCP tool reads books yet.
-    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    # G9: BookPage/ChapterPage hold the library format; /api/v2/books/ and the studio's Books area (shelf, overview,
+    # chapters, a book's other files, findings, manuscript). Partial for parts: ADR 0006 decision 14 names parts
+    # between a book and its chapters, and today a book's parts are its acts (book.yml `acts`, a chapter's `act`, the
+    # manuscript's act headings) — open decision P-D8. The extension is G10; no MCP tool reads books yet.
+    surfaces: {api: partial, studio: partial, extension: missing, mcp: missing}
     proof:
       api: content/tests/books/test_api.py::test_a_books_overview_issues_manuscript_and_context
       studio: web/packages/ui/test/books.test.tsx
@@ -711,15 +714,15 @@ sources:
   - id: books
     path: packages/books
     summary: bookshelf — a dependency-free Python package with the books CLI, a local studio and Claude-backed writing help for long-form books in library/<slug>/.
-    content: library/impairment/** (book.yml, README, outline, chapters ch01–ch14, the three act guides, notes/characters.md and notes/continuity.md — the continuity ledger goes to Memory); library/_template/**, library/README.md, docs/SCHEMA.md (the validation-code catalog), docs/reviews/impairment.md; the authoring guidance in .github/ (copilot instructions, instructions, the outline prompt — these become assistant and profile prompts).
+    content: library/impairment/** (book.yml, README, outline, chapters ch01–ch14, the three act guides, notes/characters.md and notes/continuity.md — the continuity ledger is the book's continuity_notes); library/_template/**, library/README.md, docs/SCHEMA.md (the validation-code catalog), docs/reviews/impairment.md; the authoring guidance in .github/ (copilot instructions, instructions, the outline prompt — these become assistant and profile prompts).
     capabilities:
       # From the 2026-10-21 code inventory (113 tests in packages/books/tests).
       # G9 (2026-10-22): content/books/ — the library is a generated file set of the platform's BookPage and
       # ChapterPages, the CLI is `manage.py books …`, the AI tasks are runs of the `books` agent through content/ai,
       # the studio's Books area is the local studio. A row is done when a person can use it from the Books area (or,
       # for an operator's command, from manage.py) and its test proves it; what is left is named in `note`.
-      - {id: books.library-format, what: "The library format — book.yml (status idea → complete, logline, genre, POV, tense, era, acts, targets, cast), outline, act guides, numbered chapters, character and continuity notes.", target: books.manage, status: done, proof: "content/tests/books/test_files.py::test_the_book_holds_what_its_files_hold"}
-      - {id: books.import-export, what: "The library imports into the platform and is regenerated from it as the static library/<slug>/.", target: content.export, status: done, proof: "content/tests/books/test_files.py::test_the_real_library_round_trips_byte_for_byte"}
+      - {id: books.library-format, what: "The library format — book.yml (status idea → complete, logline, genre, POV, tense, era, acts, targets, cast), outline, act guides, numbered chapters, character and continuity notes.", target: books.manage, status: done, proof: "content/tests/books/test_files.py::test_the_book_holds_what_its_files_hold", note: "the act guides and README are edited in the Books area's Files tab (test_api.py::test_a_books_other_files_are_edited_one_by_one_as_draft_revisions, books.test.tsx)"}
+      - {id: books.import-export, what: "The library imports into the platform and is regenerated from it as the static library/<slug>/.", target: content.export, status: done, proof: "content/tests/books/test_files.py::test_the_real_library_round_trips_byte_for_byte", note: "neither side loses the other's change (test_files.py: an export keeps a hand edit, an import never publishes a draft, never makes a renumbered chapter twice, never brings back a deleted one); a hand edit arriving as a suggestion and the export committed by a job are content.export's, still open"}
       - {id: books.list, what: "books list — every book with status, chapters done and planned, words, progress.", target: books.manage, status: done, proof: "content/tests/books/test_commands.py::test_list_show_stats_and_validate", note: "and the studio's shelf (web/packages/ui/test/books.test.tsx)"}
       - {id: books.show, what: "books show — a book's facts and its chapter table.", target: books.manage, status: done, proof: "content/tests/books/test_commands.py::test_list_show_stats_and_validate", note: "and the studio's book overview (web/packages/ui/test/books.test.tsx)"}
       - {id: books.scaffold, what: "books new and add-chapter — start a book from the template; add the next chapter with its act inferred.", target: books.create, status: done, proof: "content/tests/books/test_api.py::test_new_books_and_chapters_are_drafts"}
@@ -729,10 +732,10 @@ sources:
       - {id: books.build-manuscript, what: "books build — the compiled manuscript with a title page, act headings and placeholders for unwritten chapters.", target: books.manage, status: done, proof: "content/tests/books/test_library.py::test_the_platform_says_what_bookshelf_said_about_the_real_library", note: "byte-identical to bookshelf's on impairment, with and without the outline; downloaded from the studio (books.test.tsx)"}
       - {id: books.library-json, what: "library.json — every book exported as data.", target: content.export, status: done, proof: "content/tests/books/test_commands.py::test_new_add_chapter_build_dashboard_and_context", note: "each book's entry equals bookshelf's (test_library.py's golden)"}
       - {id: books.dashboard, what: "books dashboard and serve — a static HTML shelf with chapter tables and validation findings.", target: books.manage, status: done, proof: "content/tests/books/test_commands.py::test_new_add_chapter_build_dashboard_and_context", note: "serve is the studio's Books area"}
-      - {id: books.studio-editor, what: "books studio — a local editor: the shelf, a chapter's fields and Markdown, word count, autosave.", target: books.write, status: partial, note: "the shelf, a chapter's fields and Markdown and its prose word count are the studio's ChapterWriter (web/packages/ui/test/books.test.tsx); autosave is content.edit's, still to come"}
-      - {id: books.studio-checks, what: "The studio's checks pane — validation findings for the open chapter and an on-demand AI continuity check.", target: books.write, status: done, proof: "web/packages/ui/test/books.test.tsx"}
-      - {id: books.ai-draft-continue, what: "AI Draft (a chapter from its outline section, the act guide and the neighbouring chapters) and Continue (from where it stops, in its voice), streamed.", target: books.write, status: partial, note: "draft and continue as suggestions (content/tests/books/test_ai.py); token-by-token streaming is the AI layer's, still to come (a run streams its steps)"}
-      - {id: books.ai-revise, what: "AI Revise — rewrite a selected passage to an instruction.", target: books.write, status: done, proof: "content/tests/books/test_ai.py::test_revise_replaces_the_selected_passage_and_refuses_one_not_in_the_chapter"}
+      - {id: books.studio-editor, what: "books studio — a local editor: the shelf, a chapter's fields and Markdown, word count, autosave.", target: books.write, status: partial, note: "the shelf (books.test.tsx's <BookShelf>) and the chapter writer — a chapter's fields and Markdown in the page editor, its prose word count, the chapter tasks (books.test.tsx's <ChapterWriter>); autosave is content.edit's, still to come"}
+      - {id: books.studio-checks, what: "The studio's checks pane — validation findings for the open chapter and an on-demand AI continuity check.", target: books.write, status: done, proof: "web/packages/ui/test/books.test.tsx", note: "the open chapter's own findings beside its editor (<ChapterWriter>), the continuity check's findings (<BookAssist>)"}
+      - {id: books.ai-draft-continue, what: "AI Draft (a chapter from its outline section, the act guide and the neighbouring chapters) and Continue (from where it stops, in its voice), streamed.", target: books.write, status: partial, note: "draft and continue as suggestions on the prose only, `#`-sectioned chapters included (content/tests/books/test_ai.py, on impairment's ch05 and ch03); token-by-token streaming is the AI layer's, still to come (a run streams its steps)"}
+      - {id: books.ai-revise, what: "AI Revise — rewrite a selected passage to an instruction.", target: books.write, status: done, proof: "content/tests/books/test_ai.py::test_revise_replaces_the_selected_passage_and_refuses_one_not_in_the_chapter", note: "on the real book too, where the author's own prose has a banned phrase (test_a_phrase_the_author_wrote_never_blocks_continue_or_revise)"}
       - {id: books.ai-check, what: "AI continuity check with structured findings (severity, kind, quote, problem, suggestion) and a summary.", target: books.write, status: done, proof: "content/tests/books/test_ai.py::test_the_continuity_check_returns_validated_findings_and_proposes_nothing"}
       - {id: books.ai-outline-critique, what: "AI Outline (premise → synopsis, themes, three-act beats, arcs, chapter plan) and Critique (an editorial read with the top fixes).", target: books.create, status: done, proof: "content/tests/books/test_ai.py::test_a_premise_becomes_an_outline_a_person_turns_into_a_draft_book", note: "the critique and a book's outline in test_critique_and_outline_are_the_runs_output"}
       - {id: books.ai-context, what: "Every AI request carries the book's brief, outline, characters, continuity, the act guide and the neighbouring chapters, with prompt caching.", target: books.write, status: partial, note: "the context, identical to bookshelf's (content/tests/books/test_library.py's golden, test_ai.py::test_the_run_is_given_the_books_own_material); prompt caching is the provider adapters', still to come"}
