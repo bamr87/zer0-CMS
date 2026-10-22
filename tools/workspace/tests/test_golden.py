@@ -1,7 +1,7 @@
 """Golden equivalence: the Python bin/zer0 prints what the Ruby one printed.
 
 golden/recordings.json holds the Ruby tool's stdout, stderr and exit status for
-every step it was recorded on (golden/README.md says how), over scenarios that
+every step it was recorded on (tools/workspace/README.md § Tests says how), over scenarios that
 fixtures.py builds the same way here: the small workspaces of the old Ruby
 suite, and the frozen tree — this repository at the recorded commit. Each step
 is replayed through the Python CLI and all three are compared byte for byte,

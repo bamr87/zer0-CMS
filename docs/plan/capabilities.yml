@@ -30,7 +30,6 @@ schema: capabilities/v1
 
 ruby_ratchet:
   apps/parodynews/src/pages/: 2
-  bin/zer0: 1
   packages/zer0-image-generator/: 223
   rails/: 151
   sites/2005/: 1
@@ -40,7 +39,6 @@ ruby_ratchet:
   sites/zer0-demo-garden/: 1
   sites/zer0-pages-remote/: 1
   sites/zer0-pages/: 11
-  tools/workspace/: 11
 
 theme_ratchet:
   # zer0-mistakes leaves completely (ADR 0006 decision 4): code and configuration
@@ -371,7 +369,8 @@ platform:
     surfaces: {ops: partial}
   - id: platform.workspace
     what: The repository's workspace tool — list, info, run, affected, matrix, routes, check, vendor, doctor, tags — in Python.
-    surfaces: {ops: missing}
+    surfaces: {ops: done}
+    proof: {ops: tools/workspace/tests/test_golden.py}
 
   - id: platform.shared-ui
     what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
@@ -469,17 +468,19 @@ sources:
 
   - id: workspace-tool
     path: tools/workspace
-    summary: bin/zer0 and its library — the monorepo workspace tool that reads workspace.yml.
+    summary: bin/zer0 and its library — the monorepo workspace tool that reads workspace.yml. Python since P5, proven against recordings of the Ruby original (tools/workspace/tests/golden/), which is deleted.
     content: None; workspace.yml stays.
     capabilities:
-      - {id: workspace.list, what: "list and info — every project, its path, kind, what it publishes and what gates it.", target: platform.workspace, status: missing}
-      - {id: workspace.run, what: "run setup|check|test|build|pages for one, the affected or all projects, with dry run and keep-going.", target: platform.workspace, status: missing}
-      - {id: workspace.affected, what: "affected and matrix — the projects a change touches, as text or the CI matrix.", target: platform.workspace, status: missing}
-      - {id: workspace.routes, what: "routes — each site's Pages route, for the one Pages deploy.", target: platform.workspace, status: missing}
-      - {id: workspace.check, what: "check — registration, paths, workflow path filters, routes and vendored-copy drift.", target: platform.workspace, status: missing}
-      - {id: workspace.vendor, what: "vendor — re-sync vendored copies from their source.", target: platform.workspace, status: missing}
-      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: missing}
-      - {id: workspace.tags, what: "tags — this repository's release tags against those inherited from the Front Matter fork.", target: platform.workspace, status: missing}
+      - {id: workspace.list, what: "list and info — every project, its path, kind, what it publishes and what gates it.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::FrozenTreeTest}
+      - {id: workspace.run, what: "run setup|check|test|build|pages for one, the affected or all projects, with dry run and keep-going.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::RunnerTest}
+      - {id: workspace.affected, what: "affected and matrix — the projects a change touches, as text or the CI matrix.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::FrozenTreeTest}
+      - {id: workspace.routes, what: "routes — each site's Pages route, for the one Pages deploy.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::ScenarioTest}
+      - {id: workspace.check, what: "check — registration, paths, workflow path filters, routes and vendored-copy drift.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_real_manifest.py::RealManifestTest}
+      - {id: workspace.vendor, what: "vendor — re-sync vendored copies from their source.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::ChecksTest::test_vendored_drift_is_a_finding_and_vendor_write_repairs_it}
+      # partial: `bin/zer0 doctor` is Python and tested, but the doctor it runs is still
+      # rails/bin/zer0-cms (Ruby) until G4 ports it to the platform (sites.doctor).
+      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: partial}
+      - {id: workspace.tags, what: "tags — this repository's release tags against those inherited from the Front Matter fork.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::TagsTest}
 
   - id: zer0-image-generator
     path: packages/zer0-image-generator
