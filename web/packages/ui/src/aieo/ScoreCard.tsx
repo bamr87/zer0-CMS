@@ -1,10 +1,12 @@
 // A score and its breakdown: the citability score and grade, the five
-// dimensions as bars, each pattern with its evidence and recommendation, the
-// gaps worst first, the anti-pattern penalties, and — from a model's
-// evaluation — the assessment, the executive summary, the priority actions
-// and before/after improvements. `compact` shows the editor's panel's share.
+// dimensions as a radar and as bars, each pattern with its evidence and
+// recommendation, the gaps worst first, the anti-pattern penalties, and — from
+// a model's evaluation — the assessment, the executive summary, the priority
+// actions and before/after improvements. `compact` shows the editor's panel's
+// share: the bars without the radar, the first gaps, no details.
 import { Accordion, Alert, Badge, Group, List, Paper, Progress, RingProgress, Stack, Table, Text, Title } from '@mantine/core';
 
+import { Radar } from './Radar';
 import { DIMENSION_LABELS, DIMENSIONS, gradeColor, label, type Scored } from './score';
 
 const SEVERITY: Record<string, string> = { high: 'red', medium: 'orange', low: 'yellow' };
@@ -40,19 +42,22 @@ export function ScoreCard({ scored, compact = false }: { scored: Scored; compact
       </Group>
       {scored.fallback ? <Alert color="yellow">{scored.fallback}</Alert> : null}
       {scored.visual ? <Alert color="gray">{scored.visual}</Alert> : null}
-      <Stack gap={6} aria-label="Dimensions">
-        {DIMENSIONS.map((d) => (
-          <div key={d}>
-            <Group justify="space-between" gap="xs">
-              <Text size="sm">{DIMENSION_LABELS[d]}</Text>
-              <Text size="sm" fw={600}>
-                {scored.dimensions[d] ?? '—'}
-              </Text>
-            </Group>
-            <Progress value={scored.dimensions[d] ?? 0} aria-label={`${DIMENSION_LABELS[d]} ${scored.dimensions[d] ?? 0}`} />
-          </div>
-        ))}
-      </Stack>
+      <Group align="center" gap="lg">
+        {compact ? null : <Radar dimensions={scored.dimensions} />}
+        <Stack gap={6} aria-label="Dimensions" style={{ flex: 1, minWidth: 200 }}>
+          {DIMENSIONS.map((d) => (
+            <div key={d}>
+              <Group justify="space-between" gap="xs">
+                <Text size="sm">{DIMENSION_LABELS[d]}</Text>
+                <Text size="sm" fw={600}>
+                  {scored.dimensions[d] ?? '—'}
+                </Text>
+              </Group>
+              <Progress value={scored.dimensions[d] ?? 0} aria-label={`${DIMENSION_LABELS[d]} ${scored.dimensions[d] ?? 0}`} />
+            </div>
+          ))}
+        </Stack>
+      </Group>
       {scored.assessment ? <Text size="sm">{scored.assessment}</Text> : null}
       {scored.gaps.length ? (
         <Stack gap={4}>

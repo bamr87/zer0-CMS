@@ -81,6 +81,11 @@ describe('<AieoWorkspace> audits', () => {
     const opened = await screen.findByLabelText('Audit of the text');
     expect(await within(opened).findByText('Grade D')).toBeInTheDocument();
     expect(within(opened).getByLabelText('SEO 20')).toBeInTheDocument();
+    expect(
+      within(opened).getByRole('img', {
+        name: 'The five dimensions: Citability (AIEO) 52, SEO 20, Readability 81.8, Humanity 100, Conversion (CRO) 0',
+      }),
+    ).toBeInTheDocument();
     expect(within(opened).getByText(/Explain why your content matters/)).toBeInTheDocument();
     expect(within(opened).getByText('Better than 75% of the audits here.')).toBeInTheDocument();
     expect(within(opened).getByText('Closest in meaning: Restore drills (61)')).toBeInTheDocument();
@@ -324,6 +329,8 @@ describe('<PageScore>', () => {
     });
     const { go } = renderUi(<PageScore pageId={5} onReview={onReview} />, { api });
     expect(await screen.findByText('Grade D')).toBeInTheDocument();
+    expect(screen.getByLabelText('SEO 20')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /The five dimensions/ })).not.toBeInTheDocument(); // the panel's share: bars alone
     expect(calls.find((c) => c.path === '/api/v2/aieo/audits/')?.query.get('page')).toBe('5');
     await userEvent.click(screen.getByRole('button', { name: 'Score this page' }));
     await waitFor(() => expect(posts(calls, '/api/v2/aieo/audits/')[0]?.body).toMatchObject({ kind: 'page', page_id: 5, method: 'heuristic' }));
