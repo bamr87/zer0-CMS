@@ -238,6 +238,49 @@ features:
       - content/tests/ops/test_server.py
     scenarios: []
     evidence: []
+  - id: ZER0-043
+    title: "The studio's AI area: assistants, pipelines, output schemas, providers and models"
+    description: "An editor manages the AI content layer from the studio's AI area: writes assistants (instructions, prompt template, provider and model, parameters, output schema, read-only tools), tries one on a prompt and follows its run to the answer, exports and imports them as documents; builds pipelines whose steps are reordered by dragging (pointer or keyboard) and runs them; edits output schemas with feedback as they are typed and the platform's verdict on save, exports and imports them, and adds the bundled ones; browses the model catalog with filters. People who configure providers edit a provider's configuration (the credential write-only, shown only as set or not set), test it, sync its models and choose the default."
+    implemented: true
+    surface: ui
+    link: /studio/ai
+    docs: content/ai/README.md
+    tags: [studio, web, ai, assistants, pipelines, providers]
+    date: 2026-10-22
+    tests:
+      - web/packages/ui/test/ai/assistants.test.tsx
+      - web/packages/ui/test/ai/pipelines.test.tsx
+      - web/packages/ui/test/ai/schemas.test.tsx
+      - web/packages/ui/test/ai/providers.test.tsx
+      - web/studio/test/ai.test.tsx
+      - content/tests/ai/test_api.py
+      - content/tests/ai/test_on_page.py
+    scenarios:
+      - verify/scenarios/studio-ai-brief.yml
+    evidence:
+      - test/evidence/studio-ai-brief/
+  - id: ZER0-044
+    title: "Briefs, conversations and the editor's AI panel"
+    description: "An editor asks AI for content and reviews everything it gives: writes a brief in Create (a prompt or a text, an assistant or a pipeline, a schema, where the draft goes), generates it as a run followed live, reviews the rendered draft, its metadata and the structured result, and applies it — the draft opens in the editor with its text as suggestions; holds conversations whose replies arrive as their runs finish, asks again or another assistant, and promotes an answer to a brief or a draft; and in the editor runs an assistant or a pipeline on the whole page, one block or a selection, whose answer lands on the page as suggestions."
+    implemented: true
+    surface: ui
+    link: /studio/create/briefs
+    docs: content/ai/README.md
+    tags: [studio, web, ai, briefs, conversations, editor]
+    date: 2026-10-22
+    tests:
+      - web/packages/ui/test/ai/briefs.test.tsx
+      - web/packages/ui/test/ai/conversations.test.tsx
+      - web/packages/ui/test/ai/aipanel.test.tsx
+      - content/tests/ai/test_on_page.py
+      - content/tests/ai/test_api.py
+      - content/tests/ai/test_services.py
+    scenarios:
+      - verify/scenarios/studio-ai-brief.yml
+      - verify/scenarios/studio-ai-chat.yml
+    evidence:
+      - test/evidence/studio-ai-brief/
+      - test/evidence/studio-ai-chat/
 
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030
