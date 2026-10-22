@@ -228,7 +228,7 @@
       "properties": {
         "linkedin": {
           "type": "object",
-          "description": "LinkedIn publishing through zer0-cms linkedin, the zer0-linkedin.yml workflow, the fleet CMS and its MCP server.",
+          "description": "LinkedIn publishing through the platform's lane over this site's files: manage.py linkedin, the zer0-linkedin.yml workflow and the lane's MCP server. A platform LinkedIn channel can share the ledger file named here.",
           "additionalProperties": false,
           "properties": {
             "author": {

@@ -23,7 +23,7 @@ zer0-CMS is becoming a comprehensive application for content work — writing ar
 `content/` is zer0-CMS ([ADR 0004](docs/adr/0004-one-platform.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share — built to the fleet's operational rows: liveness, readiness and version probes, a request id on every response and log line, one error envelope, JSON logs that never hold a token, throttling, a committed OpenAPI document. It imports the Jekyll sites and exports them back byte for byte, so the files stay the source of truth for a site until it cuts over. The Rails fleet CMS, the image generator's panel, aieo, parodynews and the books studio are absorbed into it function by function, each behind a parity gate. [`content/README.md`](content/README.md)
 
 ```bash
-docker compose --profile content up -d --wait db redis content worker research-worker beat relay   # → http://localhost:8000/admin/
+docker compose --profile content up -d --wait db redis content worker research-worker beat relay events   # → http://localhost:8000/admin/
 curl -fsS localhost:8000/healthz && curl -fsS localhost:8000/readyz && curl -fsS localhost:8000/version
 ```
 
@@ -46,10 +46,10 @@ It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front
 
 | Path | What it is |
 |---|---|
-| `content/` | The **platform** — the Django + Wagtail CMS above, the system of record for every site, the agent runtime and every API. [`content/README.md`](content/README.md) · [`content/ops/README.md`](content/ops/README.md) |
+| `content/` | The **platform** — the Django + Wagtail CMS above, the system of record for every site, the agent runtime and every API — and distribution: a site's content to LinkedIn, WordPress, a GitHub pull request or a newsletter under a person's approval, with the LinkedIn lane a site that is still files runs from its CI (`manage.py linkedin`, the `zer0-linkedin.yml` workflow). [`content/README.md`](content/README.md) · [`content/ops/README.md`](content/ops/README.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
 | `web/` | The **studio** — the React frontend where people write, create and review content and follow agent runs, served by the platform at `/studio/`; its workspaces live in shared packages the extension's webviews will render too (ADR 0006). [`web/README.md`](web/README.md) |
 | `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*; the platform's client once a platform URL is configured (PLAN G10). This README. |
-| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), carries a site's content to LinkedIn under a human gate (`zer0-cms linkedin`, the `zer0-linkedin.yml` workflow, `/admin/distribution`), and hosts the ABC book wizard. Being absorbed by the platform (PLAN Phase G). [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
+| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), and hosts the ABC book wizard. Being absorbed by the platform (PLAN Phase G); its LinkedIn distribution already was (G5). [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) |
 
 ```bash
 SITES_DIR=~/github docker compose up --build                      # → http://localhost:3001/admin

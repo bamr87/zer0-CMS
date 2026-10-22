@@ -12,7 +12,7 @@ Eight documents and two directories live here, and they answer different questio
 | [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 44 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
 | [`adr/`](adr/README.md) | Architecture decision records, 0001–0006. **[ADR 0006](adr/0006-one-python-platform.md) is the current target** — one Python platform with a React frontend, every merged repository absorbed, no Ruby; the earlier records say what it amends. |
 | [`plan/`](plan/PLAN.md) | The target ([`TARGET.md`](plan/TARGET.md)), the capability ledger ([`capabilities.yml`](plan/capabilities.yml), gated by `tools/check_absorption.py`), the build plan with its order of work ([`PLAN.md`](plan/PLAN.md) § 3), and the agent-native design note ([`agent-native-design.md`](plan/agent-native-design.md)). |
-| [`DISTRIBUTION.md`](DISTRIBUTION.md) | The governed LinkedIn lane: queue, guard, approval, ledger, the reusable workflow. |
+| [`DISTRIBUTION.md`](DISTRIBUTION.md) | Distribution: channels (LinkedIn, WordPress, GitHub pull requests, newsletters), the queue, guard, approval, ledger and statistics, and the LinkedIn lane a site that is still files runs from its CI. |
 | [`RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 
 ## The rule these documents follow
