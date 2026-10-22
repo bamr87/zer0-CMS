@@ -2,7 +2,7 @@
 title: "Troubleshooting Guide: Release Automation System"
 description: "Diagnose and fix common failures in the Zer0-Mistakes release automation scripts: version bumps, gem builds, tagging, and RubyGems publishing."
 date: 2026-05-31T20:54:47.000Z
-lastmod: 2026-05-31T20:54:47.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 categories: [docs]
 tags: [development, contributing]
 author: bamr87
@@ -600,7 +600,7 @@ docker-compose config
 1. **[GitHub Issues](https://github.com/bamr87/zer0-mistakes/issues)** - Bug reports and feature requests
 2. **[GitHub Discussions](https://github.com/bamr87/zer0-mistakes/discussions)** - Questions and community help
 3. **[Contributing Guide](../../CONTRIBUTING.md)** - Development guidelines
-4. **[Documentation](README.md)** - Comprehensive documentation center
+4. **[Documentation](../README.md)** - Comprehensive documentation center
 
 ### Creating Good Bug Reports
 

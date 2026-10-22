@@ -2,7 +2,7 @@
 title: "PRD: Roadmap, Metrics, and Compliance"
 description: "Success metrics, release roadmap, security and compliance requirements, stakeholder needs, and acceptance criteria for the zer0-mistakes theme."
 date: 2026-04-11T00:00:00.000Z
-lastmod: 2026-05-31T20:54:52.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 categories: [docs]
 tags: [architecture, product, prd, roadmap]
 author: bamr87
@@ -474,4 +474,4 @@ status: "Active"
 
 _This Product Requirements Document is a living document. It will be updated quarterly or as significant product changes occur. All stakeholders are encouraged to provide feedback and suggestions through GitHub Issues or Discussions._
 
-**🚀 Ready to build? Start with [Quick Start](README.md#-quick-start)!**
+**🚀 Ready to build? Start with [Quick Start](../../README.md#-quick-start)!**

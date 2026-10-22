@@ -65,6 +65,8 @@ Every subcommand, global option and example, as `./scripts/bin/install help` pri
 | What AI does, what data is sent, how to disable, cost notes | [`ai-features.md`](./ai-features.md) |
 | Flag-by-flag mapping from 0.x to 1.0 | [`migration-from-0.x.md`](./migration-from-0.x.md) |
 | Overriding templates, custom profiles, custom deploy modules | [`customization.md`](./customization.md) |
+| Fork → configure → personalize, and the workflows a fork inherits | [`forking.md`](./forking.md) |
+| `url` and `baseurl` for user sites, project sites and custom domains | [`url-configuration.md`](./url-configuration.md) |
 
 ## Two-minute start
 

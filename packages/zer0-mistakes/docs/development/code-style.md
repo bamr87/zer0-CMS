@@ -2,7 +2,7 @@
 title: "Code Style Guide"
 description: "Coding conventions for contributing to Zer0-Mistakes: naming, formatting, Liquid and SCSS idioms, and the consistency rules enforced in review."
 date: 2026-01-25T03:38:33.000Z
-lastmod: 2026-06-01T03:38:46.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 categories: [docs]
 tags: [development, contributing]
 author: bamr87
@@ -305,7 +305,7 @@ EXIT_USAGE=2
 
 ### Markdown
 
-```markdown
+````markdown
 # Main Heading
 
 Brief description of the document.
@@ -335,13 +335,13 @@ docker-compose up
 |----------|----------|----------|
 | Value 1  | Value 2  | Value 3  |
 
-```text
+````
 
 ## Commit Messages
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 
 feat: add mermaid diagram support
 fix: resolve sidebar collapse on mobile
@@ -350,7 +350,7 @@ refactor: simplify layout inheritance
 test: add pagination tests
 chore: update dependencies
 
-```text
+```
 
 ## Pull Request Guidelines
 
@@ -364,4 +364,4 @@ chore: update dependencies
 
 - [Local Setup](local-setup.md)
 - [Testing](testing.md)
-- [Architecture](../architecture/README.md)
+- [Project structure](../architecture/project-structure.md)
