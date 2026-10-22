@@ -28,8 +28,9 @@ It asserts:
     `theme_ratchet:` prefix within its ceiling, or is listed in `theme_allowed:`
     (the Jekyll-theme option's own files, and this gate). Content that merely talks
     about the theme (Markdown, a site's `_posts`/`_docs`/`_data`, `docs/`, test
-    fixtures that model outside repositories, the workspace tool's golden
-    recordings of what its Ruby predecessor printed about the old tree, and the
+    fixtures that model outside repositories, the workspace tool's and the
+    distribution lane's golden recordings of what their Ruby predecessors
+    printed or computed about the old tree and its sites' pages, and the
     recordings of what each site's Jekyll build wrote, `web/site/fixtures/`,
     whose paths include the theme's own asset names) is not counted — it is
     content, and content is kept;
@@ -74,7 +75,14 @@ RUBY_NAMES = {"Gemfile", "Gemfile.lock", "Rakefile", ".ruby-version", "Guardfile
 THEME_TERMS = re.compile(rb"zer0-mistakes|jekyll-theme-zer0|ZER0_THEME_")
 THEME_SUFFIXES = (".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".rb", ".yml", ".yaml", ".json", ".gemspec", ".toml")
 THEME_NAMES = {"Gemfile", "Gemfile.lock", "Dockerfile"}
-THEME_SKIP_PREFIXES = ("docs/", "src/test/fixtures/", "features/", "tools/workspace/tests/golden/", "web/site/fixtures/")
+THEME_SKIP_PREFIXES = (
+    "docs/",
+    "src/test/fixtures/",
+    "features/",
+    "tools/workspace/tests/golden/",
+    "content/tests/distribution/golden/",
+    "web/site/fixtures/",
+)
 # A proof is a test: a test file (under tests/ or test/, test_*, *.test.ts, *_test.py), optionally
 # followed by `::` and a test id in it (`test_x`, `SomeTest`, `SomeTest::test_x`, `test_x[case]`).
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*$|[._]test\.[a-z]+$")
