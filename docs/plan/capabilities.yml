@@ -1,7 +1,10 @@
 # The capability ledger (ADR 0006). Read by tools/check_absorption.py, which
 # CI runs on every pull request (zer0-workspace.yml).
 #
-# Three parts:
+# Four parts:
+#
+#   theme_ratchet / theme_allowed — the zer0-mistakes burn-down: code and config
+#     that names the theme, per prefix, until only the Jekyll-theme option does.
 #
 #   ruby_ratchet / ruby_fixtures — the Ruby burn-down. Each prefix may hold at
 #     most its ceiling of Ruby files; Ruby anywhere else fails. Ceilings only go
@@ -38,6 +41,38 @@ ruby_ratchet:
   sites/zer0-pages-remote/: 1
   sites/zer0-pages/: 11
   tools/workspace/: 11
+
+theme_ratchet:
+  # zer0-mistakes leaves completely (ADR 0006 decision 4): code and configuration
+  # that names the theme, per prefix. Content that talks about it is not counted.
+  .github/: 5
+  .vscode/: 1
+  apps/parodynews/: 5
+  content/: 1
+  media/: 1
+  packages/zer0-image-generator/: 8
+  rails/lib/: 5
+  rails/schema/: 1
+  rails/test/: 2
+  schemas/: 1
+  sites/2005/: 2
+  sites/drsai/: 5
+  sites/irony-works/: 5
+  sites/wargames/: 5
+  sites/zer0-demo-cookbook/: 4
+  sites/zer0-demo-garden/: 4
+  sites/zer0-pages-remote/: 2
+  sites/zer0-pages/: 4
+  src/core/: 13
+  src/test/: 6
+  src/webview/: 1
+  workspace.yml: 1
+
+theme_allowed:
+  # The only files that may name the theme for good: the Jekyll-theme option's
+  # own (PLAN P2 adds them here) and this gate.
+  - tools/check_absorption.py
+  - tools/tests/test_check_absorption.py
 
 ruby_fixtures:
   # The extension detects a Jekyll site by its Gemfile (src/core/platform/detect.ts);
@@ -100,6 +135,54 @@ platform:
   - id: content.import
     what: Importers (Jekyll and Obsidian sites, parodynews, books, WordPress) that are idempotent and round-trip byte for byte.
     surfaces: {ops: partial}
+  - id: content.export
+    what: Every site and book also exists as a generated file tree (a site's source, a book's library/<slug>/) — exported byte-stably, committed by a job, re-importable; a hand edit to it comes back as a suggestion.
+    surfaces: {api: missing, studio: missing, ops: partial}
+  - id: content.repurpose
+    what: Turn one piece into others — an article into a newsletter item, a social thread, a summary, a landing page.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+
+  # ── Ideas and research (TARGET.md § Ideas and research) ─────────────────────
+  - id: ideas.board
+    what: Capture ideas on boards — tags, status, votes, links to sources — and promote one to a brief, an article or a book.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: ideas.brainstorm
+    what: AI brainstorming — angles, headlines, outlines — whose results become ideas; ideas clustered and de-duplicated by meaning.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: research.sources
+    what: A sources library — web pages, feeds, documents and notes with extracted text, metadata, summaries and entities — with quotes, citations and collections.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: research.capture
+    what: Capture by URL, bookmarklet, feed subscription (RSS, Atom, wires) on a schedule, upload, or a web search through a provider's tool.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: research.synthesize
+    what: Ask questions across a collection with cited answers, extract facts and quotes, and fact-check a draft's claims against its sources.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+
+  # ── The newsroom (TARGET.md § The newsroom) ─────────────────────────────────
+  - id: news.desk
+    what: Desks and sections, the story budget, the editorial calendar, assignments and deadlines.
+    surfaces: {api: missing, studio: missing}
+  - id: news.workflow
+    what: The newsroom workflow (pitch → assigned → drafting → editing → copy → scheduled → published → updated or corrected), embargoes, a breaking-news fast path.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: news.fronts
+    what: Home and section fronts — featured, pinned and related stories, curated by hand or by rule.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: news.corrections
+    what: A corrections and updates log on a published story, shown on the story.
+    surfaces: {api: missing, studio: missing, extension: missing, site: missing}
+  - id: news.newsletters
+    what: Newsletters assembled from stories and sent by email, with subscribers.
+    surfaces: {api: missing, studio: missing}
+  - id: news.bylines
+    what: Bylines, author pages and contributor profiles.
+    surfaces: {api: missing, studio: missing, site: missing}
+
+  # ── Pipelines and workflows (TARGET.md § Pipelines and workflows) ───────────
+  - id: workflows.automations
+    what: Automations — a trigger (event, schedule, webhook, new source item, monitor finding), conditions and actions (run a pipeline or an agent, create a brief or an idea, notify, move a stage) — with a run history; new ones start paused.
+    surfaces: {api: missing, studio: missing}
 
   # ── Media ───────────────────────────────────────────────────────────────────
   - id: media.library
@@ -170,8 +253,11 @@ platform:
     what: Background jobs (sync, render, deploy, preview, doctor, reports) with live logs, artifacts and cancel.
     surfaces: {api: missing, studio: missing}
   - id: sites.render
-    what: The React site renderer — layouts and skins of the zer0 design, feeds, sitemap, robots, search index, redirects — matching each site's recorded build.
+    what: The React site renderer, in the platform's own design system — layouts, skins, feeds, sitemap, robots, search index, redirects — reproducing each site's recorded build.
     surfaces: {site: missing, ops: missing}
+  - id: sites.render-jekyll
+    what: The Jekyll-theme option — render a site with the zer0-mistakes theme and deploy it with a Jekyll server (GitHub Pages' builder or a pinned container), with nothing Ruby in this repository.
+    surfaces: {api: missing, studio: missing, ops: missing}
   - id: sites.obsidian
     what: Obsidian-flavoured content — wikilinks, embeds, callouts, Dataview queries, the graph index.
     surfaces: {api: partial, site: missing}
@@ -201,6 +287,9 @@ platform:
   - id: aieo.citations
     what: Citation tracking — whether AI engines cite the site, on a schedule.
     surfaces: {api: missing, studio: missing}
+  - id: aieo.optimize
+    what: Rewrite content to raise its score (score → gaps → AI rewrite) or scrub AI-writing tells, as a suggestion.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
   - id: aieo.patterns
     what: The pattern library and applying a pattern as a rewrite proposal.
     surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
@@ -227,7 +316,13 @@ platform:
 
   # ── Books ───────────────────────────────────────────────────────────────────
   - id: books.manage
-    what: Books and chapters, continuity, validation, statistics, compiled manuscripts.
+    what: Books in the database — parts and chapters, outline, characters, continuity notes, style guide, order and status, validation, statistics, compiled manuscripts — with library/<slug>/ as the generated file set.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: books.create
+    what: Create a book with AI — premise → outline → chapter plan.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: books.write
+    what: Write with AI — draft, continue, rewrite or expand a chapter in the book's voice, and check continuity and consistency — every result a suggestion.
     surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
   - id: books.abc
     what: The ABC book wizard — themes, lexicons, art styles, letters, export into a site.
@@ -277,6 +372,10 @@ platform:
   - id: platform.workspace
     what: The repository's workspace tool — list, info, run, affected, matrix, routes, check, vendor, doctor, tags — in Python.
     surfaces: {ops: missing}
+
+  - id: platform.shared-ui
+    what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
+    surfaces: {studio: missing, extension: missing}
 
   # ── The extension's own (file mode) ─────────────────────────────────────────
   - id: extension.file-mode
@@ -333,6 +432,7 @@ sources:
       - {id: parodynews.posthog, what: "An optional self-hosted PostHog stack (not wired into the app).", target: sites.analytics, status: missing}
       - {id: parodynews.field-defaults, what: "Stored default field values per model.", target: content.types, status: missing}
       - {id: parodynews.cloud-deploy, what: "Azure deployment (azd, Bicep: Container Apps, Postgres, Key Vault, registry, monitoring).", target: platform.deploy, status: missing}
+      - {id: parodynews.newsroom, what: "Run a news site — posts move draft → review → published → archived, generated by assistant pipelines and published to the site.", target: news.workflow, status: partial}
       - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: missing}
 
   - id: rails-app
@@ -383,21 +483,39 @@ sources:
 
   - id: zer0-image-generator
     path: packages/zer0-image-generator
-    summary: AI preview and social images for Jekyll sites — the Python engine, its byte-identical Ruby port and gem, and a Rails web panel.
-    content: The art styles (abc/art_styles.yml), the design tokens (zer0-tokens.css), prompts and the SVG examples under tools/; the panel's library entries and compositions if any exist locally.
+    summary: AI preview and social images and SVG art for sites — a Python engine and toolkit, its byte-identical Ruby port and gem, and a Rails web panel. Rewritten in Python and TypeScript (ADR 0006 decision 11).
+    content: tools/svg/library/** (MANIFEST.json, 42 external SVGs with LICENSES.md, 6 style cards — provenance and licenses kept); abc/art_styles.yml; fonts/* (Inter, Press Start 2P, OFL licenses); svg/{plan,critique}.schema.json; docs/samples/*.svg and docs/showcase/**; test/fixture-site/ (the G6 gate); zer0-tokens.css; runtime data outside git — the panel's SQLite volume (sites, runs and logs, artifacts, compositions, studio renders, library entries, credentials re-encrypted on import) and the forge volume.
     capabilities:
-      - {id: imagegen.engine, what: "The preview engine — providers (OpenAI, xAI, Stability, Gemini, local), prompt engines (Claude, xAI), review, enhance, list missing, dry run, per collection.", target: media.generate, status: partial}
-      - {id: imagegen.cli, what: "Generation from the command line (jekyll preview-images, or the engine's own CLI).", target: media.generate, status: partial}
-      - {id: imagegen.illustration-loop, what: "The Claude illustration loop — plan, author, shape, look, critique.", target: media.generate, status: partial}
-      - {id: imagegen.svg-generators, what: "SVG generators, sanitizer, lint, rasterizer and text-to-paths.", target: media.svg-studio, status: partial}
-      - {id: imagegen.abc-style-pack, what: "One text-free raster prompt per letter for an art style.", target: books.abc, status: missing}
-      - {id: imagegen.panel-sites, what: "The panel's sites — scan, edit the preview_images block, generate, dry run, list missing and enhance with a live log.", target: media.generate, status: missing}
-      - {id: imagegen.forge, what: "The image forge — direct, render, review, enhance compositions.", target: media.forge, status: missing}
-      - {id: imagegen.svg-studio, what: "The SVG studio — knobs and seed sweeps.", target: media.svg-studio, status: missing}
-      - {id: imagegen.library, what: "The library with FreeSVG sourcing.", target: media.sourcing, status: partial}
-      - {id: imagegen.runs, what: "The runs audit.", target: media.generate, status: missing}
-      - {id: imagegen.credentials, what: "Encrypted per-provider credentials.", target: ai.providers, status: missing}
-      - {id: imagegen.tokens, what: "The zer0 UI design tokens shared with the other UIs.", target: sites.render, status: partial}
+      # From the 2026-10-21 code inventory. [Ruby] rows are rewritten, not ported.
+      - {id: imagegen.engine-cli, what: "Generate previews for a site from the command line — dry run, file, collection, force, list missing, parallel workers.", target: media.generate, status: partial}
+      - {id: imagegen.engine-config, what: "Configuration precedence — author overrides, CLI, environment, the site's preview_images block, defaults.", target: media.generate, status: partial}
+      - {id: imagegen.front-matter, what: "Find content lacking a preview and write the preview key surgically.", target: media.generate, status: partial}
+      - {id: imagegen.provider-raster, what: "Raster renderers — OpenAI, xAI, Stability, Gemini.", target: media.generate, status: partial}
+      - {id: imagegen.provider-svg, what: "SVG renderers — deterministic per-article banners in several compositions.", target: media.generate, status: partial}
+      - {id: imagegen.prompt-engines, what: "Art direction by Claude or Grok writing the renderer's brief, falling back to a template.", target: media.generate, status: partial}
+      - {id: imagegen.review-engine, what: "Vision review of a render with one refined regeneration.", target: media.generate, status: partial}
+      - {id: imagegen.enhance, what: "Enhance existing previews with OpenAI image edits.", target: media.generate, status: partial}
+      - {id: imagegen.illustration-loop, what: "The Claude illustration loop — plan, author, shape, look, critique, edit — with style cards and palettes.", target: media.generate, status: partial}
+      - {id: imagegen.svg-toolkit, what: "SVG sanitizer, strict lint, text-to-paths with bundled fonts, precision rounding, rasterizers, inspect and shape.", target: media.svg-studio, status: partial}
+      - {id: imagegen.svg-generators, what: "Parametric generators — banner, flowfield, L-system, low-poly, mandala, starmap, invaders, pixel quest — and a pixel-art kit.", target: media.svg-studio, status: partial}
+      - {id: imagegen.svg-authoring-loop, what: "The render-and-look development loop — check, render, sweep contact sheets, an editor hook.", target: media.svg-studio, status: partial}
+      - {id: imagegen.freesvg, what: "FreeSVG.org search, fetch and promote into the library, with a tiered cache.", target: media.sourcing, status: partial}
+      - {id: imagegen.svg-library, what: "The curated SVG library — 55 entries with source, license, tags and lint.", target: media.sourcing, status: partial}
+      - {id: imagegen.xai-oauth, what: "The xAI credential ladder — a Grok OAuth token with refresh, then the API key.", target: ai.providers, status: partial}
+      - {id: imagegen.panel-dashboard, what: "[Ruby] The panel's dashboard — sites, runs, compositions, studio and library counts, favorites, configured credentials.", target: media.generate, status: missing}
+      - {id: imagegen.sites, what: "[Ruby] Register, edit, remove and bulk-import sites; rescan; per-site overview, content, config and runs.", target: media.generate, status: missing}
+      - {id: imagegen.site-scan, what: "[Ruby] Every content file per collection with its preview status, and single-file generation.", target: media.generate, status: missing}
+      - {id: imagegen.site-config-editor, what: "[Ruby] A form editor for a site's preview_images settings.", target: media.generate, status: missing}
+      - {id: imagegen.runs, what: "[Ruby] Generate, dry-run, list-missing and enhance runs with a live log, cancel, statistics and status.", target: media.generate, status: missing}
+      - {id: imagegen.runs-audit, what: "[Ruby] A cross-site audit trail of every run, filterable by kind and status.", target: media.generate, status: missing}
+      - {id: imagegen.forge, what: "[Ruby] The image forge — compositions with art direction, review and versions; enhance and favorite a version.", target: media.forge, status: missing}
+      - {id: imagegen.svg-studio, what: "[Ruby] The SVG studio — knob forms for eight generators with live preview and lint, saved recipes, seed sweeps as contact sheets.", target: media.svg-studio, status: missing}
+      - {id: imagegen.library-panel, what: "[Ruby] Browse the library with search, tags, provenance, license and lint; promote from FreeSVG.", target: media.sourcing, status: missing}
+      - {id: imagegen.credentials, what: "[Ruby] An encrypted per-provider credential vault with masked display.", target: ai.providers, status: missing}
+      - {id: imagegen.file-serving, what: "[Ruby] Serve generated images only from allow-listed roots.", target: media.library, status: missing}
+      - {id: imagegen.abc-art-styles, what: "[Ruby] The ABC art-style catalog — one text-free raster prompt per letter for a style.", target: books.abc, status: missing}
+      - {id: imagegen.jekyll-command, what: "[Ruby] jekyll preview-images and the facade the Rails CMS calls — replaced by the platform's commands and API.", target: media.generate, status: missing}
+      - {id: imagegen.tokens, what: "The zer0 UI design tokens shared with the other UIs — the seed of the platform's design system.", target: sites.render, status: partial}
 
   - id: site-1987
     path: sites/1987
@@ -471,3 +589,85 @@ sources:
     capabilities:
       - {id: site-zer0-pages-remote.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render, status: missing}
+
+  - id: aieo
+    path: apps/aieo
+    summary: AIEO (AI Engine Optimization) — FastAPI + SQLAlchemy + Celery + React; scores and rewrites content so AI engines cite it, runs a file-based content lifecycle, and audits whole sites.
+    content: backend/prompts/** (system, scoring rubric, optimize-expand, 10 pattern files, 14 agent prompts, 7 command prompts → pattern snippets and agent definitions); the PATTERNS table; the workspace CONTEXT_TEMPLATES and examples/{castos,starter} brand voices (→ BrandRules, Memory, site settings); reports/ (10 site audits, REPORT.md, summary.json) and sites.txt (→ audit history); wordpress/*.php; docs/*.md and PRD-aieo.md (its never-built "planned" features are inputs to G7/G13 scope, not rows here); runtime data outside git — any operator's .aieo-workspace/ and its .cache, and near-empty Postgres rows (users, api_keys, citations, audits).
+    capabilities:
+      # From the 2026-10-21 code inventory. "stub" means the source fakes it, so absorbing it means building it.
+      - {id: aieo.audit, what: "Score pasted Markdown/HTML or a fetched URL: 0–100 and a grade, per-pattern evidence, gaps, anti-pattern penalties, the five dimensions.", target: aieo.scoring, status: missing}
+      - {id: aieo.scoring-engine, what: "The prompt-driven evaluator — system prompt, rubric and pattern files build a prompt that returns structured scores — with heuristic fallbacks.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-aieo, what: "Dimension aieo: ten citability patterns (structured data, entity density, comparisons and the rest) with weights.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-seo, what: "Dimension seo: SEO quality, keyword density and placement, search intent, content-length comparison.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-readability, what: "Dimension readability: readability metrics.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-humanity, what: "Dimension humanity: the humanity and quality score.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-cro, what: "Dimension cro: above-the-fold, CTA and trust-signal analysis with the CRO checklist.", target: aieo.scoring, status: missing}
+      - {id: aieo.analyzers-extra, what: "The engagement and competitor-gap analyzers (exported, wired to nothing).", target: aieo.scoring, status: missing}
+      - {id: aieo.benchmark, what: "Percentile and per-engine estimates on each audit (stub: fixed buckets).", target: aieo.scoring, status: missing}
+      - {id: aieo.visual-audit, what: "Screenshot a URL (Playwright, 1280×800) and score it with vision alongside the text.", target: aieo.audits, status: missing}
+      - {id: aieo.analyze-existing, what: "Analyze a URL or a workspace file: score plus an AI summary (health, quick wins, strategic actions).", target: aieo.audits, status: missing}
+      - {id: aieo.site-snapshot, what: "Crawl a static site (sitemap → feed → robots → links; robots-aware, SSRF guard, ETag cache) into an offline snapshot.", target: aieo.audits, status: missing}
+      - {id: aieo.batch-audit, what: "Batch-audit a list of sites directly or over MCP.", target: aieo.audits, status: missing}
+      - {id: aieo.reports, what: "Per-site Markdown reports and a summary report (rankings, score bars, severity) from audit JSON.", target: aieo.audits, status: missing}
+      - {id: aieo.headless-runner, what: "A database-free CI runner that scores or optimizes Markdown selected by globs or a git diff, with dry run.", target: aieo.audits, status: missing}
+      - {id: aieo.ci-workflows, what: "A reusable workflow that scores or optimizes another repository's Markdown and can commit the result.", target: workflows.automations, status: missing}
+      - {id: aieo.optimize, what: "Rewrite content to raise its score — score, gaps, AI rewrite (preserve or aggressive; enhance or expand).", target: aieo.optimize, status: missing}
+      - {id: aieo.scrub, what: "Remove AI-writing tells from a draft.", target: aieo.optimize, status: missing}
+      - {id: aieo.patterns, what: "Browse the pattern library (category, description, citation-boost range) and fetch a pattern (apply is a stub).", target: aieo.patterns, status: missing}
+      - {id: aieo.prompt-library, what: "Change scoring and agent behaviour by editing Markdown prompts with front-matter weights, no code change.", target: aieo.patterns, status: missing}
+      - {id: aieo.providers, what: "Pick the AI engine per request or by environment: OpenAI, Anthropic, Claude Code over OAuth, xAI.", target: ai.providers, status: partial}
+      - {id: aieo.agent-runner, what: "Run any agent prompt on pasted content with the workspace context injected.", target: ai.assistants, status: partial}
+      - {id: aieo.agents-seo, what: "Agents seo-optimizer, meta-creator and keyword mapping.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-editor, what: "Agent editor ('human editor'): clarity, flow, human voice, a humanity score and a rewritten excerpt.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-headlines, what: "Agent headline-generator: variants, rationale, a testing plan.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-internal-linker, what: "Agent internal-linker: links with anchor text and placement from the internal-links map.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-content-analyzer, what: "Agent content-analyzer: summary, strengths and weaknesses of a draft.", target: aieo.agents, status: missing}
+      - {id: aieo.agents-cro, what: "Agents cro-analyst and landing-page-optimizer.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-performance, what: "Agent performance: quick wins, declining content and a roadmap from analytics.", target: aieo.agents, status: missing}
+      - {id: aieo.workspace, what: "The content workspace — context, topics, research, drafts, rewrites, review-required, published, landing pages, audits.", target: aieo.lifecycle, status: missing}
+      - {id: aieo.brand-context, what: "Context every agent reads: brand voice, style guide, writing examples, target keywords, internal-links map, competitor analysis.", target: sites.registry, status: partial}
+      - {id: aieo.topics, what: "Capture ideas as topics from a template.", target: ideas.board, status: missing}
+      - {id: aieo.research, what: "Generate a research brief.", target: research.synthesize, status: missing}
+      - {id: aieo.write, what: "Write a long-form draft from a topic and a brief, then run the SEO, meta, internal-link and keyword agents on it.", target: ai.briefs, status: partial}
+      - {id: aieo.rewrite, what: "Rewrite a workspace file, shown side by side with the original.", target: ai.suggestions, status: partial}
+      - {id: aieo.priorities, what: "A ranked content-update queue and quick wins from Search Console rows (position, impressions, CTR, trend, business priority).", target: sites.evolve, status: missing}
+      - {id: aieo.landing-pages, what: "Draft landing pages, research them, analyze a competitor URL, CRO-audit copy.", target: aieo.lifecycle, status: missing}
+      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: missing}
+      - {id: aieo.connectors, what: "GA4 top pages, Search Console queries, DataForSEO SERP (stub: placeholder or mock rows).", target: aieo.connectors, status: missing}
+      - {id: aieo.citations, what: "Citations by URL, domain and engine, and a share-of-voice dashboard (stub: probing returns nothing).", target: aieo.citations, status: missing}
+      - {id: aieo.site-context, what: "Crawl a seed URL N levels into a dataset — link map with hubs and orphans, per-page content and meta.", target: research.capture, status: missing}
+      - {id: aieo.prd-lineage, what: "Inventory a repository's product documents and classify them against canonical PRD elements.", target: research.synthesize, status: missing}
+      - {id: aieo.vectors, what: "A Qdrant client for semantic benchmarks (configured, never used).", target: content.search, status: partial}
+      - {id: aieo.mcp-server, what: "A stdio MCP server with 28 aieo_* tools (scoring, auditing, patterns, readability, workspace, agents).", target: platform.api, status: missing}
+      - {id: aieo.frontend, what: "The React UI — Score and optimize (audit, optimize, patterns, agents), Create (topics, research, write, rewrite), landing pages, publish, citations, priorities.", target: aieo.scoring, status: missing}
+      - {id: aieo.auth, what: "An X-API-Key on every route; hashed, expiring keys for citations and the dashboard.", target: platform.tokens, status: partial}
+      - {id: aieo.infra, what: "Compose services for the MCP server, Postgres (TimescaleDB), Redis and Qdrant.", target: platform.deploy, status: partial}
+      - {id: aieo.ops, what: "Health, liveness and readiness probes, per-key rate limits, request logging, input limits.", target: platform.ops, status: done, proof: content/tests/ops/test_health.py}
+
+  - id: books
+    path: packages/books
+    summary: bookshelf — a dependency-free Python package with the books CLI, a local studio and Claude-backed writing help for long-form books in library/<slug>/.
+    content: library/impairment/** (book.yml, README, outline, chapters ch01–ch14, the three act guides, notes/characters.md and notes/continuity.md — the continuity ledger goes to Memory); library/_template/**, library/README.md, docs/SCHEMA.md (the validation-code catalog), docs/reviews/impairment.md; the authoring guidance in .github/ (copilot instructions, instructions, the outline prompt — these become assistant and profile prompts).
+    capabilities:
+      # From the 2026-10-21 code inventory (113 tests in packages/books/tests).
+      - {id: books.library-format, what: "The library format — book.yml (status idea → complete, logline, genre, POV, tense, era, acts, targets, cast), outline, act guides, numbered chapters, character and continuity notes.", target: books.manage, status: partial}
+      - {id: books.import-export, what: "The library imports into the platform and is regenerated from it as the static library/<slug>/.", target: content.export, status: missing}
+      - {id: books.list, what: "books list — every book with status, chapters done and planned, words, progress.", target: books.manage, status: missing}
+      - {id: books.show, what: "books show — a book's facts and its chapter table.", target: books.manage, status: missing}
+      - {id: books.scaffold, what: "books new and add-chapter — start a book from the template; add the next chapter with its act inferred.", target: books.create, status: missing}
+      - {id: books.validate, what: "books validate — schema checks with stable codes, strict mode, JSON.", target: books.manage, status: missing}
+      - {id: books.continuity, what: "Continuity checks — placeholders, meta references, unknown characters, navigation, broken links, POV and era drift.", target: books.write, status: missing}
+      - {id: books.stats, what: "books stats — narrative-only word counts, status breakdown, chapter lengths, progress against target.", target: books.manage, status: missing}
+      - {id: books.build-manuscript, what: "books build — the compiled manuscript with a title page, act headings and placeholders for unwritten chapters.", target: books.manage, status: missing}
+      - {id: books.library-json, what: "library.json — every book exported as data.", target: content.export, status: partial}
+      - {id: books.dashboard, what: "books dashboard and serve — a static HTML shelf with chapter tables and validation findings.", target: books.manage, status: missing}
+      - {id: books.studio-editor, what: "books studio — a local editor: the shelf, a chapter's fields and Markdown, word count, autosave.", target: books.write, status: missing}
+      - {id: books.studio-checks, what: "The studio's checks pane — validation findings for the open chapter and an on-demand AI continuity check.", target: books.write, status: missing}
+      - {id: books.ai-draft-continue, what: "AI Draft (a chapter from its outline section, the act guide and the neighbouring chapters) and Continue (from where it stops, in its voice), streamed.", target: books.write, status: missing}
+      - {id: books.ai-revise, what: "AI Revise — rewrite a selected passage to an instruction.", target: books.write, status: missing}
+      - {id: books.ai-check, what: "AI continuity check with structured findings (severity, kind, quote, problem, suggestion) and a summary.", target: books.write, status: missing}
+      - {id: books.ai-outline-critique, what: "AI Outline (premise → synopsis, themes, three-act beats, arcs, chapter plan) and Critique (an editorial read with the top fixes).", target: books.create, status: missing}
+      - {id: books.ai-context, what: "Every AI request carries the book's brief, outline, characters, continuity, the act guide and the neighbouring chapters, with prompt caching.", target: books.write, status: missing}
+      - {id: books.ai-client, what: "The Anthropic client — model, effort, token limits, caching and fallback configurable.", target: ai.providers, status: partial}
+      - {id: books.authoring-guidance, what: "Agent guidance for outlining, drafting and structuring chapters.", target: ai.assistants, status: missing}
