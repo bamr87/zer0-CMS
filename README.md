@@ -1,22 +1,31 @@
-<h1 align="center">zer0-CMS</h1>
+# zer0-CMS
+
+> A CMS for zer0-themed markdown sites: VS Code for in-editor edits, Rails for the fleet, and a Django + Wagtail content plane for where it is going — publishing only through a gate a human has to walk through.
+
+[![CI](https://img.shields.io/github/actions/workflow/status/bamr87/zer0-CMS/ci.yml?branch=main&label=CI)](https://github.com/bamr87/zer0-CMS/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 <p align="center">
   <img src="media/zer0-cms-128.png" width="96" alt="">
 </p>
 
-<p align="center">
-A CMS for zer0-themed markdown sites: VS Code for in-editor edits, Rails for the fleet.<br> Edit front matter as real controls, browse every site in one dashboard, and publish through a gate a human has to walk through.
-</p>
+## Overview
 
-<p align="center">
-  <em>Extension: zero runtime dependencies. Fleet CMS: Rails 8.1 on Administrate, on 127.0.0.1:3001.</em>
-</p>
+zer0-CMS turns a repository of markdown into something you can actually operate. Edit front matter as real controls, browse every site in one dashboard, and publish through a gate a human has to walk through. The extension has zero runtime dependencies; the fleet CMS is Rails 8.1 on Administrate, on 127.0.0.1:3001.
 
----
+It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-## What it is
+The repository holds three products of its own and the rest of the zer0 stack:
 
-zer0-CMS turns a repository of markdown into something you can actually operate:
+| Path | What it is |
+|---|---|
+| `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*. This README. |
+| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), carries a site's content to LinkedIn under a human gate (`zer0-cms linkedin`, the `zer0-linkedin.yml` workflow, `/admin/distribution`), and hosts the ABC book wizard. [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
+| `content/` | The **content plane** — where zer0-CMS is going ([ADR 0001](docs/adr/0001-target-architecture.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share. It imports the Jekyll sites and exports them back byte for byte, so for now the files stay the source of truth. [`content/README.md`](content/README.md) |
+| `packages/`, `sites/`, `apps/` | The theme, the image generator, the books app, the zer0 sites and the parodynews and aieo apps, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and `bin/zer0` lists, checks, tests and builds them all. [`docs/MONOREPO.md`](docs/MONOREPO.md) lists each one and what still runs from the original repositories. |
+
+How this repository, the zer0-mistakes theme and zer0-image-generator fit together: [`docs/ZER0-STACK.md`](docs/ZER0-STACK.md).
+
+## Features
 
 - a **metadata panel** that renders the active file's front matter as typed controls instead of raw YAML,
 - a **dashboard** that lists every piece of content with search, filters and sorting,
@@ -27,52 +36,33 @@ zer0-CMS turns a repository of markdown into something you can actually operate:
 - **many sites in one window**, each with its own configuration, draft queue and MCP server,
 - and a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs.
 
-It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
-
-## The two halves of this repo
-
-| Path | What it is |
-|---|---|
-| `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*. This README. |
-| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), carries a site's content to LinkedIn under a human gate (`zer0-cms linkedin`, the `zer0-linkedin.yml` workflow, `/admin/distribution`), and hosts the ABC book wizard. [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
+## Quick start
 
 ```bash
-SITES_DIR=~/github docker compose up --build                      # → http://localhost:3001/admin
-SITES_DIR=~/github docker compose --profile imagegen up --build   # + zer0-image-generator → http://localhost:3000
+npm install
+npm run compile          # check-types + lint + all five bundles
+npm run watch            # rebuild on change, then F5 in VS Code to launch the Extension Host
+npm test                 # unit, golden, MCP stdio and integration suites
+SITES_DIR=$HOME/github docker compose up --build                                   # fleet CMS → http://localhost:3001/admin
+docker compose --profile content up -d --wait db redis content worker beat relay  # content plane → http://localhost:8000/admin/
+bin/zer0 run check --affected                                                      # fast checks of every project this branch touched
 ```
 
-Both ports are published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposing the CMS anywhere else. How this repository, the zer0-mistakes theme and zer0-image-generator fit together: [`docs/ZER0-STACK.md`](docs/ZER0-STACK.md).
+Both Docker ports are published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposing the fleet CMS anywhere else. `SITES_DIR=$HOME/github docker compose --profile imagegen up --build` adds zer0-image-generator on :3000.
 
-### The content plane
+## Usage
 
-`content/` is where zer0-CMS is going ([ADR 0001](docs/adr/0001-target-architecture.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share. It imports the Jekyll sites and exports them back byte for byte, so for now the files stay the source of truth. [`content/README.md`](content/README.md)
+1. Install the extension and open your content repo.
+2. Run **zer0-CMS: Initialize project** to write a `zer0.json`.
+3. Register a content folder (right-click a folder → *Register content folder*, or add it to `zer0.json`).
+4. Open a markdown file — the panel fills in.
+5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
 
-```bash
-docker compose --profile content up -d --wait db redis content worker beat relay   # → http://localhost:8000/admin/
-```
-
-### The rest of the stack, in the same repository
-
-The theme, the image generator, the books app, the zer0 sites and the parodynews and aieo apps live here too, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
-
-| Path | What it is |
-|---|---|
-| `packages/zer0-mistakes/` | The Jekyll theme (`jekyll-theme-zer0` gem). |
-| `packages/zer0-image-generator/` | The preview-image engine (`zer0-image-generator` gem) and its web panel. |
-| `packages/books/` | The book projects and the `bookshelf` app that validates, compiles and edits them. |
-| `sites/drsai/` | The children's picture-book site and its story engine; the ABC wizard exports here. |
-| `apps/parodynews/` | The Django + React parody-news app (imported as barodybroject, de-branded in ADR 0003); its models are absorbed by the content plane under PLAN M20. |
-| `apps/aieo/` | AI Engine Optimization — the FastAPI + React app that scores content for AI-engine citation. |
-| `sites/zer0-pages/` | The Obsidian vault + Jekyll site. |
-| `sites/zer0-pages-remote/` | The minimal `remote_theme` consumer demo. |
-| `sites/irony-works/` | The perpetual encyclopedia of irony — an AI-tended Obsidian vault published as a site. |
-| `sites/wargames/` | OverTheWire security wargames as a Jekyll study site. |
-| `sites/zer0-demo-cookbook/`, `sites/zer0-demo-garden/` | Demo sites generated by the theme's installer. |
-| `sites/1987/`, `sites/2005/` | The year knowledge bases — 1987 (plain markdown, from bamr87/1987) and 2005 (a `remote_theme` site from the year-of-ai lineage). |
+Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why most settings are folder-scoped, so one window can hold several sites.
 
 ## How publishing works
 
-```
+```text
 Content ──▶ Draft ──────▶ Guard ──────▶ Approve ──────▶ Publish ──▶ Ledger
    ▲        status:        length,       status:          the        keyed by
    │        pending        bans,         approved         target     canonical
@@ -93,16 +83,6 @@ Five rules hold this together:
 3. **The ledger is keyed by canonical URL**, so this extension and a CI lane can share one queue without double-publishing. It is byte-compatible with the Python lane's `json.dump` output, so the file never churns in git.
 4. **What comes back is aggregate, and only about your own content.** The read surface is declared as data in `core/analytics`, and a test fails the build if a call in it would return another person's data. Nothing is derived about a reader anywhere in the loop.
 5. **Publishing is off by default.** Until you enable `zer0Cms.governance.publishAllow`, every path — commands, panel, dashboard, MCP — is preview and draft only.
-
-## Getting started
-
-1. Install the extension and open your content repo.
-2. Run **zer0-CMS: Initialize project** to write a `zer0.json`.
-3. Register a content folder (right-click a folder → *Register content folder*, or add it to `zer0.json`).
-4. Open a markdown file — the panel fills in.
-5. Press <kbd>Alt</kbd>+<kbd>D</kbd> for the dashboard.
-
-Everything about the *project* — content folders, content types and their fields, taxonomy, SEO thresholds, the slug template — lives in `zer0.json`, validated as you type. Everything about *your machine* lives in VS Code settings under `zer0Cms.*`. That split is why there are 44 settings here instead of 89, and why most of them are folder-scoped so one window can hold several sites.
 
 ## Configuration
 
@@ -132,27 +112,7 @@ Everything about the *project* — content folders, content types and their fiel
 }
 ```
 
-The settings that matter most:
-
-| Setting | Default | Purpose |
-|---|---|---|
-| `zer0Cms.governance.publishAllow` | `false` | The master gate |
-| `zer0Cms.governance.acceptStatuses` | `pending, approved` | Set to `approved` only to force the approval step |
-| `zer0Cms.governance.draftsFolder` | `.zer0/drafts` | The queue |
-| `zer0Cms.governance.ledgerPath` | `.zer0/ledger.json` | The shared ledger |
-| `zer0Cms.governance.bannedPatternsFile` | — | Extra brand-guard patterns |
-| `zer0Cms.cms.root` | `.cms` | Where the content engine's contract lives |
-| `zer0Cms.cms.aiConfigPath` | `_data/ai.yml` | The site's own AI configuration, so the editor agent and the repository's CI resolve the same model |
-| `zer0Cms.cms.verifyCommand` | — | The repository's own verification command; empty means there is none, and nothing is guessed |
-| `zer0Cms.agent.enabled` | `false` | The optional AI layer |
-| `zer0Cms.fleet.enabled` | `false` | The Fleet, Workflows and Monitor tabs and the twelve `fleet.*`/`workflows.open`/`lane.scaffold`/`monitor.open` palette entries — read-only until `dispatchAllow` or `scaffoldAllow` |
-| `zer0Cms.fleet.dispatchAllow` | `false` | Lets the console flip a lane's switch, dispatch it, re-run its last failure, cancel a run, or enable/disable its workflow file — your settings only |
-| `zer0Cms.fleet.scaffoldAllow` | `false` | Lets the console write a new lane's files for you to review and commit — your settings only; it never creates the variable that arms the lane |
-| `zer0Cms.fleet.roster` | `[]` | Other repositories to show beside this one, as `owner/name` |
-| `zer0Cms.fleet.hub` | `bamr87/bamr87` | The fleet's hub, read only when you ask for it |
-| `zer0Cms.fleet.gitfactoryUrl` | `https://bamr87.github.io/gitorio/` | Where "Open in GitFactory" points |
-
-Full reference: [`docs/CONFIG.md`](docs/CONFIG.md).
+The settings that matter on day one are the gates, all off by default: `zer0Cms.governance.publishAllow` (the master publish switch), `zer0Cms.agent.enabled` (the optional AI layer), `zer0Cms.fleet.enabled` (the Fleet, Workflows and Monitor tabs, read-only), and — read from your own settings only — `zer0Cms.fleet.dispatchAllow` (the lane run verbs) and `zer0Cms.fleet.scaffoldAllow` (writing a new lane's files). Set `zer0Cms.governance.acceptStatuses` to `approved` only to force the approval step, and `zer0Cms.cms.verifyCommand` to the repository's own verification command. Every setting, its default and its scope: [`docs/CONFIG.md`](docs/CONFIG.md) §5, generated from `package.json`.
 
 ## The `.cms/` contract
 
@@ -162,9 +122,7 @@ If your repo has no `.cms/`, that is a normal state, not an error — the extens
 
 ## Fleet
 
-If a repository carries a `fleet.manifest.yml` (spec `fleet/v1`, written by `wtd fleet adopt`), turning on `zer0Cms.fleet.enabled` adds three dashboard tabs. **Fleet** draws that repository's AI lanes — harness, workflow, triggers, guardrails, `*_ENABLED` switch — and, after a GitHub sign-in you answer, each switch's value, each lane's newest run, the open pull requests attributed to it, its cost from the repository's own usage ledger and the audit grade of its workflow. **Monitor** draws the same columns for a roster: the folders open in this window that carry a manifest, the repositories in `zer0Cms.fleet.roster`, and — only when you run `fleet.importHubRoster` — the hub's registry. **Workflows** catalogues every lane read-only and, behind `zer0Cms.fleet.scaffoldAllow`, writes a new lane's files (`lane.scaffold`) for you to commit, never creating the variable that arms it. The **Harness** tab needs no setting: it inventories a repository's agents, skills, workflows, lanes, switches and usage ledger, and reports where they disagree.
-
-Five verbs act on a lane: flip its switch, dispatch it once, re-run its last failure, cancel what is in flight, and enable or disable its workflow file. All five are off until `zer0Cms.fleet.dispatchAllow` is set in *your* settings; each re-reads the manifest and re-runs the gate host-side, and asks first. The webview sends `{repo, lane}` and nothing else. A refresh costs four calls per repository whatever its lane count, and a list GitHub refuses to show renders as unknown rather than as empty. Nothing about the fleet runs at activation; the extension stores no token.
+If a repository carries a `fleet.manifest.yml` (spec `fleet/v1`, written by `wtd fleet adopt`), turning on `zer0Cms.fleet.enabled` adds three dashboard tabs: **Fleet** draws that repository's AI lanes and, after a GitHub sign-in you answer, each switch's value, newest run, open pull requests, cost and audit grade; **Monitor** draws the same columns for a roster of repositories; **Workflows** catalogues every lane and, behind `zer0Cms.fleet.scaffoldAllow`, writes a new lane's files for you to commit. The **Harness** tab needs no setting: it inventories a repository's agents, skills, workflows, lanes, switches and usage ledger, and reports where they disagree. Five verbs act on a lane — flip its switch, dispatch it, re-run its last failure, cancel a run, enable or disable its workflow file — and all five are off until `zer0Cms.fleet.dispatchAllow` is set in *your* settings. Nothing about the fleet runs at activation, and the extension stores no token. How the console is bounded: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#the-fleet-console).
 
 ## MCP server
 
@@ -186,7 +144,7 @@ Off unless you turn it on. With `zer0Cms.agent.enabled` and the `@anthropic-ai/c
 
 ## Architecture
 
-```
+```text
 src/core/      pure Node. No `vscode` import — enforced by eslint and by the build.
                content, governance, catering, contract, analytics, portfolio, media,
                platform (site profiles), fleet (the console's pure half), harness.
@@ -195,22 +153,47 @@ src/webview/   vanilla TS + CSS. No React, no Tailwind, no innerHTML.
 src/           the thin vscode shell: extension.ts, commands, views, providers.
 ```
 
-The `src/core` boundary is load-bearing, not stylistic: it is why the same publish gate runs identically from a command, a webview and an MCP client, and why the core is testable without an extension host.
+The `src/core` boundary is load-bearing, not stylistic: it is why the same publish gate runs identically from a command, a webview and an MCP client, and why the core is testable without an extension host. More: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-More: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+## Documentation
+
+[`docs/README.md`](docs/README.md) indexes every document in the repository, one line each. Start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (the extension), [`docs/PLATFORM.md`](docs/PLATFORM.md) (the fleet CMS), [`docs/CONFIG.md`](docs/CONFIG.md) (every configuration key) and [`docs/MONOREPO.md`](docs/MONOREPO.md) (the imported projects).
+
+## Project structure
+
+| Path | Holds |
+|---|---|
+| `src/`, `media/`, `schemas/` | The VS Code extension, its stylesheets and templates, and the `zer0.json` schema. |
+| `rails/` | The fleet CMS and the stdlib-only zer0 library. |
+| `content/` | The Django + Wagtail content plane. |
+| `packages/`, `sites/`, `apps/` | The imported zer0 stack: theme, image generator, books, sites, apps. |
+| `bin/`, `tools/`, `workspace.yml` | `bin/zer0`, its registry, and the repository's gates. |
+| `docs/` | Architecture, configuration, CI, releasing, ADRs and the plan. |
 
 ## Development
 
+The Quick start builds and tests the extension. Two more:
+
 ```bash
-npm install
-npm run compile          # type-check + lint + all five bundles
-npm run watch            # esbuild + tsc in watch mode, then F5
-npm test                 # unit + golden + MCP stdio + integration
-npx @vscode/vsce package # build the .vsix
+npm run check-types && npm run lint   # the type and lint gates on their own
+npx @vscode/vsce package              # build the .vsix
 ```
 
-`npm run compile` failing with `Could not resolve "vscode"` means something in `src/core` or `src/mcp` imported the VS Code API. That is the layering gate doing its job.
+`npm run compile` failing with `Could not resolve "vscode"` means something in `src/core` or `src/mcp` imported the VS Code API. That is the layering gate doing its job. The commands for the Rails app, the content plane and every imported project, and the rules every change follows, are in [`AGENTS.md`](AGENTS.md).
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`AGENTS.md`](AGENTS.md); everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Changelog
+
+[`CHANGELOG.md`](CHANGELOG.md), written by release-please; packaged builds are on the [releases page](https://github.com/bamr87/zer0-CMS/releases).
 
 ## License
 
 [MIT](LICENSE). Portions © 2019 Elio Struyf (Front Matter CMS) — see [ATTRIBUTION.md](ATTRIBUTION.md).
+
+---
+
+<!-- bamr87-portfolio-footer -->
+Part of the [bamr87 portfolio](https://github.com/bamr87) — browse every project on [Amr's GitHub profile](https://github.com/bamr87).
