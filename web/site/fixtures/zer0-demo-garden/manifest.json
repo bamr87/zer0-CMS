@@ -1,0 +1,1297 @@
+{
+  "built_with": {
+    "gems": {
+      "addressable": "2.9.0",
+      "base64": "0.3.0",
+      "bigdecimal": "4.1.3",
+      "colorator": "1.1.0",
+      "concurrent-ruby": "1.3.8",
+      "csv": "3.3.6",
+      "em-websocket": "0.5.3",
+      "eventmachine": "1.2.7",
+      "ffi": "1.17.4",
+      "forwardable-extended": "2.6.0",
+      "google-protobuf": "4.36.2",
+      "http_parser.rb": "0.8.1",
+      "i18n": "1.15.2",
+      "jekyll": "4.4.1",
+      "jekyll-feed": "0.18.0",
+      "jekyll-include-cache": "0.3.1",
+      "jekyll-paginate": "1.1.0",
+      "jekyll-remote-theme": "0.6.2",
+      "jekyll-sass-converter": "3.1.0",
+      "jekyll-seo-tag": "2.9.1",
+      "jekyll-sitemap": "1.4.0",
+      "jekyll-watch": "2.2.1",
+      "json": "2.21.2",
+      "kramdown": "2.5.2",
+      "kramdown-parser-gfm": "1.1.0",
+      "liquid": "4.0.4",
+      "listen": "3.10.1",
+      "logger": "1.7.0",
+      "mercenary": "0.4.0",
+      "openssl": "4.0.2",
+      "pathutil": "0.16.2",
+      "public_suffix": "7.0.5",
+      "rake": "13.4.2",
+      "rb-fsevent": "0.11.2",
+      "rb-inotify": "0.11.1",
+      "rexml": "3.4.4",
+      "rouge": "4.7.0",
+      "rubyzip": "3.7.0",
+      "safe_yaml": "1.0.5",
+      "sass-embedded": "1.106.1",
+      "terminal-table": "3.0.2",
+      "unicode-display_width": "2.6.0",
+      "webrick": "1.9.2"
+    },
+    "remote_theme": {
+      "bamr87/zer0-mistakes": "98e978d21f2d071a45cba3d018369c0fc2b6c828"
+    }
+  },
+  "feeds": {
+    "feed.xml": [
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening",
+        "link": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening/",
+        "published": "2026-09-08T01:00:11+00:00",
+        "title": "Six months of gardening in public",
+        "updated": "2026-09-08T01:00:11+00:00"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome",
+        "link": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome/",
+        "published": "2026-09-08T01:00:11+00:00",
+        "title": "This is a garden, not a blog",
+        "updated": "2026-09-08T01:00:11+00:00"
+      }
+    ]
+  },
+  "paths": {
+    "LICENSE": {
+      "type": "application/octet-stream"
+    },
+    "about/index.html": {
+      "text": [
+        "About",
+        "I read a lot and forget most of it, so I started writing notes that link to each other. This is that pile, in public.",
+        "The notes are deliberately short. When one grows past a screen it usually means it contains two ideas and wants splitting, which is the only real rule here.",
+        "Nothing is finished. If a note contradicts another note, both are staying up until I work out which one is wrong.",
+        "Contact: iris@marginalia.example"
+      ],
+      "text_sha256": "9502517a0cc26b2853eda76a0540f9937eab7d4eac37d276a49a15494ad263e1",
+      "title": "About | Marginalia",
+      "type": "text/html"
+    },
+    "assets/backgrounds/gradients/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/css/custom.css": {
+      "type": "text/css"
+    },
+    "assets/css/extension-points-demo.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css.map": {
+      "type": "application/json"
+    },
+    "assets/css/stats.css": {
+      "type": "text/css"
+    },
+    "assets/css/theme-npm-entry.scss": {
+      "type": "text/x-scss"
+    },
+    "assets/css/user-overrides.css": {
+      "type": "text/css"
+    },
+    "assets/css/vendor/.gitkeep": {
+      "type": "application/octet-stream"
+    },
+    "assets/data/notebooks/sales_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/survey_responses.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/weather_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/wiki-index.json": {
+      "type": "application/json"
+    },
+    "assets/images/authors/bamr87.png": {
+      "type": "image/png"
+    },
+    "assets/images/authors/cassandra.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/authors/vega.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/docs/author-profiles/ai-persona-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/author-profiles/interactive-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/admin-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/back-to-top.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/code-copy.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/cookie-consent.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/docs-layout.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/dynamic-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/configurator-repo-check.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-error-not-installed.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-working.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/jupyter-notebooks.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mermaid-rendered.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mobile-toc.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/smart-404.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/docs-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/theme-home.png": {
+      "type": "image/png"
+    },
+    "assets/images/favicon_gpt_computer_retro.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar-small.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar.png": {
+      "type": "image/png"
+    },
+    "assets/images/info-banner-mountain-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/images/logo.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/notebooks/test-notebook_files/test-notebook_4_0.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/10-ai-tools-that-will-transform-your-productivity-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/about.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/accessible-form-patterns-labels-errors-and-helpful.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/add-floating-back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/admin-layout-configuration-dashboards.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/agents-md-cross-tool-ai-agent-entry-point.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-assisted-development-with-zer0-mistakes.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-chat-assistant-claude-github.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-preview-image-generator.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/aieo-ai-engine-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/amr-abdel-motaleb.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/author-profiles-and-about-the-author-bylines.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/auto-hide-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/automated-version-build-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bare-minimum-remote-theme-starter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-theme-examples.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/breadcrumbs-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/build-a-responsive-documentation-card-grid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-accessible-web-applications.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-an-ai-ready-knowledge-base-from-documents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/business.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ci-cd-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-dashboards-turning-measurements-into-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-primer-reading-trends-without-losing-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-copy-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/collection-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/comprehensive-gem-automation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/config-driven-frontmatter-validation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/configuration-utility.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/cookie-consent-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/css-grid-mastery-build-any-layout-you-can-imagine.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customer-onboarding-scorecards-that-reveal-revenue.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dark-light-mode-toggle.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dependency-updates.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-github-pages.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploying-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/devcontainer-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development-docs.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/docker.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dynamic-collection-based-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/edge-ai-in-the-real-world-practical-patterns-for-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/enhanced-sitemap-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/environment-build-info.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/es6-modular-navigation-architecture.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/feature-flags-for-safer-continuous-delivery.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/features.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/from-ai-awareness-to-action-the-skills-systems-and.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/front-matter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-jekyll-your-first-static-site.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-the-obsidian-vault.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/giscus-comments.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/git-workflow-best-practices-for-modern-teams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-copilot-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-setup-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-tag-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/homebrew-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/i-bayesian-modeled-my-coffee-intake-and-wept-with-.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/include-components.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/installation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-collections.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-technical-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-theme-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jeykll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jupyter-notebook-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/layouts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-docker-publishing-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-resilience-networks-how-communities-coordina.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/machine-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-diagrams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-native-markdown.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mobile-toc-floating-action-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation-editor.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/observability-for-small-apps-logs-metrics-and-trac.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-authoring-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-graph-view.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-integration-troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-resolver-performance-caching.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-syntax-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-vault-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/pagination.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/particles-background.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/performance-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/posthog-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/product-requirements-document.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/published-documentation-library.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quantum-computing-explained-from-qubits-to-quantum.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/release-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/remote-theme-consumer-checklist.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby-101.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/safe-mode-build-overlay-building-outside-github-pa.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scenario-planning-for-small-teams-a-practical-oper.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/science.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scripts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security-scanning.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo-meta-tags.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sidebar-navigation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-personalization-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-statistics-portal.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sitemap-generation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/skip-to-content-accessibility-link.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/smart-404-site-configuration-detection.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/statistics-dashboard-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/stats-page-enhancement-summary.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/styles.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/syntax-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/table-of-contents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/technology.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/testing.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-imperative-why-mid-market-manufact.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-map-where-ai-will-augment-replace-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-complete-guide-to-startup-funding-in-2025.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-remote-work-revolution-how-global-teams-are-re.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-trailing-slash-that-could-end-your-entire-comp.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-version-display-plugin.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/tutorial.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/umap-revealed-14-hidden-dimensions-in-my-404-logs.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/urban-resilience-how-cities-prepare-for-extreme-he.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendor-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendored-bootstrap-icon-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/version-bump-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/winget-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/world-news.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/your-favicon-ico-is-an-unlocked-door-to-total-coll.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/zer0-mistakes-about-section.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-features-documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-news-network-building-dynamic-news-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-theme-features.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/06-theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-fork-dialog.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-pages-settings.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-clone.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-main.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-auth.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork-cleanup.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-push.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/install-oneliner.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-compose-up.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-doctor.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-structure.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-git-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-homebrew.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-verify.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/personalization-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/site-running.png": {
+      "type": "image/png"
+    },
+    "assets/images/wizard-on-journey.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-1.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-2.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-mistakes-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/js/ai-chat.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/author-profile.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/auto-hide-nav.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/back-to-top.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/background-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/cheetsheet.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/code-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/config-utility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/docs.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/extension-points-demo.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback-capture.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/halfmoon.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/mermaid-diagrams.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/config.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/focus.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/gestures.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/index.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/keyboard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/navbar.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/scroll-spy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-state.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/smooth-scroll.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/toc-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/theme/appearance.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/myScript.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar-init.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nav-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/navigation.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-local-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-wiki-links.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-views.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/palette-generator.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles-source.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/posts-pagination.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/recipe-scaler.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/search-modal.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/setup-wizard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/share-actions.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/side-bar-folders.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/site-builder.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/skin-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/stats.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/table-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-preview.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-enhancements.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-helpers.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/user-overrides.js": {
+      "type": "text/javascript"
+    },
+    "assets/particles.json": {
+      "type": "application/json"
+    },
+    "assets/vendor/bootstrap-icons/font/bootstrap-icons.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
+      "type": "font/woff2"
+    },
+    "assets/vendor/bootstrap/css/bootstrap.min.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap/js/bootstrap.bundle.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/cytoscape/cytoscape.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/github-calendar/github-calendar-responsive.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/github-calendar/github-calendar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/adaptors/liteDOM.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/core.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/startup.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/tex-mml-chtml.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mermaid/mermaid.min.js": {
+      "type": "text/javascript"
+    },
+    "feed.xml": {
+      "type": "application/xml"
+    },
+    "index.html": {
+      "text": [
+        "Digital garden",
+        "Ideas are worth more connected than collected",
+        "Short notes, revised in place, each one showing what links to it. Start anywhere and follow the links.",
+        "Wander the notes Why a garden",
+        "Recently tended",
+        "September 8, 2026",
+        "This is a garden, not a blog",
+        "A public digital garden about reading, note-taking and how ideas connect — written in the open and revised in place.",
+        "September 8, 2026",
+        "Six months of gardening in public",
+        "What changed after moving from a blog to a set of interlinked notes: fewer posts, more revisiting, and one surprise.",
+        "How to read this",
+        "There is no order. The notes point at each other with [[wiki-links]], and every note lists its backlinks at the bottom — the notes that needed it.",
+        "If you want a path: start at Evergreen notes, follow it to Notes should be atomic, and let the links take you sideways from there. Most of the value is in the sideways.",
+        "Growing your own?",
+        "This whole site is a folder of Markdown files. Open it in Obsidian and the links work identically.",
+        "See how it is built"
+      ],
+      "text_sha256": "8f15bbb3ff0a71515bd77237eec680c1793ab80987843f497b42155a927b2013",
+      "title": "Marginalia | A garden of half-finished thoughts, cross-referenced",
+      "type": "text/html"
+    },
+    "notes/backlinks-change-what-you-write/index.html": {
+      "text": [
+        "A backlink list is not navigation. It is feedback.",
+        "The first time a note shows you four other notes that needed it, you learn something you could not have known while writing it: which of your ideas is load-bearing. Notes with many backlinks are the ones your thinking actually rests on, and they are usually not the ones you thought were important.",
+        "It changes the writing, too. Knowing a note will be arrived at from somewhere else, you stop writing openings. No context-setting, no “as I mentioned” — the reader came from a link that already gave them the context.",
+        "The tooling matters less than the habit, but it has to be automatic. A backlink you maintain by hand is a backlink you stop maintaining.",
+        "Related: [[Notes should be atomic]], [[Evergreen notes]]."
+      ],
+      "text_sha256": "a066093732053a3d3781d13b68f751136604e5f95ded00271dff1fc0a91af44d",
+      "title": "Backlinks change what you write | Marginalia",
+      "type": "text/html"
+    },
+    "notes/evergreen-notes/index.html": {
+      "text": [
+        "An evergreen note is written to be edited. That single decision changes how you write it.",
+        "A post is addressed to a reader at a moment: it has an occasion, a hook, and a shelf life. A note is addressed to you in two years, and its job is to still be true then. So it drops the occasion, states the claim, and expects to be rewritten when the claim stops holding.",
+        "The practical difference is what you do when you learn something new. With posts you write another post. With notes you go back and change the note — which means the pile gets better over time instead of just longer.",
+        "This only works if notes are small enough to revise. See [[Notes should be atomic]].",
+        "[!tip] Rule of thumb If revising a note feels like rewriting an essay, it is too big.",
+        "Related: [[Backlinks change what you write]], [[Why gardens beat blogs]]."
+      ],
+      "text_sha256": "ec3a201a4f9a0c050e5185f990eff5de447ccda0b8542fd55361f44a9b606790",
+      "title": "Evergreen notes | Marginalia",
+      "type": "text/html"
+    },
+    "notes/index.html": {
+      "text": [
+        "Notes",
+        "Everything in pages/_notes/, newest first.",
+        "Collection Index - notes",
+        "Why gardens beat blogs",
+        "Reverse chronology answers one question — what is new? — and organises everything else badly.",
+        "Last updated September 08, 2026",
+        "Welcome Note",
+        "Notes are short, evergreen and interlinked. Link to another note with a wiki-link, like [[Getting Started]], and the theme resolves it and shows backlinks on...",
+        "Last updated September 08, 2026",
+        "Posts and notes do different jobs",
+        "Choosing between a blog and a garden is a false choice; they answer different questions.",
+        "Last updated September 08, 2026",
+        "Notes should be atomic",
+        "One note, one idea. Not one note per source, per session, or per topic.",
+        "Last updated September 08, 2026",
+        "Evergreen notes",
+        "An evergreen note is written to be edited. That single decision changes how you write it.",
+        "Last updated September 08, 2026",
+        "Backlinks change what you write",
+        "A backlink list is not navigation. It is feedback.",
+        "Last updated September 08, 2026"
+      ],
+      "text_sha256": "a0abc6fc26d0ca386a3c5a0e6c6baaf281baa658a11e6a4a3c23e008ddf996c4",
+      "title": "Notes | Marginalia",
+      "type": "text/html"
+    },
+    "notes/notes-should-be-atomic/index.html": {
+      "text": [
+        "One note, one idea. Not one note per source, per session, or per topic.",
+        "The reason is mechanical rather than aesthetic. Links connect notes, so the note is your unit of connection. If a note holds three ideas, anything linking to it links to all three, and the link stops meaning something specific. The graph fills with edges that say “these are vaguely related”, which is the same as saying nothing.",
+        "The test is whether you can title the note as a claim. “Reading notes — March” is a container. “Backlinks change what you write” is a claim, and other notes can agree or disagree with it.",
+        "Splitting is cheap and merging is expensive, so split early. See [[Evergreen notes]] for why revision matters, and [[Backlinks change what you write]] for what you get back."
+      ],
+      "text_sha256": "8182dce893390be9a827e00a2cf7c3bef4e90f6dacc39174c74caa6e123828cc",
+      "title": "Notes should be atomic | Marginalia",
+      "type": "text/html"
+    },
+    "notes/posts-and-notes-do-different-jobs/index.html": {
+      "text": [
+        "Choosing between a blog and a garden is a false choice; they answer different questions.",
+        "A post is an event. It has a date because the date matters — this is what I thought in March, here is a thing I built, here is an argument aimed at a moment. Posts are how anything gets announced, and how anyone arrives.",
+        "A note is a position. It has a date only so you know how stale it might be, and it gets rewritten when the position changes.",
+        "So: write the post when there is an occasion, and let it link into the notes for the claims it leans on. The post ages; the notes it points at stay current. See [[Why gardens beat blogs]] and [[Evergreen notes]]."
+      ],
+      "text_sha256": "7d39c33a86c2eab1d1abb6a3a7e07de979f374ebc2e3f6138d379297f69892f8",
+      "title": "Posts and notes do different jobs | Marginalia",
+      "type": "text/html"
+    },
+    "notes/welcome-note/index.html": {
+      "text": [
+        "Notes are short, evergreen and interlinked. Link to another note with a wiki-link, like [[Getting Started]], and the theme resolves it and shows backlinks on both pages.",
+        "[!tip] Obsidian users Open pages/_notes/ as a vault; callouts, embeds and [[links]] render the same on the site."
+      ],
+      "text_sha256": "49e396b251dcc1235ed2305a8cacfcce577cdd125ee3c97d00a4ac2531a6a867",
+      "title": "Welcome Note | Marginalia",
+      "type": "text/html"
+    },
+    "notes/why-gardens-beat-blogs/index.html": {
+      "text": [
+        "Reverse chronology answers one question — what is new? — and organises everything else badly.",
+        "Most of what I want to write does not expire. A note about how to think about note-taking is as true in three years as today, but a blog buries it under everything published since, and the only way back is search or a tag page nobody maintains.",
+        "A garden inverts that. Notes sit at stable URLs, get revised rather than replaced, and are found by following links from whatever you were already reading. The date becomes metadata rather than structure.",
+        "The cost is real: there is no feed of new things, and a garden is harder to arrive at cold. That is why this one still has a few posts — see [[Posts and notes do different jobs]]."
+      ],
+      "text_sha256": "5882556d5dfe2a80de940d7828a672c51513ada6dbd2e47e6f74a9017b897791",
+      "title": "Why gardens beat blogs | Marginalia",
+      "type": "text/html"
+    },
+    "posts/index.html": {
+      "text": [
+        "Posts",
+        "Everything in pages/_posts/, newest first.",
+        "Collection Index - posts",
+        "Six months of gardening in public",
+        "I moved this site from a blog to a garden six months ago. Here is what actually changed.",
+        "Last updated September 08, 2026",
+        "This is a garden, not a blog",
+        "A blog is a stack of finished things in date order. A garden is a set of unfinished things that point at each other, and the pointing is the useful part.",
+        "Last updated September 08, 2026"
+      ],
+      "text_sha256": "22a94290286bd51e40d97f9c6b2030a8a82e2f0a273d3e0e73f172e2590e77a5",
+      "title": "Posts | Marginalia",
+      "type": "text/html"
+    },
+    "posts/six-months-of-gardening/index.html": {
+      "text": [
+        "I moved this site from a blog to a garden six months ago. Here is what actually changed.",
+        "I write less and revise more",
+        "Post count went down by roughly two thirds. Edit count went up by a lot more than that. The pile is smaller and better, which is the trade I wanted, but it does feel unproductive in a way a publishing schedule never did.",
+        "The links do the organising",
+        "I have not made a single tag decision in six months. Notes find each other because I link them while writing, and the backlink lists surface structure I did not plan — see [[Backlinks change what you write]].",
+        "The surprise",
+        "The most-linked note is the most boring one: [[Notes should be atomic]]. It is four paragraphs of mechanics with no insight in it at all, and nearly everything else leans on it. Apparently load-bearing ideas are rarely the interesting ones."
+      ],
+      "text_sha256": "6b739c3bd3097c49208e3c08337afcaae50696b960f13f7f2f4f40fb54c99887",
+      "title": "Six months of gardening in public | Marginalia",
+      "type": "text/html"
+    },
+    "posts/welcome/index.html": {
+      "text": [
+        "A blog is a stack of finished things in date order. A garden is a set of unfinished things that point at each other, and the pointing is the useful part.",
+        "Notes here get revised in place rather than superseded by a newer post. If a note changes your mind, it will also have changed itself since you last read it.",
+        "Every note shows what links to it. That list is usually more interesting than the note, because it tells you which other ideas needed this one."
+      ],
+      "text_sha256": "d58beffd78b2ae3da8d9e3e88b07b6334acd45eed11c91ae016696ca026dca90",
+      "title": "This is a garden, not a blog | Marginalia",
+      "type": "text/html"
+    },
+    "robots.txt": {
+      "type": "text/plain"
+    },
+    "sitemap.xml": {
+      "type": "application/xml"
+    }
+  },
+  "redirects": {},
+  "schema": "site-manifest/v2",
+  "site": "zer0-demo-garden",
+  "sitemaps": {
+    "sitemap.xml": [
+      "https://bamr87.github.io/zer0-CMS/demos/garden/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/about/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/backlinks-change-what-you-write/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/evergreen-notes/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/notes-should-be-atomic/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/posts-and-notes-do-different-jobs/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/welcome-note/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/why-gardens-beat-blogs/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/posts/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome/"
+    ]
+  }
+}

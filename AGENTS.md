@@ -26,7 +26,7 @@ This is the canonical agent file for the whole repository. It applies to every c
 - Build an extension UI separately from the studio's. Extension webviews render `web/packages/` workspaces; the extension's own code is the VS Code host.
 - Build a capability that only an API can reach. A capability is done when a person can use it from its studio workspace (and, where it belongs next to a file, from the extension).
 - Add a dependency on zer0-mistakes — a vendored file, a fixture checkout, a CI job against it, a design port, an overlay. Only the Jekyll-theme option names it (`theme_allowed:` in the ledger); its home is `bamr87/zer0-mistakes` ([ADR 0005](docs/adr/0005-theme-goes-home.md)).
-- Hand-edit a generated file tree (a site's exported source, a book's `library/<slug>/`) as if it were the source. Edit in the platform; the files are regenerated.
+- Hand-edit a generated file tree (a site's exported source, a book's `library/<slug>/`) as if it were the source. Edit in the platform; the files are regenerated. Likewise a recorded site build (`web/site/fixtures/`): re-record it with `tools/site_manifest.py`, never edit it to make a check pass.
 - Delete a source directory, a site or a capability because it looks obsolete, or mark a capability `dropped`. Deletion follows the ledger, and dropping is the owner's decision.
 - Run a fleet-wide kit (docs framework, governance, standards) over an imported project as if it were a live product. Imported projects under `apps/`, `packages/`, `rails/` and `sites/` are **sources being absorbed**; fleet kits apply to the platform, `web/` and the extension.
 - Pick work by "the first unchecked box" in the plan. The order of work is PLAN § 3's list; older phases keep boxes later decisions overtook.
@@ -124,6 +124,10 @@ bin/zer0 check                    # registry, paths, workflows and vendored copi
 bin/zer0 doctor                   # zer0 doctor over every in-repo site (runs rails/bin/zer0-cms: needs Ruby until G4)
 bin/zer0 tags                     # this repo's release tags vs. those inherited from the Front Matter fork
 .venv/bin/python -m unittest discover tools/workspace   # the tool's tests, with the golden replay of its Ruby predecessor (any Python with PyYAML)
+
+# ── The sites' recorded Jekyll builds (web/site/fixtures/, PLAN P1) — Ruby 3.3, bundler, network ──
+python3 tools/site_manifest.py --check --site drsai   # rebuild a routed site as pages.yml does (UTC, none of your JEKYLL_/ZER0_ variables), compare
+python3 tools/site_manifest.py compare --pages <recorded> <candidate>   # what a renderer must match: pages, titles, text, feeds, sitemaps, redirects
 ```
 
 `extension.test.ts` and `multiroot.test.ts` need a real extension host (`multiroot` has its own entry in `.vscode-test.mjs`: `npx vscode-test --label multiroot`), and `mcp.test.ts` needs `dist/mcp-server.js`, so the fourteen-suite command above leaves all three out; `out/test/mcp.test.js` does run under plain Mocha once `npm run compile` has built the bundle. On headless Linux `npm test` shells out to `xvfb-run` itself (`test-runner.js`); `ZER0_CMS_NO_XVFB=1` forces the plain path.
