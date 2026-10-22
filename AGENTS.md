@@ -36,9 +36,10 @@ This is the canonical agent file for the whole repository. It applies to every c
 
 ## Layout
 
-Today the repository holds three products of its own and the imported sources still being absorbed (`web/` arrives in PLAN P4):
+Today the repository holds four products of its own and the imported sources still being absorbed:
 
-- `content/` is the **platform** — the Django 5.2 + Wagtail project: page models, revisions, the agent harness and its tool registry, suggestions, the content graph, the outbox, the GraphQL/REST APIs, the MCP server, and the operational baseline (`content/ops/`: probes, request ids, the error envelope, JSON logging, throttling, OpenAPI).
+- `content/` is the **platform** — the Django 5.2 + Wagtail project: page models, revisions, the agent harness and its tool registry, suggestions, the content graph, the outbox, the GraphQL/REST APIs (including the studio's: `api/session.py`, `api/pages.py`, `api/review.py`), the MCP server, and the operational baseline (`content/ops/`: probes, request ids, the error envelope, JSON logging, throttling, OpenAPI). It serves the built studio at `/studio/`.
+- `web/` is the **React frontend** (PLAN P4) — the studio (`web/studio/`: Write, Create, Review, agent runs, and every other area's place in the navigation) and the packages it is built from (`web/packages/`: `@zer0/api`, the client generated from `schemas/openapi/openapi.json`; `@zer0/tokens`, the design tokens and the Mantine theme; `@zer0/ui`, the workspaces). `@zer0/ui` takes its client, event streams and navigation from its host (`<StudioProvider>`) and ESLint keeps routers, transports and page globals out of it, because the extension's webviews render the same components in G10. See [`web/README.md`](web/README.md).
 - `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content in the editor: a metadata panel, dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → ledger). It becomes a client of the platform with the studio's capabilities (ADR 0006 decision 9, PLAN G10) and keeps its file mode.
 - `rails/` is the **fleet CMS** — a Rails 8.1 app on Administrate 1.0 that indexes every registered Jekyll site into SQLite and writes edits back to the files (git stays the source of truth), draws a missing preview through zer0-image-generator, and hosts the ABC book wizard; `rails/lib` is a stdlib-only library (the Jekyll-exact catalog, front-matter surgery, the confined writer, `zer0 doctor`, the ABC generator). Being absorbed by the platform (PLAN G4, G5, G9) and then deleted — no Ruby remains (ADR 0006); its invariants below hold until each gate is green.
 
@@ -113,8 +114,19 @@ python manage.py run_evals --all --recorded        # every agent's eval suite, n
 python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json   # the committed OpenAPI document
 python manage.py import_jekyll --site drsai --path ../sites/drsai   # a site → pages (idempotent)
 python manage.py roundtrip_jekyll --path ../sites/drsai             # import → export → byte-compare
-# Docker, from the repository root: http://localhost:8000 (/admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
+python manage.py seed_demo                         # a demo site, the person `editor` (password zer0-demo under DEBUG), pending suggestions
+# Docker, from the repository root: http://localhost:8000 (/studio/, /admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
 docker compose --profile content up -d --wait db redis content worker beat relay
+
+# ── The studio (web/) — React 19, Vite, Mantine, TanStack Query, TipTap; see web/README.md ──
+cd web
+npm ci                                             # the committed lockfile (§ Standard deviations)
+npm run dev                                        # http://localhost:5173/studio/, proxied to the platform on :8000
+npm run lint && npm run typecheck && npm test      # ESLint (with the @zer0/ui host gate), tsc, Vitest
+npm run build                                      # studio/dist/, which the platform serves at /studio/
+npm run gen                                        # after the OpenAPI document changed: regenerate @zer0/api's types
+npm run check:api                                  # the committed types match schemas/openapi/openapi.json
+cd .. && node verify/runner.mjs --only studio-create-page,studio-accept-suggestion,studio-publish   # the browser scenarios, against a platform started as verify/verify.yml says (needs @playwright/test and yaml: see the runner's header)
 
 # ── The workspace (every project in the repository) — Python 3.9+ and PyYAML, nothing else ──
 python3 -m venv .venv && .venv/bin/pip install pyyaml   # once, where python3 lacks PyYAML (PEP 668 refuses a global pip install); bin/zer0 then runs on .venv
@@ -205,12 +217,14 @@ Fourteen repositories live here, each imported with full history and each a **so
 
 ## Fleet context
 
-This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents. `.github/workflows/ci.yml` and `markdown-oneline.yml` are thin hub-seeded callers — don't edit their logic. `extension.yml` is this repo's own and gates the extension alone; the Rails half has two of its own, both filtered to `rails/**` — `abc-engine.yml` (`rails/lib` with no bundler, Ruby 3.3 and 4.0.5) and `rails-app.yml` (the app with its bundle, Zeitwerk, and a production boot) — so an extension pull request no longer runs Ruby and a Rails change no longer downloads VS Code. `content.yml` gates the content plane alone (pytest on SQLite and on Postgres, migrations, schema drift). `zer0-doctor.yml` is the reusable consumer-contract check content repositories call. `release.yml` calls the hub's release-please workflow and then a repo-owned marketplace job — see `docs/RELEASING.md`. `claude.yml` is the `@claude` mention lane (`anthropics/claude-code-action@v1`), the only workflow that calls a model and the one lane `fleet.manifest.yml` declares; `codeql-analysis.yml` is GitHub CodeQL (`github/codeql-action@v4`).
+This repo is one of ~40 managed by the [bamr87/bamr87 dash](https://github.com/bamr87/bamr87) (registry: `_data/projects.yml`; tiered baseline: `docs/STANDARDS.md`). It is vendored there as a git submodule: commit and push changes **here** first — the hub only bumps its pointer afterwards. Shared CI, release, schema, and agent kits are seeded from the hub's `templates/`; prefer adopting those over hand-rolling equivalents. `.github/workflows/ci.yml` and `markdown-oneline.yml` are thin hub-seeded callers — don't edit their logic. `extension.yml` is this repo's own and gates the extension alone; the Rails half has two of its own, both filtered to `rails/**` — `abc-engine.yml` (`rails/lib` with no bundler, Ruby 3.3 and 4.0.5) and `rails-app.yml` (the app with its bundle, Zeitwerk, and a production boot) — so an extension pull request no longer runs Ruby and a Rails change no longer downloads VS Code. `content.yml` gates the content plane alone (pytest on SQLite and on Postgres, migrations, schema drift). `web.yml` gates `web/` (lint, types, Vitest, the generated client's drift against the OpenAPI document, the studio build) and also runs when the document changes. `zer0-doctor.yml` is the reusable consumer-contract check content repositories call. `release.yml` calls the hub's release-please workflow and then a repo-owned marketplace job — see `docs/RELEASING.md`. `claude.yml` is the `@claude` mention lane (`anthropics/claude-code-action@v1`), the only workflow that calls a model and the one lane `fleet.manifest.yml` declares; `codeql-analysis.yml` is GitHub CodeQL (`github/codeql-action@v4`).
 
 ## Standard deviations
 
-Three, all dated 2026-09-09 and all consequences of consuming the hub's engines package rather than copying it.
+Five. The first three are dated 2026-09-09 and are all consequences of consuming the hub's engines package rather than copying it; the last two, dated 2026-10-22, are the same choice made for `web/` for the same reason — generated output that a floating version would churn.
 
 - **The lockfile is committed**, against the hub's `lockfiles: never-commit` posture. `npm ci` needs it, and so does the reusable relock job; more importantly an exact-pinned engines version is only reproducible with one.
 - **`@bamr87/fleet-engines` is exact-pinned**, against the hub's always-latest convention. A bump changes generated goldens, so it is a deliberate `chore(deps)` pull request whose diff a person reads, not an ambient upgrade.
 - **`yaml` is bundled.** The hand-rolled YAML subset in `src/core/shared/config.ts` reads front matter and manifests; GitHub Actions workflow files exceed it (anchors, merge keys, multi-line flow collections), and the engines answer that with the `yaml` package. It is bundled into the extension host only, never into the MCP server.
+- **`web/package-lock.json` is committed**, against the hub's `lockfiles: never-commit` posture. `npm ci` in `web.yml` and in the platform image's Node stage needs it, and the studio's build and tests then run on the versions they were checked against.
+- **`openapi-typescript` is exact-pinned** in `web/packages/api`, against the always-latest convention. Its output is committed (`src/schema.d.ts`) and drift-checked against `schemas/openapi/openapi.json`, so a new generator version would fail the check with no change to the API; a bump is a deliberate `chore(deps)` change that regenerates the file in the same commit. Every other `web/` dependency takes caret ranges and moves when the lockfile is refreshed.

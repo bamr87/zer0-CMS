@@ -7,11 +7,21 @@ endpoints (`api/urls.py` `urlpatterns` and the AI content layer's router,
 (`get_serializer_class` reads `self.request`), which no static generator can
 introspect, so they are documented by Wagtail itself and left out here. The
 probes are root-level, not `/api/v2`, so they stay out too.
+
+`urlpatterns` is built when first read (a module `__getattr__`), not at
+import: the API's views import `ERROR_RESPONSES` from here, so an eager
+`include("api.urls")` made importing a view before the URLconf an import cycle.
 """
 
 from django.urls import include, path
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import serializers
+
+
+def __getattr__(name):
+    if name == "urlpatterns":
+        return [path("api/v2/ai/", include("ai.urls")), path("api/v2/", include("api.urls"))]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class AgentTokenScheme(OpenApiAuthenticationExtension):
@@ -49,6 +59,3 @@ class ErrorEnvelopeSerializer(serializers.Serializer):
 
 
 ERROR_RESPONSES = {status: ErrorEnvelopeSerializer for status in (401, 403, 404, 405, 409, 422, 429, 500)}
-
-# Last, because the views these include import ERROR_RESPONSES from here.
-urlpatterns = [path("api/v2/ai/", include("ai.urls")), path("api/v2/", include("api.urls"))]

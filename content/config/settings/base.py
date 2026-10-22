@@ -20,7 +20,8 @@ REPO_ROOT = BASE_DIR.parent  # the zer0-CMS checkout
 
 env = environ.Env(
     DEBUG=(bool, False),
-    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
+    # `.localhost`: each imported site is a Wagtail Site at <site>.localhost.
+    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1", ".localhost"]),
     CSRF_TRUSTED_ORIGINS=(list, []),
 )
 if (BASE_DIR / ".env").exists():
@@ -156,6 +157,13 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
 
+# ── The studio (web/studio, api/studio.py) ──────────────────────────────────
+# `npm run build` in web/ writes the studio here; its assets are static files
+# under /static/studio/ and /studio/ answers with its index.html. The image
+# builds it in a Node stage and points STUDIO_DIST at the copy.
+STUDIO_DIST = Path(env("STUDIO_DIST", default=str(REPO_ROOT / "web" / "studio" / "dist")))
+STATICFILES_DIRS = [("studio", str(STUDIO_DIST))] if STUDIO_DIST.is_dir() else []
+
 CACHES = {"default": env.cache("CACHE_URL", default="locmemcache://")}
 
 # ── Wagtail ─────────────────────────────────────────────────────────────────
@@ -204,13 +212,22 @@ REST_FRAMEWORK = {
 # committed schemas/openapi/openapi.json stale.
 SPECTACULAR_SETTINGS = {
     "TITLE": "zer0-CMS platform API",
-    "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry. "
+    "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry; and for the studio and the "
+    "extension, the session, sites, pages, revisions, publishing and the review inbox. "
     "Wagtail's pages, images and documents endpoints live beside these at /api/v2/ and are documented by Wagtail.",
     "VERSION": "2",
     "OAS_VERSION": "3.1.0",
     "SCHEMA_PATH_PREFIX": r"/api/v2",
     "SERVE_URLCONF": "ops.openapi",
     "SERVE_INCLUDE_SCHEMA": False,
+    # Named enums, so the generated client's types read well (api/serializers.py).
+    "ENUM_NAME_OVERRIDES": {
+        "PageStatusEnum": "api.serializers.PAGE_STATUSES",
+        "FieldKindEnum": "api.serializers.KINDS",
+        "FieldGroupEnum": "api.serializers.GROUPS",
+        "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
+        "TargetTypeEnum": "api.serializers.TARGET_TYPES",
+    },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
 API_DOCS_ENABLED = env.bool("API_DOCS_ENABLED", default=True)
@@ -252,9 +269,11 @@ CELERY_TASK_ACKS_LATE = True
 # The worker, beat and relay log through LOGGING below, not Celery's own setup.
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # The outbox relay runs as its own process (`manage.py relay_outbox`, the
-# compose `relay` service); beat schedules the nightly graph job.
+# compose `relay` service); beat schedules the nightly graph job and, every
+# minute, the scheduled publishes that have come due (cms/tasks.py).
 CELERY_BEAT_SCHEDULE = {
     "viewed-together-nightly": {"task": "graph.tasks.build_viewed_together", "schedule": crontab(hour=3, minute=17)},
+    "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
 }
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────

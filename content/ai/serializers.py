@@ -21,6 +21,8 @@ from rest_framework import serializers
 from rest_framework.fields import get_error_detail
 from wagtail.models import Page, Site
 
+from api.serializers import RunLinksSerializer
+
 from . import providers
 from .models import (
     Assistant,
@@ -59,11 +61,6 @@ def _clean(model, instance, attrs):
 
 
 # ── runs ───────────────────────────────────────────────────────────────────
-
-
-class RunLinksSerializer(serializers.Serializer):
-    self = serializers.CharField(help_text="The run with its steps.")
-    stream = serializers.CharField(help_text="Its steps and final status as server-sent events.")
 
 
 class RunRefSerializer(serializers.Serializer):

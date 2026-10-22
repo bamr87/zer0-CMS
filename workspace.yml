@@ -91,6 +91,24 @@ projects:
         run: python3 -m pytest -q && python3 manage.py makemigrations --check --dry-run && ruff check . && ruff format --check .
       build: docker build -f Dockerfile ..
 
+  # The one React frontend (ADR 0006 decision 2): the studio, and the shared
+  # packages its workspaces are built from — the extension's webviews render
+  # the same ones (PLAN G10). Its API client is generated from the platform's
+  # committed OpenAPI document, so it depends on the platform.
+  web:
+    path: web
+    kind: app
+    stack: [node]
+    summary: The React frontend — the studio, where people write, create, review and run AI on their content (served by the platform at /studio/), and the shared packages (the generated API client, the design tokens, the workspaces) the extension's webviews will render too (ADR 0006).
+    upstream: bamr87/zer0-CMS
+    depends_on: [content]
+    ci: web.yml
+    tasks:
+      setup: npm ci
+      check: npm run lint && npm run typecheck && npm run check:api
+      test: npm run lint && npm run typecheck && npm test && npm run check:api
+      build: npm run build
+
   cms-rails:
     path: rails
     kind: rails

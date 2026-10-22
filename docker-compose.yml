@@ -6,10 +6,13 @@
 #   docker compose up --build                     # the Rails CMS on :3001/admin
 #   docker compose --profile imagegen up --build  # + zer0-image-generator on :3000
 #
-# The content profile is Postgres with pgvector, Redis, the Django app
-# (/healthz, /readyz, /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery
-# worker and beat (agent runs, the nightly graph job) and the outbox relay to
-# Redis Streams.
+# The content profile is Postgres with pgvector, Redis, the Django app on
+# gunicorn's threaded workers (content/gunicorn.conf.py, so a run's event
+# stream holds a thread, not a worker)
+# (/studio/ — the React studio its image builds from web/ —, /healthz, /readyz,
+# /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery worker and beat
+# (agent runs, scheduled publishing, the nightly graph job) and the outbox
+# relay to Redis Streams.
 #
 # SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
 # the zer0 sites — discovery finds them two levels down, e.g.
@@ -172,7 +175,7 @@ services:
     command: >-
       sh -c "python manage.py migrate --noinput &&
              python manage.py sync_agents --publish &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+             gunicorn config.wsgi:application"
     ports:
       - "127.0.0.1:${CONTENT_PORT:-8000}:8000"
     environment: &content-env

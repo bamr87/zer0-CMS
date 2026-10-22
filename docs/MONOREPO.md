@@ -9,6 +9,7 @@ zer0-CMS carries the zer0 stack's content-management half in one repository: the
 | `src/`, `media/`, … (root) | `bamr87/zer0-CMS` | The VS Code extension (`cms-extension`). |
 | `rails/` | `bamr87/zer0-CMS` | The fleet CMS and the stdlib-only zer0 library — catalog, `zer0 doctor`, the ABC generator (`cms-rails`). |
 | `content/` | new (2026-10) | The platform (`content`): Wagtail pages and revisions, the agent harness and its tool registry, suggestions, the graph, the outbox, GraphQL/REST/MCP, and the ops baseline (probes, request ids, the error envelope, logging, OpenAPI). It imports the Jekyll sites below and exports them back byte for byte ([`content/README.md`](../content/README.md)). |
+| `web/` | new (2026-10) | The React frontend (`web`, ADR 0006): the studio — Write, Create, Review and agent runs over the platform's API, served by the platform at `/studio/` — and the packages it is built from (the client generated from `schemas/openapi/openapi.json`, the design tokens, the workspaces), which the extension's webviews render in PLAN G10 ([`web/README.md`](../web/README.md)). |
 | `packages/zer0-image-generator/` | `bamr87/zer0-image-generator` | The preview-image engine, published as the `zer0-image-generator` gem, plus its Rails web panel. |
 | `packages/books/` | `bamr87/books` | The book projects (`library/<slug>/`) and the `bookshelf` Python app that validates, compiles and edits them. |
 | `sites/drsai/` | `bamr87/drsai` | The children's picture-book site and its Python story engine in `drsai/`. The CMS's ABC wizard exports into it. |

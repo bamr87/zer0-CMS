@@ -20,3 +20,6 @@ rails/tmp
 vendor/bundle/
 .venv
 __pycache__/
+
+# Short-lived worktrees of parallel agent work (AGENTS.md § Workflow); merged into main and removed the same day.
+.claude/worktrees/

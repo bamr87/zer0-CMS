@@ -1,0 +1,15 @@
+{
+  "name": "@zer0/tokens",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The zer0 design tokens as CSS custom properties for light and dark, and the Mantine theme that reads them.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens.css"
+  },
+  "dependencies": {
+    "@mantine/core": "^9.7.3"
+  }
+}

@@ -1,0 +1,32 @@
+# =============================================================================
+# verify/scenarios/studio-create-page.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# The studio (web/studio, served by the platform at /studio/) on the demo the
+# platform seeds (`manage.py seed_demo`, verify/verify.yml's start command):
+# sign in, create an article under the demo site, land in its editor as a draft.
+# The page carries the platform's enforced nonce CSP, so a console error here
+# would also be a CSP violation.
+# =============================================================================
+id: studio-create-page
+feature: ZER0-040
+title: "Create a page in the studio"
+description: "An editor signs in to the studio, creates an article under the demo site from the Create area, and lands in the editor with the new page as a draft — nothing published."
+viewports: [desktop]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  - click: "role=link[name='Create']"
+  - wait: { url: /studio/create }
+  - click: "role=combobox[name='Type']"
+  - click: "role=option[name='Article page']"
+  - fill: { selector: "role=textbox[name='Title']", value: "A page from the studio scenario" }
+  - screenshot: create-form
+  - click: "role=button[name='Create draft']"
+  - wait: { url: /studio/write/ }
+  - expect: { visible: "role=heading[name='A page from the studio scenario']" }
+  - expect: { text: "Draft" }
+  - expect: { no_console_errors: true }
+  - screenshot: created-draft

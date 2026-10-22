@@ -1,0 +1,33 @@
+# =============================================================================
+# verify/scenarios/studio-publish.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# Publishing from the editor: the seeded draft "Nightly backups" is found in
+# Write's page list, opened, edited, and published — the save goes first, and
+# only the Publish button reaches the live site. On a fresh seed the edit is
+# unsaved until Publish; a rerun against the same database finds it already
+# saved and published, so the scenario asserts the outcome, not the marker
+# (web/packages/ui/test/editor.test.tsx pins save-before-publish).
+# =============================================================================
+id: studio-publish
+feature: ZER0-040
+title: "Edit a draft and publish it"
+description: "An editor finds a draft in the Write area's page list, changes its SEO title, and publishes it; the studio saves the edit as a draft revision first, then publishes, and the page shows as live."
+viewports: [desktop]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  - click: "role=link[name='Write']"
+  - fill: { selector: "role=textbox[name='Search']", value: "Nightly" }
+  - click: "role=button[name='Nightly backups']"
+  - wait: { url: /studio/write/ }
+  - click: "role=tab[name='SEO']"
+  - fill: { selector: "role=textbox[name='Title tag']", value: "Nightly backups, in plain words" }
+  - screenshot: editing
+  - click: "role=button[name='Publish']"
+  - wait: { selector: "text=Published" }
+  - expect: { text: "Live" }
+  - expect: { no_console_errors: true }
+  - screenshot: published

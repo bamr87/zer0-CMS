@@ -179,6 +179,66 @@ features:
     scenarios: []
     evidence: []
 
+  # ── The studio (web/, ADR 0006, PLAN P4) ──────────────────────────────────
+  - id: ZER0-040
+    title: "The studio: write, create and publish"
+    description: "An editor signs in to the studio at /studio/, browses every site's pages in any status with filters and the tree, creates a page of a type its parent allows, edits its blocks (Markdown in a rich editor that never rewrites what it cannot reproduce), fields and SEO, saves a draft, and publishes, unpublishes, or schedules a time to go live and a time to come down. A page someone has locked opens read-only and says why."
+    implemented: true
+    surface: ui
+    link: /studio/write
+    docs: web/README.md
+    tags: [studio, web, editor, publishing]
+    date: 2026-10-22
+    tests:
+      - content/tests/api/test_pages.py
+      - content/tests/api/test_session.py
+      - content/tests/api/test_studio.py
+      - content/tests/cms/test_tasks.py
+      - web/packages/ui/test/editor.test.tsx
+      - web/packages/ui/test/create.test.tsx
+      - web/packages/ui/test/richtext.test.tsx
+      - web/studio/test/app.test.tsx
+    scenarios:
+      - verify/scenarios/studio-create-page.yml
+      - verify/scenarios/studio-publish.yml
+    evidence:
+      - test/evidence/studio-create-page/
+      - test/evidence/studio-publish/
+  - id: ZER0-041
+    title: "The studio's review inbox and revisions"
+    description: "An editor reviews every pending agent suggestion they may decide as a diff with its rationale — accepting one, rejecting one with a reason, or accepting all of a run that the inbox shows as one draft revision per page — and compares any revision with the latest and reverts to it as a new draft."
+    implemented: true
+    surface: ui
+    link: /studio/review
+    docs: web/README.md
+    tags: [studio, web, review, agents, governance]
+    date: 2026-10-22
+    tests:
+      - content/tests/api/test_review.py
+      - content/tests/api/test_pages.py
+      - web/packages/ui/test/review.test.tsx
+      - web/packages/ui/test/editor.test.tsx
+    scenarios:
+      - verify/scenarios/studio-accept-suggestion.yml
+    evidence:
+      - test/evidence/studio-accept-suggestion/
+  - id: ZER0-042
+    title: "Agent runs with a live step timeline"
+    description: "An editor follows an agent run's steps as they happen (server-sent events, which the platform serves on threaded workers so a stream outlives the worker timeout), sees its cost, tokens and outcome, and goes from a finished run to the suggestions it made; a reviewer can open the run behind any suggestion they may decide."
+    implemented: true
+    surface: ui
+    link: /studio/ai
+    docs: web/README.md
+    tags: [studio, web, agents]
+    date: 2026-10-22
+    tests:
+      - web/packages/ui/test/runs.test.tsx
+      - web/studio/test/transport.test.ts
+      - content/tests/api/test_review.py
+      - content/tests/ops/test_server.py
+    scenarios: []
+    evidence: []
+
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030
     title: "Metadata panel: front matter as typed controls"

@@ -4,6 +4,7 @@ accept rate recorded, and the brand guard ported rule for rule."""
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from wagtail.models import Revision
 
 from agents.models import AgentRun, AgentStep
@@ -81,7 +82,7 @@ def test_rejecting_records_the_decision_and_feeds_the_accept_rate(article, run, 
 @pytest.mark.django_db
 def test_an_agent_never_decides_and_a_stale_suggestion_is_refused(article, run, editor):
     s = proposal(article, run, op="delete", block_id=article.body[1].id)
-    with pytest.raises(SuggestionError, match="may not"):
+    with pytest.raises(PermissionDenied, match="may not"):
         accept([s], agent_user("drafter"))
     other = proposal(
         article, run, op="replace", block_id=article.body[1].id, payload={"type": "markdown", "value": "x"}

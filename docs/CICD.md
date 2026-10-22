@@ -6,8 +6,9 @@ Every project in this repository is gated on its own terms: the VS Code extensio
 
 | Workflow | Runs on | What green means |
 |---|---|---|
-| `extension.yml` | PR and push to `main`, unless every changed file is under `rails/**`, `packages/**`, `sites/**`, `apps/**`, `content/**`, the content plane's schemas (`schemas/{events,graphql,content}/**`) or the recorded site builds (`web/site/fixtures/**`), or is `docker-compose.yml` | `npm ci`, type-check, lint, the five bundles, the VS Code test host under `xvfb-run`, `tools/check-config-docs.py`, `vsce package`, and the packaged file list diffed against `.vsix-manifest.txt`; the vsix is uploaded as an artifact named by commit |
+| `extension.yml` | PR and push to `main`, unless every changed file is under `rails/**`, `packages/**`, `sites/**`, `apps/**`, `content/**`, `web/**` or the content plane's schemas (`schemas/{events,graphql,content}/**`), or is `docker-compose.yml` | `npm ci`, type-check, lint, the five bundles, the VS Code test host under `xvfb-run`, `tools/check-config-docs.py`, `vsce package`, and the packaged file list diffed against `.vsix-manifest.txt`; the vsix is uploaded as an artifact named by commit |
 | `content.yml` | PR and push to `main` touching `content/**`, `schemas/events/**`, `schemas/graphql/**`, `schemas/content/**`, `schemas/openapi/**` or the workflow | Two jobs, both inside `content/`. **sqlite** (Python 3.12 and 3.13): ruff lint and format, `makemigrations --check`, the full pytest suite (including the byte-for-byte round trips of zer0-pages and of the theme's docs site, checked out at a pinned tag into `.cache/zer0-mistakes` — that case skips where the checkout is absent), the committed GraphQL SDL, agent schema and OpenAPI document unchanged, and every agent's eval suite on the recorded models (`run_evals --all --recorded`). **postgres**: the fast tier against `pgvector/pgvector:pg16` and `redis:7`, where the vector column, `<=>` kNN and `SKIP LOCKED` are real. No job calls a model provider |
+| `web.yml` | PR and push to `main` touching `web/**`, `schemas/openapi/**` or the workflow | Inside `web/` on Node 24: `npm ci` (the committed lockfile), ESLint (including the gate that keeps `@zer0/ui` free of routers, transports and page globals), `tsc --noEmit`, the Vitest suites, `npm run check:api` (the generated client regenerated from the committed OpenAPI document must equal `packages/api/src/schema.d.ts`) and the studio's production build |
 | `abc-engine.yml` | PR and push to `main` touching `rails/**` or the workflow | `rails/bin/test-stdlib` — every `rails/test/zer0_cms/test_*.rb` — with **no** `bundle install`, on Ruby 3.3 and 4.0.5 (matrix, `fail-fast: false`) |
 | `rails-app.yml` | PR and push to `main` touching `rails/**`, `docker-compose.yml` or the workflow | With the bundle (from `rails/.ruby-version` and `rails/Gemfile.lock`) and PyYAML: `bin/rails test`, `bin/rails zeitwerk:check`, then a production boot — `assets:precompile`, `db:prepare`, `bin/rails server` — that must answer `/up` and `/admin/sites` |
 | `zer0-image-generator.yml` | PR and push to `main` touching `packages/zer0-image-generator/**` or the workflow | The package's old `test.yml`, run inside the package: the Python engine's unit tests on 3.9 and 3.12, the Ruby port's byte-identity tests against it, a gem build that must contain the engine and the rasterizer helper, and the fixture site's `jekyll preview-images` run with the deterministic `local` provider (real PNGs, idempotent second run) |
@@ -28,7 +29,7 @@ Every project in this repository is gated on its own terms: the VS Code extensio
 | `release.yml` | push to `main` | The hub's release-please workflow maintains the release PR; when that PR merges, the repo-owned `marketplace` job packages the vsix at the tag, attaches it to the GitHub Release, and publishes to the Marketplace and Open VSX when their tokens exist (see [`RELEASING.md`](RELEASING.md)) |
 | `claude.yml` | `@claude` in an issue, comment or review | The mention handler (`anthropics/claude-code-action@v1`), one run per thread; it never merges |
 
-A change to `rails/` runs `abc-engine.yml` and `rails-app.yml` and not `extension.yml`; a change to `src/` runs `extension.yml` and neither Ruby workflow; a change to `content/` runs `content.yml` alone. The two Ruby workflows are split on purpose: `abc-engine.yml` proves the library under `rails/lib` needs no gem, and `rails-app.yml` is allowed the bundle. Do not add `bundle install` to `abc-engine.yml`; a gem reached from `lib/` is the bug that job exists to catch.
+A change to `rails/` runs `abc-engine.yml` and `rails-app.yml` and not `extension.yml`; a change to `src/` runs `extension.yml` and neither Ruby workflow; a change to `content/` runs `content.yml` alone; a change to `web/` runs `web.yml` alone, and a change to the OpenAPI document runs both `content.yml` and `web.yml`, because the studio's client is generated from it. The two Ruby workflows are split on purpose: `abc-engine.yml` proves the library under `rails/lib` needs no gem, and `rails-app.yml` is allowed the bundle. Do not add `bundle install` to `abc-engine.yml`; a gem reached from `lib/` is the bug that job exists to catch.
 
 Nothing in CI builds the Docker image. `rails-app.yml` boots the app in the same `RAILS_ENV` and asset pipeline the image runs, and the image itself is verified by hand before a change to `rails/Dockerfile` or `docker-compose.yml` merges (the commands are below).
 
@@ -74,9 +75,13 @@ python manage.py wagtail_ai_schema --check ../schemas/content/ai-schema.json
 python manage.py graphql_schema --out /tmp/s.graphql && diff ../schemas/graphql/schema.graphql /tmp/s.graphql
 python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file /tmp/o.json && diff ../schemas/openapi/openapi.json /tmp/o.json
 
-# the platform's stack, when content/Dockerfile or docker-compose.yml changed
+# the studio and its packages (what web.yml runs)
+cd web && npm ci && npm run lint && npm run typecheck && npm test && npm run check:api && npm run build
+
+# the platform's stack, when content/Dockerfile, web/ or docker-compose.yml changed (the image builds the studio)
 GIT_SHA=$(git rev-parse --short HEAD) BUILT_AT=$(date -u +%FT%TZ) docker compose --profile content up -d --build --wait db redis content worker beat relay
 curl -fsS http://localhost:8000/healthz && curl -fsS http://localhost:8000/readyz && curl -fsS http://localhost:8000/version
+curl -fsS -o /dev/null -w '%{http_code}\n' http://localhost:8000/studio/   # 200, with an enforced Content-Security-Policy
 docker compose --profile content down -v
 
 # the same checks as pre-commit hooks (pip install pre-commit && pre-commit install)

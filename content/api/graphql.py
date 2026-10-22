@@ -8,12 +8,15 @@ module adds what is not a model field:
 - mutations: `requestAgentRun`, `acceptSuggestion`, `rejectSuggestion`.
 
 Mutations route through the same functions the admin and REST views call
-(`runner.start_run`, `suggestions.services.accept` / `reject`), so a gate is
+(`runner.start_run`, `suggestions.services.accept` / `reject`), and every
+resolver reads runs and suggestions through the same scopes
+(`AgentRun.objects.visible_to`, `Suggestion.objects.visible_to`), so a gate is
 never only in GraphQL.
 """
 
 import graphene
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from graphene.types.generic import GenericScalar
 from graphql import GraphQLError
 from grapple.types.interfaces import get_page_interface
@@ -24,7 +27,7 @@ from agents.runner import RunRefused, start_run
 from agents.schema import export
 from graph import services as graph
 from suggestions.models import Suggestion
-from suggestions.services import SuggestionError, accept, can_decide, pending_for, reject
+from suggestions.services import SuggestionError, accept, pending_for, reject
 
 
 class Hit(graphene.ObjectType):
@@ -120,14 +123,6 @@ def _user(info):
     return user if user is not None and user.is_authenticated else None
 
 
-def may_read_run(user, run) -> bool:
-    if user is None:
-        return False
-    if user.is_superuser or run.started_by_id == user.pk:
-        return True
-    return user.username == run.agent.username
-
-
 class Query(graphene.ObjectType):
     semantic_search = graphene.List(
         Hit, query=graphene.String(required=True), first=graphene.Int(default_value=10), page_type=graphene.String()
@@ -179,15 +174,14 @@ class Query(graphene.ObjectType):
         ]
 
     def resolve_suggestions(self, info, page_id):
-        user = _user(info)
         page = Page.objects.filter(pk=page_id).first()
-        if user is None or page is None or not can_decide(user, page.specific):
+        if page is None:
             return []
-        return [SuggestionType.of(s) for s in pending_for(page.specific)]
+        return [SuggestionType.of(s) for s in pending_for(page.specific).visible_to(_user(info))]
 
     def resolve_agent_run(self, info, id):
-        run = AgentRun.objects.filter(pk=id).select_related("agent").first()
-        return AgentRunType.of(run) if run is not None and may_read_run(_user(info), run) else None
+        run = AgentRun.objects.visible_to(_user(info)).filter(pk=id).select_related("agent").first()
+        return AgentRunType.of(run) if run is not None else None
 
     def resolve_ai_schema(self, info):
         return export()
@@ -238,12 +232,12 @@ class AcceptSuggestion(graphene.Mutation):
     def mutate(self, info, id=None, ids=None):
         user = _user(info)
         wanted = [*([id] if id else []), *(ids or [])]
-        suggestions = list(Suggestion.objects.filter(pk__in=wanted))
+        suggestions = list(Suggestion.objects.visible_to(user).filter(pk__in=wanted))
         if user is None or len(suggestions) != len(set(wanted)) or not wanted:
             raise GraphQLError("unknown suggestion, or not signed in")
         try:
             result = accept(suggestions, user)
-        except SuggestionError as e:
+        except (SuggestionError, PermissionDenied) as e:
             raise GraphQLError(str(e)) from e
         revision_id = result.pk if isinstance(result, Revision) else None
         return AcceptSuggestion(ok=True, revision_id=revision_id, accepted=[s.pk for s in suggestions])
@@ -258,12 +252,12 @@ class RejectSuggestion(graphene.Mutation):
 
     def mutate(self, info, id, reason=""):
         user = _user(info)
-        suggestion = Suggestion.objects.filter(pk=id).first()
+        suggestion = Suggestion.objects.visible_to(user).filter(pk=id).first()
         if user is None or suggestion is None:
             raise GraphQLError("unknown suggestion, or not signed in")
         try:
             reject(suggestion, user, reason=reason)
-        except SuggestionError as e:
+        except (SuggestionError, PermissionDenied) as e:
             raise GraphQLError(str(e)) from e
         return RejectSuggestion(ok=True)
 

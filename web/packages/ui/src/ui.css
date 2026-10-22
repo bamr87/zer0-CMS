@@ -1,0 +1,44 @@
+/*
+ * @zer0/ui's styles: Mantine's editor toolbar, and our own few — the diff
+ * marks and ProseMirror's required base (the editor runs with TipTap's
+ * injected CSS off, so the page's CSP needs no exception for it). A host
+ * imports this after Mantine's core styles. Everything else is Mantine
+ * reading the zer0 tokens.
+ */
+@import '@mantine/tiptap/styles.css';
+
+.zer0-diff {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--zer0-mono);
+  font-size: 0.85rem;
+  background: var(--zer0-bg-inset);
+  border-radius: var(--zer0-radius-sm);
+}
+
+.zer0-diff ins {
+  text-decoration: none;
+  background: color-mix(in srgb, var(--zer0-ok) 30%, transparent);
+}
+
+.zer0-diff del {
+  background: color-mix(in srgb, var(--zer0-err) 30%, transparent);
+}
+
+.ProseMirror {
+  position: relative;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: break-spaces;
+  font-variant-ligatures: none;
+}
+
+.ProseMirror [contenteditable='false'] {
+  white-space: normal;
+}
+
+.ProseMirror-hideselection *::selection {
+  background: transparent;
+}

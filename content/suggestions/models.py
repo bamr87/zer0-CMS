@@ -10,12 +10,53 @@ when. The accept rate an agent is promoted on is computed from these rows.
 accepted suggestion wrote, which run, model and prompt version produced it
 and who accepted it. Block ids are stable across revisions, so a block keeps
 its provenance until it is changed again.
+
+`Suggestion.objects.visible_to(user, site=None)` is the one scope every
+surface reads suggestions through (TARGET.md § Rules): the review inbox, the
+REST and GraphQL lists and decisions, and the runs a reviewer may open.
 """
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+
+
+def _on_pages(pages) -> models.Q:
+    """On one of `pages` (a page queryset), matched by content type as well as
+    id: an image may have the same id as a page."""
+    from wagtail.models import get_page_models
+
+    page_types = ContentType.objects.get_for_models(*get_page_models(), for_concrete_models=False)
+    return models.Q(target_ct__in=list(page_types.values()), target_id__in=pages.values("pk"))
+
+
+class SuggestionQuerySet(models.QuerySet):
+    def on_pages(self, pages):
+        return self.filter(_on_pages(pages))
+
+    def visible_to(self, user, site=None):
+        """What `user` may see and decide: suggestions on the pages they may
+        edit (Wagtail's page permissions, the owner rule included) and, with
+        the image permission, on images; with `site`, that site's pages only.
+        A person decides, so an agent, an anonymous visitor and an inactive
+        account see none."""
+        from wagtail.models import Page
+        from wagtail.permission_policies.pages import PagePermissionPolicy
+
+        if user is None or not user.is_authenticated or not user.is_active or user.username.startswith("agent:"):
+            return self.none()
+        pages = (
+            Page.objects.all()
+            if user.is_superuser
+            else PagePermissionPolicy().instances_user_has_permission_for(user, "change")
+        )
+        if site is not None:
+            return self.on_pages(pages.descendant_of(site.root_page, inclusive=True))
+        mine = _on_pages(pages)
+        if user.has_perm("cms.change_contentimage"):
+            mine |= models.Q(target_ct__app_label="cms", target_ct__model="contentimage")
+        return self.filter(mine)
 
 
 class Suggestion(models.Model):
@@ -55,6 +96,8 @@ class Suggestion(models.Model):
     error = models.TextField(blank=True)
     legacy_ref = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = SuggestionQuerySet.as_manager()
 
     class Meta:
         ordering = ["created_at", "id"]
