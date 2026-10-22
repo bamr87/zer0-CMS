@@ -7,8 +7,8 @@
 import type { ApiClient } from '@zer0/api';
 import { createContext, use, type ReactNode } from 'react';
 
-/** A section of the AI area (G8). */
-export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models';
+/** A section of the AI area (G8; automations, G16). */
+export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models' | 'automations';
 
 /** Where a workspace asks to go; the host maps it to a route or a panel. */
 export type Destination =
@@ -29,7 +29,9 @@ export type Destination =
   | { to: 'story'; id: string }
   | { to: 'books' }
   | { to: 'book'; id: number }
-  | { to: 'chapter'; book: number; id: number };
+  | { to: 'chapter'; book: number; id: number }
+  // Automations (G16), under the AI area; one without an id is a new one.
+  | { to: 'automation'; id?: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

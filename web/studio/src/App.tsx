@@ -72,6 +72,8 @@ export function pathFor(to: Destination): string {
       return `/books/${to.id}`;
     case 'chapter':
       return `/books/${to.book}/chapters/${to.id}`;
+    case 'automation':
+      return `/ai/automations/${to.id ?? 'new'}`;
   }
 }
 

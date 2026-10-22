@@ -45,7 +45,7 @@ export const AREAS: Area[] = [
   {
     path: '/ai',
     label: 'AI',
-    summary: 'Agent runs, assistants, pipelines, output schemas, conversations, providers and models.',
+    summary: 'Agent runs, assistants, pipelines, output schemas, conversations, providers, models and automations.',
     icon: IconSparkles,
   },
   {
