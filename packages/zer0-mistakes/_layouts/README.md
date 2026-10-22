@@ -1,5 +1,7 @@
 # Layout Files Documentation
 
+> The theme's layout templates: the inheritance hierarchy, what each layout is for, the front matter they read, and how their comments are organised.
+
 This directory contains the Jekyll layout templates for the Zer0-Pages theme.  
 Each layout has been organized with comprehensive comments explaining the template logic,  
 structure, and usage patterns.

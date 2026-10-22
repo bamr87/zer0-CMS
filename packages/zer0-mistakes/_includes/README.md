@@ -1,5 +1,7 @@
 # \_includes Directory Organization
 
+> How the theme's includes are grouped into subdirectories, what each group holds, and how to include them.
+
 This directory has been reorganized for better maintainability and clarity. Files are now grouped by functionality into subdirectories.
 
 ## Directory Structure

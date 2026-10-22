@@ -1,5 +1,7 @@
 # Components
 
+> The reusable Liquid UI components: the conventions they follow, the component catalog, and how to add one.
+
 Reusable Liquid partials that render UI primitives. Components compose into pages via the `layout:` chain and the `{% include %}` tag.
 
 ## Conventions

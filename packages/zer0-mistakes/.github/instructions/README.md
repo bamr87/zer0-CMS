@@ -1,5 +1,7 @@
 # Copilot Instructions for Zer0-Mistakes
 
+> How the file-scoped instruction files work, what each one covers, and how to add a new instruction file, prompt, skill or agent configuration.
+
 This directory contains file-specific instructions for GitHub Copilot to provide context-aware assistance when working with different parts of the Zer0-Mistakes Jekyll theme codebase.
 
 > 🤖 **Working with another AI agent?** (Codex, Cursor, Aider, Jules, Continue, Claude Code, …) Start at [`AGENTS.md`](../../AGENTS.md) in the repository root — it is the cross-tool entry point and links into the layered guidance described below.

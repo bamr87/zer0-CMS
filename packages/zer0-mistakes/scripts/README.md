@@ -1,5 +1,7 @@
 # Gem Automation Scripts
 
+> The theme's automation scripts: the scripts/bin entry points, shared libraries, feature scripts, generators and test suites, and how to run each.
+
 This directory contains automation scripts for managing the `jekyll-theme-zer0` gem lifecycle and feature modules.
 
 ## Directory Structure

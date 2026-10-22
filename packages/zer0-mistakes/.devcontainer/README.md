@@ -1,5 +1,7 @@
 # Dev Container
 
+> A one-click Jekyll environment for GitHub Codespaces and VS Code Dev Containers: how it launches the site, prebuilds for near-instant Codespaces, local use with Docker Desktop, and how it relates to docker-compose.yml.
+
 One-click Jekyll dev environment for **GitHub Codespaces** and **VS Code Dev Containers**. The site builds and serves automatically — no local Ruby, Bundler, or Node required.
 
 ## How it launches the site

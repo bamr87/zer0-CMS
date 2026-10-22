@@ -1,5 +1,7 @@
 # Deploy templates
 
+> The static files for each installer deploy target, and how `./scripts/bin/install deploy` uses them.
+
 Each subdirectory holds the static files (workflow YAML, Dockerfile, config snippets, README) for a single deploy target. The matching `scripts/lib/install/deploy/<target>.sh` module copies / renders these files into a target site when the user runs:
 
 ```bash

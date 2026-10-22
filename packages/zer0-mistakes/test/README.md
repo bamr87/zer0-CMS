@@ -1,5 +1,7 @@
 # Consolidated Testing Framework for zer0-mistakes Jekyll Theme
 
+> How the theme's test suites are organised, how to run them with test_runner.sh, and how they report and run in CI.
+
 ## 🎯 Overview
 
 The zer0-mistakes testing framework provides **6 comprehensive test suites** for validating the Jekyll theme across installation modes, site generation, and visual rendering.

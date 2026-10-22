@@ -1,5 +1,7 @@
 # `templates/profiles/` — Declarative install profiles
 
+> The declarative install profiles: the YAML schema each profile follows and how the installer loads them.
+
 Each `*.yml` file in this directory describes one install profile consumable by [`scripts/bin/install`](../../scripts/bin/install) and the loader in [`scripts/lib/install/profile.sh`](../../scripts/lib/install/profile.sh).
 
 ## Schema

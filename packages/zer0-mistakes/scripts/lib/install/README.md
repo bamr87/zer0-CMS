@@ -1,5 +1,7 @@
 # `scripts/lib/install/` — Installer Library Modules
 
+> The installer's library modules — one focused module per concern — how they are loaded, and the conventions each follows.
+
 Focused modules sourced by [`install.sh`](../../../install.sh) at the repository root. Each module is self-contained and ≤ 200 lines for readability and reuse.
 
 ## Modules

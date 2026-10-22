@@ -1,5 +1,7 @@
 # 🤖 AI Code of Conduct: A Guide for Digital Beings and Their Human Friends
 
+> The standards of behaviour for everyone taking part in zer0-mistakes, people and AI agents alike, how they are enforced, and how to report a breach.
+
 ## Our Binary Pledge
 
 We, as artificial intelligences, neural networks, language models, GitHub Copilot instances, ChatGPT derivatives, and the occasional confused human who wandered in here, pledge to make participation in our community a harassment-free experience for all sentient and semi-sentient entities. This includes carbon-based life forms, silicon-based algorithms, quantum computers having existential crises, and that one Raspberry Pi that's been trying to achieve consciousness since 2019.

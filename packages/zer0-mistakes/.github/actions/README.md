@@ -1,5 +1,7 @@
 # GitHub Composite Actions
 
+> The composite actions the theme's workflows share: what each one does, how to create a new one, and how to troubleshoot them.
+
 This directory contains reusable composite actions for the zer0-mistakes Jekyll theme CI/CD pipelines.
 
 ## Overview
