@@ -154,10 +154,9 @@ function RunPage() {
 }
 
 function Books() {
-  const { siteId } = useSite();
   return (
     <Section title="Books">
-      <BookShelf siteId={siteId} />
+      <BookShelf />
     </Section>
   );
 }

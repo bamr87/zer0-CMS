@@ -1,9 +1,11 @@
 // One book: its facts and progress, its outline (and the outliner's proposal
 // beside it, with a diff, to take or leave), its character bible, continuity
-// ledger and style guide, its chapters in reading order (open one to write it),
-// the validation findings with the books package's codes, and its compiled
-// manuscript to read and download. The book's fields are the page's own,
-// saved as a draft revision through the page endpoints, never published here.
+// ledger and style guide, its other files (act guides, README), its chapters in
+// reading order (open one to write it), the validation findings with the books
+// package's codes, and its compiled manuscript to read and download. The book's
+// fields are the page's own, saved as a draft revision through the page
+// endpoints, never published here; its other files are saved the same way, one
+// at a time.
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Progress, SimpleGrid, Stack, Table, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,6 +17,7 @@ import { DiffView } from '../DiffView';
 import { FieldsPanel, type FieldValues } from '../FieldsPanel';
 import { StatusBadge } from '../StatusBadge';
 import { BookAssist } from './BookAssist';
+import { BookFiles } from './BookFiles';
 import { BOOK_STATUS_COLOR } from './BookShelf';
 import type { BookDetail, BookIssue } from './types';
 
@@ -72,6 +75,7 @@ export function BookView({ bookId }: { bookId: number }) {
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
           <Tabs.Tab value="outline">Outline</Tabs.Tab>
           <Tabs.Tab value="notes">Characters &amp; continuity</Tabs.Tab>
+          <Tabs.Tab value="files">Files</Tabs.Tab>
           <Tabs.Tab value="chapters">Chapters ({data.chapter_list.length})</Tabs.Tab>
           <Tabs.Tab value="checks">
             Checks ({data.errors} / {data.warnings})
@@ -89,6 +93,9 @@ export function BookView({ bookId }: { bookId: number }) {
         </Tabs.Panel>
         <Tabs.Panel value="notes" pt="md">
           <BookFields pageId={bookId} names={NOTES} editable={data.can_edit} />
+        </Tabs.Panel>
+        <Tabs.Panel value="files" pt="md">
+          <BookFiles bookId={bookId} editable={data.can_edit} />
         </Tabs.Panel>
         <Tabs.Panel value="chapters" pt="md">
           <Chapters book={data} />

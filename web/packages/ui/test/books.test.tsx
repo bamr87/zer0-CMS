@@ -1,15 +1,17 @@
-// The Books workspace: the shelf with each book's status and progress; a new
-// book from the template; a book from a premise — outlined by a run, read by
-// the person, and made only when they say so; a book's facts saved as a draft
-// revision; its chapters, findings and manuscript; the outliner's proposal as a
-// diff the person may take; and the book assistant beside a chapter, whose
-// writing comes back as suggestions to review and whose continuity check comes
-// back as findings. The platform is a fake behind the real client.
+// The Books workspace: the library's shelf with each book's status and
+// progress; a new book from the template; a book from a premise — outlined by a
+// run, read by the person, and made only when they say so; a book's facts saved
+// as a draft revision; its other files edited one at a time; its chapters,
+// findings and manuscript; the outliner's proposal as a diff the person may
+// take; the chapter writer — the page editor, the book assistant's chapter tasks
+// and that chapter's own findings — and the assistant, whose writing comes back
+// as suggestions to review and whose continuity check comes back as findings.
+// The platform is a fake behind the real client.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { BookAssist, BookShelf, BookView, PremiseToBook } from '../src';
+import { BookAssist, BookShelf, BookView, ChapterWriter, PremiseToBook } from '../src';
 import { fakePlatform, pageDetail, renderUi } from '../../../test/harness';
 
 const summary = (overrides: Record<string, unknown> = {}) => ({
@@ -118,13 +120,14 @@ const bookPage = () =>
 
 describe('<BookShelf>', () => {
   it('shows each book with its status and progress, and opens one', async () => {
-    const { api } = fakePlatform({ 'GET /api/v2/books/': () => [summary()] });
-    const { go } = renderUi(<BookShelf siteId={1} />, { api });
+    const { api, calls } = fakePlatform({ 'GET /api/v2/books/': () => [summary()] });
+    const { go } = renderUi(<BookShelf />, { api });
     expect(await screen.findByText('A laid-off engineer finds the cover-up.')).toBeInTheDocument();
     expect(screen.getByText('drafting')).toBeInTheDocument();
     expect(screen.getByText(/14 of 14 chapters · 10,096 of 90,000 words · 11%/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'The Impairment' }));
     expect(go).toHaveBeenCalledWith({ to: 'book', id: 20 });
+    expect([...(calls[0]?.query.keys() ?? [])]).toEqual([]); // the library's books, whichever site is picked
   });
 
   it('starts a book from the template', async () => {
@@ -231,6 +234,25 @@ describe('<BookView>', () => {
     expect(link.getAttribute('href')).toBe(`data:text/markdown;charset=utf-8,${encodeURIComponent('# The Impairment\n\n---\n')}`);
   });
 
+  it('edits an act guide as a draft revision of the book, against the revision it was read from', async () => {
+    const guide = { path: 'guides/act-1-chapters-01-05.md', text: '# Act I\n\nOpen cold.\n' };
+    const { api, calls } = platform({
+      'GET /api/v2/books/20/documents/': () => ({ revision: 41, documents: [{ path: 'README.md', text: '# The Impairment\n' }, guide] }),
+      'POST /api/v2/books/20/documents/': () => ({ revision: 42, documents: [{ path: 'README.md', text: '# The Impairment\n' }, { ...guide, text: '# Act I\n\nOpen warm.\n' }] }),
+    });
+    renderUi(<BookView bookId={20} />, { api });
+    await userEvent.click(await screen.findByRole('tab', { name: 'Files' }));
+    await userEvent.click(await screen.findByText('guides/act-1-chapters-01-05.md'));
+    const editor = screen.getByLabelText('guides/act-1-chapters-01-05.md');
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    await userEvent.clear(editor);
+    await userEvent.type(editor, '# Act I{enter}{enter}Open warm.{enter}');
+    await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/v2/books/20/documents/' && c.method === 'POST')).toBe(true));
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ base_revision_id: 41, path: 'guides/act-1-chapters-01-05.md', text: '# Act I\n\nOpen warm.\n' });
+    expect(await screen.findByRole('button', { name: 'Save draft' })).toBeDisabled();
+  });
+
   it('offers the outliner’s proposal as a diff, and saves it only when the person does', async () => {
     const proposal = '# The Impairment\n\nNew plan.\n';
     const { api, calls } = platform({
@@ -302,5 +324,46 @@ describe('<BookAssist> beside a chapter', () => {
     expect(screen.getByText('Puffin Rock')).toBeInTheDocument();
     expect(screen.getByText('The ledger says Gannet Rock.')).toBeInTheDocument();
     expect(screen.getByText('high')).toBeInTheDocument();
+  });
+});
+
+describe('<ChapterWriter>', () => {
+  it('puts the page editor, the chapter tasks and that chapter’s findings side by side, and drafts into suggestions', async () => {
+    const chapterPage = pageDetail({
+      id: 31,
+      title: 'Chapter 1',
+      type: 'cms.ChapterPage',
+      type_label: 'Chapter page',
+      fields: { title: 'Chapter 1', number: 1, chapter_status: 'draft', pov: 'First person' },
+      field_specs: [
+        { name: 'title', label: 'Title', group: 'content', kind: 'text', required: true, help_text: '', max_length: 255, choices: [] },
+        { name: 'number', label: 'Number', group: 'content', kind: 'integer', required: false, help_text: '', max_length: null, choices: [] },
+        { name: 'chapter_status', label: 'Status', group: 'content', kind: 'choice', required: true, help_text: '', max_length: 16, choices: [{ value: 'draft', label: 'Draft' }, { value: 'final', label: 'Final' }] },
+        { name: 'pov', label: 'Point of view', group: 'content', kind: 'text', required: false, help_text: '', max_length: 255, choices: [] },
+      ],
+    });
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/books/20/': () => detail({ chapter_list: [chapterRow(1, { path: 'impairment/chapters/ch01.md' }), chapterRow(2, { path: 'impairment/chapters/ch02.md' })] }),
+      'GET /api/v2/content/pages/31/': () => chapterPage,
+      'GET /api/v2/books/tasks/': () => TASKS,
+      'GET /api/v2/books/20/issues/': () => [
+        { level: 'warning', code: 'nav-missing', message: 'no link to the next chapter', path: 'impairment/chapters/ch01.md', line: null },
+        { level: 'error', code: 'placeholder', message: 'unresolved placeholder [Company Name] left in the file', path: 'impairment/chapters/ch02.md', line: 38 },
+      ],
+      'POST /api/v2/books/20/assist/': () => ({ run: { id: 77, status: 'queued', links: { self: '', stream: '' } } }),
+      'GET /api/v2/agent-runs/77/': () => run('succeeded', { task: 'draft', markdown: 'Kareem sat.', suggestions: [501, 502] }),
+    });
+    renderUi(<ChapterWriter bookId={20} chapterId={31} />, { api });
+    expect(await screen.findByLabelText(/^Point of view/)).toHaveValue('First person'); // the page editor's fields
+    for (const task of ['Draft', 'Continue', 'Revise', 'Continuity check', 'Critique']) {
+      expect(await screen.findByRole('radio', { name: task })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole('radio', { name: 'Outline' })).toBeNull(); // the book's task, not a chapter's
+    expect(await screen.findByText('no link to the next chapter')).toBeInTheDocument();
+    expect(screen.queryByText(/unresolved placeholder/)).toBeNull(); // chapter 2's finding is not this chapter's
+    await userEvent.click(screen.getByRole('button', { name: 'Draft' }));
+    expect(await screen.findByText('2 suggestions to review')).toBeInTheDocument();
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ task: 'draft', chapter: 31, instruction: '', selection: '' });
+    expect(calls.some((c) => c.method === 'PATCH')).toBe(false); // nothing is written by running
   });
 });

@@ -1,8 +1,9 @@
-// The shelf: every book a person may open, with its status and progress, and
-// two ways to start one — from the template (a title, a logline, a genre), or
-// from a premise the outliner turns into an outline that the person reads
-// before anything is made. Accepting it makes the book as a draft with a stub
-// per planned chapter; nothing is published.
+// The shelf: every book of the library a person may open, with its status and
+// progress, and two ways to start one — from the template (a title, a logline,
+// a genre), or from a premise the outliner turns into an outline that the
+// person reads before anything is made. Accepting it makes the book as a draft
+// with a stub per planned chapter; nothing is published. Books live in the
+// library, not in a site, so the shelf is the same whichever site is picked.
 import { Alert, Anchor, Badge, Button, Card, Group, Loader, Progress, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -20,13 +21,10 @@ export const BOOK_STATUS_COLOR: Record<string, string> = {
   archived: 'dark',
 };
 
-export function BookShelf({ siteId }: { siteId?: number }) {
+export function BookShelf() {
   const api = useApi();
   const [starting, setStarting] = useState<'template' | 'premise' | null>(null);
-  const shelf = useQuery({
-    queryKey: ['books', siteId],
-    queryFn: () => call(api.GET('/api/v2/books/', { params: { query: { site: siteId } } })),
-  });
+  const shelf = useQuery({ queryKey: ['books'], queryFn: () => call(api.GET('/api/v2/books/')) });
   return (
     <Stack>
       <Group>
@@ -137,7 +135,7 @@ export function PremiseToBook() {
     refetchInterval: (query) => (query.state.data?.status === 'generating' ? 1000 : false),
   });
   const create = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/books/premise/{brief}/create/', { params: { path: { brief: briefId ?? '' } }, body: {} })),
+    mutationFn: () => call(api.POST('/api/v2/books/premise/{brief}/create/', { params: { path: { brief: briefId ?? '' } } })),
     onSuccess: (book) => go({ to: 'book', id: book.id }),
   });
   const ready = brief.data?.status === 'ready' && isOutline(brief.data.result) ? brief.data.result : null;
