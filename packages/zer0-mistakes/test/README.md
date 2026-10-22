@@ -592,7 +592,7 @@ The consolidated testing framework is working correctly when:
 
 ## 📚 Additional Documentation
 
-- [Installation Test Plan](../docs/systems/testing-framework.md)
+- [Testing guide](../docs/development/testing.md)
 - [Configuration Matrix](lib/config_matrix_generator.sh)
 - [Playwright Configuration](playwright.config.js)
 
