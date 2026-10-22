@@ -1,4 +1,4 @@
-# The platform (Django + Wagtail): gunicorn on :8000, serving the studio at /studio/.
+# The platform (Django + Wagtail): gunicorn on :8000 (threaded workers), serving the studio at /studio/.
 #
 # Build from the repository root, because the event schemas the outbox
 # validates against live in ../schemas and the studio in ../web, outside this
@@ -56,5 +56,6 @@ EXPOSE 8000
 # No HEALTHCHECK here: one image runs four roles (web, worker, beat, relay),
 # and only the web role answers HTTP. Each compose service declares its own
 # (the web role's is /readyz). The access log is the platform's own one line
-# per request (ops/middleware.py), so gunicorn's is off.
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+# per request (ops/middleware.py), so gunicorn's is off. gunicorn reads its
+# bind, workers and threaded worker class from content/gunicorn.conf.py.
+CMD ["gunicorn", "config.wsgi:application"]
