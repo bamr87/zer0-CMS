@@ -42,7 +42,7 @@ workspace.yml ──► bin/zer0 ──► list · info · run <task> · affecte
 
 **1. One registry — `workspace.yml`.** Every project is an entry: its path, kind and toolchain, a one-line summary, where it came from, what it depends on inside the repository, what it publishes, the root workflow that gates it, the Jekyll root of a zer0 site, and its tasks — `setup`, `check` (the fast tier), `test` (the full suite) and `build`. A command is written once, here, in the same words a contributor would type in the project's directory.
 
-**2. One command — `bin/zer0`.** It reads the registry and is Python with PyYAML alone (it was stdlib Ruby until PLAN P5, and keeps that tool's commands and output), so it runs in a bare checkout before any project's own dependencies are installed ([`tools/workspace/README.md`](../tools/workspace/README.md)):
+**2. One command — `bin/zer0`.** It reads the registry and is Python with PyYAML alone (it was stdlib Ruby until PLAN P5, and keeps that tool's commands and output), so it runs before any project's own dependencies are installed. Where `python3` has no PyYAML and refuses a global `pip install` (Homebrew, Debian), `python3 -m venv .venv && .venv/bin/pip install pyyaml` once, and `bin/zer0` runs on that `.venv` by itself ([`tools/workspace/README.md`](../tools/workspace/README.md)):
 
 ```bash
 bin/zer0 list                       # every project: path, kind, what it publishes, what gates it

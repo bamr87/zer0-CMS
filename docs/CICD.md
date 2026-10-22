@@ -85,7 +85,8 @@ pre-commit run --all-files
 # one paragraph per line, with the two excludes markdown-oneline.yml passes
 python3 tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'
 
-# the workspace and the absorption gate (what zer0-workspace.yml runs; Python with PyYAML)
+# the workspace and the absorption gate (what zer0-workspace.yml runs; any Python with PyYAML,
+# such as the repository's .venv — tools/workspace/README.md § PyYAML)
 python3 -m unittest discover tools/workspace && bin/zer0 check
 python3 -m unittest discover tools/tests && python3 tools/check_absorption.py
 ```

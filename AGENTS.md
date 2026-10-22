@@ -117,13 +117,13 @@ python manage.py roundtrip_jekyll --path ../sites/drsai             # import →
 docker compose --profile content up -d --wait db redis content worker beat relay
 
 # ── The workspace (every project in the repository) — Python 3.9+ and PyYAML, nothing else ──
-python3 -m pip install pyyaml     # the tool's one dependency
+python3 -m venv .venv && .venv/bin/pip install pyyaml   # once, where python3 lacks PyYAML (PEP 668 refuses a global pip install); bin/zer0 then runs on .venv
 bin/zer0 list                     # projects, paths, what each publishes and what gates it
 bin/zer0 run check --affected     # the fast tier of everything this branch touched (+ dependents)
 bin/zer0 check                    # registry, paths, workflows and vendored copies all agree
 bin/zer0 doctor                   # zer0 doctor over every in-repo site (runs rails/bin/zer0-cms: needs Ruby until G4)
 bin/zer0 tags                     # this repo's release tags vs. those inherited from the Front Matter fork
-python3 -m unittest discover tools/workspace   # the tool's tests, with the golden replay of its Ruby predecessor
+.venv/bin/python -m unittest discover tools/workspace   # the tool's tests, with the golden replay of its Ruby predecessor (any Python with PyYAML)
 ```
 
 `extension.test.ts` and `multiroot.test.ts` need a real extension host (`multiroot` has its own entry in `.vscode-test.mjs`: `npx vscode-test --label multiroot`), and `mcp.test.ts` needs `dist/mcp-server.js`, so the fourteen-suite command above leaves all three out; `out/test/mcp.test.js` does run under plain Mocha once `npm run compile` has built the bundle. On headless Linux `npm test` shells out to `xvfb-run` itself (`test-runner.js`); `ZER0_CMS_NO_XVFB=1` forces the plain path.

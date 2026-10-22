@@ -1,7 +1,8 @@
 """The workspace tool behind bin/zer0: every project in this repository, managed
-from one manifest (workspace.yml). Python 3.9+ and PyYAML, nothing else, so it
-runs in a bare checkout and in any CI job before a project's own dependencies
-are installed. tools/workspace/README.md documents the commands.
+from one manifest (workspace.yml). Python 3.9+ and PyYAML, nothing else (none of
+a project's own dependencies), so it runs in any CI job before they are
+installed; bin/zer0 falls back on the repository's .venv where python3 lacks
+PyYAML. tools/workspace/README.md documents the commands.
 """
 
 
