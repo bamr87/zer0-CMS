@@ -2,9 +2,13 @@
 // their labels and colours, what a move asks of a person before it is sent,
 // the priorities, and the queries and the move every view uses — one cache key
 // (['newsroom', …]) so a move anywhere refreshes the board, the calendar, the
-// assignments and the story's panel together.
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { components, StoryStatus } from '@zer0/api';
+// assignments and the story's panel together. A list says how many it did not
+// show (`count`) rather than dropping them; the published-story picker loads
+// the newest first and searches the platform as the person types.
+import { useDebouncedValue } from '@mantine/hooks';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ApiClient, components, StoryStatus } from '@zer0/api';
+import { useState } from 'react';
 
 import { call } from '../call';
 import { useApi } from '../context';
@@ -42,14 +46,14 @@ export const PRIORITIES = [
   { value: '4', label: 'Low' },
 ];
 
-/** What a move needs from a person before it is sent, if anything. */
-export type Need = 'assignee' | 'comment' | 'when' | 'reason' | 'note';
+/** What a move needs from a person before it is sent, if anything: going live always asks first. */
+export type Need = 'assignee' | 'comment' | 'when' | 'reason' | 'note' | 'confirm';
 
 export function needOf(from: StoryStatus, to: StoryStatus): Need | null {
   if (to === 'assigned') return 'assignee';
   if (to === 'drafting' && (from === 'editing' || from === 'copy')) return 'comment';
   if (to === 'scheduled') return 'when';
-  if (to === 'published' && from === 'editing') return 'reason';
+  if (to === 'published') return from === 'editing' ? 'reason' : 'confirm';
   if (to === 'updated' || to === 'corrected') return 'note';
   return null;
 }
@@ -57,8 +61,10 @@ export function needOf(from: StoryStatus, to: StoryStatus): Need | null {
 export const moveLabel = (from: StoryStatus, to: StoryStatus) =>
   to === 'drafting' && (from === 'editing' || from === 'copy')
     ? 'Send back'
-    : to === 'published' && from === 'editing'
-      ? 'Breaking: publish now'
+    : to === 'published'
+      ? from === 'editing'
+        ? 'Breaking: publish now'
+        : 'Publish now'
       : to === 'corrected'
         ? 'Add a correction'
         : to === 'updated'
@@ -73,16 +79,43 @@ export interface StoriesQuery {
   my_desks?: boolean;
   slot_after?: string;
   slot_before?: string;
+  ordering?: string;
+  q?: string;
+}
+
+/** One page of stories, `size` long (the platform's most is 200): a query for useQuery or useQueries. */
+export function storiesQuery(api: ApiClient, query: StoriesQuery, size = 200) {
+  const params = { ...query, page_size: size };
+  return {
+    queryKey: ['newsroom', 'stories', params],
+    queryFn: () => call(api.GET('/api/v2/newsroom/stories/', { params: { query: params } })),
+  };
 }
 
 export function useStories(query: StoriesQuery, enabled = true) {
   const api = useApi();
-  const params = { ...query, page_size: 200 };
-  return useQuery({
-    queryKey: ['newsroom', 'stories', params],
-    queryFn: () => call(api.GET('/api/v2/newsroom/stories/', { params: { query: params } })),
-    enabled,
+  return useQuery({ ...storiesQuery(api, query), enabled });
+}
+
+/** "Showing n of N" when a list has more than it shows, else nothing. */
+export const shownOf = (data: { count: number; results: unknown[] } | undefined) =>
+  data && data.count > data.results.length ? `Showing ${data.results.length} of ${data.count}` : '';
+
+/**
+ * A site's published stories to pick from — for a front's slot or an issue — the most recently published
+ * first, searched on the platform by headline as the person types. Spread it onto a Mantine Select or
+ * MultiSelect, which keeps the label of what is picked when a later search no longer lists it.
+ */
+export function usePublishedPicker(siteId: number) {
+  const api = useApi();
+  const [searchValue, onSearchChange] = useState('');
+  const [q] = useDebouncedValue(searchValue.trim(), 250);
+  const found = useQuery({
+    ...storiesQuery(api, { site: siteId, status: PUBLISHED, ordering: '-page__first_published_at', q: q || undefined }, 50),
+    placeholderData: keepPreviousData,
   });
+  const data = (found.data?.results ?? []).map((s) => ({ value: s.id, label: s.headline ?? '' }));
+  return { data, searchable: true, searchValue, onSearchChange };
 }
 
 export function useDesks(siteId?: number) {

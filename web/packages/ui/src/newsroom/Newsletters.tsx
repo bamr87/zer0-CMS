@@ -1,7 +1,9 @@
 // Newsletters: a site's lists and their subscribers (confirmed, waiting to
 // confirm, gone — subscribing is double opt-in), each list's issues, composing
-// an issue from published stories, its preview exactly as it is sent, and
-// sending it: once, to the confirmed subscribers, as a job on the platform.
+// an issue from published stories (newest first, searched as one types), its
+// preview exactly as it is sent, and sending it: as a job on the platform, to
+// the confirmed subscribers, once each — a send that failed part way, or that
+// a worker left unfinished, is sent again to those who have not had it.
 import { Alert, Badge, Button, Card, Code, Group, Loader, MultiSelect, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Issue, Newsletter } from '@zer0/api';
@@ -10,7 +12,7 @@ import { useState } from 'react';
 import { call, errorText } from '../call';
 import { useApi } from '../context';
 import { slugify } from './Fronts';
-import { PUBLISHED, useStories, when } from './shared';
+import { usePublishedPicker, when } from './shared';
 
 const COLOR = { draft: 'gray', sending: 'blue', sent: 'green', failed: 'red' };
 
@@ -66,7 +68,7 @@ function Issues({ newsletter, siteId }: { newsletter: Newsletter; siteId: number
   const [subject, setSubject] = useState('');
   const [intro, setIntro] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
-  const published = useStories({ site: siteId, status: PUBLISHED });
+  const picker = usePublishedPicker(siteId);
   const issues = useQuery({
     queryKey: ['newsroom', 'issues', newsletter.id],
     queryFn: () => call(api.GET('/api/v2/newsroom/issues/', { params: { query: { newsletter: newsletter.id, page_size: 100 } } })),
@@ -102,13 +104,7 @@ function Issues({ newsletter, siteId }: { newsletter: Newsletter; siteId: number
           <Title order={4}>Compose an issue</Title>
           <TextInput label="Subject" value={subject} onChange={(e) => setSubject(e.currentTarget.value)} />
           <Textarea label="Introduction" autosize minRows={2} value={intro} onChange={(e) => setIntro(e.currentTarget.value)} />
-          <MultiSelect
-            label="Stories, in order"
-            searchable
-            data={(published.data?.results ?? []).map((s) => ({ value: s.id, label: s.headline ?? '' }))}
-            value={picked}
-            onChange={setPicked}
-          />
+          <MultiSelect label="Stories, in order" {...picker} value={picked} onChange={setPicked} />
           {compose.error ? <Alert color="red">{errorText(compose.error)}</Alert> : null}
           <Button w="fit-content" disabled={!subject.trim()} loading={compose.isPending} onClick={() => compose.mutate()}>
             Save the issue
@@ -146,7 +142,7 @@ function IssueView({ issue, confirmed }: { issue: Issue; confirmed: number }) {
     mutationFn: () => call(api.POST('/api/v2/newsroom/issues/{public_id}/send/', path)),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['newsroom', 'issues'] }),
   });
-  const sendable = issue.status === 'draft' || issue.status === 'failed';
+  const sendable = issue.status === 'draft' || issue.status === 'failed' || issue.status === 'sending';
   return (
     <Card withBorder aria-label="Issue preview">
       <Stack gap="xs">
@@ -162,9 +158,18 @@ function IssueView({ issue, confirmed }: { issue: Issue; confirmed: number }) {
         </Text>
         {preview.isPending ? <Loader size="sm" /> : preview.isError ? <Alert color="red">{errorText(preview.error)}</Alert> : <Code block>{preview.data.text}</Code>}
         {send.error ? <Alert color="red">{errorText(send.error)}</Alert> : null}
+        {issue.status === 'sending' ? (
+          <Text size="sm" c="dimmed">
+            Being sent. If it has stopped part way, resume it: nobody gets it twice.
+          </Text>
+        ) : null}
         {sendable ? (
-          <Button w="fit-content" color="green" loading={send.isPending} onClick={() => send.mutate()}>
-            Send to {confirmed} confirmed subscriber{confirmed === 1 ? '' : 's'}
+          <Button w="fit-content" color="green" variant={issue.status === 'sending' ? 'light' : 'filled'} loading={send.isPending} onClick={() => send.mutate()}>
+            {issue.status === 'draft'
+              ? `Send to ${confirmed} confirmed subscriber${confirmed === 1 ? '' : 's'}`
+              : issue.status === 'failed'
+                ? 'Send it again to those who have not had it'
+                : 'Resume sending, if it has stopped'}
           </Button>
         ) : null}
       </Stack>

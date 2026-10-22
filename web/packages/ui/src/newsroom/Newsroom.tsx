@@ -24,6 +24,7 @@ export function Newsroom({ siteId, storyId }: { siteId?: number; storyId?: strin
   const [deskId, setDeskId] = useState<string | null>(null);
   const [tab, setTab] = useState<string | null>('budget');
   const [pitching, setPitching] = useState(false);
+  const [notice, setNotice] = useState<{ story: string; text: string }>(); // what pitching left to say
   const desk = deskId ?? undefined;
   const query = { site: siteId, desk };
   const open = (id: string) => go({ to: 'story', id });
@@ -87,14 +88,15 @@ export function Newsroom({ siteId, storyId }: { siteId?: number; storyId?: strin
         title="Story"
         closeButtonProps={{ 'aria-label': 'Close the story' }}
       >
-        {storyId ? <StoryPanel storyId={storyId} /> : null}
+        {storyId ? <StoryPanel storyId={storyId} notice={notice?.story === storyId ? notice.text : undefined} /> : null}
       </Drawer>
       <Modal opened={pitching} onClose={() => setPitching(false)} title="Pitch a story" size="lg" closeButtonProps={{ 'aria-label': 'Close' }}>
         <PitchForm
           desks={all}
           deskId={desk}
-          onDone={(id) => {
+          onDone={(id, warning) => {
             setPitching(false);
+            setNotice(warning ? { story: id, text: warning } : undefined);
             open(id);
           }}
         />

@@ -1,8 +1,10 @@
 // Moving a story where the move needs a word from the person first: whom to
 // assign it to, a comment when sending it back, when to schedule it (its
-// embargo, unless they say otherwise), why breaking news skips copy, or the
-// correction's or update's note. The platform decides; a refusal is shown
-// here, and nothing moves until it agrees.
+// embargo, unless they say otherwise), why breaking news skips copy, the
+// correction's or update's note — or, for anything that goes live now, a
+// second click that says so: publication cannot be taken back from readers,
+// feeds and newsletters. The platform decides; a refusal is shown here, and
+// nothing moves until it agrees.
 import { Alert, Button, Group, Modal, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import type { Story, StoryStatus } from '@zer0/api';
@@ -17,8 +19,9 @@ const PROMPT = {
   assignee: 'Who writes it?',
   comment: 'What needs changing? The reporter sees this.',
   when: 'When does it go live? Not before its embargo.',
-  reason: 'Breaking news skips the copy desk. Say why — it is kept with the story.',
-  note: 'The note readers see on the story.',
+  reason: 'Breaking news skips the copy desk and goes live now. Say why — it is kept with the story.',
+  note: 'The note readers see on the story. It publishes nothing else: a fix to the page goes live from the editor.',
+  confirm: 'It goes live now: readers, feeds and newsletters see it at once, and it cannot be taken back from them.',
 };
 
 export function MoveDialog({ story, to, onClose }: { story: Story; to: StoryStatus | null; onClose: () => void }) {
@@ -49,12 +52,12 @@ function MoveForm({ story, to, need, onDone }: { story: Story; to: StoryStatus; 
   else if (need === 'when') body.go_live_at = fromLocalInput(value);
   else if (need === 'reason') body.reason = value;
   else if (need === 'note') body.text = value;
-  else body.comment = value;
-  const required = need !== 'comment';
+  else if (need === 'comment') body.comment = value;
+  const required = need !== 'comment' && need !== 'confirm';
   return (
     <Stack>
-      <Text size="sm">{PROMPT[need]}</Text>
-      {need === 'assignee' ? (
+      <Text size="sm">{need === 'confirm' && story.status === 'scheduled' ? PROMPT.confirm.replace('now', 'now, not at its scheduled time') : PROMPT[need]}</Text>
+      {need === 'confirm' ? null : need === 'assignee' ? (
         <Select
           label="Assignee"
           searchable

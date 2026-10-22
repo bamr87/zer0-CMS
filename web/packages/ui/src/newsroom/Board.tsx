@@ -1,18 +1,27 @@
 // The story budget as a board: a column per status of the newsroom workflow,
-// a card per story. Drag a card to another column to move it (@hello-pangea/dnd,
-// its <style> carrying the page's CSP nonce), or use the card's "Move" menu —
-// the same move, for a keyboard or a single pointer. A move the workflow does
-// not allow from where the story stands is refused here before anything is
-// sent; one that needs a word from the person (an assignee, a reason, a time,
-// a note) asks for it first; and the platform has the last say.
+// a card per story. Each column is its own page of the story list — the stories
+// in the making by priority and deadline, the published ones most recently
+// changed first — with its true count, and "Show more" while it has more, so a
+// story is never dropped from the board without a word. Drag a card to another
+// column to move it (@hello-pangea/dnd, its <style> carrying the page's CSP
+// nonce), or use the card's "Move" menu — the same move, for a keyboard or a
+// single pointer. A move the workflow does not allow from where the story
+// stands is refused here before anything is sent; one that needs a word from
+// the person (an assignee, a reason, a time, a note) or that publishes asks
+// first; and the platform has the last say.
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { ActionIcon, Alert, Anchor, Badge, Card, Group, Loader, Menu, Paper, ScrollArea, Stack, Text, useMantineStyleNonce } from '@mantine/core';
+import { ActionIcon, Alert, Anchor, Badge, Button, Card, Group, Loader, Menu, Paper, ScrollArea, Stack, Text, useMantineStyleNonce } from '@mantine/core';
+import { useQueries } from '@tanstack/react-query';
 import type { Story, StoryStatus } from '@zer0/api';
 import { useState } from 'react';
 
 import { errorText } from '../call';
+import { useApi } from '../context';
 import { MoveDialog } from './MoveDialog';
-import { IN_PROGRESS, moveLabel, needOf, PRIORITIES, STATUSES, statusOf, useMove, useStories, when, type StoriesQuery } from './shared';
+import { IN_PROGRESS, moveLabel, needOf, PRIORITIES, PUBLISHED, STATUSES, statusOf, storiesQuery, useMove, when, type StoriesQuery } from './shared';
+
+const PAGE = 50;
+const MOST = 200; // the platform's largest page
 
 /** Where a drop on the board asks a story to go, if anywhere. */
 export function dropTarget(result: Pick<DropResult, 'draggableId' | 'destination'>, stories: Story[]) {
@@ -22,15 +31,19 @@ export function dropTarget(result: Pick<DropResult, 'draggableId' | 'destination
 }
 
 export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: string) => void }) {
-  const stories = useStories(query);
+  const api = useApi();
   const move = useMove();
   const nonce = useMantineStyleNonce()?.();
+  const [sizes, setSizes] = useState<Partial<Record<StoryStatus, number>>>({});
   const [asking, setAsking] = useState<{ story: Story; to: StoryStatus } | null>(null);
   const [refused, setRefused] = useState('');
-
-  if (stories.isPending) return <Loader />;
-  if (stories.isError) return <Alert color="red">{errorText(stories.error)}</Alert>;
-  const all = stories.data.results;
+  const columns = useQueries({
+    queries: STATUSES.map((s) =>
+      storiesQuery(api, { ...query, status: [s.value], ...(PUBLISHED.includes(s.value) ? { ordering: '-updated_at' } : {}) }, sizes[s.value] ?? PAGE),
+    ),
+  });
+  const failed = columns.find((c) => c.isError);
+  const all = columns.flatMap((c) => c.data?.results ?? []);
 
   const request = (story: Story, to: StoryStatus) => {
     setRefused('');
@@ -51,22 +64,30 @@ export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: str
 
   return (
     <Stack>
+      {failed?.error ? <Alert color="red">{errorText(failed.error)}</Alert> : null}
       {refused ? <Alert color="orange">{refused}</Alert> : null}
       {move.error ? <Alert color="red">{errorText(move.error)}</Alert> : null}
       <ScrollArea type="auto" offsetScrollbars>
         <DragDropContext onDragEnd={onDragEnd} nonce={nonce}>
           <Group align="flex-start" wrap="nowrap" gap="sm">
-            {STATUSES.map((status) => {
-              const column = all.filter((s) => s.status === status.value);
+            {STATUSES.map((status, at) => {
+              const page = columns[at]?.data;
+              const column = (page?.results ?? []).filter((s) => s.status === status.value);
+              const size = sizes[status.value] ?? PAGE;
+              const more = (page?.count ?? 0) - column.length;
               return (
                 <Droppable key={status.value} droppableId={status.value}>
                   {(drop) => (
                     <Paper ref={drop.innerRef} {...drop.droppableProps} withBorder p="xs" w={230} miw={230} mih={240} aria-label={`${status.label} column`}>
                       <Group justify="space-between" mb="xs">
                         <Text fw={600}>{status.label}</Text>
-                        <Badge size="sm" variant="light" color={status.color}>
-                          {column.length}
-                        </Badge>
+                        {page ? (
+                          <Badge size="sm" variant="light" color={status.color}>
+                            {page.count}
+                          </Badge>
+                        ) : (
+                          <Loader size="xs" />
+                        )}
                       </Group>
                       <Stack gap="xs">
                         {column.map((story, index) => (
@@ -79,6 +100,18 @@ export function Board({ query, onOpen }: { query: StoriesQuery; onOpen: (id: str
                           </Draggable>
                         ))}
                         {drop.placeholder}
+                        {more > 0 ? (
+                          <Stack gap={2}>
+                            <Text size="xs" c="dimmed">
+                              {more} more not shown{size >= MOST ? ' — pick a desk to narrow the board' : ''}
+                            </Text>
+                            {size < MOST ? (
+                              <Button size="compact-xs" variant="subtle" onClick={() => setSizes({ ...sizes, [status.value]: Math.min(size + PAGE, MOST) })}>
+                                Show more
+                              </Button>
+                            ) : null}
+                          </Stack>
+                        ) : null}
                       </Stack>
                     </Paper>
                   )}

@@ -1,7 +1,9 @@
 // Pitching a story: a headline and an angle by hand, or a wire or feed item to
 // pitch from (its link, title and text) — with one, the AI may be asked for a
 // pitch from it, which the panel then offers to apply. The story starts at
-// pitch on the chosen desk and its panel opens.
+// pitch on the chosen desk and its panel opens. Once the story exists the pitch
+// has worked: if asking the AI then fails, the panel says so, and the form is
+// never left open to make the story twice.
 import { Alert, Button, Checkbox, Group, Select, Stack, Textarea, TextInput } from '@mantine/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Desk } from '@zer0/api';
@@ -10,7 +12,7 @@ import { useState } from 'react';
 import { call, errorText } from '../call';
 import { useApi } from '../context';
 
-export function PitchForm({ desks, deskId, onDone }: { desks: Desk[]; deskId?: string; onDone: (storyId: string) => void }) {
+export function PitchForm({ desks, deskId, onDone }: { desks: Desk[]; deskId?: string; onDone: (storyId: string, notice?: string) => void }) {
   const api = useApi();
   const qc = useQueryClient();
   const [desk, setDesk] = useState<string | null>(deskId ?? desks[0]?.id ?? null);
@@ -26,14 +28,19 @@ export function PitchForm({ desks, deskId, onDone }: { desks: Desk[]; deskId?: s
           body: { desk: desk ?? '', headline, summary, ...(fromItem ? { source: item } : {}) },
         }),
       );
+      let notice: string | undefined;
       if (fromItem && withAi) {
-        await call(api.POST('/api/v2/newsroom/stories/{public_id}/ai/', { params: { path: { public_id: story.id } }, body: { kind: 'pitch' } }));
+        try {
+          await call(api.POST('/api/v2/newsroom/stories/{public_id}/ai/', { params: { path: { public_id: story.id } }, body: { kind: 'pitch' } }));
+        } catch (error) {
+          notice = `The story is pitched, but the AI was not asked for its pitch: ${errorText(error)}`;
+        }
       }
-      return story;
+      return { story, notice };
     },
-    onSuccess: (story) => {
+    onSuccess: ({ story, notice }) => {
       void qc.invalidateQueries({ queryKey: ['newsroom'] });
-      onDone(story.id);
+      onDone(story.id, notice);
     },
   });
   const set = (name: keyof typeof item) => (e: { currentTarget: { value: string } }) => setItem({ ...item, [name]: e.currentTarget.value });

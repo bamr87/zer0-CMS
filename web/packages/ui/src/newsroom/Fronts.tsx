@@ -1,7 +1,8 @@
 // Fronts: a site's home front and its desks' section fronts. Each is a list of
 // slots in order — a story pinned there, or the latest published story of a
 // desk (any desk on the site, without one) — edited here, saved as a whole, and
-// shown beside the editor as a reader would find it.
+// shown beside the editor as a reader would find it. A slot's story is picked
+// from the site's published stories, newest first, searched as one types.
 import { ActionIcon, Alert, Button, Card, Group, List, Loader, Select, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Front, FrontSlot } from '@zer0/api';
@@ -9,7 +10,7 @@ import { useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi } from '../context';
-import { PUBLISHED, useDesks, useStories } from './shared';
+import { useDesks, usePublishedPicker } from './shared';
 
 export const slugify = (text: string) =>
   text
@@ -62,7 +63,6 @@ function FrontEditor({ front, siteId }: { front: Front; siteId: number }) {
   const api = useApi();
   const qc = useQueryClient();
   const [slots, setSlots] = useState<FrontSlot[]>(front.slots ?? []);
-  const published = useStories({ site: siteId, status: PUBLISHED });
   const desks = useDesks(siteId);
   const path = { params: { path: { public_id: front.id } } };
   const shown = useQuery({
@@ -80,7 +80,7 @@ function FrontEditor({ front, siteId }: { front: Front; siteId: number }) {
     if (a && b) [next[i], next[j]] = [b, a];
     setSlots(next);
   };
-  const stories = (published.data?.results ?? []).map((s) => ({ value: s.id, label: s.headline ?? '' }));
+  const headlines = new Map((shown.data ?? []).flatMap((slot) => (slot.story ? [[slot.story.id, slot.story.headline]] : [])));
   const deskOptions = [{ value: '', label: 'Any desk' }, ...(desks.data?.results ?? []).map((d) => ({ value: d.id, label: d.name }))];
 
   return (
@@ -107,7 +107,7 @@ function FrontEditor({ front, siteId }: { front: Front; siteId: number }) {
               {slot.rule === 'latest' ? (
                 <Select label="From" data={deskOptions} value={slot.desk ?? ''} allowDeselect={false} onChange={(desk) => change(i, { ...slot, desk: desk || null })} />
               ) : (
-                <Select label="Story" searchable data={stories} value={slot.story ?? null} onChange={(story) => change(i, { ...slot, story })} />
+                <StorySelect siteId={siteId} value={slot.story ?? null} known={headlines} onChange={(story) => change(i, { ...slot, story })} />
               )}
               <ActionIcon variant="default" aria-label={`Move slot ${i + 1} up`} disabled={i === 0} onClick={() => swap(i, i - 1)}>
                 ↑
@@ -147,4 +147,11 @@ function FrontEditor({ front, siteId }: { front: Front; siteId: number }) {
       </Stack>
     </Group>
   );
+}
+
+/** A slot's story: the site's published stories, newest first and searched as one types — and the story it holds. */
+function StorySelect({ siteId, value, known, onChange }: { siteId: number; value: string | null; known: Map<string, string>; onChange: (story: string | null) => void }) {
+  const picker = usePublishedPicker(siteId);
+  const held = value && known.has(value) && !picker.data.some((o) => o.value === value) ? [{ value, label: known.get(value) ?? '' }] : [];
+  return <Select label="Story" {...picker} data={[...held, ...picker.data]} value={value} onChange={onChange} />;
 }

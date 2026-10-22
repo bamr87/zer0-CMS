@@ -4,7 +4,7 @@ import { Alert, Anchor, Badge, Loader, SegmentedControl, Stack, Table, Text } fr
 import { useState } from 'react';
 
 import { errorText } from '../call';
-import { IN_PROGRESS, statusOf, useStories, when, type StoriesQuery } from './shared';
+import { IN_PROGRESS, shownOf, statusOf, useStories, when, type StoriesQuery } from './shared';
 
 export function Assignments({ query, onOpen }: { query: StoriesQuery; onOpen: (id: string) => void }) {
   const [scope, setScope] = useState('mine');
@@ -25,6 +25,7 @@ export function Assignments({ query, onOpen }: { query: StoriesQuery; onOpen: (i
           { value: 'desks', label: 'My desks' },
         ]}
       />
+      {shownOf(stories.data) ? <Alert color="yellow">{shownOf(stories.data)}: pick a desk to see the rest.</Alert> : null}
       {stories.isPending ? (
         <Loader />
       ) : stories.isError ? (

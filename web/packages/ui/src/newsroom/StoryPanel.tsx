@@ -1,9 +1,11 @@
 // A story's panel: where it stands and where it may go next; its planning (the
-// pitch, priority, reporter, deadline, slot, embargo) and bylines; its page;
-// the AI's help — a pitch from its wire item, a draft from its pitch, headlines
-// and a summary, a correction note — each something the person applies or
-// accepts; its corrections and updates; and its history. Every change is a
-// request the platform checks again; nothing here publishes on its own.
+// pitch, priority, reporter, deadline, slot, embargo — the last four the desk
+// editors' to set) and bylines, saved as what changed; its page; the AI's help
+// — a pitch from its wire item, a draft from its pitch, headlines and a
+// summary, a correction note — each something the person applies or accepts;
+// its corrections and updates, which publish nothing else; and its history.
+// Every change is a request the platform checks again; nothing here publishes
+// without the person saying so.
 import {
   Alert,
   Anchor,
@@ -44,7 +46,34 @@ interface Pitch {
   why_now?: string;
 }
 
-export function StoryPanel({ storyId }: { storyId: string }) {
+type PatchedStory = components['schemas']['PatchedStory'];
+
+function planOf(story: StoryDetail) {
+  return {
+    headline: story.headline ?? '',
+    summary: story.summary ?? '',
+    priority: String(story.priority ?? 3),
+    deadline: toLocalInput(story.deadline),
+    slot_date: story.slot_date ?? '',
+    embargo: toLocalInput(story.embargo),
+    byline_ids: story.bylines.map((b) => b.id),
+  };
+}
+
+/** What the person changed in the plan, as the PATCH body — nothing they left alone. */
+function planChanges(plan: ReturnType<typeof planOf>, was: ReturnType<typeof planOf>): PatchedStory {
+  const body: PatchedStory = {};
+  if (plan.headline !== was.headline) body.headline = plan.headline;
+  if (plan.summary !== was.summary) body.summary = plan.summary;
+  if (plan.priority !== was.priority) body.priority = Number(plan.priority) as 1 | 2 | 3 | 4;
+  if (plan.deadline !== was.deadline) body.deadline = fromLocalInput(plan.deadline);
+  if (plan.slot_date !== was.slot_date) body.slot_date = plan.slot_date || null;
+  if (plan.embargo !== was.embargo) body.embargo = fromLocalInput(plan.embargo);
+  if (plan.byline_ids.join() !== was.byline_ids.join()) body.byline_ids = plan.byline_ids;
+  return body;
+}
+
+export function StoryPanel({ storyId, notice }: { storyId: string; notice?: string }) {
   const api = useApi();
   const story = useQuery({
     queryKey: ['newsroom', 'story', storyId],
@@ -53,7 +82,12 @@ export function StoryPanel({ storyId }: { storyId: string }) {
   });
   if (story.isPending) return <Loader />;
   if (story.isError) return <Alert color="red">{errorText(story.error)}</Alert>;
-  return <Panel key={story.data.updated_at} story={story.data} />;
+  return (
+    <Stack>
+      {notice ? <Alert color="yellow">{notice}</Alert> : null}
+      <Panel key={story.data.updated_at} story={story.data} />
+    </Stack>
+  );
 }
 
 function Panel({ story }: { story: StoryDetail }) {
@@ -65,8 +99,7 @@ function Panel({ story }: { story: StoryDetail }) {
   const path = { params: { path: { public_id: story.id } } };
   const refresh = () => qc.invalidateQueries({ queryKey: ['newsroom'] });
   const save = useMutation({
-    mutationFn: (body: components['schemas']['PatchedStory']) =>
-      call(api.PATCH('/api/v2/newsroom/stories/{public_id}/', { ...path, body })),
+    mutationFn: (body: PatchedStory) => call(api.PATCH('/api/v2/newsroom/stories/{public_id}/', { ...path, body })),
     onSuccess: refresh,
   });
   const assign = useMutation({
@@ -90,16 +123,10 @@ function Panel({ story }: { story: StoryDetail }) {
     queryKey: ['newsroom', 'authors'],
     queryFn: () => call(api.GET('/api/v2/newsroom/authors/', { params: { query: { page_size: 200 } } })),
   });
-  const [plan, setPlan] = useState({
-    headline: story.headline ?? '',
-    summary: story.summary ?? '',
-    priority: String(story.priority ?? 3),
-    deadline: toLocalInput(story.deadline),
-    slot_date: story.slot_date ?? '',
-    embargo: toLocalInput(story.embargo),
-    byline_ids: story.bylines.map((b) => b.id),
-  });
+  const [plan, setPlan] = useState(() => planOf(story));
+  const changes = planChanges(plan, planOf(story));
   const set = (name: keyof typeof plan) => (value: string | string[]) => setPlan((p) => ({ ...p, [name]: value }));
+  const desks = story.is_editor ? undefined : "Set by the desk's editors";
   const runs = new Map(story.ai_runs.map((r) => [r.kind as Kind, r]));
   const published = PUBLISHED.includes(story.status);
   const failure = move.error ?? save.error ?? assign.error ?? ask.error ?? applyDraft.error;
@@ -136,7 +163,15 @@ function Panel({ story }: { story: StoryDetail }) {
       <TextInput label="Headline" value={plan.headline} onChange={(e) => set('headline')(e.currentTarget.value)} />
       <Textarea label="Pitch" autosize minRows={2} value={plan.summary} onChange={(e) => set('summary')(e.currentTarget.value)} />
       <Group grow>
-        <Select label="Priority" data={PRIORITIES} value={plan.priority} allowDeselect={false} onChange={(v) => set('priority')(v ?? '3')} />
+        <Select
+          label="Priority"
+          description={desks}
+          disabled={!story.is_editor}
+          data={PRIORITIES}
+          value={plan.priority}
+          allowDeselect={false}
+          onChange={(v) => set('priority')(v ?? '3')}
+        />
         <Select
           label="Reporter"
           searchable
@@ -145,15 +180,29 @@ function Panel({ story }: { story: StoryDetail }) {
           onChange={(v) => (v ? assign.mutate(Number(v)) : undefined)}
         />
       </Group>
-      <Group grow>
-        <TextInput label="Deadline" type="datetime-local" value={plan.deadline} onChange={(e) => set('deadline')(e.currentTarget.value)} />
-        <TextInput label="Runs on" type="date" value={plan.slot_date} onChange={(e) => set('slot_date')(e.currentTarget.value)} />
+      <Group grow align="flex-start">
+        <TextInput
+          label="Deadline"
+          description={desks}
+          disabled={!story.is_editor}
+          type="datetime-local"
+          value={plan.deadline}
+          onChange={(e) => set('deadline')(e.currentTarget.value)}
+        />
+        <TextInput
+          label="Runs on"
+          description={desks}
+          disabled={!story.is_editor}
+          type="date"
+          value={plan.slot_date}
+          onChange={(e) => set('slot_date')(e.currentTarget.value)}
+        />
         <TextInput
           label="Embargo"
-          description="It goes live no earlier."
+          description={desks ?? 'It goes live no earlier, by any route.'}
           type="datetime-local"
           value={plan.embargo}
-          disabled={story.status === 'scheduled' || published}
+          disabled={!story.is_editor || story.status === 'scheduled' || published}
           onChange={(e) => set('embargo')(e.currentTarget.value)}
         />
       </Group>
@@ -165,20 +214,7 @@ function Panel({ story }: { story: StoryDetail }) {
         onChange={set('byline_ids')}
       />
       <Group justify="flex-end">
-        <Button
-          loading={save.isPending}
-          onClick={() =>
-            save.mutate({
-              headline: plan.headline,
-              summary: plan.summary,
-              priority: Number(plan.priority) as 1 | 2 | 3 | 4,
-              deadline: fromLocalInput(plan.deadline),
-              slot_date: plan.slot_date || null,
-              ...(story.status === 'scheduled' || published ? {} : { embargo: fromLocalInput(plan.embargo) }),
-              byline_ids: plan.byline_ids,
-            })
-          }
-        >
+        <Button loading={save.isPending} disabled={Object.keys(changes).length === 0} onClick={() => save.mutate(changes)}>
           Save the plan
         </Button>
       </Group>
@@ -283,6 +319,7 @@ function Panel({ story }: { story: StoryDetail }) {
 
 function Corrections({ story }: { story: StoryDetail }) {
   const api = useApi();
+  const go = useGo();
   const qc = useQueryClient();
   const move = useMove();
   const [kind, setKind] = useState<'corrected' | 'updated'>('corrected');
@@ -298,6 +335,16 @@ function Corrections({ story }: { story: StoryDetail }) {
   return (
     <Stack gap="xs">
       <Divider label="Corrections and updates" labelPosition="left" />
+      {story.page && !story.page.live ? (
+        <Alert color="gray">The page is not live: a note goes on its log, and is shown if the page goes live again.</Alert>
+      ) : story.page?.has_unpublished_changes ? (
+        <Alert color="yellow" title="Changes saved since the page went live">
+          A note publishes nothing else. Review those changes in the editor and publish them there if they should go live.{' '}
+          <Anchor component="button" type="button" size="sm" onClick={() => story.page && go({ to: 'page', id: story.page.id })}>
+            Review them in the editor
+          </Anchor>
+        </Alert>
+      ) : null}
       {story.corrections.length ? (
         story.corrections.map((c) => (
           <Text key={c.id} size="sm">

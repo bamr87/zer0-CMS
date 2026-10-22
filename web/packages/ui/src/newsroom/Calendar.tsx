@@ -1,12 +1,13 @@
 // The editorial calendar: a month of the budget by slot date — what runs which
 // day, and where each story stands — a week to a row, Monday first. It is the
-// story list's slot-date filter laid out as a month; a story opens its panel.
+// story list's slot-date filter laid out as a month (and says so when the
+// month holds more than one page of it); a story opens its panel.
 import { Alert, Anchor, Badge, Button, Group, Loader, Paper, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import type { Story } from '@zer0/api';
 import { useState } from 'react';
 
 import { errorText } from '../call';
-import { statusOf, useStories, type StoriesQuery } from './shared';
+import { shownOf, statusOf, useStories, type StoriesQuery } from './shared';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -46,6 +47,7 @@ export function Calendar({ query, onOpen, today = new Date() }: { query: Stories
         </Button>
       </Group>
       {stories.isPending ? <Loader size="sm" /> : stories.isError ? <Alert color="red">{errorText(stories.error)}</Alert> : null}
+      {shownOf(stories.data) ? <Alert color="yellow">{shownOf(stories.data)} stories slotted in these weeks: pick a desk to see the rest.</Alert> : null}
       <SimpleGrid cols={7} spacing={4} verticalSpacing={4}>
         {WEEKDAYS.map((day) => (
           <Text key={day} size="xs" fw={600} c="dimmed" ta="center">

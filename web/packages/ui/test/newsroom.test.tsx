@@ -1,19 +1,24 @@
-// The Newsroom workspace: the budget board groups stories by status and moves
-// one through its menu (asking first for what a move needs, showing the
-// platform's refusal), and a drop maps to a move; the calendar lays a month out
-// by slot date; assignments ask for mine or my desks'; a story's panel saves
-// its plan, asks the AI and applies what it proposes, and posts a correction;
-// fronts are edited and saved as a whole; an issue is composed, previewed and
-// sent; and pitching from a wire item asks the AI and opens the story.
+// The Newsroom workspace: the budget board groups stories by status, a column
+// a page of the list with its true count and more on request, and moves one
+// through its menu (asking first for what a move needs and before anything goes
+// live, showing the platform's refusal), and a drop maps to a move; the
+// calendar lays a month out by slot date; assignments ask for mine or my desks';
+// a story's panel saves what changed in its plan (the desk's decisions the
+// desk's), asks the AI and applies what it proposes, and posts a correction
+// that publishes nothing else; fronts are edited and saved as a whole; an issue
+// is composed from stories found on the platform, previewed, sent and resumed;
+// and pitching from a wire item asks the AI and opens the story, saying so if
+// the AI could not be asked.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { Newsroom, StoryPanel } from '../src';
 import { dropTarget } from '../src/newsroom/Board';
 import { Calendar, monthGrid } from '../src/newsroom/Calendar';
 import { Fronts } from '../src/newsroom/Fronts';
 import { Newsletters } from '../src/newsroom/Newsletters';
+import { PitchForm } from '../src/newsroom/PitchForm';
 import { fakePlatform, renderUi, Reply } from '../../../test/harness';
 
 const STORIES = '/api/v2/newsroom/stories/';
@@ -45,21 +50,28 @@ function story(overrides: Record<string, unknown> = {}) {
   };
 }
 
-const detail = (overrides: Record<string, unknown> = {}) => ({ events: [], corrections: [], ai_runs: [], ...story(overrides) });
-const listOf = (results: unknown[]) => ({ count: results.length, next: null, previous: null, results });
+const detail = (overrides: Record<string, unknown> = {}) => ({ events: [], corrections: [], ai_runs: [], is_editor: true, ...story(overrides) });
+const listOf = (results: unknown[], count = results.length) => ({ count, next: null, previous: null, results });
+/** The story list as the platform answers it: only the statuses asked for. */
+const storiesOf =
+  (all: ReturnType<typeof story>[]) =>
+  ({ url }: { url: URL }) => {
+    const wanted = url.searchParams.getAll('status');
+    return listOf(wanted.length ? all.filter((s) => wanted.includes(String(s.status))) : all);
+  };
 const DESK = { id: 'd1', site: 1, name: 'Metro', slug: 'metro', section: 3, section_title: 'News', editors: [], copy_editors: [], is_editor: true };
 const PEOPLE = [{ id: 2, username: 'rae', name: 'Rae Porter' }];
 
 describe('the budget board', () => {
   it('shows each story in its status column and moves one through its menu', async () => {
     const platform = fakePlatform({
-      [`GET ${STORIES}`]: () => listOf([story(), story({ id: 's2', headline: 'Fire on Main', status: 'pitch', moves: ['assigned'] })]),
+      [`GET ${STORIES}`]: storiesOf([story(), story({ id: 's2', headline: 'Fire on Main', status: 'pitch', moves: ['assigned'] })]),
       [`POST ${STORIES}s1/move/`]: () => detail({ status: 'editing' }),
     });
     renderUi(<Newsroom siteId={1} />, { api: platform.api });
     const drafting = await screen.findByLabelText('Drafting column');
-    expect(within(drafting).getByText('Bridge closes')).toBeInTheDocument();
-    expect(within(screen.getByLabelText('Pitch column')).getByText('Fire on Main')).toBeInTheDocument();
+    expect(await within(drafting).findByText('Bridge closes')).toBeInTheDocument();
+    expect(await within(screen.getByLabelText('Pitch column')).findByText('Fire on Main')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Move “Bridge closes”' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'To editing' }));
     await waitFor(() => expect(platform.calls.find((c) => c.method === 'POST')?.body).toEqual({ status: 'editing' }));
@@ -82,6 +94,37 @@ describe('the budget board', () => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Breaking: publish now' }).at(-1) as HTMLElement);
     expect(await screen.findByText('the story is embargoed until tomorrow')).toBeInTheDocument();
     expect(platform.calls.find((c) => c.method === 'POST')?.body).toEqual({ status: 'published', reason: 'The bridge is closed now' });
+  });
+
+  it('asks before anything goes live, and sends nothing until the person agrees', async () => {
+    const atCopy = story({ status: 'copy', moves: ['scheduled', 'published', 'drafting'] });
+    const platform = fakePlatform({
+      [`GET ${STORIES}`]: storiesOf([atCopy]),
+      [`POST ${STORIES}s1/move/`]: () => detail({ status: 'published' }),
+    });
+    renderUi(<Newsroom siteId={1} />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Move “Bridge closes”' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Publish now' }));
+    expect(await screen.findByText(/It goes live now: readers, feeds and newsletters see it at once/)).toBeInTheDocument();
+    expect(platform.calls.some((c) => c.method === 'POST')).toBe(false);
+    await userEvent.click(screen.getAllByRole('button', { name: 'Publish now' }).at(-1) as HTMLElement);
+    await waitFor(() => expect(platform.calls.find((c) => c.method === 'POST')?.body).toEqual({ status: 'published' }));
+  });
+
+  it('gives each column its true count and more of it on request, the published newest first', async () => {
+    const pitches = [story({ id: 'p1', headline: 'One of many', status: 'pitch', moves: ['assigned'] })];
+    const platform = fakePlatform({
+      [`GET ${STORIES}`]: ({ url }) => (url.searchParams.get('status') === 'pitch' ? listOf(pitches, 120) : listOf([])),
+    });
+    renderUi(<Newsroom siteId={1} />, { api: platform.api });
+    const column = await screen.findByLabelText('Pitch column');
+    expect(await within(column).findByText('119 more not shown')).toBeInTheDocument();
+    expect(within(column).getByText('120')).toBeInTheDocument();
+    await userEvent.click(within(column).getByRole('button', { name: 'Show more' }));
+    const asked = (status: string) => platform.calls.filter((c) => c.path === STORIES && c.query.get('status') === status);
+    await waitFor(() => expect(asked('pitch').at(-1)?.query.get('page_size')).toBe('100'));
+    expect(asked('pitch')[0]?.query.get('page_size')).toBe('50');
+    expect(asked('published')[0]?.query.get('ordering')).toBe('-updated_at');
   });
 
   it('maps a drop to a move, and a drop in the same column to none', () => {
@@ -131,7 +174,7 @@ describe('a story’s panel', () => {
     await userEvent.clear(headline);
     await userEvent.type(headline, 'Bridge closes Monday');
     await userEvent.click(screen.getByRole('button', { name: 'Save the plan' }));
-    await waitFor(() => expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({ headline: 'Bridge closes Monday', priority: 3, byline_ids: [] }));
+    await waitFor(() => expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({ headline: 'Bridge closes Monday' }));
     await userEvent.click(screen.getByRole('button', { name: 'Suggest headlines and a summary' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.body).toEqual({ kind: 'headlines' }));
     await userEvent.click(screen.getByRole('button', { name: 'Use this pitch' }));
@@ -140,6 +183,19 @@ describe('a story’s panel', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: /Open “Bridge closes” in the editor/ }));
     expect(go).toHaveBeenCalledWith({ to: 'page', id: 5 });
+  });
+
+  it('leaves the desk’s decisions to the desk’s editors', async () => {
+    const platform = fakePlatform({
+      [`GET ${STORIES}s1/`]: () => detail({ is_editor: false }),
+      'GET /api/v2/newsroom/desks/d1/people/': () => PEOPLE,
+      'GET /api/v2/newsroom/authors/': () => listOf([]),
+    });
+    renderUi(<StoryPanel storyId="s1" notice="The story is pitched, but the AI was not asked for its pitch: busy" />, { api: platform.api });
+    expect(await screen.findByText(/the AI was not asked for its pitch/)).toBeInTheDocument();
+    for (const field of ['Priority', 'Deadline', 'Runs on', 'Embargo']) expect(screen.getByLabelText(field, { selector: 'input' })).toBeDisabled();
+    expect(screen.getByLabelText('Headline')).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Save the plan' })).toBeDisabled(); // nothing changed yet
   });
 
   it('asks the AI for a draft from the pitch and makes it the story’s page', async () => {
@@ -158,16 +214,20 @@ describe('a story’s panel', () => {
     await waitFor(() => expect(platform.calls.some((c) => c.method === 'POST' && c.path.endsWith('/apply-draft/'))).toBe(true));
   });
 
-  it('drafts a correction note with the AI and posts the one the editor keeps', async () => {
+  it('drafts a correction note with the AI and posts the one the editor keeps, which publishes nothing else', async () => {
     const noteRun = { kind: 'correction', run: { id: 11, status: 'succeeded', links: { self: '', stream: '' } }, result: { text: 'An earlier version misstated the day.' }, text: '', error: '' };
+    const page = { id: 5, title: 'Bridge closes', live: true, has_unpublished_changes: true, url_path: '/x/', first_published_at: null };
     const platform = fakePlatform({
-      [`GET ${STORIES}s1/`]: () => detail({ status: 'published', moves: ['updated', 'corrected'], ai_runs: [noteRun] }),
+      [`GET ${STORIES}s1/`]: () => detail({ status: 'published', moves: ['updated', 'corrected'], ai_runs: [noteRun], page }),
       [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 12, status: 'queued', links: { self: '', stream: '' } } }),
       [`POST ${STORIES}s1/move/`]: () => detail({ status: 'corrected' }),
       'GET /api/v2/newsroom/desks/d1/people/': () => PEOPLE,
       'GET /api/v2/newsroom/authors/': () => listOf([]),
     });
-    renderUi(<StoryPanel storyId="s1" />, { api: platform.api });
+    const { go } = renderUi(<StoryPanel storyId="s1" />, { api: platform.api });
+    expect(await screen.findByText('Changes saved since the page went live')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Review them in the editor' }));
+    expect(go).toHaveBeenCalledWith({ to: 'page', id: 5 });
     await userEvent.type(await screen.findByLabelText(/What changed\?/), 'the vote is Tuesday');
     await userEvent.click(screen.getByRole('button', { name: 'Draft the note with AI' }));
     await waitFor(() => expect(platform.calls.find((c) => c.path.endsWith('/ai/'))?.body).toEqual({ kind: 'correction', text: 'the vote is Tuesday' }));
@@ -210,7 +270,8 @@ describe('fronts and newsletters', () => {
     const platform = fakePlatform({
       'GET /api/v2/newsroom/newsletters/': () => listOf([newsletter]),
       'GET /api/v2/newsroom/issues/': () => listOf([issue]),
-      [`GET ${STORIES}`]: () => listOf([story({ status: 'published' })]),
+      [`GET ${STORIES}`]: ({ url }) =>
+        listOf([story({ status: 'published' }), story({ id: 's2', headline: 'Older news', status: 'published' })].filter((s) => s.headline.includes(url.searchParams.get('q') ?? ''))),
       'POST /api/v2/newsroom/issues/': () => issue,
       'GET /api/v2/newsroom/issues/i1/preview/': () => ({ subject: 'Monday', text: 'Morning Brief — Monday\n1. Bridge closes', html: '<h1></h1>' }),
       'POST /api/v2/newsroom/issues/i1/send/': () => new Reply(202, { ...issue, status: 'sending' }),
@@ -218,7 +279,9 @@ describe('fronts and newsletters', () => {
     renderUi(<Newsletters siteId={1} />, { api: platform.api });
     expect(await screen.findByText('2 confirmed')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Subject'), 'Monday');
-    await userEvent.click(screen.getByLabelText('Stories, in order', { selector: 'input' }));
+    await userEvent.type(screen.getByLabelText('Stories, in order', { selector: 'input' }), 'Bridge');
+    await waitFor(() => expect(platform.calls.filter((c) => c.path === STORIES).at(-1)?.query.get('q')).toBe('Bridge'));
+    expect(platform.calls.find((c) => c.path === STORIES)?.query.get('ordering')).toBe('-page__first_published_at');
     await userEvent.click(await screen.findByRole('option', { name: 'Bridge closes' }));
     await userEvent.click(screen.getByRole('button', { name: 'Save the issue' }));
     await waitFor(() =>
@@ -232,6 +295,24 @@ describe('fronts and newsletters', () => {
     expect(await screen.findByText(/1\. Bridge closes/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send to 2 confirmed subscribers' }));
     await waitFor(() => expect(platform.calls.some((c) => c.path === '/api/v2/newsroom/issues/i1/send/')).toBe(true));
+  });
+});
+
+describe('a send that stopped', () => {
+  it('offers to resume an issue left sending', async () => {
+    const newsletter = { id: 'n1', site: 1, name: 'Morning Brief', slug: 'morning', description: '', from_email: '', subscribers: { pending: 0, confirmed: 3, unsubscribed: 0 }, created_at: '' };
+    const issue = { id: 'i1', newsletter: 'n1', subject: 'Monday', intro: '', stories: [], status: 'sending', recipients: 1, sent_at: null, error: '', created_at: '', updated_at: 'v1' };
+    const platform = fakePlatform({
+      'GET /api/v2/newsroom/newsletters/': () => listOf([newsletter]),
+      'GET /api/v2/newsroom/issues/': () => listOf([issue]),
+      [`GET ${STORIES}`]: () => listOf([]),
+      'GET /api/v2/newsroom/issues/i1/preview/': () => ({ subject: 'Monday', text: 'Morning Brief — Monday', html: '' }),
+      'POST /api/v2/newsroom/issues/i1/send/': () => new Reply(409, { error: { code: 'resource.conflict', message: 'this issue is being sent', status: 409, details: [] } }),
+    });
+    renderUi(<Newsletters siteId={1} />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Monday' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Resume sending, if it has stopped' }));
+    expect(await screen.findByText('this issue is being sent')).toBeInTheDocument();
   });
 });
 
@@ -278,5 +359,18 @@ describe('pitching', () => {
     expect(posted.map((c) => c.path)).toEqual([STORIES, `${STORIES}s9/ai/`]);
     expect(posted[0]?.body).toEqual({ desk: 'd1', headline: '', summary: '', source: { url: 'https://wire.example/1', title: 'BRIDGE SHUT', text: '' } });
     expect(posted[1]?.body).toEqual({ kind: 'pitch' });
+  });
+
+  it('opens a story that was pitched even when the AI could not be asked, and says so', async () => {
+    const platform = fakePlatform({
+      [`POST ${STORIES}`]: () => story({ id: 's9', status: 'pitch' }),
+      [`POST ${STORIES}s9/ai/`]: () => new Reply(403, { error: { code: 'auth.forbidden', message: 'not yours', status: 403, details: [] } }),
+    });
+    const onDone = vi.fn();
+    renderUi(<PitchForm desks={[DESK] as never} onDone={onDone} />, { api: platform.api });
+    await userEvent.type(screen.getByLabelText('From a wire or feed item: its link'), 'https://wire.example/1');
+    await userEvent.click(screen.getByRole('button', { name: 'Pitch it' }));
+    await waitFor(() => expect(onDone).toHaveBeenCalledWith('s9', expect.stringContaining('the AI was not asked for its pitch: not yours')));
+    expect(platform.calls.filter((c) => c.method === 'POST' && c.path === STORIES)).toHaveLength(1);
   });
 });
