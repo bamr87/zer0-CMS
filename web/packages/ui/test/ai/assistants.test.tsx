@@ -56,7 +56,8 @@ describe('<AssistantEditor>', () => {
       ...lists,
       'GET /api/v2/ai/assistants/a1/': () => assistant(),
       'POST /api/v2/ai/assistants/a1/run/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun(status, { text: 'Cats win', markdown: '## Cats win\n\nThe sofa is theirs.', provider: 'fake', model: 'fake-1' }),
+      'GET /api/v2/agent-runs/9/': () =>
+        agentRun(status, { text: '{"headline": "Cats win"}', markdown: '## Cats win\n\nThe sofa is theirs.', json: { headline: 'Cats win' }, provider: 'fake', model: 'fake-1' }),
     });
     renderUi(<AssistantEditor id="a1" />, { api, stream });
     await userEvent.type(await screen.findByLabelText('Prompt'), 'cats');
@@ -69,6 +70,8 @@ describe('<AssistantEditor>', () => {
     const answer = await screen.findByRole('document', { name: 'The answer' });
     expect(within(answer).getByRole('heading', { name: 'Cats win' })).toBeInTheDocument();
     expect(answer).toHaveTextContent('The sofa is theirs.');
+    // With an output schema, the answer is also the validated JSON it was rendered from.
+    expect(screen.getByLabelText('The structured answer')).toHaveTextContent('"headline": "Cats win"');
   });
 
   it('exports an assistant as a document to copy or save', async () => {

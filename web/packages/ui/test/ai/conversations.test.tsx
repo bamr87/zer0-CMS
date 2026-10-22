@@ -118,6 +118,48 @@ describe('<ConversationThread>', () => {
     expect(calls.find((c) => c.path === '/api/v2/ai/messages/m2/promote/')?.body).toEqual({ to: 'draft' });
   });
 
+  it('shows one side of the thread, or the replies that failed, as the platform filters them', async () => {
+    const { api, calls } = fakePlatform({
+      ...helpers,
+      'GET /api/v2/ai/conversations/c1/messages/': ({ url }) =>
+        cursor(
+          url.searchParams.get('status') === 'failed'
+            ? [message(2, 'assistant', '', { status: 'failed', error: 'the provider is down' })]
+            : [message(1, 'user', 'Ideas?'), message(2, 'assistant', '', { status: 'failed', error: 'the provider is down' })],
+        ),
+    });
+    renderUi(<ConversationThread id="c1" />, { api });
+    expect(await screen.findByText('Ideas?')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'Failed' }));
+    await waitFor(() => expect(screen.queryByText('Ideas?')).toBeNull());
+    expect(screen.getByText('the provider is down')).toBeInTheDocument();
+    expect(calls.findLast((c) => c.path.endsWith('/messages/'))?.query.get('status')).toBe('failed');
+    await userEvent.click(screen.getByRole('radio', { name: 'Yours' }));
+    await waitFor(() => expect(calls.findLast((c) => c.path.endsWith('/messages/'))?.query.get('role')).toBe('user'));
+  });
+
+  it('runs the conversation’s pipeline on the message, each step replying in turn', async () => {
+    let status = 'running';
+    const { stream, finish } = liveStream();
+    const { api, calls } = fakePlatform({
+      ...helpers,
+      'GET /api/v2/ai/conversations/c1/': () => ({ ...conversation, pipeline: 'p1' }),
+      'GET /api/v2/ai/pipelines/': () => page([{ id: 'p1', name: 'Draft, then edit', owner: 'editor', site: null, visibility: 'private', can_edit: true, created_at: '', updated_at: '', steps: [] }]),
+      'GET /api/v2/ai/conversations/c1/messages/': () => cursor([]),
+      'POST /api/v2/ai/conversations/c1/run-pipeline/': () => ({ run: runRef(9) }),
+      'GET /api/v2/agent-runs/9/': () => agentRun(status),
+    });
+    renderUi(<ConversationThread id="c1" />, { api, stream });
+    await userEvent.type(await screen.findByLabelText('Your message'), 'A post about backups');
+    await userEvent.click(screen.getByRole('button', { name: 'Run the pipeline' }));
+    await waitFor(() => expect(calls.find((c) => c.path.endsWith('/run-pipeline/'))?.body).toEqual({ prompt: 'A post about backups' }));
+    expect(await screen.findByRole('status', { name: 'Run #9' })).toHaveTextContent('running');
+    const before = calls.filter((c) => c.path.endsWith('/messages/')).length;
+    status = 'succeeded';
+    finish();
+    await waitFor(() => expect(calls.filter((c) => c.path.endsWith('/messages/')).length).toBeGreaterThan(before));
+  });
+
   it('deletes a message and changes who replies', async () => {
     const { api, calls } = fakePlatform({
       ...helpers,

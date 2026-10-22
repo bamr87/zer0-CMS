@@ -7,6 +7,6 @@ export { BriefList, BriefStatusBadge, BriefWorkspace } from './Briefs';
 export { ConversationList, ConversationThread } from './Conversations';
 export { ModelCatalog } from './Models';
 export { PipelineEditor, PipelineList } from './Pipelines';
-export { ProviderList } from './Providers';
+export { ProviderList, ProviderStatus } from './Providers';
 export { SchemaEditor, SchemaList, schemaProblem } from './Schemas';
 export { Answer, MarkdownView, RunProgress } from './shared';

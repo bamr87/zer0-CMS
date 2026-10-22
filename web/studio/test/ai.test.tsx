@@ -82,6 +82,41 @@ describe('the Create area', () => {
   });
 });
 
+describe('Home', () => {
+  it('shows the AI providers’ status, a step from configuring them', async () => {
+    const provider = (slug: string, overrides: Record<string, unknown>) => ({
+      id: `p-${slug}`,
+      slug,
+      display_name: slug === 'anthropic' ? 'Anthropic' : slug,
+      enabled: true,
+      is_default: false,
+      default_model: '',
+      monthly_budget_usd: null,
+      has_credential: true,
+      credential_source: 'database',
+      capabilities: [],
+      last_health: {},
+      checked_at: null,
+      created_at: '',
+      updated_at: '',
+      ...overrides,
+    });
+    renderStudio('/', {
+      'GET /api/v2/review/suggestions/': () => EMPTY,
+      'GET /api/v2/ai/providers/': () => ({
+        ...EMPTY,
+        results: [provider('anthropic', { is_default: true, last_health: { ok: true } }), provider('openai', { last_health: { ok: false } }), provider('fake', { enabled: false })],
+      }),
+    });
+    const status = await screen.findByLabelText('Provider status');
+    expect(status).toHaveTextContent('Default: Anthropic');
+    expect(status).toHaveTextContent('healthy');
+    expect(status).toHaveTextContent('2 enabled · 1 failing its last check');
+    await userEvent.click(screen.getByRole('button', { name: 'Open the providers' }));
+    expect(await screen.findByRole('tab', { name: 'Providers' })).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
 describe('the AI destinations', () => {
   it('map to their routes', () => {
     expect(pathFor({ to: 'page', id: 5, tab: 'suggestions' })).toBe('/write/5?tab=suggestions');

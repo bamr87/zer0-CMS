@@ -49,6 +49,20 @@ describe('<SchemaEditor>', () => {
     expect(calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({ name: 'Story', schema: { type: 'strin' } });
   });
 
+  it('exports a schema with its render template', async () => {
+    const document = { name: 'Story', description: '', version: 1, schema: { type: 'object' }, render_template: '## {{ headline }}' };
+    const { api } = fakePlatform({
+      'GET /api/v2/sites/': () => [],
+      'GET /api/v2/ai/output-schemas/s1/': () => schema(),
+      'GET /api/v2/ai/output-schemas/s1/export/': () => document,
+    });
+    renderUi(<SchemaEditor id="s1" />, { api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Export' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Export Story' });
+    expect(within(dialog).getByLabelText('The exported document')).toHaveTextContent('"render_template": "## {{ headline }}"');
+    expect(within(dialog).getByRole('link', { name: 'Download story.json' })).toHaveAttribute('download', 'story.json');
+  });
+
   it('creates a schema and opens it', async () => {
     const { api, calls } = fakePlatform({
       'GET /api/v2/sites/': () => [],

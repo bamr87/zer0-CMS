@@ -1,10 +1,11 @@
 // Conversations: threads with an assistant (or a pipeline whose steps reply
-// in turn), the whole history replayed to the provider on every turn. Send a
+// in turn), the whole history replayed to the provider on every turn — shown
+// whole, or filtered to one side or to the replies that failed. Send a
 // message and watch the answer arrive by following its run; ask again (with
 // the same assistant or another), delete a message, or promote one to a
 // brief — to write from — or to a draft, which opens as a brief to review and
 // apply. Reachable from the AI area and from Create.
-import { Alert, Badge, Button, Card, Group, Loader, Menu, Paper, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { Alert, Badge, Button, Card, Group, Loader, Menu, Paper, SegmentedControl, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ApiClient, Conversation, Message } from '@zer0/api';
 import { useState } from 'react';
@@ -64,12 +65,21 @@ export function ConversationList({ siteId }: { siteId?: number }) {
   );
 }
 
-/** Every message of a conversation, oldest first, following the cursor to the end. */
-async function allMessages(api: ApiClient, id: string): Promise<Message[]> {
+/** Which messages a thread shows: all of them, one side's, or the replies that failed (the platform filters). */
+const SHOW = {
+  all: {},
+  user: { role: 'user' },
+  assistant: { role: 'assistant' },
+  failed: { status: 'failed' },
+} as const;
+type Show = keyof typeof SHOW;
+
+/** Every message of a conversation the filter keeps, oldest first, following the cursor to the end. */
+async function allMessages(api: ApiClient, id: string, show: Show): Promise<Message[]> {
   const found: Message[] = [];
   let cursor: string | undefined;
   for (let page = 0; page < 25; page += 1) {
-    const query = { page_size: 200, ...(cursor ? { cursor } : {}) };
+    const query = { page_size: 200, ...SHOW[show], ...(cursor ? { cursor } : {}) };
     const batch = await call(api.GET('/api/v2/ai/conversations/{public_id}/messages/', { params: { path: { public_id: id }, query } }));
     found.push(...batch.results);
     cursor = batch.next ? (new URL(batch.next).searchParams.get('cursor') ?? undefined) : undefined;
@@ -84,16 +94,28 @@ export function ConversationThread({ id }: { id: string }) {
     queryKey: ['ai', 'conversation', id],
     queryFn: () => call(api.GET('/api/v2/ai/conversations/{public_id}/', { params: { path: { public_id: id } } })),
   });
-  const messages = useQuery({ queryKey: ['ai', 'messages', id], queryFn: () => allMessages(api, id) });
+  const [show, setShow] = useState<Show>('all');
+  const messages = useQuery({ queryKey: ['ai', 'messages', id, show], queryFn: () => allMessages(api, id, show) });
   if (conversation.isPending) return <Loader aria-label="Loading the conversation" />;
   if (conversation.isError) return <Alert color="red">{errorText(conversation.error)}</Alert>;
   return (
     <Stack>
       <ThreadHeader conversation={conversation.data} />
       <ReadOnlyNote owner={conversation.data.owner} can={conversation.data.can_edit} />
+      <SegmentedControl
+        aria-label="Show"
+        value={show}
+        onChange={(next) => setShow(next in SHOW ? (next as Show) : 'all')}
+        data={[
+          { value: 'all', label: 'Every message' },
+          { value: 'user', label: 'Yours' },
+          { value: 'assistant', label: 'Answers' },
+          { value: 'failed', label: 'Failed' },
+        ]}
+      />
       {messages.isPending ? <Loader aria-label="Loading the messages" /> : null}
       {messages.isError ? <Alert color="red">{errorText(messages.error)}</Alert> : null}
-      {messages.data?.length === 0 ? <Text c="dimmed">No messages yet: say something below.</Text> : null}
+      {messages.data?.length === 0 ? <Text c="dimmed">{show === 'all' ? 'No messages yet: say something below.' : 'No message is shown by this filter.'}</Text> : null}
       <Stack component="ol" gap="sm" p={0} m={0} aria-label="Messages">
         {(messages.data ?? []).map((m) => (
           <MessageItem key={m.id} message={m} conversation={conversation.data} />

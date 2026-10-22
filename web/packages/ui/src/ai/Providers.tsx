@@ -4,15 +4,16 @@
 // also edit one's configuration, test it, sync its models into the catalog and
 // make it the default; a test and a sync are runs, followed live. A credential
 // only ever goes in: the platform never sends one back, so this screen shows
-// "set" or "not set" and its input starts empty every time.
-import { Alert, Badge, Button, Checkbox, Drawer, Group, JsonInput, Loader, PasswordInput, Stack, Switch, Table, Text, TextInput } from '@mantine/core';
+// "set" or "not set" and its input starts empty every time. Home shows the
+// default provider's status (ProviderStatus).
+import { Alert, Badge, Button, Card, Checkbox, Drawer, Group, JsonInput, Loader, PasswordInput, Stack, Switch, Table, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Provider } from '@zer0/api';
 import { useState } from 'react';
 
 import { call, errorText } from '../call';
-import { useApi } from '../context';
+import { useApi, useGo } from '../context';
 import { fieldError, isRecord, RunProgress, useCanConfigure, useProviders } from './shared';
 
 type Check = 'test' | 'sync-models';
@@ -32,6 +33,37 @@ function health(provider: Provider) {
 function credential(provider: Provider) {
   if (provider.has_credential) return 'set';
   return provider.credential_source ? `not set — uses ${provider.credential_source}` : 'not set';
+}
+
+/** For Home: the default provider and its last check, and how many providers are on and failing. */
+export function ProviderStatus() {
+  const go = useGo();
+  const providers = useProviders();
+  const on = (providers.data?.results ?? []).filter((p) => p.enabled);
+  const preferred = on.find((p) => p.is_default);
+  const failing = on.filter((p) => isRecord(p.last_health) && p.last_health.ok === false).length;
+  return (
+    <Card withBorder>
+      <Title order={4} mb="sm">
+        AI providers
+      </Title>
+      {providers.isError ? <Text c="red">{errorText(providers.error)}</Text> : null}
+      {providers.data ? (
+        <Stack gap={6} aria-label="Provider status">
+          <Group justify="space-between" wrap="nowrap">
+            <Text size="sm">{preferred ? `Default: ${preferred.display_name || preferred.slug}` : 'No default chosen: the platform’s setting decides'}</Text>
+            {preferred ? health(preferred) : null}
+          </Group>
+          <Text size="sm" c="dimmed">
+            {on.length} enabled{failing ? ` · ${failing} failing its last check` : ''}
+          </Text>
+        </Stack>
+      ) : null}
+      <Button variant="light" mt="sm" onClick={() => go({ to: 'ai', section: 'providers' })}>
+        Open the providers
+      </Button>
+    </Card>
+  );
 }
 
 export function ProviderList() {
