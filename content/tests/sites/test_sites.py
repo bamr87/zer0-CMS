@@ -165,6 +165,21 @@ def test_seeing_a_site_is_not_managing_it(registered, editor):
 # ── sync and write-back ────────────────────────────────────────────────────
 
 
+@pytest.mark.parametrize("name", ["jekyll-site", "jekyll-site-src"])
+def test_the_rails_fixture_sites_sync_and_export_byte_for_byte(name, capsys):
+    """PLAN G4's gate: the fixture sites the Rails catalog was proven on come
+    through a sync and an export unchanged, every file the catalog reads."""
+    from django.core.management import call_command
+
+    from sites import catalog
+
+    root = FIXTURE.parent.parent / name
+    call_command("roundtrip_jekyll", "--path", str(root), "--site", name)
+    out = capsys.readouterr().out
+    read = len(catalog.scan(root).entries)
+    assert f"{read}/{read} file(s) identical after the round trip" in out, out
+
+
 def test_a_second_sync_reads_nothing_new_and_a_hand_edit_comes_in(
     api, registered, checkout, django_capture_on_commit_callbacks
 ):

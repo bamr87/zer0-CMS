@@ -69,23 +69,13 @@ class NotAMapping(yaml.YAMLError):
     the same file)."""
 
 
-class _FrozenKey(tuple):
-    """A mapping key that is itself a collection — `date: {{date}}` is a mapping
-    whose key is a mapping. Jekyll's YAML reads it; Python's dict cannot hold an
-    unhashable key, so it is kept as a frozen tuple instead of failing."""
-
-
-def _freeze(value):
-    if isinstance(value, dict):
-        return _FrozenKey((_freeze(k), _freeze(v)) for k, v in value.items())
-    if isinstance(value, list):
-        return _FrozenKey(_freeze(v) for v in value)
-    return value
-
-
 class Loader(yaml.SafeLoader):
     """YAML as Jekyll reads front matter: dates and times typed, aliases allowed,
-    nothing but plain data constructed, and a collection used as a key kept."""
+    nothing but plain data constructed — and a collection used as a key kept as
+    the text it is written as. `date: {{date}}` (a template's placeholder) is a
+    mapping whose key is a mapping; Jekyll's YAML reads it, a Python dict cannot
+    hold that key, and the platform stores front matter as JSON, whose keys are
+    strings."""
 
     def construct_mapping(self, node, deep=False):
         if isinstance(node, yaml.MappingNode):
@@ -94,7 +84,8 @@ class Loader(yaml.SafeLoader):
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=True)
             if not isinstance(key, Hashable):
-                key = _freeze(key)
+                start, end = key_node.start_mark, key_node.end_mark
+                key = start.buffer[start.index : end.index] if start.buffer is not None else repr(key)
             mapping[key] = self.construct_object(value_node, deep=deep)
         return mapping
 
@@ -250,7 +241,7 @@ def dump(data: dict, eol: str = "\n") -> str:
 def normalize(value):
     if isinstance(value, dict):
         return {k: normalize(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)) and not isinstance(value, _FrozenKey):
+    if isinstance(value, (list, tuple)):
         return [normalize(v) for v in value]
     return value
 

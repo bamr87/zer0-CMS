@@ -7,8 +7,9 @@
 #   ruby rails/bin/jekyll-parity SITE --json     # print Jekyll's lists as JSON
 #
 # Needs the jekyll gem (4.4.x) — this is NOT part of bin/test-stdlib. The JSON
-# it prints is what test/fixtures/*.expected.json hold, so the stdlib test can
-# assert the catalog against Jekyll without Jekyll installed.
+# it prints is what content/tests/fixtures/*.expected.json hold (moved there with
+# the catalog's Python port, PLAN G4), so the Ruby and the Python tests can
+# assert their catalogs against Jekyll without Jekyll installed.
 #
 # Jekyll is run the way `jekyll build` runs from the site root, in safe mode
 # with no plugins, and with future, unpublished and drafts all shown — the
