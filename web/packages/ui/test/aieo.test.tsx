@@ -50,7 +50,7 @@ const audit = (rest: Record<string, unknown> = {}) => ({
   content_hash: 'x',
   result: RESULT,
   pages: [],
-  benchmark: { percentile: 75, compared_with: 4, engines: {} },
+  benchmark: { percentile: 75, compared_with: 4, engines: {}, similar: [{ audit: 'u0', target: 'Restore drills', score: 61, similarity: 0.8 }] },
   screenshot: null,
   batch: '',
   origin: 'studio',
@@ -83,6 +83,7 @@ describe('<AieoWorkspace> audits', () => {
     expect(within(opened).getByLabelText('SEO 20')).toBeInTheDocument();
     expect(within(opened).getByText(/Explain why your content matters/)).toBeInTheDocument();
     expect(within(opened).getByText('Better than 75% of the audits here.')).toBeInTheDocument();
+    expect(within(opened).getByText('Closest in meaning: Restore drills (61)')).toBeInTheDocument();
     await userEvent.click(within(opened).getByRole('button', { name: /Patterns \(2\)/ }));
     expect(await within(opened).findByText('1 tables, 2 lists, 7 headers')).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Audit history' })).toBeInTheDocument();

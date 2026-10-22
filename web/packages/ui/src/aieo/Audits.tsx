@@ -161,13 +161,19 @@ export function AuditView({ id }: { id: string }) {
 function Finished({ row }: { row: AieoAudit }) {
   const pages = readPages(row.pages);
   const links = readLinkMap(row.result);
-  const percentile = (row.benchmark as { percentile?: number | null }).percentile;
+  const benchmark = row.benchmark as { percentile?: number | null; similar?: { target?: string; score?: number | null }[] };
+  const similar = (benchmark.similar ?? []).filter((s) => typeof s.target === 'string');
   return (
     <Stack gap="sm">
       <ScoreCard scored={readScore(row.result, row)} />
-      {typeof percentile === 'number' ? (
+      {typeof benchmark.percentile === 'number' ? (
         <Text size="sm" c="dimmed">
-          Better than {percentile}% of the audits here.
+          Better than {benchmark.percentile}% of the audits here.
+        </Text>
+      ) : null}
+      {similar.length ? (
+        <Text size="sm" c="dimmed">
+          Closest in meaning: {similar.map((s) => `${s.target} (${s.score ?? '—'})`).join(', ')}
         </Text>
       ) : null}
       {row.screenshot ? (
