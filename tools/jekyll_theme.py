@@ -32,6 +32,10 @@ and this module carries it out in two steps:
   python3 tools/jekyll_theme.py export <project> --out DIR [--config FILE]
   python3 tools/jekyll_theme.py image <server>     the image a server runs (CI builds jekyll-4's under it)
 
+The build writes a new or empty directory, or replaces the site's own `_site`
+(Jekyll's default); it refuses, before it starts, any other directory that holds
+files, so a typo or a stale ZER0_PAGES_DEST deletes nothing.
+
 A site's `pages` task runs `build`; pages.yml gives it ZER0_PAGES_CONFIG and
 ZER0_PAGES_DEST, which stand in for --config and --dest, and
 ZER0_PAGES_BUILT_WITH, where it writes what the build resolved (the theme
@@ -122,21 +126,12 @@ def project(name: str, root: Path = ROOT) -> Project:
     return found
 
 
-def deep_merge(base: dict, other: dict) -> dict:
-    """Jekyll's `Utils.deep_merge_hashes`, which is how it layers `--config a,b`."""
-    merged = dict(base)
-    for key, value in other.items():
-        both = isinstance(value, dict) and isinstance(merged.get(key), dict)
-        merged[key] = deep_merge(merged[key], value) if both else value
-    return merged
-
-
 def site_config(site: Project, root: Path, overrides: Optional[Path] = None) -> tuple[Path, dict]:
     """(the Jekyll source directory, the config the server builds it with)."""
     config_dir = root / (site.site_root or site.path)
     config = yaml.safe_load((config_dir / "_config.yml").read_text(encoding="utf-8")) or {}
     if overrides:
-        config = deep_merge(config, yaml.safe_load(overrides.read_text(encoding="utf-8")) or {})
+        config = vault.deep_merge(config, yaml.safe_load(overrides.read_text(encoding="utf-8")) or {})  # as Jekyll layers --config a,b
     source = config_dir / str(config.pop("source", None) or ".")
     for key in ("destination", "theme"):  # the server decides where; the theme is the remote one below
         config.pop(key, None)
@@ -159,11 +154,27 @@ def tracked(directory: Path, root: Path) -> list:
     return [rel for rel in files if (directory / rel).is_file()]
 
 
-def _replaceable(path: Path, root: Path) -> None:
-    """Refuse to delete a directory the option did not make: the repository, one of its parents, a git checkout."""
-    path, root = path.resolve(), root.resolve()
-    if path == root or path in root.parents or (path / ".git").exists():
-        raise OptionError(f"refusing to replace {path}: give the build a directory of its own")
+def default_destination(site: Project, root: Path = ROOT) -> Path:
+    """Jekyll's own default destination: `_site` beside the site's _config.yml."""
+    return root / (site.site_root or site.path) / "_site"
+
+
+def _replaces(dest: Path, default: Path, root: Path) -> bool:
+    """Whether the build must clear `dest` before writing it — or an OptionError when it may not write it.
+
+    A directory that is missing or empty is written. The only one replaced is the site's own `_site`
+    (Jekyll's default destination, which Jekyll itself rewrites on every build), and only while git
+    tracks nothing in it. Anything else that holds files — the site's source, a directory in it, a
+    typo, a stale ZER0_PAGES_DEST — is refused before the build, never deleted.
+    """
+    if not dest.exists():
+        return False
+    if dest.is_dir() and not dest.is_symlink():
+        if not any(dest.iterdir()):
+            return False
+        if dest.resolve() == default.resolve() and not tracked(dest.resolve(), root):
+            return True
+    raise OptionError(f"refusing to replace {dest}: it holds files this build did not write; give it a new or empty directory")
 
 
 def export(name: str, out: Path, overrides: Optional[Path] = None, root: Path = ROOT) -> tuple[dict, list]:
@@ -230,6 +241,7 @@ def build(
 ) -> dict:
     """Export the site, build it with its server into `dest`, and return what the build resolved (`built_with`)."""
     site = project(name, root)
+    clear = _replaces(dest, default_destination(site, root), root)  # refused before a minute of building, not after
     server = SERVERS[site.render["server"]]
     ensure_image(server)
     with tempfile.TemporaryDirectory(prefix="jekyll-theme-") as tmp:
@@ -245,10 +257,9 @@ def build(
         if subprocess.run(server.command(work, repository)).returncode:
             raise OptionError(f"{name}: the {server.name} server's build failed (above)")
         vault.postprocess(work / "out", items, config)
-        if dest.exists():
-            _replaceable(dest, root)
+        if clear:
             shutil.rmtree(dest)
-        shutil.copytree(work / "out", dest)
+        shutil.copytree(work / "out", dest, dirs_exist_ok=True)
     theme = config["remote_theme"]
     return {"remote_theme": {theme: theme_commit(site.render["theme"])}, "server": {server.name: server.tag}}
 
@@ -258,7 +269,7 @@ def main(argv: Optional[list] = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     b = commands.add_parser("build", help="export the site and build it with its Jekyll server")
     b.add_argument("project")
-    b.add_argument("--dest", type=Path, default=os.environ.get("ZER0_PAGES_DEST"), help="where the site is written")
+    b.add_argument("--dest", type=Path, default=os.environ.get("ZER0_PAGES_DEST"), help="a new or empty directory (default: the site's _site)")
     b.add_argument("--config", type=Path, default=os.environ.get("ZER0_PAGES_CONFIG"), help="a config merged over _config.yml")
     b.add_argument("--built-with", type=Path, default=os.environ.get("ZER0_PAGES_BUILT_WITH"), help="write what it resolved here")
     b.add_argument("--keep", type=Path, help="keep the exported tree and the server's output in this directory")
@@ -277,8 +288,8 @@ def main(argv: Optional[list] = None) -> int:
             export(args.project, args.out, args.config)
             print(f"{args.project}: exported to {args.out}")
         else:
-            dest = args.dest or ROOT / (project(args.project).site_root or args.project) / "_site"
-            facts = build(args.project, Path(dest), args.config, args.keep, args.repository)
+            dest = Path(args.dest) if args.dest else default_destination(project(args.project))
+            facts = build(args.project, dest, args.config, args.keep, args.repository)
             if args.built_with:
                 Path(args.built_with).write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             print(f"{args.project}: built into {dest}")

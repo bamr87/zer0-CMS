@@ -332,6 +332,7 @@ def _flatten(values: list) -> list:
 
 
 def deep_merge(base: dict, other: dict) -> dict:
+    """Jekyll's `Utils.deep_merge_hashes`: front matter over defaults, and a `--config b` over `a`."""
     merged = dict(base)
     for key, value in other.items():
         merged[key] = deep_merge(merged[key], value) if isinstance(value, dict) and isinstance(merged.get(key), dict) else value

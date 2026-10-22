@@ -6,7 +6,9 @@ is what git tracks, with the site's config merged with the route's and the theme
 pinned to the setting's tag (never the gem, never floating); a site's `before:`
 command runs in the copy, never in the repository; an Obsidian vault is resolved
 before the build and its built pages finished after; each server runs as its
-upstream runs it, as the caller's user; and the build reports what it resolved.
+upstream runs it, as the caller's user; the build writes only a new or empty
+directory or the site's own `_site`, and refuses any other before it starts;
+and it reports what it resolved.
 No test runs Docker or reaches the network: `subprocess.run` is replaced where
 the option would call them. Run: `python3 -m unittest discover tools/tests`.
 """
@@ -15,6 +17,7 @@ from __future__ import annotations
 
 import io
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -148,8 +151,6 @@ class ExportTest(OptionCase):
         (self.root / "busy/keep.txt").write_text("mine")
         with self.assertRaisesRegex(jt.OptionError, "is not empty"):
             jt.export("blog", self.root / "busy", None, self.root)
-        with self.assertRaisesRegex(jt.OptionError, "refusing to replace"):
-            jt._replaceable(self.root, self.root)
         (self.root / "sites/blog/deleted.md").write_text("tracked, then deleted from the working tree")
         fixtures.git(self.root, "add", "sites/blog/deleted.md")
         (self.root / "sites/blog/deleted.md").unlink()
@@ -225,6 +226,38 @@ class BuildTest(OptionCase):
         self.assertEqual('<a href="/vault/docs/setup/" class="wikilink">Setup</a>', (dest / "index.html").read_text())
         self.assertEqual({"remote_theme": {"bamr87/zer0-mistakes@v1.28.0": "227fed10"}, "server": {"jekyll-4": jt.SERVERS["jekyll-4"].tag}}, facts)
         self.assertTrue(any(c[:2] == ["docker", "run"] for c in calls))
+
+    def build(self, dest: Path, calls: list) -> dict:
+        with mock.patch.object(jt.shutil, "which", return_value="/usr/bin/docker"), mock.patch.object(jt.subprocess, "run", self.fake_run(calls)):
+            return jt.build("blog", dest, root=self.root)
+
+    def test_the_build_never_deletes_a_directory_it_did_not_write(self):
+        """A typo'd --dest or a stale ZER0_PAGES_DEST: the site's source, a directory in it, the sites, a
+        populated directory outside the repository — each refused before the server runs, and left whole."""
+        fixtures.write(self.root, "sites/blog/_posts/2020-01-01-hi.md", "---\n---\nhi\n")
+        fixtures.git(self.root, "add", "sites/blog/_posts")
+        outside = Path(tempfile.mkdtemp(prefix="not-a-build-")).resolve()
+        self.addCleanup(shutil.rmtree, outside)
+        (outside / "notes.txt").write_text("mine")
+        (self.root / "sites/blog/_site").mkdir()
+        fixtures.write(self.root, "sites/blog/_site/committed.html", "tracked")
+        fixtures.git(self.root, "add", "sites/blog/_site")
+        for dest in ("sites/blog", "sites/blog/_posts", "sites", str(outside), "sites/blog/_site", "sites/blog/index.md"):
+            calls: list = []
+            with self.subTest(dest=dest), self.assertRaisesRegex(jt.OptionError, "refusing to replace"):
+                self.build(self.root / dest, calls)
+            self.assertFalse(any(c[:2] == ["docker", "run"] for c in calls), f"{dest}: refused only after building")
+        self.assertEqual("---\n---\nhi\n", (self.root / "sites/blog/_posts/2020-01-01-hi.md").read_text())
+        self.assertEqual("mine", (outside / "notes.txt").read_text())
+        self.assertEqual("tracked", (self.root / "sites/blog/_site/committed.html").read_text())
+
+    def test_the_build_writes_a_new_or_empty_directory_and_replaces_only_the_sites_own_site(self):
+        (self.root / "empty").mkdir()
+        fixtures.write(self.root, "sites/blog/_site/stale.html", "from an earlier build")
+        for dest in ("new/site", "empty", "sites/blog/_site"):
+            with self.subTest(dest=dest):
+                self.build(self.root / dest, [])
+                self.assertEqual(["docs", "index.html"], sorted(p.name for p in (self.root / dest).iterdir()))
 
     def test_keep_reuses_only_its_own_directory(self):
         keep = self.root / "keep"
