@@ -140,15 +140,70 @@ def test_a_feed_whose_body_is_a_path_on_the_worker_brings_nothing_from_that_file
 
 
 @pytest.mark.django_db
-def test_beat_refreshes_only_the_feeds_that_are_due(alice, web):
-    web.get(at("/due.xml")).respond(200, text=FEED)
+def test_beat_claims_and_reads_only_the_feeds_that_are_due_and_never_twice(alice, web):
+    route = web.get(at("/due.xml")).respond(200, text=FEED)
     due = FeedSubscription.objects.create(owner=alice, url="https://example.com/due.xml")
     later = FeedSubscription.objects.create(
         owner=alice, url="https://example.com/later.xml", next_check_at=timezone.now() + timedelta(hours=1)
     )
     FeedSubscription.objects.create(owner=alice, url="https://example.com/off.xml", active=False)
-    assert refresh_feeds() == 2
+    assert refresh_feeds() == 1  # the due feed, read in a task of its own
     assert fresh(due).last_checked_at is not None and fresh(later).last_checked_at is None
+    assert Source.objects.filter(feed=due).count() == 2
+    assert services.claim(due.pk) is False  # its next check moved on when it was claimed
+    assert refresh_feeds() == 0 and route.calls.call_count == 1
+
+
+@pytest.mark.django_db
+def test_a_worker_writes_only_what_its_fetch_owns_and_never_brings_back_a_deleted_row(alice, site_root, site_web):
+    from wagtail.models import Site
+
+    site = Site.objects.get(root_page=site_root)
+    source = Source.objects.create(
+        owner=alice, kind="url", url="https://example.com/backups", status="pending", site=site, visibility="site"
+    )
+    stale = Source.objects.get(pk=source.pk)  # what the worker loaded before its network round trip
+    Source.objects.filter(pk=source.pk).update(visibility="private", title="A person's title")  # meanwhile
+    services.fetch_into(stale)
+    source = fresh(source)
+    assert (source.visibility, source.title, source.status) == ("private", "A person's title", "ready")
+    assert "A nightly backup" in source.text and source.author == "Ada Lovelace"
+    gone = Source.objects.create(owner=alice, kind="url", url="https://example.com/backups", status="pending")
+    stale = Source.objects.get(pk=gone.pk)
+    Source.objects.filter(pk=gone.pk).delete()  # the person deletes it while it is fetched
+    assert services.fetch_into(stale) is None and not Source.objects.filter(pk=gone.pk).exists()
+
+
+@pytest.mark.django_db
+def test_a_feed_paused_or_deleted_while_it_is_read_takes_nothing(alice, web):
+    web.get(at("/feed.xml")).respond(200, text=FEED)
+    feed = FeedSubscription.objects.create(owner=alice, url="https://example.com/feed.xml", title="Mine")
+    stale = FeedSubscription.objects.get(pk=feed.pk)
+    FeedSubscription.objects.filter(pk=feed.pk).update(active=False, interval_minutes=120)  # paused meanwhile
+    assert services.refresh(stale) == 0
+    feed = fresh(feed)
+    assert (feed.active, feed.interval_minutes, feed.last_checked_at) == (False, 120, None)
+    assert not Source.objects.filter(feed=feed).exists()
+    FeedSubscription.objects.filter(pk=feed.pk).update(active=True)
+    stale = FeedSubscription.objects.get(pk=feed.pk)
+    FeedSubscription.objects.filter(pk=feed.pk).delete()  # deleted meanwhile
+    assert services.refresh(stale) == 0
+    assert not FeedSubscription.objects.filter(pk=feed.pk).exists() and not Source.objects.exists()
+    kept = FeedSubscription.objects.create(owner=alice, url="https://example.com/feed.xml", title="Mine")
+    assert services.refresh(kept) == 2 and fresh(kept).title == "Mine"  # a title a person gave stays
+
+
+@pytest.mark.django_db
+def test_a_fetch_whose_result_cannot_be_stored_says_so_rather_than_stay_fetching(alice, site_web, monkeypatch):
+    from django.db import DataError
+
+    def refuse(*args):
+        raise DataError("PostgreSQL text fields cannot contain NUL (0x00) bytes")
+
+    monkeypatch.setattr(services, "_fetched", refuse)
+    source = Source.objects.create(owner=alice, kind="url", url="https://example.com/backups", status="pending")
+    assert services.fetch_into(source).status == "failed"
+    assert (fresh(source).status, fresh(source).error) == ("failed", "the page could not be stored")
 
 
 # ── the AI steps ───────────────────────────────────────────────────────────

@@ -147,6 +147,10 @@ def test_a_feed_is_subscribed_refreshed_and_listed(api, alice, web, django_captu
     with django_capture_on_commit_callbacks(execute=True):
         assert api(alice).post(f"{BASE}/feeds/{feed['id']}/refresh/").status_code == 202
     assert Source.objects.filter(kind="feed").count() == 2
+    paused = api(alice).patch(f"{BASE}/feeds/{feed['id']}/", {"active": False}, format="json")
+    assert paused.status_code == 200 and paused.json()["active"] is False
+    refused = api(alice).post(f"{BASE}/feeds/{feed['id']}/refresh/")
+    assert refused.status_code == 422 and "paused" in refused.json()["error"]["message"]
     too_often = api(alice).post(
         f"{BASE}/feeds/", {"url": "https://example.com/x.xml", "interval_minutes": 1}, format="json"
     )

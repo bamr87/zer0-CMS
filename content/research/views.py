@@ -278,6 +278,8 @@ class FeedViewSet(PeopleViewSet):
         from .tasks import refresh_feed
 
         feed = self.get_object()
+        if not feed.active:
+            raise Invalid("the feed is paused: switch it on to read it")
         services.queue(refresh_feed, feed.pk)
         return Response(s.FeedSerializer(feed, context=self.get_serializer_context()).data, status=202)
 

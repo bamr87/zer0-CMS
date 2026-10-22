@@ -23,7 +23,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -145,11 +145,13 @@ def upload(user, file, *, collection=None, title: str = "") -> Source:
     )
 
 
-def fetch_into(source: Source) -> Source:
+def fetch_into(source: Source) -> Source | None:
     """Fetch a URL source (in a worker): robots.txt first, then the page through the guard, extracted. A refusal or a
-    failure is recorded on the source, which can be fetched again."""
+    failure is recorded on the source, which can be fetched again; a source is never left fetching. What the fetch
+    found is written to the row as it is once the fetch is over, and only the fields a fetch owns — a person's change
+    meanwhile stays, and a source deleted meanwhile stays gone (None)."""
     Source.objects.filter(pk=source.pk).update(status=Source.FETCHING, error="")
-    verdict = fetch.UNKNOWN
+    verdict, got, found = fetch.UNKNOWN, None, None
     try:
         verdict = fetch.robots(source.url)
         if verdict == fetch.DISALLOWED:
@@ -158,26 +160,39 @@ def fetch_into(source: Source) -> Source:
         if got.status >= 400:
             raise fetch.FetchError(f"the site answered HTTP {got.status}")
         found = fetch.extract(got.body, got.content_type, url=got.url, charset=got.charset)
+        outcome = {"status": Source.READY, "error": ""}
     except fetch.FetchError as e:
-        source.status, source.error = Source.FAILED, str(e)
+        outcome = {"status": Source.FAILED, "error": str(e)}
     except Exception as e:  # noqa: BLE001 — an unreadable page is recorded on the source, never left fetching
         log.exception("fetching source %s failed", source.pk)
-        source.status, source.error = Source.FAILED, f"the page could not be read: {type(e).__name__}"
-    else:
-        source.text, source.status, source.error = found.text, Source.READY, ""
-        source.title = source.title or found.title[:500]
-        source.author = source.author or found.author[:255]
-        source.site_name, source.published, source.language = (
-            found.site_name[:255],
-            found.published[:40],
-            found.language[:16],
-        )
+        outcome = {"status": Source.FAILED, "error": f"the page could not be read: {type(e).__name__}"}
+    try:
+        return _fetched(source.pk, {**outcome, "robots": verdict}, got, found)
+    except DatabaseError:  # what was read could not be stored: say so on the source rather than leave it fetching
+        log.exception("storing fetched source %s failed", source.pk)
+        failed = {"status": Source.FAILED, "error": "the page could not be stored", "robots": verdict}
+        Source.objects.filter(pk=source.pk).update(**failed, updated_at=timezone.now())
+        return Source.objects.filter(pk=source.pk).first()
+
+
+@transaction.atomic
+def _fetched(pk: int, outcome: dict, got, found) -> Source | None:
+    row = Source.objects.select_for_update().filter(pk=pk).first()
+    if row is None:
+        return None
+    fields = [*outcome, "updated_at"]
+    for key, value in outcome.items():
+        setattr(row, key, value)
+    if found is not None:
+        row.text, row.fetched_at = found.text, timezone.now()
+        row.title = row.title or found.title[:500]  # a title or author a person gave is theirs
+        row.author = row.author or found.author[:255]
+        row.site_name, row.published, row.language = found.site_name[:255], found.published[:40], found.language[:16]
         extra = {"final_url": got.url, "content_type": got.content_type, "bytes": len(got.body)}
-        source.metadata = {**source.metadata, **found.metadata, **extra}
-        source.fetched_at = timezone.now()
-    source.robots = verdict
-    source.save()
-    return source
+        row.metadata = {**row.metadata, **found.metadata, **extra}
+        fields += ["text", "fetched_at", "title", "author", "site_name", "published", "language", "metadata"]
+    row.save(update_fields=fields)
+    return row
 
 
 def subscribe(user, url: str, *, collection=None, title: str = "", interval_minutes: int = 60) -> FeedSubscription:
@@ -201,8 +216,10 @@ def subscribe(user, url: str, *, collection=None, title: str = "", interval_minu
 
 def refresh(feed: FeedSubscription) -> int:
     """Read a feed (in a worker) and keep its new items as sources; returns how many were new. A feed that has not
-    changed (`304`) costs nothing; a failure is recorded on the subscription and tried again on schedule."""
-    now, new = timezone.now(), 0
+    changed (`304`) costs nothing; a failure is recorded on the subscription and tried again on schedule. What was
+    read is written to the subscription as it is once the read is over, and only what a read owns — a feed paused or
+    deleted meanwhile takes nothing, and a person's change to it stays."""
+    now, title, items, validators, error = timezone.now(), "", [], {}, ""
     asked = {"If-None-Match": feed.etag} if feed.etag else {}
     if feed.modified:
         asked["If-Modified-Since"] = feed.modified
@@ -212,34 +229,44 @@ def refresh(feed: FeedSubscription) -> int:
             raise fetch.FetchError(f"the feed answered HTTP {got.status}")
         if got.status != 304:
             title, items = fetch.entries(got.body)
-            for item in [i for i in items if i["guid"]][:NEW_ITEMS]:
-                url = item["url"] if item["url"].startswith(("http://", "https://")) else ""
-                _, created = Source.objects.get_or_create(
-                    feed=feed,
-                    guid=item["guid"],
-                    defaults={
-                        "owner": feed.owner,
-                        "kind": Source.FEED,
-                        "url": url[:2000],
-                        "title": item["title"],
-                        "author": item["author"],
-                        "published": item["published"],
-                        "text": item["text"],
-                        "fetched_at": now,
-                        "collection": feed.collection,
-                        "site": feed.site,
-                        "visibility": feed.visibility,
-                    },
-                )
-                new += created
-            feed.title = feed.title or title[:500]
-            feed.etag, feed.modified = got.headers.get("etag", "")[:255], got.headers.get("last-modified", "")[:64]
-        feed.error = ""
+            validators = {"etag": got.headers.get("etag", "")[:255], "modified": got.headers.get("last-modified", "")[:64]}
     except fetch.FetchError as e:
-        feed.error = str(e)
-    feed.last_checked_at, feed.next_check_at = now, now + timedelta(minutes=feed.interval_minutes)
-    feed.save()
+        error = str(e)
+    with transaction.atomic():
+        row = FeedSubscription.objects.select_for_update().filter(pk=feed.pk, active=True).first()
+        if row is None:
+            return 0
+        new = sum(_kept(row, item, now) for item in [i for i in items if i["guid"]][:NEW_ITEMS])
+        row.title = row.title or title[:500]  # a title a person gave is theirs
+        row.error, row.last_checked_at = error, now
+        row.next_check_at = now + timedelta(minutes=row.interval_minutes)
+        for key, value in validators.items():
+            setattr(row, key, value)
+        row.save(update_fields=["title", "error", "last_checked_at", "next_check_at", *validators, "updated_at"])
     return new
+
+
+def _kept(feed: FeedSubscription, item: dict, now) -> bool:
+    """A feed item as a source, once per guid; True when it is new."""
+    url = item["url"] if item["url"].startswith(("http://", "https://")) else ""
+    _, created = Source.objects.get_or_create(
+        feed=feed,
+        guid=item["guid"],
+        defaults={
+            "owner": feed.owner,
+            "kind": Source.FEED,
+            "url": url[:2000],
+            "title": item["title"],
+            "author": item["author"],
+            "published": item["published"],
+            "text": item["text"],
+            "fetched_at": now,
+            "collection": feed.collection,
+            "site": feed.site,
+            "visibility": feed.visibility,
+        },
+    )
+    return created
 
 
 def due_feeds():
@@ -247,6 +274,16 @@ def due_feeds():
     return FeedSubscription.objects.filter(active=True).filter(
         Q(next_check_at__isnull=True) | Q(next_check_at__lte=now)
     )
+
+
+def claim(pk: int) -> bool:
+    """Take a due feed for one worker: its next check moves on before it is read, so a later tick of beat (or a
+    second beat) does not read it too. False when it is no longer due, active or there."""
+    feed = due_feeds().filter(pk=pk).only("interval_minutes").first()
+    if feed is None:
+        return False
+    later = timezone.now() + timedelta(minutes=feed.interval_minutes)
+    return due_feeds().filter(pk=pk).update(next_check_at=later) == 1
 
 
 def searcher(slug: str = "") -> str:
