@@ -20,7 +20,7 @@ may not change a 403); what reaches a model answers 202 and honours an
 
 import uuid
 
-from django.db.models import Count, Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Prefetch, Q
 from django_filters import rest_framework as filters
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
@@ -28,10 +28,13 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ai.models import Brief
 from ai.serializers import BriefSerializer, MessageSerializer, RunRefSerializer
 from ai.views import IDEMPOTENCY, idempotent, page_or_404
+from cms.services import visible_pages
 from graph.embeddings import get_embedder
 from ops.openapi import ERROR_RESPONSES
+from research.models import Source
 from research.views import PeopleViewSet, valid
 
 from . import serializers as s
@@ -72,9 +75,7 @@ class IdeaFilter(filters.FilterSet):
     partial_update=extend_schema(summary="Change an idea: move it, retitle it, tag it, link sources"),
 )
 class IdeaViewSet(PeopleViewSet):
-    queryset = Idea.objects.select_related("owner", "board", "brief", "page", "source_message").prefetch_related(
-        "tags", "sources"
-    )
+    queryset = Idea.objects.select_related("owner", "board", "brief", "page", "source_message").prefetch_related("tags")
     serializer_class = s.IdeaSerializer
     filterset_class = IdeaFilter
     ordering_fields = ["created_at", "updated_at", "vote_count", "title"]
@@ -83,8 +84,21 @@ class IdeaViewSet(PeopleViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
 
     def get_queryset(self):
-        mine = Vote.objects.filter(idea=OuterRef("pk"), user=self.request.user)
-        return super().get_queryset().annotate(vote_count=Count("votes", distinct=True), my_vote=Exists(mine))
+        """Ideas the person sees, each with the sources, brief and page it links to as far as they see those too."""
+        user = self.request.user
+        mine = Vote.objects.filter(idea=OuterRef("pk"), user=user)
+        seen = Prefetch("sources", queryset=Source.objects.visible_to(user), to_attr="seen_sources")
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(seen)
+            .annotate(
+                vote_count=Count("votes", distinct=True),
+                my_vote=Exists(mine),
+                brief_seen=Exists(Brief.objects.visible_to(user).filter(pk=OuterRef("brief_id"))),
+                page_seen=Exists(visible_pages(user).filter(pk=OuterRef("page_id"))),
+            )
+        )
 
     def _out(self, idea, code=status.HTTP_200_OK):
         fresh = self.get_queryset().get(pk=idea.pk)

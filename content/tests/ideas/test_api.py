@@ -71,6 +71,60 @@ def test_ideas_live_on_boards_or_in_the_inbox_and_are_scoped_and_voted_on(api, a
 
 
 @pytest.mark.django_db
+def test_an_idea_shows_only_the_research_brief_and_page_its_viewer_sees_and_a_save_keeps_the_rest(
+    api, alice, site_root
+):
+    from django.contrib.auth.models import Group, Permission
+    from wagtail.models import GroupPagePermission
+
+    from ai.models import Brief
+    from tests.ai.conftest import _person
+
+    from ..conftest import make_article
+
+    site = Site.objects.get(root_page=site_root)
+    dave = _person("dave")  # edits one page of the site: one of its editors, who finds that page and the way to it
+    group = Group.objects.create(name="One page")
+    change = Permission.objects.get(content_type__app_label="wagtailcore", codename="change_page")
+    GroupPagePermission.objects.create(group=group, page=make_article(site_root, "His page"), permission=change)
+    dave.groups.add(group)
+    note = {"kind": "note", "text": "The CFO resigns on Friday.", "title": "Private lead"}
+    private = api(alice).post("/api/v2/research/sources/", note, format="json").json()
+    filing = {"kind": "note", "text": "The annual filing.", "title": "Filing"}
+    shared = api(alice).post("/api/v2/research/sources/", filing, format="json").json()
+    api(alice).patch(f"/api/v2/research/sources/{shared['id']}/", {"visibility": "shared"}, format="json")
+    body = {"title": "Team idea", "site": site.pk, "visibility": "site", "source_ids": [private["id"], shared["id"]]}
+    idea = api(alice).post(f"{BASE}/", body, format="json").json()
+    Idea.objects.filter(public_id=idea["id"]).update(
+        brief=Brief.objects.create(owner=alice, title="Secret plan", prompt="A plan"),
+        page=make_article(site_root, "Elsewhere", publish=False),
+    )
+    mine = api(alice).get(f"{BASE}/{idea['id']}/").json()
+    assert {s["title"] for s in mine["sources"]} == {"Private lead", "Filing"}
+    assert (mine["brief"]["title"], mine["page"]["title"]) == ("Secret plan", "Elsewhere")
+    seen = api(dave).get(f"{BASE}/{idea['id']}/").json()
+    assert [s["title"] for s in seen["sources"]] == ["Filing"] and (seen["brief"], seen["page"]) == (None, None)
+    listed = api(dave).get(f"{BASE}/", {"board": "none"}).json()["results"]
+    assert [[s["title"] for s in i["sources"]] for i in listed] == [["Filing"]]
+    # Dave saves the idea as the drawer does, with the sources he was shown: Alice's private link stays.
+    saved = api(dave).patch(f"{BASE}/{idea['id']}/", {"title": "Sharper", "source_ids": [shared["id"]]}, format="json")
+    assert saved.status_code == 200 and [s["title"] for s in saved.json()["sources"]] == ["Filing"]
+    assert set(Idea.objects.get(public_id=idea["id"]).sources.values_list("title", flat=True)) == {
+        "Private lead",
+        "Filing",
+    }
+    unlinked = api(dave).patch(f"{BASE}/{idea['id']}/", {"source_ids": []}, format="json")
+    assert unlinked.status_code == 200
+    assert list(Idea.objects.get(public_id=idea["id"]).sources.values_list("title", flat=True)) == ["Private lead"]
+    refused = api(dave).patch(f"{BASE}/{idea['id']}/", {"source_ids": [private["id"]]}, format="json")
+    assert refused.status_code == 422  # a source he cannot see cannot be named
+    # Only the owner changes who sees it; the rest of a site idea is the site editors' to change.
+    assert api(dave).patch(f"{BASE}/{idea['id']}/", {"visibility": "shared"}, format="json").status_code == 403
+    same = {"visibility": "site", "site": site.pk, "status": "planned"}
+    assert api(dave).patch(f"{BASE}/{idea['id']}/", same, format="json").status_code == 200
+
+
+@pytest.mark.django_db
 def test_capture_from_anywhere_and_a_brainstorm_kept_by_a_person(
     api, alice, bob, fake, brainstormed, django_capture_on_commit_callbacks
 ):

@@ -70,6 +70,24 @@ def test_sources_are_scoped_and_a_sites_research_is_shared_by_its_editors(api, a
 
 
 @pytest.mark.django_db
+def test_a_sites_editors_change_its_research_but_only_its_owner_changes_who_sees_it(api, alice, bob, site_root):
+    from tests.ai.conftest import _person
+
+    carol = _person("carol", editor=True)
+    site = Site.objects.get(root_page=site_root)
+    url = f"{BASE}/collections/"
+    team = api(alice).post(url, {"name": "Team", "site": site.pk, "visibility": "site"}, format="json").json()
+    for change in ({"visibility": "shared"}, {"visibility": "private"}, {"site": None, "visibility": "shared"}):
+        refused = api(carol).patch(f"{url}{team['id']}/", change, format="json")
+        assert refused.status_code == 403 and "only its owner" in refused.json()["error"]["message"]
+    assert api(bob).get(f"{url}{team['id']}/").status_code == 404
+    same = {"name": "Our team", "visibility": "site", "site": site.pk}  # what a form sends back unchanged
+    assert api(carol).patch(f"{url}{team['id']}/", same, format="json").status_code == 200
+    assert api(alice).patch(f"{url}{team['id']}/", {"visibility": "shared"}, format="json").status_code == 200
+    assert api(bob).get(f"{url}{team['id']}/").json()["name"] == "Our team"
+
+
+@pytest.mark.django_db
 def test_a_page_is_captured_by_a_worker_and_an_address_off_the_web_refused_at_once(
     api, alice, site_web, django_capture_on_commit_callbacks
 ):

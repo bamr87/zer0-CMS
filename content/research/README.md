@@ -40,7 +40,7 @@ Each run re-checks what it uses when it executes, as every AI run does: the row 
 
 ## Rows and who sees them
 
-Collections, sources, feeds, questions and fact-checks are owned rows with the AI layer's rules (`owner`, `site`, `visibility`, `visible_to(user, site)`), and research in a site is teamwork: a row visible to its site is changed by anyone who edits that site. A row made inside a collection or a feed takes its site and visibility as far as its owner may hold them. A quote is seen with its source and changed by its owner or the source's editors; a citation is seen with its source and what cites it (a page the person may edit, a brief they see) and removed by whoever made it.
+Collections, sources, feeds, questions and fact-checks are owned rows with the AI layer's rules (`owner`, `site`, `visibility`, `visible_to(user, site)`), and research in a site is teamwork: a row visible to its site is changed by anyone who edits that site, but who sees it — its `site` and `visibility` — is changed only by its owner or staff (`CollaborativeSerializer`: 403 for anyone else, while a form that sends them back unchanged is fine). A row made inside a collection or a feed takes its site and visibility as far as its owner may hold them; sharing a collection later does not change the sources already in it. A quote is seen with its source and changed by its owner or the source's editors; a citation is seen with its source and what cites it (a page the person may edit, a brief they see) and removed by whoever made it.
 
 ## Settings
 

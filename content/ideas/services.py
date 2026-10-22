@@ -35,7 +35,7 @@ from graph.embeddings import cosine, get_embedder
 from graph.models import Embedding
 from graph.services import embed_object
 from ops.errors import Conflict, Forbidden, Invalid, Unavailable
-from research.models import Citation, placement
+from research.models import Citation, Source, placement
 
 from .models import Idea, Vote
 
@@ -251,7 +251,7 @@ def promote(idea: Idea, *, user, to: str, parent=None, assistant=None, generate:
     Returns (idea, brief or None, page or None, run or None). Nothing is published."""
     _changing(idea, user)
     brief = page = run = None
-    sources = list(idea.sources.all())
+    sources = list(Source.objects.visible_to(user).filter(ideas=idea))  # cited by the person who promotes it
     if to == "brief":
         brief = Brief.objects.create(
             owner=user,

@@ -3,7 +3,9 @@
 Rows are addressed by their UUID public id (`id`); a related row is named by
 its public id too, out of the rows the requester may see (`Visible`), a page by
 Wagtail's id. Validation is the models' own (`OwnedSerializer`, from the AI
-layer). A list of sources leaves out their text (`SourceListSerializer`); one
+layer), and who sees a row — its `site` and `visibility` — is changed only by
+its owner or staff, though a site's editors change the rest of a site row
+(`CollaborativeSerializer`). A list of sources leaves out their text (`SourceListSerializer`); one
 source carries all of it. A question's and a fact-check's `status` is its
 run's: `pending` until the run ends, then `ready` or `failed` (with the run's
 error).
@@ -15,6 +17,7 @@ from wagtail.models import Page
 
 from ai.models import Brief
 from ai.serializers import OWNED, OwnedSerializer, RunRefSerializer, Visible
+from ops.errors import Forbidden
 
 from .models import Citation, Collection, FactCheck, FeedSubscription, Question, Quote, Source
 
@@ -30,7 +33,22 @@ def outcome(run) -> tuple[str, str]:
     return ("ready", "") if run.status == run.SUCCEEDED else ("failed", run.error or run.status)
 
 
-class CollectionSerializer(OwnedSerializer):
+class CollaborativeSerializer(OwnedSerializer):
+    """A row people work on together (`research.models.Collaborative`): a change to who sees it — `site`,
+    `visibility` — is refused (403) unless the requester owns it or is staff."""
+
+    def validate(self, attrs):
+        user = getattr(self.context.get("request"), "user", None)
+        if self.instance is not None and not self.instance.can_share(user):
+            moved = [
+                key for key in ("site", "visibility") if key in attrs and attrs[key] != getattr(self.instance, key)
+            ]
+            if moved:
+                raise Forbidden(f"only its owner changes who sees it ({', '.join(moved)})")
+        return super().validate(attrs)
+
+
+class CollectionSerializer(CollaborativeSerializer):
     class Meta:
         model = Collection
         fields = [*OWNED, "name", "description"]
@@ -62,7 +80,7 @@ class SourceListSerializer(OwnedSerializer):
         read_only_fields = fields
 
 
-class SourceSerializer(OwnedSerializer):
+class SourceSerializer(CollaborativeSerializer):
     collection = Visible(Collection, allow_null=True, required=False)
     feed = serializers.SlugRelatedField(slug_field="public_id", read_only=True, allow_null=True)
     summary_run = RunRefSerializer(read_only=True, allow_null=True)
@@ -172,7 +190,7 @@ class CitationSerializer(serializers.ModelSerializer):
         return citation.page.title if citation.page_id else ""
 
 
-class FeedSerializer(OwnedSerializer):
+class FeedSerializer(CollaborativeSerializer):
     collection = Visible(Collection, allow_null=True, required=False)
     items = serializers.SerializerMethodField(help_text="The sources it has brought.")
 
@@ -215,7 +233,7 @@ class CitedSourceSerializer(serializers.Serializer):
     verified = serializers.BooleanField(help_text="The quote is in the source's text, word for word.")
 
 
-class QuestionSerializer(Outcome, OwnedSerializer):
+class QuestionSerializer(Outcome, CollaborativeSerializer):
     collection = Visible(Collection, allow_null=True, required=False)
     citations = CitedSourceSerializer(many=True, read_only=True)
     status = serializers.SerializerMethodField()
@@ -249,7 +267,7 @@ class FindingSerializer(serializers.Serializer):
     error = serializers.CharField(allow_blank=True, help_text="Why a correction could not become a suggestion.")
 
 
-class FactCheckSerializer(Outcome, OwnedSerializer):
+class FactCheckSerializer(Outcome, CollaborativeSerializer):
     page = serializers.PrimaryKeyRelatedField(read_only=True)
     page_title = serializers.CharField(source="page.title", read_only=True)
     collection = Visible(Collection, allow_null=True, required=False)

@@ -3,15 +3,23 @@
 An idea is addressed by its UUID public id (`id`); its board, sources, the
 message it was brainstormed in and the brief it became are named by theirs, a
 page by Wagtail's id — and only a row the requester may see can be named
-(`Visible`). Tags are plain names (taggit underneath). `votes` and `voted` are
-counted for the requester. Validation is the models' own (`OwnedSerializer`).
+(`Visible`). What an idea links to is shown only as far as the requester may
+see it: the sources they see, the brief if they see it, the page if they can
+find it (`ideas.views.IdeaViewSet` prefetches and annotates exactly that), and
+saving `source_ids` keeps the links to sources the requester cannot see. Tags
+are plain names (taggit underneath). `votes` and `voted` are counted for the
+requester. Validation is the models' own, and only an idea's owner changes who
+sees it (`research.serializers.CollaborativeSerializer`).
 """
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from ai.models import Assistant, Conversation, Message
-from ai.serializers import OWNED, BriefSerializer, MessageSerializer, OwnedSerializer, RunRefSerializer, Visible
+from ai.models import Assistant, Brief, Conversation, Message
+from ai.serializers import OWNED, BriefSerializer, MessageSerializer, RunRefSerializer, Visible
+from cms.services import visible_pages
 from research.models import Source, placement
+from research.serializers import CollaborativeSerializer
 
 from .models import Board, Idea
 from .services import KINDS, TEMPLATES
@@ -19,7 +27,7 @@ from .services import KINDS, TEMPLATES
 PROMOTIONS = ["brief", "article", "book"]
 
 
-class BoardSerializer(OwnedSerializer):
+class BoardSerializer(CollaborativeSerializer):
     class Meta:
         model = Board
         fields = [*OWNED, "name", "description"]
@@ -51,14 +59,14 @@ class IdeaPageSerializer(serializers.Serializer):
     title = serializers.CharField()
 
 
-class IdeaSerializer(OwnedSerializer):
+class IdeaSerializer(CollaborativeSerializer):
     board = Visible(Board, allow_null=True, required=False)
     tags = TagsField(required=False)
-    sources = IdeaSourceSerializer(many=True, read_only=True)
+    sources = serializers.SerializerMethodField(help_text="The linked sources the requester sees.")
     source_ids = Visible(Source, many=True, write_only=True, required=False, source="sources")
     source_message = serializers.SlugRelatedField(slug_field="public_id", read_only=True, allow_null=True)
-    brief = IdeaBriefSerializer(read_only=True, allow_null=True)
-    page = IdeaPageSerializer(read_only=True, allow_null=True)
+    brief = serializers.SerializerMethodField(help_text="The brief it became, if the requester sees it.")
+    page = serializers.SerializerMethodField(help_text="The draft it became, if the requester can find it.")
     votes = serializers.SerializerMethodField()
     voted = serializers.SerializerMethodField()
 
@@ -82,6 +90,34 @@ class IdeaSerializer(OwnedSerializer):
             "voted",
         ]
         read_only_fields = ["origin", "created_at", "updated_at"]
+
+    def _user(self):
+        return getattr(self.context.get("request"), "user", None)
+
+    @extend_schema_field(IdeaSourceSerializer(many=True))
+    def get_sources(self, idea):
+        seen = getattr(idea, "seen_sources", None)  # IdeaViewSet's prefetch; else asked now
+        if seen is None:
+            seen = Source.objects.visible_to(self._user()).filter(ideas=idea)
+        return IdeaSourceSerializer(seen, many=True).data
+
+    @extend_schema_field(IdeaBriefSerializer(allow_null=True))
+    def get_brief(self, idea):
+        if idea.brief_id is None:
+            return None
+        seen = getattr(idea, "brief_seen", None)
+        if seen is None:
+            seen = Brief.objects.visible_to(self._user()).filter(pk=idea.brief_id).exists()
+        return IdeaBriefSerializer(idea.brief).data if seen else None
+
+    @extend_schema_field(IdeaPageSerializer(allow_null=True))
+    def get_page(self, idea):
+        if idea.page_id is None:
+            return None
+        seen = getattr(idea, "page_seen", None)
+        if seen is None:
+            seen = visible_pages(self._user()).filter(pk=idea.page_id).exists()
+        return IdeaPageSerializer(idea.page).data if seen else None
 
     def get_votes(self, idea) -> int:
         return idea.vote_count if hasattr(idea, "vote_count") else idea.votes.count()
@@ -108,9 +144,13 @@ class IdeaSerializer(OwnedSerializer):
 
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", None)
+        sources = validated_data.pop("sources", None)
         idea = super().update(instance, validated_data)
         if tags is not None:
             idea.tags.set(tags)
+        if sources is not None:  # the links to sources the requester cannot see are not theirs to drop
+            unseen = idea.sources.exclude(pk__in=Source.objects.visible_to(self._user()).values("pk"))
+            idea.sources.set([*sources, *unseen])
         return idea
 
 

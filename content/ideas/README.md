@@ -26,7 +26,7 @@ Capturing ideas, sorting them on boards, voting, brainstorming with an assistant
 
 ## Rows and who sees them
 
-Boards and ideas are owned rows with the AI layer's rules (`owner`, `site`, `visibility`, `visible_to`), and a site's board is teamwork: a site-visible board or idea is changed by anyone who edits that site. An idea put on a board takes the board's site and visibility unless it says otherwise.
+Boards and ideas are owned rows with the AI layer's rules (`owner`, `site`, `visibility`, `visible_to`), and a site's board is teamwork: a site-visible board or idea is changed by anyone who edits that site, while who sees it — its `site` and `visibility` — is changed only by its owner or staff (403 for anyone else; a form that sends them back unchanged is fine). An idea put on a board takes the board's site and visibility unless it says otherwise. What an idea links to is shown as far as the person reading it may see it — the sources they see, the brief if they see it, the page if they can find it — and saving `source_ids` keeps the idea's links to sources they cannot see; naming one they cannot see is refused (422). Promoting cites the sources the person who promotes it sees.
 
 ## Tests
 

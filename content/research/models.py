@@ -13,7 +13,8 @@
 Owned rows take the AI layer's `Owned` base (ai/models.py) — a UUID public id,
 owner, site, visibility and `visible_to(user, site)`, the one place they are
 scoped — and research in a site is teamwork: a row visible to its site is
-changed by anyone who edits that site (`Collaborative`). A quote is seen with
+changed by anyone who edits that site (`Collaborative`), though only its owner
+(or staff) changes who sees it. A quote is seen with
 its source, a citation with its source and what cites it. The text a run
 works on is read here; vectors live in `graph.Embedding` (kind `source`).
 """
@@ -31,16 +32,20 @@ USER = settings.AUTH_USER_MODEL
 
 
 class Collaborative(Owned):
-    """An owned row people work on together: one visible to a site is changed by anyone who edits that site."""
+    """An owned row people work on together: one visible to a site is changed by anyone who edits that site — but
+    who sees it (its site and visibility) is changed only by its owner, or staff (`can_share`)."""
 
     class Meta:
         abstract = True
 
     def can_edit(self, user) -> bool:
-        if super().can_edit(user):
+        if self.can_share(user):
             return True
         signed_in = getattr(user, "is_authenticated", False)
         return signed_in and self.visibility == Visibility.SITE and self.site_id in sites_for(user)
+
+    def can_share(self, user) -> bool:
+        return super().can_edit(user)
 
 
 def placement(user, container) -> dict:
