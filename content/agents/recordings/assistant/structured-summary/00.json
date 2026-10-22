@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "c7200c042f5e28b4",
+  "response": {
+    "text": "{\"headline\": \"Backups, explained\", \"summary\": \"A nightly copy of your site on a second disk turns a bad day into a short one: when something breaks, you restore last night's copy and carry on.\"}",
+    "tool_calls": [],
+    "tokens_in": 120,
+    "tokens_out": 48,
+    "cost_usd": "0.0014",
+    "model": "claude-opus-5-5"
+  }
+}

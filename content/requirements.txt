@@ -23,3 +23,7 @@ whitenoise==6.12.0
 drf-spectacular==0.30.0
 django-cors-headers==4.9.0
 sentry-sdk==2.72.0
+# The AI content layer (ai/README.md): list filters on its API, and provider credentials encrypted at rest.
+# The provider SDKs themselves are optional: requirements-providers.txt.
+django-filter==26.2
+cryptography==50.0.2

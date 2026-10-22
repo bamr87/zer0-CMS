@@ -1,0 +1,57 @@
+# The output schemas and the assistant barodybroject shipped, seeded by
+# ai.services.import_bundled() after every migrate and by
+# POST /api/v2/ai/output-schemas/import-bundled/. The JSON files and the prompt are
+# byte copies of apps/parodynews/src/parodynews/schema/; a schema's local "$ref"
+# ("./content_detail_schema.json") is inlined when it is loaded. Each row's public
+# id is derived from its key, so seeding is idempotent and never duplicates.
+schemas:
+  - key: parody-news-article
+    name: Parody news article
+    description: A satirical article — headlines, an introduction, a body that turns from dark humor to optimism, a conclusion — with its style and metadata.
+    file: parody_news_article_schema.json
+    template: |
+      {% with headlines=Content.Headline %}{% if headlines %}# {{ headlines.0 }}
+      {% for other in headlines|slice:"1:" %}
+      *{{ other }}*
+      {% endfor %}{% endif %}{% endwith %}
+      {% for paragraph in Content.Introduction %}
+      {{ paragraph }}
+      {% endfor %}
+      ## Dark humor
+      {% for paragraph in Content.Body.DarkHumor %}
+      {{ paragraph }}
+      {% endfor %}
+      ## Facts
+      {% for paragraph in Content.Body.Facts %}
+      {{ paragraph }}
+      {% endfor %}
+      ## Optimistic turn
+      {% for paragraph in Content.Body.OptimisticTurn %}
+      {{ paragraph }}
+      {% endfor %}
+      ## Conclusion
+      {% for paragraph in Content.Conclusion %}
+      {{ paragraph }}
+      {% endfor %}
+  - key: news-article
+    name: News article
+    description: An online news article — header, publication metadata and a Markdown body.
+    file: news_article_schema.json
+    template: |
+      {{ Content.body }}
+  - key: content-detail
+    name: Content detail
+    description: Publication metadata for a piece — title, subtitle, author, date, description, slug, excerpt, categories, keywords and tags. A brief's metadata step fills it.
+    file: content_detail_schema.json
+    template: |
+      # {{ Header.title }}
+
+      *{{ Header.subtitle }}*
+
+      {{ Metadata.description }}
+assistants:
+  - key: parody-news-writer
+    name: Parody news writer
+    description: Writes a satirical article that starts dark and ends hopeful, as a parody news article (barodybroject's prompt).
+    instructions: parody_prompt.md
+    output_schema: parody-news-article

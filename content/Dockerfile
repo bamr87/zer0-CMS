@@ -25,8 +25,12 @@ RUN apt-get update \
     && useradd --create-home --uid 1000 app
 
 WORKDIR /app/content
-COPY content/requirements.txt ./requirements.txt
+COPY content/requirements.txt content/requirements-providers.txt ./
 RUN pip install -r requirements.txt
+# The model providers' SDKs (ai/README.md): optional for the platform, which
+# imports each only inside its adapter; build with AI_PROVIDERS=false to leave them out.
+ARG AI_PROVIDERS=true
+RUN if [ "$AI_PROVIDERS" = "true" ]; then pip install -r requirements-providers.txt; fi
 
 COPY schemas /app/schemas
 COPY content /app/content

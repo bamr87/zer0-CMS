@@ -1,0 +1,53 @@
+# The assistant runner: the AI content layer's one agent (content/ai/, ADR 0006
+# decision 7). People write assistants, pipelines, briefs and conversations; every
+# generation they ask for is a run of this definition, whose handler runs their
+# persona through the provider registry. Its tools are read-only, and an
+# assistant may use only those of them it lists, so a run only ever proposes — a
+# brief, a message, suggestions on a draft — and a person decides.
+slug: assistant
+name: Assistant runner
+role: author
+description: Runs user-managed assistants, pipelines, briefs and conversations through the provider registry, with read-only tools; every result is reviewed by a person.
+handler: ai.handlers.run
+policy: suggest
+max_steps: 6
+budget_usd: "1.00"
+tools:
+  - content.get_schema
+  - content.get_page
+  - content.search
+  - graph.search
+  - graph.related
+  - brand.rules
+  - memory.recall
+evals:
+  - name: headline-plain
+    input:
+      input:
+        kind: assistant
+        prompt: nightly backups
+        spec:
+          instructions: You write one-line headlines for a small website's news page. Reply with the headline only.
+          prompt_template: "Write a headline about {{ prompt }}."
+    checks:
+      - {check: status, is: succeeded}
+      - {check: max_cost_usd, max: "0.10"}
+  - name: structured-summary
+    input:
+      input:
+        kind: assistant
+        prompt: Why a small site needs nightly backups.
+        spec:
+          instructions: You summarise a topic for a small website's readers, as JSON that matches the schema.
+          schema:
+            type: object
+            properties:
+              headline: {type: string}
+              summary: {type: string}
+            required: [headline, summary]
+            additionalProperties: false
+          render_template: "# {{ headline }}\n\n{{ summary }}"
+    checks:
+      - {check: status, is: succeeded}
+      - {check: output, path: headline, equals: "Backups, explained"}
+      - {check: max_cost_usd, max: "0.10"}

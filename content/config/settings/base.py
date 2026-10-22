@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     # rest of Wagtail is configured to use.
     "cms",
     "agents",
+    "ai",
     "suggestions",
     "graph",
     "workflow",
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
     "taggit",
     # Headless APIs.
     "rest_framework",
+    "django_filters",
     "drf_spectacular",
     "corsheaders",
     "graphene_django",
@@ -267,8 +269,18 @@ AGENT_PROMOTION_ACCEPT_RATE = env.float("AGENT_PROMOTION_ACCEPT_RATE", default=0
 AGENT_PROMOTION_MIN_DECISIONS = env.int("AGENT_PROMOTION_MIN_DECISIONS", default=10)
 AGENT_DEFINITIONS_DIR = BASE_DIR / "agents" / "definitions"
 
+# ── The AI content layer (ai/README.md) ─────────────────────────────────────
+# AI_PROVIDERS: slug → dotted path of a provider adapter, merged over the six
+# built in (ai/providers/__init__.py); "" disables one.
+AI_PROVIDERS: dict[str, str] = {}
+# The provider a request uses when no ProviderConfig row is flagged default.
+AI_DEFAULT_PROVIDER = env("AI_DEFAULT_PROVIDER", default="claude_code")
+# Fernet keys for provider credentials, the newest first; none derives one from
+# SECRET_KEY (ai/crypto.py). Rotate with `manage.py rotate_ai_credentials`.
+AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
+
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
-# EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm
+# EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)
 EMBEDDING_BACKEND = env("EMBEDDING_BACKEND", default="hashing")
 EMBEDDING_MODEL = env("EMBEDDING_MODEL", default="hashing-256")
 EMBEDDING_DIMENSIONS = env.int("EMBEDDING_DIMENSIONS", default=256)
