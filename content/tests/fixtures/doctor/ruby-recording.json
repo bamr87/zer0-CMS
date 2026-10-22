@@ -1,0 +1,1467 @@
+{
+ "recorded": {
+  "by": "ruby -I rails/lib rails/bin/zer0-cms doctor <site> --format findings",
+  "ruby": "3.3 (the ruby:3.3 image)",
+  "on": "2026-10-22",
+  "tree": "af00290a (main), before the Ruby doctor was deleted (PLAN G4)"
+ },
+ "scenarios": {
+  "aligned": {
+   "digest": "801def2e5f37b45f5102da7206518be21769c1f1dc05f586c6cc42c67b1547fd",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "cms-folder-missing": {
+   "digest": "7ea9575af7fa4a8147e946fbe8172dea756a9c36160003e83a832d3acfab5b43",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "cms",
+     "severity": "warning",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "zer0-json-no-schema",
+     "evidence": "zer0.json has no $schema",
+     "fingerprint": "80d3b1e56e46"
+    },
+    {
+     "check_id": "cms",
+     "severity": "error",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "content-folder-missing",
+     "evidence": "contentFolders[0].path [[workspace]]/pages/_nope does not exist",
+     "fingerprint": "e7e8cb5e1805"
+    }
+   ],
+   "exit": 1
+  },
+  "cms-invalid": {
+   "digest": "c6b637ab132bec79f175d43b4f7edd4dc0e0218fa99455b5f37e09e029395e3f",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "cms",
+     "severity": "error",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "zer0-json-invalid",
+     "evidence": "zer0.json is not valid JSON(C): unexpected token at '{ \"$schema\": \"x\" \"missing comma\": 1 }'",
+     "fingerprint": "b3940934094e"
+    }
+   ],
+   "exit": 1
+  },
+  "cms-jsonc": {
+   "digest": "fa6599e6aacd24808d4f3d3b79a69bc7d1aab0a75027c8eec5619aa32987639a",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "cms-missing": {
+   "digest": "7361f241168af5c2fb9fe6d31456d34ac2431ad0a5009f46a01e32308769fa88",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "cms",
+     "severity": "warning",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "no-zer0-json",
+     "evidence": "no zer0.json",
+     "fingerprint": "6c6172c192f1"
+    }
+   ],
+   "exit": 1
+  },
+  "config-broken": {
+   "digest": "2c2d797ebbc221a5cdf13ad77a503ef1d440df4831dd622e53c17fa33516e874",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": 1,
+     "rule": "config-unreadable",
+     "evidence": "_config.yml does not parse: did not find expected ',' or ']'",
+     "fingerprint": "c399a900f05a"
+    }
+   ],
+   "exit": 1
+  },
+  "config-missing": {
+   "digest": "30e791ae5d7cef343390c3c5b90013599661390d5f5534a4d03094698d0d0b11",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "config-unreadable",
+     "evidence": "cannot read _config.yml: ENOENT",
+     "fingerprint": "5975511b0e13"
+    }
+   ],
+   "exit": 1
+  },
+  "content": {
+   "digest": "8af03326acfad15ab9539cc74ecaa130b6aa4809874b7118f4d382f2c2059d1b",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "error",
+     "file": "pages/_posts/2026-01-03-broken.md",
+     "line": 2,
+     "rule": "front-matter-invalid",
+     "evidence": "front matter: (<unknown>): did not find expected ',' or ']' while parsing a flow sequence at line 2 column 8",
+     "fingerprint": "477d1e11d334"
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-02-thin.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-02-thin.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-02-thin.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-02-thin.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-02-thin.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-02-thin.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-02-thin.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "distribution-invalid": {
+   "digest": "cad98c6b3768fb4c859ba9237823fe70d67106a8ff1ecd7ce53da488366f8ae3",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "distribution",
+     "severity": "error",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "distribution-config-invalid",
+     "evidence": "author must be urn:li:organization:{id} or urn:li:person:{id}, got \"urn:li:company:1\"",
+     "fingerprint": "58b1b02bdb89"
+    },
+    {
+     "check_id": "distribution",
+     "severity": "warning",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "distribution-config",
+     "evidence": "distribution.linkedin.publishAllow is not a setting (known: author, siteUrl, apiVersion, queue, ledger, acceptStatuses, sources, fallbackImage, hashtagLimit, bannedPatternsFile, scopes)",
+     "fingerprint": "dc98baab60a2"
+    },
+    {
+     "check_id": "distribution",
+     "severity": "warning",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "distribution-config",
+     "evidence": "no site URL: set url in _config.yml or distribution.linkedin.siteUrl — article shares need one",
+     "fingerprint": "b1ec9d2e01a0"
+    }
+   ],
+   "exit": 1
+  },
+  "distribution-ledger": {
+   "digest": "ea9a542e75c5c9b89a86ef02e2fc635a2f5fba7a723dc8f75bfb7f3bf76a2edc",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "distribution",
+     "severity": "error",
+     "file": "log.json",
+     "line": null,
+     "rule": "distribution-ledger-unreadable",
+     "evidence": "log.json is not valid JSON",
+     "fingerprint": "07e0bed961b0"
+    }
+   ],
+   "exit": 1
+  },
+  "distribution-outside": {
+   "digest": "53f2af8c6afc4c0ddf0233ad972c75e181f7f654c934aec68bcd403cace744d7",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "distribution",
+     "severity": "error",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "distribution-config-invalid",
+     "evidence": "distribution.linkedin.queue must be a path inside the repository, got \"../outside\"",
+     "fingerprint": "a05e53262622"
+    }
+   ],
+   "exit": 1
+  },
+  "distribution-valid": {
+   "digest": "ce3190da108fc3b792ad3e919975123d997cc207d0fabb2118a01c82fea10d2d",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "distribution-vendored": {
+   "digest": "46ed5afe924d269e2e25bd44cca987f3a689838b7da5957fc73a9db06d2c48b5",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "distribution",
+     "severity": "warning",
+     "file": "scripts/features/linkedin/posts.py",
+     "line": null,
+     "rule": "vendored-linkedin-publisher",
+     "evidence": "a per-site LinkedIn publisher; zer0-cms linkedin replaces it",
+     "fingerprint": "eb25fb004168"
+    }
+   ],
+   "exit": 1
+  },
+  "fleet-alias": {
+   "digest": "f79df52c55b6212e1c3910ea0707ae4df2275a86646cbf406808d9bcc62215ef",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "fleet",
+     "severity": "error",
+     "file": "fleet.manifest.yml",
+     "line": null,
+     "rule": "fleet-manifest-invalid",
+     "evidence": "not strict YAML: Alias parsing was not enabled. To enable it, pass `aliases: true` to `Psych::load` or `Psych::safe_load`.",
+     "fingerprint": "e858b2df21fe"
+    }
+   ],
+   "exit": 1
+  },
+  "fleet-duplicate": {
+   "digest": "f47d9bd8c0ac17a928dfa9800e6533b77e17ec4d97e8fdf4efa0a393f4566015",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "fleet",
+     "severity": "error",
+     "file": "fleet.manifest.yml",
+     "line": 2,
+     "rule": "fleet-manifest-invalid",
+     "evidence": "duplicate key \"name\"",
+     "fingerprint": "e57cf984362e"
+    }
+   ],
+   "exit": 1
+  },
+  "fleet-list": {
+   "digest": "03928b069cb1f8007b2ca1f7b85e9afe44c1f1664ac792783141624b35ce24da",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "fleet",
+     "severity": "error",
+     "file": "fleet.manifest.yml",
+     "line": null,
+     "rule": "fleet-manifest-invalid",
+     "evidence": "top level is not a mapping",
+     "fingerprint": "6e12d5f61b2e"
+    }
+   ],
+   "exit": 1
+  },
+  "fleet-missing": {
+   "digest": "12d0205535532949344a12a6d22e37345184f168cfac357ceaf3a8585511e068",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "fleet-wrapped": {
+   "digest": "c2ecc6a9689beaa1a9d2d9e339630726c980b9ad090281b27884be7753851ec2",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "fleet",
+     "severity": "error",
+     "file": "fleet.manifest.yml",
+     "line": 2,
+     "rule": "fleet-manifest-invalid",
+     "evidence": "not valid YAML: mapping values are not allowed in this context (column 10)",
+     "fingerprint": "5d1aefb324e8"
+    }
+   ],
+   "exit": 1
+  },
+  "image-engine": {
+   "digest": "8a2e5f1df6773c74fc28beb6faa94ce6a9e27efaea738c3a38433c15fbf5a035",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "error",
+     "file": "_plugins/preview_image_generator.rb",
+     "line": null,
+     "rule": "vendored-preview-fork",
+     "evidence": "a vendored preview generator; use the zer0-image-generator gem",
+     "fingerprint": "680a4fb4b867"
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "error",
+     "file": "_plugins/preview_generator.rb",
+     "line": null,
+     "rule": "vendored-preview-fork",
+     "evidence": "a vendored preview generator; use the zer0-image-generator gem",
+     "fingerprint": "e4dc4b8311df"
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "error",
+     "file": "scripts/lib/preview_generator.py",
+     "line": null,
+     "rule": "vendored-preview-fork",
+     "evidence": "a vendored preview generator; use the zer0-image-generator gem",
+     "fingerprint": "7fdd260856a7"
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "warning",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "no-preview-images-config",
+     "evidence": "no preview_images: block",
+     "fingerprint": "72f59507013e"
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "warning",
+     "file": "Gemfile",
+     "line": null,
+     "rule": "gemfile-missing-image-generator",
+     "evidence": "Gemfile does not require zer0-image-generator",
+     "fingerprint": "cdd93e7ab8b7"
+    }
+   ],
+   "exit": 1
+  },
+  "image-engine-namesake": {
+   "digest": "da813a1bcaacfa556c165657e3e66062839335a666ce915510b8a75e5db4df2c",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "theme-gem": {
+   "digest": "68f9caf02c433d9f2828bba1e8c1bcdd81fb6a24a5b22b97811f19f863f891a9",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "theme-other": {
+   "digest": "be4fa0b45ff173627e9ac1844e30ea075686d76eccf944594a9302915966a2b4",
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "theme",
+     "severity": "warning",
+     "file": ".theme-overrides.yml",
+     "line": null,
+     "rule": "no-theme-overrides",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  }
+ },
+ "fixtures": {
+  "jekyll-site": {
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "theme",
+     "severity": "warning",
+     "file": ".theme-overrides.yml",
+     "line": null,
+     "rule": "no-theme-overrides",
+     "dropped": true
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "warning",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "no-preview-images-config",
+     "evidence": "no preview_images: block",
+     "fingerprint": "72f59507013e"
+    },
+    {
+     "check_id": "cms",
+     "severity": "warning",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "no-zer0-json",
+     "evidence": "no zer0.json",
+     "fingerprint": "6c6172c192f1"
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2099-01-01-future.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2099-01-01-future.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2099-01-01-future.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2099-01-01-future.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2099-01-01-future.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2099-01-01-future.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2099-01-01-future.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/sub/2026-03-03-nested.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/sub/2026-03-03-nested.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/sub/2026-03-03-nested.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/sub/2026-03-03-nested.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/sub/2026-03-03-nested.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/sub/2026-03-03-nested.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/sub/2026-03-03-nested.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:title",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-02-02-no-front-matter.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-01-hello.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-01-hello.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-01-hello.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-01-hello.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-01-hello.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-01-01-hello.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": ".well-known/security.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "_shared.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "about.html",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "guides/deep/more.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "guides/setup.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "guides/template.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "index.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/hidden.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/hidden.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/hidden.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/hidden.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/hidden.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/intro.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/intro.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/intro.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/intro.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/intro.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_drafts/wip.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_drafts/wip.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_drafts/wip.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_drafts/wip.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_drafts/wip.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_drafts/wip.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_drafts/wip.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:difficulty",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_notes/first-note.md",
+     "line": null,
+     "rule": "missing-key:permalink",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/about-us.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/about-us.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/about-us.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "jekyll-site-src": {
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "theme",
+     "severity": "warning",
+     "file": ".theme-overrides.yml",
+     "line": null,
+     "rule": "no-theme-overrides",
+     "dropped": true
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "warning",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "no-preview-images-config",
+     "evidence": "no preview_images: block",
+     "fingerprint": "72f59507013e"
+    },
+    {
+     "check_id": "cms",
+     "severity": "warning",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "no-zer0-json",
+     "evidence": "no zer0.json",
+     "fingerprint": "6c6172c192f1"
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/blog/_posts/2026-03-03-blog-post.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/blog/_posts/2026-03-03-blog-post.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/blog/_posts/2026-03-03-blog-post.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/blog/_posts/2026-03-03-blog-post.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/blog/_posts/2026-03-03-blog-post.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/blog/_posts/2026-03-03-blog-post.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/blog/_posts/2026-03-03-blog-post.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_posts/2026-02-02-src-post.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_posts/2026-02-02-src-post.md",
+     "line": null,
+     "rule": "missing-key:date",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_posts/2026-02-02-src-post.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_posts/2026-02-02-src-post.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_posts/2026-02-02-src-post.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_posts/2026-02-02-src-post.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_posts/2026-02-02-src-post.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/_recipes/soup.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/about/team.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "src/index.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  },
+  "jekyll/site": {
+   "findings": [
+    {
+     "check_id": "theme",
+     "severity": "error",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "theme-not-zer0",
+     "dropped": true
+    },
+    {
+     "check_id": "theme",
+     "severity": "warning",
+     "file": ".theme-overrides.yml",
+     "line": null,
+     "rule": "no-theme-overrides",
+     "dropped": true
+    },
+    {
+     "check_id": "image-engine",
+     "severity": "warning",
+     "file": "_config.yml",
+     "line": null,
+     "rule": "no-preview-images-config",
+     "evidence": "no preview_images: block",
+     "fingerprint": "72f59507013e"
+    },
+    {
+     "check_id": "cms",
+     "severity": "warning",
+     "file": "zer0.json",
+     "line": null,
+     "rule": "no-zer0-json",
+     "evidence": "no zer0.json",
+     "fingerprint": "6c6172c192f1"
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-08-01-unfinished.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-08-01-unfinished.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-08-01-unfinished.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-08-01-unfinished.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-08-01-unfinished.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-08-01-unfinished.md",
+     "line": null,
+     "rule": "missing-key:author",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-07-31-hello.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_posts/2026-07-31-hello.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "about.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "index.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_books/abc/index.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_books/story/01-one.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_books/story/index.md",
+     "line": null,
+     "rule": "missing-key:lastmod",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/setup.md",
+     "line": null,
+     "rule": "missing-key:description",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/setup.md",
+     "line": null,
+     "rule": "missing-key:layout",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/setup.md",
+     "line": null,
+     "rule": "missing-key:categories",
+     "dropped": true
+    },
+    {
+     "check_id": "content",
+     "severity": "warning",
+     "file": "pages/_docs/setup.md",
+     "line": null,
+     "rule": "missing-key:tags",
+     "dropped": true
+    }
+   ],
+   "exit": 1
+  }
+ }
+}

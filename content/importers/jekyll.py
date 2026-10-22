@@ -105,7 +105,7 @@ def documents(root: Path, config: dict | None = None, errors: list | None = None
         try:
             if entry.error:
                 raise ValueError(entry.error)
-            text = Path(entry.path).read_text(encoding="utf-8")
+            text = Path(entry.path).read_bytes().decode("utf-8")  # bytes, so CRLF stays CRLF
             data, body = frontmatter.split(text)
         except (ValueError, yaml.YAMLError) as e:
             if errors is not None:

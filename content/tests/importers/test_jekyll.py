@@ -138,8 +138,15 @@ def test_an_edited_page_exports_its_edits_over_its_front_matter(imported, tmp_pa
     report = export_site("fixture", tmp_path)
     assert sorted(report.rendered) == ["pages/_books/abc/index.md", "pages/_posts/2026-07-31-hello.md"]
     text = (tmp_path / "pages/_posts/2026-07-31-hello.md").read_text()
-    assert text.startswith("---\ntitle: Hello again, backups\ndate: 2026-07-31 10:00:00 -0500\nauthor: amr\n")
-    assert "- restore" in text and "comments: true" in text and "preview: /assets/images/hello.png" in text
+    # Only the changed keys are rewritten, by line surgery: the title keeps its
+    # quotes, the tags their flow style, and every other line is the file's own.
+    original = (FIXTURE / "pages/_posts/2026-07-31-hello.md").read_text()
+    assert text.startswith(
+        original.split("\n---\n")[0]
+        .replace('title: "Hello, backups"', 'title: "Hello again, backups"')
+        .replace("tags: [backups, ops]", "tags: [backups, ops, restore]")
+        + "\n---\n"
+    )
     assert '{% include callout.html text="Nightly" %}' in text and text.rstrip().endswith("A new closing line.")
     abc = (tmp_path / "pages/_books/abc/index.md").read_text()
     assert (
