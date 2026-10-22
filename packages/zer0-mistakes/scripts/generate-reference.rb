@@ -17,6 +17,9 @@
 #                                     test/test_runner.sh suites, Makefile
 #                                     targets (## comments), Rakefile tasks
 #                                     (desc) and package.json scripts
+#   docs/reference/installer.md       the installer's subcommands, options and
+#                                     examples, from its help text in
+#                                     scripts/install/cli.sh
 #   docs/reference/workflows.md       every .github/workflows/*.yml: name,
 #                                     triggers and jobs
 #
@@ -299,6 +302,51 @@ def workflows
   MD
 end
 
+# --- installer ---------------------------------------------------------------
+
+# The installer's own `help` text, from the heredoc in scripts/install/cli.sh.
+def installer_help
+  src = read('scripts/install/cli.sh')
+  m = src.match(/^_cmd_help\(\) \{\n\s*cat >&2 <<'USAGE'\n(.*?)\nUSAGE$/m) or
+    abort "scripts/install/cli.sh: the _cmd_help <<'USAGE' heredoc was not found"
+  sections = {}
+  current = nil
+  m[1].each_line do |line|
+    if (h = line.match(/\A(\S[^:]*):\s*\z/))
+      current = sections[h[1]] = []
+    elsif current && !line.strip.empty?
+      current << line.rstrip.sub(/\A  /, '')
+    end
+  end
+  sections
+end
+
+def installer
+  help = installer_help
+  pairs = lambda do |key|
+    (help[key] || []).map { |l| l.split(/\s{2,}/, 2) }.map { |a, b| [code(a.gsub('|', '\|')), cell(b)] }
+  end
+  subcommands = pairs.call('Subcommands').map { |c, d| [c.sub('`', '`./scripts/bin/install '), d] }
+
+  <<~MD
+    The modular installer's command surface, as `./scripts/bin/install help` prints it. How the pieces fit together: [`docs/installation/`](../installation/index.md).
+
+    ## Subcommands
+
+    #{table(['Command', 'What it does'], subcommands)}
+
+    ## Global options
+
+    #{table(['Option', 'Effect'], pairs.call('Global options'))}
+
+    ## Examples
+
+    ```bash
+    #{(help['Examples'] || []).join("\n")}
+    ```
+  MD
+end
+
 # --- pages -------------------------------------------------------------------
 
 PAGES = [
@@ -315,6 +363,13 @@ PAGES = [
     description: 'Every scripts/bin entry point, test suite, Make target, Rake task and npm script in the theme, generated from the files that define them.',
     tags: %w[reference commands],
     body: -> { commands }
+  },
+  {
+    path: 'docs/reference/installer.md',
+    title: 'Installer reference',
+    description: 'Every subcommand, global option and example of the modular installer, generated from the help text in scripts/install/cli.sh.',
+    tags: %w[reference installation],
+    body: -> { installer }
   },
   {
     path: 'docs/reference/workflows.md',
