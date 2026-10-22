@@ -39,6 +39,9 @@ import { RunStatus, useLiveRun } from '../RunTimeline';
 /** Every row of a list in one page: the AI lists are short. */
 export const ALL = { page_size: 200 } as const;
 
+/** A template or a schema typed in monospace — the field, not its label. */
+export const MONO = { input: { fontFamily: 'var(--mantine-font-family-monospace)' } };
+
 export const VISIBILITY: { value: Visibility; label: string }[] = [
   { value: 'private', label: 'Private — only you' },
   { value: 'site', label: 'Site — everyone who edits its site' },

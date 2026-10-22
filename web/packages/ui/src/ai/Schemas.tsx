@@ -12,7 +12,7 @@ import { useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { ConfirmButton, documentOf, ExportButton, fieldError, ImportButton, isRecord, OwnerFields, ReadOnlyNote, Rows, useMe, useSchemas, type Ownership } from './shared';
+import { ConfirmButton, documentOf, ExportButton, fieldError, ImportButton, isRecord, MONO, OwnerFields, ReadOnlyNote, Rows, useMe, useSchemas, type Ownership } from './shared';
 
 const STARTER = '{\n  "type": "object",\n  "properties": {\n    "headline": { "type": "string" },\n    "body": { "type": "string" }\n  },\n  "required": ["headline", "body"]\n}';
 
@@ -180,7 +180,7 @@ function SchemaForm({ schema }: { schema?: OutputSchema }) {
             description="A Django template that turns an answer into Markdown, e.g. ## {{ headline }}. Empty renders every field."
             autosize
             minRows={3}
-            ff="monospace"
+            styles={MONO}
             value={draft.render_template}
             disabled={!editable}
             onChange={(e) => setDraft({ ...draft, render_template: e.currentTarget.value })}

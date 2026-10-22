@@ -296,6 +296,7 @@ function Composer({ conversation }: { conversation: Conversation }) {
           />
           <Group align="end">
             <Select
+              miw={260}
               label="Who answers this one"
               data={[{ value: '', label: 'The conversation’s assistant' }, ...options(assistants.data?.results)]}
               value={assistant ?? ''}

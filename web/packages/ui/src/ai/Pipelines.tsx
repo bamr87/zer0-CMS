@@ -214,10 +214,10 @@ function StepRow({ step, index, count, choices, editable, onChange, onMove, onRe
         <Text fw={600} w={24}>
           {n}
         </Text>
-        <Select label="Assistant" placeholder="Choose one" data={choices} value={step.assistant} disabled={!editable} allowDeselect={false} onChange={(assistant) => onChange({ assistant })} />
-        <Select label="Reads" data={SOURCES} value={step.source} disabled={!editable} allowDeselect={false} onChange={(source) => onChange({ source: (source as StepSource | null) ?? 'previous' })} />
+        <Select flex={2} label="Assistant" placeholder="Choose one" data={choices} value={step.assistant} disabled={!editable} allowDeselect={false} onChange={(assistant) => onChange({ assistant })} />
+        <Select flex={2} label="Reads" data={SOURCES} value={step.source} disabled={!editable} allowDeselect={false} onChange={(source) => onChange({ source: (source as StepSource | null) ?? 'previous' })} />
         {step.source === 'page' ? (
-          <TextInput label="Field" placeholder="body" value={step.source_field} disabled={!editable} onChange={(e) => onChange({ source_field: e.currentTarget.value })} />
+          <TextInput flex={1} label="Field" placeholder="body" value={step.source_field} disabled={!editable} onChange={(e) => onChange({ source_field: e.currentTarget.value })} />
         ) : null}
         <ActionIcon variant="subtle" aria-label={`Move step ${n} up`} disabled={!editable || index === 0} onClick={() => onMove(-1)}>
           ↑

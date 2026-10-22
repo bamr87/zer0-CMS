@@ -19,6 +19,7 @@ import {
   fieldError,
   ImportButton,
   isRecord,
+  MONO,
   ON_A_PROMPT,
   options,
   OwnerFields,
@@ -203,7 +204,7 @@ function AssistantForm({ assistant }: { assistant?: Assistant }) {
             description="Optional. A Django template around each request, which it reads as {{ prompt }}."
             autosize
             minRows={2}
-            ff="monospace"
+            styles={MONO}
             value={draft.prompt_template}
             disabled={!editable}
             onChange={(e) => set('prompt_template', e.currentTarget.value)}

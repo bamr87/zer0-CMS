@@ -83,7 +83,7 @@ export function AiPanel({ page, dirty, held, onReview }: Props) {
   const blocks = page.body.flatMap((block, i) => (block.id ? [{ value: `block:${block.id}`, label: `Block ${i + 1} · ${block.type} · ${preview(block)}`, id: block.id }] : []));
   const where = (blockId: string) => blocks.findIndex((b) => b.id === blockId) + 1;
   const scopes = [
-    { value: 'page', label: 'The whole page (the answer is added at the end)' },
+    { value: 'page', label: 'The whole page' },
     ...(selected ? [{ value: 'selection', label: `The selection in block ${where(selected.blockId)}: “${quote(selected.text)}”` }] : []),
     ...blocks.map(({ value, label }) => ({ value, label })),
   ];
@@ -132,7 +132,14 @@ export function AiPanel({ page, dirty, held, onReview }: Props) {
         ]}
       />
       <Select label={kind === 'assistant' ? 'Assistant' : 'Pipeline'} placeholder="Choose one" data={choices} value={source} searchable onChange={setSource} />
-      <Select label="Work on" data={scopes} value={scope} allowDeselect={false} onChange={(next) => setScope(next ?? 'page')} />
+      <Select
+        label="Work on"
+        description={scope === 'page' ? 'Its answer is added at the end of the page.' : 'Its answer takes the place of what you chose.'}
+        data={scopes}
+        value={scope}
+        allowDeselect={false}
+        onChange={(next) => setScope(next ?? 'page')}
+      />
       <Textarea
         label="What should it do?"
         placeholder={scope === 'page' ? 'e.g. Write a two-sentence summary for the end' : 'e.g. Make it shorter and plainer'}
