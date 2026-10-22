@@ -1,54 +1,235 @@
 # =============================================================================
-# features/features.yml — THE FEATURE INDEX for zer0-CMS
+# features/features.yml — THE FEATURE INDEX for bamr87/zer0-CMS
 # =============================================================================
-# kit: verify v0.1.0 (seeded from bamr87/bamr87 templates/verify/)
+# kit: verify v0.1.0 · governance v0.1.0 (bamr87/bamr87 templates/verify/, templates/governance/)
 #
-# One entry per user-facing capability. This file is what an AI agent reads to
-# know what the product DOES, where it lives, how it is documented, which tests
-# and user scenarios prove it, and what evidence exists that it works. The hub
-# aggregates every repo's copy into its fleet features index
-# (bamr87/bamr87 _data/features_index.yml → /features/) and grades coverage:
-#
-#   covered    ≥1 of `tests` / `scenarios` exists on disk
-#   evidenced  ≥1 `evidence` bundle exists (README + screenshots + report)
-#   verified   `verified.date` is set (by an agent, a human, or CI)
-#
-# Schema: features/v1 — a strict SUPERSET of the shape zer0-mistakes,
-# it-journey, and barodybroject already use, so legacy files validate as-is.
-# Validate: python3 <hub>/tools/features_index.py check .
-#
-# Per feature:
-#   id            required  STABLE id, `^[A-Z0-9]+-[0-9]+$` (prefix per repo, e.g. ZER0-001)
-#   title         required  short name
-#   description   required  one or two sentences — what the user can do
-#   implemented   required  true|false (planned features are welcome — they show as gaps)
-#   surface       optional  ui | api | cli | docs | content | infra (default: ui when `link`
-#                           is a route starting with `/`, else infra)
-#   link          optional  the route (`/settings/`) or file that IS the feature
-#   docs          optional  where it is explained (path or URL)
-#   tags          optional  list
-#   date          optional  YYYY-MM-DD introduced
-#   provenance    optional  { introduced_in, pr, commit, issue }
-#   tests         optional  automated test files that pin it (paths)
-#   scenarios     optional  declarative user scenarios (verify/scenarios/*.yml)
-#   evidence      optional  evidence bundle dirs (test/evidence/<slug>/)
-#   screenshots   optional  direct image paths, when a bundle is overkill
-#   verified      optional  { date, by: agent|human|ci, run: <url> } — last verification
-#   deviations    optional  free text: why a MUST row is waived for this feature
+# One entry per user-facing capability, grounded in this repo's PRD, README and
+# code: what it does, where it lives (`link`), where it is explained (`docs`),
+# its `status` (shipped | partial | planned | deprecated | tbd) and the PRD
+# requirements it serves (`prd:`; TBD = not yet traced). Ids are STABLE: never
+# renumber or reuse one. The PRD's "Feature catalog" block is generated from
+# this file — edit here, then run:
+#   python3 <bamr87/bamr87>/tools/governance_lint.py prd-sync . --write
+# Validate: python3 <hub>/tools/governance_lint.py check .  ·  <hub>/tools/features_index.py check .
+# Schema: features/v1 (field reference: bamr87/bamr87 templates/verify/features.template.yml)
 # =============================================================================
 schema: features/v1
 repo: bamr87/zer0-CMS
 
 features:
-  - id: TODO-001
-    title: "TODO: the first thing a user does here"
-    description: "TODO: replace with the primary user-facing capability of zer0-CMS."
+  - id: ZCMS-001
+    title: "Front matter metadata panel"
+    description: "Renders the active file's front matter as typed controls instead of raw YAML. (VS Code extension, README 'What it is')."
     implemented: true
+    status: shipped
+    prd: [TBD]
     surface: ui
-    link: /
-    docs: README.md
-    tags: [todo]
-    tests: []
-    scenarios:
-      - verify/scenarios/smoke-home.yml
-    evidence: []
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-002
+    title: "Content dashboard"
+    description: "Lists every piece of content with search, filters and sorting. (VS Code extension, README 'What it is')."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-003
+    title: "SEO insights"
+    description: "Measures content against thresholds you set. (VS Code extension, README 'What it is')."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-004
+    title: "Governed publishing path"
+    description: "draft → brand guard → human approval → publish → ledger. (VS Code extension, README 'What it is')."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-005
+    title: "Front-matter audit"
+    description: "Audits every page against the site's own schema and shows fixes as a diff first. (VS Code extension, README 'What it is')."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-006
+    title: "Platform profiles"
+    description: "Jekyll (zer0-mistakes overlay), MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback. (VS Code extension, README 'What it is')."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-007
+    title: "Many sites in one window"
+    description: "Each site with its own configuration, draft queue and MCP server. (VS Code extension, README 'What it is')."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-008
+    title: "Fleet console"
+    description: "Harness, Fleet, Monitor and Workflows tabs for a repository's AI lanes. (VS Code extension, README 'What it is')."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "src"
+    docs: "README.md"
+  - id: ZCMS-009
+    title: "content (content)"
+    description: "The content plane — Django + Wagtail pages, the agent harness and its one tool registry, suggestions, the content graph, the outbox, and GraphQL/REST/MCP over all of it (ADR 0001)."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "content"
+    docs: "workspace.yml"
+  - id: ZCMS-010
+    title: "cms-rails (rails)"
+    description: "The fleet CMS — a Rails 8.1 app that indexes every registered site and writes edits back to the files, plus the stdlib-only zer0 library (catalog, doctor, ABC generator)."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "rails"
+    docs: "workspace.yml"
+  - id: ZCMS-011
+    title: "zer0-mistakes (packages/zer0-mistakes)"
+    description: "The Jekyll theme, published as the jekyll-theme-zer0 gem, with its docs site, installer and theme-propagation tooling."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: infra
+    link: "packages/zer0-mistakes"
+    docs: "workspace.yml"
+  - id: ZCMS-012
+    title: "zer0-image-generator (packages/zer0-image-generator)"
+    description: "AI preview and social-image generation for any Jekyll site — the jekyll preview-images gem, its Python engine, the byte-identical Ruby port and the web panel."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: infra
+    link: "packages/zer0-image-generator"
+    docs: "workspace.yml"
+  - id: ZCMS-013
+    title: "books (packages/books)"
+    description: "A shelf of book projects (library/<slug>/) and the bookshelf app that validates, compiles and edits them, with a Claude-backed studio."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: cli
+    link: "packages/books"
+    docs: "workspace.yml"
+  - id: ZCMS-014
+    title: "1987 (sites/1987)"
+    description: "The self-growing knowledge base about the year 1987 — plain-markdown topic pages by category, grown by Claude Code slash commands and published by GitHub Pages from the original repository."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/1987"
+    docs: "workspace.yml"
+  - id: ZCMS-015
+    title: "2005 (sites/2005)"
+    description: "The year-2005 knowledge base of the year-of-ai lineage — a remote_theme consumer of the zer0 theme, built the way zer0-pages-remote is."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/2005"
+    docs: "workspace.yml"
+  - id: ZCMS-016
+    title: "drsai (sites/drsai)"
+    description: "The children's picture-book site and its Python story engine; the CMS's ABC wizard exports into it."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/drsai"
+    docs: "workspace.yml"
+  - id: ZCMS-017
+    title: "zer0-pages (sites/zer0-pages)"
+    description: "One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/zer0-pages"
+    docs: "workspace.yml"
+  - id: ZCMS-018
+    title: "zer0-pages-remote (sites/zer0-pages-remote)"
+    description: "The minimal remote_theme consumer — proof of how few files a working GitHub Pages site needs."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/zer0-pages-remote"
+    docs: "workspace.yml"
+  - id: ZCMS-019
+    title: "zer0-demo-cookbook (sites/zer0-demo-cookbook)"
+    description: "A demo site generated by the theme's installer (cookbook profile)."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/zer0-demo-cookbook"
+    docs: "workspace.yml"
+  - id: ZCMS-020
+    title: "zer0-demo-garden (sites/zer0-demo-garden)"
+    description: "A demo site generated by the theme's installer (garden profile)."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/zer0-demo-garden"
+    docs: "workspace.yml"
+  - id: ZCMS-021
+    title: "irony-works (sites/irony-works)"
+    description: "The perpetual encyclopedia of irony — a self-growing, AI-tended Obsidian vault whose engine transplants entries into a Jekyll collection published with the zer0 theme."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/irony-works"
+    docs: "workspace.yml"
+  - id: ZCMS-022
+    title: "wargames (sites/wargames)"
+    description: "OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site with spoiler-free study guides — a remote_theme consumer of the zer0 theme."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: content
+    link: "sites/wargames"
+    docs: "workspace.yml"
+  - id: ZCMS-023
+    title: "parodynews (apps/parodynews)"
+    description: "A Django 5.2 + React app that generates and manages parody news with a provider-agnostic AI layer, deployed to Azure Container Apps."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "apps/parodynews"
+    docs: "workspace.yml"
+  - id: ZCMS-024
+    title: "aieo (apps/aieo)"
+    description: "AI Engine Optimization — a FastAPI + React app that scores and rewrites website content so AI engines like ChatGPT and Claude will cite it."
+    implemented: true
+    status: shipped
+    prd: [TBD]
+    surface: ui
+    link: "apps/aieo"
+    docs: "workspace.yml"
