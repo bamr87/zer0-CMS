@@ -5,6 +5,8 @@ wagtail==7.4.3
 # GraphQL (PLAN-D2: Grapple). It brings graphene-django and wagtail-headless-preview.
 wagtail-grapple==0.31.0
 djangorestframework==3.18.3
+# The studio's list filters (status, type, site, text), documented in the OpenAPI document.
+django-filter==26.2
 django-environ==0.11.2
 # The agent runner and the outbox relay run as Celery tasks on Redis.
 celery==5.6.3

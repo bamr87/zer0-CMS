@@ -16,8 +16,15 @@ accepted outcome (note §9, "revision bloat"). Every check is re-run at accept
 time against the current state, because a suggestion made against revision 5
 may meet revision 7: a block it replaces may be gone, and then it is refused
 rather than applied somewhere it was not aimed.
+
+For the review inbox (the studio's Review area, api/review.py): `decidable`
+is the pending suggestions a person may decide, `describe` is one
+suggestion's change as before/after text for a diff, measured against the
+target's latest revision, and `accept_run` accepts everything a run proposed
+— one revision per target.
 """
 
+import json
 import uuid
 
 from django.db import transaction
@@ -332,3 +339,85 @@ def accept_rate(agent=None):
         qs = qs.filter(agent=agent)
     total = qs.count()
     return None if total == 0 else qs.filter(status=Suggestion.ACCEPTED).count() / total
+
+
+# ── the review inbox ───────────────────────────────────────────────────────
+
+
+def decidable(user):
+    """Pending suggestions on pages `user` may edit (and on images, with the
+    image permission). A person decides; an agent never has an inbox."""
+    from django.db.models import Q
+    from wagtail.permission_policies.pages import PagePermissionPolicy
+
+    qs = Suggestion.objects.filter(status=Suggestion.PENDING).select_related("agent", "run", "target_ct")
+    if user is None or not user.is_authenticated or user.username.startswith("agent:"):
+        return qs.none()
+    if user.is_superuser:
+        return qs
+    images = Q(target_ct__app_label="cms", target_ct__model="contentimage")
+    editable = PagePermissionPolicy().instances_user_has_permission_for(user, "change").values("pk")
+    pages = Q(target_id__in=editable) & ~images
+    return qs.filter(pages | images) if user.has_perm("cms.change_contentimage") else qs.filter(pages)
+
+
+def _text(block_type, value) -> str:
+    from importers.markdown import block_to_markdown
+
+    return block_to_markdown(block_type, value) or json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False)
+
+
+def _line(value) -> str:
+    return ", ".join(str(v) for v in value) if isinstance(value, list) else str(value or "")
+
+
+def describe(suggestion, latest=None) -> dict:
+    """The change as {kind, label, before, after, stale} text for a diff.
+    `latest` is the target page's latest revision as an object — pass it when
+    describing many suggestions on one page. `stale` means the block the
+    suggestion aims at is gone, so accepting it would be refused."""
+    from cms.models import BasePage
+
+    target = latest
+    if target is None:
+        target = suggestion.target
+        if isinstance(target, BasePage):
+            target = target.get_latest_revision_as_object()
+    op, payload = suggestion.op, suggestion.payload or {}
+    if op == Suggestion.EDGE:
+        return {"kind": "edge", "label": "graph edge", "before": "", "after": _text("edge", payload), "stale": False}
+    if op == Suggestion.META:
+        before = _line(getattr(target, suggestion.field, ""))
+        after = _line(payload.get("value"))
+        return {"kind": "field", "label": suggestion.field, "before": before, "after": after, "stale": False}
+    blocks = {b["id"]: b for b in target.body.get_prep_value()} if isinstance(target, BasePage) else {}
+    aimed = blocks.get(suggestion.block_id)
+    if op == Suggestion.INSERT:
+        where = "after a block" if suggestion.block_id else "at the end"
+        return {
+            "kind": "block",
+            "label": f"insert {payload.get('type')} {where}",
+            "before": "",
+            "after": _text(payload.get("type"), payload.get("value")),
+            "stale": bool(suggestion.block_id) and aimed is None,
+        }
+    return {
+        "kind": "block",
+        "label": f"{op} {aimed['type'] if aimed else 'block'}",
+        "before": _text(aimed["type"], aimed["value"]) if aimed else "",
+        "after": _text(payload.get("type"), payload.get("value")) if op == Suggestion.REPLACE else "",
+        "stale": aimed is None,
+    }
+
+
+@transaction.atomic
+def accept_run(run, user) -> list:
+    """Accept every pending suggestion of `run`: one revision per target (and
+    per proposing user, as `accept` requires). All of it, or none of it."""
+    pending = list(Suggestion.objects.filter(run=run, status=Suggestion.PENDING).order_by("created_at", "id"))
+    if not pending:
+        raise SuggestionError(f"run {run.pk} has no pending suggestions")
+    groups: dict = {}
+    for s in pending:
+        groups.setdefault((s.target_ct_id, s.target_id, s.created_by_id), []).append(s)
+    return [accept(group, user) for group in groups.values()]

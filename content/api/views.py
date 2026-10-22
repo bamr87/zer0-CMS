@@ -15,6 +15,8 @@ traceback in the log, never in the response.
 `/api/v2/suggestions/` lists, accepts and rejects; `/api/v2/tools/` lists the
 registry. Each view calls the same service functions as GraphQL and the admin,
 and every failure is raised (`ops.errors`) so the one envelope answers it.
+The studio's endpoints live beside these: api/session.py, api/pages.py and
+api/review.py.
 """
 
 import json
@@ -27,12 +29,13 @@ from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from graphene_django.views import GraphQLView
 from graphql import GraphQLError
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import serializers, status
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 from wagtail.models import Page, Revision
 
@@ -49,8 +52,22 @@ from suggestions.services import SuggestionError, accept, can_decide, pending_fo
 
 from .access import may_request_run
 from .graphql import may_read_run
+from .serializers import RunListSerializer, RunSerializer
 
 log = logging.getLogger("ops.graphql")
+
+
+class EventStreamRenderer(BaseRenderer):
+    """Lets a browser's `EventSource`, which sends `Accept: text/event-stream`,
+    through DRF's content negotiation (without it the stream answers 406). The
+    stream view returns its own response; only an error is rendered here, as
+    the JSON envelope."""
+
+    media_type = "text/event-stream"
+    format = "event-stream"
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return json.dumps(data).encode()
 
 
 class _CSRFCheck(CsrfViewMiddleware):
@@ -171,14 +188,14 @@ def _create_run(request, slug):
     methods=["GET"],
     operation_id="agent_runs_list",
     summary="The newest 50 runs the caller may see",
-    responses={200: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={200: RunListSerializer, **ERROR_RESPONSES},
 )
 @extend_schema(
     methods=["POST"],
     operation_id="agent_runs_create",
     summary="Start a run of `agent` on `page_id` with `input`",
     request=OpenApiTypes.OBJECT,
-    responses={201: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={201: RunSerializer, **ERROR_RESPONSES},
 )
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
@@ -199,7 +216,7 @@ def agent_runs(request):
 @extend_schema(
     summary="Start a run of one agent",
     request=OpenApiTypes.OBJECT,
-    responses={201: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={201: RunSerializer, **ERROR_RESPONSES},
 )
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -215,7 +232,7 @@ def _readable_run(request, pk):
 @extend_schema(
     operation_id="agent_runs_retrieve",
     summary="One run with its steps",
-    responses={200: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={200: RunSerializer, **ERROR_RESPONSES},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -235,6 +252,7 @@ def agent_run(request, pk):
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+@renderer_classes([JSONRenderer, EventStreamRenderer])
 def agent_run_stream(request, pk):
     """Server-sent events: each step as it lands, then the final status."""
     run = _readable_run(request, pk)
@@ -402,14 +420,31 @@ def suggestions(request):
 
 @extend_schema(
     summary="Accept (with `with: [ids]` as one revision) or reject (with `reason`) a suggestion",
-    request=OpenApiTypes.OBJECT,
-    responses={200: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    description="`decision` is `accept` or `reject`.",
+    request=inline_serializer(
+        "SuggestionDecision",
+        {
+            "with": serializers.ListField(child=serializers.IntegerField(), required=False),
+            "reason": serializers.CharField(required=False, allow_blank=True),
+        },
+    ),
+    responses={
+        200: inline_serializer(
+            "SuggestionDecided",
+            {
+                "accepted": serializers.BooleanField(required=False),
+                "rejected": serializers.BooleanField(required=False),
+                "revision_id": serializers.IntegerField(required=False, allow_null=True),
+            },
+        ),
+        **ERROR_RESPONSES,
+    },
 )
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def suggestion_decide(request, pk, decision):
     suggestion = Suggestion.objects.filter(pk=pk).first()
-    if suggestion is None:
+    if suggestion is None or decision not in ("accept", "reject"):
         raise NotFound("not found")
     try:
         with transaction.atomic():

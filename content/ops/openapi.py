@@ -6,13 +6,21 @@ endpoints (`api/urls.py` `urlpatterns`) and nothing else. Wagtail's
 (`get_serializer_class` reads `self.request`), which no static generator can
 introspect, so they are documented by Wagtail itself and left out here. The
 probes are root-level, not `/api/v2`, so they stay out too.
+
+`urlpatterns` is built when first read (a module `__getattr__`), not at
+import: the API's views import `ERROR_RESPONSES` from here, so an eager
+`include("api.urls")` made importing a view before the URLconf an import cycle.
 """
 
 from django.urls import include, path
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import serializers
 
-urlpatterns = [path("api/v2/", include("api.urls"))]
+
+def __getattr__(name):
+    if name == "urlpatterns":
+        return [path("api/v2/", include("api.urls"))]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class AgentTokenScheme(OpenApiAuthenticationExtension):

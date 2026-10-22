@@ -9,6 +9,7 @@
 /api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
+/studio/          the studio (web/studio), built; every path under it is its index.html (api/studio.py)
 /                 Wagtail page serving (preview; the sites are headless)
 
 Errors Django answers itself — an unknown path, a CSRF failure, a crash — use
@@ -17,12 +18,13 @@ the same JSON envelope as the APIs on the API paths (ops/errors.py).
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularJSONAPIView, SpectacularSwaggerView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from api.studio import studio
 from api.urls import router
 from api.views import ContentGraphQLView
 from mcp_server.views import mcp_endpoint
@@ -45,6 +47,7 @@ urlpatterns = [
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),
     path("mcp/", mcp_endpoint, name="mcp"),
+    re_path(r"^studio(?:/(?P<path>.*))?$", studio, name="studio"),
 ]
 if settings.API_DOCS_ENABLED:
     urlpatterns.append(path("api/v2/docs/", SpectacularSwaggerView.as_view(url_name="openapi"), name="api-docs"))

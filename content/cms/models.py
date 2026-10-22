@@ -111,6 +111,19 @@ class BasePage(AgentManagedMixin, Page):
 
     # The typed fields a subclass adds to the hash, beyond the shared ones.
     hashed_fields: tuple[str, ...] = ()
+    # What a person edits in the studio and the extension (api/pages.py): the
+    # shared fields, then the typed fields each subclass adds. The body is
+    # edited block by block, not as a field.
+    shared_editor_fields: tuple[str, ...] = (
+        "title",
+        "slug",
+        "seo_title",
+        "search_description",
+        "ai_summary",
+        "ai_keywords",
+        "agent_policy",
+    )
+    editor_fields: tuple[str, ...] = ()
     # Headless first: this template exists for the editor's preview only.
     template = "cms/page.html"
 
@@ -195,6 +208,7 @@ class SiteRootPage(BasePage):
     parent_page_types = ["wagtailcore.Page"]
     subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage"]
     hashed_fields = ("site_key", "jekyll_config")
+    editor_fields = ("source_root",)
     content_panels = BasePage.content_panels + [FieldPanel("site_key"), FieldPanel("source_root")]
     graphql_fields = BasePage.graphql_fields + [GraphQLString("site_key")]
 
@@ -207,6 +221,7 @@ class CollectionPage(BasePage):
 
     subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage"]
     hashed_fields = ("collection", "output_dir")
+    editor_fields = ("collection", "output_dir")
     content_panels = BasePage.content_panels + [FieldPanel("collection"), FieldPanel("output_dir")]
     graphql_fields = BasePage.graphql_fields + [GraphQLString("collection")]
 
@@ -242,6 +257,7 @@ class ArticlePage(BasePage):
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types: list[str] = []
     hashed_fields = ("date", "author", "tags", "categories")
+    editor_fields = ("date", "author", "tags", "categories")
 
     content_panels = Page.content_panels + [
         MultiFieldPanel([FieldPanel("date"), FieldPanel("author"), FieldPanel("tags"), FieldPanel("categories")]),
@@ -290,6 +306,7 @@ class BookPage(BasePage):
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types = ["cms.ChapterPage"]
     hashed_fields = ("subtitle", "author", "series", "profile", "audience", "art_style")
+    editor_fields = ("subtitle", "author", "series", "profile", "audience", "art_style")
 
     content_panels = Page.content_panels + [
         MultiFieldPanel(
@@ -320,6 +337,7 @@ class ChapterPage(BasePage):
     parent_page_types = ["cms.BookPage"]
     subpage_types: list[str] = []
     hashed_fields = ("number",)
+    editor_fields = ("number",)
     content_panels = Page.content_panels + [
         FieldPanel("number"),
         FieldPanel("body"),

@@ -11,7 +11,7 @@ pages. A crash never leaks its traceback: the body says `internal.error` and
 the request id, and the log line with the same id holds the rest.
 
 Code taxonomy (ops/README.md): `auth.required`, `auth.invalid_token`,
-`auth.forbidden`, `auth.csrf_failed`, `request.malformed`,
+`auth.forbidden`, `auth.csrf_failed`, `auth.invalid_credentials`, `request.malformed`,
 `request.method_not_allowed`, `request.unsupported_media_type`,
 `request.not_acceptable`, `validation.failed`, `resource.not_found`,
 `resource.conflict`, `rate.limited`, `upstream.unavailable`, `internal.error`.
@@ -137,6 +137,8 @@ def drf_exception_handler(exc, context):
     elif isinstance(exc, DjangoPermissionDenied):
         exc = drf.PermissionDenied()
     code = next((code for cls, code in _CODES if isinstance(exc, cls)), "request.invalid")
+    if isinstance(exc, drf.PermissionDenied) and str(exc.detail).startswith("CSRF Failed"):
+        code = "auth.csrf_failed"  # DRF's SessionAuthentication says it only in the message
     status = response.status_code
     details: list = []
     retry_after = None
