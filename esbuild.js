@@ -14,6 +14,9 @@
  * src/core must stay pure Node, so a stray `import 'vscode'` anywhere in that
  * import graph becomes a BUILD ERROR here — not a runtime crash inside an MCP
  * client launched outside the extension host.
+ *
+ * Every build also writes dist/THIRD_PARTY_NOTICES.txt: the licence of each
+ * library the six bundles inline, which the vsix ships beside them.
  */
 
 const esbuild = require('esbuild');
@@ -234,6 +237,53 @@ const copyMediaPlugin = {
 const DEFINES = buildDefines();
 
 /**
+ * `dist/THIRD_PARTY_NOTICES.txt`: every package whose files a bundle inlines
+ * — read from the six builds' metafiles, so nothing is listed by hand — with
+ * its version, its licence and the licence text it ships. The bundles are
+ * minified and keep no banners, and MIT, ISC, BSD and Apache-2.0 all ask for
+ * the notice in every copy distributed, which the vsix is. A bundled package
+ * that declares no licence fails the build: shipping it would be a question
+ * nobody had asked.
+ */
+const NOTICES_FILE = path.join(__dirname, 'dist', 'THIRD_PARTY_NOTICES.txt');
+const LICENCE_FILE = /^(licen[cs]e|copying|notice)/i;
+
+function writeNotices(metafiles) {
+  const dirs = new Map();
+  for (const input of metafiles.flatMap((meta) => Object.keys(meta.inputs))) {
+    const at = input.lastIndexOf('node_modules/');
+    if (at >= 0) {
+      const [scope, name] = input.slice(at + 'node_modules/'.length).split('/');
+      const pkg = scope.startsWith('@') ? `${scope}/${name}` : scope;
+      dirs.set(path.join(__dirname, input.slice(0, at), 'node_modules', pkg), pkg);
+    }
+  }
+  const notices = new Map();
+  for (const [dir, name] of dirs) {
+    const pkg = readJson(path.join(dir, 'package.json'));
+    const licence = typeof pkg.license === 'string' ? pkg.license : (pkg.license ?? pkg.licenses?.[0])?.type;
+    if (!licence) {
+      throw new Error(`esbuild: ${name} is bundled into dist/ and its package.json declares no licence.`);
+    }
+    const files = fs.readdirSync(dir).filter((file) => LICENCE_FILE.test(file)).sort();
+    const text = files.map((file) => fs.readFileSync(path.join(dir, file), 'utf8').trim()).join('\n\n');
+    const author = typeof pkg.author === 'string' ? pkg.author : pkg.author?.name;
+    const declared = `(The package ships no licence file; its package.json says ${licence}${author ? `, by ${author}` : ''}.)`;
+    notices.set(`${pkg.name}@${pkg.version}`, `${licence}\n\n${text || declared}`);
+  }
+  const body = [...notices]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, notice]) => `${'='.repeat(78)}\n${id} — ${notice}\n`);
+  fs.mkdirSync(path.dirname(NOTICES_FILE), { recursive: true });
+  fs.writeFileSync(
+    NOTICES_FILE,
+    'zer0-CMS bundles the following libraries into dist/. Their licences and notices follow.\n\n' +
+      body.join('\n'),
+    'utf8',
+  );
+}
+
+/**
  * The libraries src/core reads its inputs with (ADR 0006 decision 9, which
  * amends D3 and D14): YAML, JSON with comments, globs and dates, each the
  * maintained library rather than a hand-rolled subset. Core runs in both
@@ -393,6 +443,7 @@ async function main() {
     sourcemap: !production,
     sourcesContent: false,
     logLevel: 'silent',
+    metafile: true,
   };
 
   if (watch) {
@@ -401,7 +452,8 @@ async function main() {
     return;
   }
 
-  await Promise.all(targets.map((t) => esbuild.build({ ...shared, ...t })));
+  const results = await Promise.all(targets.map((t) => esbuild.build({ ...shared, ...t })));
+  writeNotices(results.map((result) => result.metafile));
 }
 
 // Running the file builds; requiring it hands back the gate so a test can

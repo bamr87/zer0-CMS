@@ -258,6 +258,23 @@ suite('engines: the seam holds', () => {
     );
   });
 
+  test('every library a node bundle inlines ships its licence in dist/THIRD_PARTY_NOTICES.txt', function () {
+    const notices = path.resolve(__dirname, '../../dist/THIRD_PARTY_NOTICES.txt');
+    if (!fs.existsSync(META) || !fs.existsSync(notices)) {
+      this.skip(); // `node esbuild.js` writes both
+      return;
+    }
+    const meta = JSON.parse(read(META)) as { inputs: Record<string, unknown> };
+    const packages = new Set(
+      Object.keys(meta.inputs)
+        .map((input) => /.*node_modules\/((?:@[^/]+\/)?[^/]+)\//.exec(input)?.[1])
+        .filter((name): name is string => name !== undefined),
+    );
+    const listed = new Set([...read(notices).matchAll(/^(\S+)@[^@\s]+ — /gm)].map((match) => match[1]));
+    assert.ok(packages.has('yaml') && packages.has('eventsource'), 'expected the node bundles to inline yaml and eventsource');
+    assert.deepEqual([...packages].filter((name) => !listed.has(name)), [], 'a bundled library with no notice in the vsix');
+  });
+
   test('ENGINES_VERSION resolves without an esbuild define', () => {
     // The fast loop compiles with tsc, which has no `define`, so this value came
     // from the installed package.json — the fallback path in engines.ts.

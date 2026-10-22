@@ -107,6 +107,9 @@ jobs:
       # of whatever `.vscodeignore` happens to say today. A packaging change is
       # a diff a person reads; regenerate with:
       #   npx @vscode/vsce ls --no-dependencies | LC_ALL=C sort > .vsix-manifest.txt
+      # The list includes dist/THIRD_PARTY_NOTICES.txt — the licence of every
+      # library the bundles inline, which esbuild.js writes from the build's
+      # metafiles and fails without — so a vsix without it fails here.
       - name: Verify the packaged file list
         run: |
           npx @vscode/vsce ls --no-dependencies | LC_ALL=C sort > /tmp/vsix-actual.txt
