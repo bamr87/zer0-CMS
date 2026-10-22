@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "importers",
     "exporters",
     "ops",
+    "accounts",
     # Wagtail.
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
@@ -190,6 +191,8 @@ GRAPPLE = {
 # rate turns a scope off.
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        # A person's token first: it answers only for `zer0u_`, so an agent's still reaches its own.
+        "accounts.auth.UserTokenAuthentication",
         "agents.auth.AgentTokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],

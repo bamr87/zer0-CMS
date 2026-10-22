@@ -4862,6 +4862,8 @@ export interface operations {
                 q?: string;
                 /** @description A site id: the pages of that site. */
                 site?: number;
+                /** @description A file's path, relative to its site's folder or a folder above it: the pages imported from that file. */
+                source?: string;
                 /**
                  * @description * `draft` - draft
                  *     * `live` - live
