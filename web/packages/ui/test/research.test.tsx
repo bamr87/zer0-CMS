@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { PageResearch, ResearchWorkspace, SourceView } from '../src';
 import { AskPanel } from '../src/research/AskPanel';
 import { CaptureSource } from '../src/research/CaptureSource';
+import { FeedsPanel } from '../src/research/FeedsPanel';
 import { ResearchBrief } from '../src/research/ResearchBrief';
 import { fakePlatform, renderUi, type Call } from '../../../test/harness';
 
@@ -45,6 +46,7 @@ const source = (rest: Record<string, unknown> = {}) => ({
 });
 
 const posts = (calls: Call[]) => calls.filter((c) => c.method === 'POST');
+const site = { id: 1, name: 'Test site', hostname: 'localhost', port: 80, is_default: true, root_page_id: 3 };
 
 describe('<ResearchWorkspace>', () => {
   it('lists collections and sources, and a source opens on its own page', async () => {
@@ -58,6 +60,84 @@ describe('<ResearchWorkspace>', () => {
     expect(await screen.findByText('the site answered HTTP 404')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Backups explained' }));
     expect(go).toHaveBeenCalledWith({ to: 'source', id: 's1' });
+  });
+});
+
+describe('<ResearchWorkspace> collections', () => {
+  it('makes a collection shared with everyone signed in, and changes who sees one', async () => {
+    const collection = (rest: Record<string, unknown> = {}) => ({ ...owned, id: 'c1', name: 'Backups', description: '', ...rest });
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/research/collections/': () => page([collection({ visibility: 'site', site: 1 })]),
+      'GET /api/v2/research/sources/': () => page([]),
+      'GET /api/v2/sites/': () => [site],
+      'POST /api/v2/research/collections/': () => collection({ id: 'c2', name: 'Wires', visibility: 'shared' }),
+      'PATCH /api/v2/research/collections/c1/': () => collection(),
+    });
+    renderUi(<ResearchWorkspace siteId={1} />, { api });
+    expect(await within(screen.getByLabelText('Collections')).findByText('Editors of a site')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'New collection' }));
+    const form = screen.getByRole('form', { name: 'Add collection' });
+    await userEvent.type(within(form).getByLabelText('Name'), 'Wires');
+    await userEvent.type(within(form).getByLabelText('Description'), 'Agency copy');
+    await userEvent.click(within(form).getByLabelText('Who sees it', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Everyone signed in' }));
+    await userEvent.click(within(form).getByRole('button', { name: 'Add collection' }));
+    await waitFor(() =>
+      expect(posts(calls).at(-1)?.body).toEqual({ name: 'Wires', description: 'Agency copy', visibility: 'shared', site: 1 }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^Backups/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Collection settings' }));
+    const settings = screen.getByRole('form', { name: 'Save collection' });
+    expect(within(settings).getByLabelText('Site', { selector: 'input' })).toHaveValue('Test site');
+    await userEvent.click(within(settings).getByLabelText('Who sees it', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Only me' }));
+    await userEvent.click(within(settings).getByRole('button', { name: 'Save collection' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')).toMatchObject({
+        path: '/api/v2/research/collections/c1/',
+        body: { name: 'Backups', description: '', visibility: 'private', site: 1 },
+      }),
+    );
+  });
+});
+
+describe('<FeedsPanel>', () => {
+  it('subscribes to a feed in the collection, pauses one, and reads one now (not while paused)', async () => {
+    const feed = (rest: Record<string, unknown> = {}) => ({
+      ...owned,
+      id: 'f1',
+      url: 'https://example.com/feed.xml',
+      title: 'Example News',
+      collection: 'c1',
+      active: true,
+      interval_minutes: 60,
+      last_checked_at: '2026-10-22T09:00:00Z',
+      next_check_at: '2026-10-22T10:00:00Z',
+      error: '',
+      items: 2,
+      ...rest,
+    });
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/research/feeds/': () => page([feed(), feed({ id: 'f2', title: 'Paused wire', active: false, error: 'the feed answered HTTP 500' })]),
+      'POST /api/v2/research/feeds/': () => feed({ id: 'f3' }),
+      'PATCH /api/v2/research/feeds/f1/': () => feed({ active: false }),
+      'POST /api/v2/research/feeds/f1/refresh/': () => feed(),
+    });
+    renderUi(<FeedsPanel collection="c1" />, { api });
+    expect(await screen.findByText('the feed answered HTTP 500')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Feed address'), 'https://news.example.com/rss');
+    await userEvent.click(screen.getByLabelText('Check it', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Every day' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Subscribe' }));
+    await waitFor(() =>
+      expect(posts(calls).at(-1)).toMatchObject({ path: '/api/v2/research/feeds/', body: { url: 'https://news.example.com/rss', interval_minutes: 1440, collection: 'c1' } }),
+    );
+    const [first, paused] = screen.getAllByRole('button', { name: 'Refresh now' });
+    expect(paused).toBeDisabled();
+    await userEvent.click(first as HTMLElement);
+    await waitFor(() => expect(posts(calls).at(-1)?.path).toBe('/api/v2/research/feeds/f1/refresh/'));
+    await userEvent.click(screen.getByRole('switch', { name: 'Keep reading Example News' }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'PATCH')).toMatchObject({ path: '/api/v2/research/feeds/f1/', body: { active: false } }));
   });
 });
 
@@ -91,6 +171,26 @@ describe('<CaptureSource>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));
     await waitFor(() => expect(calls.some((c) => c.path === '/api/v2/agent-runs/41/')).toBe(true));
     expect(posts(calls).at(-1)?.body).toEqual({ query: 'nightly backups', max_results: 5, collection: 'c1' });
+  });
+});
+
+describe('<SourceView> who sees it', () => {
+  it('shares a source with the editors of a site', async () => {
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/research/sources/s1/': () => source(),
+      'GET /api/v2/research/quotes/': () => page([]),
+      'GET /api/v2/research/citations/': () => page([]),
+      'GET /api/v2/content/pages/': () => ({ count: 0, next: null, previous: null, results: [] }),
+      'GET /api/v2/sites/': () => [site],
+      'PATCH /api/v2/research/sources/s1/': () => source({ visibility: 'site', site: 1 }),
+    });
+    renderUi(<SourceView sourceId="s1" />, { api });
+    const card = await screen.findByLabelText('Sharing');
+    expect(within(card).getByRole('button', { name: 'Save' })).toBeDisabled();
+    await userEvent.click(within(card).getByLabelText('Who sees it', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Editors of a site' }));
+    await userEvent.click(within(card).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'PATCH')).toMatchObject({ path: '/api/v2/research/sources/s1/', body: { visibility: 'site', site: 1 } }));
   });
 });
 
@@ -190,9 +290,12 @@ describe('<PageResearch>', () => {
       collection: null,
       summary: 'One claim is wrong.',
       findings: [
-        { block: 'b1', claim: 'Back up weekly', verdict: 'contradicted', explanation: 'The guide says nightly.', correction: 'Back up nightly.', sources: [{ id: 's1', title: 'Backups explained' }], suggestion: 77, error: '' },
-        { block: 'b2', claim: 'Keep two copies', verdict: 'supported', explanation: 'It says so.', correction: '', sources: [], suggestion: null, error: '' },
+        { block: 'b1', claim: 'Back up weekly', verdict: 'contradicted', explanation: 'The guide says nightly.', find: 'weekly', replace: 'nightly', sources: [{ id: 's1', title: 'Backups explained' }], suggestion: 77, error: '' },
+        { block: 'b1', claim: 'Keep one copy', verdict: 'contradicted', explanation: 'It says two.', find: 'one copy', replace: 'two copies', sources: [{ id: 's1', title: 'Backups explained' }], suggestion: 77, error: '' },
+        { block: 'b2', claim: 'Keep two copies', verdict: 'supported', explanation: 'It says so.', find: '', replace: '', sources: [], suggestion: null, error: '' },
       ],
+      sources: [{ id: 's1', title: 'Backups explained', cited: true }],
+      left_out: 3,
       status: 'ready',
       error: '',
       run: run(9, 'succeeded'),
@@ -207,8 +310,9 @@ describe('<PageResearch>', () => {
     });
     const { go } = renderUi(<PageResearch pageId={5} pageTitle="Nightly backups" />, { api });
     const findings = await screen.findByLabelText('Findings');
-    expect(within(findings).getByText('contradicted')).toBeInTheDocument();
-    expect(within(findings).getByText('Suggested: Back up nightly.')).toBeInTheDocument();
+    expect(within(findings).getAllByText('contradicted')).toHaveLength(2);
+    expect(within(findings).getByText('Suggested: “weekly” → “nightly”')).toBeInTheDocument();
+    expect(within(findings).getByLabelText('Sources read')).toHaveTextContent('Read 1 source (1 cited by the draft): Backups explained. 3 more were left out');
     await userEvent.click(within(findings).getByRole('button', { name: 'Review 1 suggested correction' }));
     expect(go).toHaveBeenCalledWith({ to: 'review', runId: 9 });
     await userEvent.click(screen.getByLabelText('Cite a source', { selector: 'input' }));

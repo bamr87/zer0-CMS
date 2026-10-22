@@ -22,6 +22,7 @@ export type Run = Schemas['Run'];
 export type Step = Schemas['Step'];
 export type ErrorEnvelope = Schemas['ErrorEnvelope'];
 // Ideas and research (PLAN G14), and the AI-layer rows their workspaces show.
+export type Visibility = Schemas['VisibilityEnum'];
 export type Board = Schemas['Board'];
 export type Idea = Schemas['Idea'];
 export type IdeaStatus = Schemas['IdeaStatusEnum'];

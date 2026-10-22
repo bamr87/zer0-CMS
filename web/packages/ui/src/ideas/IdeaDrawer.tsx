@@ -1,6 +1,6 @@
 // One idea, beside its board: edit it, move it, tag it, link the research it
-// rests on, and promote it — to a brief an assistant writes, an article draft
-// or a book draft. What it became is shown and one step away.
+// rests on, say who sees it, and promote it — to a brief an assistant writes,
+// an article draft or a book draft. What it became is shown and one step away.
 import { Alert, Anchor, Button, Divider, Drawer, Group, Loader, MultiSelect, SegmentedControl, Select, Stack, Switch, TagsInput, Text, Textarea, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { PagePicker } from '../PagePicker';
+import { Sharing, sharedOf } from '../Sharing';
 import { BriefCard } from './BriefCard';
 
 export const STATUSES: { value: IdeaStatus; label: string }[] = [
@@ -49,6 +50,7 @@ function IdeaForm({ idea, boards, onGone }: { idea: Idea; boards: Board[]; onGon
   const [status, setStatus] = useState<IdeaStatus>(idea.status ?? 'new');
   const [board, setBoard] = useState(idea.board ?? '');
   const [linked, setLinked] = useState(idea.sources.map((s) => s.id));
+  const [shared, setShared] = useState(sharedOf(idea));
   const [into, setInto] = useState<'brief' | 'article' | 'book'>('brief');
   const [parent, setParent] = useState<number | null>(null);
   const [now, setNow] = useState(true);
@@ -63,7 +65,7 @@ function IdeaForm({ idea, boards, onGone }: { idea: Idea; boards: Board[]; onGon
   };
   const save = useMutation({
     mutationFn: () =>
-      call(api.PATCH('/api/v2/ideas/{public_id}/', { ...path, body: { title, notes, tags, status, board: board || null, source_ids: linked } })),
+      call(api.PATCH('/api/v2/ideas/{public_id}/', { ...path, body: { title, notes, tags, status, board: board || null, source_ids: linked, ...shared } })),
     onSuccess: () => done('Idea saved'),
   });
   const remove = useMutation({
@@ -108,6 +110,7 @@ function IdeaForm({ idea, boards, onGone }: { idea: Idea; boards: Board[]; onGon
         value={linked}
         onChange={setLinked}
       />
+      <Sharing value={shared} onChange={setShared} />
       <Text size="xs" c="dimmed">
         {idea.origin} · {idea.votes} vote{idea.votes === 1 ? '' : 's'}
         {idea.url ? (

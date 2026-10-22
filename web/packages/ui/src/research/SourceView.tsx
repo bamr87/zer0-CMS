@@ -1,7 +1,8 @@
 // One source: where it came from and how its fetch went, its summary, the
 // entities it names and the passages an assistant suggests quoting (each
 // kept as a quote only when a person says so), its quotes, the pages that
-// cite it — and citing it on another — and the text the platform extracted.
+// cite it — and citing it on another — who sees it, and the text the platform
+// extracted.
 import { Alert, Anchor, Badge, Button, Card, Divider, Group, Loader, ScrollArea, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { useState } from 'react';
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { PagePicker } from '../PagePicker';
+import { Sharing, sharedOf } from '../Sharing';
 import { entities, strings, WAITING } from './runs';
 
 export function SourceView({ sourceId }: { sourceId: string }) {
@@ -110,6 +112,7 @@ export function SourceView({ sourceId }: { sourceId: string }) {
       </Card>
       <Quotes sourceId={s.id} />
       <CitedBy sourceId={s.id} />
+      <WhoSees key={`${s.visibility}-${s.site}`} source={s} />
       <Divider label="Extracted text" />
       <ScrollArea.Autosize mah={420}>
         <Text size="sm" style={{ whiteSpace: 'pre-wrap' }} aria-label="Extracted text">
@@ -197,6 +200,32 @@ function Quotes({ sourceId }: { sourceId: string }) {
         </Button>
       </Group>
       {add.isError || remove.isError ? <Alert color="red" mt="xs">{errorText(add.error ?? remove.error)}</Alert> : null}
+    </Card>
+  );
+}
+
+/** Who sees the source: only its owner may change it, which the platform checks. */
+function WhoSees({ source }: { source: Source }) {
+  const api = useApi();
+  const qc = useQueryClient();
+  const [shared, setShared] = useState(sharedOf(source));
+  const save = useMutation({
+    mutationFn: () => call(api.PATCH('/api/v2/research/sources/{public_id}/', { params: { path: { public_id: source.id } }, body: shared })),
+    onSuccess: () => {
+      notifications.show({ message: 'Saved who sees it' });
+      void qc.invalidateQueries({ queryKey: ['source', source.id] });
+    },
+  });
+  const was = sharedOf(source);
+  return (
+    <Card withBorder aria-label="Sharing">
+      <Group align="end">
+        <Sharing value={shared} onChange={setShared} />
+        <Button variant="light" disabled={shared.visibility === was.visibility && shared.site === was.site} loading={save.isPending} onClick={() => save.mutate()}>
+          Save
+        </Button>
+      </Group>
+      {save.isError ? <Alert color="red" mt="xs">{errorText(save.error)}</Alert> : null}
     </Card>
   );
 }

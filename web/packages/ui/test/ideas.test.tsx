@@ -6,6 +6,7 @@
 // platform behind the real client.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Board } from '@zer0/api';
 import { describe, expect, it } from 'vitest';
 
 import { CaptureIdea, IdeasWorkspace } from '../src';
@@ -72,6 +73,39 @@ describe('<IdeasWorkspace>', () => {
     expect(calls.find((c) => c.path === '/api/v2/ideas/')?.query.get('board')).toBe('none');
     await userEvent.click(within(fresh).getByRole('button', { name: 'Vote · 2' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.path === '/api/v2/ideas/i1/vote/')).toBe(true));
+  });
+});
+
+const site = { id: 1, name: 'Test site', hostname: 'localhost', port: 80, is_default: true, root_page_id: 3 };
+const board = (rest: Partial<Board> = {}): Board => ({ id: 'b1', name: 'Spring', description: '', owner: 'editor', site: null, visibility: 'private', created_at: '', updated_at: '', ...rest });
+
+describe('<IdeasWorkspace> boards', () => {
+  it('makes a board shared with the editors of a site, and changes who sees one', async () => {
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/ideas/boards/': () => page([board({ visibility: 'shared' })]),
+      'GET /api/v2/ideas/': () => page([]),
+      'GET /api/v2/sites/': () => [site],
+      'POST /api/v2/ideas/boards/': () => board({ id: 'b2', name: 'Team', visibility: 'site', site: 1 }),
+      'PATCH /api/v2/ideas/boards/b1/': () => board({ visibility: 'private' }),
+    });
+    renderUi(<IdeasWorkspace />, { api });
+    expect(await within(screen.getByLabelText('Boards')).findByText('Everyone signed in')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'New board' }));
+    const form = screen.getByRole('form', { name: 'Add board' });
+    await userEvent.type(within(form).getByLabelText('Name'), 'Team');
+    await userEvent.click(within(form).getByLabelText('Who sees it', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Editors of a site' }));
+    expect(within(form).getByLabelText('Site', { selector: 'input' })).toHaveValue('Test site');
+    await userEvent.click(within(form).getByRole('button', { name: 'Add board' }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ name: 'Team', description: '', visibility: 'site', site: 1 }));
+    await userEvent.click(screen.getByRole('button', { name: /^Spring/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Board settings' }));
+    const settings = screen.getByRole('form', { name: 'Save board' });
+    expect(within(settings).getByLabelText('Name')).toHaveValue('Spring');
+    await userEvent.click(within(settings).getByLabelText('Who sees it', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Only me' }));
+    await userEvent.click(within(settings).getByRole('button', { name: 'Save board' }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'PATCH')).toMatchObject({ path: '/api/v2/ideas/boards/b1/', body: { name: 'Spring', description: '', visibility: 'private', site: null } }));
   });
 });
 
@@ -197,6 +231,44 @@ describe('<IdeaDrawer> to a brief', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Make it a draft' }));
     await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'page', id: 14 }));
     expect(calls.filter((c) => c.method === 'POST').at(-1)).toMatchObject({ path: '/api/v2/ai/briefs/br1/apply/', body: { parent: 3 } });
+  });
+});
+
+describe('<IdeaDrawer> save', () => {
+  it('saves the title, notes, tags, status, board, the research it rests on and who sees it', async () => {
+    const linked = { id: 's1', title: 'Survey', url: '', kind: 'note' };
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/ideas/i1/': () => idea('i1', 'Restore drills', { sources: [linked] }),
+      'GET /api/v2/research/sources/': () => page([{ ...linked, status: 'ready' }, { id: 's2', title: 'Drill study', url: '', kind: 'url', status: 'ready' }]),
+      'GET /api/v2/sites/': () => [site],
+      'PATCH /api/v2/ideas/i1/': () => idea('i1', 'Restore drills, quarterly'),
+    });
+    renderUi(<IdeaDrawer ideaId="i1" boards={[board()]} onClose={() => undefined} />, { api });
+    const title = await screen.findByDisplayValue('Restore drills');
+    await userEvent.type(title, ', quarterly');
+    await userEvent.type(screen.getByLabelText('Notes'), 'Once a quarter.');
+    await userEvent.type(screen.getByRole('combobox', { name: 'Tags' }), 'ops{enter}');
+    await userEvent.click(screen.getByLabelText('Status', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Planned' }));
+    await userEvent.click(screen.getByLabelText('Board', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Spring' }));
+    await userEvent.click(screen.getByLabelText('Research it rests on', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Drill study' }));
+    await userEvent.click(screen.getByLabelText('Who sees it', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Editors of a site' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+        title: 'Restore drills, quarterly',
+        notes: 'Once a quarter.',
+        tags: ['ops'],
+        status: 'planned',
+        board: 'b1',
+        source_ids: ['s1', 's2'],
+        visibility: 'site',
+        site: 1,
+      }),
+    );
   });
 });
 

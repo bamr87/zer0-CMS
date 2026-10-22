@@ -1726,6 +1726,10 @@ export interface components {
             type: string;
             value: unknown;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         Board: {
             /** Format: uuid */
             readonly id: string;
@@ -1740,6 +1744,10 @@ export interface components {
             name: string;
             description?: string;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         BoardRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -1903,6 +1911,13 @@ export interface components {
          * @enum {string}
          */
         ChangeKindEnum: "block" | "field" | "edge";
+        CheckedSource: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** @description The draft cites it (else it came from the chosen collection). */
+            cited: boolean;
+        };
         Choice: {
             value: string;
             label: string;
@@ -1966,6 +1981,10 @@ export interface components {
             /** @description Ideas whose vector is still being computed. */
             pending: components["schemas"]["IdeaRef"][];
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         Collection: {
             /** Format: uuid */
             readonly id: string;
@@ -1980,6 +1999,10 @@ export interface components {
             name: string;
             description?: string;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         CollectionRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -2063,6 +2086,10 @@ export interface components {
             collection?: string | null;
             readonly summary: string;
             readonly findings: components["schemas"]["Finding"][];
+            /** @description What the check read, its citations first. */
+            readonly sources: components["schemas"]["CheckedSource"][];
+            /** @description Sources it could have read but did not: a check reads at most six, its citations first. */
+            readonly left_out: number;
             readonly status: components["schemas"]["OutcomeEnum"];
             readonly error: string;
             readonly run: components["schemas"]["RunRef"] | null;
@@ -2080,6 +2107,10 @@ export interface components {
             fact_check: components["schemas"]["FactCheck"];
             run: components["schemas"]["RunRef"];
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         Feed: {
             /** Format: uuid */
             readonly id: string;
@@ -2107,6 +2138,10 @@ export interface components {
             /** @description The sources it has brought. */
             readonly items: number;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         FeedRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -2154,9 +2189,12 @@ export interface components {
             claim: string;
             verdict: components["schemas"]["VerdictEnum"];
             explanation: string;
-            correction: string;
+            /** @description The block's words a source contradicts ('' if none). */
+            find: string;
+            /** @description What those words should say, by the sources. */
+            replace: string;
             sources: components["schemas"]["FindingSource"][];
-            /** @description The suggestion it became, to accept or reject. */
+            /** @description The suggestion it became — with the block's other corrections — to accept or reject. */
             suggestion: number | null;
             /** @description Why a correction could not become a suggestion. */
             error: string;
@@ -2166,6 +2204,10 @@ export interface components {
             id: string;
             title: string;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         Idea: {
             /** Format: uuid */
             readonly id: string;
@@ -2186,10 +2228,13 @@ export interface components {
             readonly origin: components["schemas"]["OriginEnum"];
             /** @description Where it was captured from. */
             url?: string;
+            /** @description The linked sources the requester sees. */
             readonly sources: components["schemas"]["IdeaSource"][];
             /** Format: uuid */
             readonly source_message: string | null;
+            /** @description The brief it became, if the requester sees it. */
             readonly brief: components["schemas"]["IdeaBrief"] | null;
+            /** @description The draft it became, if the requester can find it. */
             readonly page: components["schemas"]["IdeaPage"] | null;
             readonly votes: number;
             readonly voted: boolean;
@@ -2200,17 +2245,7 @@ export interface components {
             title: string;
             status: string;
         };
-        IdeaBriefRequest: {
-            /** Format: uuid */
-            id: string;
-            title: string;
-            status: string;
-        };
         IdeaPage: {
-            id: number;
-            title: string;
-        };
-        IdeaPageRequest: {
             id: number;
             title: string;
         };
@@ -2220,6 +2255,10 @@ export interface components {
             title: string;
             status: string;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         IdeaRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -2235,13 +2274,6 @@ export interface components {
             source_ids?: string[];
         };
         IdeaSource: {
-            /** Format: uuid */
-            id: string;
-            title: string;
-            url: string;
-            kind: string;
-        };
-        IdeaSourceRequest: {
             /** Format: uuid */
             id: string;
             title: string;
@@ -2804,6 +2836,10 @@ export interface components {
             /** @description Read-only registry tools it may use. */
             tools?: unknown;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         PatchedBoardRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -2833,6 +2869,10 @@ export interface components {
             /** Format: uuid */
             conversation?: string | null;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         PatchedCollectionRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -2856,6 +2896,10 @@ export interface components {
              */
             from_brief?: string;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         PatchedFeedRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -2869,6 +2913,10 @@ export interface components {
             /** @description How often to look. */
             interval_minutes?: number;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         PatchedIdeaRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -2943,6 +2991,10 @@ export interface components {
             /** @description Where in the source: a page, a paragraph. */
             location?: string;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         PatchedSourceRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -3313,6 +3365,10 @@ export interface components {
             is_default: boolean;
             root_page_id: number;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
         Source: {
             /** Format: uuid */
             readonly id: string;

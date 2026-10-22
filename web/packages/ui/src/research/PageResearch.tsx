@@ -1,7 +1,9 @@
 // The editor's research tab: the sources this page cites (cite another,
 // drop one), a fact-check of the draft against them — and a collection, if
-// chosen — whose corrections arrive as suggestions to accept in Review, and
-// capturing an idea that came up while writing. Nothing here edits the page.
+// chosen — that says what it read and what it left out, and whose corrections
+// (exact words, and what they should say) arrive as suggestions to accept in
+// Review; and capturing an idea that came up while writing. Nothing here edits
+// the page.
 import { Alert, Anchor, Badge, Button, Card, Divider, Group, Loader, Select, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -122,11 +124,16 @@ export function PageResearch({ pageId, pageTitle }: { pageId: number; pageTitle:
 function Findings({ check, onReview }: { check: FactCheck; onReview: (runId: number) => void }) {
   if (check.status === 'pending') return <Text size="sm" c="dimmed" mt="sm">Checking the claims…</Text>;
   if (check.status === 'failed') return <Alert color="red" mt="sm">{check.error}</Alert>;
-  const suggested = check.findings.filter((f) => f.suggestion !== null).length;
+  const suggested = new Set(check.findings.flatMap((f) => (f.suggestion === null ? [] : [f.suggestion]))).size;
   const run = check.run;
+  const cited = check.sources.filter((s) => s.cited).length;
   return (
     <Stack gap="xs" mt="sm" aria-label="Findings">
       <Text size="sm">{check.summary}</Text>
+      <Text size="xs" c="dimmed" aria-label="Sources read">
+        Read {check.sources.length} source{check.sources.length === 1 ? '' : 's'} ({cited} cited by the draft): {check.sources.map((s) => s.title).join(', ')}
+        {check.left_out ? `. ${check.left_out} more ${check.left_out === 1 ? 'was' : 'were'} left out: a check reads at most six, the draft's citations first.` : '.'}
+      </Text>
       {check.findings.map((f, i) => (
         <Card key={`${f.block}-${i}`} withBorder padding="xs">
           <Group gap="xs">
@@ -141,7 +148,11 @@ function Findings({ check, onReview }: { check: FactCheck; onReview: (runId: num
             {f.explanation}
             {f.sources.length ? ` (${f.sources.map((s) => s.title).join(', ')})` : ''}
           </Text>
-          {f.correction ? <Text size="sm">Suggested: {f.correction}</Text> : null}
+          {f.find ? (
+            <Text size="sm">
+              Suggested: “{f.find}” → “{f.replace}”
+            </Text>
+          ) : null}
           {f.error ? (
             <Text size="xs" c="red">
               {f.error}

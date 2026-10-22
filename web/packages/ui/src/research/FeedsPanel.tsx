@@ -1,6 +1,6 @@
 // Feeds: subscribe to an RSS or Atom feed (the platform refreshes it on a
 // schedule and turns each new item into a source), see when each was last
-// read and what went wrong, pause one, or refresh it now.
+// read and what went wrong, pause one, or refresh it now (not while paused).
 import { Alert, Button, Group, Select, Stack, Switch, Table, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -88,7 +88,7 @@ export function FeedsPanel({ collection }: { collection: string | null }) {
                   />
                 </Table.Td>
                 <Table.Td>
-                  <Button size="compact-xs" variant="light" onClick={() => now.mutate(feed.id)}>
+                  <Button size="compact-xs" variant="light" disabled={feed.active === false} onClick={() => now.mutate(feed.id)}>
                     Refresh now
                   </Button>
                 </Table.Td>

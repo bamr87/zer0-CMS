@@ -34,8 +34,8 @@ def outcome(run) -> tuple[str, str]:
 
 
 class CollaborativeSerializer(OwnedSerializer):
-    """A row people work on together (`research.models.Collaborative`): a change to who sees it — `site`,
-    `visibility` — is refused (403) unless the requester owns it or is staff."""
+    """A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+    sees it — `site` and `visibility`; anyone else's change to either is refused (403)."""
 
     def validate(self, attrs):
         user = getattr(self.context.get("request"), "user", None)

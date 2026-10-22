@@ -12577,6 +12577,7 @@
             },
             "Board": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -12628,6 +12629,7 @@
             },
             "BoardRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -13122,6 +13124,27 @@
                 "type": "string",
                 "description": "* `block` - block\n* `field` - field\n* `edge` - edge"
             },
+            "CheckedSource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "cited": {
+                        "type": "boolean",
+                        "description": "The draft cites it (else it came from the chosen collection)."
+                    }
+                },
+                "required": [
+                    "cited",
+                    "id",
+                    "title"
+                ]
+            },
             "Choice": {
                 "type": "object",
                 "properties": {
@@ -13355,6 +13378,7 @@
             },
             "Collection": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -13406,6 +13430,7 @@
             },
             "CollectionRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -13700,6 +13725,19 @@
                         },
                         "readOnly": true
                     },
+                    "sources": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CheckedSource"
+                        },
+                        "readOnly": true,
+                        "description": "What the check read, its citations first."
+                    },
+                    "left_out": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Sources it could have read but did not: a check reads at most six, its citations first."
+                    },
                     "status": {
                         "allOf": [
                             {
@@ -13729,10 +13767,12 @@
                     "error",
                     "findings",
                     "id",
+                    "left_out",
                     "owner",
                     "page",
                     "page_title",
                     "run",
+                    "sources",
                     "status",
                     "summary",
                     "updated_at"
@@ -13775,6 +13815,7 @@
             },
             "Feed": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -13873,6 +13914,7 @@
             },
             "FeedRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -13998,8 +14040,13 @@
                     "explanation": {
                         "type": "string"
                     },
-                    "correction": {
-                        "type": "string"
+                    "find": {
+                        "type": "string",
+                        "description": "The block's words a source contradicts ('' if none)."
+                    },
+                    "replace": {
+                        "type": "string",
+                        "description": "What those words should say, by the sources."
                     },
                     "sources": {
                         "type": "array",
@@ -14012,7 +14059,7 @@
                             "integer",
                             "null"
                         ],
-                        "description": "The suggestion it became, to accept or reject."
+                        "description": "The suggestion it became — with the block's other corrections — to accept or reject."
                     },
                     "error": {
                         "type": "string",
@@ -14022,9 +14069,10 @@
                 "required": [
                     "block",
                     "claim",
-                    "correction",
                     "error",
                     "explanation",
+                    "find",
+                    "replace",
                     "sources",
                     "suggestion",
                     "verdict"
@@ -14048,6 +14096,7 @@
             },
             "Idea": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -14132,7 +14181,8 @@
                         "items": {
                             "$ref": "#/components/schemas/IdeaSource"
                         },
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "The linked sources the requester sees."
                     },
                     "source_message": {
                         "type": [
@@ -14151,7 +14201,8 @@
                                 "type": "null"
                             }
                         ],
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "The brief it became, if the requester sees it."
                     },
                     "page": {
                         "oneOf": [
@@ -14162,7 +14213,8 @@
                                 "type": "null"
                             }
                         ],
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "The draft it became, if the requester can find it."
                     },
                     "votes": {
                         "type": "integer",
@@ -14208,28 +14260,6 @@
                     "title"
                 ]
             },
-            "IdeaBriefRequest": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "title": {
-                        "type": "string",
-                        "minLength": 1
-                    },
-                    "status": {
-                        "type": "string",
-                        "minLength": 1
-                    }
-                },
-                "required": [
-                    "id",
-                    "status",
-                    "title"
-                ]
-            },
             "IdeaPage": {
                 "type": "object",
                 "properties": {
@@ -14238,22 +14268,6 @@
                     },
                     "title": {
                         "type": "string"
-                    }
-                },
-                "required": [
-                    "id",
-                    "title"
-                ]
-            },
-            "IdeaPageRequest": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer"
-                    },
-                    "title": {
-                        "type": "string",
-                        "minLength": 1
                     }
                 },
                 "required": [
@@ -14283,6 +14297,7 @@
             },
             "IdeaRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -14363,33 +14378,6 @@
                     },
                     "kind": {
                         "type": "string"
-                    }
-                },
-                "required": [
-                    "id",
-                    "kind",
-                    "title",
-                    "url"
-                ]
-            },
-            "IdeaSourceRequest": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "title": {
-                        "type": "string",
-                        "minLength": 1
-                    },
-                    "url": {
-                        "type": "string",
-                        "minLength": 1
-                    },
-                    "kind": {
-                        "type": "string",
-                        "minLength": 1
                     }
                 },
                 "required": [
@@ -15911,6 +15899,7 @@
             },
             "PatchedBoardRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -16005,6 +15994,7 @@
             },
             "PatchedCollectionRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -16074,6 +16064,7 @@
             },
             "PatchedFeedRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -16115,6 +16106,7 @@
             },
             "PatchedIdeaRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -16349,6 +16341,7 @@
             },
             "PatchedSourceRequest": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "site": {
                         "type": [
@@ -17527,6 +17520,7 @@
             },
             "Source": {
                 "type": "object",
+                "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
                 "properties": {
                     "id": {
                         "type": "string",

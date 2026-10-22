@@ -1,13 +1,16 @@
 // Research: collections of sources and everything gathered — pages captured
 // from the web, documents, notes, feed items, web search hits — with their
 // fetch status; asking the sources; feeds; and a research brief on a topic.
-// A source opens on its own page (SourceView), as the host routes it.
+// A collection is made and changed — named, and shared with a site's editors
+// or everyone — beside the list of collections. A source opens on its own page
+// (SourceView), as the host routes it.
 import { Alert, Anchor, Badge, Button, Code, Group, Loader, NavLink, Stack, Table, Tabs, Text, TextInput } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
+import { ListForm, WHO, type ListValues } from '../Sharing';
 import { AskPanel } from './AskPanel';
 import { CaptureSource } from './CaptureSource';
 import { FeedsPanel } from './FeedsPanel';
@@ -29,34 +32,60 @@ export function ResearchWorkspace({ siteId, captureUrl, bookmarklet }: Props) {
   const api = useApi();
   const qc = useQueryClient();
   const [collection, setCollection] = useState<string | null>(null);
-  const [name, setName] = useState('');
+  const [editing, setEditing] = useState<'new' | 'collection' | null>(null);
   const collections = useQuery({
     queryKey: ['collections', siteId],
     queryFn: () => call(api.GET('/api/v2/research/collections/', { params: { query: { site: siteId, page_size: 200 } } })),
   });
+  const changed = () => {
+    setEditing(null);
+    void qc.invalidateQueries({ queryKey: ['collections'] });
+  };
   const add = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/research/collections/', { body: { name } })),
+    mutationFn: (values: ListValues) => call(api.POST('/api/v2/research/collections/', { body: values })),
     onSuccess: (made) => {
-      setName('');
       setCollection(made.id);
-      void qc.invalidateQueries({ queryKey: ['collections'] });
+      changed();
     },
   });
+  const save = useMutation({
+    mutationFn: (values: ListValues) =>
+      call(api.PATCH('/api/v2/research/collections/{public_id}/', { params: { path: { public_id: collection ?? '' } }, body: values })),
+    onSuccess: changed,
+  });
+  const current = (collections.data?.results ?? []).find((c) => c.id === collection);
 
   return (
     <Group align="start" wrap="nowrap" gap="lg">
       <Stack w={220} gap={4} aria-label="Collections">
         <NavLink component="button" label="All sources" active={collection === null} onClick={() => setCollection(null)} />
         {(collections.data?.results ?? []).map((c) => (
-          <NavLink component="button" key={c.id} label={c.name} description={c.description || undefined} active={collection === c.id} onClick={() => setCollection(c.id)} />
+          <NavLink
+            component="button"
+            key={c.id}
+            label={c.name}
+            description={[c.visibility && c.visibility !== 'private' ? WHO[c.visibility] : '', c.description].filter(Boolean).join(' · ') || undefined}
+            active={collection === c.id}
+            onClick={() => {
+              setCollection(c.id);
+              setEditing(null);
+            }}
+          />
         ))}
-        <Group gap={4} mt="xs" wrap="nowrap">
-          <TextInput size="xs" placeholder="New collection" aria-label="New collection" value={name} onChange={(e) => setName(e.currentTarget.value)} />
-          <Button size="xs" variant="light" disabled={!name.trim()} loading={add.isPending} onClick={() => add.mutate()}>
-            Add
+        <Group gap={4} mt="xs">
+          <Button size="xs" variant={editing === 'new' ? 'filled' : 'light'} onClick={() => setEditing(editing === 'new' ? null : 'new')}>
+            New collection
           </Button>
+          {current ? (
+            <Button size="xs" variant={editing === 'collection' ? 'filled' : 'subtle'} onClick={() => setEditing(editing === 'collection' ? null : 'collection')}>
+              Collection settings
+            </Button>
+          ) : null}
         </Group>
-        {add.isError ? <Alert color="red">{errorText(add.error)}</Alert> : null}
+        {editing === 'new' ? <ListForm siteId={siteId} action="Add collection" pending={add.isPending} error={add.error} onSubmit={add.mutate} /> : null}
+        {editing === 'collection' && current ? (
+          <ListForm key={current.id} initial={current} action="Save collection" pending={save.isPending} error={save.error} onSubmit={save.mutate} />
+        ) : null}
       </Stack>
       <Tabs defaultValue="sources" keepMounted={false} flex={1} miw={0}>
         <Tabs.List>
