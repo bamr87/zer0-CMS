@@ -9,8 +9,9 @@
 // that follows the block through edits, moves and removals. Never by its
 // position: the rich editor reads its content once, so a positional key would
 // hand one block's editor to another block's data after a remove or a move.
-// A saved block carries its id in the page (`data-block-id`), so the editor's
-// AI panel knows which block a selection is in.
+// A saved block carries its id in the page (`data-block-id`) and each field of
+// a structured block its name (`data-field`), so the editor's AI panel knows
+// which block — and which field — a selection is in.
 import { ActionIcon, Badge, Button, Group, NumberInput, Paper, Select, Stack, Textarea, TextInput } from '@mantine/core';
 import type { Block } from '@zer0/api';
 
@@ -124,17 +125,26 @@ function BlockFields({ block, onChange, disabled }: { block: Block; onChange: (v
       {Object.entries(value).map(([key, field]) => {
         if (key === 'level') {
           return (
-            <Select key={key} label="Level" data={['2', '3', '4', '5', '6']} value={String(field)} disabled={disabled} allowDeselect={false} onChange={(next) => put(key, next)} />
+            <Select
+              key={key}
+              label="Level"
+              data={['2', '3', '4', '5', '6']}
+              value={String(field)}
+              disabled={disabled}
+              allowDeselect={false}
+              data-field={key}
+              onChange={(next) => put(key, next)}
+            />
           );
         }
         if (typeof field === 'number' || field === null) {
-          return <NumberInput key={key} label={key} value={field ?? ''} disabled={disabled} onChange={(next) => put(key, next === '' ? null : Number(next))} />;
+          return <NumberInput key={key} label={key} value={field ?? ''} disabled={disabled} data-field={key} onChange={(next) => put(key, next === '' ? null : Number(next))} />;
         }
         const text = String(field ?? '');
         return LONG.has(key) ? (
-          <Textarea key={key} label={key} autosize ff={key === 'code' ? 'monospace' : undefined} value={text} disabled={disabled} onChange={(e) => put(key, e.currentTarget.value)} />
+          <Textarea key={key} label={key} autosize ff={key === 'code' ? 'monospace' : undefined} value={text} disabled={disabled} data-field={key} onChange={(e) => put(key, e.currentTarget.value)} />
         ) : (
-          <TextInput key={key} label={key} value={text} disabled={disabled} onChange={(e) => put(key, e.currentTarget.value)} />
+          <TextInput key={key} label={key} value={text} disabled={disabled} data-field={key} onChange={(e) => put(key, e.currentTarget.value)} />
         );
       })}
     </Stack>
