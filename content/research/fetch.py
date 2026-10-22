@@ -18,7 +18,8 @@ whether our user agent may fetch the page: `allowed`, `disallowed`, or
 `unknown` when there is no robots.txt to read. `extract` turns a body into text
 and metadata (HTML through trafilatura, PDF through pypdf, plain text and
 Markdown as they are) and `entries` reads a feed with feedparser — from bytes
-already fetched, so neither library ever opens a URL itself.
+already fetched, handed over as a stream, so neither library opens a URL or a
+file itself.
 """
 
 import html
@@ -252,8 +253,11 @@ def plain(markup: str) -> str:
 
 
 def entries(body: bytes) -> tuple[str, list[dict]]:
-    """A feed's title and its items (guid, url, title, author, published, text), newest as the feed orders them."""
-    parsed = feedparser.parse(body)
+    """A feed's title and its items (guid, url, title, author, published, text), newest as the feed orders them.
+
+    feedparser is handed a stream, never the bytes themselves: given bytes or a string it first tries them as a
+    file name (`open(body)`), so a feed whose body is a path would have the worker read its own disk."""
+    parsed = feedparser.parse(BytesIO(body))
     if parsed.bozo and not parsed.entries:
         raise FetchError("not a feed it can read")
     items = []

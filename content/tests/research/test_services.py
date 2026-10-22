@@ -128,6 +128,18 @@ def test_a_feed_brings_its_new_items_once_and_records_a_failure(alice, web, djan
 
 
 @pytest.mark.django_db
+def test_a_feed_whose_body_is_a_path_on_the_worker_brings_nothing_from_that_file(alice, web, tmp_path):
+    local = tmp_path / "secret-feed.xml"
+    local.write_text(FEED.replace("Example News", "A FILE ON THE WORKER"))
+    web.get(at("/evil.xml")).respond(200, content=str(local).encode(), headers={"Content-Type": "application/rss+xml"})
+    feed = FeedSubscription.objects.create(owner=alice, url="https://example.com/evil.xml")
+    assert services.refresh(feed) == 0
+    feed = fresh(feed)
+    assert (feed.title, feed.error) == ("", "not a feed it can read")
+    assert not Source.objects.filter(feed=feed).exists()
+
+
+@pytest.mark.django_db
 def test_beat_refreshes_only_the_feeds_that_are_due(alice, web):
     web.get(at("/due.xml")).respond(200, text=FEED)
     due = FeedSubscription.objects.create(owner=alice, url="https://example.com/due.xml")

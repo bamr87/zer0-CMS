@@ -112,3 +112,11 @@ def test_a_feed_is_read_into_items_with_plain_text():
     }
     with pytest.raises(fetch.FetchError, match="not a feed"):
         fetch.entries(b"\x00\x01 binary nonsense")
+
+
+def test_a_feed_body_that_names_a_file_is_read_as_text_never_opened(tmp_path):
+    local = tmp_path / "worker-feed.xml"
+    local.write_text(FEED.replace("Example News", "A FILE ON THE WORKER"))
+    for body in (str(local).encode(), bytes(local)):
+        with pytest.raises(fetch.FetchError, match="not a feed"):
+            fetch.entries(body)  # the bytes are the feed: a path in them is text, not a file to open
