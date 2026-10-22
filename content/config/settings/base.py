@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "ideas",
     "newsroom",
     "books",
+    "aieo",
     "suggestions",
     "graph",
     "workflow",
@@ -277,6 +278,15 @@ SPECTACULAR_SETTINGS = {
         "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
         "IssueLevelEnum": "books.serializers.ISSUE_LEVELS",
         "BookTaskEnum": "books.serializers.TASK_CHOICES",
+        "AuditKindEnum": "aieo.models.Audit.KINDS",
+        "AuditMethodEnum": "aieo.models.Audit.METHODS",
+        "AuditStatusEnum": "aieo.models.Audit.STATUSES",
+        "CitationCheckStatusEnum": "aieo.models.CitationCheck.STATUSES",
+        "ConnectorKindEnum": "aieo.models.Connector.KINDS",
+        "ConnectorStatusEnum": "aieo.models.Connector.STATUSES",
+        "RewriteModeEnum": "aieo.serializers.MODES",
+        "RewriteStyleEnum": "aieo.serializers.STYLES",
+        "AieoAgentGroupEnum": "aieo.serializers.GROUPS",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -326,6 +336,8 @@ CELERY_BEAT_SCHEDULE = {
     "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
     # The research library's feed subscriptions that are due (research/tasks.py).
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
+    # AIEO's tracked citation questions that are due, asked of every engine again (aieo/tasks.py).
+    "aieo-citations": {"task": "aieo.tasks.check_citations", "schedule": 3600.0},
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
@@ -383,6 +395,15 @@ RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 10
 # How long one fetch task may run in all — robots.txt and the page, each within RESEARCH_FETCH_TIMEOUT, and the
 # extraction — before Celery stops it (soft; the hard limit is 30 seconds later).
 RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
+
+# ── AIEO (aieo/README.md) ───────────────────────────────────────────────────
+# The visual audit: a screenshot in a headless browser (Playwright, an optional install) whose every request goes
+# through the research fetcher's guard; off unless set.
+AIEO_VISUAL_AUDIT = env.bool("AIEO_VISUAL_AUDIT", default=False)
+# Seconds a GA4, Search Console or DataForSEO request may take (aieo/connectors.py).
+AIEO_CONNECTOR_TIMEOUT = env.float("AIEO_CONNECTOR_TIMEOUT", default=30.0)
+# The citability review (the `aieo` agent as a workflow task) passes a page that scores at least this.
+AIEO_REVIEW_MIN_SCORE = env.float("AIEO_REVIEW_MIN_SCORE", default=40.0)
 
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"

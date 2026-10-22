@@ -28,6 +28,7 @@ def __getattr__(name):
             path("api/v2/research/", include("research.urls")),
             path("api/v2/newsroom/", include("newsroom.urls")),
             path("api/v2/books/", include("books.urls")),
+            path("api/v2/aieo/", include("aieo.urls")),
             path("api/v2/", include("api.urls")),
         ]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

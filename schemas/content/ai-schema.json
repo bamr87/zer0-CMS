@@ -184,6 +184,196 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Block JSON an agent proposes must match this schema and is then validated by the blocks themselves. A body is a list of {type, value} blocks; `id` is assigned by the CMS.",
   "pages": {
+    "aieo.LandingPage": {
+      "body": {
+        "items": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "markdown"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/markdown"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "markdown",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "heading"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/heading"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "heading",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "paragraph"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/paragraph"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "paragraph",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "image"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/image"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "image",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "code"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/code"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "code",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "quote"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/quote"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "quote",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "page_link"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/page_link"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "page_link",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "brief"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/brief"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "brief",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "letter"
+                },
+                "value": {
+                  "$ref": "#/$defs/blocks/letter"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "title": "letter",
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "description": "A conversion page: the copy AIEO's landing-page workflow drafts, researches and CRO-audits, with the one action it asks a reader to take.",
+      "meta_fields": {
+        "ai_keywords": {
+          "description": "Agent-maintained keywords.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "ai_summary": {
+          "description": "Agent-maintained summary; editors may change it.",
+          "type": "string"
+        },
+        "search_description": {
+          "description": "The descriptive text displayed underneath a headline in search engine results.",
+          "type": "string"
+        },
+        "seo_title": {
+          "description": "The name of the page displayed on search engine results as the clickable headline.",
+          "maxLength": 255,
+          "type": "string"
+        },
+        "title": {
+          "description": "The page title as you'd like it to be seen by the public",
+          "maxLength": 255,
+          "type": "string"
+        }
+      }
+    },
     "cms.ArticlePage": {
       "body": {
         "items": {
@@ -1326,5 +1516,5 @@
     }
   },
   "title": "zer0-CMS content schema for agents",
-  "version": "54d76119aed3"
+  "version": "68794cf62d47"
 }

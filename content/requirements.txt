@@ -43,3 +43,5 @@ charset-normalizer==3.5.2
 beautifulsoup4==4.15.0
 # The newsroom's newsletters and subscription email (newsroom/README.md): any ESP behind Django's mail API.
 django-anymail==15.2
+# AIEO's GA4 and Search Console connectors (aieo/README.md): a Google service account's signed JWT, traded for a token.
+PyJWT==2.12.1
