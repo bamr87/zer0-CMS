@@ -48,7 +48,7 @@ Re-syncing from upstream regenerates the pages and drops the guides and the site
 
 The site is built with the **zer0-mistakes** Jekyll theme, loaded remotely on GitHub Pages via the `remote_theme: bamr87/zer0-mistakes` directive — no theme files are vendored here, so this repo stays content-only.
 
-The framework (`_config.yml`, `Gemfile`, `_data/`, `.github/workflows/jekyll-gh-pages.yml`, `.devcontainer/`) was scaffolded with the theme's AI installer and is described declaratively in [`zer0.install.yml`](zer0.install.yml). Re-scaffold or upgrade it with:
+The framework (`_config.yml`, `_data/`, `.github/workflows/jekyll-gh-pages.yml`, and a `Gemfile` and `.devcontainer/` that zer0-CMS removed when the site moved to its Jekyll-theme option) was scaffolded with the theme's AI installer and is described declaratively in [`zer0.install.yml`](zer0.install.yml). Re-scaffold or upgrade it with:
 
 ```bash
 # from a checkout of bamr87/zer0-mistakes
@@ -95,28 +95,13 @@ The left sidebar's group order and labels are fixed by the theme (it sorts games
 
 ### Local development
 
-Preview with the same Bundler build the Pages workflow runs:
+In zer0-CMS the site builds with the Jekyll-theme option, with Docker and no Ruby — the build the one Pages deploy runs:
 
 ```bash
-bundle install
-bundle exec jekyll serve   # http://localhost:4000/wargames/
+python3 ../../tools/jekyll_theme.py build wargames   # → _site/
 ```
 
-The `Gemfile` uses `jekyll-remote-theme`, so this downloads the theme from GitHub exactly as `.github/workflows/jekyll-gh-pages.yml` does, and what you see is what production serves. Do **not** preview by loading the theme as a gem (`theme: jekyll-theme-zer0`) instead: a gem theme also merges the theme's `_config.yml` and `_data/`, which hides defects (the "Edit on GitHub" link built from an unset `repository`, the dead search, the cookie banner). To preview against a local checkout of the theme (for example an unreleased change) while keeping production's behaviour, stage only the four directories `remote_theme` ships and ignore the theme config:
-
-```bash
-THEME=/path/to/zer0-mistakes STAGE=/tmp/zer0-remote
-mkdir -p $STAGE && for d in _layouts _includes _sass assets lib; do cp -R $THEME/$d $STAGE/; done
-cp $THEME/jekyll-theme-zer0.gemspec $STAGE/    # replace its `git ls-files` with a Dir.glob; the stage is not a git repo
-# Gemfile: gem "jekyll-theme-zer0", path: "/tmp/zer0-remote"  (plus jekyll and the plugins in _config.yml)
-cat > /tmp/override.yml <<'EOF'
-remote_theme: ""
-theme: jekyll-theme-zer0
-ignore_theme_config: true
-plugins: [jekyll-feed, jekyll-sitemap, jekyll-seo-tag, jekyll-include-cache]
-EOF
-bundle exec jekyll build --config _config.yml,/tmp/override.yml -d /tmp/site
-```
+It loads the theme with `jekyll-remote-theme` at the tag the root `workspace.yml` pins, in Jekyll 4.4.1 with the plugins `tools/jekyll/Dockerfile` pins, so what you see is what production serves.
 
 ## Project structure
 

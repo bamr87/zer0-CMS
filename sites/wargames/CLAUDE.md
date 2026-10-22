@@ -7,9 +7,7 @@ Wargames is a **content-only Jekyll site**: a vendored markdown mirror of the [O
 ## Stack & commands
 
 ```bash
-# install dependencies:  bundle install
-# run the dev server:     bundle exec jekyll serve     # http://localhost:4000/wargames/
-# build:                  bundle exec jekyll build
+# build:                  python3 ../../tools/jekyll_theme.py build wargames   # zer0-CMS's Jekyll-theme option (Docker, no Ruby) → _site/
 # re-sync content:        pip install -r scripts/docs-aggregator/requirements.txt && ./scripts/docs-aggregator/aggregate_docs.sh
 # lint:                   python3 ../../tools/unwrap-prose.py --check
 # after a re-sync:        python3 ../../tools/unwrap-prose.py --write pages/_docs/wargames/overthewire && python3 tools/carry-study-guides.py pages/_docs/wargames/overthewire
