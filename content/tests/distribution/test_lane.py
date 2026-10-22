@@ -590,6 +590,43 @@ def test_the_command_line_plan_usage_errors_and_the_management_command(checkout)
     assert stopped.value.code == 1
 
 
+def test_the_mcp_server_lists_tools_previews_and_keeps_publish_off(checkout, web):
+    draft = approved_draft(pipeline(checkout))
+    lines = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {"name": "linkedin_preview", "arguments": {"draft": draft.id}},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {"name": "linkedin_publish", "arguments": {"draft": draft.id, "confirm": True}},
+        },
+        {"jsonrpc": "2.0", "id": 5, "method": "nope"},
+    ]
+    stdin = io.StringIO("\n".join(json.dumps(m) for m in lines) + "\nnot json\n")
+    out = io.StringIO()
+    assert cli.main(["mcp", "--site", str(checkout)], out=out, err=io.StringIO(), env=ARMED, stdin=stdin) == 0
+    replies = [json.loads(line) for line in out.getvalue().splitlines()]
+    assert [r.get("id") for r in replies] == [1, 2, 3, 4, 5, None]
+    assert replies[0]["result"]["protocolVersion"] == "2025-03-26"
+    names = [t["name"] for t in replies[1]["result"]["tools"]]
+    assert "linkedin_publish" in names and not any("approve" in n for n in names), "approval is not a tool"
+    assert json.loads(replies[2]["result"]["content"][0]["text"])["key"] == MCP_URL
+    assert (
+        replies[3]["result"]["isError"] is True
+        and "ZER0_LINKEDIN_MCP_PUBLISH" in replies[3]["result"]["content"][0]["text"]
+    )
+    assert replies[4]["error"]["code"] == -32601 and replies[5]["error"]["code"] == -32700
+    assert not web.calls
+
+
 def test_the_doctors_distribution_check(tmp_path):
     """The Ruby doctor's `check_distribution` (test_doctor.rb), ported with the lane it reads."""
     from distribution.lane.doctor import findings

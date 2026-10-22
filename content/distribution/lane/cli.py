@@ -21,6 +21,7 @@ from urllib.parse import parse_qsl, urlsplit
 from ..ledger import LedgerError
 from ..linkedin import Client, Error, oauth, plan, posts
 from ..linkedin.client import send
+from .mcp import Server
 from .pipeline import Pipeline
 from .site import ARM_VARIABLE, Config, ConfigError
 
@@ -46,6 +47,7 @@ Usage: manage.py linkedin COMMAND [--site PATH] [--json] [options]
   stats [--write]                    aggregate statistics for published posts
   connect [--port N] [--redirect-uri URL] [--write-env FILE | --print-token]
                                      three-legged OAuth (state + PKCE) through a loopback callback
+  mcp                                the same tools over MCP (stdio); publishing off unless armed
 
 Credentials come from the environment only: LINKEDIN_ACCESS_TOKEN, and optionally
 LINKEDIN_REFRESH_TOKEN with LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET.
@@ -67,6 +69,7 @@ COMMANDS = (
     "organizations",
     "stats",
     "connect",
+    "mcp",
 )
 
 
@@ -106,7 +109,7 @@ def parser() -> Parser:
     return p
 
 
-def main(argv, *, out=sys.stdout, err=sys.stderr, env=None, transport=send, sleeper=time.sleep) -> int:
+def main(argv, *, out=sys.stdout, err=sys.stderr, env=None, transport=send, sleeper=time.sleep, stdin=None) -> int:
     try:
         opts = parser().parse_intermixed_args(argv)  # a draft id may come after the options, as CI passes it
     except Usage as e:
@@ -122,7 +125,16 @@ def main(argv, *, out=sys.stdout, err=sys.stderr, env=None, transport=send, slee
         for key in ("commentary", "message"):
             if path := getattr(opts, f"{key}_file"):
                 setattr(opts, key, Path(path).read_text(encoding="utf-8"))
-        config = Config(opts.site, env=os.environ if env is None else env)
+        env = os.environ if env is None else env
+        if opts.command == "mcp":
+            server = Server(opts.site, env=env, pipeline_options={"transport": transport, "sleeper": sleeper})
+
+            def write(message):
+                out.write(json.dumps(message) + "\n")
+                out.flush()
+
+            return server.run(stdin if stdin is not None else sys.stdin, write)
+        config = Config(opts.site, env=env)
         runner = Runner(Pipeline(config, transport=transport, sleeper=sleeper), opts, out, err)
         return getattr(runner, opts.command)()
     except (ConfigError, LedgerError, ValueError, KeyError, OSError) as e:
