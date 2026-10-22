@@ -369,8 +369,9 @@ platform:
     surfaces: {ops: partial}
   - id: platform.workspace
     what: The repository's workspace tool — list, info, run, affected, matrix, routes, check, vendor, doctor, tags — in Python.
-    surfaces: {ops: done}
-    proof: {ops: tools/workspace/tests/test_golden.py}
+    # partial: every command is Python and tested (tools/workspace/tests/), but the doctor
+    # `bin/zer0 doctor` runs is still rails/bin/zer0-cms (Ruby); G4 makes it done.
+    surfaces: {ops: partial}
 
   - id: platform.shared-ui
     what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
