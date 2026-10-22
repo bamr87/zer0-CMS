@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "cms",
     "agents",
     "ai",
+    "research",
+    "ideas",
     "suggestions",
     "graph",
     "workflow",
@@ -227,6 +229,14 @@ SPECTACULAR_SETTINGS = {
         "FieldGroupEnum": "api.serializers.GROUPS",
         "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
+        "IdeaStatusEnum": "ideas.models.Idea.STATUSES",
+        "BrainstormKindEnum": "ideas.services.KINDS",
+        "PromotionEnum": "ideas.serializers.PROMOTIONS",
+        "SourceKindEnum": "research.models.Source.KINDS",
+        "SourceStatusEnum": "research.models.Source.STATUSES",
+        "CapturedKindEnum": "research.serializers.CAPTURED",
+        "OutcomeEnum": "research.serializers.OUTCOMES",
+        "VerdictEnum": "research.serializers.VERDICTS",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -274,6 +284,8 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 CELERY_BEAT_SCHEDULE = {
     "viewed-together-nightly": {"task": "graph.tasks.build_viewed_together", "schedule": crontab(hour=3, minute=17)},
     "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
+    # The research library's feed subscriptions that are due (research/tasks.py).
+    "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
 }
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
@@ -306,6 +318,17 @@ EMBEDDING_DIMENSIONS = env.int("EMBEDDING_DIMENSIONS", default=256)
 # An agent-proposed edge at or above this confidence is written; below, it
 # becomes a Suggestion for an editor.
 GRAPH_EDGE_AUTO_THRESHOLD = env.float("GRAPH_EDGE_AUTO_THRESHOLD", default=0.85)
+
+# ── Ideas and research (ideas/README.md, research/README.md) ────────────────
+# How alike two ideas' vectors must be to share a cluster, and to be offered as
+# duplicates to merge (cosine; tune them to the embedding model).
+IDEAS_CLUSTER_THRESHOLD = env.float("IDEAS_CLUSTER_THRESHOLD", default=0.5)
+IDEAS_DUPLICATE_THRESHOLD = env.float("IDEAS_DUPLICATE_THRESHOLD", default=0.85)
+# What the research fetcher sends and how much it takes (research/fetch.py).
+RESEARCH_USER_AGENT = env("RESEARCH_USER_AGENT", default="zer0-cms-research/1.0 (+https://github.com/bamr87/zer0-CMS)")
+RESEARCH_MAX_BYTES = env.int("RESEARCH_MAX_BYTES", default=5 * 1024 * 1024)
+RESEARCH_FETCH_TIMEOUT = env.float("RESEARCH_FETCH_TIMEOUT", default=20.0)
+RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 1024 * 1024)
 
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"

@@ -1,0 +1,99 @@
+# The research library's bundled output schemas and assistants, seeded after
+# every migrate through ai.services.import_bundled() (research/apps.py). Each
+# row's public id is derived from its key, so seeding is idempotent and a row a
+# person edited is left alone. Schemas are written inline; every property is
+# required (an empty string or list when there is nothing), so every provider's
+# structured output accepts them. Instructions are the .md files beside this one.
+schemas:
+  - key: source-summary
+    name: Source summary
+    description: What a source says — a short summary, its key points, the people, organisations, places and topics it names, and passages worth quoting word for word.
+    schema:
+      type: object
+      properties:
+        summary: {type: string, description: "Two to four sentences on what the source says."}
+        key_points: {type: array, items: {type: string}, description: "The facts and claims it makes, one per item."}
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              name: {type: string}
+              kind: {type: string, enum: [person, org, place, product, event, topic, concept, other]}
+            required: [name, kind]
+            additionalProperties: false
+        quotes: {type: array, items: {type: string}, description: "Passages worth quoting, copied exactly."}
+      required: [summary, key_points, entities, quotes]
+      additionalProperties: false
+    template: |
+      {{ summary }}
+
+      {% for point in key_points %}- {{ point }}
+      {% endfor %}
+  - key: research-answer
+    name: Research answer
+    description: An answer drawn only from the sources given, each claim marked with the label of the source it rests on, and the exact words that support it.
+    schema:
+      type: object
+      properties:
+        answer: {type: string, description: "The answer in Markdown; each claim followed by its source's label, like [S1]."}
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              source: {type: string, description: "A source's label, like S1."}
+              quote: {type: string, description: "The exact words of that source the answer rests on."}
+            required: [source, quote]
+            additionalProperties: false
+      required: [answer, citations]
+      additionalProperties: false
+    template: |
+      {{ answer }}
+  - key: fact-check
+    name: Fact-check findings
+    description: A draft's claims checked against its sources — each claim's block, a verdict, why, the sources that decide it, and a corrected text when a source contradicts it.
+    schema:
+      type: object
+      properties:
+        summary: {type: string, description: "One or two sentences on how the draft holds up."}
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              block: {type: string, description: "The label of the draft block the claim is in, like B2."}
+              claim: {type: string}
+              verdict: {type: string, enum: [supported, contradicted, unsupported]}
+              explanation: {type: string}
+              sources: {type: array, items: {type: string}, description: "Labels of the sources that decide it."}
+              correction: {type: string, description: "The block's whole text, corrected to what the sources say; empty when nothing should change."}
+            required: [block, claim, verdict, explanation, sources, correction]
+            additionalProperties: false
+      required: [summary, findings]
+      additionalProperties: false
+    template: |
+      {{ summary }}
+
+      {% for finding in findings %}- {{ finding.verdict }}: {{ finding.claim }} — {{ finding.explanation }}
+      {% endfor %}
+assistants:
+  - key: source-summarizer
+    name: Source summarizer
+    description: Summarizes a source, lists its key points and the entities it names, and picks passages worth quoting.
+    instructions: summarizer.md
+    output_schema: source-summary
+  - key: research-answerer
+    name: Research answerer
+    description: Answers a question only from the sources it is given, citing each claim and quoting the words it rests on.
+    instructions: answerer.md
+    output_schema: research-answer
+  - key: fact-checker
+    name: Fact checker
+    description: Checks a draft's claims against its sources and corrects what a source contradicts; a person accepts each correction.
+    instructions: fact_checker.md
+    output_schema: fact-check
+  - key: research-brief-writer
+    name: Research brief writer
+    description: Writes a content research brief on a topic — intent, keywords, angles, an outline and link opportunities (AIEO's research brief).
+    instructions: research_brief.md

@@ -7,6 +7,8 @@
 /django-admin/    Django admin
 /api/v2/          Wagtail API v2 + agent runs, graph, suggestions, tools
 /api/v2/ai/       the AI content layer: providers, models, schemas, assistants, pipelines, briefs, conversations
+/api/v2/ideas/    ideas, boards, capture, brainstorm, clusters, promotion
+/api/v2/research/ collections, sources, quotes, citations, feeds, questions, fact-checks
 /api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
@@ -45,6 +47,8 @@ urlpatterns = [
     path("documents/", include(wagtaildocs_urls)),
     path("api/v2/openapi.json", SpectacularJSONAPIView.as_view(), name="openapi"),
     path("api/v2/ai/", include("ai.urls")),
+    path("api/v2/ideas/", include("ideas.urls")),
+    path("api/v2/research/", include("research.urls")),
     path("api/v2/", include("api.urls")),
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),

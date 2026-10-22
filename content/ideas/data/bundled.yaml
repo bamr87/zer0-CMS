@@ -1,0 +1,37 @@
+# The ideas app's bundled output schema and assistants, seeded after every
+# migrate through ai.services.import_bundled() (ideas/apps.py). Each row's public
+# id is derived from its key, so seeding is idempotent and a row a person edited
+# is left alone. The schema is written inline, every property required; the
+# instructions are the .md files beside this one.
+schemas:
+  - key: idea-list
+    name: Idea list
+    description: Ideas from a brainstorm — each a title, a few lines of notes, and its kind (an angle, a headline or an outline).
+    schema:
+      type: object
+      properties:
+        ideas:
+          type: array
+          items:
+            type: object
+            properties:
+              title: {type: string, description: "The idea in one line — for a headline, the headline itself."}
+              notes: {type: string, description: "Why it works, for whom, and how to go about it; for an outline, its sections as a list."}
+              kind: {type: string, enum: [angle, headline, outline]}
+            required: [title, notes, kind]
+            additionalProperties: false
+      required: [ideas]
+      additionalProperties: false
+    template: |
+      {% for idea in ideas %}- **{{ idea.title }}** ({{ idea.kind }}) — {{ idea.notes }}
+      {% endfor %}
+assistants:
+  - key: brainstormer
+    name: Brainstormer
+    description: Brainstorms angles, headlines and outlines for a topic, returned as a list of ideas a person keeps or discards.
+    instructions: brainstormer.md
+    output_schema: idea-list
+  - key: article-writer
+    name: Article writer
+    description: Writes an article draft in Markdown from a brief — an idea, its notes and the research cited on it.
+    instructions: article_writer.md
