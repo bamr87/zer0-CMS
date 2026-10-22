@@ -392,30 +392,80 @@ platform:
     surfaces: {api: missing, studio: missing, mcp: missing}
 
   # ── AIEO (TARGET.md § AIEO in the platform) ─────────────────────────────────
+  # G7: content/aieo/ (/api/v2/aieo/) and the studio's AIEO workspace (Sites → AIEO, web/packages/ui/src/aieo/) with
+  # Write's Citability tab; the extension renders the same components once G10 hosts them.
   - id: aieo.scoring
     what: The analyzers and the five-dimension citability score of a page or a text, with evidence.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    # G7: the heuristics scored exactly as AIEO scored on the fixtures (test_analyzers.py, golden/source.json); a
+    # model's evaluation through the AI layer's bundled evaluator, the heuristics as its fallback; over MCP as
+    # aieo.score_text / aieo_score_content.
+    surfaces: {api: done, studio: done, extension: missing, mcp: done}
+    proof:
+      api: content/tests/aieo/test_api.py::test_a_text_is_scored_at_once_and_nothing_is_recorded
+      studio: web/packages/ui/test/aieo.test.tsx
+      mcp: content/tests/aieo/test_tools.py::test_an_mcp_client_with_the_aieo_token_lists_aieos_tool_names_and_scores_a_text
   - id: aieo.audits
     what: Audits of a URL or a crawled site, and reports.
-    surfaces: {api: missing, studio: missing, mcp: missing, ops: missing}
+    # G7: audits of a text, a page, a URL or a site as runs, every fetch through research/fetch.py; history,
+    # benchmark, link maps; AIEO's reports byte for byte; `manage.py aieo` (ops).
+    surfaces: {api: done, studio: done, mcp: done, ops: done}
+    proof:
+      api: content/tests/aieo/test_audits.py::test_a_site_is_crawled_cheap_first_and_scored_page_by_page_with_its_link_map
+      studio: web/packages/ui/test/aieo.test.tsx
+      mcp: content/tests/aieo/test_tools.py::test_auditing_a_url_over_mcp_is_a_run_the_agent_owns
+      ops: content/tests/aieo/test_commands.py::test_a_list_of_sites_is_audited_together_into_aieos_layout_and_reports
   - id: aieo.citations
     what: Citation tracking — whether AI engines cite the site, on a schedule.
-    surfaces: {api: missing, studio: missing}
+    # G7: tracked questions asked of each engine (a provider) through the citation probe, on Celery beat; share of
+    # voice per engine and by week.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/aieo/test_citations.py::test_the_api_tracks_a_question_checks_it_and_reports_share_of_voice
+      studio: web/packages/ui/test/aieo.test.tsx
   - id: aieo.optimize
     what: Rewrite content to raise its score (score → gaps → AI rewrite) or scrub AI-writing tells, as a suggestion.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    # G7: optimize, expand, scrub, rewrite — on a page as suggestions aligned block by block, on a text a draft; over
+    # MCP an agent rewrites a text (only a person asks for suggestions on a page).
+    surfaces: {api: done, studio: done, extension: missing, mcp: done}
+    proof:
+      api: content/tests/aieo/test_rewrites.py::test_optimizing_a_page_lands_its_rewrite_as_suggestions_not_a_revision
+      studio: web/packages/ui/test/aieo.test.tsx
+      mcp: content/tests/aieo/test_tools.py::test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose
   - id: aieo.patterns
     what: The pattern library and applying a pattern as a rewrite proposal.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    # G7: Pattern rows seeded from AIEO's pattern files, changed with aieo.change_pattern (the scorer reads the
+    # change), applied to a page (suggestions) or a text (a draft).
+    surfaces: {api: done, studio: done, extension: missing, mcp: done}
+    proof:
+      api: content/tests/aieo/test_api.py::test_everyone_reads_the_pattern_library_and_only_its_keepers_change_it
+      studio: web/packages/ui/test/aieo.test.tsx
+      mcp: content/tests/aieo/test_tools.py::test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose
   - id: aieo.agents
     what: The AIEO agents (SEO, meta, internal links, headlines, conversion and the rest) as agent definitions at suggest.
-    surfaces: {api: missing, studio: missing, mcp: missing}
+    # G7: the ten AIEO agents as bundled assistants of the AI layer (propose-only, each with its output schema, made
+    # from AIEO's agent prompts) rather than agent definitions, as the overhaul's brief asked (PLAN G7, deviations);
+    # they read the site's brand context and also appear in Write's AI panel.
+    surfaces: {api: done, studio: done, mcp: done}
+    proof:
+      api: content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes
+      studio: web/packages/ui/test/aieo.test.tsx
+      mcp: content/tests/aieo/test_tools.py::test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose
   - id: aieo.lifecycle
     what: The AIEO content lifecycle — topics, research, drafts, rewrites, published pages, landing pages.
-    surfaces: {api: missing, studio: missing}
+    # G7: topics are Ideas, research briefs Research, drafts briefs by the bundled AIEO writer, rewrites suggestions,
+    # landing pages the LandingPage type; lifecycle/ counts each stage and the studio opens each stage's workspace.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/aieo/test_lifecycle.py::test_a_landing_page_is_drafted_as_its_own_type_and_its_copy_cro_audited
+      studio: web/packages/ui/test/aieo.test.tsx
   - id: aieo.connectors
     what: GA4, Search Console and DataForSEO connections per site.
-    surfaces: {api: missing, studio: missing}
+    # G7: per-site connectors with the credential encrypted (the AI layer's keys) and write-only, synced in a worker
+    # against each vendor's REST API (recorded HTTP in tests); priorities from Search Console's rows.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/aieo/test_connectors.py::test_connectors_are_configured_over_the_api_with_a_write_only_encrypted_credential
+      studio: web/packages/ui/test/aieo.test.tsx
 
   # ── Distribution ────────────────────────────────────────────────────────────
   - id: distribution.channels
@@ -753,53 +803,53 @@ sources:
     content: backend/prompts/** (system, scoring rubric, optimize-expand, 10 pattern files, 14 agent prompts, 7 command prompts → pattern snippets and agent definitions); the PATTERNS table; the workspace CONTEXT_TEMPLATES and examples/{castos,starter} brand voices (→ BrandRules, Memory, site settings); reports/ (10 site audits, REPORT.md, summary.json) and sites.txt (→ audit history); wordpress/*.php; docs/*.md and PRD-aieo.md (its never-built "planned" features are inputs to G7/G13 scope, not rows here); runtime data outside git — any operator's .aieo-workspace/ and its .cache, and near-empty Postgres rows (users, api_keys, citations, audits).
     capabilities:
       # From the 2026-10-21 code inventory. "stub" means the source fakes it, so absorbing it means building it.
-      - {id: aieo.audit, what: "Score pasted Markdown/HTML or a fetched URL: 0–100 and a grade, per-pattern evidence, gaps, anti-pattern penalties, the five dimensions.", target: aieo.scoring, status: missing}
-      - {id: aieo.scoring-engine, what: "The prompt-driven evaluator — system prompt, rubric and pattern files build a prompt that returns structured scores — with heuristic fallbacks.", target: aieo.scoring, status: missing}
-      - {id: aieo.dim-aieo, what: "Dimension aieo: ten citability patterns (structured data, entity density, comparisons and the rest) with weights.", target: aieo.scoring, status: missing}
-      - {id: aieo.dim-seo, what: "Dimension seo: SEO quality, keyword density and placement, search intent, content-length comparison.", target: aieo.scoring, status: missing}
-      - {id: aieo.dim-readability, what: "Dimension readability: readability metrics.", target: aieo.scoring, status: missing}
-      - {id: aieo.dim-humanity, what: "Dimension humanity: the humanity and quality score.", target: aieo.scoring, status: missing}
-      - {id: aieo.dim-cro, what: "Dimension cro: above-the-fold, CTA and trust-signal analysis with the CRO checklist.", target: aieo.scoring, status: missing}
-      - {id: aieo.analyzers-extra, what: "The engagement and competitor-gap analyzers (exported, wired to nothing).", target: aieo.scoring, status: missing}
-      - {id: aieo.benchmark, what: "Percentile and per-engine estimates on each audit (stub: fixed buckets).", target: aieo.scoring, status: missing}
-      - {id: aieo.visual-audit, what: "Screenshot a URL (Playwright, 1280×800) and score it with vision alongside the text.", target: aieo.audits, status: missing}
-      - {id: aieo.analyze-existing, what: "Analyze a URL or a workspace file: score plus an AI summary (health, quick wins, strategic actions).", target: aieo.audits, status: missing}
-      - {id: aieo.site-snapshot, what: "Crawl a static site (sitemap → feed → robots → links; robots-aware, SSRF guard, ETag cache) into an offline snapshot.", target: aieo.audits, status: missing}
-      - {id: aieo.batch-audit, what: "Batch-audit a list of sites directly or over MCP.", target: aieo.audits, status: missing}
-      - {id: aieo.reports, what: "Per-site Markdown reports and a summary report (rankings, score bars, severity) from audit JSON.", target: aieo.audits, status: missing}
-      - {id: aieo.headless-runner, what: "A database-free CI runner that scores or optimizes Markdown selected by globs or a git diff, with dry run.", target: aieo.audits, status: missing}
-      - {id: aieo.ci-workflows, what: "A reusable workflow that scores or optimizes another repository's Markdown and can commit the result.", target: workflows.automations, status: missing}
-      - {id: aieo.optimize, what: "Rewrite content to raise its score — score, gaps, AI rewrite (preserve or aggressive; enhance or expand).", target: aieo.optimize, status: missing}
-      - {id: aieo.scrub, what: "Remove AI-writing tells from a draft.", target: aieo.optimize, status: missing}
-      - {id: aieo.patterns, what: "Browse the pattern library (category, description, citation-boost range) and fetch a pattern (apply is a stub).", target: aieo.patterns, status: missing}
-      - {id: aieo.prompt-library, what: "Change scoring and agent behaviour by editing Markdown prompts with front-matter weights, no code change.", target: aieo.patterns, status: missing}
-      - {id: aieo.providers, what: "Pick the AI engine per request or by environment: OpenAI, Anthropic, Claude Code over OAuth, xAI.", target: ai.providers, status: partial}
-      - {id: aieo.agent-runner, what: "Run any agent prompt on pasted content with the workspace context injected.", target: ai.assistants, status: partial}
-      - {id: aieo.agents-seo, what: "Agents seo-optimizer, meta-creator and keyword mapping.", target: aieo.agents, status: missing}
-      - {id: aieo.agent-editor, what: "Agent editor ('human editor'): clarity, flow, human voice, a humanity score and a rewritten excerpt.", target: aieo.agents, status: missing}
-      - {id: aieo.agent-headlines, what: "Agent headline-generator: variants, rationale, a testing plan.", target: aieo.agents, status: missing}
-      - {id: aieo.agent-internal-linker, what: "Agent internal-linker: links with anchor text and placement from the internal-links map.", target: aieo.agents, status: missing}
-      - {id: aieo.agent-content-analyzer, what: "Agent content-analyzer: summary, strengths and weaknesses of a draft.", target: aieo.agents, status: missing}
-      - {id: aieo.agents-cro, what: "Agents cro-analyst and landing-page-optimizer.", target: aieo.agents, status: missing}
-      - {id: aieo.agent-performance, what: "Agent performance: quick wins, declining content and a roadmap from analytics.", target: aieo.agents, status: missing}
-      - {id: aieo.workspace, what: "The content workspace — context, topics, research, drafts, rewrites, review-required, published, landing pages, audits.", target: aieo.lifecycle, status: missing}
-      - {id: aieo.brand-context, what: "Context every agent reads: brand voice, style guide, writing examples, target keywords, internal-links map, competitor analysis.", target: sites.registry, status: partial}
+      - {id: aieo.audit, what: "Score pasted Markdown/HTML or a fetched URL: 0–100 and a grade, per-pattern evidence, gaps, anti-pattern penalties, the five dimensions.", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_audits.py::test_a_text_audit_is_a_run_the_evaluator_scores_with_aieos_prompt_and_schema", note: "and a URL through the guard (test_a_url_is_fetched_through_the_guard_and_robots_txt_is_honoured); the studio's Audit tab (web/packages/ui/test/aieo.test.tsx)"}
+      - {id: aieo.scoring-engine, what: "The prompt-driven evaluator — system prompt, rubric and pattern files build a prompt that returns structured scores — with heuristic fallbacks.", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_audits.py::test_a_provider_that_fails_leaves_the_heuristic_score_and_says_why", note: "the bundled AIEO evaluator through the AI layer, its prompt byte for byte AIEO's (test_analyzers.py::test_the_bundled_patterns_and_the_evaluators_prompt_are_aieos)"}
+      - {id: aieo.dim-aieo, what: "Dimension aieo: ten citability patterns (structured data, entity density, comparisons and the rest) with weights.", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_analyzers.py::test_a_markdown_document_parses_and_scores_as_aieo_scored_it"}
+      - {id: aieo.dim-seo, what: "Dimension seo: SEO quality, keyword density and placement, search intent, content-length comparison.", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_analyzers.py::test_every_analyzer_returns_what_aieo_returned", note: "a site's target keywords feed the keyword analysis (test_audits.py)"}
+      - {id: aieo.dim-readability, what: "Dimension readability: readability metrics.", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_analyzers.py::test_every_analyzer_returns_what_aieo_returned"}
+      - {id: aieo.dim-humanity, what: "Dimension humanity: the humanity and quality score.", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_analyzers.py::test_every_analyzer_returns_what_aieo_returned"}
+      - {id: aieo.dim-cro, what: "Dimension cro: above-the-fold, CTA and trust-signal analysis with the CRO checklist.", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_analyzers.py::test_every_analyzer_returns_what_aieo_returned"}
+      - {id: aieo.analyzers-extra, what: "The engagement and competitor-gap analyzers (exported, wired to nothing).", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_audits.py::test_a_heuristic_audit_asks_no_model_and_reads_the_sites_keywords", note: "wired into every score: competitor gaps against the brand context's competitor topics"}
+      - {id: aieo.benchmark, what: "Percentile and per-engine estimates on each audit (stub: fixed buckets).", target: aieo.scoring, status: done, proof: "content/tests/aieo/test_audits.py::test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain", note: "real now: the percentile among the platform's audits of its kind, and per engine how often the tracked questions' answers cited its domain"}
+      - {id: aieo.visual-audit, what: "Screenshot a URL (Playwright, 1280×800) and score it with vision alongside the text.", target: aieo.audits, status: done, proof: "content/tests/aieo/test_audits.py::test_the_visual_audit_screenshots_the_page_and_the_evaluator_sees_it", note: "behind AIEO_VISUAL_AUDIT, Playwright an optional install whose every request goes through research/fetch.py (test_every_request_the_browser_makes_goes_through_the_guarded_fetcher); the browser itself is faked in tests, never run in CI; the screenshot reaches the providers that declare vision (anthropic, openai)"}
+      - {id: aieo.analyze-existing, what: "Analyze a URL or a workspace file: score plus an AI summary (health, quick wins, strategic actions).", target: aieo.audits, status: done, proof: "content/tests/aieo/test_commands.py::test_a_url_is_fetched_through_the_guard_and_ai_records_an_audit", note: "an audit with a model's evaluation: the assessment, executive summary and priority actions; a page stands for a workspace file"}
+      - {id: aieo.site-snapshot, what: "Crawl a static site (sitemap → feed → robots → links; robots-aware, SSRF guard, ETag cache) into an offline snapshot.", target: aieo.audits, status: partial, note: "manage.py aieo crawl writes snapshot.json, .md and .txt (test_commands.py::test_a_site_is_crawled_into_an_offline_snapshot), robots-aware, every request through the SSRF guard; not yet: the ETag/conditional-GET cache between crawls and AIEO's PDF, HTML and bundle exports"}
+      - {id: aieo.batch-audit, what: "Batch-audit a list of sites directly or over MCP.", target: aieo.audits, status: done, proof: "content/tests/aieo/test_commands.py::test_a_list_of_sites_is_audited_together_into_aieos_layout_and_reports", note: "audits/batch/ and the studio's Reports tab (test_api.py, aieo.test.tsx); over MCP each site with aieo_audit_url (test_tools.py)"}
+      - {id: aieo.reports, what: "Per-site Markdown reports and a summary report (rankings, score bars, severity) from audit JSON.", target: aieo.audits, status: done, proof: "content/tests/aieo/test_audits.py::test_aieos_ten_site_audits_import_as_history_and_report_as_aieo_reported_them", note: "byte for byte AIEO's for its ten imported site audits; HTML too; downloaded from an audit or a batch (test_api.py) or written by manage.py aieo report"}
+      - {id: aieo.headless-runner, what: "A database-free CI runner that scores or optimizes Markdown selected by globs or a git diff, with dry run.", target: aieo.audits, status: done, proof: "content/tests/aieo/test_commands.py::test_the_headless_runner_follows_a_git_diff_and_proposes_rewrites_never_in_place", note: "manage.py aieo run: scoring needs no database; optimizing records its runs like every AI generation, and writes proposed/ for a person, never in place (AIEO's --apply-in-place is not carried)"}
+      - {id: aieo.ci-workflows, what: "A reusable workflow that scores or optimizes another repository's Markdown and can commit the result.", target: workflows.automations, status: missing, note: "the runner it would call exists (manage.py aieo run); the workflow and committing a rewrite belong to automations (PLAN G16)"}
+      - {id: aieo.optimize, what: "Rewrite content to raise its score — score, gaps, AI rewrite (preserve or aggressive; enhance or expand).", target: aieo.optimize, status: done, proof: "content/tests/aieo/test_rewrites.py::test_optimizing_a_page_lands_its_rewrite_as_suggestions_not_a_revision"}
+      - {id: aieo.scrub, what: "Remove AI-writing tells from a draft.", target: aieo.optimize, status: done, proof: "content/tests/aieo/test_rewrites.py::test_scrubbing_a_text_is_a_draft_in_the_runs_output"}
+      - {id: aieo.patterns, what: "Browse the pattern library (category, description, citation-boost range) and fetch a pattern (apply is a stub).", target: aieo.patterns, status: done, proof: "content/tests/aieo/test_rewrites.py::test_applying_a_pattern_over_the_api_rewrites_with_that_pattern", note: "apply is real now: a rewrite with the pattern's criteria, suggestions on a page"}
+      - {id: aieo.prompt-library, what: "Change scoring and agent behaviour by editing Markdown prompts with front-matter weights, no code change.", target: aieo.patterns, status: done, proof: "content/tests/aieo/test_commands.py::test_the_prompt_importer_keeps_a_persons_change_unless_forced", note: "the patterns and the assistants are rows a person edits in the studio (test_api.py), and import-prompts re-reads a prompts directory"}
+      - {id: aieo.providers, what: "Pick the AI engine per request or by environment: OpenAI, Anthropic, Claude Code over OAuth, xAI.", target: ai.providers, status: done, proof: "content/tests/aieo/test_audits.py::test_an_audit_can_name_the_engine_that_evaluates_it", note: "the AI layer's providers (xAI through litellm); an audit names one, or the default by AI_DEFAULT_PROVIDER or the default row"}
+      - {id: aieo.agent-runner, what: "Run any agent prompt on pasted content with the workspace context injected.", target: ai.assistants, status: done, proof: "content/tests/aieo/test_api.py::test_the_aieo_agents_are_listed_and_run_with_the_sites_context"}
+      - {id: aieo.agents-seo, what: "Agents seo-optimizer, meta-creator and keyword mapping.", target: aieo.agents, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes"}
+      - {id: aieo.agent-editor, what: "Agent editor ('human editor'): clarity, flow, human voice, a humanity score and a rewritten excerpt.", target: aieo.agents, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes"}
+      - {id: aieo.agent-headlines, what: "Agent headline-generator: variants, rationale, a testing plan.", target: aieo.agents, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes"}
+      - {id: aieo.agent-internal-linker, what: "Agent internal-linker: links with anchor text and placement from the internal-links map.", target: aieo.agents, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes", note: "the internal-links map is the brand context's"}
+      - {id: aieo.agent-content-analyzer, what: "Agent content-analyzer: summary, strengths and weaknesses of a draft.", target: aieo.agents, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes"}
+      - {id: aieo.agents-cro, what: "Agents cro-analyst and landing-page-optimizer.", target: aieo.agents, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes"}
+      - {id: aieo.agent-performance, what: "Agent performance: quick wins, declining content and a roadmap from analytics.", target: aieo.agents, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_every_aieo_agent_answers_with_its_schema_and_only_proposes", note: "its analytics are the connectors' rows, given as its inputs"}
+      - {id: aieo.workspace, what: "The content workspace — context, topics, research, drafts, rewrites, review-required, published, landing pages, audits.", target: aieo.lifecycle, status: done, proof: "content/tests/aieo/test_api.py::test_the_brand_context_and_the_lifecycle_are_the_sites_editors", note: "each stage is the platform's own rows, counted by lifecycle/ and opened from the studio's Context tab"}
+      - {id: aieo.brand-context, what: "Context every agent reads: brand voice, style guide, writing examples, target keywords, internal-links map, competitor analysis.", target: sites.registry, status: done, proof: "content/tests/aieo/test_api.py::test_the_aieo_agents_are_listed_and_run_with_the_sites_context", note: "aieo.BrandContext, a Wagtail site setting its editors change (the studio's Context tab); the scorer reads its keywords and competitor topics"}
       # G14: capture with AIEO's topic template (studio: CaptureIdea's "Start from the topic template", web/packages/ui/test/ideas.test.tsx).
       - {id: aieo.topics, what: "Capture ideas as topics from a template.", target: ideas.board, status: done, proof: "content/tests/ideas/test_services.py::test_an_idea_is_captured_from_a_line_or_a_template_and_voted_once_per_person"}
       # G14: the bundled Research brief writer (AIEO's research prompt) over a collection, kept as a note (studio: ResearchBrief, web/packages/ui/test/research.test.tsx).
       - {id: aieo.research, what: "Generate a research brief.", target: research.synthesize, status: done, proof: "content/tests/research/test_services.py::test_a_brief_reads_the_sources_it_cites_and_a_research_brief_is_a_run"}
-      - {id: aieo.write, what: "Write a long-form draft from a topic and a brief, then run the SEO, meta, internal-link and keyword agents on it.", target: ai.briefs, status: partial}
-      - {id: aieo.rewrite, what: "Rewrite a workspace file, shown side by side with the original.", target: ai.suggestions, status: partial}
-      - {id: aieo.priorities, what: "A ranked content-update queue and quick wins from Search Console rows (position, impressions, CTR, trend, business priority).", target: sites.evolve, status: missing}
-      - {id: aieo.landing-pages, what: "Draft landing pages, research them, analyze a competitor URL, CRO-audit copy.", target: aieo.lifecycle, status: missing}
-      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: missing}
-      - {id: aieo.connectors, what: "GA4 top pages, Search Console queries, DataForSEO SERP (stub: placeholder or mock rows).", target: aieo.connectors, status: missing}
-      - {id: aieo.citations, what: "Citations by URL, domain and engine, and a share-of-voice dashboard (stub: probing returns nothing).", target: aieo.citations, status: missing}
-      - {id: aieo.site-context, what: "Crawl a seed URL N levels into a dataset — link map with hubs and orphans, per-page content and meta.", target: research.capture, status: missing}
-      - {id: aieo.prd-lineage, what: "Inventory a repository's product documents and classify them against canonical PRD elements.", target: research.synthesize, status: missing}
-      - {id: aieo.vectors, what: "A Qdrant client for semantic benchmarks (configured, never used).", target: content.search, status: partial}
-      - {id: aieo.mcp-server, what: "A stdio MCP server with 28 aieo_* tools (scoring, auditing, patterns, readability, workspace, agents).", target: platform.api, status: missing}
-      - {id: aieo.frontend, what: "The React UI — Score and optimize (audit, optimize, patterns, agents), Create (topics, research, write, rewrite), landing pages, publish, citations, priorities.", target: aieo.scoring, status: missing}
+      - {id: aieo.write, what: "Write a long-form draft from a topic and a brief, then run the SEO, meta, internal-link and keyword agents on it.", target: ai.briefs, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_a_draft_is_written_from_a_topic_and_the_four_agents_read_it", note: "a brief with the bundled Article writer (AIEO), applied as a draft whose text arrives as suggestions; the four agents run on the page (AIEO → Agents, or Write's AI panel)"}
+      - {id: aieo.rewrite, what: "Rewrite a workspace file, shown side by side with the original.", target: ai.suggestions, status: done, proof: "content/tests/aieo/test_rewrites.py::test_optimizing_a_page_lands_its_rewrite_as_suggestions_not_a_revision", note: "on a page each changed block is a suggestion whose diff Review shows; a pasted text's rewrite is shown beside the original (aieo.test.tsx)"}
+      - {id: aieo.priorities, what: "A ranked content-update queue and quick wins from Search Console rows (position, impressions, CTR, trend, business priority).", target: sites.evolve, status: done, proof: "content/tests/aieo/test_connectors.py::test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule", note: "the trend is the change in impressions since the sync before; a query naming a target keyword is a business priority"}
+      - {id: aieo.landing-pages, what: "Draft landing pages, research them, analyze a competitor URL, CRO-audit copy.", target: aieo.lifecycle, status: done, proof: "content/tests/aieo/test_lifecycle.py::test_a_landing_page_is_drafted_as_its_own_type_and_its_copy_cro_audited", note: "the LandingPage type drafted by the bundled Landing page writer; research by the Landing page researcher (AI → Assistants); a competitor's page is audited by its URL (its cro dimension); copy is CRO-audited by the score's cro dimension"}
+      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: missing, note: "a distribution channel: PLAN G5"}
+      - {id: aieo.connectors, what: "GA4 top pages, Search Console queries, DataForSEO SERP (stub: placeholder or mock rows).", target: aieo.connectors, status: done, proof: "content/tests/aieo/test_connectors.py::test_ga4_signs_a_jwt_for_its_token_and_reads_the_top_pages", note: "real clients now, tested on recorded HTTP; Search Console and DataForSEO in the same file"}
+      - {id: aieo.citations, what: "Citations by URL, domain and engine, and a share-of-voice dashboard (stub: probing returns nothing).", target: aieo.citations, status: done, proof: "content/tests/aieo/test_citations.py::test_every_engine_is_asked_and_each_answer_records_whether_it_cites_the_domain", note: "real now: each engine answers through the citation probe; share of voice per engine and by week (the studio's Citations tab)"}
+      - {id: aieo.site-context, what: "Crawl a seed URL N levels into a dataset — link map with hubs and orphans, per-page content and meta.", target: research.capture, status: partial, note: "a site audit crawls a seed URL into its pages (content, title, how each was found) and a link map with hubs and orphans (test_audits.py::test_a_site_is_crawled_cheap_first_and_scored_page_by_page_with_its_link_map); not yet: a depth limit (the crawl is bounded by pages), per-page meta beyond the title, AIEO's dataset exports"}
+      - {id: aieo.prd-lineage, what: "Inventory a repository's product documents and classify them against canonical PRD elements.", target: research.synthesize, status: missing, note: "not built in G7: the inventory, its classification and its three MCP tools (aieo_prd, aieo_prd_map, aieo_prd_manifest) have no platform counterpart yet"}
+      - {id: aieo.vectors, what: "A Qdrant client for semantic benchmarks (configured, never used).", target: content.search, status: done, proof: "content/tests/aieo/test_audits.py::test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain", note: "Qdrant replaced by pgvector: every audit's text is a graph.Embedding (kind audit), and its benchmark lists the audits nearest it in meaning that its owner sees"}
+      - {id: aieo.mcp-server, what: "A stdio MCP server with 28 aieo_* tools (scoring, auditing, patterns, readability, workspace, agents).", target: platform.api, status: partial, note: "24 of the 28 names are registry tools or aliases of one, listed to the aieo agent's token over the platform's MCP server (HTTP and stdio; test_tools.py); not carried: aieo_publish_wordpress (G5) and the three PRD-lineage tools (aieo.prd-lineage)"}
+      - {id: aieo.frontend, what: "The React UI — Score and optimize (audit, optimize, patterns, agents), Create (topics, research, write, rewrite), landing pages, publish, citations, priorities.", target: aieo.scoring, status: partial, note: "all of it in the studio (the AIEO workspace, Write's Citability tab, Ideas, Research, Create; web/packages/ui/test/aieo.test.tsx) except publishing to WordPress (G5)"}
       - {id: aieo.auth, what: "An X-API-Key on every route; hashed, expiring keys for citations and the dashboard.", target: platform.tokens, status: partial}
       - {id: aieo.infra, what: "Compose services for the MCP server, Postgres (TimescaleDB), Redis and Qdrant.", target: platform.deploy, status: partial}
       - {id: aieo.ops, what: "Health, liveness and readiness probes, per-key rate limits, request logging, input limits.", target: platform.ops, status: done, proof: content/tests/ops/test_health.py}
