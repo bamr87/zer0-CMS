@@ -200,6 +200,9 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Sites (content/sites/README.md): checkouts may be registered from /sites;
+      # the worker, which runs their sync and write-back jobs, mounts it writable.
+      SITES_DIR: /sites
     volumes:
       - ${SITES_DIR:-.}:/sites:ro
       - content-media:/app/content/media
@@ -224,6 +227,7 @@ services:
     command: celery -A config worker --loglevel=INFO
     environment: *content-env
     volumes:
+      - ${SITES_DIR:-.}:/sites
       - content-media:/app/content/media
     labels: *content-labels
     logging: *fleet-logging

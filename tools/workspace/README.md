@@ -18,7 +18,7 @@ It was stdlib Ruby until PLAN P5 ([ADR 0006](../../docs/adr/0006-one-python-plat
 | `bin/zer0 routes [--json]` | Where the one Pages deploy serves each site (`route:` in `workspace.yml`), root first; `--json` is `pages.yml`'s build plan, with each site's `render:` setting when it renders with the Jekyll-theme option (so a leg knows its Jekyll server). Sites that publish pages without a route are listed with their reason. |
 | `bin/zer0 check` | The workspace contract, below. Exit 1 on any finding. |
 | `bin/zer0 vendor [--write]` | Every vendored copy and whether it still matches its source; `--write` re-copies the drifted ones. |
-| `bin/zer0 doctor [project...]` | The CMS's own `zer0 doctor` (`rails/bin/zer0-cms`) on every project with a `site:` root. Report-only unless `--strict`; `--verbose` prints each full report. That doctor is still Ruby until PLAN G4 ports it to the platform: with no `ruby` on `PATH`, this command says so and exits 2. |
+| `bin/zer0 doctor [project...]` | The platform's `zer0 doctor` (`content/sites/doctor.py`, run as `python -m sites.doctor` on this Python) on every project with a `site:` root. Report-only unless `--strict`; `--verbose` prints each full report. It needs PyYAML and jsonschema and Python 3.11+: without them, this command says so and exits 2. |
 | `bin/zer0 tags [--remote NAME]` | The tags on a remote (default `origin`), split into this repository's releases (a version with a `## [x.y.z]` heading in `CHANGELOG.md`), tags inherited from the Front Matter CMS fork (a bare semver with no heading) and anything else (component-prefixed tags, never touched). `--delete` removes the inherited ones from the remote and the local clone; `--json` prints the three lists. |
 
 Options go anywhere on the line, as `--name VALUE` or `--name=VALUE`, and any unique prefix of a name works (`--dry` for `--dry-run`). Exit codes: 0 success, 1 a failing check, test or strict doctor, 2 a usage or manifest error.
@@ -60,7 +60,7 @@ python3 -m unittest discover tools/workspace    # or .venv/bin/python -m unittes
 
 | File | What it proves |
 |---|---|
-| `tests/test_workspace.py` | Every class against throwaway workspaces with their own git repository: the Ruby suite's tests, ported one for one, and the ones it lacked (longest-prefix ownership, the glob semantics, the real `bash` spawn, the doctor without Ruby, a remote that refuses a tag delete, paths held inside the repository, and `affected` from git itself — committed, uncommitted and untracked changes, each file once, names git would quote). |
+| `tests/test_workspace.py` | Every class against throwaway workspaces with their own git repository: the Ruby suite's tests, ported one for one, and the ones it lacked (longest-prefix ownership, the glob semantics, the real `bash` spawn, the platform's doctor and the doctor without its modules, a remote that refuses a tag delete, paths held inside the repository, and `affected` from git itself — committed, uncommitted and untracked changes, each file once, names git would quote). |
 | `tests/test_real_manifest.py` | The repository's own `workspace.yml` passes every rule, `docs/MONOREPO.md` mentions every project, and the `bin/zer0` script itself runs — and, without PyYAML, says how to get it or runs once on the repository's `.venv`. |
 | `tests/test_golden.py` | The Python tool prints what the Ruby one printed: every recorded step, replayed and compared byte for byte (stdout, stderr and exit status). |
 | `tests/fixtures.py` | Builds every scenario the tests and the recordings use. |

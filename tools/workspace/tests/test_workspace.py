@@ -364,6 +364,12 @@ class AffectedTest(WorkspaceCase):  # beyond the Ruby suite
         self.assertEqual(self.affected(), {"affected": ["theme", "site"], "direct": ["theme", "site"], "unowned": []})
 
 
+def _importable(*names) -> bool:
+    import importlib.util
+
+    return all(importlib.util.find_spec(name) is not None for name in names)
+
+
 class DoctorTest(WorkspaceCase):
     def test_checks_every_declared_site_and_parses_the_result_line(self):
         seen = []
@@ -388,13 +394,22 @@ class DoctorTest(WorkspaceCase):
         self.assertEqual(self.manifest().project("site").site_root, "sites/site")
         self.assertIsNone(self.manifest().project("theme").site_root)
 
-    def test_without_ruby_it_says_so(self):  # beyond the Ruby suite: the doctor is Ruby until PLAN G4
-        empty = self.root / "no-ruby-here"
-        empty.mkdir()
-        with mock.patch.dict(os.environ, {"PATH": str(empty)}):
-            status, out, err = self.cli("doctor")
-        self.assertEqual((status, out), (2, ""))
-        self.assertIn("needs Ruby until PLAN G4", err)
+    @unittest.skipUnless(
+        sys.version_info >= (3, 11) and _importable("yaml", "jsonschema"),
+        "the platform's doctor needs Python 3.11+ with PyYAML and jsonschema (CI installs them)",
+    )
+    def test_the_doctor_is_the_platforms_python_doctor(self):  # PLAN G4: no Ruby
+        self.write("sites/site/_config.yml", "title: t\n")
+        reports = Doctor(self.manifest()).run(["site"])
+        self.assertEqual([(r.errors, r.warnings) for r in reports], [(0, 2)])
+        self.assertIn("cms           0 error(s), 1 warning(s)", reports[0].output)
+
+    def test_without_the_doctors_modules_it_says_so(self):
+        missing = mock.Mock(stdout=b"Traceback ...\nModuleNotFoundError: No module named 'jsonschema'\n")
+        with mock.patch("workspace.doctor.subprocess.run", return_value=missing):
+            with self.assertRaises(WorkspaceError) as raised:
+                Doctor(self.manifest()).run(["site"])
+        self.assertIn("needs jsonschema", str(raised.exception))
 
 
 class TagsTest(WorkspaceCase):
