@@ -12,26 +12,28 @@
   `graph.Embedding` by a worker (`ideas.tasks.embed_idea`, through the
   provider registry when `EMBEDDING_BACKEND` names one, the deterministic
   hashing embedder otherwise), and clusters and likely duplicates are read
-  from the stored vectors — no model call in the request. A person **merges**
-  a duplicate.
+  from the stored vectors — no model call in the request, and on Postgres the
+  pairs are compared by pgvector in the database (`alike`). A person
+  **merges** a duplicate.
 - **Promote** an idea to a brief (the AI layer's; its sources become the
   brief's citations, which its writer reads), an article draft or a book
   draft (`cms.services.create_draft`: a draft, never published).
 """
 
+import math
 from collections import defaultdict
 from itertools import combinations
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
+from django.db import connection, transaction
 
 from ai import services as ai
 from ai.models import Assistant, Brief, Conversation, Message, usable
 from api.pages import service_errors
 from cms import services as cms
 from cms.models import ArticlePage, BookPage, stable_hash
-from graph.embeddings import cosine, get_embedder
+from graph.embeddings import get_embedder
 from graph.models import Embedding
 from graph.services import embed_object
 from ops.errors import Conflict, Forbidden, Invalid, Unavailable
@@ -183,16 +185,9 @@ def clusters(ideas, *, threshold: float | None = None, duplicate: float | None =
     threshold = settings.IDEAS_CLUSTER_THRESHOLD if threshold is None else threshold
     duplicate = settings.IDEAS_DUPLICATE_THRESHOLD if duplicate is None else duplicate
     ideas = list(ideas[:CLUSTER_LIMIT])
-    vectors = dict(
-        Embedding.objects.filter(
-            content_type=ContentType.objects.get_for_model(Idea),
-            model=get_embedder().model,
-            object_id__in=[i.pk for i in ideas],
-        ).values_list("object_id", "vector")
-    )
-    known = [i for i in ideas if i.pk in vectors]
-    pairs = [(a, b, cosine(vectors[a.pk], vectors[b.pk])) for a, b in combinations(known, 2)]
-    parent = {i.pk: i.pk for i in known}
+    by_pk = {idea.pk: idea for idea in ideas}
+    pairs, embedded = alike(list(by_pk), min(threshold, duplicate))
+    parent = {pk: pk for pk in embedded}
 
     def root(pk):
         while parent[pk] != pk:
@@ -202,15 +197,53 @@ def clusters(ideas, *, threshold: float | None = None, duplicate: float | None =
 
     for a, b, similarity in pairs:
         if similarity >= threshold:
-            parent[root(a.pk)] = root(b.pk)
+            parent[root(a)] = root(b)
     groups = defaultdict(list)
-    for idea in known:
-        groups[root(idea.pk)].append(idea)
+    for idea in ideas:
+        if idea.pk in embedded:
+            groups[root(idea.pk)].append(idea)
+    close = ((by_pk[a], by_pk[b], round(similarity, 4)) for a, b, similarity in pairs if similarity >= duplicate)
     return {
         "clusters": [group for group in groups.values() if len(group) > 1],
-        "duplicates": sorted(((a, b, round(s, 4)) for a, b, s in pairs if s >= duplicate), key=lambda p: -p[2]),
-        "pending": [i for i in ideas if i.pk not in vectors],
+        "duplicates": sorted(close, key=lambda pair: -pair[2]),
+        "pending": [idea for idea in ideas if idea.pk not in embedded],
     }
+
+
+ALIKE_SQL = """
+    SELECT a.object_id, b.object_id, 1 - (a.vector <=> b.vector)
+    FROM {table} a JOIN {table} b
+      ON b.content_type_id = a.content_type_id AND b.model = a.model AND b.object_id > a.object_id
+    WHERE a.content_type_id = %s AND a.model = %s
+      AND a.object_id = ANY(%s::bigint[]) AND b.object_id = ANY(%s::bigint[])
+      AND 1 - (a.vector <=> b.vector) >= %s
+    ORDER BY 1, 2
+"""
+
+
+def alike(ids: list[int], floor: float) -> tuple[list[tuple[int, int, float]], set[int]]:
+    """(id, id, cosine similarity) of every pair of these ideas whose stored vectors are at least `floor` alike, and
+    the ids that have a vector. On Postgres pgvector compares them in the database; elsewhere (SQLite, tests) each
+    vector is made a unit vector once and every pair is one `math.sumprod`."""
+    stored = Embedding.objects.filter(
+        content_type=ContentType.objects.get_for_model(Idea), model=get_embedder().model, object_id__in=ids
+    )
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute(
+                ALIKE_SQL.format(table=Embedding._meta.db_table),
+                [ContentType.objects.get_for_model(Idea).pk, get_embedder().model, ids, ids, floor],
+            )
+            pairs = [(a, b, float(similarity)) for a, b, similarity in cursor.fetchall()]
+        return pairs, set(stored.values_list("object_id", flat=True))
+    units = {pk: unit(vector) for pk, vector in stored.values_list("object_id", "vector")}
+    pairs = ((a, b, math.sumprod(units[a], units[b])) for a, b in combinations(sorted(units), 2))
+    return [pair for pair in pairs if pair[2] >= floor], set(units)
+
+
+def unit(vector: list[float]) -> list[float]:
+    norm = math.sqrt(math.sumprod(vector, vector))
+    return [x / norm for x in vector] if norm else vector
 
 
 @transaction.atomic

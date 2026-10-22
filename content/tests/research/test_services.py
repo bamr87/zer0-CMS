@@ -276,6 +276,18 @@ def test_a_question_is_answered_from_the_closest_sources_and_its_quotes_checked(
 
 
 @pytest.mark.django_db
+def test_retrieval_finds_sources_by_their_words_in_the_database_before_they_have_a_vector(alice, bob):
+    drills = services.add_note(alice, "Restore drills catch broken backups before a disaster.", title="Drills")
+    services.add_note(alice, "Sourdough wants a warm kitchen.", title="Bread")
+    services.add_note(bob, "Restore drills, in Bob's private notes.", title="Bob's")
+    assert not Embedding.objects.filter(kind="source").exists()  # vectors are stored after commit, by a worker
+    pool = services.visible_sources(alice).filter(status="ready")
+    assert services.ranked(pool, "How often should we run restore drills?", k=3) == [drills]  # Bob's is his
+    newest = services.ranked(pool, "zeppelins", k=1)
+    assert [s.title for s in newest] == ["Bread"]  # nothing alike: the newest, and the answerer says so
+
+
+@pytest.mark.django_db
 def test_a_fact_check_turns_corrections_into_suggestions_and_changes_nothing_itself(alice, fake, worker, site_root):
     page = make_article(
         site_root,

@@ -31,7 +31,7 @@ from suggestions.services import SuggestionError, propose
 
 from . import services
 from .models import Collection, FactCheck, Question, Source, placement
-from .tasks import embed_source, fetch_source
+from .tasks import fetch_source
 
 TEXT_LIMIT = 40_000  # characters of a source a summary reads
 
@@ -56,10 +56,10 @@ def summarize(run: AgentRun, ctx: ToolContext) -> dict:
     request = f"Title: {source.title or 'Untitled'}\nURL: {source.url or 'none'}\n\n{text}"
     result = generate(run, ctx, _persona(run), [{"role": "user", "content": request}])
     data = result["json"]
-    Source.objects.filter(pk=source.pk).update(
-        summary=result["markdown"], entities=data["entities"], highlights=data["quotes"], updated_at=timezone.now()
-    )
-    services.queue(embed_source, source.pk)  # its vector reads the summary too
+    row = Source.objects.filter(pk=source.pk).first()  # as it is now; a source deleted meanwhile stays gone
+    if row is not None:  # saved, so its vector and its search entry read the summary too
+        row.summary, row.entities, row.highlights = result["markdown"], data["entities"], data["quotes"]
+        row.save(update_fields=["summary", "entities", "highlights", "updated_at"])
     return {**result, "source": str(source.public_id)}
 
 

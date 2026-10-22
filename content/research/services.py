@@ -12,9 +12,11 @@ and in budget. An upload is read in the request: a PDF, plain text or
 Markdown, within `RESEARCH_UPLOAD_MAX_BYTES`. A fact-check's findings become
 suggestions on the draft for a person to accept: nothing here changes a page.
 
-Retrieval (`ranked`, `passages`) is by the sources' stored vectors
-(`graph.Embedding`, pgvector on Postgres) and then by shared words, so it works
-on SQLite and in tests with the deterministic hashing embedder too.
+Retrieval (`ranked`) is by the sources' stored vectors (`graph.Embedding`,
+pgvector on Postgres) and then by their words through Wagtail search, in the
+database, so it works on SQLite and in tests with the deterministic hashing
+embedder too; a chosen source's passages are the ones that share most words
+with the question (`passages`).
 """
 
 import logging
@@ -27,6 +29,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.html import strip_tags
+from wagtail.search.backends import get_search_backend
 
 from agents.models import AgentRun
 from ai import providers
@@ -51,6 +54,8 @@ SUMMARIZER, ANSWERER, FACT_CHECKER, BRIEF_WRITER = (
 )
 PASSAGE = 900  # characters in a passage a run reads
 TOP = 6  # sources a run reads at most
+VECTOR_POOL = 2000  # the newest sources whose vectors a ranking compares
+QUERY_CHARS = 2000  # of a long query (a draft), what the word search reads
 NEW_ITEMS = 50  # feed items taken in one refresh at most
 CHECKED_TYPES = ("markdown", "paragraph", "heading", "quote")
 
@@ -481,20 +486,17 @@ def passages(source: Source, words: set, limit: int = 2) -> list[str]:
 
 
 def ranked(rows, query: str, k: int = TOP) -> list[Source]:
-    """The `k` sources most like `query`: by stored vector first, then by shared words, and when nothing is alike
-    (a question in other words than its sources'), the newest — the answerer says when they do not answer it."""
-    ids = list(rows.values_list("pk", flat=True)[:2000])
+    """The `k` sources most like `query`: by stored vector first (pgvector on Postgres), then by their words through
+    Wagtail search (Postgres full-text, SQLite FTS5 — in the database, never a scan in Python), and when nothing is
+    alike (a question in other words than its sources'), the newest — the answerer says when they do not answer it."""
+    ids = list(rows.values_list("pk", flat=True)[:VECTOR_POOL])
     if not ids:
         return []
     chosen = [pk for pk, score in knn(get_embedder().embed(query), kind="source", k=k, only_ids=ids) if score > 0]
-    if len(chosen) < k:
-        words = set(tokens(query))
-        rest = rows.exclude(pk__in=chosen).only("pk", "title", "summary", "text")
-        scored = sorted(
-            ((overlap(f"{s.title}\n{s.summary}\n{s.text}", words), s.pk) for s in rest), key=lambda t: (-t[0], t[1])
-        )
-        chosen += [pk for score, pk in scored if score > 0][: k - len(chosen)]
-    chosen = chosen or list(rows.order_by("-created_at").values_list("pk", flat=True)[:k])
+    if len(chosen) < k and query.strip():
+        found = get_search_backend().search(query[:QUERY_CHARS], rows.exclude(pk__in=chosen), operator="or")
+        chosen += [source.pk for source in found[: k - len(chosen)]]
+    chosen = chosen or ids[:k]
     found = Source.objects.in_bulk(chosen)
     return [found[pk] for pk in chosen if pk in found]
 

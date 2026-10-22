@@ -16,7 +16,8 @@ scoped — and research in a site is teamwork: a row visible to its site is
 changed by anyone who edits that site (`Collaborative`), though only its owner
 (or staff) changes who sees it. A quote is seen with
 its source, a citation with its source and what cites it. The text a run
-works on is read here; vectors live in `graph.Embedding` (kind `source`).
+works on is read here; vectors live in `graph.Embedding` (kind `source`), and
+a source's words in Wagtail's search index (`Source.search_fields`).
 """
 
 import uuid
@@ -25,6 +26,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
+from wagtail.search import index
 
 from ai.models import Owned, Visibility, is_staff, sites_for
 
@@ -69,7 +71,7 @@ class Collection(Collaborative):
         return self.name
 
 
-class Source(Collaborative):
+class Source(index.Indexed, Collaborative):
     URL, FEED, DOCUMENT, NOTE = "url", "feed", "document", "note"
     KINDS = [(URL, "Web page"), (FEED, "Feed item"), (DOCUMENT, "Document"), (NOTE, "Note")]
     PENDING, FETCHING, READY, FAILED = "pending", "fetching", "ready", "failed"
@@ -99,6 +101,16 @@ class Source(Collaborative):
     fetched_at = models.DateTimeField(null=True, blank=True)
     feed = models.ForeignKey("FeedSubscription", null=True, blank=True, on_delete=models.SET_NULL, related_name="items")
     guid = models.CharField(max_length=1000, blank=True, help_text="The feed's id for the item.")
+
+    # Wagtail search (the database backend: Postgres full-text, SQLite FTS5) finds a source by its words for
+    # retrieval (`research.services.ranked`); every column a search is filtered on is a FilterField.
+    search_fields = [
+        index.SearchField("title", boost=2),
+        index.SearchField("summary"),
+        index.SearchField("text"),
+        *(index.FilterField(name) for name in ("id", "owner", "site", "visibility", "collection", "status")),
+        *(index.FilterField(name) for name in ("kind", "feed", "created_at")),
+    ]
 
     class Meta:
         ordering = ["-created_at", "-id"]

@@ -31,7 +31,7 @@ Gathering information for content: web pages, feed items, documents and notes ke
 | Kind | Started by | What a person gets |
 |---|---|---|
 | `research.summarize` | `sources/<id>/summarize/` | the summary and key points (`summary`), the entities it names (`entities`), passages worth quoting (`highlights`) — on the source, to edit or keep as quotes |
-| `research.answer` | `POST questions/` | an answer drawn only from the closest sources (by stored vector — pgvector on Postgres — then by shared words, then the newest), each claim marked with its source's label, and citations whose quotes are checked against the source's own text (`verified`) |
+| `research.answer` | `POST questions/` | an answer drawn only from the closest sources (by stored vector — pgvector on Postgres — then by their words through Wagtail search in the database, then the newest), each claim marked with its source's label, and citations whose quotes are checked against the source's own text (`verified`) |
 | `research.fact_check` | `POST fact-checks/` (a page the person may edit) | findings for the draft's claims checked against the sources it cites and a collection — supported, contradicted or unsupported, with the sources that decide each — and, for each correction, a `replace` suggestion on the claim's block from the `assistant` agent, for the editor to accept or reject in Review; nothing changes the page until a person accepts. A page whose agent policy is `off` gets findings and no suggestions. |
 | `research.search` | `POST sources/search/` | sources to fetch, one per hit |
 | (an `assistant` run) | `collections/<id>/research-brief/` | a research brief on a topic from the collection (AIEO's: intent, keywords, angles, outline, link opportunities), to read and keep as a note |
