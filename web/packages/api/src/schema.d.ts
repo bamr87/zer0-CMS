@@ -811,7 +811,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Runs of the automations you see, newest first */
+        /** Runs of your automations (staff: everyone's), newest first */
         get: operations["automations_runs_list"];
         put?: never;
         post?: never;
@@ -2749,7 +2749,7 @@ export interface components {
             } | {
                 /** @constant */
                 kind: "hook";
-                /** @description e.g. monitor.finding */
+                /** @description e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires */
                 hook: string;
             };
             /** @description A JMESPath expression over the payload; empty always runs. */
@@ -2935,7 +2935,7 @@ export interface components {
             } | {
                 /** @constant */
                 kind: "hook";
-                /** @description e.g. monitor.finding */
+                /** @description e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires */
                 hook: string;
             };
             /** @description A JMESPath expression over the payload; empty always runs. */
@@ -4791,7 +4791,7 @@ export interface components {
             } | {
                 /** @constant */
                 kind: "hook";
-                /** @description e.g. monitor.finding */
+                /** @description e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires */
                 hook: string;
             };
             /** @description A JMESPath expression over the payload; empty always runs. */

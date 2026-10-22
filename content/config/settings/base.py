@@ -335,8 +335,11 @@ CELERY_BEAT_SCHEDULE = {
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
-# publishes pages.
-CELERY_TASK_ROUTES = {f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")}
+# publishes pages. An automation's run joins it, since its webhooks and email wait on someone else's server too.
+CELERY_TASK_ROUTES = {
+    **{f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")},
+    "automations.tasks.execute_run": {"queue": "research"},
+}
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
 # LLM_BACKEND: recorded (fixtures; the test default) | fake | litellm
@@ -356,8 +359,9 @@ AGENT_DEFINITIONS_DIR = BASE_DIR / "agents" / "definitions"
 AI_PROVIDERS: dict[str, str] = {}
 # The provider a request uses when no ProviderConfig row is flagged default.
 AI_DEFAULT_PROVIDER = env("AI_DEFAULT_PROVIDER", default="claude_code")
-# Fernet keys for provider credentials, the newest first; none derives one from
-# SECRET_KEY (ai/crypto.py). Rotate with `manage.py rotate_ai_credentials`.
+# Fernet keys for provider credentials and automations' webhook secrets, the
+# newest first; none derives one from SECRET_KEY (ai/crypto.py). Rotate with
+# `manage.py rotate_ai_credentials`, which re-encrypts both.
 AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
 
 # ── Books (books/README.md) ─────────────────────────────────────────────────
@@ -389,6 +393,10 @@ RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 10
 # How long one fetch task may run in all — robots.txt and the page, each within RESEARCH_FETCH_TIMEOUT, and the
 # extraction — before Celery stops it (soft; the hard limit is 30 seconds later).
 RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
+
+# ── Automations (automations/README.md) ─────────────────────────────────────
+# How many emails one person's automations may send in an hour, all of them together (recipients counted).
+AUTOMATIONS_EMAILS_PER_HOUR = env.int("AUTOMATIONS_EMAILS_PER_HOUR", default=100)
 
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"

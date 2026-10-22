@@ -12,18 +12,23 @@ event, a source, a schedule tick, a webhook delivery), and a firing over the aut
 * a webhook — `receive_webhook`, its HMAC signature checked against the automation's secret before anything else;
 * a new research source — `on_source`, when a source becomes ready (apps.py connects it);
 * a named hook — `fire_hook`, which the platform's apps call (G12's monitor findings) and the `automations.fire_hook`
-  tool calls for an agent.
+  tool calls for an agent, as `agent.<slug>.<name>`.
 
-An automation hears only what its owner may see (a suggestion, an agent run, a source), and only its site's when it
-has one; an automation's own work — an agent run it started, or one under it — never fires another.
+An automation hears only what its owner may see — a suggestion, an agent run, a source, a page that went live behind
+a view restriction, a hook fired for a site — and only its site's when it has one (an event's site is its page's, or
+the page its agent run worked on); an automation's own work — an agent run it started, or one under it — never fires
+another, and a webhook action never calls an automation's endpoint.
 
-**Running** (`execute`, in the worker) evaluates the condition and then runs the actions in order, each as the
-automation's owner — through the same services and permission checks a person's request goes through, in a
-savepoint of its own — and writes each action's inputs and outcome to the run, with links to the agent runs and rows
-it made. Nothing here publishes: an assistant or a pipeline answers in its run, an agent that lists a publishing tool
-is refused, a brief waits for a person to apply it, and a newsroom story moves only to a stage that publishes
-nothing. A failing action is recorded, and the run stops there or goes on as the automation says (`on_error`).
-Network calls — a webhook notified — happen only here, through the research fetcher's SSRF guard.
+**Running** (`execute`, in the worker, on the `research` queue with the other work that waits on someone else's
+server) evaluates the condition and then runs the actions in order, each as the automation's owner — through the
+same services and permission checks a person's request goes through, in a savepoint of its own — and writes each
+action's inputs and outcome to the run, with links to the agent runs and rows it made. Nothing here publishes: an
+assistant or a pipeline answers in its run, an agent that lists a publishing tool is refused, a brief waits for its
+owner to apply it, and a newsroom story moves only to a stage that publishes nothing. A failing action is recorded,
+and the run stops there or goes on as the automation says (`on_error`); an action that has not started within
+`RUN_SECONDS` does not run. Network calls — a webhook notified — happen only here, through the research fetcher
+(`fetch.post`: its SSRF guard and its one deadline); email goes to the platform's people, at most
+`AUTOMATIONS_EMAILS_PER_HOUR` an hour per owner.
 """
 
 import hashlib
@@ -34,12 +39,13 @@ import time
 import uuid
 from datetime import timedelta
 
-import httpx
 import yaml
+from anymail.message import AnymailMessage
+from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -49,7 +55,7 @@ from agents.models import AgentDefinition, AgentRun
 from agents.runner import RunRefused, start_run
 from ai import crypto
 from ai import services as ai
-from ai.models import Assistant, Brief, OutputSchema, Pipeline
+from ai.models import Assistant, Brief, OutputSchema, Pipeline, Visibility, is_staff, sites_for
 from api.access import may_request_run
 from api.pages import service_errors
 from ideas import services as ideas
@@ -69,12 +75,26 @@ log = logging.getLogger(__name__)
 MAX_PAYLOAD = 256 * 1024  # bytes of JSON one payload may take
 SOURCE_TEXT = 5000  # characters of a source's text its payload carries
 LOGGED = 2000  # characters of each rendered input a run's log keeps
-SIGNATURE = "X-Zer0-Signature-256"
-SIGNATURES = (SIGNATURE, "X-Hub-Signature-256")  # GitHub signs the same way, under its own name
+SIGNATURES = ("X-Zer0-Signature-256", "X-Hub-Signature-256")  # what a webhook is signed with: ours, or GitHub's
 DELIVERIES = ("X-Zer0-Delivery", "X-GitHub-Delivery")
-UNKEPT = {"x-zer0-signature-256", "x-hub-signature", "x-hub-signature-256", "x-csrftoken", "x-request-id"}
+# The request headers a webhook's payload keeps: what says what was sent and by whom — never a credential, a cookie,
+# a signature or a proxy's client address, whatever else the sender put in.
+KEPT = (
+    "content-type",
+    "user-agent",
+    "x-github-event",
+    "x-github-delivery",
+    "x-github-hook-id",
+    "x-gitlab-event",
+    "x-zer0-delivery",
+    "x-zer0-event",
+)
 MARK = "automation-run:"  # what an agent run an action started carries in `started_by_event`
 DOCUMENT = ("name", "description", "trigger", "condition", "actions", "on_error", "max_runs_per_hour")
+# An action that has not started this many seconds into its run does not run: each is bounded (a webhook by
+# RESEARCH_FETCH_TIMEOUT), so a run ends inside its task's time limit (tasks.py) rather than being stopped mid-way.
+RUN_SECONDS = 90
+DEPTH = 20  # how many collections deep an imported document may nest
 
 
 class ActionFailed(Exception):
@@ -142,28 +162,47 @@ def from_automation(run) -> bool:
     return True  # ten runs deep is a loop, whatever started it
 
 
-def _sees(owner, event_type: str, data: dict) -> bool:
-    """Whether an automation's owner may see what an event is about: a suggestion, an agent run (a page that went
-    live is public)."""
+def edits(owner, site) -> bool:
+    """Whether an automation's owner works on `site` (staff work on every site)."""
+    return is_staff(owner) or site.pk in sites_for(owner)
+
+
+def _page_of(event_type: str, data: dict):
+    """The page an event is about: its own `page_id`, or — an agent run's event names none — the page the run worked
+    on. None for one about no page (a suggestion on an image, a run without a page)."""
+    if data.get("page_id"):
+        return Page.objects.filter(pk=data["page_id"]).first()
+    run = AgentRun.objects.filter(pk=data.get("run_id")).first() if event_type == "agent.run.completed" else None
+    target = run.target if run is not None else None
+    return target if isinstance(target, Page) else None
+
+
+def _sees(owner, event_type: str, data: dict, page, restricted: bool) -> bool:
+    """Whether an automation's owner may see what an event is about: a suggestion, an agent run, or a page that went
+    live — public, unless a view restriction keeps it from some, when only its editors hear it."""
     if event_type == "content.suggestion.created":
         return Suggestion.objects.visible_to(owner).filter(pk=data["suggestion_id"]).exists()
     if event_type == "agent.run.completed":
         return AgentRun.objects.visible_to(owner).filter(pk=data["run_id"]).exists()
-    return True
+    return page is not None and (not restricted or page.permissions_for_user(owner).can_edit())
 
 
 def on_event(envelope: dict) -> list[AutomationRun]:
     """An event this platform announced, as the outbox consumer `automations` reads it (consumers.py)."""
     if envelope.get("source") != settings.EVENTS_SOURCE or envelope.get("type") not in spec.EVENTS:
         return []
-    data = envelope.get("data") or {}
-    if data.get("run_id") and from_automation(data["run_id"]):
-        return []  # an automation's own work never fires automations
-    page = Page.objects.filter(pk=data["page_id"]).first() if data.get("page_id") else None
+    data, kind = envelope.get("data") or {}, envelope["type"]
+    automations = list(listening("event", event=kind))
+    if not automations or (data.get("run_id") and from_automation(data["run_id"])):
+        return []  # nobody waits for it, or it is an automation's own work, which never fires automations
+    page = _page_of(kind, data)
     site = page.get_site() if page is not None else None
+    restricted = page is not None and page.get_view_restrictions().exists()
     runs = []
-    for automation in listening("event", event=envelope["type"]):
-        if elsewhere(automation, site.pk if site else None) or not _sees(automation.owner, envelope["type"], data):
+    for automation in automations:
+        if elsewhere(automation, site.pk if site else None) or not _sees(
+            automation.owner, kind, data, page, restricted
+        ):
             continue
         if run := fire(automation, "event", envelope, key=f"event:{envelope['id']}"):
             runs.append(run)
@@ -210,13 +249,16 @@ def on_source(source: Source) -> list[AutomationRun]:
 
 def fire_hook(name: str, data: dict | None = None, *, site=None, by: str = "") -> list[AutomationRun]:
     """Fire the named hook: every enabled automation waiting for it runs with `{hook, by, site, data}` — `by` says
-    who fired it (an app, or `agent:<slug>` for the tool), so a condition can insist on one. How the platform's apps
-    hand automations something to act on; G12's monitor findings fire `monitor.finding`."""
+    who fired it (an app, or `agent:<slug>` for the tool, whose hooks are all `agent.<slug>.…`). How the platform's
+    apps hand automations something to act on; G12's monitor findings fire `monitor.finding`. A hook fired for a site
+    carries that site's business, so only automations whose owner works on that site hear it."""
     payload = {"hook": name, "by": by, "site": site.pk if site is not None else None, "data": data or {}}
     check_size(payload)
     runs = []
     for automation in listening("hook", hook=name):
-        if not elsewhere(automation, payload["site"]) and (run := fire(automation, "hook", payload)):
+        if elsewhere(automation, payload["site"]) or (site is not None and not edits(automation.owner, site)):
+            continue
+        if run := fire(automation, "hook", payload):
             runs.append(run)
     return runs
 
@@ -242,18 +284,20 @@ def tick(now=None) -> list[AutomationRun]:
     return runs
 
 
-def signature(secret: str, body: bytes) -> str:
-    return "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+def mac(secret: str, message: bytes) -> str:
+    """The hex HMAC-SHA256 of `message` with `secret`."""
+    return hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()
 
 
 def receive_webhook(automation: Automation, body: bytes, headers) -> AutomationRun:
     """A request to an automation's webhook: its signature (`X-Zer0-Signature-256`, or GitHub's
     `X-Hub-Signature-256`: `sha256=` and the HMAC-SHA256 of the body with the automation's secret) checked before
-    anything else is read; then the JSON body and the request's `X-…` headers are the payload. A delivery sent again
-    (`X-Zer0-Delivery`, `X-GitHub-Delivery`) gets the run it made the first time."""
+    anything else is read; then the JSON body and a few of its headers (`KEPT`) are the payload. A delivery sent
+    again (`X-Zer0-Delivery`, `X-GitHub-Delivery`) gets the run it made the first time. What an automation sends is
+    signed another way (`_webhook`), so a request it sent is never one it accepts."""
     sent = next((headers.get(name) for name in SIGNATURES if headers.get(name)), "")
     try:
-        expected = signature(automation.get_secret(), body)
+        expected = "sha256=" + mac(automation.get_secret(), body)
     except ValueError:
         log.exception("automation %s: its secret cannot be read; its owner gives it a new one", automation.public_id)
         expected = ""  # nothing a sender sends matches it
@@ -267,12 +311,7 @@ def receive_webhook(automation: Automation, body: bytes, headers) -> AutomationR
         parsed = json.loads(body or b"null")
     except ValueError as e:
         raise Invalid("a webhook's body is JSON") from e
-    kept = {
-        name.lower(): value
-        for name, value in headers.items()
-        if (name.lower().startswith("x-") or name.lower() in ("content-type", "user-agent"))
-        and name.lower() not in UNKEPT
-    }
+    kept = {name.lower(): value for name, value in headers.items() if name.lower() in KEPT}
     delivery = next((headers.get(name) for name in DELIVERIES if headers.get(name)), "")
     key = f"webhook:{delivery}"[:200] if delivery else ""
     run = fire(automation, "webhook", {"body": parsed, "headers": kept}, key=key)
@@ -314,6 +353,8 @@ def _message(error: Exception) -> str:
         return "; ".join(error.messages)
     if isinstance(error, (ActionFailed, RunRefused)):
         return str(error)
+    if isinstance(error, SoftTimeLimitExceeded):
+        return "its run ran out of time"
     return f"{type(error).__name__}: {error}"
 
 
@@ -327,7 +368,9 @@ def _finish(run: AutomationRun, status: str, *, matched=None, outcomes=None, err
 
 def execute(pk: int) -> AutomationRun | None:
     """Run a queued firing (in the worker): the condition, then each action in order as the automation's owner, in
-    a savepoint of its own; its inputs and outcome go on the run. None when no run with this id is still queued."""
+    a savepoint of its own; its inputs and outcome go on the run. An action not started within `RUN_SECONDS` does
+    not run, and one stopped by the task's time limit is recorded as failed, so no run is left `running`. None when
+    no run with this id is still queued."""
     if not AutomationRun.objects.filter(pk=pk, status=AutomationRun.QUEUED).update(
         status=AutomationRun.RUNNING, started_at=timezone.now()
     ):
@@ -344,15 +387,18 @@ def execute(pk: int) -> AutomationRun | None:
         return _finish(run, AutomationRun.FAILED, error=f"the condition could not be evaluated: {e}")
     if not matched:
         return _finish(run, AutomationRun.SKIPPED, matched=False, error="the condition did not match")
-    outcomes, failed = [], False
+    outcomes, failed, late = [], False, False
+    deadline = time.monotonic() + RUN_SECONDS
     for index, action in enumerate(automation.actions):
-        if failed and automation.on_error == Automation.STOP:
+        late = late or time.monotonic() > deadline
+        if late or (failed and automation.on_error == Automation.STOP):
             outcomes.append({"index": index, "kind": action.get("kind", ""), "status": "not_run"})
             continue
         outcomes.append(_act(run, index, action, owner))
         failed = failed or outcomes[-1]["status"] == "failed"
-    status = AutomationRun.FAILED if failed else AutomationRun.SUCCEEDED
-    return _finish(run, status, matched=True, outcomes=outcomes, error="an action failed" if failed else "")
+    error = f"out of time: what had not started within {RUN_SECONDS} s did not run" if late else ""
+    status = AutomationRun.FAILED if failed or late else AutomationRun.SUCCEEDED
+    return _finish(run, status, matched=True, outcomes=outcomes, error=error or ("an action failed" if failed else ""))
 
 
 def _act(run: AutomationRun, index: int, action: dict, owner) -> dict:
@@ -444,11 +490,12 @@ def _agent(given, run, owner):
 
 
 def _brief(given, run, owner):
-    automation = run.automation
+    """A brief of its owner's alone, whoever the automation is shared with: it is written from what the automation
+    heard with its owner's permissions. Its owner shares it, or applies it."""
     brief = Brief(
         owner=owner,
-        site=automation.site,
-        visibility=automation.visibility,
+        site=run.automation.site,
+        visibility=Visibility.PRIVATE,
         title=given.get("title", "").strip()[:255],
         prompt=given["prompt"],
         assistant=_row(Assistant, given.get("assistant"), owner, "assistant"),
@@ -475,28 +522,31 @@ def _idea(given, run, owner):
 
 
 def _email(given, run, owner):
-    subject = " ".join(given["subject"].split())[:200] or run.automation.name
-    sent = send_mail(subject, given.get("body", ""), None, given["to"], fail_silently=False)
-    return {"to": given["to"], "sent": sent}
-
-
-def post(url: str, body: bytes, headers: dict) -> int:
-    """POST `body` to `url` through the research fetcher's SSRF guard (`fetch.pinned`: every address the name resolves
-    to public, the connection pinned to the one checked), with no proxy and no redirect, within the fetcher's time;
-    the status it answered."""
-    try:
-        target, host, name = fetch.pinned(url)
-        sent = {"User-Agent": settings.RESEARCH_USER_AGENT, **headers, "Host": host}
-        with httpx.Client(trust_env=False, follow_redirects=False, timeout=settings.RESEARCH_FETCH_TIMEOUT) as client:
-            with client.stream("POST", target, content=body, headers=sent, extensions={"sni_hostname": name}) as reply:
-                return reply.status_code
-    except fetch.FetchError as e:
-        raise ActionFailed(str(e)) from e
-    except httpx.HTTPError as e:
-        raise ActionFailed(f"the webhook could not be reached: {type(e).__name__}") from e
+    """Mail to the platform's people (anyone, for an owner with `automations.email_anyone`), asked again now, within
+    the owner's hourly budget across all their automations (the shared cache), tagged for the mail provider."""
+    if outside := spec.strangers(given["to"], owner):
+        raise Forbidden(f"to: {', '.join(outside)} — {spec.NOT_PEOPLE}")
+    limit, hour = settings.AUTOMATIONS_EMAILS_PER_HOUR, int(time.time() // 3600)
+    budget = f"zer0:automations:email:{owner.pk}:{hour}"
+    cache.add(budget, 0, timeout=7200)
+    if cache.incr(budget, len(given["to"])) > limit:
+        raise ActionFailed(f"{owner}'s automations send at most {limit} emails an hour; this one waits for the next")
+    message = AnymailMessage(
+        subject=" ".join(given["subject"].split())[:200] or run.automation.name,
+        body=given.get("body", ""),
+        to=given["to"],
+        tags=["automation"],
+        metadata={"automation": str(run.automation.public_id), "run": str(run.public_id)},
+    )
+    return {"to": given["to"], "sent": message.send()}
 
 
 def _webhook(given, run, owner):
+    """The run as JSON to a URL, through the research fetcher (its SSRF guard and its one deadline), signed the way a
+    receiver can check and date: `X-Zer0-Signature: t=<unix time>,v1=<hex HMAC-SHA256 of "<t>.<body>">`. Never what
+    an automation's webhook accepts (the body alone, under `X-Zer0-Signature-256`), so it cannot be replayed to one."""
+    if problem := spec.endpoint_problem(given["url"]):
+        raise Forbidden(problem)
     automation = run.automation
     document = {
         "automation": {"id": str(automation.public_id), "name": automation.name},
@@ -504,13 +554,16 @@ def _webhook(given, run, owner):
         "trigger": run.trigger,
         "payload": run.payload,
     }
-    body = json.dumps(document, cls=DjangoJSONEncoder).encode()
+    body, now = json.dumps(document, cls=DjangoJSONEncoder).encode(), int(time.time())
     headers = {
         "Content-Type": "application/json",
-        SIGNATURE: signature(automation.get_secret(), body),
+        "X-Zer0-Signature": f"t={now},v1={mac(automation.get_secret(), f'{now}.'.encode() + body)}",
         "X-Zer0-Delivery": str(run.public_id),
     }
-    status = post(given["url"], body, headers)
+    try:
+        status = fetch.post(given["url"], body, headers=headers)
+    except fetch.FetchError as e:
+        raise ActionFailed(str(e)) from e
     if status >= 400:
         raise ActionFailed(f"the webhook answered HTTP {status}")
     return {"http_status": status}
@@ -585,9 +638,9 @@ def disable(automation: Automation, *, user) -> Automation:
 
 @transaction.atomic
 def reencrypt_secrets() -> int:
-    """Re-encrypt every automation's secret with the first key — the keys provider credentials use (ai/crypto.py),
-    so this runs beside `rotate_ai_credentials` when they change. One no key reads stops it, named, and nothing is
-    changed. How many it re-encrypted."""
+    """Re-encrypt every automation's secret with the first key — the keys provider credentials use (ai/crypto.py) —
+    as part of `manage.py rotate_ai_credentials` (apps.py adds it to `crypto.REENCRYPT`). One no key reads stops it,
+    named, and nothing is changed. How many it re-encrypted."""
     rows = list(Automation.objects.exclude(secret_encrypted=""))
     for row in rows:
         row.secret_encrypted = crypto.encrypt(row.get_secret())
@@ -643,17 +696,36 @@ def export_yaml(automation: Automation) -> str:
     return yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
 
 
+class _Document(yaml.SafeLoader):
+    """YAML read the way `export_yaml` writes it: no aliases — `*name` stands for a copy of what it names, so a short
+    document could expand into an enormous one — and at most `DEPTH` collections deep."""
+
+    depth = 0
+
+    def compose_node(self, parent, index):
+        if self.check_event(yaml.AliasEvent):
+            raise Invalid("an automation document has no aliases (*name): write each value out")
+        self.depth += 1
+        try:
+            if self.depth > DEPTH:
+                raise Invalid(f"an automation document nests at most {DEPTH} deep")
+            return super().compose_node(parent, index)
+        finally:
+            self.depth -= 1
+
+
 @transaction.atomic
 def import_yaml(text: str, *, user) -> Automation:
     """A new automation from a YAML document, owned by `user` — private, with a secret of its own, and paused."""
     try:
-        document = yaml.safe_load(text)
+        document = yaml.load(text, Loader=_Document)  # a SafeLoader, without aliases
     except yaml.YAMLError as e:
-        raise Invalid(f"not a YAML document: {e}") from e
-    if not isinstance(document, dict) or not str(document.get("name") or "").strip():
+        raise Invalid(f"not a YAML document: {str(e)[: spec.SAID]}") from e
+    name = document.get("name") if isinstance(document, dict) else None
+    if not isinstance(name, str) or not name.strip():
         raise Invalid("an automation document is a mapping with a name")
-    if unknown := sorted(set(document) - set(DOCUMENT)):
-        raise Invalid(f"an automation document has no {', '.join(map(str, unknown))}: it has {', '.join(DOCUMENT)}")
+    if unknown := sorted(str(key)[:40] for key in set(document) - set(DOCUMENT)):
+        raise Invalid(f"an automation document has no {', '.join(unknown)}: it has {', '.join(DOCUMENT)}")
     automation = Automation(owner=user, **{field: document[field] for field in DOCUMENT if field in document})
     validate(automation)
     automation.save()

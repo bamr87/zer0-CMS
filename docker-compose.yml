@@ -237,9 +237,9 @@ services:
       retries: 5
       start_period: 30s
 
-  # The research library's fetches wait on other people's servers, so they have a queue of their own
-  # (CELERY_TASK_ROUTES in content/config/settings/base.py) that only this worker consumes: a slow site holds it,
-  # never the worker that runs agents and publishes pages.
+  # The research library's fetches — and automations' runs, whose webhooks and email wait too — wait on other people's
+  # servers, so they have a queue of their own (CELERY_TASK_ROUTES in content/config/settings/base.py) that only this
+  # worker consumes: a slow site holds it, never the worker that runs agents and publishes pages.
   research-worker:
     profiles: ["content"]
     build: *content-build

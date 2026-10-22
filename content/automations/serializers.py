@@ -4,8 +4,9 @@ An automation is the AI layer's owned row (`ai.serializers.OwnedSerializer`: its
 visibility, `can_edit`), validated by the model's own `clean()`, so the API, an import and a shell agree. Its trigger
 and its actions are JSON whose OpenAPI description is `spec.py`'s schemas, so the generated client types them as
 unions by `kind`. It is made paused (`enabled` is read-only: `enable/` and `disable/` change it), and its secret is in
-the answer that made it — or a new one, from `rotate-secret/` — and never again. Every name here starts with
-`Automation`, since drf-spectacular names a component after its serializer.
+the answer that made it — or a new one, from `rotate-secret/` — and never again; its last run is shown only to whom
+its runs are (`Automation.shows_runs_to`). Every name here starts with `Automation`, since drf-spectacular names a
+component after its serializer.
 """
 
 from django.urls import reverse
@@ -116,6 +117,13 @@ class AutomationSerializer(OwnedSerializer):
         if validated_data.get("trigger", automation.trigger) != automation.trigger:
             automation.scheduled_at = timezone.now()  # a new schedule counts from when it was set, as on enabling
         return super().update(automation, validated_data)
+
+    def to_representation(self, automation):
+        """Its last run only for whoever sees its runs (its owner, staff): a run's error can quote what it heard."""
+        data = super().to_representation(automation)
+        if not automation.shows_runs_to(getattr(self.context.get("request"), "user", None)):
+            data["last_run"] = None
+        return data
 
 
 class AutomationRunSerializer(serializers.ModelSerializer):

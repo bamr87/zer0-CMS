@@ -6458,7 +6458,7 @@
         "/api/v2/automations/runs/": {
             "get": {
                 "operationId": "automations_runs_list",
-                "summary": "Runs of the automations you see, newest first",
+                "summary": "Runs of your automations (staff: everyone's), newest first",
                 "parameters": [
                     {
                         "in": "query",
@@ -19206,8 +19206,8 @@
                                     },
                                     "hook": {
                                         "type": "string",
-                                        "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
-                                        "description": "e.g. monitor.finding"
+                                        "pattern": "^[a-z0-9][a-z0-9_.-]{0,159}$",
+                                        "description": "e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires"
                                     }
                                 },
                                 "required": [
@@ -19393,7 +19393,7 @@
                                 },
                                 {
                                     "type": "object",
-                                    "description": "Notify people by email, through the platform's mail setup.",
+                                    "description": "Notify people by email, through the platform's mail setup: the platform's people, by their address — anyone only for an owner with `automations.email_anyone` —, and at most AUTOMATIONS_EMAILS_PER_HOUR an hour.",
                                     "properties": {
                                         "kind": {
                                             "const": "email"
@@ -19427,7 +19427,7 @@
                                 },
                                 {
                                     "type": "object",
-                                    "description": "Notify a webhook: the run and its payload as JSON, signed with the automation's secret.",
+                                    "description": "Notify a webhook: the run and its payload as JSON, signed with the automation's secret (`X-Zer0-Signature: t=<unix time>,v1=<hex HMAC-SHA256 of '<t>.<body>'>`).",
                                     "properties": {
                                         "kind": {
                                             "const": "webhook"
@@ -19850,8 +19850,8 @@
                                     },
                                     "hook": {
                                         "type": "string",
-                                        "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
-                                        "description": "e.g. monitor.finding"
+                                        "pattern": "^[a-z0-9][a-z0-9_.-]{0,159}$",
+                                        "description": "e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires"
                                     }
                                 },
                                 "required": [
@@ -20037,7 +20037,7 @@
                                 },
                                 {
                                     "type": "object",
-                                    "description": "Notify people by email, through the platform's mail setup.",
+                                    "description": "Notify people by email, through the platform's mail setup: the platform's people, by their address — anyone only for an owner with `automations.email_anyone` —, and at most AUTOMATIONS_EMAILS_PER_HOUR an hour.",
                                     "properties": {
                                         "kind": {
                                             "const": "email"
@@ -20071,7 +20071,7 @@
                                 },
                                 {
                                     "type": "object",
-                                    "description": "Notify a webhook: the run and its payload as JSON, signed with the automation's secret.",
+                                    "description": "Notify a webhook: the run and its payload as JSON, signed with the automation's secret (`X-Zer0-Signature: t=<unix time>,v1=<hex HMAC-SHA256 of '<t>.<body>'>`).",
                                     "properties": {
                                         "kind": {
                                             "const": "webhook"
@@ -25389,8 +25389,8 @@
                                     },
                                     "hook": {
                                         "type": "string",
-                                        "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
-                                        "description": "e.g. monitor.finding"
+                                        "pattern": "^[a-z0-9][a-z0-9_.-]{0,159}$",
+                                        "description": "e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires"
                                     }
                                 },
                                 "required": [
@@ -25576,7 +25576,7 @@
                                 },
                                 {
                                     "type": "object",
-                                    "description": "Notify people by email, through the platform's mail setup.",
+                                    "description": "Notify people by email, through the platform's mail setup: the platform's people, by their address — anyone only for an owner with `automations.email_anyone` —, and at most AUTOMATIONS_EMAILS_PER_HOUR an hour.",
                                     "properties": {
                                         "kind": {
                                             "const": "email"
@@ -25610,7 +25610,7 @@
                                 },
                                 {
                                     "type": "object",
-                                    "description": "Notify a webhook: the run and its payload as JSON, signed with the automation's secret.",
+                                    "description": "Notify a webhook: the run and its payload as JSON, signed with the automation's secret (`X-Zer0-Signature: t=<unix time>,v1=<hex HMAC-SHA256 of '<t>.<body>'>`).",
                                     "properties": {
                                         "kind": {
                                             "const": "webhook"

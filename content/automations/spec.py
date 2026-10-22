@@ -12,20 +12,26 @@ the generated client types them as the unions they are. Beyond the schemas:
 * every template compiles as a Django template (`ai.rendering`, no loaders or libraries) and is rendered against
   the payload (`render`: `{{ data.page_id }}`); a webhook's URL and an email's recipients are never templates, so a
   payload never chooses where anything goes;
-* a webhook's URL is http(s), carries no credentials and is not a private address written out — the research
-  fetcher's guard (`research.fetch`) checks the address it resolves to when it is called;
+* a webhook's URL is http(s), carries no credentials, is not a private address written out — the research
+  fetcher's guard (`research.fetch`) checks the address it resolves to when it is called — and is no automation's
+  webhook endpoint, so one automation never sets off another (`endpoint_problem`);
 * the rows an automation names — assistants, pipelines, output schemas, boards, collections, feeds, agents — are
-  ones its owner may use (`check_rows`), and an agent it starts lists no tool that publishes.
+  ones its owner may use (`check_rows`), an agent it starts lists no tool that publishes, and an email goes to the
+  platform's people unless its owner may email anyone (`strangers`).
 """
 
 import json
+import re
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 import jmespath
 from celery.schedules import ParseException, crontab
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db.models import Q
 from jmespath.exceptions import JMESPathError
 from jsonschema import Draft202012Validator, FormatChecker
 
@@ -41,8 +47,16 @@ STAGES = ("assigned", "drafting", "editing", "copy")
 MAX_ACTIONS = 20
 UUID = {"type": "string", "format": "uuid"}
 TEMPLATE = {"type": "string", "maxLength": 20000, "description": "A Django template, rendered against the payload."}
-HOOK = {"type": "string", "pattern": r"^[a-z0-9][a-z0-9._-]{0,63}$", "description": "e.g. monitor.finding"}
+HOOK = {
+    "type": "string",
+    "pattern": r"^[a-z0-9][a-z0-9_.-]{0,159}$",  # agent.<a 64-character slug>.<a 64-character name> fits
+    "description": "e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires",
+}
 OBJECT = {"type": "object", "additionalProperties": True}
+# An automation's own webhook endpoint (automations/urls.py), wherever the platform is mounted.
+ENDPOINT = re.compile(r"/api/v2/automations/[^/]+/webhook/?$")
+SAID = 300  # characters of a validation message about what a person wrote
+NOT_PEOPLE = "not the address of a person on the platform, and only an owner who may email anyone mails those"
 
 
 class ConditionError(Exception):
@@ -121,7 +135,8 @@ ACTIONS = {
     ),
     "email": _kind(
         "email",
-        "Notify people by email, through the platform's mail setup.",
+        "Notify people by email, through the platform's mail setup: the platform's people, by their address — anyone "
+        "only for an owner with `automations.email_anyone` —, and at most AUTOMATIONS_EMAILS_PER_HOUR an hour.",
         {
             "to": {"type": "array", "items": {"type": "string", "maxLength": 254}, "minItems": 1, "maxItems": 20},
             "subject": TEMPLATE,
@@ -131,7 +146,8 @@ ACTIONS = {
     ),
     "webhook": _kind(
         "webhook",
-        "Notify a webhook: the run and its payload as JSON, signed with the automation's secret.",
+        "Notify a webhook: the run and its payload as JSON, signed with the automation's secret "
+        "(`X-Zer0-Signature: t=<unix time>,v1=<hex HMAC-SHA256 of '<t>.<body>'>`).",
         {"url": {"type": "string", "maxLength": 2000}},
         ["url"],
     ),
@@ -217,7 +233,10 @@ def _by_kind(schemas: dict, value, what: str) -> str:
         return f"{what} is an object whose kind is one of: {', '.join(schemas)}"
     validator = Draft202012Validator(schemas[value["kind"]], format_checker=FormatChecker())
     errors = sorted(validator.iter_errors(value), key=lambda e: list(e.path))
-    return f"{'/'.join(map(str, errors[0].path)) or '(root)'}: {errors[0].message}" if errors else ""
+    if not errors:
+        return ""
+    message = errors[0].message  # it quotes the value, which a person may have made as long as they liked
+    return f"{'/'.join(map(str, errors[0].path)) or '(root)'}: {message[:SAID]}{'…' if len(message) > SAID else ''}"
 
 
 def _trigger(trigger) -> str:
@@ -277,7 +296,29 @@ def _action(action) -> str:
             fetch.refuse_private_literal(action["url"])
         except fetch.Blocked as e:
             return f"url: {e}"
+        return endpoint_problem(action["url"])
     return ""
+
+
+def endpoint_problem(url: str) -> str:
+    """Why a webhook action may not call `url` — an automation's own webhook endpoint, here or on another platform,
+    since one automation's work never sets another off — or ''."""
+    if ENDPOINT.search(unquote(urlsplit(url).path)):
+        return "url: an automation never calls an automation's webhook, so one never sets another off"
+    return ""
+
+
+def strangers(addresses, owner) -> list[str]:
+    """The addresses that are no active person's on the platform — all of them fine for an owner who may email anyone
+    (`automations.email_anyone`)."""
+    if not addresses or owner.has_perm("automations.email_anyone"):
+        return []
+    known = Q()
+    for address in addresses:
+        known |= Q(email__iexact=address)
+    people = get_user_model().objects.filter(known, is_active=True).exclude(username__startswith="agent:")
+    found = {email.lower() for email in people.values_list("email", flat=True)}
+    return [address for address in addresses if address.lower() not in found]
 
 
 def _actions(actions) -> str:
@@ -352,6 +393,8 @@ def check_rows(trigger, actions, owner) -> None:
                 return f"agent: no agent {spec['agent']!r}"
             if problem := unstartable(definition):
                 return f"agent: {problem}"
+        if spec.get("kind") == "email" and (outside := strangers(spec.get("to"), owner)):
+            return f"to: {', '.join(outside)} — {NOT_PEOPLE}"
         return ""
 
     if isinstance(trigger, dict) and (problem := missing({k: v for k, v in trigger.items() if k != "kind"})):

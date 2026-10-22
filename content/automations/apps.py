@@ -1,7 +1,9 @@
 """App config for `automations`: a research source that has just become ready fires the automations waiting for new
-sources (`services.on_source`) — in a savepoint, so an automation's trouble never stops a source from being kept.
-Its tool (`tools.py`) is found by the agents app's tool discovery; its event consumer is registered by the process
-that reads the stream (`consumers.register`, from `manage.py consume_events`)."""
+sources (`services.on_source`) — in a savepoint, so an automation's trouble never stops a source from being kept —
+and the automations' webhook secrets, kept under the AI layer's credential keys, join `manage.py
+rotate_ai_credentials` (`ai.crypto.REENCRYPT`), so one rotation moves them too. Its tool (`tools.py`) is found by the
+agents app's tool discovery; its event consumer is registered by the process that reads the stream
+(`consumers.register`, from `manage.py consume_events`)."""
 
 import logging
 
@@ -18,9 +20,13 @@ class AutomationsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
 
     def ready(self):
+        from ai import crypto
         from research.models import Source
 
+        from .services import reencrypt_secrets
+
         post_save.connect(_source_saved, sender=Source, dispatch_uid="automations.source")
+        crypto.REENCRYPT.add(reencrypt_secrets)
 
 
 def _source_saved(sender, instance, created=False, update_fields=None, raw=False, **kwargs):

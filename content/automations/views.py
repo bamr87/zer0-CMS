@@ -10,8 +10,9 @@
     <id>/webhook/           a webhook trigger's endpoint: no session or token — its HMAC signature is the credential
     condition/              a condition tried against a sample payload, as the editor types it
     options/                the events, stages and agents to pick from, and a sample payload per trigger
-    runs/                   every run of the automations the person sees (filters automation, status, trigger), by
-                            cursor, newest first; runs/<id>/ one run with its payload and each action's outcome
+    runs/                   the runs of the person's own automations — every one, for staff — (filters automation,
+                            status, trigger), by cursor, newest first; runs/<id>/ one run with its payload and each
+                            action's outcome: what an automation heard, it heard as its owner
 
 Thin views: validate, call automations/services.py, serialize. People only (`IsPerson`): an agent fires a named hook
 through the tool registry instead. Rows come from `visible_to` alone, so one the person cannot see is a 404; an
@@ -212,7 +213,7 @@ class AutomationRunFilter(filters.FilterSet):
 
 
 @extend_schema_view(
-    list=extend_schema(summary="Runs of the automations you see, newest first"),
+    list=extend_schema(summary="Runs of your automations (staff: everyone's), newest first"),
     retrieve=extend_schema(summary="One run: its payload, the condition's verdict, each action's outcome"),
 )
 class AutomationRunViewSet(viewsets.ReadOnlyModelViewSet):

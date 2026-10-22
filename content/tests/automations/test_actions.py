@@ -1,16 +1,25 @@
 """What an automation does (PLAN G16): each action runs as the automation's owner — through the services a person's
 request goes through, with that person's permissions, which are asked again when it runs — and nothing it does
 publishes. Every run logs each action's inputs and outcome with links to the runs and rows it made; a failing action
-is recorded and the run stops or goes on as the automation says; a firing over the runs per hour is limited. The
-provider is the scripted fake and a webhook is recorded HTTP: nothing reaches a model or a network."""
+is recorded and the run stops or goes on as the automation says; a firing over the runs per hour is limited; email
+goes to the platform's people within its owner's hourly budget; a webhook is reached through the research fetcher,
+within its deadline, signed so that it never fires an automation. The provider is the scripted fake and a webhook is
+recorded HTTP: nothing reaches a model or a network."""
 
+import asyncio
 import hashlib
 import hmac
 import json
+import time
 
+import httpx
 import pytest
+from celery.exceptions import SoftTimeLimitExceeded
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.test import override_settings
 
 from agents.llm import FakeLLM, use_llm
 from agents.models import AgentDefinition, AgentRun
@@ -129,13 +138,14 @@ def test_a_brief_is_made_and_written_for_a_person_to_apply_never_applied(alice, 
         "assistant": str(writer.public_id),
         "generate": True,
     }
-    make(alice, HOOK, [action])
+    make(alice, HOOK, [action], visibility=Visibility.SHARED)  # the automation is shared; what it writes is hers
     fake.script += [{"text": "Tides rise twice a day."}, {"text": json.dumps(DETAIL)}]
     before = published()
     [run] = fired(worker, {"topic": "tides"})
     brief = Brief.objects.get(public_id=run.outcomes[0]["result"]["brief"])
     assert run.status == AutomationRun.SUCCEEDED and run.outcomes[0]["result"]["run"] == brief.run_id
     assert (brief.owner, brief.prompt, brief.status) == (alice, "Write about tides", "ready")
+    assert brief.visibility == Visibility.PRIVATE
     assert run.outcomes[0]["input"]["title"] == "On tides"  # the title it was made with; writing it found a better one
     assert brief.page is None and published() == before  # a person applies it; nothing went live
 
@@ -159,38 +169,81 @@ def test_an_idea_is_captured_on_a_board_its_owner_sees(alice, make, worker):
 # ── notifications ──────────────────────────────────────────────────────────
 
 
+def addressed(user, email):
+    user.email = email
+    user.save(update_fields=["email"])
+    return user
+
+
 @pytest.mark.django_db
-def test_an_email_is_sent_through_the_platforms_mail(alice, make, worker):
+def test_an_email_goes_to_the_platforms_people_through_its_mail(alice, bob, make, worker):
+    addressed(bob, "bob@example.com")
     action = {
         "kind": "email",
-        "to": ["desk@example.com"],
+        "to": ["Bob@Example.com"],
         "subject": "Finding: {{ data.rule }}",
         "body": "On {{ data.url }}",
     }
-    make(alice, HOOK, [action])
+    automation = make(alice, HOOK, [action])
     [run] = fired(worker, {"rule": "broken-link", "url": "https://example.com/a"})
     assert run.status == AutomationRun.SUCCEEDED
     [sent] = mail.outbox
     assert (sent.to, sent.subject, sent.body) == (
-        ["desk@example.com"],
+        ["Bob@Example.com"],
         "Finding: broken-link",
         "On https://example.com/a",
     )
+    assert sent.tags == ["automation"]  # what the mail provider sees: it is an automation's, and whose
+    assert sent.metadata == {"automation": str(automation.public_id), "run": str(run.public_id)}
     with pytest.raises(ValidationError):
         make(alice, HOOK, [{**action, "to": ["not an address"]}])
+
+    # Asked again when it runs: someone who has left the platform is mailed no longer.
+    bob.is_active = False
+    bob.save(update_fields=["is_active"])
+    [gone] = fired(worker)
+    assert gone.status == AutomationRun.FAILED and "not the address of a person" in gone.outcomes[0]["error"]
+    assert len(mail.outbox) == 1
+
+    # Anyone else's address is refused when it is saved, unless its owner may email anyone.
+    outside = {**action, "to": ["someone@elsewhere.example"]}
+    with pytest.raises(ValidationError) as refused:
+        make(alice, {"kind": "hook", "hook": "out"}, [outside])
+    assert "not the address of a person on the platform" in refused.value.message_dict["actions"][0]
+    alice.user_permissions.add(Permission.objects.get(codename="email_anyone"))
+    make(get_user_model().objects.get(pk=alice.pk), {"kind": "hook", "hook": "out"}, [outside])
+    [out] = fired(worker, hook="out")
+    assert out.status == AutomationRun.SUCCEEDED and mail.outbox[-1].to == ["someone@elsewhere.example"]
+
+
+@pytest.mark.django_db
+@override_settings(AUTOMATIONS_EMAILS_PER_HOUR=3)
+def test_a_persons_automations_send_so_many_emails_an_hour_and_no_more(alice, bob, make, worker):
+    two = {"kind": "email", "to": [addressed(alice, "alice@example.com").email, addressed(bob, "b@example.com").email]}
+    make(alice, {"kind": "hook", "hook": "one"}, [{**two, "subject": "One"}])
+    make(alice, {"kind": "hook", "hook": "two"}, [{**two, "subject": "Two"}])
+    [first] = fired(worker, hook="one")
+    [second] = fired(worker, hook="two")  # another of her automations: the budget is hers, across all of them
+    assert first.status == AutomationRun.SUCCEEDED and second.status == AutomationRun.FAILED
+    assert "at most 3 emails an hour" in second.outcomes[0]["error"]
+    assert [m.subject for m in mail.outbox] == ["One"]
 
 
 @pytest.mark.django_db
 def test_a_webhook_is_notified_signed_through_the_ssrf_guard(alice, make, worker, web):
     automation = make(alice, HOOK, [{"kind": "webhook", "url": "https://hooks.example.com/notify"}])
     route = web.post(f"https://{PUBLIC}/notify").respond(204)
+    before = int(time.time())
     [run] = fired(worker, {"rule": "broken-link"})
     assert run.status == AutomationRun.SUCCEEDED and run.outcomes[0]["result"] == {"http_status": 204}
     request = route.calls.last.request
     body = json.loads(request.content)
     assert body["run"] == str(run.public_id) and body["payload"]["data"] == {"rule": "broken-link"}
-    expected = hmac.new(automation.get_secret().encode(), request.content, hashlib.sha256).hexdigest()
-    assert request.headers["X-Zer0-Signature-256"] == f"sha256={expected}"
+    # Signed over its time and its body, so a receiver can refuse an old one.
+    sent = dict(part.split("=", 1) for part in request.headers["X-Zer0-Signature"].split(","))
+    assert int(sent["t"]) >= before and "X-Zer0-Signature-256" not in request.headers
+    signed = f"{sent['t']}.".encode() + request.content
+    assert sent["v1"] == hmac.new(automation.get_secret().encode(), signed, hashlib.sha256).hexdigest()
     assert request.headers["Host"] == "hooks.example.com"  # the name, sent to the address the guard checked
 
     route.respond(500)
@@ -202,6 +255,96 @@ def test_a_webhook_is_notified_signed_through_the_ssrf_guard(alice, make, worker
     assert inside.status == AutomationRun.FAILED and "not a public address" in inside.outcomes[0]["error"]
     with pytest.raises(ValidationError):  # a private address written out is refused when it is saved
         make(alice, HOOK, [{"kind": "webhook", "url": "http://10.0.0.5/hook"}])
+
+
+@pytest.mark.django_db
+def test_a_webhook_never_calls_an_automation_and_what_one_sends_never_fires_one(alice, make, worker, web, api):
+    """One automation never sets another off — itself included — through a webhook: an automation's endpoint is refused
+    as an action's URL, here or elsewhere, and a request an automation sent is not one an automation accepts."""
+    listener = make(alice, {"kind": "webhook"}, [{"kind": "idea", "title": "Heard"}])
+    for url in (
+        f"https://hooks.example.com/api/v2/automations/{listener.public_id}/webhook/",
+        f"https://hooks.example.com/cms/api/v2/automations/{listener.public_id}/webhook",
+        "https://hooks.example.com/api/v2/automations/x%2Fwebhook/",
+    ):
+        with pytest.raises(ValidationError) as refused:
+            make(alice, HOOK, [{"kind": "webhook", "url": url}])
+        assert "never calls an automation's webhook" in refused.value.message_dict["actions"][0], url
+
+    # What an automation sends, replayed to the automation's own endpoint as it was sent, fires nothing.
+    make(alice, {"kind": "hook", "hook": "tell"}, [{"kind": "webhook", "url": "https://hooks.example.com/notify"}])
+    route = web.post(f"https://{PUBLIC}/notify").respond(204)
+    automation = Automation.objects.get(trigger__hook="tell")
+    Automation.objects.filter(pk=listener.pk).update(secret_encrypted=automation.secret_encrypted)  # one secret
+    fired(worker, hook="tell")
+    sent = route.calls.last.request
+    headers = {
+        f"HTTP_{name.upper().replace('-', '_')}": value for name, value in sent.headers.items() if name.startswith("x-")
+    }
+    assert set(headers) == {"HTTP_X_ZER0_SIGNATURE", "HTTP_X_ZER0_DELIVERY"}
+    path = f"/api/v2/automations/{listener.public_id}/webhook/"
+    replayed = worker(api().post, path, data=sent.content, content_type="application/json", **headers)
+    assert replayed.status_code == 401
+    # Nor with its MAC moved to the header an automation reads: it signs `<t>.<body>`, which is never JSON.
+    t, v1 = (part.split("=", 1)[1] for part in sent.headers["X-Zer0-Signature"].split(","))
+    moved = worker(
+        api().post,
+        path,
+        data=f"{t}.".encode() + sent.content,
+        content_type="application/json",
+        HTTP_X_ZER0_SIGNATURE_256=f"sha256={v1}",
+    )
+    assert moved.status_code == 422 and not AutomationRun.objects.filter(automation=listener).exists()
+
+
+@pytest.mark.django_db
+@override_settings(RESEARCH_FETCH_TIMEOUT=0.3)
+def test_a_slow_webhook_is_cut_off_at_the_fetchers_deadline_and_a_late_action_does_not_start(
+    alice, make, worker, web, monkeypatch
+):
+    async def late(request):
+        await asyncio.sleep(5)
+        return httpx.Response(204)
+
+    web.post(f"https://{PUBLIC}/slow").mock(side_effect=late)
+    slow = {"kind": "webhook", "url": "https://hooks.example.com/slow"}
+    make(alice, HOOK, [slow, {"kind": "idea", "title": "After it"}], on_error=Automation.CONTINUE)
+    started = time.monotonic()
+    [run] = fired(worker)
+    assert time.monotonic() - started < 3  # the whole exchange, not each read, is bounded
+    assert run.status == AutomationRun.FAILED and "did not answer within 0.3 seconds" in run.outcomes[0]["error"]
+    assert run.outcomes[1]["status"] == "succeeded"
+
+    monkeypatch.setattr(services, "RUN_SECONDS", 0.1)  # the second action would start after the run's time
+    [late_run] = fired(worker)
+    assert [o["status"] for o in late_run.outcomes] == ["failed", "not_run"]
+    assert late_run.status == AutomationRun.FAILED and late_run.error.startswith("out of time")
+    assert Idea.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_a_run_its_task_stops_at_the_time_limit_is_recorded_never_left_running(alice, make, worker, monkeypatch):
+    def stopped(given, run, owner):
+        raise SoftTimeLimitExceeded()  # what Celery raises inside the task at its soft limit (tasks.py)
+
+    monkeypatch.setitem(services.ACTS, "idea", stopped)
+    make(alice, HOOK, [{"kind": "idea", "title": "Never made"}])
+    [run] = fired(worker)
+    assert run.status == AutomationRun.FAILED and run.finished_at is not None
+    assert run.outcomes[0] | {"ms": 0} == {
+        "index": 0,
+        "kind": "idea",
+        "input": {"title": "Never made"},
+        "status": "failed",
+        "error": "its run ran out of time",
+        "ms": 0,
+    }
+
+
+def test_an_automations_run_waits_on_the_queue_for_work_that_waits_on_other_servers():
+    from django.conf import settings
+
+    assert settings.CELERY_TASK_ROUTES["automations.tasks.execute_run"] == {"queue": "research"}
 
 
 # ── the newsroom ───────────────────────────────────────────────────────────

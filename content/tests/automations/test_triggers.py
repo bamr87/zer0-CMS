@@ -1,17 +1,21 @@
 """What fires an automation (PLAN G16): an event the platform announces — read from the stream the relay writes, by
-the outbox consumer `automations`, once per event —, a schedule's tick, a signed webhook (a bad signature refused), a
-new research source, and a named hook. A paused automation hears nothing; an automation hears only what its owner may
-see and its own site's; its own work never fires one. Nothing reaches a network or a model."""
+the outbox consumer `automations`, once per event, through quiet spells —, a schedule's tick, a signed webhook (a bad
+signature refused, its credentials never kept), a new research source, and a named hook. A paused automation hears
+nothing; an automation hears only what its owner may see and its own site's — whichever event it is, and a hook fired
+for a site only if its owner works there; its own work never fires one. Nothing reaches a network or a model."""
 
 import hashlib
 import hmac
 import json
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import fakeredis
 import pytest
+import redis
 from django.conf import settings
-from wagtail.models import Site
+from django.core.management import call_command
+from wagtail.models import PageViewRestriction, Site
 
 from agents.runner import start_run
 from automations import services
@@ -22,6 +26,7 @@ from outbox.models import OutboxEvent, ProcessedEvent
 from outbox.relay import RedisStreamsRelay, relay_pending
 from research import services as research
 from research.models import FeedSubscription, Source
+from suggestions.models import Suggestion
 
 from ..conftest import make_article
 from .conftest import IDEA, PUBLIC
@@ -65,6 +70,33 @@ def test_a_published_page_fires_an_event_automation_through_the_stream_once(alic
     assert AutomationRun.objects.filter(automation=automation).count() == 2
 
 
+class Quiet(fakeredis.FakeRedis):
+    """A stream nothing arrives on, read through a socket that gives up before the read's block ends — what redis-py's
+    default five-second socket timeout made of every quiet five-second read."""
+
+    asked: list = []
+
+    def xreadgroup(self, group, name, streams, **kwargs):
+        Quiet.asked.append((group, list(streams)))
+        raise redis.exceptions.TimeoutError("Timeout reading from socket")
+
+
+@pytest.mark.django_db
+def test_the_events_consumer_reads_the_platforms_own_stream_through_quiet_spells(consuming, monkeypatch):
+    Quiet.asked = []
+    assert consume_stream(Quiet(), settings.EVENTS_STREAM, "automations", "a1") == 0  # quiet, not a crash
+    made = {}
+
+    def from_url(url, **options):
+        made.update(options)
+        return Quiet()
+
+    monkeypatch.setattr(redis.Redis, "from_url", staticmethod(from_url))
+    call_command("consume_events", "--own", "--group", "automations", "--name", "automations-1", "--once")
+    assert Quiet.asked[-1] == ("automations", [settings.EVENTS_STREAM])  # where the relay writes, not a fixed name
+    assert made["socket_timeout"] > 5  # the read blocks for five seconds: the socket waits longer
+
+
 @pytest.mark.django_db
 def test_an_event_fires_only_enabled_automations_waiting_for_it(alice, make, worker, site_root):
     waiting = make(alice, PUBLISHED)
@@ -95,6 +127,42 @@ def test_an_automation_hears_only_what_its_owner_may_see_and_its_own_sites(alice
     page = make_article(site_root, "On the test site")
     event = envelope("content.page.published", {**data, "page_id": page.pk})
     assert on_other_site not in [r.automation for r in worker(services.on_event, event)]
+
+
+@pytest.mark.django_db
+def test_every_event_belongs_to_its_pages_site_an_agent_runs_and_a_suggestions_included(
+    alice, make, worker, site_root, agent
+):
+    """An agent run's event names no page, and a suggestion's names one: each is its page's site's all the same."""
+    here = Site.objects.get(root_page=site_root)
+    other_root = make_article(site_root, "Elsewhere")
+    there = Site.objects.create(hostname="other.localhost", root_page=other_root)
+    page = make_article(other_root, "Over there")
+    for event_type in ("agent.run.completed", "content.suggestion.created"):
+        ours = make(alice, {"kind": "event", "event": event_type}, site=here, visibility="site")
+        theirs = make(alice, {"kind": "event", "event": event_type}, site=there, visibility="site")
+        anywhere = make(alice, {"kind": "event", "event": event_type})
+        run = start_run(agent("seo"), trigger="rest", user=alice, target=page, enqueue=False)
+        if event_type == "agent.run.completed":
+            data = {"run_id": run.pk, "agent": "seo", "status": "succeeded"}
+        else:
+            made = Suggestion.objects.create(target=page, op="meta", field="seo_title", payload={"value": "x"}, run=run)
+            data = {"suggestion_id": made.pk, "target": f"page:{page.pk}", "page_id": page.pk, "op": "meta"}
+        heard = worker(services.on_event, envelope(event_type, data, id=str(uuid.uuid4())))
+        assert {r.automation for r in heard} == {theirs, anywhere}, event_type
+        assert ours not in {r.automation for r in heard}
+
+
+@pytest.mark.django_db
+def test_a_page_behind_a_view_restriction_goes_live_only_for_its_editors(alice, bob, make, worker, site_root):
+    hers, his = make(alice, PUBLISHED), make(bob, PUBLISHED)
+    members = make_article(site_root, "Members only")
+    PageViewRestriction.objects.create(page=members, restriction_type=PageViewRestriction.LOGIN)
+    published = envelope("content.page.published", {"page_id": members.pk}, id=str(uuid.uuid4()))
+    assert [r.automation for r in worker(services.on_event, published)] == [hers]  # bob may not read it
+    public = make_article(site_root, "For everyone")
+    published = envelope("content.page.published", {"page_id": public.pk}, id=str(uuid.uuid4()))
+    assert {r.automation for r in worker(services.on_event, published)} == {hers, his}
 
 
 @pytest.mark.django_db
@@ -175,13 +243,21 @@ def test_a_signed_webhook_fires_and_a_bad_signature_is_refused(alice, make, api,
     assert post(HTTP_X_ZER0_SIGNATURE_256=signed(secret, b"another body")).status_code == 401
     assert not AutomationRun.objects.filter(automation=automation).exists()
 
-    answer = post(HTTP_X_ZER0_SIGNATURE_256=signed(secret, body), HTTP_X_GITHUB_EVENT="issues")
+    answer = post(
+        HTTP_X_ZER0_SIGNATURE_256=signed(secret, body),
+        HTTP_X_GITHUB_EVENT="issues",
+        HTTP_X_API_KEY="sk-live-123",
+        HTTP_X_GITLAB_TOKEN="glpat-secret",
+        HTTP_X_FORWARDED_FOR="203.0.113.7",
+        HTTP_X_REAL_IP="203.0.113.7",
+        HTTP_COOKIE="sessionid=abc",
+    )
     assert answer.status_code == 202, answer.content
     run = AutomationRun.objects.get(public_id=answer.json()["run"])
     assert run.status == AutomationRun.SUCCEEDED and run.trigger == "webhook"
     assert run.payload["body"]["issue"]["title"] == "Slow archive"
-    assert run.payload["headers"]["x-github-event"] == "issues"
-    assert not any("signature" in name for name in run.payload["headers"])  # the signature is not kept
+    # What says what was sent is kept; a credential, a cookie, the signature and a client's address never are.
+    assert run.payload["headers"] == {"content-type": "application/json", "x-github-event": "issues"}
     assert Idea.objects.get(public_id=run.outcomes[0]["result"]["idea"]).title == "Issue: Slow archive"
 
     # GitHub's header is read the same way; a delivery sent again gets the run it made.
@@ -277,3 +353,16 @@ def test_a_named_hook_fires_the_automations_waiting_for_it(alice, make, worker, 
     assert {r.automation for r in worker(services.fire_hook, "monitor.finding", data, site=other, by="x")} == {anywhere}
     spoofed = AutomationRun.objects.filter(automation=anywhere).latest("created_at")
     assert spoofed.status == AutomationRun.SKIPPED  # its condition insists the monitor fired it
+
+
+@pytest.mark.django_db
+def test_a_hook_fired_for_a_site_reaches_only_the_automations_of_people_who_work_there(alice, bob, make, worker):
+    """bob edits nothing: a site's findings are not his to hear, however his automation is set up — a hook fired for
+    no site is anyone's who waits for it."""
+    site = Site.objects.get(is_default_site=True)
+    finding = [{"kind": "idea", "title": "Fix {{ data.rule }}"}]
+    hers = make(alice, {"kind": "hook", "hook": "monitor.finding"}, finding)
+    his = make(bob, {"kind": "hook", "hook": "monitor.finding"}, finding)
+    data = {"rule": "broken-link"}
+    assert {r.automation for r in worker(services.fire_hook, "monitor.finding", data, site=site)} == {hers}
+    assert {r.automation for r in worker(services.fire_hook, "monitor.finding", data)} == {hers, his}

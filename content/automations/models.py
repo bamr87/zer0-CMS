@@ -9,7 +9,9 @@ An automation is an owned row with the AI layer's rules (`ai.models.Owned`): a U
 visibility and `visible_to(user, site)`, the one place rows are scoped. Unlike an assistant, it acts — as its owner
 — so only its owner (or a superuser) changes, enables, tests or exports its secret (`can_edit`); staff may pause one
 (`can_pause`). Its trigger and actions are JSON validated against `spec.py`'s schemas, which is also how they export
-and import as YAML. A run is seen by whoever sees its automation.
+and import as YAML. Sharing an automation shares what it does, never what it heard: a run's payload and outcomes are
+what it heard and did with its owner's permissions — a private note, a webhook's body —, so its runs are its owner's
+and staff's (`RunQuerySet.visible_to`, `shows_runs_to`).
 """
 
 import secrets
@@ -50,6 +52,7 @@ class Automation(Owned):
 
     class Meta:
         ordering = ["name", "id"]
+        permissions = [("email_anyone", "Can email any address from an automation, not only the platform's people")]
 
     def __str__(self):
         return self.name
@@ -86,10 +89,17 @@ class Automation(Owned):
     def can_pause(self, user) -> bool:
         return self.can_edit(user) or is_staff(user)
 
+    def shows_runs_to(self, user) -> bool:
+        """Whether `user` sees its runs: its owner, and staff (who see every row)."""
+        return is_staff(user) or (self.owner_id is not None and self.owner_id == getattr(user, "pk", None))
+
 
 class RunQuerySet(models.QuerySet):
     def visible_to(self, user, site=None):
-        return self.filter(automation__in=Automation.objects.visible_to(user, site))
+        """The runs of the automations `user` sees that are theirs — or, for staff, all of them: what a run heard and
+        did, it heard and did as its automation's owner."""
+        rows = self.filter(automation__in=Automation.objects.visible_to(user, site))
+        return rows if is_staff(user) else rows.filter(automation__owner_id=getattr(user, "pk", None))
 
 
 class AutomationRun(models.Model):

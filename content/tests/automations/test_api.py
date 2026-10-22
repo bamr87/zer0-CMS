@@ -5,6 +5,7 @@ automation, the round trip unchanged; a test fires a real run and a dry run does
 Nothing reaches a model or a network."""
 
 import io
+import time
 import uuid
 
 import pytest
@@ -15,9 +16,10 @@ from django.core.management import CommandError, call_command
 from django.test import override_settings
 
 from agents.models import AgentToken
-from ai.models import Visibility
+from ai.models import ProviderConfig, Visibility
 from automations.models import Automation, AutomationRun
 from ideas.models import Idea
+from research import services as research
 
 HOOK = {"kind": "hook", "hook": "act"}
 IDEA = {"kind": "idea", "title": "About {{ data.topic }}"}
@@ -45,18 +47,31 @@ def test_a_new_automation_is_paused_and_its_secret_is_shown_once(alice, api):
 
 
 @pytest.mark.django_db
-def test_secrets_are_kept_under_the_credential_keys_and_follow_them_when_they_rotate(alice, api):
+def test_secrets_are_kept_under_the_credential_keys_and_move_with_the_one_rotation(alice, api):
+    """`rotate_ai_credentials` — the documented rotation — moves the automations' secrets with the providers'
+    credentials, in one transaction: drop the old key afterwards and nothing is left behind under it."""
     made = api(alice).post(URL, body(trigger={"kind": "webhook"}), format="json").json()
+    provider = ProviderConfig.objects.get(slug="openai")
+    provider.set_credential("sk-openai")
+    provider.save()
     old, new = Fernet.generate_key().decode(), Fernet.generate_key().decode()
+    out = io.StringIO()
     with override_settings(AI_CREDENTIAL_KEYS=[old]):
-        call_command("rotate_automation_secrets", stdout=io.StringIO())
+        call_command("rotate_ai_credentials", stdout=out)
+    assert out.getvalue().startswith("2 credential(s)")  # the provider's and the automation's
     with override_settings(AI_CREDENTIAL_KEYS=[new, old]):
-        call_command("rotate_automation_secrets", stdout=io.StringIO())
+        call_command("rotate_ai_credentials", stdout=out)
     with override_settings(AI_CREDENTIAL_KEYS=[new], SECRET_KEY="a-new-secret"):
         assert Automation.objects.get(public_id=made["id"]).get_secret() == made["secret"]
-    with override_settings(AI_CREDENTIAL_KEYS=[old]):
+        assert ProviderConfig.objects.get(pk=provider.pk).get_credential() == "sk-openai"
+    # A secret under a key that is gone stops the rotation, named, and the credentials it had moved stay as they were.
+    lost, newer = Fernet.generate_key(), Fernet.generate_key().decode()
+    Automation.objects.filter(public_id=made["id"]).update(secret_encrypted=Fernet(lost).encrypt(b"x").decode())
+    before = ProviderConfig.objects.get(pk=provider.pk).credential_encrypted
+    with override_settings(AI_CREDENTIAL_KEYS=[newer, new]):
         with pytest.raises(CommandError, match="a key that is gone"):
-            call_command("rotate_automation_secrets", stdout=io.StringIO())
+            call_command("rotate_ai_credentials", stdout=out)
+        assert ProviderConfig.objects.get(pk=provider.pk).credential_encrypted == before  # all of it, or none
         refused = api().post(
             f"{URL}{made['id']}/webhook/",
             data=b"{}",
@@ -97,14 +112,39 @@ def test_who_sees_an_automation_and_who_changes_it(alice, bob, api, worker):
 
     worker(api(alice).post, f"{path}/test/", {"payload": {"data": {"topic": "x"}}}, format="json")
     worker(api(alice).post, f"{URL}{private['id']}/test/", {"payload": {}}, format="json")
-    assert [r["automation_name"] for r in api(bob).get(f"{URL}runs/").json()["results"]] == ["Ours"]
+    # What it does is shared; what it heard and did, as alice, is hers — and staff's.
+    assert api(bob).get(f"{URL}runs/").json()["results"] == []
+    assert api(bob).get(f"{path}/").json()["last_run"] is None
+    assert api(alice).get(f"{path}/").json()["last_run"]["status"] == "succeeded"
     assert len(api(alice).get(f"{URL}runs/").json()["results"]) == 2
+    staff = get_user_model().objects.create_user("ops", password="pw", is_staff=True)
+    assert len(api(staff).get(f"{URL}runs/").json()["results"]) == 2
 
     agent = get_user_model().objects.get(username="agent:drafter")
     raw = AgentToken.issue(agent, name="test")[1]
     from rest_framework.test import APIClient
 
     assert APIClient().get(URL, HTTP_AUTHORIZATION=f"Bearer {raw}").status_code == 403  # people only
+
+
+@pytest.mark.django_db
+def test_sharing_an_automation_never_shares_what_it_heard(alice, bob, api, worker):
+    """alice's private note fires her shared automation: bob reads what the automation does, never the note — not in
+    its runs, not in its last run, not in a brief it writes."""
+    actions = [{"kind": "idea", "title": "{{ source.title }}"}, {"kind": "brief", "prompt": "{{ source.text }}"}]
+    shared = (
+        api(alice)
+        .post(URL, body(trigger={"kind": "source"}, actions=actions, visibility=Visibility.SHARED), format="json")
+        .json()
+    )
+    api(alice).post(f"{URL}{shared['id']}/enable/")
+    worker(research.add_note, alice, "Mine alone\nSECRET-PRIVATE-TEXT")
+    [run] = api(alice).get(f"{URL}runs/").json()["results"]
+    assert "SECRET-PRIVATE-TEXT" in str(run["payload"]) and run["status"] == "succeeded", run
+    for path in (f"{URL}runs/", f"{URL}{shared['id']}/", f"{URL}", "/api/v2/ai/briefs/"):
+        answer = api(bob).get(path)
+        assert answer.status_code == 200 and "SECRET-PRIVATE-TEXT" not in answer.content.decode(), path
+    assert api(bob).get(f"{URL}runs/{run['id']}/").status_code == 404
 
 
 @pytest.mark.django_db
@@ -164,11 +204,28 @@ def test_an_automation_exports_to_yaml_and_imports_as_a_new_paused_one(alice, bo
     for text, why in (
         ("name: [unclosed", "not a YAML document"),
         ("- a list", "a mapping with a name"),
+        ("name: [a, list]", "a mapping with a name"),
         (exported["yaml"] + "owner: alice\n", "has no owner"),
         (exported["yaml"].replace("kind: source", "kind: rss"), "kind is one of"),
     ):
         refused = api(bob).post(f"{URL}import/", {"yaml": text}, format="json")
         assert refused.status_code == 422 and why in str(refused.json()), refused.json()
+
+
+@pytest.mark.django_db
+def test_an_import_that_would_expand_or_nest_without_end_is_refused_at_once(alice, api):
+    """Ten levels of aliases, each naming the one before ten times, are under a kilobyte of YAML and ten billion values
+    once read: refused before anything is expanded, as is nesting deeper than any automation needs."""
+    levels = ["a0: &a0 [x, x, x, x, x, x, x, x, x, x]"]
+    levels += [f"a{n}: &a{n} [{', '.join([f'*a{n - 1}'] * 10)}]" for n in range(1, 10)]
+    bomb = "\n".join(levels) + "\nname: Bomb\ndescription: *a9\n"  # each anchor before the aliases that name it
+    deep = "name: Deep\ncondition: " + "[" * 5000 + "]" * 5000
+    for text, why in ((bomb, "no aliases"), (deep, "nests at most")):
+        started = time.monotonic()
+        refused = api(alice).post(f"{URL}import/", {"yaml": text}, format="json")
+        assert refused.status_code == 422 and why in refused.json()["error"]["message"], refused.content[:300]
+        assert time.monotonic() - started < 2 and len(refused.content) < 2000
+    assert not Automation.objects.exists()
 
 
 @pytest.mark.django_db
