@@ -8,12 +8,20 @@ or none do.
 
 `save_draft` and `publish` are the two primitives. The rest are what a person
 does to a page in the studio or the extension: create it as a draft, save a
-draft over the latest revision, publish the latest revision now, schedule it,
-cancel the schedule, unpublish, and revert to an old revision — which is a new
-draft revision, never a publish. Each checks the person's Wagtail page
-permissions itself (`PermissionDenied`); bad input is Django's
+draft over the latest revision, publish the latest revision now, schedule it
+(and its expiry), cancel the schedule, unpublish, and revert to an old revision
+— which is a new draft revision, never a publish. Each checks the person's
+Wagtail page permissions itself (`PermissionDenied`); bad input is Django's
 `ValidationError`; a save against a revision someone else has since replaced is
 `StaleRevision`.
+
+Every writer of an existing page starts with `writable()`: it takes the page
+row's lock for the transaction, so two writers that start from the same
+revision run one after the other (the second save is then stale, the second
+accept builds on the first's revision), and it refuses a page that a Wagtail
+lock keeps from this person — another person's lock, a workflow task's, or a
+scheduled publish's (`PageLocked`), as Wagtail's own editor does. Cancelling a
+schedule takes the row lock alone: it is how a scheduled page's lock is lifted.
 """
 
 import uuid
@@ -21,11 +29,16 @@ import uuid
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.html import strip_tags
 from wagtail.permission_policies.pages import PagePermissionPolicy
 
 
 class StaleRevision(Exception):
     """The page has a newer revision than the one the caller edited."""
+
+
+class PageLocked(PermissionDenied):
+    """A Wagtail lock keeps this person from changing the page; says why."""
 
 
 @transaction.atomic
@@ -49,9 +62,30 @@ def publish(page, user, log_action=True):
 
 
 def visible_pages(user):
-    """The pages a person may work with: Wagtail's explorable pages (those they
-    hold a permission on, and their ancestors), without the tree's root."""
-    return PagePermissionPolicy().explorable_instances(user).filter(depth__gt=1)
+    """The pages a person finds in the studio: Wagtail's explorable pages (those
+    they hold a permission on, and the ancestors that lead to them) of the
+    platform's own page types — not the tree's root, nor the placeholder page
+    Wagtail's first migration makes. Opening one needs more (api/pages.py)."""
+    from .models import BasePage
+
+    return PagePermissionPolicy().explorable_instances(user).type(BasePage)
+
+
+def lock_for(page, user) -> str | None:
+    """Why a Wagtail lock keeps `user` from changing `page`, or None."""
+    lock = page.get_lock()
+    if lock is None or not lock.for_user(user):
+        return None
+    return strip_tags(lock.get_message(user) or "") or f"{page} is locked"
+
+
+def writable(page, user):
+    """`page` as it is now, its row locked until the transaction ends; refused
+    (`PageLocked`) when a Wagtail lock keeps `user` from changing it."""
+    page = type(page).objects.select_for_update().get(pk=page.pk)
+    if (reason := lock_for(page, user)) is not None:
+        raise PageLocked(reason)
+    return page
 
 
 def _require(allowed: bool, message: str):
@@ -115,11 +149,15 @@ def clean_body(page, blocks: list) -> list[dict]:
     from suggestions.services import SuggestionError, clean_block
 
     stored = {b["id"]: b for b in page.body.get_prep_value()}
-    cleaned, errors = [], {}
+    cleaned, errors, seen = [], {}, set()
     for i, block in enumerate(blocks):
         if not isinstance(block, dict):
             errors[f"body.{i}"] = ['a block is {"type": …, "value": …}']
             continue
+        if block.get("id") and block["id"] in seen:  # suggestions and provenance find a block by its id
+            errors[f"body.{i}"] = [f"block id {block['id']!r} is used twice; every block has its own"]
+            continue
+        seen.add(block.get("id"))
         same = stored.get(block.get("id"))
         if same is not None and same["type"] == block.get("type") and same["value"] == block.get("value"):
             cleaned.append(same)
@@ -149,13 +187,15 @@ def create_draft(parent, model, user, *, fields: dict, body: list | None = None)
 
 
 @transaction.atomic
-def save_changes(page, user, *, fields: dict, body: list | None = None, base_revision_id=None):
-    """A new draft revision over the latest one. Never publishes."""
+def save_changes(page, user, *, base_revision_id, fields: dict, body: list | None = None):
+    """A new draft revision over the latest one, which must be the revision the
+    person edited (`base_revision_id`; None only for a page without one).
+    Never publishes."""
     _require(page.permissions_for_user(user).can_edit(), f"{user} may not edit {page}")
-    latest = page.get_latest_revision()
-    if base_revision_id is not None and latest is not None and latest.pk != base_revision_id:
+    page = writable(page, user)
+    if page.latest_revision_id != base_revision_id:
         raise StaleRevision(
-            f"page {page.pk} has a newer revision ({latest.pk}) than the one edited ({base_revision_id})"
+            f"page {page.pk} has a newer revision ({page.latest_revision_id}) than the one edited ({base_revision_id})"
         )
     draft = page.get_latest_revision_as_object()
     apply_fields(draft, fields)
@@ -166,24 +206,39 @@ def save_changes(page, user, *, fields: dict, body: list | None = None, base_rev
 
 @transaction.atomic
 def publish_now(page, user):
-    """Publish the latest revision now — a future go-live time on it is cleared."""
+    """Publish the latest revision now. A future go-live time on it is cleared,
+    and so is an expiry that has passed, or the next sweep would take the page
+    straight down again."""
     _require(page.permissions_for_user(user).can_publish(), f"{user} may not publish {page}")
+    page = writable(page, user)
     revision = page.get_latest_revision()
     draft = page.get_latest_revision_as_object()
-    if revision is None or (draft.go_live_at and draft.go_live_at > timezone.now()):
+    now = timezone.now()
+    expired = draft.expire_at is not None and draft.expire_at <= now
+    if revision is None or (draft.go_live_at and draft.go_live_at > now) or expired:
         draft.go_live_at = None
+        draft.expire_at = None if expired else draft.expire_at
         revision = save_draft(draft, user)
     revision.publish(user=user, skip_permission_checks=True)
     return revision
 
 
 @transaction.atomic
-def schedule(page, user, go_live_at, expire_at=None):
-    """Publish the latest revision at `go_live_at`: Wagtail holds it until
-    `publish_scheduled` (Celery beat, cms/tasks.py) finds it due."""
+def schedule(page, user, go_live_at=None, expire_at=None):
+    """Publish the latest revision at `go_live_at` (now, when it is None) and
+    take the page down at `expire_at`. Wagtail holds a future revision until
+    `publish_scheduled` (Celery beat, cms/tasks.py) finds it due, and takes a
+    live page down once its expiry has passed; an expiry belongs to the
+    revision that goes live, as in Wagtail."""
     _require(page.permissions_for_user(user).can_publish(), f"{user} may not publish {page}")
-    if go_live_at <= timezone.now():
+    page = writable(page, user)
+    now = timezone.now()
+    if go_live_at is None and expire_at is None:
+        raise ValidationError({"go_live_at": ["give a time to publish at, a time to take the page down at, or both"]})
+    if go_live_at is not None and go_live_at <= now:
         raise ValidationError({"go_live_at": ["a schedule is in the future; publish now instead"]})
+    if expire_at is not None and expire_at <= (go_live_at or now):
+        raise ValidationError({"expire_at": ["the page comes down after it goes live"]})
     draft = page.get_latest_revision_as_object()
     draft.go_live_at = go_live_at
     if expire_at is not None:
@@ -195,7 +250,10 @@ def schedule(page, user, go_live_at, expire_at=None):
 
 @transaction.atomic
 def unschedule(page, user):
+    """Cancel a scheduled publish — the one change a scheduled page's lock
+    allows, since it is how the lock is lifted (as in Wagtail)."""
     _require(page.permissions_for_user(user).can_unschedule(), f"{user} may not unschedule {page}")
+    page = type(page).objects.select_for_update().get(pk=page.pk)
     revision = page.scheduled_revision
     if revision is not None:
         revision.approved_go_live_at = None
@@ -205,6 +263,7 @@ def unschedule(page, user):
 
 @transaction.atomic
 def unpublish(page, user):
+    page = writable(page, user)  # first: Wagtail's can_unpublish() is false on a locked page, and the lock says why
     _require(page.permissions_for_user(user).can_unpublish(), f"{user} may not unpublish {page}")
     page.unpublish(user=user)
 
@@ -213,4 +272,5 @@ def unpublish(page, user):
 def revert(page, revision, user):
     """A new draft revision with an old revision's content. Never publishes."""
     _require(page.permissions_for_user(user).can_edit(), f"{user} may not edit {page}")
+    writable(page, user)
     return save_draft(revision.as_object(), user, previous_revision=revision)

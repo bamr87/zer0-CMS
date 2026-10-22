@@ -14,7 +14,8 @@ Code taxonomy (ops/README.md): `auth.required`, `auth.invalid_token`,
 `auth.forbidden`, `auth.csrf_failed`, `auth.invalid_credentials`, `request.malformed`,
 `request.method_not_allowed`, `request.unsupported_media_type`,
 `request.not_acceptable`, `validation.failed`, `resource.not_found`,
-`resource.conflict`, `rate.limited`, `upstream.unavailable`, `internal.error`.
+`resource.conflict`, `resource.locked`, `rate.limited`, `upstream.unavailable`,
+`internal.error`.
 """
 
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
@@ -65,6 +66,12 @@ class NotFound(ApiError):
 class Conflict(ApiError):
     status = 409
     code = "resource.conflict"
+
+
+class Locked(Conflict):
+    """A Wagtail lock keeps the caller from changing the page; the message says whose."""
+
+    code = "resource.locked"
 
 
 class Unavailable(ApiError):

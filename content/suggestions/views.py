@@ -1,9 +1,10 @@
 """Admin views: a page's pending suggestions, accept (one or all of a run's)
 and reject. POST-only, CSRF-protected Wagtail admin views; every decision goes
 through `services.accept` / `services.reject`, which re-check the editor's
-permission and the page's current state."""
+permission, the page's lock and its current state; a refusal is a message."""
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -49,6 +50,6 @@ def decide(request, suggestion_id, decision):
             messages.success(request, "Rejected.")
         else:
             raise Http404
-    except SuggestionError as e:
-        messages.error(request, str(e))
+    except (SuggestionError, PermissionDenied) as e:
+        messages.error(request, str(e) or "You may not decide this suggestion.")
     return redirect("suggestions_page", page_id=suggestion.target_id)

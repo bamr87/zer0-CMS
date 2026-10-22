@@ -2,15 +2,19 @@
 
     GET  /api/v2/review/suggestions/             pending suggestions across sites, newest first, each
                                                  with its change as before/after text (filters: site,
-                                                 target, run, agent)
-    POST /api/v2/review/runs/<run_id>/accept/    accept everything a run proposed — one revision per page
+                                                 page_id, run, agent)
+    POST /api/v2/review/runs/<run_id>/accept/    accept the suggestions of a run the person saw
+                                                 (`ids`) — one revision per page
 
 A single suggestion is accepted or rejected (with a reason) through the
-existing `/api/v2/suggestions/<id>/accept|reject/`. Everything here goes
-through `suggestions.services`, which re-checks the person's rights and the
-page's current state at decision time; the diff is measured against the
-page's latest revision, so a suggestion whose block has gone says so
-(`change.stale`) before anyone tries to accept it.
+existing `/api/v2/suggestions/<id>/accept|reject/`. Everything here reads
+through the one scope (`Suggestion.objects.visible_to`, `AgentRun.objects.
+visible_to`) and decides through `suggestions.services`, which re-checks the
+person's rights, the page's lock and its current state at decision time; the
+diff is measured against the page's latest revision, so a suggestion whose
+block has gone says so (`change.stale`) before anyone tries to accept it. A
+run the person may not see is a 404, and a refusal never names a page they
+cannot open.
 """
 
 import django_filters
@@ -23,27 +27,27 @@ from wagtail.models import Page, Revision, Site
 
 from agents.models import AgentRun
 from cms.models import BasePage
-from ops.errors import Conflict, NotFound
+from ops.errors import NotFound
 from ops.openapi import ERROR_RESPONSES
 from suggestions.models import Suggestion
-from suggestions.services import SuggestionError, accept_run, decidable, describe
+from suggestions.services import accept_run, describe
 
-from .pages import IsPerson, StudioPagination
-from .serializers import AcceptedRunSerializer, SuggestionSerializer
+from .pages import IsPerson, StudioPagination, _valid, service_errors
+from .serializers import AcceptedRunSerializer, AcceptRunSerializer, SuggestionSerializer
 
 
 class InboxFilter(django_filters.FilterSet):
     site = django_filters.NumberFilter(method="by_site", help_text="A site id: suggestions on its pages.")
-    target = django_filters.NumberFilter(field_name="target_id", help_text="A page (or image) id.")
+    page_id = django_filters.NumberFilter(method="by_page", help_text="A page id: the suggestions on that page.")
     run = django_filters.NumberFilter(field_name="run_id")
     agent = django_filters.CharFilter(field_name="agent__slug")
 
     def by_site(self, qs, name, value: int):
         site = Site.objects.filter(pk=value).select_related("root_page").first()
-        if site is None:
-            return qs.none()
-        pages = Page.objects.descendant_of(site.root_page, inclusive=True).values("pk")
-        return qs.filter(target_id__in=pages).exclude(target_ct__model="contentimage")
+        return qs.visible_to(self.request.user, site) if site else qs.none()
+
+    def by_page(self, qs, name, value: int):
+        return qs.on_pages(Page.objects.filter(pk=value))
 
 
 def _row(suggestion: Suggestion, targets: dict) -> dict:
@@ -88,7 +92,12 @@ class Inbox(generics.ListAPIView):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return Suggestion.objects.none()
-        return decidable(self.request.user).order_by("-created_at", "-id")
+        return (
+            Suggestion.objects.visible_to(self.request.user)
+            .filter(status=Suggestion.PENDING)
+            .select_related("agent", "run", "target_ct")
+            .order_by("-created_at", "-id")
+        )
 
     @extend_schema(operation_id="review_suggestions", summary="Pending suggestions the caller may decide, with diffs")
     def get(self, request, *args, **kwargs):
@@ -102,20 +111,18 @@ class Inbox(generics.ListAPIView):
 
 @extend_schema(
     operation_id="review_runs_accept",
-    summary="Accept every pending suggestion of a run, one revision per page",
-    request=None,
+    summary="Accept the suggestions of a run the caller saw, one revision per page",
+    request=AcceptRunSerializer,
     responses={200: AcceptedRunSerializer, **ERROR_RESPONSES},
 )
 @api_view(["POST"])
 @permission_classes([IsPerson])
 def accept_all(request, run_id):
-    run = AgentRun.objects.filter(pk=run_id).first()
+    run = AgentRun.objects.visible_to(request.user).filter(pk=run_id).first()
     if run is None:
         raise NotFound(f"no run {run_id}")
-    ids = list(run.suggestions.filter(status=Suggestion.PENDING).values_list("pk", flat=True))
-    try:
-        results = accept_run(run, request.user)
-    except SuggestionError as e:
-        raise Conflict(str(e)) from e
+    data = _valid(AcceptRunSerializer, request)
+    with service_errors():
+        accepted, results = accept_run(run, request.user, data["ids"])
     revisions = [r.pk for r in results if isinstance(r, Revision)]
-    return Response(AcceptedRunSerializer({"accepted": ids, "revision_ids": revisions}).data)
+    return Response(AcceptedRunSerializer({"accepted": [s.pk for s in accepted], "revision_ids": revisions}).data)

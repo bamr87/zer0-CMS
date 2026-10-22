@@ -24,7 +24,7 @@ Every non-2xx a REST path returns, whoever answers it:
            "details": [], "request_id": "6f1c…", "retry_after": null}}
 ```
 
-A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Conflict`, `Unavailable`) or any DRF exception; `drf_exception_handler` renders it. What Django answers itself — an unknown path, a CSRF failure, a crash — is rendered by the `handler400/403/404/500` views in `config/urls.py` when the path is an API path (`/api/`, `/graphql/`, `/mcp/`, the probes) or the request asks for `application/json`; HTML paths keep Django's pages. A validation failure is `422` with one `details` entry per field. A crash is `internal.error` with the request id and nothing else; the log line with the same id holds the traceback.
+A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Conflict`, `Locked`, `Unavailable`) or any DRF exception; `drf_exception_handler` renders it. What Django answers itself — an unknown path, a CSRF failure, a crash — is rendered by the `handler400/403/404/500` views in `config/urls.py` when the path is an API path (`/api/`, `/graphql/`, `/mcp/`, the probes) or the request asks for `application/json`; HTML paths keep Django's pages. A validation failure is `422` with one `details` entry per field. A crash is `internal.error` with the request id and nothing else; the log line with the same id holds the traceback.
 
 | Code | Status | When |
 |---|---|---|
@@ -40,6 +40,7 @@ A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Con
 | `validation.failed` | 422 | per-field `details` |
 | `resource.not_found` | 404 | |
 | `resource.conflict` | 409 | a run that is refused, a suggestion that can no longer be decided |
+| `resource.locked` | 409 | a page a Wagtail lock keeps from the caller — another person's lock, a workflow task's, or a scheduled publish's (cancel it to edit); the message says which |
 | `rate.limited` | 429 | `retry_after` and the `Retry-After` header |
 | `upstream.unavailable` | 503 | a dependency the request needed is down |
 | `internal.error` | 500 | |

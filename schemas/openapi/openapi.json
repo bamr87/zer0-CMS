@@ -1621,7 +1621,7 @@
         "/api/v2/content/pages/{id}/schedule/": {
             "post": {
                 "operationId": "content_pages_schedule",
-                "summary": "Publish the latest revision at `go_live_at`",
+                "summary": "Publish the latest revision at `go_live_at` (or now) and take it down at `expire_at`",
                 "parameters": [
                     {
                         "in": "path",
@@ -1652,8 +1652,7 @@
                                 "$ref": "#/components/schemas/Schedule"
                             }
                         }
-                    },
-                    "required": true
+                    }
                 },
                 "security": [
                     {
@@ -2883,7 +2882,7 @@
         "/api/v2/review/runs/{run_id}/accept/": {
             "post": {
                 "operationId": "review_runs_accept",
-                "summary": "Accept every pending suggestion of a run, one revision per page",
+                "summary": "Accept the suggestions of a run the caller saw, one revision per page",
                 "parameters": [
                     {
                         "in": "path",
@@ -2897,6 +2896,26 @@
                 "tags": [
                     "review"
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcceptRun"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcceptRun"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AcceptRun"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "security": [
                     {
                         "agentToken": []
@@ -3021,6 +3040,14 @@
                         }
                     },
                     {
+                        "in": "query",
+                        "name": "page_id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A page id: the suggestions on that page."
+                    },
+                    {
                         "name": "page_size",
                         "required": false,
                         "in": "query",
@@ -3043,14 +3070,6 @@
                             "type": "integer"
                         },
                         "description": "A site id: suggestions on its pages."
-                    },
-                    {
-                        "in": "query",
-                        "name": "target",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "description": "A page (or image) id."
                     }
                 ],
                 "tags": [
@@ -3810,6 +3829,22 @@
     },
     "components": {
         "schemas": {
+            "AcceptRun": {
+                "type": "object",
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "description": "The run's pending suggestions the caller saw and accepts — only these, never the rest of the run.",
+                        "minItems": 1
+                    }
+                },
+                "required": [
+                    "ids"
+                ]
+            },
             "AcceptedRun": {
                 "type": "object",
                 "properties": {
@@ -4265,6 +4300,13 @@
                     "permissions": {
                         "$ref": "#/components/schemas/PagePermissions"
                     },
+                    "lock": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why the caller cannot change the page now — a Wagtail lock: another person's, a workflow task's, or a scheduled publish's (cancelling the schedule lifts it) — or null."
+                    },
                     "pending_suggestions": {
                         "type": "integer"
                     },
@@ -4296,6 +4338,7 @@
                     "live",
                     "live_revision_id",
                     "live_url",
+                    "lock",
                     "locked",
                     "markdown",
                     "parent",
@@ -4562,7 +4605,7 @@
                             "integer",
                             "null"
                         ],
-                        "description": "The revision edited; a newer one makes the save a 409."
+                        "description": "The revision edited (null only for a page without one); a newer one makes the save a 409."
                     },
                     "fields": {
                         "type": "object",
@@ -4727,6 +4770,10 @@
                     "status": {
                         "type": "string"
                     },
+                    "is_final": {
+                        "type": "boolean",
+                        "description": "It has finished (succeeded, failed, refused or cancelled)."
+                    },
                     "trigger": {
                         "type": "string"
                     },
@@ -4779,6 +4826,7 @@
                     "finished_at",
                     "id",
                     "input",
+                    "is_final",
                     "links",
                     "output",
                     "schema_version",
@@ -4843,20 +4891,22 @@
                 "type": "object",
                 "properties": {
                     "go_live_at": {
-                        "type": "string",
-                        "format": "date-time"
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "When the latest revision goes live; leave it out to publish now."
                     },
                     "expire_at": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "format": "date-time"
+                        "format": "date-time",
+                        "description": "When the page comes down again. Give one of the two, or both."
                     }
-                },
-                "required": [
-                    "go_live_at"
-                ]
+                }
             },
             "Site": {
                 "type": "object",

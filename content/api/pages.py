@@ -9,7 +9,8 @@
     GET   /api/v2/content/pages/<id>/types/               the page types the person may create under it
     POST  /api/v2/content/pages/<id>/publish/             publish the latest revision now
     POST  /api/v2/content/pages/<id>/unpublish/
-    POST  /api/v2/content/pages/<id>/schedule/            publish the latest revision at `go_live_at`
+    POST  /api/v2/content/pages/<id>/schedule/            publish the latest revision at `go_live_at` (or now),
+                                                          and take it down at `expire_at`
     POST  /api/v2/content/pages/<id>/unschedule/
     GET   /api/v2/content/pages/<id>/revisions/           newest first
     GET   /api/v2/content/pages/<id>/revisions/compare/   two revisions side by side, for a diff
@@ -18,8 +19,14 @@
 Views validate, call `cms.services` and serialize (api/serializers.py). They
 serve people only: an agent changes content through the tool registry and
 the accept flow, never through these (content/AGENTS.md). A session request
-needs the CSRF token, page access follows Wagtail's page permissions, and
-every failure is the envelope (ops/errors.py).
+needs the CSRF token, and every failure is the envelope (ops/errors.py).
+
+Page access follows Wagtail's page permissions. A person finds the pages
+Wagtail's explorer would show them (`cms.services.visible_pages`: those they
+hold a permission on and the ancestors that lead there), but opening one — its
+draft, fields, blocks and revisions — needs what Wagtail's own draft view
+needs, the right to edit or publish it; any other page is a 404. A Wagtail
+lock refuses every write but cancelling a schedule (409 `resource.locked`).
 """
 
 from contextlib import contextmanager
@@ -30,7 +37,7 @@ import django_filters
 from django.apps import apps
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django.urls import reverse
 from django.utils.text import capfirst
 from django_filters.rest_framework import DjangoFilterBackend
@@ -45,9 +52,9 @@ from wagtail.models import Page, Site, get_page_models
 
 from cms import services
 from importers.markdown import from_blocks
-from ops.errors import Conflict, Forbidden, Invalid, NotFound
+from ops.errors import Conflict, Forbidden, Invalid, Locked, NotFound
 from ops.openapi import ERROR_RESPONSES
-from suggestions.services import pending_for
+from suggestions.services import SuggestionError, pending_for
 
 from .serializers import (
     PageCreateSerializer,
@@ -81,6 +88,20 @@ class StudioPagination(PageNumberPagination):
     max_page_size = 100
 
 
+class NullsLastOrdering(OrderingFilter):
+    """DRF's ordering, with empty values last in either direction on every
+    database: Postgres sorts NULLs first in a descending order, so a page that
+    never had a revision would head "recently edited"."""
+
+    def filter_queryset(self, request, queryset, view):
+        ordering = self.get_ordering(request, queryset, view)
+        if not ordering:
+            return queryset
+        return queryset.order_by(
+            *(F(f[1:]).desc(nulls_last=True) if f.startswith("-") else F(f).asc(nulls_last=True) for f in ordering)
+        )
+
+
 def _details(error: ValidationError) -> list[dict]:
     found = error.message_dict if hasattr(error, "error_dict") else {None: error.messages}
     return [{"field": field, "code": "invalid", "message": m} for field, messages in found.items() for m in messages]
@@ -88,14 +109,18 @@ def _details(error: ValidationError) -> list[dict]:
 
 @contextmanager
 def service_errors():
-    """A service's exceptions as the envelope's: 403, 422 with details, 409."""
+    """A service's exceptions as the envelope's: 409 `resource.locked` for a
+    page someone has locked, 403, 422 with details, and 409 for a save over a
+    newer revision or a suggestion the page's state no longer admits."""
     try:
         yield
+    except services.PageLocked as e:
+        raise Locked(str(e)) from e
     except PermissionDenied as e:
         raise Forbidden(str(e) or "forbidden") from e
     except ValidationError as e:
         raise Invalid("validation failed", details=_details(e)) from e
-    except services.StaleRevision as e:
+    except (services.StaleRevision, SuggestionError) as e:
         raise Conflict(str(e)) from e
 
 
@@ -105,10 +130,19 @@ def _valid(serializer_class, request) -> dict:
     return serializer.validated_data
 
 
-def _page(request, pk):
-    if not services.visible_pages(request.user).filter(pk=pk).exists():
-        raise NotFound(f"no page {pk}")
-    return Page.objects.get(pk=pk).specific
+def _page(request, pk, *, opening=True):
+    """The page `pk` as the person may have it, else a 404. `opening` (reading
+    its draft or revisions, or changing it) needs the right to edit or publish
+    it; an ancestor they may only pass through is found by its title in a list
+    and no further. A parent to create under needs only to be found: whether
+    anything may be created there is `creatable_types`' question."""
+    page = services.visible_pages(request.user).filter(pk=pk).first()
+    if page is not None:
+        page = page.specific
+        perms = page.permissions_for_user(request.user)
+        if not opening or perms.can_edit() or perms.can_publish():
+            return page
+    raise NotFound(f"no page {pk}")
 
 
 # ── reading a page ─────────────────────────────────────────────────────────
@@ -244,7 +278,8 @@ def detail(page, user) -> dict:
             "add_subpage": perms.can_add_subpage(),
             "delete": perms.can_delete(),
         },
-        "pending_suggestions": pending_for(page).count(),
+        "lock": services.lock_for(page, user),
+        "pending_suggestions": pending_for(page).visible_to(user).count(),
         "preview_url": reverse("wagtailadmin_pages:view_draft", args=[page.pk]),
         "live_url": page.get_url() if page.live else None,
     }
@@ -319,7 +354,7 @@ class PageList(generics.ListAPIView):
     permission_classes = [IsPerson]
     serializer_class = PageSummarySerializer
     pagination_class = StudioPagination
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, NullsLastOrdering]
     filterset_class = PageFilter
     ordering_fields = ["title", "latest_revision_created_at", "last_published_at", "path"]
     ordering = ["-latest_revision_created_at", "path"]
@@ -345,7 +380,7 @@ class PageList(generics.ListAPIView):
     )
     def post(self, request):
         data = _valid(PageCreateSerializer, request)
-        parent = _page(request, data["parent"])
+        parent = _page(request, data["parent"], opening=False)
         try:
             model = apps.get_model(data["type"])
         except (LookupError, ValueError) as e:
@@ -378,9 +413,9 @@ def page_detail(request, pk):
             services.save_changes(
                 page,
                 request.user,
+                base_revision_id=data["base_revision_id"],
                 fields=data.get("fields") or {},
                 body=data.get("body"),
-                base_revision_id=data.get("base_revision_id"),
             )
     return _detail_response(request, pk)
 
@@ -405,7 +440,7 @@ def all_types(request):
 @api_view(["GET"])
 @permission_classes([IsPerson])
 def page_types(request, pk):
-    parent = _page(request, pk)
+    parent = _page(request, pk, opening=False)
     found = services.creatable_types(parent, request.user)
     data = [{"type": m._meta.label, "label": capfirst(m._meta.verbose_name)} for m in found]
     return Response(PageTypeSerializer(data, many=True).data)
@@ -440,14 +475,18 @@ def unpublish(request, pk):
     return _detail_response(request, pk)
 
 
-@_action("content_pages_schedule", "Publish the latest revision at `go_live_at`", ScheduleSerializer)
+@_action(
+    "content_pages_schedule",
+    "Publish the latest revision at `go_live_at` (or now) and take it down at `expire_at`",
+    ScheduleSerializer,
+)
 @api_view(["POST"])
 @permission_classes([IsPerson])
 def schedule(request, pk):
     data = _valid(ScheduleSerializer, request)
     page = _page(request, pk)
     with service_errors():
-        services.schedule(page, request.user, data["go_live_at"], data.get("expire_at"))
+        services.schedule(page, request.user, data.get("go_live_at"), data.get("expire_at"))
     return _detail_response(request, pk)
 
 

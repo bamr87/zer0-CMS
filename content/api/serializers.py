@@ -127,6 +127,11 @@ class PageDetailSerializer(PageSummarySerializer):
     body = BlockSerializer(many=True)
     markdown = serializers.CharField(allow_blank=True, help_text="The body as Markdown, as the exporter writes it.")
     permissions = PagePermissionsSerializer()
+    lock = serializers.CharField(
+        allow_null=True,
+        help_text="Why the caller cannot change the page now — a Wagtail lock: another person's, a workflow "
+        "task's, or a scheduled publish's (cancelling the schedule lifts it) — or null.",
+    )
     pending_suggestions = serializers.IntegerField()
     preview_url = serializers.CharField(help_text="The latest revision rendered by the platform.")
     live_url = serializers.CharField(allow_null=True)
@@ -141,15 +146,20 @@ class PageCreateSerializer(serializers.Serializer):
 
 class PageUpdateSerializer(serializers.Serializer):
     base_revision_id = serializers.IntegerField(
-        required=False, allow_null=True, help_text="The revision edited; a newer one makes the save a 409."
+        allow_null=True,
+        help_text="The revision edited (null only for a page without one); a newer one makes the save a 409.",
     )
     fields = serializers.DictField(child=serializers.JSONField(allow_null=True), required=False)
     body = BlockSerializer(many=True, required=False)
 
 
 class ScheduleSerializer(serializers.Serializer):
-    go_live_at = serializers.DateTimeField()
-    expire_at = serializers.DateTimeField(required=False, allow_null=True)
+    go_live_at = serializers.DateTimeField(
+        required=False, allow_null=True, help_text="When the latest revision goes live; leave it out to publish now."
+    )
+    expire_at = serializers.DateTimeField(
+        required=False, allow_null=True, help_text="When the page comes down again. Give one of the two, or both."
+    )
 
 
 class PageTypeSerializer(serializers.Serializer):
@@ -213,6 +223,14 @@ class SuggestionSerializer(serializers.Serializer):
     change = ChangeSerializer()
 
 
+class AcceptRunSerializer(serializers.Serializer):
+    ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        help_text="The run's pending suggestions the caller saw and accepts — only these, never the rest of the run.",
+    )
+
+
 class AcceptedRunSerializer(serializers.Serializer):
     accepted = serializers.ListField(child=serializers.IntegerField())
     revision_ids = serializers.ListField(child=serializers.IntegerField())
@@ -245,6 +263,7 @@ class RunSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     agent = serializers.CharField()
     status = serializers.CharField()
+    is_final = serializers.BooleanField(help_text="It has finished (succeeded, failed, refused or cancelled).")
     trigger = serializers.CharField()
     target = RunTargetSerializer()
     input = serializers.JSONField()

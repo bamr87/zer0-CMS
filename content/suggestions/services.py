@@ -17,16 +17,21 @@ time against the current state, because a suggestion made against revision 5
 may meet revision 7: a block it replaces may be gone, and then it is refused
 rather than applied somewhere it was not aimed.
 
-For the review inbox (the studio's Review area, api/review.py): `decidable`
-is the pending suggestions a person may decide, `describe` is one
-suggestion's change as before/after text for a diff, measured against the
-target's latest revision, and `accept_run` accepts everything a run proposed
-— one revision per target.
+For the review inbox (the studio's Review area, api/review.py): the
+suggestions a person may decide are `Suggestion.objects.visible_to(user)`,
+`describe` is one suggestion's change as before/after text for a diff,
+measured against the target's latest revision, and `accept_run` accepts the
+pending suggestions of a run that the person saw — one revision per target.
+
+A decision a person may not make is `PermissionDenied` (its message never
+names the target), a page someone has locked is `cms.services.PageLocked`, and
+a decision the target's current state refuses is `SuggestionError`.
 """
 
 import json
 import uuid
 
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 from wagtail.admin.rich_text.converters.editor_html import EditorHTMLConverter
@@ -62,9 +67,14 @@ def clean_block(payload: dict) -> dict:
     child = BasePage._meta.get_field("body").stream_block.child_blocks[payload["type"]]
     value = child.get_prep_value(native)
     if isinstance(child, RichTextBlock):
-        # Wagtail whitelists rich text that comes through its editor; a value
-        # that arrives as JSON gets the same whitelist here.
-        value = EditorHTMLConverter(features=child.features).to_database_format(value)
+        # Rich text arrives in Wagtail's database format — the form every reader
+        # of a page gets (the studio's API, the agent tools) — with internal
+        # links as <a linktype="page" id="…">. The whitelist below reads the
+        # editor's form (data-linktype), so the value is expanded to that form
+        # first: a link or embed the block's features allow keeps its target,
+        # and anything else is dropped, as Wagtail's own editor drops it.
+        converter = EditorHTMLConverter(features=child.features)
+        value = converter.to_database_format(converter.from_database_format(value))
     return {"type": payload["type"], "value": value}
 
 
@@ -229,7 +239,7 @@ def accept(suggestions, user):
     """Apply pending suggestions on one target as one revision. Returns the
     revision (pages) or the saved object (images, edges)."""
     from cms.models import BasePage
-    from cms.services import save_draft
+    from cms.services import save_draft, writable
 
     suggestions = list(
         Suggestion.objects.select_for_update().filter(pk__in=[s.pk for s in suggestions]).order_by("created_at", "id")
@@ -247,7 +257,7 @@ def accept(suggestions, user):
     target = suggestions[0].target
     target = target.specific if hasattr(target, "specific") else target
     if not can_decide(user, target):
-        raise SuggestionError(f"{user} may not change {target}")
+        raise PermissionDenied("you may not decide suggestions on this target")
     author = suggestions[0].created_by
 
     edges = [s for s in suggestions if s.op == Suggestion.EDGE]
@@ -261,7 +271,10 @@ def accept(suggestions, user):
     result = target
     written: list[tuple[Suggestion, str]] = []
     if rest and isinstance(target, BasePage):
-        page = target.get_latest_revision_as_object()
+        # The page's row lock, so a save or another accept that started from the
+        # same revision runs after this one and builds on its revision; and a
+        # page someone has locked is refused, as for any other writer.
+        page = writable(target, user).get_latest_revision_as_object()
         for s in rest:
             payload = s.payload
             if s.op == Suggestion.META:
@@ -314,7 +327,7 @@ def reject(suggestion, user, reason=""):
     target = suggestion.target
     target = target.specific if hasattr(target, "specific") else target
     if not can_decide(user, target):
-        raise SuggestionError(f"{user} may not change {target}")
+        raise PermissionDenied("you may not decide suggestions on this target")
     suggestion.status = Suggestion.REJECTED
     suggestion.decided_by = user
     suggestion.decided_at = timezone.now()
@@ -342,23 +355,6 @@ def accept_rate(agent=None):
 
 
 # ── the review inbox ───────────────────────────────────────────────────────
-
-
-def decidable(user):
-    """Pending suggestions on pages `user` may edit (and on images, with the
-    image permission). A person decides; an agent never has an inbox."""
-    from django.db.models import Q
-    from wagtail.permission_policies.pages import PagePermissionPolicy
-
-    qs = Suggestion.objects.filter(status=Suggestion.PENDING).select_related("agent", "run", "target_ct")
-    if user is None or not user.is_authenticated or user.username.startswith("agent:"):
-        return qs.none()
-    if user.is_superuser:
-        return qs
-    images = Q(target_ct__app_label="cms", target_ct__model="contentimage")
-    editable = PagePermissionPolicy().instances_user_has_permission_for(user, "change").values("pk")
-    pages = Q(target_id__in=editable) & ~images
-    return qs.filter(pages | images) if user.has_perm("cms.change_contentimage") else qs.filter(pages)
 
 
 def _text(block_type, value) -> str:
@@ -411,13 +407,22 @@ def describe(suggestion, latest=None) -> dict:
 
 
 @transaction.atomic
-def accept_run(run, user) -> list:
-    """Accept every pending suggestion of `run`: one revision per target (and
-    per proposing user, as `accept` requires). All of it, or none of it."""
-    pending = list(Suggestion.objects.filter(run=run, status=Suggestion.PENDING).order_by("created_at", "id"))
-    if not pending:
-        raise SuggestionError(f"run {run.pk} has no pending suggestions")
+def accept_run(run, user, ids) -> tuple[list[Suggestion], list]:
+    """Accept the suggestions `ids` of `run` — the ones the person saw, never
+    the rest of the run — as one revision per target (and per proposing user,
+    as `accept` requires). Each must be a pending suggestion of the run that
+    the person may decide. All of them, or none. Returns the suggestions and
+    what each `accept` returned."""
+    wanted = set(ids)
+    found = list(
+        Suggestion.objects.visible_to(user)
+        .filter(run=run, status=Suggestion.PENDING, pk__in=wanted)
+        .order_by("created_at", "id")
+    )
+    missing = sorted(wanted - {s.pk for s in found})
+    if not wanted or missing:
+        raise SuggestionError(f"not pending suggestions of run {run.pk} you may decide: {missing or 'none given'}")
     groups: dict = {}
-    for s in pending:
+    for s in found:
         groups.setdefault((s.target_ct_id, s.target_id, s.created_by_id), []).append(s)
-    return [accept(group, user) for group in groups.values()]
+    return found, [accept(group, user) for group in groups.values()]
