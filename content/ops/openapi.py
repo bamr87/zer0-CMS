@@ -1,7 +1,8 @@
 """The OpenAPI document's scope and the envelope's schema (UPS-BE-12, BE-31).
 
 drf-spectacular walks a URLconf; this one holds the platform's own REST
-endpoints (`api/urls.py` `urlpatterns`) and nothing else. Wagtail's
+endpoints (`api/urls.py` `urlpatterns` and the AI content layer's router,
+`ai/urls.py`) and nothing else. Wagtail's
 `pages`/`images`/`documents` viewsets build their serializer per request
 (`get_serializer_class` reads `self.request`), which no static generator can
 introspect, so they are documented by Wagtail itself and left out here. The
@@ -11,8 +12,6 @@ probes are root-level, not `/api/v2`, so they stay out too.
 from django.urls import include, path
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import serializers
-
-urlpatterns = [path("api/v2/", include("api.urls"))]
 
 
 class AgentTokenScheme(OpenApiAuthenticationExtension):
@@ -50,3 +49,6 @@ class ErrorEnvelopeSerializer(serializers.Serializer):
 
 
 ERROR_RESPONSES = {status: ErrorEnvelopeSerializer for status in (401, 403, 404, 405, 409, 422, 429, 500)}
+
+# Last, because the views these include import ERROR_RESPONSES from here.
+urlpatterns = [path("api/v2/ai/", include("ai.urls")), path("api/v2/", include("api.urls"))]

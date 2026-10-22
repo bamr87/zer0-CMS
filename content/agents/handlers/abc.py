@@ -48,9 +48,9 @@ def draft(run, ctx):
     theme = (run.input or {}).get("theme") or (page.front_matter or {}).get("theme") or page.title
     data = lexicon(theme)
     if data is None:
-        from ..runner import _model_loop
+        from ..runner import model_loop
 
-        return {**_model_loop(run, ctx, ctx.agent), "theme": theme, "provider": "model"}
+        return {**model_loop(run, ctx, ctx.agent), "theme": theme, "provider": "model"}
 
     current = registry.call("content.get_page", {"page_id": page.pk}, ctx)
     have = {b["value"].get("letter") for b in current.get("body", []) if b["type"] == "letter"}

@@ -15,6 +15,11 @@ can be read back step by step, and nothing a step did is lost.
 
 Nothing here writes content. Writing is what tools do, under the registry's
 checks; the runner only decides which tool the model asked for.
+
+`run_finished` is sent when a run reaches a final status, in the transaction
+that records it, whether or not its handler ever ran — so whatever the run was
+filling (an AI layer brief or reply) can take the run's outcome even when the
+run was refused before the handler started.
 """
 
 import copy
@@ -25,6 +30,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.dispatch import Signal
 from django.utils import timezone
 from django.utils.module_loading import import_string
 
@@ -33,6 +39,8 @@ from .models import AgentRun, AgentStep
 from .principals import is_agent_user
 from .registry import ToolContext, ToolError, registry
 from .tracing import current_trace_id, new_trace_id, span, trace
+
+run_finished = Signal()  # sender=AgentRun, run=<the run, final>
 
 
 class RunRefused(Exception):
@@ -99,7 +107,7 @@ def _execute(run: AgentRun) -> AgentRun:
         if config.handler:
             output = import_string(config.handler)(run, ctx)
         else:
-            output = _model_loop(run, ctx, config)
+            output = model_loop(run, ctx, config)
     except BudgetExceeded as e:
         return _finish(run, AgentRun.FAILED, error=str(e))
     except (RecordingMissing, RecordingStale) as e:
@@ -146,30 +154,59 @@ def _context(run: AgentRun, results: list) -> dict:
     }
 
 
-def _model_loop(run: AgentRun, ctx: ToolContext, config) -> dict:
-    llm = get_llm()
+def model_loop(
+    run: AgentRun,
+    ctx: ToolContext,
+    config,
+    *,
+    llm=None,
+    model=None,
+    system=None,
+    messages=None,
+    schema=None,
+    params=None,
+    step_offset=0,
+) -> dict:
+    """Ask the model, run the tool calls it makes, feed the results back, stop at
+    an answer with no tool call. A definition's run uses its own model, prompt
+    and backend; a handler (the AI content layer's assistants, ai/handlers.py)
+    passes its own client, persona, history, output schema and parameters, and
+    `step_offset` when it calls the loop again within one run (the recording
+    step numbers keep counting)."""
+    llm = llm or get_llm()
     run.llm_backend = getattr(llm, "name", type(llm).__name__)
     run.save(update_fields=["llm_backend"])
     tools = [t.spec() for t in registry.for_context(ctx)]
-    messages = [{"role": "user", "content": first_message(run)}]
+    if tools and "tools" not in getattr(llm, "capabilities", {"tools"}):
+        raise ValueError(f"{run.llm_backend} has no tool calls and {config.slug} uses tools: choose another backend")
+    messages = list(messages) if messages is not None else [{"role": "user", "content": first_message(run)}]
+    model = model or config.model
+    system = config.system_prompt if system is None else system
+    options = {key: value for key, value in (("schema", schema), ("params", params)) if value}
     results: list = []
     scenario = run.input.get("scenario", "default")
 
     for step in range(config.max_steps):
         started = time.monotonic()
-        with span("agent.llm", model=config.model, step=step):
+        with span("agent.llm", model=model, step=step_offset + step):
             completion = llm.complete(
-                model=config.model,
-                system=config.system_prompt,
+                model=model,
+                system=system,
                 messages=messages,
                 tools=tools,
-                metadata={"agent": config.slug, "scenario": scenario, "step": step, "context": _context(run, results)},
+                metadata={
+                    "agent": config.slug,
+                    "scenario": scenario,
+                    "step": step_offset + step,
+                    "context": _context(run, results),
+                },
+                **options,
             )
         AgentStep.objects.create(
             run=run,
             idx=run.next_step_index(),
             kind=AgentStep.LLM,
-            name=completion.model or config.model,
+            name=completion.model or model,
             args={"step": step, "messages": len(messages)},
             result={
                 "text": completion.text,
@@ -186,7 +223,10 @@ def _model_loop(run: AgentRun, ctx: ToolContext, config) -> dict:
             raise BudgetExceeded(f"spent ${run.cost_usd} of a ${config.budget_usd} budget")
 
         if not completion.tool_calls:
-            return final_output(completion.text)
+            output = final_output(completion.text)
+            if getattr(completion, "data", None) is not None:
+                output["json"] = completion.data  # a provider's native structured output
+            return output
 
         messages.append(
             {
@@ -239,6 +279,7 @@ def _finish(run: AgentRun, status: str, output=None, error="") -> AgentRun:
                 "suggestions": Suggestion.objects.filter(run=run).count(),
             },
         )
+        run_finished.send(sender=AgentRun, run=run)
     if run.trigger == "workflow":
         from workflow.services import finish_review
 

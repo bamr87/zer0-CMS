@@ -8,15 +8,15 @@ Definitions, runs and the one tool registry every surface dispatches through (no
 |---|---|
 | `models.py` | `AgentDefinition` (a snippet with revisions and a draft/live state), `AgentRun`, `AgentStep`, `Memory`, `EvalCase`, `EvalResult`, `AgentToken` |
 | `principals.py` | `agent:<slug>` users, the `Agents` group and each agent's own group with its Wagtail page and collection permissions |
-| `registry.py` | `@tool`, `Registry.call()` and the six checks it runs on every call |
-| `llm.py` | `complete()` over `recorded`, `fake` and `litellm` backends; `RecordingLLM` |
-| `runner.py` | `start_run` / `execute`: the state machine over runs and steps |
+| `registry.py` | `@tool`, `Registry.call()` and the six checks it runs on every call — for a call that acts for a person (`ToolContext.on_behalf_of`, set by the AI content layer's runs), a page the tool targets must also be one that person may edit |
+| `llm.py` | the model client the runner uses (`get_llm`, `use_llm`): a thin front over the provider registry in `ai/providers/`, which `LLM_BACKEND` names a slug of (`recorded`, `fake`, `litellm`, `anthropic`, `openai`, `claude_code`) — the definitions' LiteLLM-style ids (`anthropic/claude-sonnet-5-5`) reach a vendor adapter bare, and `claude_code`, which has no tool calls, refuses a definition that uses tools; `RecordingLLM` |
+| `runner.py` | `start_run` / `execute`: the state machine over runs and steps; `model_loop`, which a handler may call with its own client, persona and history (the AI content layer's assistants do); `run_finished`, sent in the transaction that records a final status — also for a run refused before its handler ran |
 | `schema.py` | the JSON Schema export of every page type and block; `validate_block` |
 | `evals.py` | scoring, the publish gate and the promotion rule |
 | `sync.py` | `definitions/*.yaml` → definitions and eval cases |
 | `handlers/` | deterministic agents: `reviews.brand`, `reviews.a11y`, `abc.draft` |
 | `tools.py` | `memory.recall`, `memory.remember`, `brand.rules` |
-| `definitions/` | the agents, as reviewable YAML |
+| `definitions/` | the agents, as reviewable YAML — including `assistant`, which runs the AI content layer's user-managed assistants (`ai/handlers.py`) |
 | `recordings/` | recorded model responses for the eval scenarios |
 | `data/abc_lexicons/` | the ABC lexicons (a vendored copy of `rails/lib/zer0_cms/abc/lexicons/`) |
 
@@ -43,4 +43,4 @@ A definition may carry `profile.profiles.<name>`: an alternative handler or syst
 
 Tests and CI never call a model. `LLM_BACKEND=recorded` replays `recordings/<agent>/<scenario>/<step>.json`, where the scenario is the run's `input.scenario` (an eval case's name by default) and the step counts model calls within the run. Each file stores the `prompt_digest` of the system prompt and tool list it was recorded with; replaying it against a changed prompt fails with `RecordingStale`, because a changed prompt deserves a new recording. Tool-call arguments use placeholders instead of ids — `{{target.id}}`, `{{results.N.path}}` (the Nth tool result in the run so far) and `{{input.key}}` — so one recording holds on any database.
 
-To record: `LLM_BACKEND=litellm ZER0_LLM_RECORD=1 python manage.py run_evals --agent <slug>` (with `pip install litellm` and the provider's key), then replace the ids in the written files with placeholders and commit them.
+To record: `LLM_BACKEND=litellm ZER0_LLM_RECORD=1 python manage.py run_evals --agent <slug>` (any provider slug works; with `pip install -r requirements-providers.txt` and the provider's key), then replace the ids in the written files with placeholders and commit them. A call with an output schema digests the schema too, so a changed schema needs a new recording.
