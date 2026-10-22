@@ -1,5 +1,7 @@
 # The zer0 monorepo
 
+> Every project under `packages/`, `sites/` and `apps/`, how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs from the originals.
+
 zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension and the Rails fleet CMS it started with, the Django + Wagtail content plane that is becoming its centre ([ADR 0001](adr/0001-target-architecture.md)), plus the theme, the image generator, the books app, nine Jekyll sites, the parodynews Django app and the aieo FastAPI app. Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
 
 ## Layout

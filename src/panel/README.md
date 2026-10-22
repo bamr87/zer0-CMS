@@ -1,5 +1,7 @@
 # `src/panel` — the metadata panel's host
 
+> The metadata panel's host: the snapshot the sidebar webview draws, the whitelist that turns its intents into actions, and the imperative posts commands need.
+
 One file. `PanelProvider` is the `vscode.WebviewViewProvider` behind the `zer0Cms.panel` sidebar view: it builds the snapshot the webview draws, owns the whitelist that decides which webview intents become actions, and implements the two imperative posts that three commands need.
 
 The UI itself is `src/webview/panel/**` — vanilla TypeScript, bundled to `dist/panel.js`, no framework. Read `src/webview/panel/README.md` for the sections; read this file for what the host does with them.

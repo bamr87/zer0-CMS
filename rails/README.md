@@ -2,6 +2,8 @@
 
 # zer0-CMS — fleet CMS platform (Rails) + ABC generator
 
+> The fleet CMS half of zer0-CMS — a Rails app that indexes, edits and previews every zer0-themed Jekyll site — and the stdlib-only ABC book generator with its CLI.
+
 This is the **platform** half of zer0-CMS. The VS Code extension (`../src`) still *edits* content inside the editor. This Rails app is the browser control panel for every zer0-themed Jekyll site: register roots, scan collections, edit front matter in place, and generate ABC books.
 
 The ABC generator remains a stdlib-only Ruby library (`lib/zer0_cms/abc`) with a CLI. The web UI wraps that plus the new `Zer0Cms::Cms` catalog / front-matter layer.

@@ -1,5 +1,7 @@
 # The zer0 stack
 
+> The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it.
+
 Three repositories, one contract each: a theme that renders, an image engine that draws, a CMS that edits. A content repository is aligned when it consumes each pillar through its contract and nothing else — no vendored forks, no copied generators. This page is zer0-CMS's side of that agreement: what it owns, the consumer contract `zer0 doctor` checks, the reusable workflow that runs it, and what zer0-CMS itself consumes from the other two. The image generator's side is its own `docs/ZER0-STACK.md`. The decisions were taken on 2026-09-14.
 
 ## The three pillars

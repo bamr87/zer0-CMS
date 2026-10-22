@@ -1,5 +1,7 @@
 # `src/mcp` — the bundled MCP server
 
+> The bundled MCP server: sixteen tools over stdio with the governance built into their shapes, the environment flags that arm them, and how to run it.
+
 Three files that expose the CMS as sixteen tools over stdio, with the governance built into their shapes. Pure Node — see `../core/README.md` for the layering rule, which this directory is the second half of.
 
 | File | Exports | Owner |

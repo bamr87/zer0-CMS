@@ -1,5 +1,7 @@
 # `outbox/` — events between the planes
 
+> The transactional outbox: events committed with the change they announce, relayed in order to Redis Streams, and handled once per consumer.
+
 The transactional outbox (M8). A change and the event announcing it commit together, or neither does; then a relay moves events onto Redis Streams, at least once, in order.
 
 - **`emit(type, data, subject)`** validates `data` against `schemas/events/<type>.v<N>.json` and inserts an `OutboxEvent` — and refuses to run outside a transaction, because an event that could commit without its change (or the reverse) defeats the outbox. Every HTTP request is atomic (`ATOMIC_REQUESTS`), so an admin publish and the event its signal emits share one transaction; commands and tasks that write wrap their work in `transaction.atomic()`.

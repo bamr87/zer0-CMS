@@ -1,30 +1,68 @@
-# `docs/` — the long-form documentation
+# zer0-CMS documentation
 
-Eight documents and two directories live here, and they answer different questions. Everything shorter than these is in the root [`README.md`](../README.md); everything about *changing* the code is in [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`AGENTS.md`](../AGENTS.md).
+> Every document in this repository's own trees, one line each — the root docs of record, the long-form guides, ADRs and plan in `docs/`, and each product directory's README.
 
-| Document | Answers |
-|---|---|
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Where the extension's internal boundary is, why `src/core` cannot import `vscode`, what the five bundles are, how the webview contract works, what the ledger guarantees, and D15–D16: the Rails CMS and the extension share files, not a process, and the Rails UI is Administrate over an index git stays the truth for. |
-| [`PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
-| [`MONOREPO.md`](MONOREPO.md) | The monorepo: every project under `packages/`, `sites/` and `apps/`, how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs from the original repositories. |
-| [`ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
-| [`CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
-| [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 44 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
-| [`adr/`](adr/README.md) | Architecture decision records: [ADR 0001](adr/0001-target-architecture.md) — one agent-native headless CMS, with a Django/Wagtail content plane, a Rails experience plane, and the extension and Jekyll sites as clients and frontends — and the interim calls on the plan's open decisions. |
-| [`plan/`](plan/PLAN.md) | The build plan (milestones M0–M20, with what is done and what is blocked) and the design note it implements, [`agent-native-design.md`](plan/agent-native-design.md). |
-| [`DISTRIBUTION.md`](DISTRIBUTION.md) | The governed LinkedIn lane: queue, guard, approval, ledger, the reusable workflow. |
-| [`RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
+Start with the root [`README.md`](../README.md) for what zer0-CMS is, and [`AGENTS.md`](../AGENTS.md) for how to work here. The projects imported under `packages/`, `sites/` and `apps/` keep their own documentation in their own trees; [`MONOREPO.md`](MONOREPO.md) lists them and `bin/zer0 list` prints them. A product README below links the deeper guides inside its directory; [`src/README.md`](../src/README.md) carries a generated index of its own.
+
+**Backlog of record:** GitHub Issues with the fleet labels (`.github/sdlc.yml`), and the milestones in [`plan/PLAN.md`](plan/PLAN.md) as the build order.
 
 ## The rule these documents follow
 
 Every document here describes **the code as it is**, not as a plan intended it. When they disagree with the source, the source is right and the document is a bug — so a change to configuration, to the JSON schema, or to the layer boundary is not finished until the matching document moves with it.
 
-Two places make that concrete for `CONFIG.md`: every `zer0Cms.*` id it names exists in `package.json`'s `contributes.configuration`, and every `zer0.json` key it names exists in [`../schemas/zer0.schema.json`](../schemas/zer0.schema.json). Adding a setting means editing three files — the manifest, the settings layer in `src/config.ts`, and `CONFIG.md`. Adding a `zer0.json` key means editing four — the schema, `src/core/shared/types.ts`, `src/core/shared/config.ts`, and `CONFIG.md`.
+Where the source holds the facts, the reference is generated rather than written. The settings tables in [`CONFIG.md`](CONFIG.md) §5 come from `package.json`'s `contributes.configuration` (`python3 tools/check-config-docs.py --write`), so adding a setting means editing the manifest and the settings layer in `src/config.ts`, then regenerating; adding a `zer0.json` key means editing the schema, `src/core/shared/types.ts`, `src/core/shared/config.ts` and `CONFIG.md` §3. The index below comes from each document's own summary line (`tools/docs_index.py`, vendored from the hub). `python3 tools/check-config-docs.py --write` regenerates both, and CI runs it without `--write`, failing while either is stale or while a document cites a setting that does not exist.
 
-## Writing conventions
+Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it, skipping `SCHEMA.md` and `CHANGELOG.md`; run `python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'` after editing.
 
-Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it, skipping `SCHEMA.md` and `CHANGELOG.md`; run `python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'` after editing, or `--check` with the same excludes to see what would change.
+<!-- AUTO:docs-index:start roots=docs,src,rails,content,schemas,media,tools -->
+<!-- Generated by tools/docs_index.py from each document's summary line (front-matter `description:` or the `>` line under its H1). Edit the documents, then run `python3 tools/docs_index.py --write`. -->
 
-## Nearby documentation
+### Repository root
 
-The per-directory `README.md` files are the other half of the documentation and are usually the faster answer: [`src/core/`](../src/core/README.md), [`src/core/shared/`](../src/core/shared/README.md), [`src/core/content/`](../src/core/content/README.md), [`src/core/governance/`](../src/core/governance/README.md), [`src/core/contract/`](../src/core/contract/README.md), [`src/core/catering/`](../src/core/catering/README.md), [`src/mcp/`](../src/mcp/README.md), [`src/panel/`](../src/panel/README.md), [`src/dashboard/`](../src/dashboard/README.md), [`src/webview/panel/fields/`](../src/webview/panel/fields/README.md), [`src/core/platform/`](../src/core/platform/README.md), [`src/core/fleet/`](../src/core/fleet/README.md), [`src/core/harness/`](../src/core/harness/README.md), [`src/commands/`](../src/commands/README.md), [`src/test/`](../src/test/README.md), [`src/views/`](../src/views/README.md), [`src/agent/`](../src/agent/README.md), [`src/webview/`](../src/webview/README.md), [`src/webview/dashboard/`](../src/webview/dashboard/README.md), [`media/`](../media/README.md), [`media/templates/`](../media/templates/README.md), [`rails/`](../rails/README.md) for the fleet CMS platform (and the ABC wizard), which is a separate product in the same repository, and [`content/`](../content/README.md) for the content plane.
+| Document | What it covers |
+| --- | --- |
+| [`AGENTS.md`](../AGENTS.md) | How to work in zer0-CMS, the zer0 stack's agent-native headless CMS and monorepo: commands, layout, conventions, the plane boundary and the invariants the build enforces. |
+| [`CONTRIBUTING.md`](../CONTRIBUTING.md) | How to set up, the rules the build enforces, style, tests, and how to report a problem — for anyone sending a change to zer0-CMS. |
+| [`CHANGELOG.md`](../CHANGELOG.md) | Release history: the notable changes in each version, newest first. |
+| [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) | The standards of behaviour for everyone taking part. |
+| [`ATTRIBUTION.md`](../ATTRIBUTION.md) | Where zer0-CMS came from — a fork of Front Matter CMS, since rewritten from scratch — what of its design remains, and the MIT notice that covers it. |
+| [`content/`](../content/README.md) | The Django 5.2 + Wagtail 7.4 content plane — pages and revisions, the agent harness and tool registry, suggestions, the graph, the outbox, and its GraphQL, REST and MCP surfaces — and how to run it. |
+| [`media/`](../media/README.md) | The extension's design system: four stylesheets, the `--z-*` token layer, themes, metrics and icons, and the rules for adding a style. |
+| [`rails/`](../rails/README.md) | The fleet CMS half of zer0-CMS — a Rails app that indexes, edits and previews every zer0-themed Jekyll site — and the stdlib-only ABC book generator with its CLI. |
+| [`src/`](../src/README.md) | The VS Code extension's layers — the pure core, the MCP server, the webviews and the `vscode` shell — the shell's files, and the five things in it that are easy to get wrong. |
+
+### `docs/`
+
+| Document | What it covers |
+| --- | --- |
+| [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | The design decisions D1–D17 and why the code follows them: the `src/core` layer boundary, the five bundles, the webview contract, the ledger, the Fleet console's guards, and the shared-files boundary with the Rails CMS. |
+| [`docs/CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
+| [`docs/CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, every `zer0Cms.*` setting (generated from `package.json`), the placeholder tokens, and which layer a decision belongs in. |
+| [`docs/DISTRIBUTION.md`](DISTRIBUTION.md) | The governed LinkedIn lane — queue, brand guard, human approval, ledger and the reusable workflow — that carries a site's content to LinkedIn and its aggregate response back. |
+| [`docs/MONOREPO.md`](MONOREPO.md) | Every project under `packages/`, `sites/` and `apps/`, how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs from the originals. |
+| [`docs/PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
+| [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
+| [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
+| [`docs/adr/`](adr/README.md) | The architecture decision records, one per decision that changes how the repository is put together — from ADR 0001's content plane, experience plane and clients onward. |
+
+### `schemas/`
+
+| Document | What it covers |
+| --- | --- |
+| [`schemas/events/`](../schemas/events/README.md) | The CloudEvents contracts between the planes: every event type, who publishes and consumes it, and the schema its data is validated against. |
+
+### `tools/`
+
+| Document | What it covers |
+| --- | --- |
+| [`tools/history/`](../tools/history/README.md) | `graft.sh`, which restores the imported history a squash merge dropped (cutover milestone C0), and how to run it safely. |
+| [`tools/workspace/`](../tools/workspace/README.md) | The tooling behind `bin/zer0`: every command, the contract `bin/zer0 check` enforces, ownership of files, and the library's layout. |
+
+### `docs/plan/`
+
+| Document | What it covers |
+| --- | --- |
+| [`docs/plan/agent-native-design.md`](plan/agent-native-design.md) | The design note the plan implements ("the note"): agent runs as content-adjacent data — Wagtail revisions, moderation tasks and graph edges — across a Django/Wagtail content plane and a Rails experience plane. |
+| [`docs/plan/PLAN.md`](plan/PLAN.md) | The build plan for the agent-native headless CMS: milestones M0–M20 and the cutover steps, with what is done, what is blocked, and the open decisions. |
+
+<!-- AUTO:docs-index:end -->

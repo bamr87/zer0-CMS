@@ -1,5 +1,7 @@
 # Configuration
 
+> Every configuration key: the three layers and their precedence, all of `zer0.json`, every `zer0Cms.*` setting (generated from `package.json`), the placeholder tokens, and which layer a decision belongs in.
+
 zer0-CMS is configured from two surfaces that resolve into one value object.
 
 `zer0.json` describes the **project**: where content lives, what shape it has, what a slug looks like, which thresholds SEO is measured against. It is committed, it is read by the extension *and* by the bundled MCP server, and it is the same for everyone who clones the repo. VS Code settings under `zer0Cms.*` describe **your preferences on this machine**: whether the panel opens by itself, how big a dashboard page is, where your Python lives, whether publishing is allowed at all. There are 44 of them, and none of them describe the project.

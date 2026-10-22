@@ -1,5 +1,7 @@
 # LinkedIn distribution
 
+> The governed LinkedIn lane — queue, brand guard, human approval, ledger and the reusable workflow — that carries a site's content to LinkedIn and its aggregate response back.
+
 zer0-CMS carries a site's content to LinkedIn — to a company page or to a member's own profile — and brings the audience's aggregate response back into the site, where it decides what gets written next. A person approves every post. Nothing a repository ships can switch publishing on. Every LinkedIn call the CMS can make is declared, as data, before it is made.
 
 ```

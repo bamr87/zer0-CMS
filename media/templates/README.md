@@ -1,5 +1,7 @@
 # `media/templates` — the files a generated lane is written from
 
+> The files a generated lane is written from, shipped inside the vsix: what each one is, where it came from, and the rule for refreshing it.
+
 Three files, shipped inside the vsix (`.vscodeignore` excludes this directory's own `README.md`, `media/README.md` and `CLAUDE.md`, and `src/**` is not packaged, so a template kept beside the tests would not exist at runtime). The Harness route reads them from `context.extensionUri` when it plans a scaffold, which is why they live under `media/` with the stylesheets rather than under `src/`.
 
 ## What each file is, and where it came from

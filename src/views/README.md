@@ -1,5 +1,7 @@
 # `src/views/` — the five tree views
 
+> The five tree views — Sites, Drafts, Content, Distribution and Published — their ids and context keys, and the one rule that no tree reads the filesystem.
+
 | File | View id | Shown when | Levels |
 |---|---|---|---|
 | `sitesTree.ts` | `zer0Cms.sites` | `zer0Cms:sites:multi` | one |

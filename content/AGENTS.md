@@ -1,5 +1,7 @@
 # AGENTS.md — the content plane (`content/`)
 
+> What holds inside the content plane on top of the root AGENTS.md: what done means, the invariants, and the conventions for its Django apps.
+
 Guidance for AI coding agents working in `content/`, the Django + Wagtail content plane. The repository-wide rules — the plane boundary, the agent safety rules, the workflow — are in the root [`AGENTS.md`](../AGENTS.md); this file adds what holds inside this project. [`README.md`](README.md) maps the apps; ADR 0001 says why they exist.
 
 "Done" for a change here means `python -m pytest -q` (with `-m "not slow"` as the fast loop) and `python manage.py makemigrations --check --dry-run` pass, `ruff check . && ruff format --check .` are clean, `python manage.py run_evals --all --recorded` passes, and the two committed schemas are current: `schemas/graphql/schema.graphql` (`manage.py graphql_schema --out …`) and `schemas/content/ai-schema.json` (`manage.py wagtail_ai_schema --out …`). CI runs the suite on SQLite and on Postgres with pgvector (`content.yml`).

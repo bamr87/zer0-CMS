@@ -1,5 +1,7 @@
 # `lib/zer0_cms/cms/` — the stdlib content library
 
+> The stdlib content library the Rails app drives — Jekyll 4.4's catalog, front-matter line surgery and the confined writer — file by file.
+
 The read/write layer the Rails app drives. Stdlib only — no gems — so `bin/test-stdlib` runs it with no bundler on the CI Ruby (3.3) and on the app's Ruby (4.0).
 
 | File | Role |

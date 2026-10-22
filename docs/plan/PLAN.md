@@ -1,5 +1,7 @@
 # PLAN: zer0-CMS → agent-native headless CMS (Django/Wagtail + Rails)
 
+> The build plan for the agent-native headless CMS: milestones M0–M20 and the cutover steps, with what is done, what is blocked, and the open decisions.
+
 Source of truth for the target: `docs/plan/agent-native-design.md` (called "the note"; section numbers refer to it). Working rules: [`AGENTS.md`](../../AGENTS.md). The decision record is [ADR 0001](../adr/0001-target-architecture.md), which also makes the interim calls on §7's open decisions. One milestone = one Claude Code session = one PR. Tick boxes in the same PR that does the work.
 
 ## 0. What is in this repo today (review findings)

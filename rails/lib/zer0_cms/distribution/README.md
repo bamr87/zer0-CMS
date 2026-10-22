@@ -1,5 +1,7 @@
 # `Zer0Cms::Distribution` — the LinkedIn lane
 
+> The LinkedIn lane, file by file: the governed path from a site's page to a LinkedIn post and the aggregate response back.
+
 The governed path from a site's page to a LinkedIn post, and the aggregate response back into `.cms/distribution/performance.json`. The CLI (`bin/zer0-cms linkedin`), the reusable workflow (`.github/workflows/zer0-linkedin.yml`), the MCP server and the Rails CMS all call `Pipeline`. The design of record, including every gate and the declared call plan, is [`docs/DISTRIBUTION.md`](../../../../docs/DISTRIBUTION.md).
 
 | File | What it holds |

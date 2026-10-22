@@ -1,5 +1,7 @@
 # `content/` — the content plane
 
+> The Django 5.2 + Wagtail 7.4 content plane — pages and revisions, the agent harness and tool registry, suggestions, the graph, the outbox, and its GraphQL, REST and MCP surfaces — and how to run it.
+
 The Django 5.2 + Wagtail 7.4 project at the centre of zer0-CMS's target architecture ([ADR 0001](../docs/adr/0001-target-architecture.md)): pages and their revisions, the agent harness and its one tool registry, suggestions, the content graph, the transactional outbox, and the GraphQL, REST and MCP surfaces over all of it. It is additive today: the Jekyll files stay the source of truth (PLAN-D1 is open), and the importer and exporter keep both directions exact.
 
 ```bash
