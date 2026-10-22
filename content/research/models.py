@@ -242,6 +242,10 @@ class FactCheck(Collaborative):
     collection = models.ForeignKey(Collection, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     summary = models.TextField(blank=True)
     findings = models.JSONField(default=list, blank=True)
+    sources = models.JSONField(default=list, blank=True, help_text="[{id, title, cited}] the sources the check read.")
+    left_out = models.PositiveIntegerField(
+        default=0, help_text="Sources it could have read but did not: a check reads at most six, its citations first."
+    )
     run = models.ForeignKey("agents.AgentRun", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
 
     class Meta:

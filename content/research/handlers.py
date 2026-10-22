@@ -7,33 +7,36 @@ tokens and cost, under the definition's limits.
 Every result is something a person reviews: a summary, the entities and the
 passages worth quoting arrive on the source; an answer cites its sources by
 label and each quote is checked against the source's own text (`verified`); a
-fact-check's findings are kept on the check, and the ones with a correction
-become suggestions on the draft from the assistant agent, for the editor to
-accept or reject. What a run uses is asked again here, as for every AI run:
-the rows must still be its starter's to use, and the draft one they may edit.
+fact-check's findings are kept on the check with the sources it read, and a
+block's corrections — exact words and what they should say — are made together
+in the block's own value and proposed as one suggestion on the draft through
+the tool registry (`content.propose_edit`, as the assistant agent, for the
+person who asked), for the editor to accept or reject. What a run uses is asked
+again here, as for every AI run: the rows must still be its starter's to use,
+and the draft one they may edit.
 """
 
+import copy
 import time
+from collections import defaultdict
 from dataclasses import asdict
 
 from django.utils import timezone
-from django.utils.html import escape
 
 from agents.models import AgentRun, AgentStep
-from agents.registry import ToolContext
+from agents.registry import ToolContext, ToolError, registry
 from ai import providers
 from ai.handlers import Persona, generate, owned, register, used
 from ai.models import Assistant
 from ai.services import check_provider
-from cms.models import POLICY_ORDER, POLICY_SUGGEST
 from graph.embeddings import tokens
-from suggestions.services import SuggestionError, propose
 
 from . import services
-from .models import Collection, FactCheck, Question, Source, placement
+from .models import Citation, Collection, FactCheck, Question, Source, placement
 from .tasks import fetch_source
 
 TEXT_LIMIT = 40_000  # characters of a source a summary reads
+PROPOSE = "content.propose_edit"  # the one tool a fact-check proposes with (agents/definitions/assistant.yaml)
 
 
 def _persona(run: AgentRun) -> Persona:
@@ -94,15 +97,6 @@ def answer(run: AgentRun, ctx: ToolContext) -> dict:
     return {**result, "sources": [str(s.public_id) for s in labelled.values()]}
 
 
-def _replacement(block: dict, correction: str) -> dict:
-    """The block as the correction would have it, in its own type's shape."""
-    if block["type"] == "markdown":
-        return {"type": "markdown", "value": correction}
-    if block["type"] == "paragraph":
-        return {"type": "paragraph", "value": f"<p>{escape(correction)}</p>"}
-    return {"type": block["type"], "value": {**block["value"], "text": correction}}
-
-
 @register("research.fact_check")
 def fact_check(run: AgentRun, ctx: ToolContext) -> dict:
     check = owned(FactCheck, run.input.get("fact_check"), run, edit=True)
@@ -111,46 +105,75 @@ def fact_check(run: AgentRun, ctx: ToolContext) -> dict:
         raise PermissionError(f"page {page.pk} is not one {run.started_by} may edit")
     persona = _persona(run)
     blocks = {b["label"]: b for b in services.draft_blocks(page)}
-    words = set(tokens(" ".join(b["text"] for b in blocks.values())))
-    labelled = {
-        f"S{i}": s
-        for i, s in enumerate(services.checked_sources(run.started_by, page, check.collection)[: services.TOP], start=1)
-    }
     draft = "\n".join(f"[{label}] {b['text']}" for label, b in blocks.items())
-    request = f'Draft "{page.title}":\n\n{draft}\n\nSources:\n\n{_sources(labelled, words)}'
+    read, left_out = services.checked_sources(run.started_by, page, check.collection, draft)
+    labelled = {f"S{i}": s for i, s in enumerate(read, start=1)}
+    request = f'Draft "{page.title}":\n\n{draft}\n\nSources:\n\n{_sources(labelled, set(tokens(draft)))}'
     result = generate(run, ctx, persona, [{"role": "user", "content": request}])
-    proposes = POLICY_ORDER.index(page.effective_policy(ctx.policy)) >= POLICY_ORDER.index(POLICY_SUGGEST)
-    findings = []
+    findings, fixes = [], defaultdict(list)
     for item in result["json"]["findings"]:
-        block = blocks.get(item["block"].strip("[] "))
+        label = item["block"].strip("[] ")
         sources = [labelled[s.strip("[] ")] for s in item["sources"] if s.strip("[] ") in labelled]
-        finding = {
-            **{key: item[key] for key in ("claim", "verdict", "explanation", "correction")},
-            "block": block["id"] if block else "",
-            "sources": [{"id": str(s.public_id), "title": s.title or s.url} for s in sources],
-            "suggestion": None,
-            "error": "",
-        }
-        if block is not None and item["verdict"] != "supported" and item["correction"].strip() and proposes:
-            named = ", ".join(s.title or s.url for s in sources) or "its sources"
-            try:
-                finding["suggestion"] = propose(
-                    target=page,
-                    op="replace",
-                    user=ctx.user,
-                    run=run,
-                    agent=run.agent,
-                    block_id=block["id"],
-                    payload=_replacement(block, item["correction"].strip()),
-                    rationale=f"Fact-check ({item['verdict']}): {item['claim']} — {item['explanation']} (from {named})",
-                ).pk
-            except SuggestionError as e:
-                finding["error"] = str(e)
-        findings.append(finding)
+        find, replace = item.get("find", ""), item.get("replace", "")  # a schema seeded before spans has neither
+        findings.append(
+            {
+                **{key: item[key] for key in ("claim", "verdict", "explanation")},
+                "find": find,
+                "replace": replace,
+                "block": blocks[label]["id"] if label in blocks else "",
+                "sources": [{"id": str(s.public_id), "title": s.title or s.url} for s in sources],
+                "suggestion": None,
+                "error": "",
+            }
+        )
+        if label in blocks and item["verdict"] == "contradicted" and find.strip() and find != replace:
+            fixes[label].append(findings[-1])
+    for label, wrong in fixes.items():
+        _correct(run, ctx, page, blocks[label], wrong)
+    cited = set(Citation.objects.filter(page=page).values_list("source", flat=True))
     FactCheck.objects.filter(pk=check.pk).update(
-        summary=result["json"]["summary"], findings=findings, updated_at=timezone.now()
+        summary=result["json"]["summary"],
+        findings=findings,
+        sources=[{"id": str(s.public_id), "title": s.title or s.url, "cited": s.pk in cited} for s in read],
+        left_out=left_out,
+        updated_at=timezone.now(),
     )
-    return {**result, "suggestions": [f["suggestion"] for f in findings if f["suggestion"]]}
+    return {**result, "suggestions": sorted({f["suggestion"] for f in findings if f["suggestion"]})}
+
+
+def _correct(run: AgentRun, ctx: ToolContext, page, block: dict, wrong: list[dict]) -> None:
+    """A block's corrections made together — each finding's words replaced in the block's own value, so links and
+    emphasis stay — and proposed as one `replace` suggestion through the tool registry, which checks the assistant
+    agent's tools, its principal's right to edit the page, the page's policy, the starter's edit right and the rate,
+    and records the call as a step of the run. A correction that cannot be made, or a refusal, is kept on its
+    finding for the person who reads the check."""
+    value, made = block["value"], []
+    for finding in wrong:
+        try:
+            value = services.corrected(block["type"], value, finding["find"], finding["replace"])
+            made.append(finding)
+        except services.Uncorrectable as e:
+            finding["error"] = str(e)
+    if not made:
+        return
+    named = ", ".join(dict.fromkeys(s["title"] for f in made for s in f["sources"])) or "its sources"
+    claims = "; ".join(f"{f['claim']} — {f['explanation']}" for f in made)
+    args = {
+        "page_id": page.pk,
+        "op": "replace",
+        "block_id": block["id"],
+        "block": {"type": block["type"], "value": value},
+        "rationale": f"Fact-check: {claims} (from {named})"[:2000],
+    }
+    proposer = copy.copy(ctx.agent)  # this call may use the one propose tool its definition lists, and nothing else
+    proposer.tools = [tool for tool in ctx.agent.tools or [] if tool == PROPOSE]
+    tool_ctx = ToolContext(user=ctx.user, agent=proposer, run=run, trigger=ctx.trigger, on_behalf_of=run.started_by)
+    try:
+        suggestion, error = registry.call(PROPOSE, args, tool_ctx)["suggestion_id"], ""
+    except ToolError as e:
+        suggestion, error = None, e.message
+    for finding in made:
+        finding["suggestion"], finding["error"] = suggestion, error
 
 
 @register("research.search")

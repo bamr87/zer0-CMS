@@ -261,7 +261,8 @@ def test_a_fact_check_of_a_draft_lists_findings_and_the_suggestions_they_became(
         "verdict": "contradicted",
         "explanation": "It boils at 100 C.",
         "sources": ["S1"],
-        "correction": "Water boils at 100 C.",
+        "find": "90 C",
+        "replace": "100 C",
     }
     fake.script.append({"text": json.dumps({"summary": "One error.", "findings": [finding]})})
     assert api(bob).post(f"{BASE}/fact-checks/", {"page_id": page.pk}, format="json").status_code == 403

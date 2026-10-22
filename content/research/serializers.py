@@ -261,10 +261,18 @@ class FindingSerializer(serializers.Serializer):
     claim = serializers.CharField()
     verdict = serializers.ChoiceField(choices=VERDICTS)
     explanation = serializers.CharField()
-    correction = serializers.CharField(allow_blank=True)
+    find = serializers.CharField(allow_blank=True, help_text="The block's words a source contradicts ('' if none).")
+    replace = serializers.CharField(allow_blank=True, help_text="What those words should say, by the sources.")
     sources = FindingSourceSerializer(many=True)
-    suggestion = serializers.IntegerField(allow_null=True, help_text="The suggestion it became, to accept or reject.")
+    suggestion = serializers.IntegerField(
+        allow_null=True,
+        help_text="The suggestion it became — with the block's other corrections — to accept or reject.",
+    )
     error = serializers.CharField(allow_blank=True, help_text="Why a correction could not become a suggestion.")
+
+
+class CheckedSourceSerializer(FindingSourceSerializer):
+    cited = serializers.BooleanField(help_text="The draft cites it (else it came from the chosen collection).")
 
 
 class FactCheckSerializer(Outcome, CollaborativeSerializer):
@@ -272,14 +280,27 @@ class FactCheckSerializer(Outcome, CollaborativeSerializer):
     page_title = serializers.CharField(source="page.title", read_only=True)
     collection = Visible(Collection, allow_null=True, required=False)
     findings = FindingSerializer(many=True, read_only=True)
+    sources = CheckedSourceSerializer(many=True, read_only=True, help_text="What the check read, its citations first.")
     status = serializers.SerializerMethodField()
     error = serializers.SerializerMethodField()
     run = RunRefSerializer(read_only=True, allow_null=True)
 
     class Meta:
         model = FactCheck
-        fields = [*OWNED, "page", "page_title", "collection", "summary", "findings", "status", "error", "run"]
-        read_only_fields = ["summary", "created_at", "updated_at"]
+        fields = [
+            *OWNED,
+            "page",
+            "page_title",
+            "collection",
+            "summary",
+            "findings",
+            "sources",
+            "left_out",
+            "status",
+            "error",
+            "run",
+        ]
+        read_only_fields = ["summary", "left_out", "created_at", "updated_at"]
 
 
 class FactCheckCreateSerializer(serializers.Serializer):

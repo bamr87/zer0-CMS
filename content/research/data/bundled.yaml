@@ -52,7 +52,7 @@ schemas:
       {{ answer }}
   - key: fact-check
     name: Fact-check findings
-    description: A draft's claims checked against its sources — each claim's block, a verdict, why, the sources that decide it, and a corrected text when a source contradicts it.
+    description: A draft's claims checked against its sources — each claim's block, a verdict, why, the sources that decide it, and, when a source contradicts it, the exact words that are wrong and what they should say.
     schema:
       type: object
       properties:
@@ -67,15 +67,16 @@ schemas:
               verdict: {type: string, enum: [supported, contradicted, unsupported]}
               explanation: {type: string}
               sources: {type: array, items: {type: string}, description: "Labels of the sources that decide it."}
-              correction: {type: string, description: "The block's whole text, corrected to what the sources say; empty when nothing should change."}
-            required: [block, claim, verdict, explanation, sources, correction]
+              find: {type: string, description: "When a source contradicts the claim: the fewest words of the block that are wrong, copied exactly; otherwise empty."}
+              replace: {type: string, description: "What those words should say, by the sources; empty when find is."}
+            required: [block, claim, verdict, explanation, sources, find, replace]
             additionalProperties: false
       required: [summary, findings]
       additionalProperties: false
     template: |
       {{ summary }}
 
-      {% for finding in findings %}- {{ finding.verdict }}: {{ finding.claim }} — {{ finding.explanation }}
+      {% for finding in findings %}- {{ finding.verdict }}: {{ finding.claim }} — {{ finding.explanation }}{% if finding.find %} (“{{ finding.find }}” → “{{ finding.replace }}”){% endif %}
       {% endfor %}
 assistants:
   - key: source-summarizer

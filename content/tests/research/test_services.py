@@ -15,6 +15,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.utils import timezone
+from wagtail.models import Page
 
 from agents.models import AgentRun
 from ai import providers
@@ -307,7 +308,8 @@ def test_a_fact_check_turns_corrections_into_suggestions_and_changes_nothing_its
                 "verdict": "contradicted",
                 "explanation": "The guide says nightly.",
                 "sources": ["S1"],
-                "correction": "Back up nightly.",
+                "find": "weekly",
+                "replace": "nightly",
             },
             {
                 "block": "B2",
@@ -315,7 +317,8 @@ def test_a_fact_check_turns_corrections_into_suggestions_and_changes_nothing_its
                 "verdict": "unsupported",
                 "explanation": "No source speaks to it.",
                 "sources": [],
-                "correction": "",
+                "find": "",
+                "replace": "",
             },
         ],
     }
@@ -329,10 +332,19 @@ def test_a_fact_check_turns_corrections_into_suggestions_and_changes_nothing_its
         "assistant",
     )
     assert suggestion.payload == {"type": "markdown", "value": "Back up nightly."}
-    assert "Fact-check (contradicted)" in suggestion.rationale and "Backup guide" in suggestion.rationale
+    assert "Fact-check: Back up weekly" in suggestion.rationale and "Backup guide" in suggestion.rationale
     assert [f["suggestion"] for f in check.findings] == [suggestion.pk, None]
     assert [f["block"] for f in check.findings] == [first, second] and check.summary == "One claim is wrong."
     assert check.findings[0]["sources"] == [{"id": str(guide.public_id), "title": "Backup guide"}]
+    assert check.sources == [{"id": str(guide.public_id), "title": "Backup guide", "cited": True}]
+    assert check.left_out == 0
+    step = check.run.steps.get(kind="tool")  # proposed through the registry, and recorded as a step of the run
+    assert (step.name, step.user.username, step.error, step.result["suggestion_id"]) == (
+        "content.propose_edit",
+        "agent:assistant",
+        "",
+        suggestion.pk,
+    )
     request = fake.calls[0]["messages"][0]["content"]
     assert "[B1] Back up weekly." in request and "[S1] Backup guide" in request
     page.refresh_from_db()
@@ -340,6 +352,104 @@ def test_a_fact_check_turns_corrections_into_suggestions_and_changes_nothing_its
     accept([suggestion], alice)
     page.refresh_from_db()
     assert page.get_latest_revision_as_object().body[0].value == "Back up nightly."
+
+
+def checked(*findings, summary="Checked."):
+    """The fact checker's scripted answer: findings as (block, claim, verdict, find, replace)."""
+    items = [
+        {"block": b, "claim": c, "verdict": v, "explanation": f"{c}?", "sources": ["S1"], "find": f, "replace": r}
+        for b, c, v, f, r in findings
+    ]
+    return {"text": json.dumps({"summary": summary, "findings": items})}
+
+
+@pytest.mark.django_db
+def test_a_fact_check_reads_the_drafts_citations_first_then_the_closest_of_a_collection(alice, fake, worker, site_root):
+    page = make_article(
+        site_root, "Boiling", body=[{"type": "markdown", "value": "Water boils at 90 C."}], publish=False
+    )
+    cited = services.add_note(alice, "Water boils at 100 C at sea level.", title="Physics")
+    services.cite(alice, cited, page=page)
+    kitchen = Collection.objects.create(owner=alice, name="Kitchen")
+    alpine = services.add_note(alice, "At altitude water boils below 100 C.", title="Alpine", collection=kitchen)
+    for i in range(7):  # newer than both, and about something else
+        services.add_note(alice, f"Knead the dough for {i + 5} minutes.", title=f"Bread {i}", collection=kitchen)
+    fake.script.append(checked())
+    check = fresh(worker(services.fact_check, page, user=alice, collection=kitchen))
+    sent = fake.calls[0]["messages"][0]["content"]
+    assert "[S1] Physics" in sent and "[S2] Alpine" in sent and "Bread" not in sent
+    assert [(s["title"], s["cited"]) for s in check.sources] == [("Physics", True), ("Alpine", False)]
+    assert check.left_out == 7 and str(alpine.public_id) == check.sources[1]["id"]
+    many = make_article(site_root, "Bread", body=[{"type": "markdown", "value": "Knead for 9 minutes."}], publish=False)
+    for source in Source.objects.filter(collection=kitchen):
+        services.cite(alice, source, page=many)
+    fake.script.append(checked())
+    check = fresh(worker(services.fact_check, many, user=alice))  # cites eight: the six closest to the draft
+    assert len(check.sources) == 6 and check.left_out == 2 and all(s["cited"] for s in check.sources)
+    assert "Alpine" not in {s["title"] for s in check.sources}
+
+
+@pytest.mark.django_db
+def test_a_blocks_corrections_are_proposed_together_and_keep_its_links_and_emphasis(alice, fake, worker, site_root):
+    target = make_article(site_root, "Guide")
+    linked = (
+        f'<p>Back up <b>weekly</b>, as <a linktype="page" id="{target.pk}">our guide</a> and '
+        '<a href="https://example.org/">the survey</a> say.</p>'
+    )
+    body = [
+        {"type": "markdown", "value": "Back up weekly. Keep one copy."},
+        {"type": "paragraph", "value": linked},
+        {"type": "paragraph", "value": "<p>Restore <i>every</i> year.</p>"},
+    ]
+    page = make_article(site_root, "Backups", body=body, publish=False)
+    services.cite(alice, services.add_note(alice, "Back up nightly; keep two copies; restore monthly."), page=page)
+    fake.script.append(
+        checked(
+            ("B1", "Back up weekly", "contradicted", "weekly", "nightly"),
+            ("B1", "Keep one copy", "contradicted", "one copy", "two copies"),
+            ("B1", "Keep one copy, again", "contradicted", "one copy", "three copies"),  # its words are gone by then
+            ("B2", "Back up weekly", "contradicted", "weekly", "nightly"),
+            ("B3", "Restore every year", "contradicted", "Restore every year", "Restore every month"),
+            ("B3", "Daily", "unsupported", "", ""),
+        )
+    )
+    check = fresh(worker(services.fact_check, page, user=alice))
+    made = list(Suggestion.objects.filter(run=check.run).order_by("pk"))
+    assert len(made) == 2  # one per block it could correct
+    first, second, third, fourth, fifth, sixth = check.findings
+    assert first["suggestion"] == second["suggestion"] == made[0].pk and fourth["suggestion"] == made[1].pk
+    assert third["suggestion"] is None and third["error"] == "the words to correct are not in the block as it reads now"
+    assert fifth["suggestion"] is None and "run across a link or emphasis" in fifth["error"]
+    assert sixth["suggestion"] is None and sixth["error"] == ""
+    assert made[0].payload == {"type": "markdown", "value": "Back up nightly. Keep two copies."}
+    sent = fake.calls[0]["messages"][0]["content"]
+    assert "[B2] Back up weekly, as our guide and the survey say." in sent  # the words a reader sees
+    accept(made, alice)  # "Accept all": both of the first block's corrections hold
+    latest = Page.objects.get(pk=page.pk).specific.get_latest_revision_as_object().body
+    assert latest[0].value == "Back up nightly. Keep two copies."
+    paragraph = latest[1].value.source
+    assert (
+        "<b>nightly</b>" in paragraph
+        and f'id="{target.pk}"' in paragraph
+        and 'href="https://example.org/"' in paragraph
+    )
+    assert latest[2].value.source == "<p>Restore <i>every</i> year.</p>"
+
+
+@pytest.mark.django_db
+def test_a_fact_check_proposes_only_what_the_registry_allows_its_agent(alice, fake, worker, site_root):
+    from django.contrib.auth.models import Group
+    from wagtail.models import GroupPagePermission
+
+    page = make_article(site_root, "Advice", body=[{"type": "markdown", "value": "Back up weekly."}], publish=False)
+    services.cite(alice, services.add_note(alice, "Back up nightly.", title="Guide"), page=page)
+    # An operator narrows the assistant runner: its principal may no longer change any page.
+    GroupPagePermission.objects.filter(group=Group.objects.get(name="agent:assistant")).delete()
+    fake.script.append(checked(("B1", "Back up weekly", "contradicted", "weekly", "nightly")))
+    check = fresh(worker(services.fact_check, page, user=alice))
+    assert check.run.status == "succeeded" and not Suggestion.objects.filter(run=check.run).exists()
+    assert check.findings[0]["suggestion"] is None and "lacks wagtailcore.change_page" in check.findings[0]["error"]
+    assert check.run.steps.get(kind="tool").result["error"] == "permission_denied"
 
 
 @pytest.mark.django_db
@@ -368,7 +478,8 @@ def test_a_fact_check_needs_text_sources_and_the_right_to_edit_and_respects_a_pa
                             "verdict": "contradicted",
                             "explanation": "100 C.",
                             "sources": ["S1"],
-                            "correction": "Water boils at 100 C.",
+                            "find": "90 C",
+                            "replace": "100 C",
                         }
                     ],
                 }
@@ -377,7 +488,9 @@ def test_a_fact_check_needs_text_sources_and_the_right_to_edit_and_respects_a_pa
     )
     check = fresh(worker(services.fact_check, page, user=alice))
     assert check.run.status == "succeeded" and check.findings[0]["suggestion"] is None
-    assert not Suggestion.objects.filter(run=check.run).exists()
+    assert (
+        not Suggestion.objects.filter(run=check.run).exists() and "needs policy suggest" in check.findings[0]["error"]
+    )
 
 
 @pytest.mark.django_db
@@ -429,3 +542,19 @@ def test_a_brief_reads_the_sources_it_cites_and_a_research_brief_is_a_run(alice,
     assert fake.calls[-1]["system"].startswith("You write a content research brief")
     assert "Restore guide" in fake.calls[-1]["messages"][0]["content"]
     assert AgentRun.objects.filter(pk=brief_run.pk, agent__slug="assistant").exists()
+
+
+@pytest.mark.django_db
+def test_a_research_brief_and_a_briefs_writer_read_the_sources_closest_to_their_topic(alice, fake, worker):
+    mixed = Collection.objects.create(owner=alice, name="Mixed")
+    services.add_note(alice, "Restore drills catch broken backups.", title="Restore drills", collection=mixed)
+    for i in range(7):  # the seven newest are all about bread
+        services.add_note(alice, f"Sourdough needs {i + 2} hours to rise.", title=f"Bread {i}", collection=mixed)
+    fake.script.append({"text": "## Target intent\n\nRestores."})
+    worker(services.research_brief, mixed, user=alice, topic="restore drills")
+    assert "Restore drills" in fake.calls[-1]["messages"][0]["content"]
+    brief = Brief.objects.create(owner=alice, prompt="Write about restore drills for small sites")
+    for source in Source.objects.filter(collection=mixed):
+        services.cite(alice, source, brief=brief)
+    read = services.brief_sources(Brief, brief)
+    assert "Restore drills" in read and sum(f"Bread {i}" in read for i in range(7)) == 5  # six in all

@@ -23,12 +23,12 @@ import logging
 import re
 from datetime import timedelta
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import DatabaseError, transaction
 from django.db.models import Q
 from django.utils import timezone
-from django.utils.html import strip_tags
 from wagtail.search.backends import get_search_backend
 
 from agents.models import AgentRun
@@ -58,6 +58,11 @@ VECTOR_POOL = 2000  # the newest sources whose vectors a ranking compares
 QUERY_CHARS = 2000  # of a long query (a draft), what the word search reads
 NEW_ITEMS = 50  # feed items taken in one refresh at most
 CHECKED_TYPES = ("markdown", "paragraph", "heading", "quote")
+BLOCK_TAGS = ("p", "li", "h2", "h3", "h4", "h5", "h6", "blockquote")  # a line each in a rich-text block's text
+WHY = {
+    0: "the words to correct are not in the block as it reads now",
+    2: "the words to correct are in the block more than once: correct them by hand",
+}
 
 
 def bundled(key: str, user) -> Assistant:
@@ -358,28 +363,72 @@ def ask(user, text: str, *, collection=None) -> Question:
     return question
 
 
-def checked_sources(user, page, collection=None):
-    """What a draft is checked against: the sources it cites, and a collection's."""
+def check_pool(user, page, collection=None):
+    """Every source a draft could be checked against: the ready ones it cites, and a collection's, that `user` sees."""
     which = Q(pk__in=Citation.objects.filter(page=page).values("source"))
     if collection is not None:
         which |= Q(collection=collection)
     return Source.objects.visible_to(user).filter(which, status=Source.READY)
 
 
+def checked_sources(user, page, collection=None, draft: str = "") -> tuple[list[Source], int]:
+    """What a fact-check reads, and how many sources it leaves out: the sources the draft cites first — every one,
+    or the TOP closest to the draft when it cites more — then a collection's closest to the draft to fill the rest
+    (only ones alike when the draft cites any); at most TOP in all."""
+    pool = check_pool(user, page, collection)
+    read = closest(pool.filter(pk__in=Citation.objects.filter(page=page).values("source")), draft)
+    if collection is not None and len(read) < TOP:
+        rest = pool.exclude(pk__in=[source.pk for source in read])
+        read += ranked(rest, draft, TOP - len(read), newest=not read)
+    return read, pool.exclude(pk__in=[source.pk for source in read]).count()
+
+
+def readable(markup: str) -> str:
+    """A rich-text value's words as its reader sees them: entities read, a line to each paragraph and list item."""
+    soup = BeautifulSoup(markup or "", "html.parser")
+    for element in soup.find_all(BLOCK_TAGS):
+        element.append("\n")
+    return re.sub(r"\n+", "\n", soup.get_text()).strip()
+
+
 def draft_blocks(page) -> list[dict]:
-    """The latest revision's checkable blocks: label, id, type, value and plain text."""
+    """The latest revision's checkable blocks: label, id, type, value and the text a reader sees."""
     found = []
     for block in page.get_latest_revision_as_object().body.get_prep_value():
         value = block.get("value")
         if block.get("type") not in CHECKED_TYPES:
             continue
         text = value if isinstance(value, str) else (value or {}).get("text", "")
-        text = strip_tags(text).strip() if block["type"] == "paragraph" else str(text).strip()
+        text = readable(text) if block["type"] == "paragraph" else str(text).strip()
         if text:
             found.append(
                 {"label": f"B{len(found) + 1}", "id": block["id"], "type": block["type"], "value": value, "text": text}
             )
     return found
+
+
+class Uncorrectable(ValueError):
+    """A correction that cannot be made as it was given; the message says why, for the person who reads the check."""
+
+
+def corrected(block_type: str, value, find: str, replace: str):
+    """The block's value with `find` — words the block has exactly once — replaced, and nothing else changed. In rich
+    text the words must lie inside one run of text, so every link, emphasis and list around them stays as it was."""
+    if block_type == "paragraph":
+        soup = BeautifulSoup(value or "", "html.parser")
+        runs = [node for node in soup.find_all(string=True) if find in node]
+        times = sum(node.count(find) for node in runs)
+        if times == 0 and find in readable(value):
+            raise Uncorrectable("the words to correct run across a link or emphasis: correct them by hand")
+        if times != 1:
+            raise Uncorrectable(WHY[min(times, 2)])
+        runs[0].replace_with(runs[0].replace(find, replace, 1))
+        return str(soup)
+    text = value if isinstance(value, str) else (value or {}).get("text", "")
+    if text.count(find) != 1:
+        raise Uncorrectable(WHY[min(text.count(find), 2)])
+    fixed = text.replace(find, replace, 1)
+    return fixed if isinstance(value, str) else {**value, "text": fixed}
 
 
 def fact_check(page, *, user, collection=None) -> FactCheck:
@@ -389,7 +438,7 @@ def fact_check(page, *, user, collection=None) -> FactCheck:
         raise Forbidden(f"{user} may not edit that page")
     if not draft_blocks(page):
         raise Invalid("the draft has no text to check")
-    if not checked_sources(user, page, collection).exists():
+    if not check_pool(user, page, collection).exists():
         raise Invalid("cite sources on the draft, or choose a collection, to check it against")
     assistant = bundled(FACT_CHECKER, user)
     provider_slug(assistant)
@@ -405,7 +454,7 @@ def research_brief(collection, *, user, topic: str) -> AgentRun:
     as a run of the bundled writer; the person reads it and may keep it as a note."""
     if not topic.strip():
         raise Invalid("a research brief needs a topic")
-    sources = list(visible_sources(user, collection).filter(status=Source.READY)[:TOP])
+    sources = ranked(visible_sources(user, collection).filter(status=Source.READY), topic)
     words = set(tokens(topic))
     notes = "\n\n".join(f"[{s.title or s.url}] {s.url}\n{' … '.join(passages(s, words, 1))}" for s in sources)
     prompt = f"Topic: {topic.strip()}" + (f"\n\nWhat the research holds so far:\n\n{notes}" if notes else "")
@@ -436,7 +485,7 @@ def brief_sources(sender, brief, **kwargs) -> str:
     if brief.owner_id is None:
         return ""
     cited = Citation.objects.filter(brief=brief).values("source")
-    sources = list(Source.objects.visible_to(brief.owner).filter(pk__in=cited)[:TOP])
+    sources = closest(Source.objects.visible_to(brief.owner).filter(pk__in=cited), brief.prompt)
     if not sources:
         return ""
     parts = [f"- {s.title or s.url}{f' ({s.url})' if s.url else ''}: {(s.summary or s.text)[:1500]}" for s in sources]
@@ -485,10 +534,20 @@ def passages(source: Source, words: set, limit: int = 2) -> list[str]:
     return [found[i] for i in sorted(best)]
 
 
-def ranked(rows, query: str, k: int = TOP) -> list[Source]:
+def closest(rows, query: str, k: int = TOP) -> list[Source]:
+    """Every one of `rows` when they are no more than `k`; else the `k` most like `query`, the newest filling in."""
+    found = list(rows[: k + 1])
+    if len(found) <= k:
+        return found
+    picked = ranked(rows, query, k)
+    return picked + list(rows.exclude(pk__in=[source.pk for source in picked])[: k - len(picked)])
+
+
+def ranked(rows, query: str, k: int = TOP, *, newest: bool = True) -> list[Source]:
     """The `k` sources most like `query`: by stored vector first (pgvector on Postgres), then by their words through
     Wagtail search (Postgres full-text, SQLite FTS5 — in the database, never a scan in Python), and when nothing is
-    alike (a question in other words than its sources'), the newest — the answerer says when they do not answer it."""
+    alike (a question in other words than its sources'), the newest unless `newest` is off — the answerer says when
+    they do not answer it."""
     ids = list(rows.values_list("pk", flat=True)[:VECTOR_POOL])
     if not ids:
         return []
@@ -496,7 +555,7 @@ def ranked(rows, query: str, k: int = TOP) -> list[Source]:
     if len(chosen) < k and query.strip():
         found = get_search_backend().search(query[:QUERY_CHARS], rows.exclude(pk__in=chosen), operator="or")
         chosen += [source.pk for source in found[: k - len(chosen)]]
-    chosen = chosen or ids[:k]
+    chosen = chosen or (ids[:k] if newest else [])
     found = Source.objects.in_bulk(chosen)
     return [found[pk] for pk in chosen if pk in found]
 
