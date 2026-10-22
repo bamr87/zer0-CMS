@@ -71,3 +71,22 @@ AGENTS.md
 CLAUDE.md
 media/README.md
 media/templates/README.md
+
+# Repository infrastructure that lives at the root but is not extension payload:
+# the agent kit and the verification kit (the verifier agent, the verify-feature
+# skill, the feature index, the scenarios), the hooks, the security policy, the
+# root env template, the platform OpenAPI document, and the page-feedback widget
+# the hub vendors into media/ for its parity check (nothing in the extension
+# loads it).
+.claude/**
+features/**
+verify/**
+.pre-commit-config.yaml
+.env.example
+SECURITY.md
+schemas/openapi/**
+media/fleet-feedback.js
+media/fleet-feedback-capture.js
+# Local caches a checkout may carry; CI never has them, so they must not change the list.
+.ruff_cache/**
+.frontmatter/**

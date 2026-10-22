@@ -7,7 +7,7 @@ Every project in this repository is gated on its own terms: the VS Code extensio
 | Workflow | Runs on | What green means |
 |---|---|---|
 | `extension.yml` | PR and push to `main`, unless every changed file is under `rails/**`, `packages/**`, `sites/**`, `apps/**`, `content/**` or the content plane's schemas (`schemas/{events,graphql,content}/**`), or is `docker-compose.yml` | `npm ci`, type-check, lint, the five bundles, the VS Code test host under `xvfb-run`, `tools/check-config-docs.py`, `vsce package`, and the packaged file list diffed against `.vsix-manifest.txt`; the vsix is uploaded as an artifact named by commit |
-| `content.yml` | PR and push to `main` touching `content/**`, `schemas/events/**`, `schemas/graphql/**`, `schemas/content/**` or the workflow | Two jobs, both inside `content/`. **sqlite** (Python 3.12 and 3.13): ruff lint and format, `makemigrations --check`, the full pytest suite (including the byte-for-byte round trips of the theme and zer0-pages), the committed GraphQL SDL and agent schema unchanged, and every agent's eval suite on the recorded models (`run_evals --all --recorded`). **postgres**: the fast tier against `pgvector/pgvector:pg16` and `redis:7`, where the vector column, `<=>` kNN and `SKIP LOCKED` are real. No job calls a model provider |
+| `content.yml` | PR and push to `main` touching `content/**`, `schemas/events/**`, `schemas/graphql/**`, `schemas/content/**`, `schemas/openapi/**` or the workflow | Two jobs, both inside `content/`. **sqlite** (Python 3.12 and 3.13): ruff lint and format, `makemigrations --check`, the full pytest suite (including the byte-for-byte round trips of the theme and zer0-pages), the committed GraphQL SDL, agent schema and OpenAPI document unchanged, and every agent's eval suite on the recorded models (`run_evals --all --recorded`). **postgres**: the fast tier against `pgvector/pgvector:pg16` and `redis:7`, where the vector column, `<=>` kNN and `SKIP LOCKED` are real. No job calls a model provider |
 | `abc-engine.yml` | PR and push to `main` touching `rails/**` or the workflow | `rails/bin/test-stdlib` — every `rails/test/zer0_cms/test_*.rb` — with **no** `bundle install`, on Ruby 3.3 and 4.0.5 (matrix, `fail-fast: false`) |
 | `rails-app.yml` | PR and push to `main` touching `rails/**`, `docker-compose.yml` or the workflow | With the bundle (from `rails/.ruby-version` and `rails/Gemfile.lock`) and PyYAML: `bin/rails test`, `bin/rails zeitwerk:check`, then a production boot — `assets:precompile`, `db:prepare`, `bin/rails server` — that must answer `/up` and `/admin/sites` |
 | `zer0-image-generator.yml` | PR and push to `main` touching `packages/zer0-image-generator/**` or the workflow | The package's old `test.yml`, run inside the package: the Python engine's unit tests on 3.9 and 3.12, the Ruby port's byte-identity tests against it, a gem build that must contain the engine and the rasterizer helper, and the fixture site's `jekyll preview-images` run with the deterministic `local` provider (real PNGs, idempotent second run) |
@@ -68,17 +68,21 @@ PORT=3021 docker compose -p zer0cms-check up -d cms
 curl -fsS http://localhost:3021/up && curl -fsS -o /dev/null -w '%{http_code}\n' http://localhost:3021/admin/sites
 docker compose -p zer0cms-check down -v --rmi local
 
-# the content plane (what content.yml runs)
+# the platform (what content.yml runs)
 cd content && pip install -r requirements-dev.txt
 ruff check . && ruff format --check . && python manage.py makemigrations --check --dry-run
 python -m pytest -q                                  # DATABASE_URL=postgres://… for the Postgres job
 python manage.py wagtail_ai_schema --check ../schemas/content/ai-schema.json
 python manage.py graphql_schema --out /tmp/s.graphql && diff ../schemas/graphql/schema.graphql /tmp/s.graphql
+python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file /tmp/o.json && diff ../schemas/openapi/openapi.json /tmp/o.json
 
-# the content plane's stack, when content/Dockerfile or docker-compose.yml changed
-docker compose --profile content up -d --build --wait db redis content worker beat relay
-curl -fsS http://localhost:8000/healthz
+# the platform's stack, when content/Dockerfile or docker-compose.yml changed
+GIT_SHA=$(git rev-parse --short HEAD) BUILT_AT=$(date -u +%FT%TZ) docker compose --profile content up -d --build --wait db redis content worker beat relay
+curl -fsS http://localhost:8000/healthz && curl -fsS http://localhost:8000/readyz && curl -fsS http://localhost:8000/version
 docker compose --profile content down -v
+
+# the same checks as pre-commit hooks (pip install pre-commit && pre-commit install)
+pre-commit run --all-files
 
 # one paragraph per line, with the two excludes markdown-oneline.yml passes
 python3 tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'

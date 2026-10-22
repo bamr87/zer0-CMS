@@ -2,15 +2,19 @@
 
 This is the canonical agent file for the whole repository. It applies to every coding agent (Claude Code, Copilot, Cursor, Codex). Every `CLAUDE.md` in the tree is a pointer that imports the `AGENTS.md` beside it; edit the `AGENTS.md`, never the pointer. Each project under `packages/`, `sites/` and `apps/` has its own `AGENTS.md`, which governs work inside that tree — read it before touching the tree.
 
-zer0-CMS is moving to one architecture: an agent-native, headless CMS with a **content plane** (Django + Wagtail, `content/`) and an **experience plane** (Rails, `rails/`), with the VS Code extension and the Jekyll sites as clients and frontends of it. The decision is [ADR 0001](docs/adr/0001-target-architecture.md), with content going DB-first site by site and this repository as the stack's only home per [ADR 0002](docs/adr/0002-one-home-cutover.md); the build order is [`docs/plan/PLAN.md`](docs/plan/PLAN.md) (milestones M0–M20); the design note it implements is [`docs/plan/agent-native-design.md`](docs/plan/agent-native-design.md) ("the note"). Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's code are enforced by today's build.
+## What this repo is
+
+zer0-CMS is becoming **one platform**: an agent-native, headless CMS (Django + Wagtail, `content/`) with the VS Code extension as its editor client and the Jekyll sites and theme as its frontends. The decision is [ADR 0004](docs/adr/0004-one-platform.md), on top of [ADR 0001](docs/adr/0001-target-architecture.md) (the agent-native design and its safety rules) and [ADR 0002](docs/adr/0002-one-home-cutover.md) (this repository as the stack's only home; content DB-first site by site); the build order is [`docs/plan/PLAN.md`](docs/plan/PLAN.md) (milestones M0–M20, then Phase G "one platform" and Phase H "enterprise"); the design note it implements is [`docs/plan/agent-native-design.md`](docs/plan/agent-native-design.md) ("the note"). The Rails fleet CMS, the image generator's panel and the imported apps are being absorbed into the platform function by function, each behind a parity gate, and keep running until their gate is green. Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's code are enforced by today's build.
+
+## Layout
 
 Today the repository holds three products of its own and the imported zer0 stack:
 
-- `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content in the editor: a metadata panel, dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → ledger).
-- `rails/` is the **fleet CMS** — a Rails 8.1 app on Administrate 1.0 that indexes every registered Jekyll site into SQLite and writes edits back to the files (git stays the source of truth), draws a missing preview through zer0-image-generator, and hosts the ABC book wizard; `rails/lib` is a stdlib-only library (the Jekyll-exact catalog, front-matter surgery, the confined writer, `zer0 doctor`, the ABC generator).
-- `content/` is the **content plane** — the Django 5.2 + Wagtail project the plan builds from milestone M4 on: page models, revisions, the agent harness and its tool registry, suggestions, the content graph, the outbox, the GraphQL/REST APIs and the MCP server.
+- `content/` is the **platform** — the Django 5.2 + Wagtail project: page models, revisions, the agent harness and its tool registry, suggestions, the content graph, the outbox, the GraphQL/REST APIs, the MCP server, and the operational baseline (`content/ops/`: probes, request ids, the error envelope, JSON logging, throttling, OpenAPI).
+- `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content in the editor: a metadata panel, dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → ledger). It becomes the platform's client in PLAN G10 and keeps its file mode.
+- `rails/` is the **fleet CMS** — a Rails 8.1 app on Administrate 1.0 that indexes every registered Jekyll site into SQLite and writes edits back to the files (git stays the source of truth), draws a missing preview through zer0-image-generator, and hosts the ABC book wizard; `rails/lib` is a stdlib-only library (the Jekyll-exact catalog, front-matter surgery, the confined writer, `zer0 doctor`, the ABC generator). Being absorbed by the platform (PLAN G4, G5, G9); its invariants below hold until each gate is green.
 
-"Done" for a `rails/lib` change means `rails/bin/test-stdlib` passes with no bundler. "Done" for the Rails app means `bin/rails test` and `bin/rails zeitwerk:check` pass, and — when `rails/Dockerfile` or `docker-compose.yml` changed — the image still builds, boots and answers `/up`. "Done" for `content/` means `pytest -q` and `python manage.py makemigrations --check --dry-run` pass and the committed GraphQL schema has not drifted. Do not call Rails "the content engine" — that name belongs to `.cms/` in `src/core/contract/`. Platform contract: `docs/PLATFORM.md`. Stack contract: `docs/ZER0-STACK.md`. CI map: `docs/CICD.md`.
+"Done" for a `rails/lib` change means `rails/bin/test-stdlib` passes with no bundler. "Done" for the Rails app means `bin/rails test` and `bin/rails zeitwerk:check` pass, and — when `rails/Dockerfile` or `docker-compose.yml` changed — the image still builds, boots and answers `/up`. "Done" for `content/` is [`content/AGENTS.md`](content/AGENTS.md)'s definition: `pytest -q`, `makemigrations --check`, ruff, the recorded evals, and the three committed schemas (GraphQL, the agent schema, OpenAPI) unchanged. Do not call Rails "the content engine" — that name belongs to `.cms/` in `src/core/contract/`. Platform contract: `docs/PLATFORM.md`. Stack contract: `docs/ZER0-STACK.md`. CI map: `docs/CICD.md`.
 
 ## Workflow
 
@@ -20,15 +24,14 @@ Today the repository holds three products of its own and the imported zer0 stack
 4. **Git hygiene.** No force-push, no history rewrites on shared branches, no `--no-verify`, no amending pushed commits. Conventional commit messages (`feat(content): …`, `fix(rails): …`) because release-please reads them. Don't change repo settings, branch protection, secrets or workflow permissions.
 5. **Stop and ask** (comment in the PR, leave the box unchecked) when a milestone needs an open decision from PLAN §7, a destructive data step, or a credential.
 
-## The planes and their boundary
+## The platform and its boundary
 
-The target boundary is non-negotiable; ADR 0001 records where today's code still crosses it and which milestone removes the crossing.
+The boundary is non-negotiable; ADR 0001 and ADR 0004 record where today's code still crosses it and which milestone removes the crossing.
 
-- **Django/Wagtail (`content/`) owns** content, revisions, workflow, the graph, embeddings, the agent harness, the tool registry, the MCP server, and agents that write content.
-- **Rails (`rails/`) owns** users, sessions, personalization, app/commerce data, distribution channels, and agents that act on app state.
-- Rails **never** writes content tables. It reads through GraphQL/REST or MCP; it changes content only by calling content-plane tools (e.g. `content.propose_edit`) with a scoped agent token. *Transitional:* until M16 and decision D1, `PageEditor` and `Zer0Cms::Cms::Writer` still write Jekyll files (D16). Don't add a third Rails writer.
-- Django never reads the Rails database; it receives Rails data as aggregated events (`app.user.interaction`) or through Rails MCP tools.
-- Cross-plane side effects go through the transactional outbox and the event schemas in `schemas/events/`. Change a schema = bump its version + update the contract tests on both sides.
+- **The platform (`content/`) owns** content, revisions, workflow, the graph, embeddings, the agent harness, the tool registry, the MCP server, users and sign-in, every API and every admin screen, and — as each Phase G milestone lands — the site registry, distribution, media, scoring, conversations and books.
+- **Rails (`rails/`)** is being retired. Until its functions have moved it keeps doing what it does today, and it **never** writes content tables: it changes content only through the files that are still canonical for a site (`PageEditor`, `Zer0Cms::Cms::Writer`, D16) or by calling platform tools with a scoped agent token. Don't add a third Rails writer, and don't add a feature to Rails that Phase G would have to move.
+- A new capability is a platform app that reuses the one registry, the agent users, Suggestions, the outbox and the admin. A second LLM client, a second ledger or a second registry is the sign that something is being federated rather than absorbed.
+- Side effects between the platform and anything outside it go through the transactional outbox and the event schemas in `schemas/events/`. Change a schema = bump its version + update the contract tests on both sides.
 - Frontends (the Jekyll sites, the theme) and clients (the VS Code extension) are headless: they consume APIs, exported files and stored outputs, never a database.
 
 ## Agent safety rules in code
@@ -69,7 +72,7 @@ SITES_DIR=$HOME/github docker compose --profile imagegen up --build   # + zer0-i
 
 python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'   # fix the markdown one-paragraph-per-line CI gate (its two excludes)
 
-# ── Content plane (content/) — Django 5.2 + Wagtail 7.4; see content/AGENTS.md ──
+# ── The platform (content/) — Django 5.2 + Wagtail 7.4; see content/AGENTS.md ──
 cd content
 pip install -r requirements-dev.txt
 python manage.py migrate && python manage.py sync_agents --publish   # agent users, definitions, evals → live
@@ -77,9 +80,10 @@ python -m pytest -q -m "not slow"                  # the fast tier; drop -m for 
 DATABASE_URL=postgres://… python -m pytest -q      # the same suite on Postgres + pgvector
 python manage.py makemigrations --check --dry-run && ruff check . && ruff format --check .
 python manage.py run_evals --all --recorded        # every agent's eval suite, no network
+python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file ../schemas/openapi/openapi.json   # the committed OpenAPI document
 python manage.py import_jekyll --site drsai --path ../sites/drsai   # a site → pages (idempotent)
 python manage.py roundtrip_jekyll --path ../sites/drsai             # import → export → byte-compare
-# Docker, from the repository root: http://localhost:8000 (/admin/, /graphql/, /api/v2/, /mcp/)
+# Docker, from the repository root: http://localhost:8000 (/admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
 docker compose --profile content up -d --wait db redis content worker beat relay
 
 # ── The workspace (every project in the repository) — stdlib Ruby, no installs ──

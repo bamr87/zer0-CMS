@@ -78,9 +78,10 @@ projects:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
+      - "schemas/openapi/**"
     kind: app
     stack: [python, docker]
-    summary: The content plane — Django + Wagtail pages, the agent harness and its one tool registry, suggestions, the content graph, the outbox, and GraphQL/REST/MCP over all of it (ADR 0001).
+    summary: The platform — Django + Wagtail pages, the agent harness and its one tool registry, suggestions, the content graph, the outbox, GraphQL/REST/MCP over all of it, and the ops baseline (ADR 0001, ADR 0004).
     upstream: bamr87/zer0-CMS
     ci: content.yml
     tasks:

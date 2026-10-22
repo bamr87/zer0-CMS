@@ -30,14 +30,15 @@
 # the runner executes the whole scenario once per viewport.
 # =============================================================================
 id: smoke-home
-feature: TODO-001
-title: "Home page renders and is usable"
-description: "The first thing any visitor does: land on the home page, see the main content, and find the navigation."
+feature: ZER0-001
+title: "The admin's sign-in page renders and is usable"
+description: "The first thing an editor does: open the platform, reach the admin's sign-in form, and see it fit the viewport."
 viewports: [desktop, mobile]
 steps:
-  - goto: /
+  - goto: /admin/login/
   - expect: { status: 200 }
-  - expect: { visible: "main, [role=main], #main-content" }
+  - expect: { visible: "form" }
+  - expect: { visible: "input[name=username]" }
+  - expect: { visible: "input[name=password]" }
   - expect: { no_horizontal_scroll: true }
-  - expect: { no_console_errors: true }
-  - screenshot: home
+  - screenshot: sign-in

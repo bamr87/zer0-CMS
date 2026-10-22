@@ -35,20 +35,199 @@
 #   screenshots   optional  direct image paths, when a bundle is overkill
 #   verified      optional  { date, by: agent|human|ci, run: <url> } — last verification
 #   deviations    optional  free text: why a MUST row is waived for this feature
+#
+# The platform (content/, ADR 0004) is what the browser scenarios exercise; the
+# VS Code extension's features are pinned by its own suite under src/test/.
 # =============================================================================
 schema: features/v1
 repo: bamr87/zer0-CMS
 
 features:
-  - id: TODO-001
-    title: "TODO: the first thing a user does here"
-    description: "TODO: replace with the primary user-facing capability of zer0-CMS."
+  # ── The platform: the admin ────────────────────────────────────────────────
+  - id: ZER0-001
+    title: "Wagtail admin: pages, revisions, media, workflows"
+    description: "An editor signs in to the admin, browses every imported site's page tree, edits StreamField bodies and front matter as typed fields, previews, and publishes through revisions and moderation workflows."
     implemented: true
     surface: ui
-    link: /
-    docs: README.md
-    tags: [todo]
-    tests: []
+    link: /admin/
+    docs: content/README.md
+    tags: [platform, admin, wagtail]
+    tests:
+      - content/tests/cms/test_models.py
     scenarios:
       - verify/scenarios/smoke-home.yml
+    evidence: []
+  - id: ZER0-002
+    title: "Agent suggestions, reviewed in the editor"
+    description: "An agent proposes changes as suggestions; an editor reviews them per page, accepts one or a whole run as one draft revision, or rejects them — the page is never changed behind their back."
+    implemented: true
+    surface: ui
+    link: /admin/suggestions/page/
+    docs: content/suggestions/services.py
+    tags: [platform, agents, governance]
+    tests:
+      - content/tests/suggestions/test_suggestions.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-003
+    title: "Agent review as a moderation task"
+    description: "A workflow can include an agent review (brand, accessibility, review) that leaves block comments and approves or rejects, and can never be the step that publishes."
+    implemented: true
+    surface: ui
+    link: /admin/workflows/
+    docs: content/workflow/models.py
+    tags: [platform, agents, workflow]
+    tests:
+      - content/tests/workflow/test_review.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-004
+    title: "Agent runs report"
+    description: "An administrator sees every agent run with its cost, tokens and outcome under Reports → Agent runs."
+    implemented: true
+    surface: ui
+    link: /admin/reports/agent-runs/
+    docs: content/agents/README.md
+    tags: [platform, agents, reports]
+    tests:
+      - content/tests/agents/test_runner.py
+    scenarios: []
+    evidence: []
+
+  # ── The platform: APIs and integrations ───────────────────────────────────
+  - id: ZER0-010
+    title: "GraphQL API"
+    description: "A client reads every page type with StreamField JSON, semantic and graph search, related pages, entities and suggestions, and requests agent runs or decides suggestions through mutations."
+    implemented: true
+    surface: api
+    link: /graphql/
+    docs: schemas/graphql/schema.graphql
+    tags: [platform, api, graphql]
+    tests:
+      - content/tests/api/test_graphql.py
+      - content/tests/ops/test_graphql_errors.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-011
+    title: "REST API: agent runs, graph, suggestions, tools"
+    description: "A client starts and streams agent runs (SSE), queries the content graph, decides suggestions and lists the tools it may call, documented at /api/v2/docs/."
+    implemented: true
+    surface: api
+    link: /api/v2/docs/
+    docs: schemas/openapi/openapi.json
+    tags: [platform, api, rest, openapi]
+    tests:
+      - content/tests/api/test_graphql.py
+      - content/tests/ops/test_openapi.py
+      - content/tests/ops/test_errors.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-012
+    title: "MCP server over the one tool registry"
+    description: "An MCP client with an agent token sees exactly the tools its agent may call, over Streamable HTTP or stdio, with every call recorded as an audited run."
+    implemented: true
+    surface: api
+    link: /mcp/
+    docs: content/mcp_server/README.md
+    tags: [platform, api, mcp, agents]
+    tests:
+      - content/tests/mcp/test_mcp.py
+      - content/tests/ops/test_mcp_errors.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-013
+    title: "Jekyll sites imported and exported byte for byte"
+    description: "An operator imports a Jekyll site into the platform (idempotent, never overwriting an editor's change) and exports it back, unchanged pages byte for byte, so the files stay the source of truth until a site cuts over."
+    implemented: true
+    surface: cli
+    link: content/importers/jekyll.py
+    docs: content/README.md
+    tags: [platform, jekyll, import, export]
+    tests:
+      - content/tests/importers/test_jekyll.py
+    scenarios: []
+    evidence: []
+
+  # ── The platform: operations ──────────────────────────────────────────────
+  - id: ZER0-020
+    title: "Health, readiness and version probes"
+    description: "An orchestrator reads /healthz (liveness, touches nothing), /readyz (database, cache, Redis — 503 naming the one that is down) and /version (name, version, commit, built_at)."
+    implemented: true
+    surface: api
+    link: /readyz
+    docs: content/ops/README.md
+    tags: [platform, ops, probes]
+    tests:
+      - content/tests/ops/test_health.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-021
+    title: "Request ids, the error envelope and structured logs"
+    description: "Every response carries X-Request-Id and X-App-Version; every API error is one JSON envelope with a stable code and the request id; logs are JSON lines with the same id and never contain a token."
+    implemented: true
+    surface: api
+    link: /api/v2/docs/
+    docs: content/ops/README.md
+    tags: [platform, ops, logging, errors]
+    tests:
+      - content/tests/ops/test_request_id.py
+      - content/tests/ops/test_errors.py
+      - content/tests/ops/test_logging.py
+      - content/tests/ops/test_throttling.py
+      - content/tests/ops/test_cors.py
+      - content/tests/ops/test_security_headers.py
+    scenarios: []
+    evidence: []
+
+  # ── The VS Code extension (the platform's editor client) ──────────────────
+  - id: ZER0-030
+    title: "Metadata panel: front matter as typed controls"
+    description: "In VS Code, the active markdown file's front matter is edited as typed fields, written back by line surgery so untouched lines stay byte-identical."
+    implemented: true
+    surface: ui
+    link: src/panel/panelProvider.ts
+    docs: README.md
+    tags: [extension, editor]
+    tests:
+      - src/test/fields.test.ts
+      - src/test/extension.test.ts
+    scenarios: []
+    evidence: []
+  - id: ZER0-031
+    title: "Dashboard: every site's content in one place"
+    description: "A dashboard lists every page across the window's sites with search, filters, sorting and a structure view, plus the drafts queue, audit, distribution, fleet and harness tabs."
+    implemented: true
+    surface: ui
+    link: src/dashboard/dashboardPanel.ts
+    docs: README.md
+    tags: [extension, dashboard]
+    tests:
+      - src/test/webview.test.ts
+      - src/test/routes.test.ts
+    scenarios: []
+    evidence: []
+  - id: ZER0-032
+    title: "Governed publishing: draft → guard → approve → publish → ledger"
+    description: "Nothing is published by a script alone: a draft passes the brand guard, a person approves it in the file, publishing is off until the person's own settings allow it, and the ledger keyed by canonical URL stops double publishing."
+    implemented: true
+    surface: ui
+    link: src/core/governance/
+    docs: README.md
+    tags: [extension, governance]
+    tests:
+      - src/test/governance.test.ts
+      - src/test/golden.test.ts
+    scenarios: []
+    evidence: []
+  - id: ZER0-033
+    title: "Bundled MCP server for the editor's agents"
+    description: "Copilot agent mode or any MCP client gets sixteen tools over the workspace's content: read-only by default, drafting on request, publishing and scaffolding only when the environment arms them."
+    implemented: true
+    surface: api
+    link: src/mcp/server.ts
+    docs: README.md
+    tags: [extension, mcp]
+    tests:
+      - src/test/mcp.test.ts
+    scenarios: []
     evidence: []
