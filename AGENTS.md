@@ -124,7 +124,8 @@ bin/zer0 doctor                   # zer0 doctor over every in-repo site
 bin/zer0 tags                     # this repo's release tags vs. those inherited from the Front Matter fork
 
 # ── The sites' recorded Jekyll builds (web/site/fixtures/, PLAN P1) — Ruby 3.3, bundler, network ──
-python3 tools/site_manifest.py --check --site drsai   # rebuild a routed site as pages.yml does, compare with its recording
+python3 tools/site_manifest.py --check --site drsai   # rebuild a routed site as pages.yml does (UTC, none of your JEKYLL_/ZER0_ variables), compare
+python3 tools/site_manifest.py compare --pages <recorded> <candidate>   # what a renderer must match: pages, titles, text, feeds, sitemaps, redirects
 ```
 
 `extension.test.ts` and `multiroot.test.ts` need a real extension host (`multiroot` has its own entry in `.vscode-test.mjs`: `npx vscode-test --label multiroot`), and `mcp.test.ts` needs `dist/mcp-server.js`, so the fourteen-suite command above leaves all three out; `out/test/mcp.test.js` does run under plain Mocha once `npm run compile` has built the bundle. On headless Linux `npm test` shells out to `xvfb-run` itself (`test-runner.js`); `ZER0_CMS_NO_XVFB=1` forces the plain path.
