@@ -1,8 +1,10 @@
-// Home: what needs attention — the review queue, the latest agent runs and
-// the pages edited most recently — each a step away from where to act on it.
+// Home: what needs attention — the review queue, the latest agent runs, the
+// pages edited most recently and the AI providers' status — each a step away
+// from where to act on it.
 import { Anchor, Button, Card, Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 
+import { ProviderStatus } from './ai/Providers';
 import { call } from './call';
 import { useApi, useGo } from './context';
 import { RunStatus } from './RunTimeline';
@@ -18,7 +20,7 @@ export function Overview({ siteId }: { siteId?: number }) {
   const recent = useQuery({ queryKey: ['pages', recentQuery], queryFn: () => call(api.GET('/api/v2/content/pages/', { params: { query: recentQuery } })) });
 
   return (
-    <SimpleGrid cols={{ base: 1, md: 3 }}>
+    <SimpleGrid cols={{ base: 1, md: 2, xl: 4 }}>
       <Card withBorder>
         <Title order={4}>To review</Title>
         <Text size="xl" fw={700} my="sm" aria-label="Suggestions to review">
@@ -63,6 +65,7 @@ export function Overview({ siteId }: { siteId?: number }) {
           {recent.data?.results.length === 0 ? <Text c="dimmed">No pages yet.</Text> : null}
         </Stack>
       </Card>
+      <ProviderStatus />
     </SimpleGrid>
   );
 }

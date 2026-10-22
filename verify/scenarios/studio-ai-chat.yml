@@ -1,0 +1,46 @@
+# =============================================================================
+# verify/scenarios/studio-ai-chat.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# A conversation with an assistant on the seeded demo: start one, send a
+# message, and the reply — a run of the `assistant` agent with the whole
+# conversation replayed, answered from verify/recordings/ — arrives in the
+# thread; then the answer is promoted to a brief, which opens in Create.
+# =============================================================================
+id: studio-ai-chat
+feature: ZER0-044
+title: "Chat with an assistant and promote its answer to a brief"
+description: "An editor writes an assistant, starts a conversation with it from the AI area, sends a message and reads the reply when its run has finished, rendered; then promotes the reply to a brief, which opens in Create ready to generate."
+viewports: [desktop]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  - click: "role=link[name='AI']"
+  - click: "role=tab[name='Assistants']"
+  - click: "role=button[name='New assistant']"
+  - fill: { selector: "role=textbox[name='Name']", value: "Chat partner" }
+  - fill: { selector: "role=textbox[name='Instructions']", value: "You help an editor think a piece through. Answer briefly." }
+  - click: "role=button[name='Create']"
+  - wait: { selector: "role=heading[name='Chat partner']" }
+  - click: "role=tab[name='Conversations']"
+  - fill: { selector: "role=textbox[name='A new conversation']", value: "Backup ideas" }
+  - click: "role=combobox[name='With']"
+  - click: "role=option[name='Chat partner']"
+  - click: "role=button[name='Start']"
+  - wait: { selector: "role=heading[name='Backup ideas']" }
+  - fill: { selector: "role=textbox[name='Your message']", value: "How often should a small site back up?" }
+  - screenshot: message-written
+  - click: "role=button[name='Send']"
+  - wait: { selector: "role=document[name=\"Chat partner's answer\"]" }
+  - expect: { visible: "role=heading[name='Backups, explained']" }
+  - expect: { text: "How often should a small site back up?" }
+  - screenshot: answered
+  - click: "role=button[name='Actions for message 2']"
+  - click: "role=menuitem[name='Promote to a brief']"
+  - wait: { url: /studio/create/briefs/ }
+  - expect: { visible: "role=heading[name='Backup ideas']" }
+  - expect: { text: "draft" }
+  - expect: { no_console_errors: true }
+  - screenshot: promoted-to-a-brief

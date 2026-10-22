@@ -191,7 +191,7 @@ class ModelEntrySerializer(serializers.ModelSerializer):
 
 # ── owned rows ─────────────────────────────────────────────────────────────
 
-OWNED = ["id", "owner", "site", "visibility", "created_at", "updated_at"]
+OWNED = ["id", "owner", "site", "visibility", "can_edit", "created_at", "updated_at"]
 
 
 class OwnedSerializer(serializers.ModelSerializer):
@@ -200,6 +200,11 @@ class OwnedSerializer(serializers.ModelSerializer):
     site = serializers.PrimaryKeyRelatedField(
         queryset=Site.objects.all(), allow_null=True, required=False, help_text="A site its owner edits."
     )
+    can_edit = serializers.SerializerMethodField()
+
+    def get_can_edit(self, row) -> bool:
+        """Whether the requester may change or delete the row (its owner, or staff)."""
+        return row.can_edit(getattr(self.context.get("request"), "user", None))
 
     def validate(self, attrs):
         # A new row is the requester's: its owner is known before it is saved, for the rules that need it.
@@ -300,8 +305,8 @@ class BriefSerializer(OwnedSerializer):
     output_schema = Visible(OutputSchema, allow_null=True, required=False)
     conversation = Visible(Conversation, allow_null=True, required=False)
     parent = serializers.PrimaryKeyRelatedField(queryset=Page.objects.all(), allow_null=True, required=False)
-    page = serializers.PrimaryKeyRelatedField(read_only=True)
-    source_message = serializers.SlugRelatedField(slug_field="public_id", read_only=True)
+    page = serializers.PrimaryKeyRelatedField(read_only=True, allow_null=True, help_text="The draft it made.")
+    source_message = serializers.SlugRelatedField(slug_field="public_id", read_only=True, allow_null=True)
     run = RunRefSerializer(read_only=True, allow_null=True)
 
     class Meta:
@@ -407,14 +412,66 @@ class AssistantDocumentSerializer(serializers.Serializer):
     output_schema = SchemaDocumentSerializer(allow_null=True, required=False)
 
 
-class RunAssistantSerializer(serializers.Serializer):
+class OnPageSerializer(serializers.Serializer):
+    """A run on a page whose answer lands there as suggestions (`suggest`)."""
+
+    page_id = serializers.IntegerField(required=False, help_text="A page the run may read, which you can edit.")
+    suggest = serializers.BooleanField(
+        default=False,
+        help_text="Propose the answer on the page (`page_id`) as suggestions to accept or reject: in place of "
+        "`block_id`, or as new blocks at the end. The run reads that block, else the whole page.",
+    )
+    block_id = serializers.CharField(
+        required=False, allow_blank=True, default="", help_text="With `suggest`: the block it reads and replaces."
+    )
+    selection = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        max_length=50_000,
+        help_text="With `block_id`: text in that block, as saved and as a person sees it (a paragraph's without its "
+        "markup), that it reads and whose place its answer takes — only that text changes.",
+    )
+    field = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=64,
+        help_text="With `selection` in a structured block: the field it is in (`text` of a heading, `code` of a code "
+        "block); else any of its text fields.",
+    )
+    selection_start = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=0,
+        help_text="With `selection`: the character it starts at in that text (code points, a paragraph's counted "
+        "without its markup). Without it, the selection must appear in the block exactly once.",
+    )
+
+    def validate(self, attrs):
+        if attrs["suggest"] and attrs.get("page_id") is None:
+            raise serializers.ValidationError({"page_id": "suggestions land on a page: name it"})
+        if (attrs["block_id"] or attrs["selection"]) and not attrs["suggest"]:
+            raise serializers.ValidationError({"suggest": "a block or a selection is for a run that suggests"})
+        if (attrs.get("field") or attrs.get("selection_start") is not None) and not attrs["selection"]:
+            raise serializers.ValidationError({"selection": "a field or a start says where a selection is: send it"})
+        return attrs
+
+
+class RunAssistantSerializer(OnPageSerializer):
     prompt = serializers.CharField(max_length=50_000)
-    page_id = serializers.IntegerField(required=False, help_text="A page the assistant may read, which you can edit.")
 
 
-class RunPipelineSerializer(serializers.Serializer):
+class RunPipelineSerializer(OnPageSerializer):
     prompt = serializers.CharField(max_length=50_000, required=False, allow_blank=True, default="")
-    page_id = serializers.IntegerField(required=False)
+
+
+class ConversationPipelineSerializer(serializers.Serializer):
+    prompt = serializers.CharField(max_length=50_000, required=False, allow_blank=True, default="")
+
+
+class ToolSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    description = serializers.CharField()
 
 
 class BriefRunSerializer(serializers.Serializer):

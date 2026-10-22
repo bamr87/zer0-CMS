@@ -367,11 +367,17 @@ def _line(value) -> str:
     return ", ".join(str(v) for v in value) if isinstance(value, list) else str(value or "")
 
 
+def _source(value) -> str:
+    return value if isinstance(value, str) else json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False)
+
+
 def describe(suggestion, latest=None) -> dict:
     """The change as {kind, label, before, after, stale} text for a diff.
     `latest` is the target page's latest revision as an object — pass it when
     describing many suggestions on one page. `stale` means the block the
-    suggestion aims at is gone, so accepting it would be refused."""
+    suggestion aims at is gone, so accepting it would be refused. A replacement
+    whose text reads the same but whose stored value differs (a link's target,
+    the markup) is described by its stored values, labelled "markup only"."""
     from cms.models import BasePage
 
     target = latest
@@ -397,13 +403,14 @@ def describe(suggestion, latest=None) -> dict:
             "after": _text(payload.get("type"), payload.get("value")),
             "stale": bool(suggestion.block_id) and aimed is None,
         }
-    return {
-        "kind": "block",
-        "label": f"{op} {aimed['type'] if aimed else 'block'}",
-        "before": _text(aimed["type"], aimed["value"]) if aimed else "",
-        "after": _text(payload.get("type"), payload.get("value")) if op == Suggestion.REPLACE else "",
-        "stale": aimed is None,
-    }
+    label = f"{op} {aimed['type'] if aimed else 'block'}"
+    before = _text(aimed["type"], aimed["value"]) if aimed else ""
+    after = _text(payload.get("type"), payload.get("value")) if op == Suggestion.REPLACE else ""
+    if op == Suggestion.REPLACE and aimed and before == after and aimed["value"] != payload.get("value"):
+        # Only what the text cannot show changes — a link's target, the markup, a field outside the text — so
+        # the diff is of the stored values: a person never accepts a change that reads as none.
+        label, before, after = f"{label} (markup only)", _source(aimed["value"]), _source(payload.get("value"))
+    return {"kind": "block", "label": label, "before": before, "after": after, "stale": aimed is None}
 
 
 @transaction.atomic

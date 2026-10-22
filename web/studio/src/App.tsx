@@ -4,21 +4,12 @@
 // turns the destinations they ask for (Destination) into paths.
 import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
-import {
-  CreatePage,
-  Overview,
-  PageEditor,
-  PageList,
-  RunList,
-  RunTimeline,
-  StudioProvider,
-  SuggestionInbox,
-  type Destination,
-  type OpenStream,
-} from '@zer0/ui';
+import { Overview, PageEditor, PageList, StudioProvider, SuggestionInbox, type Destination, type OpenStream } from '@zer0/ui';
 import { useCallback, type ReactNode } from 'react';
 import { Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router';
 
+import { AiArea } from './ai/AiArea';
+import { CreateArea } from './ai/CreateArea';
 import { AREAS, type Area } from './areas';
 import { SignedIn } from './auth';
 import { Shell } from './Shell';
@@ -27,7 +18,7 @@ import { SiteProvider, useSite } from './site';
 export function pathFor(to: Destination): string {
   switch (to.to) {
     case 'page':
-      return `/write/${to.id}`;
+      return to.tab ? `/write/${to.id}?tab=${to.tab}` : `/write/${to.id}`;
     case 'pages':
       return '/write';
     case 'create':
@@ -36,6 +27,20 @@ export function pathFor(to: Destination): string {
       return `/ai/runs/${to.id}`;
     case 'review':
       return to.runId ? `/review?run=${to.runId}` : '/review';
+    case 'ai':
+      return to.section && to.section !== 'runs' ? `/ai/${to.section}` : '/ai';
+    case 'assistant':
+      return `/ai/assistants/${to.id ?? 'new'}`;
+    case 'pipeline':
+      return `/ai/pipelines/${to.id ?? 'new'}`;
+    case 'schema':
+      return `/ai/schemas/${to.id ?? 'new'}`;
+    case 'conversation':
+      return `/ai/conversations/${to.id}`;
+    case 'brief':
+      return `/create/briefs/${to.id ?? 'new'}`;
+    case 'briefs':
+      return '/create/briefs';
   }
 }
 
@@ -52,10 +57,9 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route index element={<Home />} />
                 <Route path="write" element={<Write />} />
                 <Route path="write/:id" element={<EditPage />} />
-                <Route path="create" element={<Create />} />
+                <Route path="create/*" element={<CreateArea />} />
                 <Route path="review" element={<Review />} />
-                <Route path="ai" element={<Ai />} />
-                <Route path="ai/runs/:id" element={<RunPage />} />
+                <Route path="ai/*" element={<AiArea />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -102,16 +106,8 @@ function Write() {
 
 function EditPage() {
   const { id } = useParams();
-  return <PageEditor key={id} pageId={Number(id)} />;
-}
-
-function Create() {
-  const { siteId } = useSite();
-  return (
-    <Section title="Create">
-      <CreatePage siteId={siteId} />
-    </Section>
-  );
+  const [params] = useSearchParams();
+  return <PageEditor key={id} pageId={Number(id)} tab={params.get('tab') === 'suggestions' ? 'suggestions' : undefined} />;
 }
 
 function Review() {
@@ -123,22 +119,6 @@ function Review() {
       <SuggestionInbox siteId={runId ? undefined : siteId} runId={runId} />
     </Section>
   );
-}
-
-function Ai() {
-  return (
-    <Section title="AI">
-      <Text c="dimmed">
-        Agent runs, newest first. Assistants, pipelines, output schemas, providers and models arrive with PLAN G8.
-      </Text>
-      <RunList />
-    </Section>
-  );
-}
-
-function RunPage() {
-  const { id } = useParams();
-  return <RunTimeline key={id} runId={Number(id)} />;
 }
 
 function Planned({ area }: { area: Area }) {

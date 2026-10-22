@@ -7,12 +7,15 @@
 // site except through those buttons. A page a Wagtail lock keeps from this
 // person (`page.lock`: someone else's, a workflow's, a schedule's) opens
 // read-only and says why; cancelling a schedule is the one thing it allows.
-import { Alert, Anchor, Badge, Button, Group, Loader, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
+// The AI panel opens beside the editor: an assistant or a pipeline run on the
+// page, whose answer arrives in the Suggestions tab (ai/AiPanel.tsx).
+import { Alert, Anchor, Badge, Button, Grid, Group, Loader, Paper, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Block, PageDetail } from '@zer0/api';
 import { useState } from 'react';
 
+import { AiPanel } from './ai/AiPanel';
 import { BodyEditor } from './BodyEditor';
 import { call, errorText } from './call';
 import { useApi } from './context';
@@ -43,7 +46,7 @@ const DONE: Record<PageAction, string> = {
   unschedule: 'Schedule cancelled',
 };
 
-export function PageEditor({ pageId }: { pageId: number }) {
+export function PageEditor({ pageId, tab }: { pageId: number; tab?: 'suggestions' }) {
   const api = useApi();
   const qc = useQueryClient();
   const path = { path: { id: pageId } };
@@ -81,6 +84,7 @@ export function PageEditor({ pageId }: { pageId: number }) {
     <Draft
       key={page.data.latest_revision?.id ?? 'none'}
       page={page.data}
+      tab={tab}
       busy={act.isPending}
       failure={act.isError ? errorText(act.error) : null}
       run={(action, changes, at) => act.mutate({ action, changes, at })}
@@ -90,16 +94,19 @@ export function PageEditor({ pageId }: { pageId: number }) {
 
 interface DraftProps {
   page: PageDetail;
+  tab?: string;
   busy: boolean;
   failure: string | null;
   run: (action: PageAction, changes: Changes | null, at?: Schedule) => void;
 }
 
-function Draft({ page, busy, failure, run }: DraftProps) {
+function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
   const [fields, setFields] = useState<FieldValues>(page.fields);
   const [body, setBody] = useState<Block[]>(page.body);
   const [goLive, setGoLive] = useState('');
   const [comeDown, setComeDown] = useState('');
+  const [tab, setTab] = useState<string | null>(firstTab ?? 'content');
+  const [askingAi, setAskingAi] = useState(false);
   const changed = Object.fromEntries(Object.entries(fields).filter(([name, value]) => !same(value, page.fields[name])));
   const bodyChanged = !same(body, page.body);
   const dirty = Object.keys(changed).length > 0 || bodyChanged;
@@ -127,6 +134,9 @@ function Draft({ page, busy, failure, run }: DraftProps) {
           </Text>
         </Stack>
         <Group gap="xs">
+          <Button variant={askingAi ? 'filled' : 'light'} aria-expanded={askingAi} aria-controls="zer0-ai-panel" onClick={() => setAskingAi((open) => !open)}>
+            AI
+          </Button>
           <Anchor href={page.preview_url} target="_blank" rel="noreferrer" size="sm">
             Preview
           </Anchor>
@@ -196,38 +206,49 @@ function Draft({ page, busy, failure, run }: DraftProps) {
         <Alert color="blue">Comes down {new Date(page.expire_at).toLocaleString()}.</Alert>
       ) : null}
       {failure ? <Alert color="red">{failure}</Alert> : null}
-      <Tabs defaultValue="content" keepMounted={false}>
-        <Tabs.List>
-          <Tabs.Tab value="content">Content</Tabs.Tab>
-          <Tabs.Tab value="seo">SEO</Tabs.Tab>
-          <Tabs.Tab value="settings">Settings</Tabs.Tab>
-          <Tabs.Tab value="suggestions">Suggestions ({page.pending_suggestions})</Tabs.Tab>
-          <Tabs.Tab value="revisions">Revisions</Tabs.Tab>
-        </Tabs.List>
-        <Tabs.Panel value="content" pt="md">
-          <Stack>
-            <FieldsPanel specs={page.field_specs} values={fields} group="content" disabled={!editable} onChange={setField} />
-            <BodyEditor blocks={body} onChange={setBody} disabled={!editable} />
-          </Stack>
-        </Tabs.Panel>
-        <Tabs.Panel value="seo" pt="md">
-          <FieldsPanel specs={page.field_specs} values={fields} group="seo" disabled={!editable} onChange={setField} />
-        </Tabs.Panel>
-        <Tabs.Panel value="settings" pt="md">
-          <FieldsPanel specs={page.field_specs} values={fields} group="settings" disabled={!editable} onChange={setField} />
-        </Tabs.Panel>
-        <Tabs.Panel value="suggestions" pt="md">
-          <SuggestionInbox pageId={page.id} holdAccept={hold} />
-        </Tabs.Panel>
-        <Tabs.Panel value="revisions" pt="md">
-          {hold ? (
-            <Alert color="yellow" mb="sm">
-              {hold}
-            </Alert>
-          ) : null}
-          <RevisionHistory pageId={page.id} canEdit={editable && !dirty} />
-        </Tabs.Panel>
-      </Tabs>
+      <Grid>
+        <Grid.Col span={{ base: 12, md: askingAi ? 8 : 12 }}>
+          <Tabs value={tab} onChange={setTab} keepMounted={false}>
+            <Tabs.List>
+              <Tabs.Tab value="content">Content</Tabs.Tab>
+              <Tabs.Tab value="seo">SEO</Tabs.Tab>
+              <Tabs.Tab value="settings">Settings</Tabs.Tab>
+              <Tabs.Tab value="suggestions">Suggestions ({page.pending_suggestions})</Tabs.Tab>
+              <Tabs.Tab value="revisions">Revisions</Tabs.Tab>
+            </Tabs.List>
+            <Tabs.Panel value="content" pt="md">
+              <Stack>
+                <FieldsPanel specs={page.field_specs} values={fields} group="content" disabled={!editable} onChange={setField} />
+                <BodyEditor blocks={body} onChange={setBody} disabled={!editable} />
+              </Stack>
+            </Tabs.Panel>
+            <Tabs.Panel value="seo" pt="md">
+              <FieldsPanel specs={page.field_specs} values={fields} group="seo" disabled={!editable} onChange={setField} />
+            </Tabs.Panel>
+            <Tabs.Panel value="settings" pt="md">
+              <FieldsPanel specs={page.field_specs} values={fields} group="settings" disabled={!editable} onChange={setField} />
+            </Tabs.Panel>
+            <Tabs.Panel value="suggestions" pt="md">
+              <SuggestionInbox pageId={page.id} holdAccept={hold} />
+            </Tabs.Panel>
+            <Tabs.Panel value="revisions" pt="md">
+              {hold ? (
+                <Alert color="yellow" mb="sm">
+                  {hold}
+                </Alert>
+              ) : null}
+              <RevisionHistory pageId={page.id} canEdit={editable && !dirty} />
+            </Tabs.Panel>
+          </Tabs>
+        </Grid.Col>
+        {askingAi ? (
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <Paper withBorder p="md" component="aside" id="zer0-ai-panel" aria-label="AI panel">
+              <AiPanel page={page} dirty={dirty} held={editable ? null : (page.lock ?? 'You cannot change this page.')} onReview={() => setTab('suggestions')} />
+            </Paper>
+          </Grid.Col>
+        ) : null}
+      </Grid>
     </Stack>
   );
 }

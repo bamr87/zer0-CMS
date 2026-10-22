@@ -7,13 +7,21 @@
 import type { ApiClient } from '@zer0/api';
 import { createContext, use, type ReactNode } from 'react';
 
+/** A section of the AI area (G8). */
+export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models';
+
 /** Where a workspace asks to go; the host maps it to a route or a panel. */
 export type Destination =
-  | { to: 'page'; id: number }
+  | { to: 'page'; id: number; tab?: 'suggestions' }
   | { to: 'pages' }
   | { to: 'create' }
   | { to: 'run'; id: number }
-  | { to: 'review'; runId?: number };
+  | { to: 'review'; runId?: number }
+  // The AI content layer (G8); a row without an id is a new one.
+  | { to: 'ai'; section?: AiSection }
+  | { to: 'assistant' | 'pipeline' | 'schema' | 'brief'; id?: string }
+  | { to: 'briefs' }
+  | { to: 'conversation'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

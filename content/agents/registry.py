@@ -25,6 +25,9 @@ every check below is written once and holds on every surface:
 
 The call then runs in its own transaction and is recorded as an `AgentStep`
 of the caller's run, with its arguments, result, latency and any error.
+`check()` asks the same questions (all but the rate) without calling, for a
+surface that queues work which will end in a call — the AI layer's runs on a
+page ask it when they are requested.
 """
 
 import time
@@ -167,7 +170,12 @@ class Registry:
         self._close_step(step, started, result=result)
         return result
 
-    def _check(self, t: Tool, args: dict, ctx: ToolContext):
+    def check(self, name: str, args: dict | None, ctx: ToolContext) -> None:
+        """Raise the `ToolError` a call would be refused with — every check but the rate, which only a call
+        spends — without running the tool or recording a step: a surface asks before it queues work for one."""
+        self._check(self.get(name), dict(args or {}), ctx, rate=False)
+
+    def _check(self, t: Tool, args: dict, ctx: ToolContext, *, rate: bool = True):
         refusal = self.refusal(t, ctx)
         if refusal:
             raise refusal
@@ -186,7 +194,8 @@ class Registry:
         person = ctx.on_behalf_of
         if person is not None and page is not None and not page.permissions_for_user(person).can_edit():
             raise ToolError("permission_denied", f"page {page.pk} is not one {person} may edit, and the run is theirs")
-        self._check_rate(t, ctx.user)
+        if rate:
+            self._check_rate(t, ctx.user)
 
     @staticmethod
     def _target_page(t: Tool, args: dict):

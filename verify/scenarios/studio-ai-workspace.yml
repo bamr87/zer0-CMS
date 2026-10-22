@@ -1,0 +1,82 @@
+# =============================================================================
+# verify/scenarios/studio-ai-workspace.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# The AI area's workspaces on the seeded demo, in a browser under the
+# platform's CSP: the providers' status and the model catalog; an output
+# schema written with feedback as it is typed; two assistants; and a pipeline
+# built from them whose steps are reordered by dragging from the keyboard
+# (@dnd-kit: space picks a step up, an arrow moves it, space drops it), saved,
+# and read back in the new order. No model is reached.
+# =============================================================================
+id: studio-ai-workspace
+feature: ZER0-043
+title: "Check the providers, write a schema, and build a pipeline by dragging its steps"
+description: "An editor opens the AI area's providers and model catalog, writes an output schema (told when the JSON is not valid yet, then that it is), writes two assistants, and builds a pipeline from them; dragging the first step below the second from the keyboard and saving keeps the new order."
+viewports: [desktop]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  # Providers and models: status for everyone (the demo editor does not configure them).
+  - click: "role=link[name='AI']"
+  - click: "role=tab[name='Providers']"
+  - wait: { selector: "role=table[name='Providers']" }
+  - expect: { text: "recorded" }
+  - screenshot: providers
+  - click: "role=tab[name='Models']"
+  - wait: { selector: "role=tabpanel[name='Models']" }
+  # An output schema, with feedback as it is typed.
+  - click: "role=tab[name='Output schemas']"
+  - click: "role=button[name='New schema']"
+  - fill: { selector: "role=textbox[name='Name']", value: "Headline and body" }
+  - fill: { selector: "role=textbox[name='JSON Schema']", value: "{\"type\": \"object\", " }
+  - expect: { text: "Not JSON yet" }
+  - fill: { selector: "role=textbox[name='JSON Schema']", value: "{\"type\": \"object\", \"properties\": {\"headline\": {\"type\": \"string\"}}, \"required\": [\"headline\"]}" }
+  - expect: { visible: "role=status >> text=Valid JSON" }
+  - click: "role=button[name='Create']"
+  - wait: { selector: "role=heading[name='Headline and body']" }
+  - screenshot: schema-written
+  # Two assistants for the pipeline.
+  - click: "role=tab[name='Assistants']"
+  - click: "role=button[name='New assistant']"
+  - fill: { selector: "role=textbox[name='Name']", value: "Step drafter" }
+  - click: "role=button[name='Create']"
+  - wait: { selector: "role=heading[name='Step drafter']" }
+  - click: "role=tab[name='Assistants']"
+  - click: "role=button[name='New assistant']"
+  - fill: { selector: "role=textbox[name='Name']", value: "Step editor" }
+  - click: "role=button[name='Create']"
+  - wait: { selector: "role=heading[name='Step editor']" }
+  # The pipeline: two steps, created.
+  - click: "role=tab[name='Pipelines']"
+  - click: "role=button[name='New pipeline']"
+  - fill: { selector: "role=textbox[name='Name']", value: "Draft, then edit" }
+  - click: "role=button[name='Add a step']"
+  - click: "li[aria-label='Step 1'] >> role=combobox[name='Assistant']"
+  - click: "role=option[name='Step drafter']"
+  - click: "role=button[name='Add a step']"
+  - click: "li[aria-label='Step 2'] >> role=combobox[name='Assistant']"
+  - click: "role=option[name='Step editor']"
+  - click: "role=button[name='Create']"
+  - wait: { selector: "role=heading[name='Draft, then edit']" }
+  # Drag step 1 below step 2 from the keyboard, then save: the platform keeps the new order.
+  - eval: "document.querySelector(\"[aria-label='Drag step 1']\").focus()"
+  - press: Space
+  - wait: { ms: 300 }
+  - press: ArrowDown
+  - wait: { ms: 300 }
+  - press: Space
+  - wait: { ms: 300 }
+  - expect: { visible: "li[aria-label='Step 1'] input[value='Step editor']" }
+  - click: "role=button[name='Save']"
+  - wait: { ms: 1000 }
+  # Opened again from the list, it is read from the platform: the steps in the order saved.
+  - click: "role=tab[name='Pipelines']"
+  - click: "role=table[name='Pipelines'] >> role=button[name='Draft, then edit']"
+  - wait: { selector: "role=heading[name='Draft, then edit']" }
+  - expect: { visible: "li[aria-label='Step 1'] input[value='Step editor']" }
+  - expect: { visible: "li[aria-label='Step 2'] input[value='Step drafter']" }
+  - expect: { no_console_errors: true }
+  - screenshot: pipeline-reordered

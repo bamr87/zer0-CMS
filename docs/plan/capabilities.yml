@@ -217,32 +217,53 @@ platform:
   # ── The AI content layer (TARGET.md § The AI content layer) ─────────────────
   - id: ai.providers
     what: Provider adapters behind one registry, per-provider configuration with an encrypted credential, the default provider, and a health test.
-    surfaces: {api: done, studio: missing, extension: missing}
-    proof: {api: content/tests/ai/test_api.py::test_providers_are_listed_for_everyone_and_configured_by_staff_with_a_write_only_credential}
+    # G8 screens: AI → Providers — status and health for everyone, configuration (the credential write-only, shown as set or not set), test, model sync and the default for those with ai.change_providerconfig (one check at a time); the default's status on Home; verify/scenarios/studio-ai-workspace.yml opens it in a browser.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_providers_are_listed_for_everyone_and_configured_by_staff_with_a_write_only_credential
+      studio: web/packages/ui/test/ai/providers.test.tsx
   - id: ai.models
     what: The model catalog, synced from each provider.
-    surfaces: {api: done, studio: missing}
-    proof: {api: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default}
+    # G8 screens: AI → Models, filtered by provider, activity and name; a provider's "Sync models" fills it.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default
+      studio: web/packages/ui/test/ai/providers.test.tsx
   - id: ai.assistants
     what: User-managed assistants (persona, instructions, model, parameters, output schema), propose-only, run on demand.
-    surfaces: {api: done, studio: missing, extension: missing, mcp: partial}
-    proof: {api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it}
+    # G8 screens: AI → Assistants — create, edit (the form read again from the saved row), try on a prompt (the run followed live), export and import; and the editor's AI panel runs one on the open page — the whole page, a block, or a selection placed by its field and occurrence — its answer landing as suggestions proposed through the registry (api: test_on_page.py).
+    surfaces: {api: done, studio: done, extension: missing, mcp: partial}
+    proof:
+      api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
+      studio: web/packages/ui/test/ai/assistants.test.tsx
   - id: ai.pipelines
     what: Ordered pipelines of assistants, each step reading the one before.
-    surfaces: {api: done, studio: missing, extension: missing, mcp: missing}
-    proof: {api: content/tests/ai/test_api.py::test_a_pipeline_is_written_with_its_steps_and_run}
+    # G8 screens: AI → Pipelines — created from steps, reordered by dragging (pointer or keyboard, @dnd-kit) or the move buttons, each step's assistant and source; run and follow; also on a conversation and from the editor's AI panel; verify/scenarios/studio-ai-workspace.yml builds one and drags its steps from the keyboard in a browser.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_a_pipeline_is_written_with_its_steps_and_run
+      studio: web/packages/ui/test/ai/pipelines.test.tsx
   - id: ai.schemas
     what: The output-schema library (bundled schemas seeded), export and import, and schema-validated structured generation.
-    surfaces: {api: done, studio: missing}
-    proof: {api: content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled}
+    # G8 screens: AI → Output schemas — edited with feedback as typed and the platform's verdict on save, exported, imported, the bundled ones added by staff; an assistant's structured answer shown as its JSON; verify/scenarios/studio-ai-workspace.yml writes one in a browser.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled
+      studio: web/packages/ui/test/ai/schemas.test.tsx
   - id: ai.briefs
     what: A brief turns a prompt or a text into a structured draft with extracted metadata (title, slug, description, keywords, tags).
-    surfaces: {api: done, studio: missing, extension: missing, mcp: partial}
-    proof: {api: content/tests/ai/test_api.py::test_a_brief_is_generated_as_a_run_and_applied_as_a_draft_with_suggestions}
+    # G8 screens: Create → Briefs — write, generate (the run followed live), review the rendered Markdown, the metadata and the structured result, apply (the draft opens on its Suggestions tab); verify/scenarios/studio-ai-brief.yml in a browser.
+    surfaces: {api: done, studio: done, extension: missing, mcp: partial}
+    proof:
+      api: content/tests/ai/test_api.py::test_a_brief_is_generated_as_a_run_and_applied_as_a_draft_with_suggestions
+      studio: web/packages/ui/test/ai/briefs.test.tsx
   - id: ai.conversations
     what: Conversations — threads and messages replayed to any provider, run an assistant or a pipeline, assign, re-run, promote a message to a brief or a draft.
-    surfaces: {api: done, studio: missing, extension: missing}
-    proof: {api: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one}
+    # G8 screens: AI → Conversations (and Create) — send and follow the reply's run, filter, ask again (or another assistant), run the pipeline, promote to a brief or a draft, delete; the newest messages first, earlier ones loaded on request; verify/scenarios/studio-ai-chat.yml in a browser.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one
+      studio: web/packages/ui/test/ai/conversations.test.tsx
   - id: ai.agents
     what: Tool-using agents — GitOps definitions, policies, runs with step timelines and cancel, agent tokens.
     # P4: runs and a run's live step timeline in the studio; definitions, cancel and tokens to come.
@@ -259,13 +280,15 @@ platform:
     surfaces: {ops: partial}
   - id: ai.usage
     what: Tokens, cost and budgets per run, person, site and provider.
-    # P4: a run's tokens and cost on its timeline; the rollups and budgets to come.
+    # P4: a run's tokens and cost on its timeline. G8: each reply's provider, model, tokens and cost in its conversation; a provider's monthly budget set in the studio. Rollups per person and site, and their budgets, to come (H2).
     surfaces: {api: partial, studio: partial}
   - id: ai.streaming
     what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
-    # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource on gthread workers (it outlives gunicorn's worker timeout), and the studio's timeline follows it live — stopping at a final status, reopening after a pause, backing off from a broken stream; idempotent creation to come (G8).
-    surfaces: {api: done, studio: partial, extension: missing}
-    proof: {api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it}
+    # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource on gthread workers (it outlives gunicorn's worker timeout), and the studio's timeline follows it live — stopping at a final status, reopening after a pause, backing off from a broken stream. G8: every screen that starts a run (202) follows it the same way (useLiveRun) and reads its result when it ends, and every request that starts a run carries an Idempotency-Key made when the person acts (the API replays the first answer to a repeat); its control waits while the request is out and a double click asks once — conversations.test.tsx (keys, Ctrl+Enter sends once, a message's actions held), providers.test.tsx (one check per double click), briefs.test.tsx and aipanel.test.tsx.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
+      studio: web/packages/ui/test/ai/conversations.test.tsx
 
   # ── Sites: manage, monitor, improve ─────────────────────────────────────────
   - id: sites.registry
@@ -438,20 +461,20 @@ sources:
     # command), ownership (a rule on every surface). The rows a person works with are partial until the studio
     # (P4, G10); `note` names the test that proves the platform's half (the API).
       - {id: parodynews.providers, what: "Four providers (Claude Code over OAuth, Anthropic, OpenAI, mock), pluggable by setting.", target: ai.providers, status: done, proof: content/tests/ai/test_providers.py::test_the_registry_has_six_adapters_and_takes_more_from_settings}
-      - {id: parodynews.provider-config, what: "Staff set each provider's key, base URL, organization, project, default model and extras in the UI, enable it and pick the default; the database overrides the environment.", target: ai.providers, status: partial, note: "API done (content/tests/ai/test_api.py::test_a_providers_configuration_is_validated_and_shown_only_to_those_who_configure_it); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.provider-test, what: "Send a test prompt to a provider.", target: ai.providers, status: partial, note: "API done (content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.model-sync, what: "List a vendor's models live and sync them into the catalog (UI, admin action, sync_models).", target: ai.models, status: partial, note: "API and sync_ai_models done (content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default, content/tests/ai/test_services.py::test_the_catalog_syncs_from_the_command_line); the admin action and the screen are the studio's (P4, G10)"}
-      - {id: parodynews.structured-output, what: "Generation enforces an assistant's JSON Schema (parse and validate).", target: ai.schemas, status: partial, note: "API done (content/tests/ai/test_services.py::test_a_structured_answer_is_validated_and_rendered_or_the_run_fails); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.assistants, what: "Create and edit assistants — instructions, prompt, model, temperature, top_p, JSON schema — with import/export.", target: ai.assistants, status: partial, note: "API done (content/tests/ai/test_api.py::test_an_assistant_exports_as_a_document_and_imports_as_a_new_private_one); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.assistant-groups, what: "Ordered groups of assistants that run in sequence, each seeing the earlier output.", target: ai.pipelines, status: partial, note: "API done (content/tests/ai/test_services.py::test_a_pipeline_is_a_parent_run_with_a_child_run_per_step_each_fed_the_last); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.schema-library, what: "Create, edit, export and import JSON schemas; one-click import of the bundled parody-article, news-article and content-detail schemas and the parody prompt.", target: ai.schemas, status: partial, note: "API done (content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: partial, note: "API done (content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.extract-metadata, what: "A second call fills title, author, description, slug, keywords and tags.", target: ai.briefs, status: partial, note: "API done (content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: partial, note: "API done (content/tests/ai/test_services.py::test_a_brief_from_a_pipeline_and_a_brief_from_text); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: partial, note: "API done (content/tests/ai/test_services.py::test_a_message_queues_a_reply_and_the_whole_conversation_is_replayed); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.run-group, what: "Run a whole assistant group on a thread in one action.", target: ai.conversations, status: partial, note: "API done (content/tests/ai/test_services.py::test_a_pipeline_on_a_conversation_reads_the_prompt_it_was_given); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: partial, note: "API done (content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one — assign, re-run; content/tests/ai/test_api.py::test_a_conversation_starts_from_a_brief_and_its_messages_filter_and_delete — list, filter, delete; content/tests/ai/test_services.py::test_a_failed_reply_records_its_error_and_is_left_out_of_the_replay and test_a_message_queues_a_reply_and_the_whole_conversation_is_replayed — failures, usage, provider, model); a person reaches it with the studio (P4, G10)"}
-      - {id: parodynews.message-to-post, what: "Promote a message to a draft post with AI-generated front matter.", target: ai.conversations, status: partial, note: "API done (content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one — promoted, applied, a draft post); a person reaches it with the studio (P4, G10)"}
+      - {id: parodynews.provider-config, what: "Staff set each provider's key, base URL, organization, project, default model and extras in the UI, enable it and pick the default; the database overrides the environment.", target: ai.providers, status: done, proof: web/packages/ui/test/ai/providers.test.tsx, note: "API: content/tests/ai/test_api.py::test_a_providers_configuration_is_validated_and_shown_only_to_those_who_configure_it; studio: AI → Providers → Configure (G8)"}
+      - {id: parodynews.provider-test, what: "Send a test prompt to a provider.", target: ai.providers, status: done, proof: web/packages/ui/test/ai/providers.test.tsx, note: "API: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default; studio: AI → Providers → Test, the check followed as a run (G8)"}
+      - {id: parodynews.model-sync, what: "List a vendor's models live and sync them into the catalog (UI, admin action, sync_models).", target: ai.models, status: done, proof: web/packages/ui/test/ai/providers.test.tsx, note: "API and manage.py sync_ai_models: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default, content/tests/ai/test_services.py::test_the_catalog_syncs_from_the_command_line; studio: AI → Providers → Sync models, and AI → Models (G8)"}
+      - {id: parodynews.structured-output, what: "Generation enforces an assistant's JSON Schema (parse and validate).", target: ai.schemas, status: done, proof: web/packages/ui/test/ai/assistants.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_structured_answer_is_validated_and_rendered_or_the_run_fails; studio: an assistant given an output schema, its answer shown as the validated JSON and the Markdown rendered from it (G8)"}
+      - {id: parodynews.assistants, what: "Create and edit assistants — instructions, prompt, model, temperature, top_p, JSON schema — with import/export.", target: ai.assistants, status: done, proof: web/packages/ui/test/ai/assistants.test.tsx, note: "API: content/tests/ai/test_api.py::test_an_assistant_exports_as_a_document_and_imports_as_a_new_private_one; studio: AI → Assistants — create, edit, export, import (G8)"}
+      - {id: parodynews.assistant-groups, what: "Ordered groups of assistants that run in sequence, each seeing the earlier output.", target: ai.pipelines, status: done, proof: web/packages/ui/test/ai/pipelines.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_pipeline_is_a_parent_run_with_a_child_run_per_step_each_fed_the_last; studio: AI → Pipelines, built by dragging and run (G8)"}
+      - {id: parodynews.schema-library, what: "Create, edit, export and import JSON schemas; one-click import of the bundled parody-article, news-article and content-detail schemas and the parody prompt.", target: ai.schemas, status: done, proof: web/packages/ui/test/ai/schemas.test.tsx, note: "API: content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled; studio: AI → Output schemas — edit, export, import, and staff add the bundled schemas with the parody writer (G8)"}
+      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/briefs.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata; studio: Create → Briefs, generated and reviewed (G8); verify/scenarios/studio-ai-brief.yml"}
+      - {id: parodynews.extract-metadata, what: "A second call fills title, author, description, slug, keywords and tags.", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/briefs.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata; studio: the brief review shows the metadata the second call extracted (G8)"}
+      - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_from_a_pipeline_and_a_brief_from_text; studio: a message promoted to a draft, and a brief written as 'Use my text as it is' (G8)"}
+      - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_message_queues_a_reply_and_the_whole_conversation_is_replayed; studio: AI or Create → Conversations, started by hand or from a brief ('Talk it over'), each reply followed live (G8); verify/scenarios/studio-ai-chat.yml"}
+      - {id: parodynews.run-group, what: "Run a whole assistant group on a thread in one action.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_pipeline_on_a_conversation_reads_the_prompt_it_was_given; studio: 'Run the pipeline' in a conversation (G8)"}
+      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: partial, note: "API done (content/tests/ai/test_api.py::test_a_conversation_starts_from_a_brief_and_its_messages_filter_and_delete, content/tests/ai/test_services.py::test_a_failed_reply_records_its_error_and_is_left_out_of_the_replay). Studio (G8, web/packages/ui/test/ai/conversations.test.tsx): within one thread — filtered by side or failure, ask again or another assistant, delete; each reply's error, provider, model, tokens and cost. Open: barodybroject's Messages screen lists every message across threads with per-message assignment — the studio has no cross-conversation list (the API has none either: messages are read per conversation) and never assigns (PATCH messages/<id>/ assistant)"}
+      - {id: parodynews.message-to-post, what: "Promote a message to a draft post with AI-generated front matter.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one; studio: a message promoted to a draft opens as a brief to apply (G8)"}
       - {id: parodynews.post-editing, what: "Edit a post's Markdown body (with a rendered preview), front matter and status.", target: content.edit, status: partial}
       - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
       - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
@@ -466,7 +489,7 @@ sources:
       - {id: parodynews.ownership, what: "People see their own rows and shared ones; staff see all.", target: platform.permissions, status: done, proof: content/tests/ai/test_models.py::test_visible_to_is_the_one_scope}
       - {id: parodynews.install-wizard, what: "First-run setup on the web or the CLI (headless with an expiring token), admin creation, status and health, the redirect until installed.", target: platform.install, status: missing}
       - {id: parodynews.ops-commands, what: "ensure_admin, ensure_e2e_user, reset_db, refreshmigrations.", target: platform.install, status: partial}
-      - {id: parodynews.admin-import-export, what: "A back office for every model, with import/export of assistants, models, schemas and posts and a sync-from-provider action.", target: content.bulk, status: partial}
+      - {id: parodynews.admin-import-export, what: "A back office for every model, with import/export of assistants, models, schemas and posts and a sync-from-provider action.", target: content.bulk, status: partial, note: "G8: the studio exports and imports assistants and output schemas as documents and syncs a provider's models; posts and the models' rows as documents, and a back office for every model, to come (content.bulk)"}
       - {id: parodynews.error-issues, what: "Unhandled exceptions filed as deduplicated, rate-limited, redacted GitHub issues (off by default; refuses public repositories unless allowed).", target: platform.observability, status: partial}
       - {id: parodynews.report-issue, what: "A navigation link to the repository's GitHub issue templates.", target: platform.feedback, status: missing}
       - {id: parodynews.powered-by, what: "Admin-managed powered-by links in the footer.", target: content.navigation, status: missing}
@@ -478,7 +501,7 @@ sources:
       - {id: parodynews.field-defaults, what: "Stored default field values per model.", target: content.types, status: missing}
       - {id: parodynews.cloud-deploy, what: "Azure deployment (azd, Bicep: Container Apps, Postgres, Key Vault, registry, monitoring).", target: platform.deploy, status: missing}
       - {id: parodynews.newsroom, what: "Run a news site — posts move draft → review → published → archived, generated by assistant pipelines and published to the site.", target: news.workflow, status: partial}
-      - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: missing}
+      - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: partial, note: "The studio (web/, web/studio/test/ai.test.tsx): Home with the providers' status, Create and AI → Conversations (threads and their messages), AI → Assistants, Pipelines (groups), Output schemas, Providers and Models (settings), light and dark from the platform's tokens (P4, G8). Open, with their own rows: the posts screens — a post's Markdown with its rendered preview, its versions, publishing as a pull request (parodynews.post-editing, render-preview, post-versions, publish-pr) — and the cross-thread messages list (parodynews.messages)"}
 
   - id: rails-app
     path: rails/app

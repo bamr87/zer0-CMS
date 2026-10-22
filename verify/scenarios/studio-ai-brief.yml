@@ -1,0 +1,54 @@
+# =============================================================================
+# verify/scenarios/studio-ai-brief.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# The AI layer in the studio, end to end, on the seeded demo: write an
+# assistant, write a brief for it, generate it (a run of the `assistant`
+# agent, answered from verify/recordings/ — no model is reached), review the
+# rendered draft and its metadata, and apply it — the draft opens in the
+# editor on its Suggestions tab, the brief's text waiting there as
+# suggestions, nothing published.
+# =============================================================================
+id: studio-ai-brief
+feature: ZER0-044
+title: "Write a brief, generate it, review it and apply it as a draft"
+description: "An editor writes an assistant, then a brief for it in Create; generating it is a run followed to its end, after which the editor reviews the rendered Markdown and the extracted metadata and applies the brief: a new draft page opens in the editor on its Suggestions tab with the text as suggestions to accept — never published."
+viewports: [desktop]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  # An assistant to write it: a persona with no output schema, so a plain answer.
+  - click: "role=link[name='AI']"
+  - click: "role=tab[name='Assistants']"
+  - click: "role=button[name='New assistant']"
+  - fill: { selector: "role=textbox[name='Name']", value: "Plain writer" }
+  - fill: { selector: "role=textbox[name='Instructions']", value: "You write short, plain articles for a small website." }
+  - click: "role=button[name='Create']"
+  - wait: { selector: "role=heading[name='Plain writer']" }
+  # The brief: a prompt, who writes it, where the draft goes.
+  - click: "role=link[name='Create']"
+  - click: "role=tab[name='Briefs']"
+  - click: "role=button[name='New brief']"
+  - fill: { selector: "role=textbox[name='Prompt']", value: "Why a small site needs nightly backups" }
+  - click: "role=combobox[name='Assistant']"
+  - click: "role=option[name='Plain writer']"
+  - click: "role=combobox[name='Where the draft goes']"
+  - click: "role=option[name='Posts (Collection page)']"
+  - screenshot: brief-written
+  - click: "role=button[name='Save and generate']"
+  # The run has finished: the review shows the rendered draft and its metadata.
+  - wait: { selector: "role=document[name=\"The brief's Markdown, rendered\"]" }
+  - expect: { visible: "role=heading[name='Backups, explained']" }
+  - expect: { visible: "role=table[name='Metadata']" }
+  - expect: { text: "nightly-backups-explained" }
+  - screenshot: brief-ready
+  - click: "role=button[name='Apply as a draft']"
+  - wait: { url: /studio/write/ }
+  - expect: { visible: "role=heading[name='Nightly backups, explained']" }
+  - expect: { visible: "role=tab[name=/Suggestions/][selected=true]" }
+  - expect: { visible: "ins" }
+  - expect: { text: "Draft" }
+  - expect: { no_console_errors: true }
+  - screenshot: draft-with-suggestions

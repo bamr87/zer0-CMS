@@ -31,7 +31,7 @@ export interface Area {
 export const AREAS: Area[] = [
   { path: '/', label: 'Home', summary: 'What needs attention.', icon: IconHome },
   { path: '/write', label: 'Write', summary: 'Pages across your sites, the editor, revisions.', icon: IconPencil },
-  { path: '/create', label: 'Create', summary: 'A new page of any type, from a brief if you like.', icon: IconFilePlus },
+  { path: '/create', label: 'Create', summary: 'A new page of any type, a brief for AI to write, a conversation.', icon: IconFilePlus },
   { path: '/ideas', label: 'Ideas', summary: 'Boards, brainstorm sessions, and promoting an idea to a brief.', icon: IconBulb, milestone: 'G14' },
   {
     path: '/research',
@@ -49,7 +49,12 @@ export const AREAS: Area[] = [
   },
   { path: '/books', label: 'Books', summary: 'Books, outlines, chapters, characters, continuity, manuscripts.', icon: IconBook, milestone: 'G9' },
   { path: '/review', label: 'Review', summary: 'Suggestions with their diffs: accept, reject, accept a whole run.', icon: IconChecklist },
-  { path: '/ai', label: 'AI', summary: 'Agent runs and their step timelines.', icon: IconSparkles },
+  {
+    path: '/ai',
+    label: 'AI',
+    summary: 'Agent runs, assistants, pipelines, output schemas, conversations, providers and models.',
+    icon: IconSparkles,
+  },
   {
     path: '/sites',
     label: 'Sites',

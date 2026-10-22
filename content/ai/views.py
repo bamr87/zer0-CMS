@@ -111,6 +111,29 @@ def page_or_404(page_id):
     return page.specific
 
 
+def run_from(source, request, serializer):
+    """An assistant's or a pipeline's run from a request: on a prompt, or —
+    with `suggest` — on a page, its answer proposed there as suggestions."""
+    body = serializer(data=request.data)
+    body.is_valid(raise_exception=True)
+    data = body.validated_data
+    page = page_or_404(data.get("page_id"))
+    if data["suggest"]:
+        return services.suggest_on_page(
+            source,
+            user=request.user,
+            page=page,
+            prompt=data["prompt"],
+            block_id=data["block_id"],
+            selection=data["selection"],
+            field=data.get("field", ""),
+            selection_start=data.get("selection_start"),
+        )
+    if isinstance(source, Pipeline):
+        return services.run_pipeline(source, user=request.user, prompt=data["prompt"], page=page)
+    return services.run_assistant(source, user=request.user, prompt=data["prompt"], page=page)
+
+
 class Paged(PageNumberPagination):
     page_size = 50
     page_size_query_param = "page_size"
@@ -118,10 +141,16 @@ class Paged(PageNumberPagination):
 
 
 class BySeq(CursorPagination):
+    """A conversation's messages in order: oldest first, or newest first (`ordering=-seq`) for a screen that
+    shows the latest and loads earlier ones when asked."""
+
     ordering = "seq"
     page_size = 50
     page_size_query_param = "page_size"
     max_page_size = 200
+
+    def get_ordering(self, request, queryset, view):
+        return ("-seq",) if request.query_params.get("ordering") == "-seq" else ("seq",)
 
 
 class CanEdit(BasePermission):
@@ -308,7 +337,8 @@ class AssistantViewSet(OwnedViewSet):
     open_actions = ("run",)
 
     @extend_schema(
-        summary="Run the assistant on a prompt; follow the run for its answer",
+        summary="Run the assistant on a prompt — or on a page, its answer proposed there as suggestions; follow the "
+        "run for its answer",
         request=s.RunAssistantSerializer,
         parameters=[IDEMPOTENCY],
         responses={202: s.RunAcceptedSerializer, **ERROR_RESPONSES},
@@ -316,15 +346,15 @@ class AssistantViewSet(OwnedViewSet):
     @action(detail=True, methods=["post"])
     @idempotent
     def run(self, request, public_id=None):
-        body = s.RunAssistantSerializer(data=request.data)
-        body.is_valid(raise_exception=True)
-        run = services.run_assistant(
-            self.get_object(),
-            user=request.user,
-            prompt=body.validated_data["prompt"],
-            page=page_or_404(body.validated_data.get("page_id")),
-        )
-        return accepted(run=s.RunRefSerializer(run).data)
+        return accepted(run=s.RunRefSerializer(run_from(self.get_object(), request, s.RunAssistantSerializer)).data)
+
+    @extend_schema(
+        summary="The read-only tools an assistant may list, which its runs use",
+        responses={200: s.ToolSerializer(many=True), **ERROR_RESPONSES},
+    )
+    @action(detail=False, methods=["get"], pagination_class=None, filter_backends=[])
+    def tools(self, request):
+        return Response(s.ToolSerializer(services.assistant_tools(), many=True).data)
 
     @extend_schema(summary="The assistant as a portable document", responses={200: s.AssistantDocumentSerializer})
     @action(detail=True, methods=["get"])
@@ -352,7 +382,8 @@ class PipelineViewSet(OwnedViewSet):
     open_actions = ("run",)
 
     @extend_schema(
-        summary="Run the pipeline: a parent run with one child run per step",
+        summary="Run the pipeline — a parent run with one child run per step — on a prompt, or on a page with its "
+        "answer proposed there as suggestions",
         request=s.RunPipelineSerializer,
         parameters=[IDEMPOTENCY],
         responses={202: s.RunAcceptedSerializer, **ERROR_RESPONSES},
@@ -360,15 +391,7 @@ class PipelineViewSet(OwnedViewSet):
     @action(detail=True, methods=["post"])
     @idempotent
     def run(self, request, public_id=None):
-        body = s.RunPipelineSerializer(data=request.data)
-        body.is_valid(raise_exception=True)
-        run = services.run_pipeline(
-            self.get_object(),
-            user=request.user,
-            prompt=body.validated_data["prompt"],
-            page=page_or_404(body.validated_data.get("page_id")),
-        )
-        return accepted(run=s.RunRefSerializer(run).data)
+        return accepted(run=s.RunRefSerializer(run_from(self.get_object(), request, s.RunPipelineSerializer)).data)
 
 
 # ── briefs ─────────────────────────────────────────────────────────────────
@@ -469,10 +492,13 @@ class ConversationViewSet(OwnedViewSet):
 
     @extend_schema(
         methods=["GET"],
-        summary="The conversation's messages, oldest first (cursor-paginated)",
+        summary="The conversation's messages, oldest first or newest first (cursor-paginated)",
         parameters=[
             OpenApiParameter("role", OpenApiTypes.STR, enum=[r for r, _ in Message.ROLES]),
             OpenApiParameter("status", OpenApiTypes.STR, enum=[st for st, _ in Message.STATUSES]),
+            OpenApiParameter(
+                "ordering", OpenApiTypes.STR, enum=["seq", "-seq"], description="`-seq` for the newest first."
+            ),
         ],
         responses={200: s.MessageSerializer(many=True), **ERROR_RESPONSES},
     )
@@ -518,7 +544,7 @@ class ConversationViewSet(OwnedViewSet):
 
     @extend_schema(
         summary="Run a pipeline on the conversation: each step replies in turn",
-        request=s.RunPipelineSerializer,
+        request=s.ConversationPipelineSerializer,
         parameters=[IDEMPOTENCY],
         responses={202: s.RunAcceptedSerializer, **ERROR_RESPONSES},
     )
@@ -528,7 +554,7 @@ class ConversationViewSet(OwnedViewSet):
         conversation = self.get_object()
         if conversation.pipeline is None:
             raise Invalid("the conversation has no pipeline")
-        body = s.RunPipelineSerializer(data=request.data)
+        body = s.ConversationPipelineSerializer(data=request.data)
         body.is_valid(raise_exception=True)
         run = services.run_pipeline(
             conversation.pipeline,
