@@ -1,6 +1,8 @@
 """`/api/v2/newsroom/`: the newsroom's router (newsroom/views.py) and its three
 public subscription endpoints; included from config/urls.py and, for the
-OpenAPI document, from ops/openapi.py."""
+OpenAPI document, from ops/openapi.py. `subscription_pages` are the HTML pages
+the links in a newsletter's email open, under `/newsletters/` (config/urls.py):
+not part of the API, so not in its document."""
 
 from django.urls import path
 from rest_framework.routers import DefaultRouter
@@ -21,4 +23,9 @@ urlpatterns = [
     path("subscriptions/confirm/", views.confirm, name="newsroom-confirm"),
     path("subscriptions/unsubscribe/", views.unsubscribe, name="newsroom-unsubscribe"),
     *router.urls,
+]
+
+subscription_pages = [
+    path("confirm/", views.subscription_page, {"action": "confirm"}, name="newsroom-confirm-page"),
+    path("unsubscribe/", views.subscription_page, {"action": "unsubscribe"}, name="newsroom-unsubscribe-page"),
 ]

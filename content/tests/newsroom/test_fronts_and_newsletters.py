@@ -1,19 +1,30 @@
 """Fronts and newsletters (PLAN G15). A front's slots resolve to stories as a
 reader would find them — a pinned story while it is live, else the next latest
 published story of a desk, never twice. A newsletter subscription is confirmed
-by an emailed link before anything is sent (double opt-in); an issue assembled
-from published stories is previewed, then sent by the worker through Django's
-mail API (locmem here; an anymail ESP in production) to confirmed subscribers
-only, each with their own unsubscribe link — once."""
+by an emailed link before anything is sent (double opt-in): the link opens a
+page that changes nothing until its button is pressed, and a link stops working
+once the address unsubscribes. An issue assembled from published stories is
+previewed, then sent by the worker through Django's mail API (locmem here; an
+anymail ESP in production) to confirmed subscribers only, each with their own
+unsubscribe link — once each, even when a send fails part way or its task runs
+twice. Production never mails to the console by default."""
 
+import os
+import subprocess
+import sys
 from datetime import timedelta
+from pathlib import Path
+from smtplib import SMTPDataError
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from django.core import mail
+from django.core.cache import cache
+from django.core.mail.backends import locmem
 from django.utils import timezone
 
-from newsroom import services
+from newsroom import services, tasks
 from newsroom.models import Front, Issue, Newsletter, Story, Subscriber
 
 S = Story.Status
@@ -21,9 +32,24 @@ URL = "/api/v2/newsroom"
 
 
 def link(text, path):
-    """The token of the link to `path` in an email's text."""
-    url = next(word for word in text.split() if path in word)
+    """The link to `path` in an email's text, without its host."""
+    url = urlparse(next(word for word in text.split() if path in word))
+    return f"{url.path}?{url.query}"
+
+
+def token(url):
     return parse_qs(urlparse(url).query)["token"][0]
+
+
+class Throttled(locmem.EmailBackend):
+    """Django's test backend, refusing every message after the first `limit`, as an ESP throttling a send does."""
+
+    limit = 1
+
+    def send_messages(self, messages):
+        if len(mail.outbox) >= self.limit:
+            raise SMTPDataError(454, b"throttled")
+        return super().send_messages(messages)
 
 
 @pytest.mark.django_db
@@ -79,13 +105,19 @@ def test_a_subscription_is_confirmed_by_email_before_anything_is_sent(
     assert len(mailoutbox) == 1  # not again within the hour
     assert client.post(url, {"email": "not an address"}, content_type="application/json").status_code == 422
 
-    token = link(mailoutbox[0].body, "/subscriptions/confirm/")
-    assert client.get(f"{URL}/subscriptions/confirm/", {"token": token + "x"}).status_code == 422
-    confirmed = client.get(f"{URL}/subscriptions/confirm/", {"token": token})
-    assert confirmed.status_code == 200 and confirmed.json()["status"] == "confirmed"
+    confirm = link(mailoutbox[0].body, "/newsletters/confirm/")
+    page = client.get(confirm)  # what a mail scanner, a prefetcher or a person opening the link fetches
+    assert page.status_code == 200 and page["Content-Type"].startswith("text/html")
+    assert b"Confirm the subscription" in page.content and b'method="post"' in page.content
+    assert Subscriber.objects.get().status == "pending"  # opening the link changes nothing
+    assert client.get(confirm + "x").status_code == 422
+    done = client.post(confirm)  # the page's button
+    assert done.status_code == 200 and b"You are subscribed" in done.content
+    assert Subscriber.objects.get().status == "confirmed"
     with django_capture_on_commit_callbacks(execute=True):
         client.post(url, {"email": "reader@example.com"}, content_type="application/json")
     assert len(mailoutbox) == 1 and Subscriber.objects.get().status == "confirmed"
+    assert client.get(f"{URL}/subscriptions/confirm/", {"token": token(confirm)}).status_code == 405  # POST only
 
 
 @pytest.mark.django_db
@@ -136,13 +168,13 @@ def test_an_issue_is_assembled_previewed_and_sent_once_to_confirmed_subscribers(
     assert api(ed).post(send).status_code == 409  # never twice
     assert api(ed).patch(f"{URL}/issues/{issue.public_id}/", {"subject": "Changed"}, format="json").status_code == 409
 
-    token = parse_qs(urlparse(unsubscribe).query)["token"][0]
-    gone = api().post(
-        f"{URL}/subscriptions/unsubscribe/?token={token}",
+    assert urlparse(unsubscribe).path == "/newsletters/unsubscribe/"
+    gone = api().post(  # a mail client's one-click unsubscribe (RFC 8058): no session, no CSRF token
+        f"{urlparse(unsubscribe).path}?{urlparse(unsubscribe).query}",
         "List-Unsubscribe=One-Click",
         content_type="application/x-www-form-urlencoded",
     )
-    assert gone.status_code == 200 and gone.json()["status"] == "unsubscribed"
+    assert gone.status_code == 200 and Subscriber.objects.get(pk=confirmed.pk).status == "unsubscribed"
 
 
 @pytest.mark.django_db
@@ -169,5 +201,89 @@ def test_a_confirmation_link_expires_and_does_only_what_it_says(site):
         services.confirm(token("confirm", timezone.now() - timedelta(days=8)))
     with pytest.raises(services.Invalid):
         services.unsubscribe(token("confirm"))  # a confirm link does not unsubscribe
-    assert services.confirm(token("confirm")).status == "confirmed"
+    old_link = token("confirm")
+    assert services.confirm(old_link).status == "confirmed"
     assert services.unsubscribe(token("unsubscribe", timezone.now() - timedelta(days=400))).status == "unsubscribed"
+    with pytest.raises(services.Invalid, match="no longer valid"):
+        services.confirm(old_link)  # a confirm link still in the mailbox does not subscribe the address again
+    assert Subscriber.objects.get(pk=subscriber.pk).status == "unsubscribed"
+
+
+@pytest.mark.django_db
+def test_a_send_that_fails_part_way_is_sent_again_to_the_rest_only(
+    api, desk, site, ed, advance, settings, mailoutbox, django_capture_on_commit_callbacks
+):
+    settings.EMAIL_BACKEND = f"{__name__}.Throttled"
+    newsletter = Newsletter.objects.create(site=site, name="Brief", slug="brief")
+    for name in ("ann", "bo", "cy"):
+        Subscriber.objects.create(newsletter=newsletter, email=f"{name}@example.com", status="confirmed")
+    issue = Issue.objects.create(newsletter=newsletter, subject="Monday")
+    services.set_issue_stories(issue, [advance(desk, S.PUBLISHED)])
+    send = f"{URL}/issues/{issue.public_id}/send/"
+
+    with django_capture_on_commit_callbacks(execute=True):
+        assert api(ed).post(send).status_code == 202
+    issue.refresh_from_db()
+    assert (issue.status, issue.recipients, len(mailoutbox)) == ("failed", 1, 1)
+    assert issue.error.startswith("sent to 1 of 3")
+
+    Throttled.limit = 99
+    try:
+        with django_capture_on_commit_callbacks(execute=True):
+            assert api(ed).post(send).status_code == 202
+        issue.refresh_from_db()
+        assert (issue.status, issue.recipients) == ("sent", 3)
+        assert sorted(m.to[0] for m in mailoutbox) == ["ann@example.com", "bo@example.com", "cy@example.com"]
+        assert tasks.send_issue(issue.pk) == 0  # the broker delivers the task again: nobody gets it twice
+        assert len(mailoutbox) == 3
+    finally:
+        Throttled.limit = 1
+
+
+@pytest.mark.django_db
+def test_an_issue_a_worker_left_sending_resumes_and_one_being_sent_is_not_sent_again(
+    api, desk, site, ed, advance, mailoutbox, django_capture_on_commit_callbacks
+):
+    newsletter = Newsletter.objects.create(site=site, name="Brief", slug="brief")
+    had = Subscriber.objects.create(newsletter=newsletter, email="had@example.com", status="confirmed")
+    Subscriber.objects.create(newsletter=newsletter, email="next@example.com", status="confirmed")
+    issue = Issue.objects.create(newsletter=newsletter, subject="Monday", status=Issue.Status.SENDING)
+    services.set_issue_stories(issue, [advance(desk, S.PUBLISHED)])
+    issue.deliveries.create(subscriber=had)  # the worker died after the first message
+    send = f"{URL}/issues/{issue.public_id}/send/"
+
+    cache.add(services.sending(issue.pk), True)  # while a worker holds it …
+    try:
+        assert api(ed).post(send).status_code == 409
+        assert tasks.send_issue(issue.pk) == 0  # … a second delivery of the task sends nothing
+    finally:
+        cache.delete(services.sending(issue.pk))
+    with django_capture_on_commit_callbacks(execute=True):
+        assert api(ed).post(send).status_code == 202  # nobody holds it: resume
+    issue.refresh_from_db()
+    assert (issue.status, issue.recipients) == ("sent", 2) and [m.to for m in mailoutbox] == [["next@example.com"]]
+
+
+@pytest.mark.django_db
+def test_an_issue_is_sent_only_with_its_own_sites_stories(desk, site, advance):
+    from wagtail.models import Site
+
+    from .conftest import person
+
+    newsletter = Newsletter.objects.create(site=site, name="Brief", slug="brief")
+    Subscriber.objects.create(newsletter=newsletter, email="a@example.com", status="confirmed")
+    issue = Issue.objects.create(newsletter=newsletter, subject="Monday")
+    services.set_issue_stories(issue, [advance(desk, S.PUBLISHED)])
+    other = Site.objects.create(hostname="other.localhost", root_page=desk.section)
+    type(desk).objects.filter(pk=desk.pk).update(site=other)  # its desk moved to another site since
+    with pytest.raises(services.Conflict, match="its newsletter's site"):
+        services.send_issue(issue, user=person("staffer", is_staff=True))
+
+
+def test_production_never_mails_to_the_console_by_default():
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("EMAIL_", "DJANGO_"))}
+    env |= {"DJANGO_SETTINGS_MODULE": "config.settings.production", "SECRET_KEY": "check"}
+    code = "import django; django.setup(); from django.conf import settings; print(settings.EMAIL_BACKEND)"
+    content = Path(__file__).resolve().parents[2]
+    out = subprocess.run([sys.executable, "-c", code], env=env, cwd=content, capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "django.core.mail.backends.smtp.EmailBackend"

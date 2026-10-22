@@ -10,11 +10,13 @@ story's `status`, moved by `newsroom.services`. `StoryEvent` is a story's
 history (assignments, moves, the fast path's reason). `Correction` is the log a
 site shows on a page; `Author` and `Byline` are who wrote it. `Front` and
 `FrontSlot` curate home and section fronts; `Newsletter`, `Issue` and
-`Subscriber` assemble stories into email.
+`Subscriber` assemble stories into email, and `IssueDelivery` records who has
+had an issue.
 
 Every row a client names has a UUID `public_id`; integer keys stay inside.
 `visible_to(user, site=None)` is the one place rows are scoped: staff see
-everything, everyone else the rows of the sites they edit (`ai.models.sites_for`).
+everything, everyone else the rows of the sites they edit (`ai.models.sites_for`)
+— and the authors of the stories they may see, or of none yet.
 """
 
 import uuid
@@ -242,9 +244,22 @@ class StageTask(Task):
 # ── bylines and corrections ────────────────────────────────────────────────
 
 
+class AuthorQuerySet(models.QuerySet):
+    def visible_to(self, user, site=None):
+        """Staff see every author; anyone else the authors of the stories they may see, and the authors no
+        story carries yet (so a desk can byline someone new). With `site`, that site's and the unused."""
+        if user is None or not user.is_authenticated:
+            return self.none()
+        if is_staff(user) and site is None:
+            return self
+        stories = Story.objects.visible_to(user, site)
+        return self.filter(models.Q(stories__in=stories) | models.Q(stories=None)).distinct()
+
+
 @register_snippet
 class Author(models.Model):
-    """A byline and its author page: who wrote it, for every site."""
+    """A byline and its author page: who wrote it. One author may write for several sites; it is
+    changed by the desk editors of every site its bylines are on (`services.may_change_author`)."""
 
     public_id = public_id()
     name = models.CharField(max_length=120)
@@ -253,6 +268,8 @@ class Author(models.Model):
     email = models.EmailField(blank=True)
     user = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = AuthorQuerySet.as_manager()
 
     class Meta:
         ordering = ["name", "id"]
@@ -421,3 +438,19 @@ class Subscriber(models.Model):
     class Meta:
         ordering = ["newsletter", "email"]
         constraints = [models.UniqueConstraint(fields=["newsletter", "email"], name="newsroom_one_subscription")]
+
+
+class IssueDelivery(models.Model):
+    """An issue sent to one subscriber, recorded as each message is accepted: what makes a send that
+    failed part way, or a worker that died, resume with the rest instead of mailing everyone again."""
+
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name="deliveries")
+    subscriber = models.ForeignKey(Subscriber, on_delete=models.CASCADE, related_name="+")
+    sent_at = models.DateTimeField(default=timezone.now)
+    message_id = models.CharField(max_length=255, blank=True, help_text="The ESP's id for the message, if it gave one.")
+
+    class Meta:
+        verbose_name_plural = "issue deliveries"
+        constraints = [
+            models.UniqueConstraint(fields=["issue", "subscriber"], name="newsroom_one_delivery_per_subscriber")
+        ]

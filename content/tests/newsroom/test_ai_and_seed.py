@@ -5,8 +5,9 @@ pipeline are bundled and shared; a pitch from a wire item, a draft from a pitch
 `assistant` agent whose result a person applies or accepts — the draft and the
 headlines arrive as suggestions on the page. The seed makes the Parody desk on
 the parodynews site with barodybroject's parody writer and schema, once, and
-barodybroject's generate → review → publish runs through it. The provider is
-the scripted fake: nothing reaches a model."""
+barodybroject's generate → review → publish runs through it; a post
+barodybroject publishes after the desk adopted it as a draft is published by
+the next import. The provider is the scripted fake: nothing reaches a model."""
 
 import json
 from io import StringIO
@@ -198,3 +199,18 @@ def test_parodynews_runs_as_a_newsroom_with_a_parody_desk(ed, reporter, copyedit
     page.refresh_from_db()
     assert story.status == S.PUBLISHED and page.live and page.get_parent().pk == desk.section_id
     assert "Sofa Annexed by Cat" in "".join(str(b.value) for b in page.body)
+
+
+@pytest.mark.django_db
+def test_a_post_barodybroject_publishes_after_its_desk_adopted_it_is_published_on_reimport(ed):
+    import_dump(DUMP)
+    call_command("seed_parody_desk", editor=["ed"], stdout=StringIO())
+    draft = Story.objects.get(desk__slug="parody", status=S.DRAFTING)
+    rows = json.loads(DUMP.read_text())
+    for row in rows:
+        if row["model"] == "parodynews.post" and row["fields"].get("status") == "draft":
+            row["fields"]["status"] = "published"  # barodybroject, still running, published it since
+    import_dump(rows)  # the source's publish, replayed: not a person going round the newsroom
+    draft.refresh_from_db()
+    assert draft.status == S.PUBLISHED and Page.objects.get(pk=draft.page_id).live
+    assert (draft.events.last().action, draft.events.last().note) == ("went live", "published by an import")

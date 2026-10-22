@@ -7,10 +7,12 @@ Wagtail's workflow machinery — the page enters the `Newsroom` workflow, its
 `StageTask`s are approved or sent back by the story's desk, and reaching a stage
 moves the story there (`reached_stage`). Everything else is the story's status,
 moved here. Nothing here publishes on its own: a page goes live only through
-`cms.services` (`release`, `correct`), under the person's Wagtail publish
-permission and the page's locks, and never before the story's embargo. The
-breaking-news fast path skips copy — Wagtail records the copy stage as skipped —
-and the story keeps the reason.
+`cms.services` (`release`), under the person's Wagtail publish permission and
+the page's locks, and never before the story's embargo — and every other way
+a page can go live is held to the same rule (`publish_refusal`, enforced for
+all of them by `workflow.on_page_published`). The breaking-news fast path skips
+copy — Wagtail records the copy stage as skipped — and the story keeps the
+reason. A correction or an update adds to the page's log and publishes nothing.
 
 AI help goes through the AI content layer only (`ai.services`): the newsroom's
 bundled assistants and pipeline (data/bundled.yaml) pitch from a wire item,
@@ -29,10 +31,12 @@ import yaml
 from django.apps import apps
 from django.conf import settings
 from django.core import signing
+from django.core.cache import cache
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlencode
 from django.utils.text import slugify
 from wagtail.models import Page, TaskState, Workflow, WorkflowState, WorkflowTask
 
@@ -63,8 +67,11 @@ from .models import (
 
 log = logging.getLogger(__name__)
 S = Story.Status
-PRE_PUBLISH = (S.PITCH, S.ASSIGNED, S.DRAFTING, S.EDITING, S.COPY, S.SCHEDULED)
+# A story still being made: its page goes live only through the newsroom's own moves (`release`).
+IN_THE_MAKING = (S.PITCH, S.ASSIGNED, S.DRAFTING, S.EDITING, S.COPY)
 PUBLISHED = (S.PUBLISHED, S.UPDATED, S.CORRECTED)
+# The desk's planning decisions: a story's reporter reads them and its editors change them.
+DESK_DECIDES = ("priority", "deadline", "slot_date", "embargo")
 # Where a person may move a story from each status. EDITING → PUBLISHED is the
 # breaking-news fast path; EDITING/COPY → DRAFTING sends it back.
 MOVES = {
@@ -88,8 +95,12 @@ def _may(allowed: bool, message: str):
 
 
 def _writes(story, user) -> bool:
-    """The desk's editors and the story's reporter work on a story."""
-    return story.desk.is_editor(user) or story.assignee_id == user.pk
+    """The desk's editors and the story's reporter work on a story — and on a pitch, the person who pitched it."""
+    return (
+        story.desk.is_editor(user)
+        or story.assignee_id == user.pk
+        or (story.status == S.PITCH and story.created_by_id == user.pk)
+    )
 
 
 def _page(story):
@@ -148,6 +159,17 @@ def edits_a_desk(user) -> bool:
     return is_staff(user) or Desk.objects.filter(editors=user).exists()
 
 
+def may_change_author(author, user) -> bool:
+    """An author is changed or deleted by staff, or by someone who edits a desk on every site their bylines
+    are on — by any desk editor while no story carries them — so one site's editors never rename another
+    site's bylines."""
+    if is_staff(user):
+        return True
+    on = set(Story.objects.filter(bylines=author).values_list("desk__site_id", flat=True))
+    edited = set(Desk.objects.filter(editors=user).values_list("site_id", flat=True))
+    return bool(edited) and on <= edited
+
+
 def _set_bylines(story, authors) -> None:
     story.byline_rows.all().delete()
     Byline.objects.bulk_create(Byline(story=story, author=a, position=i) for i, a in enumerate(dict.fromkeys(authors)))
@@ -178,20 +200,28 @@ def pitch(desk, *, user, headline: str = "", item: WireItem | None = None, bylin
 
 @transaction.atomic
 def update(story, *, user, bylines=None, **fields) -> Story:
-    """Change a story's planning fields — and, given `bylines`, its authors in order. Only those fields are
-    written, so a move another request made meanwhile (its status, its page) is never written back over."""
+    """Change a story's planning fields — and, given `bylines`, its authors in order. Only the fields that
+    change are written, so a move another request made meanwhile (its status, its page) is never written back
+    over. Its priority, deadline, slot and embargo are the desk editors' to change (`DESK_DECIDES`), and a
+    change of embargo goes into the story's history."""
     _may(_writes(story, user), "the desk's editors and the story's reporter change a story")
     if "slug" in fields and not fields["slug"]:
         del fields["slug"]  # a blank slug keeps the story's
-    if "embargo" in fields and fields["embargo"] != story.embargo and story.status in (S.SCHEDULED, *PUBLISHED):
+    fields = {name: value for name, value in fields.items() if value != getattr(story, name)}
+    decided = [name.replace("_", " ") for name in DESK_DECIDES if name in fields]
+    _may(not decided or story.desk.is_editor(user), f"only the desk's editors change a story's {', '.join(decided)}")
+    if "embargo" in fields and story.status in (S.SCHEDULED, *PUBLISHED):
         raise Conflict("the story is scheduled or published: its embargo no longer holds anything back")
-    if fields.get("slug") and fields["slug"] != story.slug:
-        if Story.objects.filter(desk=story.desk, slug=fields["slug"]).exclude(pk=story.pk).exists():
-            raise Invalid("another story on the desk has this slug", details=[_detail("slug", "taken")])
+    if "slug" in fields and Story.objects.filter(desk=story.desk, slug=fields["slug"]).exclude(pk=story.pk).exists():
+        raise Invalid("another story on the desk has this slug", details=[_detail("slug", "taken")])
+    embargo_was = story.embargo
     for name, value in fields.items():
         setattr(story, name, value)
     if fields:
         story.save(update_fields=[*fields, "updated_at"])
+    if "embargo" in fields:
+        note = f"until {story.embargo.isoformat()}" if story.embargo else f"lifted (it was {embargo_was.isoformat()})"
+        record(story, None, user, "embargo", note=note)
     if bylines is not None:
         _set_bylines(story, bylines)
     return story
@@ -370,11 +400,31 @@ def release(story, to: str, *, user, go_live_at=None, reason: str = "") -> None:
         pages.publish_now(page, user)
 
 
+def publish_refusal(story, go_live_at=None, *, replayed=False) -> Conflict | None:
+    """Why `story`'s page may not go live — at `go_live_at`, or now — if it may not. A story still being
+    made goes live only through the newsroom: the copy desk publishes or schedules it, or a desk editor
+    publishes it as breaking news with a reason (`release` moves the story on before it publishes, so its
+    own publish is never refused here). An importer `replayed` a source still canonical for the site (a
+    post published in barodybroject after its desk adopted it as a draft): that is the source's publish, not
+    a person's. No story's page goes live before its embargo. Every way a page can go live — Write's
+    buttons, the Wagtail admin, an agent's tool, an importer, the scheduled publish — is held to this by
+    `workflow.on_page_published`."""
+    if story.status in IN_THE_MAKING and not replayed:
+        return Conflict(
+            f"this page's story is at {story.status}: it goes live through the newsroom — the copy desk publishes "
+            "or schedules it, or a desk editor publishes it as breaking news with a reason",
+            code="story.in_workflow",
+        )
+    if story.embargo is not None and (go_live_at or timezone.now()) < story.embargo:
+        return Conflict(f"this page's story is embargoed until {story.embargo.isoformat()}", code="story.embargoed")
+    return None
+
+
 @transaction.atomic
 def correct(story, kind: str, *, user, text: str) -> Correction:
-    """A correction or an update on a published story: the note goes on the page's
-    log (shown at once by the page API and in the export), and a fix saved in the
-    editor since it went live is published with it."""
+    """A correction or an update on a published story: the note goes on the page's log, which the page API
+    and the export show at once. It publishes nothing — not a page taken down, not a draft saved since the
+    page went live: a fix goes live from the editor's Publish, where the person sees what goes with it."""
     _may(story.desk.is_editor(user), "only the desk's editors correct or update a story")
     if not story.is_published:
         raise Conflict("a story is corrected or updated once it is published")
@@ -382,11 +432,10 @@ def correct(story, kind: str, *, user, text: str) -> Correction:
     if not text:
         raise Invalid(f"say what the {kind} is", details=[_detail("text", "required")])
     page = _page(story)
+    # The note is shown on the site as soon as it is posted: posting one is a publisher's right.
     _may(page.permissions_for_user(user).can_publish(), f"{user} may not publish this story's page")
     entry = Correction.objects.create(page=page, story=story, kind=kind, text=text, created_by=user)
     record(story, S.CORRECTED if kind == Correction.Kind.CORRECTION else S.UPDATED, user, kind, note=text)
-    if page.has_unpublished_changes:
-        pages.publish_now(page, user)
     return entry
 
 
@@ -499,22 +548,38 @@ def can_manage(site, user) -> bool:
     return is_staff(user) or Desk.objects.filter(site=site, editors=user).exists()
 
 
+def _requested(subscriber) -> str:
+    """Which confirmation request a confirm link answers: a later request, or an unsubscribe, makes it stale."""
+    return subscriber.confirmation_sent_at.isoformat() if subscriber.confirmation_sent_at else ""
+
+
 def subscription_link(subscriber, action: str) -> str:
-    token = signing.dumps({"s": str(subscriber.public_id), "a": action}, salt=SUBSCRIPTION)
-    path = reverse(f"newsroom-{action}")
-    return f"{settings.WAGTAILADMIN_BASE_URL.rstrip('/')}{path}?token={token}"
+    """The emailed link that confirms a subscription or ends one: a page that says what it does and does it
+    when the person presses its button (`views.subscription_page`), never on the link being fetched."""
+    data = {"s": str(subscriber.public_id), "a": action}
+    if action == "confirm":
+        data["t"] = _requested(subscriber)
+    token = signing.dumps(data, salt=SUBSCRIPTION)
+    path = reverse(f"newsroom-{action}-page")
+    return f"{settings.WAGTAILADMIN_BASE_URL.rstrip('/')}{path}?{urlencode({'token': token})}"
 
 
-def _subscriber(token: str, action: str, max_age=None) -> Subscriber:
+def subscription_for(token: str, action: str) -> Subscriber:
+    """The subscription a link names, if the link is good for `action` — checked, never changed (what the
+    link's page shows before anyone presses its button). A confirm link is good for seven days, while the
+    address waits to confirm, and only for the latest confirmation request."""
     try:
-        data = signing.loads(token or "", salt=SUBSCRIPTION, max_age=max_age)
+        data = signing.loads(token or "", salt=SUBSCRIPTION, max_age=CONFIRM_FOR if action == "confirm" else None)
     except signing.BadSignature as e:
         raise Invalid("this link is not valid, or it has expired") from e
     if data.get("a") != action:
         raise Invalid(f"this link does not {action}")
-    found = Subscriber.objects.filter(public_id=data.get("s")).first()
+    found = Subscriber.objects.select_related("newsletter").filter(public_id=data.get("s")).first()
     if found is None:
         raise NotFound("no such subscription")
+    stale = found.status == Subscriber.Status.UNSUBSCRIBED or data.get("t") != _requested(found)
+    if action == "confirm" and found.status != Subscriber.Status.CONFIRMED and stale:
+        raise Invalid("this link is no longer valid: subscribe again for a new one")
     return found
 
 
@@ -539,8 +604,10 @@ def subscribe(newsletter, email: str) -> Subscriber:
 
 @transaction.atomic
 def confirm(token: str) -> Subscriber:
-    subscriber = _subscriber(token, "confirm", max_age=CONFIRM_FOR)
-    if subscriber.status != Subscriber.Status.CONFIRMED:
+    """Confirm the subscription a confirm link names: only an address still waiting to confirm, from the
+    latest request (an address confirmed already stays so)."""
+    subscriber = subscription_for(token, "confirm")
+    if subscriber.status == Subscriber.Status.PENDING:
         subscriber.status, subscriber.confirmed_at = Subscriber.Status.CONFIRMED, timezone.now()
         subscriber.save(update_fields=["status", "confirmed_at"])
     return subscriber
@@ -548,9 +615,11 @@ def confirm(token: str) -> Subscriber:
 
 @transaction.atomic
 def unsubscribe(token: str) -> Subscriber:
-    subscriber = _subscriber(token, "unsubscribe")
+    """End the subscription an unsubscribe link names; any confirm link still in a mailbox stops working."""
+    subscriber = subscription_for(token, "unsubscribe")
     subscriber.status, subscriber.unsubscribed_at = Subscriber.Status.UNSUBSCRIBED, timezone.now()
-    subscriber.save(update_fields=["status", "unsubscribed_at"])
+    subscriber.confirmation_sent_at = None
+    subscriber.save(update_fields=["status", "unsubscribed_at", "confirmation_sent_at"])
     return subscriber
 
 
@@ -592,19 +661,29 @@ def render_issue(issue, *, unsubscribe_url: str = "", items=None) -> dict:
     }
 
 
+def sending(issue_pk: int) -> str:
+    """The shared-cache key a worker holds while it sends an issue (`tasks.send_issue`)."""
+    return f"newsroom.issue.{issue_pk}.sending"
+
+
 @transaction.atomic
 def send_issue(issue, *, user) -> Issue:
-    """Send an issue to the newsletter's confirmed subscribers, as a job: every
-    story in it published first, and never twice."""
+    """Send an issue to the newsletter's confirmed subscribers, as a job: every story in it published and of
+    the newsletter's site. Each subscriber gets it once (`IssueDelivery`): an issue whose send failed part
+    way, or whose worker died while it was sending, is sent again to those who have not had it."""
     from .tasks import send_issue as deliver
 
     issue = Issue.objects.select_for_update().select_related("newsletter").get(pk=issue.pk)
     _may(can_manage(issue.newsletter.site, user), "the site's desk editors send its newsletters")
-    if issue.status not in (Issue.Status.DRAFT, Issue.Status.FAILED):
+    if issue.status == Issue.Status.SENDING and cache.get(sending(issue.pk)):
+        raise Conflict("this issue is being sent")
+    if issue.status not in (Issue.Status.DRAFT, Issue.Status.FAILED, Issue.Status.SENDING):
         raise Conflict(f"this issue is {issue.status}")
     stories = issue_stories(issue)
     if not stories:
         raise Invalid("add stories to the issue first", details=[_detail("stories", "required")])
+    if any(s.desk.site_id != issue.newsletter.site_id for s in stories):
+        raise Conflict("an issue carries stories of its newsletter's site only")
     if not all(s.is_published and s.page is not None and s.page.live for s in stories):
         raise Conflict("every story in an issue is published before it is sent")
     if not issue.newsletter.subscribers.filter(status=Subscriber.Status.CONFIRMED).exists():

@@ -6972,6 +6972,8 @@
         "/api/v2/newsroom/authors/": {
             "get": {
                 "operationId": "newsroom_authors_list",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
+                "summary": "The authors of the stories a person may see, and those no story carries yet",
                 "parameters": [
                     {
                         "in": "query",
@@ -7006,6 +7008,14 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "site",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "Only this Wagtail site's rows."
                     }
                 ],
                 "tags": [
@@ -7034,6 +7044,7 @@
             },
             "post": {
                 "operationId": "newsroom_authors_create",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
                 "tags": [
                     "newsroom"
                 ],
@@ -7082,6 +7093,7 @@
         "/api/v2/newsroom/authors/{public_id}/": {
             "get": {
                 "operationId": "newsroom_authors_retrieve",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
                 "summary": "An author page: the author and their published stories",
                 "parameters": [
                     {
@@ -7120,6 +7132,7 @@
             },
             "patch": {
                 "operationId": "newsroom_authors_partial_update",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
                 "parameters": [
                     {
                         "in": "path",
@@ -7176,6 +7189,8 @@
             },
             "delete": {
                 "operationId": "newsroom_authors_destroy",
+                "description": "Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),\nchanged by the desk editors of every one of those sites.",
+                "summary": "Delete an author no story carries",
                 "parameters": [
                     {
                         "in": "path",
@@ -9491,127 +9506,9 @@
             }
         },
         "/api/v2/newsroom/subscriptions/confirm/": {
-            "get": {
-                "operationId": "newsroom_subscriptions_confirm_retrieve",
-                "summary": "Confirm a subscription (the emailed link)",
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "token",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The token from the emailed link."
-                    }
-                ],
-                "tags": [
-                    "newsroom"
-                ],
-                "security": [
-                    {
-                        "agentToken": []
-                    },
-                    {
-                        "cookieAuth": []
-                    },
-                    {}
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Subscription"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "405": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "409": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "422": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "429": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            },
             "post": {
                 "operationId": "newsroom_subscriptions_confirm_create",
-                "summary": "Confirm a subscription (the emailed link)",
+                "summary": "Confirm a subscription with the token from its emailed link (only while it waits to confirm)",
                 "parameters": [
                     {
                         "in": "query",
@@ -9749,127 +9646,9 @@
             }
         },
         "/api/v2/newsroom/subscriptions/unsubscribe/": {
-            "get": {
-                "operationId": "newsroom_subscriptions_unsubscribe_retrieve",
-                "summary": "Unsubscribe (the link in every issue, and its one-click List-Unsubscribe-Post)",
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "token",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The token from the emailed link."
-                    }
-                ],
-                "tags": [
-                    "newsroom"
-                ],
-                "security": [
-                    {
-                        "agentToken": []
-                    },
-                    {
-                        "cookieAuth": []
-                    },
-                    {}
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Subscription"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "403": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "404": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "405": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "409": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "422": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "429": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorEnvelope"
-                                }
-                            }
-                        },
-                        "description": ""
-                    }
-                }
-            },
             "post": {
                 "operationId": "newsroom_subscriptions_unsubscribe_create",
-                "summary": "Unsubscribe (the link in every issue, and its one-click List-Unsubscribe-Post)",
+                "summary": "Unsubscribe with the token from an issue's link",
                 "parameters": [
                     {
                         "in": "query",
@@ -11239,6 +11018,7 @@
                         "maxLength": 120
                     },
                     "slug": {
+                        "description": "Made from the name when left empty.",
                         "oneOf": [
                             {
                                 "type": "string",
@@ -11299,6 +11079,7 @@
                         "maxLength": 120
                     },
                     "slug": {
+                        "description": "Made from the name when left empty.",
                         "oneOf": [
                             {
                                 "type": "string",
@@ -11409,6 +11190,7 @@
                         "maxLength": 120
                     },
                     "slug": {
+                        "description": "Made from the name when left empty.",
                         "oneOf": [
                             {
                                 "type": "string",
@@ -13911,6 +13693,7 @@
                         "maxLength": 120
                     },
                     "slug": {
+                        "description": "Made from the name when left empty.",
                         "oneOf": [
                             {
                                 "type": "string",
@@ -14785,13 +14568,7 @@
                         "readOnly": true
                     },
                     "priority": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/StoryPriorityEnum"
-                            }
-                        ],
-                        "minimum": 0,
-                        "maximum": 9223372036854775807
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
                     },
                     "assignee": {
                         "oneOf": [
@@ -15698,13 +15475,7 @@
                         "readOnly": true
                     },
                     "priority": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/StoryPriorityEnum"
-                            }
-                        ],
-                        "minimum": 0,
-                        "maximum": 9223372036854775807
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
                     },
                     "assignee": {
                         "oneOf": [
@@ -15968,13 +15739,7 @@
                         "readOnly": true
                     },
                     "priority": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/StoryPriorityEnum"
-                            }
-                        ],
-                        "minimum": 0,
-                        "maximum": 9223372036854775807
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
                     },
                     "assignee": {
                         "oneOf": [
@@ -16107,6 +15872,11 @@
                         },
                         "readOnly": true,
                         "description": "The latest AI run of each kind and its answer."
+                    },
+                    "is_editor": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Whether the requester edits the story's desk: its priority, deadline, slot and embargo are theirs."
                     }
                 },
                 "required": [
@@ -16122,6 +15892,7 @@
                     "events",
                     "fast_path_reason",
                     "id",
+                    "is_editor",
                     "moves",
                     "page",
                     "status",
@@ -16192,6 +15963,10 @@
                     "live": {
                         "type": "boolean"
                     },
+                    "has_unpublished_changes": {
+                        "type": "boolean",
+                        "description": "A draft saved since it last went live."
+                    },
                     "url_path": {
                         "type": "string"
                     },
@@ -16205,6 +15980,7 @@
                 },
                 "required": [
                     "first_published_at",
+                    "has_unpublished_changes",
                     "id",
                     "live",
                     "title",
@@ -16265,13 +16041,7 @@
                         "description": "The pitch: the angle, and why it matters now."
                     },
                     "priority": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/StoryPriorityEnum"
-                            }
-                        ],
-                        "minimum": 0,
-                        "maximum": 9223372036854775807
+                        "$ref": "#/components/schemas/StoryPriorityEnum"
                     },
                     "deadline": {
                         "type": [

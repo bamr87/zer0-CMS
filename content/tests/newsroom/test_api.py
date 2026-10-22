@@ -2,9 +2,12 @@
 set one up; pitching by hand and from a wire item; the budget and the calendar
 as the story list's filters; a story's panel (its history, moves, bylines and
 corrections); moves and assignments over REST, with the workflow's refusals as
-409s and missing page rights as 403s; authors and their pages; and bylines and
-corrections in the page API a site reads."""
+409s and missing page rights as 403s; the desk's planning decisions and the
+pitcher's own pitch; authors and their pages, changed only by the sites their
+bylines are on; bylines and corrections in the page API a site reads; and a
+bad `site`, an issue moved off its newsletter, refused with the envelope."""
 
+import json
 from datetime import date, timedelta
 
 import pytest
@@ -12,7 +15,7 @@ from django.contrib.auth.models import Permission
 from django.utils import timezone
 
 from newsroom import services
-from newsroom.models import Author, Desk, Story
+from newsroom.models import Author, Desk, Issue, Newsletter, Story
 
 S = Story.Status
 URL = "/api/v2/newsroom"
@@ -155,3 +158,80 @@ def test_bylines_and_corrections_are_in_the_page_api(client, desk, ed, advance):
     assert [(c["kind"], c["text"]) for c in data["corrections"]] == [
         ("correction", "An earlier version misspelled the mayor's name.")
     ]
+
+
+@pytest.mark.django_db
+def test_the_desk_decides_a_storys_priority_deadline_slot_and_embargo(api, desk, ed, reporter, advance):
+    story = advance(desk, S.COPY, embargo=timezone.now() + timedelta(days=2))
+    url = f"{URL}/stories/{story.public_id}/"
+    lifted = api(reporter).patch(url, {"embargo": None, "priority": 1}, format="json")
+    assert lifted.status_code == 403 and "priority, embargo" in lifted.json()["error"]["message"]
+    kept = api(reporter).patch(url, {"headline": "Sharper", "priority": 3}, format="json")  # an unchanged value
+    assert kept.status_code == 200 and kept.json()["headline"] == "Sharper"
+    later = timezone.now() + timedelta(days=3)
+    assert api(ed).patch(url, {"embargo": later.isoformat()}, format="json").status_code == 200
+    event = Story.objects.get(pk=story.pk).events.last()
+    assert (event.action, event.actor, event.note[:6]) == ("embargo", ed, "until ")
+    assert api(ed).get(url).json()["is_editor"] is True and api(reporter).get(url).json()["is_editor"] is False
+
+
+@pytest.mark.django_db
+def test_whoever_pitched_a_story_works_on_the_pitch(api, desk, reporter, copyeditor, fake):
+    item = {"url": "https://wire.example/2", "title": "Water main bursts"}
+    story = api(reporter).post(f"{URL}/stories/", {"desk": str(desk.public_id), "source": item}, format="json").json()
+    url = f"{URL}/stories/{story['id']}/"
+    assert api(reporter).patch(url, {"summary": "Flooding on Elm Street."}, format="json").status_code == 200
+    fake.script.append({"text": json.dumps({"headline": "Elm Street floods", "angle": "Homes cut off."})})
+    assert api(reporter).post(f"{url}ai/", {"kind": "pitch"}, format="json").status_code == 202
+    assert api(reporter).patch(url, {"priority": 1}, format="json").status_code == 403  # the desk's decision
+    assert api(copyeditor).patch(url, {"summary": "Not theirs."}, format="json").status_code == 403
+
+
+@pytest.mark.django_db
+def test_authors_are_seen_and_changed_by_the_sites_their_bylines_are_on(api, desk, ed, advance, elsewhere):
+    other_ed = elsewhere.editors.get()
+    ada = Author.objects.create(name="Ada Reporter", slug="ada")
+    services.update(advance(desk, S.PUBLISHED), user=ed, bylines=[ada])
+    url = f"{URL}/authors/{ada.public_id}/"
+    assert api(other_ed).patch(url, {"name": "Renamed by another site"}, format="json").status_code == 404
+    assert api(other_ed).delete(url).status_code == 404
+    assert str(ada.public_id) not in {a["id"] for a in api(other_ed).get(f"{URL}/authors/").json()["results"]}
+
+    made = api(other_ed).post(f"{URL}/authors/", {"name": "Bo Writer"}, format="json")
+    assert made.status_code == 201  # an author no story carries yet: anyone's to byline
+    bo = Author.objects.get(public_id=made.json()["id"])
+    services.update(Story.objects.get(desk=desk), user=ed, bylines=[ada, bo])
+    services.pitch(elsewhere, user=other_ed, headline="Over there", bylines=[bo])
+    shared = f"{URL}/authors/{bo.public_id}/"
+    for someone in (ed, other_ed):  # bylines on both sites: neither site's editors alone rename them
+        assert api(someone).patch(shared, {"bio": "Changed."}, format="json").status_code == 403
+
+    assert api(ed).patch(url, {"bio": "Covers the city."}, format="json").status_code == 200
+    gone = api(ed).delete(url)
+    assert gone.status_code == 409 and "bylines" in gone.json()["error"]["message"]
+    taken = api(ed).post(f"{URL}/authors/", {"name": "Another Ada", "slug": "ada"}, format="json")
+    assert taken.status_code == 422 and taken.json()["error"]["details"][0]["field"] == "slug"
+    spare = Author.objects.create(name="Spare", slug="spare")
+    assert api(ed).delete(f"{URL}/authors/{spare.public_id}/").status_code == 204
+
+
+@pytest.mark.django_db
+def test_a_site_that_is_not_an_id_is_a_422(api, ed):
+    for table in ("desks", "stories", "authors", "fronts", "newsletters", "issues"):
+        answer = api(ed).get(f"{URL}/{table}/", {"site": "abc"})
+        assert answer.status_code == 422 and answer.json()["error"]["details"][0]["field"] == "site", table
+
+
+@pytest.mark.django_db
+def test_an_issue_stays_on_its_newsletter(api, desk, site, ed, reporter, elsewhere):
+    elsewhere.editors.add(reporter)  # sees this site's newsletters, curates only the other site's
+    here = Newsletter.objects.create(site=site, name="Here", slug="here")
+    there = Newsletter.objects.create(site=elsewhere.site, name="There", slug="there")
+    issue = Issue.objects.create(newsletter=here, subject="Monday", created_by=ed)
+    url = f"{URL}/issues/{issue.public_id}/"
+    assert api(reporter).patch(url, {"subject": "Mine"}, format="json").status_code == 403
+    moved = api(reporter).patch(url, {"newsletter": str(there.public_id), "subject": "Taken"}, format="json")
+    assert moved.status_code == 422 and moved.json()["error"]["details"][0]["field"] == "newsletter"
+    issue.refresh_from_db()
+    assert (issue.newsletter, issue.subject) == (here, "Monday")
+    assert api(ed).patch(url, {"subject": "Tuesday"}, format="json").status_code == 200

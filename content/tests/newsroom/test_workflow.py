@@ -3,14 +3,21 @@
 workflow, approved by the story's desk; a move the workflow does not allow is
 refused; the breaking-news fast path skips copy and records why; an embargo
 holds a story back until its time; a page goes live only through
-`cms.services`, under the person's publish permission; and a publish outside
-the newsroom, or a stage sent back in Wagtail, keeps the story's status true."""
+`cms.services`, under the person's publish permission — and every other way a
+page goes live (Write's buttons, the Wagtail admin, an agent's tool, the
+scheduled publish) is refused for a story still being made or under embargo; a
+stage sent back or a workflow cancelled in Wagtail keeps the story's status
+true; a correction publishes nothing; and the newsroom's stages send none of
+Wagtail's workflow email."""
 
 from datetime import timedelta
 from unittest import mock
 
 import pytest
+from django.contrib.messages.storage.cookie import CookieStorage
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
+from django.test import RequestFactory
 from django.utils import timezone
 from wagtail.models import Page, TaskState, WorkflowState
 
@@ -19,6 +26,7 @@ from cms.models import ArticlePage
 from cms.tasks import publish_scheduled
 from newsroom import services
 from newsroom.models import Correction, StageTask, Story
+from newsroom.wagtail_hooks import held_back_by_its_story
 from ops.errors import Conflict, Forbidden, Invalid
 
 from .conftest import person
@@ -178,20 +186,24 @@ def test_publishing_is_only_through_the_publish_service_and_its_permission(desk,
 
 
 @pytest.mark.django_db
-def test_a_correction_goes_on_the_log_and_a_saved_fix_goes_live_with_it(desk, ed, reporter, advance):
+def test_a_correction_goes_on_the_log_and_publishes_nothing(desk, ed, reporter, advance):
     story = advance(desk, S.PUBLISHED)
     page = page_of(story)
     with pytest.raises(Invalid):
         services.move(story, S.CORRECTED, user=ed, text=" ")
     with pytest.raises(Forbidden):
         services.move(story, S.CORRECTED, user=reporter, text="Wrong date.")
-    pages.save_changes(page, ed, base_revision_id=page.latest_revision_id, fields={"title": "Council votes Tuesday"})
+    # A draft saved since the page went live — nobody has reviewed it — stays a draft.
+    pages.save_changes(page, reporter, base_revision_id=page.latest_revision_id, fields={"title": "UNREVIEWED"})
     story = services.move(story, S.CORRECTED, user=ed, text="An earlier version gave the wrong day of the vote.")
     page.refresh_from_db()
-    assert story.status == S.CORRECTED and page.live and not page.has_unpublished_changes
-    assert page.title == "Council votes Tuesday"
+    assert story.status == S.CORRECTED and page.live and page.has_unpublished_changes
+    assert page.title == "Council votes on the bridge"  # what readers see is what was published
+    # A page taken down in Write stays down when an update is added to its log.
+    pages.unpublish(page_of(story), ed)
     story = services.move(story, S.UPDATED, user=ed, text="Updated with the mayor's statement.")
-    assert story.status == S.UPDATED
+    page.refresh_from_db()
+    assert story.status == S.UPDATED and not page.live
     log = [(c.kind, c.text) for c in Correction.objects.filter(page=page)]
     assert log == [
         ("correction", "An earlier version gave the wrong day of the vote."),
@@ -201,31 +213,104 @@ def test_a_correction_goes_on_the_log_and_a_saved_fix_goes_live_with_it(desk, ed
 
 
 @pytest.mark.django_db
-def test_a_publish_outside_the_newsroom_and_a_send_back_in_wagtail_keep_the_story_true(desk, ed, advance, root_page):
+def test_a_stage_sent_back_or_a_workflow_cancelled_in_wagtail_returns_the_story_to_drafting(
+    desk, ed, reporter, advance
+):
     story = advance(desk, S.EDITING)
     page = page_of(story)
-    state = page.current_workflow_task_state
-    StageTask.objects.get(stage=S.EDITING).on_action(state, ed, "reject", comment="Rework the lede.")
+    StageTask.objects.get(stage=S.EDITING).on_action(page.current_workflow_task_state, ed, "reject", comment="Rework.")
     story.refresh_from_db()
-    assert story.status == S.DRAFTING and story.events.last().note == "Rework the lede."
+    assert story.status == S.DRAFTING and story.events.last().note == "Rework."
 
-    admin = person("admin", is_superuser=True, is_staff=True)
-    pages.publish_now(page_of(story), admin)  # the Wagtail admin's publish, say
+    story = services.move(story, S.EDITING, user=reporter)  # resumes where it was sent back
+    page_of(story).current_workflow_state.cancel(user=reporter)  # Wagtail offers this to the requester and owner
     story.refresh_from_db()
-    assert story.status == S.PUBLISHED and story.events.last().action == "went live"
+    assert story.status == S.DRAFTING and story.events.last().action == "workflow cancelled"
+    story = services.move(story, S.EDITING, user=reporter)  # a new run of the workflow
+    assert services.move(story, S.COPY, user=ed).status == S.COPY
 
 
 @pytest.mark.django_db
-def test_other_workflows_still_publish_when_approved(site_root, ed):
+def test_a_story_still_being_made_goes_live_only_through_the_newsroom(api, desk, ed, reporter, advance):
+    admin = person("admin", is_superuser=True, is_staff=True)
+    drafting = advance(desk, S.DRAFTING, headline="Drafting")
+    page = page_of(drafting)
+    for publish in (
+        lambda: pages.publish_now(page_of(drafting), ed),  # Write's Publish
+        lambda: pages.schedule(page_of(drafting), ed, go_live_at=timezone.now() + timedelta(hours=1)),  # Schedule
+        lambda: page_of(drafting).get_latest_revision().publish(user=admin),  # the admin, a tool, the sweep
+    ):
+        with pytest.raises(Conflict) as refused, transaction.atomic():
+            publish()
+        assert refused.value.code == "story.in_workflow"
+    page.refresh_from_db()
+    assert not page.live and page.scheduled_revision is None
+    assert Story.objects.get(pk=drafting.pk).status == S.DRAFTING
+
+    editing = advance(desk, S.EDITING, headline="Editing")
+    answer = api(ed).post(f"/api/v2/content/pages/{editing.page_id}/publish/")  # copy skipped, no reason given
+    assert answer.status_code == 409 and answer.json()["error"]["code"] == "story.in_workflow"
+    assert not page_of(editing).live and Story.objects.get(pk=editing.pk).breaking is False
+
+    request = RequestFactory().post("/admin/")
+    request._messages = CookieStorage(request)
+    assert held_back_by_its_story(request, page_of(editing)).status_code == 302  # the admin says why
+    published = advance(desk, S.PUBLISHED, headline="Out")
+    assert held_back_by_its_story(request, page_of(published)) is None  # a fix to a published story goes live
+
+
+@pytest.mark.django_db
+def test_an_embargo_holds_on_every_path(api, desk, ed, copyeditor, advance):
+    embargo = timezone.now() + timedelta(days=2)
+    story = services.move(advance(desk, S.COPY, embargo=embargo), S.SCHEDULED, user=copyeditor)
+    page = page_of(story)
+    url = f"/api/v2/content/pages/{page.pk}"
+    assert api(ed).post(f"{url}/unschedule/").status_code == 200  # Write lifts the schedule …
+    early = api(ed).post(f"{url}/publish/")  # … and publishes now: refused
+    assert early.status_code == 409 and early.json()["error"]["code"] == "story.embargoed"
+    sooner = api(ed).post(f"{url}/schedule/", {"go_live_at": (embargo - timedelta(hours=1)).isoformat()}, format="json")
+    assert sooner.status_code == 409 and sooner.json()["error"]["code"] == "story.embargoed"
+    draft = page_of(story).get_latest_revision_as_object()
+    draft.go_live_at = None  # a revision that would go live now: the admin's, an agent's tool's
+    with pytest.raises(Conflict, match="embargoed"), transaction.atomic():
+        draft.save_revision(user=ed).publish(user=ed)
+    page.refresh_from_db()
+    assert not page.live and Story.objects.get(pk=story.pk).status == S.SCHEDULED
+
+    with mock.patch("django.utils.timezone.now", return_value=embargo + timedelta(minutes=1)):
+        assert api(ed).post(f"{url}/publish/").status_code == 200  # cleared by copy, and its time has come
+    story.refresh_from_db()
+    assert page_of(story).live and story.status == S.PUBLISHED and story.events.last().action == "went live"
+
+
+@pytest.mark.django_db
+def test_the_newsrooms_stages_send_no_workflow_email(desk, ed, copyeditor, reporter, advance, mailoutbox):
+    reporter.email = "reporter@example.com"  # the requester, whom Wagtail would tell of an approval
+    reporter.save(update_fields=["email"])
+    person("boss", is_superuser=True, email="boss@example.com")  # whom Wagtail would tell of each submission
+    story = advance(desk, S.COPY)
+    no_publish = person("nopublish", "add", "change")
+    desk.copy_editors.add(no_publish)
+    with pytest.raises(PermissionDenied):
+        services.move(story, S.PUBLISHED, user=no_publish)  # the approval is rolled back with the refusal
+    services.move(story, S.PUBLISHED, user=copyeditor)
+    assert mailoutbox == []
+
+
+@pytest.mark.django_db
+def test_other_workflows_still_publish_and_mail_when_approved(site_root, ed, reporter, mailoutbox):
     from wagtail.models import GroupApprovalTask, Workflow, WorkflowTask
 
     from tests.conftest import make_article
 
+    reporter.email = "reporter@example.com"
+    reporter.save(update_fields=["email"])
     page = make_article(site_root, "Plain page", publish=False)
     workflow = Workflow.objects.create(name="Review")
     task = GroupApprovalTask.objects.create(name="Approve")
     WorkflowTask.objects.create(workflow=workflow, task=task, sort_order=0)
-    state = workflow.start(page, ed)
+    state = workflow.start(page, reporter)
     state.current_task_state.approve(user=ed)
     page.refresh_from_db()
     assert page.live  # WAGTAIL_FINISH_WORKFLOW_ACTION changes only the newsroom's workflow
+    assert [m.to for m in mailoutbox] == [["reporter@example.com"]]  # and so does keeping Wagtail's email away

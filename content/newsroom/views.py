@@ -8,11 +8,15 @@ ranges). A move the newsroom workflow refuses is a 409 that says which moves
 it allows; a page right the person lacks is a 403 from `cms.services`. Asking
 the AI answers `202` with the run (followed on `/api/v2/agent-runs/<id>/stream/`)
 and honours an `Idempotency-Key`. The three subscription endpoints are public,
-for a site's own forms and for the links in the email.
+for a site's own forms; the links in the email open `subscription_page`, which
+changes nothing until its button is pressed.
 """
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import ProtectedError, Q
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django_filters import rest_framework as filters
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
@@ -27,7 +31,7 @@ from wagtail.models import Site
 from ai.serializers import RunAcceptedSerializer, RunRefSerializer
 from ai.views import IDEMPOTENCY, idempotent
 from api.pages import IsPerson, service_errors
-from ops.errors import Conflict, Forbidden, Invalid, NotFound
+from ops.errors import ApiError, Conflict, Forbidden, Invalid, NotFound
 from ops.openapi import ERROR_RESPONSES
 
 from . import serializers as s
@@ -55,8 +59,10 @@ class Scoped(viewsets.ModelViewSet):
 
     def get_queryset(self):
         site = None
-        if self.request.query_params.get("site"):
-            site = Site.objects.filter(pk=self.request.query_params["site"]).first()
+        if value := self.request.query_params.get("site"):
+            if not value.isdigit():
+                raise Invalid("site is a site's id", details=[{"field": "site", "code": "invalid", "message": value}])
+            site = Site.objects.filter(pk=value).first()
             if site is None:
                 return self.queryset.none()
         return self.queryset.visible_to(self.request.user, site)
@@ -64,6 +70,12 @@ class Scoped(viewsets.ModelViewSet):
     def curate(self, site):
         if not services.can_manage(site, self.request.user):
             raise Forbidden("the site's desk editors curate its fronts and newsletters")
+
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ProtectedError as e:
+            raise Conflict(f"{instance} is in use: {len(e.protected_objects)} row(s) refer to it") from e
 
 
 # ── desks ──────────────────────────────────────────────────────────────────
@@ -151,7 +163,7 @@ class StoryViewSet(Scoped):
     )
     serializer_class = s.StorySerializer
     filterset_class = StoryFilter
-    ordering_fields = ["priority", "deadline", "slot_date", "created_at", "updated_at"]
+    ordering_fields = ["priority", "deadline", "slot_date", "created_at", "updated_at", "page__first_published_at"]
 
     def get_serializer_class(self):
         return s.StoryDetailSerializer if self.action == "retrieve" else s.StorySerializer
@@ -264,22 +276,39 @@ class WritesAuthors(BasePermission):
 
 
 @extend_schema_view(
+    list=extend_schema(
+        summary="The authors of the stories a person may see, and those no story carries yet", parameters=[SITE]
+    ),
     retrieve=extend_schema(summary="An author page: the author and their published stories"),
     create=extend_schema(request=s.writable(s.AuthorSerializer)),
+    destroy=extend_schema(summary="Delete an author no story carries"),
 )
-class AuthorViewSet(viewsets.ModelViewSet):
-    http_method_names = ["get", "post", "patch", "delete"]
+class AuthorViewSet(Scoped):
+    """Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+    changed by the desk editors of every one of those sites."""
+
     queryset = Author.objects.all()
     serializer_class = s.AuthorSerializer
-    lookup_field = "public_id"
     permission_classes = [IsPerson, WritesAuthors]
-    pagination_class = Paged
-    filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     filterset_fields = {"name": ["icontains"]}
     ordering_fields = ["name", "created_at"]
 
     def get_serializer_class(self):
         return s.AuthorPageSerializer if self.action == "retrieve" else s.AuthorSerializer
+
+    def changes(self, author):
+        if not services.may_change_author(author, self.request.user):
+            raise Forbidden("an author is changed by the desk editors of every site their bylines are on")
+
+    def perform_update(self, serializer):
+        self.changes(serializer.instance)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self.changes(instance)
+        if instance.stories.exists():
+            raise Conflict("the author has bylines: take them off those stories first")
+        super().perform_destroy(instance)
 
 
 # ── fronts ─────────────────────────────────────────────────────────────────
@@ -305,7 +334,7 @@ class FrontViewSet(Scoped):
 
     def perform_destroy(self, instance):
         self.curate(instance.site)
-        instance.delete()
+        super().perform_destroy(instance)
 
     @extend_schema(
         summary="The front as a reader sees it: each slot's story, pinned or filled by its rule",
@@ -343,7 +372,7 @@ class NewsletterViewSet(Scoped):
 
     def perform_destroy(self, instance):
         self.curate(instance.site)
-        instance.delete()
+        super().perform_destroy(instance)
 
 
 class IssueFilter(filters.FilterSet):
@@ -375,12 +404,12 @@ class IssueViewSet(Scoped):
 
     def perform_update(self, serializer):
         if serializer.instance.status not in (Issue.Status.DRAFT, Issue.Status.FAILED):
-            raise Conflict("a sent issue is not changed")
-        self._save(serializer, serializer.validated_data.get("newsletter", serializer.instance.newsletter))
+            raise Conflict("an issue being sent, or sent, is not changed")
+        self._save(serializer, serializer.instance.newsletter)  # it stays on its newsletter (the serializer)
 
     def perform_destroy(self, instance):
         self.curate(instance.newsletter.site)
-        instance.delete()
+        super().perform_destroy(instance)
 
     @extend_schema(summary="The issue as it is sent: subject, text and HTML", responses={200: s.IssuePreviewSerializer})
     @action(detail=True, methods=["get"])
@@ -433,24 +462,45 @@ TOKEN = OpenApiParameter("token", OpenApiTypes.STR, description="The token from 
 
 
 @extend_schema(
-    summary="Confirm a subscription (the emailed link)",
+    summary="Confirm a subscription with the token from its emailed link (only while it waits to confirm)",
     parameters=[TOKEN],
     request=s.TokenSerializer,
     responses={200: s.SubscriptionSerializer, **ERROR_RESPONSES},
 )
-@api_view(["GET", "POST"])
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def confirm(request):
     return _subscription(services.confirm(_token(request)))
 
 
 @extend_schema(
-    summary="Unsubscribe (the link in every issue, and its one-click List-Unsubscribe-Post)",
+    summary="Unsubscribe with the token from an issue's link",
     parameters=[TOKEN],
     request=s.TokenSerializer,
     responses={200: s.SubscriptionSerializer, **ERROR_RESPONSES},
 )
-@api_view(["GET", "POST"])
+@api_view(["POST"])
 @permission_classes([AllowAny])
 def unsubscribe(request):
     return _subscription(services.unsubscribe(_token(request)))
+
+
+# The token in the link is the authority here, and a mail client's one-click unsubscribe (RFC 8058) posts
+# without a CSRF token: what CSRF protects against — a request forged without the secret — cannot act.
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def subscription_page(request, action):
+    """The page a newsletter email's link opens (`/newsletters/confirm/`, `/newsletters/unsubscribe/`, and the
+    `List-Unsubscribe` header's). A GET only says what the link does, with a button that does it — so a mail
+    scanner or a link prefetcher that fetches every link changes nothing; a POST — the button, or a mail
+    client's one-click unsubscribe — does it."""
+    token = request.GET.get("token", "")
+    context = {"action": action, "token": token, "done": request.method == "POST"}
+    try:
+        if request.method == "POST":
+            context["subscriber"] = (services.confirm if action == "confirm" else services.unsubscribe)(token)
+        else:
+            context["subscriber"] = services.subscription_for(token, action)
+    except ApiError as e:
+        return render(request, "newsroom/subscription.html", {**context, "error": e.message}, status=e.status)
+    return render(request, "newsroom/subscription.html", context)

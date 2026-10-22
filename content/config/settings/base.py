@@ -179,13 +179,20 @@ WAGTAIL_I18N_ENABLED = False
 # Approving a workflow's last task publishes the page, except in the newsroom's
 # workflow, where the newsroom publishes or schedules it (newsroom/workflow.py).
 WAGTAIL_FINISH_WORKFLOW_ACTION = "newsroom.workflow.finish_workflow"
+# Wagtail mails a workflow's submissions to every superuser unless told not to;
+# people follow review in the studio, and the newsroom's stages send none of
+# Wagtail's workflow email at all (newsroom/workflow.py).
+WAGTAILADMIN_NOTIFICATION_INCLUDE_SUPERUSERS = False
 
 # ── Email (newsroom/README.md) ──────────────────────────────────────────────
 # Django's mail API to EMAIL_BACKEND: a django-anymail ESP backend in production
 # (e.g. anymail.backends.amazon_ses.EmailBackend), configured by ANYMAIL_*
-# variables (ANYMAIL_MAILGUN_API_KEY → ANYMAIL["MAILGUN_API_KEY"]); the console
-# otherwise. Tests use Django's locmem backend.
-EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+# variables (ANYMAIL_MAILGUN_API_KEY → ANYMAIL["MAILGUN_API_KEY"]). Unset, it is
+# Django's own SMTP backend, which fails loudly when there is no server — never
+# the console, which would print every address and signed link into the logs
+# and mark an issue sent that nobody received. Development sets the console
+# (development.py); tests use Django's locmem backend.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="zer0-CMS <noreply@localhost>")
 ANYMAIL = {key.removeprefix("ANYMAIL_"): value for key, value in env.ENVIRON.items() if key.startswith("ANYMAIL_")}
 

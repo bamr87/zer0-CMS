@@ -13,6 +13,7 @@ from django.utils.text import slugify
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.fields import get_error_detail
+from rest_framework.validators import UniqueValidator
 from wagtail.models import Page, Site
 
 from agents.models import AgentRun
@@ -136,6 +137,7 @@ class StoryPageSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()
     live = serializers.BooleanField()
+    has_unpublished_changes = serializers.BooleanField(help_text="A draft saved since it last went live.")
     url_path = serializers.CharField()
     first_published_at = serializers.DateTimeField(allow_null=True)
 
@@ -145,6 +147,9 @@ class StorySerializer(serializers.ModelSerializer):
     desk = Visible(Desk)
     desk_name = serializers.CharField(source="desk.name", read_only=True)
     slug = serializers.SlugField(required=False, allow_blank=True, max_length=200)
+    # Declared, not left to ModelSerializer: the model field's range validators come from the database
+    # (SQLite's 64-bit range, Postgres's smallint), and the committed OpenAPI document must not.
+    priority = serializers.ChoiceField(Story.Priority.choices, required=False)
     assignee = PersonSerializer(read_only=True, allow_null=True)
     page = StoryPageSerializer(read_only=True, allow_null=True)
     brief = serializers.UUIDField(source="brief.public_id", read_only=True, allow_null=True)
@@ -196,7 +201,8 @@ class StorySerializer(serializers.ModelSerializer):
         return list(services.MOVES.get(story.status, ()))
 
     def validate_byline_ids(self, ids):
-        found = {a.public_id: a for a in Author.objects.filter(public_id__in=ids)}
+        user = self.context["request"].user
+        found = {a.public_id: a for a in Author.objects.visible_to(user).filter(public_id__in=ids)}
         missing = [str(i) for i in ids if i not in found]
         if missing:
             raise serializers.ValidationError(f"no author {', '.join(missing)}")
@@ -238,9 +244,15 @@ class StoryDetailSerializer(StorySerializer):
     events = StoryEventSerializer(many=True, read_only=True)
     corrections = CorrectionSerializer(many=True, read_only=True)
     ai_runs = serializers.SerializerMethodField(help_text="The latest AI run of each kind and its answer.")
+    is_editor = serializers.SerializerMethodField(
+        help_text="Whether the requester edits the story's desk: its priority, deadline, slot and embargo are theirs."
+    )
 
     class Meta(StorySerializer.Meta):
-        fields = [*StorySerializer.Meta.fields, "events", "corrections", "ai_runs"]
+        fields = [*StorySerializer.Meta.fields, "events", "corrections", "ai_runs", "is_editor"]
+
+    def get_is_editor(self, story) -> bool:
+        return story.desk.is_editor(self.context["request"].user)
 
     @extend_schema_field(StoryAIRunSerializer(many=True))
     def get_ai_runs(self, story):
@@ -297,7 +309,13 @@ class AppliedDraftSerializer(serializers.Serializer):
 
 class AuthorSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source="public_id", read_only=True)
-    slug = serializers.SlugField(required=False, allow_blank=True, max_length=120)
+    slug = serializers.SlugField(
+        required=False,
+        allow_blank=True,
+        max_length=120,
+        validators=[UniqueValidator(queryset=Author.objects.all(), message="another author has this slug")],
+        help_text="Made from the name when left empty.",
+    )
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
 
     class Meta:
@@ -306,10 +324,13 @@ class AuthorSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at"]
 
     def validate(self, attrs):
-        if not attrs.get("slug") and "name" in attrs:
-            base, n = slugify(attrs["name"])[:110] or "author", 2
+        if attrs.get("slug"):
+            return attrs
+        attrs.pop("slug", None)  # an empty slug keeps an author's, and a new author's is made from the name
+        if self.instance is None:
+            base, n = slugify(attrs.get("name", ""))[:110] or "author", 2
             attrs["slug"] = base
-            while Author.objects.filter(slug=attrs["slug"]).exclude(pk=getattr(self.instance, "pk", None)).exists():
+            while Author.objects.filter(slug=attrs["slug"]).exists():
                 attrs["slug"], n = f"{base}-{n}", n + 1
         return attrs
 
@@ -470,6 +491,11 @@ class IssueSerializer(serializers.ModelSerializer):
     @extend_schema_field(StoryCardSerializer(many=True))
     def get_stories(self, issue):
         return StoryCardSerializer(services.issue_stories(issue), many=True).data
+
+    def validate(self, attrs):
+        if self.instance is not None and "newsletter" in attrs and attrs["newsletter"] != self.instance.newsletter:
+            raise serializers.ValidationError({"newsletter": "an issue stays on its newsletter"})
+        return attrs
 
     def validate_story_ids(self, ids):
         user = self.context["request"].user

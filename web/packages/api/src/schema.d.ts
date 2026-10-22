@@ -861,8 +861,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * The authors of the stories a person may see, and those no story carries yet
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
         get: operations["newsroom_authors_list"];
         put?: never;
+        /**
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
         post: operations["newsroom_authors_create"];
         delete?: never;
         options?: never;
@@ -877,13 +886,26 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** An author page: the author and their published stories */
+        /**
+         * An author page: the author and their published stories
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
         get: operations["newsroom_authors_retrieve"];
         put?: never;
         post?: never;
+        /**
+         * Delete an author no story carries
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
         delete: operations["newsroom_authors_destroy"];
         options?: never;
         head?: never;
+        /**
+         * @description Bylines' authors: seen by the people of the sites their stories are on (and, unused, by every desk),
+         *     changed by the desk editors of every one of those sites.
+         */
         patch: operations["newsroom_authors_partial_update"];
         trace?: never;
     };
@@ -1277,10 +1299,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Confirm a subscription (the emailed link) */
-        get: operations["newsroom_subscriptions_confirm_retrieve"];
+        get?: never;
         put?: never;
-        /** Confirm a subscription (the emailed link) */
+        /** Confirm a subscription with the token from its emailed link (only while it waits to confirm) */
         post: operations["newsroom_subscriptions_confirm_create"];
         delete?: never;
         options?: never;
@@ -1295,10 +1316,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Unsubscribe (the link in every issue, and its one-click List-Unsubscribe-Post) */
-        get: operations["newsroom_subscriptions_unsubscribe_retrieve"];
+        get?: never;
         put?: never;
-        /** Unsubscribe (the link in every issue, and its one-click List-Unsubscribe-Post) */
+        /** Unsubscribe with the token from an issue's link */
         post: operations["newsroom_subscriptions_unsubscribe_create"];
         delete?: never;
         options?: never;
@@ -1534,6 +1554,7 @@ export interface components {
             /** Format: uuid */
             readonly id: string;
             name: string;
+            /** @description Made from the name when left empty. */
             slug?: string;
             bio?: string;
             email?: string;
@@ -1546,6 +1567,7 @@ export interface components {
             /** Format: uuid */
             readonly id: string;
             name: string;
+            /** @description Made from the name when left empty. */
             slug?: string;
             bio?: string;
             email?: string;
@@ -1570,6 +1592,7 @@ export interface components {
         };
         AuthorWrite: {
             name: string;
+            /** @description Made from the name when left empty. */
             slug?: string;
             bio?: string;
             email?: string;
@@ -2396,6 +2419,7 @@ export interface components {
             /** Format: uuid */
             readonly id?: string;
             name?: string;
+            /** @description Made from the name when left empty. */
             slug?: string;
             bio?: string;
             email?: string;
@@ -3052,6 +3076,8 @@ export interface components {
             readonly corrections: components["schemas"]["Correction"][];
             /** @description The latest AI run of each kind and its answer. */
             readonly ai_runs: components["schemas"]["StoryAIRun"][];
+            /** @description Whether the requester edits the story's desk: its priority, deadline, slot and embargo are theirs. */
+            readonly is_editor: boolean;
         };
         StoryEvent: {
             /** Format: date-time */
@@ -3067,6 +3093,8 @@ export interface components {
             id: number;
             title: string;
             live: boolean;
+            /** @description A draft saved since it last went live. */
+            has_unpublished_changes: boolean;
             url_path: string;
             /** Format: date-time */
             first_published_at: string | null;
@@ -7488,6 +7516,8 @@ export interface operations {
                 page?: number;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description Only this Wagtail site's rows. */
+                site?: number;
             };
             header?: never;
             path?: never;
@@ -8844,92 +8874,6 @@ export interface operations {
             };
         };
     };
-    newsroom_subscriptions_confirm_retrieve: {
-        parameters: {
-            query?: {
-                /** @description The token from the emailed link. */
-                token?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Subscription"];
-                };
-            };
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     newsroom_subscriptions_confirm_create: {
         parameters: {
             query?: {
@@ -8947,92 +8891,6 @@ export interface operations {
                 "multipart/form-data": components["schemas"]["Token"];
             };
         };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Subscription"];
-                };
-            };
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            405: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    newsroom_subscriptions_unsubscribe_retrieve: {
-        parameters: {
-            query?: {
-                /** @description The token from the emailed link. */
-                token?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
             200: {
                 headers: {
