@@ -329,7 +329,8 @@ class PageFilter(django_filters.FilterSet):
     can_have_children = django_filters.BooleanFilter(method="by_children", help_text="Only pages that take children.")
     source = django_filters.CharFilter(
         method="by_source",
-        help_text="A file's path, relative to its site's folder or a folder above it: the pages imported from that file.",
+        help_text="A file's path from the folder a client has open, starting with that folder's name "
+        "(`drsai/_posts/a.md`): the pages imported from that file, in the sites whose folder that is.",
     )
 
     # The `value` type hints are what the OpenAPI document reads for each parameter.

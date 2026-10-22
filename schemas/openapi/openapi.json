@@ -5024,7 +5024,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "A file's path, relative to its site's folder or a folder above it: the pages imported from that file."
+                        "description": "A file's path from the folder a client has open, starting with that folder's name (`drsai/_posts/a.md`): the pages imported from that file, in the sites whose folder that is."
                     },
                     {
                         "in": "query",
