@@ -148,6 +148,32 @@ class PlatformTest(unittest.TestCase):
         self.assertEqual(ca.parity_gaps(caps), ["content.create: studio done, extension missing"])
 
 
+class ThemeDependencyTest(unittest.TestCase):
+    def test_code_and_config_naming_the_theme_count(self):
+        read = heads({"sites/a/_config.yml": b"remote_theme: bamr87/zer0-mistakes\n", "src/core/x.ts": b"'jekyll-theme-zer0'", "sites/a/Gemfile": b'gem "jekyll-theme-zer0"', ".github/workflows/d.yml": b"ZER0_THEME_LOCAL: x"})
+        for path in ("sites/a/_config.yml", "src/core/x.ts", "sites/a/Gemfile", ".github/workflows/d.yml"):
+            self.assertTrue(ca.is_theme_dependency(path, read), path)
+
+    def test_content_never_counts(self):
+        read = lambda p: b"remote_theme: bamr87/zer0-mistakes"  # noqa: E731
+        for path in ("sites/a/pages/_docs/quick-start.md", "sites/a/_data/navigation/main.yml", "sites/a/_posts/2024-01-01-x.yml", "docs/MONOREPO.md", "src/test/fixtures/sites/x/_config.yml", "CHANGELOG.md", "features/features.yml"):
+            self.assertFalse(ca.is_theme_dependency(path, read), path)
+
+    def test_files_that_do_not_name_it_do_not_count(self):
+        self.assertFalse(ca.is_theme_dependency("src/core/x.ts", heads({"src/core/x.ts": b"export const x = 1"})))
+
+    def test_ratchet_message_names_the_option(self):
+        errors, _ = ca.check_ratchet(["web/x.ts"], {"src/": 3}, "zer0-mistakes dependency", "the theme is only the option's")
+        self.assertIn("new zer0-mistakes dependency outside the ratchet", errors[0])
+
+    def test_write_ratchet_by_key(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "l.yml"
+            p.write_text("ruby_ratchet:\n  a/: 1\ntheme_ratchet:\n  b/: 4\n  c/: 1\nsources: []\n")
+            ca.write_ratchet(p, {"b/": 2}, "theme_ratchet")
+            self.assertEqual(p.read_text(), "ruby_ratchet:\n  a/: 1\ntheme_ratchet:\n  b/: 2\nsources: []\n")
+
+
 class FixtureTest(unittest.TestCase):
     def test_listed_fixture_must_exist(self):
         self.assertEqual(ca.check_fixtures(["a/Gemfile"], lambda p: True), [])

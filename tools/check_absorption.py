@@ -22,6 +22,14 @@ It asserts:
     `--tighten` lowers every ceiling to today's count and drops the prefixes
     that reached zero; it never raises one. `ruby_fixtures:` names the exact
     files that only *model* an outside Jekyll site for a test; each must exist;
+  * **the theme ratchet** — zer0-mistakes leaves completely (ADR 0006 decision
+    4): every tracked code or configuration file that names the theme
+    (`zer0-mistakes`, `jekyll-theme-zer0`, `ZER0_THEME_*`) lies under a
+    `theme_ratchet:` prefix within its ceiling, or is listed in `theme_allowed:`
+    (the Jekyll-theme option's own files, and this gate). Content that merely talks
+    about the theme (Markdown, a site's `_posts`/`_docs`/`_data`, `docs/`, test
+    fixtures that model outside repositories) is not counted — it is content,
+    and content is kept;
   * **the platform catalog** — unique ids, a known surface and status for each
     surface, and a `proof` path that exists for every surface marked `done`;
   * **the sources** — every capability has a unique id, a known status and a
@@ -44,6 +52,7 @@ Run it from anywhere (`python3 tools/check_absorption.py`); CI runs it in
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from collections import Counter
@@ -57,6 +66,10 @@ LEDGER = ROOT / "docs" / "plan" / "capabilities.yml"
 
 RUBY_SUFFIXES = (".rb", ".rake", ".ru", ".erb", ".gemspec")
 RUBY_NAMES = {"Gemfile", "Gemfile.lock", "Rakefile", ".ruby-version", "Guardfile"}
+THEME_TERMS = re.compile(rb"zer0-mistakes|jekyll-theme-zer0|ZER0_THEME_")
+THEME_SUFFIXES = (".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".rb", ".yml", ".yaml", ".json", ".gemspec", ".toml")
+THEME_NAMES = {"Gemfile", "Gemfile.lock", "Dockerfile"}
+THEME_SKIP_PREFIXES = ("docs/", "src/test/fixtures/", "features/")
 STATUSES = ("missing", "partial", "done", "dropped")
 OPEN = ("missing", "partial")
 SURFACES = ("api", "studio", "extension", "mcp", "site", "ops")
@@ -74,6 +87,21 @@ def is_ruby(path: str, head: Callable[[str], bytes]) -> bool:
     return first.startswith(b"#!") and b"ruby" in first
 
 
+def is_theme_dependency(path: str, read: Callable[[str], bytes]) -> bool:
+    """True for a code or configuration file that names the zer0-mistakes theme."""
+    if path.startswith(THEME_SKIP_PREFIXES):
+        return False
+    name = path.rsplit("/", 1)[-1]
+    if not (name in THEME_NAMES or name.endswith(THEME_SUFFIXES)):
+        return False
+    # A Jekyll collection or data directory (`_posts/`, `_docs/`, `_data/` …) holds content.
+    if any(part.startswith("_") for part in path.split("/")[:-1]):
+        return False
+    if "CHANGELOG" in name:
+        return False
+    return bool(THEME_TERMS.search(read(path)))
+
+
 def owning_prefix(path: str, prefixes: Iterable[str]) -> str | None:
     """The longest ratchet prefix that contains `path`, matched by whole segment."""
     best = None
@@ -89,18 +117,20 @@ def check_fixtures(fixtures: list[str], exists: Callable[[str], bool]) -> list[s
     return [f"ruby_fixtures: {f} is listed but does not exist" for f in fixtures if not exists(f)]
 
 
-def check_ratchet(ruby: list[str], ratchet: dict[str, int]) -> tuple[list[str], Counter]:
+def check_ratchet(
+    files: list[str], ratchet: dict[str, int], what: str = "Ruby", fix: str = "port it to Python or TypeScript"
+) -> tuple[list[str], Counter]:
     errors: list[str] = []
     counts: Counter = Counter()
-    for path in ruby:
+    for path in files:
         prefix = owning_prefix(path, ratchet)
         if prefix is None:
-            errors.append(f"new Ruby outside the ratchet: {path} (ADR 0006 decision 1 — port it to Python or TypeScript)")
+            errors.append(f"new {what} outside the ratchet: {path} (ADR 0006 — {fix})")
         else:
             counts[prefix] += 1
     for prefix, ceiling in ratchet.items():
         if counts[prefix] > ceiling:
-            errors.append(f"Ruby grew under {prefix}: {counts[prefix]} files, ceiling {ceiling} (the ratchet only goes down)")
+            errors.append(f"{what} grew under {prefix}: {counts[prefix]} files, ceiling {ceiling} (the ratchet only goes down)")
     return errors, counts
 
 
@@ -191,6 +221,16 @@ def tracked_files(root: Path) -> list[str]:
     return [p for p in out.decode().split("\0") if p]
 
 
+def read_all(root: Path) -> Callable[[str], bytes]:
+    def read(path: str) -> bytes:
+        try:
+            return (root / path).read_bytes()
+        except OSError:
+            return b""
+
+    return read
+
+
 def read_head(root: Path) -> Callable[[str], bytes]:
     def head(path: str) -> bytes:
         try:
@@ -206,17 +246,17 @@ def tighten(ratchet: dict[str, int], counts: Counter) -> dict[str, int]:
     return {p: min(c, counts[p]) for p, c in ratchet.items() if min(c, counts[p]) > 0}
 
 
-def write_ratchet(ledger_path: Path, ratchet: dict[str, int]) -> None:
-    """Rewrite only the ruby_ratchet block, leaving the rest of the file's bytes alone."""
+def write_ratchet(ledger_path: Path, ratchet: dict[str, int], key: str = "ruby_ratchet") -> None:
+    """Rewrite only one ratchet block, leaving the rest of the file's bytes alone."""
     lines = ledger_path.read_text().splitlines(keepends=True)
-    start = next(i for i, line in enumerate(lines) if line.startswith("ruby_ratchet:"))
+    start = next(i for i, line in enumerate(lines) if line.startswith(f"{key}:"))
     end = start + 1
     while end < len(lines) and (lines[end].startswith((" ", "\t")) or not lines[end].strip()):
         end += 1
     while end > start + 1 and not lines[end - 1].strip():
         end -= 1
     body = [f"  {p}: {c}\n" for p, c in ratchet.items()] or []
-    head = "ruby_ratchet:\n" if body else "ruby_ratchet: {}\n"
+    head = f"{key}:\n" if body else f"{key}: {{}}\n"
     ledger_path.write_text("".join(lines[:start] + [head] + body + lines[end:]))
 
 
@@ -239,9 +279,18 @@ def main(argv: list[str] | None = None) -> int:
     ratchet = {str(k): int(v) for k, v in (ledger.get("ruby_ratchet") or {}).items()}
     fixtures = [str(f) for f in ledger.get("ruby_fixtures") or []]
     head = read_head(ROOT)
-    ruby = [p for p in tracked_files(ROOT) if is_ruby(p, head) and p not in fixtures]
+    tracked = tracked_files(ROOT)
+    ruby = [p for p in tracked if is_ruby(p, head) and p not in fixtures]
     errors, counts = check_ratchet(ruby, ratchet)
     errors += check_fixtures(fixtures, exists)
+    theme_ratchet = {str(k): int(v) for k, v in (ledger.get("theme_ratchet") or {}).items()}
+    theme_allowed = [str(f) for f in ledger.get("theme_allowed") or []]
+    read = read_all(ROOT)
+    themed = [p for p in tracked if p not in theme_allowed and is_theme_dependency(p, read)]
+    theme_errors, theme_counts = check_ratchet(
+        themed, theme_ratchet, "zer0-mistakes dependency", "only the Jekyll-theme option names the theme (theme_allowed:)"
+    )
+    errors += theme_errors
     platform = ledger.get("platform") or []
     errors += check_platform(platform, exists)
     sources = ledger.get("sources") or []
@@ -249,12 +298,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.tighten:
         write_ratchet(LEDGER, tighten(ratchet, counts))
-        print("ruby_ratchet tightened")
+        write_ratchet(LEDGER, tighten(theme_ratchet, theme_counts), "theme_ratchet")
+        print("ruby_ratchet and theme_ratchet tightened")
 
     if args.report:
         print(f"Ruby files: {len(ruby)}")
         for prefix in sorted(ratchet):
             print(f"  {prefix:<40} {counts[prefix]:>4} / {ratchet[prefix]}")
+        print(f"zer0-mistakes dependencies (code and config): {len(themed)}")
+        for prefix in sorted(theme_ratchet):
+            print(f"  {prefix:<40} {theme_counts[prefix]:>4} / {theme_ratchet[prefix]}")
         print("Capabilities:")
         for source in sources:
             tally = Counter(c.get("status") for c in source.get("capabilities") or [])
@@ -276,7 +329,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     total = sum(len(s.get("capabilities") or []) for s in sources)
     print(
-        f"absorption gate OK — {len(ruby)} Ruby files within the ratchet, {len(platform)} platform capabilities, "
+        f"absorption gate OK — {len(ruby)} Ruby files and {len(themed)} zer0-mistakes dependencies within their ratchets, "
+        f"{len(platform)} platform capabilities, "
         f"{len(sources)} sources with {total} capabilities"
     )
     return 0
