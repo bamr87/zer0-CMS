@@ -4,6 +4,7 @@ that an unchanged site exports byte for byte, that an edited page exports its
 edits over its original front matter, and that the real sites in this
 repository survive the round trip."""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -183,6 +184,11 @@ def test_a_page_made_in_wagtail_gets_a_jekyll_path(imported, tmp_path):
     )
 
 
+# The theme's docs site (376 files) is the largest fixture, and it lives in its
+# own repository (ADR 0005): content.yml checks bamr87/zer0-mistakes out at a
+# pinned tag into .cache/zer0-mistakes; locally, point ZER0_THEME_CHECKOUT at a
+# checkout, or the case skips with a reason.
+THEME_CHECKOUT = os.environ.get("ZER0_THEME_CHECKOUT", ".cache/zer0-mistakes")
 REAL_SITES = [
     "sites/zer0-demo-garden",
     "sites/zer0-pages-remote",
@@ -190,7 +196,7 @@ REAL_SITES = [
     "sites/drsai",
     # The two big ones (210 and 376 files) run in the full suite, not the fast tier.
     pytest.param("sites/zer0-pages", marks=pytest.mark.slow),
-    pytest.param("packages/zer0-mistakes", marks=pytest.mark.slow),
+    pytest.param(THEME_CHECKOUT, marks=pytest.mark.slow, id="zer0-mistakes"),
 ]
 
 

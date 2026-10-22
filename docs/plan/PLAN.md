@@ -11,7 +11,7 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 | cms-extension | `src/ media/ schemas/` (root) | bamr87/zer0-CMS (fork of estruyf/vscode-front-matter v10.10.1, rewritten) | Merge history still carries estruyf PRs (#9xx–#1026) before the rewrite; zer0 PRs #13–#27 after |
 | — governance layer inside the extension | `src/core/governance/` | bamr87/bash-cms (ported, not subtree) | draft queue, brand guard, approval, idempotency ledger |
 | cms-rails | `rails/` | bamr87/zer0-CMS (PR #24 feat/rails-fleet-platform) | Rails 8.1 fleet CMS + stdlib `zer0` lib |
-| zer0-mistakes | `packages/zer0-mistakes` | bamr87/zer0-mistakes | Jekyll theme gem `jekyll-theme-zer0`, own AGENTS.md + release-please |
+| zer0-mistakes | *(returned to its repository, ADR 0005)* | bamr87/zer0-mistakes | Jekyll theme gem `jekyll-theme-zer0`; developed there with its Rails studio; consumed here as a gem / `remote_theme` |
 | zer0-image-generator | `packages/zer0-image-generator` | bamr87/zer0-image-generator | Python engine + byte-identical Ruby port + web panel; own release-please + compose |
 | books | `packages/books` | bamr87/books | Python bookshelf app + Claude studio |
 | parodynews | `apps/parodynews` | bamr87/barodybroject | Django 5.2 + React, Azure Container Apps |
@@ -32,7 +32,6 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 | parodynews | Django 5.2, DRF, React/Vite, Postgres, Azure | AI parody news generation, assistants, threads, posts with front matter + versions | `JSONSchema, AIModel, Assistant, AssistantGroup(+Membership), AIProviderConfig, AppConfig, FieldDefaults, ContentItem, ContentDetail, Post, PostFrontMatter, PostVersion, Thread, Message, PoweredBy` | DRF `parodynews/api/urls.py` | pytest + Vitest (frontend) | parodynews.yml |
 | books | Python | validate/compile/edit book projects, Claude studio | `library/<slug>/` files | CLI/local app | pytest | books.yml |
 | image-generator | Python + Ruby gem + web | AI preview/social images | files | CLI, Jekyll plugin | py + ruby tests | zer0-image-generator.yml |
-| zer0-mistakes | Jekyll, Ruby, Node, Docker | theme, installer, propagation | — | — | `scripts/bin/test` | zer0-mistakes.yml |
 | Sites | Jekyll / Obsidian | content | Markdown + front matter | — | build | sites.yml, zer0-pages.yml, drsai.yml, abc-engine.yml |
 | Workspace tooling | Ruby `bin/zer0`, `tools/workspace` | registry check, affected, vendor drift | `workspace.yml`, `fleet.manifest.yml` | CLI | — | zer0-workspace.yml, ci.yml, markdown-oneline.yml, codeql, claude.yml |
 
@@ -43,7 +42,7 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 3. **Two content models**: Rails `Page/Term/Asset` vs parodynews `Post/PostFrontMatter/PostVersion/ContentItem`, both shadowing Markdown files. Both are replaced by Wagtail pages, revisions and snippets.
 4. **Two MCP surfaces in waiting**: extension `src/mcp` (TS) vs the note's Django MCP server.
 5. **Image engine twice**: Python engine + "byte-identical Ruby port" + `rails/app/services/image_engine.rb` + vendored copies tracked by `bin/zer0 vendor`.
-6. **Per-package infra leftovers from the subtree imports**: 3 nested `release-please-config.json` (root, zer0-mistakes, image-generator), 10+ `docker-compose.yml` (incl. `apps/parodynews/src/posthog/`), 9 `CLAUDE.md`, but only one `AGENTS.md` (zer0-mistakes).
+6. **Per-package infra leftovers from the subtree imports**: 2 nested `release-please-config.json` (root, image-generator), 10+ `docker-compose.yml` (incl. `apps/parodynews/src/posthog/`), 9 `CLAUDE.md` (the theme's went home with it, ADR 0005).
 7. **CI is not on hub conventions**: 18 workflows, none call `standard-ci@v2`; release-please covers only the root node package.
 8. **Dead/obsolete**: pre-rewrite estruyf history (keep it in git, but nothing in-tree depends on it); commented-out reusable-workflow calls (`zer0-doctor.yml`, `zer0-linkedin.yml` refs); parodynews Azure `infra/` and `azure.yaml` if Azure is dropped; `sites/drsai` planning docs (`PRD*.md`, `IMPLEMENTATION_PLAN.md`, `newsletter_seuss.md`, `reena_poem.md`, `Family newsletter.md`) at the site root; `src/test/fixtures/sites/wikijs/docker-compose.yml` is a fixture, so keep it.
 
@@ -71,7 +70,7 @@ Source of truth for the target: `docs/plan/agent-native-design.md` (called "the 
 | zer0-image-generator | image AI | Django media pipeline (`ai_alt`, `ai_tags`, embedding, previews) via a Python import; the gem stays for Jekyll users | Keep the package; **drop the Ruby port** from Rails (`image_engine.rb`) |
 | books | book projects + studio | Content import as `BookPage` tree; studio → Django agents | Migrate content; drop the studio LLM client |
 | drsai story engine | story generation | Django agent profile; site → frontend | Migrate |
-| zer0-mistakes theme | Jekyll theme | `frontends/jekyll` theme, fed by the exporter / headless API | Keep |
+| zer0-mistakes theme | Jekyll theme | its own repository, `bamr87/zer0-mistakes`, with its Rails studio (ADR 0005); the exporter's sites build with the gem / `remote_theme` each declares | Consume |
 | sites/* | content | Imported into Wagtail (one `Site` per Jekyll site); Jekyll stays as a static frontend | Migrate |
 | `bin/zer0`, `tools/workspace`, `workspace.yml` | registry | Keep, re-registered with the new projects | Update |
 | 18 workflows | CI | `standard-ci@v2` caller + per-project matrix via `bin/zer0 affected` | Consolidate |
@@ -97,7 +96,6 @@ app/                     # Rails 8 (moved from rails/) — experience plane
   app/services           # ContentClient (graphql-client), McpClient, HomepageAgent, LinkedinGateway
   lib/zer0_cms           # stdlib doctor/catalog (ABC generator removed)
 clients/vscode/          # the extension (src/, media/, package.json) as a headless client
-frontends/jekyll-theme/  # packages/zer0-mistakes
 frontends/sites/         # sites/*
 packages/zer0-image-generator/
 schemas/                 # zer0.schema.json, events/*.json, graphql/schema.graphql (generated)
@@ -155,7 +153,7 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
   - [ ] `packages/books` `library/<slug>/` → `BookPage` + chapters (§4.5) — not started.
   - Found: `apps/parodynews/src/pages/_config.yml` refers to an undefined YAML alias (`*site_domain`), which Jekyll's YAML loader refuses as well; the importer reports it instead of guessing.
 - [x] **M7: Jekyll exporter** so the static sites keep building from Wagtail (§4).
-  - Done: `export_jekyll` and `roundtrip_jekyll`. An unchanged page exports its source byte for byte; an edited one renders typed fields over its original front matter, in its original key order. Every Jekyll site in the repository round-trips byte for byte — the theme (376 files), zer0-pages (210), drsai, the two demos and zer0-pages-remote — on SQLite and on Postgres (`test_the_real_sites_round_trip_byte_for_byte`). The build-time switch to exporter output (§4.8) waits on D1.
+  - Done: `export_jekyll` and `roundtrip_jekyll`. An unchanged page exports its source byte for byte; an edited one renders typed fields over its original front matter, in its original key order. Every Jekyll site in the repository round-trips byte for byte — zer0-pages (210 files), drsai, the two demos and zer0-pages-remote — and so does the theme's docs site (376 files) from a pinned checkout (`ZER0_THEME_CHECKOUT`, fetched by `content.yml`; ADR 0005), on SQLite and on Postgres (`test_the_real_sites_round_trip_byte_for_byte`). The build-time switch to exporter output (§4.8) waits on D1.
 - [x] **M8: Outbox + event schemas**
   - Tasks: `outbox` app (`OutboxEvent` written in the same transaction as publish/revision); relay to Redis Streams; `schemas/events/` CloudEvents JSON Schemas for `content.page.published`, `content.suggestion.created`, `agent.run.completed`, `app.user.interaction`; contract tests on both sides.
   - Accept: publishing a page writes exactly one outbox row; the relay delivers it at least once; consumers dedupe by event id.
@@ -224,44 +222,44 @@ Ordered: each step needs the one before it. A step that needs a credential, a re
 
 - [ ] **C0: Restore the imported history** — found 2026-10-19: #29 and #36 were *squash*-merged, so `main` holds each imported tree as one commit (`packages/zer0-mistakes`: 3 commits here, 770 in the original) and the rewritten histories survive only in `refs/pull/29/head`, `refs/pull/36/head` and the originals. Nothing is archived before this lands.
   - Tasks: a branch from `main` that removes the imported paths, merges each rewritten history back (`git merge --allow-unrelated-histories`, the tips taken from the PR refs so the hashes match what was reviewed), then replays every later `main` commit that touched those paths as its own commit, so the branch's tree ends equal to `main`'s.
-  - Accept: `git diff main <branch>` is empty; `git log -- packages/zer0-mistakes/_layouts/default.html` and `git blame` reach the original commits.
+  - Accept: `git diff main <branch>` is empty; `git log -- sites/drsai/_config.yml` and `git blame` reach the original commits. (The theme's graft stays as history; the theme itself has gone home, ADR 0005.)
   - Needs the owner: it must land as a **fast-forward** (`git push origin <branch>:main`). A GitHub merge commit keeps the history reachable, but `git log` and `git blame` still stop at the squash, because `main`'s side already carries the same lines. A fast-forward adds commits and rewrites none.
   - The same applies to law-ai#174 (`lawmode/`), gitorio#136 (`packages/gitnexus`, `packages/git-with-the-program`) and rewind-arcade#36 (`retro-pi/`), all squash-merged the same day — tracked in the hub's `docs/CONSOLIDATION.md`.
 - [ ] **C1: Freeze and final delta**
-  - Tasks: land or close every open pull request on the originals (zer0-mistakes, zer0-image-generator, …), re-open drafts here under the package path; re-import what landed since #29/#36 with the MONOREPO.md recipe (the rewrite is deterministic, so the new commits merge onto the earlier import without duplicating it); turn off the originals' scheduled workflows (`*_ENABLED=false`) and disable issues and pull requests on them.
+  - Tasks: land or close every open pull request on the originals (zer0-image-generator, …; the theme is not one of them, ADR 0005), re-open drafts here under the package path; re-import what landed since #29/#36 with the MONOREPO.md recipe (the rewrite is deterministic, so the new commits merge onto the earlier import without duplicating it); turn off the originals' scheduled workflows (`*_ENABLED=false`) and disable issues and pull requests on them.
   - Accept: every original's `main` equals what is under its path here (minus the nested workflows removed at import); no original has an open pull request.
   - Test: `bin/zer0 check`, plus a tree comparison per original (`git diff --stat <original>/main HEAD:<path>` after `git fetch`).
 - [ ] **C2: Releases from here** (the rest of M1)
-  - Tasks: release-please manifest mode with components `.` (extension, unchanged), `packages/zer0-mistakes` (`jekyll-theme-zer0`, ruby), `packages/zer0-image-generator` (ruby), `sites/drsai` (the story engine, python); prefixed tags; the manifest seeded from each original's last release (theme `v1.31.2`, image generator `v0.9.0`, …); publish jobs for RubyGems and PyPI; delete the nested release-please configs.
+  - Tasks: release-please manifest mode with components `.` (extension, unchanged), `packages/zer0-image-generator` (ruby), `sites/drsai` (the story engine, python); prefixed tags; the manifest seeded from each original's last release (image generator `v0.9.0`, …); publish jobs for RubyGems and PyPI; delete the nested release-please configs. The theme releases from its own repository (ADR 0005).
   - Accept: a release-please dry run lists every component at its continued version; `bin/zer0 check` fails for a `publishes:` project without a component.
   - Needs the owner: `RUBYGEMS_API_KEY` (or RubyGems trusted publishing) and PyPI trusted publishing pointed at this repository.
-- [ ] **C3: The theme mirror**
+- [x] **C3: The theme mirror** — *struck by [ADR 0005](../adr/0005-theme-goes-home.md): there is no mirror; `bamr87/zer0-mistakes` is the theme's home and `theme-mirror.yml` is deleted.*
   - Tasks: `mirror-theme.yml` — on a push to `main` that touches `packages/zer0-mistakes/**`, and on a theme release, commit the subtree onto `bamr87/zer0-mistakes` `main` as one fast-forward snapshot commit (`sync: zer0-CMS@<sha>`) and, on a release, tag it `v<version>`; the mirror's `.github/workflows/` is reduced to nothing that deploys, releases or opens pull requests.
   - Accept: the mirror's tree equals `packages/zer0-mistakes/` (less the workflows); the job refuses when the mirror's `main` is not the commit it last pushed; a consumer pinned to `@v<version>` builds.
   - Needs the owner: a `FLEET_TOKEN` with `contents:write` on the mirror; disabling its issues and pull requests.
   - Built: `.github/workflows/theme-mirror.yml` (kill switch `THEME_MIRROR_ENABLED`, default off). Armed only after C1: a local dry run of the first snapshot against today's mirror changes 99 files outside `.github/workflows/` (−5,981 lines) — the theme's own commits since the import, which this repository does not have yet, so a sync before C1 would revert them on the mirror.
 - [ ] **C4: One Pages deploy**
-  - Tasks: `pages.yml` builds every site under `sites/`, the theme's docs and parodynews's sidecar into one artifact with each site's sub-path `baseurl` (ADR 0002 §4); `year-of-ai.github.io` builds `sites/2005` into `/2005/` from this repository.
+  - Tasks: `pages.yml` builds every site under `sites/` and parodynews's sidecar into one artifact with each site's sub-path `baseurl` (ADR 0002 §4, amended by ADR 0005: the theme's docs stay on zer0-mistakes.com from the theme's repository, and this deploy targets this repository's project site); `year-of-ai.github.io` builds `sites/2005` into `/2005/` from this repository.
   - Accept: every route answers 200 in a link-checked preview; `bin/zer0 check` fails for a site with no route.
-  - Needs the owner: moving the `zer0-mistakes.com` custom domain from the theme repository's Pages to this one.
-  - Built: `.github/workflows/pages.yml`, `route:` + the `pages` task in `workspace.yml`, `bin/zer0 routes [--json]` and the `routes` rule in `bin/zer0 check`. Routed today: `/` (theme docs + examples), `/zer0-pages/`, `/drsai/`, `/zer0-pages-remote/`, `/demos/cookbook/`, `/demos/garden/`, `/wargames/`. Not routed, each with its reason in `workspace.yml`: parodynews (its sidecar's `_config.yml` uses an undefined YAML alias — C5), `sites/1987` (no Jekyll config since its repository was deleted), `sites/2005` (year-of-ai.github.io builds it), `sites/irony-works` (no Gemfile: it builds with GitHub Pages' own Jekyll after a node transplant step). Deploys only while `PAGES_DEPLOY_ENABLED` is `true`.
+  - Needs the owner: enabling Pages for this repository (the domain stays with the theme).
+  - Built: `.github/workflows/pages.yml`, `route:` + the `pages` task in `workspace.yml`, `bin/zer0 routes [--json]` and the `routes` rule in `bin/zer0 check`. Routed today: `/zer0-pages/`, `/drsai/`, `/zer0-pages-remote/`, `/demos/cookbook/`, `/demos/garden/`, `/wargames/`. Not routed, each with its reason in `workspace.yml`: parodynews (its sidecar's `_config.yml` uses an undefined YAML alias — C5), `sites/1987` (no Jekyll config since its repository was deleted), `sites/2005` (year-of-ai.github.io builds it), `sites/irony-works` (no Gemfile: it builds with GitHub Pages' own Jekyll after a node transplant step). Deploys only while `PAGES_DEPLOY_ENABLED` is `true`.
 - [ ] **C5: Port what is left** — done so far: the news app's Jekyll sidecar is routed at `/parodynews/` (ADR 0003).
-  - Tasks: the theme's remaining reference workflows (Docker integration, the 9-skin visual snapshots, nightly, translation) as root workflows filtered to `packages/zer0-mistakes/**`, the issue autopilot and theme propagation only if still wanted; parodynews's Playwright E2E, container validation and Trivy jobs. parodynews's Azure deploy waits on D4.
+  - Tasks: parodynews's Playwright E2E, container validation and Trivy jobs (the theme's workflows stay in the theme's repository, ADR 0005). parodynews's Azure deploy waits on D4.
   - Accept: every nested `.github/workflows/` file is ported or deleted with a reason; MONOREPO.md § What still depends on the original repositories is empty.
 - [ ] **C6: Redirect and archive**
-  - Tasks: one last commit per original (the mirror excepted) that replaces its Pages site with redirects to the new URL and its README with a pointer here; then archive it.
+  - Tasks: one last commit per original (the theme excepted — it is not archived, ADR 0005) that replaces its Pages site with redirects to the new URL and its README with a pointer here; then archive it.
   - Accept: each old URL answers with a redirect to the new one.
   - Needs the owner: the archive itself.
 - [ ] **C7: The fleet hub follows**
-  - Tasks (in `bamr87/bamr87`): point the registry entries at this repository's sub-paths (registry-only rows), remove the eight submodules, and take the originals out of every loop (evolution, issue pipeline, fan-outs); `zer0-mistakes` stays registered as a mirror that is never a fan-out target.
-  - Accept: the hub's drift gate is green; no hub loop opens a pull request on an archived repository or on the mirror.
+  - Tasks (in `bamr87/bamr87`): point the registry entries at this repository's sub-paths (registry-only rows), remove the seven absorbed submodules, and take the originals out of every loop (evolution, issue pipeline, fan-outs); `zer0-mistakes` is registered as a submodule again (T4) and a normal fan-out target.
+  - Accept: the hub's drift gate is green; no hub loop opens a pull request on an archived repository.
 
 ### Phase F: DB-first, site by site (PLAN-D1, [ADR 0002](../adr/0002-one-home-cutover.md) §5)
 
 One milestone per site, smallest first. A site is eligible once `roundtrip_jekyll` has been green for it for two consecutive releases.
 
 - [ ] **D1-0: The switch** — `workspace.yml` gains `content_source: files | wagtail` per site (default `files`); `pages.yml` builds a `wagtail` site from `export_jekyll` output; a CI check fails when a `wagtail` site's committed Markdown differs from the export. Test: `bin/zer0 check && cd content && python -m pytest -q tests/exporters`
-- [ ] **D1-1: `sites/zer0-pages-remote`** · [ ] **D1-2: `sites/zer0-demo-garden`** · [ ] **D1-3: `sites/zer0-demo-cookbook`** · [ ] **D1-4: `sites/drsai`** · [ ] **D1-5: `sites/zer0-pages`** · [ ] **D1-6: `sites/1987`, `sites/2005`** · [ ] **D1-7: the theme's docs site**
+- [ ] **D1-1: `sites/zer0-pages-remote`** · [ ] **D1-2: `sites/zer0-demo-garden`** · [ ] **D1-3: `sites/zer0-demo-cookbook`** · [ ] **D1-4: `sites/drsai`** · [ ] **D1-5: `sites/zer0-pages`** · [ ] **D1-6: `sites/1987`, `sites/2005`** (the theme's docs site is not a CMS site: it lives and publishes from `bamr87/zer0-mistakes`, ADR 0005)
   - Each: flip `content_source`, publish from the export, unblock that site's share of G4 (the platform stops importing its files and starts exporting them), G10 and G11.
 
 ### Phase G: One platform ([ADR 0004](../adr/0004-one-platform.md))
@@ -291,6 +289,15 @@ One branch `g<N>-<slug>`, one PR per milestone. Every absorption ends in a parit
 - [ ] **H1: Deploy** — `deploy/compose.prod.yml` (web, worker, beat, relay, Postgres, Redis; secrets from the environment), `deploy/helm/zer0-cms/` (a Deployment per role, HPA on web, a PVC for media, external or subchart Postgres/Redis, `/readyz` probes), `.github/workflows/publish.yml` (build and push `ghcr.io/bamr87/zer0-cms` on a release tag, verify `/readyz` on the image), `docs/OPERATIONS.md` (backups with `pg_dump`, a restore drill, retention, rotation), `manage.py seed_demo` if G2 has not added it. Needs the owner: GHCR publish permission.
 - [ ] **H2: Observability and tenancy hardening** — OpenTelemetry instrumentation for Django and Celery behind `OTEL_EXPORTER_OTLP_ENDPOINT` (extending `agents/tracing.py`), optional Prometheus `/metrics`, per-site budgets (`budget_usd` per `SiteSettings`, enforced by the runner), per-site token scopes, an agent-provenance audit report, the CSP enforced after a report-only soak, `WORK-10` (fleet workflow refs pinned) and the remaining `AGENT` rows of the hub's conformance report.
 
+### Phase T: The theme goes home ([ADR 0005](../adr/0005-theme-goes-home.md))
+
+The zer0-mistakes theme returns to `bamr87/zer0-mistakes`, gains a Rails theme studio there, and this repository consumes it as each site declares it. T1 and T2 are pull requests on two repositories; T3 lands inside G2; T4 is a pull request on the fleet hub.
+
+- [x] **T1: The theme leaves this repository.** The monorepo's theme changes ported to `bamr87/zer0-mistakes` as a draft PR (`port/zer0-cms-2026-10`: ship-no-person, the setup-wizard fix, the settings byte copy — each with a `Ported-From:` trailer); `packages/zer0-mistakes/` removed; the `zer0-mistakes` project, its `/` route, eight `depends_on` edges and two `vendored:` entries gone from `workspace.yml`; `zer0-mistakes.yml` and `theme-mirror.yml` deleted; `pages.yml` without the theme's route and targeting this repository's project site; `drsai.yml` building against the theme's `main` checked out beside the site (weekly too); `content.yml` fetching the theme at a pinned tag into `.cache/zer0-mistakes` for the round-trip fixture (`ZER0_THEME_CHECKOUT`); ADR 0005; the docs. Test: `bin/zer0 check && cd content && ZER0_THEME_CHECKOUT=<checkout> python -m pytest -q`
+- [ ] **T2: zer0 studio** (in `bamr87/zer0-mistakes`, `studio/`) — a Rails 8.1 app, Ruby 3.3, SQLite + Solid Queue + Solid Cable, that customizes, updates and designs the theme: tokens and skins edited at the source through a small SCSS declaration tokenizer with a diff, a digest-guarded atomic write and the design-system parity check; a registry of consumer sites (from `_data/consumers.yml` and `SITES_DIR`) with each site's theme keys edited in place; the theme's own scripts (`validate`, `audit-consumer`, `propagate.rb`, `release --dry-run`, `design-system-check.rb`, Jekyll builds) run as jobs with a live log and cancel; docs-site previews in a sandboxed cross-origin iframe; a WCAG contrast check; a theme doctor (token parity, 7-vs-9 skins, the default skin, the gem's missing backgrounds, the config byte copy, `studio/` excluded); version lockstep and the consumer pin matrix. Loopback-only unless a password is set, nonce CSP, confined paths, no network at boot, never in the gem. Then S2 (live CSS re-render, 9-skin before/after compare, new skins, the axe sweep, a companion theme PR for what the doctor flags), S3 (overrides, `audit-consumer --fix`, consumer previews against gem/remote/checkout, installer profiles), S4 (dispatch, bump PRs through the consumer kit, the hub roster). Test: `cd studio && bin/rails test && bin/rails zeitwerk:check`; the gem build unchanged; the docs site builds with `studio/` excluded.
+- [ ] **T3: The platform's theme record per site** (inside G2) — `SiteSettings.theme_source` (`gem|remote_theme|path`), `theme_version`, `theme_skin`, filled by `import_jekyll` from the site's `Gemfile`/`_config.yml`; a dashboard row comparing the pin with the newest `bamr87/zer0-mistakes` release (read on demand); a test that `export_jekyll` leaves the pin's bytes untouched. The CMS never edits, vendors or publishes the theme; a bump reaches a site through its own repository and the consumer kit.
+- [ ] **T4: The fleet hub follows** (in `bamr87/bamr87`) — `projects/zer0-mistakes` back as a submodule, the registry entry's mirror note and `scout: false` dropped, the `zer0-CMS` description without "plus the theme", `docs/CONSOLIDATION.md`'s rows; the drift gate green. Needs the owner: merging.
+
 ## 4. Content and data migration
 
 1. **Freeze**: tag `pre-migration` (via the PR merge, not a manual push); record counts of files per site and rows per parodynews table.
@@ -315,8 +322,8 @@ They follow the note's §10 order exactly: M9–M10 (step 1), M11–M12 (step 2)
 
 ## 6. CI/CD and docker compose
 
-- **CI**: a single `ci.yml` calls `standard-ci@v2` with `bin/zer0 affected` producing the matrix (content: `pytest` + `makemigrations --check` + schema drift + recorded evals; app: `bin/rails test` + `zeitwerk:check`; clients/vscode: `npm test`; image-generator, theme, books: existing tasks). Services: `pgvector/pgvector:pg16`, `redis:7`. Keep `codeql-analysis.yml` and `claude.yml`; remove the per-project workflows once they are covered.
-- **Release**: release-please manifest mode, components `content`, `app`, `clients/vscode` (node, vsix), `packages/zer0-image-generator` (ruby), `frontends/jekyll-theme` (ruby). Conventional commits are required (squash merge titles).
+- **CI**: a single `ci.yml` calls `standard-ci@v2` with `bin/zer0 affected` producing the matrix (content: `pytest` + `makemigrations --check` + schema drift + recorded evals; app: `bin/rails test` + `zeitwerk:check`; clients/vscode: `npm test`; image-generator, books: existing tasks; the theme is gated in its own repository). Services: `pgvector/pgvector:pg16`, `redis:7`. Keep `codeql-analysis.yml` and `claude.yml`; remove the per-project workflows once they are covered.
+- **Release**: release-please manifest mode, components `content`, `app`, `clients/vscode` (node, vsix), `packages/zer0-image-generator` (ruby). The theme releases from `bamr87/zer0-mistakes`. Conventional commits are required (squash merge titles).
 - **Images**: `content/Dockerfile` carries `GIT_SHA`/`BUILT_AT` into `/version` and OCI labels; the deploy target is decided (ADR 0004: GHCR images, a production compose file and a Helm chart — H1).
 - **Compose (root)**: `db`, `redis`, `content` (gunicorn), `worker` (celery), `beat`, `relay` (outbox → Redis Streams) behind `--profile content`, each with the fleet's labels and log rotation; `cms` (Rails) and `imagegen` until Phase G retires them. The root `.env.example` lists the compose keys; `content/.env.example` the platform's own.
 
