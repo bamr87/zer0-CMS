@@ -31,7 +31,7 @@ An adapter implements `complete` (a model id, a system prompt, the runner's prov
 
 Each slug has a `ProviderConfig` row (created after every migrate): enabled, the default (one at most, by a database constraint), base URL, organization, project, default model, `extra` options — only the ones its adapter declares in `options` (`max_retries`, `timeout`, `max_tokens`, `effort`, `server_side_fallbacks`, `max_turns`, LiteLLM's `models`), validated on save, so nothing a row holds chooses what the worker runs — a monthly budget, the last health check, and the credential — encrypted at rest, write-only over the API, never logged, and dropped when the base URL changes without a new one. An environment credential is the deployment's and never goes to a base URL a row chose: such a row needs its own. Without a row flagged default, `AI_DEFAULT_PROVIDER` is the default. `settings.AI_PROVIDERS` (slug → dotted path) adds an adapter or, mapped to `""`, removes one. `agents/llm.py`, the tool-using agents' client, is a thin front over the same registry (`LLM_BACKEND` names a slug; a definition's `anthropic/…` or `openai/…` model id reaches that vendor's adapter bare, and `claude_code`, without tool calls, refuses a definition that uses tools).
 
-Credentials are encrypted with the first of `AI_CREDENTIAL_KEYS`, else a key derived from `SECRET_KEY`; every key decrypts, and the keys derived from `SECRET_KEY` and `SECRET_KEY_FALLBACKS` always stay among them, so setting `AI_CREDENTIAL_KEYS` (or rotating `SECRET_KEY` with the old one as a fallback) loses nothing. `manage.py rotate_ai_credentials` moves every credential to the first key; one no current key can read is named (`NotConfigured`), never silently lost.
+Credentials are encrypted with the first of `AI_CREDENTIAL_KEYS`, else a key derived from `SECRET_KEY`; every key decrypts, and the keys derived from `SECRET_KEY` and `SECRET_KEY_FALLBACKS` always stay among them, so setting `AI_CREDENTIAL_KEYS` (or rotating `SECRET_KEY` with the old one as a fallback) loses nothing. `manage.py rotate_ai_credentials` moves every credential to the first key — the providers', and in the same transaction every other secret kept under these keys (`crypto.REENCRYPT`: the automations' webhook secrets) —; one no current key can read is named (`NotConfigured`, or the automation's), never silently lost, and then nothing is changed.
 
 ## Rows and who sees them
 
@@ -74,7 +74,7 @@ After every migrate the three bundled schemas (parody news article, news article
 
 ## Settings
 
-`AI_DEFAULT_PROVIDER`, `AI_PROVIDERS`, `AI_CREDENTIAL_KEYS` (rotate with `manage.py rotate_ai_credentials`), and each adapter's environment variables — all in `content/.env.example`. `manage.py sync_ai_models [SLUG …]` syncs the catalog from the command line. Who configures providers is a Django permission (`ai.change_providerconfig`), granted like any other.
+`AI_DEFAULT_PROVIDER`, `AI_PROVIDERS`, `AI_CREDENTIAL_KEYS` (rotate with `manage.py rotate_ai_credentials`, which re-encrypts automations' secrets too), and each adapter's environment variables — all in `content/.env.example`. `manage.py sync_ai_models [SLUG …]` syncs the catalog from the command line. Who configures providers is a Django permission (`ai.change_providerconfig`), granted like any other.
 
 ## Tests
 
