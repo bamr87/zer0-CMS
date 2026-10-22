@@ -785,17 +785,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         }
                     },
@@ -881,17 +881,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Assistant"
+                                "$ref": "#/components/schemas/AssistantRequest"
                             }
                         }
                     },
@@ -938,17 +938,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAssistant"
+                                "$ref": "#/components/schemas/PatchedAssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAssistant"
+                                "$ref": "#/components/schemas/PatchedAssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAssistant"
+                                "$ref": "#/components/schemas/PatchedAssistantRequest"
                             }
                         }
                     }
@@ -1075,17 +1075,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunAssistant"
+                                "$ref": "#/components/schemas/RunAssistantRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunAssistant"
+                                "$ref": "#/components/schemas/RunAssistantRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunAssistant"
+                                "$ref": "#/components/schemas/RunAssistantRequest"
                             }
                         }
                     },
@@ -1204,17 +1204,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AssistantDocument"
+                                "$ref": "#/components/schemas/AssistantDocumentRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/AssistantDocument"
+                                "$ref": "#/components/schemas/AssistantDocumentRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/AssistantDocument"
+                                "$ref": "#/components/schemas/AssistantDocumentRequest"
                             }
                         }
                     },
@@ -1439,17 +1439,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         }
                     }
@@ -1534,17 +1534,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brief"
+                                "$ref": "#/components/schemas/BriefRequest"
                             }
                         }
                     }
@@ -1590,17 +1590,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBrief"
+                                "$ref": "#/components/schemas/PatchedBriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBrief"
+                                "$ref": "#/components/schemas/PatchedBriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBrief"
+                                "$ref": "#/components/schemas/PatchedBriefRequest"
                             }
                         }
                     }
@@ -1679,17 +1679,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ApplyBrief"
+                                "$ref": "#/components/schemas/ApplyBriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/ApplyBrief"
+                                "$ref": "#/components/schemas/ApplyBriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/ApplyBrief"
+                                "$ref": "#/components/schemas/ApplyBriefRequest"
                             }
                         }
                     }
@@ -2026,17 +2026,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         }
                     }
@@ -2121,17 +2121,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Conversation"
+                                "$ref": "#/components/schemas/ConversationRequest"
                             }
                         }
                     }
@@ -2177,17 +2177,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedConversation"
+                                "$ref": "#/components/schemas/PatchedConversationRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedConversation"
+                                "$ref": "#/components/schemas/PatchedConversationRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedConversation"
+                                "$ref": "#/components/schemas/PatchedConversationRequest"
                             }
                         }
                     }
@@ -2435,17 +2435,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PostMessage"
+                                "$ref": "#/components/schemas/PostMessageRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PostMessage"
+                                "$ref": "#/components/schemas/PostMessageRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PostMessage"
+                                "$ref": "#/components/schemas/PostMessageRequest"
                             }
                         }
                     },
@@ -2593,17 +2593,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         }
                     }
@@ -2770,17 +2770,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMessage"
+                                "$ref": "#/components/schemas/PatchedMessageRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMessage"
+                                "$ref": "#/components/schemas/PatchedMessageRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMessage"
+                                "$ref": "#/components/schemas/PatchedMessageRequest"
                             }
                         }
                     }
@@ -2868,17 +2868,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Promote"
+                                "$ref": "#/components/schemas/PromoteRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Promote"
+                                "$ref": "#/components/schemas/PromoteRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Promote"
+                                "$ref": "#/components/schemas/PromoteRequest"
                             }
                         }
                     },
@@ -3026,17 +3026,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Rerun"
+                                "$ref": "#/components/schemas/RerunRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Rerun"
+                                "$ref": "#/components/schemas/RerunRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Rerun"
+                                "$ref": "#/components/schemas/RerunRequest"
                             }
                         }
                     }
@@ -3350,17 +3350,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         }
                     },
@@ -3446,17 +3446,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/OutputSchema"
+                                "$ref": "#/components/schemas/OutputSchemaRequest"
                             }
                         }
                     },
@@ -3503,17 +3503,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedOutputSchema"
+                                "$ref": "#/components/schemas/PatchedOutputSchemaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedOutputSchema"
+                                "$ref": "#/components/schemas/PatchedOutputSchemaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedOutputSchema"
+                                "$ref": "#/components/schemas/PatchedOutputSchemaRequest"
                             }
                         }
                     }
@@ -3805,17 +3805,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         }
                     },
@@ -3901,17 +3901,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Pipeline"
+                                "$ref": "#/components/schemas/PipelineRequest"
                             }
                         }
                     },
@@ -3958,17 +3958,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPipeline"
+                                "$ref": "#/components/schemas/PatchedPipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPipeline"
+                                "$ref": "#/components/schemas/PatchedPipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPipeline"
+                                "$ref": "#/components/schemas/PatchedPipelineRequest"
                             }
                         }
                     }
@@ -4055,17 +4055,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/RunPipeline"
+                                "$ref": "#/components/schemas/RunPipelineRequest"
                             }
                         }
                     }
@@ -4304,17 +4304,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Provider"
+                                "$ref": "#/components/schemas/ProviderRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Provider"
+                                "$ref": "#/components/schemas/ProviderRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Provider"
+                                "$ref": "#/components/schemas/ProviderRequest"
                             }
                         }
                     }
@@ -4361,17 +4361,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedProvider"
+                                "$ref": "#/components/schemas/PatchedProviderRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedProvider"
+                                "$ref": "#/components/schemas/PatchedProviderRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedProvider"
+                                "$ref": "#/components/schemas/PatchedProviderRequest"
                             }
                         }
                     }
@@ -4895,17 +4895,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PageCreate"
+                                "$ref": "#/components/schemas/PageCreateRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PageCreate"
+                                "$ref": "#/components/schemas/PageCreateRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PageCreate"
+                                "$ref": "#/components/schemas/PageCreateRequest"
                             }
                         }
                     },
@@ -5151,17 +5151,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPageUpdate"
+                                "$ref": "#/components/schemas/PatchedPageUpdateRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPageUpdate"
+                                "$ref": "#/components/schemas/PatchedPageUpdateRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedPageUpdate"
+                                "$ref": "#/components/schemas/PatchedPageUpdateRequest"
                             }
                         }
                     }
@@ -5729,17 +5729,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Schedule"
+                                "$ref": "#/components/schemas/ScheduleRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Schedule"
+                                "$ref": "#/components/schemas/ScheduleRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Schedule"
+                                "$ref": "#/components/schemas/ScheduleRequest"
                             }
                         }
                     }
@@ -6986,17 +6986,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Idea"
+                                "$ref": "#/components/schemas/IdeaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Idea"
+                                "$ref": "#/components/schemas/IdeaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Idea"
+                                "$ref": "#/components/schemas/IdeaRequest"
                             }
                         }
                     },
@@ -7085,17 +7085,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedIdea"
+                                "$ref": "#/components/schemas/PatchedIdeaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedIdea"
+                                "$ref": "#/components/schemas/PatchedIdeaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedIdea"
+                                "$ref": "#/components/schemas/PatchedIdeaRequest"
                             }
                         }
                     }
@@ -7176,17 +7176,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Merge"
+                                "$ref": "#/components/schemas/MergeRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Merge"
+                                "$ref": "#/components/schemas/MergeRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Merge"
+                                "$ref": "#/components/schemas/MergeRequest"
                             }
                         }
                     },
@@ -7325,17 +7325,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PromoteIdea"
+                                "$ref": "#/components/schemas/PromoteIdeaRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PromoteIdea"
+                                "$ref": "#/components/schemas/PromoteIdeaRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PromoteIdea"
+                                "$ref": "#/components/schemas/PromoteIdeaRequest"
                             }
                         }
                     },
@@ -7621,17 +7621,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Board"
+                                "$ref": "#/components/schemas/BoardRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Board"
+                                "$ref": "#/components/schemas/BoardRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Board"
+                                "$ref": "#/components/schemas/BoardRequest"
                             }
                         }
                     },
@@ -7719,17 +7719,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Board"
+                                "$ref": "#/components/schemas/BoardRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Board"
+                                "$ref": "#/components/schemas/BoardRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Board"
+                                "$ref": "#/components/schemas/BoardRequest"
                             }
                         }
                     },
@@ -7777,17 +7777,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBoard"
+                                "$ref": "#/components/schemas/PatchedBoardRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBoard"
+                                "$ref": "#/components/schemas/PatchedBoardRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedBoard"
+                                "$ref": "#/components/schemas/PatchedBoardRequest"
                             }
                         }
                     }
@@ -7867,17 +7867,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brainstorm"
+                                "$ref": "#/components/schemas/BrainstormRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brainstorm"
+                                "$ref": "#/components/schemas/BrainstormRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Brainstorm"
+                                "$ref": "#/components/schemas/BrainstormRequest"
                             }
                         }
                     },
@@ -7997,17 +7997,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Capture"
+                                "$ref": "#/components/schemas/CaptureRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Capture"
+                                "$ref": "#/components/schemas/CaptureRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Capture"
+                                "$ref": "#/components/schemas/CaptureRequest"
                             }
                         }
                     },
@@ -8263,17 +8263,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Keep"
+                                "$ref": "#/components/schemas/KeepRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Keep"
+                                "$ref": "#/components/schemas/KeepRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Keep"
+                                "$ref": "#/components/schemas/KeepRequest"
                             }
                         }
                     },
@@ -8572,17 +8572,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Citation"
+                                "$ref": "#/components/schemas/CitationRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Citation"
+                                "$ref": "#/components/schemas/CitationRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Citation"
+                                "$ref": "#/components/schemas/CitationRequest"
                             }
                         }
                     },
@@ -8767,17 +8767,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Collection"
+                                "$ref": "#/components/schemas/CollectionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Collection"
+                                "$ref": "#/components/schemas/CollectionRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Collection"
+                                "$ref": "#/components/schemas/CollectionRequest"
                             }
                         }
                     },
@@ -8865,17 +8865,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Collection"
+                                "$ref": "#/components/schemas/CollectionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Collection"
+                                "$ref": "#/components/schemas/CollectionRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Collection"
+                                "$ref": "#/components/schemas/CollectionRequest"
                             }
                         }
                     },
@@ -8923,17 +8923,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedCollection"
+                                "$ref": "#/components/schemas/PatchedCollectionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedCollection"
+                                "$ref": "#/components/schemas/PatchedCollectionRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedCollection"
+                                "$ref": "#/components/schemas/PatchedCollectionRequest"
                             }
                         }
                     }
@@ -9022,17 +9022,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ResearchBrief"
+                                "$ref": "#/components/schemas/ResearchBriefRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/ResearchBrief"
+                                "$ref": "#/components/schemas/ResearchBriefRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/ResearchBrief"
+                                "$ref": "#/components/schemas/ResearchBriefRequest"
                             }
                         }
                     },
@@ -9234,17 +9234,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/FactCheckCreate"
+                                "$ref": "#/components/schemas/FactCheckCreateRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/FactCheckCreate"
+                                "$ref": "#/components/schemas/FactCheckCreateRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/FactCheckCreate"
+                                "$ref": "#/components/schemas/FactCheckCreateRequest"
                             }
                         }
                     },
@@ -9488,17 +9488,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Feed"
+                                "$ref": "#/components/schemas/FeedRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Feed"
+                                "$ref": "#/components/schemas/FeedRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Feed"
+                                "$ref": "#/components/schemas/FeedRequest"
                             }
                         }
                     },
@@ -9586,17 +9586,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Feed"
+                                "$ref": "#/components/schemas/FeedRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Feed"
+                                "$ref": "#/components/schemas/FeedRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Feed"
+                                "$ref": "#/components/schemas/FeedRequest"
                             }
                         }
                     },
@@ -9644,17 +9644,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedFeed"
+                                "$ref": "#/components/schemas/PatchedFeedRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedFeed"
+                                "$ref": "#/components/schemas/PatchedFeedRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedFeed"
+                                "$ref": "#/components/schemas/PatchedFeedRequest"
                             }
                         }
                     }
@@ -9927,17 +9927,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Question"
+                                "$ref": "#/components/schemas/QuestionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Question"
+                                "$ref": "#/components/schemas/QuestionRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Question"
+                                "$ref": "#/components/schemas/QuestionRequest"
                             }
                         }
                     },
@@ -10180,17 +10180,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Quote"
+                                "$ref": "#/components/schemas/QuoteRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Quote"
+                                "$ref": "#/components/schemas/QuoteRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Quote"
+                                "$ref": "#/components/schemas/QuoteRequest"
                             }
                         }
                     },
@@ -10276,17 +10276,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedQuote"
+                                "$ref": "#/components/schemas/PatchedQuoteRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedQuote"
+                                "$ref": "#/components/schemas/PatchedQuoteRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedQuote"
+                                "$ref": "#/components/schemas/PatchedQuoteRequest"
                             }
                         }
                     }
@@ -10482,17 +10482,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SourceCreate"
+                                "$ref": "#/components/schemas/SourceCreateRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/SourceCreate"
+                                "$ref": "#/components/schemas/SourceCreateRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/SourceCreate"
+                                "$ref": "#/components/schemas/SourceCreateRequest"
                             }
                         }
                     },
@@ -10672,17 +10672,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedSource"
+                                "$ref": "#/components/schemas/PatchedSourceRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedSource"
+                                "$ref": "#/components/schemas/PatchedSourceRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedSource"
+                                "$ref": "#/components/schemas/PatchedSourceRequest"
                             }
                         }
                     }
@@ -11012,17 +11012,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Search"
+                                "$ref": "#/components/schemas/SearchRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Search"
+                                "$ref": "#/components/schemas/SearchRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Search"
+                                "$ref": "#/components/schemas/SearchRequest"
                             }
                         }
                     },
@@ -11142,7 +11142,7 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Upload"
+                                "$ref": "#/components/schemas/UploadRequest"
                             }
                         }
                     },
@@ -11271,17 +11271,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AcceptRun"
+                                "$ref": "#/components/schemas/AcceptRunRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/AcceptRun"
+                                "$ref": "#/components/schemas/AcceptRunRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/AcceptRun"
+                                "$ref": "#/components/schemas/AcceptRunRequest"
                             }
                         }
                     },
@@ -11479,17 +11479,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Login"
+                                "$ref": "#/components/schemas/LoginRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Login"
+                                "$ref": "#/components/schemas/LoginRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Login"
+                                "$ref": "#/components/schemas/LoginRequest"
                             }
                         }
                     },
@@ -11969,17 +11969,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SuggestionDecision"
+                                "$ref": "#/components/schemas/SuggestionDecisionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/SuggestionDecision"
+                                "$ref": "#/components/schemas/SuggestionDecisionRequest"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/SuggestionDecision"
+                                "$ref": "#/components/schemas/SuggestionDecisionRequest"
                             }
                         }
                     }
@@ -12200,7 +12200,7 @@
     },
     "components": {
         "schemas": {
-            "AcceptRun": {
+            "AcceptRunRequest": {
                 "type": "object",
                 "properties": {
                     "ids": {
@@ -12261,7 +12261,7 @@
                     "suggestions"
                 ]
             },
-            "ApplyBrief": {
+            "ApplyBriefRequest": {
                 "type": "object",
                 "properties": {
                     "parent": {
@@ -12270,6 +12270,7 @@
                     },
                     "page_type": {
                         "type": "string",
+                        "minLength": 1,
                         "description": "e.g. cms.ArticlePage; else the brief's."
                     }
                 }
@@ -12419,6 +12420,125 @@
                     "name"
                 ]
             },
+            "AssistantDocumentRequest": {
+                "type": "object",
+                "description": "An assistant as a portable document (export, import).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "instructions": {
+                        "type": "string"
+                    },
+                    "prompt_template": {
+                        "type": "string"
+                    },
+                    "params": {},
+                    "tools": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1
+                        }
+                    },
+                    "provider": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "A provider's slug."
+                    },
+                    "model": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "The provider's model id."
+                    },
+                    "output_schema": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SchemaDocumentRequest"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "AssistantRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "description": "The system prompt."
+                    },
+                    "prompt_template": {
+                        "type": "string",
+                        "description": "A Django template around the request: {{ prompt }}."
+                    },
+                    "provider": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 1,
+                        "description": "The adapter's key in the provider registry."
+                    },
+                    "model": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "params": {
+                        "description": "temperature, top_p, max_tokens, effort."
+                    },
+                    "output_schema": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "tools": {
+                        "description": "Read-only registry tools it may use."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
             "Block": {
                 "type": "object",
                 "properties": {
@@ -12428,6 +12548,25 @@
                     },
                     "type": {
                         "type": "string"
+                    },
+                    "value": {}
+                },
+                "required": [
+                    "type",
+                    "value"
+                ]
+            },
+            "BlockRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Absent on a block that is new in this request."
+                    },
+                    "type": {
+                        "type": "string",
+                        "minLength": 1
                     },
                     "value": {}
                 },
@@ -12487,11 +12626,47 @@
                     "updated_at"
                 ]
             },
-            "Brainstorm": {
+            "BoardRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "BrainstormKindEnum": {
+                "enum": [
+                    "angles",
+                    "headlines",
+                    "outlines"
+                ],
+                "type": "string",
+                "description": "* `angles` - angles\n* `headlines` - headlines\n* `outlines` - outlines"
+            },
+            "BrainstormRequest": {
                 "type": "object",
                 "properties": {
                     "prompt": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 5000
                     },
                     "kind": {
@@ -12500,13 +12675,13 @@
                                 "$ref": "#/components/schemas/BrainstormKindEnum"
                             }
                         ],
-                        "default": "angles"
+                        "description": "angles when not given.\n\n* `angles` - angles\n* `headlines` - headlines\n* `outlines` - outlines"
                     },
                     "count": {
                         "type": "integer",
                         "maximum": 20,
                         "minimum": 1,
-                        "default": 8
+                        "description": "8 when not given."
                     },
                     "board": {
                         "type": [
@@ -12543,15 +12718,6 @@
                 "required": [
                     "prompt"
                 ]
-            },
-            "BrainstormKindEnum": {
-                "enum": [
-                    "angles",
-                    "headlines",
-                    "outlines"
-                ],
-                "type": "string",
-                "description": "* `angles` - angles\n* `headlines` - headlines\n* `outlines` - outlines"
             },
             "Brainstormed": {
                 "type": "object",
@@ -12737,6 +12903,77 @@
                     "updated_at"
                 ]
             },
+            "BriefRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "source_text": {
+                        "type": "string",
+                        "description": "A text to turn into content as it is (metadata only)."
+                    },
+                    "assistant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "pipeline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "output_schema": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "page_type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                    },
+                    "parent": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "markdown": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "description": "title, slug, description, keywords, tags (and what else it found)."
+                    },
+                    "conversation": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    }
+                }
+            },
             "BriefRun": {
                 "type": "object",
                 "properties": {
@@ -12793,11 +13030,12 @@
                     "schemas"
                 ]
             },
-            "Capture": {
+            "CaptureRequest": {
                 "type": "object",
                 "properties": {
                     "text": {
                         "type": "string",
+                        "minLength": 1,
                         "description": "The first line is the title; the rest, the notes.",
                         "maxLength": 20000
                     },
@@ -12806,7 +13044,6 @@
                             {
                                 "type": "string",
                                 "format": "uri",
-                                "default": "",
                                 "maxLength": 2000
                             },
                             {
@@ -12827,12 +13064,12 @@
                         "type": "array",
                         "items": {
                             "type": "string",
+                            "minLength": 1,
                             "maxLength": 100
                         }
                     },
                     "template": {
                         "type": "string",
-                        "default": "",
                         "description": "Notes from a template: topic."
                     }
                 },
@@ -12971,6 +13208,41 @@
                     "source_url"
                 ]
             },
+            "CitationRequest": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "quote": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "page": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "brief": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "source"
+                ]
+            },
             "CitedSource": {
                 "type": "object",
                 "properties": {
@@ -12986,6 +13258,38 @@
                     },
                     "quote": {
                         "type": "string"
+                    },
+                    "verified": {
+                        "type": "boolean",
+                        "description": "The quote is in the source's text, word for word."
+                    }
+                },
+                "required": [
+                    "label",
+                    "quote",
+                    "source",
+                    "title",
+                    "verified"
+                ]
+            },
+            "CitedSourceRequest": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "source": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "quote": {
+                        "type": "string",
+                        "minLength": 1
                     },
                     "verified": {
                         "type": "boolean",
@@ -13100,6 +13404,32 @@
                     "updated_at"
                 ]
             },
+            "CollectionRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
             "Conversation": {
                 "type": "object",
                 "properties": {
@@ -13158,12 +13488,6 @@
                             "integer",
                             "null"
                         ]
-                    },
-                    "from_brief": {
-                        "type": "string",
-                        "format": "uuid",
-                        "writeOnly": true,
-                        "description": "On create: start from this brief's text, its first turn."
                     }
                 },
                 "required": [
@@ -13172,6 +13496,52 @@
                     "owner",
                     "updated_at"
                 ]
+            },
+            "ConversationRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                    },
+                    "assistant": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "pipeline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "page": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "from_brief": {
+                        "type": "string",
+                        "format": "uuid",
+                        "writeOnly": true,
+                        "description": "On create: start from this brief's text, its first turn."
+                    }
+                }
             },
             "Duplicate": {
                 "type": "object",
@@ -13368,7 +13738,7 @@
                     "updated_at"
                 ]
             },
-            "FactCheckCreate": {
+            "FactCheckCreateRequest": {
                 "type": "object",
                 "properties": {
                     "page_id": {
@@ -13498,6 +13868,50 @@
                     "next_check_at",
                     "owner",
                     "updated_at",
+                    "url"
+                ]
+            },
+            "FeedRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "minLength": 1,
+                        "maxLength": 2000
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "collection": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "interval_minutes": {
+                        "type": "integer",
+                        "maximum": 10080,
+                        "minimum": 15,
+                        "description": "How often to look."
+                    }
+                },
+                "required": [
                     "url"
                 ]
             },
@@ -13720,17 +14134,11 @@
                         },
                         "readOnly": true
                     },
-                    "source_ids": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "format": "uuid",
-                            "writeOnly": true
-                        },
-                        "writeOnly": true
-                    },
                     "source_message": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "format": "uuid",
                         "readOnly": true
                     },
@@ -13800,6 +14208,28 @@
                     "title"
                 ]
             },
+            "IdeaBriefRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "status": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "id",
+                    "status",
+                    "title"
+                ]
+            },
             "IdeaPage": {
                 "type": "object",
                 "properties": {
@@ -13808,6 +14238,22 @@
                     },
                     "title": {
                         "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "title"
+                ]
+            },
+            "IdeaPageRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1
                     }
                 },
                 "required": [
@@ -13835,6 +14281,73 @@
                     "title"
                 ]
             },
+            "IdeaRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "board": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                        }
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/IdeaStatusEnum"
+                    },
+                    "url": {
+                        "description": "Where it was captured from.",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "uri",
+                                "maxLength": 2000
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "source_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "writeOnly": true
+                        },
+                        "writeOnly": true
+                    }
+                },
+                "required": [
+                    "title"
+                ]
+            },
             "IdeaSource": {
                 "type": "object",
                 "properties": {
@@ -13859,6 +14372,33 @@
                     "url"
                 ]
             },
+            "IdeaSourceRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "url": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "kind": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "id",
+                    "kind",
+                    "title",
+                    "url"
+                ]
+            },
             "IdeaStatusEnum": {
                 "enum": [
                     "new",
@@ -13870,7 +14410,7 @@
                 "type": "string",
                 "description": "* `new` - new\n* `exploring` - exploring\n* `planned` - planned\n* `promoted` - promoted\n* `archived` - archived"
             },
-            "Keep": {
+            "KeepRequest": {
                 "type": "object",
                 "properties": {
                     "message": {
@@ -13916,14 +14456,16 @@
                     "ideas"
                 ]
             },
-            "Login": {
+            "LoginRequest": {
                 "type": "object",
                 "properties": {
                     "username": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                     },
                     "password": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                     }
                 },
                 "required": [
@@ -13966,7 +14508,7 @@
                     "user"
                 ]
             },
-            "Merge": {
+            "MergeRequest": {
                 "type": "object",
                 "properties": {
                     "other": {
@@ -14326,7 +14868,41 @@
                     "version"
                 ]
             },
-            "PageCreate": {
+            "OutputSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "schema": {
+                        "description": "The JSON Schema a result must match."
+                    },
+                    "render_template": {
+                        "type": "string",
+                        "description": "A Django template that turns a result into Markdown; empty renders generically."
+                    }
+                },
+                "required": [
+                    "name",
+                    "schema"
+                ]
+            },
+            "PageCreateRequest": {
                 "type": "object",
                 "properties": {
                     "parent": {
@@ -14334,6 +14910,7 @@
                     },
                     "type": {
                         "type": "string",
+                        "minLength": 1,
                         "description": "One of the parent's creatable types, e.g. `cms.ArticlePage`."
                     },
                     "fields": {
@@ -14350,7 +14927,7 @@
                     "body": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Block"
+                            "$ref": "#/components/schemas/BlockRequest"
                         }
                     }
                 },
@@ -15273,21 +15850,9 @@
                     }
                 }
             },
-            "PatchedAssistant": {
+            "PatchedAssistantRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15298,18 +15863,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -15328,6 +15884,7 @@
                             "string",
                             "null"
                         ],
+                        "minLength": 1,
                         "description": "The adapter's key in the provider registry."
                     },
                     "model": {
@@ -15349,29 +15906,12 @@
                     },
                     "tools": {
                         "description": "Read-only registry tools it may use."
-                    },
-                    "effect": {
-                        "type": "string",
-                        "description": "Always `propose`: an assistant's results are reviewed, never written.",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedBoard": {
+            "PatchedBoardRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15382,18 +15922,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -15401,21 +15932,9 @@
                     }
                 }
             },
-            "PatchedBrief": {
+            "PatchedBriefRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15425,16 +15944,6 @@
                     },
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
                     },
                     "title": {
                         "type": "string",
@@ -15470,6 +15979,7 @@
                     },
                     "page_type": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 80
                     },
                     "parent": {
@@ -15478,47 +15988,11 @@
                             "null"
                         ]
                     },
-                    "status": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/BriefStatusEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "result": {
-                        "oneOf": [
-                            {},
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
                     "markdown": {
                         "type": "string"
                     },
                     "metadata": {
                         "description": "title, slug, description, keywords, tags (and what else it found)."
-                    },
-                    "page": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "run": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/RunRef"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "error": {
-                        "type": "string",
-                        "readOnly": true
                     },
                     "conversation": {
                         "type": [
@@ -15526,37 +16000,12 @@
                             "null"
                         ],
                         "format": "uuid"
-                    },
-                    "source_message": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "applied_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedCollection": {
+            "PatchedCollectionRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15567,18 +16016,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -15586,21 +16026,9 @@
                     }
                 }
             },
-            "PatchedConversation": {
+            "PatchedConversationRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15611,18 +16039,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "title": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 200
                     },
                     "assistant": {
@@ -15653,21 +16072,9 @@
                     }
                 }
             },
-            "PatchedFeed": {
+            "PatchedFeedRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15678,19 +16085,10 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "url": {
                         "type": "string",
                         "format": "uri",
+                        "minLength": 1,
                         "maxLength": 2000
                     },
                     "title": {
@@ -15712,49 +16110,12 @@
                         "maximum": 10080,
                         "minimum": 15,
                         "description": "How often to look."
-                    },
-                    "last_checked_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "next_check_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "error": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "items": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "description": "The sources it has brought."
                     }
                 }
             },
-            "PatchedIdea": {
+            "PatchedIdeaRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15765,16 +16126,6 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "board": {
                         "type": [
                             "string",
@@ -15784,6 +16135,7 @@
                     },
                     "title": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 255
                     },
                     "notes": {
@@ -15793,19 +16145,12 @@
                         "type": "array",
                         "items": {
                             "type": "string",
+                            "minLength": 1,
                             "maxLength": 100
                         }
                     },
                     "status": {
                         "$ref": "#/components/schemas/IdeaStatusEnum"
-                    },
-                    "origin": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/OriginEnum"
-                            }
-                        ],
-                        "readOnly": true
                     },
                     "url": {
                         "description": "Where it was captured from.",
@@ -15821,13 +16166,6 @@
                             }
                         ]
                     },
-                    "sources": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/IdeaSource"
-                        },
-                        "readOnly": true
-                    },
                     "source_ids": {
                         "type": "array",
                         "items": {
@@ -15836,145 +16174,24 @@
                             "writeOnly": true
                         },
                         "writeOnly": true
-                    },
-                    "source_message": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "brief": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/IdeaBrief"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "page": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/IdeaPage"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "votes": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "voted": {
-                        "type": "boolean",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedMessage": {
+            "PatchedMessageRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "conversation": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "seq": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "role": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/RoleEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "text": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "result": {
-                        "oneOf": [
-                            {},
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
                     "assistant": {
                         "type": [
                             "string",
                             "null"
                         ],
                         "format": "uuid"
-                    },
-                    "run": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/RunRef"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "status": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/MessageStatusEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "provider": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "model": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "usage": {
-                        "readOnly": true
-                    },
-                    "error": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedOutputSchema": {
+            "PatchedOutputSchemaRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -15985,18 +16202,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -16005,21 +16213,13 @@
                     "schema": {
                         "description": "The JSON Schema a result must match."
                     },
-                    "version": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
                     "render_template": {
                         "type": "string",
                         "description": "A Django template that turns a result into Markdown; empty renders generically."
-                    },
-                    "bundled": {
-                        "type": "boolean",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedPageUpdate": {
+            "PatchedPageUpdateRequest": {
                 "type": "object",
                 "properties": {
                     "base_revision_id": {
@@ -16043,26 +16243,14 @@
                     "body": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Block"
+                            "$ref": "#/components/schemas/BlockRequest"
                         }
                     }
                 }
             },
-            "PatchedPipeline": {
+            "PatchedPipelineRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -16073,18 +16261,9 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 120
                     },
                     "description": {
@@ -16093,36 +16272,21 @@
                     "steps": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/PipelineStep"
+                            "$ref": "#/components/schemas/PipelineStepRequest"
                         },
                         "description": "In order; replaced as a whole on update."
                     }
                 }
             },
-            "PatchedProvider": {
+            "PatchedProviderRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "slug": {
-                        "type": "string",
-                        "readOnly": true,
-                        "description": "The adapter's key in the provider registry.",
-                        "pattern": "^[-a-zA-Z0-9_]+$"
-                    },
                     "display_name": {
                         "type": "string",
                         "maxLength": 120
                     },
                     "enabled": {
                         "type": "boolean"
-                    },
-                    "is_default": {
-                        "type": "boolean",
-                        "readOnly": true
                     },
                     "base_url": {
                         "type": "string",
@@ -16159,61 +16323,19 @@
                         "type": "string",
                         "writeOnly": true,
                         "description": "Write-only; encrypted at rest. An empty string removes it (the environment is used again)."
-                    },
-                    "has_credential": {
-                        "type": "boolean",
-                        "readOnly": true
-                    },
-                    "credential_source": {
-                        "type": "string",
-                        "description": "`database`, the environment variable the adapter would read, or ''.",
-                        "readOnly": true
-                    },
-                    "capabilities": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "readOnly": true
-                    },
-                    "last_health": {
-                        "readOnly": true,
-                        "description": "The last check; only `ok` for those who do not configure providers."
-                    },
-                    "checked_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedQuote": {
+            "PatchedQuoteRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
                     "source": {
                         "type": "string",
                         "format": "uuid"
                     },
                     "text": {
-                        "type": "string"
+                        "type": "string",
+                        "minLength": 1
                     },
                     "note": {
                         "type": "string"
@@ -16222,36 +16344,12 @@
                         "type": "string",
                         "description": "Where in the source: a page, a paragraph.",
                         "maxLength": 120
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
                     }
                 }
             },
-            "PatchedSource": {
+            "PatchedSourceRequest": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
-                    },
-                    "owner": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "readOnly": true
-                    },
                     "site": {
                         "type": [
                             "integer",
@@ -16262,35 +16360,12 @@
                     "visibility": {
                         "$ref": "#/components/schemas/VisibilityEnum"
                     },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true
-                    },
-                    "kind": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/SourceKindEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
                     "collection": {
                         "type": [
                             "string",
                             "null"
                         ],
                         "format": "uuid"
-                    },
-                    "url": {
-                        "type": "string",
-                        "format": "uri",
-                        "readOnly": true
                     },
                     "title": {
                         "type": "string",
@@ -16309,31 +16384,6 @@
                         "description": "As the source dates itself.",
                         "maxLength": 40
                     },
-                    "status": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/SourceStatusEnum"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "error": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "robots": {
-                        "type": "string",
-                        "readOnly": true,
-                        "description": "What robots.txt said: allowed, disallowed, unknown."
-                    },
-                    "fetched_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time",
-                        "readOnly": true
-                    },
                     "language": {
                         "type": "string",
                         "maxLength": 16
@@ -16342,36 +16392,8 @@
                         "type": "string",
                         "description": "The extracted text."
                     },
-                    "metadata": {
-                        "readOnly": true,
-                        "description": "Content type, size, pages, file, feed entry …"
-                    },
                     "summary": {
                         "type": "string"
-                    },
-                    "entities": {
-                        "readOnly": true,
-                        "description": "[{name, kind}] the source names."
-                    },
-                    "highlights": {
-                        "readOnly": true,
-                        "description": "Passages an assistant suggests quoting."
-                    },
-                    "summary_run": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/RunRef"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "readOnly": true
-                    },
-                    "feed": {
-                        "type": "string",
-                        "format": "uuid",
-                        "readOnly": true
                     }
                 }
             },
@@ -16433,6 +16455,39 @@
                     "updated_at"
                 ]
             },
+            "PipelineRequest": {
+                "type": "object",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "steps": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PipelineStepRequest"
+                        },
+                        "description": "In order; replaced as a whole on update."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
             "PipelineStep": {
                 "type": "object",
                 "properties": {
@@ -16458,11 +16513,32 @@
                     "position"
                 ]
             },
-            "PostMessage": {
+            "PipelineStepRequest": {
+                "type": "object",
+                "properties": {
+                    "assistant": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/SourceEnum"
+                    },
+                    "source_field": {
+                        "type": "string",
+                        "description": "For source=page: the field to read.",
+                        "maxLength": 64
+                    }
+                },
+                "required": [
+                    "assistant"
+                ]
+            },
+            "PostMessageRequest": {
                 "type": "object",
                 "properties": {
                     "text": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 50000
                     },
                     "assistant": {
@@ -16480,24 +16556,7 @@
                     "text"
                 ]
             },
-            "Promote": {
-                "type": "object",
-                "properties": {
-                    "to": {
-                        "$ref": "#/components/schemas/ToEnum"
-                    },
-                    "parent": {
-                        "type": "integer"
-                    },
-                    "page_type": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "to"
-                ]
-            },
-            "PromoteIdea": {
+            "PromoteIdeaRequest": {
                 "type": "object",
                 "properties": {
                     "into": {
@@ -16522,12 +16581,29 @@
                     },
                     "generate": {
                         "type": "boolean",
-                        "default": false,
                         "description": "Write the brief now (202, with its run)."
                     }
                 },
                 "required": [
                     "into"
+                ]
+            },
+            "PromoteRequest": {
+                "type": "object",
+                "properties": {
+                    "to": {
+                        "$ref": "#/components/schemas/ToEnum"
+                    },
+                    "parent": {
+                        "type": "integer"
+                    },
+                    "page_type": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "to"
                 ]
             },
             "PromotedIdea": {
@@ -16636,11 +16712,6 @@
                         "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
                         "description": "Refuse new runs once spent this month."
                     },
-                    "credential": {
-                        "type": "string",
-                        "writeOnly": true,
-                        "description": "Write-only; encrypted at rest. An empty string removes it (the environment is used again)."
-                    },
                     "has_credential": {
                         "type": "boolean",
                         "readOnly": true
@@ -16692,6 +16763,54 @@
                     "slug",
                     "updated_at"
                 ]
+            },
+            "ProviderRequest": {
+                "type": "object",
+                "properties": {
+                    "display_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "base_url": {
+                        "type": "string",
+                        "description": "Shown to those who configure; a row with its own needs its own credential.",
+                        "maxLength": 255
+                    },
+                    "organization": {
+                        "type": "string",
+                        "description": "Shown to those who configure providers.",
+                        "maxLength": 255
+                    },
+                    "project": {
+                        "type": "string",
+                        "description": "Shown to those who configure providers.",
+                        "maxLength": 255
+                    },
+                    "default_model": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "extra": {
+                        "description": "The adapter's options (its declared keys only). Shown to those who configure."
+                    },
+                    "monthly_budget_usd": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "decimal",
+                        "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
+                        "description": "Refuse new runs once spent this month."
+                    },
+                    "credential": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "description": "Write-only; encrypted at rest. An empty string removes it (the environment is used again)."
+                    }
+                }
             },
             "Question": {
                 "type": "object",
@@ -16787,6 +16906,36 @@
                     "updated_at"
                 ]
             },
+            "QuestionRequest": {
+                "type": "object",
+                "description": "`status` and `error`, from the run that fills the row.",
+                "properties": {
+                    "site": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A site its owner edits."
+                    },
+                    "visibility": {
+                        "$ref": "#/components/schemas/VisibilityEnum"
+                    },
+                    "collection": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "text": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
             "QuestionRun": {
                 "type": "object",
                 "properties": {
@@ -16846,7 +16995,32 @@
                     "text"
                 ]
             },
-            "Rerun": {
+            "QuoteRequest": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "text": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Where in the source: a page, a paragraph.",
+                        "maxLength": 120
+                    }
+                },
+                "required": [
+                    "source",
+                    "text"
+                ]
+            },
+            "RerunRequest": {
                 "type": "object",
                 "properties": {
                     "assistant": {
@@ -16855,11 +17029,12 @@
                     }
                 }
             },
-            "ResearchBrief": {
+            "ResearchBriefRequest": {
                 "type": "object",
                 "properties": {
                     "topic": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 500
                     }
                 },
@@ -17098,11 +17273,12 @@
                     "run"
                 ]
             },
-            "RunAssistant": {
+            "RunAssistantRequest": {
                 "type": "object",
                 "properties": {
                     "prompt": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 50000
                     },
                     "page_id": {
@@ -17146,7 +17322,7 @@
                     "results"
                 ]
             },
-            "RunPipeline": {
+            "RunPipelineRequest": {
                 "type": "object",
                 "properties": {
                     "prompt": {
@@ -17184,6 +17360,23 @@
                     "status"
                 ]
             },
+            "RunRefRequest": {
+                "type": "object",
+                "description": "An agent run to follow on the existing runs API.",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "id",
+                    "status"
+                ]
+            },
             "RunTarget": {
                 "type": "object",
                 "properties": {
@@ -17205,7 +17398,7 @@
                     "type"
                 ]
             },
-            "Schedule": {
+            "ScheduleRequest": {
                 "type": "object",
                 "properties": {
                     "go_live_at": {
@@ -17248,11 +17441,35 @@
                     "schema"
                 ]
             },
-            "Search": {
+            "SchemaDocumentRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string",
+                        "default": ""
+                    },
+                    "schema": {},
+                    "render_template": {
+                        "type": "string",
+                        "default": ""
+                    }
+                },
+                "required": [
+                    "name",
+                    "schema"
+                ]
+            },
+            "SearchRequest": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
+                        "minLength": 1,
                         "maxLength": 500
                     },
                     "collection": {
@@ -17266,11 +17483,10 @@
                         "type": "integer",
                         "maximum": 10,
                         "minimum": 1,
-                        "default": 5
+                        "description": "5 when not given."
                     },
                     "provider": {
                         "type": "string",
-                        "default": "",
                         "description": "A provider's slug."
                     }
                 },
@@ -17441,7 +17657,10 @@
                         "readOnly": true
                     },
                     "feed": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "format": "uuid",
                         "readOnly": true
                     }
@@ -17464,7 +17683,7 @@
                     "url"
                 ]
             },
-            "SourceCreate": {
+            "SourceCreateRequest": {
                 "type": "object",
                 "properties": {
                     "kind": {
@@ -17478,6 +17697,7 @@
                     "url": {
                         "type": "string",
                         "format": "uri",
+                        "minLength": 1,
                         "description": "For a web page.",
                         "maxLength": 2000
                     },
@@ -17487,7 +17707,6 @@
                     },
                     "title": {
                         "type": "string",
-                        "default": "",
                         "maxLength": 500
                     },
                     "collection": {
@@ -17780,7 +17999,7 @@
                     }
                 }
             },
-            "SuggestionDecision": {
+            "SuggestionDecisionRequest": {
                 "type": "object",
                 "properties": {
                     "with": {
@@ -17829,17 +18048,16 @@
                 "type": "string",
                 "description": "* `brief` - brief\n* `draft` - draft"
             },
-            "Upload": {
+            "UploadRequest": {
                 "type": "object",
                 "properties": {
                     "file": {
                         "type": "string",
-                        "format": "uri",
+                        "format": "binary",
                         "description": "A PDF, plain text or Markdown."
                     },
                     "title": {
                         "type": "string",
-                        "default": "",
                         "maxLength": 500
                     },
                     "collection": {

@@ -123,7 +123,7 @@ class SourceViewSet(PeopleViewSet):
     @idempotent
     def create(self, request):
         body = valid(s.SourceCreateSerializer, request)
-        where = {"collection": body.get("collection"), "title": body["title"]}
+        where = {"collection": body.get("collection"), "title": body.get("title", "")}
         if body["kind"] == Source.NOTE:
             return self._out(services.add_note(request.user, body.get("text", ""), **where), status.HTTP_201_CREATED)
         if not body.get("url"):
@@ -138,7 +138,9 @@ class SourceViewSet(PeopleViewSet):
     @action(detail=False, methods=["post"], parser_classes=[MultiPartParser, FormParser])
     def upload(self, request):
         body = valid(s.UploadSerializer, request)
-        source = services.upload(request.user, body["file"], collection=body.get("collection"), title=body["title"])
+        source = services.upload(
+            request.user, body["file"], collection=body.get("collection"), title=body.get("title", "")
+        )
         return self._out(source, status.HTTP_201_CREATED)
 
     @extend_schema(
@@ -155,8 +157,8 @@ class SourceViewSet(PeopleViewSet):
             request.user,
             body["query"],
             collection=body.get("collection"),
-            max_results=body["max_results"],
-            provider=body["provider"],
+            max_results=body.get("max_results", 5),
+            provider=body.get("provider", ""),
         )
         return accepted(run=RunRefSerializer(run).data)
 

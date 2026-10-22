@@ -56,7 +56,7 @@ class IdeaSerializer(OwnedSerializer):
     tags = TagsField(required=False)
     sources = IdeaSourceSerializer(many=True, read_only=True)
     source_ids = Visible(Source, many=True, write_only=True, required=False, source="sources")
-    source_message = serializers.SlugRelatedField(slug_field="public_id", read_only=True)
+    source_message = serializers.SlugRelatedField(slug_field="public_id", read_only=True, allow_null=True)
     brief = IdeaBriefSerializer(read_only=True, allow_null=True)
     page = IdeaPageSerializer(read_only=True, allow_null=True)
     votes = serializers.SerializerMethodField()
@@ -116,18 +116,18 @@ class IdeaSerializer(OwnedSerializer):
 
 class CaptureSerializer(serializers.Serializer):
     text = serializers.CharField(max_length=20_000, help_text="The first line is the title; the rest, the notes.")
-    url = serializers.URLField(max_length=2000, required=False, allow_blank=True, default="")
+    url = serializers.URLField(max_length=2000, required=False, allow_blank=True)
     board = Visible(Board, allow_null=True, required=False, help_text="Else the inbox.")
-    tags = serializers.ListField(child=serializers.CharField(max_length=100), required=False, default=list)
+    tags = serializers.ListField(child=serializers.CharField(max_length=100), required=False)
     template = serializers.CharField(
-        required=False, allow_blank=True, default="", help_text=f"Notes from a template: {', '.join(TEMPLATES)}."
+        required=False, allow_blank=True, help_text=f"Notes from a template: {', '.join(TEMPLATES)}."
     )
 
 
 class BrainstormSerializer(serializers.Serializer):
     prompt = serializers.CharField(max_length=5000)
-    kind = serializers.ChoiceField(choices=list(KINDS), default="angles")
-    count = serializers.IntegerField(min_value=1, max_value=20, default=8)
+    kind = serializers.ChoiceField(choices=list(KINDS), required=False, help_text="angles when not given.")
+    count = serializers.IntegerField(min_value=1, max_value=20, required=False, help_text="8 when not given.")
     board = Visible(Board, allow_null=True, required=False)
     conversation = Visible(Conversation, allow_null=True, required=False, help_text="A session to continue.")
     sources = Visible(Source, many=True, required=False, help_text="Research to brainstorm from.")
@@ -147,7 +147,6 @@ class KeepSerializer(serializers.Serializer):
         child=serializers.IntegerField(min_value=0),
         required=False,
         allow_null=True,
-        default=None,
         help_text="Else all.",
     )
     board = Visible(Board, allow_null=True, required=False, help_text="Else the inbox.")
@@ -188,7 +187,7 @@ class PromoteIdeaSerializer(serializers.Serializer):
     into = serializers.ChoiceField(choices=PROMOTIONS, help_text="What the idea becomes.")
     parent = serializers.IntegerField(required=False, help_text="Where the draft goes (an article, a book).")
     assistant = Visible(Assistant, allow_null=True, required=False, help_text="Who writes the brief.")
-    generate = serializers.BooleanField(default=False, help_text="Write the brief now (202, with its run).")
+    generate = serializers.BooleanField(required=False, help_text="Write the brief now (202, with its run).")
 
 
 class PromotedIdeaSerializer(serializers.Serializer):

@@ -64,7 +64,7 @@ class SourceListSerializer(OwnedSerializer):
 
 class SourceSerializer(OwnedSerializer):
     collection = Visible(Collection, allow_null=True, required=False)
-    feed = serializers.SlugRelatedField(slug_field="public_id", read_only=True)
+    feed = serializers.SlugRelatedField(slug_field="public_id", read_only=True, allow_null=True)
     summary_run = RunRefSerializer(read_only=True, allow_null=True)
 
     class Meta:
@@ -100,21 +100,21 @@ class SourceCreateSerializer(serializers.Serializer):
     kind = serializers.ChoiceField(choices=CAPTURED, help_text="A web page to capture, or a note.")
     url = serializers.URLField(max_length=2000, required=False, help_text="For a web page.")
     text = serializers.CharField(required=False, allow_blank=True, help_text="For a note.")
-    title = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    title = serializers.CharField(max_length=500, required=False, allow_blank=True)
     collection = Visible(Collection, allow_null=True, required=False)
 
 
 class UploadSerializer(serializers.Serializer):
     file = serializers.FileField(help_text="A PDF, plain text or Markdown.")
-    title = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    title = serializers.CharField(max_length=500, required=False, allow_blank=True)
     collection = Visible(Collection, allow_null=True, required=False)
 
 
 class SearchSerializer(serializers.Serializer):
     query = serializers.CharField(max_length=500)
     collection = Visible(Collection, allow_null=True, required=False)
-    max_results = serializers.IntegerField(min_value=1, max_value=10, default=5)
-    provider = serializers.CharField(required=False, allow_blank=True, default="", help_text="A provider's slug.")
+    max_results = serializers.IntegerField(min_value=1, max_value=10, required=False, help_text="5 when not given.")
+    provider = serializers.CharField(required=False, allow_blank=True, help_text="A provider's slug.")
 
 
 class SourceRunSerializer(serializers.Serializer):

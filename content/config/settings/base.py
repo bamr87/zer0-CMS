@@ -222,6 +222,10 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/v2",
     "SERVE_URLCONF": "ops.openapi",
     "SERVE_INCLUDE_SCHEMA": False,
+    # A request body is its own component (`…Request`), without the read-only
+    # fields a response carries, so the generated client asks only for what a
+    # caller sends (G14: the studio's first create forms on owned rows).
+    "COMPONENT_SPLIT_REQUEST": True,
     # Named enums, so the generated client's types read well (api/serializers.py).
     "ENUM_NAME_OVERRIDES": {
         "PageStatusEnum": "api.serializers.PAGE_STATUSES",

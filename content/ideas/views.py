@@ -112,9 +112,9 @@ class IdeaViewSet(PeopleViewSet):
             request.user,
             body["text"],
             board=body.get("board"),
-            url=body["url"],
-            tags=body["tags"],
-            template=body["template"],
+            url=body.get("url", ""),
+            tags=body.get("tags", []),
+            template=body.get("template", ""),
         )
         return self._out(idea, status.HTTP_201_CREATED)
 
@@ -131,8 +131,8 @@ class IdeaViewSet(PeopleViewSet):
         conversation, message, reply, run = services.brainstorm(
             request.user,
             body["prompt"],
-            kind=body["kind"],
-            count=body["count"],
+            kind=body.get("kind", "angles"),
+            count=body.get("count", 8),
             board=body.get("board"),
             conversation=body.get("conversation"),
             sources=body.get("sources") or (),
@@ -157,7 +157,7 @@ class IdeaViewSet(PeopleViewSet):
     @action(detail=False, methods=["post"])
     def keep(self, request):
         body = valid(s.KeepSerializer, request)
-        kept = services.keep(body["message"], user=request.user, picks=body["picks"], board=body.get("board"))
+        kept = services.keep(body["message"], user=request.user, picks=body.get("picks"), board=body.get("board"))
         rows = self.get_queryset().filter(pk__in=[i.pk for i in kept])
         data = s.IdeaSerializer(rows, many=True, context=self.get_serializer_context()).data
         return Response({"ideas": data}, status=status.HTTP_201_CREATED)
@@ -226,7 +226,7 @@ class IdeaViewSet(PeopleViewSet):
             to=body["into"],
             parent=page_or_404(body.get("parent")),
             assistant=body.get("assistant"),
-            generate=body["generate"],
+            generate=body.get("generate", False),
         )
         context = self.get_serializer_context()
         data = {
