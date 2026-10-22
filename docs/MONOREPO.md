@@ -42,7 +42,7 @@ workspace.yml ──► bin/zer0 ──► list · info · run <task> · affecte
 
 **1. One registry — `workspace.yml`.** Every project is an entry: its path, kind and toolchain, a one-line summary, where it came from, what it depends on inside the repository, what it publishes, the root workflow that gates it, the Jekyll root of a zer0 site, and its tasks — `setup`, `check` (the fast tier), `test` (the full suite) and `build`. A command is written once, here, in the same words a contributor would type in the project's directory.
 
-**2. One command — `bin/zer0`.** It reads the registry and is stdlib-only Ruby, so it runs in a bare checkout before anything is installed ([`tools/workspace/README.md`](../tools/workspace/README.md)):
+**2. One command — `bin/zer0`.** It reads the registry and is Python with PyYAML alone (it was stdlib Ruby until PLAN P5, and keeps that tool's commands and output), so it runs in a bare checkout before any project's own dependencies are installed ([`tools/workspace/README.md`](../tools/workspace/README.md)):
 
 ```bash
 bin/zer0 list                       # every project: path, kind, what it publishes, what gates it
@@ -69,7 +69,7 @@ It also writes the affected projects and a report-only `zer0 doctor` of every si
 
 **4. Vendored copies are a checked contract.** Some files must exist twice. The Rails app is its own Docker build context, `rails/lib` loads no gem, and several projects call `tools/unwrap-prose.py` by a project-relative path. `workspace.yml` lists each copy under `vendored:` with its single source and the reason the copy exists. `bin/zer0 vendor --write` re-copies, and `bin/zer0 check` fails CI on drift. The import found a real case: the CMS's `zer0-tokens.css` was still kit `1.0.0` while the image generator had shipped `1.0.1` (`--maxw` 1180px → 1320px). It is re-vendored here.
 
-**5. The CMS manages the repository's own sites.** Every project with a `site:` root is a zer0 site, and `bin/zer0 doctor` runs the CMS's `zer0 doctor` (`rails/bin/zer0-cms`, stdlib-only) against each. Docker Compose now mounts this repository as `SITES_DIR` by default, so `docker compose up --build` shows the in-repo sites, two levels down (`/sites/sites/drsai`), with no setup. `SITES_DIR=~/github` still points it at a wider fleet. drsai's CI builds against the theme's `main` checked out beside the site (its `ZER0_THEME_LOCAL` path gem), so a theme change that breaks drsai is caught here, on drsai's side.
+**5. The CMS manages the repository's own sites.** Every project with a `site:` root is a zer0 site, and `bin/zer0 doctor` runs the CMS's `zer0 doctor` (`rails/bin/zer0-cms`, stdlib Ruby until PLAN G4 ports it to the platform; where there is no Ruby, `bin/zer0 doctor` says so) against each. Docker Compose now mounts this repository as `SITES_DIR` by default, so `docker compose up --build` shows the in-repo sites, two levels down (`/sites/sites/drsai`), with no setup. `SITES_DIR=~/github` still points it at a wider fleet. drsai's CI builds against the theme's `main` checked out beside the site (its `ZER0_THEME_LOCAL` path gem), so a theme change that breaks drsai is caught here, on drsai's side.
 
 ### Today's doctor baseline
 
