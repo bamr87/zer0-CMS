@@ -24,6 +24,7 @@ a 1,536-float column would be copied into each one. They live in
 import hashlib
 import json
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from graphene.types.generic import GenericScalar
 from grapple.models import (
@@ -290,11 +291,39 @@ class StandardPage(BasePage):
 
 
 BOOK_PROFILES = [("book", "Book"), ("abc", "ABC board book"), ("story", "Picture-book story")]
+# A book's and a chapter's lifecycle (the books package's library format, books/README.md).
+BOOK_STATUSES = ("idea", "outlining", "drafting", "revising", "complete", "archived")
+CHAPTER_STATUSES = ("stub", "outline", "draft", "revised", "final")
+
+
+def string_list(value):
+    """A list of non-empty strings: a cast, themes, a chapter's characters."""
+    if not isinstance(value, list) or not all(isinstance(v, str) and v.strip() for v in value):
+        raise ValidationError("a list of non-empty strings")
+
+
+def document_list(value):
+    """A book's other files: [{"path": "guides/act-1.md", "text": "…"}], each path relative and inside the book."""
+    paths = [d.get("path") for d in value if isinstance(d, dict)] if isinstance(value, list) else None
+    if paths is None or len(paths) != len(value) or len(set(paths)) != len(paths):
+        raise ValidationError("a list of {path, text}, each path once")
+    for doc in value:
+        path = doc["path"]
+        if not isinstance(path, str) or not isinstance(doc.get("text"), str) or set(doc) != {"path", "text"}:
+            raise ValidationError("a document is {path, text}, both strings")
+        if not path or path.startswith("/") or "\\" in path or ".." in path.split("/") or "" in path.split("/"):
+            raise ValidationError(f"{path!r} is not a relative path inside the book")
 
 
 class BookPage(BasePage):
     """A book: a manuscript with chapters (books), an ABC board book (its
-    letters are `letter` blocks in the body) or a picture-book story (drsai)."""
+    letters are `letter` blocks in the body) or a picture-book story (drsai).
+
+    A manuscript book carries what its `library/<slug>/` files hold (books/):
+    the manifest (book.yml: status, logline, genre, point of view, tense, era,
+    acts, targets, cast, themes; every other key stays in `front_matter`), the
+    outline, the character bible, the continuity ledger, a style guide, and
+    every other file — the act guides, the README — as `documents`."""
 
     subtitle = models.CharField(max_length=250, blank=True)
     author = models.CharField(max_length=200, blank=True)
@@ -302,11 +331,79 @@ class BookPage(BasePage):
     profile = models.CharField(max_length=16, choices=BOOK_PROFILES, default="book")
     audience = models.CharField(max_length=80, blank=True)
     art_style = models.CharField(max_length=80, blank=True)
+    book_status = models.CharField(
+        "status",
+        max_length=16,
+        choices=[(s, s.capitalize()) for s in BOOK_STATUSES],
+        default="idea",
+        help_text="Where the book stands, from an idea to a finished draft.",
+    )
+    logline = models.TextField(blank=True, help_text="One sentence: who wants what, and what stands in the way.")
+    genre = models.CharField(max_length=255, blank=True)
+    pov = models.CharField("point of view", max_length=255, blank=True, help_text="New chapters start with it.")
+    tense = models.CharField(max_length=80, blank=True)
+    era = models.CharField(max_length=255, blank=True, help_text="When it happens; new chapters start with it.")
+    protagonist = models.CharField(max_length=255, blank=True)
+    acts = models.PositiveSmallIntegerField(default=3, help_text="The act a chapter declares is one of these.")
+    planned_chapters = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Progress counts chapters against it when there is no word target."
+    )
+    target_word_count = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Progress counts the prose's words against it."
+    )
+    themes = models.JSONField(default=list, blank=True, validators=[string_list])
+    cast = models.JSONField(
+        default=list,
+        blank=True,
+        validators=[string_list],
+        help_text="Every name a chapter may list; empty switches the check off.",
+    )
+    outline = models.TextField(
+        blank=True, help_text="Synopsis, themes, the acts' beats, the arc and the chapter plan, in Markdown."
+    )
+    character_notes = models.TextField("character bible", blank=True, help_text="Who everyone is, in Markdown.")
+    continuity_notes = models.TextField(
+        "continuity ledger", blank=True, help_text="Settled facts and open questions; agents recall it as memory."
+    )
+    style_guide = models.TextField(blank=True, help_text="The book's voice, register and house rules, in Markdown.")
+    documents = models.JSONField(
+        default=list,
+        blank=True,
+        validators=[document_list],
+        help_text="The book's other files — act guides, README — as [{path, text}].",
+    )
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types = ["cms.ChapterPage"]
-    hashed_fields = ("subtitle", "author", "series", "profile", "audience", "art_style")
-    editor_fields = ("subtitle", "author", "series", "profile", "audience", "art_style")
+    manuscript_fields = (
+        "book_status",
+        "logline",
+        "genre",
+        "pov",
+        "tense",
+        "era",
+        "protagonist",
+        "acts",
+        "planned_chapters",
+        "target_word_count",
+        "themes",
+        "cast",
+        "outline",
+        "character_notes",
+        "continuity_notes",
+        "style_guide",
+    )
+    hashed_fields = (
+        "subtitle",
+        "author",
+        "series",
+        "profile",
+        "audience",
+        "art_style",
+        *manuscript_fields,
+        "documents",
+    )
+    editor_fields = ("subtitle", "author", "series", "profile", "audience", "art_style", *manuscript_fields)
 
     content_panels = Page.content_panels + [
         MultiFieldPanel(
@@ -332,12 +429,43 @@ class BookPage(BasePage):
 
 
 class ChapterPage(BasePage):
+    """A chapter of a book: its body is the chapter's Markdown as blocks — the
+    outline scaffolding, and the prose under "Chapter Body".
+
+    Its fields are the chapter file's front matter (number, subtitle, act,
+    status, point of view, era, characters, setting, tone, style); every other
+    key stays in `front_matter` (books/)."""
+
     number = models.PositiveIntegerField(null=True, blank=True)
+    subtitle = models.CharField(max_length=250, blank=True)
+    act = models.PositiveSmallIntegerField(null=True, blank=True, help_text="One of the book's acts.")
+    chapter_status = models.CharField(
+        "status", max_length=16, choices=[(s, s.capitalize()) for s in CHAPTER_STATUSES], default="draft"
+    )
+    pov = models.CharField("point of view", max_length=255, blank=True)
+    era = models.CharField(max_length=255, blank=True)
+    characters = models.JSONField(
+        default=list, blank=True, validators=[string_list], help_text="Names from the book's cast."
+    )
+    setting = models.JSONField(default=list, blank=True, validators=[string_list])
+    tone = models.JSONField(default=list, blank=True, validators=[string_list])
+    style = models.CharField(max_length=255, blank=True)
 
     parent_page_types = ["cms.BookPage"]
     subpage_types: list[str] = []
-    hashed_fields = ("number",)
-    editor_fields = ("number",)
+    hashed_fields = (
+        "number",
+        "subtitle",
+        "act",
+        "chapter_status",
+        "pov",
+        "era",
+        "characters",
+        "setting",
+        "tone",
+        "style",
+    )
+    editor_fields = hashed_fields
     content_panels = Page.content_panels + [
         FieldPanel("number"),
         FieldPanel("body"),
