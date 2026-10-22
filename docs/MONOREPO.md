@@ -24,7 +24,7 @@ zer0-CMS carries the whole zer0 stack in one repository: the VS Code extension a
 | `apps/parodynews/` | `bamr87/barodybroject` | A Django 5.2 + React app that generates parody news with AI, with a Jekyll sidecar (`src/pages`) and an Azure Container Apps deploy. |
 | `apps/aieo/` | `bamr87/aieo` | AI Engine Optimization: a FastAPI backend (PostgreSQL, Redis, Celery) and a React + Vite frontend that score website content against what AI engines cite and rewrite it, plus a CLI, WordPress REST snippets and a reusable content-scoring workflow. |
 
-`packages/` holds libraries and tools, `sites/` holds what gets published as a website, and `apps/` holds deployed applications; the plan's eventual layout (`clients/`, `frontends/`, PLAN §2) is milestone M2 and has not been applied. Each imported directory keeps its own `README.md`, `AGENTS.md` (with a `CLAUDE.md` pointer) and tooling, and its own commands still run from inside it.
+`packages/` holds libraries and tools, `sites/` holds what gets published as a website, and `apps/` holds deployed applications; the plan's eventual layout (`clients/`, `frontends/`, PLAN §2) is milestone M2 and has not been applied. Each imported directory keeps its own `README.md` and tooling, most keep an `AGENTS.md` (with a `CLAUDE.md` pointer), and its own commands still run from inside it.
 
 ## How one repository manages all of them
 

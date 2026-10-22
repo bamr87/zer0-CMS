@@ -218,7 +218,7 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
 
 ### Phase E: Cutover — one home ([ADR 0002](../adr/0002-one-home-cutover.md))
 
-Ordered: each step needs the one before it. A step that needs a credential, a repository setting, a DNS change or an archive stops and asks (AGENTS.md § Workflow 5); those are the owner's.
+Ordered: each step needs the one before it. A step that needs a credential, a repository setting, a DNS change or an archive stops and asks (AGENTS.md § Conventions, "Stop and ask"); those are the owner's.
 
 - [ ] **C0: Restore the imported history** — found 2026-10-19: #29 and #36 were *squash*-merged, so `main` holds each imported tree as one commit (`packages/zer0-mistakes`: 3 commits here, 770 in the original) and the rewritten histories survive only in `refs/pull/29/head`, `refs/pull/36/head` and the originals. Nothing is archived before this lands.
   - Tasks: a branch from `main` that removes the imported paths, merges each rewritten history back (`git merge --allow-unrelated-histories`, the tips taken from the PR refs so the hashes match what was reviewed), then replays every later `main` commit that touched those paths as its own commit, so the branch's tree ends equal to `main`'s.
