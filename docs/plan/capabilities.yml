@@ -83,31 +83,43 @@ platform:
   # ── Content model and authoring ─────────────────────────────────────────────
   - id: content.types
     what: Page types, fields and StreamField blocks, per-type default field values, and the exported agent block schema.
-    surfaces: {api: partial, studio: missing, mcp: partial}
+    # P4: every type and the creatable ones under a parent (api), each type's editable fields as specs the studio renders.
+    surfaces: {api: partial, studio: partial, mcp: partial}
   - id: content.list
     what: Browse and filter pages across sites — tree, lists, and a filter language (status, collection, site, kind, tag, category, author, errors).
-    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+    # P4: any status across sites, filtered by site, parent (the tree), type, status and text; tag/category/author/errors filters to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.create
     what: Create a page or a draft from a type in a site and section, or duplicate one as a draft.
-    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+    # P4: create as a draft from a type the parent allows; duplicate to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.edit
     what: A block editor with a Markdown round trip, front matter and fields, autosave, and a stale-write guard.
-    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+    # P4: blocks (TipTap with the Markdown round trip), typed fields, save as a draft with a stale-write guard (409); autosave and raw front matter to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.seo
     what: SEO and social fields (title, description, keywords, canonical, Open Graph, noindex) with insights and agent proposals for a page.
-    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+    # P4: title tag, description (with lengths shown), keywords, summary; canonical, Open Graph and noindex to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.preview
     what: Live preview of a draft in the site's own design, including the exact exported document and file name.
-    surfaces: {api: missing, studio: missing, extension: partial}
+    # P4: the latest revision rendered by the platform (preview_url); the site's own design and the exported document to come.
+    surfaces: {api: partial, studio: partial, extension: partial}
   - id: content.revisions
     what: Revisions with diff, compare and revert.
-    surfaces: {api: partial, studio: missing, extension: missing, mcp: missing}
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/api/test_pages.py::test_revisions_compare_and_revert_as_a_new_draft
+      studio: web/packages/ui/test/editor.test.tsx
   - id: content.workflow
     what: Editorial workflows with moderation states, tasks and assignments, and the governed publish path (draft → brand guard → approval → publish).
     surfaces: {api: missing, studio: missing, extension: partial}
   - id: content.publish
     what: Publish and unpublish now or on a schedule.
-    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+    surfaces: {api: done, studio: done, extension: partial, mcp: partial}
+    proof:
+      api: content/tests/api/test_pages.py::test_schedule_sets_go_live_at_and_beat_publishes_when_it_is_due
+      studio: web/packages/ui/test/editor.test.tsx
   - id: content.collaboration
     what: Comments, mentions and page locking.
     surfaces: {api: missing, studio: missing, extension: missing}
@@ -116,7 +128,8 @@ platform:
     surfaces: {api: missing, studio: missing, site: missing}
   - id: content.taxonomy
     what: Tags, categories, series, authors and entities, managed and assigned.
-    surfaces: {api: partial, studio: missing, extension: partial}
+    # P4: tags, categories and authors assigned in the editor; managing them to come.
+    surfaces: {api: partial, studio: partial, extension: partial}
   - id: content.search
     what: Full-text search with filters, semantic search, and search promotions.
     surfaces: {api: partial, studio: missing, extension: partial, mcp: partial, site: missing}
@@ -228,24 +241,31 @@ platform:
     surfaces: {api: missing, studio: missing, extension: missing}
   - id: ai.agents
     what: Tool-using agents — GitOps definitions, policies, runs with step timelines and cancel, agent tokens.
-    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+    # P4: runs and a run's live step timeline in the studio; definitions, cancel and tokens to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: ai.suggestions
     what: Suggestions with diffs — accept, reject with a reason, accept all of a run.
-    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+    surfaces: {api: done, studio: done, extension: partial, mcp: partial}
+    proof:
+      api: content/tests/api/test_review.py
+      studio: web/packages/ui/test/review.test.tsx
   - id: ai.evals
     what: Eval suites over recorded fixtures that gate an agent's policy.
     surfaces: {ops: partial}
   - id: ai.usage
     what: Tokens, cost and budgets per run, person, site and provider.
-    surfaces: {api: partial, studio: missing}
+    # P4: a run's tokens and cost on its timeline; the rollups and budgets to come.
+    surfaces: {api: partial, studio: partial}
   - id: ai.streaming
     what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource and the studio's timeline follows it live; idempotent creation to come (G8).
+    surfaces: {api: partial, studio: partial, extension: missing}
 
   # ── Sites: manage, monitor, improve ─────────────────────────────────────────
   - id: sites.registry
     what: Register and discover sites; per-site settings, domains, design and skin, budgets.
-    surfaces: {api: missing, studio: missing, extension: partial}
+    # P4: the sites a person can work in, listed (api) and switched between (studio); registering and settings are G4.
+    surfaces: {api: partial, studio: partial, extension: partial}
   - id: sites.sync
     what: Sync a site's files with the platform — the exact Jekyll reader, line-level front-matter surgery, the confined writer, write-back with a stale-write guard.
     surfaces: {api: missing, extension: partial, ops: partial}
@@ -331,7 +351,8 @@ platform:
   # ── Platform and operations ─────────────────────────────────────────────────
   - id: platform.accounts
     what: Email sign-up with verification, login by code, password reset, OIDC SSO, GitHub login, MFA (TOTP, passkeys, recovery codes), the session list.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    # P4: sign-in with a username and password over a session with CSRF (api/session.py, studio/src/auth.tsx); everything else is G3's allauth.
+    surfaces: {api: partial, studio: partial, extension: missing}
   - id: platform.tokens
     what: Personal API tokens and agent tokens, issued and revoked.
     surfaces: {api: partial, studio: missing, extension: missing}
@@ -355,7 +376,8 @@ platform:
     surfaces: {studio: missing, site: missing}
   - id: platform.install
     what: First-run setup — the install wizard, ensure-admin, demo seed, operator commands.
-    surfaces: {studio: missing, ops: missing}
+    # P4: manage.py seed_demo; the wizard and ensure-admin to come.
+    surfaces: {studio: missing, ops: partial}
   - id: platform.ops
     what: Liveness, readiness and version probes, request ids, the error envelope, JSON logs with redaction, throttles, CORS, security headers.
     surfaces: {ops: done}
@@ -375,7 +397,10 @@ platform:
 
   - id: platform.shared-ui
     what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
-    surfaces: {studio: missing, extension: missing}
+    # P4: the studio renders @zer0/ui's workspaces through the host contract (StudioProvider), and ESLint keeps routers, transports and page globals out of them; the extension's half is G10.
+    surfaces: {studio: done, extension: missing}
+    proof:
+      studio: web/studio/test/app.test.tsx
 
   # ── The extension's own (file mode) ─────────────────────────────────────────
   - id: extension.file-mode

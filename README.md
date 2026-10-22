@@ -46,7 +46,8 @@ It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front
 
 | Path | What it is |
 |---|---|
-| `content/` | The **platform** — the Django + Wagtail CMS above, the system of record for every site, the agent runtime, every API and every admin screen. [`content/README.md`](content/README.md) · [`content/ops/README.md`](content/ops/README.md) |
+| `content/` | The **platform** — the Django + Wagtail CMS above, the system of record for every site, the agent runtime and every API. [`content/README.md`](content/README.md) · [`content/ops/README.md`](content/ops/README.md) |
+| `web/` | The **studio** — the React frontend where people write, create and review content and follow agent runs, served by the platform at `/studio/`; its workspaces live in shared packages the extension's webviews will render too (ADR 0006). [`web/README.md`](web/README.md) |
 | `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*; the platform's client once a platform URL is configured (PLAN G10). This README. |
 | `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), carries a site's content to LinkedIn under a human gate (`zer0-cms linkedin`, the `zer0-linkedin.yml` workflow, `/admin/distribution`), and hosts the ABC book wizard. Being absorbed by the platform (PLAN Phase G). [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
 
