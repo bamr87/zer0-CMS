@@ -279,7 +279,7 @@ The agent guidance system is designed to be **extendable**. Use these patterns w
 1. Create `.github/instructions/<area>.instructions.md` with the front matter template above.
 2. Cover overview, structure, standards, patterns, best practices, testing, and documentation (mirror existing files such as `layouts.instructions.md`).
 3. Add the file to the **Structure** diagram and table at the top of this README.
-4. Add a row to the file-scoped instruction map in [`AGENTS.md`](../../AGENTS.md) so non-Copilot agents can find it.
+4. Run `ruby scripts/generate-reference.rb` so the generated [`docs/reference/agent-guidance.md`](../../docs/reference/agent-guidance.md) — the map non-Copilot agents read from [`AGENTS.md`](../../AGENTS.md) — lists it. The lib test tier fails until you do.
 
 ### Add a reusable prompt / agent mode
 
@@ -296,7 +296,7 @@ The agent guidance system is designed to be **extendable**. Use these patterns w
 
 2. Write the prompt as a numbered, checkable workflow (see `commit-publish.prompt.md` for the canonical pattern).
 3. To make it available as a Cursor slash-command, mirror the file into `.cursor/commands/<task>.md`.
-4. Add it to the prompts table in [`AGENTS.md`](../../AGENTS.md).
+4. Run `ruby scripts/generate-reference.rb` to list it in [`docs/reference/agent-guidance.md`](../../docs/reference/agent-guidance.md).
 
 ### Add a workflow skill
 
@@ -314,16 +314,16 @@ Skills are operational checklists an agent reads before performing a recurring a
 
 2. Write it as a numbered, checkable procedure with a "When to use" section and a
    "Reporting back to the user" section.
-3. Add it to the **Structure** diagram above and the workflow-skills table in
-   [`AGENTS.md`](../../AGENTS.md).
-4. If it governs how *all* changes are made, reference it from `CLAUDE.md` and
+3. Add it to the **Structure** diagram above, then run `ruby scripts/generate-reference.rb` to list it in
+   [`docs/reference/agent-guidance.md`](../../docs/reference/agent-guidance.md).
+4. If it governs how *all* changes are made, reference it from `AGENTS.md` and
    the relevant `*.instructions.md`.
 
 ### Onboard a new AI tool / IDE
 
 When adding support for a new agent that uses its own config file, **do not duplicate** instruction content — point the new file at `AGENTS.md` and the layered guidance under `.github/`. Examples:
 
-- Claude Code: `CLAUDE.md` → "See `AGENTS.md`."
+- Claude Code: `CLAUDE.md` → a pointer whose `@AGENTS.md` line imports it.
 - Aider: `.aider.conf.yml` with `read: [AGENTS.md, .github/copilot-instructions.md]`.
 - Continue: `.continuerc.json` referencing the same files.
 

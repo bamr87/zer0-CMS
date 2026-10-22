@@ -1,5 +1,5 @@
 ---
-lastmod: 2026-06-14T00:00:00.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 title: AGENTS.md — Cross-Tool AI Agent Entry Point
 description: How the repository-root AGENTS.md file gives AI coding agents — Copilot, Codex, Cursor, Aider, Jules, Continue, and Claude Code — a single source of truth.
 preview: /images/previews/agents-md-cross-tool-ai-agent-entry-point.png
@@ -47,13 +47,14 @@ GitHub Copilot also reads it as supplementary context. Other tools that support 
 
 ## What It Contains
 
-`AGENTS.md` is intentionally short. It covers:
+`AGENTS.md` is intentionally short and follows the bamr87 fleet's agent-file shape:
 
-1. **Project snapshot** — what the repo is, primary languages, version source of truth
-2. **Guidance map** — a table showing which file to read for which task
-3. **Essential commands** — the handful of commands every agent needs
-4. **Operating rules** — seven concise rules (minimal changes, validate before done, etc.)
-5. **Extension guide** — how to add new agent capabilities
+1. **What this repo is** — what the theme is, where it lives, and what "done" means
+2. **Stack & commands** — the exact install, run, test, lint and build commands
+3. **Layout** — the top-level directories and what lives in each
+4. **Conventions** — backlog, branches, commits, releases and the do-nots
+5. **Generated files, architecture rules and feature systems** — the invariants an agent must not break
+6. **Agent guidance** — which layer to read for which task; the full map of instruction files, prompts, skills and subagents is generated into `docs/reference/agent-guidance.md`
 
 ## Layered Guidance Model
 
@@ -77,13 +78,13 @@ AGENTS.md          ← Cross-tool entry point (always read first)
 
 ## Operating Rules for Agents
 
-All agents working in this repository must follow these rules (quoted from `AGENTS.md`):
+All agents working in this repository must follow these rules (summarised from the **Conventions** section of `AGENTS.md`):
 
 1. **Make minimal, surgical changes.** Match the existing style. Do not refactor unrelated code.
 2. **Respect the layered guidance.** File-scoped instructions override generic best practices.
 3. **Validate before declaring done.** Run relevant tests; for theme changes run the Docker Jekyll build.
 4. **Update `CHANGELOG.md`** for any user-visible change.
-5. **Bump the version only via `./scripts/bin/release`** — never in unrelated PRs.
+5. **Never bump the version by hand** — release-please's release PR does it (`./scripts/bin/release` is the manual fallback), never an unrelated PR.
 6. **Do not commit secrets.** Use environment variables.
 7. **Prefer existing libraries and patterns.**
 
@@ -92,7 +93,7 @@ All agents working in this repository must follow these rules (quoted from `AGEN
 To onboard a new AI tool without duplicating content:
 
 1. Create the tool's own config file (e.g. `CLAUDE.md`)
-2. In that file, write: *"See `AGENTS.md`."*
+2. In that file, point at `AGENTS.md` — for Claude Code, `CLAUDE.md` imports it with an `@AGENTS.md` line
 3. That's it — the layered guidance already covers everything
 
 ## Related
