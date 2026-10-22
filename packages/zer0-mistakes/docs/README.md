@@ -14,7 +14,7 @@ To add a document, start from [the feature template](templates/feature-documenta
 | Document | What it covers |
 | --- | --- |
 | [`AGENTS.md`](../AGENTS.md) | The Jekyll theme published as the `jekyll-theme-zer0` gem — layouts, includes, Sass and vendored assets — with the zer0-mistakes.com docs site that runs on it, the self-healing installer, and the release and theme-propagation tooling. |
-| [`CHANGELOG.md`](../CHANGELOG.md) | Release history, written by release-please from the merged pull request titles. |
+| [`CHANGELOG.md`](../CHANGELOG.md) | Release history: the notable changes in each version, newest first. |
 | [`SECURITY.md`](../SECURITY.md) | Supported versions and how to report a vulnerability privately. |
 | [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) | The standards of behaviour for everyone taking part in zer0-mistakes, people and AI agents alike, how they are enforced, and how to report a breach. |
 
