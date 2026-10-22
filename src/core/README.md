@@ -12,7 +12,7 @@ a stray `vscode` import anywhere in this graph becomes a *build* error rather th
 
 If a core function needs the editor, it takes what it needs as a parameter — a path, a `LogSink`, a callback — and the shell supplies it. That is what makes this layer unit-testable with plain `node`, reusable from the bundled MCP server, and runnable from a script.
 
-The second rule follows from the first: **zero runtime dependencies**. YAML subset parsing, globbing, date formatting, JSON-with-comments and Python-parity JSON output are all hand-rolled here against the Node standard library.
+The second rule: **zero *shipped* runtime dependencies, and libraries over hand-rolled code** (ADR 0006 decision 9, amending D3 and D14). YAML (`yaml`), JSON with comments (`jsonc-parser`), globs (`picomatch`) and dates (`date-fns`, `@date-fns/tz`) are the maintained libraries, bundled by esbuild into both node bundles from `devDependencies` (`esbuild.js`'s `CORE_LIBRARIES`); Python-parity JSON output stays hand-rolled, because no library writes `json.dumps` byte for byte. The engines package never enters this layer's graph.
 
 ## Layout
 

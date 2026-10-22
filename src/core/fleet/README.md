@@ -24,7 +24,7 @@ It is written by a tool, edited by hand and committed, so it is coerced field by
 
 The one refusal is the spec version. No `spec_version`, or one that is not `fleet/v1`, yields `{ manifest: null, reason }`. The console says "this is not a manifest I understand" rather than rendering an empty table somebody could dispatch against. A missing file is reported the same way, not thrown: a repository without a fleet is a normal state (decision D9, again).
 
-The wrapped `summary:` that `wtd fleet adopt` writes is why `parseYamlSubset` learned to fold plain-scalar continuation lines; the irony-works manifest is checked in verbatim as `src/test/fixtures/workspace/fleet.manifest.yml` and the suite asserts that sentence parses whole.
+The wrapped `summary:` that `wtd fleet adopt` writes is a plain scalar folded over its continuation lines, which YAML (and so `parseYaml`) reads as one sentence; the irony-works manifest is checked in verbatim as `src/test/fixtures/workspace/fleet.manifest.yml` and the suite asserts that sentence parses whole.
 
 ## The gate
 
@@ -78,7 +78,7 @@ That is not hypothetical. `wtd fleet adopt` wraps a single-quoted scalar at colu
 `claude setup-token`.'
 ```
 
-**Seven of the ten manifests committed across this fleet** (as of 2026-09-14: ai-world-view, aieo, bash-365, it-journey, zer0-CMS, zer0-image-generator and zer0-mistakes; gitorio, irony-works and lifehacker.dev parse) were invalid YAML for exactly that reason — this repository's own until it was re-wrapped by hand. The `yaml` package throws; the package's parser returns nothing and says nothing. `parseYamlSubset` recovers every lane, but it silently loses the tokens after the broken scalar — it-journey's manifest reads as 3 tokens where PyYAML reads 10, zer0-mistakes' as 3 of 5 — so a lane count is not proof a manifest was read whole. `engines.test.ts` pins both halves: parity where the package can read, and the disagreement where it cannot.
+**Seven of the ten manifests committed across this fleet** (as of 2026-09-14: ai-world-view, aieo, bash-365, it-journey, zer0-CMS, zer0-image-generator and zer0-mistakes; gitorio, irony-works and lifehacker.dev parse) were invalid YAML for exactly that reason — this repository's own until it was re-wrapped by hand. The package's parser (`yaml.parse`) throws, so it returns nothing and says nothing. This repository's reader parses with the same `yaml` package's `parseDocument`, which keeps what it could read and reports the error, so every lane is recovered — but the tokens after the broken scalar can still be lost — it-journey's manifest reads as 3 tokens where PyYAML reads 10, zer0-mistakes' as 3 of 5 — so a lane count is not proof a manifest was read whole. `engines.test.ts` pins both halves: parity where the package can read, and the disagreement where it cannot.
 
 ## What the conversion loses, out loud
 

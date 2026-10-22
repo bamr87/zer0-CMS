@@ -59,7 +59,7 @@ import type {
   SiteSchema,
   Zer0Config,
 } from '../shared/types';
-import { asList, asString, ownValue, parseYamlSubset } from './frontmatter';
+import { asList, asString, ownValue, parseYaml } from './frontmatter';
 import type { FmValue, FrontMatter } from './frontmatter';
 
 // ---------------------------------------------------------------------------
@@ -148,12 +148,12 @@ function positiveInt(value: FmValue | undefined): number | null {
  * `path_pattern` / `required` / `optional` / `layout.allowed`, plus the global
  * block.
  *
- * Never throws: the hand-rolled YAML subset already degrades a construct it
- * cannot read to "these keys, minus the ones I could not read", and a schema
- * we half-read is still better than no schema — the keys it did read are real.
+ * Never throws: the YAML reader returns the keys it could read and names the
+ * rest (`readYaml`), and a schema we half-read is still better than no schema
+ * — the keys it did read are real.
  */
 export function schemaFromFrontmatterSchemaYml(text: string): SiteSchema {
-  const data = parseYamlSubset(text);
+  const data = parseYaml(text);
   const schema = emptySiteSchema();
   schema.source = 'frontmatter_schema.yml';
   schema.path = SCHEMA_PATHS.frontmatterSchema;
@@ -209,7 +209,7 @@ export function schemaFromCmsConfig(
   schema.source = 'cms-config';
   schema.path = SCHEMA_PATHS.cmsSchema;
 
-  const config = configYml === undefined ? {} : parseYamlSubset(configYml);
+  const config = configYml === undefined ? {} : parseYaml(configYml);
   const requiredBase = uniq(asList(ownValue(config, 'required_base')));
   schema.global.required = requiredBase;
 

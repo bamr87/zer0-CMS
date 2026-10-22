@@ -112,7 +112,7 @@ An agent file, a skill, a workflow, a manifest lane, a repository variable, a to
 
 | File | What it is |
 |---|---|
-| `workflows.ts` | `.github/workflows/*.yml` → `WorkflowRecord`. Regex line scans over `parseYamlSubset`; engines-free by construction. |
+| `workflows.ts` | `.github/workflows/*.yml` → `WorkflowRecord`. Regex line scans (written before core read YAML with the `yaml` package), with `parseYaml` only to tell an unreadable file; engines-free by construction. |
 | `derive.ts` | A TypeScript port of `wtd fleet adopt`, used **only to agree**. Never overwrites a committed manifest. |
 | `joins.ts` | The six edges, and every `HarnessFinding` a broken one produces. Records in, records out — no I/O, no clock. |
 | `ledger.ts` | `_data/ai_usage/{ledger.jsonl,summary.yml}` → `LedgerSummary`, or `null`. |

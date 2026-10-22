@@ -19,7 +19,7 @@ import {
   asList,
   asString,
   detectFormat,
-  parseYamlSubset,
+  parseYaml,
   splitFrontMatter,
 } from '../core/content/frontmatter';
 import {
@@ -195,7 +195,7 @@ suite('core: pyJsonDump — byte parity with json.dumps', () => {
 
 suite('core: front matter — three dialects, one shape', () => {
   test('YAML: nested maps, block scalars, flow collections and coercion', () => {
-    const data = parseYamlSubset(
+    const data = parseYaml(
       [
         'title: Plain',
         'quoted: "with #hash and : colon"',
@@ -230,7 +230,7 @@ suite('core: front matter — three dialects, one shape', () => {
   });
 
   test('the documented non-goals stay strings rather than being guessed at', () => {
-    const data = parseYamlSubset('a: yes\nb: no\nc: 007\nd: 2026-07-08\ne: 99999999999999999999');
+    const data = parseYaml('a: yes\nb: no\nc: 007\nd: 2026-07-08\ne: 99999999999999999999');
     assert.equal(data.a, 'yes', 'YAML 1.1 booleans stay strings — a field whose value is "no"');
     assert.equal(data.b, 'no');
     assert.equal(data.c, '007', 'a zero-padded integer is an identifier, not a number');
@@ -244,7 +244,7 @@ suite('core: front matter — three dialects, one shape', () => {
 
   test('YAML: a plain scalar folds its more-indented continuation lines', () => {
     // The shape `wtd fleet adopt` writes: a `summary:` wrapped at 80 columns.
-    const data = parseYamlSubset(
+    const data = parseYaml(
       [
         'summary: A self-growing encyclopedia of irony — the germinate engine scouts candidates,',
         '  scores them at the Alanis Gate, and drafts passes into vault/nursery/ for a human to merge.',
@@ -261,8 +261,6 @@ suite('core: front matter — three dialects, one shape', () => {
         '- one that',
         '  wraps',
         '- two',
-        'stops: at a',
-        '  looks: like a key',
         'number: 42',
         '  and text',
       ].join('\n'),
@@ -281,13 +279,13 @@ suite('core: front matter — three dialects, one shape', () => {
     );
     assert.deepEqual(data.nested, { inner: 'wraps onto a deeper line', sibling: 1 });
     assert.deepEqual(data.items, ['one that wraps', 'two'], 'sequence items fold the same way');
-    assert.equal(
-      data.stops,
-      'at a',
-      'a more-indented line that reads as a key ends the scalar and is skipped, as before',
+    const keyLike = splitFrontMatter('---\nstops: at a\n  looks: like a key\n---\n').block;
+    assert.ok(
+      keyLike !== null && keyLike.warnings.length > 0,
+      'a more-indented line that reads as a key is a YAML error, and the block says so',
     );
     assert.equal(data.number, '42 and text', 'a value that wraps is prose, never coerced');
-    assert.equal(parseYamlSubset('n: 42\n').n, 42, 'a single-line value still coerces');
+    assert.equal(parseYaml('n: 42\n').n, 42, 'a single-line value still coerces');
   });
 
   test('TOML front matter parses from the fixture', () => {
@@ -343,12 +341,12 @@ suite('core: front matter — three dialects, one shape', () => {
       nothing: null,
     };
     const emitted = serializeFrontMatter(data, opts);
-    assert.deepEqual(parseYamlSubset(emitted), data);
+    assert.deepEqual(parseYaml(emitted), data);
     assert.ok(
       emitted.includes('quoted: "no"'),
       'a string a reader would coerce is quoted on emit, so Jekyll agrees with us',
     );
-    assert.equal(parseYamlSubset(serializeFrontMatter(parseYamlSubset(emitted), opts)).quoted, 'no');
+    assert.equal(parseYaml(serializeFrontMatter(parseYaml(emitted), opts)).quoted, 'no');
   });
 });
 
@@ -381,7 +379,7 @@ suite('core: front matter is data, never a prototype', () => {
     assert.ok(nested !== null);
     assert.equal(polluted(), undefined);
 
-    const yaml = parseYamlSubset('__proto__:\n  publishAllow: true\n');
+    const yaml = parseYaml('__proto__:\n  publishAllow: true\n');
     assert.equal(polluted(), undefined);
     assert.deepEqual(yaml.__proto__, { publishAllow: true });
 
@@ -536,13 +534,13 @@ suite('core: line surgery preserves what it did not touch (D7)', () => {
     assert.ok(next !== null);
     assert.ok(next.startsWith(blockRaw), 'every pre-existing byte is carried through unchanged');
     assert.equal(next.slice(blockRaw.length), '\nseo:\n  title: X');
-    assert.deepEqual(parseYamlSubset(next).seo, { title: 'X' });
+    assert.deepEqual(parseYaml(next).seo, { title: 'X' });
 
     // With the parent present the same change is placed inside it.
     const withParent = 'title: T\nseo:\n  noindex: false\n';
     const inside = updateFrontMatterKeys(withParent, [{ key: 'seo.title', value: 'X' }], opts);
     assert.ok(inside !== null);
-    assert.deepEqual(parseYamlSubset(inside).seo, { noindex: false, title: 'X' });
+    assert.deepEqual(parseYaml(inside).seo, { noindex: false, title: 'X' });
 
     // A parent holding a scalar is the one shape no writer can place a child
     // in. That is the remaining `null`, and `writeArticle` turns it into a
@@ -559,11 +557,11 @@ suite('core: line surgery preserves what it did not touch (D7)', () => {
     // `{draft: false}`. Splicing out only the last range resurrected the
     // earlier one: clearing the field returned a published page to draft.
     const raw = 'draft: true\ntitle: x\ndraft: false';
-    assert.equal(parseYamlSubset(raw).draft, false);
+    assert.equal(parseYaml(raw).draft, false);
 
     const next = updateFrontMatterKeys(raw, [{ key: 'draft', value: undefined }], opts);
     assert.equal(next, 'title: x');
-    assert.equal('draft' in parseYamlSubset(next ?? ''), false, 'the field is cleared, not flipped');
+    assert.equal('draft' in parseYaml(next ?? ''), false, 'the field is cleared, not flipped');
 
     // Setting is unaffected: it rewrites the range the parser reads.
     assert.equal(
@@ -624,10 +622,11 @@ suite('core: writeArticle never rebuilds a YAML block from the parse', () => {
   const scratch = (): string => fs.mkdtempSync(path.join(os.tmpdir(), 'zer0-cms-article-'));
 
   /**
-   * The exact shape from the audit: an anchored mapping (which the parser reads
-   * as the literal string `"&series"`, dropping its two children), a comment,
-   * and a plain scalar wrapped onto a second line (which the parser truncates).
-   * All three survive on disk only because surgery never re-emits them.
+   * The exact shape from the audit: an anchored mapping, a comment, and a plain
+   * scalar wrapped onto a second line. The parser reads all of it, and all
+   * three survive on disk byte for byte only because surgery never re-emits
+   * them — a block rebuilt from the parse would lose the comment and the
+   * anchor and unwrap the line.
    */
   const LOSSY =
     '---\n' +
@@ -641,15 +640,16 @@ suite('core: writeArticle never rebuilds a YAML block from the parse', () => {
     '---\n' +
     '\nBody\n';
 
-  test('editing a nested key in a file full of unreadable YAML keeps every byte of it', async () => {
+  test('editing a nested key keeps an anchor, a comment and a wrapped line byte for byte', async () => {
     const dir = scratch();
     try {
       const file = path.join(dir, 'post.md');
       fs.writeFileSync(file, LOSSY, 'utf8');
 
       const article = await readArticle(file);
-      assert.equal(article.data.defaults, '&series', 'the parser really cannot read this');
-      assert.equal(article.data.layout, undefined);
+      assert.deepEqual(article.data.defaults, { layout: 'post', author: 'Amr' }, 'the anchored mapping reads as YAML reads it');
+      assert.equal(article.data.description, 'a long description that the author wrapped onto a second line');
+      assert.equal(article.data.layout, undefined, 'an anchor names a mapping; it merges nothing by itself');
 
       // What the panel sends when someone types an SEO title.
       await writeArticle(article, setFieldValue(article.data, ['seo', 'title'], 'X'), fixtureConfig());
@@ -1116,7 +1116,7 @@ suite('core: the page index', () => {
 });
 
 suite('core: SEO metrics', () => {
-  const article = (): { data: ReturnType<typeof parseYamlSubset>; body: string } => {
+  const article = (): { data: ReturnType<typeof parseYaml>; body: string } => {
     const raw = fixture('pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md');
     const { block, body } = splitFrontMatter(raw);
     assert.ok(block !== null);
@@ -1338,7 +1338,7 @@ suite('core: the execution gate (D13)', () => {
   });
 });
 
-suite("core: the parser's warnings channel — what it had to guess at (WP2.3)", () => {
+suite("core: the parser's warnings channel — what YAML could not read (WP2.3, ADR 0006)", () => {
   /** The block for a body, with the fences added. Never throws, by contract. */
   function block(body: string, fence = '---'): { warnings: string[]; data: Record<string, unknown> } {
     const { block: parsed } = splitFrontMatter(`${fence}\n${body}\n${fence}\nbody\n`);
@@ -1363,49 +1363,49 @@ suite("core: the parser's warnings channel — what it had to guess at (WP2.3)",
     );
     assert.deepEqual(clean.warnings, [], `an ampersand in prose is an ampersand: ${clean.warnings.join(' | ')}`);
     assert.equal(clean.data.title, 'Hello');
+    assert.equal(clean.data.folded, 'prose with & and * and [an unclosed bracket and a second line\n');
   });
 
-  test('anchors and aliases are named, each on its own line', () => {
-    const anchored = block(['defaults: &series', '  layout: post', 'title: x'].join('\n'));
-    assert.equal(anchored.warnings.length, 1);
-    assert.match(anchored.warnings[0] ?? '', /^line 1: a YAML anchor \(`&series`\)/);
-    assert.equal(anchored.data.defaults, '&series', 'and the value really is the literal text');
-
-    const aliased = block(['title: x', 'meta: *series'].join('\n'));
-    assert.equal(aliased.warnings.length, 1);
-    assert.match(aliased.warnings[0] ?? '', /^line 2: a YAML alias \(`\*series`\)/);
-
-    // `*emphasis*` is markdown, not an alias, and must not be reported as one.
+  test('anchors, aliases, merge keys and tags are read as YAML reads them', () => {
+    const read = block(
+      [
+        'defaults: &series',
+        '  layout: post',
+        'meta: *series',
+        'page:',
+        '  <<: *series',
+        '  title: x',
+        'count: !!str 5',
+        'tags: [a,',
+        '  b]',
+        'title: "caf\\u00e9"',
+      ].join('\n'),
+    );
+    assert.deepEqual(read.warnings, []);
+    assert.deepEqual(read.data.meta, { layout: 'post' });
+    assert.deepEqual(read.data.page, { layout: 'post', title: 'x' });
+    assert.equal(read.data.count, '5');
+    assert.deepEqual(read.data.tags, ['a', 'b'], 'a flow collection may close on a later line');
+    assert.equal(read.data.title, 'café', 'every escape is decoded');
+    // `*emphasis*` is markdown inside a plain scalar, not an alias.
     assert.deepEqual(block('title: a *bold* claim about 5 > 3').warnings, []);
   });
 
-  test('merge keys and tags are named', () => {
-    const merged = block(['title: x', '<<: *defaults'].join('\n'));
-    assert.equal(merged.warnings.length, 1, 'the merge subsumes the alias on the same line');
-    assert.match(merged.warnings[0] ?? '', /^line 2: a YAML merge key \(`<<`\)/);
+  test('what YAML cannot read is named on its line, and the rest of the block is still read', () => {
+    const dangling = block(['title: x', 'layout: *base', '<<: *defaults'].join('\n'));
+    assert.equal(dangling.warnings.length, 2);
+    assert.match(dangling.warnings[0] ?? '', /^line 2: the alias \*base names no anchor/);
+    assert.match(dangling.warnings[1] ?? '', /^line 3: the alias \*defaults names no anchor, so nothing is merged/);
+    assert.deepEqual(dangling.data, { title: 'x', layout: null }, 'the value is unknown, never guessed, and the rest is read');
 
-    const tagged = block(['count: !!str 5', 'thing: !Custom {a: 1}'].join('\n'));
-    assert.equal(tagged.warnings.length, 2);
-    assert.match(tagged.warnings[0] ?? '', /^line 1: a YAML tag \(`!!str`\)/);
-    assert.match(tagged.warnings[1] ?? '', /^line 2: a YAML tag \(`!Custom`\)/);
-  });
+    const unclosed = block(['date: 2026-01-01', 'title: "one', 'slug: s'].join('\n'));
+    assert.ok(unclosed.warnings.length > 0);
+    assert.match(unclosed.warnings[0] ?? '', /^line \d+: .*quote/i);
+    assert.equal(unclosed.data.date, '2026-01-01', 'a date stays a string');
 
-  test('a value truncated to its first line says so — quoted or flow', () => {
-    const quoted = block(['title: "one', 'date: 2026-01-01'].join('\n'));
-    assert.equal(quoted.warnings.length, 1);
-    assert.match(quoted.warnings[0] ?? '', /^line 1: a quoted scalar that never closes inside its value/);
-    assert.equal(quoted.data.title, '"one', 'which is exactly what the caller could not otherwise tell');
-    assert.equal(quoted.data.date, '2026-01-01', 'and the next key is still read');
-
-    // A continuation not indented past its key is not vouched for, even where
-    // PyYAML would be lenient: the value is not guessed, and the scan says so.
-    const shallow = block(['parent:', '  title: "one', ' two"'].join('\n'));
-    assert.equal(shallow.warnings.length, 1);
-    assert.match(shallow.warnings[0] ?? '', /^line 2: a quoted scalar that never closes inside its value/);
-
-    const flow = block(['tags: [a,', '  b]'].join('\n'));
-    assert.equal(flow.warnings.length, 1);
-    assert.match(flow.warnings[0] ?? '', /^line 1: a flow collection that closes on a later line/);
+    const tagged = block('thing: !Custom {a: 1}');
+    assert.equal(tagged.warnings.length, 1);
+    assert.match(tagged.warnings[0] ?? '', /^line 1: .*!Custom/);
   });
 
   test('a quoted scalar wrapped onto later lines reads whole, the way PyYAML reads it', () => {
@@ -1446,20 +1446,13 @@ suite("core: the parser's warnings channel — what it had to guess at (WP2.3)",
     assert.deepEqual(item.warnings, []);
     assert.deepEqual(item.data.tags, ['one two', 'three'], 'a sequence item wraps the same way');
 
-    // Read whole is not the same as fully decoded: an escape this parser does
-    // not decode is still named, on the line the scalar opens.
+    // Read whole, and decoded: every escape YAML defines, after the fold.
     const escaped = block(['t: "caf\\u00e9', '  x"'].join('\n'));
-    assert.equal(escaped.warnings.length, 1);
-    assert.match(escaped.warnings[0] ?? '', /^line 1: a `\\u` escape is not decoded/);
-    assert.equal(escaped.data.t, 'caf\\u00e9 x');
+    assert.deepEqual(escaped.warnings, []);
+    assert.equal(escaped.data.t, 'café x');
   });
 
-  test('an undecoded escape, and the two TOML constructs', () => {
-    const escaped = block('title: "caf\\u00e9"');
-    assert.equal(escaped.warnings.length, 1);
-    assert.match(escaped.warnings[0] ?? '', /^line 1: a `\\u` escape is not decoded/);
-    assert.deepEqual(block('title: "a \\n b \\" c"').warnings, [], 'the eight escapes we do decode are silent');
-
+  test('the two TOML constructs its reader does not support are named', () => {
     const toml = block(
       ['title = "x"', "note = '''", 'over two lines', "'''", '[[items]]', 'name = "a"'].join('\n'),
       '+++',

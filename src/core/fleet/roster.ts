@@ -23,7 +23,7 @@
  * throws, for the same reason `.cms/` absence is a state rather than an error.
  */
 
-import { parseYamlSubset } from '../content/frontmatter';
+import { parseYaml } from '../content/frontmatter';
 import type { FleetRosterEntry } from '../shared/types';
 import { FLEET_MANIFEST_FILE } from './manifest';
 
@@ -57,7 +57,7 @@ export function rosterSlugOf(raw: string): string | undefined {
  * `bamr87/bamr87` `_data/projects.yml` — the fleet's project registry, and the
  * join key every dash surface already uses.
  *
- * The file is a document-level YAML **sequence**, which `parseYamlSubset` will
+ * The file is a document-level YAML **sequence**, which `parseYaml` will
  * not read (front matter is a mapping, so it refuses a top-level list on
  * purpose). Indenting every line by two and giving it a synthetic key turns it
  * into a mapping whose one value is that sequence, without touching a byte of
@@ -80,7 +80,7 @@ export function parseProjectsRegistry(text: string): FleetRosterEntry[] {
     .split('\n')
     .map((line) => (line.length === 0 ? line : `  ${line}`))
     .join('\n');
-  const parsed = parseYamlSubset(`projects:\n${indented}`).projects;
+  const parsed = parseYaml(`projects:\n${indented}`).projects;
   if (!Array.isArray(parsed)) {
     return [];
   }

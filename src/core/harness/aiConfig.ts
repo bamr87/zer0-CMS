@@ -19,7 +19,7 @@
  * Auth is never in this file, in any repository, and nothing here looks for it.
  */
 
-import { asString, parseYamlSubset, type FmValue } from '../content/frontmatter';
+import { asString, parseYaml, type FmValue } from '../content/frontmatter';
 import type { AiConfig } from '../shared/types';
 import type { HarnessIo } from './agents';
 
@@ -46,7 +46,7 @@ function scalar(value: FmValue | undefined): string | null {
  * the same tristate the fleet manifest parser keeps, and for the same reason.
  */
 export function parseAiConfig(filePath: string, text: string): AiConfig {
-  const data = parseYamlSubset(text);
+  const data = parseYaml(text);
   const maxTokensRaw = scalar(data['max_tokens']);
   const maxTokens = maxTokensRaw === null ? null : Number.parseInt(maxTokensRaw, 10);
   const extra: Record<string, string> = {};

@@ -1,9 +1,9 @@
 ---
 title: "A quoted title whose closing quote never arrives
-description: The value the parser keeps is the first line, quote and all.
+description: The quote runs on to the end of the block, which YAML cannot read.
 date: 2026-02-03
 slug: multiline-quote
 layout: post
 ---
 
-Truncated to the first line.
+Not vouched for: the channel names the missing quote.

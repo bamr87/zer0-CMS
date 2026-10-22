@@ -212,7 +212,7 @@ suite('engines: the seam holds', () => {
     assert.match(parsed.reason ?? '', /is not fleet\/v1/);
   });
 
-  test('dist/mcp-server.js contains neither the package nor yaml', function () {
+  test('dist/mcp-server.js carries the libraries core reads with, and never the engines package', function () {
     if (!fs.existsSync(META)) {
       // The fast loop (`tsc -p . --outDir out` + mocha) never runs esbuild, and
       // a bundle assertion that fails for want of a bundle teaches nobody
@@ -229,13 +229,25 @@ suite('engines: the seam holds', () => {
     assert.ok(mcp !== undefined, 'out/meta.json has no dist/mcp-server.js output');
     const inputs = Object.keys(meta.outputs[mcp]?.inputs ?? {});
 
-    const leaked = inputs.filter((input) => /fleet-engines|node_modules\/yaml/.test(input));
+    // ADR 0006 decision 9 (amending D14): core reads YAML, JSON with comments,
+    // globs and dates with maintained libraries, and core runs in the MCP
+    // server, so those come along — esbuild.js's CORE_LIBRARIES. Nothing else
+    // may: never the engines package, never vscode, no package by accident.
+    const packageOf = (input: string): string | undefined => {
+      const match = /node_modules\/((?:@[^/]+\/)?[^/]+)\//.exec(input);
+      return match?.[1];
+    };
+    const packages = new Set(inputs.map(packageOf).filter((name): name is string => name !== undefined));
+    const allowed = new Set(['yaml', 'jsonc-parser', 'picomatch', 'date-fns', '@date-fns/tz']);
+    const leaked = [...packages].filter((name) => !allowed.has(name));
     assert.deepEqual(
       leaked,
       [],
-      'dist/mcp-server.js must bundle no third-party package (decision D14). ' +
-        'Something under src/mcp reached core/fleet/engines.ts, directly or through the barrel.',
+      'dist/mcp-server.js may bundle only the libraries core reads with (esbuild.js CORE_LIBRARIES). ' +
+        'Something under src/mcp reached another package — core/fleet/engines.ts, directly or through the barrel?',
     );
+    assert.ok(!inputs.some((input) => /fleet-engines/.test(input)), 'the engines package reached the MCP bundle');
+    assert.ok(packages.has('yaml'), 'expected core to read YAML with the yaml package in the MCP bundle too');
 
     // And prove the assertion is not vacuous: the barrel really does pull the
     // type-only adapters into the MCP graph, so "no package files" is a result
