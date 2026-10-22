@@ -159,13 +159,15 @@ def test_output_schemas_are_validated_edited_exported_imported_and_bundled(api, 
     )
     assert imported.json()["schema"] == STORY and imported.json()["render_template"] == "# {{ headline }}"
     listed = api(alice).get(f"{BASE}/output-schemas/", {"bundled": "true"}).json()["results"]
-    assert sorted(s["name"] for s in listed) == ["Content detail", "News article", "Parody news article"]
+    # this layer's three, and whatever other apps bundle (books/ seeds its own)
+    assert {"Content detail", "News article", "Parody news article"} <= {s["name"] for s in listed}
     bundled = listed[0]["id"]
     assert api(alice).patch(f"{BASE}/output-schemas/{bundled}/", {"name": "mine now"}, format="json").status_code == 403
     assert api(alice).post(f"{BASE}/output-schemas/import-bundled/").status_code == 403
+    seeded = OutputSchema.objects.filter(bundled=True).count()
     imported = api(staff).post(f"{BASE}/output-schemas/import-bundled/").json()
     assert len(imported["schemas"]) == 3 and len(imported["assistants"]) == 1
-    assert OutputSchema.objects.filter(bundled=True).count() == 3
+    assert OutputSchema.objects.filter(bundled=True).count() == seeded
 
 
 # ── assistants: visibility, runs, idempotency ──────────────────────────────

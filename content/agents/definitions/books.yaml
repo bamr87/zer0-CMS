@@ -1,0 +1,87 @@
+# The book assistant: bookshelf's AI tasks on the platform (books/, PLAN G9).
+# A person asks for a task on a chapter or a book in the studio's Books area; the
+# run assembles the book's own material (books/context.py), asks the task's
+# assistant through the AI layer's provider registry, and — for draft, continue
+# and revise — proposes the result as suggestions on the chapter, which a person
+# accepts or rejects. The continuity check, the critique and the outline are the
+# run's output. The model is given no tools: the book arrives in the request.
+slug: books
+name: Book assistant
+role: author
+description: Drafts, continues and revises chapters, checks continuity, critiques and outlines — from the book's own outline, notes, act guide and neighbouring chapters — as suggestions a person reviews.
+handler: books.handlers.run
+policy: suggest
+max_steps: 2
+budget_usd: "2.00"
+tools:
+  - content.get_page
+  - content.propose_edit
+  - memory.recall
+  - brand.rules
+evals:
+  - name: draft-a-chapter
+    input:
+      page: &book
+        type: BookPage
+        title: The Lighthouse Keeper
+        fields:
+          book_status: drafting
+          logline: A keeper who believes the light runs itself learns that someone has tended it every night for forty years.
+          pov: Third person limited
+          tense: Past
+          era: 1950s
+          protagonist: Mara Quill
+          planned_chapters: 2
+          cast: [Mara Quill, Tobias Fenn]
+          outline: "# The Lighthouse Keeper\n\n## Chapter Plan\n\n| # | Act | Title | Beat |\n| --- | --- | --- | --- |\n| 1 | 1 | The Logbook | Mara finds the logbook. |\n| 2 | 1 | The Storm | The light fails for the first time. |\n"
+          continuity_notes: "# Continuity ledger\n\n- The lighthouse stands on Gannet Rock.\n- Tobias Fenn kept the light before Mara.\n"
+        children:
+          - type: ChapterPage
+            title: The Logbook
+            slug: ch01
+            fields: {number: 1, act: 1, chapter_status: stub, pov: Third person limited, era: 1950s, characters: [Mara Quill]}
+            body:
+              - {type: heading, value: {level: "2", text: Outline and Contextual Alignment}}
+              - {type: markdown, value: "- Mara finds the logbook and learns the light was never automated."}
+              - {type: heading, value: {level: "2", text: Chapter Body}}
+              - {type: markdown, value: "_The Logbook is not written yet._\n\n---"}
+              - {type: heading, value: {level: "2", text: Links and References}}
+              - {type: markdown, value: "- [Next Chapter: The Storm](ch02.md)"}
+          - type: ChapterPage
+            title: The Storm
+            slug: ch02
+            fields: {number: 2, act: 1, chapter_status: draft, pov: Third person limited, era: 1950s, characters: [Mara Quill, Tobias Fenn]}
+            body:
+              - {type: heading, value: {level: "2", text: Chapter Body}}
+              - {type: markdown, value: "The storm came in off Gannet Rock at dusk, and the light went dark at nine."}
+      input: {task: draft, chapter: 1}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: suggestions, ops: [replace], min: 1, max: 1}
+      - {check: brand_clean}
+      - {check: max_cost_usd, max: "0.50"}
+  - name: continuity-check
+    input:
+      page:
+        <<: *book
+        children:
+          - type: ChapterPage
+            title: The Storm
+            slug: ch02
+            fields: {number: 1, act: 1, chapter_status: draft, pov: Third person limited, era: 1950s, characters: [Mara Quill]}
+            body:
+              - {type: heading, value: {level: "2", text: Chapter Body}}
+              - {type: markdown, value: "The storm came in off Puffin Rock at dusk, and the light went dark at nine."}
+      input: {task: check, chapter: 1}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: output, path: summary, equals: "One contradiction: the chapter moves the lighthouse to Puffin Rock."}
+      - {check: max_cost_usd, max: "0.50"}
+  - name: outline-the-book
+    input:
+      page: *book
+      input: {task: outline}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: output, path: title, equals: The Lighthouse Keeper}
+      - {check: max_cost_usd, max: "0.50"}

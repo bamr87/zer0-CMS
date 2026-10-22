@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "437d540710c2b267",
+  "response": {
+    "text": "Mara Quill found the logbook on her third night on Gannet Rock, wedged behind the oil tins where no inventory had ever reached.\n\nThe cover was salt-stiff and the spine cracked when she opened it. Every page held the same column of entries in the same careful hand: the hour the light was lit, the hour it was trimmed, the hour it was put out at dawn. The last entry was dated the night before she arrived.\n\nShe read the name at the foot of the first page twice. Tobias Fenn. The company had told her the light ran itself now, that the keeper's cottage was hers because nobody needed it, that the lamp turned on a clockwork the size of a church bell and asked for nothing.\n\nShe climbed the stair with the logbook under her arm and stood beside the lamp until the dark came down, and the lamp did not light itself. At nine she struck the match.",
+    "tool_calls": [],
+    "tokens_in": 1840,
+    "tokens_out": 212,
+    "cost_usd": "0.0410",
+    "model": "claude-opus-5-5"
+  }
+}

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "cms",
     "agents",
     "ai",
+    "books",
     "suggestions",
     "graph",
     "workflow",
@@ -227,6 +228,8 @@ SPECTACULAR_SETTINGS = {
         "FieldGroupEnum": "api.serializers.GROUPS",
         "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
+        "IssueLevelEnum": "books.serializers.ISSUE_LEVELS",
+        "BookTaskEnum": "books.serializers.TASK_CHOICES",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -297,6 +300,13 @@ AI_DEFAULT_PROVIDER = env("AI_DEFAULT_PROVIDER", default="claude_code")
 # Fernet keys for provider credentials, the newest first; none derives one from
 # SECRET_KEY (ai/crypto.py). Rotate with `manage.py rotate_ai_credentials`.
 AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
+
+# ── Books (books/README.md) ─────────────────────────────────────────────────
+# The library the books' generated `library/<slug>/` files live in (import_books
+# reads it, export_books writes it) — packages/books/library/ until PLAN G11
+# decides its permanent home — and the site key of the site root they live under.
+BOOKS_LIBRARY_DIR = Path(env("BOOKS_LIBRARY_DIR", default=str(REPO_ROOT / "packages" / "books" / "library")))
+BOOKS_SITE_KEY = env("BOOKS_SITE_KEY", default="library")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)

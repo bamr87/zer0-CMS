@@ -176,8 +176,9 @@ def _make_page(parent, page_spec: dict):
 
 def build_fixtures(spec: dict):
     """Create what an eval case runs against: the target page (a draft, as a
-    page in moderation would be) and any `extra_pages` (published, so search
-    and the graph can find them). Returns (target, extras)."""
+    page in moderation would be) with its `children` (a book's chapters) and
+    any `extra_pages` (published, so search and the graph can find them).
+    Returns (target, extras)."""
     from wagtail.models import Page
 
     from cms.services import publish
@@ -192,6 +193,8 @@ def build_fixtures(spec: dict):
     if spec.get("page"):
         target = _make_page(root, spec["page"])
         target.save_revision()
+        for child in spec["page"].get("children", []):  # a book's chapters, say
+            _make_page(target, child).save_revision()
     return target, extras
 
 
