@@ -10,8 +10,8 @@ Eight documents and two directories live here, and they answer different questio
 | [`ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
 | [`CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
 | [`CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, all 44 `zer0Cms.*` settings, the placeholder tokens, and which layer a given decision belongs in. |
-| [`adr/`](adr/README.md) | Architecture decision records: [ADR 0001](adr/0001-target-architecture.md) — one agent-native headless CMS, with a Django/Wagtail content plane, a Rails experience plane, and the extension and Jekyll sites as clients and frontends — and the interim calls on the plan's open decisions. |
-| [`plan/`](plan/PLAN.md) | The build plan (milestones M0–M20, with what is done and what is blocked) and the design note it implements, [`agent-native-design.md`](plan/agent-native-design.md). |
+| [`adr/`](adr/README.md) | Architecture decision records, 0001–0006. **[ADR 0006](adr/0006-one-python-platform.md) is the current target** — one Python platform with a React frontend, every merged repository absorbed, no Ruby; the earlier records say what it amends. |
+| [`plan/`](plan/PLAN.md) | The target ([`TARGET.md`](plan/TARGET.md)), the capability ledger ([`capabilities.yml`](plan/capabilities.yml), gated by `tools/check_absorption.py`), the build plan with its order of work ([`PLAN.md`](plan/PLAN.md) § 3), and the agent-native design note ([`agent-native-design.md`](plan/agent-native-design.md)). |
 | [`DISTRIBUTION.md`](DISTRIBUTION.md) | The governed LinkedIn lane: queue, guard, approval, ledger, the reusable workflow. |
 | [`RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 

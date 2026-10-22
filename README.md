@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-An agent-native, headless CMS for zer0-themed markdown sites: one platform (Django + Wagtail), a VS Code extension to edit in, Jekyll sites as the frontends.<br> Edit front matter as real controls, let agents propose changes you accept as revisions, browse every site in one admin, and publish through a gate a human has to walk through.
+An agent-native CMS for markdown sites: one Python platform (Django, with Wagtail as a headless library), a React studio and site renderer, and a VS Code extension with the studio's capabilities.<br> Edit front matter as real controls, let agents propose changes you accept as revisions, browse every site in one admin, and publish through a gate a human has to walk through.
 </p>
 
 <p align="center">
@@ -13,6 +13,10 @@ An agent-native, headless CMS for zer0-themed markdown sites: one platform (Djan
 </p>
 
 ---
+
+## Where this is going
+
+zer0-CMS is being rebuilt into one Python platform with a React frontend ([ADR 0006](docs/adr/0006-one-python-platform.md)): a complete, modern CMS on established libraries; an AI content layer (provider adapters, assistants, pipelines, output schemas, briefs, conversations) that helps create and develop content; a loop that manages, monitors and improves the sites it serves, with AIEO's citability scoring in it; the VS Code extension at parity with the studio; and every repository merged here — parodynews (barodybroject), aieo, books, the image generator, the Rails fleet CMS and the nine sites — absorbed with its content and capabilities, with no Ruby left. The target is [`docs/plan/TARGET.md`](docs/plan/TARGET.md), the order of work [`docs/plan/PLAN.md`](docs/plan/PLAN.md) § 3, and the per-capability progress [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) (`python3 tools/check_absorption.py --report`). What follows describes the code as it runs today.
 
 ## One platform
 
