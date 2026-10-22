@@ -1,0 +1,21 @@
+{
+  "name": "@zer0/api",
+  "private": true,
+  "version": "0.0.0",
+  "description": "The platform's REST API for the studio and the extension: types generated from schemas/openapi/openapi.json, and a same-origin session client.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "gen": "node scripts/gen.mjs",
+    "check": "node scripts/gen.mjs --check"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0"
+  }
+}

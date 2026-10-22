@@ -1,0 +1,52 @@
+/*
+ * @zer0/tokens — the zer0 design tokens as CSS custom properties.
+ *
+ * The values are the zer0 UI tokens kit's (zer0-tokens.css 1.0.1, the image
+ * generator's panel), copied here as values rather than imported: from now on
+ * this file owns them. Each colour is `light-dark(<light>, <dark>)`, so one
+ * declaration serves both schemes; the scheme is Mantine's
+ * `data-mantine-color-scheme` on <html>, or the system's preference when
+ * nothing sets it. A host may redefine any token — the extension's webviews
+ * map VS Code's theme onto them (PLAN G10) — and every component follows,
+ * because the Mantine theme (theme.ts) reads these and holds no colour of its own.
+ */
+:root {
+  color-scheme: light dark;
+
+  --zer0-bg: light-dark(#f6f8fa, #0d1117);
+  --zer0-bg-raised: light-dark(#ffffff, #161b22);
+  --zer0-bg-inset: light-dark(#eef1f4, #0a0e14);
+  --zer0-border: light-dark(#d5dbe1, #26303d);
+  --zer0-border-strong: light-dark(#c0c8d0, #3a4757);
+  --zer0-text: light-dark(#1c2128, #e6edf3);
+  --zer0-text-dim: light-dark(#57606a, #9aa7b4);
+  --zer0-text-faint: light-dark(#8b949e, #6b7684);
+
+  --zer0-accent: light-dark(#0969da, #58a6ff);
+  /* Added here, not in the kit: the kit's dark accent is a text colour, and
+     white on it is too faint for a filled button (2.6:1); this one is 4.6:1. */
+  --zer0-accent-strong: light-dark(#0969da, #1f6feb);
+  --zer0-accent-warm: #f0a742;
+  --zer0-ok: #3fb950;
+  --zer0-warn: #d29922;
+  --zer0-err: #f85149;
+
+  --zer0-shadow-near: light-dark(rgba(140, 149, 159, 0.15), rgba(0, 0, 0, 0.4));
+  --zer0-shadow-far: light-dark(rgba(140, 149, 159, 0.15), rgba(0, 0, 0, 0.25));
+  --zer0-shadow: 0 1px 2px var(--zer0-shadow-near), 0 8px 24px var(--zer0-shadow-far);
+
+  --zer0-radius: 10px;
+  --zer0-radius-sm: 6px;
+  --zer0-gap: 1rem;
+  --zer0-maxw: 1320px;
+  --zer0-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --zer0-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root[data-mantine-color-scheme='light'] {
+  color-scheme: light;
+}
+
+:root[data-mantine-color-scheme='dark'] {
+  color-scheme: dark;
+}
