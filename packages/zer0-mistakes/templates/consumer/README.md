@@ -1,5 +1,7 @@
 # Consumer adoption kit
 
+> The adoption kit a site built on zer0-mistakes copies to keep its theme pins current automatically, and how to install it.
+
 Everything a site built on zer0-mistakes needs to stay current with the theme without anyone remembering to do it by hand.
 
 ## Why

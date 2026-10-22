@@ -1,5 +1,7 @@
 # AI Chat Proxy (Cloudflare Worker)
 
+> The server-side proxy for the AI chat assistant and the Site Builder — Claude or Grok — as a Cloudflare Worker or a local Node proxy: what it serves, providers, auth modes, deployment, routes and security notes.
+
 Server-side companion for the theme's AI chat assistant ([`_includes/components/ai-chat.html`](../../../_includes/components/ai-chat.html) + [`assets/js/ai-chat.js`](../../../assets/js/ai-chat.js)) and the Site Builder session. GitHub Pages is static-only, so the widget delegates everything that needs a secret to this proxy. The site stays on GitHub Pages; only `/api/*` is handled here.
 
 The proxy answers with **Claude (Anthropic)** or **Grok (xAI)** — see [Providers](#providers--claude-or-grok). Every client speaks the Anthropic Messages dialect; for Grok the proxy translates the request to xAI's OpenAI-compatible API and converts the reply stream back, so switching providers is a server-side decision ([`providers.js`](providers.js)).

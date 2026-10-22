@@ -364,3 +364,10 @@ vendored:
   - copy: packages/zer0-mistakes/tools/unwrap-prose.py
     source: tools/unwrap-prose.py
     why: scripts/translate.rb and test/test_i18n.sh run it from the theme's root.
+  # The hub-seeded docs-index generator (UPS-DOC-03), same shape as the copy
+  # above: the root copy is the source, and the theme keeps one because its
+  # docs/README.md index is written and checked from the theme's own root,
+  # which must also work in the read-only mirror (ADR 0002) — no root tools/.
+  - copy: packages/zer0-mistakes/tools/docs_index.py
+    source: tools/docs_index.py
+    why: The theme's docs/README.md index is generated and checked from the theme's root, including in the read-only mirror, which has no root tools/.

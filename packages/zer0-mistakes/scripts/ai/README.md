@@ -1,5 +1,7 @@
 # scripts/ai — companions to the fleet's `ai-runner` kit
 
+> The consumer-owned companions to the fleet's ai-runner kit that stay in this repository, and why the runner itself is referenced rather than copied.
+
 Every model call a workflow here makes goes through `uses: bamr87/bamr87/.github/actions/claude-run@main` — the fleet's one AI step, versioned once in the [bamr87/bamr87 hub](https://github.com/bamr87/bamr87) and consumed **by reference**. This repo no longer carries the runner (`scripts/ai/run.sh`) or the composite action (`.github/actions/claude-run/`); it receives every fix on its next run with nothing to copy forward. The kit's contract, environment, and exit codes are documented in the hub: [`templates/ai-runner/README.md`](https://github.com/bamr87/bamr87/blob/main/templates/ai-runner/README.md).
 
 What stays here are the **consumer-owned companions** the hub runner probes for in `$GITHUB_WORKSPACE` and uses when present:

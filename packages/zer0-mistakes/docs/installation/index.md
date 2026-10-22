@@ -2,7 +2,7 @@
 title: "Installation Guide"
 description: "Overview of the modular, profile-driven Zer0-Mistakes installer CLI, the classic install.sh one-liner, and how to choose the right install path."
 date: 2026-04-21T04:03:45.000Z
-lastmod: 2026-04-21T04:03:45.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 categories: [docs]
 tags: [installation, setup]
 author: bamr87
@@ -34,20 +34,26 @@ flowchart TD
 
 ## Subcommand reference
 
-| Command | Purpose |
+Every subcommand, global option and example, as `./scripts/bin/install help` prints it, is in the generated [installer reference](../reference/installer.md).
+
+## Clone an existing site (`--scrape`)
+
+`install init <dir> --scrape <URL>` crawls an existing website breadth-first and turns it into a rendered zer0-mistakes site, with no post-processing; `install scrape <URL>` only crawls, into `./.zer0/scrape`. It needs `python3` (stdlib) and `curl` — no `pip` packages and no API key.
+
+| What gets scraped | Where it lands |
 |---|---|
-| `install init [--profile X] [--deploy a,b,c] [--config FILE]` | Scaffold a new site from a profile (+ optional config file) |
-| `install wizard [--ai] [--ai-provider P]` | Interactive setup; `--ai` uses Claude Code OAuth / Anthropic / OpenAI for `_config.yml` generation |
-| `install suggest [GOAL]` | Recommend a profile + deploy target (AI or rule-based) |
-| `install agents [--cursor\|--claude\|--aider\|--all]` | Drop AI agent guidance files into a site |
-| `install deploy <target>[,<target>] [--ai-suggest]` | Add a deploy target to an existing site |
-| `install list-profiles` | Show available profiles |
-| `install list-targets` | Show available deploy targets |
-| `install doctor [--ai] [--quiet] [--json]` | Health check (platform, tooling, site, AI) |
-| `install diagnose [--ai] [--log <file>]` | Pattern-match build errors; `--ai` proposes a patch |
-| `install upgrade [--from X] [--force] [--dry-run]` | Idempotent in-place upgrade tracked via `.zer0-installed` |
-| `install version` | Print theme version |
-| `install help` | Show full command index |
+| Home page | `index.md` with `permalink: /` |
+| Event pages | `pages/events/<slug>.md` |
+| Blog and news posts | `pages/news/<slug>.md` |
+| All other pages | `pages/<slug>.md` |
+| Images | `assets/scraped/<md5>.<ext>`, with the Markdown rewritten to the local paths |
+| Navigation | `_data/navigation/main.yml` (junk labels such as Back, Cart and Folder: are filtered) |
+| Site metadata | `_config.yml` title, description, lang and logo, seeded from the `<og:>` tags |
+
+```bash
+./scripts/bin/install init ./my-clone --scrape https://example.com                                         # depth 2, at most 25 pages
+./scripts/bin/install init ./my-clone --scrape https://example.com --scrape-depth 3 --scrape-max-pages 50   # a deeper crawl
+```
 
 ## What's where
 
@@ -59,6 +65,8 @@ flowchart TD
 | What AI does, what data is sent, how to disable, cost notes | [`ai-features.md`](./ai-features.md) |
 | Flag-by-flag mapping from 0.x to 1.0 | [`migration-from-0.x.md`](./migration-from-0.x.md) |
 | Overriding templates, custom profiles, custom deploy modules | [`customization.md`](./customization.md) |
+| Fork → configure → personalize, and the workflows a fork inherits | [`forking.md`](./forking.md) |
+| `url` and `baseurl` for user sites, project sites and custom domains | [`url-configuration.md`](./url-configuration.md) |
 
 ## Two-minute start
 

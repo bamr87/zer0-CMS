@@ -1,5 +1,7 @@
 # 📊 Zer0-Mistakes Data Directory
 
+> The YAML data files behind the theme's dynamic features — navigation, statistics, UI strings, the feature registry, backlog and roadmap — and what reads each one.
+
 This directory contains YAML data files that power the Zer0-Mistakes Jekyll theme's dynamic features, including navigation, content statistics, internationalization, and content organization.
 
 ## 📁 Directory Contents

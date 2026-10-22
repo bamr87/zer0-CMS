@@ -1,5 +1,7 @@
 # GitHub Configuration Files
 
+> The configuration files under .github/config/ — the linters' settings and the environment configuration — and how each is used.
+
 This directory contains configuration files for various development tools and linters used in the Zer0-Mistakes project.
 
 ## Linting Configurations

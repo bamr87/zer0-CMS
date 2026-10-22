@@ -1,5 +1,7 @@
 # Features Directory
 
+> The feature registry: its files, the feature schema and categories, how to add and validate a feature, and the count the feature tests keep in sync.
+
 This directory contains the comprehensive feature registry for the zer0-mistakes Jekyll theme.
 
 ## Files

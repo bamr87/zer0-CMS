@@ -1,5 +1,5 @@
 ---
-lastmod: 2026-06-15T00:00:00.000Z
+lastmod: 2026-10-22T00:00:00.000Z
 title: Admin Layout & Configuration Dashboards
 description: Admin-style layout and dashboard partials for surfacing site configuration, build info, and feature flags in a single place.
 preview: /images/previews/admin-layout-configuration-dashboards.png
@@ -97,6 +97,17 @@ The theme ships several admin pages under `pages/_about/settings/`:
 | `analytics.md` | `/about/settings/analytics/` | Analytics provider settings |
 | `collections.md` | `/about/settings/collections/` | Collection configuration |
 | `environment.md` | `/about/settings/environment/` | Build environment info |
+
+## Installing the Admin Pages on an Existing Site
+
+A site that already runs on zer0-mistakes can add these pages without touching its content: `scripts/migrate.sh`, run from a checkout of the theme, copies them into the target site's `pages/_about/settings/`. The `admin` layout and its component includes need theme version 0.22.10 or later.
+
+```bash
+./scripts/migrate.sh /path/to/your-site            # install the admin pages
+./scripts/migrate.sh --dry-run /path/to/your-site  # preview, write nothing
+./scripts/migrate.sh --force /path/to/your-site    # overwrite existing admin pages
+./scripts/migrate.sh --verify /path/to/your-site   # check an existing installation
+```
 
 ## Creating a Custom Admin Page
 

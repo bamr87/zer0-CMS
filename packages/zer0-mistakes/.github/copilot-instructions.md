@@ -1,5 +1,7 @@
 # Zer0-Mistakes Copilot Instructions
 
+> The detailed project conventions for GitHub Copilot and every other agent: architecture, commands, front matter, the Bootstrap and include patterns, and the commit and release workflow.
+
 **Docker-First Jekyll Theme with Automated Release Management & Privacy-Compliant Analytics**
 
 > 🤖 **Other AI agents** (Codex, Cursor, Aider, Jules, Continue, Claude Code, …)

@@ -1,5 +1,7 @@
 # Statistics Layout Documentation
 
+> The statistics layout's components: the files that make it up, how to use and customise it, and how to troubleshoot it.
+
 ## Overview
 
 The Zer0-Mistakes theme now includes a comprehensive statistics layout system that provides detailed analytics and metrics for Jekyll sites. This system consists of a dedicated layout and modular include components that can be easily customized and extended.

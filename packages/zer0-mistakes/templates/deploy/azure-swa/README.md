@@ -1,5 +1,7 @@
 # Deploy target: Azure Static Web Apps
 
+> The Azure Static Web Apps deploy target: the workflow and configuration it installs, and how to finish the setup.
+
 Generates the GitHub Actions workflow + `staticwebapp.config.json` required by Azure Static Web Apps. This is the modern replacement for the legacy `install.sh::create_azure_static_web_apps_workflow` heredoc.
 
 ## Files installed

@@ -89,9 +89,9 @@ The dispatcher (`scripts/bin/install`) sources what it needs lazily inside each 
    - Calls `<name>_run` with positional args
    - Handles `--help` locally
 3. Add the dispatch case under `main()`'s subcommand switch.
-4. Update `show_usage` in the dispatcher.
+4. Update the help text (`_cmd_help` in `scripts/install/cli.sh`).
 5. Update [`scripts/lib/install/README.md`](../../scripts/lib/install/README.md).
-6. Update [`docs/installation/index.md`](../../docs/installation/index.md) subcommand reference table.
+6. Run `ruby scripts/generate-reference.rb`: [`docs/reference/installer.md`](../../docs/reference/installer.md) is generated from that help text, and the lib test tier fails until it is regenerated.
 
 ## Adding a new profile
 

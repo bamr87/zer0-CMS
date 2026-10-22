@@ -1,5 +1,7 @@
 # scripts/install/ — Modular Installer v2
 
+> The modular installer's architecture: the spec-driven CLI, its tasks, the config-file layer, AI integration and deploy plugins, and how to add a task.
+
 Spec-driven, AI-integrated Jekyll theme installer for zer0-mistakes.
 
 ## Architecture
