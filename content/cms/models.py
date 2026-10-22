@@ -147,6 +147,8 @@ class BasePage(AgentManagedMixin, Page):
         APIField("agent_policy"),
         APIField("legacy_path"),
         APIField("content_hash"),
+        APIField("bylines"),
+        APIField("corrections"),
     ]
     graphql_fields = [
         GraphQLStreamfield("body"),
@@ -164,6 +166,20 @@ class BasePage(AgentManagedMixin, Page):
     @property
     def body_json(self) -> list:
         return list(self.body.get_prep_value())
+
+    # What a site shows beside the content: who wrote the page and its corrections
+    # and updates log. The newsroom keeps both, outside the page's revisions.
+    @property
+    def bylines(self) -> list[dict]:
+        from newsroom.services import page_bylines
+
+        return page_bylines(self)
+
+    @property
+    def corrections(self) -> list[dict]:
+        from newsroom.services import page_corrections
+
+        return page_corrections(self)
 
     def hashed_content(self) -> dict:
         """Everything that makes this page's content what it is, without ids,

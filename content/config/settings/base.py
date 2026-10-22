@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "cms",
     "agents",
     "ai",
+    "newsroom",
     "suggestions",
     "graph",
     "workflow",
@@ -79,6 +80,8 @@ INSTALLED_APPS = [
     "corsheaders",
     "graphene_django",
     "grapple",
+    # Email through an ESP (newsroom/README.md).
+    "anymail",
     # Django.
     "django.contrib.admin",
     "django.contrib.auth",
@@ -173,6 +176,18 @@ WAGTAILIMAGES_IMAGE_MODEL = "cms.ContentImage"
 WAGTAILSEARCH_BACKENDS = {"default": {"BACKEND": "wagtail.search.backends.database"}}
 WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "txt", "xlsx", "zip"]
 WAGTAIL_I18N_ENABLED = False
+# Approving a workflow's last task publishes the page, except in the newsroom's
+# workflow, where the newsroom publishes or schedules it (newsroom/workflow.py).
+WAGTAIL_FINISH_WORKFLOW_ACTION = "newsroom.workflow.finish_workflow"
+
+# ── Email (newsroom/README.md) ──────────────────────────────────────────────
+# Django's mail API to EMAIL_BACKEND: a django-anymail ESP backend in production
+# (e.g. anymail.backends.amazon_ses.EmailBackend), configured by ANYMAIL_*
+# variables (ANYMAIL_MAILGUN_API_KEY → ANYMAIL["MAILGUN_API_KEY"]); the console
+# otherwise. Tests use Django's locmem backend.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="zer0-CMS <noreply@localhost>")
+ANYMAIL = {key.removeprefix("ANYMAIL_"): value for key, value in env.ENVIRON.items() if key.startswith("ANYMAIL_")}
 
 # ── GraphQL (Grapple) ───────────────────────────────────────────────────────
 GRAPHENE = {"SCHEMA": "grapple.schema.schema"}
@@ -227,6 +242,13 @@ SPECTACULAR_SETTINGS = {
         "FieldGroupEnum": "api.serializers.GROUPS",
         "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
+        "StoryStatusEnum": "newsroom.models.Story.Status",
+        "StoryPriorityEnum": "newsroom.models.Story.Priority",
+        "StoryAiKindEnum": "newsroom.services.AI_KINDS",
+        "CorrectionKindEnum": "newsroom.models.Correction.Kind",
+        "FrontRuleEnum": "newsroom.models.FrontSlot.Rule",
+        "IssueStatusEnum": "newsroom.models.Issue.Status",
+        "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }

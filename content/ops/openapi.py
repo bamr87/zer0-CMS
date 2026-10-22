@@ -1,8 +1,8 @@
 """The OpenAPI document's scope and the envelope's schema (UPS-BE-12, BE-31).
 
 drf-spectacular walks a URLconf; this one holds the platform's own REST
-endpoints (`api/urls.py` `urlpatterns` and the AI content layer's router,
-`ai/urls.py`) and nothing else. Wagtail's
+endpoints (`api/urls.py` `urlpatterns`, the AI content layer's router,
+`ai/urls.py`, and the newsroom's, `newsroom/urls.py`) and nothing else. Wagtail's
 `pages`/`images`/`documents` viewsets build their serializer per request
 (`get_serializer_class` reads `self.request`), which no static generator can
 introspect, so they are documented by Wagtail itself and left out here. The
@@ -20,7 +20,11 @@ from rest_framework import serializers
 
 def __getattr__(name):
     if name == "urlpatterns":
-        return [path("api/v2/ai/", include("ai.urls")), path("api/v2/", include("api.urls"))]
+        return [
+            path("api/v2/ai/", include("ai.urls")),
+            path("api/v2/newsroom/", include("newsroom.urls")),
+            path("api/v2/", include("api.urls")),
+        ]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

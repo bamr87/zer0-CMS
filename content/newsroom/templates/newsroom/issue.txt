@@ -1,0 +1,11 @@
+{# A newsletter issue as plain text: the email's text part and the studio's preview (newsroom.services.render_issue). #}{% autoescape off %}{{ newsletter.name }} — {{ issue.subject }}
+{% if issue.intro %}
+{{ issue.intro }}
+{% endif %}{% for item in items %}
+{{ forloop.counter }}. {{ item.headline }}{% if item.bylines %}
+   By {{ item.bylines|join:", " }}{% endif %}{% if item.summary %}
+   {{ item.summary }}{% endif %}{% if item.url %}
+   {{ item.url }}{% endif %}
+{% endfor %}{% if unsubscribe_url %}
+—
+You get this because you subscribed to {{ newsletter.name }}. Unsubscribe: {{ unsubscribe_url }}{% endif %}{% endautoescape %}
