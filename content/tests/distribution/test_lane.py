@@ -574,6 +574,50 @@ def test_the_command_line_walks_the_governed_path(checkout, web):
     assert TOKEN not in out and not web.calls
 
 
+def test_the_command_line_reads_linkedin_back_and_records_by_hand(checkout, web):
+    """queue, record, posts, verify, organizations and stats --write — every other command, through the CLI."""
+    env = {"LINKEDIN_ACCESS_TOKEN": TOKEN}
+    run(["draft", "tech/2026-07-06-mcp-for-the-back-office", "--site", str(checkout)])
+    code, out, _ = run(["queue", "--site", str(checkout), "--json"])
+    [row] = json.loads(out)
+    assert (code, row["status"], row["type"]) == (0, "pending", "article")
+    assert run(["record", row["id"], "not-a-urn", "--site", str(checkout)])[0] == 1
+    code, out, _ = run(["record", row["id"], "urn:li:share:77", "--site", str(checkout)])
+    assert code == 0 and "urn:li:share:77" in out
+    assert Ledger(checkout / ".github/linkedin-log.json").urn_for(MCP_URL) == "urn:li:share:77"
+    assert json.loads(run(["queue", "--site", str(checkout), "--json"])[1])[0]["status"] == "published"
+
+    web.get(url__startswith=f"{REST}/posts?").respond(
+        200, json={"elements": [{"id": "urn:li:share:77", "commentary": "The plug.\nMore."}]}
+    )
+    code, out, _ = run(["posts", "--site", str(checkout), "--count", "5"], env=env)
+    assert (code, out.strip()) == (0, "urn:li:share:77  The plug.")
+    web.get(f"{REST}/posts/urn%3Ali%3Ashare%3A77").respond(200, json={"id": "urn:li:share:77", "commentary": "hi"})
+    code, out, _ = run(["verify", "urn:li:share:77", "--site", str(checkout)], env=env)
+    assert (code, json.loads(out)) == (0, {"id": "urn:li:share:77", "commentary": "hi"})
+
+    acls = web.get(url__startswith=f"{REST}/organizationAcls?").respond(
+        200, json={"elements": [{"role": "ADMINISTRATOR", "organizationTarget": AUTHOR}]}
+    )
+    web.get(f"{REST}/organizations/{AUTHOR.rsplit(':', 1)[-1]}").respond(200, json={"localizedName": "Example Co"})
+    code, out, _ = run(["organizations", "--site", str(checkout), "--json"], env=env)
+    assert (code, json.loads(out)) == (0, [{"urn": AUTHOR, "role": "ADMINISTRATOR", "name": "Example Co"}])
+    acls.respond(403, json={"message": "no"})
+    code, _, err = run(["organizations", "--site", str(checkout)], env=env)
+    assert code == 1 and "may not read page roles" in err
+
+    web.get(url__startswith=f"{REST}/organizationalEntityShareStatistics?").respond(
+        200, json={"elements": [{"share": "urn:li:share:77", "totalShareStatistics": {"impressionCount": 3}}]}
+    )
+    code, out, _ = run(["stats", "--site", str(checkout), "--write"], env=env)
+    assert code == 0 and "impressions 3" in out and "wrote" in out
+    written = json.loads((checkout / ".cms/distribution/performance.json").read_text())["content"]
+    assert written == {
+        MCP_POST: {"impressions": 3, "clicks": 0, "reactions": 0, "comments": 0, "shares": 0, "engagements": 0}
+    }
+    assert TOKEN not in out + err
+
+
 def test_the_command_line_plan_usage_errors_and_the_management_command(checkout):
     code, out, _ = run(["plan"])
     assert code == 0 and "returns   aggregate counts for the member's own post" in out

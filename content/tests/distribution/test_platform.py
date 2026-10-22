@@ -436,11 +436,21 @@ def test_an_agent_composes_through_the_registry_and_publishing_stays_armed_off(a
         registry.call("distribution.compose", {"channel": str(channel.public_id), "page_id": article.pk}, ctx)
 
 
-def test_the_mcp_server_lists_the_tools_for_a_distribution_token(channel):
+def test_an_mcp_client_with_the_distribution_token_drafts_and_cannot_publish(channel, article):
     from tests.mcp.test_mcp import rpc, token_for
 
-    names = [t["name"] for t in rpc(token_for("distribution"), "tools/list").json()["result"]["tools"]]
+    raw = token_for("distribution")
+    names = [t["name"] for t in rpc(raw, "tools/list").json()["result"]["tools"]]
     assert names == ["distribution.compose", "distribution.publish"]
+    compose = {"name": "distribution.compose", "arguments": {"channel": str(channel.public_id), "page_id": article.pk}}
+    made = rpc(raw, "tools/call", compose).json()["result"]
+    assert made["isError"] is False, made
+    post = DistributionPost.objects.get(public_id=made["structuredContent"]["post"])
+    assert (post.status, post.origin) == ("draft", "agent")
+    publish = {"name": "distribution.publish", "arguments": {"post": str(post.public_id), "page_id": article.pk}}
+    refused = rpc(raw, "tools/call", publish).json()["result"]
+    assert refused["isError"] is True and refused["structuredContent"]["error"] == "policy"
+    assert AgentRun.objects.filter(trigger="mcp", agent__slug="distribution").count() == 2
 
 
 def test_a_published_page_drafts_a_post_for_each_auto_channel_never_a_publish(
