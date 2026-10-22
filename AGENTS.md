@@ -41,7 +41,7 @@ Today the repository holds four products of its own and the imported sources sti
 - `content/` is the **platform** — the Django 5.2 + Wagtail project: page models, revisions, the agent harness and its tool registry, suggestions, the content graph, the outbox, the GraphQL/REST APIs (including the studio's: `api/session.py`, `api/pages.py`, `api/review.py`), the MCP server, and the operational baseline (`content/ops/`: probes, request ids, the error envelope, JSON logging, throttling, OpenAPI). It serves the built studio at `/studio/`.
 - `web/` is the **React frontend** (PLAN P4) — the studio (`web/studio/`: Write, Create, Review, agent runs, and every other area's place in the navigation) and the packages it is built from (`web/packages/`: `@zer0/api`, the client generated from `schemas/openapi/openapi.json`; `@zer0/tokens`, the design tokens and the Mantine theme; `@zer0/ui`, the workspaces). `@zer0/ui` takes its client, event streams and navigation from its host (`<StudioProvider>`) and ESLint keeps routers, transports and page globals out of it, because the extension's webviews render the same components in G10. See [`web/README.md`](web/README.md).
 - `src/` is the **VS Code extension** — a lightweight, zero-runtime-dependency CMS that *edits* content in the editor: a metadata panel, dashboard, SEO insights, and a governed publishing path (draft → brand guard → human approval → publish → ledger). It becomes a client of the platform with the studio's capabilities (ADR 0006 decision 9, PLAN G10) and keeps its file mode.
-- `rails/` is the **fleet CMS** — a Rails 8.1 app on Administrate 1.0 that indexes every registered Jekyll site into SQLite and writes edits back to the files (git stays the source of truth), draws a missing preview through zer0-image-generator, and hosts the ABC book wizard; `rails/lib` is a stdlib-only library (the Jekyll-exact catalog, front-matter surgery, the confined writer, `zer0 doctor`, the ABC generator). Being absorbed by the platform (PLAN G4, G5, G9) and then deleted — no Ruby remains (ADR 0006); its invariants below hold until each gate is green.
+- `rails/` is the **fleet CMS** — a Rails 8.1 app on Administrate 1.0 that indexes every registered Jekyll site into SQLite and writes edits back to the files (git stays the source of truth), draws a missing preview through zer0-image-generator, and hosts the ABC book wizard; `rails/lib` is a stdlib-only library (the Jekyll-exact catalog, front-matter surgery and the confined writer — ported to `content/sites/` in PLAN G4 and kept here only while the app and the LinkedIn lane run on them — the ABC generator, the LinkedIn lane). `zer0 doctor` is the platform's (`content/sites/doctor.py`) since G4. Being absorbed by the platform (PLAN G4, G5, G9) and then deleted — no Ruby remains (ADR 0006); its invariants below hold until each gate is green.
 
 "Done" for a `rails/lib` change means `rails/bin/test-stdlib` passes with no bundler. "Done" for the Rails app means `bin/rails test` and `bin/rails zeitwerk:check` pass, and — when `rails/Dockerfile` or `docker-compose.yml` changed — the image still builds, boots and answers `/up`. "Done" for `content/` is [`content/AGENTS.md`](content/AGENTS.md)'s definition: `pytest -q`, `makemigrations --check`, ruff, the recorded evals, and the three committed schemas (GraphQL, the agent schema, OpenAPI) unchanged. Do not call Rails "the content engine" — that name belongs to `.cms/` in `src/core/contract/`. Platform contract: `docs/PLATFORM.md`. Stack contract: `docs/ZER0-STACK.md`. CI map: `docs/CICD.md`.
 
@@ -91,8 +91,7 @@ npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or 
 
 # ── Fleet CMS (rails/) — Rails 8.1 on Administrate; rails/lib stays stdlib-only ──
 cd rails
-bash bin/test-stdlib                              # rails/lib: catalog, front matter, writer, doctor, ABC — no bundler
-ruby bin/zer0-cms doctor ../sites/drsai              # zer0 stack alignment; exit 1 on any error
+bash bin/test-stdlib                              # rails/lib: catalog, front matter, writer, ABC, LinkedIn — no bundler
 ruby bin/zer0-cms new --theme "IT systems" --out ../sites/drsai   # an ABC book, headless
 bundle install && bin/rails db:prepare
 SITES_DIR=$HOME/github bin/rails server            # http://localhost:3000/admin
@@ -133,7 +132,7 @@ python3 -m venv .venv && .venv/bin/pip install pyyaml   # once, where python3 la
 bin/zer0 list                     # projects, paths, what each publishes and what gates it
 bin/zer0 run check --affected     # the fast tier of everything this branch touched (+ dependents)
 bin/zer0 check                    # registry, paths, workflows and vendored copies all agree
-bin/zer0 doctor                   # zer0 doctor over every in-repo site (runs rails/bin/zer0-cms: needs Ruby until G4)
+bin/zer0 doctor                   # zer0 doctor over every in-repo site (content/sites/doctor.py; needs PyYAML and jsonschema)
 bin/zer0 tags                     # this repo's release tags vs. those inherited from the Front Matter fork
 .venv/bin/python -m unittest discover tools/workspace   # the tool's tests, with the golden replay of its Ruby predecessor (any Python with PyYAML)
 
@@ -190,7 +189,7 @@ Declare it in `package.json` under `contributes.commands` (with any `when` claus
 - **`ImageEngine` is the only file that loads or runs zer0-image-generator.** The engine writes the preview key itself, so its write is replaced through `PageEditor#replace_engine_write!`; its subprocess gets no credentials. The locked 0.6.0 gem is Python; the facade backend activates by itself once a release ships `Zer0ImageGenerator::Facade`.
 - **Access is loopback or a password.** `AccessGuard` reads `REMOTE_ADDR` and every `X-Forwarded-For` hop, never `remote_ip`. Compose publishes on 127.0.0.1 and trusts the Docker gateway only because of that binding; never publish the port elsewhere without `ZER0_CMS_PASSWORD`.
 - **No inline script or style.** The CSP has a per-request nonce and no `unsafe-inline`. Administrate's compiled JS/CSS is deliberately not loaded (it would start a second Turbo); flashes are escaped because they carry repository text.
-- **Vendored files are byte-identical copies, never edited here:** `app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens`, from zer0-image-generator), `lib/zer0_cms/data/abc_art_styles.yml` (zer0-image-generator), `lib/zer0_cms/data/frontmatter_schema.yml` (zer0-mistakes). They are declared under `vendored:` in the root `workspace.yml`: re-sync with `bin/zer0 vendor --write` and read the diff; `bin/zer0 check` (and CI) fails while any copy differs from its source.
+- **Vendored files are byte-identical copies, never edited here:** `app/assets/stylesheets/zer0-tokens.css` (kit `zer0-ui-tokens`, from zer0-image-generator), `lib/zer0_cms/data/abc_art_styles.yml` (zer0-image-generator). They are declared under `vendored:` in the root `workspace.yml`: re-sync with `bin/zer0 vendor --write` and read the diff; `bin/zer0 check` (and CI) fails while any copy differs from its source.
 - The ABC wizard exports only into an explicit Jekyll root; bundled themes generate offline, anything else falls back to Claude. Never hand-edit a generated book in drsai; re-run the wizard.
 
 ## The monorepo (`packages/`, `sites/`, `apps/`) — `workspace.yml` and `bin/zer0`

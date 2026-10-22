@@ -31,7 +31,7 @@ schema: capabilities/v1
 
 ruby_ratchet:
   packages/zer0-image-generator/: 223
-  rails/: 151
+  rails/: 150
   sites/zer0-pages/: 11
 
 theme_ratchet:
@@ -43,9 +43,8 @@ theme_ratchet:
   content/: 1
   media/: 1
   packages/zer0-image-generator/: 8
-  rails/lib/: 5
+  rails/lib/: 4
   rails/schema/: 1
-  rails/test/: 2
   schemas/: 1
   sites/2005/: 1
   sites/drsai/: 3
@@ -58,7 +57,6 @@ theme_ratchet:
   src/core/: 13
   src/test/: 6
   src/webview/: 1
-  workspace.yml: 1
 
 theme_allowed:
   # The only files that may name the theme for good: the Jekyll-theme option's

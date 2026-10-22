@@ -355,6 +355,3 @@ vendored:
   # The hub-seeded one-paragraph-per-line fixer, tools/unwrap-prose.py, has one
   # copy: the root's, which markdown-oneline.yml runs over the whole repository
   # and every project calls as ../../tools/unwrap-prose.py.
-  # rails/lib/zer0_cms/data/frontmatter_schema.yml is a copy of the theme's
-  # .github/config/frontmatter_schema.yml, refreshed from bamr87/zer0-mistakes by
-  # tag (its README records the commit) now that the theme lives there (ADR 0005).
