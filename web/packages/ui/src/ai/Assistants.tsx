@@ -21,6 +21,8 @@ import {
   isRecord,
   MONO,
   ON_A_PROMPT,
+  once,
+  oneClick,
   options,
   OwnerFields,
   ReadOnlyNote,
@@ -261,7 +263,7 @@ function AssistantForm({ assistant }: { assistant?: Assistant }) {
           {error ? <Alert color="red">{errorText(error)}</Alert> : null}
           {editable ? (
             <Group>
-              <Button type="submit" loading={save.isPending} disabled={!draft.name.trim()}>
+              <Button type="submit" loading={save.isPending} disabled={!draft.name.trim()} onClick={oneClick()}>
                 {assistant ? 'Save' : 'Create'}
               </Button>
             </Group>
@@ -274,8 +276,9 @@ function AssistantForm({ assistant }: { assistant?: Assistant }) {
             Try it
           </Title>
           <RunBox
-            start={async (prompt) =>
-              (await call(api.POST('/api/v2/ai/assistants/{public_id}/run/', { params: { path: { public_id: assistant.id } }, body: { prompt, ...ON_A_PROMPT } }))).run.id
+            start={async (prompt, key) =>
+              (await call(api.POST('/api/v2/ai/assistants/{public_id}/run/', { params: { path: { public_id: assistant.id }, header: once(key) }, body: { prompt, ...ON_A_PROMPT } })))
+                .run.id
             }
           />
         </Card>

@@ -3,8 +3,9 @@
 // schemas), the owner/site/visibility fields every owned row has, a run
 // followed live to its end, a finished answer (Markdown rendered by TipTap
 // read-only, JSON as JSON), export and import of documents, a table of rows,
-// and the platform's per-field errors. Everything reaches the platform
-// through the host's client (useApi), so the extension renders it too.
+// the platform's per-field errors, and the Idempotency-Key every request that
+// starts a run carries. Everything reaches the platform through the host's
+// client (useApi), so the extension renders it too.
 import {
   Alert,
   Anchor,
@@ -95,6 +96,32 @@ export function useSchemas() {
 
 /** A run on a prompt alone — no page, nothing suggested (the request's defaults, which the client types as required). */
 export const ON_A_PROMPT = { suggest: false, block_id: '', selection: '' } as const;
+
+/**
+ * A key for one thing a person asked for, made when they act and kept with the request (its mutation's
+ * variables), so a repeat of that request is answered with the first run instead of starting another. A
+ * request that starts a run sends it as `Idempotency-Key`; its control is also disabled while it is out.
+ * `crypto.randomUUID` needs a secure context, so a page served over plain HTTP falls back to random bytes.
+ */
+export function newKey(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** The header that carries an action's key. */
+export const once = (key: string) => ({ 'Idempotency-Key': key });
+
+/**
+ * A click handler that ignores the second click of a double click — and, on a submit button, the second submit:
+ * a person who double-clicks a button that starts a run or makes a row asks once, however fast the platform
+ * answers (a control waiting on its request covers a slow answer; this covers a quick one).
+ */
+export function oneClick(act?: () => void) {
+  return (event: { detail: number; preventDefault: () => void }) => {
+    if (event.detail > 1) event.preventDefault();
+    else act?.();
+  };
+}
 
 /** An imported document, checked for the one thing every document has (a name) before the platform reads the rest. */
 export function documentOf<T extends { name: string }>(value: unknown): T {
@@ -231,13 +258,13 @@ export function Answer({ run }: { run: Run }) {
   );
 }
 
-/** Try an assistant or a pipeline: a prompt, the run followed live, then its answer. */
-export function RunBox({ start, promptRequired = true }: { start: (prompt: string) => Promise<number>; promptRequired?: boolean }) {
+/** Try an assistant or a pipeline: a prompt, the run followed live, then its answer. `start` sends the action's key. */
+export function RunBox({ start, promptRequired = true }: { start: (prompt: string, key: string) => Promise<number>; promptRequired?: boolean }) {
   const [prompt, setPrompt] = useState('');
   const [runId, setRunId] = useState<number | null>(null);
   const [answer, setAnswer] = useState<Run | null>(null);
   const begin = useMutation({
-    mutationFn: () => start(prompt),
+    mutationFn: (key: string) => start(prompt, key),
     onSuccess: (id) => {
       setAnswer(null);
       setRunId(id);
@@ -247,7 +274,7 @@ export function RunBox({ start, promptRequired = true }: { start: (prompt: strin
     <Stack gap="xs">
       <Textarea label="Prompt" autosize minRows={2} value={prompt} onChange={(e) => setPrompt(e.currentTarget.value)} />
       <Group>
-        <Button disabled={promptRequired && !prompt.trim()} loading={begin.isPending} onClick={() => begin.mutate()}>
+        <Button disabled={promptRequired && !prompt.trim()} loading={begin.isPending} onClick={oneClick(() => begin.mutate(newKey()))}>
           Run
         </Button>
       </Group>
@@ -312,10 +339,10 @@ export function ImportButton({ label, onImport }: { label: string; onImport: (do
               </Button>
             )}
           </FileButton>
-          <JsonInput label="The document" description="Paste an exported document, or read one from a file" autosize minRows={8} maxRows={20} value={text} onChange={setText} validationError="This is not valid JSON" formatOnBlur />
+          <JsonInput label="The document" description="Paste an exported document, or read one from a file" autosize minRows={8} maxRows={20} value={text} onChange={setText} validationError="This is not valid JSON" />
           {imported.isError ? <Alert color="red">{errorText(imported.error)}</Alert> : null}
           <Group justify="end">
-            <Button disabled={!text.trim()} loading={imported.isPending} onClick={() => imported.mutate()}>
+            <Button disabled={!text.trim()} loading={imported.isPending} onClick={oneClick(() => imported.mutate())}>
               Import
             </Button>
           </Group>

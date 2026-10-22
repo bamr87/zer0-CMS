@@ -1,7 +1,9 @@
-// Assistants: created with their instructions, parameters, schema and tools;
-// tried on a prompt with the run followed live until its answer shows,
-// rendered; exported as a document (shown, copied, saved) and imported from
-// one; an assistant shared with someone is theirs to run, not to change.
+// Assistants: created with their instructions, parameters, schema and tools,
+// and edited — the form read again from the row the platform saved; tried on
+// a prompt (with an Idempotency-Key) with the run followed live until its
+// answer shows, rendered; exported as a document (shown, copied, saved) and
+// imported from one; an assistant shared with someone is theirs to run, not
+// to change.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -49,6 +51,33 @@ describe('<AssistantEditor>', () => {
     });
   });
 
+  it('edits an assistant and shows what the platform saved', async () => {
+    let row = assistant({ instructions: 'Write headlines.', params: { temperature: 0.2 } });
+    const { api, calls } = fakePlatform({
+      ...lists,
+      'GET /api/v2/ai/assistants/a1/': () => row,
+      'PATCH /api/v2/ai/assistants/a1/': ({ body }) => {
+        // The platform's answer is the row as saved — here with a description it filled in.
+        row = { ...row, ...(body as object), description: 'Saved by the platform', updated_at: '2026-10-22T10:00:00Z' };
+        return row;
+      },
+    });
+    const { go } = renderUi(<AssistantEditor id="a1" />, { api });
+    const instructions = await screen.findByLabelText('Instructions');
+    await userEvent.clear(instructions);
+    await userEvent.type(instructions, 'Write one plain headline.');
+    await userEvent.clear(screen.getByLabelText('Temperature'));
+    await userEvent.type(screen.getByLabelText('Temperature'), '0.7');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(1));
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({ name: 'Headliner', instructions: 'Write one plain headline.', params: { temperature: 0.7 } });
+    // The form is read again from the saved row: what the platform stored, not what was typed.
+    expect(await screen.findByDisplayValue('Saved by the platform')).toBeInTheDocument();
+    expect(screen.getByLabelText('Instructions')).toHaveValue('Write one plain headline.');
+    expect(screen.getByLabelText('Temperature')).toHaveValue('0.7');
+    expect(go).not.toHaveBeenCalled(); // an existing assistant stays where it is
+  });
+
   it('runs on a prompt and shows the answer once the run it follows has finished', async () => {
     const { stream, finish } = liveStream();
     let status = 'running';
@@ -64,6 +93,7 @@ describe('<AssistantEditor>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Run' }));
     expect(await screen.findByRole('status', { name: 'Run #9' })).toHaveTextContent('running');
     expect(calls.find((c) => c.path === '/api/v2/ai/assistants/a1/run/')?.body).toEqual({ prompt: 'cats', suggest: false, block_id: '', selection: '' });
+    expect(calls.find((c) => c.path === '/api/v2/ai/assistants/a1/run/')?.idempotencyKey).toBeTruthy();
     await waitFor(() => expect(stream).toHaveBeenCalled());
     status = 'succeeded';
     finish();

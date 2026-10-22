@@ -1,4 +1,5 @@
-// Pipelines: steps are reordered by dragging — here from the keyboard, as
+// Pipelines: created from their steps (once, however the button is clicked)
+// and opened; steps are reordered by dragging — here from the keyboard, as
 // @dnd-kit's sensor reads it (space picks a step up, an arrow moves it, space
 // drops it) — or with the move buttons, and the whole list is saved in the
 // new order; a step reads what its source says; the pipeline runs on a
@@ -87,6 +88,38 @@ describe('<PipelineEditor>', () => {
       { assistant: 'a2', source: 'previous', source_field: '' },
       { assistant: 'a1', source: 'page', source_field: 'summary' },
     ]);
+  });
+
+  it('creates a pipeline from its steps and opens it', async () => {
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/ai/assistants/': () => page([assistant({ id: 'a1', name: 'Drafter' }), assistant({ id: 'a2', name: 'Editor' })]),
+      'GET /api/v2/sites/': () => [],
+      'POST /api/v2/ai/pipelines/': ({ body }) => ({ ...pipeline, ...(body as object), id: 'p9' }),
+    });
+    const { go } = renderUi(<PipelineEditor />, { api });
+    expect(await screen.findByRole('heading', { name: 'New pipeline' })).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText(/^Name/), 'Draft, then edit');
+    for (const name of ['Drafter', 'Editor']) {
+      await userEvent.click(screen.getByRole('button', { name: 'Add a step' }));
+      const step = screen.getAllByRole('listitem').at(-1);
+      if (!step) throw new Error('no step was added');
+      await userEvent.click(within(step).getByRole('combobox', { name: 'Assistant' }));
+      await userEvent.click(await screen.findByRole('option', { name }));
+    }
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Create' }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'pipeline', id: 'p9' }));
+    const posts = calls.filter((c) => c.method === 'POST');
+    expect(posts).toHaveLength(1); // a double click makes one pipeline
+    expect(posts[0]?.body).toEqual({
+      name: 'Draft, then edit',
+      description: '',
+      visibility: 'private',
+      site: null,
+      steps: [
+        { assistant: 'a1', source: 'previous', source_field: '' },
+        { assistant: 'a2', source: 'previous', source_field: '' },
+      ],
+    });
   });
 
   it('runs the pipeline on a prompt and shows what its last step wrote', async () => {

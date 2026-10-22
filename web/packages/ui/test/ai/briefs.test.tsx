@@ -1,14 +1,16 @@
 // Briefs: written (a prompt, who writes it, where the draft goes) and
-// generated in one step; the generation is a run followed live, after which
-// the brief is read again and reviewed — the rendered Markdown, the metadata,
-// the structured result — and applied: the draft opens in the editor on its
-// Suggestions tab. A failed generation says why and can be asked again.
+// generated in one step — two requests, so a new brief is made once and
+// opened whatever generating it answers; the generation is a run followed
+// live, after which the brief is read again and reviewed — the rendered
+// Markdown, the metadata, the structured result — and applied: the draft
+// opens in the editor on its Suggestions tab. A failed or refused generation
+// says why and can be asked again.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { BriefList, BriefWorkspace } from '../../src';
-import { fakePlatform, pageDetail, renderUi } from '../../../../test/harness';
+import { fakePlatform, pageDetail, renderUi, Reply } from '../../../../test/harness';
 import { agentRun, assistant, EMPTY, liveStream, page, runRef } from './fixtures';
 
 const brief = (overrides: Record<string, unknown> = {}) => ({
@@ -67,6 +69,7 @@ describe('<BriefWorkspace>', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save and generate' }));
     await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'brief', id: 'b1' }));
     expect(calls.filter((c) => c.method === 'POST').map((c) => c.path)).toEqual(['/api/v2/ai/briefs/', '/api/v2/ai/briefs/b1/generate/']);
+    expect(calls.find((c) => c.path.endsWith('/generate/'))?.idempotencyKey).toBeTruthy();
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
       title: '',
       prompt: 'Why a small site needs nightly backups',
@@ -79,6 +82,45 @@ describe('<BriefWorkspace>', () => {
       visibility: 'private',
       site: 1,
     });
+  });
+
+  it('makes a new brief once: a refused generation still opens it, says why, and saving again changes that brief', async () => {
+    const refused = new Reply(409, { error: { code: 'resource.conflict', message: 'the fake provider is disabled', status: 409, details: [] } });
+    const { api, calls } = fakePlatform({
+      ...places,
+      'POST /api/v2/ai/briefs/': ({ body }) => brief({ ...(body as object) }),
+      'PATCH /api/v2/ai/briefs/b1/': ({ body }) => brief({ ...(body as object) }),
+      'POST /api/v2/ai/briefs/b1/generate/': () => refused,
+    });
+    const { go } = renderUi(<BriefWorkspace siteId={1} />, { api });
+    await userEvent.type(await screen.findByLabelText('Prompt'), 'Why a small site needs nightly backups');
+    await userEvent.click(screen.getByRole('combobox', { name: 'Assistant' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Headliner' }));
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Save and generate' }));
+    // The brief exists once the platform has it, so it opens whatever generating it answered.
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'brief', id: 'b1' }));
+    expect(await screen.findByText('the fake provider is disabled')).toBeInTheDocument();
+    expect(calls.filter((c) => c.method === 'POST' && c.path === '/api/v2/ai/briefs/')).toHaveLength(1);
+    expect(calls.filter((c) => c.path.endsWith('/generate/'))).toHaveLength(1);
+    // Asked again, it is the same brief, changed — never a second one.
+    await userEvent.click(screen.getByRole('button', { name: 'Save and generate' }));
+    await waitFor(() => expect(calls.filter((c) => c.path.endsWith('/generate/'))).toHaveLength(2));
+    expect(calls.filter((c) => c.method === 'POST' && c.path === '/api/v2/ai/briefs/')).toHaveLength(1);
+    expect(calls.filter((c) => c.method === 'PATCH').map((c) => c.path)).toEqual(['/api/v2/ai/briefs/b1/']);
+    const [first, second] = calls.filter((c) => c.path.endsWith('/generate/'));
+    expect(first?.idempotencyKey && second?.idempotencyKey && first.idempotencyKey !== second.idempotencyKey).toBe(true);
+  });
+
+  it('shows on the brief why generating it was refused', async () => {
+    const { api } = fakePlatform({
+      ...places,
+      'GET /api/v2/ai/briefs/b1/': () => brief({ status: 'failed', error: 'the provider is down', run: runRef(9) }),
+      'POST /api/v2/ai/briefs/b1/generate/': () => new Reply(429, { error: { code: 'budget.exceeded', message: 'the fake provider has spent its $5 budget this month', status: 429, details: [] } }),
+    });
+    renderUi(<BriefWorkspace id="b1" />, { api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Generate again' }));
+    const alert = await screen.findByRole('alert', { name: 'Generating it was refused' });
+    expect(alert).toHaveTextContent('spent its $5 budget');
   });
 
   it('follows the generation live, then reviews the result and applies it as a draft with suggestions', async () => {

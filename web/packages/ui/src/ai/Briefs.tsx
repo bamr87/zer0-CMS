@@ -1,13 +1,16 @@
 // Briefs (Create): a request to create — a prompt, or a text to use as it
 // is; the site and where the draft goes (a parent page and a page type); who
 // writes it (an assistant or a pipeline) and its shape (an output schema).
-// Generating it is a run, followed live; then a person reviews the structured
-// result, its rendered Markdown and the metadata, and applies it: a draft page
-// opens in the editor with the brief's text waiting as suggestions to accept.
-// Nothing here publishes.
+// Saving it and generating it are two requests: a new brief is made once and
+// opened, whatever generating it then answers, and every screen shows the
+// latest request to generate a brief — out, or refused and why — beside
+// "Generate again". Generating is a run, followed live; then a person reviews
+// the structured result, its rendered Markdown and the metadata, and applies
+// it: a draft page opens in the editor with the brief's text waiting as
+// suggestions to accept. Nothing here publishes.
 import { Alert, Badge, Button, Card, Group, Loader, SegmentedControl, Select, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient, type Mutation } from '@tanstack/react-query';
 import type { Brief, BriefStatus, Visibility } from '@zer0/api';
 import { useState } from 'react';
 
@@ -19,6 +22,9 @@ import {
   isRecord,
   JsonView,
   MarkdownView,
+  newKey,
+  once,
+  oneClick,
   options,
   OwnerFields,
   ReadOnlyNote,
@@ -41,6 +47,40 @@ export function BriefStatusBadge({ status }: { status: BriefStatus }) {
 }
 
 const nameOf = (brief: Brief) => brief.title || brief.prompt?.slice(0, 80) || brief.source_text?.slice(0, 80) || 'Untitled brief';
+
+/** Every request to generate a brief, whichever screen sends it, under one key — so the brief shows what a form started. */
+const GENERATE = ['ai', 'generate-brief'];
+
+function useGenerate() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationKey: GENERATE,
+    mutationFn: ({ id, key }: { id: string; key: string }) =>
+      call(api.POST('/api/v2/ai/briefs/{public_id}/generate/', { params: { path: { public_id: id }, header: once(key) } })),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['ai'] }),
+  });
+}
+
+/** The latest request to generate brief `id`, from any screen: whether it is out, and why the platform refused it. */
+function useGenerating(id: string | undefined) {
+  const states = useMutationState({
+    filters: { mutationKey: GENERATE, predicate: (m: Mutation) => isRecord(m.state.variables) && m.state.variables.id === id },
+    select: (m) => m.state,
+  });
+  const last = id === undefined ? undefined : states.at(-1);
+  return { pending: last?.status === 'pending', refused: last?.status === 'error' ? last.error : null };
+}
+
+/** Why generating was refused (a disabled provider, a spent budget, an agent not live), or nothing. */
+function Refused({ error }: { error: unknown }) {
+  if (!error) return null;
+  return (
+    <Alert color="red" title="Generating it was refused">
+      {errorText(error)}
+    </Alert>
+  );
+}
 
 export function BriefList({ siteId }: { siteId?: number }) {
   const api = useApi();
@@ -174,22 +214,31 @@ function BriefForm({ brief, siteId, onSaved }: { brief?: Brief; siteId?: number;
   const pipelines = usePipelines();
   const schemas = useSchemas();
   const [draft, setDraft] = useState(() => draftOf(brief, siteId));
-  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => ({ ...current, [key]: value }));
-  const save = useMutation({
-    mutationFn: async ({ generate }: { generate: boolean }) => {
-      const saved = brief
-        ? await call(api.PATCH('/api/v2/ai/briefs/{public_id}/', { params: { path: { public_id: brief.id } }, body: bodyOf(draft) }))
-        : await call(api.POST('/api/v2/ai/briefs/', { body: bodyOf(draft) }));
-      if (generate) await call(api.POST('/api/v2/ai/briefs/{public_id}/generate/', { params: { path: { public_id: saved.id } } }));
-      return saved;
-    },
-    onSuccess: (saved, { generate }) => {
-      notifications.show({ message: generate ? 'Generating the brief' : 'Brief saved' });
+  // A new brief, once the platform has it: saving again changes that one rather than making another.
+  const [made, setMade] = useState<Brief | undefined>(undefined);
+  const current = brief ?? made;
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((was) => ({ ...was, [key]: value }));
+  const generate = useGenerate();
+  const generating = useGenerating(current?.id);
+  const save = useMutation<Brief, Error, { generate: boolean }>({
+    mutationFn: () =>
+      current
+        ? call(api.PATCH('/api/v2/ai/briefs/{public_id}/', { params: { path: { public_id: current.id } }, body: bodyOf(draft) }))
+        : call(api.POST('/api/v2/ai/briefs/', { body: bodyOf(draft) })),
+    onSuccess: (saved, { generate: andGenerate }) => {
+      notifications.show({ message: andGenerate ? 'Brief saved: generating it' : 'Brief saved' });
       void qc.invalidateQueries({ queryKey: ['ai'] });
+      if (!brief) setMade(saved);
+      // Generating is its own request, sent after the save; the brief opens whatever it answers.
+      if (andGenerate) generate.mutate({ id: saved.id, key: newKey() });
       onSaved?.();
-      if (!brief) go({ to: 'brief', id: saved.id });
+      if (!current) go({ to: 'brief', id: saved.id });
     },
   });
+  const busy = save.isPending || generating.pending;
+  const submit = (andGenerate: boolean) => {
+    if (!busy) save.mutate({ generate: andGenerate });
+  };
   const error = save.error;
   const text = draft.mode === 'prompt' ? draft.prompt : draft.source_text;
   const writer = draft.writer === 'assistant' ? draft.assistant : draft.pipeline;
@@ -198,7 +247,7 @@ function BriefForm({ brief, siteId, onSaved }: { brief?: Brief; siteId?: number;
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        save.mutate({ generate: true });
+        submit(true);
       }}
     >
       <Stack maw={760}>
@@ -246,12 +295,14 @@ function BriefForm({ brief, siteId, onSaved }: { brief?: Brief; siteId?: number;
         <OwnerFields value={draft} error={error} onChange={(next) => setDraft((current) => ({ ...current, ...next, parent: next.site === current.site ? current.parent : null }))} />
         <PlaceFields site={draft.site} parent={draft.parent} type={draft.page_type} error={error} onChange={(next) => setDraft((current) => ({ ...current, ...next }))} />
         {error ? <Alert color="red">{errorText(error)}</Alert> : null}
+        {/* A brief's own view shows why generating it was refused; a new one shows it here until it opens. */}
+        {brief ? null : <Refused error={generating.refused} />}
         <Group>
-          <Button variant="default" loading={save.isPending && !save.variables?.generate} disabled={!text.trim()} onClick={() => save.mutate({ generate: false })}>
+          <Button variant="default" loading={save.isPending && !save.variables.generate} disabled={!text.trim() || busy} onClick={oneClick(() => submit(false))}>
             Save the brief
           </Button>
-          <Button type="submit" loading={save.isPending && save.variables?.generate} disabled={!ready}>
-            {brief ? 'Save and generate again' : 'Save and generate'}
+          <Button type="submit" loading={(save.isPending && save.variables.generate) || generating.pending} disabled={!ready || busy} onClick={oneClick()}>
+            {current && current.status !== 'draft' ? 'Save and generate again' : 'Save and generate'}
           </Button>
         </Group>
       </Stack>
@@ -283,10 +334,8 @@ function BriefView({ brief }: { brief: Brief }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const refresh = () => void qc.invalidateQueries({ queryKey: ['ai'] });
-  const generate = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/ai/briefs/{public_id}/generate/', { params: { path: { public_id: brief.id } } })),
-    onSuccess: refresh,
-  });
+  const generate = useGenerate();
+  const generating = useGenerating(brief.id);
   const talk = useMutation({
     mutationFn: () =>
       call(api.POST('/api/v2/ai/conversations/', { body: { title: `About: ${nameOf(brief)}`.slice(0, 200), from_brief: brief.id, assistant: brief.assistant ?? null, site: brief.site ?? null } })),
@@ -312,7 +361,7 @@ function BriefView({ brief }: { brief: Brief }) {
               {editing ? 'Close the brief' : 'Edit the brief'}
             </Button>
           ) : null}
-          <Button variant="default" loading={talk.isPending} disabled={!(brief.markdown || brief.source_text || brief.prompt)} onClick={() => talk.mutate()}>
+          <Button variant="default" loading={talk.isPending} disabled={!(brief.markdown || brief.source_text || brief.prompt)} onClick={oneClick(() => talk.mutate())}>
             Talk it over
           </Button>
         </Group>
@@ -335,7 +384,7 @@ function BriefView({ brief }: { brief: Brief }) {
             <Text size="sm">{brief.error || 'The run ended without a result.'}</Text>
             {editable ? (
               <Group>
-                <Button size="xs" loading={generate.isPending} onClick={() => generate.mutate()}>
+                <Button size="xs" loading={generating.pending} onClick={oneClick(() => generate.mutate({ id: brief.id, key: newKey() }))}>
                   Generate again
                 </Button>
               </Group>
@@ -343,7 +392,7 @@ function BriefView({ brief }: { brief: Brief }) {
           </Stack>
         </Alert>
       ) : null}
-      {generate.isError ? <Alert color="red">{errorText(generate.error)}</Alert> : null}
+      <Refused error={generating.refused} />
       {brief.status === 'ready' || brief.status === 'applied' ? <Review brief={brief} /> : null}
       {/* The platform lets its owner (or staff) apply a brief, or anyone shown one an agent asked for. */}
       {brief.status === 'ready' && (editable || brief.owner?.startsWith('agent:')) ? <Apply brief={brief} /> : null}
@@ -414,7 +463,7 @@ function Apply({ brief }: { brief: Brief }) {
         <PlaceFields site={brief.site ?? null} parent={place.parent} type={place.page_type} error={apply.error} onChange={setPlace} />
         {apply.isError ? <Alert color="red">{errorText(apply.error)}</Alert> : null}
         <Group>
-          <Button loading={apply.isPending} onClick={() => apply.mutate()}>
+          <Button loading={apply.isPending} onClick={oneClick(() => apply.mutate())}>
             Apply as a draft
           </Button>
         </Group>

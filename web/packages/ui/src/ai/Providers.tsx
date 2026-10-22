@@ -2,10 +2,11 @@
 // enabled, the default, whether a credential is set, its capabilities and its
 // last health check. People who configure providers (`ai.change_providerconfig`)
 // also edit one's configuration, test it, sync its models into the catalog and
-// make it the default; a test and a sync are runs, followed live. A credential
-// only ever goes in: the platform never sends one back, so this screen shows
-// "set" or "not set" and its input starts empty every time. Home shows the
-// default provider's status (ProviderStatus).
+// make it the default; a test and a sync are runs, followed live — one at a
+// time, each request with its Idempotency-Key. A credential only ever goes in:
+// the platform never sends one back, so this screen shows "set" or "not set"
+// and its input starts empty every time. Home shows the default provider's
+// status (ProviderStatus).
 import { Alert, Badge, Button, Card, Checkbox, Drawer, Group, JsonInput, Loader, PasswordInput, Stack, Switch, Table, Text, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,7 +15,7 @@ import { useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { fieldError, isRecord, RunProgress, useCanConfigure, useProviders } from './shared';
+import { fieldError, isRecord, newKey, once, oneClick, RunProgress, useCanConfigure, useProviders } from './shared';
 
 type Check = 'test' | 'sync-models';
 
@@ -74,9 +75,10 @@ export function ProviderList() {
   const [editing, setEditing] = useState<Provider | null>(null);
   const [checks, setChecks] = useState<Record<string, number>>({});
   const refresh = () => void qc.invalidateQueries({ queryKey: ['ai'] });
+  // One check at a time: every Test and Sync button waits while one is out, and a double click asks once.
   const check = useMutation({
-    mutationFn: ({ provider, kind }: { provider: Provider; kind: Check }) => {
-      const params = { params: { path: { public_id: provider.id } } };
+    mutationFn: ({ provider, kind, key }: { provider: Provider; kind: Check; key: string }) => {
+      const params = { params: { path: { public_id: provider.id }, header: once(key) } };
       return call(
         kind === 'test'
           ? api.POST('/api/v2/ai/providers/{public_id}/test/', params)
@@ -85,6 +87,10 @@ export function ProviderList() {
     },
     onSuccess: ({ run }, { provider }) => setChecks((current) => ({ ...current, [provider.id]: run.id })),
   });
+  const checking = (provider: Provider, kind: Check) => check.isPending && check.variables.provider.id === provider.id && check.variables.kind === kind;
+  const start = (provider: Provider, kind: Check) => {
+    if (!check.isPending) check.mutate({ provider, kind, key: newKey() });
+  };
   const makeDefault = useMutation({
     mutationFn: (provider: Provider) => call(api.POST('/api/v2/ai/providers/{public_id}/set-default/', { params: { path: { public_id: provider.id } } })),
     onSuccess: (provider) => {
@@ -151,14 +157,28 @@ export function ProviderList() {
                     <Button size="xs" variant="default" onClick={() => setEditing(p)}>
                       Configure
                     </Button>
-                    <Button size="xs" variant="default" onClick={() => check.mutate({ provider: p, kind: 'test' })} aria-label={`Test ${p.slug}`}>
+                    <Button size="xs" variant="default" loading={checking(p, 'test')} disabled={check.isPending} onClick={oneClick(() => start(p, 'test'))} aria-label={`Test ${p.slug}`}>
                       Test
                     </Button>
-                    <Button size="xs" variant="default" onClick={() => check.mutate({ provider: p, kind: 'sync-models' })} aria-label={`Sync ${p.slug}'s models`}>
+                    <Button
+                      size="xs"
+                      variant="default"
+                      loading={checking(p, 'sync-models')}
+                      disabled={check.isPending}
+                      onClick={oneClick(() => start(p, 'sync-models'))}
+                      aria-label={`Sync ${p.slug}'s models`}
+                    >
                       Sync models
                     </Button>
                     {p.is_default ? null : (
-                      <Button size="xs" variant="subtle" disabled={!p.enabled} onClick={() => makeDefault.mutate(p)} aria-label={`Make ${p.slug} the default`}>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        disabled={!p.enabled || makeDefault.isPending}
+                        loading={makeDefault.isPending && makeDefault.variables.id === p.id}
+                        onClick={() => makeDefault.mutate(p)}
+                        aria-label={`Make ${p.slug} the default`}
+                      >
                         Make default
                       </Button>
                     )}
@@ -251,7 +271,7 @@ function ProviderForm({ provider, onSaved }: { provider: Provider; onSaved: (pro
           <TextInput label="Project" value={form.project} onChange={(e) => set('project', e.currentTarget.value)} />
         </Group>
         <TextInput label="Monthly budget (USD)" description="New runs are refused once it is spent this month; empty for none." inputMode="decimal" value={form.monthly_budget_usd} onChange={(e) => set('monthly_budget_usd', e.currentTarget.value)} error={fieldError(error, 'monthly_budget_usd')} />
-        <JsonInput label="Adapter options" description="Only the options this adapter declares (timeout, max_retries, effort …)." autosize minRows={3} value={form.extra} onChange={(value) => set('extra', value)} validationError="This is not valid JSON" formatOnBlur error={fieldError(error, 'extra')} />
+        <JsonInput label="Adapter options" description="Only the options this adapter declares (timeout, max_retries, effort …)." autosize minRows={3} value={form.extra} onChange={(value) => set('extra', value)} validationError="This is not valid JSON" error={fieldError(error, 'extra')} />
         {error ? <Alert color="red">{errorText(error)}</Alert> : null}
         <Group justify="end">
           <Button type="submit" loading={save.isPending}>

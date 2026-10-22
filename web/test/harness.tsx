@@ -1,7 +1,9 @@
 // The test harness: a fake platform behind the real openapi-fetch client —
-// routes keyed by "METHOD /path", every request recorded — and the providers
-// every @zer0/ui component and the studio render inside. It is the same seam
-// a host uses (an injected fetch), so nothing here reaches a network.
+// routes keyed by "METHOD /path", every request recorded (with its CSRF token
+// and Idempotency-Key), a route may answer later (a promise, for a request a
+// test holds open) — and the providers every @zer0/ui component and the
+// studio render inside. It is the same seam a host uses (an injected fetch),
+// so nothing here reaches a network.
 import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
@@ -26,6 +28,7 @@ export interface Call {
   query: URLSearchParams;
   body: unknown;
   csrf: string | null;
+  idempotencyKey: string | null;
 }
 
 export function fakePlatform(routes: Record<string, Handler>) {
@@ -34,11 +37,12 @@ export function fakePlatform(routes: Record<string, Handler>) {
     const url = new URL(request.url);
     const text = request.method === 'GET' ? '' : await request.text();
     const body: unknown = text ? JSON.parse(text) : undefined;
-    calls.push({ method: request.method, path: url.pathname, query: url.searchParams, body, csrf: request.headers.get('X-CSRFToken') });
+    const headers = request.headers;
+    calls.push({ method: request.method, path: url.pathname, query: url.searchParams, body, csrf: headers.get('X-CSRFToken'), idempotencyKey: headers.get('Idempotency-Key') });
     const handler = routes[`${request.method} ${url.pathname}`];
-    const out = handler
+    const out: unknown = await (handler
       ? handler({ body, url })
-      : new Reply(404, { error: { code: 'resource.not_found', message: `no fake for ${request.method} ${url.pathname}`, status: 404, details: [] } });
+      : new Reply(404, { error: { code: 'resource.not_found', message: `no fake for ${request.method} ${url.pathname}`, status: 404, details: [] } }));
     const reply = out instanceof Reply ? out : new Reply(200, out);
     return new Response(JSON.stringify(reply.body), { status: reply.status, headers: { 'Content-Type': 'application/json' } });
   };
@@ -47,6 +51,15 @@ export function fakePlatform(routes: Record<string, Handler>) {
 }
 
 export const noStream: OpenStream = () => () => undefined;
+
+/** A reply a test holds back: a route returns `reply`, and the request stays out until the test calls `answer`. */
+export function held(body: unknown = {}) {
+  let answer: () => void = () => undefined;
+  const reply = new Promise<unknown>((resolve) => {
+    answer = () => resolve(body);
+  });
+  return { reply, answer: () => answer() };
+}
 
 /** The `at`-th of a list a query found, or a failed test that says so. */
 export function nth<T>(items: T[], at = 0): T {

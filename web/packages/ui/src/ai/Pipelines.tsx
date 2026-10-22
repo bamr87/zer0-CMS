@@ -15,7 +15,7 @@ import { useRef, useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { ConfirmButton, fieldError, ON_A_PROMPT, options, OwnerFields, ReadOnlyNote, Rows, RunBox, useAssistants, usePipelines, type Ownership } from './shared';
+import { ConfirmButton, fieldError, ON_A_PROMPT, once, oneClick, options, OwnerFields, ReadOnlyNote, Rows, RunBox, useAssistants, usePipelines, type Ownership } from './shared';
 
 const SOURCES: { value: StepSource; label: string }[] = [
   { value: 'previous', label: "The previous step's answer" },
@@ -167,7 +167,7 @@ function PipelineForm({ pipeline }: { pipeline?: Pipeline }) {
               <Button variant="default" onClick={add}>
                 Add a step
               </Button>
-              <Button type="submit" loading={save.isPending} disabled={!draft.name.trim() || steps.some((s) => !s.assistant)}>
+              <Button type="submit" loading={save.isPending} disabled={!draft.name.trim() || steps.some((s) => !s.assistant)} onClick={oneClick()}>
                 {pipeline ? 'Save' : 'Create'}
               </Button>
             </Group>
@@ -181,8 +181,9 @@ function PipelineForm({ pipeline }: { pipeline?: Pipeline }) {
           </Title>
           <RunBox
             promptRequired={false}
-            start={async (prompt) =>
-              (await call(api.POST('/api/v2/ai/pipelines/{public_id}/run/', { params: { path: { public_id: pipeline.id } }, body: { prompt, ...ON_A_PROMPT } }))).run.id
+            start={async (prompt, key) =>
+              (await call(api.POST('/api/v2/ai/pipelines/{public_id}/run/', { params: { path: { public_id: pipeline.id }, header: once(key) }, body: { prompt, ...ON_A_PROMPT } })))
+                .run.id
             }
           />
         </Card>

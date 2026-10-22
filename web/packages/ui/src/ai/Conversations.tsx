@@ -1,18 +1,20 @@
 // Conversations: threads with an assistant (or a pipeline whose steps reply
 // in turn), the whole history replayed to the provider on every turn — shown
-// whole, or filtered to one side or to the replies that failed. Send a
-// message and watch the answer arrive by following its run; ask again (with
-// the same assistant or another), delete a message, or promote one to a
-// brief — to write from — or to a draft, which opens as a brief to review and
-// apply. Reachable from the AI area and from Create.
+// newest page first with earlier messages loaded on request, whole or
+// filtered to one side or to the replies that failed. Send a message and
+// watch the answer arrive by following its run; ask again (with the same
+// assistant or another), delete a message, or promote one to a brief — to
+// write from — or to a draft, which opens as a brief to review and apply.
+// Every request that starts a run carries its Idempotency-Key, and its
+// controls wait while it is out. Reachable from the AI area and from Create.
 import { Alert, Badge, Button, Card, Group, Loader, Menu, Paper, SegmentedControl, Select, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ApiClient, Conversation, Message } from '@zer0/api';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Conversation, Message } from '@zer0/api';
 import { useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { ALL, isRecord, MarkdownView, options, ReadOnlyNote, Rows, RunProgress, useAssistants, usePipelines } from './shared';
+import { ALL, isRecord, MarkdownView, newKey, once, oneClick, options, ReadOnlyNote, Rows, RunProgress, useAssistants, usePipelines } from './shared';
 
 export function ConversationList({ siteId }: { siteId?: number }) {
   const api = useApi();
@@ -42,7 +44,7 @@ export function ConversationList({ siteId }: { siteId?: number }) {
           <Group align="end">
             <TextInput label="A new conversation" placeholder="What about?" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
             <Select label="With" placeholder="Choose an assistant" data={options(assistants.data?.results)} value={assistant} searchable onChange={setAssistant} />
-            <Button type="submit" loading={start.isPending}>
+            <Button type="submit" loading={start.isPending} onClick={oneClick()}>
               Start
             </Button>
           </Group>
@@ -74,18 +76,27 @@ const SHOW = {
 } as const;
 type Show = keyof typeof SHOW;
 
-/** Every message of a conversation the filter keeps, oldest first, following the cursor to the end. */
-async function allMessages(api: ApiClient, id: string, show: Show): Promise<Message[]> {
-  const found: Message[] = [];
-  let cursor: string | undefined;
-  for (let page = 0; page < 25; page += 1) {
-    const query = { page_size: 200, ...SHOW[show], ...(cursor ? { cursor } : {}) };
-    const batch = await call(api.GET('/api/v2/ai/conversations/{public_id}/messages/', { params: { path: { public_id: id }, query } }));
-    found.push(...batch.results);
-    cursor = batch.next ? (new URL(batch.next).searchParams.get('cursor') ?? undefined) : undefined;
-    if (!cursor) break;
-  }
-  return found;
+/** Messages a page: a thread opens on its newest, and earlier ones come a page at a time when asked for. */
+const PAGE = 50;
+
+/** The cursor in a next-page link, if there is one. */
+const cursorOf = (next: string | null | undefined) => (next ? (new URL(next, 'http://studio.invalid').searchParams.get('cursor') ?? undefined) : undefined);
+
+/**
+ * A conversation's messages that the filter keeps, newest page first (`ordering=-seq`), each further page the
+ * one before it. When the thread changes, only the pages already shown are read again.
+ */
+function useMessages(id: string, show: Show) {
+  const api = useApi();
+  return useInfiniteQuery({
+    queryKey: ['ai', 'messages', id, show],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => {
+      const query = { page_size: PAGE, ordering: '-seq' as const, ...SHOW[show], ...(pageParam ? { cursor: pageParam } : {}) };
+      return call(api.GET('/api/v2/ai/conversations/{public_id}/messages/', { params: { path: { public_id: id }, query } }));
+    },
+    getNextPageParam: (last) => cursorOf(last.next),
+  });
 }
 
 export function ConversationThread({ id }: { id: string }) {
@@ -95,7 +106,9 @@ export function ConversationThread({ id }: { id: string }) {
     queryFn: () => call(api.GET('/api/v2/ai/conversations/{public_id}/', { params: { path: { public_id: id } } })),
   });
   const [show, setShow] = useState<Show>('all');
-  const messages = useQuery({ queryKey: ['ai', 'messages', id, show], queryFn: () => allMessages(api, id, show) });
+  const messages = useMessages(id, show);
+  // The platform sends the newest first; the thread reads top to bottom, oldest first.
+  const shown = (messages.data?.pages ?? []).flatMap((page) => page.results).reverse();
   if (conversation.isPending) return <Loader aria-label="Loading the conversation" />;
   if (conversation.isError) return <Alert color="red">{errorText(conversation.error)}</Alert>;
   return (
@@ -115,9 +128,16 @@ export function ConversationThread({ id }: { id: string }) {
       />
       {messages.isPending ? <Loader aria-label="Loading the messages" /> : null}
       {messages.isError ? <Alert color="red">{errorText(messages.error)}</Alert> : null}
-      {messages.data?.length === 0 ? <Text c="dimmed">{show === 'all' ? 'No messages yet: say something below.' : 'No message is shown by this filter.'}</Text> : null}
+      {messages.data && shown.length === 0 ? <Text c="dimmed">{show === 'all' ? 'No messages yet: say something below.' : 'No message is shown by this filter.'}</Text> : null}
+      {messages.hasNextPage ? (
+        <Group justify="center">
+          <Button variant="subtle" size="xs" loading={messages.isFetchingNextPage} onClick={() => void messages.fetchNextPage()}>
+            Load earlier messages
+          </Button>
+        </Group>
+      ) : null}
       <Stack component="ol" gap="sm" p={0} m={0} aria-label="Messages">
-        {(messages.data ?? []).map((m) => (
+        {shown.map((m) => (
           <MessageItem key={m.id} message={m} conversation={conversation.data} />
         ))}
       </Stack>
@@ -176,22 +196,25 @@ function MessageItem({ message, conversation }: { message: Message; conversation
   const go = useGo();
   const qc = useQueryClient();
   const assistants = useAssistants();
-  const path = { params: { path: { public_id: message.id } } };
+  const at = (key: string) => ({ params: { path: { public_id: message.id }, header: once(key) } });
   const refresh = () => void qc.invalidateQueries({ queryKey: ['ai', 'messages', conversation.id] });
   const rerun = useMutation({
-    mutationFn: (assistant?: string) => call(api.POST('/api/v2/ai/messages/{public_id}/rerun/', { ...path, body: assistant ? { assistant } : {} })),
+    mutationFn: ({ assistant, key }: { assistant?: string; key: string }) =>
+      call(api.POST('/api/v2/ai/messages/{public_id}/rerun/', { ...at(key), body: assistant ? { assistant } : {} })),
     onSuccess: refresh,
   });
   const promote = useMutation({
-    mutationFn: (to: 'brief' | 'draft') => call(api.POST('/api/v2/ai/messages/{public_id}/promote/', { ...path, body: { to } })),
+    mutationFn: ({ to, key }: { to: 'brief' | 'draft'; key: string }) => call(api.POST('/api/v2/ai/messages/{public_id}/promote/', { ...at(key), body: { to } })),
     onSuccess: ({ brief }) => {
       void qc.invalidateQueries({ queryKey: ['ai'] });
       go({ to: 'brief', id: brief.id });
     },
   });
-  const remove = useMutation({ mutationFn: () => call(api.DELETE('/api/v2/ai/messages/{public_id}/', path)), onSuccess: refresh });
+  const remove = useMutation({ mutationFn: () => call(api.DELETE('/api/v2/ai/messages/{public_id}/', { params: { path: { public_id: message.id } } })), onSuccess: refresh });
   const who = message.role === 'assistant' ? (assistants.data?.results.find((a) => a.id === message.assistant)?.name ?? 'Assistant') : (WHO[message.role] ?? message.role);
   const working = message.status === 'queued' || message.status === 'running';
+  // While one of this message's requests is out, its menu starts nothing else: each would be another run or brief.
+  const busy = rerun.isPending || promote.isPending || remove.isPending;
   const failure = rerun.error ?? promote.error ?? remove.error;
   return (
     <Paper component="li" withBorder p="sm" style={{ listStyle: 'none' }} aria-label={`${who}, message ${message.seq}`} bg={message.role === 'user' ? 'var(--zer0-bg-inset)' : undefined}>
@@ -209,33 +232,35 @@ function MessageItem({ message, conversation }: { message: Message; conversation
         {conversation.can_edit && !working ? (
           <Menu position="bottom-end">
             <Menu.Target>
-              <Button size="compact-xs" variant="subtle" aria-label={`Actions for message ${message.seq}`}>
+              <Button size="compact-xs" variant="subtle" loading={busy} aria-label={`Actions for message ${message.seq}`}>
                 ⋯
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
               {message.role === 'assistant' ? (
                 <>
-                  <Menu.Item onClick={() => rerun.mutate(undefined)}>Ask again</Menu.Item>
+                  <Menu.Item disabled={busy} onClick={() => rerun.mutate({ key: newKey() })}>
+                    Ask again
+                  </Menu.Item>
                   {(assistants.data?.results ?? [])
                     .filter((a) => a.id !== message.assistant)
                     .slice(0, 8)
                     .map((a) => (
-                      <Menu.Item key={a.id} onClick={() => rerun.mutate(a.id)}>
+                      <Menu.Item key={a.id} disabled={busy} onClick={() => rerun.mutate({ assistant: a.id, key: newKey() })}>
                         Ask {a.name} instead
                       </Menu.Item>
                     ))}
                   <Menu.Divider />
                 </>
               ) : null}
-              <Menu.Item disabled={!message.text.trim()} onClick={() => promote.mutate('brief')}>
+              <Menu.Item disabled={busy || !message.text.trim()} onClick={() => promote.mutate({ to: 'brief', key: newKey() })}>
                 Promote to a brief
               </Menu.Item>
-              <Menu.Item disabled={!message.text.trim()} onClick={() => promote.mutate('draft')}>
+              <Menu.Item disabled={busy || !message.text.trim()} onClick={() => promote.mutate({ to: 'draft', key: newKey() })}>
                 Promote to a draft
               </Menu.Item>
               <Menu.Divider />
-              <Menu.Item color="red" onClick={() => remove.mutate()}>
+              <Menu.Item color="red" disabled={busy} onClick={() => remove.mutate()}>
                 Delete
               </Menu.Item>
             </Menu.Dropdown>
@@ -275,22 +300,28 @@ function Composer({ conversation }: { conversation: Conversation }) {
   const [assistant, setAssistant] = useState<string | null>(null);
   const [pipelineRun, setPipelineRun] = useState<number | null>(null);
   const refresh = () => void qc.invalidateQueries({ queryKey: ['ai', 'messages', conversation.id] });
-  const path = { params: { path: { public_id: conversation.id } } };
+  const at = (key: string) => ({ params: { path: { public_id: conversation.id }, header: once(key) } });
   const send = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/ai/conversations/{public_id}/messages/', { ...path, body: { text, answer: true, ...(assistant ? { assistant } : {}) } })),
+    mutationFn: (key: string) =>
+      call(api.POST('/api/v2/ai/conversations/{public_id}/messages/', { ...at(key), body: { text, answer: true, ...(assistant ? { assistant } : {}) } })),
     onSuccess: () => {
       setText('');
       refresh();
     },
   });
   const runPipeline = useMutation({
-    mutationFn: () => call(api.POST('/api/v2/ai/conversations/{public_id}/run-pipeline/', { ...path, body: { prompt: text } })),
+    mutationFn: (key: string) => call(api.POST('/api/v2/ai/conversations/{public_id}/run-pipeline/', { ...at(key), body: { prompt: text } })),
     onSuccess: ({ run }) => {
       setText('');
       setPipelineRun(run.id);
       refresh();
     },
   });
+  // One request at a time from the composer: the button waits, and so does Ctrl+Enter pressed again.
+  const busy = send.isPending || runPipeline.isPending;
+  const submit = () => {
+    if (!busy && text.trim()) send.mutate(newKey());
+  };
   const replier = assistant ?? conversation.assistant;
   const failure = send.error ?? runPipeline.error;
   return (
@@ -298,7 +329,7 @@ function Composer({ conversation }: { conversation: Conversation }) {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          send.mutate();
+          submit();
         }}
       >
         <Stack gap="xs">
@@ -310,9 +341,9 @@ function Composer({ conversation }: { conversation: Conversation }) {
             value={text}
             onChange={(e) => setText(e.currentTarget.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && text.trim()) {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
-                send.mutate();
+                submit();
               }
             }}
           />
@@ -325,11 +356,11 @@ function Composer({ conversation }: { conversation: Conversation }) {
               allowDeselect={false}
               onChange={(next) => setAssistant(next || null)}
             />
-            <Button type="submit" disabled={!text.trim()} loading={send.isPending}>
+            <Button type="submit" disabled={!text.trim() || busy} loading={send.isPending} onClick={oneClick()}>
               {replier ? 'Send' : 'Add a note'}
             </Button>
             {conversation.pipeline ? (
-              <Button variant="light" loading={runPipeline.isPending} onClick={() => runPipeline.mutate()}>
+              <Button variant="light" disabled={busy} loading={runPipeline.isPending} onClick={oneClick(() => runPipeline.mutate(newKey()))}>
                 Run the pipeline
               </Button>
             ) : null}

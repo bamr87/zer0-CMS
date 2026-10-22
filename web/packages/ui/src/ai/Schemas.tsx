@@ -3,7 +3,9 @@
 // with feedback as the schema is typed (is it JSON, is it an object) and the
 // platform's own verdict on save (is it a valid JSON Schema that refers only
 // to itself), exported and imported as documents; staff add the bundled ones
-// (barodybroject's parody article, news article and content detail).
+// (barodybroject's parody article, news article and content detail). A JSON
+// field here is never reformatted when it loses focus: one that grows then
+// moves the button below it out from under the click that moved the focus.
 import { Alert, Badge, Button, Group, JsonInput, Loader, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +14,7 @@ import { useState } from 'react';
 
 import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
-import { ConfirmButton, documentOf, ExportButton, fieldError, ImportButton, isRecord, MONO, OwnerFields, ReadOnlyNote, Rows, useMe, useSchemas, type Ownership } from './shared';
+import { ConfirmButton, documentOf, ExportButton, fieldError, ImportButton, isRecord, MONO, oneClick, OwnerFields, ReadOnlyNote, Rows, useMe, useSchemas, type Ownership } from './shared';
 
 const STARTER = '{\n  "type": "object",\n  "properties": {\n    "headline": { "type": "string" },\n    "body": { "type": "string" }\n  },\n  "required": ["headline", "body"]\n}';
 
@@ -167,7 +169,6 @@ function SchemaForm({ schema }: { schema?: OutputSchema }) {
             value={text}
             disabled={!editable}
             onChange={setText}
-            formatOnBlur
             error={problem ?? fieldError(error, 'schema')}
           />
           {problem ? null : (
@@ -190,7 +191,7 @@ function SchemaForm({ schema }: { schema?: OutputSchema }) {
           {error ? <Alert color="red">{errorText(error)}</Alert> : null}
           {editable ? (
             <Group>
-              <Button type="submit" loading={save.isPending} disabled={!draft.name.trim() || problem !== null}>
+              <Button type="submit" loading={save.isPending} disabled={!draft.name.trim() || problem !== null} onClick={oneClick()}>
                 {schema ? 'Save' : 'Create'}
               </Button>
             </Group>

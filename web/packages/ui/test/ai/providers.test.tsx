@@ -2,13 +2,14 @@
 // configuration unless they configure providers; a credential only goes in —
 // typed into an empty field, sent once, never shown or echoed back — and a
 // test or a model sync is a run followed live, after which the list is read
-// again. The catalog filters through the platform.
+// again: one check at a time, a double click starting one run, each request
+// with its Idempotency-Key. The catalog filters through the platform.
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
 import { ModelCatalog, ProviderList } from '../../src';
-import { fakePlatform, renderUi } from '../../../../test/harness';
+import { fakePlatform, held, renderUi } from '../../../../test/harness';
 import { agentRun, liveStream, me, page, runRef } from './fixtures';
 
 const provider = (overrides: Record<string, unknown> = {}) => ({
@@ -110,6 +111,31 @@ describe('<ProviderList>', () => {
     await waitFor(() => expect(calls.some((c) => c.path.endsWith('/sync-models/'))).toBe(true));
     await userEvent.click(screen.getByRole('button', { name: 'Make anthropic the default' }));
     await waitFor(() => expect(calls.some((c) => c.path.endsWith('/set-default/'))).toBe(true));
+  });
+
+  it('starts one check for a double click, with an Idempotency-Key, and holds every check while it is out', async () => {
+    const testing = held({ run: runRef(9) });
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/me': () => me(['ai.change_providerconfig']),
+      'GET /api/v2/ai/providers/': () => page([provider(CONFIG), provider({ ...CONFIG, id: 'p-openai', slug: 'openai', display_name: 'OpenAI' })]),
+      'POST /api/v2/ai/providers/p-anthropic/test/': () => testing.reply,
+      'POST /api/v2/ai/providers/p-anthropic/sync-models/': () => ({ run: runRef(10) }),
+      'GET /api/v2/agent-runs/9/': () => agentRun('running'),
+    });
+    renderUi(<ProviderList />, { api });
+    await userEvent.dblClick(await screen.findByRole('button', { name: 'Test anthropic' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Test anthropic' })).toBeDisabled());
+    expect(screen.getByRole('button', { name: "Sync anthropic's models" })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Test openai' })).toBeDisabled();
+    const tests = calls.filter((c) => c.path.endsWith('/test/'));
+    expect(tests).toHaveLength(1);
+    expect(tests[0]?.idempotencyKey).toMatch(/^[0-9a-f-]{32,36}$/);
+    testing.answer();
+    expect(await screen.findByRole('status', { name: 'Run #9' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: "Sync anthropic's models" })).toBeEnabled());
+    await userEvent.dblClick(screen.getByRole('button', { name: "Sync anthropic's models" }));
+    await waitFor(() => expect(calls.filter((c) => c.path.endsWith('/sync-models/'))).toHaveLength(1));
+    expect(calls.find((c) => c.path.endsWith('/sync-models/'))?.idempotencyKey).not.toBe(tests[0]?.idempotencyKey);
   });
 });
 
