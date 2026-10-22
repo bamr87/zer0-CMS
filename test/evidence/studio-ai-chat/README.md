@@ -9,7 +9,7 @@ An editor writes an assistant, starts a conversation with it from the AI area, s
 | Image | Viewport | What to look at |
 | --- | --- | --- |
 | `desktop-message-written.png` | 1280×800 | AI → Conversations → the new conversation "Backup ideas": who replies (the assistant it was started with), an optional pipeline, no messages yet, and the message typed in the composer. |
-| `desktop-answered.png` | 1280×800 | The thread after the reply's run: the person's message, the assistant's answer rendered from Markdown, and under it the provider, model, tokens and cost of the run that wrote it. |
+| `desktop-answered.png` | 1280×800 | The thread after the reply's run: the filter (every message, yours, answers, failed), the person's message, the assistant's answer rendered from Markdown, and under it the provider, model, tokens and cost of the run that wrote it. |
 | `desktop-promoted-to-a-brief.png` | 1280×800 | Create → Briefs on the brief the answer became: status `draft`, titled after the conversation, the answer as its prompt and the conversation's assistant as its writer — ready to generate, or to edit first. |
 
 Raw data: [`report.json`](report.json).

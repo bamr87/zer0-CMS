@@ -33,15 +33,20 @@ const SECTIONS: { value: AiSection; label: string }[] = [
   { value: 'models', label: 'Models' },
 ];
 
-/** Section tabs that are routes: `base` + `/` + the section (the first is `base` itself). */
-export function SectionTabs({ base, sections, label }: { base: string; sections: { value: string; label: string }[]; label: string }) {
+/**
+ * Section tabs that are routes — `base` + `/` + the section, the first being
+ * `base` itself — around the routes they switch, which render in the active
+ * tab's panel (so the content is the panel its tab names).
+ */
+export function SectionTabs(props: { base: string; sections: { value: string; label: string }[]; label: string; children: ReactNode }) {
+  const { base, sections, label, children } = props;
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const first = sections[0]?.value;
   const current = pathname.slice(base.length).split('/')[1] || first;
   const pick = (next: string | null) => void navigate(next === first || !next ? base : `${base}/${next}`);
   return (
-    <Tabs value={current} onChange={pick}>
+    <Tabs value={current} onChange={pick} keepMounted={false}>
       <Tabs.List aria-label={label}>
         {sections.map((s) => (
           <Tabs.Tab key={s.value} value={s.value}>
@@ -49,6 +54,11 @@ export function SectionTabs({ base, sections, label }: { base: string; sections:
           </Tabs.Tab>
         ))}
       </Tabs.List>
+      {current ? (
+        <Tabs.Panel value={current} pt="md">
+          {children}
+        </Tabs.Panel>
+      ) : null}
     </Tabs>
   );
 }
@@ -64,22 +74,23 @@ export function AiArea() {
   return (
     <Stack>
       <Title order={2}>AI</Title>
-      <SectionTabs base="/ai" sections={SECTIONS} label="AI sections" />
-      <Routes>
-        <Route index element={<RunList />} />
-        <Route path="runs" element={<RunList />} />
-        <Route path="runs/:id" element={<WithId>{(id) => <RunTimeline key={id} runId={Number(id)} />}</WithId>} />
-        <Route path="assistants" element={<AssistantList />} />
-        <Route path="assistants/:id" element={<WithId>{(id) => <AssistantEditor key={id ?? 'new'} id={id} />}</WithId>} />
-        <Route path="pipelines" element={<PipelineList />} />
-        <Route path="pipelines/:id" element={<WithId>{(id) => <PipelineEditor key={id ?? 'new'} id={id} />}</WithId>} />
-        <Route path="schemas" element={<SchemaList />} />
-        <Route path="schemas/:id" element={<WithId>{(id) => <SchemaEditor key={id ?? 'new'} id={id} />}</WithId>} />
-        <Route path="conversations" element={<ConversationList siteId={siteId} />} />
-        <Route path="conversations/:id" element={<WithId>{(id) => <ConversationThread key={id} id={id ?? ''} />}</WithId>} />
-        <Route path="providers" element={<ProviderList />} />
-        <Route path="models" element={<ModelCatalog />} />
-      </Routes>
+      <SectionTabs base="/ai" sections={SECTIONS} label="AI sections">
+        <Routes>
+          <Route index element={<RunList />} />
+          <Route path="runs" element={<RunList />} />
+          <Route path="runs/:id" element={<WithId>{(id) => <RunTimeline key={id} runId={Number(id)} />}</WithId>} />
+          <Route path="assistants" element={<AssistantList />} />
+          <Route path="assistants/:id" element={<WithId>{(id) => <AssistantEditor key={id ?? 'new'} id={id} />}</WithId>} />
+          <Route path="pipelines" element={<PipelineList />} />
+          <Route path="pipelines/:id" element={<WithId>{(id) => <PipelineEditor key={id ?? 'new'} id={id} />}</WithId>} />
+          <Route path="schemas" element={<SchemaList />} />
+          <Route path="schemas/:id" element={<WithId>{(id) => <SchemaEditor key={id ?? 'new'} id={id} />}</WithId>} />
+          <Route path="conversations" element={<ConversationList siteId={siteId} />} />
+          <Route path="conversations/:id" element={<WithId>{(id) => <ConversationThread key={id} id={id ?? ''} />}</WithId>} />
+          <Route path="providers" element={<ProviderList />} />
+          <Route path="models" element={<ModelCatalog />} />
+        </Routes>
+      </SectionTabs>
     </Stack>
   );
 }

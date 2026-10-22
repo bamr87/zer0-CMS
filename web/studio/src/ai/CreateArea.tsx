@@ -26,13 +26,14 @@ export function CreateArea() {
   return (
     <Stack>
       <Title order={2}>Create</Title>
-      <SectionTabs base="/create" sections={SECTIONS} label="What to create" />
-      <Routes>
-        <Route index element={<CreatePage siteId={siteId} />} />
-        <Route path="briefs" element={<BriefList siteId={siteId} />} />
-        <Route path="briefs/:id" element={<Brief />} />
-        <Route path="conversations" element={<ConversationList siteId={siteId} />} />
-      </Routes>
+      <SectionTabs base="/create" sections={SECTIONS} label="What to create">
+        <Routes>
+          <Route index element={<CreatePage siteId={siteId} />} />
+          <Route path="briefs" element={<BriefList siteId={siteId} />} />
+          <Route path="briefs/:id" element={<Brief />} />
+          <Route path="conversations" element={<ConversationList siteId={siteId} />} />
+        </Routes>
+      </SectionTabs>
     </Stack>
   );
 }

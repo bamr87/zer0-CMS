@@ -345,7 +345,8 @@ function BriefView({ brief }: { brief: Brief }) {
       ) : null}
       {generate.isError ? <Alert color="red">{errorText(generate.error)}</Alert> : null}
       {brief.status === 'ready' || brief.status === 'applied' ? <Review brief={brief} /> : null}
-      {brief.status === 'ready' ? <Apply brief={brief} /> : null}
+      {/* The platform lets its owner (or staff) apply a brief, or anyone shown one an agent asked for. */}
+      {brief.status === 'ready' && (editable || brief.owner?.startsWith('agent:')) ? <Apply brief={brief} /> : null}
       {brief.status === 'applied' && brief.page ? (
         <Alert color="grape" title="Applied as a draft">
           <Group gap="xs">

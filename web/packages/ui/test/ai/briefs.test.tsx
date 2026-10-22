@@ -115,6 +115,18 @@ describe('<BriefWorkspace>', () => {
     expect(calls.find((c) => c.path === '/api/v2/ai/briefs/b1/apply/')?.body).toEqual({ parent: 3, page_type: 'cms.ArticlePage' });
   });
 
+  it('offers to apply a ready brief to whoever the platform lets: its owner, or anyone shown one an agent asked for', async () => {
+    const ready = { status: 'ready', markdown: 'Text.', can_edit: false };
+    const shared = fakePlatform({ ...places, 'GET /api/v2/ai/briefs/b1/': () => brief({ ...ready, owner: 'alice' }) });
+    const { unmount } = renderUi(<BriefWorkspace id="b1" />, { api: shared.api });
+    expect(await screen.findByText(/alice shares this with you/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Apply as a draft' })).toBeNull();
+    unmount();
+    const asked = fakePlatform({ ...places, 'GET /api/v2/ai/briefs/b1/': () => brief({ ...ready, owner: 'agent:seo' }) });
+    renderUi(<BriefWorkspace id="b1" />, { api: asked.api });
+    expect(await screen.findByRole('button', { name: 'Apply as a draft' })).toBeInTheDocument();
+  });
+
   it('says why a generation failed and asks again', async () => {
     const { api, calls } = fakePlatform({
       ...places,
