@@ -273,6 +273,26 @@ def test_a_new_page_gets_a_file_and_the_job_says_so(api, registered, checkout, d
     assert ImportedSource.objects.get(page=page).legacy_path == "pages/_posts/2026-09-01-cafe-notes.md"
 
 
+def test_a_new_page_never_takes_another_pages_file(api, registered, checkout, django_capture_on_commit_callbacks):
+    """A slug whose file name is a draft's (`unfinished_` → `unfinished`): that
+    file is the platform's own and unchanged, so the digest guard alone would
+    let the new page overwrite it."""
+    from datetime import UTC, datetime
+
+    from cms.models import ArticlePage, CollectionPage
+
+    draft = "pages/_posts/2026-08-01-unfinished.md"
+    before = (checkout / draft).read_bytes()
+    posts = CollectionPage.objects.get(collection="posts", path__startswith=Page.objects.get(slug="fixture").path)
+    page = ArticlePage(title="Unfinished, again", slug="unfinished_", date=datetime(2026, 8, 1, tzinfo=UTC), body=[])
+    posts.add_child(instance=page)
+    page.save_revision().publish()
+    job = start(api, registered["site"]["id"], "export", django_capture_on_commit_callbacks)
+    assert job.status == Job.Status.SUCCEEDED and job.result["conflict"] == 1
+    assert (checkout / draft).read_bytes() == before
+    assert "the file of another page" in next(line.text for line in job.lines.all() if line.text.startswith(draft))
+
+
 def test_one_sync_or_write_back_at_a_time(api, registered):
     site_id = registered["site"]["id"]
     first = api.post(f"/api/v2/sites/{site_id}/sync/", {}, format="json")  # queued: no commit, so not run

@@ -24,6 +24,7 @@ None of `catalog.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Djan
 - a file is written only while its bytes on disk still have the digest the platform last read or wrote there, and — when the job names one (`base`, `{path: digest}` as the caller saw it) — while that is still the indexed digest; the bytes are compared again right before the atomic rename;
 - a file whose rendering equals what is on disk is not written at all, so a write-back with nothing to do writes nothing;
 - a file changed (or deleted) by hand since is a conflict and stays as it is: sync first;
+- a page is never written into another page's file (a new page whose slug lands on a draft's file name, say): a conflict;
 - the file of a page deleted here is removed while it is unchanged since; a draft's or an unpublished page's file is left alone;
 - a changed page is rendered over its original file by line surgery, so only the keys and the body that changed move.
 

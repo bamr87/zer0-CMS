@@ -281,6 +281,9 @@ def run_export(job, ctx):
 
 
 def _write(root, file, digests, base, key) -> tuple[str, str]:
+    owner = ImportedSource.objects.filter(site_key=key, legacy_path=file.rel).exclude(page_id=file.page.pk).first()
+    if owner is not None:  # a page made here whose path is another page's file — a draft's, say
+        return "conflict", f"the file of another page (#{owner.page_id}); this page was not written — change its slug"
     data = file.text.encode("utf-8")
     try:
         disk = writer.read_bytes(root, file.rel)
