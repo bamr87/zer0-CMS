@@ -21353,6 +21353,8 @@
                         "maxLength": 120
                     },
                     "settings": {
+                        "type": "object",
+                        "additionalProperties": {},
                         "description": "What the kind needs; never a secret (README)."
                     },
                     "newsletter": {
@@ -21389,6 +21391,10 @@
                         "description": "Who it publishes as, as the target reports it."
                     },
                     "scopes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
                         "readOnly": true
                     },
                     "connected_at": {
@@ -21424,6 +21430,8 @@
                         "readOnly": true
                     },
                     "last_check": {
+                        "type": "object",
+                        "additionalProperties": {},
                         "readOnly": true
                     },
                     "last_error": {
@@ -21498,6 +21506,8 @@
                         "maxLength": 120
                     },
                     "settings": {
+                        "type": "object",
+                        "additionalProperties": {},
                         "description": "What the kind needs; never a secret (README)."
                     },
                     "newsletter": {
@@ -21634,48 +21644,62 @@
                     },
                     "key": {
                         "type": "string",
-                        "maxLength": 2048
+                        "readOnly": true
                     },
                     "urn": {
                         "type": "string",
-                        "description": "Empty for an attempt the target did not confirm.",
-                        "maxLength": 512
+                        "readOnly": true,
+                        "description": "Empty for an attempt the target did not confirm."
                     },
                     "state": {
-                        "$ref": "#/components/schemas/LedgerStateEnum"
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/LedgerStateEnum"
+                            }
+                        ],
+                        "readOnly": true
                     },
                     "kind": {
                         "type": "string",
-                        "maxLength": 8
+                        "readOnly": true
                     },
                     "posted_at": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "format": "date-time"
+                        "format": "date-time",
+                        "readOnly": true
                     },
                     "attempted_at": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "format": "date-time"
+                        "format": "date-time",
+                        "readOnly": true
                     },
                     "error": {
-                        "type": "string"
+                        "type": "string",
+                        "readOnly": true
                     },
                     "source_file": {
                         "type": "string",
-                        "maxLength": 512
+                        "readOnly": true
                     },
                     "post": {
-                        "type": "string",
+                        "type": [
+                            "string",
+                            "null"
+                        ],
                         "format": "uuid",
                         "readOnly": true
                     },
                     "page": {
-                        "type": "integer",
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
                         "readOnly": true
                     },
                     "latest": {
@@ -21691,14 +21715,21 @@
                     }
                 },
                 "required": [
+                    "attempted_at",
                     "channel",
                     "channel_kind",
                     "channel_name",
+                    "error",
                     "id",
                     "key",
+                    "kind",
                     "latest",
                     "page",
-                    "post"
+                    "post",
+                    "posted_at",
+                    "source_file",
+                    "state",
+                    "urn"
                 ]
             },
             "DistributionLedgerFile": {
@@ -21860,6 +21891,10 @@
                         "readOnly": true
                     },
                     "notes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
                         "readOnly": true
                     },
                     "reason": {
@@ -22046,6 +22081,10 @@
                         "readOnly": true
                     },
                     "notes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
                         "readOnly": true
                     },
                     "reason": {
@@ -22204,51 +22243,48 @@
                 "properties": {
                     "day": {
                         "type": "string",
-                        "format": "date"
+                        "format": "date",
+                        "readOnly": true
                     },
                     "impressions": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "clicks": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "reactions": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "comments": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "shares": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "engagements": {
                         "type": "integer",
-                        "maximum": 9223372036854775807,
-                        "minimum": 0,
-                        "format": "int64"
+                        "readOnly": true
                     },
                     "fetched_at": {
                         "type": "string",
-                        "format": "date-time"
+                        "format": "date-time",
+                        "readOnly": true
                     }
                 },
                 "required": [
-                    "day"
+                    "clicks",
+                    "comments",
+                    "day",
+                    "engagements",
+                    "fetched_at",
+                    "impressions",
+                    "reactions",
+                    "shares"
                 ]
             },
             "Document": {
@@ -25700,6 +25736,8 @@
                         "maxLength": 120
                     },
                     "settings": {
+                        "type": "object",
+                        "additionalProperties": {},
                         "description": "What the kind needs; never a secret (README)."
                     },
                     "newsletter": {

@@ -28,7 +28,11 @@ class DistributionChannelSerializer(serializers.ModelSerializer):
     kind_label = serializers.CharField(source="get_kind_display", read_only=True)
     newsletter = Visible(Newsletter, required=False, allow_null=True)
     newsletter_name = serializers.CharField(source="newsletter.name", read_only=True, default="")
-    settings = serializers.JSONField(required=False, help_text="What the kind needs; never a secret (README).")
+    settings = serializers.DictField(
+        child=serializers.JSONField(), required=False, help_text="What the kind needs; never a secret (README)."
+    )
+    scopes = serializers.ListField(child=serializers.CharField(), read_only=True)
+    last_check = serializers.DictField(child=serializers.JSONField(), read_only=True)
     credentials = serializers.DictField(
         child=serializers.CharField(allow_blank=True),
         write_only=True,
@@ -134,6 +138,7 @@ class DistributionPostSerializer(serializers.ModelSerializer):
     page_title = serializers.CharField(source="page.title", read_only=True, default="")
     story = serializers.UUIDField(source="story.public_id", read_only=True, default=None)
     guard = DistributionFindingSerializer(many=True, read_only=True)
+    notes = serializers.ListField(child=serializers.CharField(), read_only=True)
     created_by = serializers.CharField(source="created_by.username", read_only=True, default=None)
     approved_by = serializers.CharField(source="approved_by.username", read_only=True, default=None)
     can_publish = serializers.SerializerMethodField()
@@ -251,14 +256,15 @@ class DistributionStatisticSerializer(serializers.ModelSerializer):
     class Meta:
         model = Statistic
         fields = ["day", "impressions", "clicks", "reactions", "comments", "shares", "engagements", "fetched_at"]
+        read_only_fields = fields
 
 
 class DistributionLedgerEntrySerializer(serializers.ModelSerializer):
     channel = serializers.UUIDField(source="channel.public_id", read_only=True)
     channel_name = serializers.CharField(source="channel.name", read_only=True)
     channel_kind = serializers.CharField(source="channel.kind", read_only=True)
-    post = serializers.UUIDField(source="post.public_id", read_only=True, default=None)
-    page = serializers.IntegerField(source="post.page_id", read_only=True, default=None)
+    post = serializers.UUIDField(source="post.public_id", read_only=True, allow_null=True, default=None)
+    page = serializers.IntegerField(source="post.page_id", read_only=True, allow_null=True, default=None)
     latest = serializers.SerializerMethodField()
 
     class Meta:
@@ -280,6 +286,7 @@ class DistributionLedgerEntrySerializer(serializers.ModelSerializer):
             "page",
             "latest",
         ]
+        read_only_fields = fields
 
     @extend_schema_field(DistributionStatisticSerializer(allow_null=True))
     def get_latest(self, row):

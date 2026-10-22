@@ -9,6 +9,8 @@ import { createContext, use, type ReactNode } from 'react';
 
 /** A section of the AI area (G8). */
 export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models';
+/** A tab of the Distribution area (G5). */
+export type DistributionTab = 'queue' | 'channels' | 'ledger' | 'statistics';
 
 /** Where a workspace asks to go; the host maps it to a route or a panel. */
 export type Destination =
@@ -29,7 +31,11 @@ export type Destination =
   | { to: 'story'; id: string }
   | { to: 'books' }
   | { to: 'book'; id: number }
-  | { to: 'chapter'; book: number; id: number };
+  | { to: 'chapter'; book: number; id: number }
+  // Distribution (G5): the area, a post of the queue, a channel.
+  | { to: 'distribution'; tab?: DistributionTab }
+  | { to: 'distribution-post'; id: string }
+  | { to: 'channel'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.
