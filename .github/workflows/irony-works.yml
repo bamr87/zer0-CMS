@@ -2,12 +2,17 @@
 # gated pull requests with the hub's standard-ci alone; the real proof the site
 # works is the build half of its publish.yml, so that is the gate here, through
 # the Jekyll-theme option (PLAN P2): the site's `build` task (tools/jekyll_theme.py)
-# exports the site, runs its `before:` step there — render the previews,
-# transplant the vault into the _entries/ collection — and builds it with the
-# zer0 theme at its pinned tag and GitHub Pages' own builder (the image
-# actions/jekyll-build-pages runs), so no Ruby is installed. The build is then
-# compared with the recording of it (web/site/fixtures/irony-works/, PLAN P1);
-# a difference warns, as it does in pages.yml. Nothing is deployed —
+# exports the site, runs its `before:` step there — install js-yaml at the
+# version the recording published, render the previews, transplant the vault
+# into the _entries/ collection — and builds it with the zer0 theme at its
+# pinned tag and GitHub Pages' own builder (the image actions/jekyll-build-pages
+# runs), so no Ruby is installed. The build is then compared with the recording
+# of it (web/site/fixtures/irony-works/, PLAN P1): every input is pinned, so a
+# difference fails; when it is intended, commit the uploaded
+# site-manifest-irony-works artifact over web/site/fixtures/ in the same pull
+# request. It runs when anything that builds the site changes: the site, its
+# `render:` setting (workspace.yml), the workspace tool that reads it, the
+# option and its server, the comparison or the recording. Nothing is deployed —
 # bamr87/irony-works still publishes the live site. Not ported (see
 # docs/MONOREPO.md): the deploy, the advisory Alanis Gate on vault pull requests
 # and the scheduled Germinate loop, all still under
@@ -17,9 +22,9 @@ name: irony-works
 on:
   push:
     branches: [main]
-    paths: ["sites/irony-works/**", "tools/jekyll_theme.py", "web/site/fixtures/irony-works/**", ".github/workflows/irony-works.yml"]
+    paths: ["sites/irony-works/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "tools/site_manifest.py", "web/site/fixtures/irony-works/**", ".github/workflows/irony-works.yml"]
   pull_request:
-    paths: ["sites/irony-works/**", "tools/jekyll_theme.py", "web/site/fixtures/irony-works/**", ".github/workflows/irony-works.yml"]
+    paths: ["sites/irony-works/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "tools/site_manifest.py", "web/site/fixtures/irony-works/**", ".github/workflows/irony-works.yml"]
 
 permissions:
   contents: read
@@ -59,14 +64,20 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
+      - name: Record what the build wrote
+        run: python3 tools/site_manifest.py build "$RUNNER_TEMP/site" --site irony-works --built-with "$RUNNER_TEMP/built-with.json" --out "$RUNNER_TEMP/manifests/irony-works/manifest.json"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site-manifest-irony-works
+          path: ${{ runner.temp }}/manifests
+          retention-days: 30
       - name: Compare with the recorded build
-        continue-on-error: true
         run: |
           set -euo pipefail
-          python3 tools/site_manifest.py build "$RUNNER_TEMP/site" --site irony-works --built-with "$RUNNER_TEMP/built-with.json" --out "$RUNNER_TEMP/manifest.json"
           status=0
-          python3 tools/site_manifest.py compare web/site/fixtures/irony-works/manifest.json "$RUNNER_TEMP/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
+          python3 tools/site_manifest.py compare web/site/fixtures/irony-works/manifest.json "$RUNNER_TEMP/manifests/irony-works/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
           if [ "$status" -ne 0 ]; then
             { echo "### irony-works differs from its recording"; echo '```'; head -n 200 "$RUNNER_TEMP/compare.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-            echo "::warning::irony-works's build differs from web/site/fixtures/irony-works/manifest.json (the job summary says how)"
+            echo "::error::irony-works's build differs from web/site/fixtures/irony-works/manifest.json (the job summary says how); if that is intended, commit the site-manifest-irony-works artifact over web/site/fixtures/ in the same pull request"
+            exit 1
           fi

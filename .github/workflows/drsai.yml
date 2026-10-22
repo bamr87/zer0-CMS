@@ -3,7 +3,10 @@
 # (tools/jekyll_theme.py) renders it with the zer0 theme at the tag its
 # `render:` setting pins and builds it with GitHub Pages' own builder in Docker,
 # so no Ruby is installed (PLAN P2). The theme is pinned, so a theme release
-# cannot break the site unnoticed and there is no weekly run. Ported from
+# cannot break the site unnoticed and there is no weekly run; the workflow runs
+# when anything that builds the site changes — the site, its `render:` setting
+# (workspace.yml), the workspace tool that reads it, the option and its server
+# (pages.yml compares the build with its recording). Ported from
 # bamr87/drsai's ci.yml without its tag-triggered PyPI publish; the Pages
 # deploy stays in the original repository for now (see docs/MONOREPO.md).
 name: drsai
@@ -11,9 +14,9 @@ name: drsai
 on:
   push:
     branches: [main]
-    paths: ["sites/drsai/**", "tools/jekyll_theme.py", ".github/workflows/drsai.yml"]
+    paths: ["sites/drsai/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", ".github/workflows/drsai.yml"]
   pull_request:
-    paths: ["sites/drsai/**", "tools/jekyll_theme.py", ".github/workflows/drsai.yml"]
+    paths: ["sites/drsai/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", ".github/workflows/drsai.yml"]
 
 permissions:
   contents: read

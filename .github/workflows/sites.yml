@@ -5,9 +5,13 @@
 # with the zer0 theme at the tag its `render:` setting pins and builds it with
 # that setting's Jekyll server in Docker (PLAN P2). No Ruby is installed. One
 # matrix leg per site, each only when its own tree changes, and every site when
-# the option itself does. 2005 is also compared with the recording of its build
-# (web/site/fixtures/2005/, PLAN P1): nothing routes it, so pages.yml does not;
-# a difference warns, as it does there.
+# what builds them does: workspace.yml (each site's `render:` setting and tasks),
+# the workspace tool that reads it, the option and its server. 2005 is also
+# compared with the recording of its build (web/site/fixtures/2005/, PLAN P1):
+# nothing routes it, so pages.yml does not; a difference fails, since the
+# option reproduces the recording exactly. The fresh recording is uploaded as
+# the site-manifest-2005 artifact: when the change is intended, commit it over
+# web/site/fixtures/ in the same pull request.
 name: sites
 
 on:
@@ -19,8 +23,13 @@ on:
       - "sites/zer0-demo-garden/**"
       - "sites/2005/**"
       - "sites/wargames/**"
+      - "workspace.yml"
+      - "bin/zer0"
+      - "tools/workspace/**"
       - "tools/jekyll_theme.py"
       - "tools/jekyll/**"
+      - "tools/obsidian/**"
+      - "tools/site_manifest.py"
       - "web/site/fixtures/2005/**"
       - ".github/workflows/sites.yml"
   pull_request:
@@ -30,8 +39,13 @@ on:
       - "sites/zer0-demo-garden/**"
       - "sites/2005/**"
       - "sites/wargames/**"
+      - "workspace.yml"
+      - "bin/zer0"
+      - "tools/workspace/**"
       - "tools/jekyll_theme.py"
       - "tools/jekyll/**"
+      - "tools/obsidian/**"
+      - "tools/site_manifest.py"
       - "web/site/fixtures/2005/**"
       - ".github/workflows/sites.yml"
 
@@ -67,9 +81,10 @@ jobs:
           BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
         run: |
           all='["zer0-pages-remote","zer0-demo-cookbook","zer0-demo-garden","2005","wargames"]'
-          # Every site when there is nothing to diff against, or when the option, the 2005 recording or
-          # this workflow changed; otherwise the sites the change affects.
-          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null || ! git diff --quiet "$BASE" HEAD -- tools/jekyll_theme.py tools/jekyll web/site/fixtures/2005 .github/workflows/sites.yml; then
+          # Every site when there is nothing to diff against, or when what builds them changed — workspace.yml
+          # (a site's render: setting, its theme tag, server or before: step), the workspace tool, the option, its
+          # server, the comparison, the 2005 recording, this workflow; otherwise the sites the change affects.
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null || ! git diff --quiet "$BASE" HEAD -- workspace.yml bin/zer0 tools/workspace tools/jekyll_theme.py tools/jekyll tools/obsidian tools/site_manifest.py web/site/fixtures/2005 .github/workflows/sites.yml; then
             changed="$all"
           else
             changed=$(bin/zer0 affected --base "$BASE" --json | python -c 'import json, sys; print(json.dumps(json.load(sys.stdin)["affected"]))')
@@ -127,15 +142,23 @@ jobs:
         if: matrix.site.name == '2005'
         with:
           python-version: "3.14"
+      - name: Record what the build wrote
+        if: matrix.site.name == '2005'
+        run: python3 tools/site_manifest.py build "$RUNNER_TEMP/site" --site 2005 --built-with "$RUNNER_TEMP/built-with.json" --out "$RUNNER_TEMP/manifests/2005/manifest.json"
+      - uses: actions/upload-artifact@v7
+        if: matrix.site.name == '2005'
+        with:
+          name: site-manifest-2005
+          path: ${{ runner.temp }}/manifests
+          retention-days: 30
       - name: Compare with the recorded build
         if: matrix.site.name == '2005'
-        continue-on-error: true
         run: |
           set -euo pipefail
-          python3 tools/site_manifest.py build "$RUNNER_TEMP/site" --site 2005 --built-with "$RUNNER_TEMP/built-with.json" --out "$RUNNER_TEMP/manifest.json"
           status=0
-          python3 tools/site_manifest.py compare web/site/fixtures/2005/manifest.json "$RUNNER_TEMP/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
+          python3 tools/site_manifest.py compare web/site/fixtures/2005/manifest.json "$RUNNER_TEMP/manifests/2005/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
           if [ "$status" -ne 0 ]; then
             { echo "### 2005 differs from its recording"; echo '```'; head -n 200 "$RUNNER_TEMP/compare.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-            echo "::warning::2005's build differs from web/site/fixtures/2005/manifest.json (the job summary says how)"
+            echo "::error::2005's build differs from web/site/fixtures/2005/manifest.json (the job summary says how); if that is intended, commit the site-manifest-2005 artifact over web/site/fixtures/ in the same pull request"
+            exit 1
           fi

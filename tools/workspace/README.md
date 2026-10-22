@@ -29,7 +29,7 @@ Options go anywhere on the line, as `--name VALUE` or `--name=VALUE`, and any un
 |---|---|
 | `paths_exist` | A project's directory is missing, or a glob it claims in `paths:` matches no tracked file. |
 | `containers_registered` | A directory directly under `packages/`, `sites/` or `apps/` is not a project in `workspace.yml`. |
-| `workflows` | A project's `ci:` names a root workflow that does not exist, the workflow filters on paths but none is under the project, or `ci: none` gives no reason. |
+| `workflows` | A project's `ci:` names a root workflow that does not exist, the workflow filters on paths but none is under the project, or `ci: none` gives no reason. A site that workflow builds with the Jekyll-theme option (a `render:` setting and a `build` task) also needs every path the option reads besides the site — `workspace.yml`, `bin/zer0`, `tools/workspace/**`, `tools/jekyll_theme.py`, `tools/jekyll/**`, `tools/obsidian/**` (`OPTION_INPUTS` in `checks.py`) — so a theme-tag bump or a `before:` edit cannot merge unbuilt. |
 | `routes` | A project publishes `pages` with no `route:`, a `route: none` gives no reason, a route is not `/` or `/name/…/`, a routed project has no `pages` task, or two routes are the same or nest (only `/` may contain the others). |
 | `vendored` | A vendored copy or its source is missing, or the two differ by a single byte. |
 

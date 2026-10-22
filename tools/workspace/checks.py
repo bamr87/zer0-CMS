@@ -27,6 +27,11 @@ CONTAINERS = ("packages", "sites", "apps")
 RULES = ("paths_exist", "containers_registered", "workflows", "routes", "vendored")
 ROUTE = re.compile(r"/(?:[a-z0-9][a-z0-9._-]*/)*")
 NONE = re.compile(r"none[ \t\n\v\f\r]*[—-]?[ \t\n\v\f\r]*")  # what precedes the reason in `none — <reason>`
+# What a build through the Jekyll-theme option reads besides the site's own tree (PLAN P2): the site's
+# `render:` setting, the workspace tool that reads it, the option, its jekyll-4 image and the Obsidian
+# bridge it imports. A workflow that builds such a site must run when one of them changes, or a theme-tag
+# bump, a server change or a `before:` edit merges without a build.
+OPTION_INPUTS = ("workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**")
 VENDORED = {
     "missing_source": "{source} (source of {copy}) does not exist",
     "missing_copy": "{copy} (copy of {source}) does not exist — bin/zer0 vendor --write",
@@ -77,7 +82,9 @@ class Checks:
 
     def workflows(self):
         """A project's `ci:` names a root workflow that exists and, when that workflow filters
-        on paths, includes the project's own path. `none` must carry a reason."""
+        on paths, includes the project's own path — and, for a site the workflow builds with the
+        Jekyll-theme option (a `render:` setting and a `build` task), every path in OPTION_INPUTS.
+        `none` must carry a reason."""
         for p in self.manifest.projects:
             file = os.path.join(self.root, ".github/workflows", p.workflow or "")
             if p.workflow is None:
@@ -85,9 +92,12 @@ class Checks:
                     yield f"{p.name}: ci is `none` without a reason — say why nothing gates it"
             elif not os.path.isfile(file):
                 yield f"{p.name}: ci names .github/workflows/{p.workflow}, which does not exist"
-            elif (filters := _path_filters(file)) is not None and p.path != ".":
-                if not any(f == f"{p.path}/**" or f.startswith(f"{p.path}/") for f in filters):
+            elif (filters := _path_filters(file)) is not None:
+                if p.path != "." and not any(f == f"{p.path}/**" or f.startswith(f"{p.path}/") for f in filters):
                     yield f"{p.name}: {p.workflow} filters on paths but none is under {p.path}/"
+                missing = [i for i in OPTION_INPUTS if i not in filters] if p.render and p.task("build") else []
+                if missing:
+                    yield f"{p.name}: {p.workflow} builds it with the Jekyll-theme option but does not filter on {', '.join(missing)}"
 
     def routes(self):
         """Every project that publishes `pages` has a place in the one Pages deploy (ADR 0002 §4):

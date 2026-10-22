@@ -6,8 +6,9 @@ every path is listed with its type; a page's text is its own content — the
 words, not the markup, and not the layout a theme puts around them, so a
 renderer in another design system can match it; feeds keep their entries and
 dates in order; sitemaps and redirects are read; the same tree always gives the
-same bytes; a comparison names exactly what moved; and the rebuild is
-pages.yml's, in its time zone and without the caller's build variables. No test
+same bytes; a comparison names exactly what moved; the rebuild is pages.yml's,
+in its time zone and without the caller's build variables; and in CI a
+difference fails a pull request for every site on the Jekyll-theme option. No test
 runs Jekyll or touches the network: the rebuild's commands are replaced by
 functions that write a tree. Run: `python3 -m unittest tools/tests/test_site_manifest.py`.
 """
@@ -667,6 +668,22 @@ class RebuildTest(TempTree):
         ):
             self.assertIn(fragment, workflow)
         self.assertNotIn("JEKYLL_ENV", workflow)
+
+    def test_a_difference_fails_a_pull_request_for_every_site_on_the_option(self):
+        """PLAN P2: an option build pins every input, so a difference from the recording is a change that the
+        pull request making it re-records. pages.yml fails such a leg on a pull request (a push only warns, so a
+        deploy is never blocked); sites.yml (2005) and irony-works.yml fail on any difference."""
+        workflows = sm.ROOT / ".github" / "workflows"
+        pages = (workflows / "pages.yml").read_text(encoding="utf-8")
+        self.assertIn("PARITY_GATE: ${{ inputs.check || (matrix.site.render && github.event_name == 'pull_request') }}", pages)
+        self.assertEqual(2, pages.count("continue-on-error: ${{ env.PARITY_GATE != 'true' }}"), "the record and compare steps")
+        self.assertIn('test "$PARITY_GATE" != "true"', pages)
+        for name in ("sites.yml", "irony-works.yml"):
+            text = (workflows / name).read_text(encoding="utf-8")
+            compare = text[text.index("- name: Compare with the recorded build") :]
+            with self.subTest(workflow=name):
+                self.assertNotIn("continue-on-error", compare)
+                self.assertIn("exit 1", compare)
 
 
 if __name__ == "__main__":

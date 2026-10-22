@@ -283,7 +283,9 @@ projects:
     route: none — bamr87/irony-works still deploys it; it builds here with the Jekyll-theme option after its node transplant step, and routes at /irony-works/ once its deploy moves here (C4)
     ci: irony-works.yml
     site: "."
-    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages, before: npm i js-yaml --no-save && node engine/scripts/preview.mjs && node engine/scripts/transplant.mjs}
+    # Its build publishes node_modules/ (its exclude: replaces Jekyll 3's defaults; PLAN P1),
+    # so js-yaml and argparse are pinned at the versions its recording holds.
+    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages, before: npm i js-yaml@5.5.0 argparse@3.0.3 --no-save && node engine/scripts/preview.mjs && node engine/scripts/transplant.mjs}
     tasks:
       setup: npm i js-yaml --no-save
       check: for f in engine/scripts/*.mjs; do node --check "$f" || exit 1; done

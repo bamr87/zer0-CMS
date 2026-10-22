@@ -10,6 +10,8 @@
 # is built by tools/jekyll_theme.py — the zer0 theme at the tag the setting pins, built by a
 # Jekyll server in Docker (GitHub Pages' own builder, or the jekyll-4 image of
 # tools/jekyll/Dockerfile) — and installs no Ruby; zer0-pages still builds with its Gemfile.
+# The workflow runs when any of that changes: a site, the setting (workspace.yml), the
+# workspace tool that reads it, the option and its server, or a recording.
 #
 # Pull requests build and verify everything and deploy nothing. A push to main deploys
 # only while vars.PAGES_DEPLOY_ENABLED is 'true' (default OFF). The default target is this
@@ -19,17 +21,20 @@
 # Every build is also compared with the recording of that site's Jekyll build (PLAN P1,
 # web/site/fixtures/README.md): `tools/site_manifest.py` records what it wrote — paths, each
 # page's title and text, feed entries, sitemap URLs, redirects, the gems and theme commit it
-# resolved — and a difference warns, with the fresh recording uploaded as the
-# site-manifest-<site> artifact to commit when the change is intended. A dispatch with
-# `check` fails on a difference instead.
+# resolved — and the fresh recording is uploaded as the site-manifest-<site> artifact, to
+# commit when the change is intended. A site on the Jekyll-theme option reproduces its
+# recording exactly (P2), so on a pull request a difference fails its leg until the same
+# pull request re-records it; zer0-pages, still on its Gemfile, warns. A push to main only
+# warns, so a difference never stands between a site and its deploy; a dispatch with
+# `check` fails on any difference.
 name: pages
 
 on:
   push:
     branches: [main]
-    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "tools/site_manifest.py", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "web/site/fixtures/**", ".github/workflows/pages.yml"]
+    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/site_manifest.py", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "web/site/fixtures/**", ".github/workflows/pages.yml"]
   pull_request:
-    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "tools/site_manifest.py", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "web/site/fixtures/**", ".github/workflows/pages.yml"]
+    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/site_manifest.py", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "web/site/fixtures/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
     inputs:
       check:
@@ -85,6 +90,9 @@ jobs:
       # jekyll-github-metadata aborts without a repository it can infer; a project's own
       # `pages` task may name a different one.
       PAGES_REPO_NWO: ${{ github.repository }}
+      # 'true' where a difference from the recording fails this leg: a site on the Jekyll-theme
+      # option in a pull request, or any site when a dispatch asks for `check`.
+      PARITY_GATE: ${{ inputs.check || (matrix.site.render && github.event_name == 'pull_request') }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -141,15 +149,15 @@ jobs:
             echo "::warning::$NAME has Liquid warnings (above): content was dropped from those pages"
           fi
       # PLAN P1: what this build wrote, against the recording of the site's Jekyll build. It
-      # never stands between a site and its deploy — the two steps continue on an error unless a
-      # dispatch asked for `check` — and the interpreter is the one the recordings were written
-      # with, so a parser change in another Python release cannot pass for a change to a site.
+      # never stands between a site and its deploy — on a push the two steps continue on an
+      # error — and the interpreter is the one the recordings were written with, so a parser
+      # change in another Python release cannot pass for a change to a site.
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
       - name: Record what the build wrote
         id: record
-        continue-on-error: ${{ inputs.check != true }}
+        continue-on-error: ${{ env.PARITY_GATE != 'true' }}
         env:
           NAME: ${{ matrix.site.name }}
           SOURCE: ${{ matrix.site.bundle_dir }}
@@ -169,18 +177,18 @@ jobs:
           retention-days: 30
       - name: Compare with the recorded build
         if: steps.record.outcome == 'success'
-        continue-on-error: ${{ inputs.check != true }}
+        continue-on-error: ${{ env.PARITY_GATE != 'true' }}
         env:
           NAME: ${{ matrix.site.name }}
-          CHECK: ${{ inputs.check }}
         run: |
           set -euo pipefail
           status=0
           python3 tools/site_manifest.py compare "web/site/fixtures/$NAME/manifest.json" "$RUNNER_TEMP/manifests/$NAME/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
           if [ "$status" -ne 0 ]; then
             { echo "### $NAME differs from its recording"; echo '```'; head -n 200 "$RUNNER_TEMP/compare.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-            echo "::warning::$NAME's build differs from web/site/fixtures/$NAME/manifest.json (the job summary says how); if that is intended, commit the site-manifest-$NAME artifact over web/site/fixtures/"
-            test "$CHECK" != "true"
+            level=$([ "$PARITY_GATE" = "true" ] && echo error || echo warning)
+            echo "::$level::$NAME's build differs from web/site/fixtures/$NAME/manifest.json (the job summary says how); if that is intended, commit the site-manifest-$NAME artifact over web/site/fixtures/ in this pull request"
+            test "$PARITY_GATE" != "true"
           fi
       - uses: actions/upload-artifact@v7
         with:

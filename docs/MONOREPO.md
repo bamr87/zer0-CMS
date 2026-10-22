@@ -62,7 +62,7 @@ bin/zer0 doctor [--strict]          # the CMS's zer0 doctor over every zer0 site
 
 - a directory under `packages/`, `sites/` or `apps/` is not registered;
 - a project's path or claimed glob matches nothing;
-- a project's workflow is missing or no longer filters on its path;
+- a project's workflow is missing or no longer filters on its path — or, for a site it builds with the Jekyll-theme option, on what the option reads besides the site (`workspace.yml`, the workspace tool, the option and its server);
 - a project says `ci: none` without a reason;
 - a vendored copy has drifted from its source.
 
