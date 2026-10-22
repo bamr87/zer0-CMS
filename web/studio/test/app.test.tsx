@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
-import { App, pathFor } from '../src/App';
+import { App, bookmarkletFor, pathFor } from '../src/App';
 import { AREAS } from '../src/areas';
 import { fakePlatform, noStream, pageDetail, Providers, Reply, type Handler } from '../../test/harness';
 
@@ -102,6 +102,17 @@ describe('the shell and its routes', () => {
     expect(await screen.findByText('All sources')).toBeInTheDocument();
     renderStudio('/research/sources/s1', platformFor({ 'GET /api/v2/research/sources/s1/': () => new Reply(404, { error: { code: 'resource.not_found', message: 'no source s1', status: 404, details: [] } }) }));
     expect(await screen.findByText('no source s1')).toBeInTheDocument();
+  });
+
+  it('takes a page from the bookmarklet into Research, to capture on the person’s word', async () => {
+    const routes = { 'GET /api/v2/research/collections/': () => EMPTY, 'GET /api/v2/research/sources/': () => EMPTY };
+    const platform = renderStudio('/research?url=https%3A%2F%2Fexample.com%2Fa', platformFor(routes));
+    expect(await screen.findByLabelText('Page address')).toHaveValue('https://example.com/a');
+    expect(platform.calls.some((c) => c.method === 'POST')).toBe(false);
+    expect(screen.getByText(bookmarkletFor(window.location.origin))).toBeInTheDocument();
+    expect(bookmarkletFor('https://cms.example')).toBe(
+      "javascript:void(open('https://cms.example/studio/research?url='+encodeURIComponent(location.href)))",
+    );
   });
 
   it('opens the editor at /write/:id and the inbox for one run at /review?run=', async () => {

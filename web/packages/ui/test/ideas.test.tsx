@@ -140,6 +140,66 @@ describe('<Clusters>', () => {
   });
 });
 
+const brief = (status: string, rest: Record<string, unknown> = {}) => ({
+  id: 'br1',
+  owner: 'editor',
+  site: null,
+  visibility: 'private',
+  created_at: '',
+  updated_at: '',
+  title: 'Restore drills',
+  prompt: 'Write a piece from this idea.',
+  source_text: '',
+  assistant: 'aw',
+  pipeline: null,
+  output_schema: null,
+  page_type: 'cms.ArticlePage',
+  parent: null,
+  status,
+  result: null,
+  markdown: status === 'ready' ? '# Restore drills\n\nRun one every quarter.' : '',
+  metadata: {},
+  page: null,
+  run: null,
+  error: '',
+  conversation: null,
+  source_message: null,
+  applied_at: null,
+  ...rest,
+});
+
+describe('<IdeaDrawer> to a brief', () => {
+  it('promotes to a brief the Article writer writes now, then makes it a draft from its card', async () => {
+    let promoted = false;
+    let status = 'generating';
+    const section = { ...pageDetail(), id: 3, title: 'Posts', type_label: 'Collection page' };
+    const ideaRef = { id: 'br1', title: 'Restore drills', status: 'generating' };
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/ideas/i1/': () => idea('i1', 'Restore drills', promoted ? { status: 'promoted', brief: ideaRef } : {}),
+      'GET /api/v2/research/sources/': () => page([]),
+      'GET /api/v2/content/pages/': () => ({ count: 1, next: null, previous: null, results: [section] }),
+      'POST /api/v2/ideas/i1/promote/': () => {
+        promoted = true;
+        return { idea: idea('i1', 'Restore drills', { status: 'promoted', brief: ideaRef }), brief: brief('generating'), page_id: null, run: { id: 61, status: 'queued', links: { self: '', stream: '' } } };
+      },
+      'GET /api/v2/ai/briefs/br1/': () => brief(status),
+      'POST /api/v2/ai/briefs/br1/apply/': () => ({ brief: brief('applied', { page: 14 }), page_id: 14, suggestions: [1, 2] }),
+    });
+    const { go } = renderUi(<IdeaDrawer ideaId="i1" boards={[]} onClose={() => undefined} />, { api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Promote' }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ into: 'brief', generate: true }));
+    expect(await screen.findByText('Being written…')).toBeInTheDocument();
+    status = 'ready';
+    expect(await screen.findByText(/Run one every quarter\./, {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Make it a draft' })).toBeDisabled();
+    await userEvent.click(screen.getByLabelText('Where the draft goes', { selector: 'input' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Posts (Collection page)' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Make it a draft' }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith({ to: 'page', id: 14 }));
+    expect(calls.filter((c) => c.method === 'POST').at(-1)).toMatchObject({ path: '/api/v2/ai/briefs/br1/apply/', body: { parent: 3 } });
+  });
+});
+
 describe('<IdeaDrawer>', () => {
   it('promotes an idea to an article draft and opens it', async () => {
     const section = { ...pageDetail(), id: 3, title: 'Posts', type_label: 'Collection page' };

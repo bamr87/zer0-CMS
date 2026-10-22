@@ -162,11 +162,16 @@ function Ideas() {
   );
 }
 
+/** Opens the studio's Research area on the page a person is reading, to capture it there. */
+export const bookmarkletFor = (origin: string) =>
+  `javascript:void(open('${origin}/studio/research?url='+encodeURIComponent(location.href)))`;
+
 function Research() {
   const { siteId } = useSite();
+  const [params] = useSearchParams();
   return (
     <Section title="Research">
-      <ResearchWorkspace siteId={siteId} />
+      <ResearchWorkspace siteId={siteId} captureUrl={params.get('url') ?? undefined} bookmarklet={bookmarkletFor(window.location.origin)} />
     </Section>
   );
 }

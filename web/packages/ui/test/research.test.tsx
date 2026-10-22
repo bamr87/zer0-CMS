@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { PageResearch, ResearchWorkspace, SourceView } from '../src';
 import { AskPanel } from '../src/research/AskPanel';
 import { CaptureSource } from '../src/research/CaptureSource';
+import { ResearchBrief } from '../src/research/ResearchBrief';
 import { fakePlatform, renderUi, type Call } from '../../../test/harness';
 
 const page = (results: unknown[]) => ({ next: null, previous: null, results });
@@ -147,6 +148,35 @@ describe('<AskPanel>', () => {
     await userEvent.type(screen.getByLabelText(/Ask your sources/), 'Which disk?');
     await userEvent.click(screen.getByRole('button', { name: 'Ask' }));
     await waitFor(() => expect(posts(calls).at(-1)?.body).toEqual({ text: 'Which disk?', collection: 'c1' }));
+  });
+});
+
+describe('<ResearchBrief>', () => {
+  it('writes a research brief from a collection as a run, shows it, and keeps it as a note', async () => {
+    let final = false;
+    const { api, calls } = fakePlatform({
+      'POST /api/v2/research/collections/c1/research-brief/': () => ({ run: run(50) }),
+      'GET /api/v2/agent-runs/50/': () =>
+        final
+          ? { id: 50, status: 'succeeded', is_final: true, output: { markdown: '## Target intent\n\nRestore with confidence.' }, error: '' }
+          : { id: 50, status: 'running', is_final: false, output: {}, error: '' },
+      'POST /api/v2/research/sources/': () => source({ kind: 'note' }),
+    });
+    renderUi(<ResearchBrief collection="c1" />, { api });
+    await userEvent.type(screen.getByLabelText('Topic'), 'restores');
+    await userEvent.click(screen.getByRole('button', { name: 'Write a research brief' }));
+    await waitFor(() => expect(posts(calls).at(-1)?.body).toEqual({ topic: 'restores' }));
+    final = true;
+    expect(await screen.findByLabelText('Research brief', {}, { timeout: 4000 })).toHaveTextContent('Restore with confidence.');
+    await userEvent.click(screen.getByRole('button', { name: 'Keep it as a note' }));
+    await waitFor(() =>
+      expect(posts(calls).at(-1)?.body).toEqual({
+        kind: 'note',
+        title: 'Research brief: restores',
+        text: '## Target intent\n\nRestore with confidence.',
+        collection: 'c1',
+      }),
+    );
   });
 });
 

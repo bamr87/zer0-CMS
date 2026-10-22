@@ -12,11 +12,17 @@ import { useRun } from './runs';
 
 type Way = 'url' | 'upload' | 'note' | 'search';
 
-export function CaptureSource({ collection }: { collection: string | null }) {
+interface Props {
+  collection: string | null;
+  /** A page address to start from: what a bookmarklet hands the host, to capture on the person's word. */
+  initialUrl?: string;
+}
+
+export function CaptureSource({ collection, initialUrl = '' }: Props) {
   const api = useApi();
   const qc = useQueryClient();
   const [way, setWay] = useState<Way>('url');
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(initialUrl);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');

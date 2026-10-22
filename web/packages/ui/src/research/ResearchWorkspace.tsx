@@ -2,7 +2,7 @@
 // from the web, documents, notes, feed items, web search hits — with their
 // fetch status; asking the sources; feeds; and a research brief on a topic.
 // A source opens on its own page (SourceView), as the host routes it.
-import { Alert, Anchor, Badge, Button, Group, Loader, NavLink, Stack, Table, Tabs, Text, TextInput } from '@mantine/core';
+import { Alert, Anchor, Badge, Button, Code, Group, Loader, NavLink, Stack, Table, Tabs, Text, TextInput } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -17,7 +17,15 @@ import { WAITING } from './runs';
 const KIND: Record<string, string> = { url: 'web page', feed: 'feed item', document: 'document', note: 'note' };
 const STATUS_COLOR: Record<string, string> = { ready: 'teal', failed: 'red', pending: 'yellow', fetching: 'yellow' };
 
-export function ResearchWorkspace({ siteId }: { siteId?: number }) {
+interface Props {
+  siteId?: number;
+  /** A page address to capture, as a bookmarklet handed it to the host; captured only when the person says so. */
+  captureUrl?: string;
+  /** The host's bookmarklet, shown to copy into a browser's bookmarks (only the host knows its own address). */
+  bookmarklet?: string;
+}
+
+export function ResearchWorkspace({ siteId, captureUrl, bookmarklet }: Props) {
   const api = useApi();
   const qc = useQueryClient();
   const [collection, setCollection] = useState<string | null>(null);
@@ -59,7 +67,12 @@ export function ResearchWorkspace({ siteId }: { siteId?: number }) {
         </Tabs.List>
         <Tabs.Panel value="sources" pt="md">
           <Stack>
-            <CaptureSource collection={collection} />
+            <CaptureSource collection={collection} initialUrl={captureUrl} />
+            {bookmarklet ? (
+              <Text size="xs" c="dimmed">
+                Capture from any page: save <Code>{bookmarklet}</Code> as a bookmark, and click it on the page.
+              </Text>
+            ) : null}
             <SourceList collection={collection} />
           </Stack>
         </Tabs.Panel>
