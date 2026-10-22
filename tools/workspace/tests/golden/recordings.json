@@ -747,6 +747,28 @@
     },
     {
      "argv": [
+      "affected",
+      "--files",
+      "schemas/openapi/o.json,schemas/zer0.schema.json",
+      "--json"
+     ],
+     "exit": 0,
+     "stdout": "{\"affected\":[\"cms-extension\",\"content\"],\"direct\":[\"cms-extension\",\"content\"],\"unowned\":[]}\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "affected",
+      "--files",
+      "schemas/events/x.json",
+      "--json"
+     ],
+     "exit": 0,
+     "stdout": "{\"affected\":[\"content\"],\"direct\":[\"content\"],\"unowned\":[]}\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
       "run",
       "setup",
       "--all",
@@ -1287,6 +1309,29 @@
      ],
      "exit": 0,
      "stdout": "==> root-app: check  (.)\n    $ true\n==> theme: check  (packages/theme)\n    $ true\n\n  skipped  root-app\n  skipped  theme\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "run",
+      "test",
+      "theme",
+      "site"
+     ],
+     "exit": 1,
+     "stdout": "==> theme: test  (packages/theme/lib)\n    $ exit 3\n\n  failed   theme (0.0s)\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "run",
+      "test",
+      "--keep-going",
+      "theme",
+      "site"
+     ],
+     "exit": 1,
+     "stdout": "==> theme: test  (packages/theme/lib)\n    $ exit 3\n\n  failed   theme (0.0s)\n  skipped  site\n",
      "stderr": ""
     },
     {
@@ -1943,6 +1988,95 @@
      "exit": 2,
      "stdout": "",
      "stderr": "bin/zer0: <root>/CHANGELOG.md not found — the changelog is what says which tags are releases\n"
+    }
+   ]
+  },
+  {
+   "scenario": "missing-project-dir",
+   "steps": [
+    {
+     "argv": [
+      "check"
+     ],
+     "exit": 1,
+     "stdout": "  ✗ paths_exist: site: sites/gone/ does not exist\n  ✗ containers_registered: sites/site/ is not registered in workspace.yml — add it under projects:\n\n2 finding(s).\n",
+     "stderr": ""
+    }
+   ]
+  },
+  {
+   "scenario": "vendored-missing-copy",
+   "steps": [
+    {
+     "argv": [
+      "check"
+     ],
+     "exit": 1,
+     "stdout": "  ✗ vendored: src/tokens.css (copy of packages/theme/tokens.css) does not exist — bin/zer0 vendor --write\n\n1 finding(s).\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "vendor"
+     ],
+     "exit": 1,
+     "stdout": "  missing_copy   src/tokens.css\n                 ← packages/theme/tokens.css\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "vendor",
+      "--write"
+     ],
+     "exit": 0,
+     "stdout": "re-vendored src/tokens.css\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "check"
+     ],
+     "exit": 0,
+     "stdout": "workspace OK — 3 projects, 1 vendored copies, every rule green.\n",
+     "stderr": ""
+    }
+   ]
+  },
+  {
+   "scenario": "vendored-missing-source",
+   "steps": [
+    {
+     "argv": [
+      "check"
+     ],
+     "exit": 1,
+     "stdout": "  ✗ vendored: packages/theme/tokens.css (source of src/tokens.css) does not exist\n\n1 finding(s).\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "vendor"
+     ],
+     "exit": 1,
+     "stdout": "  missing_source src/tokens.css\n                 ← packages/theme/tokens.css\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "vendor",
+      "--write"
+     ],
+     "exit": 0,
+     "stdout": "Every vendored copy already matches its source.\n",
+     "stderr": ""
+    },
+    {
+     "argv": [
+      "check"
+     ],
+     "exit": 1,
+     "stdout": "  ✗ vendored: packages/theme/tokens.css (source of src/tokens.css) does not exist\n\n1 finding(s).\n",
+     "stderr": ""
     }
    ]
   }

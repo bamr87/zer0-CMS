@@ -189,6 +189,7 @@ EDITS = {  # scenario: one (old, new) edit of MANIFEST, the way the Ruby suite b
     "version-2": ("version: 1", "version: 2"),
     "bad-vendored": ("  - copy: src/tokens.css\n    source: packages/theme/tokens.css\n", "  - copy: src/tokens.css\n"),
     "bad-task-env": ("        cwd: lib\n", "        cwd: lib\n        env: [A]\n"),
+    "missing-project-dir": ("path: sites/site", "path: sites/gone"),
 }
 
 ROUTES = {  # scenario: with_route(...) arguments
@@ -213,6 +214,8 @@ AFTER = {  # scenario: files written (text) or deleted (None) once the workspace
         ".github/workflows/theme.yml": 'on:\n  pull_request:\n    paths: ["elsewhere/**"]\n',
     },
     "tags-no-changelog": {"CHANGELOG.md": None},
+    "vendored-missing-copy": {"src/tokens.css": None},
+    "vendored-missing-source": {"packages/theme/tokens.css": None},
 }
 
 

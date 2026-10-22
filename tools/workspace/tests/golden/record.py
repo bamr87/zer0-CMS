@@ -50,6 +50,9 @@ def frozen_steps(projects: list[str]) -> list[list[str]]:
     steps += [["affected", "--files", "packages/zer0-image-generator/lib/x.rb,docs/README.md", "--json"]]
     steps += [["affected", "--files", "docs/README.md"], ["affected", "--files=.github/workflows/sites.yml", "--json"]]
     steps += [["affected", "--files", "content/x.py,src/a.ts,sites/drsai/y.md,schemas/openapi/o.json"]]
+    # The longest literal prefix wins: content's schemas/openapi/** over the extension's schemas/**.
+    steps += [["affected", "--files", "schemas/openapi/o.json,schemas/zer0.schema.json", "--json"]]
+    steps += [["affected", "--files", "schemas/events/x.json", "--json"]]
     steps += [["run", t, "--all", "--dry-run"] for t in TASKS]
     steps += [["run", "test", "drsai", "books", "--dry-run"], ["run", "pages", "books", "parodynews", "--dry-run"]]
     steps += [["run", "test", "--dry-run", "drsai", "--", "--keep-going"], ["run", "--dry-run", "test", "--al", "aieo"]]
@@ -73,6 +76,7 @@ SMALL_STEPS = [
     ["affected", "--files", "packages/themes/x,src/deep/file.ts,package.json,.github/workflows/x.yml", "--json"],
     ["affected"],
     ["run", "test", "theme"], ["run", "test", "--keep-going"], ["run", "check", "--dry-run"],
+    ["run", "test", "theme", "site"], ["run", "test", "--keep-going", "theme", "site"],
     ["run", "check", "root-app", "theme"], ["run", "build", "--dry-run", "root-app", "site"],
     ["doctor"], ["doctor", "--strict"], ["doctor", "--verbose"], ["doctor", "theme"],
 ]
@@ -111,6 +115,9 @@ CASES: dict[str, list[list[str]]] = {
     "bad-task-env": [["list"]],
     "tags": [["tags", "--json"], ["tags"], ["tags", "--delete"], ["tags", "--json"], ["tags", "--delete"]],
     "tags-no-changelog": [["tags"]],
+    "missing-project-dir": [["check"]],
+    "vendored-missing-copy": [["check"], ["vendor"], ["vendor", "--write"], ["check"]],
+    "vendored-missing-source": [["check"], ["vendor"], ["vendor", "--write"], ["check"]],
 }
 
 
