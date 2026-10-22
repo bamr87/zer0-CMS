@@ -1,15 +1,28 @@
 /**
- * Dates for front matter: date-fns patterns, formatted and parsed in an IANA
- * time zone through `@date-fns/tz` (ADR 0006 decision 9 — the libraries the
- * hand-rolled subset over `Intl` imitated). Patterns are date-fns's, with
- * Front Matter's Moment spellings `YYYY` and `DD` read as `yyyy` and `dd`, and
- * text in single quotes literal (`yyyy-MM-dd'T'HH:mm:ssXXX`).
+ * Dates for front matter: formatted and parsed by date-fns in an IANA time
+ * zone through `@date-fns/tz` (ADR 0006 decision 9 — the libraries the
+ * hand-rolled subset over `Intl` imitated).
+ *
+ * A pattern is a setting a person types (`zer0Cms.date.format`, a content
+ * type's field), so it is read in the vocabulary file mode has always
+ * documented rather than as a date-fns program:
+ *
+ *   yyyy yy   year            MMMM MMM MM M  month        dd d do  day
+ *   EEEE EEE  weekday         HH H           hour 0–23    hh h     hour 1–12
+ *   mm m      minute          ss s           second       SSS      millisecond
+ *   aaa a     am/pm           XXX            UTC offset (`Z` when zero)
+ *
+ * Front Matter's Moment spellings mean what they meant there (`YYYY`, `YY`,
+ * `DD`, `D`, `Do`), text in single quotes is literal, and so is every other
+ * letter: `yyyy-MM-ddTHH:mm` writes a `T`. Left to date-fns, an unquoted `T`
+ * is the time as milliseconds since 1970 — written into a file — and `D` and
+ * `YY` throw.
  *
  * Three rules hold whatever the libraries do:
  *
  *   - **Nothing throws in a render.** A zone the host does not know (a typo in
- *     `zer0Cms.date.timezone`) is the host's zone; a pattern date-fns refuses
- *     formats as ISO 8601, which is still a true and readable date.
+ *     `zer0Cms.date.timezone`) is the host's zone; a pattern that still fails
+ *     formats as ISO 8601 and parses as `null`.
  *   - **Every `Date` returned is a plain `Date`**, never a zoned one, so its
  *     `toISOString()` is UTC like everywhere else.
  *   - **`parseDate` never guesses.** An existing `Date`, an epoch number, ISO
@@ -41,9 +54,44 @@ export function timezoneOffset(date: Date, timeZone?: string): number {
   return zone ? tzOffset(zone, date) : -date.getTimezoneOffset();
 }
 
-/** FM accepted Moment-style `YYYY`/`DD`; normalise them to the date-fns spelling. */
+/** The tokens a pattern may use, as date-fns spells them (the table above). */
+const TOKENS: ReadonlySet<string> = new Set(
+  'yyyy yy MMMM MMM MM M dd d do EEEE EEE HH H hh h mm m ss s SSS aaa a XXX'.split(' '),
+);
+/** Front Matter's Moment spellings, as date-fns spells them. */
+const MOMENT: Readonly<Record<string, string>> = { YYYY: 'yyyy', YY: 'yy', DD: 'dd', D: 'd', Do: 'do' };
+
+/**
+ * A pattern's pieces, in date-fns's order: a quote (`''`, read before anything
+ * else), quoted text (its inside in group 1), a run of one letter (or `Do`),
+ * other text.
+ */
+const PIECES = /''|'((?:[^']|'')*)'?|[Dd]o|([A-Za-z])\2*|[^A-Za-z']+/g;
+
+/**
+ * `pattern` as date-fns reads it: the vocabulary's tokens (Moment's spellings
+ * translated), and everything else — quoted text, other letters, punctuation —
+ * as one quoted literal between them, so it is written as it was typed.
+ */
 export function normalizePattern(pattern: string): string {
-  return pattern.replace(/YYYY/g, 'yyyy').replace(/DD/g, 'dd');
+  // Quoted, with each quote doubled; text of quotes alone is `''` per quote, since
+  // date-fns reads a leading `''` as one quote before it looks for quoted text.
+  const quote = (text: string) => {
+    const doubled = text.replace(/'/g, "''");
+    return /^'*$/.test(text) ? doubled : `'${doubled}'`;
+  };
+  let out = '';
+  let text = '';
+  for (const [run, quoted] of pattern.matchAll(PIECES)) {
+    const token = MOMENT[run] ?? run;
+    if (quoted === undefined && TOKENS.has(token)) {
+      out += quote(text) + token;
+      text = '';
+    } else {
+      text += run === "''" ? "'" : (quoted?.replace(/''/g, "'") ?? run);
+    }
+  }
+  return out + quote(text);
 }
 
 /** Format `date` with `pattern` in `timeZone` (IANA id) or the host's zone. */
@@ -56,7 +104,7 @@ export function formatDate(date: Date, pattern: string, timeZone?: string): stri
   try {
     return format(zoned, normalizePattern(pattern));
   } catch {
-    // An unescaped letter date-fns has no token for: ISO 8601 still says when.
+    // Nothing in the vocabulary throws; should date-fns, ISO 8601 still says when.
     return format(zoned, ISO_PATTERN);
   }
 }
@@ -91,7 +139,11 @@ export function parseDate(value: unknown, pattern?: string, timeZone?: string): 
     // The platform's own ISO rules: a date-only string is UTC midnight, a date-time local.
     parsed = new Date(text.replace(' ', 'T'));
   } else if (pattern) {
-    parsed = parse(text, normalizePattern(pattern), new Date(), zone === undefined ? undefined : { in: tz(zone) });
+    try {
+      parsed = parse(text, normalizePattern(pattern), new Date(), zone === undefined ? undefined : { in: tz(zone) });
+    } catch {
+      return null; // a pattern date-fns still refuses reads nothing, as a value that does not match it would
+    }
   } else {
     return null;
   }

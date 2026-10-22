@@ -810,9 +810,27 @@ suite('core: shared primitives', () => {
     assert.equal(parseDate('July 8, 2026', 'MMMM d, yyyy', 'UTC')?.toISOString(), '2026-07-08T00:00:00.000Z');
     const when = new Date(Date.UTC(2026, 6, 8, 15, 30));
     assert.equal(formatDate(when, 'yyyy-MM-dd HH:mm', 'Not/AZone'), formatDate(when, 'yyyy-MM-dd HH:mm'), 'an unknown zone is the host zone');
-    assert.equal(formatDate(when, 'yyyy-MM-dd nope', 'UTC'), '2026-07-08T15:30:00Z', 'a pattern date-fns refuses is ISO 8601');
     assert.equal(formatDate(when, 'YYYY-MM-DD', 'UTC'), '2026-07-08', "Front Matter's Moment spellings");
     assert.equal(timezoneOffset(when, zone), -240);
+  });
+
+  test('a pattern is the documented vocabulary: Moment spellings read as theirs, every other letter written as typed', () => {
+    const when = new Date(Date.UTC(2026, 6, 6, 8, 5, 9));
+    // date-fns alone reads an unquoted T as the epoch in milliseconds — into a file.
+    assert.equal(formatDate(when, 'yyyy-MM-ddTHH:mm:ss', 'UTC'), '2026-07-06T08:05:09');
+    assert.equal(formatDate(when, "yyyy-MM-dd'T'HH:mm:ssXXX", 'UTC'), '2026-07-06T08:05:09Z');
+    assert.equal(formatDate(when, 'yyyy-MM-dd nope', 'UTC'), '2026-07-06 nope');
+    assert.equal(formatDate(when, "h:mm a 'o''clock'", 'UTC'), "8:05 AM o'clock");
+    assert.equal(formatDate(when, "''yy''", 'UTC'), "'26'");
+    assert.equal(formatDate(when, 'MMMM D, YYYY', 'UTC'), 'July 6, 2026');
+    assert.equal(formatDate(when, 'Do MMM YY', 'UTC'), '6th Jul 26');
+    assert.equal(formatDate(when, 'do EEEE', 'UTC'), '6th Monday');
+    // ...and parsing with them reads the date instead of throwing out of a render.
+    assert.equal(parseDate('July 6, 2026', 'MMMM D, YYYY', 'UTC')?.toISOString(), '2026-07-06T00:00:00.000Z');
+    assert.equal(parseDate('26-07-06', 'YY-MM-DD', 'UTC')?.toISOString(), '2026-07-06T00:00:00.000Z');
+    assert.equal(parseDate('6th Jul 2026', 'Do MMM YYYY', 'UTC')?.toISOString(), '2026-07-06T00:00:00.000Z');
+    assert.equal(parseDate('2026-07-06T08:05', 'yyyy-MM-ddTHH:mm', 'UTC')?.toISOString(), '2026-07-06T08:05:00.000Z');
+    assert.equal(parseDate('6 July', 'D Q', 'UTC'), null, 'a value its pattern does not describe is no date');
   });
 
   test('readJsonc reads comments and trailing commas, and names where it stopped', () => {

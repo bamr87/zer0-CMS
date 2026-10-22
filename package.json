@@ -898,7 +898,7 @@
             "type": "string",
             "default": "yyyy-MM-dd",
             "scope": "resource",
-            "markdownDescription": "Date format for front-matter date fields. Tokens: `yyyy MM dd HH hh mm ss aaa`."
+            "markdownDescription": "Date format for front-matter date fields. Tokens: `yyyy yy MMMM MMM MM M dd d do EEEE EEE HH H hh h mm m ss s SSS aaa a XXX`, and Front Matter's Moment spellings `YYYY YY DD D Do`. Every other letter, and text in single quotes, is written as typed: `yyyy-MM-ddTHH:mm` writes a `T`."
           },
           "zer0Cms.date.timezone": {
             "type": "string",

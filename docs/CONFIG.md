@@ -680,7 +680,7 @@ Most are `resource`-scoped, so a multi-root workspace can answer them per folder
 
 | Setting | Default | What it does |
 |---|---|---|
-| `zer0Cms.date.format` | `"yyyy-MM-dd"` | Date format for front-matter date fields. |
+| `zer0Cms.date.format` | `"yyyy-MM-dd"` | Date format for front-matter date fields. Tokens: `yyyy yy MMMM MMM MM M dd d do EEEE EEE HH H hh h mm m ss s SSS aaa a XXX`, and Front Matter's Moment spellings `YYYY YY DD D Do`; every other letter, and text in single quotes, is written as typed (`yyyy-MM-ddTHH:mm` writes a `T`). |
 | `zer0Cms.date.timezone` | `"UTC"` | IANA time zone used when formatting and parsing. |
 
 ### SEO and validation
