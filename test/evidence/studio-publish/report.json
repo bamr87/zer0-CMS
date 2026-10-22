@@ -1,0 +1,155 @@
+{
+  "id": "studio-publish",
+  "title": "Edit a draft and publish it",
+  "features": [
+    "ZER0-040"
+  ],
+  "path": "verify/scenarios/studio-publish.yml",
+  "started": "2026-10-22T06:30:28.833Z",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "ok": true,
+      "steps": [
+        {
+          "step": "goto",
+          "arg": "/studio/",
+          "ok": true,
+          "ms": 594
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=username]",
+            "value": "editor"
+          },
+          "ok": true,
+          "ms": 15
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=password]",
+            "value": "zer0-demo"
+          },
+          "ok": true,
+          "ms": 25
+        },
+        {
+          "step": "click",
+          "arg": "button[type=submit]",
+          "ok": true,
+          "ms": 36
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Home']"
+          },
+          "ok": true,
+          "ms": 179
+        },
+        {
+          "step": "click",
+          "arg": "role=link[name='Write']",
+          "ok": true,
+          "ms": 18
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Search']",
+            "value": "Nightly"
+          },
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Nightly backups']",
+          "ok": true,
+          "ms": 57
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "url": "/studio/write/"
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='SEO']",
+          "ok": true,
+          "ms": 106
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Title tag']",
+            "value": "Nightly backups, in plain words"
+          },
+          "ok": true,
+          "ms": 6
+        },
+        {
+          "step": "screenshot",
+          "arg": "editing",
+          "ok": true,
+          "file": "test/evidence/studio-publish/desktop-editing.png",
+          "ms": 36
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Publish']",
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "text=Published"
+          },
+          "ok": true,
+          "ms": 74
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "Live"
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_console_errors": true
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "screenshot",
+          "arg": "published",
+          "ok": true,
+          "file": "test/evidence/studio-publish/desktop-published.png",
+          "ms": 21
+        }
+      ],
+      "console_errors": [],
+      "screenshots": [
+        "test/evidence/studio-publish/desktop-editing.png",
+        "test/evidence/studio-publish/desktop-published.png"
+      ],
+      "evals": {},
+      "final_url": "http://127.0.0.1:50754/studio/write/6"
+    }
+  ],
+  "ok": true,
+  "finished": "2026-10-22T06:30:30.095Z",
+  "base": "http://127.0.0.1:50754"
+}

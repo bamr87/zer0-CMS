@@ -1,0 +1,51 @@
+{
+  "schema": "verify-report/v1",
+  "base": "http://127.0.0.1:50754",
+  "generated": "2026-10-22T06:30:30.113Z",
+  "by": "human",
+  "run": null,
+  "total": 3,
+  "passed": 3,
+  "failed": 0,
+  "scenarios": [
+    {
+      "id": "studio-accept-suggestion",
+      "title": "Review a suggestion's diff and accept it",
+      "features": [
+        "ZER0-041"
+      ],
+      "ok": true,
+      "dir": "test/evidence/studio-accept-suggestion",
+      "screenshots": [
+        "test/evidence/studio-accept-suggestion/desktop-inbox-with-diff.png",
+        "test/evidence/studio-accept-suggestion/desktop-accepted.png"
+      ]
+    },
+    {
+      "id": "studio-create-page",
+      "title": "Create a page in the studio",
+      "features": [
+        "ZER0-040"
+      ],
+      "ok": true,
+      "dir": "test/evidence/studio-create-page",
+      "screenshots": [
+        "test/evidence/studio-create-page/desktop-create-form.png",
+        "test/evidence/studio-create-page/desktop-created-draft.png"
+      ]
+    },
+    {
+      "id": "studio-publish",
+      "title": "Edit a draft and publish it",
+      "features": [
+        "ZER0-040"
+      ],
+      "ok": true,
+      "dir": "test/evidence/studio-publish",
+      "screenshots": [
+        "test/evidence/studio-publish/desktop-editing.png",
+        "test/evidence/studio-publish/desktop-published.png"
+      ]
+    }
+  ]
+}
