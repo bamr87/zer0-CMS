@@ -84,6 +84,31 @@ def test_auditing_a_url_over_mcp_is_a_run_the_agent_owns(agent, db, fake, web, d
     assert read["result"]["structuredContent"]["score"] == row.score
 
 
+def test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose(
+    agent, db, fake, django_capture_on_commit_callbacks
+):
+    from .conftest import answer
+
+    raw = token()
+    fake.script = [
+        answer({"humanity_score": 70, "edits": ["Shorter."], "rewritten_excerpt": "Copies keep sites."}),
+        {"text": "Copies keep a site safe."},
+        {"text": "## FAQ\n\nWhy back up? Disks fail."},
+    ]
+    calls = [
+        ("aieo_editor_review", {"content": "Copies — of a site — keep it."}),
+        ("aieo_scrub", {"content": "Copies — of a site — keep it."}),
+        ("aieo.apply_pattern", {"pattern_name": "faq_injection", "content": "Why back up?"}),
+    ]
+    for name, arguments in calls:
+        with django_capture_on_commit_callbacks(execute=True):
+            result = rpc(raw, "tools/call", {"name": name, "arguments": arguments})["result"]
+        assert not result["isError"], result
+        run = AgentRun.objects.get(pk=result["structuredContent"]["run_id"])
+        assert run.status == AgentRun.SUCCEEDED and run.started_by.username == "agent:aieo", run.error
+    assert AgentRun.objects.filter(input__kind="aieo.rewrite").count() == 2
+
+
 def test_a_page_tool_needs_page_rights_and_an_agent_rewrites_a_text_never_a_page(
     agent, site_root, fake, django_capture_on_commit_callbacks
 ):

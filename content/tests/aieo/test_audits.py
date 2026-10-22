@@ -61,11 +61,23 @@ def test_a_heuristic_audit_asks_no_model_and_reads_the_sites_keywords(alice, fak
 
     context = BrandContext.for_site(site)
     context.target_keywords = "- Pillar keyword: backup\n- Long-tail variations: restore test, offsite copy\n"
+    context.competitors = {"competitors": [], "keywords": [], "topics": ["pricing", "migration", "restore"]}
     context.save()
     row = audited(worker(services.audit, alice, kind="text", content=ARTICLE, method="heuristic", site=site))
     assert fake.calls == [] and row.scoring_method == "heuristic"
     assert row.result["keyword_analysis"]["primary"]["keyword"] == "backup"
     assert [k["keyword"] for k in row.result["keyword_analysis"]["secondary"]] == ["restore test", "offsite copy"]
+    # The two analyzers AIEO exported and never wired: engagement, and the competitors' topics the text misses.
+    assert row.result["competitor_gaps"]["missing_topics"] == ["pricing", "migration"]
+    assert row.result["engagement"]["questions"] == 4
+
+
+def test_an_audit_can_name_the_engine_that_evaluates_it(alice, fake, worker):
+    with providers.override(FakeProvider([answer(evaluation(1.0, penalties=0))]), "openai") as openai:
+        row = audited(worker(services.audit, alice, kind="text", content=ARTICLE, method="ai", provider="openai"))
+    assert row.score == 100.0 and row.result["provider"] == "fake" and len(openai.calls) == 1 and fake.calls == []
+    with pytest.raises(Invalid):
+        services.audit(alice, kind="text", content=ARTICLE, method="ai", provider="nope")
 
 
 def test_a_page_audit_reads_its_latest_revision_for_someone_who_edits_it(alice, bob, fake, worker, page):
@@ -205,11 +217,35 @@ def test_every_request_the_browser_makes_goes_through_the_guarded_fetcher(web):
     assert inside.aborted and post.aborted and len(web.calls) == 1
 
 
-def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain(alice, fake, worker):
+def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain(alice, fake, worker, web):
+    from aieo.models import CitationCheck, CitationQuery
+
     for text in ("We make websites.", "# Short\n\nA page.", ARTICLE):
         worker(services.audit, alice, kind="text", content=text, method="heuristic")
     best = Audit.objects.get(content=ARTICLE)
     assert best.benchmark["compared_with"] == 2 and best.benchmark["percentile"] == 100.0
+    # Its neighbours in meaning (graph.Embedding, kind audit — the platform's vectors in place of AIEO's Qdrant).
+    near = best.benchmark["similar"]
+    assert (
+        len(near) == 2
+        and {n["target"] for n in near} == {"the text"}
+        and near[0]["similarity"] >= near[1]["similarity"]
+    )
+    from graph.models import Embedding
+
+    assert Embedding.objects.filter(kind="audit").count() == 3
+    best.delete()
+    assert Embedding.objects.filter(kind="audit").count() == 2  # a deleted audit's vector goes with it
+    query = CitationQuery.objects.create(owner=alice, prompt="Who explains backups?", domain="example.com")
+    for engine, hit in (("fake", True), ("fake", False), ("openai", True)):
+        CitationCheck.objects.create(query=query, engine=engine, status=CitationCheck.READY, cited=hit)
+    web.get(at("/robots.txt")).respond(404)
+    web.get(at("/")).respond(200, text=_page("Home"), headers={"Content-Type": "text/html"})
+    row = audited(worker(services.audit, alice, kind="url", url="https://example.com/", method="heuristic"))
+    assert row.benchmark["engines"] == {
+        "fake": {"checks": 2, "cited": 1, "rate": 0.5},
+        "openai": {"checks": 1, "cited": 1, "rate": 1.0},
+    }
 
 
 def test_a_run_that_ends_without_succeeding_fails_its_audit(alice, fake, worker):

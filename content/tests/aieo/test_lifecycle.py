@@ -9,6 +9,7 @@ from ai import services as ai_services
 from ai.models import Assistant, Brief
 from aieo import prompts, services
 from aieo.models import LandingPage, Pattern
+from suggestions.models import Suggestion
 from tests.ai.test_services import DETAIL
 
 from .conftest import answer
@@ -79,3 +80,56 @@ def test_the_library_and_the_assistants_are_seeded_once_and_a_persons_edit_is_ke
     report = prompts.seed()
     assert report.created == [] and Pattern.objects.get(name="meta_context").body == "Edited by a person."
     assert AgentRun.objects.count() == 0
+
+
+# Each AIEO agent's answer, as its bundled schema asks for it (aieo/data/bundled.yaml).
+ANSWERS = {
+    "aieo-seo-optimizer": {
+        "score": 55,
+        "critical_fixes": ["Add an H2"],
+        "quick_wins": [],
+        "updated_outline": ["Intro"],
+    },
+    "aieo-meta-creator": {
+        "titles": ["A"],
+        "descriptions": ["B"],
+        "recommended_pair": {"title": "A", "description": "B"},
+    },
+    "aieo-keyword-mapper": {
+        "density_report": [{"keyword": "backup", "count": 3, "placement": "title"}],
+        "missing_keywords": [],
+        "revisions": [],
+    },
+    "aieo-editor": {"humanity_score": 72, "edits": ["Shorter sentences"], "rewritten_excerpt": "Backups save sites."},
+    "aieo-headline-generator": {"headlines": ["Back up tonight"], "rationale": "Urgent.", "testing_plan": "A/B test."},
+    "aieo-internal-linker": {
+        "suggestions": [{"anchor_text": "restore", "target_url": "/restore/", "placement": "FAQ", "reason": "Related."}]
+    },
+    "aieo-content-analyzer": {
+        "executive_summary": "Clear.",
+        "strengths": ["Plain"],
+        "weaknesses": ["Thin"],
+        "priority_actions": ["Add sources"],
+        "scorecard": {"seo": 40, "readability": 80, "humanity": 70, "aieo": 30},
+    },
+    "aieo-cro-analyst": {"cro_score": 45, "findings": ["No CTA above the fold"], "experiments": ["Move the button up"]},
+    "aieo-landing-page-optimizer": {
+        "score_breakdown": {"above_the_fold": 40, "calls_to_action": 30, "trust": 50, "seo": 60},
+        "priority_actions": ["One CTA"],
+        "revised_sections": [{"section": "Hero", "revised": "Close your books in a day."}],
+    },
+    "aieo-performance": {"quick_wins": ["Refresh /backups/"], "declining_content": ["/old/"], "roadmap": ["Q1: FAQs"]},
+}
+
+
+def test_every_aieo_agent_answers_with_its_schema_and_only_proposes(alice, fake, worker, site):
+    assert list(ANSWERS) == prompts.AGENTS
+    for key, data in ANSWERS.items():
+        fake.script = [answer(data)]
+        run = worker(
+            services.run_agent, alice, key, content="Backups save sites.", site=site, inputs={"audience": "owners"}
+        )
+        run.refresh_from_db()
+        assert run.status == AgentRun.SUCCEEDED and run.output["json"] == data, (key, run.error)
+        assert "## Audience\n\nowners" in fake.calls[-1]["messages"][0]["content"]
+    assert not Suggestion.objects.exists()  # an answer is shown; nothing lands on a page from here

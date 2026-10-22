@@ -177,7 +177,7 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
         fresh.screenshot = shot or fresh.screenshot
         fresh.audited_at = timezone.now()
         fresh.save()
-        fresh.benchmark = services.benchmark(fresh)
+        fresh.benchmark = services.benchmark(fresh, services.remember(fresh, parsed))
         fresh.save(update_fields=["benchmark"])
     return {"audit": str(row.public_id), "score": score, "grade": fresh.grade, "scoring_method": fresh.scoring_method}
 

@@ -28,6 +28,7 @@ from ai import providers
 from ai.models import Assistant, Visibility, sites_for, usable
 from ai.services import check_page, check_provider, provider_slug, run_assistant, stable_id, start
 from cms.models import BasePage
+from graph.services import embed_object, knn
 from importers.markdown import block_to_markdown, from_blocks, to_blocks
 from ops.errors import Conflict, Forbidden, Invalid, Unavailable
 from research import fetch
@@ -189,9 +190,20 @@ def batch_audit(user, urls: list[str], *, method: str = Audit.AI, origin="api", 
         ]
 
 
-def benchmark(row: Audit) -> dict:
+def remember(row: Audit, parsed: dict) -> list[float] | None:
+    """Store what an audit read as a vector (`graph.Embedding`, kind `audit`; pgvector on Postgres), for the
+    semantic benchmark — AIEO's configured, never-used Qdrant, done on the platform's vectors."""
+    text = parsed.get("text", "")[:6000]
+    if not text.strip():
+        return None
+    stored, _ = embed_object(row, text, parsed.get("content_hash", ""), "audit")
+    return list(stored.vector)
+
+
+def benchmark(row: Audit, vector: list[float] | None = None) -> dict:
     """Where an audit stands: its percentile among the platform's audits of the same kind of thing (a page among
-    pages, a site among sites), and per engine, how often the AI engines asked about its domain cited it."""
+    pages, a site among sites); per engine, how often the AI engines asked about its domain cited it; and the
+    audits closest to it in meaning, of those its owner sees, with their scores."""
     peers = Audit.objects.filter(status=Audit.READY, score__isnull=False).exclude(pk=row.pk)
     peers = peers.filter(kind__in=(Audit.SITE,) if row.kind == Audit.SITE else (Audit.TEXT, Audit.PAGE, Audit.URL))
     scores = list(peers.values_list("score", flat=True)[:5000])
@@ -200,16 +212,34 @@ def benchmark(row: Audit) -> dict:
     if row.page_id and not domain:
         domain = (row.page.get_site().hostname if row.page.get_site() else "") or ""
     engines = {}
-    if domain:
-        checks = CitationCheck.objects.filter(status=CitationCheck.READY, query__domain__iendswith=_bare(domain))
+    if domain and row.owner_id:
+        checks = CitationCheck.objects.visible_to(row.owner).filter(
+            status=CitationCheck.READY, query__domain__iendswith=_bare(domain)
+        )
         for engine in sorted(set(checks.values_list("engine", flat=True))):
             asked = checks.filter(engine=engine)
             engines[engine] = {"checks": asked.count(), "cited": asked.filter(cited=True).count()}
             engines[engine]["rate"] = round(engines[engine]["cited"] / engines[engine]["checks"], 3)
+    similar = []
+    if vector is not None and row.owner_id:
+        seen = Audit.objects.visible_to(row.owner).filter(status=Audit.READY).exclude(pk=row.pk)
+        near = knn(vector, kind="audit", k=3, exclude=[row.pk], only_ids=list(seen.values_list("pk", flat=True)[:5000]))
+        found = Audit.objects.in_bulk([pk for pk, _ in near])
+        similar = [
+            {
+                "audit": str(found[pk].public_id),
+                "target": found[pk].target,
+                "score": found[pk].score,
+                "similarity": round(s, 3),
+            }
+            for pk, s in near
+            if pk in found
+        ]
     return {
         "percentile": round(100 * below / len(scores), 1) if scores else None,
         "compared_with": len(scores),
         "engines": engines,
+        "similar": similar,
     }
 
 
