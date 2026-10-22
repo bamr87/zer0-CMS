@@ -21,3 +21,16 @@ export type Suggestion = Schemas['Suggestion'];
 export type Run = Schemas['Run'];
 export type Step = Schemas['Step'];
 export type ErrorEnvelope = Schemas['ErrorEnvelope'];
+// The newsroom (PLAN G15).
+export type Desk = Schemas['Desk'];
+export type Story = Schemas['Story'];
+export type StoryDetail = Schemas['StoryDetail'];
+export type StoryStatus = Schemas['StoryStatusEnum'];
+export type StoryCard = Schemas['StoryCard'];
+export type Person = Schemas['Person'];
+export type Author = Schemas['Author'];
+export type Front = Schemas['Front'];
+export type FrontSlot = Schemas['FrontSlot'];
+export type ResolvedSlot = Schemas['ResolvedSlot'];
+export type Newsletter = Schemas['Newsletter'];
+export type Issue = Schemas['Issue'];

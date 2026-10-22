@@ -6,6 +6,7 @@ import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
 import {
   CreatePage,
+  Newsroom,
   Overview,
   PageEditor,
   PageList,
@@ -36,6 +37,10 @@ export function pathFor(to: Destination): string {
       return `/ai/runs/${to.id}`;
     case 'review':
       return to.runId ? `/review?run=${to.runId}` : '/review';
+    case 'newsroom':
+      return '/newsroom';
+    case 'story':
+      return `/newsroom/stories/${to.id}`;
   }
 }
 
@@ -56,6 +61,8 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="review" element={<Review />} />
                 <Route path="ai" element={<Ai />} />
                 <Route path="ai/runs/:id" element={<RunPage />} />
+                <Route path="newsroom" element={<NewsroomArea />} />
+                <Route path="newsroom/stories/:id" element={<NewsroomArea />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -139,6 +146,16 @@ function Ai() {
 function RunPage() {
   const { id } = useParams();
   return <RunTimeline key={id} runId={Number(id)} />;
+}
+
+function NewsroomArea() {
+  const { siteId } = useSite();
+  const { id } = useParams();
+  return (
+    <Section title="Newsroom">
+      <Newsroom siteId={siteId} storyId={id} />
+    </Section>
+  );
 }
 
 function Planned({ area }: { area: Area }) {
