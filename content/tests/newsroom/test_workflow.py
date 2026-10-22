@@ -88,6 +88,16 @@ def test_moves_the_workflow_does_not_allow_are_refused(desk, ed, reporter, advan
 
 
 @pytest.mark.django_db
+def test_a_planning_change_never_writes_back_over_a_move_made_meanwhile(desk, ed, reporter):
+    story = services.pitch(desk, user=ed, headline="Race")
+    stale = Story.objects.get(pk=story.pk)  # the copy a planning form was opened with
+    services.move(story, S.ASSIGNED, user=ed, assignee=reporter)
+    services.update(stale, user=ed, priority=Story.Priority.TOP, slug="")  # a blank slug keeps the story's
+    story.refresh_from_db()
+    assert (story.status, story.assignee, story.priority, story.slug) == (S.ASSIGNED, reporter, 1, "race")
+
+
+@pytest.mark.django_db
 def test_only_the_desk_assigns_and_approves_its_stages(desk, ed, copyeditor, reporter, advance):
     story = services.pitch(desk, user=reporter, headline="From the reporter")
     with pytest.raises(Forbidden, match="editors assign"):

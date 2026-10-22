@@ -18,14 +18,14 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .models import Issue, Subscriber
-from .services import render_issue, subscription_link
+from .services import issue_items, render_issue, subscription_link
 
 log = logging.getLogger(__name__)
 
 
-def newsletter_message(issue, subscriber) -> AnymailMessage:
+def newsletter_message(issue, subscriber, items=None) -> AnymailMessage:
     unsubscribe = subscription_link(subscriber, "unsubscribe")
-    content = render_issue(issue, unsubscribe_url=unsubscribe)
+    content = render_issue(issue, unsubscribe_url=unsubscribe, items=items)
     message = AnymailMessage(
         subject=content["subject"],
         body=content["text"],
@@ -45,8 +45,9 @@ def send_issue(issue_id: int) -> int:
     if issue.status != Issue.Status.SENDING:
         return 0
     try:
+        items = issue_items(issue)
         confirmed = issue.newsletter.subscribers.filter(status=Subscriber.Status.CONFIRMED)
-        sent = get_connection().send_messages([newsletter_message(issue, s) for s in confirmed]) or 0
+        sent = get_connection().send_messages([newsletter_message(issue, s, items) for s in confirmed]) or 0
     except Exception as e:  # noqa: BLE001 — any ESP failure fails the issue, which can be sent again
         log.exception("newsletter issue %s failed to send", issue.public_id)
         Issue.objects.filter(pk=issue.pk).update(

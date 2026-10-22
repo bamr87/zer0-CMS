@@ -178,8 +178,11 @@ def pitch(desk, *, user, headline: str = "", item: WireItem | None = None, bylin
 
 @transaction.atomic
 def update(story, *, user, bylines=None, **fields) -> Story:
-    """Change a story's planning fields — and, given `bylines`, its authors in order."""
+    """Change a story's planning fields — and, given `bylines`, its authors in order. Only those fields are
+    written, so a move another request made meanwhile (its status, its page) is never written back over."""
     _may(_writes(story, user), "the desk's editors and the story's reporter change a story")
+    if "slug" in fields and not fields["slug"]:
+        del fields["slug"]  # a blank slug keeps the story's
     if "embargo" in fields and fields["embargo"] != story.embargo and story.status in (S.SCHEDULED, *PUBLISHED):
         raise Conflict("the story is scheduled or published: its embargo no longer holds anything back")
     if fields.get("slug") and fields["slug"] != story.slug:
@@ -187,7 +190,8 @@ def update(story, *, user, bylines=None, **fields) -> Story:
             raise Invalid("another story on the desk has this slug", details=[_detail("slug", "taken")])
     for name, value in fields.items():
         setattr(story, name, value)
-    story.save()
+    if fields:
+        story.save(update_fields=[*fields, "updated_at"])
     if bylines is not None:
         _set_bylines(story, bylines)
     return story
@@ -564,22 +568,21 @@ def issue_stories(issue) -> list:
     return [item.story for item in issue.items.select_related("story__page", "story__desk")]
 
 
-def render_issue(issue, *, unsubscribe_url: str = "") -> dict:
-    """An issue as it is sent: its subject, its text and its HTML (Django templates)."""
+def issue_items(issue) -> list[dict]:
+    """What an issue says about each of its stories: headline, summary, link and bylines."""
     items = []
     for story in issue_stories(issue):
         page = story.page.specific if story.page_id else None
         url = (page.get_full_url() if page is not None and page.live else None) or ""
         authors = [row.author.name for row in story.byline_rows.select_related("author")]
-        items.append(
-            {
-                "headline": story.headline,
-                "summary": story.summary,
-                "url": url,
-                "bylines": authors,
-                "id": story.public_id,
-            }
-        )
+        items.append({"headline": story.headline, "summary": story.summary, "url": url, "bylines": authors})
+    return items
+
+
+def render_issue(issue, *, unsubscribe_url: str = "", items=None) -> dict:
+    """An issue as it is sent: its subject, its text and its HTML (Django templates). A send passes the
+    `items` once for every subscriber, whose messages differ only in their unsubscribe links."""
+    items = issue_items(issue) if items is None else items
     context = {"issue": issue, "newsletter": issue.newsletter, "items": items, "unsubscribe_url": unsubscribe_url}
     return {
         "subject": issue.subject,
