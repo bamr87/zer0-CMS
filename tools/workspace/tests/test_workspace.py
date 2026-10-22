@@ -15,6 +15,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -96,7 +97,6 @@ class ManifestTest(WorkspaceCase):
         self.edit("cycle")
         with self.assertRaisesRegex(WorkspaceError, "cycle"):
             self.manifest()
-
 
 class OwnershipTest(WorkspaceCase):
     def test_most_specific_glob_wins_and_workflows_map_to_their_project(self):
@@ -210,7 +210,6 @@ class ChecksTest(WorkspaceCase):
         self.assertEqual((self.root / "src/tokens.css").read_text(), "--x: 2;")
         self.assertEqual(self.findings(), [])
 
-
 class RunnerTest(WorkspaceCase):
     def test_runs_in_the_task_directory_with_its_env_and_skips_projects_without_it(self):
         calls = []
@@ -272,6 +271,44 @@ class CLITest(WorkspaceCase):
     def test_matrix_lists_projects_with_the_task(self):
         _, out, _ = self.cli("matrix", "check")
         self.assertEqual(json.loads(out), ["root-app", "theme"])
+
+
+class AffectedTest(WorkspaceCase):  # beyond the Ruby suite
+    """`affected` without --files, as CI and `run --affected` use it: git's changes since the
+    merge base, committed or not, and untracked files, each once and never quoted."""
+
+    def build(self, root: Path) -> None:
+        fixtures.small_workspace(root)
+        fixtures.write(root, "docs/old.md", "x")
+        fixtures.git(root, "add", "-A")
+        fixtures.git(root, *fixtures.IDENTITY, "commit", "-q", "-m", "base")
+        self.base = fixtures.git(root, "rev-parse", "HEAD").strip()
+
+    def affected(self) -> dict:
+        status, out, err = self.cli("affected", "--base", self.base, "--json")
+        self.assertEqual((status, err), (0, ""))
+        return json.loads(out)
+
+    def test_committed_uncommitted_and_untracked_changes_each_count_once(self):
+        self.write("src/a.ts", "b")
+        fixtures.git(self.root, *fixtures.IDENTITY, "commit", "-q", "-am", "committed")  # root-app
+        self.write("packages/theme/lib/.keep", "edited")  # uncommitted: theme
+        self.write("sites/site/new.md", "new")  # untracked: site
+        fixtures.git(self.root, "rm", "-q", "--cached", "docs/old.md")  # in git's diff and untracked: once
+        everything = ["root-app", "theme", "site"]
+        self.assertEqual(self.affected(), {"affected": everything, "direct": everything, "unowned": ["docs/old.md"]})
+        status, out, _ = self.cli("run", "check", "--affected", "--base", self.base, "--dry-run")
+        self.assertEqual(status, 0)
+        self.assertEqual(re.findall(r"^==> (\S+): check", out, re.MULTILINE), ["root-app", "theme"])
+        status, out, _ = self.cli("matrix", "check", "--affected", "--base", self.base)
+        self.assertEqual((status, json.loads(out)), (0, ["root-app", "theme"]))
+
+    def test_a_name_git_would_quote_still_has_its_owner(self):
+        self.write('sites/site/say "hi".md', "x")
+        fixtures.git(self.root, "add", "sites")
+        fixtures.git(self.root, *fixtures.IDENTITY, "commit", "-q", "-m", "committed")
+        self.write("packages/theme/café.css", "x")  # untracked
+        self.assertEqual(self.affected(), {"affected": ["theme", "site"], "direct": ["theme", "site"], "unowned": []})
 
 
 class DoctorTest(WorkspaceCase):

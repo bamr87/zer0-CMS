@@ -280,14 +280,15 @@ class CLI:
 
     def _changed_files(self, base: str | None) -> list:
         """Files changed between the merge base with `base` and the working tree, so local,
-        uncommitted edits count too."""
+        uncommitted edits count too, plus untracked files; each once. NUL-separated (-z), so
+        git never quotes a path (a non-ASCII name, a quote) into one no project owns."""
         base = "origin/main" if base is None else base
         merge_base = self._git("merge-base", base, "HEAD").strip()
         if not merge_base:
             raise WorkspaceError(f"cannot find a merge base with {base} (fetch it first)")
-        diff = self._git("diff", "--name-only", merge_base)
-        untracked = self._git("ls-files", "--others", "--exclude-standard")
-        return list(dict.fromkeys(f for f in f"{diff}\n{untracked}".split("\n") if f))
+        diff = self._git("diff", "--name-only", "-z", merge_base)
+        untracked = self._git("ls-files", "-z", "--others", "--exclude-standard")
+        return list(dict.fromkeys(f for f in (diff + untracked).split("\0") if f))
 
     def _git(self, *args: str) -> str:
         done = subprocess.run(["git", "-C", self.root, *args], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)

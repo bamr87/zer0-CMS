@@ -473,7 +473,7 @@ sources:
     capabilities:
       - {id: workspace.list, what: "list and info — every project, its path, kind, what it publishes and what gates it.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::FrozenTreeTest}
       - {id: workspace.run, what: "run setup|check|test|build|pages for one, the affected or all projects, with dry run and keep-going.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::RunnerTest}
-      - {id: workspace.affected, what: "affected and matrix — the projects a change touches, as text or the CI matrix.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::FrozenTreeTest}
+      - {id: workspace.affected, what: "affected and matrix — the projects a change touches, as text or the CI matrix.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::AffectedTest}
       - {id: workspace.routes, what: "routes — each site's Pages route, for the one Pages deploy.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::ScenarioTest}
       - {id: workspace.check, what: "check — registration, paths, workflow path filters, routes and vendored-copy drift.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_real_manifest.py::RealManifestTest}
       - {id: workspace.vendor, what: "vendor — re-sync vendored copies from their source.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::ChecksTest::test_vendored_drift_is_a_finding_and_vendor_write_repairs_it}
