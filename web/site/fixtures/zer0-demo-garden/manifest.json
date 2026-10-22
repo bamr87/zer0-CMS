@@ -1,0 +1,1132 @@
+{
+  "feeds": {
+    "feed.xml": [
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening",
+        "link": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening/",
+        "title": "Six months of gardening in public"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome",
+        "link": "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome/",
+        "title": "This is a garden, not a blog"
+      }
+    ]
+  },
+  "paths": {
+    "LICENSE": {
+      "type": "application/octet-stream"
+    },
+    "about/index.html": {
+      "text_sha256": "be5f40e8f5ec72e812ed9cf2af2e4f17055671356c21d6515c5e5b0fdebaad16",
+      "title": "About | Marginalia",
+      "type": "text/html"
+    },
+    "assets/backgrounds/gradients/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/css/custom.css": {
+      "type": "text/css"
+    },
+    "assets/css/extension-points-demo.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css.map": {
+      "type": "application/json"
+    },
+    "assets/css/stats.css": {
+      "type": "text/css"
+    },
+    "assets/css/theme-npm-entry.scss": {
+      "type": "text/x-scss"
+    },
+    "assets/css/user-overrides.css": {
+      "type": "text/css"
+    },
+    "assets/css/vendor/.gitkeep": {
+      "type": "application/octet-stream"
+    },
+    "assets/data/notebooks/sales_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/survey_responses.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/weather_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/wiki-index.json": {
+      "type": "application/json"
+    },
+    "assets/images/authors/bamr87.png": {
+      "type": "image/png"
+    },
+    "assets/images/authors/cassandra.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/authors/vega.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/docs/author-profiles/ai-persona-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/author-profiles/interactive-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/admin-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/back-to-top.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/code-copy.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/cookie-consent.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/docs-layout.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/dynamic-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/configurator-repo-check.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-error-not-installed.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-working.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/jupyter-notebooks.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mermaid-rendered.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mobile-toc.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/smart-404.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/docs-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/theme-home.png": {
+      "type": "image/png"
+    },
+    "assets/images/favicon_gpt_computer_retro.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar-small.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar.png": {
+      "type": "image/png"
+    },
+    "assets/images/info-banner-mountain-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/images/logo.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/notebooks/test-notebook_files/test-notebook_4_0.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/10-ai-tools-that-will-transform-your-productivity-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/about.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/accessible-form-patterns-labels-errors-and-helpful.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/add-floating-back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/admin-layout-configuration-dashboards.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/agents-md-cross-tool-ai-agent-entry-point.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-assisted-development-with-zer0-mistakes.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-chat-assistant-claude-github.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-preview-image-generator.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/aieo-ai-engine-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/amr-abdel-motaleb.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/author-profiles-and-about-the-author-bylines.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/auto-hide-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/automated-version-build-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bare-minimum-remote-theme-starter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-theme-examples.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/breadcrumbs-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/build-a-responsive-documentation-card-grid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-accessible-web-applications.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-an-ai-ready-knowledge-base-from-documents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/business.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ci-cd-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-dashboards-turning-measurements-into-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-primer-reading-trends-without-losing-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-copy-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/collection-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/comprehensive-gem-automation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/config-driven-frontmatter-validation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/configuration-utility.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/cookie-consent-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/css-grid-mastery-build-any-layout-you-can-imagine.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customer-onboarding-scorecards-that-reveal-revenue.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dark-light-mode-toggle.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dependency-updates.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-github-pages.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploying-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/devcontainer-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development-docs.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/docker.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dynamic-collection-based-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/edge-ai-in-the-real-world-practical-patterns-for-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/enhanced-sitemap-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/environment-build-info.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/es6-modular-navigation-architecture.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/feature-flags-for-safer-continuous-delivery.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/features.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/from-ai-awareness-to-action-the-skills-systems-and.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/front-matter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-jekyll-your-first-static-site.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-the-obsidian-vault.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/giscus-comments.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/git-workflow-best-practices-for-modern-teams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-copilot-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-setup-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-tag-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/homebrew-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/i-bayesian-modeled-my-coffee-intake-and-wept-with-.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/include-components.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/installation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-collections.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-technical-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-theme-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jeykll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jupyter-notebook-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/layouts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-docker-publishing-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-resilience-networks-how-communities-coordina.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/machine-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-diagrams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-native-markdown.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mobile-toc-floating-action-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation-editor.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/observability-for-small-apps-logs-metrics-and-trac.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-authoring-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-graph-view.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-integration-troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-resolver-performance-caching.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-syntax-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-vault-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/pagination.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/particles-background.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/performance-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/posthog-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/product-requirements-document.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/published-documentation-library.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quantum-computing-explained-from-qubits-to-quantum.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/release-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/remote-theme-consumer-checklist.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby-101.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/safe-mode-build-overlay-building-outside-github-pa.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scenario-planning-for-small-teams-a-practical-oper.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/science.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scripts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security-scanning.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo-meta-tags.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sidebar-navigation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-personalization-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-statistics-portal.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sitemap-generation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/skip-to-content-accessibility-link.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/smart-404-site-configuration-detection.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/statistics-dashboard-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/stats-page-enhancement-summary.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/styles.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/syntax-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/table-of-contents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/technology.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/testing.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-imperative-why-mid-market-manufact.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-map-where-ai-will-augment-replace-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-complete-guide-to-startup-funding-in-2025.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-remote-work-revolution-how-global-teams-are-re.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-trailing-slash-that-could-end-your-entire-comp.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-version-display-plugin.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/tutorial.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/umap-revealed-14-hidden-dimensions-in-my-404-logs.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/urban-resilience-how-cities-prepare-for-extreme-he.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendor-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendored-bootstrap-icon-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/version-bump-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/winget-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/world-news.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/your-favicon-ico-is-an-unlocked-door-to-total-coll.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/zer0-mistakes-about-section.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-features-documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-news-network-building-dynamic-news-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-theme-features.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/06-theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-fork-dialog.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-pages-settings.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-clone.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-main.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-auth.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork-cleanup.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-push.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/install-oneliner.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-compose-up.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-doctor.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-structure.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-git-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-homebrew.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-verify.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/personalization-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/site-running.png": {
+      "type": "image/png"
+    },
+    "assets/images/wizard-on-journey.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-1.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-2.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-mistakes-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/js/ai-chat.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/author-profile.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/auto-hide-nav.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/back-to-top.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/background-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/cheetsheet.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/code-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/config-utility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/docs.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/extension-points-demo.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback-capture.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/halfmoon.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/mermaid-diagrams.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/config.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/focus.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/gestures.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/index.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/keyboard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/navbar.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/scroll-spy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-state.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/smooth-scroll.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/toc-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/theme/appearance.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/myScript.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar-init.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nav-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/navigation.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-local-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-wiki-links.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-views.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/palette-generator.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles-source.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/posts-pagination.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/recipe-scaler.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/search-modal.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/setup-wizard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/share-actions.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/side-bar-folders.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/site-builder.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/skin-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/stats.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/table-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-preview.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-enhancements.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-helpers.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/user-overrides.js": {
+      "type": "text/javascript"
+    },
+    "assets/particles.json": {
+      "type": "application/json"
+    },
+    "assets/vendor/bootstrap-icons/font/bootstrap-icons.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
+      "type": "font/woff2"
+    },
+    "assets/vendor/bootstrap/css/bootstrap.min.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap/js/bootstrap.bundle.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/cytoscape/cytoscape.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/github-calendar/github-calendar-responsive.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/github-calendar/github-calendar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/adaptors/liteDOM.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/core.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/startup.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/tex-mml-chtml.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mermaid/mermaid.min.js": {
+      "type": "text/javascript"
+    },
+    "feed.xml": {
+      "type": "application/xml"
+    },
+    "index.html": {
+      "text_sha256": "8f15bbb3ff0a71515bd77237eec680c1793ab80987843f497b42155a927b2013",
+      "title": "Marginalia | A garden of half-finished thoughts, cross-referenced",
+      "type": "text/html"
+    },
+    "notes/backlinks-change-what-you-write/index.html": {
+      "text_sha256": "01504cc4716c3061b074216a30567ae3e00b65b51d8c7ebd799cedb629502e49",
+      "title": "Backlinks change what you write | Marginalia",
+      "type": "text/html"
+    },
+    "notes/evergreen-notes/index.html": {
+      "text_sha256": "6628a8b4b1f5471d5047dbf622621a74230b589b398841d43112ba4b8b424694",
+      "title": "Evergreen notes | Marginalia",
+      "type": "text/html"
+    },
+    "notes/index.html": {
+      "text_sha256": "a0e6e7ce97bae506fcb4ca9c49f85f0d409a75b0173bae559b42404b9024a777",
+      "title": "Notes | Marginalia",
+      "type": "text/html"
+    },
+    "notes/notes-should-be-atomic/index.html": {
+      "text_sha256": "0953995b5fe1c61cd922b36a5b95f5c0c918a10e904220695f3b7d4fbb520352",
+      "title": "Notes should be atomic | Marginalia",
+      "type": "text/html"
+    },
+    "notes/posts-and-notes-do-different-jobs/index.html": {
+      "text_sha256": "fd3ba8ea0bb2f0244736c66bc55a1431813039019157c3457b8bc8ae4e717fc9",
+      "title": "Posts and notes do different jobs | Marginalia",
+      "type": "text/html"
+    },
+    "notes/welcome-note/index.html": {
+      "text_sha256": "dfe47af2e251ec559201295ca1a2cd87d6d7a174d5a11bbd23dc917f9ec862c8",
+      "title": "Welcome Note | Marginalia",
+      "type": "text/html"
+    },
+    "notes/why-gardens-beat-blogs/index.html": {
+      "text_sha256": "83286a37a37d8c2a7665990ecc3f77b0f0ea2af4ca61d3cac19d51c2035b5ea7",
+      "title": "Why gardens beat blogs | Marginalia",
+      "type": "text/html"
+    },
+    "posts/index.html": {
+      "text_sha256": "5a96e32fb21b0e75501d0b75eee98e8e7266a135a321e5be992dda1920466974",
+      "title": "Posts | Marginalia",
+      "type": "text/html"
+    },
+    "posts/six-months-of-gardening/index.html": {
+      "text_sha256": "ec415f43537a2d185c3bb2a37e6b16d11760cb3b58e4634443dc5bb7daeb658e",
+      "title": "Six months of gardening in public | Marginalia",
+      "type": "text/html"
+    },
+    "posts/welcome/index.html": {
+      "text_sha256": "86de8ee08a343468be0b24d47bf5db60703317be7c3f8f3efcdcb701661e663f",
+      "title": "This is a garden, not a blog | Marginalia",
+      "type": "text/html"
+    },
+    "robots.txt": {
+      "type": "text/plain"
+    },
+    "sitemap.xml": {
+      "type": "application/xml"
+    }
+  },
+  "redirects": {},
+  "schema": "site-manifest/v1",
+  "site": "zer0-demo-garden",
+  "sitemaps": {
+    "sitemap.xml": [
+      "https://bamr87.github.io/zer0-CMS/demos/garden/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/about/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/backlinks-change-what-you-write/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/evergreen-notes/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/notes-should-be-atomic/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/posts-and-notes-do-different-jobs/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/welcome-note/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/notes/why-gardens-beat-blogs/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/posts/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/posts/six-months-of-gardening/",
+      "https://bamr87.github.io/zer0-CMS/demos/garden/posts/welcome/"
+    ]
+  }
+}

@@ -1,0 +1,2023 @@
+{
+  "feeds": {
+    "feed.xml": [
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/development/2026/07/05/inside-the-zer0-pages-engine",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/development/2026/07/05/inside-the-zer0-pages-engine/",
+        "title": "Inside the zer0-pages Engine: Obsidian In, GitHub Pages Out"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/data%20science/2026/06/19/umap-found-14-hidden-dimensions-in-404-logs",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/data%20science/2026/06/19/umap-found-14-hidden-dimensions-in-404-logs/",
+        "title": "UMAP Revealed 14 Hidden Dimensions in My 404 Logs"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/security/2026/06/18/trailing-slash-that-could-end-your-company",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/security/2026/06/18/trailing-slash-that-could-end-your-company/",
+        "title": "The Trailing Slash That Could End Your Entire Company"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/data%20science/2026/06/17/bayesian-modeled-my-coffee-and-wept-with-joy",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/data%20science/2026/06/17/bayesian-modeled-my-coffee-and-wept-with-joy/",
+        "title": "I Bayesian-Modeled My Coffee Intake and Wept With Joy"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/security/2026/06/16/favicon-ico-unlocked-door-to-collapse",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/security/2026/06/16/favicon-ico-unlocked-door-to-collapse/",
+        "title": "Your favicon.ico Is an Unlocked Door to Total Collapse"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/world/2026/04/28/local-resilience-networks",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/world/2026/04/28/local-resilience-networks/",
+        "title": "Local Resilience Networks: How Communities Coordinate Before a Crisis"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/2026/04/28/accessible-form-patterns",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/2026/04/28/accessible-form-patterns/",
+        "title": "Accessible Form Patterns: Labels, Errors, and Helpful States"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/climate%20adaptation/cooling%20strategiesenvironmental%20sustainability/extreme%20heat/heat%20vulnerability/infrastructure%20planning/neighborhood%20equity/public%20health/urban%20planning/urban%20resilience/2026/04/28/urban-resilience-extreme-heat",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/climate%20adaptation/cooling%20strategiesenvironmental%20sustainability/extreme%20heat/heat%20vulnerability/infrastructure%20planning/neighborhood%20equity/public%20health/urban%20planning/urban%20resilience/2026/04/28/urban-resilience-extreme-heat/",
+        "title": "Urban Resilience: How Cities Prepare for Extreme Heat"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2026/04/28/building-ai-ready-knowledge-base",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2026/04/28/building-ai-ready-knowledge-base/",
+        "title": "Building an AI-Ready Knowledge Base: From Documents to Answers"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/2026/04/28/responsive-documentation-card-grid",
+        "link": "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/2026/04/28/responsive-documentation-card-grid/",
+        "title": "Build a Responsive Documentation Card Grid"
+      }
+    ]
+  },
+  "paths": {
+    "SCHEMA/index.html": {
+      "text_sha256": "d26631e1c3c581467d95a8adaf5830a8956aaede9c1144637a871837d8ac8a38",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "archives/index.html": {
+      "text_sha256": "dad32af6f5f27b166a36dc78763fd91ab2e0643e9a49629749731f008cef24ad",
+      "title": "Archives | zer0-pages",
+      "type": "text/html"
+    },
+    "assets/SCHEMA/index.html": {
+      "text_sha256": "c0553d8241b8fe7d622169f3e046383bc8b3028d286202b77bc7fe10b65ac5b2",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/backgrounds/SCHEMA/index.html": {
+      "text_sha256": "4ede827b4dcae7e1b84c4d50a88ef5f8a0f784bfef3869a621cbd7876f1766f6",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/backgrounds/noise/SCHEMA/index.html": {
+      "text_sha256": "9b85fb237dd3fe933b575709f5ed0e3b84119ad97cb10dc1b9336353807c860d",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/backgrounds/noise/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/css/SCHEMA/index.html": {
+      "text_sha256": "f5db2f68a4b239decde44b41e37358f508ae375d5745f57a26403aa602847155",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/css/custom.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css.map": {
+      "type": "application/json"
+    },
+    "assets/css/stats.css": {
+      "type": "text/css"
+    },
+    "assets/css/theme-npm-entry.scss": {
+      "type": "text/x-scss"
+    },
+    "assets/css/user-overrides.css": {
+      "type": "text/css"
+    },
+    "assets/css/vendor/.gitkeep": {
+      "type": "application/octet-stream"
+    },
+    "assets/data/notebooks/sales_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/survey_responses.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/weather_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/wiki-index.json": {
+      "type": "application/json"
+    },
+    "assets/images/SCHEMA/index.html": {
+      "text_sha256": "4440145a7d41bec19d51fa159c3c9e8170e3b37c65ccd85438804ce287a3bd02",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/images/authors/SCHEMA/index.html": {
+      "text_sha256": "82146765221d60c19a1e1e4a6350ad880ec2db34670f73d23411ac96b8a5ac6d",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/images/authors/bamr87.png": {
+      "type": "image/png"
+    },
+    "assets/images/authors/cassandra.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/docs/SCHEMA/index.html": {
+      "text_sha256": "9158a3f72a32364558642bacb322f57696b9925237406cece175c7094786b438",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/images/docs/author-profiles/SCHEMA/index.html": {
+      "text_sha256": "f471261e4e82714fe6a33feb44908893541afbdca078ef700eb0a6574f47c394",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/images/docs/author-profiles/ai-persona-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/author-profiles/interactive-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/SCHEMA/index.html": {
+      "text_sha256": "c41a004ff085765617330145c7aefa4cedba9706cac95cbf4ffb9a2369cf66b7",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/images/docs/features/admin-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/back-to-top.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/code-copy.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/cookie-consent.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/docs-layout.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/dynamic-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/jupyter-notebooks.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mermaid-rendered.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mobile-toc.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/smart-404.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/SCHEMA/index.html": {
+      "text_sha256": "1aadd1d06b910c9e71a1289feabebe6203a7ba798609682e94bc657822ff3e45",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/images/docs/quickstart/docs-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/theme-home.png": {
+      "type": "image/png"
+    },
+    "assets/images/favicon_gpt_computer_retro.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar-small.png": {
+      "type": "image/png"
+    },
+    "assets/images/info-banner-mountain-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/10-ai-tools-that-will-transform-your-productivity-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/accessible-form-patterns-labels-errors-and-helpful.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/admin-layout-configuration-dashboards.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/agents-md-cross-tool-ai-agent-entry-point.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-preview-image-generator.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/aieo-ai-engine-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bare-minimum-remote-theme-starter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/breadcrumbs-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/build-a-responsive-documentation-card-grid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-an-ai-ready-knowledge-base-from-documents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/business.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ci-cd-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-dashboards-turning-measurements-into-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-primer-reading-trends-without-losing-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-copy-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/config-driven-frontmatter-validation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/cookie-consent-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/css-grid-mastery-build-any-layout-you-can-imagine.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customer-onboarding-scorecards-that-reveal-revenue.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dark-light-mode-toggle.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dependency-updates.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-github-pages.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/devcontainer-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/docker.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dynamic-collection-based-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/edge-ai-in-the-real-world-practical-patterns-for-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/es6-modular-navigation-architecture.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/feature-flags-for-safer-continuous-delivery.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/features.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/from-ai-awareness-to-action-the-skills-systems-and.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/front-matter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-the-obsidian-vault.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/giscus-comments.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/git-commands-cheatsheet.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/previews/git-workflow-best-practices-for-modern-teams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-copilot-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-tag-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/i-bayesian-modeled-my-coffee-intake-and-wept-with-.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/include-components.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/installation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-collections.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-theme-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jupyter-notebook-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/layouts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-docker-publishing-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-resilience-networks-how-communities-coordina.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/markdown-formatting-tips.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/previews/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-diagrams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mobile-toc-floating-action-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/observability-for-small-apps-logs-metrics-and-trac.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-authoring-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-graph-view.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-integration-troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-resolver-performance-caching.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-syntax-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-vault-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/pagination.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/posthog-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/product-requirements-document.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/published-documentation-library.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quantum-computing-explained-from-qubits-to-quantum.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/release-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby-101.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scenario-planning-for-small-teams-a-practical-oper.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/science.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scripts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security-scanning.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo-meta-tags.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sidebar-navigation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sitemap-generation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/skip-to-content-accessibility-link.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/smart-404-site-configuration-detection.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/statistics-dashboard-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/styles.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/table-of-contents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/technology.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/testing.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-imperative-why-mid-market-manufact.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-map-where-ai-will-augment-replace-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-complete-guide-to-startup-funding-in-2025.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-remote-work-revolution-how-global-teams-are-re.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-trailing-slash-that-could-end-your-entire-comp.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/theme-version-display-plugin.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/tutorial.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/umap-revealed-14-hidden-dimensions-in-my-404-logs.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/urban-resilience-how-cities-prepare-for-extreme-he.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendor-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendored-bootstrap-icon-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/version-bump-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/world-news.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/your-favicon-ico-is-an-unlocked-door-to-total-coll.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/zer0-mistakes-news-network-building-dynamic-news-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/SCHEMA/index.html": {
+      "text_sha256": "dec08e6c8f85d58742e10d2b6c13179212d54694bf52867bdfd88c84ab47d391",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/images/quickstart/site-running.png": {
+      "type": "image/png"
+    },
+    "assets/images/wizard-on-journey.png": {
+      "type": "image/png"
+    },
+    "assets/js/SCHEMA/index.html": {
+      "text_sha256": "d0f766038dce61fd77fda4c24a070318be8405374b43cc3685cda22846367749",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "assets/js/ai-chat.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/author-profile.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/auto-hide-nav.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/back-to-top.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/background-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/cheetsheet.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/code-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/config-utility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/docs.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/halfmoon.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/config.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/focus.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/gestures.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/index.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/keyboard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/navbar.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/scroll-spy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-state.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/smooth-scroll.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/toc-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/theme/appearance.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/myScript.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar-init.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nav-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/navigation.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-local-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-wiki-links.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/palette-generator.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles-source.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/posts-pagination.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/search-modal.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/setup-wizard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/share-actions.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/side-bar-folders.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/skin-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/stats.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/table-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-preview.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-enhancements.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-helpers.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/user-overrides.js": {
+      "type": "text/javascript"
+    },
+    "assets/particles.json": {
+      "type": "application/json"
+    },
+    "assets/vendor/bootstrap-icons/font/bootstrap-icons.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
+      "type": "font/woff2"
+    },
+    "assets/vendor/bootstrap/css/bootstrap.min.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap/js/bootstrap.bundle.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/cytoscape/cytoscape.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/github-calendar/github-calendar-responsive.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/github-calendar/github-calendar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/adaptors/liteDOM.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/core.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/startup.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/tex-mml-chtml.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mermaid/mermaid.min.js": {
+      "type": "text/javascript"
+    },
+    "business/2025/01/20/startup-funding-guide/index.html": {
+      "text_sha256": "353f9e8a33ed30cfb6d114be18cbb4f0b6967231217a0c616a70603606b3d0df",
+      "title": "The Complete Guide to Startup Funding in 2025 | zer0-pages",
+      "type": "text/html"
+    },
+    "business/2026/04/28/customer-onboarding-scorecards/index.html": {
+      "text_sha256": "ebff539b5db09167fbba819ad16347c8e4a92f9cda3976b471d2b76918700a42",
+      "title": "Customer Onboarding Scorecards That Reveal Revenue Risk | zer0-pages",
+      "type": "text/html"
+    },
+    "business/2026/04/28/scenario-planning-for-small-teams/index.html": {
+      "text_sha256": "5fd66b2daa322c77faffffd0aef98fe22923f6ffcd693c79c0a4661fc52c1eac",
+      "title": "Scenario Planning for Small Teams: A Practical Operating Rhythm | zer0-pages",
+      "type": "text/html"
+    },
+    "categories/index.html": {
+      "text_sha256": "b08096a08ef69e532495741926471fbd173b22dddec6c43bb2facef912e74eb6",
+      "title": "Categories | zer0-pages",
+      "type": "text/html"
+    },
+    "climate adaptation/cooling strategiesenvironmental sustainability/extreme heat/heat vulnerability/infrastructure planning/neighborhood equity/public health/urban planning/urban resilience/2026/04/28/urban-resilience-extreme-heat/index.html": {
+      "text_sha256": "4838ca62c3d0115c46d1acb12ec9ac156b18f60360d2903d0ce9d65aa559b2ae",
+      "title": "Urban Resilience: How Cities Prepare for Extreme Heat | zer0-pages",
+      "type": "text/html"
+    },
+    "data science/2026/06/17/bayesian-modeled-my-coffee-and-wept-with-joy/index.html": {
+      "text_sha256": "44392eac830018fa292491d2ec176aaaabaddad0514984d90195cc68ef1eaa37",
+      "title": "I Bayesian-Modeled My Coffee Intake and Wept With Joy | zer0-pages",
+      "type": "text/html"
+    },
+    "data science/2026/06/19/umap-found-14-hidden-dimensions-in-404-logs/index.html": {
+      "text_sha256": "a79712f0784c92e8f0ee0c1187c6937b3ef8b994cd531053dd99f5bea42d0720",
+      "title": "UMAP Revealed 14 Hidden Dimensions in My 404 Logs | zer0-pages",
+      "type": "text/html"
+    },
+    "development/2025/01/22/git-workflow-best-practices/index.html": {
+      "text_sha256": "28776de3637613da781a1d5f47d57a1177786427b8aaaa456b14d45a0c24a43d",
+      "title": "Git Workflow Best Practices for Modern Teams | zer0-pages",
+      "type": "text/html"
+    },
+    "development/2026/04/28/feature-flags-continuous-delivery/index.html": {
+      "text_sha256": "05312d82108ee298b4b4225b2e4d91828b5af695bb6441e76ff7c157f9dcff92",
+      "title": "Feature Flags for Safer Continuous Delivery | zer0-pages",
+      "type": "text/html"
+    },
+    "development/2026/04/28/observability-for-small-apps/index.html": {
+      "text_sha256": "27112b63c6862c3025ff84d0ae980012aea3bd37a4cc888f5840a75e88210064",
+      "title": "Observability for Small Apps: Logs, Metrics, and Traces Without the Drama | zer0-pages",
+      "type": "text/html"
+    },
+    "development/2026/07/05/inside-the-zer0-pages-engine/index.html": {
+      "text_sha256": "e038307bb91c0eba53eac35b522e00ba2790721a072ed4f68c3c93266e4a55e7",
+      "title": "Inside the zer0-pages Engine: Obsidian In, GitHub Pages Out | zer0-pages",
+      "type": "text/html"
+    },
+    "development/technology/2025/01/05/web-accessibility-guide/index.html": {
+      "text_sha256": "8a5606baf77677f419a0db46d50abf4eec306c706c1b4c42f2e8dd8cbe8f9576",
+      "title": "Building Accessible Web Applications | zer0-pages",
+      "type": "text/html"
+    },
+    "development/tutorial/2025/01/15/docker-jekyll-guide/index.html": {
+      "text_sha256": "50fec9ba7788f7ab14675b03d1db3bb492fba4f0b7a8e26161e653557883649c",
+      "title": "Docker for Jekyll Development: A Complete Guide | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/SCHEMA/index.html": {
+      "text_sha256": "49a44fe2127621088523245f048786dc4705d0adaaec360b8882c4be11bfcd21",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/analytics/SCHEMA/index.html": {
+      "text_sha256": "5374b064f7cd9532f45b7006af7ce2bd7feee5d2c32cee5c9d45e235cc948c8b",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/analytics/google-analytics/index.html": {
+      "text_sha256": "3608bcd884c482b7d4f43f492d35dd3b94f38c5c917cc534d579fa943a7b5ef1",
+      "title": "Google Analytics | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/analytics/google-tag-manager/index.html": {
+      "text_sha256": "43a730b97db43243bcd051fa92c8e73149b9bdf0596b7dfbb11e8156547c26fb",
+      "title": "Google Tag Manager | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/analytics/index.html": {
+      "text_sha256": "e9dd3cea3b472ebffdce5dcc3c568213a80b5e24c642bf0e791b733089480ae0",
+      "title": "Analytics | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/bootstrap/SCHEMA/index.html": {
+      "text_sha256": "97f67daa7432c97960dd60876f9cb35aa866606d730e4ccbd2bbc24d267d9932",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/bootstrap/index.html": {
+      "text_sha256": "db3c9fdb50ad931f66f8c1c2669ff92eefdcd351d31b5ed89d65ca5bc462f4bc",
+      "title": "Bootstrap 5 Integration in Zer0-Mistakes | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/customization/SCHEMA/index.html": {
+      "text_sha256": "fc7d0b7a333ca96fcc6d3395194c00d736ce65d20cc921400e502ea5f0b74394",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/customization/author-profiles/index.html": {
+      "text_sha256": "3fc5bfe89542a4c917e4fb734e3f08858e275fb124efc8224dda3ead7de588cf",
+      "title": "Author Profiles and About-the-Author Bylines | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/customization/includes/index.html": {
+      "text_sha256": "5b033158a28ad6803af938fe60a903fee0a9340f126c6ef364dd08b645f991d5",
+      "title": "Include Components | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/customization/index.html": {
+      "text_sha256": "8881b6fa4d0378192e84b3afe0c1a22c5c0ebed493e922883070beb5dfaaa85f",
+      "title": "Customization | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/customization/layouts/index.html": {
+      "text_sha256": "5876c7d023728530557d33632270d2d345792566c91db01c5e5b5d92db3f8581",
+      "title": "Layouts | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/customization/navigation/index.html": {
+      "text_sha256": "8e4bebef435c5609737c3f4c09048af21ddf59d4d16b9012bf4e12736db5b1e0",
+      "title": "Navigation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/customization/styles/index.html": {
+      "text_sha256": "b2027b4f42ee27d12ff1c819ebaf0b6dd6ea1f2d6083c746ac9b9067fceb431b",
+      "title": "Styles | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/deployment/SCHEMA/index.html": {
+      "text_sha256": "59ad2b21bfbed33ee27bb261ddeb722d77556b99ec7a4af55a2748625a69ee52",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/deployment/build-overlay/index.html": {
+      "text_sha256": "fe4e7b8c21be81d5f154d521129bb8cae6c771dee6923fdccaa054a44827eb4f",
+      "title": "Safe-Mode Build Overlay (Building Outside GitHub Pages) | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/deployment/custom-domain/index.html": {
+      "text_sha256": "b3b0a5017640c6545ce2cfdc8e63fbd78445a3e2117769309d316095c99a6eec",
+      "title": "Custom Domain Setup | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/deployment/github-pages/index.html": {
+      "text_sha256": "5c5d8b607cc7e5e1aaba3de80e996468ff7033c9f8a5322c44c646494b258ce5",
+      "title": "Deploy to GitHub Pages | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/deployment/index.html": {
+      "text_sha256": "5c9041fa8a519f65e8ff3d0b062b47cc8e9ed08c563a8dd0b5ae85eaa792400d",
+      "title": "Deployment | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/deployment/netlify/index.html": {
+      "text_sha256": "8abe081bc1f7530d639f83a4b771bc5cf2efb7d3853704dde19d40bf55601a56",
+      "title": "Deploy to Netlify | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/deployment/remote-theme-checklist/index.html": {
+      "text_sha256": "8d3eb4a85c4482b241674e893d0fad86407f0e89596bafb0ea57f2bc00eaffc9",
+      "title": "Remote-Theme Consumer Checklist | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/SCHEMA/index.html": {
+      "text_sha256": "0e641001335dadaf769a518d1747c7c2baf2dd0ae46b798c7d94d1fad568a05e",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/agents/index.html": {
+      "text_sha256": "3c95cd98c04cf6945db5d2f75b1cd7a961990af25f6ec850d973aa09d2fb0849",
+      "title": "AGENTS.md — Cross-Tool AI Agent Entry Point | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/ci-cd/index.html": {
+      "text_sha256": "0ada974d26c91d433c5928d969aa791d129307d1bd6aeeb5579ecb8f5904db20",
+      "title": "CI/CD Pipeline | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/dependency-updates/index.html": {
+      "text_sha256": "bcb73b96c2106b19b0726fa2df54c109fd6c1a54444b3e289b12a0183b6fd79c",
+      "title": "Dependency Updates | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/devcontainer/index.html": {
+      "text_sha256": "0bb6e7308da81a5ef898b371d3fc156fe8ad7f4d3239d6a78f70c30739897923",
+      "title": "DevContainer Configuration for Codespaces | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/docker-publishing/index.html": {
+      "text_sha256": "4c3fa919c6f3a32a9bbe5f7b365cc040052ed9fc695edc5678f76cb0f9d731ae",
+      "title": "Local Docker Publishing Pipeline | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/documentation/index.html": {
+      "text_sha256": "996b829849d52c4aa4d0cfba432c5d966b3501f9c91c7a522e7077853103eb95",
+      "title": "Documentation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/frontmatter-validation/index.html": {
+      "text_sha256": "ab1a4d28873d00014621ae24c5af00821da3ece5e83b33865d6d6366c275f899",
+      "title": "Config-Driven Frontmatter Validation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/index.html": {
+      "text_sha256": "32bbb2ac24b554bde55a04e2d41fb2729eadef8f2dba4d0ef5626e8159755369",
+      "title": "Development | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/prd/index.html": {
+      "text_sha256": "046f7282a11548bd515143255e56a70d95cc2cf848fb9c2f238a2262287dca08",
+      "title": "Zer0-Mistakes Product Requirements Document | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/release-management/index.html": {
+      "text_sha256": "406d0e962bb8fe9579fc56947fc69552a67c3b4f76c048e6eb17443897385fb2",
+      "title": "Release Management | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/scripts/index.html": {
+      "text_sha256": "8d82b740ca3414598e56adae69c879a7f04bcb51b50f3369756bb27457a396f2",
+      "title": "Scripts | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/security/index.html": {
+      "text_sha256": "42164789bdb1dcc32fdb6987c1e6efb148111e74b21bdf7660ca00f395921be4",
+      "title": "Security Scanning | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/testing/index.html": {
+      "text_sha256": "05425418f1623d76538b54e15f2a6a1c31d09f35dc7e769aff833e6fffa66849",
+      "title": "Testing | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/vendor-assets/index.html": {
+      "text_sha256": "4e1726af04ceb166940b18b357521eaa9c233c1ed40741e519bf5c6c9fbb87ca",
+      "title": "Vendor assets | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/development/version-bump/index.html": {
+      "text_sha256": "039460bbdc1b10d596b95e814703bb35deebcd8dab14c673f8d66543bcf1d086",
+      "title": "Version Bump Workflow | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/docker/SCHEMA/index.html": {
+      "text_sha256": "a2802f06ad042af7d49c7a5da676fea2369d27788643bf34315834e438afe07e",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/docker/index.html": {
+      "text_sha256": "7c4ba029c029b8b5a826a8fc7c7b8f2ae8d6932d8be65beac465c4da069cff3d",
+      "title": "Docker | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/SCHEMA/index.html": {
+      "text_sha256": "1b3d6ae0aa53c570a4aaf48349e104e23aec747e86d7f57969e1a387e60ce8ee",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/admin-dashboard/index.html": {
+      "text_sha256": "346ab4cd32174b4a2e5c09f3496c6dbefbb8feaf53100367bc58f74bf1e88194",
+      "title": "Admin Layout & Configuration Dashboards | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/ai-chat-assistant/index.html": {
+      "text_sha256": "de0cc13897a68886b01fce62f5b26bcf85c549d5a3365d0ad3ed8fe56b55bc74",
+      "title": "AI Chat Assistant (Claude + GitHub) | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/auto-hide-nav/index.html": {
+      "text_sha256": "0ec7f38896ae45f2ce079d9e4b1d1e5121c813f37857a250cf6091096a9ddb91",
+      "title": "Auto-hide Navigation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/back-to-top/index.html": {
+      "text_sha256": "c94a86e6c2a79ffc06c13a9ff48ce2d18001673d79adf6f04efda4fbedeff878",
+      "title": "Back to Top Button | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/breadcrumbs/index.html": {
+      "text_sha256": "bc14ca81c8af2cba48f731fb74ca205af4515a9955a8d2ca2bc786db700cf9b5",
+      "title": "Breadcrumbs Navigation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/code-copy/index.html": {
+      "text_sha256": "df4bdc693e34d0986b08b00437ad79e5de630ce3a21a987309b22cc529094b5d",
+      "title": "Code Copy Button | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/color-modes/index.html": {
+      "text_sha256": "065ac5adb62cc12a56801d95aec64987992d395a30095f1117a24e4ce01875c6",
+      "title": "Dark/Light Mode Toggle | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/cookie-consent/index.html": {
+      "text_sha256": "c9f86e808b88ce72ecc06d6532476334dba08e1f2c7973f0d7f80c9535308e96",
+      "title": "Cookie Consent Management | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/copilot-integration/index.html": {
+      "text_sha256": "3c3ae8c8e384525462bc362565509539ea19db639917855d7215e6f7886f7db0",
+      "title": "GitHub Copilot Integration | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/dynamic-navigation/index.html": {
+      "text_sha256": "fb0133d96ff14486c006f81e225978bcdb6982ac859cb900e538642e5e665c8b",
+      "title": "Dynamic Collection-Based Navigation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/giscus-comments/index.html": {
+      "text_sha256": "ab6bf211e7980f9a951dafd9ee07920dace1d9c8161c6c7df67b7180e160d21d",
+      "title": "Giscus Comments | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/index.html": {
+      "text_sha256": "d1b30adcaa8e9acabc247903b49bd1351a188fa32e82a8e75099555a9ba63b38",
+      "title": "Features | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/jupyter-notebooks/index.html": {
+      "text_sha256": "7233458ff13cad01b3fc7e33296e917d183294249d0f42f7cfc2b865ce564d7c",
+      "title": "Jupyter Notebook Integration | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/keyboard-navigation/index.html": {
+      "text_sha256": "061dd18e18c47f8a43e16c5947c210a095935077b2c7e4072fadcfe494681a52",
+      "title": "Keyboard Navigation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/mathjax-math/index.html": {
+      "text_sha256": "f795cdf560164da39d9766ad55682153e2187fa3b815f17e9cf0021743019637",
+      "title": "MathJax Math | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/mermaid-diagrams/index.html": {
+      "text_sha256": "c504607b9583c08dadb5cd537f68e42cc92fcb2db5492db848f131b1967908a0",
+      "title": "Mermaid Diagrams | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/mobile-toc/index.html": {
+      "text_sha256": "098657de850caa7ca7f652e99ca501bcb5dba6b1c28fc07f9b207e929ecf5d2c",
+      "title": "Mobile TOC Floating Action Button | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/navigation-architecture/index.html": {
+      "text_sha256": "8e621e904ec8e6e295d450e5f9c27d9f6355d6cde8ef0fb2030b28096f4f4f79",
+      "title": "ES6 Modular Navigation Architecture | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/particles-background/index.html": {
+      "text_sha256": "b217d73c090dd09ecb453c53a6c97fbaf513f6d25022bb7698b492ad4009eee6",
+      "title": "Particles Background | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/posthog-analytics/index.html": {
+      "text_sha256": "73c7e89fff8fc01e578a163b2be18f092ddcc6e6d783e81513aeead605a6f299",
+      "title": "PostHog Analytics | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/preview-image-generator/index.html": {
+      "text_sha256": "0f9d88c66b322594347c64009cd23a5d0c6823bba3794b2fe8ec8e41f2afe5f4",
+      "title": "AI Preview Image Generator for Jekyll Posts | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/sidebar-navigation/index.html": {
+      "text_sha256": "c5d03514d57c476aec8941adebecf1cac0ee12e59bdbc3886bfcbd37135ec36a",
+      "title": "Sidebar Navigation System | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/site-search/index.html": {
+      "text_sha256": "c271e53f572bdc69e23dc3e04a3180c7ac4b0dad1caeb64fafe98a57fce9bcbf",
+      "title": "Site Search | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/skip-to-content/index.html": {
+      "text_sha256": "862b580de48dc979b1f8f779ccccefbc666211c3c8e6bab70ceb27ae2a796af2",
+      "title": "Skip-to-Content Accessibility Link | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/smart-404/index.html": {
+      "text_sha256": "25d4b5beea52b540ede2594f5d5953acfaccc411980d0be67cf688930a6df18a",
+      "title": "Smart 404 & Site Configuration Detection | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/statistics-dashboard/index.html": {
+      "text_sha256": "3a83ff6cae2e62cf2053ffd2ede8c04a831fdf1413fd6316e9d2387da3cc3904",
+      "title": "Statistics Dashboard | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/theme-version/index.html": {
+      "text_sha256": "40eb788409c6ee0e574fca19c7cecdd32da7b5dc78d71930126a982a2393dfa2",
+      "title": "Theme Version Display Plugin | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/toc/index.html": {
+      "text_sha256": "d69f83f4c223af0ad2f29b5d1ee3d0e859739818edba3e0f5d18fb3cab0bbc5f",
+      "title": "Table of Contents | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/features/vendored-assets/index.html": {
+      "text_sha256": "414c9e237b0f9121a2d928c90b0bd12646b048792b710829ffb430fe9ddbc786",
+      "title": "Vendored Bootstrap & Icon Assets | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/front-matter/index.html": {
+      "text_sha256": "380748795746f9ed5988211b26cf1d62ad749165077b6130367dc33736722960",
+      "title": "Front Matter | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/getting-started/SCHEMA/index.html": {
+      "text_sha256": "8e8ea5529121b028d1bbebcf7c42c2a4d6200a59abe1f8c8c1ebcdf9d95fcb6b",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/getting-started/index.html": {
+      "text_sha256": "5cf52a8f5a90037677b497b7c2939c6fedcc067bc0af5dff57c96fd3123707ee",
+      "title": "Getting Started | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/getting-started/quick-start/index.html": {
+      "text_sha256": "d11ccb52eb6ea83c60028145f9461c11e8116a5104a6e933e74507290e7438bd",
+      "title": "Quick Start Guide | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/getting-started/theme-guide/index.html": {
+      "text_sha256": "eb2f2ae9f9ec6ae6f2a3f971661469317bb436fefe8ccb4ce9db7f045296ff4a",
+      "title": "Jekyll Theme Guide: Setup, Customize, Deploy | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/index.html": {
+      "text_sha256": "9cec8967674c4c6950c9bb4a392b04925cad0cfed99a804fdb1c6977b32f20e7",
+      "title": "Documentation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/installation/index.html": {
+      "text_sha256": "7f08c263eae80cf3cf03b263a27b8eb8fb2c8b01940a3544a87b2c9f4e0de734",
+      "title": "Installation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/jekyll/SCHEMA/index.html": {
+      "text_sha256": "4bce97caf8116e005cedcc138aae8038a8372fbc616b33c78257d8c8b0b9dac5",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/jekyll/code-highlighting/index.html": {
+      "text_sha256": "9a15f26d83b1e3b0ec98f3f16f31a5f4f7bf89d89a0c7835d98ec02d63164fcb",
+      "title": "Code Highlighting | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/jekyll/collections/index.html": {
+      "text_sha256": "bc5ad0d8eb9933383b6cfedb2a4885f06b46d990ead458954c547dfee205a822",
+      "title": "Jekyll Collections | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/jekyll/index.html": {
+      "text_sha256": "777ed8af014bde04bffbbb0608825f67e8bf29ad6ddcec4e3438d058d0d5e2c4",
+      "title": "Jekyll | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/jekyll/pagination/index.html": {
+      "text_sha256": "76aa889a3b151f154a810a4549ad7245ddb233dae44559ef1800cd3f918208a3",
+      "title": "Pagination | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/liquid/SCHEMA/index.html": {
+      "text_sha256": "b314c4b54001d33f5f54d3b37b01402a613db5695d9805a1f8bf31db9ce0fc44",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/liquid/index.html": {
+      "text_sha256": "0d776c0337272d5896c30961c3da2ae91f52270f56714ed5aa1500293f430559",
+      "title": "Liquid | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/SCHEMA/index.html": {
+      "text_sha256": "a8599494d36c2f806b977323d46d8b30742fc0657dad1b649ee625126e992bea",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/authoring-workflow/index.html": {
+      "text_sha256": "151333e5309ba8508a62bafa5514f525aafd566a5d0358382769801402f8081f",
+      "title": "Obsidian Authoring Workflow | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/getting-started/index.html": {
+      "text_sha256": "0444549a58b6edf2abcbf1d1dbfbe3e430be2dd79e8641c30a8254cc9a7d81a1",
+      "title": "Getting Started with the Obsidian Vault | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/graph/index.html": {
+      "text_sha256": "6c8f609b4e495cb5a686225b279d12575868b499efbb51a184318f4fff40e0c6",
+      "title": "Graph View | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/index.html": {
+      "text_sha256": "83ba45ab6d4794874ce015a5d80a2cd5c742dfd5a9d01a7ce4b3f78e4a44458e",
+      "title": "Obsidian Vault Integration | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/performance/index.html": {
+      "text_sha256": "78eb6cbf30fec4410d51a57f0278fd202972620f4d87eb4548fb822bbae9f761",
+      "title": "Obsidian Resolver — Performance & Caching | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/syntax-reference/index.html": {
+      "text_sha256": "85b35b9c84b82ae11d68e890032c04e8a0609f55f0813e61d73d0957b4cf5452",
+      "title": "Obsidian Syntax Reference | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/obsidian/troubleshooting/index.html": {
+      "text_sha256": "ef18fc355d6a30259b22ab3cce8fe38cf56af0747b79785e5f1eb244f7e7a00f",
+      "title": "Obsidian Integration Troubleshooting | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/quickstart/SCHEMA/index.html": {
+      "text_sha256": "a5af15813e8c1b5edc364a46408cf32d242325ccd197b87ceb36f912415f11df",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/quickstart/bare-minimum/index.html": {
+      "text_sha256": "42c8cfdc007e8e88e240fc2e36748069ead8e3642e999e89d41bd19b2c2413cc",
+      "title": "Bare-Minimum Remote-Theme Starter | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/quickstart/fork-and-deploy/index.html": {
+      "text_sha256": "635a26c5adaed3f6f7a3210f82ed2d8297350774ee919907a5498dc62a0e4dff",
+      "title": "Fork and Deploy to GitHub Pages | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/quickstart/index.html": {
+      "text_sha256": "29f1c008b7f5d1f59b6061ffb787c83628c0d516afa35f64158ff6fcfe9639bc",
+      "title": "Zer0-Mistakes Quickstart Guides | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/ruby-101/index.html": {
+      "text_sha256": "6573200419fd66a93afa32a96d3778ef6e3ce79948ac53f871315e9361efbf68",
+      "title": "Ruby 101 | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/ruby/SCHEMA/index.html": {
+      "text_sha256": "3eca028189426c61c0a73c483dbdf5bc4dda29af01fd49dcd728cf90acfd5d07",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/ruby/index.html": {
+      "text_sha256": "391152cb03d75d3ce5200fc68eff1fdbe88b7d79f0122341d9de29fd5797b7d3",
+      "title": "Ruby | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/seo/SCHEMA/index.html": {
+      "text_sha256": "9ba15d7e8d41f2c2cd87ae880d4a62364af57bdbc9880d6976e19fc5d97ee18c",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/seo/aieo/index.html": {
+      "text_sha256": "3963db7b3d0c05d75c6be70d9bed579de42246d0f4c80a6738c14e0b6d0234ae",
+      "title": "AIEO — AI Engine Optimization | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/seo/index.html": {
+      "text_sha256": "69f13d1e1cf6a7c47d816e157f7112f8eaf55a7faf07b734c43252ae5d6d0b67",
+      "title": "Jekyll SEO Features: Meta Tags, Sitemaps & Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/seo/meta-tags/index.html": {
+      "text_sha256": "eec7721ccb0b211305c7cbb8fb0bfb2fdef7c8d4493e3a37b28c7eea5cd6d4c3",
+      "title": "SEO Meta Tags | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/seo/sitemap/index.html": {
+      "text_sha256": "1857ec4ce4b47a754374104b0adf1c7f6ab2151b591c4248a41911cd1c05bc55",
+      "title": "Sitemap Generation | zer0-pages",
+      "type": "text/html"
+    },
+    "docs/troubleshooting/index.html": {
+      "text_sha256": "15d1f64bd2d6753c2a9e84bb9c7a2dd1ca74c3c83d58b3b8537cf6376800989f",
+      "title": "Troubleshooting | zer0-pages",
+      "type": "text/html"
+    },
+    "favicon.ico": {
+      "type": "image/vnd.microsoft.icon"
+    },
+    "feed.xml": {
+      "type": "application/xml"
+    },
+    "index.html": {
+      "text_sha256": "fbe10ee1d571c96bf1664d392f908980982d1dff564b11ab4d5198be20b62168",
+      "title": "Home | zer0-pages",
+      "type": "text/html"
+    },
+    "moc/Docs/index.html": {
+      "text_sha256": "52aaa333eafa04db7ce44fd874dec6f9e563f9ade6fcf36dbdd57decf4eb9256",
+      "title": "Docs Map | zer0-pages",
+      "type": "text/html"
+    },
+    "moc/Home/index.html": {
+      "text_sha256": "e49cbf1107105dce87b9fa0214abbbeff318d942c8fd24f71e8cc314ee98037b",
+      "title": "Home | zer0-pages",
+      "type": "text/html"
+    },
+    "moc/Notes/index.html": {
+      "text_sha256": "b06120c6d3d855f6031cc2f2355bc90d960b1e2cb7fb54a938b38774d2767a6f",
+      "title": "Notes Map | zer0-pages",
+      "type": "text/html"
+    },
+    "moc/Posts/index.html": {
+      "text_sha256": "02afc6b61f75809e198d6ef3013c38fbf75f525ab6814b601235ebbae84721ec",
+      "title": "Posts Map | zer0-pages",
+      "type": "text/html"
+    },
+    "moc/SCHEMA/index.html": {
+      "text_sha256": "6cb8e135edfb41e8f525d6223c15a4ec17a3aff9bb3cbece96e5685aac7245fc",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "news/business/index.html": {
+      "text_sha256": "64c9477900b838fdaf9fc51bb5f2f9e377ff84472887ec1abf5098adeef0cc44",
+      "title": "Business | zer0-pages",
+      "type": "text/html"
+    },
+    "news/development/index.html": {
+      "text_sha256": "0f029d64b9d9ccfca218ac1dcb6582224f03d2994e43c7486b9772944bf14d17",
+      "title": "Development | zer0-pages",
+      "type": "text/html"
+    },
+    "news/index.html": {
+      "text_sha256": "751caf2d064a0d560edaed10bac4f5896930aa255612b65cd2b79930b263e8ad",
+      "title": "Zer0-Mistakes News Network: Building Dynamic News Sites with Jekyll | zer0-pages",
+      "type": "text/html"
+    },
+    "news/science/index.html": {
+      "text_sha256": "2482528f675df7f732ecaf781e15421cabf3b29ef6cdc3944340d9d2bcdc4a56",
+      "title": "Science | zer0-pages",
+      "type": "text/html"
+    },
+    "news/technology/index.html": {
+      "text_sha256": "61623db23b1f21e101763811599c1cb968e9348281ae5f4fe0a11dae5668878d",
+      "title": "Technology | zer0-pages",
+      "type": "text/html"
+    },
+    "news/tutorial/index.html": {
+      "text_sha256": "ca80f163ced93573ca5dfa639bc323665a3ea22e45f4501445fd3f3104f1ad34",
+      "title": "Tutorial | zer0-pages",
+      "type": "text/html"
+    },
+    "news/world/index.html": {
+      "text_sha256": "99956d1b406246bba3663cbeb91421eddc9535bae42f55619f7784fe17a617bb",
+      "title": "World News | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/SCHEMA/index.html": {
+      "text_sha256": "681077dcde91618efd46eb42f05fcce0296151b4c2c6f297c0a0571348fb0e83",
+      "title": "Schema | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/bash-shortcuts/index.html": {
+      "text_sha256": "14c69f502418cf528f7616fdd262349991eec5c4d1e169bc39358e9945bf3318",
+      "title": "Bash Terminal Shortcuts | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/claude-obsidian-cheatsheet/index.html": {
+      "text_sha256": "d96ad16c9a751934ca31d7dbc3d0e629382de78e25e6cac92767cb03d2b6f149",
+      "title": "claude-obsidian Cheatsheet | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/docker-commands/index.html": {
+      "text_sha256": "8b4fd208302d69f856762e8f0ee5cdcddf97a2ad6927b20f6d307fe2b3ab0056",
+      "title": "Docker Commands Reference | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/git-cheatsheet/index.html": {
+      "text_sha256": "d3624fa1170b7f49baafb7b81225a7bfd555a71aad03c383d8e7634aaeead434",
+      "title": "Git Commands Cheatsheet | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/index.html": {
+      "text_sha256": "811e3175cf3d436c911509d3523d5c87f50a7ebf1a3778ba94f128300c48e195",
+      "title": "Notes | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/jekyll-front-matter/index.html": {
+      "text_sha256": "ada40416faf9aa63cc60ef7cdeef0c40adf1dea6c10888fabd4e9f93b739f620",
+      "title": "Jekyll Front Matter Reference | zer0-pages",
+      "type": "text/html"
+    },
+    "notes/markdown-tips/index.html": {
+      "text_sha256": "7064eaefc242237c40326acede21a4a537c7b081f0fd55865c63424853eb6ab2",
+      "title": "Markdown Formatting Tips | zer0-pages",
+      "type": "text/html"
+    },
+    "posts/index.html": {
+      "text_sha256": "4e110471b5ce0d8143f29b79c8ce40c9642b615ee5b4c40b08c157ef292016d2",
+      "title": "All Posts | zer0-pages",
+      "type": "text/html"
+    },
+    "robots.txt": {
+      "type": "text/plain"
+    },
+    "science/2025/01/18/quantum-computing-explained/index.html": {
+      "text_sha256": "e04f0259c071388310ae57f9a4f3bf3179e7788ac978492b6a3229ec4e828997",
+      "title": "Quantum Computing Explained: From Qubits to Quantum Advantage | zer0-pages",
+      "type": "text/html"
+    },
+    "science/2026/04/28/climate-data-dashboards/index.html": {
+      "text_sha256": "d14a5d108b5361ea96f1406f8d9395d4e69a2dc8fa7f6a04f2ec27ffacff3d9a",
+      "title": "Climate Data Dashboards: Turning Measurements into Decisions | zer0-pages",
+      "type": "text/html"
+    },
+    "science/2026/04/28/climate-data-primer/index.html": {
+      "text_sha256": "6f94c32e4a26362f284917dae5332c1ff02d073b5c9587e2654bb5cd9486c98d",
+      "title": "Climate Data Primer: Reading Trends Without Losing the Signal | zer0-pages",
+      "type": "text/html"
+    },
+    "security/2026/06/16/favicon-ico-unlocked-door-to-collapse/index.html": {
+      "text_sha256": "d78a9b36302e15ce101328608e8b00a6ab7370bc258736cf9e2261b3b9fdadef",
+      "title": "Your favicon.ico Is an Unlocked Door to Total Collapse | zer0-pages",
+      "type": "text/html"
+    },
+    "security/2026/06/18/trailing-slash-that-could-end-your-company/index.html": {
+      "text_sha256": "42a2d9f257ccbc50b0f3d521c22fd2ea39feaedc882820f605586d2ddf1aee76",
+      "title": "The Trailing Slash That Could End Your Entire Company | zer0-pages",
+      "type": "text/html"
+    },
+    "sitemap.xml": {
+      "type": "application/xml"
+    },
+    "tags/index.html": {
+      "text_sha256": "5699a739c0aabd66d8d0b2c210ca3ab99dc12b1c565d39a46780fc7f0ca8811b",
+      "title": "Tags | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/2025/01/25/ai-tools-productivity/index.html": {
+      "text_sha256": "cd6afe7fbc4977b763c669ec0c58a2437e4bfe0bac438ef446fa9e6e354485c9",
+      "title": "10 AI Tools That Will Transform Your Productivity in 2025 | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/2026/04/07/ai-adoption-from-awareness-to-action/index.html": {
+      "text_sha256": "8531082866e72e12250fdcda4d2fb042629813e0da5d767e213c110766050609",
+      "title": "From AI Awareness to Action: The Skills, Systems, and Partnership Model That Close the Gap | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/2026/04/07/ai-adoption-imperative-mid-market-manufacturers/index.html": {
+      "text_sha256": "cb3b020573e91080a38e74550a9a8a9ed7ed790a4faa63c1797098fd356f7656",
+      "title": "The AI Adoption Imperative: Why Mid-Market Manufacturers Have 18 Months to Act | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/2026/04/07/ai-adoption-map-function-by-function/index.html": {
+      "text_sha256": "d844fcf37171d1ea28a7a63fdee1782dfc4ade9b3595244498b7177d87a25a92",
+      "title": "The AI Adoption Map: Where AI Will Augment, Replace, and Transform Every Business Function | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/2026/04/28/building-ai-ready-knowledge-base/index.html": {
+      "text_sha256": "5aaa9602dc4120fa1b893344e3f0829f33a2625a45bc4989f3cc465470a8be76",
+      "title": "Building an AI-Ready Knowledge Base: From Documents to Answers | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/2026/04/28/edge-ai-practical-patterns/index.html": {
+      "text_sha256": "c05f3a3a15821ccfb71b9268ee5f8f5c160708ada255edac09713127d1002229",
+      "title": "Edge AI in the Real World: Practical Patterns for Small Models | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/development/ethics/2024/06/17/wizard-topples-capitalist-dominance-ingeniously/index.html": {
+      "text_sha256": "7e93640890bd7e4ce2077db31494a15649e0b395decc857016a8fcbdb42b60c2",
+      "title": "Wizard Topples Capitalist Dominance Ingeniously | zer0-pages",
+      "type": "text/html"
+    },
+    "technology/tutorial/2025/01/10/bootstrap-5-components/index.html": {
+      "text_sha256": "18e298f96caedd74caf788cbbf63482fee9ccd17881a8261363b02cf25847058",
+      "title": "Bootstrap 5 Components for Modern Jekyll Themes | zer0-pages",
+      "type": "text/html"
+    },
+    "tutorial/2025/01/23/css-grid-mastery/index.html": {
+      "text_sha256": "88c74b27a8731c89bd4c25033394675bd9519a9edc1c7bd73762c0ee0e4995e2",
+      "title": "CSS Grid Mastery: Build Any Layout You Can Imagine | zer0-pages",
+      "type": "text/html"
+    },
+    "tutorial/2026/04/28/accessible-form-patterns/index.html": {
+      "text_sha256": "26b00fb3fc08f5b55f64a73e12bacbf5afdad916499f46b67e97ff2d82c27fe4",
+      "title": "Accessible Form Patterns: Labels, Errors, and Helpful States | zer0-pages",
+      "type": "text/html"
+    },
+    "tutorial/2026/04/28/responsive-documentation-card-grid/index.html": {
+      "text_sha256": "d571ca19d173375dff99182ee9bcfb8edcba7f6c0746ea0870a0484558ff2573",
+      "title": "Build a Responsive Documentation Card Grid | zer0-pages",
+      "type": "text/html"
+    },
+    "tutorial/development/2025/01/01/getting-started-jekyll/index.html": {
+      "text_sha256": "56f6d9862b3d310a7c2f3b15d6c336aa7de3287b241bb91355952c9e2e1b7b7c",
+      "title": "Getting Started with Jekyll: Your First Static Site | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/SCHEMA/index.html": {
+      "text_sha256": "1d0ff81f7743ed95fb08709755ca90f184d41ee2b13f29deb063869500e475d5",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "wiki/concepts/SCHEMA/index.html": {
+      "text_sha256": "c242710d596ed1bc7e07ffc417c886988da001eb541f86b071ef76e64bf9bfd6",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "wiki/concepts/ai-content-engine/index.html": {
+      "text_sha256": "2509ba76a503edd56c08cf64ed8f39371986dfde5da879196196417006877d8d",
+      "title": "AI Content Engine | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/algorithmic-accountability/index.html": {
+      "text_sha256": "3395063ccfbfede1641cb639a46f132f9f21a6a5f8382ef9c9a0e81b42aab87c",
+      "title": "Algorithmic Accountability | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/esg-investing/index.html": {
+      "text_sha256": "56bf899f0fdd58f147f3829951082dd7e36abf9acdad8647fc291f23d775cbe7",
+      "title": "ESG Investing | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/ethical-engineering/index.html": {
+      "text_sha256": "6e8cbdfda7ca01329158d2804747d03af84fb55c176abf2e377837e500277b96",
+      "title": "Ethical Engineering | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/github-pages-deployment/index.html": {
+      "text_sha256": "00ac54ec643b14fa6eb690765071ef245b298d15ad9ddbba2a8e19042bdd98f0",
+      "title": "GitHub Pages Deployment Model | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/impact-weighted-accounting/index.html": {
+      "text_sha256": "801db5c08c86bbac66160db237ea284d71cd527daeffc6fbab36e05618d7a624",
+      "title": "Impact-Weighted Accounting | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/jekyll-obsidian-dual-rendering/index.html": {
+      "text_sha256": "27f7036c9f89d84239092aeadc98192a52f48fa08a666d49f97a5415f742b911",
+      "title": "Jekyll/Obsidian Dual-Rendering Architecture | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/prd-machine/index.html": {
+      "text_sha256": "158e6446a224da620343c90ed69e94c5d83f0b64377c9835639bc7adfaa49de6",
+      "title": "PRD Machine | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/radical-transparency/index.html": {
+      "text_sha256": "afe8298b8c8ed60c0624af55e6b17b30d551809b724b603a1fed6b54a796eb2a",
+      "title": "Radical Transparency | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/concepts/stakeholder-capitalism/index.html": {
+      "text_sha256": "d20a94431b78b841051d45bb569939c56b0e175cd66058b3a8833c86310ea57e",
+      "title": "Stakeholder Capitalism | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/SCHEMA/index.html": {
+      "text_sha256": "a5b5ed11a287ac3c9eca6a3b2ebc689e902c2655e8ada7d122fe72fb7f217669",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "wiki/entities/b-corp/index.html": {
+      "text_sha256": "6a33db049a1458c26115eac5f84bc9b962b2f78108ff2f6bbe982604e9d98379",
+      "title": "B Corp | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/claude-obsidian/index.html": {
+      "text_sha256": "d3afdb49aa1a0fb235fd9a051184462a07930bb4a7ec734945f193f71c3707f4",
+      "title": "claude-obsidian | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/fairlearn/index.html": {
+      "text_sha256": "bd5a946dd9fbcb2ebcaa50e114ff37b59b27d9d62d3b22fa63a2ba60c08551c8",
+      "title": "Fairlearn | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/gleif/index.html": {
+      "text_sha256": "acf61d5cac2d538ab252865646fdc6a6e506620e43194901acdd969a2d3717a5",
+      "title": "GLEIF | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/hbs-impact-weighted-accounts/index.html": {
+      "text_sha256": "fdeb9e00f7cfa885dd7ccd20030ac86ebe339293b3a8add7a472f2188daa07d3",
+      "title": "HBS Impact-Weighted Accounts Project | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/sec-edgar/index.html": {
+      "text_sha256": "0025b01b71fe003091dbcfd93dac9cd450a068fd141d32f2a3eb4ef683d2a2ab",
+      "title": "SEC EDGAR | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/zer0-mistakes/index.html": {
+      "text_sha256": "bce05447fbc74df003b12c0ec8dc39d6a424f215127af66fc207700717f7fa82",
+      "title": "zer0-mistakes | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/entities/zer0-pages/index.html": {
+      "text_sha256": "224d45b64194fd647bab4cdeaa5e1936fa77d807a3c63b27056edf1e0c48dae7",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "wiki/hot/index.html": {
+      "text_sha256": "e08f2621389e13a51417973195f15cfe39b4ed57ddfe88e39e9fc3cf75a56f79",
+      "title": "Hot Cache | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/index.html": {
+      "text_sha256": "d9645786a8233b036b358a004c0039bf755c1a0be0b6011350e1e1e59b2c1c95",
+      "title": "Wiki Index | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/log/index.html": {
+      "text_sha256": "a0f6b6cebad8084a4e488424f7770eecc33da00e3331d8c0b9efa71497ca78f7",
+      "title": "Log | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/meta/SCHEMA/index.html": {
+      "text_sha256": "9e42a780942014b4e1668ccfe996fb4da3a36449379fb2372f84eb50719e23df",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "wiki/meta/conventions/index.html": {
+      "text_sha256": "b0e49be96175710b5bfe36be28c99f35ba0753abd5abbc8ce45b898afc6e1227",
+      "title": "Conventions | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/overview/index.html": {
+      "text_sha256": "414dc9dc47a9d8fcfb5a7ea9a387e6a34873087fe5b7065696ccb5ee93904e23",
+      "title": "Overview | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/sources/SCHEMA/index.html": {
+      "text_sha256": "37c65a016eec3ce301bc28b52b6f52db374cff5cf1be8f225a7244a99544158e",
+      "title": "zer0-pages | Zero friction. Infinite possibilities.",
+      "type": "text/html"
+    },
+    "wiki/sources/wizard-topples-capitalist-dominance/index.html": {
+      "text_sha256": "2d9d7caaf588c296cf42d6b8bb18a39331b8f8bf1104530c79f4263615ab87ca",
+      "title": "Wizard Topples Capitalist Dominance Ingeniously | zer0-pages",
+      "type": "text/html"
+    },
+    "wiki/sources/zer0-pages-prd/index.html": {
+      "text_sha256": "281b78ed114be256cf6eaacef1584a41b4e544297b12e144b9985025880d6739",
+      "title": "zer0-pages Product Requirements Document (PRD) | zer0-pages",
+      "type": "text/html"
+    },
+    "world/2025/01/21/remote-work-revolution/index.html": {
+      "text_sha256": "12978edfe88675ae433952dd6eda5dd37d3198d54dfe3dc6886e5eb103a4e580",
+      "title": "The Remote Work Revolution: How Global Teams Are Reshaping Business | zer0-pages",
+      "type": "text/html"
+    },
+    "world/2026/04/28/local-resilience-networks/index.html": {
+      "text_sha256": "b32ce4c4071267172c86e4e3d05fd8fbaa8b3941d5d687d276e1d6accce5dfff",
+      "title": "Local Resilience Networks: How Communities Coordinate Before a Crisis | zer0-pages",
+      "type": "text/html"
+    }
+  },
+  "redirects": {},
+  "schema": "site-manifest/v1",
+  "site": "zer0-pages",
+  "sitemaps": {
+    "sitemap.xml": [
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/archives/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/backgrounds/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/backgrounds/noise/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/css/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/images/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/images/authors/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/images/docs/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/images/docs/author-profiles/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/images/docs/features/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/images/docs/quickstart/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/images/quickstart/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/assets/js/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/business/2025/01/20/startup-funding-guide/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/business/2026/04/28/customer-onboarding-scorecards/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/business/2026/04/28/scenario-planning-for-small-teams/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/categories/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/climate%20adaptation/cooling%20strategiesenvironmental%20sustainability/extreme%20heat/heat%20vulnerability/infrastructure%20planning/neighborhood%20equity/public%20health/urban%20planning/urban%20resilience/2026/04/28/urban-resilience-extreme-heat/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/data%20science/2026/06/17/bayesian-modeled-my-coffee-and-wept-with-joy/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/data%20science/2026/06/19/umap-found-14-hidden-dimensions-in-404-logs/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/development/2025/01/22/git-workflow-best-practices/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/development/2026/04/28/feature-flags-continuous-delivery/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/development/2026/04/28/observability-for-small-apps/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/development/2026/07/05/inside-the-zer0-pages-engine/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/development/technology/2025/01/05/web-accessibility-guide/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/development/tutorial/2025/01/15/docker-jekyll-guide/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/analytics/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/analytics/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/analytics/google-analytics/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/analytics/google-tag-manager/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/bootstrap/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/bootstrap/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/customization/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/customization/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/customization/author-profiles/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/customization/includes/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/customization/layouts/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/customization/navigation/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/customization/styles/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/deployment/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/deployment/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/deployment/build-overlay/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/deployment/custom-domain/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/deployment/github-pages/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/deployment/netlify/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/deployment/remote-theme-checklist/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/agents/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/ci-cd/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/dependency-updates/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/devcontainer/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/docker-publishing/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/documentation/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/frontmatter-validation/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/prd/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/release-management/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/scripts/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/security/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/testing/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/vendor-assets/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/development/version-bump/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/docker/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/docker/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/admin-dashboard/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/ai-chat-assistant/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/auto-hide-nav/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/back-to-top/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/breadcrumbs/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/code-copy/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/color-modes/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/cookie-consent/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/copilot-integration/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/dynamic-navigation/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/giscus-comments/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/jupyter-notebooks/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/keyboard-navigation/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/mathjax-math/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/mermaid-diagrams/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/mobile-toc/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/navigation-architecture/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/particles-background/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/posthog-analytics/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/preview-image-generator/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/sidebar-navigation/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/site-search/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/skip-to-content/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/smart-404/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/statistics-dashboard/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/theme-version/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/toc/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/features/vendored-assets/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/front-matter/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/getting-started/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/getting-started/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/getting-started/quick-start/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/getting-started/theme-guide/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/installation/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/jekyll/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/jekyll/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/jekyll/code-highlighting/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/jekyll/collections/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/jekyll/pagination/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/liquid/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/liquid/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/obsidian/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/obsidian/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/obsidian/authoring-workflow/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/obsidian/getting-started/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/obsidian/performance/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/obsidian/syntax-reference/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/obsidian/troubleshooting/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/quickstart/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/quickstart/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/quickstart/bare-minimum/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/quickstart/fork-and-deploy/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/ruby-101/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/ruby/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/ruby/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/seo/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/seo/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/seo/aieo/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/seo/meta-tags/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/seo/sitemap/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/docs/troubleshooting/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/moc/Docs/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/moc/Home/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/moc/Notes/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/moc/Posts/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/moc/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/news/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/news/business/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/news/development/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/news/science/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/news/technology/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/news/tutorial/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/news/world/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/bash-shortcuts/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/claude-obsidian-cheatsheet/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/docker-commands/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/git-cheatsheet/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/jekyll-front-matter/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/notes/markdown-tips/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/posts/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/science/2025/01/18/quantum-computing-explained/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/science/2026/04/28/climate-data-dashboards/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/science/2026/04/28/climate-data-primer/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/security/2026/06/16/favicon-ico-unlocked-door-to-collapse/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/security/2026/06/18/trailing-slash-that-could-end-your-company/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/tags/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2025/01/25/ai-tools-productivity/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2026/04/07/ai-adoption-from-awareness-to-action/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2026/04/07/ai-adoption-imperative-mid-market-manufacturers/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2026/04/07/ai-adoption-map-function-by-function/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2026/04/28/building-ai-ready-knowledge-base/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/2026/04/28/edge-ai-practical-patterns/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/development/ethics/2024/06/17/wizard-topples-capitalist-dominance-ingeniously/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/technology/tutorial/2025/01/10/bootstrap-5-components/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/2025/01/23/css-grid-mastery/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/2026/04/28/accessible-form-patterns/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/2026/04/28/responsive-documentation-card-grid/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/tutorial/development/2025/01/01/getting-started-jekyll/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/ai-content-engine/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/algorithmic-accountability/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/esg-investing/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/ethical-engineering/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/github-pages-deployment/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/impact-weighted-accounting/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/jekyll-obsidian-dual-rendering/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/prd-machine/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/radical-transparency/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/concepts/stakeholder-capitalism/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/b-corp/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/claude-obsidian/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/fairlearn/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/gleif/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/hbs-impact-weighted-accounts/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/sec-edgar/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/zer0-mistakes/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/entities/zer0-pages/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/hot/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/log/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/meta/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/meta/conventions/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/overview/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/sources/SCHEMA/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/sources/wizard-topples-capitalist-dominance/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/wiki/sources/zer0-pages-prd/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/world/2025/01/21/remote-work-revolution/",
+      "https://bamr87.github.io/zer0-CMS/zer0-pages/world/2026/04/28/local-resilience-networks/"
+    ]
+  }
+}

@@ -1,0 +1,1449 @@
+{
+  "feeds": {
+    "feed.xml": [
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/18/microsoft-windows-tech-literacy-irony",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/18/microsoft-windows-tech-literacy-irony/",
+        "title": "Windows: The Great Irony of Tech Literacy"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/18/windows-raising-afraid-generation",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/18/windows-raising-afraid-generation/",
+        "title": "Windows: Making Clicking Cool While Accidentally Raising a Generation Afraid of the Command Line"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/02/injustices",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/02/injustices/",
+        "title": "Manufactured Dispossession"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/02/erp-systems-economic-design",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/02/erp-systems-economic-design/",
+        "title": "ERP Systems Drive the Future of Economy"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/01/manufactured-dispossession",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/01/manufactured-dispossession/",
+        "title": "The Corporate Game of Dispossession"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/30/rise-of-frameworks-satire",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/30/rise-of-frameworks-satire/",
+        "title": "Frameworks: The New Kings of Code"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/18/glamorous-world-of-github-branches",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/18/glamorous-world-of-github-branches/",
+        "title": "The Glamorous World of GitHub Branches"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/15/managing-features-updates-python-github",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/15/managing-features-updates-python-github/",
+        "title": "Mastering GitHub: Updates Made Easy!"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/13/coding-with-charms-sourcery",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/13/coding-with-charms-sourcery/",
+        "title": "Spellbinding Adventures in Sourcery"
+      },
+      {
+        "id": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/12/make-or-buy-erp-decision-making",
+        "link": "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/12/make-or-buy-erp-decision-making/",
+        "title": "Make or Buy? The ERP Decision-Making Drama"
+      }
+    ]
+  },
+  "paths": {
+    "README.md": {
+      "type": "text/markdown"
+    },
+    "about/README.md": {
+      "type": "text/markdown"
+    },
+    "about/about.md": {
+      "type": "text/markdown"
+    },
+    "assets/backgrounds/gradients/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/css/custom.css": {
+      "type": "text/css"
+    },
+    "assets/css/extension-points-demo.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css": {
+      "type": "text/css"
+    },
+    "assets/css/stats.css": {
+      "type": "text/css"
+    },
+    "assets/css/theme-npm-entry.scss": {
+      "type": "text/x-scss"
+    },
+    "assets/css/vendor/.gitkeep": {
+      "type": "application/octet-stream"
+    },
+    "assets/data/notebooks/sales_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/survey_responses.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/weather_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/wiki-index.json": {
+      "type": "application/json"
+    },
+    "assets/images/authors/bamr87.png": {
+      "type": "image/png"
+    },
+    "assets/images/authors/cassandra.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/authors/vega.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/docs/author-profiles/ai-persona-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/author-profiles/interactive-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/admin-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/back-to-top.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/code-copy.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/cookie-consent.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/docs-layout.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/dynamic-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/configurator-repo-check.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-error-not-installed.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-working.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/jupyter-notebooks.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mermaid-rendered.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mobile-toc.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/smart-404.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/docs-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/theme-home.png": {
+      "type": "image/png"
+    },
+    "assets/images/favicon_gpt_computer_retro.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar-small.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar.png": {
+      "type": "image/png"
+    },
+    "assets/images/info-banner-mountain-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/images/notebooks/test-notebook_files/test-notebook_4_0.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/10-ai-tools-that-will-transform-your-productivity-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/about.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/accessible-form-patterns-labels-errors-and-helpful.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/add-floating-back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/admin-layout-configuration-dashboards.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/agents-md-cross-tool-ai-agent-entry-point.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-assisted-development-with-zer0-mistakes.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-chat-assistant-claude-github.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-preview-image-generator.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/aieo-ai-engine-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/amr-abdel-motaleb.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/author-profiles-and-about-the-author-bylines.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/auto-hide-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/automated-version-build-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bare-minimum-remote-theme-starter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-theme-examples.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/breadcrumbs-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/build-a-responsive-documentation-card-grid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-accessible-web-applications.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-an-ai-ready-knowledge-base-from-documents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/business.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ci-cd-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-dashboards-turning-measurements-into-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-primer-reading-trends-without-losing-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-copy-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/collection-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/comprehensive-gem-automation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/config-driven-frontmatter-validation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/configuration-utility.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/cookie-consent-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/css-grid-mastery-build-any-layout-you-can-imagine.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customer-onboarding-scorecards-that-reveal-revenue.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dark-light-mode-toggle.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dependency-updates.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-github-pages.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploying-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/devcontainer-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development-docs.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/docker.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dynamic-collection-based-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/edge-ai-in-the-real-world-practical-patterns-for-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/enhanced-sitemap-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/environment-build-info.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/es6-modular-navigation-architecture.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/feature-flags-for-safer-continuous-delivery.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/features.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/from-ai-awareness-to-action-the-skills-systems-and.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/front-matter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-jekyll-your-first-static-site.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-the-obsidian-vault.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/giscus-comments.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/git-workflow-best-practices-for-modern-teams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-copilot-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-setup-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-tag-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/homebrew-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/i-bayesian-modeled-my-coffee-intake-and-wept-with-.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/include-components.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/installation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-collections.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-technical-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-theme-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jeykll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jupyter-notebook-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/layouts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-docker-publishing-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-resilience-networks-how-communities-coordina.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/machine-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-diagrams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-native-markdown.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mobile-toc-floating-action-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation-editor.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/observability-for-small-apps-logs-metrics-and-trac.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-authoring-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-graph-view.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-integration-troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-resolver-performance-caching.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-syntax-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-vault-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/pagination.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/particles-background.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/performance-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/posthog-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/product-requirements-document.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/published-documentation-library.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quantum-computing-explained-from-qubits-to-quantum.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/release-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/remote-theme-consumer-checklist.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby-101.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/safe-mode-build-overlay-building-outside-github-pa.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scenario-planning-for-small-teams-a-practical-oper.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/science.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scripts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security-scanning.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo-meta-tags.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sidebar-navigation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-personalization-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-statistics-portal.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sitemap-generation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/skip-to-content-accessibility-link.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/smart-404-site-configuration-detection.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/statistics-dashboard-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/stats-page-enhancement-summary.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/styles.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/syntax-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/table-of-contents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/technology.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/testing.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-imperative-why-mid-market-manufact.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-map-where-ai-will-augment-replace-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-complete-guide-to-startup-funding-in-2025.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-remote-work-revolution-how-global-teams-are-re.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-trailing-slash-that-could-end-your-entire-comp.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-version-display-plugin.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/tutorial.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/umap-revealed-14-hidden-dimensions-in-my-404-logs.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/urban-resilience-how-cities-prepare-for-extreme-he.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendor-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendored-bootstrap-icon-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/version-bump-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/winget-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/world-news.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/your-favicon-ico-is-an-unlocked-door-to-total-coll.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/zer0-mistakes-about-section.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-features-documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-news-network-building-dynamic-news-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-theme-features.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/06-theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-fork-dialog.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-pages-settings.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-clone.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-main.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-auth.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork-cleanup.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-push.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/install-oneliner.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-compose-up.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-doctor.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-structure.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-git-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-homebrew.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-verify.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/personalization-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/site-running.png": {
+      "type": "image/png"
+    },
+    "assets/images/wizard-on-journey.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-1.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-2.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-mistakes-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/js/ai-chat.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/author-profile.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/auto-hide-nav.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/back-to-top.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/background-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/cheetsheet.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/code-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/config-utility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/docs.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/extension-points-demo.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback-capture.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/halfmoon.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/mermaid-diagrams.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/config.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/focus.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/gestures.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/index.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/keyboard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/navbar.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/scroll-spy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-state.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/smooth-scroll.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/toc-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/theme/appearance.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/myScript.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar-init.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nav-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/navigation.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-local-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-wiki-links.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-views.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/palette-generator.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles-source.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/posts-pagination.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/recipe-scaler.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/search-modal.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/setup-wizard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/share-actions.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/side-bar-folders.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/site-builder.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/skin-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/stats.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/table-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-preview.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-enhancements.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-helpers.js": {
+      "type": "text/javascript"
+    },
+    "assets/particles.json": {
+      "type": "application/json"
+    },
+    "assets/vendor/bootstrap-icons/font/bootstrap-icons.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
+      "type": "font/woff2"
+    },
+    "assets/vendor/bootstrap/css/bootstrap.min.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap/js/bootstrap.bundle.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/cytoscape/cytoscape.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/github-calendar/github-calendar-responsive.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/github-calendar/github-calendar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/adaptors/liteDOM.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/core.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/startup.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/tex-mml-chtml.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mermaid/mermaid.min.js": {
+      "type": "text/javascript"
+    },
+    "docs/README.md": {
+      "type": "text/markdown"
+    },
+    "docs/django-forms-update.md": {
+      "type": "text/markdown"
+    },
+    "feed.xml": {
+      "type": "application/xml"
+    },
+    "index.html": {
+      "text_sha256": "53779cd9e3d2c6593d19e2e57d9334aaef692bb0f3d87bb1b25c483340ec86b6",
+      "title": "pages Directory | Parody News",
+      "type": "text/html"
+    },
+    "posts/2024/06/17/wizard-topples-capitalist-dominance-ingeniously/index.html": {
+      "text_sha256": "5e3ab4ea281e0ebf3a9a5f4372cc5e1da8fb5a93355f66a17ab5aa62e2b94a06",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/07/31/generated-title/index.html": {
+      "text_sha256": "f3fc2131c9268dddd8f2ec5876538a4933d4acd20a46dcfea57d096024d4a623",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/07/31/new-yorkers-can-t-stop-complaining-about-nyc-but-will-never-leave/index.html": {
+      "text_sha256": "f6f8fbf2ca58c0dd36879a0f89b47892be6784d8ed54f68b92d3b5528b4cbecb",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/08/07/generated-title/index.html": {
+      "text_sha256": "188f0e4e254dc80b6f8b50d42188d24a802793b680c61f7f3f741eb962952db7",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/08/07/itsy-bitsy-spider-s-climatic-climb-deemed-suicidal-stunt-by-mainstream-media/index.html": {
+      "text_sha256": "31a8dcb33d6393d8bfdd132eaf30aea455dbd6f29115c22bc3543ec8bbace9b1",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/08/07/quantum-nonexistence-belief-anyways/index.html": {
+      "text_sha256": "95b99c35e9831ccf9f0dc1c215c6191b99411adab894eb35e5be7b31313592db",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/08/09/quantum-nonexistence-of-god/index.html": {
+      "text_sha256": "6bea3b9be2ff13c9fe883c3dd99da67a39d5e11a7389cd0e1937e41a6517c61a",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/08/09/slug/index.html": {
+      "text_sha256": "9fdfef293624f58eb70a323760cffec335f8edc3d557923d0898f085f1e316a6",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/19/accountants-humor-unique-numbers/index.html": {
+      "text_sha256": "5aa4728024b66ca647ed86ba503a2b16765c7723363a6c33bebc8a74b5c1d770",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/19/blizzard-of-1987-dekalb-illinois/index.html": {
+      "text_sha256": "83deeeb5bfa0a162c3c30f923765f013da1e7ddcb526ef271a3640d4ed469d8b",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/19/hilarious-accountancy-jokes/index.html": {
+      "text_sha256": "429a758b837657e3a09526bed6622693c0fa622450538f8c06cfdd4a02667729",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/19/snowmageddon-dekalb-1987/index.html": {
+      "text_sha256": "7210c7abbc98e950f97015f8da3ddcedd6d900e1cec0bd2998eade05c84c689a",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/23/cheeseman-park-exploration/index.html": {
+      "text_sha256": "204a64c15f1329e5bf1d2d0cd4f7983ba027b10f52d949d322880d022029f8b5",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/25/flotilla-raid-un-report-debate/index.html": {
+      "text_sha256": "385122c9d2f0a136755e2e7ba4ae67d8e0f099e9eb781ec2f23a3ed0b03d804c",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/25/wheat-prices-global-egypt-perspective/index.html": {
+      "text_sha256": "854929748e71d60c95c5a36b1f0791e779abf86c75748a91aaf61578301182a7",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/09/26/bonsai-trees-timeless-wonders/index.html": {
+      "text_sha256": "890d4700d5ba70955d399265c9cfdeff59f2abd381f2ce0abd684a30e52e40db",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/10/12/creamy-egyptian-macaroni-bechamel/index.html": {
+      "text_sha256": "504b680473b6ab0196f6be372d9e8c27bb52474d8e5a3b1e1d538f77d9592c2f",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/10/12/decoding-modesty-hijab-misinterpretation/index.html": {
+      "text_sha256": "1e40ca53c732da00df7db947fe55f81456daaf0f53ff8909db3d34feac62edc0",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/10/13/cosmic-karaoke-americas-next-top-signal/index.html": {
+      "text_sha256": "5ebb254e5160289886a1c9f0fcc37d3a0191a8f7b090f41181903d28a75af720",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/10/22/ancient-armenia-birthplace-of-wine/index.html": {
+      "text_sha256": "5521be406b73a8b15b9710689694c75d913d374a66b14f1254aee6553e088e6c",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/11/27/testing-content-wild-experiment/index.html": {
+      "text_sha256": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/12/16/benjamin-franklin-parody-almanack-ai/index.html": {
+      "text_sha256": "2d809505116d2e343b598b39cb52394837e43dba1e1720cb2213d4a58efac262",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/12/21/nile-river-longest-river/index.html": {
+      "text_sha256": "de140cb60e1e81a1ed2bb059e1e1342f5a337cc067bdf7487671c1c0a5a388c2",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2024/12/28/ultimate-cat-care-app-features/index.html": {
+      "text_sha256": "40acefe888110c09adcce92bdfa8cb1c81193c61193129494fe6ff7decdf63e4",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/01/02/sisi-egypt-leadership-analysis/index.html": {
+      "text_sha256": "e8f5e9664c0b457820f1be325ba547ea84bd0e07fa48103596594c2621c54de5",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/02/21/bob-dole-presidential-defeats/index.html": {
+      "text_sha256": "8b6074ca946bd0f5035c7112bd4fd0c2b26bc7b31c7e316b6d36a0bb753f4330",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/13/ai-landscape-opportunities-challenges/index.html": {
+      "text_sha256": "603dc4de382d2a181ee4ef4d961c1dea110216d83bd76bc0acb03b4ec6eae4f9",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/13/excel-to-programming/index.html": {
+      "text_sha256": "1d462dc9a6d9d6999ed8c0dc4c00297aa91a592912b48bbd20541e9965780782",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/13/unlock-programming-with-excel/index.html": {
+      "text_sha256": "987fd889b3bbbe381681ca5c50a77a6dc4b4ff98547d4701ae6820bac69d0ef6",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/14/balancing-the-books-it-glitch/index.html": {
+      "text_sha256": "3cfb7c6b865927cd8542a74bddd44f934ab45270fb83f344868f225041135da4",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/15/parents-to-grandparents-humor/index.html": {
+      "text_sha256": "ca5be4f207f4e9ed16ba7cc943af6d023e45a41a60fe93503183ddbc3e3f573c",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/16/ai-revolutionizes-tuition/index.html": {
+      "text_sha256": "7a1c18906a9b47ea69e2522153bf6e7fa2d2242f5fe8c676cdffbc997cfd4f03",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/16/campus-2-0-ai-college-tuition/index.html": {
+      "text_sha256": "436a67914107f614db3e30f9ce0f22128b03e137f114b0aa02e2c5324fa86af8",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/16/ledgers-of-logic-blockchain-as-the-guardian-of-ai-truths/index.html": {
+      "text_sha256": "7e9669e9a49bee623be1d27341f38c6048105f599bc8475c0d41c91575c11444",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/17/blockchain-ai-integrity/index.html": {
+      "text_sha256": "cb003e6f0db612b7fb2415b22c9815cc6b1b88d8b1b25a25b538e4985926c01d",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/17/blockchain-ai-trust-verify/index.html": {
+      "text_sha256": "f1653d7bbba52f2bee3f547c318c727131294697003e881669863090a191e0b3",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/18/laughter-ledger-satire/index.html": {
+      "text_sha256": "21609c6dc81e6088be915ea8bf2cffc8d2c3b7711959d2e608580f834183e6a2",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/19/artifacts-in-software-testing/index.html": {
+      "text_sha256": "18d72d6e7472deaa478ea670da8bb4140eda2cd016973a8f4c2242f193647774",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/22/the-resourceful-journey/index.html": {
+      "text_sha256": "3e4f72be7a9fb2adb3d8f1b58c32ce3a439efcb9bb1955ca18d5b62781fb7146",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/30/humorous-incrementalism-ancients/index.html": {
+      "text_sha256": "0b9e4fb7a5b87ec40064344fd46804fa2c1fd6bb2f579ae493e94b8b039f6b18",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/03/30/kaizen-cd-ci-devops/index.html": {
+      "text_sha256": "ec05e7e2b45e27224060d65989be4ecff3b5d2437a854fad0517cbb7893db099",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/02/decoding-the-data-deluge/index.html": {
+      "text_sha256": "c22a48603a6d932be13169e06810903dab8cd2d060ac8ad3dd7150d920f7a722",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/02/temple-of-templates-architectural-wonders-in-code-and-commerce/index.html": {
+      "text_sha256": "1e579cb1efff812cf7e1f6e475ce32179c9497385cd0c83315d5a3871ef60d91",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/05/ai-django-documentation-automation/index.html": {
+      "text_sha256": "a16ed8865ba0b568a2433fc18d506602c2643b8de87452cdb9f501c254e1c754",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/05/bugs-in-ai-testing/index.html": {
+      "text_sha256": "8649d30138216c155be65f27b6403c80da27adac44041fb83aa73e4077002d42",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/06/erp-transformation-satirical-guide/index.html": {
+      "text_sha256": "aae582739e4128d0e9a17d97a81bc12f3fed6498077178838023f2e20e5a0802",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/12/make-or-buy-erp-decision-making/index.html": {
+      "text_sha256": "f69572c6e2d384a33da58ac5d3d15eb39b1d32533885d32bcc4cfd6ceb6a62b8",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/13/coding-with-charms-sourcery/index.html": {
+      "text_sha256": "6facd6d7b4026861ddc7dd310dd4353dc1b88e19cced98e64c4e3ad4b95e586f",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/15/managing-features-updates-python-github/index.html": {
+      "text_sha256": "1980faba85f1290c1eeb217aded3560a7a0d03160a170b8eeae55dd8873ff95c",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/18/glamorous-world-of-github-branches/index.html": {
+      "text_sha256": "b5e2db033a3376ad4dd0cae5bed7321ca7361051e0d0161d4b112f31a32561c5",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/04/30/rise-of-frameworks-satire/index.html": {
+      "text_sha256": "46df6b8ddc095898faf6be61629cfc4e595b593a5639afea832417731a39618a",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/05/01/manufactured-dispossession/index.html": {
+      "text_sha256": "99abad297c31308bd6e27f1591050426321c33f774dc78ca35f75588a1789d79",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/05/02/erp-systems-economic-design/index.html": {
+      "text_sha256": "6e6d34aee712c5bd120d03ce75added253cd7202a3ec1034992188efd6830a3b",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/05/02/injustices/index.html": {
+      "text_sha256": "4183ab695f1d5c74c8dbbbf7713a91d89f86bf6ccbe62aae486953c08b6eee52",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/05/18/microsoft-windows-tech-literacy-irony/index.html": {
+      "text_sha256": "207aec461fba2596b8f8952aa8d21babfface524711a0e8ac7cb87b01629f1b7",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/2025/05/18/windows-raising-afraid-generation/index.html": {
+      "text_sha256": "5b30531c7603cc02a355f47e329018df1818f1b6b5521f77896fe510aecf2365",
+      "title": "",
+      "type": "text/html"
+    },
+    "posts/index.html": {
+      "text_sha256": "759f8711defb0275f8211d02d0200cbdb55042a3758dd9406f07a236fbf3ea93",
+      "title": "",
+      "type": "text/html"
+    },
+    "robots.txt": {
+      "type": "text/plain"
+    },
+    "sitemap.xml": {
+      "type": "application/xml"
+    }
+  },
+  "redirects": {},
+  "schema": "site-manifest/v1",
+  "site": "parodynews",
+  "sitemaps": {
+    "sitemap.xml": [
+      "https://bamr87.github.io/zer0-CMS/parodynews/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/06/17/wizard-topples-capitalist-dominance-ingeniously/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/07/31/generated-title/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/07/31/new-yorkers-can-t-stop-complaining-about-nyc-but-will-never-leave/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/08/07/generated-title/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/08/07/generated-title/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/08/07/itsy-bitsy-spider-s-climatic-climb-deemed-suicidal-stunt-by-mainstream-media/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/08/07/quantum-nonexistence-belief-anyways/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/08/09/quantum-nonexistence-of-god/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/08/09/slug/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/19/accountants-humor-unique-numbers/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/19/blizzard-of-1987-dekalb-illinois/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/19/hilarious-accountancy-jokes/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/19/snowmageddon-dekalb-1987/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/23/cheeseman-park-exploration/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/25/flotilla-raid-un-report-debate/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/25/wheat-prices-global-egypt-perspective/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/09/26/bonsai-trees-timeless-wonders/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/10/12/creamy-egyptian-macaroni-bechamel/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/10/12/decoding-modesty-hijab-misinterpretation/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/10/13/cosmic-karaoke-americas-next-top-signal/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/10/22/ancient-armenia-birthplace-of-wine/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/11/27/testing-content-wild-experiment/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/12/16/benjamin-franklin-parody-almanack-ai/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/12/21/nile-river-longest-river/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2024/12/28/ultimate-cat-care-app-features/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/01/02/sisi-egypt-leadership-analysis/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/02/21/bob-dole-presidential-defeats/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/13/ai-landscape-opportunities-challenges/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/13/excel-to-programming/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/13/unlock-programming-with-excel/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/14/balancing-the-books-it-glitch/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/15/parents-to-grandparents-humor/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/16/ai-revolutionizes-tuition/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/16/campus-2-0-ai-college-tuition/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/16/ledgers-of-logic-blockchain-as-the-guardian-of-ai-truths/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/17/blockchain-ai-integrity/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/17/blockchain-ai-trust-verify/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/18/laughter-ledger-satire/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/19/artifacts-in-software-testing/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/22/the-resourceful-journey/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/30/humorous-incrementalism-ancients/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/03/30/kaizen-cd-ci-devops/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/02/decoding-the-data-deluge/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/02/temple-of-templates-architectural-wonders-in-code-and-commerce/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/05/ai-django-documentation-automation/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/05/bugs-in-ai-testing/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/06/erp-transformation-satirical-guide/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/12/make-or-buy-erp-decision-making/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/13/coding-with-charms-sourcery/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/15/managing-features-updates-python-github/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/18/glamorous-world-of-github-branches/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/04/30/rise-of-frameworks-satire/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/01/manufactured-dispossession/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/02/erp-systems-economic-design/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/02/injustices/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/18/microsoft-windows-tech-literacy-irony/",
+      "https://bamr87.github.io/zer0-CMS/parodynews/posts/2025/05/18/windows-raising-afraid-generation/"
+    ]
+  }
+}

@@ -1,0 +1,2438 @@
+{
+  "feeds": {
+    "feed.xml": []
+  },
+  "paths": {
+    "assets/backgrounds/gradients/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/gradients/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/noise/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/air.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/aqua.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/contrast.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dark.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/dirt.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/mint.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/neon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/plum.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/backgrounds/patterns/sunrise.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/css/custom.css": {
+      "type": "text/css"
+    },
+    "assets/css/extension-points-demo.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css": {
+      "type": "text/css"
+    },
+    "assets/css/main.css.map": {
+      "type": "application/json"
+    },
+    "assets/css/stats.css": {
+      "type": "text/css"
+    },
+    "assets/css/theme-npm-entry.scss": {
+      "type": "text/x-scss"
+    },
+    "assets/css/user-overrides.css": {
+      "type": "text/css"
+    },
+    "assets/css/vendor/.gitkeep": {
+      "type": "application/octet-stream"
+    },
+    "assets/data/notebooks/sales_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/survey_responses.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/notebooks/weather_data.csv": {
+      "type": "text/csv"
+    },
+    "assets/data/wiki-index.json": {
+      "type": "application/json"
+    },
+    "assets/images/authors/bamr87.png": {
+      "type": "image/png"
+    },
+    "assets/images/authors/cassandra.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/authors/vega.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/docs/author-profiles/ai-persona-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/author-profiles/interactive-profile.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/admin-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/back-to-top.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/code-copy.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/cookie-consent.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/docs-layout.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/dynamic-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/configurator-repo-check.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-error-not-installed.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/giscus/widget-working.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/jupyter-notebooks.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mermaid-rendered.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/mobile-toc.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/smart-404.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/features/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/docs-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/docs/quickstart/theme-home.png": {
+      "type": "image/png"
+    },
+    "assets/images/favicon_gpt_computer_retro.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar-small.png": {
+      "type": "image/png"
+    },
+    "assets/images/gravatar.png": {
+      "type": "image/png"
+    },
+    "assets/images/info-banner-mountain-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/images/notebooks/test-notebook_files/test-notebook_4_0.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/10-ai-tools-that-will-transform-your-productivity-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/about.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/accessible-form-patterns-labels-errors-and-helpful.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/add-floating-back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/admin-layout-configuration-dashboards.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/agents-md-cross-tool-ai-agent-entry-point.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-assisted-development-with-zer0-mistakes.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-chat-assistant-claude-github.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ai-preview-image-generator.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/aieo-ai-engine-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/amr-abdel-motaleb.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics-dashboard.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/author-profiles-and-about-the-author-bylines.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/auto-hide-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/automated-version-build-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/back-to-top-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bare-minimum-remote-theme-starter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/bootstrap-theme-examples.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/breadcrumbs-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/build-a-responsive-documentation-card-grid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-accessible-web-applications.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/building-an-ai-ready-knowledge-base-from-documents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/business.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ci-cd-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-dashboards-turning-measurements-into-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/climate-data-primer-reading-trends-without-losing-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-copy-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/code-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/collection-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/comprehensive-gem-automation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/config-driven-frontmatter-validation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/configuration-utility.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/cookie-consent-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/css-grid-mastery-build-any-layout-you-can-imagine.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/custom-domain.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customer-onboarding-scorecards-that-reveal-revenue.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/customization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dark-light-mode-toggle.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dependency-updates.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-github-pages.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploy-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deploying-to-netlify.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/devcontainer-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development-docs.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/development.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/docker.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/dynamic-collection-based-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/edge-ai-in-the-real-world-practical-patterns-for-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/enhanced-sitemap-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/environment-build-info.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/es6-modular-navigation-architecture.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/feature-flags-for-safer-continuous-delivery.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/features.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/from-ai-awareness-to-action-the-skills-systems-and.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/front-matter.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-jekyll-your-first-static-site.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started-with-the-obsidian-vault.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/getting-started.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/giscus-comments.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/git-workflow-best-practices-for-modern-teams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-copilot-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/github-setup-deployment.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/google-tag-manager.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/homebrew-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/i-bayesian-modeled-my-coffee-intake-and-wept-with-.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/include-components.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/installation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-collections.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-technical-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll-theme-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jekyll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jeykll.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/jupyter-notebook-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/keyboard-navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/layouts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/liquid.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-docker-publishing-pipeline.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/local-resilience-networks-how-communities-coordina.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/machine-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax-math.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mathjax.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-diagrams.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mermaid-native-markdown.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/mobile-toc-floating-action-button.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation-editor.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/navigation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/observability-for-small-apps-logs-metrics-and-trac.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-authoring-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-graph-view.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-integration-troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-resolver-performance-caching.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-syntax-reference.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/obsidian-vault-integration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/pagination.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/particles-background.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/performance-optimization.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/posthog-analytics.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/product-requirements-document.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/published-documentation-library.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quantum-computing-explained-from-qubits-to-quantum.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/release-management.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/remote-theme-consumer-checklist.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby-101.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/ruby.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/safe-mode-build-overlay-building-outside-github-pa.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scenario-planning-for-small-teams-a-practical-oper.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/science.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/scripts.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security-scanning.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/security.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo-meta-tags.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/seo.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sidebar-navigation-system.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-personalization-configuration.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-search.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/site-statistics-portal.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/sitemap-generation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/skip-to-content-accessibility-link.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/smart-404-site-configuration-detection.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/statistics-dashboard-feature.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/stats-page-enhancement-summary.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/styles.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/syntax-highlighting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/table-of-contents.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/technology.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/testing.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-imperative-why-mid-market-manufact.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-ai-adoption-map-where-ai-will-augment-replace-.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-complete-guide-to-startup-funding-in-2025.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-remote-work-revolution-how-global-teams-are-re.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/the-trailing-slash-that-could-end-your-entire-comp.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-preview.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/theme-version-display-plugin.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/troubleshooting.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/tutorial.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/umap-revealed-14-hidden-dimensions-in-my-404-logs.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/urban-resilience-how-cities-prepare-for-extreme-he.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendor-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/vendored-bootstrap-icon-assets.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/version-bump-workflow.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/winget-setup.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/world-news.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/your-favicon-ico-is-an-unlocked-door-to-total-coll.jpg": {
+      "type": "image/jpeg"
+    },
+    "assets/images/previews/zer0-mistakes-about-section.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-features-documentation.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-news-network-building-dynamic-news-s.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-quick-start-guide.png": {
+      "type": "image/png"
+    },
+    "assets/images/previews/zer0-mistakes-theme-features.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/06-theme-customizer.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-fork-dialog.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-pages-settings.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-clone.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-repo-main.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-auth.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork-cleanup.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-fork.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/github-setup-push.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/install-oneliner.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-compose-up.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-doctor.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/jekyll-setup-structure.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-git-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-homebrew.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/machine-setup-verify.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/personalization-config.png": {
+      "type": "image/png"
+    },
+    "assets/images/quickstart/site-running.png": {
+      "type": "image/png"
+    },
+    "assets/images/wargames/banner-abraxas.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-bandit.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-behemoth.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-blacksun.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-drifter.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-formulaone.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-hes2010.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-kishi.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-krypton.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-leviathan.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-manpage.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-maze.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-monxla.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-narnia.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-natas.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-semtex.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-utumno.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner-vortex.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/banner.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/favicon.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wargames/logo.svg": {
+      "type": "image/svg+xml"
+    },
+    "assets/images/wizard-on-journey.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-1.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-checkpoint-2.png": {
+      "type": "image/png"
+    },
+    "assets/images/zer0-mistakes-wizard.png": {
+      "type": "image/png"
+    },
+    "assets/js/ai-chat.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/author-profile.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/auto-hide-nav.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/back-to-top.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/background-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/cheetsheet.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/code-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/config-utility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/docs.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/extension-points-demo.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback-capture.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/fleet-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/halfmoon.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/mermaid-diagrams.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/config.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/focus.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/gestures.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/index.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/keyboard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/navbar.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/scroll-spy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-state.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/sidebar-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/smooth-scroll.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/navigation/toc-visibility.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/modules/theme/appearance.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/myScript.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar-init.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nanobar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/nav-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/navigation.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-local-graph.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/obsidian-wiki-links.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-feedback.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/page-views.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/palette-generator.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles-source.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/particles.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/posts-pagination.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/recipe-scaler.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/search-modal.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/setup-wizard.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/share-actions.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/side-bar-folders.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/site-builder.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/skin-editor.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/stats.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/table-copy.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-customizer.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/theme-preview.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-enhancements.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/ui-helpers.js": {
+      "type": "text/javascript"
+    },
+    "assets/js/user-overrides.js": {
+      "type": "text/javascript"
+    },
+    "assets/particles.json": {
+      "type": "application/json"
+    },
+    "assets/vendor/bootstrap-icons/font/bootstrap-icons.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
+      "type": "font/woff2"
+    },
+    "assets/vendor/bootstrap/css/bootstrap.min.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/bootstrap/js/bootstrap.bundle.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/cytoscape/cytoscape.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/github-calendar/github-calendar-responsive.css": {
+      "type": "text/css"
+    },
+    "assets/vendor/github-calendar/github-calendar.min.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/adaptors/liteDOM.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/core.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_AMS-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Calligraphic-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Fraktur-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Main-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-BoldItalic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Math-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Italic.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_SansSerif-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Script-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size1-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size2-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size3-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Size4-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Typewriter-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Bold.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Vector-Regular.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/output/chtml/fonts/woff-v2/MathJax_Zero.woff": {
+      "type": "font/woff"
+    },
+    "assets/vendor/mathjax/es5/startup.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mathjax/es5/tex-mml-chtml.js": {
+      "type": "text/javascript"
+    },
+    "assets/vendor/mermaid/mermaid.min.js": {
+      "type": "text/javascript"
+    },
+    "docs/wargames/abraxas/index.html": {
+      "text_sha256": "b8c11bf0b356be8e275714a2e58438ff96c3e9fcc31b580bbbfaaf69b3c21bbe",
+      "title": "Abraxas (HES 2011) | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit0/index.html": {
+      "text_sha256": "7239cc2e735cbf5f967674c57602dbceb1472380c8fe4ea044fd8ba510da4a4c",
+      "title": "Bandit Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit1/index.html": {
+      "text_sha256": "75541bafb4b11c65c2363721a88455b46825882e9773b4ac3cbb3d5a6136b132",
+      "title": "Bandit Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit10/index.html": {
+      "text_sha256": "894f87985d2b2477de278c28c92e0a0c4f85c1e450cbde38586d837ab3a14613",
+      "title": "Bandit Level 10 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit11/index.html": {
+      "text_sha256": "28bd4318f8c79864b09274201d4c3fabd4f62564f3e5d5d76f2137c7042a55b3",
+      "title": "Bandit Level 11 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit12/index.html": {
+      "text_sha256": "e8148092535706aa826022e8f440cfe5ffca6047af145687c92908e4fa579202",
+      "title": "Bandit Level 12 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit13/index.html": {
+      "text_sha256": "28fb026b0df203e291a42209c181de35b42a2cbd52f93815b114d49b9154e0d1",
+      "title": "Bandit Level 13 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit14/index.html": {
+      "text_sha256": "b917bab648029f8d864c0d40be6dd2f3df35f03010b88683f7f4055f12a05dc7",
+      "title": "Bandit Level 14 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit15/index.html": {
+      "text_sha256": "8298b34cf57c2c67d2638210c1d0c355771942f3e4742bbdeddd17185abd0e0c",
+      "title": "Bandit Level 15 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit16/index.html": {
+      "text_sha256": "a927c756cf1215f26f96b9abdc9c20da77c8bf7c4d165c034e983dfb1407d75c",
+      "title": "Bandit Level 16 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit17/index.html": {
+      "text_sha256": "6b5f20522d042bbed417a4ab1dfb148370661dbcd2d5b5edccba21d4ed78aa5e",
+      "title": "Bandit Level 17 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit18/index.html": {
+      "text_sha256": "beac0a755b7915f006fe035ff459c93b368e8c506a56bdea6ce240491d9fb067",
+      "title": "Bandit Level 18 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit19/index.html": {
+      "text_sha256": "6b1508dc9e2e2e7629e3a29afcc6284bea28960d7e76256b3e826f9d770f5e88",
+      "title": "Bandit Level 19 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit2/index.html": {
+      "text_sha256": "e2e73d44cc900c0e758cbf128f2842c38e66aa40614c5a768b1322266a47414e",
+      "title": "Bandit Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit20/index.html": {
+      "text_sha256": "620cb4789b243efc849dec07f3c833be2462dcf647190c3b0b197b3011d9bd99",
+      "title": "Bandit Level 20 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit21/index.html": {
+      "text_sha256": "784bb1d0f1460e05c1a0a2f1ffc6ea5acbfee25771305d9f845dfc4e3791caa9",
+      "title": "Bandit Level 21 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit22/index.html": {
+      "text_sha256": "0c48a5134ec5e13d814754d3425b6ffbcf74fc1237ec077f9754e3b8710e230e",
+      "title": "Bandit Level 22 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit23/index.html": {
+      "text_sha256": "c3d5a55b57013aa8b7fe97e4c0694135e37b1a41aad1d7d664c683bf80876b26",
+      "title": "Bandit Level 23 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit24/index.html": {
+      "text_sha256": "8886adc67898c6159f6c3ef34a73f5d9dbb122ce22a5bf00d375a2b50de1fa53",
+      "title": "Bandit Level 24 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit25/index.html": {
+      "text_sha256": "05cc91cf043b96a060d30b8f7edec4cdbb875746ceaf3bc266df8294269af9ea",
+      "title": "Bandit Level 25 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit26/index.html": {
+      "text_sha256": "7d0123dfcd3c7cc4bc40414b71f02926adfb7c3e7990773290ef2195fdb9e712",
+      "title": "Bandit Level 26 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit27/index.html": {
+      "text_sha256": "d90d0c89bc54c6a851ffa23cc9e7c7fff8b00952b738292232a5903e4404f7c6",
+      "title": "Bandit Level 27 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit28/index.html": {
+      "text_sha256": "21e86644dc70c45b0ab82ba76ec69a92c5c857260410a55aa8fe719c00c5bc0b",
+      "title": "Bandit Level 28 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit29/index.html": {
+      "text_sha256": "a2bd1bb1e1ea9c75d73091295cfbfd8db7bd489c613ede9205558eaa6294a2a7",
+      "title": "Bandit Level 29 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit3/index.html": {
+      "text_sha256": "683d1b4011df77ca638b38e65f0e141ccb45a70c6755cc72884924a1ee683043",
+      "title": "Bandit Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit30/index.html": {
+      "text_sha256": "7c9163f038011f8996614a97cc8ba4ccc36ef8a4a855e6e219cb94dd7577be20",
+      "title": "Bandit Level 30 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit31/index.html": {
+      "text_sha256": "d0e1f6b3895a344eac01ae8417e874fb6708446ca419e116af8d8f9faf956a17",
+      "title": "Bandit Level 31 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit32/index.html": {
+      "text_sha256": "0ea30dee8f457ce7828a56edbff0735ebc95c6359dd31b26d046314c9e74615b",
+      "title": "Bandit Level 32 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit33/index.html": {
+      "text_sha256": "ef35a4da9c82d06c524e12ec81857b3befa7fd444c3bc69d30cec282763e6932",
+      "title": "Bandit Level 33 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit34/index.html": {
+      "text_sha256": "43b9f28183d8a04c2cdf78cb5c0a65840e4a85b654b689b08757aa1f11f4a32a",
+      "title": "Bandit Level 34 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit4/index.html": {
+      "text_sha256": "1df878809025584b8054082e7cd5da03f759997dd2a3a6adb816c61ce1b6b08d",
+      "title": "Bandit Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit5/index.html": {
+      "text_sha256": "f5831773e16fb69b964d9658ad012f709e58734d57b085acb2e4f24bdb882bb4",
+      "title": "Bandit Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit6/index.html": {
+      "text_sha256": "89d1583934e14b4a38ddebddab1ebface756069a9e488f3a469d6b7c71a062d0",
+      "title": "Bandit Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit7/index.html": {
+      "text_sha256": "71e262cf55a8110781bb546f1e1db65cc416c972521b13ccaf9c2483e7543e49",
+      "title": "Bandit Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit8/index.html": {
+      "text_sha256": "9ab1cd6a422b730f1aecdb85c635704ee79751af204714a49bbd1e7d6811ea65",
+      "title": "Bandit Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/bandit9/index.html": {
+      "text_sha256": "8d19203180eb7724c7d295c958ad022b2004a696672a24e6dab975f1649e17ff",
+      "title": "Bandit Level 9 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/bandit/index.html": {
+      "text_sha256": "8f91a9da7d57675879ab2646695fb0d724ed4d7505b38fb59f5c60bec3d6ccca",
+      "title": "Bandit | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth0/index.html": {
+      "text_sha256": "d4c9263f2344bec4df51c2163128f6f80bc4653c4237454cfd98bba5d0af7ace",
+      "title": "Behemoth Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth1/index.html": {
+      "text_sha256": "d639e3d77b426706c565bae301c58686088bfcc4f10a21a338d4bca3f1d63836",
+      "title": "Behemoth Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth2/index.html": {
+      "text_sha256": "24d1e47d75ead503f4346bece2fde54f56f697555c2e554a6c74433e452f60b9",
+      "title": "Behemoth Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth3/index.html": {
+      "text_sha256": "dac439f5dc9d3ca4d6d1beee96de050fc605cc967c843d32f244bf5ffca3daba",
+      "title": "Behemoth Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth4/index.html": {
+      "text_sha256": "e02a356bb3f62b53d4d0f1199c2074001bb39e66009db7bd8eebd56ffb7d8ce9",
+      "title": "Behemoth Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth5/index.html": {
+      "text_sha256": "80f1211cdf0617e541425ec9dc21a329f641308eec3d1c75a92fd2a8346a79d2",
+      "title": "Behemoth Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth6/index.html": {
+      "text_sha256": "586b6733c86c471ad46da08f39bc8c772b996e31e74dfbc9ea39641ddc1698bb",
+      "title": "Behemoth Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth7/index.html": {
+      "text_sha256": "dc7ce55b5399506c11d0303584e165d2d004e301b19b73ed4da33d3d9e23ccfb",
+      "title": "Behemoth Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/behemoth8/index.html": {
+      "text_sha256": "e9ab80614ec101ad40a598a8b7478197acc4b8310b92882f1c0fa75f469be7ea",
+      "title": "Behemoth Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/behemoth/index.html": {
+      "text_sha256": "3e835ddcf81b820fd7ad4426cef05fdfc6ce180baa9bdc1de57980240a9661d0",
+      "title": "Behemoth | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/blacksun/blacksun0/index.html": {
+      "text_sha256": "333505b1c44b75a625f937935ea74631cebcac950ff8a5be996fb22a02992839",
+      "title": "Blacksun Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/blacksun/blacksun1/index.html": {
+      "text_sha256": "8ae38ae3a18624f730959ed7f734416c2047ad89f6fd40b9a2084e26e52d03be",
+      "title": "Blacksun Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/blacksun/blacksun2/index.html": {
+      "text_sha256": "68bea85203c72127aab983efceb3911fb782835889919139b2e4aecdd0125233",
+      "title": "Blacksun Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/blacksun/blacksun3/index.html": {
+      "text_sha256": "6f3c765fbc0f4ae2adccd9931bfe262385e7bb03da7fc41983d47a3f2f928c28",
+      "title": "Blacksun Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/blacksun/blacksun4/index.html": {
+      "text_sha256": "fc5b41391719500e05a9c16794e0f820c31db13a5a16016b4034b3de48e6f25a",
+      "title": "Blacksun Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/blacksun/index.html": {
+      "text_sha256": "80ce67c2dd0d8d5a90a8a8e0fe5523b5ff57448d51f6db4e69c7903246d59d86",
+      "title": "Blacksun | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/blacksun/reading_material/index.html": {
+      "text_sha256": "b3d2829b6f7150318b87dadd206d84cb9a48251ef92e398481d4cfbf64b3828b",
+      "title": "Blacksun reading material | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter0/index.html": {
+      "text_sha256": "c5e5485776a784cdda8ae04da8510d60a22081db4f3bc0dd28e65bdb194adddc",
+      "title": "Drifter Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter1/index.html": {
+      "text_sha256": "61302c6fbfe93816da73878da5ab79a73c8c2d922e0abb7774881d2701ca25fe",
+      "title": "Drifter Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter10/index.html": {
+      "text_sha256": "7f02890de97a538ade1060e96df97a5a27d74a5e3c151a4ef7ed37baaccf2602",
+      "title": "Drifter Level 10 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter11/index.html": {
+      "text_sha256": "eb155e9aca61eec7babea1495b1973dd62944c5a1ab939d83d4cbaadceb493fb",
+      "title": "Drifter Level 11 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter12/index.html": {
+      "text_sha256": "ded2518061468e16b9ab38da999782e4f73c99793a57e474532a84116d2a61af",
+      "title": "Drifter Level 12 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter13/index.html": {
+      "text_sha256": "ffdd0cdeda243de8239e290af7ca904fa4265e8896654f904c1312c502899f72",
+      "title": "Drifter Level 13 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter14/index.html": {
+      "text_sha256": "cd2c315ebfb3e314b78cbba1108709821a7425b37486f65dfe0ecfe7c7a5eda1",
+      "title": "Drifter Level 14 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter15/index.html": {
+      "text_sha256": "2609ac8919f3695b1a07314f1257790d7e8dbab9115a56498da065b7a4d47b61",
+      "title": "Drifter Level 15 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter2/index.html": {
+      "text_sha256": "799b68703e346017512ae62b444d05c7c7a6ec3aeea48c8992f651bb78ba8fc4",
+      "title": "Drifter Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter3/index.html": {
+      "text_sha256": "5d53715967cf736f8cdee0835b2f460a25929a33edb2be6e5d2cc36c07cfdfd9",
+      "title": "Drifter Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter4/index.html": {
+      "text_sha256": "88423092920c77f8da852005318957b46b87b18558e94addeba08c74bd5a7ec6",
+      "title": "Drifter Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter5/index.html": {
+      "text_sha256": "ef07968bb8e84fbca224dccca58e96801c0c05e01c6812620d0e5d12d2d27ee9",
+      "title": "Drifter Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter6/index.html": {
+      "text_sha256": "6d3085891fc85d4189be1838e349c8029e3bf7d71f3e5cffedc27c9e818c7e54",
+      "title": "Drifter Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter7/index.html": {
+      "text_sha256": "925d0d8bf8631a46050ea8ab7f715cc1fae1ab49283857e0a3c9b37dedfae199",
+      "title": "Drifter Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter8/index.html": {
+      "text_sha256": "af7fdc1e85bd3ff6c49e1689bdbc5c2243f2fdeefb74d5c9cb0da0b91afd5ae5",
+      "title": "Drifter Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/drifter9/index.html": {
+      "text_sha256": "ed5981c6435dc737e867b1a7dc729c55896e65405c01e684dc30d71b9ef5db3d",
+      "title": "Drifter Level 9 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/drifter/index.html": {
+      "text_sha256": "7662286b5d169a412f3a8e3d05c14430043da7eda6f08e043d33ea453ded338a",
+      "title": "Drifter | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/formulaone0/index.html": {
+      "text_sha256": "a09ff69e9e02d40cad1354606fa8f5dcffae1b63eb95082b6e00c2c9e9110ded",
+      "title": "FormulaOne Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/formulaone1/index.html": {
+      "text_sha256": "d73aecffae15077406c53545dca160eb6c4c5937943b4c7725f44bae1d9d4187",
+      "title": "FormulaOne Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/formulaone2/index.html": {
+      "text_sha256": "ed2f94a04028921fe05ce553bf7b17130cc3377dc97f5d1f97fd0b98cccf6d61",
+      "title": "FormulaOne Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/formulaone3/index.html": {
+      "text_sha256": "f228b2e16d713c33d0178629161a35cf3039c84ccae517456146bd13b6b3c2d8",
+      "title": "FormulaOne Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/formulaone4/index.html": {
+      "text_sha256": "169ce9287dae52d1ac450ed35e08e07afdaf8a620124155e8da63114ff4a6841",
+      "title": "FormulaOne Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/formulaone5/index.html": {
+      "text_sha256": "5a5186c8654f46fe7885100b9bca3a68c1efbab85157e8a22905b97e58ef06b0",
+      "title": "FormulaOne Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/formulaone6/index.html": {
+      "text_sha256": "4dfb19a9e66a1e8aa73df522943e9eff09d628051491b9a9786dfa93f868a508",
+      "title": "FormulaOne Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/formulaone/index.html": {
+      "text_sha256": "f3222cdd64e3e93ccac961109f9ffab56473e90b5323e2cbeae78b0579d92336",
+      "title": "FormulaOne | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/hes2010/index.html": {
+      "text_sha256": "67a5c4f7055cf0886e26e29bf08b06532c1693afacdaf3209a9c2db5911d5cc7",
+      "title": "HES2010 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/index.html": {
+      "text_sha256": "778e057c2e9661f69f1c6b9171c508191ec504093acec35665c375d890d58bfd",
+      "title": "Wargames | Curated OverTheWire security wargames — learn Linux, CTF, and cybersecurity through hands-on challenges.",
+      "type": "text/html"
+    },
+    "docs/wargames/kishi/index.html": {
+      "text_sha256": "a4c7bad2d4b331711e078b963650dbf7cffbdaa086fac3bd37277ff862d613ff",
+      "title": "Kishi (HES 2013) | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/index.html": {
+      "text_sha256": "aaf1b3f7121fad5f59f68e162932029bda874058cb4940d3375afbc33865f29f",
+      "title": "Krypton | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/krypton0/index.html": {
+      "text_sha256": "ce6ed9b9bdd9d6de2db7c172b815dec7c5b88b91a251c0c7c100c8e169025c8c",
+      "title": "Krypton Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/krypton1/index.html": {
+      "text_sha256": "aa3cb06a90e70d5d7c66d5d594352c34c6220eb296f26be273fb75c4501eea30",
+      "title": "Krypton Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/krypton2/index.html": {
+      "text_sha256": "3acd9bf19178d6397fbb5fce12357cd9a807bdc324c2a3cbc4c817b8156d9bdb",
+      "title": "Krypton Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/krypton3/index.html": {
+      "text_sha256": "1bbdecefc01da702b33c03322afcf9124a868cb066348615f557d7159bb88e99",
+      "title": "Krypton Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/krypton4/index.html": {
+      "text_sha256": "8c196017a1008f08bf8cb35c186cff2cde4f91c1f6580ff4e5d2659f51317fa2",
+      "title": "Krypton Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/krypton5/index.html": {
+      "text_sha256": "5bf8672b7f1e5df632014ad4d265c0c62544c9b743f7f3568778c300fa9c3d40",
+      "title": "Krypton Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/krypton/krypton6/index.html": {
+      "text_sha256": "d9d8db0e1dcedc77182146bfdee3be1c7d58164560cb861c5412ecaa4f5ec880",
+      "title": "Krypton Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/index.html": {
+      "text_sha256": "6d90c6712c1a7a267aa5d8d53a22dbc231e0e2ce1f38045c85fb022ef2e47755",
+      "title": "Leviathan | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan0/index.html": {
+      "text_sha256": "622c83d31924b4ab05cd2bb17730e35a89b1c0b8518848ede950c880a3a386fa",
+      "title": "Leviathan Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan1/index.html": {
+      "text_sha256": "580fc0ed8d57a12edda03437de045f84a93d29479e9072249f562da75ceb0457",
+      "title": "Leviathan Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan2/index.html": {
+      "text_sha256": "73581408df7b47a0fa35835f75c58c6349572effdc16f2d9c93fb53650175a46",
+      "title": "Leviathan Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan3/index.html": {
+      "text_sha256": "e5a6ec87624b5136237b0c883e600435cedd844c56222cd518251efe519f7745",
+      "title": "Leviathan Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan4/index.html": {
+      "text_sha256": "5538c0958ad0a76e405d1d12d61cd33d28abbe31d06be78ca909356e89cf5b7c",
+      "title": "Leviathan Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan5/index.html": {
+      "text_sha256": "3b725be69db57898d978a9694e2ba2169d221c14bee47dbdf38f7aafe0c3bcdc",
+      "title": "Leviathan Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan6/index.html": {
+      "text_sha256": "077af1ee137a344e3b5bc04f403ef0d0e5739d1903224f4ff1e3c6f41403106b",
+      "title": "Leviathan Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/leviathan/leviathan7/index.html": {
+      "text_sha256": "ee9fdd90606b611bffd3d94965252f918bc374f87700dd4b6555b28f4681a5a4",
+      "title": "Leviathan Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/index.html": {
+      "text_sha256": "2687c12b5285c04a9b24285a9c463668edbc581b5b4ebe8594304839ff0b42c5",
+      "title": "Manpage | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage0/index.html": {
+      "text_sha256": "453283d07716c5b112dc9c00e4d40d16d8c2d86b3ecc1977a39dd20edf081944",
+      "title": "Manpage Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage1/index.html": {
+      "text_sha256": "dc2268f9e25fdb30e642b4ecbe3dc933f1caa0ac40178f90b86fc4521076a51c",
+      "title": "Manpage Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage2/index.html": {
+      "text_sha256": "3b2c3a8cfd10b7deb53749c9f294957f6e4f88c3c3ee9f890fb7f9b11e7552f2",
+      "title": "Manpage Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage3/index.html": {
+      "text_sha256": "94646a8754c6d67559ce4c3868e3a557c8368e84060a634d932d3328cbbe608a",
+      "title": "Manpage Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage4/index.html": {
+      "text_sha256": "c7a585214647f5a3690d2e718dd2a98ae7b859ede86a9ad8819f6d7701417a6c",
+      "title": "Manpage Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage5/index.html": {
+      "text_sha256": "9055a745c1c799bad349178d9d17b483ca444ea77daad081547b79b88bd08aef",
+      "title": "Manpage Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage6/index.html": {
+      "text_sha256": "3384abdfa24221576c922a35f1078953c39760b361e6354154b3c9d7dba7bc65",
+      "title": "Manpage Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/manpage/manpage7/index.html": {
+      "text_sha256": "6d997de9c68b6b82c002d5dc907a64b042e2339dc3dee1ebca412b9e3f0ef1a5",
+      "title": "Manpage Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/index.html": {
+      "text_sha256": "5d881dade63e30fb6ff135d0086c426db3b14a0b3a1c0f2e974fc9026d97c60f",
+      "title": "Maze | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze0/index.html": {
+      "text_sha256": "8a1a4e94af88b3a96ec0fe7cbbc2981dce32b71007c974588e291d5efccc338c",
+      "title": "Maze Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze1/index.html": {
+      "text_sha256": "000f05ca93f397efce1022a2c80aab6fca3db5965ab97ecf6163544750266ad2",
+      "title": "Maze Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze2/index.html": {
+      "text_sha256": "b034b5b1723012a580ac366728b454992a5b88f2c59cfc9c72307963584e20d7",
+      "title": "Maze Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze3/index.html": {
+      "text_sha256": "00d55bea8faa4fea4c7cc8d54f90f04b669fa7bbdbadf76ebdca0243b7c40594",
+      "title": "Maze Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze4/index.html": {
+      "text_sha256": "1cba1d2ca0e93b63d41ffbec3d9a5e6d5a290f04f60b0b31115cd4c0365631bf",
+      "title": "Maze Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze5/index.html": {
+      "text_sha256": "d32632149be6c247729527af0f5d98db44e6bd78e0c61d344d94b8927569c324",
+      "title": "Maze Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze6/index.html": {
+      "text_sha256": "3ea579fbb5ca8465abc84d43309ac4e07c9d47f78429c35cad30726cda1911c2",
+      "title": "Maze Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze7/index.html": {
+      "text_sha256": "8746d83f2c31e3579380eace26ef4ab5ccdca48d681c05ed9d7017570cbc47c3",
+      "title": "Maze Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze8/index.html": {
+      "text_sha256": "a4e0fe49fb01160e686937e333ac435a871a081d4124ee95cf4bf841f4e6fa6c",
+      "title": "Maze Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/maze/maze9/index.html": {
+      "text_sha256": "7d596c18218d2835ffa40ba607ced1f8c427e81aafe2457b8c3482c792713d9f",
+      "title": "Maze Level 9 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/monxla/index.html": {
+      "text_sha256": "f501f31fe7725145b45ce4ddc87c1b0f39f0ea7c76f00bab9e72f4a2c919a070",
+      "title": "Monxla (HES 2012) | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/index.html": {
+      "text_sha256": "649f8ef506775757d690c971214dbaf64316b308d3fe969e7ebf64cf1162e6ba",
+      "title": "Narnia | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia0/index.html": {
+      "text_sha256": "0d0ae69d7a2c61b4de40651d2d4265c4a4c34dc6b29db70b332f5e3a29bbaecc",
+      "title": "Narnia Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia1/index.html": {
+      "text_sha256": "4839012af4c8afd3385ade2f5baae28bfda033bf674efe235b2852c2a851efd4",
+      "title": "Narnia Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia2/index.html": {
+      "text_sha256": "7f0e48501c66671e41d5e3a3a90f8e49f8d1185d66893977380d589bd3845517",
+      "title": "Narnia Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia3/index.html": {
+      "text_sha256": "3b204cbfed290ba9f446365397b1bf8ad63970db557ff75bfa347a21c2aaa029",
+      "title": "Narnia Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia4/index.html": {
+      "text_sha256": "411f7da1f0ec7ecbe51c34e16774fd5fd8a7c6e110b92ecebb6c996622e98ad3",
+      "title": "Narnia Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia5/index.html": {
+      "text_sha256": "b6ee96415f8707775defad0a2962e723d630fff09fef92b98952aef2f1dbc337",
+      "title": "Narnia Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia6/index.html": {
+      "text_sha256": "74fc501e340cb9137a9ddd5d144902314a32007c48d3fab65e864c18a0c46b74",
+      "title": "Narnia Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia7/index.html": {
+      "text_sha256": "379b89338396c4ec2a7fb07c3109fd3fb25fd241bb61361088d95b182dcb9347",
+      "title": "Narnia Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia8/index.html": {
+      "text_sha256": "06061533ac83c6be1e3cae28ef0443086c6781efc2f90b3d02a1ba1a4960b0d3",
+      "title": "Narnia Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/narnia/narnia9/index.html": {
+      "text_sha256": "bfed970dee47c65c17939962c8a3dc568dfffadeb2f859f1c2f7a8d163688089",
+      "title": "Narnia Level 9 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/index.html": {
+      "text_sha256": "fb99cc8ce0475d04a9f111d022289eb80fb4eaddcc7da13eb69d159249b5ee26",
+      "title": "Natas | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas0/index.html": {
+      "text_sha256": "163374775d437c8056403183af3cb89ef8716033d01cb58d51ab18c0cf3f2917",
+      "title": "Natas Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas1/index.html": {
+      "text_sha256": "80f929a25bccc0e3eb1c39bb216c03b86612518a218ed975ec5c73f73a8c06bd",
+      "title": "Natas Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas10/index.html": {
+      "text_sha256": "a97a114cdedf60595bf163283c9bb35c5eb0ad4e153d793ee660cc3b2d447a44",
+      "title": "Natas Level 10 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas11/index.html": {
+      "text_sha256": "b047967e6458103eb8bea6ddee8c1de1ee0ac45a3a68df810fbd9ac8fb2fbd27",
+      "title": "Natas Level 11 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas12/index.html": {
+      "text_sha256": "537bbee277fa2a58a11036ac8443621fbc836ed440b0717343ded82c9bf84ad6",
+      "title": "Natas Level 12 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas13/index.html": {
+      "text_sha256": "2a4703aff2afc96f8d259eb994ce42d5501d5324527d5b28a0278d8bcb7ece27",
+      "title": "Natas Level 13 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas14/index.html": {
+      "text_sha256": "b5bbcc035be8e386536a243d08499b86b4dea9c75f93e1eb2c4a65517e0890d2",
+      "title": "Natas Level 14 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas15/index.html": {
+      "text_sha256": "4380cccb66e23ad8c8e2b8d8ca95afa11fe27c568459db15673625a5d758b806",
+      "title": "Natas Level 15 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas16/index.html": {
+      "text_sha256": "a42adcdb3b3991cdb9e681c35e76490dad7be75b8ee9b8fa99c3f2342c03fe71",
+      "title": "Natas Level 16 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas17/index.html": {
+      "text_sha256": "b0eae97e5fab38d60c68a640c2848847639ce7f3d07fe0a0db9686fd259eb6fd",
+      "title": "Natas Level 17 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas18/index.html": {
+      "text_sha256": "ee7cae269fadbba1cec201c188e2f8ef230b4fb8f7d88776c7a4d4c5788f4ff3",
+      "title": "Natas Level 18 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas19/index.html": {
+      "text_sha256": "3c97f4341b0a12967dbf9a6e1c420e3971dc9eb18738c2ffc654f6366b21a45b",
+      "title": "Natas Level 19 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas2/index.html": {
+      "text_sha256": "4ede038c991bf277c54ac893a9989656a9090266b8c3c329806dad26bb40c20f",
+      "title": "Natas Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas20/index.html": {
+      "text_sha256": "b0d8f777e8cb5d5830effb681f61d6b24cece7b0e3b3a89a5307a258399e7864",
+      "title": "Natas Level 20 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas21/index.html": {
+      "text_sha256": "ce9601ecbdec57db51a25de15f6ab417123190bc1a3ba0c2c1191e9269f91001",
+      "title": "Natas Level 21 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas22/index.html": {
+      "text_sha256": "45ad6e6410ae2e16985b83b85b849c13c93629ce9b136a75bb9943d91f320d5a",
+      "title": "Natas Level 22 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas23/index.html": {
+      "text_sha256": "ab75a214451c5ed2f2a425e45283ed3bf2dc4fd5885f9301b738e6fbce859b5c",
+      "title": "Natas Level 23 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas24/index.html": {
+      "text_sha256": "ef9d4a938ff0f93ea3b56fec844729ef3f2badccd1eda2f23f1188227cb3e713",
+      "title": "Natas Level 24 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas25/index.html": {
+      "text_sha256": "cf7fb5b1e744d4259b70db30fd6c9e8df3d8500dc8897306dfff37a720f552ef",
+      "title": "Natas Level 25 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas26/index.html": {
+      "text_sha256": "c9af896a9e928d89f4dd9b637e88f37bd3c887dc2bc45ff2997fb57afeaae705",
+      "title": "Natas Level 26 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas27/index.html": {
+      "text_sha256": "876cc611292bfc957d21d18a87bef033095bf32b5a07560dd8b76a0fed7d5903",
+      "title": "Natas Level 27 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas28/index.html": {
+      "text_sha256": "bfb21f83b9fbceed0176091bf41b354d553d7e9c6e483d2d6f70640eba50561c",
+      "title": "Natas Level 28 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas29/index.html": {
+      "text_sha256": "baecc1b219036a52266157511c554a8c1de5f803863415fd2edf8c062ee363b3",
+      "title": "Natas Level 29 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas3/index.html": {
+      "text_sha256": "4d9511bbe318ee814715ee9cdb3f8daaf69a2baa845f9c97f64ca9d3ecc3038a",
+      "title": "Natas Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas30/index.html": {
+      "text_sha256": "6e43b64696b1b7b8a3506478479b69e265745fb6e31f195203c4d7b0a1cc81e8",
+      "title": "Natas Level 30 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas31/index.html": {
+      "text_sha256": "1c2aabd30a83cb0b1ae762ac0e27b33e880f26a917110129bab15131c432573f",
+      "title": "Natas Level 31 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas32/index.html": {
+      "text_sha256": "a55715300ebcd701a320f9860710aee1cc89ef45b0833e9fc818810dc3e8b4d6",
+      "title": "Natas Level 32 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas33/index.html": {
+      "text_sha256": "7400ca03203511bbd5c6f2bef8f405aef902eaf63bfdbcaeafd83db9959476ef",
+      "title": "Natas Level 33 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas34/index.html": {
+      "text_sha256": "a3a7034613e5f3cf2467e8b879928d36bb003d2a594aac972531f346f0694bf0",
+      "title": "Natas Level 34 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas4/index.html": {
+      "text_sha256": "e61eaae3a49c864a2ba06ef5d6b1e82c03c121e41561abc75d38f086839ba83d",
+      "title": "Natas Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas5/index.html": {
+      "text_sha256": "e19841b485cadfe8d9b2e7766fded82000bc4874466f3417bb76d856c4d39da0",
+      "title": "Natas Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas6/index.html": {
+      "text_sha256": "dd916dd33e56bbbed79b6bb681b6bd723adb37e4fe97c8ae8376c73e6a96b02e",
+      "title": "Natas Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas7/index.html": {
+      "text_sha256": "be04a00185565f701e963adf70a787c9a1155536e1c10f12cb58beacf746eedb",
+      "title": "Natas Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas8/index.html": {
+      "text_sha256": "9da37412907bb9f78e4014905c09a63d7bb366f0770634036ab730b0b3c628d4",
+      "title": "Natas Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/natas/natas9/index.html": {
+      "text_sha256": "665cfc589eab63c199927d49e3ebb9c01ff3e42b7eb08b084df6553f2ce91a53",
+      "title": "Natas Level 9 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/index.html": {
+      "text_sha256": "17c4e059cdaf4384a712d0c8a69b7ea4e8d68902893d53c1a858a6d3c2d59b21",
+      "title": "Semtex | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex0/index.html": {
+      "text_sha256": "cd66dcb360c801352be76255857f686918e77a593b55b4f3b42e9f872624ff88",
+      "title": "Semtex Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex1/index.html": {
+      "text_sha256": "0da70cde79b918089f30702016d47fcf7352eba27a5ce1a0f3787a2a98695c4d",
+      "title": "Semtex Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex10/index.html": {
+      "text_sha256": "c08443a1d280293a1b2ce3eb1c6d2699708d78048510f40fabc3154cef6b5a49",
+      "title": "Semtex Level 10 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex11/index.html": {
+      "text_sha256": "74e9727ee83d5de16e8f1999458967c192312a99314efc45a56f49470abc6b43",
+      "title": "Semtex Level 11 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex12/index.html": {
+      "text_sha256": "54f6045caabe21204f8c63d5880e03a07a8110088184f2f60913e8c0d577be9c",
+      "title": "Semtex Level 12 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex2/index.html": {
+      "text_sha256": "eaf701b979fe5dda3859a0b37cfc66f57b7958d8b5f2c1cd12441e11cdd76d57",
+      "title": "Semtex Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex3/index.html": {
+      "text_sha256": "f6a01ca54bedbc8ffbb1da98811baafd1a6eaea79066e65314fe2eaada6b2923",
+      "title": "Semtex Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex4/index.html": {
+      "text_sha256": "54ff8095cb99b1f2badf121351f26db3c84a84db368564c517e52f19c06096f3",
+      "title": "Semtex Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex5/index.html": {
+      "text_sha256": "37b5824676316fa584d00b93c1c8ef749c8fed059c1f88975d5c0cdb8da57a6a",
+      "title": "Semtex Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex6/index.html": {
+      "text_sha256": "5a10a0cea790986a884a9f44da4c59e5ed358c897339482be7f8376f7e2baf5d",
+      "title": "Semtex Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex7/index.html": {
+      "text_sha256": "a88233cfcb0544ecdac4e85bfae4d49c6c2769150ccdf9079b3cacff3f9b1ff8",
+      "title": "Semtex Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex8/index.html": {
+      "text_sha256": "c84c44343b1e7dd60dd468bfb0cfaa9808adfc9c84bc746264567515d40d116b",
+      "title": "Semtex Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/semtex/semtex9/index.html": {
+      "text_sha256": "941ab6380cada844990a427ee1ce8242276491559ecbcf6f1dd10279b08eaa21",
+      "title": "Semtex Level 9 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/index.html": {
+      "text_sha256": "40e63cd80872e7ed714b0d5f95c6e43b815f437ed37cd1f768a0147a6837ccdf",
+      "title": "Utumno | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno0/index.html": {
+      "text_sha256": "2b51f15771362dda533985495197dd9f99935abf370c573e237900a945eba424",
+      "title": "Utumno Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno1/index.html": {
+      "text_sha256": "93c4cd6bd3d3c93d7176ee59b0bebc5eaf61cd36e47ed8459f112233e0891bf0",
+      "title": "Utumno Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno2/index.html": {
+      "text_sha256": "6495cb5aeddd89c8c3a4a290d8e35ff13615b14cf7ec60b4c07ac300b4213c17",
+      "title": "Utumno Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno3/index.html": {
+      "text_sha256": "102a9366955bb0e0a65b0b292bae92ea9f6030645aa7678ae36ca87169764054",
+      "title": "Utumno Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno4/index.html": {
+      "text_sha256": "989795681fbdb57327fa271d5e017a94f52972787105e8c367bdc80fbc670bbd",
+      "title": "Utumno Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno5/index.html": {
+      "text_sha256": "c44d9845bcfcb4cc0d8e036fe40d7122bb215fd1c331bb80e0b8662845d8b559",
+      "title": "Utumno Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno6/index.html": {
+      "text_sha256": "a621ea8928cee139c6658f9aa6750a29169fd1270559346899f9830c64f6ea45",
+      "title": "Utumno Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno7/index.html": {
+      "text_sha256": "1e999a5ff0594407acc0bc731e33c649030a8f8b418dad2bb2116366c00ba3eb",
+      "title": "Utumno Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/utumno/utumno8/index.html": {
+      "text_sha256": "f1e67c52e6e6920b69e5f97bcc95db06cf33b2a89c05a343435d78c5a405eae6",
+      "title": "Utumno Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/index.html": {
+      "text_sha256": "ab787a349862045347d423969ca0fe3c0c157ee4a6d1cf57f0b8741888c67e0b",
+      "title": "Vortex | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex0/index.html": {
+      "text_sha256": "2b644b4963831183fcb9b0d1c43d773b4699364efbdb2f3e3923c4d9271d60c9",
+      "title": "Vortex Level 0 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex1/index.html": {
+      "text_sha256": "f10c54f75f4b5bc5295cb9d1df84e3e09caad31353323e974a70c6182e7c964d",
+      "title": "Vortex Level 1 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex10/index.html": {
+      "text_sha256": "125768716224eb7d78c94d70d0f20bdf5fb243c5ef624b94caf8ec982b6d58f9",
+      "title": "Vortex Level 10 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex11/index.html": {
+      "text_sha256": "2a5989ffe8e9839e98d9308acd895bf2f380ec89e3fe835e1efd462f7048ad4d",
+      "title": "Vortex Level 11 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex12/index.html": {
+      "text_sha256": "a11204b4c7cd983f143840ca74e19f834926a169161f7defd340c68a515b45b7",
+      "title": "Vortex Level 12 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex13/index.html": {
+      "text_sha256": "52a71a8700b8cf45fbeceb5e0e151fc36ac9d36d9221945f5a052a07caef6d5a",
+      "title": "Vortex Level 13 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex14/index.html": {
+      "text_sha256": "9a37862b567e58c822ea7cbc898f15d6148a7fa50e3fba259b78e471a9325f7a",
+      "title": "Vortex Level 14 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex15/index.html": {
+      "text_sha256": "06b232b9341ff18dfb7e68cd95fc9eaff5ac21286a54ec9ded114d02eb7bb003",
+      "title": "Vortex Level 15 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex16/index.html": {
+      "text_sha256": "38a381c7ac3eddabc1bcd0ccd8c532209804f23d5a6e3544e7b4ef3e3b9f2223",
+      "title": "Vortex Level 16 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex17/index.html": {
+      "text_sha256": "250e78a99c6921be3b5b3fcbd65d1bca1c537fe1f973b77208ec245a8b8dc6b9",
+      "title": "Vortex Level 17 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex18/index.html": {
+      "text_sha256": "f9fc27d519a36c3c4bfc151c95fcf68f32df18b8cf3b3ee7a7d1395683adfb22",
+      "title": "Vortex Level 18 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex19/index.html": {
+      "text_sha256": "fef4e6ad254439cfb1d302b4ac6b341fdf54dc745c51c27243b79c373364d830",
+      "title": "Vortex Level 19 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex2/index.html": {
+      "text_sha256": "d6722899a11c4e3860a567a1aa78a59a0ff482209851c1c70f517ab33f3f6029",
+      "title": "Vortex Level 2 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex20/index.html": {
+      "text_sha256": "d1156dea737d83a70d9bac6082fcf54a304ac8377083428a2fdfe26aff132f92",
+      "title": "Vortex Level 20 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex21/index.html": {
+      "text_sha256": "795bd79d694515974a761aea43048f26d86e420244cbe68cf082cdcd05b5509a",
+      "title": "Vortex Level 21 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex22/index.html": {
+      "text_sha256": "fa8cfc17e147134c879cf766f45d77c912bde2178bf99c3fe74993fbf741f1ed",
+      "title": "Vortex Level 22 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex23/index.html": {
+      "text_sha256": "432cee9140e5d32fb4b7c47813a2bed11093c594f0429c5af69acbf0ad86df99",
+      "title": "Vortex Level 23 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex24/index.html": {
+      "text_sha256": "4f577abbab24cef8669e29694d00bccee99a8f64f4a65846ef17e4ba25e07b86",
+      "title": "Vortex Level 24 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex25/index.html": {
+      "text_sha256": "9daaee935419a2a8d4677f1fc2d3aa88c2f81d84a56da456594dfaa35e73ce4b",
+      "title": "Vortex Level 25 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex26/index.html": {
+      "text_sha256": "3a7da0da11aaf4bafa0b9551fa342891b5046eb7eb7b2231d84267784fa8d23c",
+      "title": "Vortex Level 26 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex3/index.html": {
+      "text_sha256": "eee0244836e627089f681828758963d587be01b80bf8525a4efaa0acbe37b914",
+      "title": "Vortex Level 3 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex4/index.html": {
+      "text_sha256": "fb83066ef911fd24c0d013c015b60f4f7ae8ebbff8d1a7166014265465249669",
+      "title": "Vortex Level 4 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex5/index.html": {
+      "text_sha256": "fc4b61c7538096a1b311ad94284539ab552bd11868007e35163a2d1f253bd094",
+      "title": "Vortex Level 5 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex6/index.html": {
+      "text_sha256": "d9b83c975973ae90b0c982fd87a03c697b01e4caef39de82fc4ec0c6c19ca86e",
+      "title": "Vortex Level 6 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex7/index.html": {
+      "text_sha256": "8541c8b64bd151ead79ff7dfd47efedb52a851d259294bf25f0e2a1d528b4f69",
+      "title": "Vortex Level 7 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex8/index.html": {
+      "text_sha256": "57b60028595a0210a13943658b1591d8460dde60b564c482cffdc52cb34b9a30",
+      "title": "Vortex Level 8 | Wargames",
+      "type": "text/html"
+    },
+    "docs/wargames/vortex/vortex9/index.html": {
+      "text_sha256": "9a21b50ba9c17e052f07c3bef8e828b51dd5235e6b55cba1df75da1938940242",
+      "title": "Vortex Level 9 | Wargames",
+      "type": "text/html"
+    },
+    "favicon.ico": {
+      "type": "image/vnd.microsoft.icon"
+    },
+    "feed.xml": {
+      "type": "application/xml"
+    },
+    "index.html": {
+      "text_sha256": "90964952dcbfcb0d8585a6fe9c9f315f1d90d1604da663119a7202eeaeeff790",
+      "title": "Wargames — Security Challenges | Wargames",
+      "type": "text/html"
+    },
+    "robots.txt": {
+      "type": "text/plain"
+    },
+    "search.json": {
+      "type": "application/json"
+    },
+    "sitemap.xml": {
+      "type": "application/xml"
+    },
+    "tags/index.html": {
+      "text_sha256": "b576a3a177630bc1ff203df8d017a1e222aefa882eb912e91f1c24ab28b12415",
+      "title": "All levels | Wargames",
+      "type": "text/html"
+    }
+  },
+  "redirects": {},
+  "schema": "site-manifest/v1",
+  "site": "wargames",
+  "sitemaps": {
+    "sitemap.xml": [
+      "https://bamr87.github.io/zer0-CMS/wargames/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/abraxas/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit10/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit11/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit12/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit13/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit14/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit15/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit16/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit17/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit18/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit19/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit20/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit21/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit22/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit23/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit24/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit25/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit26/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit27/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit28/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit29/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit30/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit31/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit32/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit33/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit34/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/bandit/bandit9/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/behemoth/behemoth8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/blacksun/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/blacksun/blacksun0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/blacksun/blacksun1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/blacksun/blacksun2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/blacksun/blacksun3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/blacksun/blacksun4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/blacksun/reading_material/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter10/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter11/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter12/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter13/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter14/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter15/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/drifter/drifter9/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/formulaone0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/formulaone1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/formulaone2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/formulaone3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/formulaone4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/formulaone5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/formulaone/formulaone6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/hes2010/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/kishi/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/krypton0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/krypton1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/krypton2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/krypton3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/krypton4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/krypton5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/krypton/krypton6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/leviathan/leviathan7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/manpage/manpage7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/maze/maze9/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/monxla/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/narnia/narnia9/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas10/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas11/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas12/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas13/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas14/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas15/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas16/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas17/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas18/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas19/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas20/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas21/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas22/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas23/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas24/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas25/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas26/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas27/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas28/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas29/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas30/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas31/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas32/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas33/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas34/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/natas/natas9/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex10/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex11/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex12/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/semtex/semtex9/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/utumno/utumno8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex0/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex1/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex10/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex11/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex12/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex13/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex14/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex15/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex16/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex17/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex18/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex19/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex2/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex20/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex21/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex22/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex23/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex24/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex25/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex26/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex3/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex4/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex5/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex6/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex7/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex8/",
+      "https://bamr87.github.io/zer0-CMS/wargames/docs/wargames/vortex/vortex9/",
+      "https://bamr87.github.io/zer0-CMS/wargames/tags/"
+    ]
+  }
+}
