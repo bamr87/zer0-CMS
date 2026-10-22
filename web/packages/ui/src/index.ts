@@ -15,5 +15,7 @@ export { PageList } from './PageList';
 export { RevisionHistory } from './RevisionHistory';
 export { RichText, roundTrips, throughEditor, type TextFormat } from './RichText';
 export { RunList, RunStatus, RunTimeline } from './RunTimeline';
+export { SitePicker } from './SitePicker';
 export { STATUS_OPTIONS, StatusBadge } from './StatusBadge';
 export { SuggestionInbox } from './SuggestionInbox';
+export { WORKSPACES, workspaceFor, type Workspace, type WorkspaceProps } from './workspaces';
