@@ -1,6 +1,6 @@
 """Automations as a consumer of the platform's own events (outbox/consumers.py).
 
-The relay writes this plane's events to the `zer0:content` stream; `manage.py consume_events --stream zer0:content
+The relay writes this plane's events to its stream (`EVENTS_STREAM`, `zer0:content`); `manage.py consume_events --own
 --group automations` reads them through a consumer group — the compose `events` service — and `handle_envelope`
 runs this handler once per event (`ProcessedEvent`, consumer `automations`), in the transaction that records it,
 so the runs an event fires commit with that record or not at all. Registration is a call, not an import side

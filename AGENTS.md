@@ -116,7 +116,7 @@ python manage.py import_jekyll --site drsai --path ../sites/drsai   # a site →
 python manage.py roundtrip_jekyll --path ../sites/drsai             # import → export → byte-compare
 python manage.py seed_demo                         # a demo site, the person `editor` (password zer0-demo under DEBUG), pending suggestions
 # Docker, from the repository root: http://localhost:8000 (/studio/, /admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
-docker compose --profile content up -d --wait db redis content worker research-worker beat relay
+docker compose --profile content up -d --wait db redis content worker research-worker beat relay events
 
 # ── The studio (web/) — React 19, Vite, Mantine, TanStack Query, TipTap; see web/README.md ──
 cd web

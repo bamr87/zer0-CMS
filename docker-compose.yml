@@ -280,12 +280,14 @@ services:
     healthcheck:
       disable: true
 
-  # The platform's own events, read back from the stream the relay writes by the consumer group of the automations an
-  # event fires (content/automations/README.md); each event is handled once (ProcessedEvent).
+  # The platform's own events, read back from the stream the relay writes (EVENTS_STREAM) by the consumer group of the
+  # automations an event fires (content/automations/README.md); each event is handled once (ProcessedEvent). Restarted
+  # if it stops: without it, event automations are accepted and enabled but never fire.
   events:
     profiles: ["content"]
     build: *content-build
-    command: python manage.py consume_events --stream zer0:content --group automations --name automations-1
+    command: python manage.py consume_events --own --group automations --name automations-1
+    restart: unless-stopped
     environment: *content-env
     labels: *content-labels
     logging: *fleet-logging
