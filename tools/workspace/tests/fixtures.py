@@ -1,5 +1,6 @@
 """Throwaway workspaces for the bin/zer0 tests, built the same way for the
-unit tests, the golden replay and the recorder that captured the Ruby tool.
+unit tests, the golden replay and the recorder that captured the Ruby tool
+(deleted with it; `git show 095d5854:tools/workspace/tests/golden/record.py`).
 
 Two kinds. The *small* workspace is the one the Ruby suite built (three
 projects, two workflows, one vendored copy, its own git repository); its
