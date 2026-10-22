@@ -12,6 +12,12 @@ too. Current models reject sampling parameters and the SDK no longer takes
 them, so `temperature` and `top_p` reach only the older models that accept
 them, in the request body. The SDK is imported lazily
 (`requirements-providers.txt`).
+
+`search` is Anthropic's server-side web search tool, in its basic version
+(`web_search_20250305`): research wants the result list itself, not results
+Claude has already filtered with code, and the basic version runs on every
+platform. Each result keeps what Claude quoted from it; a search costs $10 per
+1,000 on top of the tokens.
 """
 
 import re
@@ -25,11 +31,14 @@ from .base import (
     NotConfigured,
     Provider,
     ProviderError,
+    SearchResult,
     ToolCall,
     tool_name,
     wire_name,
 )
 
+WEB_SEARCH = {"type": "web_search_20250305", "name": "web_search", "max_uses": 1}
+SEARCH_USD = Decimal("0.01")
 OAUTH_PREFIX = "sk-ant-oat"
 OAUTH_BETA = "oauth-2025-04-20"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -41,7 +50,7 @@ CAPS = {"structured_output": True, "tools": True, "vision": True, "context": 1_0
 class AnthropicProvider(Provider):
     slug = "anthropic"
     display_name = "Anthropic (Claude API)"
-    capabilities = frozenset({"complete", "stream", "structured", "tools", "models"})
+    capabilities = frozenset({"complete", "stream", "structured", "tools", "models", "search"})
     credential_env = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
     default_model = "claude-opus-5-5"
     static_models = (
@@ -121,8 +130,11 @@ class AnthropicProvider(Provider):
     def complete(self, *, model, system, messages, tools=(), metadata=None, schema=None, params=None) -> Completion:
         sdk, client = self._client()
         kwargs = self._request(model, system, messages, tools, schema, params)
+        return self._completion(self._create(sdk, self._messages(client, kwargs), kwargs), kwargs["model"])
+
+    def _create(self, sdk, messages, kwargs):
         try:
-            response = self._messages(client, kwargs).create(**kwargs)
+            return messages.create(**kwargs)
         except sdk.APIStatusError as e:
             raise ProviderError(
                 f"Anthropic API error {e.status_code}: {e.message}",
@@ -131,7 +143,38 @@ class AnthropicProvider(Provider):
             ) from e
         except sdk.APIConnectionError as e:
             raise ProviderError(f"could not reach Anthropic: {e}", provider=self.slug, retryable=True) from e
-        return self._completion(response, kwargs["model"])
+
+    def search(self, query: str, *, max_results: int = 5) -> Completion:
+        """One web search: the results the tool returned, each with what Claude quoted from it."""
+        sdk, client = self._client()
+        model = self.model_for()
+        ask = f"Search the web for: {query}\n\nThen name the most relevant results, quoting each one."
+        kwargs = {
+            "model": model,
+            "max_tokens": 4000,
+            "tools": [WEB_SEARCH],
+            "messages": [{"role": "user", "content": ask}],
+        }
+        response = self._create(sdk, client.messages, kwargs)
+        completion = self._completion(response, model)
+        found, quoted = {}, {}
+        for block in response.content or []:
+            if block.type == "web_search_tool_result":
+                if not isinstance(block.content, list):  # an error is an object, and arrives with HTTP 200
+                    code = getattr(block.content, "error_code", "unknown")
+                    raise ProviderError(f"web search failed: {code}", provider=self.slug)
+                for hit in block.content:
+                    found.setdefault(hit.url, (hit.title or "", getattr(hit, "page_age", None) or ""))
+            for citation in getattr(block, "citations", None) or []:
+                if getattr(citation, "url", None):
+                    quoted.setdefault(citation.url, getattr(citation, "cited_text", "") or "")
+        searches = getattr(getattr(response.usage, "server_tool_use", None), "web_search_requests", 0) or 0
+        completion.cost_usd += SEARCH_USD * searches
+        completion.data = [
+            SearchResult(url=url, title=title, snippet=quoted.get(url, ""), published=age)
+            for url, (title, age) in list(found.items())[:max_results]
+        ]
+        return completion
 
     def _completion(self, response, model) -> Completion:
         if response.stop_reason == "refusal":

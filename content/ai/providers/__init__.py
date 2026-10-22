@@ -19,7 +19,7 @@ import contextlib
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-from .base import Completion, ModelInfo, NotConfigured, Provider, ProviderError, Settings, ToolCall
+from .base import Completion, ModelInfo, NotConfigured, Provider, ProviderError, SearchResult, Settings, ToolCall
 
 BUILTIN = {
     "claude_code": "ai.providers.claude_code.ClaudeCodeProvider",
@@ -36,6 +36,7 @@ __all__ = [
     "NotConfigured",
     "Provider",
     "ProviderError",
+    "SearchResult",
     "Settings",
     "ToolCall",
     "available",
