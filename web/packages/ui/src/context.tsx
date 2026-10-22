@@ -21,7 +21,10 @@ export type Destination =
   | { to: 'ai'; section?: AiSection }
   | { to: 'assistant' | 'pipeline' | 'schema' | 'brief'; id?: string }
   | { to: 'briefs' }
-  | { to: 'conversation'; id: string };
+  | { to: 'conversation'; id: string }
+  | { to: 'ideas' }
+  | { to: 'research' }
+  | { to: 'source'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

@@ -20,6 +20,7 @@ import { BodyEditor } from './BodyEditor';
 import { call, errorText } from './call';
 import { useApi } from './context';
 import { FieldsPanel, fromLocalInput, type FieldValues } from './FieldsPanel';
+import { PageResearch } from './research/PageResearch';
 import { RevisionHistory } from './RevisionHistory';
 import { StatusBadge } from './StatusBadge';
 import { SuggestionInbox } from './SuggestionInbox';
@@ -215,6 +216,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
               <Tabs.Tab value="settings">Settings</Tabs.Tab>
               <Tabs.Tab value="suggestions">Suggestions ({page.pending_suggestions})</Tabs.Tab>
               <Tabs.Tab value="revisions">Revisions</Tabs.Tab>
+              <Tabs.Tab value="research">Research</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="content" pt="md">
               <Stack>
@@ -238,6 +240,9 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
                 </Alert>
               ) : null}
               <RevisionHistory pageId={page.id} canEdit={editable && !dirty} />
+            </Tabs.Panel>
+            <Tabs.Panel value="research" pt="md">
+              <PageResearch pageId={page.id} pageTitle={page.title} />
             </Tabs.Panel>
           </Tabs>
         </Grid.Col>

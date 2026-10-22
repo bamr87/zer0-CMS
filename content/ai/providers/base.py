@@ -13,6 +13,8 @@ arrives (one chunk unless the adapter can do better), `structured` is a
 completion whose JSON is parsed and validated against a JSON Schema with
 `jsonschema` here, whatever the vendor promised, `list_models` returns the
 catalog `ModelEntry` is synced from, and `health` is a one-word completion.
+`search` — a web search through the vendor's own search tool, for research
+(research/README.md) — is offered only by an adapter that declares `search`.
 Each adapter declares what it can do in `capabilities`, the `extra` options
 it reads in `options` (a row's `extra` is validated against them — nothing
 else reaches the adapter), and the vendor prefixes a LiteLLM-style model id
@@ -41,8 +43,8 @@ from referencing import Registry
 from referencing.exceptions import Unresolvable
 
 # What an adapter can declare: plain completions, streaming, native structured
-# output, the runner's tool calls, a live model catalog, embeddings.
-CAPABILITIES = ("complete", "stream", "structured", "tools", "models", "embed")
+# output, the runner's tool calls, a live model catalog, embeddings, web search.
+CAPABILITIES = ("complete", "stream", "structured", "tools", "models", "embed", "search")
 FENCED = re.compile(r"^```[\w-]*\s*\n?(.*?)\n?```$", re.DOTALL)
 EFFORT = {"enum": ["low", "medium", "high", "xhigh", "max"]}
 CLIENT_OPTIONS = {
@@ -90,6 +92,16 @@ class Completion:
     @property
     def tokens(self) -> int:
         return self.tokens_in + self.tokens_out
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    """One web search hit: where it is, what it is called, and what the provider quoted from it."""
+
+    url: str
+    title: str = ""
+    snippet: str = ""
+    published: str = ""
 
 
 @dataclass(frozen=True)
@@ -212,6 +224,10 @@ class Provider:
 
     def embed(self, texts: list[str], *, model: str = "") -> list[list[float]]:
         raise ProviderError(f"{self.slug} does not embed text", provider=self.slug)
+
+    def search(self, query: str, *, max_results: int = 5) -> Completion:
+        """A web search: a `Completion` whose `data` is a list of `SearchResult`, with what the search cost."""
+        raise ProviderError(f"{self.slug} cannot search the web", provider=self.slug)
 
 
 # ── structured output ──────────────────────────────────────────────────────

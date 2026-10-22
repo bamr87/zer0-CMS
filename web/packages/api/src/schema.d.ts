@@ -854,6 +854,231 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/ideas/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ideas you can see, newest first
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        get: operations["ideas_list"];
+        put?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        post: operations["ideas_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["ideas_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        delete: operations["ideas_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Change an idea: move it, retitle it, tag it, link sources
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        patch: operations["ideas_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/ideas/{public_id}/merge/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fold another idea into this one: notes, tags, sources and votes come along
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["ideas_merge_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/{public_id}/promote/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promote: to a brief (written now with `generate`, 202), an article draft or a book draft
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["ideas_promote_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/{public_id}/vote/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Vote for the idea
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["ideas_vote_create"];
+        /**
+         * Take your vote back
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        delete: operations["ideas_vote_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/boards/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["ideas_boards_list"];
+        put?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        post: operations["ideas_boards_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/boards/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["ideas_boards_retrieve"];
+        /** @description An owned row's API for people: newest first, by cursor. */
+        put: operations["ideas_boards_update"];
+        post?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        delete: operations["ideas_boards_destroy"];
+        options?: never;
+        head?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        patch: operations["ideas_boards_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/ideas/brainstorm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Brainstorm with an assistant: a message whose reply, a run, lists ideas to keep
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["ideas_brainstorm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/capture/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Capture an idea: the first line is its title, the rest its notes (or a template's)
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["ideas_capture_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/clusters/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ideas alike in meaning, and likely duplicates, from the stored vectors
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        get: operations["ideas_clusters_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/ideas/keep/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Keep ideas from a brainstorm's reply
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["ideas_keep_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/me": {
         parameters: {
             query?: never;
@@ -865,6 +1090,396 @@ export interface paths {
         get: operations["me"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/citations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["research_citations_list"];
+        put?: never;
+        /** Cite a source (or one of its quotes) on a page you may edit, or on your brief */
+        post: operations["research_citations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/citations/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["research_citations_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["research_citations_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/collections/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_collections_list"];
+        put?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        post: operations["research_collections_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/collections/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_collections_retrieve"];
+        /** @description An owned row's API for people: newest first, by cursor. */
+        put: operations["research_collections_update"];
+        post?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        delete: operations["research_collections_destroy"];
+        options?: never;
+        head?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        patch: operations["research_collections_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/research/collections/{public_id}/research-brief/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A research brief on a topic, from the collection's sources (AIEO's), as a run
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_collections_research_brief_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/fact-checks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_fact_checks_list"];
+        put?: never;
+        /**
+         * Fact-check a draft against its sources: findings by a run, corrections as suggestions to accept
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_fact_checks_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/fact-checks/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_fact_checks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/feeds/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_feeds_list"];
+        put?: never;
+        /**
+         * Subscribe to an RSS or Atom feed: its new items become sources, on a schedule
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_feeds_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/feeds/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_feeds_retrieve"];
+        /** @description An owned row's API for people: newest first, by cursor. */
+        put: operations["research_feeds_update"];
+        post?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        delete: operations["research_feeds_destroy"];
+        options?: never;
+        head?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        patch: operations["research_feeds_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/research/feeds/{public_id}/refresh/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh the feed now
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_feeds_refresh_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/questions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_questions_list"];
+        put?: never;
+        /**
+         * Ask the sources a question: answered by a run, citing them
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_questions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/questions/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description An owned row's API for people: newest first, by cursor. */
+        get: operations["research_questions_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        delete: operations["research_questions_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/quotes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["research_quotes_list"];
+        put?: never;
+        post: operations["research_quotes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/quotes/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["research_quotes_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["research_quotes_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["research_quotes_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/research/sources/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sources, newest first (without their text)
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        get: operations["research_sources_list"];
+        put?: never;
+        /**
+         * Add a note (201), or capture a web page (202: a worker fetches it)
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_sources_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/sources/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One source, with its extracted text
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        get: operations["research_sources_retrieve"];
+        put?: never;
+        post?: never;
+        /** @description An owned row's API for people: newest first, by cursor. */
+        delete: operations["research_sources_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Correct a source: its title, text, summary, collection, visibility
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        patch: operations["research_sources_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/research/sources/{public_id}/refetch/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fetch a web page again
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_sources_refetch_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/sources/{public_id}/summarize/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Summarize: a summary, the entities it names and passages worth quoting, as a run
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_sources_summarize_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/sources/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search the web through a provider's search tool, as a run; each hit becomes a source to fetch
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_sources_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/research/sources/upload/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a document: a PDF, plain text or Markdown, read now
+         * @description An owned row's API for people: newest first, by cursor.
+         */
+        post: operations["research_sources_upload_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1130,6 +1745,82 @@ export interface components {
             type: string;
             value: unknown;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        Board: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            name: string;
+            description?: string;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        BoardRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name: string;
+            description?: string;
+        };
+        /**
+         * @description * `angles` - angles
+         *     * `headlines` - headlines
+         *     * `outlines` - outlines
+         * @enum {string}
+         */
+        BrainstormKindEnum: "angles" | "headlines" | "outlines";
+        BrainstormRequest: {
+            prompt: string;
+            /**
+             * @description angles when not given.
+             *
+             *     * `angles` - angles
+             *     * `headlines` - headlines
+             *     * `outlines` - outlines
+             */
+            kind?: components["schemas"]["BrainstormKindEnum"];
+            /** @description 8 when not given. */
+            count?: number;
+            /** Format: uuid */
+            board?: string | null;
+            /**
+             * Format: uuid
+             * @description A session to continue.
+             */
+            conversation?: string | null;
+            /** @description Research to brainstorm from. */
+            sources?: string[];
+            /**
+             * Format: uuid
+             * @description Else the bundled Brainstormer.
+             */
+            assistant?: string | null;
+        };
+        Brainstormed: {
+            /**
+             * Format: uuid
+             * @description The brainstorm session, to continue it.
+             */
+            conversation: string;
+            message: components["schemas"]["Message"];
+            /** @description Its `result.ideas` are the ideas to keep, once it is completed. */
+            reply: components["schemas"]["Message"];
+            run: components["schemas"]["RunRef"];
+        };
         Brief: {
             /** Format: uuid */
             readonly id: string;
@@ -1210,6 +1901,25 @@ export interface components {
             schemas: string[];
             assistants: string[];
         };
+        CaptureRequest: {
+            /** @description The first line is the title; the rest, the notes. */
+            text: string;
+            url?: string;
+            /**
+             * Format: uuid
+             * @description Else the inbox.
+             */
+            board?: string | null;
+            tags?: string[];
+            /** @description Notes from a template: topic. */
+            template?: string;
+        };
+        /**
+         * @description * `url` - url
+         *     * `note` - note
+         * @enum {string}
+         */
+        CapturedKindEnum: "url" | "note";
         Change: {
             kind: components["schemas"]["ChangeKindEnum"];
             label: string;
@@ -1225,9 +1935,106 @@ export interface components {
          * @enum {string}
          */
         ChangeKindEnum: "block" | "field" | "edge";
+        CheckedSource: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** @description The draft cites it (else it came from the chosen collection). */
+            cited: boolean;
+        };
         Choice: {
             value: string;
             label: string;
+        };
+        Citation: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            source: string;
+            readonly source_title: string;
+            /** Format: uri */
+            readonly source_url: string;
+            /** Format: uuid */
+            quote?: string | null;
+            page?: number | null;
+            readonly page_title: string;
+            /** Format: uuid */
+            brief?: string | null;
+            note?: string;
+            readonly created_by: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        CitationRequest: {
+            /** Format: uuid */
+            source: string;
+            /** Format: uuid */
+            quote?: string | null;
+            page?: number | null;
+            /** Format: uuid */
+            brief?: string | null;
+            note?: string;
+        };
+        CitedSource: {
+            label: string;
+            /** Format: uuid */
+            source: string;
+            title: string;
+            quote: string;
+            /** @description The quote is in the source's text, word for word. */
+            verified: boolean;
+        };
+        CitedSourceRequest: {
+            label: string;
+            /** Format: uuid */
+            source: string;
+            title: string;
+            quote: string;
+            /** @description The quote is in the source's text, word for word. */
+            verified: boolean;
+        };
+        Cluster: {
+            ideas: components["schemas"]["IdeaRef"][];
+        };
+        Clusters: {
+            /** @description The embedding model the vectors come from. */
+            model: string;
+            clusters: components["schemas"]["Cluster"][];
+            /** @description Pairs similar enough to be one idea; merge them. */
+            duplicates: components["schemas"]["Duplicate"][];
+            /** @description Ideas whose vector is still being computed. */
+            pending: components["schemas"]["IdeaRef"][];
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        Collection: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            name: string;
+            description?: string;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        CollectionRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name: string;
+            description?: string;
         };
         Conversation: {
             /** Format: uuid */
@@ -1269,6 +2076,12 @@ export interface components {
              */
             from_brief?: string;
         };
+        Duplicate: {
+            a: components["schemas"]["IdeaRef"];
+            b: components["schemas"]["IdeaRef"];
+            /** Format: double */
+            similarity: number;
+        };
         Error: {
             /** @description `<domain>.<reason>`, stable across releases (ops/README.md). */
             code: string;
@@ -1286,6 +2099,97 @@ export interface components {
         };
         ErrorEnvelope: {
             error: components["schemas"]["Error"];
+        };
+        /** @description `status` and `error`, from the run that fills the row. */
+        FactCheck: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly page: number;
+            readonly page_title: string;
+            /** Format: uuid */
+            collection?: string | null;
+            readonly summary: string;
+            readonly findings: components["schemas"]["Finding"][];
+            /** @description What the check read, its citations first. */
+            readonly sources: components["schemas"]["CheckedSource"][];
+            /** @description Sources it could have read but did not: a check reads at most six, its citations first. */
+            readonly left_out: number;
+            readonly status: components["schemas"]["OutcomeEnum"];
+            readonly error: string;
+            readonly run: components["schemas"]["RunRef"] | null;
+        };
+        FactCheckCreateRequest: {
+            /** @description The draft to check: a page you may edit. */
+            page_id: number;
+            /**
+             * Format: uuid
+             * @description Also check against this collection.
+             */
+            collection?: string | null;
+        };
+        FactCheckRun: {
+            fact_check: components["schemas"]["FactCheck"];
+            run: components["schemas"]["RunRef"];
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        Feed: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** Format: uri */
+            url: string;
+            title?: string;
+            /** Format: uuid */
+            collection?: string | null;
+            active?: boolean;
+            /** @description How often to look. */
+            interval_minutes?: number;
+            /** Format: date-time */
+            readonly last_checked_at: string | null;
+            /** Format: date-time */
+            readonly next_check_at: string | null;
+            readonly error: string;
+            /** @description The sources it has brought. */
+            readonly items: number;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        FeedRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** Format: uri */
+            url: string;
+            title?: string;
+            /** Format: uuid */
+            collection?: string | null;
+            active?: boolean;
+            /** @description How often to look. */
+            interval_minutes?: number;
         };
         /**
          * @description * `content` - content
@@ -1315,6 +2219,131 @@ export interface components {
             max_length: number | null;
             choices: components["schemas"]["Choice"][];
         };
+        Finding: {
+            /** @description The id of the block the claim is in ('' when the checker named none). */
+            block: string;
+            claim: string;
+            verdict: components["schemas"]["VerdictEnum"];
+            explanation: string;
+            /** @description The block's words a source contradicts ('' if none). */
+            find: string;
+            /** @description What those words should say, by the sources. */
+            replace: string;
+            sources: components["schemas"]["FindingSource"][];
+            /** @description The suggestion it became — with the block's other corrections — to accept or reject. */
+            suggestion: number | null;
+            /** @description Why a correction could not become a suggestion. */
+            error: string;
+        };
+        FindingSource: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        Idea: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** Format: uuid */
+            board?: string | null;
+            title: string;
+            notes?: string;
+            tags?: string[];
+            status?: components["schemas"]["IdeaStatusEnum"];
+            readonly origin: components["schemas"]["OriginEnum"];
+            /** @description Where it was captured from. */
+            url?: string;
+            /** @description The linked sources the requester sees. */
+            readonly sources: components["schemas"]["IdeaSource"][];
+            /** Format: uuid */
+            readonly source_message: string | null;
+            /** @description The brief it became, if the requester sees it. */
+            readonly brief: components["schemas"]["IdeaBrief"] | null;
+            /** @description The draft it became, if the requester can find it. */
+            readonly page: components["schemas"]["IdeaPage"] | null;
+            readonly votes: number;
+            readonly voted: boolean;
+        };
+        IdeaBrief: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            status: string;
+        };
+        IdeaPage: {
+            id: number;
+            title: string;
+        };
+        IdeaRef: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            status: string;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        IdeaRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** Format: uuid */
+            board?: string | null;
+            title: string;
+            notes?: string;
+            tags?: string[];
+            status?: components["schemas"]["IdeaStatusEnum"];
+            /** @description Where it was captured from. */
+            url?: string;
+            source_ids?: string[];
+        };
+        IdeaSource: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            url: string;
+            kind: string;
+        };
+        /**
+         * @description * `new` - new
+         *     * `exploring` - exploring
+         *     * `planned` - planned
+         *     * `promoted` - promoted
+         *     * `archived` - archived
+         * @enum {string}
+         */
+        IdeaStatusEnum: "new" | "exploring" | "planned" | "promoted" | "archived";
+        KeepRequest: {
+            /**
+             * Format: uuid
+             * @description A brainstorm's finished reply.
+             */
+            message: string;
+            /** @description Else all. */
+            picks?: number[] | null;
+            /**
+             * Format: uuid
+             * @description Else the inbox.
+             */
+            board?: string | null;
+        };
+        Kept: {
+            ideas: components["schemas"]["Idea"][];
+        };
         LoginRequest: {
             username: string;
             password: string;
@@ -1326,6 +2355,13 @@ export interface components {
             permissions: string[];
             /** @description Send it as `X-CSRFToken` on every unsafe request. */
             csrf_token: string;
+        };
+        MergeRequest: {
+            /**
+             * Format: uuid
+             * @description The idea to fold into this one; it goes.
+             */
+            other: string;
         };
         Message: {
             /** Format: uuid */
@@ -1382,6 +2418,20 @@ export interface components {
             /** Format: date-time */
             readonly synced_at: string | null;
         };
+        /**
+         * @description * `written` - written
+         *     * `captured` - captured
+         *     * `brainstormed` - brainstormed
+         * @enum {string}
+         */
+        OriginEnum: "written" | "captured" | "brainstormed";
+        /**
+         * @description * `pending` - pending
+         *     * `ready` - ready
+         *     * `failed` - failed
+         * @enum {string}
+         */
+        OutcomeEnum: "pending" | "ready" | "failed";
         OutputSchema: {
             /** Format: uuid */
             readonly id: string;
@@ -1540,6 +2590,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Assistant"][];
         };
+        PaginatedBoardList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Board"][];
+        };
         PaginatedBriefList: {
             /** @example 123 */
             count: number;
@@ -1555,6 +2618,32 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Brief"][];
         };
+        PaginatedCitationList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Citation"][];
+        };
+        PaginatedCollectionList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Collection"][];
+        };
         PaginatedConversationList: {
             /** @example 123 */
             count: number;
@@ -1569,6 +2658,45 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Conversation"][];
+        };
+        PaginatedFactCheckList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["FactCheck"][];
+        };
+        PaginatedFeedList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Feed"][];
+        };
+        PaginatedIdeaList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Idea"][];
         };
         PaginatedMessageList: {
             /**
@@ -1658,6 +2786,32 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Provider"][];
         };
+        PaginatedQuestionList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Question"][];
+        };
+        PaginatedQuoteList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Quote"][];
+        };
         PaginatedRevisionList: {
             /** @example 123 */
             count: number;
@@ -1672,6 +2826,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Revision"][];
+        };
+        PaginatedSourceListList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["SourceList"][];
         };
         PaginatedSuggestionList: {
             /** @example 123 */
@@ -1709,6 +2876,17 @@ export interface components {
             /** @description Read-only registry tools it may use. */
             tools?: unknown;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        PatchedBoardRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name?: string;
+            description?: string;
+        };
         PatchedBriefRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -1731,6 +2909,17 @@ export interface components {
             /** Format: uuid */
             conversation?: string | null;
         };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        PatchedCollectionRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name?: string;
+            description?: string;
+        };
         PatchedConversationRequest: {
             /** @description A site its owner edits. */
             site?: number | null;
@@ -1746,6 +2935,41 @@ export interface components {
              * @description On create: start from this brief's text, its first turn.
              */
             from_brief?: string;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        PatchedFeedRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** Format: uri */
+            url?: string;
+            title?: string;
+            /** Format: uuid */
+            collection?: string | null;
+            active?: boolean;
+            /** @description How often to look. */
+            interval_minutes?: number;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        PatchedIdeaRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** Format: uuid */
+            board?: string | null;
+            title?: string;
+            notes?: string;
+            tags?: string[];
+            status?: components["schemas"]["IdeaStatusEnum"];
+            /** @description Where it was captured from. */
+            url?: string;
+            source_ids?: string[];
         };
         PatchedMessageRequest: {
             /** Format: uuid */
@@ -1798,6 +3022,34 @@ export interface components {
             monthly_budget_usd?: string | null;
             /** @description Write-only; encrypted at rest. An empty string removes it (the environment is used again). */
             credential?: string;
+        };
+        PatchedQuoteRequest: {
+            /** Format: uuid */
+            source?: string;
+            text?: string;
+            note?: string;
+            /** @description Where in the source: a page, a paragraph. */
+            location?: string;
+        };
+        /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        PatchedSourceRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** Format: uuid */
+            collection?: string | null;
+            title?: string;
+            author?: string;
+            site_name?: string;
+            /** @description As the source dates itself. */
+            published?: string;
+            language?: string;
+            /** @description The extracted text. */
+            text?: string;
+            summary?: string;
         };
         Pipeline: {
             /** Format: uuid */
@@ -1854,11 +3106,44 @@ export interface components {
              */
             answer: boolean;
         };
+        PromoteIdeaRequest: {
+            /**
+             * @description What the idea becomes.
+             *
+             *     * `brief` - brief
+             *     * `article` - article
+             *     * `book` - book
+             */
+            into: components["schemas"]["PromotionEnum"];
+            /** @description Where the draft goes (an article, a book). */
+            parent?: number;
+            /**
+             * Format: uuid
+             * @description Who writes the brief.
+             */
+            assistant?: string | null;
+            /** @description Write the brief now (202, with its run). */
+            generate?: boolean;
+        };
         PromoteRequest: {
             to: components["schemas"]["ToEnum"];
             parent?: number;
             page_type?: string;
         };
+        PromotedIdea: {
+            idea: components["schemas"]["Idea"];
+            brief: components["schemas"]["Brief"] | null;
+            /** @description The draft (not live). */
+            page_id: number | null;
+            run: components["schemas"]["RunRef"] | null;
+        };
+        /**
+         * @description * `brief` - brief
+         *     * `article` - article
+         *     * `book` - book
+         * @enum {string}
+         */
+        PromotionEnum: "brief" | "article" | "book";
         Provider: {
             /** Format: uuid */
             readonly id: string;
@@ -1914,9 +3199,69 @@ export interface components {
             /** @description Write-only; encrypted at rest. An empty string removes it (the environment is used again). */
             credential?: string;
         };
+        /** @description `status` and `error`, from the run that fills the row. */
+        Question: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** Format: uuid */
+            collection?: string | null;
+            text: string;
+            readonly answer: string;
+            readonly citations: components["schemas"]["CitedSource"][];
+            readonly status: components["schemas"]["OutcomeEnum"];
+            readonly error: string;
+            readonly run: components["schemas"]["RunRef"] | null;
+        };
+        /** @description `status` and `error`, from the run that fills the row. */
+        QuestionRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** Format: uuid */
+            collection?: string | null;
+            text: string;
+        };
+        QuestionRun: {
+            question: components["schemas"]["Question"];
+            run: components["schemas"]["RunRef"];
+        };
+        Quote: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            source: string;
+            text: string;
+            note?: string;
+            /** @description Where in the source: a page, a paragraph. */
+            location?: string;
+            readonly owner: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        QuoteRequest: {
+            /** Format: uuid */
+            source: string;
+            text: string;
+            note?: string;
+            /** @description Where in the source: a page, a paragraph. */
+            location?: string;
+        };
         RerunRequest: {
             /** Format: uuid */
             assistant?: string;
+        };
+        ResearchBriefRequest: {
+            topic: string;
         };
         Revision: {
             id: number;
@@ -2088,6 +3433,15 @@ export interface components {
             /** @default  */
             render_template: string;
         };
+        SearchRequest: {
+            query: string;
+            /** Format: uuid */
+            collection?: string | null;
+            /** @description 5 when not given. */
+            max_results?: number;
+            /** @description A provider's slug. */
+            provider?: string;
+        };
         Site: {
             id: number;
             name: string;
@@ -2097,6 +3451,72 @@ export interface components {
             root_page_id: number;
         };
         /**
+         * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
+         *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
+         */
+        Source: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly kind: components["schemas"]["SourceKindEnum"];
+            /** Format: uuid */
+            collection?: string | null;
+            /** Format: uri */
+            readonly url: string;
+            title?: string;
+            author?: string;
+            site_name?: string;
+            /** @description As the source dates itself. */
+            published?: string;
+            readonly status: components["schemas"]["SourceStatusEnum"];
+            readonly error: string;
+            /** @description What robots.txt said: allowed, disallowed, unknown. */
+            readonly robots: string;
+            /** Format: date-time */
+            readonly fetched_at: string | null;
+            language?: string;
+            /** @description The extracted text. */
+            text?: string;
+            /** @description Content type, size, pages, file, feed entry … */
+            readonly metadata: unknown;
+            summary?: string;
+            /** @description [{name, kind}] the source names. */
+            readonly entities: unknown;
+            /** @description Passages an assistant suggests quoting. */
+            readonly highlights: unknown;
+            readonly summary_run: components["schemas"]["RunRef"] | null;
+            /** Format: uuid */
+            readonly feed: string | null;
+        };
+        SourceCreateRequest: {
+            /**
+             * @description A web page to capture, or a note.
+             *
+             *     * `url` - url
+             *     * `note` - note
+             */
+            kind: components["schemas"]["CapturedKindEnum"];
+            /**
+             * Format: uri
+             * @description For a web page.
+             */
+            url?: string;
+            /** @description For a note. */
+            text?: string;
+            title?: string;
+            /** Format: uuid */
+            collection?: string | null;
+        };
+        /**
          * @description * `previous` - The previous step's output (the request, for the first)
          *     * `conversation` - The whole conversation, or the run so far
          *     * `brief` - The brief's prompt
@@ -2104,6 +3524,56 @@ export interface components {
          * @enum {string}
          */
         SourceEnum: "previous" | "conversation" | "brief" | "page";
+        /**
+         * @description * `url` - Web page
+         *     * `feed` - Feed item
+         *     * `document` - Document
+         *     * `note` - Note
+         * @enum {string}
+         */
+        SourceKindEnum: "url" | "feed" | "document" | "note";
+        SourceList: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            readonly visibility: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change or delete the row (its owner, or staff). */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly kind: components["schemas"]["SourceKindEnum"];
+            /** Format: uuid */
+            collection?: string | null;
+            /** Format: uri */
+            readonly url: string;
+            readonly title: string;
+            readonly author: string;
+            readonly site_name: string;
+            /** @description As the source dates itself. */
+            readonly published: string;
+            readonly status: components["schemas"]["SourceStatusEnum"];
+            readonly error: string;
+            /** @description What robots.txt said: allowed, disallowed, unknown. */
+            readonly robots: string;
+            /** Format: date-time */
+            readonly fetched_at: string | null;
+        };
+        SourceRun: {
+            source: components["schemas"]["Source"];
+            run: components["schemas"]["RunRef"];
+        };
+        /**
+         * @description * `pending` - pending
+         *     * `fetching` - fetching
+         *     * `ready` - ready
+         *     * `failed` - failed
+         * @enum {string}
+         */
+        SourceStatusEnum: "pending" | "fetching" | "ready" | "failed";
         Step: {
             idx: number;
             kind: string;
@@ -2159,6 +3629,16 @@ export interface components {
             name: string;
             description: string;
         };
+        UploadRequest: {
+            /**
+             * Format: binary
+             * @description A PDF, plain text or Markdown.
+             */
+            file: string;
+            title?: string;
+            /** Format: uuid */
+            collection?: string | null;
+        };
         User: {
             id: number;
             username: string;
@@ -2167,6 +3647,13 @@ export interface components {
             is_staff: boolean;
             is_superuser: boolean;
         };
+        /**
+         * @description * `supported` - supported
+         *     * `contradicted` - contradicted
+         *     * `unsupported` - unsupported
+         * @enum {string}
+         */
+        VerdictEnum: "supported" | "contradicted" | "unsupported";
         /**
          * @description * `private` - Private — its owner
          *     * `site` - Site — everyone who edits its site
@@ -6445,6 +7932,894 @@ export interface operations {
             };
         };
     };
+    ideas_list: {
+        parameters: {
+            query?: {
+                /** @description A board's id, or `none` for the inbox. */
+                board?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /**
+                 * @description * `written` - written
+                 *     * `captured` - captured
+                 *     * `brainstormed` - brainstormed
+                 */
+                origin?: "brainstormed" | "captured" | "written";
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Words in the title or the notes. */
+                q?: string;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+                /**
+                 * @description * `new` - new
+                 *     * `exploring` - exploring
+                 *     * `planned` - planned
+                 *     * `promoted` - promoted
+                 *     * `archived` - archived
+                 */
+                status?: "archived" | "exploring" | "new" | "planned" | "promoted";
+                tag?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedIdeaList"];
+                };
+            };
+        };
+    };
+    ideas_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdeaRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["IdeaRequest"];
+                "multipart/form-data": components["schemas"]["IdeaRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Idea"];
+                };
+            };
+        };
+    };
+    ideas_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Idea"];
+                };
+            };
+        };
+    };
+    ideas_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ideas_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedIdeaRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedIdeaRequest"];
+                "multipart/form-data": components["schemas"]["PatchedIdeaRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Idea"];
+                };
+            };
+        };
+    };
+    ideas_merge_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["MergeRequest"];
+                "multipart/form-data": components["schemas"]["MergeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Idea"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ideas_promote_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromoteIdeaRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PromoteIdeaRequest"];
+                "multipart/form-data": components["schemas"]["PromoteIdeaRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotedIdea"];
+                };
+            };
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotedIdea"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ideas_vote_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Idea"];
+                };
+            };
+        };
+    };
+    ideas_vote_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Idea"];
+                };
+            };
+        };
+    };
+    ideas_boards_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+                /**
+                 * @description * `private` - Private — its owner
+                 *     * `site` - Site — everyone who edits its site
+                 *     * `shared` - Shared — everyone signed in
+                 */
+                visibility?: "private" | "shared" | "site";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedBoardList"];
+                };
+            };
+        };
+    };
+    ideas_boards_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BoardRequest"];
+                "multipart/form-data": components["schemas"]["BoardRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Board"];
+                };
+            };
+        };
+    };
+    ideas_boards_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Board"];
+                };
+            };
+        };
+    };
+    ideas_boards_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BoardRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BoardRequest"];
+                "multipart/form-data": components["schemas"]["BoardRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Board"];
+                };
+            };
+        };
+    };
+    ideas_boards_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ideas_boards_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedBoardRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedBoardRequest"];
+                "multipart/form-data": components["schemas"]["PatchedBoardRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Board"];
+                };
+            };
+        };
+    };
+    ideas_brainstorm_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrainstormRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BrainstormRequest"];
+                "multipart/form-data": components["schemas"]["BrainstormRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brainstormed"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ideas_capture_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaptureRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CaptureRequest"];
+                "multipart/form-data": components["schemas"]["CaptureRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Idea"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ideas_clusters_retrieve: {
+        parameters: {
+            query?: {
+                /** @description A board's id, or `none` for the inbox. */
+                board?: string;
+                status?: string;
+                /** @description How alike a cluster's ideas are (0–1). */
+                threshold?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Clusters"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ideas_keep_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KeepRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["KeepRequest"];
+                "multipart/form-data": components["schemas"]["KeepRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Kept"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -6460,6 +8835,1577 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_citations_list: {
+        parameters: {
+            query?: {
+                brief?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Citations on this page. */
+                page_id?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                source?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCitationList"];
+                };
+            };
+        };
+    };
+    research_citations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CitationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CitationRequest"];
+                "multipart/form-data": components["schemas"]["CitationRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Citation"];
+                };
+            };
+        };
+    };
+    research_citations_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Citation"];
+                };
+            };
+        };
+    };
+    research_citations_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    research_collections_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+                /**
+                 * @description * `private` - Private — its owner
+                 *     * `site` - Site — everyone who edits its site
+                 *     * `shared` - Shared — everyone signed in
+                 */
+                visibility?: "private" | "shared" | "site";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCollectionList"];
+                };
+            };
+        };
+    };
+    research_collections_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CollectionRequest"];
+                "multipart/form-data": components["schemas"]["CollectionRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Collection"];
+                };
+            };
+        };
+    };
+    research_collections_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Collection"];
+                };
+            };
+        };
+    };
+    research_collections_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CollectionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CollectionRequest"];
+                "multipart/form-data": components["schemas"]["CollectionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Collection"];
+                };
+            };
+        };
+    };
+    research_collections_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    research_collections_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCollectionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCollectionRequest"];
+                "multipart/form-data": components["schemas"]["PatchedCollectionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Collection"];
+                };
+            };
+        };
+    };
+    research_collections_research_brief_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchBriefRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResearchBriefRequest"];
+                "multipart/form-data": components["schemas"]["ResearchBriefRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_fact_checks_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Fact-checks of this page. */
+                page_id?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedFactCheckList"];
+                };
+            };
+        };
+    };
+    research_fact_checks_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FactCheckCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FactCheckCreateRequest"];
+                "multipart/form-data": components["schemas"]["FactCheckCreateRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FactCheckRun"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_fact_checks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FactCheck"];
+                };
+            };
+        };
+    };
+    research_feeds_list: {
+        parameters: {
+            query?: {
+                active?: boolean;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+                /**
+                 * @description * `private` - Private — its owner
+                 *     * `site` - Site — everyone who edits its site
+                 *     * `shared` - Shared — everyone signed in
+                 */
+                visibility?: "private" | "shared" | "site";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedFeedList"];
+                };
+            };
+        };
+    };
+    research_feeds_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FeedRequest"];
+                "multipart/form-data": components["schemas"]["FeedRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Feed"];
+                };
+            };
+        };
+    };
+    research_feeds_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Feed"];
+                };
+            };
+        };
+    };
+    research_feeds_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FeedRequest"];
+                "multipart/form-data": components["schemas"]["FeedRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Feed"];
+                };
+            };
+        };
+    };
+    research_feeds_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    research_feeds_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFeedRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFeedRequest"];
+                "multipart/form-data": components["schemas"]["PatchedFeedRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Feed"];
+                };
+            };
+        };
+    };
+    research_feeds_refresh_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Feed"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_questions_list: {
+        parameters: {
+            query?: {
+                collection?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedQuestionList"];
+                };
+            };
+        };
+    };
+    research_questions_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["QuestionRequest"];
+                "multipart/form-data": components["schemas"]["QuestionRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionRun"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_questions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Question"];
+                };
+            };
+        };
+    };
+    research_questions_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    research_quotes_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                source?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedQuoteList"];
+                };
+            };
+        };
+    };
+    research_quotes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["QuoteRequest"];
+                "multipart/form-data": components["schemas"]["QuoteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Quote"];
+                };
+            };
+        };
+    };
+    research_quotes_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Quote"];
+                };
+            };
+        };
+    };
+    research_quotes_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    research_quotes_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedQuoteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedQuoteRequest"];
+                "multipart/form-data": components["schemas"]["PatchedQuoteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Quote"];
+                };
+            };
+        };
+    };
+    research_sources_list: {
+        parameters: {
+            query?: {
+                collection?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                feed?: string;
+                /**
+                 * @description * `url` - Web page
+                 *     * `feed` - Feed item
+                 *     * `document` - Document
+                 *     * `note` - Note
+                 */
+                kind?: "document" | "feed" | "note" | "url";
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Words in the title, the URL or the text. */
+                q?: string;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+                /**
+                 * @description * `pending` - pending
+                 *     * `fetching` - fetching
+                 *     * `ready` - ready
+                 *     * `failed` - failed
+                 */
+                status?: "failed" | "fetching" | "pending" | "ready";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSourceListList"];
+                };
+            };
+        };
+    };
+    research_sources_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SourceCreateRequest"];
+                "multipart/form-data": components["schemas"]["SourceCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_sources_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+        };
+    };
+    research_sources_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    research_sources_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSourceRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSourceRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSourceRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+        };
+    };
+    research_sources_refetch_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_sources_summarize_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceRun"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_sources_search_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SearchRequest"];
+                "multipart/form-data": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    research_sources_upload_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["UploadRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
                 };
             };
             401: {

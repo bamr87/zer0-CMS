@@ -4,7 +4,18 @@
 // turns the destinations they ask for (Destination) into paths.
 import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
-import { Overview, PageEditor, PageList, StudioProvider, SuggestionInbox, type Destination, type OpenStream } from '@zer0/ui';
+import {
+  IdeasWorkspace,
+  Overview,
+  PageEditor,
+  PageList,
+  ResearchWorkspace,
+  SourceView,
+  StudioProvider,
+  SuggestionInbox,
+  type Destination,
+  type OpenStream,
+} from '@zer0/ui';
 import { useCallback, type ReactNode } from 'react';
 import { Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router';
 
@@ -41,6 +52,12 @@ export function pathFor(to: Destination): string {
       return `/create/briefs/${to.id ?? 'new'}`;
     case 'briefs':
       return '/create/briefs';
+    case 'ideas':
+      return '/ideas';
+    case 'research':
+      return '/research';
+    case 'source':
+      return `/research/sources/${to.id}`;
   }
 }
 
@@ -60,6 +77,9 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="create/*" element={<CreateArea />} />
                 <Route path="review" element={<Review />} />
                 <Route path="ai/*" element={<AiArea />} />
+                <Route path="ideas" element={<Ideas />} />
+                <Route path="research" element={<Research />} />
+                <Route path="research/sources/:id" element={<SourcePage />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -119,6 +139,34 @@ function Review() {
       <SuggestionInbox siteId={runId ? undefined : siteId} runId={runId} />
     </Section>
   );
+}
+
+function Ideas() {
+  const { siteId } = useSite();
+  return (
+    <Section title="Ideas">
+      <IdeasWorkspace siteId={siteId} />
+    </Section>
+  );
+}
+
+/** Opens the studio's Research area on the page a person is reading, to capture it there. */
+export const bookmarkletFor = (origin: string) =>
+  `javascript:void(open('${origin}/studio/research?url='+encodeURIComponent(location.href)))`;
+
+function Research() {
+  const { siteId } = useSite();
+  const [params] = useSearchParams();
+  return (
+    <Section title="Research">
+      <ResearchWorkspace siteId={siteId} captureUrl={params.get('url') ?? undefined} bookmarklet={bookmarkletFor(window.location.origin)} />
+    </Section>
+  );
+}
+
+function SourcePage() {
+  const { id = '' } = useParams();
+  return <SourceView key={id} sourceId={id} />;
 }
 
 function Planned({ area }: { area: Area }) {

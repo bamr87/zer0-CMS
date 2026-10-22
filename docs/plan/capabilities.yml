@@ -155,19 +155,39 @@ platform:
   # ── Ideas and research (TARGET.md § Ideas and research) ─────────────────────
   - id: ideas.board
     what: Capture ideas on boards — tags, status, votes, links to sources — and promote one to a brief, an article or a book.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    # G14: content/ideas (/api/v2/ideas/) and the studio's Ideas workspace — boards made and shared with a site's editors or everyone (only the owner changes who sees one), votes by anyone who sees an idea, the drawer's edits and links; capture also from the editor's Research tab. The extension (G10) and agent tools to come.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/ideas/test_api.py::test_ideas_live_on_boards_or_in_the_inbox_and_are_scoped_and_voted_on
+      studio: web/packages/ui/test/ideas.test.tsx
   - id: ideas.brainstorm
     what: AI brainstorming — angles, headlines, outlines — whose results become ideas; ideas clustered and de-duplicated by meaning.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    # G14: a brainstorm is an AI-layer conversation with the bundled Brainstormer; a person keeps the ideas; clusters and duplicates come from stored vectors (graph.Embedding).
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ideas/test_api.py::test_capture_from_anywhere_and_a_brainstorm_kept_by_a_person
+      studio: web/packages/ui/test/ideas.test.tsx
   - id: research.sources
     what: A sources library — web pages, feeds, documents and notes with extracted text, metadata, summaries and entities — with quotes, citations and collections.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    # G14: content/research (/api/v2/research/) and the studio's Research workspace and source page; collections and sources shared from the studio (only the owner changes who sees one).
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/research/test_api.py::test_quotes_and_citations_follow_their_source_and_what_cites_it
+      studio: web/packages/ui/test/research.test.tsx
   - id: research.capture
     what: Capture by URL, bookmarklet, feed subscription (RSS, Atom, wires) on a schedule, upload, or a web search through a provider's tool.
-    surfaces: {api: missing, studio: missing, extension: missing}
+    # G14: URL capture in a worker behind an SSRF guard (robots.txt honoured, the whole exchange under one deadline, on the research queue), RSS and Atom feeds on Celery beat, PDF/text/Markdown uploads, web search through a provider that declares `search` (anthropic), the studio's bookmarklet. Partial: wire feeds (NewsML-G2, ninjs) are not read yet — feedparser reads RSS and Atom only.
+    surfaces: {api: partial, studio: partial, extension: missing}
+    proof:
+      api: content/tests/research/test_services.py::test_a_captured_page_is_fetched_by_a_worker_extracted_and_embedded
+      studio: web/packages/ui/test/research.test.tsx
   - id: research.synthesize
     what: Ask questions across a collection with cited answers, extract facts and quotes, and fact-check a draft's claims against its sources.
-    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+    # G14: cited answers (quotes checked against the source), summaries with entities and suggested quotes, fact-checks that read the draft's citations first and whose exact corrections are proposed through the tool registry as one suggestion per block.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/research/test_api.py::test_a_fact_check_of_a_draft_lists_findings_and_the_suggestions_they_became
+      studio: web/packages/ui/test/research.test.tsx
 
   # ── The newsroom (TARGET.md § The newsroom) ─────────────────────────────────
   - id: news.desk
@@ -708,8 +728,10 @@ sources:
       - {id: aieo.agent-performance, what: "Agent performance: quick wins, declining content and a roadmap from analytics.", target: aieo.agents, status: missing}
       - {id: aieo.workspace, what: "The content workspace — context, topics, research, drafts, rewrites, review-required, published, landing pages, audits.", target: aieo.lifecycle, status: missing}
       - {id: aieo.brand-context, what: "Context every agent reads: brand voice, style guide, writing examples, target keywords, internal-links map, competitor analysis.", target: sites.registry, status: partial}
-      - {id: aieo.topics, what: "Capture ideas as topics from a template.", target: ideas.board, status: missing}
-      - {id: aieo.research, what: "Generate a research brief.", target: research.synthesize, status: missing}
+      # G14: capture with AIEO's topic template (studio: CaptureIdea's "Start from the topic template", web/packages/ui/test/ideas.test.tsx).
+      - {id: aieo.topics, what: "Capture ideas as topics from a template.", target: ideas.board, status: done, proof: "content/tests/ideas/test_services.py::test_an_idea_is_captured_from_a_line_or_a_template_and_voted_once_per_person"}
+      # G14: the bundled Research brief writer (AIEO's research prompt) over a collection, kept as a note (studio: ResearchBrief, web/packages/ui/test/research.test.tsx).
+      - {id: aieo.research, what: "Generate a research brief.", target: research.synthesize, status: done, proof: "content/tests/research/test_services.py::test_a_brief_reads_the_sources_it_cites_and_a_research_brief_is_a_run"}
       - {id: aieo.write, what: "Write a long-form draft from a topic and a brief, then run the SEO, meta, internal-link and keyword agents on it.", target: ai.briefs, status: partial}
       - {id: aieo.rewrite, what: "Rewrite a workspace file, shown side by side with the original.", target: ai.suggestions, status: partial}
       - {id: aieo.priorities, what: "A ranked content-update queue and quick wins from Search Console rows (position, impressions, CTR, trend, business priority).", target: sites.evolve, status: missing}

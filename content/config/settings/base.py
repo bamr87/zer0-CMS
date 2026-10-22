@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "cms",
     "agents",
     "ai",
+    "research",
+    "ideas",
     "suggestions",
     "graph",
     "workflow",
@@ -200,6 +202,9 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": env("THROTTLE_ANON_RATE", default="120/min") or None,
         "principal": env("THROTTLE_PRINCIPAL_RATE", default="600/min") or None,
+        # Per person, what makes the research library reach the web: a page captured or fetched again, a search,
+        # a feed subscribed to or read now (research/views.py).
+        "research_fetch": env("THROTTLE_RESEARCH_FETCH_RATE", default="30/min") or None,
     },
     # How many proxies sit in front, so the anonymous bucket keys on the client
     # address rather than the load balancer's.
@@ -220,6 +225,10 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": r"/api/v2",
     "SERVE_URLCONF": "ops.openapi",
     "SERVE_INCLUDE_SCHEMA": False,
+    # A request body is its own component (`…Request`), without the read-only
+    # fields a response carries, so the generated client asks only for what a
+    # caller sends (G14: the studio's first create forms on owned rows).
+    "COMPONENT_SPLIT_REQUEST": True,
     # Named enums, so the generated client's types read well (api/serializers.py).
     "ENUM_NAME_OVERRIDES": {
         "PageStatusEnum": "api.serializers.PAGE_STATUSES",
@@ -227,6 +236,14 @@ SPECTACULAR_SETTINGS = {
         "FieldGroupEnum": "api.serializers.GROUPS",
         "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
         "TargetTypeEnum": "api.serializers.TARGET_TYPES",
+        "IdeaStatusEnum": "ideas.models.Idea.STATUSES",
+        "BrainstormKindEnum": "ideas.services.KINDS",
+        "PromotionEnum": "ideas.serializers.PROMOTIONS",
+        "SourceKindEnum": "research.models.Source.KINDS",
+        "SourceStatusEnum": "research.models.Source.STATUSES",
+        "CapturedKindEnum": "research.serializers.CAPTURED",
+        "OutcomeEnum": "research.serializers.OUTCOMES",
+        "VerdictEnum": "research.serializers.VERDICTS",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
     # A request body is its own component (`…Request`), without the read-only fields a response carries, so the
@@ -277,7 +294,13 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 CELERY_BEAT_SCHEDULE = {
     "viewed-together-nightly": {"task": "graph.tasks.build_viewed_together", "schedule": crontab(hour=3, minute=17)},
     "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
+    # The research library's feed subscriptions that are due (research/tasks.py).
+    "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
 }
+# A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
+# `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
+# publishes pages.
+CELERY_TASK_ROUTES = {f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")}
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
 # LLM_BACKEND: recorded (fixtures; the test default) | fake | litellm
@@ -309,6 +332,20 @@ EMBEDDING_DIMENSIONS = env.int("EMBEDDING_DIMENSIONS", default=256)
 # An agent-proposed edge at or above this confidence is written; below, it
 # becomes a Suggestion for an editor.
 GRAPH_EDGE_AUTO_THRESHOLD = env.float("GRAPH_EDGE_AUTO_THRESHOLD", default=0.85)
+
+# ── Ideas and research (ideas/README.md, research/README.md) ────────────────
+# How alike two ideas' vectors must be to share a cluster, and to be offered as
+# duplicates to merge (cosine; tune them to the embedding model).
+IDEAS_CLUSTER_THRESHOLD = env.float("IDEAS_CLUSTER_THRESHOLD", default=0.5)
+IDEAS_DUPLICATE_THRESHOLD = env.float("IDEAS_DUPLICATE_THRESHOLD", default=0.85)
+# What the research fetcher sends and how much it takes (research/fetch.py).
+RESEARCH_USER_AGENT = env("RESEARCH_USER_AGENT", default="zer0-cms-research/1.0 (+https://github.com/bamr87/zer0-CMS)")
+RESEARCH_MAX_BYTES = env.int("RESEARCH_MAX_BYTES", default=5 * 1024 * 1024)
+RESEARCH_FETCH_TIMEOUT = env.float("RESEARCH_FETCH_TIMEOUT", default=20.0)
+RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 1024 * 1024)
+# How long one fetch task may run in all — robots.txt and the page, each within RESEARCH_FETCH_TIMEOUT, and the
+# extraction — before Celery stops it (soft; the hard limit is 30 seconds later).
+RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
 
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"

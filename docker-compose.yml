@@ -236,6 +236,25 @@ services:
       retries: 5
       start_period: 30s
 
+  # The research library's fetches wait on other people's servers, so they have a queue of their own
+  # (CELERY_TASK_ROUTES in content/config/settings/base.py) that only this worker consumes: a slow site holds it,
+  # never the worker that runs agents and publishes pages.
+  research-worker:
+    profiles: ["content"]
+    build: *content-build
+    command: celery -A config worker -Q research --hostname research@%h --concurrency 4 --loglevel=INFO
+    environment: *content-env
+    labels: *content-labels
+    logging: *fleet-logging
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping --timeout 5 -d research@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   beat:
     profiles: ["content"]
     build: *content-build

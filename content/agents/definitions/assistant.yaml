@@ -2,11 +2,13 @@
 # decision 7). People write assistants, pipelines, briefs and conversations; every
 # generation they ask for is a run of this definition, whose handler runs their
 # persona through the provider registry. The model is offered only the read
-# tools an assistant lists. content.propose_edit is the handler's own: an answer
-# on a page, or a brief applied as a draft, arrives as suggestions this agent
-# proposes through the registry for the person who asked — under its policy, its
-# group's page permissions, the page's policy and the tool's rate. A run only
-# ever proposes — a brief, a message, suggestions on a page — and a person decides.
+# tools an assistant lists (Assistant.clean admits no others). content.propose_edit
+# is for a run kind's own code, never the model's: an answer on a page or a brief
+# applied as a draft (ai/handlers.py), and research's fact-check corrections
+# (research/handlers.py), arrive as suggestions this agent proposes through the
+# registry for the person who asked — under its policy, its group's page
+# permissions, the page's policy and the tool's rate. A run only ever proposes —
+# a brief, a message, suggestions on a page — and a person decides.
 slug: assistant
 name: Assistant runner
 role: author

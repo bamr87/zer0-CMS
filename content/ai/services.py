@@ -477,33 +477,35 @@ def bundled_schema(name: str) -> dict:
     return json.loads(_bundled_schema(name))
 
 
-def import_bundled(state=apps) -> dict:
-    """Create the bundled schemas and assistant that do not exist yet; one a
+def import_bundled(state=apps, path: Path = DATA / "bundled.yaml") -> dict:
+    """Create the bundled schemas and assistants that do not exist yet; one a
     person already edited is left as it is. `state` is the model registry —
-    after a migrate, the migrated one."""
-    spec = yaml.safe_load((DATA / "bundled.yaml").read_text(encoding="utf-8"))
+    after a migrate, the migrated one. `path` is a bundle: this app's, or one
+    an app built on this layer ships (ideas, research), whose schemas are
+    written inline (`schema:`) and whose instructions sit beside it."""
+    spec = yaml.safe_load(path.read_text(encoding="utf-8"))
     schema_rows, assistant_rows = (state.get_model("ai", name).objects for name in ("OutputSchema", "Assistant"))
     schemas, assistants = {}, []
-    for item in spec["schemas"]:
+    for item in spec.get("schemas", []):
         schemas[item["key"]], _ = schema_rows.get_or_create(
             public_id=stable_id("bundled-schema", item["key"]),
             defaults={
                 "name": item["name"],
                 "description": item["description"],
-                "schema": bundled_schema(item["file"]),
+                "schema": item["schema"] if "schema" in item else bundled_schema(item["file"]),
                 "render_template": item["template"],
                 "bundled": True,
                 "visibility": Visibility.SHARED,
             },
         )
-    for item in spec["assistants"]:
+    for item in spec.get("assistants", []):
         row, _ = assistant_rows.get_or_create(
             public_id=stable_id("bundled-assistant", item["key"]),
             defaults={
                 "name": item["name"],
                 "description": item["description"],
-                "instructions": (DATA / item["instructions"]).read_text(encoding="utf-8"),
-                "output_schema": schemas[item["output_schema"]],
+                "instructions": (path.parent / item["instructions"]).read_text(encoding="utf-8"),
+                "output_schema": schemas.get(item.get("output_schema")),
                 "visibility": Visibility.SHARED,
             },
         )

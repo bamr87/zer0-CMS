@@ -32,4 +32,12 @@ sentry-sdk==2.72.0
 django-filter==26.2
 cryptography==50.0.2
 # A selection in a paragraph is swapped in its HTML's text nodes, never its tags (Wagtail's own HTML parser).
+# The research library (research/README.md): fetching pages behind an SSRF guard, their main text and metadata,
+# RSS/Atom feeds, PDFs, and the encoding of a text file that does not declare one; Wagtail's own HTML parser,
+# which a fact-check uses to correct words inside a rich-text block without touching its links.
+httpx==0.28.1
+trafilatura==2.3.1
+feedparser==6.0.14
+pypdf==6.21.2
+charset-normalizer==3.5.2
 beautifulsoup4==4.15.0

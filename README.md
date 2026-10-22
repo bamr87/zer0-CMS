@@ -23,7 +23,7 @@ zer0-CMS is becoming a comprehensive application for content work — writing ar
 `content/` is zer0-CMS ([ADR 0004](docs/adr/0004-one-platform.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share — built to the fleet's operational rows: liveness, readiness and version probes, a request id on every response and log line, one error envelope, JSON logs that never hold a token, throttling, a committed OpenAPI document. It imports the Jekyll sites and exports them back byte for byte, so the files stay the source of truth for a site until it cuts over. The Rails fleet CMS, the image generator's panel, aieo, parodynews and the books studio are absorbed into it function by function, each behind a parity gate. [`content/README.md`](content/README.md)
 
 ```bash
-docker compose --profile content up -d --wait db redis content worker beat relay   # → http://localhost:8000/admin/
+docker compose --profile content up -d --wait db redis content worker research-worker beat relay   # → http://localhost:8000/admin/
 curl -fsS localhost:8000/healthz && curl -fsS localhost:8000/readyz && curl -fsS localhost:8000/version
 ```
 
