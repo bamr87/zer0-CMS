@@ -10,7 +10,7 @@ Eight files with no domain knowledge and no dependencies. Everything else in the
 | `jsonio.ts` | `readJsonc`, `readJsonFile`, `pyJsonDump` | JSON-with-comments in (`jsonc-parser`), Python-identical JSON out. |
 | `timestamp.ts` | `utcStamp`, `utcDate` | Second precision, no milliseconds — a byte contract. |
 | `dates.ts` | `formatDate`, `parseDate`, `normalizePattern`, `timezoneOffset` | date-fns token subset via `Intl`. |
-| `glob.ts` | `compileGlob`, `globMatches`, `walkGlobs`, `SKIP_DIRS` | Single-pass translation, static base, sorted output. |
+| `glob.ts` | `compileGlob`, `globMatches`, `walkGlobs`, `SKIP_DIRS` | picomatch's matching, a static base, sorted output. |
 | `text.ts` | `slugify`, `removePunctuation`, `removeStopWords`, `transliterate`, `encodeEmoji`, `truncate`, `escapeHtml`, `CHAR_MAP`, `STOP_WORDS`, `MINIMAL_STOP_WORDS`, `NO_STOP_WORDS`, `STOP_WORD_PRESETS` | Slug pipeline ported from Front Matter CMS. |
 
 ## Contracts worth knowing before you change anything
@@ -27,7 +27,7 @@ Eight files with no domain knowledge and no dependencies. Everything else in the
 
 **`withPlatformDefaults(cfg, resolved)`** — fills in what the *site* already says, for a workspace that has not said it. When `contentFolders` is empty, the folders are derived from the site's own config (`collections_dir` + `collections:` in `_config.yml`, `docs_dir` in `mkdocs.yml`, `contentDir` in `hugo.toml`) through `core/platform`'s `contentRootsFor`. It only ever fills a **gap**: a workspace that registered its own folders keeps every one of them, because a derived value must never overrule a stated one. Pure and separate from `resolveConfig`, which merges values already in memory and does no I/O — the caller detects first, then merges.
 
-**`compileGlob`** — one left-to-right pass. Cascading string replaces (`**` then `*`) rewrite the fragments emitted by earlier steps, which is the classic way to get `pages/**/*.md` subtly wrong. `walkGlobs` starts at each pattern's static base, skips hidden directories below the base and every name in its `skip` set — `SKIP_DIRS` by default — and returns sorted workspace-relative POSIX paths. `skip` is a parameter rather than a constant so a caller that has resolved a platform can pass `skipDirsFor(profile, SKIP_DIRS)` and keep that generator's build output (`public/`, `dist/`, `site/`, `build/`) out of the results; `SKIP_DIRS` itself stays the platform-agnostic list plus Jekyll's `_site`, and is never mutated.
+**`compileGlob`** — picomatch's `scan` for the static base and `makeRe` for the matcher, with `dot` on (hidden directories are kept out by the walk, not the pattern). `walkGlobs` starts at each pattern's static base, skips hidden directories below the base and every name in its `skip` set — `SKIP_DIRS` by default — and returns sorted workspace-relative POSIX paths. `skip` is a parameter rather than a constant so a caller that has resolved a platform can pass `skipDirsFor(profile, SKIP_DIRS)` and keep that generator's build output (`public/`, `dist/`, `site/`, `build/`) out of the results; `SKIP_DIRS` itself stays the platform-agnostic list plus Jekyll's `_site`, and is never mutated.
 
 **`slugify`** — Front Matter's pipeline (remove punctuation → lowercase → drop stop words → join with `-` → transliterate), plus a final collapse of repeated and edge dashes.
 
