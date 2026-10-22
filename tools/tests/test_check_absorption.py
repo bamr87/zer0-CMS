@@ -156,7 +156,7 @@ class ThemeDependencyTest(unittest.TestCase):
 
     def test_content_never_counts(self):
         read = lambda p: b"remote_theme: bamr87/zer0-mistakes"  # noqa: E731
-        for path in ("sites/a/pages/_docs/quick-start.md", "sites/a/_data/navigation/main.yml", "sites/a/_posts/2024-01-01-x.yml", "docs/MONOREPO.md", "src/test/fixtures/sites/x/_config.yml", "CHANGELOG.md", "features/features.yml"):
+        for path in ("sites/a/pages/_docs/quick-start.md", "sites/a/_data/navigation/main.yml", "sites/a/_posts/2024-01-01-x.yml", "docs/MONOREPO.md", "src/test/fixtures/sites/x/_config.yml", "CHANGELOG.md", "features/features.yml", "tools/workspace/tests/golden/recordings.json"):
             self.assertFalse(ca.is_theme_dependency(path, read), path)
 
     def test_files_that_do_not_name_it_do_not_count(self):
