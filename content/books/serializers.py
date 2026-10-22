@@ -6,6 +6,7 @@ chapter's are the generic page endpoints' (`/api/v2/content/pages/<id>/`)."""
 from rest_framework import serializers
 
 from ai.serializers import RunRefSerializer
+from api.serializers import PAGE_STATUSES
 
 from .context import TASKS
 from .library import ERROR, WARNING
@@ -19,7 +20,7 @@ class BookSummarySerializer(serializers.Serializer):
     slug = serializers.CharField(help_text="Its directory in the library.")
     title = serializers.CharField()
     status = serializers.CharField(help_text="idea, outlining, drafting, revising, complete or archived.")
-    page_status = serializers.CharField(help_text="The page's: draft, live, changed, scheduled or expired.")
+    page_status = serializers.ChoiceField(choices=PAGE_STATUSES, help_text="Where the book's page stands.")
     profile = serializers.CharField(help_text="book, abc or story.")
     logline = serializers.CharField(allow_blank=True)
     genre = serializers.CharField(allow_blank=True)
@@ -83,7 +84,7 @@ class IssueSerializer(serializers.Serializer):
 
 
 class BookTaskSerializer(serializers.Serializer):
-    key = serializers.CharField()
+    key = serializers.ChoiceField(choices=TASK_CHOICES)
     label = serializers.CharField()
     description = serializers.CharField()
     chapter = serializers.BooleanField(help_text="Works on a chapter (else on the book).")

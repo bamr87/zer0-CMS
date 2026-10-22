@@ -9630,8 +9630,12 @@
                         "description": "idea, outlining, drafting, revising, complete or archived."
                     },
                     "page_status": {
-                        "type": "string",
-                        "description": "The page's: draft, live, changed, scheduled or expired."
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/PageStatusEnum"
+                            }
+                        ],
+                        "description": "Where the book's page stands.\n\n* `draft` - draft\n* `live` - live\n* `changed` - changed\n* `scheduled` - scheduled\n* `expired` - expired"
                     },
                     "profile": {
                         "type": "string",
@@ -9808,8 +9812,12 @@
                         "description": "idea, outlining, drafting, revising, complete or archived."
                     },
                     "page_status": {
-                        "type": "string",
-                        "description": "The page's: draft, live, changed, scheduled or expired."
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/PageStatusEnum"
+                            }
+                        ],
+                        "description": "Where the book's page stands.\n\n* `draft` - draft\n* `live` - live\n* `changed` - changed\n* `scheduled` - scheduled\n* `expired` - expired"
                     },
                     "profile": {
                         "type": "string",
@@ -9872,7 +9880,7 @@
                 "type": "object",
                 "properties": {
                     "key": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/BookTaskEnum"
                     },
                     "label": {
                         "type": "string"

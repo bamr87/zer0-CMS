@@ -13,7 +13,10 @@ export type Destination =
   | { to: 'pages' }
   | { to: 'create' }
   | { to: 'run'; id: number }
-  | { to: 'review'; runId?: number };
+  | { to: 'review'; runId?: number }
+  | { to: 'books' }
+  | { to: 'book'; id: number }
+  | { to: 'chapter'; book: number; id: number };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.
