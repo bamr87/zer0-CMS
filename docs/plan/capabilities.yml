@@ -1,0 +1,473 @@
+# The capability ledger (ADR 0006). Read by tools/check_absorption.py, which
+# CI runs on every pull request (zer0-workspace.yml).
+#
+# Three parts:
+#
+#   ruby_ratchet / ruby_fixtures — the Ruby burn-down. Each prefix may hold at
+#     most its ceiling of Ruby files; Ruby anywhere else fails. Ceilings only go
+#     down: `python3 tools/check_absorption.py --tighten` after removing Ruby.
+#     Fixtures are files that only model an outside Jekyll site for a test.
+#
+#   platform — the target: every capability the one platform must have, and its
+#     status on each surface that must offer it (api, studio, extension, mcp,
+#     site, ops). A surface is `done` only with a `proof:` path (a test) that
+#     exists. TARGET.md describes the same catalog in prose.
+#
+#   sources — every repository merged into zer0-CMS, every capability it had,
+#     and the platform capability it lands in (`target:`, a platform id). A row
+#     is `missing`, `partial`, `done` (with `proof:`) or `dropped` (with
+#     `decided_by:` naming the owner's decision — an agent never drops a row).
+#     A source's directory may be deleted only when no row is missing/partial.
+#
+# Statuses here were set on 2026-10-21 from two code inventories, conservatively:
+# nothing is `done` without a test that proves it, and `partial` means the
+# platform has a piece of it, not that it is close. The milestone that absorbs a
+# source completes that source's rows from the code in its first commit.
+schema: capabilities/v1
+
+ruby_ratchet:
+  apps/parodynews/src/pages/: 2
+  bin/zer0: 1
+  packages/zer0-image-generator/: 223
+  rails/: 151
+  sites/2005/: 1
+  sites/drsai/: 1
+  sites/wargames/: 1
+  sites/zer0-demo-cookbook/: 1
+  sites/zer0-demo-garden/: 1
+  sites/zer0-pages-remote/: 1
+  sites/zer0-pages/: 11
+  tools/workspace/: 11
+
+ruby_fixtures:
+  # The extension detects a Jekyll site by its Gemfile (src/core/platform/detect.ts);
+  # this two-line file is that evidence in src/test/platform.test.ts.
+  - src/test/fixtures/sites/jekyll-zer0-mistakes/Gemfile
+
+platform:
+  # ── Content model and authoring ─────────────────────────────────────────────
+  - id: content.types
+    what: Page types, fields and StreamField blocks, per-type default field values, and the exported agent block schema.
+    surfaces: {api: partial, studio: missing, mcp: partial}
+  - id: content.list
+    what: Browse and filter pages across sites — tree, lists, and a filter language (status, collection, site, kind, tag, category, author, errors).
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+  - id: content.create
+    what: Create a page or a draft from a type in a site and section, or duplicate one as a draft.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+  - id: content.edit
+    what: A block editor with a Markdown round trip, front matter and fields, autosave, and a stale-write guard.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+  - id: content.seo
+    what: SEO and social fields (title, description, keywords, canonical, Open Graph, noindex) with insights and agent proposals for a page.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+  - id: content.preview
+    what: Live preview of a draft in the site's own design, including the exact exported document and file name.
+    surfaces: {api: missing, studio: missing, extension: partial}
+  - id: content.revisions
+    what: Revisions with diff, compare and revert.
+    surfaces: {api: partial, studio: missing, extension: missing, mcp: missing}
+  - id: content.workflow
+    what: Editorial workflows with moderation states, tasks and assignments, and the governed publish path (draft → brand guard → approval → publish).
+    surfaces: {api: missing, studio: missing, extension: partial}
+  - id: content.publish
+    what: Publish and unpublish now or on a schedule.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+  - id: content.collaboration
+    what: Comments, mentions and page locking.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: content.localization
+    what: Locales, per-locale trees and a translation workflow.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.taxonomy
+    what: Tags, categories, series, authors and entities, managed and assigned.
+    surfaces: {api: partial, studio: missing, extension: partial}
+  - id: content.search
+    what: Full-text search with filters, semantic search, and search promotions.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial, site: missing}
+  - id: content.redirects
+    what: A redirect manager, and redirects from every imported page's legacy path.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.forms
+    what: A form builder and its submissions.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.navigation
+    what: Menus, footers (including powered-by links) and reusable snippets per site.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.bulk
+    what: Bulk actions, and import/export of content and configuration as CSV, JSON or YAML.
+    surfaces: {api: missing, studio: missing, ops: missing}
+  - id: content.import
+    what: Importers (Jekyll and Obsidian sites, parodynews, books, WordPress) that are idempotent and round-trip byte for byte.
+    surfaces: {ops: partial}
+
+  # ── Media ───────────────────────────────────────────────────────────────────
+  - id: media.library
+    what: Images and documents in collections, with focal points, renditions and thumbnails.
+    surfaces: {api: partial, studio: missing, extension: missing}
+  - id: media.describe
+    what: AI alt text, captions and tags when an image is saved.
+    surfaces: {api: partial, studio: missing, mcp: partial}
+  - id: media.generate
+    what: Preview and social image generation for a site — providers, prompt engines, dry run, list missing, enhance, review, cost, a runs audit.
+    surfaces: {api: missing, studio: missing, extension: missing, ops: missing}
+  - id: media.forge
+    what: Compositions — direct, render, review, enhance.
+    surfaces: {api: missing, studio: missing}
+  - id: media.svg-studio
+    what: SVG generators with knobs and seed sweeps, sanitized, linted and rasterized.
+    surfaces: {api: missing, studio: missing}
+  - id: media.sourcing
+    what: A sourced image library (FreeSVG).
+    surfaces: {api: missing, studio: missing}
+
+  # ── The AI content layer (TARGET.md § The AI content layer) ─────────────────
+  - id: ai.providers
+    what: Provider adapters behind one registry, per-provider configuration with an encrypted credential, the default provider, and a health test.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: ai.models
+    what: The model catalog, synced from each provider.
+    surfaces: {api: missing, studio: missing}
+  - id: ai.assistants
+    what: User-managed assistants (persona, instructions, model, parameters, output schema), propose-only, run on demand.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: ai.pipelines
+    what: Ordered pipelines of assistants, each step reading the one before.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: ai.schemas
+    what: The output-schema library (bundled schemas seeded), export and import, and schema-validated structured generation.
+    surfaces: {api: missing, studio: missing}
+  - id: ai.briefs
+    what: A brief turns a prompt or a text into a structured draft with extracted metadata (title, slug, description, keywords, tags).
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: ai.conversations
+    what: Conversations — threads and messages replayed to any provider, run an assistant or a pipeline, assign, re-run, promote a message to a brief or a draft.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: ai.agents
+    what: Tool-using agents — GitOps definitions, policies, runs with step timelines and cancel, agent tokens.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+  - id: ai.suggestions
+    what: Suggestions with diffs — accept, reject with a reason, accept all of a run.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial}
+  - id: ai.evals
+    what: Eval suites over recorded fixtures that gate an agent's policy.
+    surfaces: {ops: partial}
+  - id: ai.usage
+    what: Tokens, cost and budgets per run, person, site and provider.
+    surfaces: {api: partial, studio: missing}
+  - id: ai.streaming
+    what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
+    surfaces: {api: missing, studio: missing, extension: missing}
+
+  # ── Sites: manage, monitor, improve ─────────────────────────────────────────
+  - id: sites.registry
+    what: Register and discover sites; per-site settings, domains, design and skin, budgets.
+    surfaces: {api: missing, studio: missing, extension: partial}
+  - id: sites.sync
+    what: Sync a site's files with the platform — the exact Jekyll reader, line-level front-matter surgery, the confined writer, write-back with a stale-write guard.
+    surfaces: {api: missing, extension: partial, ops: partial}
+  - id: sites.jobs
+    what: Background jobs (sync, render, deploy, preview, doctor, reports) with live logs, artifacts and cancel.
+    surfaces: {api: missing, studio: missing}
+  - id: sites.render
+    what: The React site renderer — layouts and skins of the zer0 design, feeds, sitemap, robots, search index, redirects — matching each site's recorded build.
+    surfaces: {site: missing, ops: missing}
+  - id: sites.obsidian
+    what: Obsidian-flavoured content — wikilinks, embeds, callouts, Dataview queries, the graph index.
+    surfaces: {api: partial, site: missing}
+  - id: sites.deploy
+    what: Build, preview and deploy each site, with history.
+    surfaces: {api: missing, studio: missing, ops: partial}
+  - id: sites.doctor
+    what: Consistency checks over a site (theme, image engine, CMS, fleet and content rules) as findings.
+    surfaces: {api: missing, studio: missing, extension: partial, ops: missing}
+  - id: sites.monitor
+    what: Scheduled uptime, broken-link, performance and Core Web Vitals, accessibility and SEO checks, with history, trends and alerts.
+    surfaces: {api: missing, studio: missing, extension: missing, ops: missing}
+  - id: sites.analytics
+    what: Analytics ingest (GA4, Search Console, DataForSEO, product analytics) and content performance views.
+    surfaces: {api: missing, studio: missing}
+  - id: sites.evolve
+    what: The improvement loop — an editorial plan per site, agents proposing improvements from the signals, outcome measurement.
+    surfaces: {api: missing, studio: missing, mcp: missing}
+
+  # ── AIEO (TARGET.md § AIEO in the platform) ─────────────────────────────────
+  - id: aieo.scoring
+    what: The analyzers and the five-dimension citability score of a page or a text, with evidence.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: aieo.audits
+    what: Audits of a URL or a crawled site, and reports.
+    surfaces: {api: missing, studio: missing, mcp: missing, ops: missing}
+  - id: aieo.citations
+    what: Citation tracking — whether AI engines cite the site, on a schedule.
+    surfaces: {api: missing, studio: missing}
+  - id: aieo.patterns
+    what: The pattern library and applying a pattern as a rewrite proposal.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: aieo.agents
+    what: The AIEO agents (SEO, meta, internal links, headlines, conversion and the rest) as agent definitions at suggest.
+    surfaces: {api: missing, studio: missing, mcp: missing}
+  - id: aieo.lifecycle
+    what: The AIEO content lifecycle — topics, research, drafts, rewrites, published pages, landing pages.
+    surfaces: {api: missing, studio: missing}
+  - id: aieo.connectors
+    what: GA4, Search Console and DataForSEO connections per site.
+    surfaces: {api: missing, studio: missing}
+
+  # ── Distribution ────────────────────────────────────────────────────────────
+  - id: distribution.channels
+    what: Channels — LinkedIn (OAuth, encrypted token), WordPress, GitHub pull request — connected per site.
+    surfaces: {api: missing, studio: missing}
+  - id: distribution.queue
+    what: Compose, brand guard, approve and publish to a channel, with the ledger keyed by canonical URL and readable errors.
+    surfaces: {api: missing, studio: missing, extension: partial, mcp: missing}
+  - id: distribution.stats
+    what: Statistics for published posts, ingested and reported.
+    surfaces: {api: missing, studio: missing}
+
+  # ── Books ───────────────────────────────────────────────────────────────────
+  - id: books.manage
+    what: Books and chapters, continuity, validation, statistics, compiled manuscripts.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: books.abc
+    what: The ABC book wizard — themes, lexicons, art styles, letters, export into a site.
+    surfaces: {api: missing, studio: missing}
+
+  # ── Platform and operations ─────────────────────────────────────────────────
+  - id: platform.accounts
+    what: Email sign-up with verification, login by code, password reset, OIDC SSO, GitHub login, MFA (TOTP, passkeys, recovery codes), the session list.
+    surfaces: {api: missing, studio: missing, extension: missing}
+  - id: platform.tokens
+    what: Personal API tokens and agent tokens, issued and revoked.
+    surfaces: {api: partial, studio: missing, extension: missing}
+  - id: platform.permissions
+    what: Roles, groups, per-site permissions, and per-person ownership and sharing.
+    surfaces: {api: partial, studio: missing}
+  - id: platform.audit
+    what: An audit log of who did what, people and agents alike.
+    surfaces: {api: missing, studio: missing}
+  - id: platform.events
+    what: Outbox events with versioned schemas, and webhooks.
+    surfaces: {api: partial, ops: partial}
+  - id: platform.api
+    what: REST, GraphQL and MCP over one tool registry, committed schemas, and the client generated from them.
+    surfaces: {api: partial, mcp: partial, ops: partial}
+  - id: platform.notifications
+    what: Email (with a provider such as SES) and in-app notifications.
+    surfaces: {api: missing, studio: missing}
+  - id: platform.feedback
+    what: Report an issue or give page feedback into GitHub issue templates.
+    surfaces: {studio: missing, site: missing}
+  - id: platform.install
+    what: First-run setup — the install wizard, ensure-admin, demo seed, operator commands.
+    surfaces: {studio: missing, ops: missing}
+  - id: platform.ops
+    what: Liveness, readiness and version probes, request ids, the error envelope, JSON logs with redaction, throttles, CORS, security headers.
+    surfaces: {ops: done}
+    proof: {ops: content/tests/ops/test_health.py}
+  - id: platform.observability
+    what: Error reporting (Sentry, GitHub issues), metrics and traces.
+    surfaces: {ops: partial}
+  - id: platform.deploy
+    what: Release images, a production compose file, a Helm chart, secrets from the environment or a secret store, backups.
+    surfaces: {ops: missing}
+  - id: platform.docs
+    what: User, developer and API documentation, generated where it can be.
+    surfaces: {ops: partial}
+  - id: platform.workspace
+    what: The repository's workspace tool — list, info, run, affected, matrix, routes, check, vendor, doctor, tags — in Python.
+    surfaces: {ops: missing}
+
+  # ── The extension's own (file mode) ─────────────────────────────────────────
+  - id: extension.file-mode
+    what: The extension on a site's files with no server — front matter as controls, the dashboard, SEO insights, the governed publishing path and its ledger, the MCP server.
+    surfaces: {extension: done}
+    proof: {extension: src/test/core.test.ts}
+  - id: extension.fleet-console
+    what: The fleet console — lanes, kill switches, dispatch and runs across the owner's repositories.
+    surfaces: {extension: done}
+    proof: {extension: src/test/fleet.test.ts}
+
+sources:
+  - id: parodynews
+    path: apps/parodynews
+    summary: barodybroject — a Django + DRF + React app that generates (parody) news with AI assistants, runs them as pipelines over chat threads, and publishes posts as GitHub pull requests to a Jekyll sidecar site.
+    content: The database (posts, front matter, versions, assistants, groups, schemas, content details and items, threads, messages, provider and model rows — dumped with dumpdata); the bundled schemas and prompt in parodynews/schema/; the sidecar site's 59 posts and its pages in src/pages/.
+    capabilities:
+      - {id: parodynews.providers, what: "Four providers (Claude Code over OAuth, Anthropic, OpenAI, mock), pluggable by setting.", target: ai.providers, status: partial}
+      - {id: parodynews.provider-config, what: "Staff set each provider's key, base URL, organization, project, default model and extras in the UI, enable it and pick the default; the database overrides the environment.", target: ai.providers, status: missing}
+      - {id: parodynews.provider-test, what: "Send a test prompt to a provider.", target: ai.providers, status: missing}
+      - {id: parodynews.model-sync, what: "List a vendor's models live and sync them into the catalog (UI, admin action, sync_models).", target: ai.models, status: missing}
+      - {id: parodynews.structured-output, what: "Generation enforces an assistant's JSON Schema (parse and validate).", target: ai.schemas, status: partial}
+      - {id: parodynews.assistants, what: "Create and edit assistants — instructions, prompt, model, temperature, top_p, JSON schema — with import/export.", target: ai.assistants, status: partial}
+      - {id: parodynews.assistant-groups, what: "Ordered groups of assistants that run in sequence, each seeing the earlier output.", target: ai.pipelines, status: partial}
+      - {id: parodynews.schema-library, what: "Create, edit, export and import JSON schemas; one-click import of the bundled parody-article, news-article and content-detail schemas and the parody prompt.", target: ai.schemas, status: missing}
+      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: partial}
+      - {id: parodynews.extract-metadata, what: "A second call fills title, author, description, slug, keywords and tags.", target: ai.briefs, status: partial}
+      - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: missing}
+      - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: missing}
+      - {id: parodynews.run-group, what: "Run a whole assistant group on a thread in one action.", target: ai.conversations, status: missing}
+      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: partial}
+      - {id: parodynews.message-to-post, what: "Promote a message to a draft post with AI-generated front matter.", target: ai.conversations, status: partial}
+      - {id: parodynews.post-editing, what: "Edit a post's Markdown body (with a rendered preview), front matter and status.", target: content.edit, status: partial}
+      - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
+      - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
+      - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: missing}
+      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render, status: missing}
+      - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: partial}
+      - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: missing}
+      - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: missing}
+      - {id: parodynews.mfa, what: "TOTP, WebAuthn passkeys (passkey login and sign-up) and recovery codes.", target: platform.accounts, status: missing}
+      - {id: parodynews.sessions, what: "List and end one's other sessions.", target: platform.accounts, status: missing}
+      - {id: parodynews.ownership, what: "People see their own rows and shared ones; staff see all.", target: platform.permissions, status: partial}
+      - {id: parodynews.install-wizard, what: "First-run setup on the web or the CLI (headless with an expiring token), admin creation, status and health, the redirect until installed.", target: platform.install, status: missing}
+      - {id: parodynews.ops-commands, what: "ensure_admin, ensure_e2e_user, reset_db, refreshmigrations.", target: platform.install, status: partial}
+      - {id: parodynews.admin-import-export, what: "A back office for every model, with import/export of assistants, models, schemas and posts and a sync-from-provider action.", target: content.bulk, status: partial}
+      - {id: parodynews.error-issues, what: "Unhandled exceptions filed as deduplicated, rate-limited, redacted GitHub issues (off by default; refuses public repositories unless allowed).", target: platform.observability, status: partial}
+      - {id: parodynews.report-issue, what: "A navigation link to the repository's GitHub issue templates.", target: platform.feedback, status: missing}
+      - {id: parodynews.powered-by, what: "Admin-managed powered-by links in the footer.", target: content.navigation, status: missing}
+      - {id: parodynews.email, what: "Email through AWS SES in production, the console in development, optional DKIM signing.", target: platform.notifications, status: missing}
+      - {id: parodynews.secrets, what: "Production settings read from AWS Secrets Manager.", target: platform.deploy, status: missing}
+      - {id: parodynews.telemetry, what: "Azure Monitor OpenTelemetry, rotating file logs, mail to admins on errors.", target: platform.observability, status: partial}
+      - {id: parodynews.docs-site, what: "User, developer and API docs built with Sphinx and served from a container.", target: platform.docs, status: partial}
+      - {id: parodynews.posthog, what: "An optional self-hosted PostHog stack (not wired into the app).", target: sites.analytics, status: missing}
+      - {id: parodynews.field-defaults, what: "Stored default field values per model.", target: content.types, status: missing}
+      - {id: parodynews.cloud-deploy, what: "Azure deployment (azd, Bicep: Container Apps, Postgres, Key Vault, registry, monitoring).", target: platform.deploy, status: missing}
+      - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: missing}
+
+  - id: rails-app
+    path: rails/app
+    summary: The Rails 8.1 + Administrate fleet CMS — a SQLite index over every registered Jekyll site, edits written back to the files.
+    content: None of its own — git holds the content and SQLite is an index (D16); its LinkedIn channel rows and tokens move with distribution (tokens re-entered).
+    capabilities:
+      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: partial}
+      - {id: rails.page-search, what: "Search and filter pages with a filter language (draft:, live:, future:, error:, collection:, site:, kind:, tag:, category:, author:).", target: content.list, status: partial}
+      - {id: rails.page-edit, what: "Edit front matter and body in the file with the digest stale-write guard, key-level surgery, an atomic write and a re-sync.", target: sites.sync, status: partial}
+      - {id: rails.page-create, what: "Create, duplicate as draft and delete pages, confined by realpath with symlinks refused.", target: content.create, status: partial}
+      - {id: rails.assets-terms, what: "Browse images and terms, with a thumbnail server.", target: media.library, status: partial}
+      - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: partial}
+      - {id: rails.missing-previews, what: "List pages missing a preview image and draw one with a provider.", target: media.generate, status: missing}
+      - {id: rails.abc-wizard-ui, what: "The ABC book wizard — new, preview, export into drsai.", target: books.abc, status: partial}
+      - {id: rails.distribution-queue, what: "The LinkedIn queue — approve, publish, statistics.", target: distribution.queue, status: missing}
+      - {id: rails.channels, what: "Connect a LinkedIn channel over OAuth with an encrypted token.", target: distribution.channels, status: missing}
+      - {id: rails.access-guard, what: "Loopback or password access, a Host allow-list, a per-request CSP nonce.", target: platform.ops, status: partial}
+
+  - id: rails-lib
+    path: rails/lib
+    summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator, the LinkedIn distribution lane.
+    content: The ABC lexicons (lib/zer0_cms/abc/lexicons/*.yml — content/agents/data vendors one), art styles, schema/abc-book.schema.json, and the parity fixtures rails/test/fixtures/jekyll-site{,-src} with their expected lists (move to content/tests/fixtures before rails/ goes).
+    capabilities:
+      - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: partial}
+      - {id: rails.front-matter, what: "Parse front matter and update keys by line surgery, keeping comments, quoting, BOM and line endings.", target: sites.sync, status: partial}
+      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: partial}
+      - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: missing}
+      - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: partial}
+      - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: missing}
+      - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: missing}
+      - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: partial}
+      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: partial}
+
+  - id: workspace-tool
+    path: tools/workspace
+    summary: bin/zer0 and its library — the monorepo workspace tool that reads workspace.yml.
+    content: None; workspace.yml stays.
+    capabilities:
+      - {id: workspace.list, what: "list and info — every project, its path, kind, what it publishes and what gates it.", target: platform.workspace, status: missing}
+      - {id: workspace.run, what: "run setup|check|test|build|pages for one, the affected or all projects, with dry run and keep-going.", target: platform.workspace, status: missing}
+      - {id: workspace.affected, what: "affected and matrix — the projects a change touches, as text or the CI matrix.", target: platform.workspace, status: missing}
+      - {id: workspace.routes, what: "routes — each site's Pages route, for the one Pages deploy.", target: platform.workspace, status: missing}
+      - {id: workspace.check, what: "check — registration, paths, workflow path filters, routes and vendored-copy drift.", target: platform.workspace, status: missing}
+      - {id: workspace.vendor, what: "vendor — re-sync vendored copies from their source.", target: platform.workspace, status: missing}
+      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: missing}
+      - {id: workspace.tags, what: "tags — this repository's release tags against those inherited from the Front Matter fork.", target: platform.workspace, status: missing}
+
+  - id: zer0-image-generator
+    path: packages/zer0-image-generator
+    summary: AI preview and social images for Jekyll sites — the Python engine, its byte-identical Ruby port and gem, and a Rails web panel.
+    content: The art styles (abc/art_styles.yml), the design tokens (zer0-tokens.css), prompts and the SVG examples under tools/; the panel's library entries and compositions if any exist locally.
+    capabilities:
+      - {id: imagegen.engine, what: "The preview engine — providers (OpenAI, xAI, Stability, Gemini, local), prompt engines (Claude, xAI), review, enhance, list missing, dry run, per collection.", target: media.generate, status: partial}
+      - {id: imagegen.cli, what: "Generation from the command line (jekyll preview-images, or the engine's own CLI).", target: media.generate, status: partial}
+      - {id: imagegen.illustration-loop, what: "The Claude illustration loop — plan, author, shape, look, critique.", target: media.generate, status: partial}
+      - {id: imagegen.svg-generators, what: "SVG generators, sanitizer, lint, rasterizer and text-to-paths.", target: media.svg-studio, status: partial}
+      - {id: imagegen.abc-style-pack, what: "One text-free raster prompt per letter for an art style.", target: books.abc, status: missing}
+      - {id: imagegen.panel-sites, what: "The panel's sites — scan, edit the preview_images block, generate, dry run, list missing and enhance with a live log.", target: media.generate, status: missing}
+      - {id: imagegen.forge, what: "The image forge — direct, render, review, enhance compositions.", target: media.forge, status: missing}
+      - {id: imagegen.svg-studio, what: "The SVG studio — knobs and seed sweeps.", target: media.svg-studio, status: missing}
+      - {id: imagegen.library, what: "The library with FreeSVG sourcing.", target: media.sourcing, status: partial}
+      - {id: imagegen.runs, what: "The runs audit.", target: media.generate, status: missing}
+      - {id: imagegen.credentials, what: "Encrypted per-provider credentials.", target: ai.providers, status: missing}
+      - {id: imagegen.tokens, what: "The zer0 UI design tokens shared with the other UIs.", target: sites.render, status: partial}
+
+  - id: site-1987
+    path: sites/1987
+    summary: The self-growing knowledge base about the year 1987, grown by Claude Code slash commands.
+    content: Every topic page by category.
+    capabilities:
+      - {id: site-1987.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-1987.publish, what: "The public site at its route with the same URLs.", target: sites.render, status: missing}
+      - {id: site-1987.grow, what: "Grow the knowledge base with agent commands that research and add topics.", target: sites.evolve, status: partial}
+  - id: site-2005
+    path: sites/2005
+    summary: The year-2005 knowledge base of the year-of-ai lineage.
+    content: Every page.
+    capabilities:
+      - {id: site-2005.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render, status: missing}
+  - id: site-drsai
+    path: sites/drsai
+    summary: The children's picture-book site, its Python story engine (PyPI drsai) and the ABC books the wizard exports into it.
+    content: Every page and book, _data/abc_books/*.json, images.
+    capabilities:
+      - {id: site-drsai.content, what: "Its pages and books import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render, status: missing}
+      - {id: site-drsai.story-engine, what: "The Dr. Seuss-style poem and story generator.", target: ai.briefs, status: partial}
+      - {id: site-drsai.abc-import, what: "Validate and import an ABC book against its spec sidecar.", target: books.abc, status: partial}
+  - id: site-irony-works
+    path: sites/irony-works
+    summary: The irony-works site, with a Node pre-build that resolves wikilinks.
+    content: Every page.
+    capabilities:
+      - {id: site-irony-works.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render, status: missing}
+      - {id: site-irony-works.wikilinks, what: "Wikilinks resolved before the build.", target: sites.obsidian, status: partial}
+  - id: site-wargames
+    path: sites/wargames
+    summary: The wargames site.
+    content: Every page.
+    capabilities:
+      - {id: site-wargames.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render, status: missing}
+  - id: site-zer0-demo-cookbook
+    path: sites/zer0-demo-cookbook
+    summary: The cookbook demo site.
+    content: Every page and recipe.
+    capabilities:
+      - {id: site-cookbook.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render, status: missing}
+  - id: site-zer0-demo-garden
+    path: sites/zer0-demo-garden
+    summary: The garden demo site.
+    content: Every page.
+    capabilities:
+      - {id: site-garden.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render, status: missing}
+  - id: site-zer0-pages
+    path: sites/zer0-pages
+    summary: One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge.
+    content: The vault (every note and attachment).
+    capabilities:
+      - {id: site-zer0-pages.content, what: "Its notes import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-zer0-pages.publish, what: "The public site at /zer0-pages/ with the same URLs.", target: sites.render, status: missing}
+      - {id: site-zer0-pages.wikilinks, what: "[[target|alias#anchor]] links and ![[embed]] images.", target: sites.obsidian, status: partial}
+      - {id: site-zer0-pages.callouts, what: "> [!note] callouts rendered as alerts.", target: sites.obsidian, status: missing}
+      - {id: site-zer0-pages.dataview, what: "A Dataview subset — TABLE and LIST, FROM, WHERE, FLATTEN, GROUP BY, SORT, LIMIT.", target: sites.obsidian, status: missing}
+      - {id: site-zer0-pages.graph-index, what: "A deterministic wiki-index.json for the graph view.", target: sites.obsidian, status: partial}
+      - {id: site-zer0-pages.fence-mask, what: "Code fences and inline code left untouched by the bridge; root-relative links prefixed with the base URL.", target: sites.obsidian, status: missing}
+  - id: site-zer0-pages-remote
+    path: sites/zer0-pages-remote
+    summary: The remote_theme demo of zer0-pages.
+    content: Every page.
+    capabilities:
+      - {id: site-zer0-pages-remote.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render, status: missing}

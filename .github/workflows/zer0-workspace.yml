@@ -5,7 +5,8 @@
 # byte-identical to its source. It runs on every pull request (it takes
 # seconds and needs nothing but Ruby), because drift can come from any tree.
 #
-# It also prints, to the job summary, the projects a pull request affects (so
+# It also runs the ADR 0006 absorption gate (tools/check_absorption.py) and
+# prints its burn-down. It also prints, to the job summary, the projects a pull request affects (so
 # a reviewer can see which projects' gates should have run) and the CMS's own
 # `zer0 doctor` over every zer0 site in the repository — report-only, like the
 # reusable zer0-doctor.yml it mirrors, because two sites carry known errors
@@ -44,6 +45,17 @@ jobs:
           done
       - name: bin/zer0 check
         run: bin/zer0 check
+      # ADR 0006: the Ruby ratchet and the capability ledger
+      # (docs/plan/capabilities.yml) — no new Ruby, no source deleted before its
+      # capabilities moved, no capability marked done without its proof.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Absorption gate (ADR 0006)
+        run: |
+          python -m pip install --quiet pyyaml
+          python -m unittest discover tools/tests
+          python tools/check_absorption.py --report | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Projects this change affects
         if: github.event_name == 'pull_request'
         env:
