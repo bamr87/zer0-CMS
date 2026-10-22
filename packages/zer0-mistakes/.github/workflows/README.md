@@ -281,23 +281,6 @@ actionlint
 yamllint -c .github/config/.yamllint.yml .github/workflows/
 ```
 
-## Triggering and watching runs
-
-```bash
-gh run list --repo bamr87/zer0-mistakes --limit 10     # recent runs
-gh workflow run sync.yml --ref main                    # re-sync the backlog issues and the README roadmap
-gh run rerun --failed --repo bamr87/zer0-mistakes      # re-run the most recent failed run
-gh run watch --repo bamr87/zer0-mistakes               # follow a run live
-```
-
-## Forking these workflows
-
-A fork of the theme brings these workflows with it. To keep them safe and useful there:
-
-1. Configure gem publishing if you will publish your own gem (`release.yml` calls the [`bamr87/.github`](https://github.com/bamr87/.github) reusable workflows); otherwise disable `release.yml`.
-2. Tune the schedule in `update-dependencies.yml` (weekly by default).
-3. GitHub Pages turns on by itself when the fork is named `<username>.github.io` and you push to `main`.
-
 ## Troubleshooting
 
 ### Release PR not appearing
