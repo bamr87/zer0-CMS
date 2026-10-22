@@ -3,8 +3,8 @@
 # Which project owns a file, and which projects a set of changed files affects.
 #
 # A file belongs to the project whose glob matches it most specifically (the
-# longest literal prefix wins), so `packages/zer0-mistakes/x` belongs to the
-# theme even though nothing else claims `packages/`. A root workflow belongs to
+# longest literal prefix wins), so `packages/zer0-image-generator/x` belongs to
+# the image generator even though nothing else claims `packages/`. A root workflow belongs to
 # the project whose `ci:` names it. Anything left over — docs/, workspace.yml,
 # tools/ — is workspace infrastructure and affects no project by itself.
 # A change to a project also affects every project that depends on it.

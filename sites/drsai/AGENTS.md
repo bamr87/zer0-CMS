@@ -8,7 +8,7 @@ drsai is a children's book platform: a Jekyll site (zer0-mistakes remote theme, 
 
 ```bash
 # install dependencies:
-ZER0_THEME_LOCAL=../../packages/zer0-mistakes bundle install   # site (the theme in this monorepo)
+ZER0_THEME_LOCAL=../../../zer0-mistakes bundle install   # site (a sibling checkout of bamr87/zer0-mistakes)
 cd drsai && pip install -e ".[dev]"                # story engine
 
 # run the dev server / build:
