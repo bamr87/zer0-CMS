@@ -259,6 +259,17 @@ Environment Variables:
 ./scripts/lint-pages --collection posts --verbose
 ```
 
+### Documentation generators
+
+Both are stdlib Ruby, write in place, and have a `--check` mode that the lib test tier runs (`scripts/test/lib/test_generated_docs.sh`, `test_locale_independence.sh`).
+
+```bash
+ruby scripts/generate-reference.rb          # docs/reference/{agent-guidance,commands,workflows}.md from their sources
+ruby scripts/generate-reference.rb --check  # exit 1 if a page is stale
+ruby scripts/generate-roadmap.rb            # the README roadmap spans from _data/roadmap.yml
+ruby scripts/generate-roadmap.rb --check
+```
+
 ### Utility Scripts (scripts/utils/)
 
 #### `setup`
