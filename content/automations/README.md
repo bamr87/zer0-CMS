@@ -74,7 +74,7 @@ An automation is an owned row with the AI layer's rules (`owner`, `site`, `visib
 
 ## Tests
 
-`tests/automations/`: each trigger (`test_triggers.py`: an event through the relay and the stream, once; a schedule's ticks; webhooks signed, unsigned and badly signed; new feed items and a captured page; named hooks), conditions (`test_conditions.py`), each action as its owner, nothing published, failures, limits (`test_actions.py`), the API — paused by default, visibility, YAML round trip, test and dry runs, runs by cursor (`test_api.py`) — and the tool, in the registry and over MCP (`test_tool.py`). No test reaches a network or a model: the provider is the scripted fake and HTTP is recorded (respx), at an address a table resolves. The studio's view is tested in `web/packages/ui/test/automations.test.tsx`.
+`tests/automations/`: each trigger (`test_triggers.py`: an event through the relay and the stream, once; a schedule's ticks; webhooks signed, unsigned and badly signed; new feed items and a captured page; named hooks), conditions (`test_conditions.py`), each action as its owner, nothing published, failures, limits (`test_actions.py`), the API — paused by default, its secret shown once and following the keys when they rotate, visibility, YAML round trip, test and dry runs, runs by cursor (`test_api.py`) — and the tool, in the registry and over MCP (`test_tool.py`). No test reaches a network or a model: the provider is the scripted fake and HTTP is recorded (respx), at an address a table resolves. The studio's view is tested in `web/packages/ui/test/automations.test.tsx`.
 
 ## Not here yet
 

@@ -327,7 +327,7 @@ def _finish(run: AutomationRun, status: str, *, matched=None, outcomes=None, err
 
 def execute(pk: int) -> AutomationRun | None:
     """Run a queued firing (in the worker): the condition, then each action in order as the automation's owner, in
-    a savepoint of its own; its inputs and outcome go on the run. None when no queued run has this key."""
+    a savepoint of its own; its inputs and outcome go on the run. None when no run with this id is still queued."""
     if not AutomationRun.objects.filter(pk=pk, status=AutomationRun.QUEUED).update(
         status=AutomationRun.RUNNING, started_at=timezone.now()
     ):
