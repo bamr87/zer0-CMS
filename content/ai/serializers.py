@@ -1,0 +1,434 @@
+"""The AI API's shapes (`/api/v2/ai/`).
+
+Rows are addressed by their UUID public id (`id`), never by their integer key;
+a related row is named by its public id too, and only a row the requester may
+see can be named (`Visible`). A provider is named by its slug, a page and a
+site by Wagtail's own ids. A provider's credential is write-only: it goes in,
+is encrypted, and only `has_credential` ever comes back. Validation is the
+models' own (`clean()`), so the API, the importer and a shell agree.
+"""
+
+import copy
+import os
+
+from django.core.exceptions import ValidationError as DjangoValidationError
+from drf_spectacular.utils import extend_schema_field
+from rest_framework import serializers
+from rest_framework.fields import get_error_detail
+from wagtail.models import Page, Site
+
+from . import providers
+from .models import (
+    Assistant,
+    Brief,
+    Conversation,
+    Message,
+    ModelEntry,
+    OutputSchema,
+    Pipeline,
+    PipelineStep,
+    ProviderConfig,
+)
+
+
+class Visible(serializers.SlugRelatedField):
+    """A related row by public id, out of the rows the requester may see."""
+
+    def __init__(self, model, **kwargs):
+        self.model = model
+        super().__init__(slug_field="public_id", queryset=model.objects.all(), **kwargs)
+
+    def get_queryset(self):
+        request = self.context.get("request")
+        return self.model.objects.visible_to(getattr(request, "user", None))
+
+
+def _clean(model, instance, attrs):
+    """Run the model's own validation over the instance as it would be saved."""
+    candidate = copy.copy(instance) if instance is not None else model()
+    for key, value in attrs.items():
+        setattr(candidate, key, value)
+    try:
+        candidate.clean()
+    except DjangoValidationError as e:
+        raise serializers.ValidationError(get_error_detail(e)) from e
+
+
+# ── runs ───────────────────────────────────────────────────────────────────
+
+
+class RunLinksSerializer(serializers.Serializer):
+    self = serializers.CharField(help_text="The run with its steps.")
+    stream = serializers.CharField(help_text="Its steps and final status as server-sent events.")
+
+
+class RunRefSerializer(serializers.Serializer):
+    """An agent run to follow on the existing runs API."""
+
+    id = serializers.IntegerField()
+    status = serializers.CharField()
+    links = serializers.SerializerMethodField()
+
+    @extend_schema_field(RunLinksSerializer)
+    def get_links(self, run):
+        return {"self": f"/api/v2/agent-runs/{run.pk}/", "stream": f"/api/v2/agent-runs/{run.pk}/stream/"}
+
+
+class RunAcceptedSerializer(serializers.Serializer):
+    run = RunRefSerializer()
+
+
+# ── providers and models ───────────────────────────────────────────────────
+
+
+class ProviderSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="public_id", read_only=True)
+    credential = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        style={"input_type": "password"},
+        help_text="Write-only; encrypted at rest. An empty string removes it (the environment is used again).",
+    )
+    has_credential = serializers.BooleanField(read_only=True)
+    credential_source = serializers.SerializerMethodField()
+    capabilities = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProviderConfig
+        fields = [
+            "id",
+            "slug",
+            "display_name",
+            "enabled",
+            "is_default",
+            "base_url",
+            "organization",
+            "project",
+            "default_model",
+            "extra",
+            "monthly_budget_usd",
+            "credential",
+            "has_credential",
+            "credential_source",
+            "capabilities",
+            "last_health",
+            "checked_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["slug", "is_default", "last_health", "checked_at", "created_at", "updated_at"]
+
+    def get_credential_source(self, row) -> str:
+        """`database`, the environment variable the adapter would read, or ''."""
+        if row.has_credential:
+            return "database"
+        try:
+            names = providers.provider_class(row.slug).credential_env
+        except (ImportError, providers.ProviderError):
+            return ""
+        return next((name for name in names if os.environ.get(name)), "")
+
+    def get_capabilities(self, row) -> list[str]:
+        try:
+            return sorted(providers.provider_class(row.slug).capabilities)
+        except (ImportError, providers.ProviderError):
+            return []
+
+    def validate(self, attrs):
+        if self.instance is not None and self.instance.is_default and attrs.get("enabled") is False:
+            raise serializers.ValidationError({"enabled": "the default provider stays enabled; choose another first"})
+        return attrs
+
+    def update(self, instance, validated_data):
+        if "credential" in validated_data:
+            instance.set_credential(validated_data.pop("credential"))
+        return super().update(instance, validated_data)
+
+
+class ModelEntrySerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="public_id", read_only=True)
+    provider = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+
+    class Meta:
+        model = ModelEntry
+        fields = [
+            "id",
+            "provider",
+            "model_id",
+            "display_name",
+            "description",
+            "capabilities",
+            "input_usd_per_mtok",
+            "output_usd_per_mtok",
+            "active",
+            "synced_at",
+        ]
+        read_only_fields = fields
+
+
+# ── owned rows ─────────────────────────────────────────────────────────────
+
+OWNED = ["id", "owner", "site", "visibility", "created_at", "updated_at"]
+
+
+class OwnedSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="public_id", read_only=True)
+    owner = serializers.CharField(source="owner.username", read_only=True, allow_null=True)
+    site = serializers.PrimaryKeyRelatedField(queryset=Site.objects.all(), allow_null=True, required=False)
+
+    def validate(self, attrs):
+        _clean(self.Meta.model, self.instance, {k: v for k, v in attrs.items() if k != "steps"})
+        return attrs
+
+
+class OutputSchemaSerializer(OwnedSerializer):
+    class Meta:
+        model = OutputSchema
+        fields = [*OWNED, "name", "description", "schema", "version", "render_template", "bundled"]
+        read_only_fields = ["version", "bundled", "created_at", "updated_at"]
+
+
+class OutputSchemaExportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OutputSchema
+        fields = ["name", "description", "version", "schema", "render_template"]
+
+
+class BundledImportSerializer(serializers.Serializer):
+    schemas = serializers.ListField(child=serializers.UUIDField())
+    assistants = serializers.ListField(child=serializers.UUIDField())
+
+
+class AssistantSerializer(OwnedSerializer):
+    provider = serializers.SlugRelatedField(
+        slug_field="slug", queryset=ProviderConfig.objects.all(), allow_null=True, required=False
+    )
+    model = Visible(ModelEntry, allow_null=True, required=False)
+    output_schema = Visible(OutputSchema, allow_null=True, required=False)
+    effect = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Assistant
+        fields = [
+            *OWNED,
+            "name",
+            "description",
+            "instructions",
+            "prompt_template",
+            "provider",
+            "model",
+            "params",
+            "output_schema",
+            "tools",
+            "effect",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def get_effect(self, assistant) -> str:
+        """Always `propose`: an assistant's results are reviewed, never written."""
+        return Assistant.EFFECT
+
+
+class PipelineStepSerializer(serializers.ModelSerializer):
+    assistant = Visible(Assistant)
+
+    class Meta:
+        model = PipelineStep
+        fields = ["position", "assistant", "source", "source_field"]
+        read_only_fields = ["position"]
+
+
+class PipelineSerializer(OwnedSerializer):
+    steps = PipelineStepSerializer(many=True, required=False, help_text="In order; replaced as a whole on update.")
+
+    class Meta:
+        model = Pipeline
+        fields = [*OWNED, "name", "description", "steps"]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def create(self, validated_data):
+        steps = validated_data.pop("steps", [])
+        pipeline = super().create(validated_data)
+        self._steps(pipeline, steps)
+        return pipeline
+
+    def update(self, instance, validated_data):
+        steps = validated_data.pop("steps", None)
+        pipeline = super().update(instance, validated_data)
+        if steps is not None:
+            self._steps(pipeline, steps)
+        return pipeline
+
+    @staticmethod
+    def _steps(pipeline, steps):
+        pipeline.steps.all().delete()
+        PipelineStep.objects.bulk_create(
+            PipelineStep(pipeline=pipeline, position=i, **step) for i, step in enumerate(steps, start=1)
+        )
+
+
+class BriefSerializer(OwnedSerializer):
+    assistant = Visible(Assistant, allow_null=True, required=False)
+    pipeline = Visible(Pipeline, allow_null=True, required=False)
+    output_schema = Visible(OutputSchema, allow_null=True, required=False)
+    conversation = Visible(Conversation, allow_null=True, required=False)
+    parent = serializers.PrimaryKeyRelatedField(queryset=Page.objects.all(), allow_null=True, required=False)
+    page = serializers.PrimaryKeyRelatedField(read_only=True)
+    source_message = serializers.SlugRelatedField(slug_field="public_id", read_only=True)
+    run = RunRefSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        model = Brief
+        fields = [
+            *OWNED,
+            "title",
+            "prompt",
+            "source_text",
+            "assistant",
+            "pipeline",
+            "output_schema",
+            "page_type",
+            "parent",
+            "status",
+            "result",
+            "markdown",
+            "metadata",
+            "page",
+            "run",
+            "error",
+            "conversation",
+            "source_message",
+            "applied_at",
+        ]
+        read_only_fields = ["status", "result", "error", "applied_at", "created_at", "updated_at"]
+
+    def validate(self, attrs):
+        if self.instance is not None and self.instance.status in (Brief.GENERATING, Brief.APPLIED):
+            raise serializers.ValidationError(f"the brief is {self.instance.status}; it cannot change now")
+        return super().validate(attrs)
+
+
+class ConversationSerializer(OwnedSerializer):
+    assistant = Visible(Assistant, allow_null=True, required=False)
+    pipeline = Visible(Pipeline, allow_null=True, required=False)
+    page = serializers.PrimaryKeyRelatedField(queryset=Page.objects.all(), allow_null=True, required=False)
+    from_brief = Visible(
+        Brief, write_only=True, required=False, help_text="On create: start from this brief's text, its first turn."
+    )
+
+    class Meta:
+        model = Conversation
+        fields = [*OWNED, "title", "assistant", "pipeline", "page", "from_brief"]
+        read_only_fields = ["created_at", "updated_at"]
+
+    def validate(self, attrs):
+        brief = attrs.pop("from_brief", None)
+        attrs = super().validate(attrs)
+        if brief is not None and self.instance is None:
+            attrs["from_brief"] = brief
+        return attrs
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="public_id", read_only=True)
+    conversation = serializers.SlugRelatedField(slug_field="public_id", read_only=True)
+    assistant = Visible(Assistant, allow_null=True, required=False)
+    run = RunRefSerializer(read_only=True, allow_null=True)
+
+    class Meta:
+        model = Message
+        fields = [
+            "id",
+            "conversation",
+            "seq",
+            "role",
+            "text",
+            "result",
+            "assistant",
+            "run",
+            "status",
+            "provider",
+            "model",
+            "usage",
+            "error",
+            "created_at",
+        ]
+        read_only_fields = [f for f in fields if f != "assistant"]
+
+
+# ── the actions' requests and responses ────────────────────────────────────
+
+
+class SchemaDocumentSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=120)
+    description = serializers.CharField(required=False, allow_blank=True, default="")
+    schema = serializers.JSONField()
+    render_template = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class AssistantDocumentSerializer(serializers.Serializer):
+    """An assistant as a portable document (export, import)."""
+
+    name = serializers.CharField(max_length=120)
+    description = serializers.CharField(required=False, allow_blank=True)
+    instructions = serializers.CharField(required=False, allow_blank=True)
+    prompt_template = serializers.CharField(required=False, allow_blank=True)
+    params = serializers.JSONField(required=False)
+    tools = serializers.ListField(child=serializers.CharField(), required=False)
+    provider = serializers.CharField(allow_null=True, required=False, help_text="A provider's slug.")
+    model = serializers.CharField(allow_null=True, required=False, help_text="The provider's model id.")
+    output_schema = SchemaDocumentSerializer(allow_null=True, required=False)
+
+
+class RunAssistantSerializer(serializers.Serializer):
+    prompt = serializers.CharField(max_length=50_000)
+    page_id = serializers.IntegerField(required=False, help_text="A page the assistant may read, which you can edit.")
+
+
+class RunPipelineSerializer(serializers.Serializer):
+    prompt = serializers.CharField(max_length=50_000, required=False, allow_blank=True, default="")
+    page_id = serializers.IntegerField(required=False)
+
+
+class BriefRunSerializer(serializers.Serializer):
+    brief = BriefSerializer()
+    run = RunRefSerializer(allow_null=True)
+
+
+class ApplyBriefSerializer(serializers.Serializer):
+    parent = serializers.IntegerField(required=False, help_text="Where the draft goes; else the brief's parent.")
+    page_type = serializers.CharField(required=False, help_text="e.g. cms.ArticlePage; else the brief's.")
+
+
+class AppliedBriefSerializer(serializers.Serializer):
+    brief = BriefSerializer()
+    page_id = serializers.IntegerField(help_text="The draft page (not live).")
+    suggestions = serializers.ListField(child=serializers.IntegerField(), help_text="To accept on the draft.")
+
+
+class PostMessageSerializer(serializers.Serializer):
+    text = serializers.CharField(max_length=50_000)
+    assistant = serializers.UUIDField(required=False, help_text="Who replies; else the conversation's assistant.")
+    answer = serializers.BooleanField(default=True, help_text="Queue a reply (when there is an assistant).")
+
+
+class MessagePostedSerializer(serializers.Serializer):
+    message = MessageSerializer()
+    reply = MessageSerializer(allow_null=True)
+    run = RunRefSerializer(allow_null=True)
+
+
+class MessageRunSerializer(serializers.Serializer):
+    message = MessageSerializer()
+    run = RunRefSerializer()
+
+
+class RerunSerializer(serializers.Serializer):
+    assistant = serializers.UUIDField(required=False)
+
+
+class PromoteSerializer(serializers.Serializer):
+    to = serializers.ChoiceField(choices=["brief", "draft"])
+    parent = serializers.IntegerField(required=False)
+    page_type = serializers.CharField(required=False)

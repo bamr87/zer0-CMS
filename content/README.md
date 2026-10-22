@@ -5,6 +5,7 @@ The Django 5.2 + Wagtail 7.4 project that is zer0-CMS ([ADR 0001](../docs/adr/00
 ```bash
 cd content
 pip install -r requirements-dev.txt
+pip install -r requirements-providers.txt                           # optional: the model providers' SDKs (ai/README.md)
 python manage.py migrate && python manage.py sync_agents --publish   # agent users, definitions, evals → live
 python manage.py import_jekyll --site drsai --path ../sites/drsai     # a site → pages
 python manage.py createsuperuser && python manage.py runserver        # http://localhost:8000/admin/
@@ -28,13 +29,14 @@ With Docker, from the repository root: `docker compose --profile content up -d -
 | `config/` | settings (base / development / production / testing, all from the environment), URLs, Celery | `config/settings/base.py` |
 | `cms/` | page types (`SiteRootPage`, `CollectionPage`, `ArticlePage`, `StandardPage`, `BookPage`, `ChapterPage`), the `AgentManagedMixin`, StreamField blocks, the image model, `Category` and `BrandRules` snippets, the `content.*` and `media.*` tools, the publish signal | `cms/models.py`, `cms/blocks.py` |
 | `agents/` | definitions, runs, steps, memory, evals, tokens; the registry, the LLM layer, the runner, the schema export, agent principals; the YAML definitions and their recordings | [`agents/README.md`](agents/README.md) |
+| `ai/` | the AI content layer: provider adapters behind one registry (the only place a vendor SDK is imported), the model catalog, output schemas, assistants, pipelines, briefs and conversations — every generation an agent run, every result reviewed | [`ai/README.md`](ai/README.md) |
 | `suggestions/` | `Suggestion`, `BlockProvenance`, the accept/reject flow, the brand guard (ported from the extension), the editor panel and views | `suggestions/services.py` |
 | `graph/` | `Entity`, `Edge`, `Embedding`, behavioural counts; structural edges, kNN, related, semantic search, GraphRAG | [`graph/README.md`](graph/README.md) |
 | `workflow/` | `AgentReviewTask`, a Wagtail workflow task a review agent decides | `workflow/models.py` |
 | `outbox/` | `OutboxEvent`, `ProcessedEvent`, `emit()`, the relay to Redis Streams, deduplicating consumers | [`outbox/README.md`](outbox/README.md) |
 | `api/` | GraphQL additions (Grapple), REST endpoints, the CSRF-aware GraphQL view | `api/views.py` |
 | `mcp_server/` | MCP over Streamable HTTP (`/mcp/`) and stdio, over the one registry | [`mcp_server/README.md`](mcp_server/README.md) |
-| `importers/` | Jekyll sites and parodynews's dump → pages; `ImportedSource` | `importers/jekyll.py` |
+| `importers/` | Jekyll sites and parodynews's dump → pages and the AI content layer; `ImportedSource` | `importers/jekyll.py` |
 | `exporters/` | pages → Jekyll files | `exporters/jekyll.py` |
 | `ops/` | the probes, the request id, JSON logging and redaction, the error envelope, throttling, CORS, security headers, the OpenAPI document, error reporting | [`ops/README.md`](ops/README.md) |
 
@@ -56,6 +58,7 @@ editor or agent ──► tool (registry: schema, effect, policy, permission, ra
 | `/admin/` | Wagtail: pages, the suggestions panel and view, snippets (agents, memory, entities, brand rules, categories), Reports → Agent runs |
 | `/graphql/` | Grapple's schema for every page type, plus `semanticSearch`, `graphSearch`, `related`, `entities`, `suggestions`, `agentRun`, `aiSchema`; mutations `requestAgentRun`, `acceptSuggestion`, `rejectSuggestion`. The committed SDL is [`schemas/graphql/schema.graphql`](../schemas/graphql/schema.graphql). |
 | `/api/v2/` | Wagtail API v2 (`pages`, `images`, `documents`), `agent-runs/` (create, list, read, `stream/` as SSE), `agents/<slug>/runs`, `graph/{neighbors,path,related,search}/`, `suggestions/`, `tools/` |
+| `/api/v2/ai/` | the AI content layer: `providers/`, `models/`, `output-schemas/`, `assistants/`, `pipelines/`, `briefs/`, `conversations/`, `messages/` — runs answer `202` and are followed on `agent-runs/<id>/stream/` ([`ai/README.md`](ai/README.md)) |
 | `/mcp/` | MCP, bearer-token authenticated (`manage.py agent_token <slug> --name …`) |
 | `/healthz`, `/readyz`, `/version` | liveness (touches nothing), readiness (database, cache, Redis — 503 with `checks` when one is down), the build (`name`, `version`, `commit`, `built_at`) |
 | `/api/v2/openapi.json`, `/api/v2/docs/` | the OpenAPI document (committed at [`schemas/openapi/openapi.json`](../schemas/openapi/openapi.json), drift-checked) and its UI where `API_DOCS_ENABLED` |
@@ -64,4 +67,4 @@ Every response carries `X-Request-Id` (echoed when a client sent one) and `X-App
 
 ## Tests
 
-`tests/` mirrors the plan's milestones: `cms/` (M4), `api/` (M5, M12), `importers/` (M6, M7), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider.
+`tests/` mirrors the plan's milestones: `cms/` (M4), `api/` (M5, M12), `importers/` (M6, M7, G8), `outbox/` (M8, both planes' contracts), `agents/` (M9, M12), `suggestions/` (M10), `schema/` (M11), `graph/` (M13, M17), `workflow/` (M14), `mcp/` (M15), `ops/` (G1), `ai/` (G8). The session database runs `sync_agents --publish` once, so every test starts from live, eval-passed agents; no test reaches a network or a model provider.
