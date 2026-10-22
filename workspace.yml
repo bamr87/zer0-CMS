@@ -8,7 +8,7 @@
 # nobody registered, a path that does not exist, a dependency on a name that is
 # not here, or a vendored copy that drifted from its source.
 #
-# Schema (validated by tools/workspace/lib/zer0_workspace/manifest.rb):
+# Schema (validated by tools/workspace/manifest.py):
 #   projects.<name>:
 #     path:        directory the project lives in, relative to the root
 #     paths:       (optional) the globs it owns, when `path` is "." and the

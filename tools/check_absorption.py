@@ -28,8 +28,9 @@ It asserts:
     `theme_ratchet:` prefix within its ceiling, or is listed in `theme_allowed:`
     (the Jekyll-theme option's own files, and this gate). Content that merely talks
     about the theme (Markdown, a site's `_posts`/`_docs`/`_data`, `docs/`, test
-    fixtures that model outside repositories) is not counted — it is content,
-    and content is kept;
+    fixtures that model outside repositories, and the workspace tool's golden
+    recordings of what its Ruby predecessor printed about the old tree) is not
+    counted — it is content, and content is kept;
   * **the platform catalog** — unique ids, a known surface and status for each
     surface, and a `proof` path that exists for every surface marked `done`;
   * **the sources** — every capability has a unique id, a known status and a
@@ -69,7 +70,7 @@ RUBY_NAMES = {"Gemfile", "Gemfile.lock", "Rakefile", ".ruby-version", "Guardfile
 THEME_TERMS = re.compile(rb"zer0-mistakes|jekyll-theme-zer0|ZER0_THEME_")
 THEME_SUFFIXES = (".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".rb", ".yml", ".yaml", ".json", ".gemspec", ".toml")
 THEME_NAMES = {"Gemfile", "Gemfile.lock", "Dockerfile"}
-THEME_SKIP_PREFIXES = ("docs/", "src/test/fixtures/", "features/")
+THEME_SKIP_PREFIXES = ("docs/", "src/test/fixtures/", "features/", "tools/workspace/tests/golden/")
 STATUSES = ("missing", "partial", "done", "dropped")
 OPEN = ("missing", "partial")
 SURFACES = ("api", "studio", "extension", "mcp", "site", "ops")
@@ -247,7 +248,7 @@ def tighten(ratchet: dict[str, int], counts: Counter) -> dict[str, int]:
 
 
 def write_ratchet(ledger_path: Path, ratchet: dict[str, int], key: str = "ruby_ratchet") -> None:
-    """Rewrite only one ratchet block, leaving the rest of the file's bytes alone."""
+    """Rewrite only one ratchet block, leaving the rest of the file's bytes alone (the block's comments too)."""
     lines = ledger_path.read_text().splitlines(keepends=True)
     start = next(i for i, line in enumerate(lines) if line.startswith(f"{key}:"))
     end = start + 1
@@ -255,9 +256,10 @@ def write_ratchet(ledger_path: Path, ratchet: dict[str, int], key: str = "ruby_r
         end += 1
     while end > start + 1 and not lines[end - 1].strip():
         end -= 1
+    comments = [line for line in lines[start + 1 : end] if line.lstrip().startswith("#")]
     body = [f"  {p}: {c}\n" for p, c in ratchet.items()] or []
     head = f"{key}:\n" if body else f"{key}: {{}}\n"
-    ledger_path.write_text("".join(lines[:start] + [head] + body + lines[end:]))
+    ledger_path.write_text("".join(lines[:start] + [head] + comments + body + lines[end:]))
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -13,12 +13,12 @@ This is the canonical agent file for the whole repository. It applies to every c
 - **Workspaces:** the studio is organised around what people do — Write, Create, Ideas, Research, Newsroom, Books, Sites — on one runtime of AI pipelines, editorial workflows and automations (TARGET.md § What it is for).
 - **Content in the database, files generated:** every site and book lives in the platform and also exists as a generated, committed, re-importable file tree (a site's source, a book's `library/<slug>/`).
 - **Sites:** manage (registry, settings, render, deploy), monitor (uptime, links, performance, accessibility, SEO, analytics, AIEO scores) and improve (agents propose changes from those signals; a person accepts them). Sites render with React by default; zer0-mistakes survives only as an option — render a site with that theme and deploy it with a Jekyll server.
-- **No Ruby.** The Rails fleet CMS, the Ruby workspace tool, the image generator's gem and the sites' Jekyll builds are all ported away; until they are, a ratchet in CI stops Ruby from growing or spreading.
+- **No Ruby.** The workspace tool (`bin/zer0`) is Python already (PLAN P5); the Rails fleet CMS, the image generator's gem and the sites' Jekyll builds are being ported away, and until they are, a ratchet in CI stops Ruby from growing or spreading.
 - **Every merged repository is absorbed, not discarded:** parodynews (formerly barodybroject — every one of its capabilities), aieo, books, the image generator, the Rails CMS, the workspace tool and the nine sites' content. A source directory is deleted only when the ledger shows every capability `done` (with a test) or `dropped` by the owner.
 
 **What an agent must not do** — each of these has happened, or is the next obvious mistake:
 
-- Add Ruby anywhere, or build a feature on Rails, Jekyll, the image-generator gem or `bin/zer0` that a later milestone would have to port. `tools/check_absorption.py` fails CI on new Ruby.
+- Add Ruby anywhere, or build a feature on Rails, Jekyll or the image-generator gem that a later milestone would have to port. `tools/check_absorption.py` fails CI on new Ruby.
 - Add screens to the Wagtail admin. New UI is React in `web/`, with its extension counterpart or a recorded gap.
 - Call a model provider's SDK outside the adapter registry, or add a second LLM client, ledger or registry.
 - Port a merged app's models and views one to one. Map its capabilities onto the platform's model (TARGET.md § Rules that keep models and views manageable) and import its data.
@@ -32,7 +32,7 @@ This is the canonical agent file for the whole repository. It applies to every c
 - Pick work by "the first unchecked box" in the plan. The order of work is PLAN § 3's list; older phases keep boxes later decisions overtook.
 - Stack a pull request on another unmerged branch. Base every pull request on `main` (#52 merged into a dead branch and left `main` contradicting the owner for a day).
 
-**Today's code vs. the target.** Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's Rails app, workspace tool and Jekyll sites are enforced by today's build and still hold — keep them working, but do not extend them. When a rule below and ADR 0006 seem to disagree about *new* work, ADR 0006 wins.
+**Today's code vs. the target.** Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's Rails app and Jekyll sites are enforced by today's build and still hold — keep them working, but do not extend them. When a rule below and ADR 0006 seem to disagree about *new* work, ADR 0006 wins.
 
 ## Layout
 
@@ -116,12 +116,14 @@ python manage.py roundtrip_jekyll --path ../sites/drsai             # import →
 # Docker, from the repository root: http://localhost:8000 (/admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
 docker compose --profile content up -d --wait db redis content worker beat relay
 
-# ── The workspace (every project in the repository) — stdlib Ruby, no installs ──
+# ── The workspace (every project in the repository) — Python 3.9+ and PyYAML, nothing else ──
+python3 -m venv .venv && .venv/bin/pip install pyyaml   # once, where python3 lacks PyYAML (PEP 668 refuses a global pip install); bin/zer0 then runs on .venv
 bin/zer0 list                     # projects, paths, what each publishes and what gates it
 bin/zer0 run check --affected     # the fast tier of everything this branch touched (+ dependents)
 bin/zer0 check                    # registry, paths, workflows and vendored copies all agree
-bin/zer0 doctor                   # zer0 doctor over every in-repo site
+bin/zer0 doctor                   # zer0 doctor over every in-repo site (runs rails/bin/zer0-cms: needs Ruby until G4)
 bin/zer0 tags                     # this repo's release tags vs. those inherited from the Front Matter fork
+.venv/bin/python -m unittest discover tools/workspace   # the tool's tests, with the golden replay of its Ruby predecessor (any Python with PyYAML)
 ```
 
 `extension.test.ts` and `multiroot.test.ts` need a real extension host (`multiroot` has its own entry in `.vscode-test.mjs`: `npx vscode-test --label multiroot`), and `mcp.test.ts` needs `dist/mcp-server.js`, so the fourteen-suite command above leaves all three out; `out/test/mcp.test.js` does run under plain Mocha once `npm run compile` has built the bundle. On headless Linux `npm test` shells out to `xvfb-run` itself (`test-runner.js`); `ZER0_CMS_NO_XVFB=1` forces the plain path.
