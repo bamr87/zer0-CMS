@@ -1,6 +1,6 @@
 # `src/core/shared` — primitives
 
-Eight files with no domain knowledge and no dependencies. Everything else in the codebase imports from here; nothing here imports from anywhere else in the codebase except `types.ts`.
+Eight files with no domain knowledge. Where a maintained library does the job — JSON with comments, globs, dates — they wrap it rather than hand-roll it (ADR 0006 decision 9); esbuild bundles each one, so nothing ships as a runtime dependency. Everything else in the codebase imports from here; nothing here imports from anywhere else in the codebase except `types.ts`.
 
 | File | Exports | Notes |
 |---|---|---|
@@ -9,7 +9,7 @@ Eight files with no domain knowledge and no dependencies. Everything else in the
 | `atomic.ts` | `atomicWriteFile`, `atomicWriteText` | Temp file in the same directory, then `rename`. |
 | `jsonio.ts` | `readJsonc`, `readJsonFile`, `pyJsonDump` | JSON-with-comments in (`jsonc-parser`), Python-identical JSON out. |
 | `timestamp.ts` | `utcStamp`, `utcDate` | Second precision, no milliseconds — a byte contract. |
-| `dates.ts` | `formatDate`, `parseDate`, `normalizePattern`, `timezoneOffset` | date-fns token subset via `Intl`. |
+| `dates.ts` | `formatDate`, `parseDate`, `normalizePattern`, `timezoneOffset` | date-fns patterns in an IANA zone (`date-fns`, `@date-fns/tz`). |
 | `glob.ts` | `compileGlob`, `globMatches`, `walkGlobs`, `SKIP_DIRS` | picomatch's matching, a static base, sorted output. |
 | `text.ts` | `slugify`, `removePunctuation`, `removeStopWords`, `transliterate`, `encodeEmoji`, `truncate`, `escapeHtml`, `CHAR_MAP`, `STOP_WORDS`, `MINIMAL_STOP_WORDS`, `NO_STOP_WORDS`, `STOP_WORD_PRESETS` | Slug pipeline ported from Front Matter CMS. |
 

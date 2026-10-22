@@ -348,7 +348,8 @@ const targets = [
     target: 'es2022',
     format: 'iife',
     external: [],
-    plugins: [problemMatcherPlugin, bareImportGate([])],
+    // The date field formats and parses with core's dates.ts, in the page.
+    plugins: [problemMatcherPlugin, bareImportGate(['date-fns', '@date-fns/tz'])],
   },
   {
     entryPoints: ['src/webview/dashboard/main.ts'],

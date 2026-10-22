@@ -53,7 +53,7 @@ import { formatPercent, formatThousands } from '../core/catering/worklist';
 import { resolveConfig } from '../core/shared/config';
 import type { Zer0Settings } from '../core/shared/config';
 import { EXEC_VECTORS, evaluateExecGate, insideWorkspace } from '../core/shared/trust';
-import { formatDate, parseDate } from '../core/shared/dates';
+import { formatDate, parseDate, timezoneOffset } from '../core/shared/dates';
 import { compileGlob, globMatches, toPosix } from '../core/shared/glob';
 import { resolveActiveSite } from '../siteRule';
 import { pyJsonDump, readJsonc } from '../core/shared/jsonio';
@@ -798,6 +798,21 @@ suite('core: shared primitives', () => {
       assert.equal(back.getTime(), date.getTime());
     }
     assert.equal(parseDate('not a date'), null);
+  });
+
+  test('parseDate reads a zone-less time as the wall clock of its zone, and a bad zone or token never throws', () => {
+    const zone = 'America/New_York';
+    assert.equal(parseDate('2026-07-08 11:30', undefined, zone)?.toISOString(), '2026-07-08T15:30:00.000Z');
+    assert.equal(parseDate('2026-07-08', undefined, zone)?.toISOString(), '2026-07-08T04:00:00.000Z');
+    assert.equal(parseDate('2026-07-08')?.toISOString(), '2026-07-08T00:00:00.000Z', 'date-only with no zone is UTC');
+    assert.equal(parseDate('2026-07-08T11:30:00-0400')?.toISOString(), '2026-07-08T15:30:00.000Z');
+    assert.equal(parseDate('08/07/2026 11:30 PM', 'dd/MM/yyyy hh:mm a', zone)?.toISOString(), '2026-07-09T03:30:00.000Z');
+    assert.equal(parseDate('July 8, 2026', 'MMMM d, yyyy', 'UTC')?.toISOString(), '2026-07-08T00:00:00.000Z');
+    const when = new Date(Date.UTC(2026, 6, 8, 15, 30));
+    assert.equal(formatDate(when, 'yyyy-MM-dd HH:mm', 'Not/AZone'), formatDate(when, 'yyyy-MM-dd HH:mm'), 'an unknown zone is the host zone');
+    assert.equal(formatDate(when, 'yyyy-MM-dd nope', 'UTC'), '2026-07-08T15:30:00Z', 'a pattern date-fns refuses is ISO 8601');
+    assert.equal(formatDate(when, 'YYYY-MM-DD', 'UTC'), '2026-07-08', "Front Matter's Moment spellings");
+    assert.equal(timezoneOffset(when, zone), -240);
   });
 
   test('readJsonc reads comments and trailing commas, and names where it stopped', () => {
