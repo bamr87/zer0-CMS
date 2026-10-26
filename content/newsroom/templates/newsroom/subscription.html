@@ -1,0 +1,35 @@
+{# The page a newsletter email's link opens (newsroom.views.subscription_page): what the link does and a button that does it; what happened once it is pressed; or why the link does not work. No script, no inline style. #}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% if action == "confirm" %}Confirm your subscription{% else %}Unsubscribe{% endif %}</title>
+</head>
+<body>
+  <main>
+  {% if error %}
+    <h1>This link does not work</h1>
+    <p>{{ error|capfirst }}.</p>
+  {% elif done and action == "confirm" %}
+    <h1>You are subscribed</h1>
+    <p>{{ subscriber.newsletter.name }} will come to this address. Every issue has a link to unsubscribe.</p>
+  {% elif done %}
+    <h1>You are unsubscribed</h1>
+    <p>Nothing more from {{ subscriber.newsletter.name }} will come to this address.</p>
+  {% elif action == "confirm" and subscriber.status == "confirmed" %}
+    <h1>You are subscribed</h1>
+    <p>This address already gets {{ subscriber.newsletter.name }}.</p>
+  {% elif action == "unsubscribe" and subscriber.status == "unsubscribed" %}
+    <h1>You are unsubscribed</h1>
+    <p>This address no longer gets {{ subscriber.newsletter.name }}.</p>
+  {% else %}
+    <h1>{% if action == "confirm" %}Confirm your subscription{% else %}Unsubscribe{% endif %}</h1>
+    <p>{% if action == "confirm" %}Get {{ subscriber.newsletter.name }} at this address?{% else %}Stop getting {{ subscriber.newsletter.name }} at this address?{% endif %}</p>
+    <form method="post" action="?token={{ token|urlencode }}">
+      <button type="submit">{% if action == "confirm" %}Confirm the subscription{% else %}Unsubscribe{% endif %}</button>
+    </form>
+  {% endif %}
+  </main>
+</body>
+</html>

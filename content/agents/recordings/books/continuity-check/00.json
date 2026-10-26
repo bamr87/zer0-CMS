@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "f29be10895abbc76",
+  "response": {
+    "text": "{\"findings\": [{\"severity\": \"high\", \"kind\": \"continuity\", \"quote\": \"The storm came in off Puffin Rock at dusk\", \"problem\": \"The continuity ledger settles that the lighthouse stands on Gannet Rock; this chapter places it on Puffin Rock.\", \"suggestion\": \"Change Puffin Rock to Gannet Rock, or record the move in the continuity ledger if it is deliberate.\"}], \"summary\": \"One contradiction: the chapter moves the lighthouse to Puffin Rock.\"}",
+    "tool_calls": [],
+    "tokens_in": 1210,
+    "tokens_out": 96,
+    "cost_usd": "0.0230",
+    "model": "claude-opus-5-5"
+  }
+}

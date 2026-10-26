@@ -2,16 +2,19 @@
 
 For each page under a site root, in tree order:
 
-- **unchanged since import** (its `content_hash` still equals the import's):
-  the stored source file, byte for byte;
+- **unchanged since import** (its `content_hash` still equals the import's)
+  and without bylines or corrections from the newsroom: the stored source
+  file, byte for byte;
 - **changed, or created in Wagtail**: front matter + body rendered from the
   page. The front matter is the source's, in its original key order, with the
   typed fields written over it (title, description, seo_title, date — kept as
   the original string when the parsed date did not change —, author, tags,
   categories, book fields), and for an ABC book the `alphabet:` list rebuilt
   from its `letter` blocks, each merged into the original entry so a plate's
-  `image`, `prompt` and `status` survive an edit to its word. The body is the
-  blocks as Markdown (importers/markdown.py).
+  `image`, `prompt` and `status` survive an edit to its word; a story's
+  `authors` (its bylines) and `corrections` (its corrections and updates log:
+  date, kind, text) come from the newsroom, for the site to render. The body
+  is the blocks as Markdown (importers/markdown.py).
 
 A page created in Wagtail gets a path from its type: an `ArticlePage` in
 `_posts` becomes `<collections_dir>/_posts/YYYY-MM-DD-<slug>.md`, anything in
@@ -30,6 +33,8 @@ from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, SiteR
 from importers import frontmatter
 from importers.markdown import from_blocks
 from importers.models import ImportedSource
+from newsroom.services import front_matter_for as newsroom_front_matter
+from newsroom.services import with_front_matter as with_newsroom_front_matter
 
 
 @dataclass
@@ -123,6 +128,7 @@ def front_matter_for(page) -> dict:
                 fm["alphabet"] = alphabet
     if isinstance(page, ChapterPage) and page.number is not None:
         fm["chapter"] = page.number
+    fm.update(newsroom_front_matter(page))
     return fm
 
 
@@ -144,6 +150,7 @@ def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:
     report = ExportReport(site_key=site_key)
     pages = Page.objects.descendant_of(root).specific().order_by("path")
     sources = {s.page_id: s for s in ImportedSource.objects.filter(site_key=site_key)}
+    newsroom_pages = with_newsroom_front_matter()
     for page in pages:
         if isinstance(page, CollectionPage):
             continue
@@ -158,7 +165,8 @@ def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:
             continue
         source = sources.get(page.pk)
         target.parent.mkdir(parents=True, exist_ok=True)
-        if source is not None and current.compute_content_hash() == source.import_hash:
+        unchanged = source is not None and current.compute_content_hash() == source.import_hash
+        if unchanged and page.pk not in newsroom_pages:
             target.write_text(source.source_text, encoding="utf-8")
             report.verbatim.append(rel)
         else:

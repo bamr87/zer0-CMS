@@ -1,0 +1,105 @@
+# The books app's bundled AI setup, seeded after every migrate by books.apps (and
+# never changed once a person has edited a row): the output schemas a book task
+# answers in, one assistant per bookshelf task, and a pipeline. Each assistant's
+# instructions are house-rules.md (bookshelf's _HOUSE_RULES) followed by its
+# role; the task itself and the book's material arrive in the request
+# (books/context.py), so a person may also run a task with an assistant of their
+# own. The role texts carry the books package's authoring guidance
+# (packages/books/.github/instructions/ and prompts/).
+schemas:
+  - key: book-outline
+    name: Book outline
+    description: A book from its premise — title, logline, genre, point of view, tense, era, protagonist, synopsis, themes, three acts of beats, the protagonist's arc, the cast and the chapter plan — rendered as outline.md.
+    file: book_outline_schema.json
+    template: |
+      # {{ title }}
+
+      Working titles: {% for other in alt_titles %}{{ other }}{% if not forloop.last %}; {% endif %}{% endfor %}
+
+      ---
+
+      ## Synopsis
+
+      {{ synopsis }}
+
+      ---
+
+      ## Key Themes
+
+      {% for theme in themes %}{{ forloop.counter }}. **{{ theme.name }}** — {{ theme.argument }}
+      {% endfor %}
+      ---
+
+      ## Narrative Structure
+      {% for act in acts %}
+      ### Act {{ forloop.counter }} — {{ act.title }}
+      {% for beat in act.beats %}
+      #### {{ forloop.counter }}. {{ beat.title }}
+
+      {% for point in beat.points %}- {{ point }}
+      {% endfor %}{% endfor %}{% endfor %}
+      ---
+
+      ## Character Arc — {{ protagonist }}
+
+      | Phase | Description |
+      | --- | --- |
+      {% for phase in arc %}| **{{ phase.phase }}** | {{ phase.description }} |
+      {% endfor %}
+      ---
+
+      ## Chapter Plan
+
+      | # | Act | Title | Beat |
+      | --- | --- | --- | --- |
+      {% for chapter in chapters %}| {{ chapter.number }} | {{ chapter.act }} | {{ chapter.title }} | {{ chapter.beat }} |
+      {% endfor %}
+  - key: book-continuity-findings
+    name: Continuity findings
+    description: What a chapter contradicts or drifts from, each finding with its severity, kind, the exact quote, the problem and a suggestion, and a summary.
+    file: continuity_findings_schema.json
+    template: |
+      {{ summary }}
+      {% for finding in findings %}
+      - **{{ finding.severity }} · {{ finding.kind }}** — {{ finding.problem }}{% if finding.quote %} (“{{ finding.quote }}”){% endif %} Suggestion: {{ finding.suggestion }}
+      {% endfor %}
+assistants:
+  - key: book-outliner
+    name: Book outliner
+    description: Turns a premise into a book's outline — synopsis, themes, three acts, the protagonist's arc, the cast and a chapter plan — or extends a book's outline.
+    output_schema: book-outline
+    role: |
+      You outline books. From a premise (or a book's existing outline and brief) you produce the book's outline: a working title and two or three alternatives that each point at a different facet, a one-sentence logline, the genre, the point of view, the tense, the era, the protagonist, a synopsis of two or three paragraphs written like a back cover, four to six themes each with one sentence on what the book argues about it, three acts (the world established and the inciting incident; the breakdown with escalating consequences; the revelation, the climax and the resolution) each with two to four beats of events, character developments and emotional beats, the protagonist's arc in four or five phases, every name the outline uses, and a chapter plan of ten to fifteen chapters, each with its act and what it is for. Do not draft chapter prose.
+  - key: book-drafter
+    name: Chapter drafter
+    description: Drafts a chapter's prose from its outline section, the act guide and the chapters either side.
+    role: |
+      You draft chapters. Read the book's outline, the act guide covering the chapter and the chapters either side before you write, so the chapter continues the book: the same characters with the same names, the same tone and style, nothing repeated. Follow the chapter's own outline section — its purpose, setting, characters, plot progression and themes — and write the narrative in the chapter's style and tone, with vivid, exact detail, the characters' voices and dialogue where it serves.
+  - key: book-continuer
+    name: Chapter continuer
+    description: Carries a chapter on from where it stops, in its own voice and pacing.
+    role: |
+      You continue chapters. Pick up exactly where the text stops and keep its voice, its pacing and its point of view, so a reader cannot see the seam. Move the chapter toward the beats its outline section still has to reach.
+  - key: book-reviser
+    name: Passage reviser
+    description: Rewrites a selected passage of a chapter to an instruction, keeping what works.
+    role: |
+      You revise passages. Change only what the instruction asks for, keep everything that is working, and return a passage that can replace the selection as it stands — the same point of view, tense and register as the text around it.
+  - key: book-editor
+    name: Book editor
+    description: An editor's read of a chapter (or an outline) — what works, and the two or three changes that would most improve it.
+    role: |
+      You are the book's editor. Say what is working and why, then name the two or three changes that would most improve the text, most important first. Be specific and quote the text. Do not rewrite it.
+  - key: book-continuity-checker
+    name: Continuity checker
+    description: Checks a chapter against the book's brief, character bible, continuity ledger and neighbouring chapters, and reports structured findings with the exact text at fault.
+    output_schema: book-continuity-findings
+    role: |
+      You check continuity. Compare the chapter with the book's facts, its character bible, its continuity ledger, its outline and the neighbouring chapters, and report each contradiction or drift as a finding with its severity, its kind, the exact text at fault, the problem and a suggestion. Report facts, not taste.
+pipelines:
+  - key: book-premise-to-critiqued-outline
+    name: Book from a premise, with an editor's read
+    description: The outliner turns a premise into a book's outline; the editor then reads the outline and names what to fix first.
+    steps:
+      - {assistant: book-outliner, source: previous}
+      - {assistant: book-editor, source: previous}

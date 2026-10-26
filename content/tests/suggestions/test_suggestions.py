@@ -4,6 +4,7 @@ accept rate recorded, and the brand guard ported rule for rule."""
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from wagtail.models import Revision
 
 from agents.models import AgentRun, AgentStep
@@ -81,7 +82,7 @@ def test_rejecting_records_the_decision_and_feeds_the_accept_rate(article, run, 
 @pytest.mark.django_db
 def test_an_agent_never_decides_and_a_stale_suggestion_is_refused(article, run, editor):
     s = proposal(article, run, op="delete", block_id=article.body[1].id)
-    with pytest.raises(SuggestionError, match="may not"):
+    with pytest.raises(PermissionDenied, match="may not"):
         accept([s], agent_user("drafter"))
     other = proposal(
         article, run, op="replace", block_id=article.body[1].id, payload={"type": "markdown", "value": "x"}
@@ -114,6 +115,42 @@ def test_one_outcome_has_one_author(article, run, editor, agent):
 def test_the_brand_guard_refuses_a_banned_phrase_at_propose_time(article, run):
     with pytest.raises(SuggestionError, match="cutting-edge"):
         proposal(article, run, op="meta", field="seo_title", payload={"value": "Our cutting-edge backups"})
+
+
+@pytest.mark.django_db
+def test_a_replace_is_judged_on_the_banned_phrases_it_adds(site_root, run, editor):
+    """A phrase the author already wrote does not block an agent's edit of that
+    block; the agent writing it (again) does, and so does any active markup."""
+    from tests.conftest import make_article
+
+    page = make_article(site_root, "Quoted", body=[{"type": "markdown", "value": "He spoke of unlocking value."}])
+    block = page.body[0].id
+    kept = proposal(
+        page,
+        run,
+        op="replace",
+        block_id=block,
+        payload={"type": "markdown", "value": "He spoke, at length, of unlocking value."},
+    )
+    accept([kept], editor)
+    with pytest.raises(SuggestionError, match="unlock value"):
+        proposal(
+            page,
+            run,
+            op="replace",
+            block_id=block,
+            payload={"type": "markdown", "value": "Unlocking value, unlocking value."},
+        )
+    with pytest.raises(SuggestionError, match="unlock value"):
+        proposal(page, run, op="insert", payload={"type": "markdown", "value": "He spoke of unlocking value."})
+    with pytest.raises(SuggestionError, match="active markup"):
+        proposal(
+            page,
+            run,
+            op="replace",
+            block_id=block,
+            payload={"type": "markdown", "value": "<script>x()</script> unlocking value"},
+        )
 
 
 def test_the_guard_matches_the_extensions_rule_counts_and_dedupes():

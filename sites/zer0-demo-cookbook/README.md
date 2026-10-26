@@ -27,13 +27,14 @@ Total time from brief to a site serving on localhost: under a minute, plus the c
 
 ## Running it yourself
 
+In zer0-CMS the site builds with the Jekyll-theme option (Docker, no Ruby): from the repository root,
+
 ```bash
-git clone https://github.com/bamr87/zer0-demo-cookbook.git
-cd zer0-demo-cookbook
-docker compose up          # http://localhost:4400/
+python3 tools/jekyll_theme.py build zer0-demo-cookbook --config sites/zer0-demo-cookbook/_config_dev.yml
+python3 -m http.server --directory sites/zer0-demo-cookbook/_site 4400   # http://localhost:4400/
 ```
 
-Edit anything under `pages/` and the browser reloads. Site-wide settings are in `_config.yml`; restart the server after changing it.
+`_config_dev.yml` gives the build localhost URLs, drafts and future posts. Rebuild after changing anything under `pages/` or `_config.yml`.
 
 ## How it is published
 

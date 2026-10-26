@@ -1,4 +1,0 @@
-# Dev config override
-
-remote_theme             : false
-theme                    : "jekyll-theme-zer0"

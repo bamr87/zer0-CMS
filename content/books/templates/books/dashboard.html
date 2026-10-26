@@ -1,0 +1,68 @@
+{% comment %}
+The library as one self-contained page (`manage.py books dashboard`): totals,
+a card per book with its progress and chapter table, and the validation
+findings. No scripts and no external assets, so it opens from disk; the studio's
+Books area is the live version of it.
+{% endcomment %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookshelf</title>
+<style>
+:root { color-scheme: light dark; --plane: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --rule: #e1e0d9; --fill: #2a78d6; --track: #9ec5f4; --error: #d03b3b; --warning: #b07a00; }
+@media (prefers-color-scheme: dark) { :root { --plane: #0d0d0d; --surface: #1a1a19; --ink: #fff; --muted: #c3c2b7; --rule: #2c2c2a; --fill: #3987e5; --track: #184f95; --warning: #fab219; } }
+body { margin: 0; padding: 2rem 1rem 4rem; background: var(--plane); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+main { max-width: 68rem; margin: 0 auto; }
+h1, h2 { margin: 0; font-weight: 600; } .muted { color: var(--muted); font-size: .875rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .75rem; margin: 1.5rem 0; }
+.tile, .book { background: var(--surface); border: 1px solid var(--rule); border-radius: .5rem; padding: .85rem 1rem; }
+.tile b { display: block; font-size: 1.5rem; } .book { margin-bottom: 1rem; padding: 1.25rem; }
+meter { width: 100%; height: .5rem; } table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: .875rem; }
+th, td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid var(--rule); } td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.chip { border: 1px solid var(--rule); border-radius: 1rem; padding: 0 .5rem; font-size: .8rem; }
+.error { color: var(--error); } .warning { color: var(--warning); } ul { padding-left: 1.2rem; font-size: .875rem; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Bookshelf</h1>
+  <p class="muted">Generated {{ generated }} from the platform's books.</p>
+</header>
+<section class="tiles">
+  <div class="tile"><b>{{ word_count }}</b><span class="muted">words of prose</span></div>
+  <div class="tile"><b>{{ books|length }}</b><span class="muted">books</span></div>
+  <div class="tile"><b>{{ chapters }}</b><span class="muted">chapters</span></div>
+  <div class="tile"><b class="error">{{ errors }}</b><span class="muted">errors</span></div>
+  <div class="tile"><b class="warning">{{ warnings }}</b><span class="muted">warnings</span></div>
+</section>
+{% for row in books %}{% with book=row.book stats=row.stats %}
+<article class="book">
+  <h2>{{ book.title }} <span class="chip">{{ book.status }}</span> <span class="muted">{{ book.slug }}</span></h2>
+  {% if book.logline %}<p class="muted">{{ book.logline }}</p>{% endif %}
+  <meter min="0" max="1" value="{{ book.progress }}" title="{{ book.word_count }} words"></meter>
+  <p class="muted">{{ book.word_count }} words{% if book.target_word_count %} of {{ book.target_word_count }}{% endif %} · {{ stats.chapters }} of {{ book.planned_chapters }} chapters</p>
+  {% if book.chapters %}
+  <table>
+    <thead><tr><th>#</th><th>Title</th><th>Act</th><th>Status</th><th>POV</th><th>Words</th></tr></thead>
+    <tbody>{% for chapter in book.chapters %}
+      <tr><td>{{ chapter.number|default:"?" }}</td><td>{{ chapter.title }}</td><td>{{ chapter.act|default:"–" }}</td><td>{{ chapter.status }}</td><td>{{ chapter.pov|default:"–" }}</td><td class="n">{{ chapter.word_count }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  {% if row.issues %}
+  <details>
+    <summary>{{ row.issues|length }} finding{{ row.issues|length|pluralize }}</summary>
+    <ul>{% for issue in row.issues %}
+      <li><span class="{{ issue.level }}">{{ issue.level }}</span> <code>{{ issue.code }}</code> {{ issue.path }}{% if issue.line %}:{{ issue.line }}{% endif %} — {{ issue.message }}</li>{% endfor %}
+    </ul>
+  </details>
+  {% else %}<p class="muted">No findings.</p>{% endif %}
+</article>
+{% endwith %}{% empty %}
+<p>No books yet.</p>
+{% endfor %}
+</main>
+</body>
+</html>

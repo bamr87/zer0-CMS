@@ -1,0 +1,836 @@
+# The capability ledger (ADR 0006). Read by tools/check_absorption.py, which
+# CI runs on every pull request (zer0-workspace.yml).
+#
+# Four parts:
+#
+#   theme_ratchet / theme_allowed — the zer0-mistakes burn-down: code and config
+#     that names the theme, per prefix, until only the Jekyll-theme option does.
+#
+#   ruby_ratchet / ruby_fixtures — the Ruby burn-down. Each prefix may hold at
+#     most its ceiling of Ruby files; Ruby anywhere else fails. Ceilings only go
+#     down: `python3 tools/check_absorption.py --tighten` after removing Ruby.
+#     Fixtures are files that only model an outside Jekyll site for a test.
+#
+#   platform — the target: every capability the one platform must have, and its
+#     status on each surface that must offer it (api, studio, extension, mcp,
+#     site, ops). A surface is `done` only with a `proof:` that is a test: a
+#     test file that exists, optionally `::<test id>` (never a tool, a command
+#     line or a CI job). TARGET.md describes the same catalog in prose.
+#
+#   sources — every repository merged into zer0-CMS, every capability it had,
+#     and the platform capability it lands in (`target:`, a platform id). A row
+#     is `missing`, `partial`, `done` (with `proof:`) or `dropped` (with
+#     `decided_by:` naming the owner's decision — an agent never drops a row).
+#     A source's directory may be deleted only when no row is missing/partial.
+#
+# Statuses here were set on 2026-10-21 from two code inventories, conservatively:
+# nothing is `done` without a test that proves it, and `partial` means the
+# platform has a piece of it, not that it is close. The milestone that absorbs a
+# source completes that source's rows from the code in its first commit.
+schema: capabilities/v1
+
+ruby_ratchet:
+  packages/zer0-image-generator/: 223
+  rails/: 151
+  sites/zer0-pages/: 11
+
+theme_ratchet:
+  # zer0-mistakes leaves completely (ADR 0006 decision 4): code and configuration
+  # that names the theme, per prefix. Content that talks about it is not counted.
+  .github/: 1
+  .vscode/: 1
+  apps/parodynews/: 3
+  content/: 1
+  media/: 1
+  packages/zer0-image-generator/: 8
+  rails/lib/: 5
+  rails/schema/: 1
+  rails/test/: 2
+  schemas/: 1
+  sites/2005/: 1
+  sites/drsai/: 3
+  sites/irony-works/: 5
+  sites/wargames/: 4
+  sites/zer0-demo-cookbook/: 2
+  sites/zer0-demo-garden/: 2
+  sites/zer0-pages-remote/: 1
+  sites/zer0-pages/: 4
+  src/core/: 13
+  src/test/: 6
+  src/webview/: 1
+  workspace.yml: 1
+
+theme_allowed:
+  # The only files that may name the theme for good: the Jekyll-theme option's
+  # own (PLAN P2: the option, its tests and its jekyll-4 server's image) and this gate.
+  - tools/jekyll_theme.py
+  - tools/tests/test_jekyll_theme.py
+  - tools/jekyll/Dockerfile
+  - tools/check_absorption.py
+  - tools/tests/test_check_absorption.py
+
+ruby_fixtures:
+  # The extension detects a Jekyll site by its Gemfile (src/core/platform/detect.ts);
+  # this two-line file is that evidence in src/test/platform.test.ts.
+  - src/test/fixtures/sites/jekyll-zer0-mistakes/Gemfile
+
+platform:
+  # ── Content model and authoring ─────────────────────────────────────────────
+  - id: content.types
+    what: Page types, fields and StreamField blocks, per-type default field values, and the exported agent block schema.
+    # P4: every type and the creatable ones under a parent (api), each type's editable fields as specs the studio renders.
+    surfaces: {api: partial, studio: partial, mcp: partial}
+  - id: content.list
+    what: Browse and filter pages across sites — tree, lists, and a filter language (status, collection, site, kind, tag, category, author, errors).
+    # P4: any status across sites, filtered by site, parent (the tree), type, status and text; tag/category/author/errors filters to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
+  - id: content.create
+    what: Create a page or a draft from a type in a site and section, or duplicate one as a draft.
+    # P4: create as a draft from a type the parent allows; duplicate to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
+  - id: content.edit
+    what: A block editor with a Markdown round trip, front matter and fields, autosave, and a stale-write guard.
+    # P4: blocks (TipTap with the Markdown round trip; rich text keeps its internal links), typed fields, save as a draft with a required stale-write guard (409) under the page row's lock; autosave and raw front matter to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
+  - id: content.seo
+    what: SEO and social fields (title, description, keywords, canonical, Open Graph, noindex) with insights and agent proposals for a page.
+    # P4: title tag, description (with lengths shown), keywords, summary; canonical, Open Graph and noindex to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
+  - id: content.preview
+    what: Live preview of a draft in the site's own design, including the exact exported document and file name.
+    # P4: the latest revision rendered by the platform (preview_url); the site's own design and the exported document to come.
+    surfaces: {api: partial, studio: partial, extension: partial}
+  - id: content.revisions
+    what: Revisions with diff, compare and revert.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/api/test_pages.py::test_revisions_compare_and_revert_as_a_new_draft
+      studio: web/packages/ui/test/editor.test.tsx
+  - id: content.workflow
+    what: Editorial workflows with moderation states, tasks and assignments, and the governed publish path (draft → brand guard → approval → publish).
+    surfaces: {api: missing, studio: missing, extension: partial}
+  - id: content.publish
+    what: Publish and unpublish now or on a schedule.
+    # P4: publish now, unpublish now, a go-live time and an expiry (each carried out by beat, one page per transaction); the studio's editor offers all four.
+    surfaces: {api: done, studio: done, extension: partial, mcp: partial}
+    proof:
+      api: content/tests/api/test_pages.py::test_publish_and_unpublish_now_or_on_a_schedule
+      studio: web/packages/ui/test/editor.test.tsx
+  - id: content.collaboration
+    what: Comments, mentions and page locking.
+    # P4: Wagtail's locks hold in every writer (409 resource.locked) and the editor shows a locked page read-only, saying why; locking and unlocking, comments and mentions to come.
+    surfaces: {api: partial, studio: partial, extension: missing}
+  - id: content.localization
+    what: Locales, per-locale trees and a translation workflow.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.taxonomy
+    what: Tags, categories, series, authors and entities, managed and assigned.
+    # P4: tags, categories and authors assigned in the editor; managing them to come.
+    surfaces: {api: partial, studio: partial, extension: partial}
+  - id: content.search
+    what: Full-text search with filters, semantic search, and search promotions.
+    surfaces: {api: partial, studio: missing, extension: partial, mcp: partial, site: missing}
+  - id: content.redirects
+    what: A redirect manager, and redirects from every imported page's legacy path.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.forms
+    what: A form builder and its submissions.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.navigation
+    what: Menus, footers (including powered-by links) and reusable snippets per site.
+    surfaces: {api: missing, studio: missing, site: missing}
+  - id: content.bulk
+    what: Bulk actions, and import/export of content and configuration as CSV, JSON or YAML.
+    surfaces: {api: missing, studio: missing, ops: missing}
+  - id: content.import
+    what: Importers (Jekyll and Obsidian sites, parodynews, books, WordPress) that are idempotent and round-trip byte for byte.
+    # G9: import_books (idempotent; never over a platform change, never publishing over a draft, never bringing back a
+    # page deleted here; round trip proven on packages/books/library); WordPress to come.
+    surfaces: {ops: partial}
+  - id: content.export
+    what: Every site and book also exists as a generated file tree (a site's source, a book's library/<slug>/) — exported byte-stably, committed by a job, re-importable; a hand edit to it comes back as a suggestion.
+    # G9, books' half: export_books byte-stable and re-importable, and a hand edit is never lost or silently
+    # overwritten — the export keeps it as a conflict (content/tests/books/test_files.py); not yet committed by a job
+    # (G4's jobs), and a hand edit updates its page (or is a conflict) rather than arriving as a suggestion. Sites'
+    # trees are G4.
+    surfaces: {api: missing, studio: missing, ops: partial}
+  - id: content.repurpose
+    what: Turn one piece into others — an article into a newsletter item, a social thread, a summary, a landing page.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+
+  # ── Ideas and research (TARGET.md § Ideas and research) ─────────────────────
+  - id: ideas.board
+    what: Capture ideas on boards — tags, status, votes, links to sources — and promote one to a brief, an article or a book.
+    # G14: content/ideas (/api/v2/ideas/) and the studio's Ideas workspace — boards made and shared with a site's editors or everyone (only the owner changes who sees one), votes by anyone who sees an idea, the drawer's edits and links; capture also from the editor's Research tab. The extension (G10) and agent tools to come.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/ideas/test_api.py::test_ideas_live_on_boards_or_in_the_inbox_and_are_scoped_and_voted_on
+      studio: web/packages/ui/test/ideas.test.tsx
+  - id: ideas.brainstorm
+    what: AI brainstorming — angles, headlines, outlines — whose results become ideas; ideas clustered and de-duplicated by meaning.
+    # G14: a brainstorm is an AI-layer conversation with the bundled Brainstormer; a person keeps the ideas; clusters and duplicates come from stored vectors (graph.Embedding).
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ideas/test_api.py::test_capture_from_anywhere_and_a_brainstorm_kept_by_a_person
+      studio: web/packages/ui/test/ideas.test.tsx
+  - id: research.sources
+    what: A sources library — web pages, feeds, documents and notes with extracted text, metadata, summaries and entities — with quotes, citations and collections.
+    # G14: content/research (/api/v2/research/) and the studio's Research workspace and source page; collections and sources shared from the studio (only the owner changes who sees one).
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/research/test_api.py::test_quotes_and_citations_follow_their_source_and_what_cites_it
+      studio: web/packages/ui/test/research.test.tsx
+  - id: research.capture
+    what: Capture by URL, bookmarklet, feed subscription (RSS, Atom, wires) on a schedule, upload, or a web search through a provider's tool.
+    # G14: URL capture in a worker behind an SSRF guard (robots.txt honoured, the whole exchange under one deadline, on the research queue), RSS and Atom feeds on Celery beat, PDF/text/Markdown uploads, web search through a provider that declares `search` (anthropic), the studio's bookmarklet. Partial: wire feeds (NewsML-G2, ninjs) are not read yet — feedparser reads RSS and Atom only.
+    surfaces: {api: partial, studio: partial, extension: missing}
+    proof:
+      api: content/tests/research/test_services.py::test_a_captured_page_is_fetched_by_a_worker_extracted_and_embedded
+      studio: web/packages/ui/test/research.test.tsx
+  - id: research.synthesize
+    what: Ask questions across a collection with cited answers, extract facts and quotes, and fact-check a draft's claims against its sources.
+    # G14: cited answers (quotes checked against the source), summaries with entities and suggested quotes, fact-checks that read the draft's citations first and whose exact corrections are proposed through the tool registry as one suggestion per block.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/research/test_api.py::test_a_fact_check_of_a_draft_lists_findings_and_the_suggestions_they_became
+      studio: web/packages/ui/test/research.test.tsx
+
+  # ── The newsroom (TARGET.md § The newsroom) ─────────────────────────────────
+  - id: news.desk
+    what: Desks and sections, the story budget, the editorial calendar, assignments and deadlines.
+    # G15: desks (site, section, editors, copy editors, writer), the budget and the calendar as the story list's
+    # filters, assignments with their history; the studio's board, calendar and assignments. Setting a desk up is
+    # the API's (a Django permission) and the seed's until the Admin area (G3): the studio picks a desk, it does
+    # not make one.
+    surfaces: {api: done, studio: partial}
+    proof: {api: content/tests/newsroom/test_api.py::test_a_pitch_from_a_wire_item_and_the_budget_and_calendar_as_filters}
+  - id: news.workflow
+    what: The newsroom workflow (pitch → assigned → drafting → editing → copy → scheduled → published → updated or corrected), embargoes, a breaking-news fast path.
+    # G15: editing and copy are Wagtail's workflow (newsroom.StageTask); publishing only through cms.services,
+    # and every other publish path (Write, the Wagtail admin, an agent's tool, the scheduled publish) refused for a
+    # story still being made or under embargo; the board's drag and menu (a confirmation before anything goes live),
+    # the panel's moves. The extension's move-a-stage comes with G10.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/newsroom/test_workflow.py
+      studio: web/packages/ui/test/newsroom.test.tsx
+  - id: news.fronts
+    what: Home and section fronts — featured, pinned and related stories, curated by hand or by rule.
+    # G15: ordered slots, pinned or filled by "the latest of a desk" (content/tests/newsroom/test_fronts_and_newsletters.py,
+    # web/packages/ui/test/newsroom.test.tsx); "related" and "most read" rules are to come (the graph's related
+    # query, analytics in G12), and the renderer shows fronts in P6.
+    surfaces: {api: partial, studio: partial, site: missing}
+  - id: news.corrections
+    what: A corrections and updates log on a published story, shown on the story.
+    # G15: a note on the page's log that publishes nothing else (content/tests/newsroom/test_workflow.py). Site
+    # partial — the page API carries `corrections` and export_jekyll writes them into the front matter
+    # (content/tests/newsroom/test_export.py); showing them is the renderer's (P6) or the Jekyll-theme option's (P2).
+    # The extension's add-a-correction comes with G10.
+    surfaces: {api: done, studio: done, extension: missing, site: partial}
+    proof:
+      api: content/tests/newsroom/test_api.py::test_bylines_and_corrections_are_in_the_page_api
+      studio: web/packages/ui/test/newsroom.test.tsx
+  - id: news.newsletters
+    what: Newsletters assembled from stories and sent by email, with subscribers.
+    # G15: double opt-in subscriptions (emailed links open a page that changes nothing on GET), issues from published
+    # stories, the preview as sent, a send job through django-anymail (locmem in tests) that mails each subscriber
+    # once and resumes a failed or stalled send for the rest.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/newsroom/test_fronts_and_newsletters.py
+      studio: web/packages/ui/test/newsroom.test.tsx
+  - id: news.bylines
+    what: Bylines, author pages and contributor profiles.
+    # G15: site partial — `bylines` in the page API and `authors` in the export (content/tests/newsroom/test_export.py).
+    surfaces: {api: done, studio: done, site: partial}
+    proof:
+      api: content/tests/newsroom/test_api.py::test_an_author_page_lists_the_authors_published_stories
+      studio: web/packages/ui/test/newsroom.test.tsx
+
+  # ── Pipelines and workflows (TARGET.md § Pipelines and workflows) ───────────
+  - id: workflows.automations
+    what: Automations — a trigger (event, schedule, webhook, new source item, monitor finding), conditions and actions (run a pipeline or an agent, create a brief or an idea, notify, move a stage) — with a run history; new ones start paused.
+    surfaces: {api: missing, studio: missing}
+
+  # ── Media ───────────────────────────────────────────────────────────────────
+  - id: media.library
+    what: Images and documents in collections, with focal points, renditions and thumbnails.
+    surfaces: {api: partial, studio: missing, extension: missing}
+  - id: media.describe
+    what: AI alt text, captions and tags when an image is saved.
+    surfaces: {api: partial, studio: missing, mcp: partial}
+  - id: media.generate
+    what: Preview and social image generation for a site — providers, prompt engines, dry run, list missing, enhance, review, cost, a runs audit.
+    surfaces: {api: missing, studio: missing, extension: missing, ops: missing}
+  - id: media.forge
+    what: Compositions — direct, render, review, enhance.
+    surfaces: {api: missing, studio: missing}
+  - id: media.svg-studio
+    what: SVG generators with knobs and seed sweeps, sanitized, linted and rasterized.
+    surfaces: {api: missing, studio: missing}
+  - id: media.sourcing
+    what: A sourced image library (FreeSVG).
+    surfaces: {api: missing, studio: missing}
+
+  # ── The AI content layer (TARGET.md § The AI content layer) ─────────────────
+  - id: ai.providers
+    what: Provider adapters behind one registry, per-provider configuration with an encrypted credential, the default provider, and a health test.
+    # G8 screens: AI → Providers — status and health for everyone, configuration (the credential write-only, shown as set or not set), test, model sync and the default for those with ai.change_providerconfig (one check at a time); the default's status on Home; verify/scenarios/studio-ai-workspace.yml opens it in a browser.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_providers_are_listed_for_everyone_and_configured_by_staff_with_a_write_only_credential
+      studio: web/packages/ui/test/ai/providers.test.tsx
+  - id: ai.models
+    what: The model catalog, synced from each provider.
+    # G8 screens: AI → Models, filtered by provider, activity and name; a provider's "Sync models" fills it.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default
+      studio: web/packages/ui/test/ai/providers.test.tsx
+  - id: ai.assistants
+    what: User-managed assistants (persona, instructions, model, parameters, output schema), propose-only, run on demand.
+    # G8 screens: AI → Assistants — create, edit (the form read again from the saved row), try on a prompt (the run followed live), export and import; and the editor's AI panel runs one on the open page — the whole page, a block, or a selection placed by its field and occurrence — its answer landing as suggestions proposed through the registry (api: test_on_page.py).
+    surfaces: {api: done, studio: done, extension: missing, mcp: partial}
+    proof:
+      api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
+      studio: web/packages/ui/test/ai/assistants.test.tsx
+  - id: ai.pipelines
+    what: Ordered pipelines of assistants, each step reading the one before.
+    # G8 screens: AI → Pipelines — created from steps, reordered by dragging (pointer or keyboard, @dnd-kit) or the move buttons, each step's assistant and source; run and follow; also on a conversation and from the editor's AI panel; verify/scenarios/studio-ai-workspace.yml builds one and drags its steps from the keyboard in a browser.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_a_pipeline_is_written_with_its_steps_and_run
+      studio: web/packages/ui/test/ai/pipelines.test.tsx
+  - id: ai.schemas
+    what: The output-schema library (bundled schemas seeded), export and import, and schema-validated structured generation.
+    # G8 screens: AI → Output schemas — edited with feedback as typed and the platform's verdict on save, exported, imported, the bundled ones added by staff; an assistant's structured answer shown as its JSON; verify/scenarios/studio-ai-workspace.yml writes one in a browser.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled
+      studio: web/packages/ui/test/ai/schemas.test.tsx
+  - id: ai.briefs
+    what: A brief turns a prompt or a text into a structured draft with extracted metadata (title, slug, description, keywords, tags).
+    # G8 screens: Create → Briefs — write, generate (the run followed live), review the rendered Markdown, the metadata and the structured result, apply (the draft opens on its Suggestions tab); verify/scenarios/studio-ai-brief.yml in a browser.
+    surfaces: {api: done, studio: done, extension: missing, mcp: partial}
+    proof:
+      api: content/tests/ai/test_api.py::test_a_brief_is_generated_as_a_run_and_applied_as_a_draft_with_suggestions
+      studio: web/packages/ui/test/ai/briefs.test.tsx
+  - id: ai.conversations
+    what: Conversations — threads and messages replayed to any provider, run an assistant or a pipeline, assign, re-run, promote a message to a brief or a draft.
+    # G8 screens: AI → Conversations (and Create) — send and follow the reply's run, filter, ask again (or another assistant), run the pipeline, promote to a brief or a draft, delete; the newest messages first, earlier ones loaded on request; verify/scenarios/studio-ai-chat.yml in a browser.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one
+      studio: web/packages/ui/test/ai/conversations.test.tsx
+  - id: ai.agents
+    what: Tool-using agents — GitOps definitions, policies, runs with step timelines and cancel, agent tokens.
+    # P4: runs and a run's live step timeline in the studio; definitions, cancel and tokens to come.
+    surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
+  - id: ai.suggestions
+    what: Suggestions with diffs — accept, reject with a reason, accept all of a run.
+    # P4: one scope (Suggestion.objects.visible_to) on every surface; accepting all of a run accepts the ones the person was shown.
+    surfaces: {api: done, studio: done, extension: partial, mcp: partial}
+    proof:
+      api: content/tests/api/test_review.py
+      studio: web/packages/ui/test/review.test.tsx
+  - id: ai.evals
+    what: Eval suites over recorded fixtures that gate an agent's policy.
+    surfaces: {ops: partial}
+  - id: ai.usage
+    what: Tokens, cost and budgets per run, person, site and provider.
+    # P4: a run's tokens and cost on its timeline. G8: each reply's provider, model, tokens and cost in its conversation; a provider's monthly budget set in the studio. Rollups per person and site, and their budgets, to come (H2).
+    surfaces: {api: partial, studio: partial}
+  - id: ai.streaming
+    what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
+    # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource on gthread workers (it outlives gunicorn's worker timeout), and the studio's timeline follows it live — stopping at a final status, reopening after a pause, backing off from a broken stream. G8: every screen that starts a run (202) follows it the same way (useLiveRun) and reads its result when it ends, and every request that starts a run carries an Idempotency-Key made when the person acts (the API replays the first answer to a repeat); its control waits while the request is out and a double click asks once — conversations.test.tsx (keys, Ctrl+Enter sends once, a message's actions held), providers.test.tsx (one check per double click), briefs.test.tsx and aipanel.test.tsx.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
+      studio: web/packages/ui/test/ai/conversations.test.tsx
+
+  # ── Sites: manage, monitor, improve ─────────────────────────────────────────
+  - id: sites.registry
+    what: Register and discover sites; per-site settings, domains, design and skin, budgets.
+    # P4: the sites a person can work in, listed (api) and switched between (studio); registering and settings are G4.
+    surfaces: {api: partial, studio: partial, extension: partial}
+  - id: sites.sync
+    what: Sync a site's files with the platform — the exact Jekyll reader, line-level front-matter surgery, the confined writer, write-back with a stale-write guard.
+    surfaces: {api: missing, extension: partial, ops: partial}
+  - id: sites.jobs
+    what: Background jobs (sync, render, deploy, preview, doctor, reports) with live logs, artifacts and cancel.
+    surfaces: {api: missing, studio: missing}
+  - id: sites.render
+    what: The React site renderer, in the platform's own design system — layouts, skins, feeds, sitemap, robots, search index, redirects — reproducing each site's recorded build.
+    surfaces: {site: missing, ops: missing}
+  - id: sites.render-jekyll
+    what: The Jekyll-theme option — render a site with the zer0-mistakes theme and deploy it with a Jekyll server (GitHub Pages' builder or a pinned container), with nothing Ruby in this repository.
+    # P2: tools/jekyll_theme.py — a site's `render:` setting in workspace.yml, the export with the theme's tag pinned
+    # and an Obsidian vault resolved, GitHub Pages' builder or the jekyll-4 image (tools/jekyll/Dockerfile); pages.yml,
+    # sites.yml, drsai.yml and irony-works.yml build eight sites through it (ops). Choosing it per site and running the
+    # build as a job a person follows is G4's (api, studio).
+    surfaces: {api: missing, studio: missing, ops: done}
+    proof: {ops: tools/tests/test_jekyll_theme.py}
+  - id: sites.obsidian
+    what: Obsidian-flavoured content — wikilinks, embeds, callouts, Dataview queries, the graph index.
+    # P2: zer0-pages's plugins ported to Python for the Jekyll-theme option (tools/obsidian, tests in tools/tests);
+    # zer0-pages builds with its Ruby plugins until the two differences its option build shows are accepted (PLAN P2).
+    surfaces: {api: partial, site: missing, ops: partial}
+  - id: sites.deploy
+    what: Build, preview and deploy each site, with history.
+    surfaces: {api: missing, studio: missing, ops: partial}
+  - id: sites.doctor
+    what: Consistency checks over a site (theme, image engine, CMS, fleet and content rules) as findings.
+    surfaces: {api: missing, studio: missing, extension: partial, ops: missing}
+  - id: sites.monitor
+    what: Scheduled uptime, broken-link, performance and Core Web Vitals, accessibility and SEO checks, with history, trends and alerts.
+    surfaces: {api: missing, studio: missing, extension: missing, ops: missing}
+  - id: sites.analytics
+    what: Analytics ingest (GA4, Search Console, DataForSEO, product analytics) and content performance views.
+    surfaces: {api: missing, studio: missing}
+  - id: sites.evolve
+    what: The improvement loop — an editorial plan per site, agents proposing improvements from the signals, outcome measurement.
+    surfaces: {api: missing, studio: missing, mcp: missing}
+
+  # ── AIEO (TARGET.md § AIEO in the platform) ─────────────────────────────────
+  - id: aieo.scoring
+    what: The analyzers and the five-dimension citability score of a page or a text, with evidence.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: aieo.audits
+    what: Audits of a URL or a crawled site, and reports.
+    surfaces: {api: missing, studio: missing, mcp: missing, ops: missing}
+  - id: aieo.citations
+    what: Citation tracking — whether AI engines cite the site, on a schedule.
+    surfaces: {api: missing, studio: missing}
+  - id: aieo.optimize
+    what: Rewrite content to raise its score (score → gaps → AI rewrite) or scrub AI-writing tells, as a suggestion.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: aieo.patterns
+    what: The pattern library and applying a pattern as a rewrite proposal.
+    surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
+  - id: aieo.agents
+    what: The AIEO agents (SEO, meta, internal links, headlines, conversion and the rest) as agent definitions at suggest.
+    surfaces: {api: missing, studio: missing, mcp: missing}
+  - id: aieo.lifecycle
+    what: The AIEO content lifecycle — topics, research, drafts, rewrites, published pages, landing pages.
+    surfaces: {api: missing, studio: missing}
+  - id: aieo.connectors
+    what: GA4, Search Console and DataForSEO connections per site.
+    surfaces: {api: missing, studio: missing}
+
+  # ── Distribution ────────────────────────────────────────────────────────────
+  - id: distribution.channels
+    what: Channels — LinkedIn (OAuth, encrypted token), WordPress, GitHub pull request — connected per site.
+    surfaces: {api: missing, studio: missing}
+  - id: distribution.queue
+    what: Compose, brand guard, approve and publish to a channel, with the ledger keyed by canonical URL and readable errors.
+    surfaces: {api: missing, studio: missing, extension: partial, mcp: missing}
+  - id: distribution.stats
+    what: Statistics for published posts, ingested and reported.
+    surfaces: {api: missing, studio: missing}
+
+  # ── Books ───────────────────────────────────────────────────────────────────
+  - id: books.manage
+    what: Books in the database — parts and chapters, outline, characters, continuity notes, style guide, order and status, validation, statistics, compiled manuscripts — with library/<slug>/ as the generated file set.
+    # G9: BookPage/ChapterPage hold the library format; /api/v2/books/ and the studio's Books area (shelf, overview,
+    # chapters, a book's other files, findings, manuscript). Partial for parts: ADR 0006 decision 14 names parts
+    # between a book and its chapters, and today a book's parts are its acts (book.yml `acts`, a chapter's `act`, the
+    # manuscript's act headings) — open decision P-D8. The extension is G10; no MCP tool reads books yet.
+    surfaces: {api: partial, studio: partial, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/books/test_api.py::test_a_books_overview_issues_manuscript_and_context
+      studio: web/packages/ui/test/books.test.tsx
+  - id: books.create
+    what: Create a book with AI — premise → outline → chapter plan.
+    # G9: a premise is an ai.Brief the bundled outliner generates; the person accepts it and the book is made as a
+    # draft with a stub per planned chapter (studio: BookShelf's "From a premise").
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/books/test_api.py::test_a_book_from_a_premise_over_the_api
+      studio: web/packages/ui/test/books.test.tsx
+  - id: books.write
+    what: Write with AI — draft, continue, rewrite or expand a chapter in the book's voice, and check continuity and consistency — every result a suggestion.
+    # G9: runs of the `books` agent (draft, continue, revise to an instruction, continuity check, critique) with the
+    # book's context; writing arrives as suggestions on the chapter (studio: ChapterWriter's book assistant). No
+    # MCP tool starts a book task yet.
+    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    proof:
+      api: content/tests/books/test_ai.py::test_draft_replaces_the_chapters_prose_with_a_suggestion_a_person_accepts
+      studio: web/packages/ui/test/books.test.tsx
+  - id: books.abc
+    what: The ABC book wizard — themes, lexicons, art styles, letters, export into a site.
+    surfaces: {api: missing, studio: missing}
+
+  # ── Platform and operations ─────────────────────────────────────────────────
+  - id: platform.accounts
+    what: Email sign-up with verification, login by code, password reset, OIDC SSO, GitHub login, MFA (TOTP, passkeys, recovery codes), the session list.
+    # P4: sign-in with a username and password over a session with CSRF (api/session.py, studio/src/auth.tsx); everything else is G3's allauth.
+    surfaces: {api: partial, studio: partial, extension: missing}
+  - id: platform.tokens
+    what: Personal API tokens and agent tokens, issued and revoked.
+    surfaces: {api: partial, studio: missing, extension: missing}
+  - id: platform.permissions
+    what: Roles, groups, per-site permissions, and per-person ownership and sharing.
+    surfaces: {api: partial, studio: missing}
+  - id: platform.audit
+    what: An audit log of who did what, people and agents alike.
+    surfaces: {api: missing, studio: missing}
+  - id: platform.events
+    what: Outbox events with versioned schemas, and webhooks.
+    surfaces: {api: partial, ops: partial}
+  - id: platform.api
+    what: REST, GraphQL and MCP over one tool registry, committed schemas, and the client generated from them.
+    surfaces: {api: partial, mcp: partial, ops: partial}
+  - id: platform.notifications
+    what: Email (with a provider such as SES) and in-app notifications.
+    surfaces: {api: missing, studio: missing}
+  - id: platform.feedback
+    what: Report an issue or give page feedback into GitHub issue templates.
+    surfaces: {studio: missing, site: missing}
+  - id: platform.install
+    what: First-run setup — the install wizard, ensure-admin, demo seed, operator commands.
+    # P4: manage.py seed_demo; the wizard and ensure-admin to come.
+    surfaces: {studio: missing, ops: partial}
+  - id: platform.ops
+    what: Liveness, readiness and version probes, request ids, the error envelope, JSON logs with redaction, throttles, CORS, security headers.
+    surfaces: {ops: done}
+    proof: {ops: content/tests/ops/test_health.py}
+  - id: platform.observability
+    what: Error reporting (Sentry, GitHub issues), metrics and traces.
+    surfaces: {ops: partial}
+  - id: platform.deploy
+    what: Release images, a production compose file, a Helm chart, secrets from the environment or a secret store, backups.
+    surfaces: {ops: missing}
+  - id: platform.docs
+    what: User, developer and API documentation, generated where it can be.
+    surfaces: {ops: partial}
+  - id: platform.workspace
+    what: The repository's workspace tool — list, info, run, affected, matrix, routes, check, vendor, doctor, tags — in Python.
+    # partial: every command is Python and tested (tools/workspace/tests/), but the doctor
+    # `bin/zer0 doctor` runs is still rails/bin/zer0-cms (Ruby); G4 makes it done.
+    surfaces: {ops: partial}
+
+  - id: platform.shared-ui
+    what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
+    # P4: the studio renders @zer0/ui's workspaces through the host contract (StudioProvider), and ESLint keeps routers, transports and page globals out of them; the extension's half is G10.
+    surfaces: {studio: done, extension: missing}
+    proof:
+      studio: web/studio/test/app.test.tsx
+
+  # ── The extension's own (file mode) ─────────────────────────────────────────
+  - id: extension.file-mode
+    what: The extension on a site's files with no server — front matter as controls, the dashboard, SEO insights, the governed publishing path and its ledger, the MCP server.
+    surfaces: {extension: done}
+    proof: {extension: src/test/core.test.ts}
+  - id: extension.fleet-console
+    what: The fleet console — lanes, kill switches, dispatch and runs across the owner's repositories.
+    surfaces: {extension: done}
+    proof: {extension: src/test/fleet.test.ts}
+
+sources:
+  - id: parodynews
+    path: apps/parodynews
+    summary: barodybroject — a Django + DRF + React app that generates (parody) news with AI assistants, runs them as pipelines over chat threads, and publishes posts as GitHub pull requests to a Jekyll sidecar site.
+    content: The database (posts, front matter, versions, assistants, groups, schemas, content details and items, threads, messages, provider and model rows — dumped with dumpdata); the bundled schemas and prompt in parodynews/schema/; the sidecar site's 59 posts and its pages in src/pages/.
+    capabilities:
+    # G8 (2026-10-22): a capability is done when a person can use it from its workspace (ADR 0006 decision 15).
+    # Done here: what is not a workspace's — the provider registry (a setting), the import (an operator's
+    # command), ownership (a rule on every surface). The rows a person works with are partial until the studio
+    # (P4, G10); `note` names the test that proves the platform's half (the API).
+      - {id: parodynews.providers, what: "Four providers (Claude Code over OAuth, Anthropic, OpenAI, mock), pluggable by setting.", target: ai.providers, status: done, proof: content/tests/ai/test_providers.py::test_the_registry_has_six_adapters_and_takes_more_from_settings}
+      - {id: parodynews.provider-config, what: "Staff set each provider's key, base URL, organization, project, default model and extras in the UI, enable it and pick the default; the database overrides the environment.", target: ai.providers, status: done, proof: web/packages/ui/test/ai/providers.test.tsx, note: "API: content/tests/ai/test_api.py::test_a_providers_configuration_is_validated_and_shown_only_to_those_who_configure_it; studio: AI → Providers → Configure (G8)"}
+      - {id: parodynews.provider-test, what: "Send a test prompt to a provider.", target: ai.providers, status: done, proof: web/packages/ui/test/ai/providers.test.tsx, note: "API: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default; studio: AI → Providers → Test, the check followed as a run (G8)"}
+      - {id: parodynews.model-sync, what: "List a vendor's models live and sync them into the catalog (UI, admin action, sync_models).", target: ai.models, status: done, proof: web/packages/ui/test/ai/providers.test.tsx, note: "API and manage.py sync_ai_models: content/tests/ai/test_api.py::test_staff_test_a_provider_sync_its_models_and_set_the_default, content/tests/ai/test_services.py::test_the_catalog_syncs_from_the_command_line; studio: AI → Providers → Sync models, and AI → Models (G8)"}
+      - {id: parodynews.structured-output, what: "Generation enforces an assistant's JSON Schema (parse and validate).", target: ai.schemas, status: done, proof: web/packages/ui/test/ai/assistants.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_structured_answer_is_validated_and_rendered_or_the_run_fails; studio: an assistant given an output schema, its answer shown as the validated JSON and the Markdown rendered from it (G8)"}
+      - {id: parodynews.assistants, what: "Create and edit assistants — instructions, prompt, model, temperature, top_p, JSON schema — with import/export.", target: ai.assistants, status: done, proof: web/packages/ui/test/ai/assistants.test.tsx, note: "API: content/tests/ai/test_api.py::test_an_assistant_exports_as_a_document_and_imports_as_a_new_private_one; studio: AI → Assistants — create, edit, export, import (G8)"}
+      - {id: parodynews.assistant-groups, what: "Ordered groups of assistants that run in sequence, each seeing the earlier output.", target: ai.pipelines, status: done, proof: web/packages/ui/test/ai/pipelines.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_pipeline_is_a_parent_run_with_a_child_run_per_step_each_fed_the_last; studio: AI → Pipelines, built by dragging and run (G8)"}
+      - {id: parodynews.schema-library, what: "Create, edit, export and import JSON schemas; one-click import of the bundled parody-article, news-article and content-detail schemas and the parody prompt.", target: ai.schemas, status: done, proof: web/packages/ui/test/ai/schemas.test.tsx, note: "API: content/tests/ai/test_api.py::test_output_schemas_are_validated_edited_exported_imported_and_bundled; studio: AI → Output schemas — edit, export, import, and staff add the bundled schemas with the parody writer (G8)"}
+      - {id: parodynews.generate-article, what: "From a prompt and an assistant, generate an article as structured JSON rendered to Markdown (headline, intro, body, conclusion).", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/briefs.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata; studio: Create → Briefs, generated and reviewed (G8); verify/scenarios/studio-ai-brief.yml; also from the Newsroom's AI draft with a desk's writer (G15, content/tests/newsroom/test_ai_and_seed.py)"}
+      - {id: parodynews.extract-metadata, what: "A second call fills title, author, description, slug, keywords and tags.", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/briefs.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_generates_a_validated_result_its_markdown_and_its_metadata; studio: the brief review shows the metadata the second call extracted (G8)"}
+      - {id: parodynews.content-from-text, what: "Turn any message text into a content record with AI metadata.", target: ai.briefs, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_brief_from_a_pipeline_and_a_brief_from_text; studio: a message promoted to a draft, and a brief written as 'Use my text as it is' (G8)"}
+      - {id: parodynews.threads, what: "Threads from content or by hand; add messages; run an assistant on the thread with the full history replayed.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_message_queues_a_reply_and_the_whole_conversation_is_replayed; studio: AI or Create → Conversations, started by hand or from a brief ('Talk it over'), each reply followed live (G8); verify/scenarios/studio-ai-chat.yml"}
+      - {id: parodynews.run-group, what: "Run a whole assistant group on a thread in one action.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_services.py::test_a_pipeline_on_a_conversation_reads_the_prompt_it_was_given; studio: 'Run the pipeline' in a conversation (G8)"}
+      - {id: parodynews.messages, what: "List and filter messages, assign an assistant, re-run, delete; failures recorded with the error; usage, provider and model per message.", target: ai.conversations, status: partial, note: "API done (content/tests/ai/test_api.py::test_a_conversation_starts_from_a_brief_and_its_messages_filter_and_delete, content/tests/ai/test_services.py::test_a_failed_reply_records_its_error_and_is_left_out_of_the_replay). Studio (G8, web/packages/ui/test/ai/conversations.test.tsx): within one thread — filtered by side or failure, ask again or another assistant, delete; each reply's error, provider, model, tokens and cost. Open: barodybroject's Messages screen lists every message across threads with per-message assignment — the studio has no cross-conversation list (the API has none either: messages are read per conversation) and never assigns (PATCH messages/<id>/ assistant)"}
+      - {id: parodynews.message-to-post, what: "Promote a message to a draft post with AI-generated front matter.", target: ai.conversations, status: done, proof: web/packages/ui/test/ai/conversations.test.tsx, note: "API: content/tests/ai/test_api.py::test_a_conversation_takes_messages_lists_them_by_cursor_and_promotes_one; studio: a message promoted to a draft opens as a brief to apply (G8)"}
+      - {id: parodynews.post-editing, what: "Edit a post's Markdown body (with a rendered preview), front matter and status.", target: content.edit, status: partial}
+      - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
+      - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
+      - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: missing}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and choosing its renderer and following its build from the studio are G4's"}
+      - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: done, proof: content/tests/importers/test_parodynews.py}
+      - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: missing}
+      - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: missing}
+      - {id: parodynews.mfa, what: "TOTP, WebAuthn passkeys (passkey login and sign-up) and recovery codes.", target: platform.accounts, status: missing}
+      - {id: parodynews.sessions, what: "List and end one's other sessions.", target: platform.accounts, status: missing}
+      - {id: parodynews.ownership, what: "People see their own rows and shared ones; staff see all.", target: platform.permissions, status: done, proof: content/tests/ai/test_models.py::test_visible_to_is_the_one_scope}
+      - {id: parodynews.install-wizard, what: "First-run setup on the web or the CLI (headless with an expiring token), admin creation, status and health, the redirect until installed.", target: platform.install, status: missing}
+      - {id: parodynews.ops-commands, what: "ensure_admin, ensure_e2e_user, reset_db, refreshmigrations.", target: platform.install, status: partial}
+      - {id: parodynews.admin-import-export, what: "A back office for every model, with import/export of assistants, models, schemas and posts and a sync-from-provider action.", target: content.bulk, status: partial, note: "G8: the studio exports and imports assistants and output schemas as documents and syncs a provider's models; posts and the models' rows as documents, and a back office for every model, to come (content.bulk)"}
+      - {id: parodynews.error-issues, what: "Unhandled exceptions filed as deduplicated, rate-limited, redacted GitHub issues (off by default; refuses public repositories unless allowed).", target: platform.observability, status: partial}
+      - {id: parodynews.report-issue, what: "A navigation link to the repository's GitHub issue templates.", target: platform.feedback, status: missing}
+      - {id: parodynews.powered-by, what: "Admin-managed powered-by links in the footer.", target: content.navigation, status: missing}
+      - {id: parodynews.email, what: "Email through AWS SES in production, the console in development, optional DKIM signing.", target: platform.notifications, status: partial, note: "G15: EMAIL_BACKEND through django-anymail (its Amazon SES backend among others, configured by ANYMAIL_* variables), Django's SMTP backend when unset and the console in development (content/config/settings/), used by the newsroom's newsletters (content/tests/newsroom/test_fronts_and_newsletters.py, locmem); DKIM is the ESP's, and email to people about their work is platform.notifications'"}
+      - {id: parodynews.secrets, what: "Production settings read from AWS Secrets Manager.", target: platform.deploy, status: missing}
+      - {id: parodynews.telemetry, what: "Azure Monitor OpenTelemetry, rotating file logs, mail to admins on errors.", target: platform.observability, status: partial}
+      - {id: parodynews.docs-site, what: "User, developer and API docs built with Sphinx and served from a container.", target: platform.docs, status: partial}
+      - {id: parodynews.posthog, what: "An optional self-hosted PostHog stack (not wired into the app).", target: sites.analytics, status: missing}
+      - {id: parodynews.field-defaults, what: "Stored default field values per model.", target: content.types, status: missing}
+      - {id: parodynews.cloud-deploy, what: "Azure deployment (azd, Bicep: Container Apps, Postgres, Key Vault, registry, monitoring).", target: platform.deploy, status: missing}
+      - {id: parodynews.newsroom, what: "Run a news site — posts move draft → review → published → archived, generated by assistant pipelines and published to the site.", target: news.workflow, status: partial, note: "G15: generate → review → publish runs as the Parody desk (manage.py seed_parody_desk; its writer barodybroject's parody writer and schema; a story's AI draft → editing → copy → published, from the studio's Newsroom — content/tests/newsroom/test_ai_and_seed.py::test_parodynews_runs_as_a_newsroom_with_a_parody_desk). Open: 'archived' has no newsroom status (the page is taken down in Write, and its story still reads published), and the sidecar site is P2's"}
+      - {id: parodynews.spa, what: "The React SPA — home with provider status, content, threads, messages, posts, assistants, groups, schemas, settings — in light and dark.", target: ai.conversations, status: partial, note: "The studio (web/, web/studio/test/ai.test.tsx): Home with the providers' status, Create and AI → Conversations (threads and their messages), AI → Assistants, Pipelines (groups), Output schemas, Providers and Models (settings), light and dark from the platform's tokens (P4, G8). Open, with their own rows: the posts screens — a post's Markdown with its rendered preview, its versions, publishing as a pull request (parodynews.post-editing, render-preview, post-versions, publish-pr) — and the cross-thread messages list (parodynews.messages)"}
+
+  - id: rails-app
+    path: rails/app
+    summary: The Rails 8.1 + Administrate fleet CMS — a SQLite index over every registered Jekyll site, edits written back to the files.
+    content: None of its own — git holds the content and SQLite is an index (D16); its LinkedIn channel rows and tokens move with distribution (tokens re-entered).
+    capabilities:
+      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: partial}
+      - {id: rails.page-search, what: "Search and filter pages with a filter language (draft:, live:, future:, error:, collection:, site:, kind:, tag:, category:, author:).", target: content.list, status: partial}
+      - {id: rails.page-edit, what: "Edit front matter and body in the file with the digest stale-write guard, key-level surgery, an atomic write and a re-sync.", target: sites.sync, status: partial}
+      - {id: rails.page-create, what: "Create, duplicate as draft and delete pages, confined by realpath with symlinks refused.", target: content.create, status: partial}
+      - {id: rails.assets-terms, what: "Browse images and terms, with a thumbnail server.", target: media.library, status: partial}
+      - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: partial}
+      - {id: rails.missing-previews, what: "List pages missing a preview image and draw one with a provider.", target: media.generate, status: missing}
+      - {id: rails.abc-wizard-ui, what: "The ABC book wizard — new, preview, export into drsai.", target: books.abc, status: partial}
+      - {id: rails.distribution-queue, what: "The LinkedIn queue — approve, publish, statistics.", target: distribution.queue, status: missing}
+      - {id: rails.channels, what: "Connect a LinkedIn channel over OAuth with an encrypted token.", target: distribution.channels, status: missing}
+      - {id: rails.access-guard, what: "Loopback or password access, a Host allow-list, a per-request CSP nonce.", target: platform.ops, status: partial}
+
+  - id: rails-lib
+    path: rails/lib
+    summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator, the LinkedIn distribution lane.
+    content: The ABC lexicons (lib/zer0_cms/abc/lexicons/*.yml — content/agents/data vendors one), art styles, schema/abc-book.schema.json, and the parity fixtures rails/test/fixtures/jekyll-site{,-src} with their expected lists (move to content/tests/fixtures before rails/ goes).
+    capabilities:
+      - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: partial}
+      - {id: rails.front-matter, what: "Parse front matter and update keys by line surgery, keeping comments, quoting, BOM and line endings.", target: sites.sync, status: partial}
+      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: partial}
+      - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: missing}
+      - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: partial}
+      - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: missing}
+      - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: missing}
+      - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: partial}
+      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: partial}
+
+  - id: workspace-tool
+    path: tools/workspace
+    summary: bin/zer0 and its library — the monorepo workspace tool that reads workspace.yml. Python since P5, proven against recordings of the Ruby original (tools/workspace/tests/golden/), which is deleted.
+    content: None; workspace.yml stays.
+    capabilities:
+      - {id: workspace.list, what: "list and info — every project, its path, kind, what it publishes and what gates it.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::FrozenTreeTest}
+      - {id: workspace.run, what: "run setup|check|test|build|pages for one, the affected or all projects, with dry run and keep-going.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::RunnerTest}
+      - {id: workspace.affected, what: "affected and matrix — the projects a change touches, as text or the CI matrix.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::AffectedTest}
+      - {id: workspace.routes, what: "routes — each site's Pages route, for the one Pages deploy.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::ScenarioTest}
+      - {id: workspace.check, what: "check — registration, paths, workflow path filters, routes and vendored-copy drift.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_real_manifest.py::RealManifestTest}
+      - {id: workspace.vendor, what: "vendor — re-sync vendored copies from their source.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::ChecksTest::test_vendored_drift_is_a_finding_and_vendor_write_repairs_it}
+      # partial: `bin/zer0 doctor` is Python and tested, but the doctor it runs is still
+      # rails/bin/zer0-cms (Ruby) until G4 ports it to the platform (sites.doctor).
+      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: partial}
+      - {id: workspace.tags, what: "tags — this repository's release tags against those inherited from the Front Matter fork.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::TagsTest}
+
+  - id: zer0-image-generator
+    path: packages/zer0-image-generator
+    summary: AI preview and social images and SVG art for sites — a Python engine and toolkit, its byte-identical Ruby port and gem, and a Rails web panel. Rewritten in Python and TypeScript (ADR 0006 decision 11).
+    content: tools/svg/library/** (MANIFEST.json, 42 external SVGs with LICENSES.md, 6 style cards — provenance and licenses kept); abc/art_styles.yml; fonts/* (Inter, Press Start 2P, OFL licenses); svg/{plan,critique}.schema.json; docs/samples/*.svg and docs/showcase/**; test/fixture-site/ (the G6 gate); zer0-tokens.css; runtime data outside git — the panel's SQLite volume (sites, runs and logs, artifacts, compositions, studio renders, library entries, credentials re-encrypted on import) and the forge volume.
+    capabilities:
+      # From the 2026-10-21 code inventory. [Ruby] rows are rewritten, not ported.
+      - {id: imagegen.engine-cli, what: "Generate previews for a site from the command line — dry run, file, collection, force, list missing, parallel workers.", target: media.generate, status: partial}
+      - {id: imagegen.engine-config, what: "Configuration precedence — author overrides, CLI, environment, the site's preview_images block, defaults.", target: media.generate, status: partial}
+      - {id: imagegen.front-matter, what: "Find content lacking a preview and write the preview key surgically.", target: media.generate, status: partial}
+      - {id: imagegen.provider-raster, what: "Raster renderers — OpenAI, xAI, Stability, Gemini.", target: media.generate, status: partial}
+      - {id: imagegen.provider-svg, what: "SVG renderers — deterministic per-article banners in several compositions.", target: media.generate, status: partial}
+      - {id: imagegen.prompt-engines, what: "Art direction by Claude or Grok writing the renderer's brief, falling back to a template.", target: media.generate, status: partial}
+      - {id: imagegen.review-engine, what: "Vision review of a render with one refined regeneration.", target: media.generate, status: partial}
+      - {id: imagegen.enhance, what: "Enhance existing previews with OpenAI image edits.", target: media.generate, status: partial}
+      - {id: imagegen.illustration-loop, what: "The Claude illustration loop — plan, author, shape, look, critique, edit — with style cards and palettes.", target: media.generate, status: partial}
+      - {id: imagegen.svg-toolkit, what: "SVG sanitizer, strict lint, text-to-paths with bundled fonts, precision rounding, rasterizers, inspect and shape.", target: media.svg-studio, status: partial}
+      - {id: imagegen.svg-generators, what: "Parametric generators — banner, flowfield, L-system, low-poly, mandala, starmap, invaders, pixel quest — and a pixel-art kit.", target: media.svg-studio, status: partial}
+      - {id: imagegen.svg-authoring-loop, what: "The render-and-look development loop — check, render, sweep contact sheets, an editor hook.", target: media.svg-studio, status: partial}
+      - {id: imagegen.freesvg, what: "FreeSVG.org search, fetch and promote into the library, with a tiered cache.", target: media.sourcing, status: partial}
+      - {id: imagegen.svg-library, what: "The curated SVG library — 55 entries with source, license, tags and lint.", target: media.sourcing, status: partial}
+      - {id: imagegen.xai-oauth, what: "The xAI credential ladder — a Grok OAuth token with refresh, then the API key.", target: ai.providers, status: partial}
+      - {id: imagegen.panel-dashboard, what: "[Ruby] The panel's dashboard — sites, runs, compositions, studio and library counts, favorites, configured credentials.", target: media.generate, status: missing}
+      - {id: imagegen.sites, what: "[Ruby] Register, edit, remove and bulk-import sites; rescan; per-site overview, content, config and runs.", target: media.generate, status: missing}
+      - {id: imagegen.site-scan, what: "[Ruby] Every content file per collection with its preview status, and single-file generation.", target: media.generate, status: missing}
+      - {id: imagegen.site-config-editor, what: "[Ruby] A form editor for a site's preview_images settings.", target: media.generate, status: missing}
+      - {id: imagegen.runs, what: "[Ruby] Generate, dry-run, list-missing and enhance runs with a live log, cancel, statistics and status.", target: media.generate, status: missing}
+      - {id: imagegen.runs-audit, what: "[Ruby] A cross-site audit trail of every run, filterable by kind and status.", target: media.generate, status: missing}
+      - {id: imagegen.forge, what: "[Ruby] The image forge — compositions with art direction, review and versions; enhance and favorite a version.", target: media.forge, status: missing}
+      - {id: imagegen.svg-studio, what: "[Ruby] The SVG studio — knob forms for eight generators with live preview and lint, saved recipes, seed sweeps as contact sheets.", target: media.svg-studio, status: missing}
+      - {id: imagegen.library-panel, what: "[Ruby] Browse the library with search, tags, provenance, license and lint; promote from FreeSVG.", target: media.sourcing, status: missing}
+      - {id: imagegen.credentials, what: "[Ruby] An encrypted per-provider credential vault with masked display.", target: ai.providers, status: missing}
+      - {id: imagegen.file-serving, what: "[Ruby] Serve generated images only from allow-listed roots.", target: media.library, status: missing}
+      - {id: imagegen.abc-art-styles, what: "[Ruby] The ABC art-style catalog — one text-free raster prompt per letter for a style.", target: books.abc, status: missing}
+      - {id: imagegen.jekyll-command, what: "[Ruby] jekyll preview-images and the facade the Rails CMS calls — replaced by the platform's commands and API.", target: media.generate, status: missing}
+      - {id: imagegen.tokens, what: "The zer0 UI design tokens shared with the other UIs — the seed of the platform's design system.", target: sites.render, status: partial}
+
+  - id: site-1987
+    path: sites/1987
+    summary: The self-growing knowledge base about the year 1987, grown by Claude Code slash commands.
+    content: Every topic page by category.
+    capabilities:
+      - {id: site-1987.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-1987.publish, what: "The public site at its route with the same URLs.", target: sites.render, status: missing}
+      - {id: site-1987.grow, what: "Grow the knowledge base with agent commands that research and add topics.", target: sites.evolve, status: partial}
+  - id: site-2005
+    path: sites/2005
+    summary: The year-2005 knowledge base of the year-of-ai lineage.
+    content: Every page.
+    capabilities:
+      - {id: site-2005.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site 2005 identical; sites.yml fails a pull request whose build differs from the recording). Partial: year-of-ai.github.io still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+  - id: site-drsai
+    path: sites/drsai
+    summary: The children's picture-book site, its Python story engine (PyPI drsai) and the ABC books the wizard exports into it.
+    content: Every page and book, _data/abc_books/*.json, images.
+    capabilities:
+      - {id: site-drsai.content, what: "Its pages and books import into the platform and round-trip.", target: content.import, status: partial}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site drsai identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/drsai still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-drsai.story-engine, what: "The Dr. Seuss-style poem and story generator.", target: ai.briefs, status: partial}
+      - {id: site-drsai.abc-import, what: "Validate and import an ABC book against its spec sidecar.", target: books.abc, status: partial}
+  - id: site-irony-works
+    path: sites/irony-works
+    summary: The irony-works site, with a Node pre-build that resolves wikilinks.
+    content: Every page.
+    capabilities:
+      - {id: site-irony-works.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site irony-works identical; irony-works.yml fails a pull request whose build differs from the recording). Partial: bamr87/irony-works still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-irony-works.wikilinks, what: "Wikilinks resolved before the build.", target: sites.obsidian, status: partial}
+  - id: site-wargames
+    path: sites/wargames
+    summary: The wargames site.
+    content: Every page.
+    capabilities:
+      - {id: site-wargames.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site wargames identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/wargames still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+  - id: site-zer0-demo-cookbook
+    path: sites/zer0-demo-cookbook
+    summary: The cookbook demo site.
+    content: Every page and recipe.
+    capabilities:
+      - {id: site-cookbook.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-cookbook identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-cookbook still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+  - id: site-zer0-demo-garden
+    path: sites/zer0-demo-garden
+    summary: The garden demo site.
+    content: Every page.
+    capabilities:
+      - {id: site-garden.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-garden identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-garden still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+  - id: site-zer0-pages
+    path: sites/zer0-pages
+    summary: One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge.
+    content: The vault (every note and attachment).
+    capabilities:
+      - {id: site-zer0-pages.content, what: "Its notes import into the platform and round-trip.", target: content.import, status: partial}
+      - {id: site-zer0-pages.publish, what: "The public site at /zer0-pages/ with the same URLs.", target: sites.render, status: missing}
+      # P2: the bridge is ported to Python (tools/obsidian, its Ruby tests ported to tools/tests) and builds the site
+      # through the Jekyll-theme option with every page, title, feed, sitemap and Dataview table of its recording; the
+      # site stays on its Ruby plugins until the owner accepts the two differences that build shows (PLAN P2), so the
+      # rows stay partial.
+      - {id: site-zer0-pages.wikilinks, what: "[[target|alias#anchor]] links and ![[embed]] images.", target: sites.obsidian, status: partial}
+      - {id: site-zer0-pages.callouts, what: "> [!note] callouts rendered as alerts.", target: sites.obsidian, status: partial}
+      - {id: site-zer0-pages.dataview, what: "A Dataview subset — TABLE and LIST, FROM, WHERE, FLATTEN, GROUP BY, SORT, LIMIT.", target: sites.obsidian, status: partial}
+      - {id: site-zer0-pages.graph-index, what: "A deterministic wiki-index.json for the graph view.", target: sites.obsidian, status: partial}
+      - {id: site-zer0-pages.fence-mask, what: "Code fences and inline code left untouched by the bridge; root-relative links prefixed with the base URL.", target: sites.obsidian, status: partial}
+  - id: site-zer0-pages-remote
+    path: sites/zer0-pages-remote
+    summary: The remote_theme demo of zer0-pages.
+    content: Every page.
+    capabilities:
+      - {id: site-zer0-pages-remote.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
+      # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
+      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-pages-remote identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-pages-remote still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+
+  - id: aieo
+    path: apps/aieo
+    summary: AIEO (AI Engine Optimization) — FastAPI + SQLAlchemy + Celery + React; scores and rewrites content so AI engines cite it, runs a file-based content lifecycle, and audits whole sites.
+    content: backend/prompts/** (system, scoring rubric, optimize-expand, 10 pattern files, 14 agent prompts, 7 command prompts → pattern snippets and agent definitions); the PATTERNS table; the workspace CONTEXT_TEMPLATES and examples/{castos,starter} brand voices (→ BrandRules, Memory, site settings); reports/ (10 site audits, REPORT.md, summary.json) and sites.txt (→ audit history); wordpress/*.php; docs/*.md and PRD-aieo.md (its never-built "planned" features are inputs to G7/G13 scope, not rows here); runtime data outside git — any operator's .aieo-workspace/ and its .cache, and near-empty Postgres rows (users, api_keys, citations, audits).
+    capabilities:
+      # From the 2026-10-21 code inventory. "stub" means the source fakes it, so absorbing it means building it.
+      - {id: aieo.audit, what: "Score pasted Markdown/HTML or a fetched URL: 0–100 and a grade, per-pattern evidence, gaps, anti-pattern penalties, the five dimensions.", target: aieo.scoring, status: missing}
+      - {id: aieo.scoring-engine, what: "The prompt-driven evaluator — system prompt, rubric and pattern files build a prompt that returns structured scores — with heuristic fallbacks.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-aieo, what: "Dimension aieo: ten citability patterns (structured data, entity density, comparisons and the rest) with weights.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-seo, what: "Dimension seo: SEO quality, keyword density and placement, search intent, content-length comparison.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-readability, what: "Dimension readability: readability metrics.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-humanity, what: "Dimension humanity: the humanity and quality score.", target: aieo.scoring, status: missing}
+      - {id: aieo.dim-cro, what: "Dimension cro: above-the-fold, CTA and trust-signal analysis with the CRO checklist.", target: aieo.scoring, status: missing}
+      - {id: aieo.analyzers-extra, what: "The engagement and competitor-gap analyzers (exported, wired to nothing).", target: aieo.scoring, status: missing}
+      - {id: aieo.benchmark, what: "Percentile and per-engine estimates on each audit (stub: fixed buckets).", target: aieo.scoring, status: missing}
+      - {id: aieo.visual-audit, what: "Screenshot a URL (Playwright, 1280×800) and score it with vision alongside the text.", target: aieo.audits, status: missing}
+      - {id: aieo.analyze-existing, what: "Analyze a URL or a workspace file: score plus an AI summary (health, quick wins, strategic actions).", target: aieo.audits, status: missing}
+      - {id: aieo.site-snapshot, what: "Crawl a static site (sitemap → feed → robots → links; robots-aware, SSRF guard, ETag cache) into an offline snapshot.", target: aieo.audits, status: missing}
+      - {id: aieo.batch-audit, what: "Batch-audit a list of sites directly or over MCP.", target: aieo.audits, status: missing}
+      - {id: aieo.reports, what: "Per-site Markdown reports and a summary report (rankings, score bars, severity) from audit JSON.", target: aieo.audits, status: missing}
+      - {id: aieo.headless-runner, what: "A database-free CI runner that scores or optimizes Markdown selected by globs or a git diff, with dry run.", target: aieo.audits, status: missing}
+      - {id: aieo.ci-workflows, what: "A reusable workflow that scores or optimizes another repository's Markdown and can commit the result.", target: workflows.automations, status: missing}
+      - {id: aieo.optimize, what: "Rewrite content to raise its score — score, gaps, AI rewrite (preserve or aggressive; enhance or expand).", target: aieo.optimize, status: missing}
+      - {id: aieo.scrub, what: "Remove AI-writing tells from a draft.", target: aieo.optimize, status: missing}
+      - {id: aieo.patterns, what: "Browse the pattern library (category, description, citation-boost range) and fetch a pattern (apply is a stub).", target: aieo.patterns, status: missing}
+      - {id: aieo.prompt-library, what: "Change scoring and agent behaviour by editing Markdown prompts with front-matter weights, no code change.", target: aieo.patterns, status: missing}
+      - {id: aieo.providers, what: "Pick the AI engine per request or by environment: OpenAI, Anthropic, Claude Code over OAuth, xAI.", target: ai.providers, status: partial}
+      - {id: aieo.agent-runner, what: "Run any agent prompt on pasted content with the workspace context injected.", target: ai.assistants, status: partial}
+      - {id: aieo.agents-seo, what: "Agents seo-optimizer, meta-creator and keyword mapping.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-editor, what: "Agent editor ('human editor'): clarity, flow, human voice, a humanity score and a rewritten excerpt.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-headlines, what: "Agent headline-generator: variants, rationale, a testing plan.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-internal-linker, what: "Agent internal-linker: links with anchor text and placement from the internal-links map.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-content-analyzer, what: "Agent content-analyzer: summary, strengths and weaknesses of a draft.", target: aieo.agents, status: missing}
+      - {id: aieo.agents-cro, what: "Agents cro-analyst and landing-page-optimizer.", target: aieo.agents, status: missing}
+      - {id: aieo.agent-performance, what: "Agent performance: quick wins, declining content and a roadmap from analytics.", target: aieo.agents, status: missing}
+      - {id: aieo.workspace, what: "The content workspace — context, topics, research, drafts, rewrites, review-required, published, landing pages, audits.", target: aieo.lifecycle, status: missing}
+      - {id: aieo.brand-context, what: "Context every agent reads: brand voice, style guide, writing examples, target keywords, internal-links map, competitor analysis.", target: sites.registry, status: partial}
+      # G14: capture with AIEO's topic template (studio: CaptureIdea's "Start from the topic template", web/packages/ui/test/ideas.test.tsx).
+      - {id: aieo.topics, what: "Capture ideas as topics from a template.", target: ideas.board, status: done, proof: "content/tests/ideas/test_services.py::test_an_idea_is_captured_from_a_line_or_a_template_and_voted_once_per_person"}
+      # G14: the bundled Research brief writer (AIEO's research prompt) over a collection, kept as a note (studio: ResearchBrief, web/packages/ui/test/research.test.tsx).
+      - {id: aieo.research, what: "Generate a research brief.", target: research.synthesize, status: done, proof: "content/tests/research/test_services.py::test_a_brief_reads_the_sources_it_cites_and_a_research_brief_is_a_run"}
+      - {id: aieo.write, what: "Write a long-form draft from a topic and a brief, then run the SEO, meta, internal-link and keyword agents on it.", target: ai.briefs, status: partial}
+      - {id: aieo.rewrite, what: "Rewrite a workspace file, shown side by side with the original.", target: ai.suggestions, status: partial}
+      - {id: aieo.priorities, what: "A ranked content-update queue and quick wins from Search Console rows (position, impressions, CTR, trend, business priority).", target: sites.evolve, status: missing}
+      - {id: aieo.landing-pages, what: "Draft landing pages, research them, analyze a competitor URL, CRO-audit copy.", target: aieo.lifecycle, status: missing}
+      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: missing}
+      - {id: aieo.connectors, what: "GA4 top pages, Search Console queries, DataForSEO SERP (stub: placeholder or mock rows).", target: aieo.connectors, status: missing}
+      - {id: aieo.citations, what: "Citations by URL, domain and engine, and a share-of-voice dashboard (stub: probing returns nothing).", target: aieo.citations, status: missing}
+      - {id: aieo.site-context, what: "Crawl a seed URL N levels into a dataset — link map with hubs and orphans, per-page content and meta.", target: research.capture, status: missing}
+      - {id: aieo.prd-lineage, what: "Inventory a repository's product documents and classify them against canonical PRD elements.", target: research.synthesize, status: missing}
+      - {id: aieo.vectors, what: "A Qdrant client for semantic benchmarks (configured, never used).", target: content.search, status: partial}
+      - {id: aieo.mcp-server, what: "A stdio MCP server with 28 aieo_* tools (scoring, auditing, patterns, readability, workspace, agents).", target: platform.api, status: missing}
+      - {id: aieo.frontend, what: "The React UI — Score and optimize (audit, optimize, patterns, agents), Create (topics, research, write, rewrite), landing pages, publish, citations, priorities.", target: aieo.scoring, status: missing}
+      - {id: aieo.auth, what: "An X-API-Key on every route; hashed, expiring keys for citations and the dashboard.", target: platform.tokens, status: partial}
+      - {id: aieo.infra, what: "Compose services for the MCP server, Postgres (TimescaleDB), Redis and Qdrant.", target: platform.deploy, status: partial}
+      - {id: aieo.ops, what: "Health, liveness and readiness probes, per-key rate limits, request logging, input limits.", target: platform.ops, status: done, proof: content/tests/ops/test_health.py}
+
+  - id: books
+    path: packages/books
+    summary: bookshelf — a dependency-free Python package with the books CLI, a local studio and Claude-backed writing help for long-form books in library/<slug>/.
+    content: library/impairment/** (book.yml, README, outline, chapters ch01–ch14, the three act guides, notes/characters.md and notes/continuity.md — the continuity ledger is the book's continuity_notes); library/_template/**, library/README.md, docs/SCHEMA.md (the validation-code catalog), docs/reviews/impairment.md; the authoring guidance in .github/ (copilot instructions, instructions, the outline prompt — these become assistant and profile prompts).
+    capabilities:
+      # From the 2026-10-21 code inventory (113 tests in packages/books/tests).
+      # G9 (2026-10-22): content/books/ — the library is a generated file set of the platform's BookPage and
+      # ChapterPages, the CLI is `manage.py books …`, the AI tasks are runs of the `books` agent through content/ai,
+      # the studio's Books area is the local studio. A row is done when a person can use it from the Books area (or,
+      # for an operator's command, from manage.py) and its test proves it; what is left is named in `note`.
+      - {id: books.library-format, what: "The library format — book.yml (status idea → complete, logline, genre, POV, tense, era, acts, targets, cast), outline, act guides, numbered chapters, character and continuity notes.", target: books.manage, status: done, proof: "content/tests/books/test_files.py::test_the_book_holds_what_its_files_hold", note: "the act guides and README are edited in the Books area's Files tab (test_api.py::test_a_books_other_files_are_edited_one_by_one_as_draft_revisions, books.test.tsx)"}
+      - {id: books.import-export, what: "The library imports into the platform and is regenerated from it as the static library/<slug>/.", target: content.export, status: done, proof: "content/tests/books/test_files.py::test_the_real_library_round_trips_byte_for_byte", note: "neither side loses the other's change (test_files.py: an export keeps a hand edit, an import never publishes a draft, never makes a renumbered chapter twice, never brings back a deleted one); a hand edit arriving as a suggestion and the export committed by a job are content.export's, still open"}
+      - {id: books.list, what: "books list — every book with status, chapters done and planned, words, progress.", target: books.manage, status: done, proof: "content/tests/books/test_commands.py::test_list_show_stats_and_validate", note: "and the studio's shelf (web/packages/ui/test/books.test.tsx)"}
+      - {id: books.show, what: "books show — a book's facts and its chapter table.", target: books.manage, status: done, proof: "content/tests/books/test_commands.py::test_list_show_stats_and_validate", note: "and the studio's book overview (web/packages/ui/test/books.test.tsx)"}
+      - {id: books.scaffold, what: "books new and add-chapter — start a book from the template; add the next chapter with its act inferred.", target: books.create, status: done, proof: "content/tests/books/test_api.py::test_new_books_and_chapters_are_drafts"}
+      - {id: books.validate, what: "books validate — schema checks with stable codes, strict mode, JSON.", target: books.manage, status: done, proof: "content/tests/books/test_library.py::test_the_platform_says_what_bookshelf_said_about_the_real_library", note: "every code on fixtures in test_library.py; --strict and --json in test_commands.py; a relative link that leaves the book's directory is not checked (the generated set is the book's files)"}
+      - {id: books.continuity, what: "Continuity checks — placeholders, meta references, unknown characters, navigation, broken links, POV and era drift.", target: books.write, status: done, proof: "content/tests/books/test_library.py::test_drift_and_cast_checks"}
+      - {id: books.stats, what: "books stats — narrative-only word counts, status breakdown, chapter lengths, progress against target.", target: books.manage, status: done, proof: "content/tests/books/test_library.py::test_stats_are_narrative_only_and_progress_is_against_the_target"}
+      - {id: books.build-manuscript, what: "books build — the compiled manuscript with a title page, act headings and placeholders for unwritten chapters.", target: books.manage, status: done, proof: "content/tests/books/test_library.py::test_the_platform_says_what_bookshelf_said_about_the_real_library", note: "byte-identical to bookshelf's on impairment, with and without the outline; downloaded from the studio (books.test.tsx)"}
+      - {id: books.library-json, what: "library.json — every book exported as data.", target: content.export, status: done, proof: "content/tests/books/test_commands.py::test_new_add_chapter_build_dashboard_and_context", note: "each book's entry equals bookshelf's (test_library.py's golden)"}
+      - {id: books.dashboard, what: "books dashboard and serve — a static HTML shelf with chapter tables and validation findings.", target: books.manage, status: done, proof: "content/tests/books/test_commands.py::test_new_add_chapter_build_dashboard_and_context", note: "serve is the studio's Books area"}
+      - {id: books.studio-editor, what: "books studio — a local editor: the shelf, a chapter's fields and Markdown, word count, autosave.", target: books.write, status: partial, note: "the shelf (books.test.tsx's <BookShelf>) and the chapter writer — a chapter's fields and Markdown in the page editor, its prose word count, the chapter tasks (books.test.tsx's <ChapterWriter>); autosave is content.edit's, still to come"}
+      - {id: books.studio-checks, what: "The studio's checks pane — validation findings for the open chapter and an on-demand AI continuity check.", target: books.write, status: done, proof: "web/packages/ui/test/books.test.tsx", note: "the open chapter's own findings beside its editor (<ChapterWriter>), the continuity check's findings (<BookAssist>)"}
+      - {id: books.ai-draft-continue, what: "AI Draft (a chapter from its outline section, the act guide and the neighbouring chapters) and Continue (from where it stops, in its voice), streamed.", target: books.write, status: partial, note: "draft and continue as suggestions on the prose only, `#`-sectioned chapters included (content/tests/books/test_ai.py, on impairment's ch05 and ch03); token-by-token streaming is the AI layer's, still to come (a run streams its steps)"}
+      - {id: books.ai-revise, what: "AI Revise — rewrite a selected passage to an instruction.", target: books.write, status: done, proof: "content/tests/books/test_ai.py::test_revise_replaces_the_selected_passage_and_refuses_one_not_in_the_chapter", note: "on the real book too, where the author's own prose has a banned phrase (test_a_phrase_the_author_wrote_never_blocks_continue_or_revise)"}
+      - {id: books.ai-check, what: "AI continuity check with structured findings (severity, kind, quote, problem, suggestion) and a summary.", target: books.write, status: done, proof: "content/tests/books/test_ai.py::test_the_continuity_check_returns_validated_findings_and_proposes_nothing"}
+      - {id: books.ai-outline-critique, what: "AI Outline (premise → synopsis, themes, three-act beats, arcs, chapter plan) and Critique (an editorial read with the top fixes).", target: books.create, status: done, proof: "content/tests/books/test_ai.py::test_a_premise_becomes_an_outline_a_person_turns_into_a_draft_book", note: "the critique and a book's outline in test_critique_and_outline_are_the_runs_output"}
+      - {id: books.ai-context, what: "Every AI request carries the book's brief, outline, characters, continuity, the act guide and the neighbouring chapters, with prompt caching.", target: books.write, status: partial, note: "the context, identical to bookshelf's (content/tests/books/test_library.py's golden, test_ai.py::test_the_run_is_given_the_books_own_material); prompt caching is the provider adapters', still to come"}
+      - {id: books.ai-client, what: "The Anthropic client — model, effort, token limits, caching and fallback configurable.", target: ai.providers, status: partial, note: "book tasks reach a model only through the provider registry, where model, effort, token limits and the server-side fallback are configurable; caching is still to come"}
+      - {id: books.authoring-guidance, what: "Agent guidance for outlining, drafting and structuring chapters.", target: ai.assistants, status: done, proof: "content/tests/books/test_ai.py::test_the_bundled_book_assistants_schemas_and_pipeline_are_seeded", note: "the bundled book assistants' instructions (content/books/data/)"}

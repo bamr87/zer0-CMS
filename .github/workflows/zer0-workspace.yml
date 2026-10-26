@@ -3,13 +3,17 @@
 # packages/, sites/ and apps/ is registered in workspace.yml, every project's
 # workflow exists and filters on its path, and every vendored copy is still
 # byte-identical to its source. It runs on every pull request (it takes
-# seconds and needs nothing but Ruby), because drift can come from any tree.
+# seconds and needs nothing but Python and PyYAML), because drift can come
+# from any tree. The full history is fetched because the tool's golden tests
+# replay its Ruby predecessor's recordings on a commit of that history.
 #
-# It also prints, to the job summary, the projects a pull request affects (so
+# It also runs the ADR 0006 absorption gate (tools/check_absorption.py) and
+# prints its burn-down. It also prints, to the job summary, the projects a pull request affects (so
 # a reviewer can see which projects' gates should have run) and the CMS's own
 # `zer0 doctor` over every zer0 site in the repository — report-only, like the
 # reusable zer0-doctor.yml it mirrors, because two sites carry known errors
-# (docs/MONOREPO.md).
+# (docs/MONOREPO.md). That doctor is still Ruby (rails/bin/zer0-cms) until
+# PLAN G4 ports it, so Ruby is installed for that last step and nothing else.
 name: zer0-workspace
 
 on:
@@ -33,17 +37,21 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/setup-python@v7
         with:
-          ruby-version: "3.3"
-      - name: Workspace tooling tests
-        run: |
-          for f in tools/workspace/test/test_*.rb; do
-            echo "==> ruby $f"
-            ruby "$f"
-          done
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
+      - name: Workspace tool tests
+        run: python -m unittest discover tools/workspace
       - name: bin/zer0 check
         run: bin/zer0 check
+      # ADR 0006: the Ruby ratchet and the capability ledger
+      # (docs/plan/capabilities.yml) — no new Ruby, no source deleted before its
+      # capabilities moved, no capability marked done without its proof.
+      - name: Absorption gate (ADR 0006)
+        run: |
+          python -m unittest discover tools/tests
+          python tools/check_absorption.py --report | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Projects this change affects
         if: github.event_name == 'pull_request'
         env:
@@ -54,6 +62,11 @@ jobs:
             echo
             bin/zer0 affected --base "origin/$BASE_REF" | sed 's/^/- /'
           } >> "$GITHUB_STEP_SUMMARY"
+      # Temporary, until PLAN G4 ports zer0 doctor to the platform: the doctor
+      # `bin/zer0 doctor` runs is rails/bin/zer0-cms, stdlib Ruby. Remove with G4.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
       - name: zer0 doctor over every site (report-only)
         run: |
           {

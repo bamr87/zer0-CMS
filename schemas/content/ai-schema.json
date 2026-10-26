@@ -725,7 +725,7 @@
         },
         "type": "array"
       },
-      "description": "ChapterPage(id, path, depth, numchild, translation_key, locale, latest_revision, live, has_unpublished_changes, first_published_at, last_published_at, live_revision, go_live_at, expire_at, expired, locked, locked_at, locked_by, title, draft_title, slug, content_type, url_path, owner, seo_title, show_in_menus, search_description, latest_revision_created_at, alias_of, page_ptr, agent_policy, ai_summary, ai_keywords, content_hash, body, legacy_path, front_matter, preview_image, number)",
+      "description": "A chapter of a book: its body is the chapter's Markdown as blocks — the outline scaffolding, and the prose under \"Chapter Body\".",
       "meta_fields": {
         "ai_keywords": {
           "description": "Agent-maintained keywords.",
@@ -1326,5 +1326,5 @@
     }
   },
   "title": "zer0-CMS content schema for agents",
-  "version": "13990fa9b2d9"
+  "version": "54d76119aed3"
 }

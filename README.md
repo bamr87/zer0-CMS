@@ -5,18 +5,31 @@
 </p>
 
 <p align="center">
-A CMS for zer0-themed markdown sites: VS Code for in-editor edits, Rails for the fleet.<br> Edit front matter as real controls, browse every site in one dashboard, and publish through a gate a human has to walk through.
+An agent-native CMS for markdown sites: one Python platform (Django, with Wagtail as a headless library), a React studio and site renderer, and a VS Code extension with the studio's capabilities.<br> Edit front matter as real controls, let agents propose changes you accept as revisions, browse every site in one admin, and publish through a gate a human has to walk through.
 </p>
 
 <p align="center">
-  <em>Extension: zero runtime dependencies. Fleet CMS: Rails 8.1 on Administrate, on 127.0.0.1:3001.</em>
+  <em>The platform on 127.0.0.1:8000. Extension: zero runtime dependencies. The Rails fleet CMS (127.0.0.1:3001) is being absorbed into the platform.</em>
 </p>
 
 ---
 
-## What it is
+## Where this is going
 
-zer0-CMS turns a repository of markdown into something you can actually operate:
+zer0-CMS is becoming a comprehensive application for content work — writing articles, creating content, brainstorming ideas, gathering information, operating a news site and writing books — with AI integrations and pipelines and workflows throughout ([ADR 0006](docs/adr/0006-one-python-platform.md)). It is being rebuilt into one Python platform with a React frontend: a complete, modern CMS on established libraries; an AI content layer (provider adapters, assistants, pipelines, output schemas, briefs, conversations) that helps create and develop content; a loop that manages, monitors and improves the sites it serves, with AIEO's citability scoring in it; the VS Code extension at parity with the studio; and every repository merged here — parodynews (barodybroject), aieo, books, the image generator, the Rails fleet CMS and the nine sites — absorbed with its content and capabilities, with content in the database and generated static files, zer0-mistakes kept only as an option to render and deploy a site with that theme through Jekyll, and no Ruby left. The target is [`docs/plan/TARGET.md`](docs/plan/TARGET.md), the order of work [`docs/plan/PLAN.md`](docs/plan/PLAN.md) § 3, and the per-capability progress [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) (`python3 tools/check_absorption.py --report`). What follows describes the code as it runs today.
+
+## One platform
+
+`content/` is zer0-CMS ([ADR 0004](docs/adr/0004-one-platform.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share — built to the fleet's operational rows: liveness, readiness and version probes, a request id on every response and log line, one error envelope, JSON logs that never hold a token, throttling, a committed OpenAPI document. It imports the Jekyll sites and exports them back byte for byte, so the files stay the source of truth for a site until it cuts over. The Rails fleet CMS, the image generator's panel, aieo, parodynews and the books studio are absorbed into it function by function, each behind a parity gate. [`content/README.md`](content/README.md)
+
+```bash
+docker compose --profile content up -d --wait db redis content worker research-worker beat relay   # → http://localhost:8000/admin/
+curl -fsS localhost:8000/healthz && curl -fsS localhost:8000/readyz && curl -fsS localhost:8000/version
+```
+
+## What the extension does
+
+zer0-CMS's VS Code extension turns a repository of markdown into something you can actually operate:
 
 - a **metadata panel** that renders the active file's front matter as typed controls instead of raw YAML,
 - a **dashboard** that lists every piece of content with search, filters and sorting,
@@ -29,37 +42,30 @@ zer0-CMS turns a repository of markdown into something you can actually operate:
 
 It began as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) and deliberately keeps its interaction design, because that design is good and people already know it. The code underneath is new. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-## The two halves of this repo
+## The products in this repo
 
 | Path | What it is |
 |---|---|
-| `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*. This README. |
-| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), carries a site's content to LinkedIn under a human gate (`zer0-cms linkedin`, the `zer0-linkedin.yml` workflow, `/admin/distribution`), and hosts the ABC book wizard. [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
+| `content/` | The **platform** — the Django + Wagtail CMS above, the system of record for every site, the agent runtime and every API. [`content/README.md`](content/README.md) · [`content/ops/README.md`](content/ops/README.md) |
+| `web/` | The **studio** — the React frontend where people write, create and review content and follow agent runs, served by the platform at `/studio/`; its workspaces live in shared packages the extension's webviews will render too (ADR 0006). [`web/README.md`](web/README.md) |
+| `src/` | The **VS Code extension** — edit front matter, dashboard, and governed publish *inside the editor*; the platform's client once a platform URL is configured (PLAN G10). This README. |
+| `rails/` | The **fleet CMS** — a Rails 8.1 app on Administrate that indexes every registered zer0-themed Jekyll site, edits front matter and bodies back into the files (git stays the source of truth), lists and draws missing previews through zer0-image-generator, checks a site against the zer0 stack (`zer0 doctor`), carries a site's content to LinkedIn under a human gate (`zer0-cms linkedin`, the `zer0-linkedin.yml` workflow, `/admin/distribution`), and hosts the ABC book wizard. Being absorbed by the platform (PLAN Phase G). [`rails/README.md`](rails/README.md) · [`docs/PLATFORM.md`](docs/PLATFORM.md) · [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) |
 
 ```bash
 SITES_DIR=~/github docker compose up --build                      # → http://localhost:3001/admin
 SITES_DIR=~/github docker compose --profile imagegen up --build   # + zer0-image-generator → http://localhost:3000
 ```
 
-Both ports are published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposing the CMS anywhere else. How this repository, the zer0-mistakes theme and zer0-image-generator fit together: [`docs/ZER0-STACK.md`](docs/ZER0-STACK.md).
-
-### The content plane
-
-`content/` is where zer0-CMS is going ([ADR 0001](docs/adr/0001-target-architecture.md), [the plan](docs/plan/PLAN.md)): a Django + Wagtail headless CMS whose agents are first-class — each one a Django user with Wagtail permissions, proposing changes as suggestions an editor accepts, every run and tool call recorded, every tool behind one registry that GraphQL, REST and MCP all share. It imports the Jekyll sites and exports them back byte for byte, so for now the files stay the source of truth. [`content/README.md`](content/README.md)
-
-```bash
-docker compose --profile content up -d --wait db redis content worker beat relay   # → http://localhost:8000/admin/
-```
+Every port is published on 127.0.0.1 only; set `ZER0_CMS_PASSWORD` before exposing the Rails CMS anywhere else. How this repository, the zer0-mistakes theme and zer0-image-generator fit together: [`docs/ZER0-STACK.md`](docs/ZER0-STACK.md).
 
 ### The rest of the stack, in the same repository
 
-The theme, the image generator, the books app, the zer0 sites and the parodynews and aieo apps live here too, imported with their full history. One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
+The image generator, the books app, the zer0 sites and the parodynews and aieo apps live here too, imported with their full history. The zer0-mistakes theme the sites build with is developed in its own repository, [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes), with its Rails theme studio, and consumed here as the gem or `remote_theme` each site declares ([ADR 0005](docs/adr/0005-theme-goes-home.md)). One registry, [`workspace.yml`](workspace.yml), describes every project, and one command, `bin/zer0`, lists, checks, tests and builds them all (`bin/zer0 list`, `bin/zer0 run check --affected`, `bin/zer0 doctor`). [`docs/MONOREPO.md`](docs/MONOREPO.md) explains the design and what still runs from the original repositories.
 
 | Path | What it is |
 |---|---|
-| `packages/zer0-mistakes/` | The Jekyll theme (`jekyll-theme-zer0` gem). |
 | `packages/zer0-image-generator/` | The preview-image engine (`zer0-image-generator` gem) and its web panel. |
-| `packages/books/` | The book projects and the `bookshelf` app that validates, compiles and edits them. |
+| `packages/books/` | The book projects and the `bookshelf` app that validates, compiles and edits them, being absorbed: the platform holds the books now (`content/books/`, PLAN G9) and `library/<slug>/` is the file set it generates. |
 | `sites/drsai/` | The children's picture-book site and its story engine; the ABC wizard exports here. |
 | `apps/parodynews/` | The Django + React parody-news app (imported as barodybroject, de-branded in ADR 0003); its models are absorbed by the content plane under PLAN M20. |
 | `apps/aieo/` | AI Engine Optimization — the FastAPI + React app that scores content for AI-engine citation. |
@@ -72,7 +78,7 @@ The theme, the image generator, the books app, the zer0 sites and the parodynews
 
 ## How publishing works
 
-```
+```text
 Content ──▶ Draft ──────▶ Guard ──────▶ Approve ──────▶ Publish ──▶ Ledger
    ▲        status:        length,       status:          the        keyed by
    │        pending        bans,         approved         target     canonical
@@ -186,7 +192,7 @@ Off unless you turn it on. With `zer0Cms.agent.enabled` and the `@anthropic-ai/c
 
 ## Architecture
 
-```
+```text
 src/core/      pure Node. No `vscode` import — enforced by eslint and by the build.
                content, governance, catering, contract, analytics, portfolio, media,
                platform (site profiles), fleet (the console's pure half), harness.

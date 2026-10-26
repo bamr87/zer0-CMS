@@ -1,0 +1,263 @@
+{
+  "id": "studio-ai-chat",
+  "title": "Chat with an assistant and promote its answer to a brief",
+  "features": [
+    "ZER0-044"
+  ],
+  "path": "verify/scenarios/studio-ai-chat.yml",
+  "started": "2026-10-22T15:55:10.273Z",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "ok": true,
+      "steps": [
+        {
+          "step": "goto",
+          "arg": "/studio/",
+          "ok": true,
+          "ms": 592
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=username]",
+            "value": "editor"
+          },
+          "ok": true,
+          "ms": 18
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=password]",
+            "value": "zer0-demo"
+          },
+          "ok": true,
+          "ms": 28
+        },
+        {
+          "step": "click",
+          "arg": "button[type=submit]",
+          "ok": true,
+          "ms": 32
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Home']"
+          },
+          "ok": true,
+          "ms": 178
+        },
+        {
+          "step": "click",
+          "arg": "role=link[name='AI']",
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Assistants']",
+          "ok": true,
+          "ms": 100
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='New assistant']",
+          "ok": true,
+          "ms": 51
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Name']",
+            "value": "Chat partner"
+          },
+          "ok": true,
+          "ms": 82
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Instructions']",
+            "value": "You help an editor think a piece through. Answer briefly."
+          },
+          "ok": true,
+          "ms": 7
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Create']",
+          "ok": true,
+          "ms": 28
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Chat partner']"
+          },
+          "ok": true,
+          "ms": 76
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Conversations']",
+          "ok": true,
+          "ms": 22
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='A new conversation']",
+            "value": "Backup ideas"
+          },
+          "ok": true,
+          "ms": 25
+        },
+        {
+          "step": "click",
+          "arg": "role=combobox[name='With']",
+          "ok": true,
+          "ms": 28
+        },
+        {
+          "step": "click",
+          "arg": "role=option[name='Chat partner']",
+          "ok": true,
+          "ms": 33
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Start']",
+          "ok": true,
+          "ms": 32
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Backup ideas']"
+          },
+          "ok": true,
+          "ms": 75
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Your message']",
+            "value": "How often should a small site back up?"
+          },
+          "ok": true,
+          "ms": 3
+        },
+        {
+          "step": "screenshot",
+          "arg": "message-written",
+          "ok": true,
+          "file": "test/evidence/studio-ai-chat/desktop-message-written.png",
+          "ms": 34
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Send']",
+          "ok": true,
+          "ms": 21
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=document[name=\"Chat partner's answer\"]"
+          },
+          "ok": true,
+          "ms": 75
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "role=heading[name='Backups, explained']"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "How often should a small site back up?"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "screenshot",
+          "arg": "answered",
+          "ok": true,
+          "file": "test/evidence/studio-ai-chat/desktop-answered.png",
+          "ms": 37
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Actions for message 2']",
+          "ok": true,
+          "ms": 36
+        },
+        {
+          "step": "click",
+          "arg": "role=menuitem[name='Promote to a brief']",
+          "ok": true,
+          "ms": 52
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "url": "/studio/create/briefs/"
+          },
+          "ok": true,
+          "ms": 15
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "role=heading[name='Backup ideas']"
+          },
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "draft"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_console_errors": true
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "screenshot",
+          "arg": "promoted-to-a-brief",
+          "ok": true,
+          "file": "test/evidence/studio-ai-chat/desktop-promoted-to-a-brief.png",
+          "ms": 28
+        }
+      ],
+      "console_errors": [],
+      "screenshots": [
+        "test/evidence/studio-ai-chat/desktop-message-written.png",
+        "test/evidence/studio-ai-chat/desktop-answered.png",
+        "test/evidence/studio-ai-chat/desktop-promoted-to-a-brief.png"
+      ],
+      "evals": {},
+      "final_url": "http://127.0.0.1:62349/studio/create/briefs/cd7940d1-3e93-43c5-bbc4-cf5d79fda733"
+    }
+  ],
+  "ok": true,
+  "finished": "2026-10-22T15:55:12.086Z",
+  "base": "http://127.0.0.1:62349"
+}

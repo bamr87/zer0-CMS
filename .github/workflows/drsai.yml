@@ -1,17 +1,22 @@
 # sites/drsai — the story engine's tests and lint, the ABC-book drift check,
-# and a site build against the theme in packages/zer0-mistakes (the in-repo
-# replacement for the sibling-checkout ZER0_THEME_LOCAL the site already
-# supports). Ported from bamr87/drsai's ci.yml without its tag-triggered PyPI
-# publish; the Pages deploy stays in the original repository for now (see
-# docs/MONOREPO.md).
+# and a site build through the Jekyll-theme option: its `build` task
+# (tools/jekyll_theme.py) renders it with the zer0 theme at the tag its
+# `render:` setting pins and builds it with GitHub Pages' own builder in Docker,
+# so no Ruby is installed (PLAN P2). The theme is pinned, so a theme release
+# cannot break the site unnoticed and there is no weekly run; the workflow runs
+# when anything that builds the site changes — the site, its `render:` setting
+# (workspace.yml), the workspace tool that reads it, the option and its server
+# (pages.yml compares the build with its recording). Ported from
+# bamr87/drsai's ci.yml without its tag-triggered PyPI publish; the Pages
+# deploy stays in the original repository for now (see docs/MONOREPO.md).
 name: drsai
 
 on:
   push:
     branches: [main]
-    paths: ["sites/drsai/**", "packages/zer0-mistakes/**", ".github/workflows/drsai.yml"]
+    paths: ["sites/drsai/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", ".github/workflows/drsai.yml"]
   pull_request:
-    paths: ["sites/drsai/**", "packages/zer0-mistakes/**", ".github/workflows/drsai.yml"]
+    paths: ["sites/drsai/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", ".github/workflows/drsai.yml"]
 
 permissions:
   contents: read
@@ -60,17 +65,20 @@ jobs:
       - run: python3 ../../tools/unwrap-prose.py --check .
 
   site:
-    name: Jekyll build against packages/zer0-mistakes
+    name: Jekyll build (the Jekyll-theme option)
     runs-on: ubuntu-latest
-    env:
-      ZER0_THEME_LOCAL: ../../packages/zer0-mistakes
-    defaults:
-      run:
-        working-directory: sites/drsai
     steps:
       - uses: actions/checkout@v7
-      - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
-      - run: bundle install
-      - run: bundle exec jekyll build --config _config.yml,_config_dev.yml
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
+      - name: Build with the Jekyll-theme option
+        env:
+          ZER0_PAGES_DEST: ${{ runner.temp }}/site
+          PAGES_REPO_NWO: ${{ github.repository }}
+        run: |
+          bin/zer0 run build drsai
+          test -f "$ZER0_PAGES_DEST/index.html" || { echo "::error::drsai built no index.html"; exit 1; }

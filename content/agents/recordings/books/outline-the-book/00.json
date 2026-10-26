@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "f31069d3e8826b41",
+  "response": {
+    "text": "{\"title\": \"The Lighthouse Keeper\", \"alt_titles\": [\"Gannet Rock\", \"The Night Hours\"], \"logline\": \"A keeper who believes the light runs itself learns that someone has tended it every night for forty years.\", \"genre\": \"Literary mystery\", \"pov\": \"Third person limited\", \"tense\": \"Past\", \"era\": \"1950s\", \"protagonist\": \"Mara Quill\", \"synopsis\": \"Mara Quill takes the keeper's post on Gannet Rock because the company tells her the light no longer needs a keeper. On her third night she finds a logbook kept in a careful hand by Tobias Fenn, the keeper before her, whose last entry is dated the night before she came.\\n\\nWhen the light fails in the first storm of the winter, Mara has to decide whether to keep the company's story or the logbook's.\", \"themes\": [{\"name\": \"Duty\", \"argument\": \"Care that nobody sees is still care, and it still has a cost.\"}, {\"name\": \"Inheritance\", \"argument\": \"We take on the work of the people before us whether we know it or not.\"}], \"acts\": [{\"title\": \"The rock\", \"beats\": [{\"title\": \"Arrival\", \"points\": [\"Mara takes the post she was told is a formality.\"]}, {\"title\": \"The logbook\", \"points\": [\"She finds Tobias Fenn's entries, the last one dated yesterday.\"]}]}, {\"title\": \"The storm\", \"beats\": [{\"title\": \"The light fails\", \"points\": [\"The clockwork stops and Mara lights the lamp by hand.\"]}]}, {\"title\": \"The keeper\", \"beats\": [{\"title\": \"Fenn\", \"points\": [\"Mara finds where Tobias Fenn has been keeping the light from.\"]}]}], \"arc\": [{\"phase\": \"Believer\", \"description\": \"Mara trusts the company's word that the light keeps itself.\"}, {\"phase\": \"Disrupted\", \"description\": \"The logbook shows someone has kept it all along.\"}, {\"phase\": \"Keeper\", \"description\": \"She takes the work on as her own.\"}], \"cast\": [\"Mara Quill\", \"Tobias Fenn\"], \"chapters\": [{\"number\": 1, \"act\": 1, \"title\": \"The Logbook\", \"beat\": \"Mara finds the logbook.\"}, {\"number\": 2, \"act\": 1, \"title\": \"The Storm\", \"beat\": \"The light fails for the first time.\"}]}",
+    "tool_calls": [],
+    "tokens_in": 1630,
+    "tokens_out": 540,
+    "cost_usd": "0.0520",
+    "model": "claude-opus-5-5"
+  }
+}

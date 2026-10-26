@@ -17,11 +17,17 @@ every check below is written once and holds on every surface:
    anything but `off`; `propose` needs `suggest`; `write` needs `draft` and a
    live (eval-passed) definition; `publish` needs `auto`.
 5. **The permissions hold** — as that user, through Wagtail's own page
-   permission tester when the tool targets a page.
+   permission tester when the tool targets a page; and when the call acts for
+   a person (`ToolContext.on_behalf_of`: a run a person asked for, whose
+   prompt and tools they chose), that person must be able to edit the page
+   too, so a run never reads a draft its starter could not.
 6. **The rate holds** — per agent user and tool, in the cache.
 
 The call then runs in its own transaction and is recorded as an `AgentStep`
 of the caller's run, with its arguments, result, latency and any error.
+`check()` asks the same questions (all but the rate) without calling, for a
+surface that queues work which will end in a call — the AI layer's runs on a
+page ask it when they are requested.
 """
 
 import time
@@ -93,6 +99,7 @@ class ToolContext:
     trigger: str = "manual"
     token: object = None
     extra: dict = field(default_factory=dict)
+    on_behalf_of: object = None  # the person whose request this is; a page tool then needs their edit right too
 
     @property
     def policy(self) -> str:
@@ -163,7 +170,12 @@ class Registry:
         self._close_step(step, started, result=result)
         return result
 
-    def _check(self, t: Tool, args: dict, ctx: ToolContext):
+    def check(self, name: str, args: dict | None, ctx: ToolContext) -> None:
+        """Raise the `ToolError` a call would be refused with — every check but the rate, which only a call
+        spends — without running the tool or recording a step: a surface asks before it queues work for one."""
+        self._check(self.get(name), dict(args or {}), ctx, rate=False)
+
+    def _check(self, t: Tool, args: dict, ctx: ToolContext, *, rate: bool = True):
         refusal = self.refusal(t, ctx)
         if refusal:
             raise refusal
@@ -179,7 +191,11 @@ class Registry:
         page = self._target_page(t, args)
         self._check_policy(t, ctx, page)
         self._check_perms(t, ctx.user, page)
-        self._check_rate(t, ctx.user)
+        person = ctx.on_behalf_of
+        if person is not None and page is not None and not page.permissions_for_user(person).can_edit():
+            raise ToolError("permission_denied", f"page {page.pk} is not one {person} may edit, and the run is theirs")
+        if rate:
+            self._check_rate(t, ctx.user)
 
     @staticmethod
     def _target_page(t: Tool, args: dict):

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Book outline",
+  "description": "A book's outline from its premise: who it is about, what it argues, how its three acts move, how the protagonist changes, and the chapters that carry it.",
+  "type": "object",
+  "properties": {
+    "title": {"type": "string", "description": "The working title."},
+    "alt_titles": {"type": "array", "items": {"type": "string"}, "description": "Two or three alternative titles, each pointing at a different facet."},
+    "logline": {"type": "string", "description": "One sentence: who wants what, and what stands in the way."},
+    "genre": {"type": "string"},
+    "pov": {"type": "string", "description": "The point of view, e.g. Third person limited."},
+    "tense": {"type": "string", "description": "Past or present."},
+    "era": {"type": "string", "description": "When it happens."},
+    "protagonist": {"type": "string", "description": "The protagonist's name."},
+    "synopsis": {"type": "string", "description": "Two or three paragraphs, as a back cover would put it."},
+    "themes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "argument": {"type": "string", "description": "One sentence on what the book argues about it."}
+        },
+        "required": ["name", "argument"],
+        "additionalProperties": false
+      }
+    },
+    "acts": {
+      "type": "array",
+      "description": "Three acts: the world established, the breakdown, the revelation and reckoning.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "beats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {"type": "string"},
+                "points": {"type": "array", "items": {"type": "string"}, "description": "Events, developments and emotional beats."}
+              },
+              "required": ["title", "points"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["title", "beats"],
+        "additionalProperties": false
+      }
+    },
+    "arc": {
+      "type": "array",
+      "description": "The protagonist's arc in four or five phases.",
+      "items": {
+        "type": "object",
+        "properties": {"phase": {"type": "string"}, "description": {"type": "string"}},
+        "required": ["phase", "description"],
+        "additionalProperties": false
+      }
+    },
+    "cast": {"type": "array", "items": {"type": "string"}, "description": "Every name the outline uses."},
+    "chapters": {
+      "type": "array",
+      "description": "The chapter plan, in reading order.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "number": {"type": "integer", "minimum": 1},
+          "act": {"type": "integer", "minimum": 1},
+          "title": {"type": "string"},
+          "beat": {"type": "string", "description": "What the chapter is for."}
+        },
+        "required": ["number", "act", "title", "beat"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["title", "alt_titles", "logline", "genre", "pov", "tense", "era", "protagonist", "synopsis", "themes", "acts", "arc", "cast", "chapters"],
+  "additionalProperties": false
+}

@@ -12,7 +12,11 @@ guard README says the same). Extra patterns come from the active
 broken `governance.bannedPatternsFile`.
 
 An accepted suggestion whose text has an error-level finding is refused: the
-guard is a validator in the accept flow (M10), not a report.
+guard is a validator in the accept flow (M10), not a report. A suggestion that
+replaces text is judged on what it adds (`before`): a banned phrase the text
+already had is its author's, so it is refused only when the new text uses that
+phrase more often than the old (a novel's character may say "unlocking value";
+an agent continuing the chapter does not get to say it again).
 """
 
 import re
@@ -72,11 +76,11 @@ def extra_patterns() -> list[tuple[str, re.Pattern]]:
     return patterns
 
 
-def _bans(text: str, extra) -> tuple[list[dict], set[str]]:
+def _bans(text: str, extra, before: str | None = None) -> tuple[list[dict], set[str]]:
     findings, errored = [], set()
     for name, pattern in BANNED_PATTERNS + list(extra):
         match = pattern.search(text)
-        if match:
+        if match and (before is None or len(pattern.findall(text)) > len(pattern.findall(before))):
             findings.append({"level": "error", "message": f'banned phrase "{match.group(0)}" ({name})'})
             errored.add(name)
     return findings, errored
@@ -109,9 +113,10 @@ def guard_text(text: str, extra=()) -> list[dict]:
     return findings
 
 
-def page_findings(text: str, extra=None) -> list[dict]:
+def page_findings(text: str, extra=None, before: str | None = None) -> list[dict]:
+    """The bans and the filler; given `before` (the text this one replaces), only a ban it adds."""
     extra = extra_patterns() if extra is None else extra
-    bans, errored = _bans(text or "", extra)
+    bans, errored = _bans(text or "", extra, before)
     return bans + _filler(text or "", errored)
 
 

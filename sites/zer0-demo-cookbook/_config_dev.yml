@@ -1,5 +1,5 @@
-# Development overrides — layered on top of _config.yml by docker-compose.yml:
-#   jekyll serve --config _config.yml,_config_dev.yml
+# Development overrides — layered on top of _config.yml by the Jekyll-theme option:
+#   python3 tools/jekyll_theme.py build <site> --config sites/<site>/_config_dev.yml (from zer0-CMS's root)
 
 # Keep the remote theme in dev too (no theme gem needed locally).
 remote_theme: "bamr87/zer0-mistakes"

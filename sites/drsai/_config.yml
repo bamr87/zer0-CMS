@@ -106,9 +106,11 @@ sass:
 # book's illustration_style + character bible. Script-driven on demand — never
 # part of `jekyll build`.
 #
-# Preview banners (social/OG images per story): the zer0-image-generator gem
-# adds `bundle exec jekyll preview-images`, configured below. The style
-# matches the book's watercolor look so cards and stories feel like one book.
+# Preview banners (social/OG images per story): the zer0-image-generator's
+# Python engine, run from this directory (python3 ../../packages/
+# zer0-image-generator/lib/zer0_image_generator/preview_generator.py), reads
+# the block below. The style matches the book's watercolor look so cards and
+# stories feel like one book.
 preview_images:
   enabled                : true
   provider               : 'openai'

@@ -1,0 +1,10 @@
+# The model provider SDKs behind the AI content layer's adapters (ai/providers/), pinned.
+# Optional at install time: each adapter imports its SDK only when it is used, the tests
+# never need one, and a deployment installs what it uses (the image installs them all
+# unless built with --build-arg AI_PROVIDERS=false).
+-r requirements.txt
+anthropic==2.1.0
+# The newest 2.x: litellm 1.106 requires openai>=2.20,<3.
+openai==2.54.0
+litellm==1.106.2
+claude-agent-sdk==0.2.172

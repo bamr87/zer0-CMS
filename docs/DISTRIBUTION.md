@@ -2,7 +2,7 @@
 
 zer0-CMS carries a site's content to LinkedIn — to a company page or to a member's own profile — and brings the audience's aggregate response back into the site, where it decides what gets written next. A person approves every post. Nothing a repository ships can switch publishing on. Every LinkedIn call the CMS can make is declared, as data, before it is made.
 
-```
+```text
 page ──▶ draft ──▶ approve ──▶ preview ──▶ publish ──▶ ledger ──▶ statistics ──▶ .cms/distribution/performance.json
          pending   a person    no network   gated       keyed by    own posts,       read by the extension's
                                                         URL         aggregate        catering worklist

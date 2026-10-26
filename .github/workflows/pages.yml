@@ -1,25 +1,46 @@
-# pages — the one GitHub Pages deploy for every site in this repository (ADR 0002 §4, PLAN C4).
+# pages — the one GitHub Pages deploy for every site in this repository (ADR 0002 §4 as
+# amended by ADR 0005, PLAN C4).
 #
 # A repository has one Pages site, so every in-repo site is built separately and stitched
-# into one artifact at its route: the theme's docs at /, the rest under their own sub-path
-# (/zer0-pages/, /drsai/, /demos/cookbook/, …). The routes live in workspace.yml (`route:`)
-# and `bin/zer0 check` holds them honest; `bin/zer0 routes --json` is this workflow's plan.
-# Each site keeps its own build: its `pages` task, run with a generated config file that
-# sets only `url` and `baseurl` for its route.
+# into one artifact at its route, each under its own sub-path (/zer0-pages/, /drsai/,
+# /demos/cookbook/, …). The routes live in workspace.yml (`route:`) and `bin/zer0 check`
+# holds them honest; `bin/zer0 routes --json` is this workflow's plan. Each site keeps its
+# own build: its `pages` task, run with a generated config file that sets only `url` and
+# `baseurl` for its route. A site on the Jekyll-theme option (its `render:` setting, PLAN P2)
+# is built by tools/jekyll_theme.py — the zer0 theme at the tag the setting pins, built by a
+# Jekyll server in Docker (GitHub Pages' own builder, or the jekyll-4 image of
+# tools/jekyll/Dockerfile) — and installs no Ruby; zer0-pages still builds with its Gemfile.
+# The workflow runs when any of that changes: a site, the setting (workspace.yml), the
+# workspace tool that reads it, the option and its server, or a recording.
 #
 # Pull requests build and verify everything and deploy nothing. A push to main deploys
-# only while vars.PAGES_DEPLOY_ENABLED is 'true' (default OFF: the domain moves at the
-# cutover, C4). Until zer0-mistakes.com points here, vars.PAGES_URL / PAGES_BASE_PATH can
-# aim a preview at https://bamr87.github.io/zer0-CMS (PAGES_BASE_PATH=/zer0-CMS).
+# only while vars.PAGES_DEPLOY_ENABLED is 'true' (default OFF). The default target is this
+# repository's project site, https://bamr87.github.io/zer0-CMS; vars.PAGES_URL and
+# PAGES_BASE_PATH aim it elsewhere (a custom domain sets PAGES_BASE_PATH to '').
+#
+# Every build is also compared with the recording of that site's Jekyll build (PLAN P1,
+# web/site/fixtures/README.md): `tools/site_manifest.py` records what it wrote — paths, each
+# page's title and text, feed entries, sitemap URLs, redirects, the gems and theme commit it
+# resolved — and the fresh recording is uploaded as the site-manifest-<site> artifact, to
+# commit when the change is intended. A site on the Jekyll-theme option reproduces its
+# recording exactly (P2), so on a pull request a difference fails its leg until the same
+# pull request re-records it; zer0-pages, still on its Gemfile, warns. A push to main only
+# warns, so a difference never stands between a site and its deploy; a dispatch with
+# `check` fails on any difference.
 name: pages
 
 on:
   push:
     branches: [main]
-    paths: ["sites/**", "packages/zer0-mistakes/**", "workspace.yml", ".github/workflows/pages.yml"]
+    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/site_manifest.py", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "web/site/fixtures/**", ".github/workflows/pages.yml"]
   pull_request:
-    paths: ["sites/**", "packages/zer0-mistakes/**", "workspace.yml", ".github/workflows/pages.yml"]
+    paths: ["sites/**", "apps/parodynews/src/pages/**", "workspace.yml", "bin/zer0", "tools/workspace/**", "tools/site_manifest.py", "tools/jekyll_theme.py", "tools/jekyll/**", "tools/obsidian/**", "web/site/fixtures/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
+    inputs:
+      check:
+        description: Fail when a site's build differs from its recording in web/site/fixtures/
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -29,11 +50,14 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  PAGES_URL: ${{ vars.PAGES_URL || 'https://zer0-mistakes.com' }}
-  PAGES_BASE_PATH: ${{ vars.PAGES_BASE_PATH || '' }}
+  PAGES_URL: ${{ vars.PAGES_URL || 'https://bamr87.github.io' }}
+  PAGES_BASE_PATH: ${{ vars.PAGES_BASE_PATH || '/zer0-CMS' }}
   # The theme's SCSS has multibyte characters; a non-UTF-8 locale breaks the Sass converter.
   LANG: C.UTF-8
   LC_ALL: C.UTF-8
+  # Jekyll dates a post — and so its URL — in the process's time zone; the runners' zone, and
+  # the one every recording in web/site/fixtures/ was made in.
+  TZ: UTC
 
 jobs:
   plan:
@@ -44,9 +68,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/setup-python@v7
         with:
-          ruby-version: "3.3"
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
       - id: routes
         run: |
           routes=$(bin/zer0 routes --json)
@@ -63,13 +88,39 @@ jobs:
         site: ${{ fromJSON(needs.plan.outputs.routes) }}
     env:
       # jekyll-github-metadata aborts without a repository it can infer; a project's own
-      # `pages` task may name a different one (the theme names its mirror).
+      # `pages` task may name a different one.
       PAGES_REPO_NWO: ${{ github.repository }}
+      # 'true' where a difference from the recording fails this leg: a site on the Jekyll-theme
+      # option in a pull request, or any site when a dispatch asks for `check`.
+      PARITY_GATE: ${{ inputs.check || (matrix.site.render && github.event_name == 'pull_request') }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      # bin/zer0 runs the site's `pages` task (Python). On the Jekyll-theme option the task is
+      # tools/jekyll_theme.py, whose Jekyll server runs in Docker; the jekyll-4 server's image is
+      # built here from tools/jekyll/Dockerfile under the tag the option looks for, and cached.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
+      - name: The jekyll-4 server's image tag
+        id: image
+        if: matrix.site.render.server == 'jekyll-4'
+        run: echo "tag=$(python tools/jekyll_theme.py image jekyll-4)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+        if: matrix.site.render.server == 'jekyll-4'
+      - uses: docker/build-push-action@v7
+        if: matrix.site.render.server == 'jekyll-4'
+        with:
+          context: tools/jekyll
+          load: true
+          tags: ${{ steps.image.outputs.tag }}
+          cache-from: type=gha,scope=jekyll-4
+          cache-to: type=gha,scope=jekyll-4,mode=max
+      # zer0-pages alone still builds with its Gemfile (PLAN P2 records why), so only its leg installs Ruby.
       - uses: ruby/setup-ruby@v1
+        if: ${{ !matrix.site.render }}
         with:
           ruby-version: "3.3"
           bundler-cache: true
@@ -84,17 +135,60 @@ jobs:
           baseurl="${PAGES_BASE_PATH%/}${ROUTE%/}"
           printf 'url: "%s"\nbaseurl: "%s"\n' "$PAGES_URL" "$baseurl" > "$RUNNER_TEMP/route.yml"
           export ZER0_PAGES_CONFIG="$RUNNER_TEMP/route.yml" ZER0_PAGES_DEST="$RUNNER_TEMP/out" ZER0_PAGES_BASEURL="$baseurl"
+          # The option writes what its build resolved (the theme's commit, the server) here.
+          export ZER0_PAGES_BUILT_WITH="$RUNNER_TEMP/built-with.json"
           bin/zer0 run pages "$NAME" 2>&1 | tee "$RUNNER_TEMP/build.log"
           test -f "$RUNNER_TEMP/out/index.html" || { echo "::error::$NAME built no index.html"; exit 1; }
       # Jekyll 3 reports a broken Liquid expression as a warning, drops it from the page and
-      # exits 0. The theme's own Pages build failed on that; every other site is warned.
+      # exits 0, so every site is warned here rather than silently published with a hole.
       - name: Liquid warnings
         env:
           NAME: ${{ matrix.site.name }}
         run: |
           if grep -nE 'Liquid (Warning|Exception)' "$RUNNER_TEMP/build.log"; then
-            if [ "$NAME" = zer0-mistakes ]; then echo "::error::Liquid errors in the theme's docs site"; exit 1; fi
             echo "::warning::$NAME has Liquid warnings (above): content was dropped from those pages"
+          fi
+      # PLAN P1: what this build wrote, against the recording of the site's Jekyll build. It
+      # never stands between a site and its deploy — on a push the two steps continue on an
+      # error — and the interpreter is the one the recordings were written with, so a parser
+      # change in another Python release cannot pass for a change to a site.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Record what the build wrote
+        id: record
+        continue-on-error: ${{ env.PARITY_GATE != 'true' }}
+        env:
+          NAME: ${{ matrix.site.name }}
+          SOURCE: ${{ matrix.site.bundle_dir }}
+        run: |
+          set -euo pipefail
+          # What the build resolved: the option's report, or a Gemfile site's bundle.
+          if [ -f "$RUNNER_TEMP/built-with.json" ]; then
+            python3 tools/site_manifest.py build "$RUNNER_TEMP/out" --site "$NAME" --built-with "$RUNNER_TEMP/built-with.json" --out "$RUNNER_TEMP/manifests/$NAME/manifest.json"
+          else
+            python3 tools/site_manifest.py build "$RUNNER_TEMP/out" --site "$NAME" --source "$SOURCE" --out "$RUNNER_TEMP/manifests/$NAME/manifest.json"
+          fi
+      - uses: actions/upload-artifact@v7
+        if: steps.record.outcome == 'success'
+        with:
+          name: site-manifest-${{ matrix.site.name }}
+          path: ${{ runner.temp }}/manifests
+          retention-days: 30
+      - name: Compare with the recorded build
+        if: steps.record.outcome == 'success'
+        continue-on-error: ${{ env.PARITY_GATE != 'true' }}
+        env:
+          NAME: ${{ matrix.site.name }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 tools/site_manifest.py compare "web/site/fixtures/$NAME/manifest.json" "$RUNNER_TEMP/manifests/$NAME/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
+          if [ "$status" -ne 0 ]; then
+            { echo "### $NAME differs from its recording"; echo '```'; head -n 200 "$RUNNER_TEMP/compare.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            level=$([ "$PARITY_GATE" = "true" ] && echo error || echo warning)
+            echo "::$level::$NAME's build differs from web/site/fixtures/$NAME/manifest.json (the job summary says how); if that is intended, commit the site-manifest-$NAME artifact over web/site/fixtures/ in this pull request"
+            test "$PARITY_GATE" != "true"
           fi
       - uses: actions/upload-artifact@v7
         with:

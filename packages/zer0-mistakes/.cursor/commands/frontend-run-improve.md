@@ -1,1 +1,0 @@
-Directly interact with the frontend of this app and make improvements to the UI/UX

@@ -11,7 +11,15 @@ rails/storage/*.sqlite3-*
 rails/log/*.log
 rails/tmp
 
-# Per-project dependency installs (bundler and pip) anywhere in the workspace.
+# The theme's docs site, fetched by content.yml for the round-trip fixture (ADR 0005).
+.cache/
+
+# Per-project dependency installs (bundler and pip) anywhere in the workspace,
+# including the root .venv that bin/zer0 runs on where python3 lacks PyYAML.
 .bundle/
 vendor/bundle/
+.venv
 __pycache__/
+
+# Short-lived worktrees of parallel agent work (AGENTS.md § Workflow); merged into main and removed the same day.
+.claude/worktrees/

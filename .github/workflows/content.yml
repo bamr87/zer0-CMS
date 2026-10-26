@@ -13,9 +13,21 @@ name: content
 on:
   push:
     branches: [main]
-    paths: ["content/**", "schemas/events/**", "schemas/graphql/**", "schemas/content/**", ".github/workflows/content.yml"]
+    paths:
+      - "content/**"
+      - "schemas/events/**"
+      - "schemas/graphql/**"
+      - "schemas/content/**"
+      - "schemas/openapi/**"
+      - ".github/workflows/content.yml"
   pull_request:
-    paths: ["content/**", "schemas/events/**", "schemas/graphql/**", "schemas/content/**", ".github/workflows/content.yml"]
+    paths:
+      - "content/**"
+      - "schemas/events/**"
+      - "schemas/graphql/**"
+      - "schemas/content/**"
+      - "schemas/openapi/**"
+      - ".github/workflows/content.yml"
 
 permissions:
   contents: read
@@ -50,6 +62,15 @@ jobs:
         run: ruff check . && ruff format --check .
       - name: Migrations are complete
         run: python manage.py makemigrations --check --dry-run
+      # The theme's docs site is the largest round-trip fixture (376 files). It lives in
+      # its own repository (ADR 0005), so the suite reads it from a pinned checkout under
+      # ZER0_THEME_CHECKOUT and skips that one case when the directory is absent.
+      - uses: actions/checkout@v7
+        with:
+          repository: bamr87/zer0-mistakes
+          ref: v1.31.3
+          path: .cache/zer0-mistakes
+          persist-credentials: false
       - name: Tests (full suite)
         run: python -m pytest -q
       - name: The committed GraphQL schema is current
@@ -58,6 +79,10 @@ jobs:
           diff -u ../schemas/graphql/schema.graphql "$RUNNER_TEMP/schema.graphql"
       - name: The committed agent schema is current
         run: python manage.py wagtail_ai_schema --check ../schemas/content/ai-schema.json
+      - name: The committed OpenAPI document is current
+        run: |
+          python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-on-warn --file "$RUNNER_TEMP/openapi.json"
+          diff -u ../schemas/openapi/openapi.json "$RUNNER_TEMP/openapi.json"
       - name: Eval suites (recorded models)
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development

@@ -24,6 +24,7 @@ a 1,536-float column would be copied into each one. They live in
 import hashlib
 import json
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from graphene.types.generic import GenericScalar
 from grapple.models import (
@@ -111,6 +112,23 @@ class BasePage(AgentManagedMixin, Page):
 
     # The typed fields a subclass adds to the hash, beyond the shared ones.
     hashed_fields: tuple[str, ...] = ()
+    # Of those, the ones that joined the hash after pages were imported with it:
+    # left out while at their default, so such a page keeps the hash it was
+    # imported with (importers.ImportedSource.import_hash) and is still unchanged.
+    sparse_hashed_fields: tuple[str, ...] = ()
+    # What a person edits in the studio and the extension (api/pages.py): the
+    # shared fields, then the typed fields each subclass adds. The body is
+    # edited block by block, not as a field.
+    shared_editor_fields: tuple[str, ...] = (
+        "title",
+        "slug",
+        "seo_title",
+        "search_description",
+        "ai_summary",
+        "ai_keywords",
+        "agent_policy",
+    )
+    editor_fields: tuple[str, ...] = ()
     # Headless first: this template exists for the editor's preview only.
     template = "cms/page.html"
 
@@ -134,6 +152,8 @@ class BasePage(AgentManagedMixin, Page):
         APIField("agent_policy"),
         APIField("legacy_path"),
         APIField("content_hash"),
+        APIField("bylines"),
+        APIField("corrections"),
     ]
     graphql_fields = [
         GraphQLStreamfield("body"),
@@ -152,6 +172,20 @@ class BasePage(AgentManagedMixin, Page):
     def body_json(self) -> list:
         return list(self.body.get_prep_value())
 
+    # What a site shows beside the content: who wrote the page and its corrections
+    # and updates log. The newsroom keeps both, outside the page's revisions.
+    @property
+    def bylines(self) -> list[dict]:
+        from newsroom.services import page_bylines
+
+        return page_bylines(self)
+
+    @property
+    def corrections(self) -> list[dict]:
+        from newsroom.services import page_corrections
+
+        return page_corrections(self)
+
     def hashed_content(self) -> dict:
         """Everything that makes this page's content what it is, without ids,
         timestamps or tree position — two imports of the same file agree."""
@@ -165,7 +199,9 @@ class BasePage(AgentManagedMixin, Page):
             "front_matter": self.front_matter,
         }
         for name in self.hashed_fields:
-            data[name] = self.hashed_value(name)
+            value = self.hashed_value(name)
+            if name not in self.sparse_hashed_fields or value != self._meta.get_field(name).get_default():
+                data[name] = value
         return data
 
     def hashed_value(self, name):
@@ -195,6 +231,7 @@ class SiteRootPage(BasePage):
     parent_page_types = ["wagtailcore.Page"]
     subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage"]
     hashed_fields = ("site_key", "jekyll_config")
+    editor_fields = ("source_root",)
     content_panels = BasePage.content_panels + [FieldPanel("site_key"), FieldPanel("source_root")]
     graphql_fields = BasePage.graphql_fields + [GraphQLString("site_key")]
 
@@ -207,6 +244,7 @@ class CollectionPage(BasePage):
 
     subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage"]
     hashed_fields = ("collection", "output_dir")
+    editor_fields = ("collection", "output_dir")
     content_panels = BasePage.content_panels + [FieldPanel("collection"), FieldPanel("output_dir")]
     graphql_fields = BasePage.graphql_fields + [GraphQLString("collection")]
 
@@ -242,6 +280,7 @@ class ArticlePage(BasePage):
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types: list[str] = []
     hashed_fields = ("date", "author", "tags", "categories")
+    editor_fields = ("date", "author", "tags", "categories")
 
     content_panels = Page.content_panels + [
         MultiFieldPanel([FieldPanel("date"), FieldPanel("author"), FieldPanel("tags"), FieldPanel("categories")]),
@@ -274,11 +313,39 @@ class StandardPage(BasePage):
 
 
 BOOK_PROFILES = [("book", "Book"), ("abc", "ABC board book"), ("story", "Picture-book story")]
+# A book's and a chapter's lifecycle (the books package's library format, books/README.md).
+BOOK_STATUSES = ("idea", "outlining", "drafting", "revising", "complete", "archived")
+CHAPTER_STATUSES = ("stub", "outline", "draft", "revised", "final")
+
+
+def string_list(value):
+    """A list of non-empty strings: a cast, themes, a chapter's characters."""
+    if not isinstance(value, list) or not all(isinstance(v, str) and v.strip() for v in value):
+        raise ValidationError("a list of non-empty strings")
+
+
+def document_list(value):
+    """A book's other files: [{"path": "guides/act-1.md", "text": "…"}], each path relative and inside the book."""
+    paths = [d.get("path") for d in value if isinstance(d, dict)] if isinstance(value, list) else None
+    if paths is None or len(paths) != len(value) or len(set(paths)) != len(paths):
+        raise ValidationError("a list of {path, text}, each path once")
+    for doc in value:
+        path = doc["path"]
+        if not isinstance(path, str) or not isinstance(doc.get("text"), str) or set(doc) != {"path", "text"}:
+            raise ValidationError("a document is {path, text}, both strings")
+        if not path or path.startswith("/") or "\\" in path or ".." in path.split("/") or "" in path.split("/"):
+            raise ValidationError(f"{path!r} is not a relative path inside the book")
 
 
 class BookPage(BasePage):
     """A book: a manuscript with chapters (books), an ABC board book (its
-    letters are `letter` blocks in the body) or a picture-book story (drsai)."""
+    letters are `letter` blocks in the body) or a picture-book story (drsai).
+
+    A manuscript book carries what its `library/<slug>/` files hold (books/):
+    the manifest (book.yml: status, logline, genre, point of view, tense, era,
+    acts, targets, cast, themes; every other key stays in `front_matter`), the
+    outline, the character bible, the continuity ledger, a style guide, and
+    every other file — the act guides, the README — as `documents`."""
 
     subtitle = models.CharField(max_length=250, blank=True)
     author = models.CharField(max_length=200, blank=True)
@@ -286,10 +353,81 @@ class BookPage(BasePage):
     profile = models.CharField(max_length=16, choices=BOOK_PROFILES, default="book")
     audience = models.CharField(max_length=80, blank=True)
     art_style = models.CharField(max_length=80, blank=True)
+    book_status = models.CharField(
+        "status",
+        max_length=16,
+        choices=[(s, s.capitalize()) for s in BOOK_STATUSES],
+        default="idea",
+        help_text="Where the book stands, from an idea to a finished draft.",
+    )
+    logline = models.TextField(blank=True, help_text="One sentence: who wants what, and what stands in the way.")
+    genre = models.CharField(max_length=255, blank=True)
+    pov = models.CharField("point of view", max_length=255, blank=True, help_text="New chapters start with it.")
+    tense = models.CharField(max_length=80, blank=True)
+    era = models.CharField(max_length=255, blank=True, help_text="When it happens; new chapters start with it.")
+    protagonist = models.CharField(max_length=255, blank=True)
+    acts = models.PositiveSmallIntegerField(default=3, help_text="The act a chapter declares is one of these.")
+    planned_chapters = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Progress counts chapters against it when there is no word target."
+    )
+    target_word_count = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Progress counts the prose's words against it."
+    )
+    themes = models.JSONField(default=list, blank=True, validators=[string_list])
+    cast = models.JSONField(
+        default=list,
+        blank=True,
+        validators=[string_list],
+        help_text="Every name a chapter may list; empty switches the check off.",
+    )
+    outline = models.TextField(
+        blank=True, help_text="Synopsis, themes, the acts' beats, the arc and the chapter plan, in Markdown."
+    )
+    character_notes = models.TextField("character bible", blank=True, help_text="Who everyone is, in Markdown.")
+    continuity_notes = models.TextField(
+        "continuity ledger", blank=True, help_text="Settled facts and open questions; every book task reads it."
+    )
+    style_guide = models.TextField(blank=True, help_text="The book's voice, register and house rules, in Markdown.")
+    documents = models.JSONField(
+        default=list,
+        blank=True,
+        validators=[document_list],
+        help_text="The book's other files — act guides, README — as [{path, text}].",
+    )
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types = ["cms.ChapterPage"]
-    hashed_fields = ("subtitle", "author", "series", "profile", "audience", "art_style")
+    manuscript_fields = (
+        "book_status",
+        "logline",
+        "genre",
+        "pov",
+        "tense",
+        "era",
+        "protagonist",
+        "acts",
+        "planned_chapters",
+        "target_word_count",
+        "themes",
+        "cast",
+        "outline",
+        "character_notes",
+        "continuity_notes",
+        "style_guide",
+    )
+    hashed_fields = (
+        "subtitle",
+        "author",
+        "series",
+        "profile",
+        "audience",
+        "art_style",
+        *manuscript_fields,
+        "documents",
+    )
+    sparse_hashed_fields = (*manuscript_fields, "documents")  # new in cms/0002
+    # `documents` is edited file by file in the Books workspace (/api/v2/books/<id>/documents/).
+    editor_fields = ("subtitle", "author", "series", "profile", "audience", "art_style", *manuscript_fields)
 
     content_panels = Page.content_panels + [
         MultiFieldPanel(
@@ -313,13 +451,55 @@ class BookPage(BasePage):
         GraphQLString("profile"),
     ]
 
+    @classmethod
+    def from_brief(cls, brief, *, user):
+        """A brief whose result is a book outline becomes a book of the library
+        with a stub per planned chapter (books/services.py), however it is
+        applied; any other brief is made the generic way (None)."""
+        from books.services import create_from_brief, is_outline
+
+        return create_from_brief(brief, user) if is_outline(brief) else None
+
 
 class ChapterPage(BasePage):
+    """A chapter of a book: its body is the chapter's Markdown as blocks — the
+    outline scaffolding, and the prose under "Chapter Body".
+
+    Its fields are the chapter file's front matter (number, subtitle, act,
+    status, point of view, era, characters, setting, tone, style); every other
+    key stays in `front_matter` (books/)."""
+
     number = models.PositiveIntegerField(null=True, blank=True)
+    subtitle = models.CharField(max_length=250, blank=True)
+    act = models.PositiveSmallIntegerField(null=True, blank=True, help_text="One of the book's acts.")
+    chapter_status = models.CharField(
+        "status", max_length=16, choices=[(s, s.capitalize()) for s in CHAPTER_STATUSES], default="draft"
+    )
+    pov = models.CharField("point of view", max_length=255, blank=True)
+    era = models.CharField(max_length=255, blank=True)
+    characters = models.JSONField(
+        default=list, blank=True, validators=[string_list], help_text="Names from the book's cast."
+    )
+    setting = models.JSONField(default=list, blank=True, validators=[string_list])
+    tone = models.JSONField(default=list, blank=True, validators=[string_list])
+    style = models.CharField(max_length=255, blank=True)
 
     parent_page_types = ["cms.BookPage"]
     subpage_types: list[str] = []
-    hashed_fields = ("number",)
+    hashed_fields = (
+        "number",
+        "subtitle",
+        "act",
+        "chapter_status",
+        "pov",
+        "era",
+        "characters",
+        "setting",
+        "tone",
+        "style",
+    )
+    sparse_hashed_fields = hashed_fields[1:]  # all but the number are new in cms/0002
+    editor_fields = hashed_fields
     content_panels = Page.content_panels + [
         FieldPanel("number"),
         FieldPanel("body"),

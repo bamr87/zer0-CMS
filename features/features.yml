@@ -3,233 +3,334 @@
 # =============================================================================
 # kit: verify v0.1.0 · governance v0.1.0 (bamr87/bamr87 templates/verify/, templates/governance/)
 #
-# One entry per user-facing capability, grounded in this repo's PRD, README and
-# code: what it does, where it lives (`link`), where it is explained (`docs`),
-# its `status` (shipped | partial | planned | deprecated | tbd) and the PRD
-# requirements it serves (`prd:`; TBD = not yet traced). Ids are STABLE: never
-# renumber or reuse one. The PRD's "Feature catalog" block is generated from
-# this file — edit here, then run:
-#   python3 <bamr87/bamr87>/tools/governance_lint.py prd-sync . --write
-# Validate: python3 <hub>/tools/governance_lint.py check .  ·  <hub>/tools/features_index.py check .
-# Schema: features/v1 (field reference: bamr87/bamr87 templates/verify/features.template.yml)
+# One entry per user-facing capability. This file is what an AI agent reads to
+# know what the product DOES, where it lives, how it is documented, which tests
+# and user scenarios prove it, and what evidence exists that it works. The hub
+# aggregates every repo's copy into its fleet features index
+# (bamr87/bamr87 _data/features_index.yml → /features/) and grades coverage:
+#
+#   covered    ≥1 of `tests` / `scenarios` exists on disk
+#   evidenced  ≥1 `evidence` bundle exists (README + screenshots + report)
+#   verified   `verified.date` is set (by an agent, a human, or CI)
+#
+# Schema: features/v1 — a strict SUPERSET of the shape zer0-mistakes,
+# it-journey, and barodybroject already use, so legacy files validate as-is.
+# Validate: python3 <hub>/tools/features_index.py check .
+#
+# Per feature:
+#   id            required  STABLE id, `^[A-Z0-9]+-[0-9]+$` (prefix per repo, e.g. ZER0-001)
+#   title         required  short name
+#   description   required  one or two sentences — what the user can do
+#   implemented   required  true|false (planned features are welcome — they show as gaps)
+#   surface       optional  ui | api | cli | docs | content | infra (default: ui when `link`
+#                           is a route starting with `/`, else infra)
+#   link          optional  the route (`/settings/`) or file that IS the feature
+#   docs          optional  where it is explained (path or URL)
+#   tags          optional  list
+#   date          optional  YYYY-MM-DD introduced
+#   provenance    optional  { introduced_in, pr, commit, issue }
+#   tests         optional  automated test files that pin it (paths)
+#   scenarios     optional  declarative user scenarios (verify/scenarios/*.yml)
+#   evidence      optional  evidence bundle dirs (test/evidence/<slug>/)
+#   screenshots   optional  direct image paths, when a bundle is overkill
+#   verified      optional  { date, by: agent|human|ci, run: <url> } — last verification
+#   deviations    optional  free text: why a MUST row is waived for this feature
+#
+# The platform (content/, ADR 0004) is what the browser scenarios exercise; the
+# VS Code extension's features are pinned by its own suite under src/test/.
 # =============================================================================
 schema: features/v1
 repo: bamr87/zer0-CMS
 
 features:
-  - id: ZCMS-001
-    title: "Front matter metadata panel"
-    description: "Renders the active file's front matter as typed controls instead of raw YAML. (VS Code extension, README 'What it is')."
+  # ── The platform: the admin ────────────────────────────────────────────────
+  - id: ZER0-001
+    title: "Wagtail admin: pages, revisions, media, workflows"
+    description: "An editor signs in to the admin, browses every imported site's page tree, edits StreamField bodies and front matter as typed fields, previews, and publishes through revisions and moderation workflows."
     implemented: true
-    status: shipped
-    prd: [TBD]
     surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-002
-    title: "Content dashboard"
-    description: "Lists every piece of content with search, filters and sorting. (VS Code extension, README 'What it is')."
+    link: /admin/
+    docs: content/README.md
+    tags: [platform, admin, wagtail]
+    tests:
+      - content/tests/cms/test_models.py
+    scenarios:
+      - verify/scenarios/smoke-home.yml
+    evidence: []
+  - id: ZER0-002
+    title: "Agent suggestions, reviewed in the editor"
+    description: "An agent proposes changes as suggestions; an editor reviews them per page, accepts one or a whole run as one draft revision, or rejects them — the page is never changed behind their back."
     implemented: true
-    status: shipped
-    prd: [TBD]
     surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-003
-    title: "SEO insights"
-    description: "Measures content against thresholds you set. (VS Code extension, README 'What it is')."
+    link: /admin/suggestions/page/
+    docs: content/suggestions/services.py
+    tags: [platform, agents, governance]
+    tests:
+      - content/tests/suggestions/test_suggestions.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-003
+    title: "Agent review as a moderation task"
+    description: "A workflow can include an agent review (brand, accessibility, review) that leaves block comments and approves or rejects, and can never be the step that publishes."
     implemented: true
-    status: shipped
-    prd: [TBD]
     surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-004
-    title: "Governed publishing path"
-    description: "draft → brand guard → human approval → publish → ledger. (VS Code extension, README 'What it is')."
+    link: /admin/workflows/
+    docs: content/workflow/models.py
+    tags: [platform, agents, workflow]
+    tests:
+      - content/tests/workflow/test_review.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-004
+    title: "Agent runs report"
+    description: "An administrator sees every agent run with its cost, tokens and outcome under Reports → Agent runs."
     implemented: true
-    status: shipped
-    prd: [TBD]
     surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-005
-    title: "Front-matter audit"
-    description: "Audits every page against the site's own schema and shows fixes as a diff first. (VS Code extension, README 'What it is')."
+    link: /admin/reports/agent-runs/
+    docs: content/agents/README.md
+    tags: [platform, agents, reports]
+    tests:
+      - content/tests/agents/test_runner.py
+    scenarios: []
+    evidence: []
+
+  # ── The platform: APIs and integrations ───────────────────────────────────
+  - id: ZER0-010
+    title: "GraphQL API"
+    description: "A client reads every page type with StreamField JSON, semantic and graph search, related pages, entities and suggestions, and requests agent runs or decides suggestions through mutations."
     implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-006
-    title: "Platform profiles"
-    description: "Jekyll (zer0-mistakes overlay), MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback. (VS Code extension, README 'What it is')."
+    surface: api
+    link: /graphql/
+    docs: schemas/graphql/schema.graphql
+    tags: [platform, api, graphql]
+    tests:
+      - content/tests/api/test_graphql.py
+      - content/tests/ops/test_graphql_errors.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-011
+    title: "REST API: agent runs, graph, suggestions, tools"
+    description: "A client starts and streams agent runs (SSE), queries the content graph, decides suggestions and lists the tools it may call, documented at /api/v2/docs/."
     implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-007
-    title: "Many sites in one window"
-    description: "Each site with its own configuration, draft queue and MCP server. (VS Code extension, README 'What it is')."
+    surface: api
+    link: /api/v2/docs/
+    docs: schemas/openapi/openapi.json
+    tags: [platform, api, rest, openapi]
+    tests:
+      - content/tests/api/test_graphql.py
+      - content/tests/ops/test_openapi.py
+      - content/tests/ops/test_errors.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-012
+    title: "MCP server over the one tool registry"
+    description: "An MCP client with an agent token sees exactly the tools its agent may call, over Streamable HTTP or stdio, with every call recorded as an audited run."
     implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-008
-    title: "Fleet console"
-    description: "Harness, Fleet, Monitor and Workflows tabs for a repository's AI lanes. (VS Code extension, README 'What it is')."
+    surface: api
+    link: /mcp/
+    docs: content/mcp_server/README.md
+    tags: [platform, api, mcp, agents]
+    tests:
+      - content/tests/mcp/test_mcp.py
+      - content/tests/ops/test_mcp_errors.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-013
+    title: "Jekyll sites imported and exported byte for byte"
+    description: "An operator imports a Jekyll site into the platform (idempotent, never overwriting an editor's change) and exports it back, unchanged pages byte for byte, so the files stay the source of truth until a site cuts over."
     implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: ui
-    link: "src"
-    docs: "README.md"
-  - id: ZCMS-009
-    title: "content (content)"
-    description: "The content plane — Django + Wagtail pages, the agent harness and its one tool registry, suggestions, the content graph, the outbox, and GraphQL/REST/MCP over all of it (ADR 0001)."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: ui
-    link: "content"
-    docs: "workspace.yml"
-  - id: ZCMS-010
-    title: "cms-rails (rails)"
-    description: "The fleet CMS — a Rails 8.1 app that indexes every registered site and writes edits back to the files, plus the stdlib-only zer0 library (catalog, doctor, ABC generator)."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: ui
-    link: "rails"
-    docs: "workspace.yml"
-  - id: ZCMS-011
-    title: "zer0-mistakes (packages/zer0-mistakes)"
-    description: "The Jekyll theme, published as the jekyll-theme-zer0 gem, with its docs site, installer and theme-propagation tooling."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: infra
-    link: "packages/zer0-mistakes"
-    docs: "workspace.yml"
-  - id: ZCMS-012
-    title: "zer0-image-generator (packages/zer0-image-generator)"
-    description: "AI preview and social-image generation for any Jekyll site — the jekyll preview-images gem, its Python engine, the byte-identical Ruby port and the web panel."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: infra
-    link: "packages/zer0-image-generator"
-    docs: "workspace.yml"
-  - id: ZCMS-013
-    title: "books (packages/books)"
-    description: "A shelf of book projects (library/<slug>/) and the bookshelf app that validates, compiles and edits them, with a Claude-backed studio."
-    implemented: true
-    status: shipped
-    prd: [TBD]
     surface: cli
-    link: "packages/books"
-    docs: "workspace.yml"
-  - id: ZCMS-014
-    title: "1987 (sites/1987)"
-    description: "The self-growing knowledge base about the year 1987 — plain-markdown topic pages by category, grown by Claude Code slash commands and published by GitHub Pages from the original repository."
+    link: content/importers/jekyll.py
+    docs: content/README.md
+    tags: [platform, jekyll, import, export]
+    tests:
+      - content/tests/importers/test_jekyll.py
+    scenarios: []
+    evidence: []
+
+  # ── The platform: operations ──────────────────────────────────────────────
+  - id: ZER0-020
+    title: "Health, readiness and version probes"
+    description: "An orchestrator reads /healthz (liveness, touches nothing), /readyz (database, cache, Redis — 503 naming the one that is down) and /version (name, version, commit, built_at)."
     implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/1987"
-    docs: "workspace.yml"
-  - id: ZCMS-015
-    title: "2005 (sites/2005)"
-    description: "The year-2005 knowledge base of the year-of-ai lineage — a remote_theme consumer of the zer0 theme, built the way zer0-pages-remote is."
+    surface: api
+    link: /readyz
+    docs: content/ops/README.md
+    tags: [platform, ops, probes]
+    tests:
+      - content/tests/ops/test_health.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-021
+    title: "Request ids, the error envelope and structured logs"
+    description: "Every response carries X-Request-Id and X-App-Version; every API error is one JSON envelope with a stable code and the request id; logs are JSON lines with the same id and never contain a token."
     implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/2005"
-    docs: "workspace.yml"
-  - id: ZCMS-016
-    title: "drsai (sites/drsai)"
-    description: "The children's picture-book site and its Python story engine; the CMS's ABC wizard exports into it."
+    surface: api
+    link: /api/v2/docs/
+    docs: content/ops/README.md
+    tags: [platform, ops, logging, errors]
+    tests:
+      - content/tests/ops/test_request_id.py
+      - content/tests/ops/test_errors.py
+      - content/tests/ops/test_logging.py
+      - content/tests/ops/test_throttling.py
+      - content/tests/ops/test_cors.py
+      - content/tests/ops/test_security_headers.py
+    scenarios: []
+    evidence: []
+
+  # ── The studio (web/, ADR 0006, PLAN P4) ──────────────────────────────────
+  - id: ZER0-040
+    title: "The studio: write, create and publish"
+    description: "An editor signs in to the studio at /studio/, browses every site's pages in any status with filters and the tree, creates a page of a type its parent allows, edits its blocks (Markdown in a rich editor that never rewrites what it cannot reproduce), fields and SEO, saves a draft, and publishes, unpublishes, or schedules a time to go live and a time to come down. A page someone has locked opens read-only and says why."
     implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/drsai"
-    docs: "workspace.yml"
-  - id: ZCMS-017
-    title: "zer0-pages (sites/zer0-pages)"
-    description: "One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/zer0-pages"
-    docs: "workspace.yml"
-  - id: ZCMS-018
-    title: "zer0-pages-remote (sites/zer0-pages-remote)"
-    description: "The minimal remote_theme consumer — proof of how few files a working GitHub Pages site needs."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/zer0-pages-remote"
-    docs: "workspace.yml"
-  - id: ZCMS-019
-    title: "zer0-demo-cookbook (sites/zer0-demo-cookbook)"
-    description: "A demo site generated by the theme's installer (cookbook profile)."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/zer0-demo-cookbook"
-    docs: "workspace.yml"
-  - id: ZCMS-020
-    title: "zer0-demo-garden (sites/zer0-demo-garden)"
-    description: "A demo site generated by the theme's installer (garden profile)."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/zer0-demo-garden"
-    docs: "workspace.yml"
-  - id: ZCMS-021
-    title: "irony-works (sites/irony-works)"
-    description: "The perpetual encyclopedia of irony — a self-growing, AI-tended Obsidian vault whose engine transplants entries into a Jekyll collection published with the zer0 theme."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/irony-works"
-    docs: "workspace.yml"
-  - id: ZCMS-022
-    title: "wargames (sites/wargames)"
-    description: "OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site with spoiler-free study guides — a remote_theme consumer of the zer0 theme."
-    implemented: true
-    status: shipped
-    prd: [TBD]
-    surface: content
-    link: "sites/wargames"
-    docs: "workspace.yml"
-  - id: ZCMS-023
-    title: "parodynews (apps/parodynews)"
-    description: "A Django 5.2 + React app that generates and manages parody news with a provider-agnostic AI layer, deployed to Azure Container Apps."
-    implemented: true
-    status: shipped
-    prd: [TBD]
     surface: ui
-    link: "apps/parodynews"
-    docs: "workspace.yml"
-  - id: ZCMS-024
-    title: "aieo (apps/aieo)"
-    description: "AI Engine Optimization — a FastAPI + React app that scores and rewrites website content so AI engines like ChatGPT and Claude will cite it."
+    link: /studio/write
+    docs: web/README.md
+    tags: [studio, web, editor, publishing]
+    date: 2026-10-22
+    tests:
+      - content/tests/api/test_pages.py
+      - content/tests/api/test_session.py
+      - content/tests/api/test_studio.py
+      - content/tests/cms/test_tasks.py
+      - web/packages/ui/test/editor.test.tsx
+      - web/packages/ui/test/create.test.tsx
+      - web/packages/ui/test/richtext.test.tsx
+      - web/studio/test/app.test.tsx
+    scenarios:
+      - verify/scenarios/studio-create-page.yml
+      - verify/scenarios/studio-publish.yml
+    evidence:
+      - test/evidence/studio-create-page/
+      - test/evidence/studio-publish/
+  - id: ZER0-041
+    title: "The studio's review inbox and revisions"
+    description: "An editor reviews every pending agent suggestion they may decide as a diff with its rationale — accepting one, rejecting one with a reason, or accepting all of a run that the inbox shows as one draft revision per page — and compares any revision with the latest and reverts to it as a new draft."
     implemented: true
-    status: shipped
-    prd: [TBD]
     surface: ui
-    link: "apps/aieo"
-    docs: "workspace.yml"
+    link: /studio/review
+    docs: web/README.md
+    tags: [studio, web, review, agents, governance]
+    date: 2026-10-22
+    tests:
+      - content/tests/api/test_review.py
+      - content/tests/api/test_pages.py
+      - web/packages/ui/test/review.test.tsx
+      - web/packages/ui/test/editor.test.tsx
+    scenarios:
+      - verify/scenarios/studio-accept-suggestion.yml
+    evidence:
+      - test/evidence/studio-accept-suggestion/
+  - id: ZER0-042
+    title: "Agent runs with a live step timeline"
+    description: "An editor follows an agent run's steps as they happen (server-sent events, which the platform serves on threaded workers so a stream outlives the worker timeout), sees its cost, tokens and outcome, and goes from a finished run to the suggestions it made; a reviewer can open the run behind any suggestion they may decide."
+    implemented: true
+    surface: ui
+    link: /studio/ai
+    docs: web/README.md
+    tags: [studio, web, agents]
+    date: 2026-10-22
+    tests:
+      - web/packages/ui/test/runs.test.tsx
+      - web/studio/test/transport.test.ts
+      - content/tests/api/test_review.py
+      - content/tests/ops/test_server.py
+    scenarios: []
+    evidence: []
+  - id: ZER0-043
+    title: "The studio's AI area: assistants, pipelines, output schemas, providers and models"
+    description: "An editor manages the AI content layer from the studio's AI area: writes assistants (instructions, prompt template, provider and model, parameters, output schema, read-only tools), tries one on a prompt and follows its run to the answer, exports and imports them as documents; builds pipelines whose steps are reordered by dragging (pointer or keyboard) and runs them; edits output schemas with feedback as they are typed and the platform's verdict on save, exports and imports them, and adds the bundled ones; browses the model catalog with filters. People who configure providers edit a provider's configuration (the credential write-only, shown only as set or not set), test it, sync its models and choose the default."
+    implemented: true
+    surface: ui
+    link: /studio/ai
+    docs: content/ai/README.md
+    tags: [studio, web, ai, assistants, pipelines, providers]
+    date: 2026-10-22
+    tests:
+      - web/packages/ui/test/ai/assistants.test.tsx
+      - web/packages/ui/test/ai/pipelines.test.tsx
+      - web/packages/ui/test/ai/schemas.test.tsx
+      - web/packages/ui/test/ai/providers.test.tsx
+      - web/studio/test/ai.test.tsx
+      - content/tests/ai/test_api.py
+      - content/tests/ai/test_on_page.py
+    scenarios:
+      - verify/scenarios/studio-ai-workspace.yml
+    evidence:
+      - test/evidence/studio-ai-workspace/
+  - id: ZER0-044
+    title: "Briefs, conversations and the editor's AI panel"
+    description: "An editor asks AI for content and reviews everything it gives: writes a brief in Create (a prompt or a text, an assistant or a pipeline, a schema, where the draft goes), generates it as a run followed live, reviews the rendered draft, its metadata and the structured result, and applies it — the draft opens in the editor with its text as suggestions; holds conversations whose replies arrive as their runs finish, asks again or another assistant, and promotes an answer to a brief or a draft; and in the editor runs an assistant or a pipeline on the whole page, one block or a selection, whose answer lands on the page as suggestions."
+    implemented: true
+    surface: ui
+    link: /studio/create/briefs
+    docs: content/ai/README.md
+    tags: [studio, web, ai, briefs, conversations, editor]
+    date: 2026-10-22
+    tests:
+      - web/packages/ui/test/ai/briefs.test.tsx
+      - web/packages/ui/test/ai/conversations.test.tsx
+      - web/packages/ui/test/ai/aipanel.test.tsx
+      - content/tests/ai/test_on_page.py
+      - content/tests/ai/test_api.py
+      - content/tests/ai/test_services.py
+    scenarios:
+      - verify/scenarios/studio-ai-brief.yml
+      - verify/scenarios/studio-ai-chat.yml
+    evidence:
+      - test/evidence/studio-ai-brief/
+      - test/evidence/studio-ai-chat/
+
+  # ── The VS Code extension (the platform's editor client) ──────────────────
+  - id: ZER0-030
+    title: "Metadata panel: front matter as typed controls"
+    description: "In VS Code, the active markdown file's front matter is edited as typed fields, written back by line surgery so untouched lines stay byte-identical."
+    implemented: true
+    surface: ui
+    link: src/panel/panelProvider.ts
+    docs: README.md
+    tags: [extension, editor]
+    tests:
+      - src/test/fields.test.ts
+      - src/test/extension.test.ts
+    scenarios: []
+    evidence: []
+  - id: ZER0-031
+    title: "Dashboard: every site's content in one place"
+    description: "A dashboard lists every page across the window's sites with search, filters, sorting and a structure view, plus the drafts queue, audit, distribution, fleet and harness tabs."
+    implemented: true
+    surface: ui
+    link: src/dashboard/dashboardPanel.ts
+    docs: README.md
+    tags: [extension, dashboard]
+    tests:
+      - src/test/webview.test.ts
+      - src/test/routes.test.ts
+    scenarios: []
+    evidence: []
+  - id: ZER0-032
+    title: "Governed publishing: draft → guard → approve → publish → ledger"
+    description: "Nothing is published by a script alone: a draft passes the brand guard, a person approves it in the file, publishing is off until the person's own settings allow it, and the ledger keyed by canonical URL stops double publishing."
+    implemented: true
+    surface: ui
+    link: src/core/governance/
+    docs: README.md
+    tags: [extension, governance]
+    tests:
+      - src/test/governance.test.ts
+      - src/test/golden.test.ts
+    scenarios: []
+    evidence: []
+  - id: ZER0-033
+    title: "Bundled MCP server for the editor's agents"
+    description: "Copilot agent mode or any MCP client gets sixteen tools over the workspace's content: read-only by default, drafting on request, publishing and scaffolding only when the environment arms them."
+    implemented: true
+    surface: api
+    link: src/mcp/server.ts
+    docs: README.md
+    tags: [extension, mcp]
+    tests:
+      - src/test/mcp.test.ts
+    scenarios: []
+    evidence: []
