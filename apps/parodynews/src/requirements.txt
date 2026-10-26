@@ -14,7 +14,7 @@ whitenoise==6.12.0
 Django==5.2.18
 # 3.15.2 carries PYSEC-2026-3827 and PYSEC-2026-3828, fixed in 3.17.2; 3.15
 # also predates official Django 5.2 support.
-djangorestframework==3.18.1
+djangorestframework==3.18.3
 django-environ==0.11.2
 
 # Django Extensions & Apps
@@ -44,7 +44,7 @@ jsonschema-specifications==2024.10.1
 Markdown==3.8.2
 PyYAML==6.0.2
 martor==1.8.2
-setuptools==83.0.0
+setuptools==84.2.1
 
 # Database
 psycopg2-binary==2.9.10
