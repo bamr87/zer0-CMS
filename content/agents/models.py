@@ -12,6 +12,9 @@
 - `AgentToken` — a scoped bearer token that maps an MCP or REST caller to one
   agent user. Only a hash is stored.
 
+`AgentRun.objects.visible_to(user)` is the one scope every surface reads runs
+through (TARGET.md § Rules): REST, GraphQL and the run's event stream.
+
 Each agent acts as its own Django user, `agent:<slug>`, in the `Agents` group
 and its own `agent:<slug>` group, which holds its Wagtail page and collection
 permissions (agents/principals.py). There is no superuser path.
@@ -128,6 +131,24 @@ class AgentDefinition(DraftStateMixin, RevisionMixin, models.Model):
         return super().publish(revision, *args, **kwargs)
 
 
+class AgentRunQuerySet(models.QuerySet):
+    def visible_to(self, user):
+        """The runs `user` may read: every run for a superuser, its own runs
+        for an agent user, and for a person the runs they started and the runs
+        whose suggestions they may decide — a reviewer reads the run behind
+        what they review."""
+        from suggestions.models import Suggestion
+
+        if user is None or not user.is_authenticated or not user.is_active:
+            return self.none()
+        if user.is_superuser:
+            return self
+        if user.username.startswith("agent:"):
+            return self.filter(agent__slug=user.username.removeprefix("agent:"))
+        reviewed = Suggestion.objects.visible_to(user).filter(run__isnull=False).values("run_id")
+        return self.filter(models.Q(started_by=user) | models.Q(pk__in=reviewed))
+
+
 class AgentRun(models.Model):
     QUEUED, RUNNING, WAITING, SUCCEEDED, FAILED, REFUSED, CANCELLED = (
         "queued",
@@ -174,6 +195,8 @@ class AgentRun(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
+
+    objects = AgentRunQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at", "-id"]

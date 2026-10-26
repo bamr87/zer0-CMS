@@ -16,10 +16,22 @@ accepted outcome (note §9, "revision bloat"). Every check is re-run at accept
 time against the current state, because a suggestion made against revision 5
 may meet revision 7: a block it replaces may be gone, and then it is refused
 rather than applied somewhere it was not aimed.
+
+For the review inbox (the studio's Review area, api/review.py): the
+suggestions a person may decide are `Suggestion.objects.visible_to(user)`,
+`describe` is one suggestion's change as before/after text for a diff,
+measured against the target's latest revision, and `accept_run` accepts the
+pending suggestions of a run that the person saw — one revision per target.
+
+A decision a person may not make is `PermissionDenied` (its message never
+names the target), a page someone has locked is `cms.services.PageLocked`, and
+a decision the target's current state refuses is `SuggestionError`.
 """
 
+import json
 import uuid
 
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 from wagtail.admin.rich_text.converters.editor_html import EditorHTMLConverter
@@ -55,9 +67,14 @@ def clean_block(payload: dict) -> dict:
     child = BasePage._meta.get_field("body").stream_block.child_blocks[payload["type"]]
     value = child.get_prep_value(native)
     if isinstance(child, RichTextBlock):
-        # Wagtail whitelists rich text that comes through its editor; a value
-        # that arrives as JSON gets the same whitelist here.
-        value = EditorHTMLConverter(features=child.features).to_database_format(value)
+        # Rich text arrives in Wagtail's database format — the form every reader
+        # of a page gets (the studio's API, the agent tools) — with internal
+        # links as <a linktype="page" id="…">. The whitelist below reads the
+        # editor's form (data-linktype), so the value is expanded to that form
+        # first: a link or embed the block's features allow keeps its target,
+        # and anything else is dropped, as Wagtail's own editor drops it.
+        converter = EditorHTMLConverter(features=child.features)
+        value = converter.to_database_format(converter.from_database_format(value))
     return {"type": payload["type"], "value": value}
 
 
@@ -77,12 +94,15 @@ def clean_meta(field: str, value):
     return value
 
 
-def guard(value, block_type=None):
+def guard(value, block_type=None, before=None):
     """The checks every agent-proposed value passes, at propose time and again
-    at accept time: the brand guard, and — outside a code block, which shows
-    markup rather than running it — no active markup."""
+    at accept time: the brand guard — on what a replace adds to the block it
+    replaces (`before`), so the author's own words never block it — and,
+    outside a code block, which shows markup rather than running it, no active
+    markup at all."""
     text = text_of(value)
-    findings = page_findings(text) + ([] if block_type == "code" else markup_findings(text))
+    old = None if before is None else text_of(before)
+    findings = page_findings(text, before=old) + ([] if block_type == "code" else markup_findings(text))
     if has_errors(findings):
         raise SuggestionError("brand guard: " + "; ".join(f["message"] for f in findings if f["level"] == "error"))
     return findings
@@ -90,6 +110,11 @@ def guard(value, block_type=None):
 
 def _block_ids(page) -> list[str]:
     return [b.id for b in page.body]
+
+
+def _block_value(page, block_id):
+    """The stored value of one of `page`'s blocks (None when it has no such block)."""
+    return next((b["value"] for b in page.body.get_prep_value() if b.get("id") == block_id), None)
 
 
 def apply_op(page, op: str, *, block_id="", payload=None, field="") -> str | None:
@@ -153,7 +178,9 @@ def validate_proposal(target, op, block_id, payload, field):
         raise SuggestionError(f"block {block_id!r} is not in page {target.pk}")
     if op in (Suggestion.INSERT, Suggestion.REPLACE):
         block = clean_block(payload)
-        guard(block["value"], block["type"])
+        guard(
+            block["value"], block["type"], before=_block_value(latest, block_id) if op == Suggestion.REPLACE else None
+        )
         return block
     if op == Suggestion.DELETE:
         return {}
@@ -222,7 +249,7 @@ def accept(suggestions, user):
     """Apply pending suggestions on one target as one revision. Returns the
     revision (pages) or the saved object (images, edges)."""
     from cms.models import BasePage
-    from cms.services import save_draft
+    from cms.services import save_draft, writable
 
     suggestions = list(
         Suggestion.objects.select_for_update().filter(pk__in=[s.pk for s in suggestions]).order_by("created_at", "id")
@@ -240,7 +267,7 @@ def accept(suggestions, user):
     target = suggestions[0].target
     target = target.specific if hasattr(target, "specific") else target
     if not can_decide(user, target):
-        raise SuggestionError(f"{user} may not change {target}")
+        raise PermissionDenied("you may not decide suggestions on this target")
     author = suggestions[0].created_by
 
     edges = [s for s in suggestions if s.op == Suggestion.EDGE]
@@ -254,13 +281,17 @@ def accept(suggestions, user):
     result = target
     written: list[tuple[Suggestion, str]] = []
     if rest and isinstance(target, BasePage):
-        page = target.get_latest_revision_as_object()
+        # The page's row lock, so a save or another accept that started from the
+        # same revision runs after this one and builds on its revision; and a
+        # page someone has locked is refused, as for any other writer.
+        page = writable(target, user).get_latest_revision_as_object()
         for s in rest:
             payload = s.payload
             if s.op == Suggestion.META:
                 guard(payload.get("value"))
             elif s.op in (Suggestion.INSERT, Suggestion.REPLACE):
-                guard(payload.get("value"), payload.get("type"))
+                before = _block_value(page, s.block_id) if s.op == Suggestion.REPLACE else None
+                guard(payload.get("value"), payload.get("type"), before=before)
             block = apply_op(page, s.op, block_id=s.block_id, payload=payload, field=s.field)
             if block:
                 written.append((s, block))
@@ -307,7 +338,7 @@ def reject(suggestion, user, reason=""):
     target = suggestion.target
     target = target.specific if hasattr(target, "specific") else target
     if not can_decide(user, target):
-        raise SuggestionError(f"{user} may not change {target}")
+        raise PermissionDenied("you may not decide suggestions on this target")
     suggestion.status = Suggestion.REJECTED
     suggestion.decided_by = user
     suggestion.decided_at = timezone.now()
@@ -332,3 +363,84 @@ def accept_rate(agent=None):
         qs = qs.filter(agent=agent)
     total = qs.count()
     return None if total == 0 else qs.filter(status=Suggestion.ACCEPTED).count() / total
+
+
+# ── the review inbox ───────────────────────────────────────────────────────
+
+
+def _text(block_type, value) -> str:
+    from importers.markdown import block_to_markdown
+
+    return block_to_markdown(block_type, value) or json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False)
+
+
+def _line(value) -> str:
+    return ", ".join(str(v) for v in value) if isinstance(value, list) else str(value or "")
+
+
+def _source(value) -> str:
+    return value if isinstance(value, str) else json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False)
+
+
+def describe(suggestion, latest=None) -> dict:
+    """The change as {kind, label, before, after, stale} text for a diff.
+    `latest` is the target page's latest revision as an object — pass it when
+    describing many suggestions on one page. `stale` means the block the
+    suggestion aims at is gone, so accepting it would be refused. A replacement
+    whose text reads the same but whose stored value differs (a link's target,
+    the markup) is described by its stored values, labelled "markup only"."""
+    from cms.models import BasePage
+
+    target = latest
+    if target is None:
+        target = suggestion.target
+        if isinstance(target, BasePage):
+            target = target.get_latest_revision_as_object()
+    op, payload = suggestion.op, suggestion.payload or {}
+    if op == Suggestion.EDGE:
+        return {"kind": "edge", "label": "graph edge", "before": "", "after": _text("edge", payload), "stale": False}
+    if op == Suggestion.META:
+        before = _line(getattr(target, suggestion.field, ""))
+        after = _line(payload.get("value"))
+        return {"kind": "field", "label": suggestion.field, "before": before, "after": after, "stale": False}
+    blocks = {b["id"]: b for b in target.body.get_prep_value()} if isinstance(target, BasePage) else {}
+    aimed = blocks.get(suggestion.block_id)
+    if op == Suggestion.INSERT:
+        where = "after a block" if suggestion.block_id else "at the end"
+        return {
+            "kind": "block",
+            "label": f"insert {payload.get('type')} {where}",
+            "before": "",
+            "after": _text(payload.get("type"), payload.get("value")),
+            "stale": bool(suggestion.block_id) and aimed is None,
+        }
+    label = f"{op} {aimed['type'] if aimed else 'block'}"
+    before = _text(aimed["type"], aimed["value"]) if aimed else ""
+    after = _text(payload.get("type"), payload.get("value")) if op == Suggestion.REPLACE else ""
+    if op == Suggestion.REPLACE and aimed and before == after and aimed["value"] != payload.get("value"):
+        # Only what the text cannot show changes — a link's target, the markup, a field outside the text — so
+        # the diff is of the stored values: a person never accepts a change that reads as none.
+        label, before, after = f"{label} (markup only)", _source(aimed["value"]), _source(payload.get("value"))
+    return {"kind": "block", "label": label, "before": before, "after": after, "stale": aimed is None}
+
+
+@transaction.atomic
+def accept_run(run, user, ids) -> tuple[list[Suggestion], list]:
+    """Accept the suggestions `ids` of `run` — the ones the person saw, never
+    the rest of the run — as one revision per target (and per proposing user,
+    as `accept` requires). Each must be a pending suggestion of the run that
+    the person may decide. All of them, or none. Returns the suggestions and
+    what each `accept` returned."""
+    wanted = set(ids)
+    found = list(
+        Suggestion.objects.visible_to(user)
+        .filter(run=run, status=Suggestion.PENDING, pk__in=wanted)
+        .order_by("created_at", "id")
+    )
+    missing = sorted(wanted - {s.pk for s in found})
+    if not wanted or missing:
+        raise SuggestionError(f"not pending suggestions of run {run.pk} you may decide: {missing or 'none given'}")
+    groups: dict = {}
+    for s in found:
+        groups.setdefault((s.target_ct_id, s.target_id, s.created_by_id), []).append(s)
+    return found, [accept(group, user) for group in groups.values()]

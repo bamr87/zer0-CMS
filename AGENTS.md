@@ -15,12 +15,12 @@
 - **Workspaces:** the studio is organised around what people do — Write, Create, Ideas, Research, Newsroom, Books, Sites — on one runtime of AI pipelines, editorial workflows and automations (TARGET.md § What it is for).
 - **Content in the database, files generated:** every site and book lives in the platform and also exists as a generated, committed, re-importable file tree (a site's source, a book's `library/<slug>/`).
 - **Sites:** manage (registry, settings, render, deploy), monitor (uptime, links, performance, accessibility, SEO, analytics, AIEO scores) and improve (agents propose changes from those signals; a person accepts them). Sites render with React by default; zer0-mistakes survives only as an option — render a site with that theme and deploy it with a Jekyll server.
-- **No Ruby.** The Rails fleet CMS, the Ruby workspace tool, the image generator's gem and the sites' Jekyll builds are all ported away; until they are, a ratchet in CI stops Ruby from growing or spreading.
+- **No Ruby.** The workspace tool (`bin/zer0`) is Python already (PLAN P5); the Rails fleet CMS, the image generator's gem and the sites' Jekyll builds are being ported away, and until they are, a ratchet in CI stops Ruby from growing or spreading.
 - **Every merged repository is absorbed, not discarded:** parodynews (formerly barodybroject — every one of its capabilities), aieo, books, the image generator, the Rails CMS, the workspace tool and the nine sites' content. A source directory is deleted only when the ledger shows every capability `done` (with a test) or `dropped` by the owner.
 
 **What an agent must not do** — each of these has happened, or is the next obvious mistake:
 
-- Add Ruby anywhere, or build a feature on Rails, Jekyll, the image-generator gem or `bin/zer0` that a later milestone would have to port. `tools/check_absorption.py` fails CI on new Ruby.
+- Add Ruby anywhere, or build a feature on Rails, Jekyll or the image-generator gem that a later milestone would have to port. `tools/check_absorption.py` fails CI on new Ruby.
 - Add screens to the Wagtail admin. New UI is React in `web/`, with its extension counterpart or a recorded gap.
 - Call a model provider's SDK outside the adapter registry, or add a second LLM client, ledger or registry.
 - Port a merged app's models and views one to one. Map its capabilities onto the platform's model (TARGET.md § Rules that keep models and views manageable) and import its data.
@@ -28,13 +28,13 @@
 - Build an extension UI separately from the studio's. Extension webviews render `web/packages/` workspaces; the extension's own code is the VS Code host.
 - Build a capability that only an API can reach. A capability is done when a person can use it from its studio workspace (and, where it belongs next to a file, from the extension).
 - Add a dependency on zer0-mistakes — a vendored file, a fixture checkout, a CI job against it, a design port, an overlay. Only the Jekyll-theme option names it (`theme_allowed:` in the ledger); its home is `bamr87/zer0-mistakes` ([ADR 0005](docs/adr/0005-theme-goes-home.md)).
-- Hand-edit a generated file tree (a site's exported source, a book's `library/<slug>/`) as if it were the source. Edit in the platform; the files are regenerated.
+- Hand-edit a generated file tree (a site's exported source, a book's `library/<slug>/`) as if it were the source. Edit in the platform; the files are regenerated. Likewise a recorded site build (`web/site/fixtures/`): re-record it with `tools/site_manifest.py`, never edit it to make a check pass.
 - Delete a source directory, a site or a capability because it looks obsolete, or mark a capability `dropped`. Deletion follows the ledger, and dropping is the owner's decision.
 - Run a fleet-wide kit (docs framework, governance, standards) over an imported project as if it were a live product. Imported projects under `apps/`, `packages/`, `rails/` and `sites/` are **sources being absorbed**; fleet kits apply to the platform, `web/` and the extension.
 - Pick work by "the first unchecked box" in the plan. The order of work is PLAN § 3's list; older phases keep boxes later decisions overtook.
 - Stack a pull request on another unmerged branch. Base every pull request on `main` (#52 merged into a dead branch and left `main` contradicting the owner for a day).
 
-**Today's code vs. the target.** Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's Rails app, workspace tool and Jekyll sites are enforced by today's build and still hold — keep them working, but do not extend them. When a rule below and ADR 0006 seem to disagree about *new* work, ADR 0006 wins.
+**Today's code vs. the target.** Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's Rails app and Jekyll sites are enforced by today's build and still hold — keep them working, but do not extend them. When a rule below and ADR 0006 seem to disagree about *new* work, ADR 0006 wins.
 
 Where a project under `packages/`, `sites/`, `apps/` or `content/` has its own `AGENTS.md`, it governs that tree — read it first. Never call Rails "the content engine": that is `.cms/` (`src/core/contract/`).
 
@@ -48,7 +48,7 @@ npm run compile          # check-types + lint + all five bundles
 npm run watch            # rebuild on change, then F5 in VS Code to launch the Extension Host
 npm test                 # unit, golden, MCP stdio and integration suites
 SITES_DIR=$HOME/github docker compose up --build                                   # fleet CMS → http://localhost:3001/admin
-docker compose --profile content up -d --wait db redis content worker beat relay  # the platform → http://localhost:8000/admin/
+docker compose --profile content up -d --wait db redis content worker research-worker beat relay  # the platform → http://localhost:8000/studio/
 bin/zer0 run check --affected                                                      # fast checks of every project this branch touched
 ```
 
@@ -78,13 +78,29 @@ python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-
 DATABASE_URL=postgres://… python -m pytest -q                          # the same suite on Postgres + pgvector
 python manage.py import_jekyll --site drsai --path ../sites/drsai      # a site → pages (idempotent)
 python manage.py roundtrip_jekyll --path ../sites/drsai                # import → export → byte-compare
-# Docker, from the repository root: http://localhost:8000 (/admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
+python manage.py seed_demo                                             # a demo site, the person `editor` (password zer0-demo under DEBUG), pending suggestions
+# Docker, from the repository root: http://localhost:8000 (/studio/, /admin/, /graphql/, /api/v2/, /mcp/, /healthz, /readyz, /version)
 
-# ── Workspace and docs (stdlib Ruby / Python, no installs) ──
-bin/zer0 list && bin/zer0 check && bin/zer0 doctor
+# ── The studio (web/) — React 19, Vite, Mantine, TanStack Query, TipTap; see web/README.md ──
+cd web && npm ci                                   # the committed lockfile (§ Standard deviations)
+npm run dev                                        # http://localhost:5173/studio/, proxied to the platform on :8000
+npm run lint && npm run typecheck && npm test      # ESLint (with the @zer0/ui host gate), tsc, Vitest
+npm run build                                      # studio/dist/, which the platform serves at /studio/
+npm run gen && npm run check:api                   # after the OpenAPI document changed: regenerate @zer0/api's types, then check them
+node verify/runner.mjs --only studio-create-page,studio-accept-suggestion,studio-publish   # (repo root) the browser scenarios; see the runner's header
+
+# ── Workspace and docs (Python 3.9+ and PyYAML, nothing else) ──
+python3 -m venv .venv && .venv/bin/pip install pyyaml   # once, where python3 lacks PyYAML; bin/zer0 then runs on .venv
+bin/zer0 list && bin/zer0 check && bin/zer0 tags       # projects; registry, paths, workflows and vendored copies agree; release tags
+bin/zer0 doctor                                        # zer0 doctor over every in-repo site (runs rails/bin/zer0-cms: needs Ruby until G4)
+.venv/bin/python -m unittest discover tools/workspace  # the tool's tests, with the golden replay of its Ruby predecessor
 python3 tools/check-config-docs.py            # generated docs current: CONFIG.md §5 + the docs indexes (--write regenerates)
 python3 tools/docs_index.py --lint            # every indexed doc has one H1 and a summary line
 python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'
+
+# ── The sites' recorded Jekyll builds (web/site/fixtures/, PLAN P1) — Ruby 3.3, bundler, network ──
+python3 tools/site_manifest.py --check --site drsai    # rebuild a routed site as pages.yml does (UTC, none of your JEKYLL_/ZER0_ variables), compare
+python3 tools/site_manifest.py compare --pages <recorded> <candidate>   # what a renderer must match: pages, titles, text, feeds, sitemaps, redirects
 ```
 
 The fourteen-suite line omits the three suites that need an extension host or a built bundle ([`src/test/README.md`](src/test/README.md)).
@@ -96,8 +112,9 @@ The fourteen-suite line omits the three suites that need an extension host or a 
 | `src/` | The extension, a client of the platform with the studio's capabilities from PLAN G10 (ADR 0006 decision 9), keeping its file mode: `core/` (pure Node), `mcp/`, `webview/`, the `vscode` shell, `test/` ([`src/README.md`](src/README.md)). |
 | `media/`, `schemas/` | Stylesheets, icons and lane templates; `zer0.schema.json` and the platform's schemas. |
 | `rails/` | The fleet CMS, being absorbed by the platform (PLAN G4, G5, G9) and then deleted; `rails/lib` is the stdlib-only zer0 library. |
-| `content/` | The platform; `content/ops/` is its operational baseline (probes, request ids, errors, logs, throttling, OpenAPI). |
-| `packages/`, `sites/`, `apps/` | Imported sources being absorbed, each capability a row in [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) ([`docs/MONOREPO.md`](docs/MONOREPO.md)). `web/` (the studio and site renderer) arrives in PLAN P4. |
+| `content/` | The platform, including the studio's APIs (`api/session.py`, `api/pages.py`, `api/review.py`) and the built studio at `/studio/`; `content/ops/` is its operational baseline (probes, request ids, errors, logs, throttling, OpenAPI). |
+| `web/` | The React frontend (PLAN P4): the studio (`web/studio/`) and the packages it is built from (`web/packages/`: `@zer0/api`, the client generated from the OpenAPI document; `@zer0/tokens`; `@zer0/ui`, the workspaces, which take client, streams and navigation from their host so the extension's webviews can render them in G10) ([`web/README.md`](web/README.md)). |
+| `packages/`, `sites/`, `apps/` | Imported sources being absorbed, each capability a row in [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) ([`docs/MONOREPO.md`](docs/MONOREPO.md)). |
 | `bin/`, `tools/`, `workspace.yml` | `bin/zer0` and its registry, the absorption gate (`check_absorption.py`), the docs gates, vendored `unwrap-prose.py`, `tools/history/` (cutover C0). |
 | `docs/` | Guides, ADRs, the target (`plan/TARGET.md`) and the plan, indexed in [`docs/README.md`](docs/README.md). |
 | `features/`, `verify/`, `fleet.manifest.yml` | The feature index, its scenarios, the one AI lane. |
@@ -188,11 +205,13 @@ Fourteen imported repositories, each a **source being absorbed** into the platfo
 
 ## Fleet context
 
-One of ~40 repositories managed by the [bamr87/bamr87 hub](https://github.com/bamr87/bamr87) (registry `_data/projects.yml`, standards in `specs/`), as a submodule: commit and push here first; the hub bumps its pointer afterwards. Prefer the hub's `templates/` kits; don't edit the logic of the hub-seeded `ci.yml` (`standard-ci@v2`) and `markdown-oneline.yml`. Every workflow is in [`docs/CICD.md`](docs/CICD.md); `claude.yml` (`@claude`) is the only one that calls a model, and the one lane in `fleet.manifest.yml`. Hub loops reach it by PR or label: the `fleet-pulse` doctor, the `issue-pipeline`, the fan-outs and `token-rotation`.
+One of ~40 repositories managed by the [bamr87/bamr87 hub](https://github.com/bamr87/bamr87) (registry `_data/projects.yml`, standards in `specs/`), as a submodule: commit and push here first; the hub bumps its pointer afterwards. Prefer the hub's `templates/` kits; don't edit the logic of the hub-seeded `ci.yml` (`standard-ci@v2`) and `markdown-oneline.yml`. Every workflow is in [`docs/CICD.md`](docs/CICD.md) (`web.yml` gates `web/`, including the generated client's drift against the OpenAPI document); `claude.yml` (`@claude`) is the only one that calls a model, and the one lane in `fleet.manifest.yml`. Hub loops reach it by PR or label: the `fleet-pulse` doctor, the `issue-pipeline`, the fan-outs and `token-rotation`.
 
 ## Standard deviations
 
 - **Lockfile committed** (2026-09-09), against `lockfiles: never-commit`: `npm ci` and the relock job need it, and the exact-pinned engines are only reproducible with one.
 - **`@bamr87/fleet-engines` exact-pinned** (2026-09-09), against always-latest: a bump changes goldens, so it is a deliberate `chore(deps)` PR.
 - **`yaml` bundled** (2026-09-09): the hand-rolled subset in `src/core/shared/config.ts` cannot read Actions workflows (anchors, merge keys, multi-line flows); extension host only, never the MCP server.
+- **`web/package-lock.json` committed** (2026-10-22), against `lockfiles: never-commit`: `npm ci` in `web.yml` and the platform image's Node stage need it.
+- **`openapi-typescript` exact-pinned** (2026-10-22) in `web/packages/api`, against always-latest: its committed output is drift-checked against `schemas/openapi/openapi.json`, so a new generator version would fail the check with no API change; a bump regenerates the file in the same commit.
 - **UPS-DOC-08:** the prose is over the 2,000-word budget: during the overhaul AGENTS.md carries ADR 0006's target and its must-not list on top of the rules today's build still enforces; their commands blocks come on top.

@@ -14,7 +14,10 @@ ALLOWED_HOSTS = ["testserver", "localhost"]
 # Rates are off (a test that needs one brings its own throttle), the API docs
 # are on, one browser origin is allowed so CORS has something to assert, and
 # nothing reports errors anywhere.
-REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_RATES": {"anon": None, "principal": None}}
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {"anon": None, "principal": None, "research_fetch": None},
+}
 API_DOCS_ENABLED = True
 CORS_ALLOWED_ORIGINS = ["https://allowed.example"]
 SENTRY_DSN = ""
@@ -27,6 +30,8 @@ CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_BROKER_URL = "memory://"
 OUTBOX_RELAY = "memory"
 LLM_BACKEND = "recorded"
+AI_DEFAULT_PROVIDER = "fake"
+AI_CREDENTIAL_KEYS: list[str] = []
 LLM_RECORDINGS_DIR = str(BASE_DIR / "agents" / "recordings")
 EMBEDDING_BACKEND = "hashing"
 EMBEDDING_MODEL = "hashing-256"

@@ -1,0 +1,15 @@
+{# A newsletter issue as HTML: the email's HTML part (newsroom.services.render_issue); everything a person wrote is escaped. #}<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>{{ issue.subject }}</title></head>
+<body>
+  <h1>{{ newsletter.name }}</h1>
+  <h2>{{ issue.subject }}</h2>
+  {% if issue.intro %}<p>{{ issue.intro|linebreaksbr }}</p>{% endif %}
+  {% for item in items %}
+  <h3>{% if item.url %}<a href="{{ item.url }}">{{ item.headline }}</a>{% else %}{{ item.headline }}{% endif %}</h3>
+  {% if item.bylines %}<p><em>By {{ item.bylines|join:", " }}</em></p>{% endif %}
+  {% if item.summary %}<p>{{ item.summary }}</p>{% endif %}
+  {% endfor %}
+  {% if unsubscribe_url %}<hr><p><small>You get this because you subscribed to {{ newsletter.name }}. <a href="{{ unsubscribe_url }}">Unsubscribe</a>.</small></p>{% endif %}
+</body>
+</html>

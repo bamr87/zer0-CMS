@@ -1,11 +1,33 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/usr/bin/env python3
+"""bin/zer0 — one command for every project in this repository. It reads
+workspace.yml; `bin/zer0 --help` lists the commands, and
+tools/workspace/README.md explains them. Python 3.9+ with PyYAML: when this
+Python cannot import PyYAML, it runs itself once on the repository's .venv,
+because Homebrew's and Debian's Pythons refuse a global `pip install` (PEP 668).
+"""
 
-# bin/zer0 — one command for every project in this repository. It reads
-# workspace.yml; `bin/zer0 --help` lists the commands, and
-# tools/workspace/README.md explains them.
+import os
+import sys
+from pathlib import Path
 
-root = File.expand_path("..", __dir__)
-require File.join(root, "tools/workspace/lib/zer0_workspace")
+ROOT = Path(__file__).resolve().parent.parent
+VENV = ROOT / ".venv" / "bin" / "python"
+sys.path.insert(0, str(ROOT / "tools"))
 
-exit Zer0Workspace::CLI.new(ARGV, root: root).run
+try:
+    from workspace.cli import main
+except ModuleNotFoundError as error:
+    if error.name != "yaml":
+        raise
+    if VENV.is_file() and "ZER0_VENV" not in os.environ:  # the mark makes it once, never a loop
+        os.execve(VENV, [str(VENV), *sys.argv], {**os.environ, "ZER0_VENV": str(VENV)})
+    sys.stderr.write(
+        f"bin/zer0: needs PyYAML, which {sys.executable} cannot import. Any one of:\n"
+        "  python3 -m venv .venv && .venv/bin/pip install pyyaml   (once; bin/zer0 then runs on .venv)\n"
+        "  sudo apt install python3-yaml                           (Debian, Ubuntu)\n"
+        "  python3 -m pip install pyyaml                           (a Python that allows it, as in CI)\n"
+    )
+    sys.exit(2)
+os.environ.pop("ZER0_VENV", None)  # a task that runs bin/zer0 again may need the .venv too
+
+sys.exit(main(sys.argv[1:], ROOT))

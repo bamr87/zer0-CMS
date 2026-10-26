@@ -1,0 +1,154 @@
+{
+  "id": "studio-create-page",
+  "title": "Create a page in the studio",
+  "features": [
+    "ZER0-040"
+  ],
+  "path": "verify/scenarios/studio-create-page.yml",
+  "started": "2026-10-22T07:49:50.200Z",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "ok": true,
+      "steps": [
+        {
+          "step": "goto",
+          "arg": "/studio/",
+          "ok": true,
+          "ms": 591
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=username]",
+            "value": "editor"
+          },
+          "ok": true,
+          "ms": 31
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=password]",
+            "value": "zer0-demo"
+          },
+          "ok": true,
+          "ms": 45
+        },
+        {
+          "step": "click",
+          "arg": "button[type=submit]",
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Home']"
+          },
+          "ok": true,
+          "ms": 180
+        },
+        {
+          "step": "click",
+          "arg": "role=link[name='Create']",
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "url": "/studio/create"
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "click",
+          "arg": "role=combobox[name='Type']",
+          "ok": true,
+          "ms": 102
+        },
+        {
+          "step": "click",
+          "arg": "role=option[name='Article page']",
+          "ok": true,
+          "ms": 36
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Title']",
+            "value": "A page from the studio scenario"
+          },
+          "ok": true,
+          "ms": 5
+        },
+        {
+          "step": "screenshot",
+          "arg": "create-form",
+          "ok": true,
+          "file": "test/evidence/studio-create-page/desktop-create-form.png",
+          "ms": 21
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Create draft']",
+          "ok": true,
+          "ms": 37
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "url": "/studio/write/"
+          },
+          "ok": true,
+          "ms": 51
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "role=heading[name='A page from the studio scenario']"
+          },
+          "ok": true,
+          "ms": 43
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "Draft"
+          },
+          "ok": true,
+          "ms": 3
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_console_errors": true
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "screenshot",
+          "arg": "created-draft",
+          "ok": true,
+          "file": "test/evidence/studio-create-page/desktop-created-draft.png",
+          "ms": 31
+        }
+      ],
+      "console_errors": [],
+      "screenshots": [
+        "test/evidence/studio-create-page/desktop-create-form.png",
+        "test/evidence/studio-create-page/desktop-created-draft.png"
+      ],
+      "evals": {},
+      "final_url": "http://127.0.0.1:55144/studio/write/7"
+    }
+  ],
+  "ok": true,
+  "finished": "2026-10-22T07:49:51.478Z",
+  "base": "http://127.0.0.1:55144"
+}

@@ -38,9 +38,16 @@ packages/**
 sites/**
 apps/**
 .gitmodules
+# The React frontend (ADR 0006): the studio, the site renderer and the recordings of each
+# site's Jekyll build it is measured against (web/site/fixtures/). The extension's webviews
+# get what they use from it bundled into dist/ (PLAN G10); nothing in web/ ships as a file.
+web/**
 # The content plane (docs/adr/0001-target-architecture.md) and the shared
 # schemas it owns. Only schemas/zer0.schema.json ships in the vsix.
 content/**
+# The React frontend (the studio and its packages, ADR 0006). PLAN G10 bundles
+# the webviews from web/packages/ through esbuild into dist/, never as sources.
+web/**
 schemas/events/**
 schemas/graphql/**
 schemas/content/**
@@ -74,13 +81,15 @@ media/templates/README.md
 
 # Repository infrastructure that lives at the root but is not extension payload:
 # the agent kit and the verification kit (the verifier agent, the verify-feature
-# skill, the feature index, the scenarios), the hooks, the security policy, the
+# skill, the feature index, the scenarios and their evidence bundles under
+# test/), the hooks, the security policy, the
 # root env template, the platform OpenAPI document, and the page-feedback widget
 # the hub vendors into media/ for its parity check (nothing in the extension
 # loads it).
 .claude/**
 features/**
 verify/**
+test/**
 .pre-commit-config.yaml
 .env.example
 SECURITY.md

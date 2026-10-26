@@ -5,6 +5,8 @@ wagtail==7.4.3
 # GraphQL (PLAN-D2: Grapple). It brings graphene-django and wagtail-headless-preview.
 wagtail-grapple==0.31.0
 djangorestframework==3.18.3
+# The studio's list filters (status, type, site, text), documented in the OpenAPI document.
+django-filter==26.2
 django-environ==0.11.2
 # The agent runner and the outbox relay run as Celery tasks on Redis.
 celery==5.6.3
@@ -12,8 +14,10 @@ redis==8.1.0
 # Postgres + pgvector in compose and CI; SQLite needs neither.
 psycopg[binary]==3.3.6
 pgvector==0.5.1
-# Tool input validation, event schemas, front matter, markdown blocks.
+# Tool input validation, event schemas, front matter, markdown blocks. `referencing` is jsonschema's
+# own reference registry: the AI layer validates with an empty one, so a schema's $ref is never fetched.
 jsonschema==4.26.0
+referencing==0.37.0
 PyYAML==6.0.3
 Markdown==3.11.1
 # Serving.
@@ -23,3 +27,19 @@ whitenoise==6.12.0
 drf-spectacular==0.30.0
 django-cors-headers==4.9.0
 sentry-sdk==2.72.0
+# The AI content layer (ai/README.md): list filters on its API, and provider credentials encrypted at rest.
+# The provider SDKs themselves are optional: requirements-providers.txt.
+django-filter==26.2
+cryptography==50.0.2
+# A selection in a paragraph is swapped in its HTML's text nodes, never its tags (Wagtail's own HTML parser).
+# The research library (research/README.md): fetching pages behind an SSRF guard, their main text and metadata,
+# RSS/Atom feeds, PDFs, and the encoding of a text file that does not declare one; Wagtail's own HTML parser,
+# which a fact-check uses to correct words inside a rich-text block without touching its links.
+httpx==0.28.1
+trafilatura==2.3.1
+feedparser==6.0.14
+pypdf==6.21.2
+charset-normalizer==3.5.2
+beautifulsoup4==4.15.0
+# The newsroom's newsletters and subscription email (newsroom/README.md): any ESP behind Django's mail API.
+django-anymail==15.2

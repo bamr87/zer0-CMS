@@ -1,8 +1,0 @@
-source "https://rubygems.org"
-
-# GitHub Pages parity: this site was published natively by GitHub Pages from
-# year-of-ai/2005 (remote_theme: bamr87/zer0-mistakes), so it builds with the
-# github-pages toolchain here too (sites.yml). Every plugin it needs is bundled
-# by the github-pages gem and whitelisted under `plugins:` in _config.yml.
-gem "github-pages", group: :jekyll_plugins
-gem "webrick"

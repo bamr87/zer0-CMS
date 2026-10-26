@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Continuity findings",
+  "description": "What a chapter contradicts or drifts from — the brief, the character bible, the continuity ledger, the neighbouring chapters, the outline — each with the exact text at fault.",
+  "type": "object",
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+          "kind": {"type": "string", "enum": ["continuity", "character", "timeline", "pov", "plot", "prose", "outline-drift"]},
+          "quote": {"type": "string", "description": "The exact text at fault, or an empty string."},
+          "problem": {"type": "string"},
+          "suggestion": {"type": "string"}
+        },
+        "required": ["severity", "kind", "quote", "problem", "suggestion"],
+        "additionalProperties": false
+      }
+    },
+    "summary": {"type": "string"}
+  },
+  "required": ["findings", "summary"],
+  "additionalProperties": false
+}

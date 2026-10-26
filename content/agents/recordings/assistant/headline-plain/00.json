@@ -1,0 +1,11 @@
+{
+  "prompt_digest": "dd34e7e281f16d0b",
+  "response": {
+    "text": "Your Site Now Backs Itself Up Every Night",
+    "tool_calls": [],
+    "tokens_in": 64,
+    "tokens_out": 12,
+    "cost_usd": "0.0005",
+    "model": "claude-opus-5-5"
+  }
+}

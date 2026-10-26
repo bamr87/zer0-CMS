@@ -11,8 +11,11 @@
 # request no longer boots a Ruby toolchain it does not use, and a change to
 # `rails/` or the compose file no longer downloads VS Code: hence the
 # `paths-ignore` below. The same goes for the imported `packages/`, `sites/` and
-# `apps/` trees, and the content plane (`content/` and the schemas it owns,
-# gated by content.yml), which have workflows of their own (see docs/MONOREPO.md). `main` is not branch-protected, so a skipped run here is not a
+# `apps/` trees, the content plane (`content/` and the schemas it owns,
+# gated by content.yml) the React frontend (`web/`, gated by web.yml, including the recordings of each site's Jekyll build in `web/site/fixtures/`, compared by pages.yml),
+# which have workflows of their own (see docs/MONOREPO.md). Until PLAN G10
+# builds the extension's webviews from `web/packages/`, a studio change cannot
+# change the vsix. `main` is not branch-protected, so a skipped run here is not a
 # required check left pending.
 name: extension
 
@@ -28,6 +31,7 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
+      - "web/**"
   push:
     branches: [main]
     paths-ignore:
@@ -40,6 +44,7 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
+      - "web/**"
 
 permissions:
   contents: read

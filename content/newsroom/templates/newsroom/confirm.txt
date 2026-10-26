@@ -1,0 +1,8 @@
+{# The double opt-in email: the link that confirms a subscription (newsroom.tasks.send_confirmation). #}{% autoescape off %}Someone — we hope you — asked to subscribe this address to {{ newsletter.name }}.
+
+Confirm the subscription by opening this link within seven days:
+
+{{ confirm_url }}
+
+If it was not you, ignore this message: nothing is sent to this address until the link is opened.
+{% endautoescape %}

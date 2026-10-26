@@ -1,0 +1,133 @@
+{
+  "id": "studio-accept-suggestion",
+  "title": "Review a suggestion's diff and accept it",
+  "features": [
+    "ZER0-041"
+  ],
+  "path": "verify/scenarios/studio-accept-suggestion.yml",
+  "started": "2026-10-22T07:49:48.800Z",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "ok": true,
+      "steps": [
+        {
+          "step": "goto",
+          "arg": "/studio/",
+          "ok": true,
+          "ms": 653
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=username]",
+            "value": "editor"
+          },
+          "ok": true,
+          "ms": 104
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=password]",
+            "value": "zer0-demo"
+          },
+          "ok": true,
+          "ms": 29
+        },
+        {
+          "step": "click",
+          "arg": "button[type=submit]",
+          "ok": true,
+          "ms": 43
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Home']"
+          },
+          "ok": true,
+          "ms": 181
+        },
+        {
+          "step": "click",
+          "arg": "role=link[name='Review']",
+          "ok": true,
+          "ms": 10
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=article"
+          },
+          "ok": true,
+          "ms": 75
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "text=Run #"
+          },
+          "ok": true,
+          "ms": 2
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "ins"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "screenshot",
+          "arg": "inbox-with-diff",
+          "ok": true,
+          "file": "test/evidence/studio-accept-suggestion/desktop-inbox-with-diff.png",
+          "ms": 39
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Accept']",
+          "ok": true,
+          "ms": 32
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "text=Accepted as a draft revision"
+          },
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_console_errors": true
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "screenshot",
+          "arg": "accepted",
+          "ok": true,
+          "file": "test/evidence/studio-accept-suggestion/desktop-accepted.png",
+          "ms": 21
+        }
+      ],
+      "console_errors": [],
+      "screenshots": [
+        "test/evidence/studio-accept-suggestion/desktop-inbox-with-diff.png",
+        "test/evidence/studio-accept-suggestion/desktop-accepted.png"
+      ],
+      "evals": {},
+      "final_url": "http://127.0.0.1:55144/studio/review"
+    }
+  ],
+  "ok": true,
+  "finished": "2026-10-22T07:49:50.199Z",
+  "base": "http://127.0.0.1:55144"
+}

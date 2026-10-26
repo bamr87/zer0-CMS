@@ -116,7 +116,7 @@ services:
 
   jekyll:
     image: jekyll/jekyll:latest
-    command: jekyll serve --watch --force_polling --config "_config.yml,_config_dev.yml"
+    command: jekyll serve --watch --force_polling
     volumes:
       - ../src/pages:/workspace/pages
     ports:

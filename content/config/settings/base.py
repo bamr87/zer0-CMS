@@ -20,7 +20,8 @@ REPO_ROOT = BASE_DIR.parent  # the zer0-CMS checkout
 
 env = environ.Env(
     DEBUG=(bool, False),
-    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
+    # `.localhost`: each imported site is a Wagtail Site at <site>.localhost.
+    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1", ".localhost"]),
     CSRF_TRUSTED_ORIGINS=(list, []),
 )
 if (BASE_DIR / ".env").exists():
@@ -45,6 +46,11 @@ INSTALLED_APPS = [
     # rest of Wagtail is configured to use.
     "cms",
     "agents",
+    "ai",
+    "research",
+    "ideas",
+    "newsroom",
+    "books",
     "suggestions",
     "graph",
     "workflow",
@@ -72,10 +78,13 @@ INSTALLED_APPS = [
     "taggit",
     # Headless APIs.
     "rest_framework",
+    "django_filters",
     "drf_spectacular",
     "corsheaders",
     "graphene_django",
     "grapple",
+    # Email through an ESP (newsroom/README.md).
+    "anymail",
     # Django.
     "django.contrib.admin",
     "django.contrib.auth",
@@ -154,6 +163,13 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
 
+# ── The studio (web/studio, api/studio.py) ──────────────────────────────────
+# `npm run build` in web/ writes the studio here; its assets are static files
+# under /static/studio/ and /studio/ answers with its index.html. The image
+# builds it in a Node stage and points STUDIO_DIST at the copy.
+STUDIO_DIST = Path(env("STUDIO_DIST", default=str(REPO_ROOT / "web" / "studio" / "dist")))
+STATICFILES_DIRS = [("studio", str(STUDIO_DIST))] if STUDIO_DIST.is_dir() else []
+
 CACHES = {"default": env.cache("CACHE_URL", default="locmemcache://")}
 
 # ── Wagtail ─────────────────────────────────────────────────────────────────
@@ -163,6 +179,25 @@ WAGTAILIMAGES_IMAGE_MODEL = "cms.ContentImage"
 WAGTAILSEARCH_BACKENDS = {"default": {"BACKEND": "wagtail.search.backends.database"}}
 WAGTAILDOCS_EXTENSIONS = ["csv", "docx", "key", "odt", "pdf", "pptx", "rtf", "txt", "xlsx", "zip"]
 WAGTAIL_I18N_ENABLED = False
+# Approving a workflow's last task publishes the page, except in the newsroom's
+# workflow, where the newsroom publishes or schedules it (newsroom/workflow.py).
+WAGTAIL_FINISH_WORKFLOW_ACTION = "newsroom.workflow.finish_workflow"
+# Wagtail mails a workflow's submissions to every superuser unless told not to;
+# people follow review in the studio, and the newsroom's stages send none of
+# Wagtail's workflow email at all (newsroom/workflow.py).
+WAGTAILADMIN_NOTIFICATION_INCLUDE_SUPERUSERS = False
+
+# ── Email (newsroom/README.md) ──────────────────────────────────────────────
+# Django's mail API to EMAIL_BACKEND: a django-anymail ESP backend in production
+# (e.g. anymail.backends.amazon_ses.EmailBackend), configured by ANYMAIL_*
+# variables (ANYMAIL_MAILGUN_API_KEY → ANYMAIL["MAILGUN_API_KEY"]). Unset, it is
+# Django's own SMTP backend, which fails loudly when there is no server — never
+# the console, which would print every address and signed link into the logs
+# and mark an issue sent that nobody received. Development sets the console
+# (development.py); tests use Django's locmem backend.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="zer0-CMS <noreply@localhost>")
+ANYMAIL = {key.removeprefix("ANYMAIL_"): value for key, value in env.ENVIRON.items() if key.startswith("ANYMAIL_")}
 
 # ── GraphQL (Grapple) ───────────────────────────────────────────────────────
 GRAPHENE = {"SCHEMA": "grapple.schema.schema"}
@@ -190,6 +225,9 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": env("THROTTLE_ANON_RATE", default="120/min") or None,
         "principal": env("THROTTLE_PRINCIPAL_RATE", default="600/min") or None,
+        # Per person, what makes the research library reach the web: a page captured or fetched again, a search,
+        # a feed subscribed to or read now (research/views.py).
+        "research_fetch": env("THROTTLE_RESEARCH_FETCH_RATE", default="30/min") or None,
     },
     # How many proxies sit in front, so the anonymous bucket keys on the client
     # address rather than the load balancer's.
@@ -202,13 +240,44 @@ REST_FRAMEWORK = {
 # committed schemas/openapi/openapi.json stale.
 SPECTACULAR_SETTINGS = {
     "TITLE": "zer0-CMS platform API",
-    "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry. "
+    "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry; and for the studio and the "
+    "extension, the session, sites, pages, revisions, publishing and the review inbox. "
     "Wagtail's pages, images and documents endpoints live beside these at /api/v2/ and are documented by Wagtail.",
     "VERSION": "2",
     "OAS_VERSION": "3.1.0",
     "SCHEMA_PATH_PREFIX": r"/api/v2",
     "SERVE_URLCONF": "ops.openapi",
     "SERVE_INCLUDE_SCHEMA": False,
+    # A request body is its own component (`…Request`), without the read-only
+    # fields a response carries, so the generated client (openapi-typescript)
+    # asks only for what a caller sends — never an id or a timestamp the
+    # platform assigns (G8's and G14's create forms on owned rows).
+    "COMPONENT_SPLIT_REQUEST": True,
+    # Named enums, so the generated client's types read well (api/serializers.py).
+    "ENUM_NAME_OVERRIDES": {
+        "PageStatusEnum": "api.serializers.PAGE_STATUSES",
+        "FieldKindEnum": "api.serializers.KINDS",
+        "FieldGroupEnum": "api.serializers.GROUPS",
+        "ChangeKindEnum": "api.serializers.CHANGE_KINDS",
+        "TargetTypeEnum": "api.serializers.TARGET_TYPES",
+        "IdeaStatusEnum": "ideas.models.Idea.STATUSES",
+        "BrainstormKindEnum": "ideas.services.KINDS",
+        "PromotionEnum": "ideas.serializers.PROMOTIONS",
+        "SourceKindEnum": "research.models.Source.KINDS",
+        "SourceStatusEnum": "research.models.Source.STATUSES",
+        "CapturedKindEnum": "research.serializers.CAPTURED",
+        "OutcomeEnum": "research.serializers.OUTCOMES",
+        "VerdictEnum": "research.serializers.VERDICTS",
+        "StoryStatusEnum": "newsroom.models.Story.Status",
+        "StoryPriorityEnum": "newsroom.models.Story.Priority",
+        "StoryAiKindEnum": "newsroom.services.AI_KINDS",
+        "CorrectionKindEnum": "newsroom.models.Correction.Kind",
+        "FrontRuleEnum": "newsroom.models.FrontSlot.Rule",
+        "IssueStatusEnum": "newsroom.models.Issue.Status",
+        "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
+        "IssueLevelEnum": "books.serializers.ISSUE_LEVELS",
+        "BookTaskEnum": "books.serializers.TASK_CHOICES",
+    },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
 API_DOCS_ENABLED = env.bool("API_DOCS_ENABLED", default=True)
@@ -250,10 +319,18 @@ CELERY_TASK_ACKS_LATE = True
 # The worker, beat and relay log through LOGGING below, not Celery's own setup.
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 # The outbox relay runs as its own process (`manage.py relay_outbox`, the
-# compose `relay` service); beat schedules the nightly graph job.
+# compose `relay` service); beat schedules the nightly graph job and, every
+# minute, the scheduled publishes that have come due (cms/tasks.py).
 CELERY_BEAT_SCHEDULE = {
     "viewed-together-nightly": {"task": "graph.tasks.build_viewed_together", "schedule": crontab(hour=3, minute=17)},
+    "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
+    # The research library's feed subscriptions that are due (research/tasks.py).
+    "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
 }
+# A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
+# `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
+# publishes pages.
+CELERY_TASK_ROUTES = {f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")}
 
 # ── The agent harness (agents/README.md) ────────────────────────────────────
 # LLM_BACKEND: recorded (fixtures; the test default) | fake | litellm
@@ -267,14 +344,45 @@ AGENT_PROMOTION_ACCEPT_RATE = env.float("AGENT_PROMOTION_ACCEPT_RATE", default=0
 AGENT_PROMOTION_MIN_DECISIONS = env.int("AGENT_PROMOTION_MIN_DECISIONS", default=10)
 AGENT_DEFINITIONS_DIR = BASE_DIR / "agents" / "definitions"
 
+# ── The AI content layer (ai/README.md) ─────────────────────────────────────
+# AI_PROVIDERS: slug → dotted path of a provider adapter, merged over the six
+# built in (ai/providers/__init__.py); "" disables one.
+AI_PROVIDERS: dict[str, str] = {}
+# The provider a request uses when no ProviderConfig row is flagged default.
+AI_DEFAULT_PROVIDER = env("AI_DEFAULT_PROVIDER", default="claude_code")
+# Fernet keys for provider credentials, the newest first; none derives one from
+# SECRET_KEY (ai/crypto.py). Rotate with `manage.py rotate_ai_credentials`.
+AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
+
+# ── Books (books/README.md) ─────────────────────────────────────────────────
+# The library the books' generated `library/<slug>/` files live in (import_books
+# reads it, export_books writes it) — packages/books/library/ until PLAN G11
+# decides its permanent home — and the site key of the site root they live under.
+BOOKS_LIBRARY_DIR = Path(env("BOOKS_LIBRARY_DIR", default=str(REPO_ROOT / "packages" / "books" / "library")))
+BOOKS_SITE_KEY = env("BOOKS_SITE_KEY", default="library")
+
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
-# EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm
+# EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)
 EMBEDDING_BACKEND = env("EMBEDDING_BACKEND", default="hashing")
 EMBEDDING_MODEL = env("EMBEDDING_MODEL", default="hashing-256")
 EMBEDDING_DIMENSIONS = env.int("EMBEDDING_DIMENSIONS", default=256)
 # An agent-proposed edge at or above this confidence is written; below, it
 # becomes a Suggestion for an editor.
 GRAPH_EDGE_AUTO_THRESHOLD = env.float("GRAPH_EDGE_AUTO_THRESHOLD", default=0.85)
+
+# ── Ideas and research (ideas/README.md, research/README.md) ────────────────
+# How alike two ideas' vectors must be to share a cluster, and to be offered as
+# duplicates to merge (cosine; tune them to the embedding model).
+IDEAS_CLUSTER_THRESHOLD = env.float("IDEAS_CLUSTER_THRESHOLD", default=0.5)
+IDEAS_DUPLICATE_THRESHOLD = env.float("IDEAS_DUPLICATE_THRESHOLD", default=0.85)
+# What the research fetcher sends and how much it takes (research/fetch.py).
+RESEARCH_USER_AGENT = env("RESEARCH_USER_AGENT", default="zer0-cms-research/1.0 (+https://github.com/bamr87/zer0-CMS)")
+RESEARCH_MAX_BYTES = env.int("RESEARCH_MAX_BYTES", default=5 * 1024 * 1024)
+RESEARCH_FETCH_TIMEOUT = env.float("RESEARCH_FETCH_TIMEOUT", default=20.0)
+RESEARCH_UPLOAD_MAX_BYTES = env.int("RESEARCH_UPLOAD_MAX_BYTES", default=10 * 1024 * 1024)
+# How long one fetch task may run in all — robots.txt and the page, each within RESEARCH_FETCH_TIMEOUT, and the
+# extraction — before Celery stops it (soft; the hard limit is 30 seconds later).
+RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
 
 # ── Events (outbox/README.md, schemas/events/) ──────────────────────────────
 EVENTS_SCHEMA_DIR = REPO_ROOT / "schemas" / "events"

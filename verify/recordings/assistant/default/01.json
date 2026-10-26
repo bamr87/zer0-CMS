@@ -1,0 +1,10 @@
+{
+  "response": {
+    "text": "{\"Header\": {\"author\": {\"name\": \"The Desk\"}, \"publication_date\": \"2026-10-22\", \"title\": \"Nightly backups, explained\", \"subtitle\": \"Why a small site copies itself every night.\"}, \"Metadata\": {\"description\": \"Why a small site needs a copy every night, and how to restore one.\", \"slug\": \"nightly-backups-explained\", \"excerpt\": \"A copy of the site every night keeps a week of work safe.\", \"prompt\": \"Why a small site needs nightly backups\", \"categories\": [\"Operations\"], \"keywords\": \"backups, restore\", \"tags\": [\"ops\"]}}",
+    "tool_calls": [],
+    "tokens_in": 240,
+    "tokens_out": 90,
+    "cost_usd": "0.0010",
+    "model": "demo"
+  }
+}

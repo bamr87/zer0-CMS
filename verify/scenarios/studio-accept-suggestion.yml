@@ -1,0 +1,28 @@
+# =============================================================================
+# verify/scenarios/studio-accept-suggestion.yml — a USER SCENARIO (scenario/v1)
+# =============================================================================
+# The review inbox on the seeded demo: the SEO agent's pending suggestions on
+# "Welcome to the studio" (seed_demo makes sure there are some on every start),
+# each shown with its rationale and its change as a diff; accepting one makes a
+# draft revision and takes it out of the inbox.
+# =============================================================================
+id: studio-accept-suggestion
+feature: ZER0-041
+title: "Review a suggestion's diff and accept it"
+description: "An editor opens the review inbox, reads an agent's suggestion as a before/after diff with its rationale, and accepts it — the change becomes a draft revision of the page, never a publish."
+viewports: [desktop]
+steps:
+  - goto: /studio/
+  - fill: { selector: "input[name=username]", value: editor }
+  - fill: { selector: "input[name=password]", value: zer0-demo }
+  - click: "button[type=submit]"
+  - wait: { selector: "role=heading[name='Home']" }
+  - click: "role=link[name='Review']"
+  - wait: { selector: "role=article" }
+  - expect: { visible: "text=Run #" }
+  - expect: { visible: "ins" }
+  - screenshot: inbox-with-diff
+  - click: "role=button[name='Accept']"
+  - wait: { selector: "text=Accepted as a draft revision" }
+  - expect: { no_console_errors: true }
+  - screenshot: accepted

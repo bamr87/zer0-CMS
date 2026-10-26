@@ -8,7 +8,7 @@
 # nobody registered, a path that does not exist, a dependency on a name that is
 # not here, or a vendored copy that drifted from its source.
 #
-# Schema (validated by tools/workspace/lib/zer0_workspace/manifest.rb):
+# Schema (validated by tools/workspace/manifest.py):
 #   projects.<name>:
 #     path:        directory the project lives in, relative to the root
 #     paths:       (optional) the globs it owns, when `path` is "." and the
@@ -26,6 +26,13 @@
 #     route:       (required when it publishes `pages`) the sub-path the one
 #                  Pages deploy serves it at — "/" or "/name/" — or
 #                  `none — <reason>` (ADR 0002 §4; checked by `bin/zer0 check`)
+#     render:      (optional, a site) how it renders: `as: jekyll-theme` is the
+#                  Jekyll-theme option (tools/jekyll_theme.py, PLAN P2) — the
+#                  zer0 theme at the `theme:` tag, built by the Jekyll `server:`
+#                  (github-pages: GitHub Pages' own builder; jekyll-4: the image
+#                  tools/jekyll/Dockerfile pins), after an optional `before:`
+#                  command run in the exported tree; `obsidian: true` resolves an
+#                  Obsidian vault's syntax first. No Ruby file in the repository.
 #     tasks.<task>: a command run from `path` — or {run:, cwd:, env:}
 #       setup  installs dependencies (may use the network)
 #       check  fast, offline, no installs beyond the language runtime
@@ -91,6 +98,24 @@ projects:
         run: python3 -m pytest -q && python3 manage.py makemigrations --check --dry-run && ruff check . && ruff format --check .
       build: docker build -f Dockerfile ..
 
+  # The one React frontend (ADR 0006 decision 2): the studio, and the shared
+  # packages its workspaces are built from — the extension's webviews render
+  # the same ones (PLAN G10). Its API client is generated from the platform's
+  # committed OpenAPI document, so it depends on the platform.
+  web:
+    path: web
+    kind: app
+    stack: [node]
+    summary: The React frontend — the studio, where people write, create, review and run AI on their content (served by the platform at /studio/), and the shared packages (the generated API client, the design tokens, the workspaces) the extension's webviews will render too (ADR 0006).
+    upstream: bamr87/zer0-CMS
+    depends_on: [content]
+    ci: web.yml
+    tasks:
+      setup: npm ci
+      check: npm run lint && npm run typecheck && npm run check:api
+      test: npm run lint && npm run typecheck && npm test && npm run check:api
+      build: npm run build
+
   cms-rails:
     path: rails
     kind: rails
@@ -104,9 +129,11 @@ projects:
       check: bash bin/test-stdlib
       test: bin/rails test && bin/rails zeitwerk:check
 
-  # The zer0-mistakes theme (jekyll-theme-zer0) is developed in its own
-  # repository, bamr87/zer0-mistakes, with its Rails studio (ADR 0005); the
-  # sites below consume it as the gem or remote_theme each one declares.
+  # The zer0 theme is developed in its own repository (ADR 0005). The sites
+  # below render with it only through the Jekyll-theme option — their `render:`
+  # setting pins its tag (ADR 0006 decision 4, PLAN P2) — except zer0-pages,
+  # which still builds with its Gemfile until the two differences its option
+  # build shows are accepted (web/site/fixtures/README.md).
   zer0-image-generator:
     path: packages/zer0-image-generator
     kind: gem
@@ -154,38 +181,35 @@ projects:
   "2005":
     path: sites/2005
     kind: site
-    stack: [ruby, jekyll]
-    summary: The year-2005 knowledge base of the year-of-ai lineage — a remote_theme consumer of the zer0 theme, built the way zer0-pages-remote is.
+    stack: [jekyll, docker]
+    summary: The year-2005 knowledge base of the year-of-ai lineage — a site on the zer0 theme, built the way zer0-pages-remote is.
     upstream: year-of-ai/2005
     publishes: [pages]
     route: none — published by year-of-ai.github.io at /2005/, which builds it from this repository (ADR 0002 §4)
     ci: sites.yml
     site: .
+    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages}
     tasks:
-      setup: bundle install
-      build: bundle exec jekyll build
+      build: python3 ../../tools/jekyll_theme.py build 2005
 
   drsai:
     path: sites/drsai
     kind: site
-    stack: [ruby, jekyll, python]
+    stack: [jekyll, docker, python]
     summary: The children's picture-book site and its Python story engine; the CMS's ABC wizard exports into it.
     upstream: bamr87/drsai
     publishes: [pages, "pypi:drsai"]
     ci: drsai.yml
     site: "."
     route: /drsai/
+    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages}
     tasks:
-      # The site builds with the published theme (remote_theme). To build against a
-      # local theme checkout instead: ZER0_THEME_LOCAL=<path> bundle install &&
-      # bundle exec jekyll build --config _config.yml,_config_dev.yml (drsai.yml does
-      # that against bamr87/zer0-mistakes main).
-      setup: bundle install && (cd drsai && pip install -e ".[dev]")
+      setup: cd drsai && pip install -e ".[dev]"
       check: python3 tools/import_abc_book.py --check
       test:
         run: (cd drsai && pytest tests/ -q) && python3 tools/import_abc_book.py --check
-      build: bundle exec jekyll build
-      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+      build: python3 ../../tools/jekyll_theme.py build drsai
+      pages: python3 ../../tools/jekyll_theme.py build drsai
 
   zer0-pages:
     path: sites/zer0-pages
@@ -207,78 +231,81 @@ projects:
   zer0-pages-remote:
     path: sites/zer0-pages-remote
     kind: site
-    stack: [ruby, jekyll]
-    summary: The minimal remote_theme consumer — proof of how few files a working GitHub Pages site needs.
+    stack: [jekyll, docker]
+    summary: The minimal site on the zer0 theme — proof of how few files a working GitHub Pages site needs.
     upstream: bamr87/zer0-pages-remote
     publishes: [pages]
     ci: sites.yml
     site: "."
     route: /zer0-pages-remote/
+    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages}
     tasks:
-      setup: bundle install
-      build: bundle exec jekyll build
-      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+      build: python3 ../../tools/jekyll_theme.py build zer0-pages-remote
+      pages: python3 ../../tools/jekyll_theme.py build zer0-pages-remote
 
   zer0-demo-cookbook:
     path: sites/zer0-demo-cookbook
     kind: site
-    stack: [ruby, jekyll]
+    stack: [jekyll, docker]
     summary: A demo site generated by the theme's installer (cookbook profile).
     upstream: bamr87/zer0-demo-cookbook
     publishes: [pages]
     ci: sites.yml
     site: "."
     route: /demos/cookbook/
+    render: {as: jekyll-theme, theme: v1.31.3, server: jekyll-4}
     tasks:
-      setup: bundle install
-      build: bundle exec jekyll build
-      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+      build: python3 ../../tools/jekyll_theme.py build zer0-demo-cookbook
+      pages: python3 ../../tools/jekyll_theme.py build zer0-demo-cookbook
 
   zer0-demo-garden:
     path: sites/zer0-demo-garden
     kind: site
-    stack: [ruby, jekyll]
+    stack: [jekyll, docker]
     summary: A demo site generated by the theme's installer (garden profile).
     upstream: bamr87/zer0-demo-garden
     publishes: [pages]
     ci: sites.yml
     site: "."
     route: /demos/garden/
+    render: {as: jekyll-theme, theme: v1.31.3, server: jekyll-4}
     tasks:
-      setup: bundle install
-      build: bundle exec jekyll build
-      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+      build: python3 ../../tools/jekyll_theme.py build zer0-demo-garden
+      pages: python3 ../../tools/jekyll_theme.py build zer0-demo-garden
 
   irony-works:
     path: sites/irony-works
     kind: site
-    stack: [node, jekyll]
+    stack: [node, jekyll, docker]
     summary: The perpetual encyclopedia of irony — a self-growing, AI-tended Obsidian vault whose engine transplants entries into a Jekyll collection published with the zer0 theme.
     upstream: bamr87/irony-works
     publishes: [pages]
-    route: none — it builds with GitHub Pages' own Jekyll (no Gemfile) after its node transplant step, and bamr87/irony-works still deploys it; it routes at /irony-works/ once it has a bundler-based pages task (C4)
+    route: none — bamr87/irony-works still deploys it; it builds here with the Jekyll-theme option after its node transplant step, and routes at /irony-works/ once its deploy moves here (C4)
     ci: irony-works.yml
     site: "."
+    # Its build publishes node_modules/ (its exclude: replaces Jekyll 3's defaults; PLAN P1),
+    # so js-yaml and argparse are pinned at the versions its recording holds.
+    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages, before: npm i js-yaml@5.5.0 argparse@3.0.3 --no-save && node engine/scripts/preview.mjs && node engine/scripts/transplant.mjs}
     tasks:
       setup: npm i js-yaml --no-save
       check: for f in engine/scripts/*.mjs; do node --check "$f" || exit 1; done
-      build: node engine/scripts/preview.mjs && node engine/scripts/transplant.mjs
+      build: python3 ../../tools/jekyll_theme.py build irony-works --repository bamr87/irony-works
 
   wargames:
     path: sites/wargames
     kind: site
-    stack: [ruby, jekyll, python]
-    summary: OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site with spoiler-free study guides — a remote_theme consumer of the zer0 theme.
+    stack: [jekyll, docker, python]
+    summary: OverTheWire security wargames (Bandit, Natas and more) mirrored as a Jekyll study site with spoiler-free study guides — a site on the zer0 theme.
     upstream: bamr87/wargames
     publishes: [pages]
     ci: sites.yml
     site: "."
     route: /wargames/
+    render: {as: jekyll-theme, theme: v1.31.3, server: jekyll-4}
     tasks:
-      setup: bundle install
       check: python3 ../../tools/unwrap-prose.py --check --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$' .
-      build: bundle exec jekyll build
-      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+      build: python3 ../../tools/jekyll_theme.py build wargames
+      pages: python3 ../../tools/jekyll_theme.py build wargames
 
   parodynews:
     path: apps/parodynews
@@ -290,16 +317,15 @@ projects:
     route: /parodynews/
     ci: parodynews.yml
     site: "src/pages"
+    render: {as: jekyll-theme, theme: v1.31.3, server: github-pages}
     tasks:
-      setup: pip install -r requirements-dev.txt && (cd src/pages && bundle install)
+      setup: pip install -r requirements-dev.txt
       check: ruff check src/ && black --check src/
       test:
         run: python -m pytest
         cwd: src
         env: {DJANGO_SETTINGS_MODULE: config.settings.testing}
-      pages:
-        run: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
-        cwd: src/pages
+      pages: python3 ../../tools/jekyll_theme.py build parodynews
 
   aieo:
     path: apps/aieo

@@ -2,17 +2,16 @@
 
 Guidance for AI coding agents (Claude Code, Copilot, Cursor) working in **drsai**.
 
-drsai is a children's book platform: a Jekyll site (zer0-mistakes remote theme, `books` collection) publishing AI-written, AI-illustrated picture books on GitHub Pages, plus the Python story engine in `drsai/` and the import/illustration tools in `tools/`. "Done" for site changes means `bundle exec jekyll build` passes and the book renders; see `README.md` for the full pipeline.
+drsai is a children's book platform: a Jekyll site (zer0-mistakes remote theme, `books` collection) publishing AI-written, AI-illustrated picture books on GitHub Pages, plus the Python story engine in `drsai/` and the import/illustration tools in `tools/`. "Done" for site changes means the site builds through zer0-CMS's Jekyll-theme option (`python3 ../../tools/jekyll_theme.py build drsai`, which needs Docker) and the book renders; see `README.md` for the full pipeline. There is no Gemfile: the option pins the theme's tag in the root `workspace.yml` and builds with GitHub Pages' own builder in a container, so no Ruby is installed here.
 
 ## Stack & commands
 
 ```bash
 # install dependencies:
-ZER0_THEME_LOCAL=../../../zer0-mistakes bundle install   # site (a sibling checkout of bamr87/zer0-mistakes)
 cd drsai && pip install -e ".[dev]"                # story engine
 
-# run the dev server / build:
-bundle exec jekyll serve --config _config.yml,_config_dev.yml   # http://localhost:4000
+# build the site (Docker; the theme at its pinned tag, GitHub Pages' builder) into _site/:
+python3 ../../tools/jekyll_theme.py build drsai
 
 # run tests:
 cd drsai && pytest                                  # engine tests

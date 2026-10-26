@@ -4,9 +4,10 @@
 bigrams into `EMBEDDING_DIMENSIONS` signed buckets, L2-normalised. It needs no
 model, no network and no randomness, so related pages and semantic search
 work — modestly — on a laptop and give the same answer in every test run.
-`LiteLLMEmbedder` calls a real embedding model when `EMBEDDING_BACKEND=litellm`
-(imported lazily, like the LLM backend). Either way the vector is stored with
-the model's name, and vectors of different models are never compared.
+`ProviderEmbedder` asks a provider adapter that can embed (`EMBEDDING_BACKEND=litellm`,
+through the provider registry in ai/providers/, the one place a vendor SDK is
+imported). Either way the vector is stored with the model's name, and vectors
+of different models are never compared.
 """
 
 import hashlib
@@ -38,20 +39,20 @@ class HashingEmbedder:
         return [v / norm for v in vector] if norm else vector
 
 
-class LiteLLMEmbedder:
-    def __init__(self, model: str | None = None):
+class ProviderEmbedder:
+    def __init__(self, backend: str | None = None, model: str | None = None):
+        self.backend = backend or settings.EMBEDDING_BACKEND
         self.model = model or settings.EMBEDDING_MODEL
         self.dimensions = settings.EMBEDDING_DIMENSIONS
 
     def embed(self, text: str) -> list[float]:
-        import litellm  # noqa: PLC0415 — optional, deployment-time dependency
+        from ai import providers
 
-        response = litellm.embedding(model=self.model, input=[text])
-        return [float(x) for x in response.data[0]["embedding"]]
+        return providers.get(self.backend).embed([text], model=self.model)[0]
 
 
 def get_embedder():
-    return LiteLLMEmbedder() if settings.EMBEDDING_BACKEND == "litellm" else HashingEmbedder()
+    return HashingEmbedder() if settings.EMBEDDING_BACKEND == "hashing" else ProviderEmbedder()
 
 
 def cosine(a: list[float], b: list[float]) -> float:

@@ -1,0 +1,455 @@
+{
+  "id": "studio-ai-workspace",
+  "title": "Check the providers, write a schema, and build a pipeline by dragging its steps",
+  "features": [
+    "ZER0-043"
+  ],
+  "path": "verify/scenarios/studio-ai-workspace.yml",
+  "started": "2026-10-22T15:55:12.086Z",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "ok": true,
+      "steps": [
+        {
+          "step": "goto",
+          "arg": "/studio/",
+          "ok": true,
+          "ms": 594
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=username]",
+            "value": "editor"
+          },
+          "ok": true,
+          "ms": 32
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "input[name=password]",
+            "value": "zer0-demo"
+          },
+          "ok": true,
+          "ms": 29
+        },
+        {
+          "step": "click",
+          "arg": "button[type=submit]",
+          "ok": true,
+          "ms": 28
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Home']"
+          },
+          "ok": true,
+          "ms": 181
+        },
+        {
+          "step": "click",
+          "arg": "role=link[name='AI']",
+          "ok": true,
+          "ms": 18
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Providers']",
+          "ok": true,
+          "ms": 100
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=table[name='Providers']"
+          },
+          "ok": true,
+          "ms": 26
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "recorded"
+          },
+          "ok": true,
+          "ms": 2
+        },
+        {
+          "step": "screenshot",
+          "arg": "providers",
+          "ok": true,
+          "file": "test/evidence/studio-ai-workspace/desktop-providers.png",
+          "ms": 40
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Models']",
+          "ok": true,
+          "ms": 33
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=tabpanel[name='Models']"
+          },
+          "ok": true,
+          "ms": 24
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Output schemas']",
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='New schema']",
+          "ok": true,
+          "ms": 48
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Name']",
+            "value": "Headline and body"
+          },
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='JSON Schema']",
+            "value": "{\"type\": \"object\", "
+          },
+          "ok": true,
+          "ms": 7
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "text": "Not JSON yet"
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='JSON Schema']",
+            "value": "{\"type\": \"object\", \"properties\": {\"headline\": {\"type\": \"string\"}}, \"required\": [\"headline\"]}"
+          },
+          "ok": true,
+          "ms": 4
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "role=status >> text=Valid JSON"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Create']",
+          "ok": true,
+          "ms": 37
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Headline and body']"
+          },
+          "ok": true,
+          "ms": 77
+        },
+        {
+          "step": "screenshot",
+          "arg": "schema-written",
+          "ok": true,
+          "file": "test/evidence/studio-ai-workspace/desktop-schema-written.png",
+          "ms": 37
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Assistants']",
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='New assistant']",
+          "ok": true,
+          "ms": 49
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Name']",
+            "value": "Step drafter"
+          },
+          "ok": true,
+          "ms": 43
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Create']",
+          "ok": true,
+          "ms": 29
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Step drafter']"
+          },
+          "ok": true,
+          "ms": 74
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Assistants']",
+          "ok": true,
+          "ms": 37
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='New assistant']",
+          "ok": true,
+          "ms": 50
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Name']",
+            "value": "Step editor"
+          },
+          "ok": true,
+          "ms": 39
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Create']",
+          "ok": true,
+          "ms": 28
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Step editor']"
+          },
+          "ok": true,
+          "ms": 73
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Pipelines']",
+          "ok": true,
+          "ms": 28
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='New pipeline']",
+          "ok": true,
+          "ms": 49
+        },
+        {
+          "step": "fill",
+          "arg": {
+            "selector": "role=textbox[name='Name']",
+            "value": "Draft, then edit"
+          },
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Add a step']",
+          "ok": true,
+          "ms": 35
+        },
+        {
+          "step": "click",
+          "arg": "li[aria-label='Step 1'] >> role=combobox[name='Assistant']",
+          "ok": true,
+          "ms": 41
+        },
+        {
+          "step": "click",
+          "arg": "role=option[name='Step drafter']",
+          "ok": true,
+          "ms": 36
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Add a step']",
+          "ok": true,
+          "ms": 37
+        },
+        {
+          "step": "click",
+          "arg": "li[aria-label='Step 2'] >> role=combobox[name='Assistant']",
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "click",
+          "arg": "role=option[name='Step editor']",
+          "ok": true,
+          "ms": 38
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Create']",
+          "ok": true,
+          "ms": 27
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Draft, then edit']"
+          },
+          "ok": true,
+          "ms": 78
+        },
+        {
+          "step": "eval",
+          "arg": "document.querySelector(\"[aria-label='Drag step 1']\").focus()",
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "press",
+          "arg": "Space",
+          "ok": true,
+          "ms": 10
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "ms": 300
+          },
+          "ok": true,
+          "ms": 303
+        },
+        {
+          "step": "press",
+          "arg": "ArrowDown",
+          "ok": true,
+          "ms": 6
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "ms": 300
+          },
+          "ok": true,
+          "ms": 303
+        },
+        {
+          "step": "press",
+          "arg": "Space",
+          "ok": true,
+          "ms": 15
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "ms": 300
+          },
+          "ok": true,
+          "ms": 301
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "li[aria-label='Step 1'] input[value='Step editor']"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "click",
+          "arg": "role=button[name='Save']",
+          "ok": true,
+          "ms": 14
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "ms": 1000
+          },
+          "ok": true,
+          "ms": 1001
+        },
+        {
+          "step": "click",
+          "arg": "role=tab[name='Pipelines']",
+          "ok": true,
+          "ms": 52
+        },
+        {
+          "step": "click",
+          "arg": "role=table[name='Pipelines'] >> role=button[name='Draft, then edit']",
+          "ok": true,
+          "ms": 116
+        },
+        {
+          "step": "wait",
+          "arg": {
+            "selector": "role=heading[name='Draft, then edit']"
+          },
+          "ok": true,
+          "ms": 34
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "li[aria-label='Step 1'] input[value='Step editor']"
+          },
+          "ok": true,
+          "ms": 2
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "visible": "li[aria-label='Step 2'] input[value='Step drafter']"
+          },
+          "ok": true,
+          "ms": 1
+        },
+        {
+          "step": "expect",
+          "arg": {
+            "no_console_errors": true
+          },
+          "ok": true,
+          "ms": 0
+        },
+        {
+          "step": "screenshot",
+          "arg": "pipeline-reordered",
+          "ok": true,
+          "file": "test/evidence/studio-ai-workspace/desktop-pipeline-reordered.png",
+          "ms": 26
+        }
+      ],
+      "console_errors": [],
+      "screenshots": [
+        "test/evidence/studio-ai-workspace/desktop-providers.png",
+        "test/evidence/studio-ai-workspace/desktop-schema-written.png",
+        "test/evidence/studio-ai-workspace/desktop-pipeline-reordered.png"
+      ],
+      "evals": {},
+      "final_url": "http://127.0.0.1:62349/studio/ai/pipelines/df949d6a-9e30-4b88-8f73-61aa4c04d73a"
+    }
+  ],
+  "ok": true,
+  "finished": "2026-10-22T15:55:16.566Z",
+  "base": "http://127.0.0.1:62349"
+}

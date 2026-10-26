@@ -1,4 +1,4 @@
-"""parodynews's database → the content plane (PLAN §4.4, M6).
+"""parodynews's database → the platform (PLAN §4.4, M6, G8).
 
 Input is parodynews's own `manage.py dumpdata parodynews` (the plan's
 first step: dump before anything moves), read as data — this project never
@@ -9,11 +9,11 @@ imports parodynews's code or connects to its database.
 | `Post` + `PostFrontMatter` + `ContentDetail` | an `ArticlePage` under the `parodynews` site, `posts` collection |
 | `PostVersion` (in `version_number` order) | one revision each, authored by `legacy:import`, dated as the original |
 | the post's current content           | the latest revision; published if the post's status is `published` |
-| `Assistant` (+ `AIModel`)             | an `AgentDefinition` `legacy-<name>`, policy `off`, never live — a record to port from, not an agent to run |
+| providers, models, schemas, assistants, groups, content details and items, threads and messages | the AI content layer (importers/parodynews_ai.py) |
 
-`Thread` / `Message` are left in the dump: whether chat history becomes
-`AgentRun` rows is still open (PLAN §4.4). Re-running the import changes
-nothing that did not change in the dump.
+Re-running the import changes nothing that did not change in the dump, and
+leaves alone what a person changed here since the last import — a post's page
+or an AI row — reporting it as a conflict (`force` overwrites it).
 """
 
 import hashlib
@@ -25,7 +25,6 @@ from django.db import transaction
 from django.utils.text import slugify
 from wagtail.models import Revision
 
-from agents.models import AgentDefinition
 from agents.principals import ensure_legacy_import_user
 from cms.models import ArticlePage, CollectionPage, SiteRootPage
 from cms.services import publish, save_draft
@@ -33,6 +32,7 @@ from cms.services import publish, save_draft
 from . import frontmatter
 from .markdown import to_blocks
 from .models import ImportedSource
+from .parodynews_ai import import_ai
 
 SITE_KEY = "parodynews"
 
@@ -42,12 +42,25 @@ class Report:
     pages_created: list = field(default_factory=list)
     pages_unchanged: list = field(default_factory=list)
     revisions: int = 0
-    agents: list = field(default_factory=list)
+    providers: list = field(default_factory=list)
+    assistants: list = field(default_factory=list)
+    schemas: int = 0
+    pipelines: int = 0
+    briefs: int = 0
+    conversations: int = 0
+    messages: int = 0
+    skipped: list = field(default_factory=list)
+    conflicts: list = field(default_factory=list)
 
     def summary(self) -> str:
         return (
             f"parodynews: {len(self.pages_created)} page(s) created, {len(self.pages_unchanged)} unchanged, "
-            f"{self.revisions} historical revision(s), {len(self.agents)} legacy agent definition(s)"
+            f"{self.revisions} historical revision(s); {len(self.providers)} provider(s) (credentials not "
+            f"imported), {len(self.assistants)} assistant(s), {self.schemas} schema(s), {self.pipelines} "
+            f"pipeline(s), {self.briefs} brief(s), {self.conversations} conversation(s) with {self.messages} "
+            f"message(s)"
+            + (f"; skipped: {'; '.join(self.skipped)}" if self.skipped else "")
+            + (f"; {len(self.conflicts)} conflict(s): {'; '.join(self.conflicts)}" if self.conflicts else "")
         )
 
 
@@ -105,7 +118,7 @@ def _apply(page, *, title, description, author, date, slug, body, extra):
     }
 
 
-def import_dump(path_or_rows) -> Report:
+def import_dump(path_or_rows, *, force=False) -> Report:
     rows = path_or_rows if isinstance(path_or_rows, list) else json.loads(open(path_or_rows, encoding="utf-8").read())
     posts = _index(rows, "parodynews.post")
     front = _index(rows, "parodynews.postfrontmatter")
@@ -114,9 +127,8 @@ def import_dump(path_or_rows) -> Report:
         (r for r in rows if r.get("model") == "parodynews.postversion"),
         key=lambda r: (r["fields"]["post"], r["fields"]["version_number"]),
     )
-    models = _index(rows, "parodynews.aimodel")
-    assistants = _index(rows, "parodynews.assistant")
     report = Report()
+    pages_by_post = {}
     importer = ensure_legacy_import_user()
     with transaction.atomic():
         parent = _site()
@@ -130,7 +142,14 @@ def import_dump(path_or_rows) -> Report:
             existing = ImportedSource.objects.filter(site_key=SITE_KEY, legacy_path=legacy).first()
             if existing is not None and existing.source_digest == digest:
                 report.pages_unchanged.append(legacy)
+                pages_by_post[pk] = existing.page
                 continue
+            if existing is not None and not force:
+                current = existing.page.specific.get_latest_revision_as_object()
+                if current.compute_content_hash() != existing.import_hash:
+                    report.conflicts.append(f"{legacy}: changed here since the last import (pass --force to overwrite)")
+                    pages_by_post[pk] = existing.page
+                    continue
             fm = front.get(post.get("postfrontmatter")) or next((f for f in front.values() if f.get("post") == pk), {})
             detail = details.get(post.get("content_detail"), {})
             title = fm.get("title") or detail.get("title")
@@ -190,27 +209,6 @@ def import_dump(path_or_rows) -> Report:
                 },
             )
             report.pages_created.append(legacy)
-        for pk, assistant in sorted(assistants.items(), key=lambda kv: str(kv[0])):
-            slug = f"legacy-{slugify(assistant.get('name') or pk)}"[:64]
-            model = models.get(assistant.get("model"), {})
-            values = {
-                "name": (assistant.get("name") or slug)[:120],
-                "description": assistant.get("description") or "",
-                "role": "author",
-                "policy": "off",
-                "tools": [],
-                "system_prompt": "\n\n".join(p for p in (assistant.get("instructions"), assistant.get("prompt")) if p),
-                "model": f"{model.get('provider', '')}/{model.get('model_id', '')}".strip("/"),
-                "profile": {
-                    "legacy_ref": f"parodynews.assistant:{pk}",
-                    "tools": assistant.get("tools") or [],
-                    "temperature": assistant.get("temperature"),
-                },
-            }
-            definition = AgentDefinition.objects.filter(slug=slug).first()
-            if definition is None:
-                definition = AgentDefinition(slug=slug, live=False, **values)
-                definition.save()
-                definition.save_revision(log_action=False)
-            report.agents.append(slug)
+            pages_by_post[pk] = page
+        import_ai(rows, report, pages_by_post, force=force)
     return report

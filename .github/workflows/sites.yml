@@ -1,9 +1,17 @@
-# The five remote_theme sites under sites/ — zer0-pages-remote, the two
-# installer demos, 2005 and wargames — built the way the hub's standard-ci built them in their
-# own repositories: `bundle install` and `bundle exec jekyll build`, one matrix
-# leg per site, each only when its own tree changes. They load the theme from
-# GitHub (`remote_theme: bamr87/zer0-mistakes`, the theme's own repository per
-# ADR 0005); drsai.yml is the gate that builds a site against the theme's main.
+# The five sites under sites/ that build with the Jekyll-theme option and no
+# workflow of their own — zer0-pages-remote, the two installer demos, 2005 and
+# wargames — each built the way its own repository publishes it: with its own
+# url and baseurl, by its `build` task (tools/jekyll_theme.py), which renders it
+# with the zer0 theme at the tag its `render:` setting pins and builds it with
+# that setting's Jekyll server in Docker (PLAN P2). No Ruby is installed. One
+# matrix leg per site, each only when its own tree changes, and every site when
+# what builds them does: workspace.yml (each site's `render:` setting and tasks),
+# the workspace tool that reads it, the option and its server. 2005 is also
+# compared with the recording of its build (web/site/fixtures/2005/, PLAN P1):
+# nothing routes it, so pages.yml does not; a difference fails, since the
+# option reproduces the recording exactly. The fresh recording is uploaded as
+# the site-manifest-2005 artifact: when the change is intended, commit it over
+# web/site/fixtures/ in the same pull request.
 name: sites
 
 on:
@@ -15,6 +23,14 @@ on:
       - "sites/zer0-demo-garden/**"
       - "sites/2005/**"
       - "sites/wargames/**"
+      - "workspace.yml"
+      - "bin/zer0"
+      - "tools/workspace/**"
+      - "tools/jekyll_theme.py"
+      - "tools/jekyll/**"
+      - "tools/obsidian/**"
+      - "tools/site_manifest.py"
+      - "web/site/fixtures/2005/**"
       - ".github/workflows/sites.yml"
   pull_request:
     paths:
@@ -23,6 +39,14 @@ on:
       - "sites/zer0-demo-garden/**"
       - "sites/2005/**"
       - "sites/wargames/**"
+      - "workspace.yml"
+      - "bin/zer0"
+      - "tools/workspace/**"
+      - "tools/jekyll_theme.py"
+      - "tools/jekyll/**"
+      - "tools/obsidian/**"
+      - "tools/site_manifest.py"
+      - "web/site/fixtures/2005/**"
       - ".github/workflows/sites.yml"
 
 permissions:
@@ -31,6 +55,11 @@ permissions:
 concurrency:
   group: sites-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+  TZ: UTC
 
 jobs:
   plan:
@@ -42,23 +71,34 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: ruby/setup-ruby@v1
+          persist-credentials: false
+      - uses: actions/setup-python@v7
         with:
-          ruby-version: "3.3"
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
       - id: plan
         env:
           BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
         run: |
           all='["zer0-pages-remote","zer0-demo-cookbook","zer0-demo-garden","2005","wargames"]'
-          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-            echo "sites=$all" >> "$GITHUB_OUTPUT"; exit 0
+          # Every site when there is nothing to diff against, or when what builds them changed — workspace.yml
+          # (a site's render: setting, its theme tag, server or before: step), the workspace tool, the option, its
+          # server, the comparison, the 2005 recording, this workflow; otherwise the sites the change affects.
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null || ! git diff --quiet "$BASE" HEAD -- workspace.yml bin/zer0 tools/workspace tools/jekyll_theme.py tools/jekyll tools/obsidian tools/site_manifest.py web/site/fixtures/2005 .github/workflows/sites.yml; then
+            changed="$all"
+          else
+            changed=$(bin/zer0 affected --base "$BASE" --json | python -c 'import json, sys; print(json.dumps(json.load(sys.stdin)["affected"]))')
           fi
-          affected=$(bin/zer0 affected --base "$BASE" --json)
-          sites=$(ruby -rjson -e 'puts JSON.generate(JSON.parse(ARGV[0]) & JSON.parse(ARGV[1])["affected"])' "$all" "$affected")
+          # Each leg names its site's Jekyll server, so only the jekyll-4 legs build that image.
+          sites=$(bin/zer0 list --json | python -c '
+          import json, sys
+          wanted = set(json.loads(sys.argv[1])) & set(json.loads(sys.argv[2]))
+          legs = [{"name": p["name"], "server": p["render"]["server"]} for p in json.load(sys.stdin) if p["name"] in wanted]
+          print(json.dumps(legs, separators=(",", ":")))' "$all" "$changed")
           echo "sites=$sites" >> "$GITHUB_OUTPUT"
 
   build:
-    name: jekyll build (${{ matrix.site }})
+    name: jekyll build (${{ matrix.site.name }})
     needs: plan
     if: needs.plan.outputs.sites != '[]'
     runs-on: ubuntu-latest
@@ -67,14 +107,58 @@ jobs:
       fail-fast: false
       matrix:
         site: ${{ fromJSON(needs.plan.outputs.sites) }}
-    defaults:
-      run:
-        working-directory: sites/${{ matrix.site }}
     steps:
       - uses: actions/checkout@v7
-      - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
-          bundler-cache: true
-          working-directory: sites/${{ matrix.site }}
-      - run: bundle exec jekyll build
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml
+      - name: The jekyll-4 server's image tag
+        id: image
+        if: matrix.site.server == 'jekyll-4'
+        run: echo "tag=$(python tools/jekyll_theme.py image jekyll-4)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+        if: matrix.site.server == 'jekyll-4'
+      - uses: docker/build-push-action@v7
+        if: matrix.site.server == 'jekyll-4'
+        with:
+          context: tools/jekyll
+          load: true
+          tags: ${{ steps.image.outputs.tag }}
+          cache-from: type=gha,scope=jekyll-4
+          cache-to: type=gha,scope=jekyll-4,mode=max
+      - name: Build with the Jekyll-theme option
+        env:
+          NAME: ${{ matrix.site.name }}
+          ZER0_PAGES_DEST: ${{ runner.temp }}/site
+          ZER0_PAGES_BUILT_WITH: ${{ runner.temp }}/built-with.json
+          PAGES_REPO_NWO: ${{ github.repository }}
+        run: |
+          bin/zer0 run build "$NAME"
+          test -f "$ZER0_PAGES_DEST/index.html" || { echo "::error::$NAME built no index.html"; exit 1; }
+      - uses: actions/setup-python@v7
+        if: matrix.site.name == '2005'
+        with:
+          python-version: "3.14"
+      - name: Record what the build wrote
+        if: matrix.site.name == '2005'
+        run: python3 tools/site_manifest.py build "$RUNNER_TEMP/site" --site 2005 --built-with "$RUNNER_TEMP/built-with.json" --out "$RUNNER_TEMP/manifests/2005/manifest.json"
+      - uses: actions/upload-artifact@v7
+        if: matrix.site.name == '2005'
+        with:
+          name: site-manifest-2005
+          path: ${{ runner.temp }}/manifests
+          retention-days: 30
+      - name: Compare with the recorded build
+        if: matrix.site.name == '2005'
+        run: |
+          set -euo pipefail
+          status=0
+          python3 tools/site_manifest.py compare web/site/fixtures/2005/manifest.json "$RUNNER_TEMP/manifests/2005/manifest.json" | tee "$RUNNER_TEMP/compare.txt" || status=$?
+          if [ "$status" -ne 0 ]; then
+            { echo "### 2005 differs from its recording"; echo '```'; head -n 200 "$RUNNER_TEMP/compare.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::2005's build differs from web/site/fixtures/2005/manifest.json (the job summary says how); if that is intended, commit the site-manifest-2005 artifact over web/site/fixtures/ in the same pull request"
+            exit 1
+          fi

@@ -12,14 +12,9 @@
 ## Quick commands
 
 ```bash
-# Install dependencies
-bundle install
-
-# Development (no Docker in this repo; the devcontainer runs this same command)
-bundle exec jekyll serve --host 0.0.0.0 --port 4000 --livereload   # http://localhost:4000/wargames/
-
-# Build
-bundle exec jekyll build
+# Build (zer0-CMS's Jekyll-theme option: the theme at the tag the root workspace.yml pins, Jekyll 4.4.1
+# in the image tools/jekyll/Dockerfile pins — Docker, no Ruby) into _site/
+python3 ../../tools/jekyll_theme.py build wargames
 
 # Lint (markdown prose must be one paragraph per line — CI enforces it)
 python3 ../../tools/unwrap-prose.py --check    # --write to fix

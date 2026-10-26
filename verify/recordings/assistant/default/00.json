@@ -1,0 +1,10 @@
+{
+  "response": {
+    "text": "## Backups, explained\n\nA copy of the site every night keeps a week of work safe.\n\nRestoring one takes a single command, so test it once a month.",
+    "tool_calls": [],
+    "tokens_in": 180,
+    "tokens_out": 60,
+    "cost_usd": "0.0010",
+    "model": "demo"
+  }
+}

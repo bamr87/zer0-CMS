@@ -6,10 +6,13 @@
 #   docker compose up --build                     # the Rails CMS on :3001/admin
 #   docker compose --profile imagegen up --build  # + zer0-image-generator on :3000
 #
-# The content profile is Postgres with pgvector, Redis, the Django app
-# (/healthz, /readyz, /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery
-# worker and beat (agent runs, the nightly graph job) and the outbox relay to
-# Redis Streams.
+# The content profile is Postgres with pgvector, Redis, the Django app on
+# gunicorn's threaded workers (content/gunicorn.conf.py, so a run's event
+# stream holds a thread, not a worker)
+# (/studio/ — the React studio its image builds from web/ —, /healthz, /readyz,
+# /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery worker and beat
+# (agent runs, scheduled publishing, the nightly graph job) and the outbox
+# relay to Redis Streams.
 #
 # SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
 # the zer0 sites — discovery finds them two levels down, e.g.
@@ -172,7 +175,7 @@ services:
     command: >-
       sh -c "python manage.py migrate --noinput &&
              python manage.py sync_agents --publish &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+             gunicorn config.wsgi:application"
     ports:
       - "127.0.0.1:${CONTENT_PORT:-8000}:8000"
     environment: &content-env
@@ -228,6 +231,25 @@ services:
       content: {condition: service_healthy}
     healthcheck:
       test: ["CMD-SHELL", "celery -A config inspect ping --timeout 5 -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # The research library's fetches wait on other people's servers, so they have a queue of their own
+  # (CELERY_TASK_ROUTES in content/config/settings/base.py) that only this worker consumes: a slow site holds it,
+  # never the worker that runs agents and publishes pages.
+  research-worker:
+    profiles: ["content"]
+    build: *content-build
+    command: celery -A config worker -Q research --hostname research@%h --concurrency 4 --loglevel=INFO
+    environment: *content-env
+    labels: *content-labels
+    logging: *fleet-logging
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping --timeout 5 -d research@$$HOSTNAME"]
       interval: 30s
       timeout: 10s
       retries: 5

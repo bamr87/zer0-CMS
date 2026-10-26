@@ -14,7 +14,15 @@ traceback in the log, never in the response.
 `/api/v2/graph/{neighbors,path,related,search}/` read the graph;
 `/api/v2/suggestions/` lists, accepts and rejects; `/api/v2/tools/` lists the
 registry. Each view calls the same service functions as GraphQL and the admin,
-and every failure is raised (`ops.errors`) so the one envelope answers it.
+reads rows through the one scope (`AgentRun.objects.visible_to`,
+`Suggestion.objects.visible_to`), and raises every failure (`ops.errors`) so
+the one envelope answers it. The studio's endpoints live beside these:
+api/session.py, api/pages.py and api/review.py.
+
+A run's event stream holds its request for up to `timeout` seconds, which is
+why the web role serves on threads (content/gunicorn.conf.py): it opens with a
+comment frame, so the headers reach the browser at once, and sends a comment
+whenever it has been quiet for a while, so no proxy closes it as idle.
 """
 
 import json
@@ -27,12 +35,13 @@ from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from graphene_django.views import GraphQLView
 from graphql import GraphQLError
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import serializers, status
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 from wagtail.models import Page, Revision
 
@@ -45,12 +54,27 @@ from ops.context import current_request_id
 from ops.errors import ApiError, Conflict, Forbidden, Invalid, NotFound
 from ops.openapi import ERROR_RESPONSES
 from suggestions.models import Suggestion
-from suggestions.services import SuggestionError, accept, can_decide, pending_for, reject
+from suggestions.services import accept, pending_for, reject
 
 from .access import may_request_run
-from .graphql import may_read_run
+from .pages import service_errors
+from .serializers import RunListSerializer, RunSerializer
 
 log = logging.getLogger("ops.graphql")
+KEEPALIVE_SECONDS = 15
+
+
+class EventStreamRenderer(BaseRenderer):
+    """Lets a browser's `EventSource`, which sends `Accept: text/event-stream`,
+    through DRF's content negotiation (without it the stream answers 406). The
+    stream view returns its own response; only an error is rendered here, as
+    the JSON envelope."""
+
+    media_type = "text/event-stream"
+    format = "event-stream"
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return json.dumps(data).encode()
 
 
 class _CSRFCheck(CsrfViewMiddleware):
@@ -114,6 +138,7 @@ def run_json(run: AgentRun, steps=False) -> dict:
         "id": run.pk,
         "agent": run.agent.slug,
         "status": run.status,
+        "is_final": run.is_final,
         "trigger": run.trigger,
         "target": {"type": run.target_ct.model if run.target_ct else None, "id": run.target_id},
         "input": run.input,
@@ -171,35 +196,28 @@ def _create_run(request, slug):
     methods=["GET"],
     operation_id="agent_runs_list",
     summary="The newest 50 runs the caller may see",
-    responses={200: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={200: RunListSerializer, **ERROR_RESPONSES},
 )
 @extend_schema(
     methods=["POST"],
     operation_id="agent_runs_create",
     summary="Start a run of `agent` on `page_id` with `input`",
     request=OpenApiTypes.OBJECT,
-    responses={201: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={201: RunSerializer, **ERROR_RESPONSES},
 )
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def agent_runs(request):
     if request.method == "POST":
         return _create_run(request, request.data.get("agent", ""))
-    user = request.user
-    qs = AgentRun.objects.select_related("agent", "target_ct")
-    if not user.is_superuser:
-        qs = (
-            qs.filter(agent__slug=user.username[6:])
-            if user.username.startswith("agent:")
-            else qs.filter(started_by=user)
-        )
+    qs = AgentRun.objects.visible_to(request.user).select_related("agent", "target_ct")
     return Response({"results": [run_json(r) for r in qs[:50]]})
 
 
 @extend_schema(
     summary="Start a run of one agent",
     request=OpenApiTypes.OBJECT,
-    responses={201: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={201: RunSerializer, **ERROR_RESPONSES},
 )
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -208,14 +226,13 @@ def agent_runs_for(request, slug):
 
 
 def _readable_run(request, pk):
-    run = AgentRun.objects.select_related("agent", "target_ct").filter(pk=pk).first()
-    return run if run is not None and may_read_run(request.user, run) else None
+    return AgentRun.objects.visible_to(request.user).select_related("agent", "target_ct").filter(pk=pk).first()
 
 
 @extend_schema(
     operation_id="agent_runs_retrieve",
     summary="One run with its steps",
-    responses={200: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    responses={200: RunSerializer, **ERROR_RESPONSES},
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -235,6 +252,7 @@ def agent_run(request, pk):
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+@renderer_classes([JSONRenderer, EventStreamRenderer])
 def agent_run_stream(request, pk):
     """Server-sent events: each step as it lands, then the final status."""
     run = _readable_run(request, pk)
@@ -243,17 +261,27 @@ def agent_run_stream(request, pk):
     timeout = min(float(request.query_params.get("timeout", 60)), 300)
 
     def events():
-        sent = -1
-        deadline = time.monotonic() + timeout
+        yield ": open\n\n"
+        sent, quiet = -1, time.monotonic()
+        deadline = quiet + timeout
         while True:
             current = AgentRun.objects.get(pk=run.pk)
             for step in current.steps.filter(idx__gt=sent).order_by("idx"):
-                sent = step.idx
+                sent, quiet = step.idx, time.monotonic()
                 yield f"event: step\ndata: {json.dumps(step_json(step), default=str)}\n\n"
             if current.is_final or time.monotonic() > deadline:
-                yield f"event: status\ndata: {json.dumps({'id': current.pk, 'status': current.status, 'error': current.error})}\n\n"
+                status = {
+                    "id": current.pk,
+                    "status": current.status,
+                    "is_final": current.is_final,
+                    "error": current.error,
+                }
+                yield f"event: status\ndata: {json.dumps(status)}\n\n"
                 yield "event: end\ndata: {}\n\n"
                 return
+            if time.monotonic() - quiet > KEEPALIVE_SECONDS:
+                quiet = time.monotonic()
+                yield ": keep-alive\n\n"
             time.sleep(0.5)
 
     response = StreamingHttpResponse(events(), content_type="text/event-stream")
@@ -395,32 +423,50 @@ def suggestion_json(s: Suggestion) -> dict:
 @permission_classes([IsAuthenticated])
 def suggestions(request):
     page = Page.objects.filter(pk=request.query_params.get("page") or 0).first()
-    if page is None or not can_decide(request.user, page.specific):
+    if page is None:
         return Response({"results": []})
-    return Response({"results": [suggestion_json(s) for s in pending_for(page.specific)]})
+    return Response({"results": [suggestion_json(s) for s in pending_for(page.specific).visible_to(request.user)]})
 
 
 @extend_schema(
     summary="Accept (with `with: [ids]` as one revision) or reject (with `reason`) a suggestion",
-    request=OpenApiTypes.OBJECT,
-    responses={200: OpenApiTypes.OBJECT, **ERROR_RESPONSES},
+    description="`decision` is `accept` or `reject`.",
+    request=inline_serializer(
+        "SuggestionDecision",
+        {
+            "with": serializers.ListField(child=serializers.IntegerField(), required=False),
+            "reason": serializers.CharField(required=False, allow_blank=True),
+        },
+    ),
+    responses={
+        200: inline_serializer(
+            "SuggestionDecided",
+            {
+                "accepted": serializers.BooleanField(required=False),
+                "rejected": serializers.BooleanField(required=False),
+                "revision_id": serializers.IntegerField(required=False, allow_null=True),
+            },
+        ),
+        **ERROR_RESPONSES,
+    },
 )
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def suggestion_decide(request, pk, decision):
-    suggestion = Suggestion.objects.filter(pk=pk).first()
-    if suggestion is None:
+    visible = Suggestion.objects.visible_to(request.user)
+    suggestion = visible.filter(pk=pk).first()
+    if suggestion is None or decision not in ("accept", "reject"):
         raise NotFound("not found")
-    try:
-        with transaction.atomic():
-            if decision == "accept":
-                extra = Suggestion.objects.filter(pk__in=request.data.get("with", []))
-                result = accept([suggestion, *extra], request.user)
-                return Response({"accepted": True, "revision_id": result.pk if isinstance(result, Revision) else None})
-            reject(suggestion, request.user, reason=request.data.get("reason", ""))
-            return Response({"rejected": True})
-    except SuggestionError as e:
-        raise Conflict(str(e)) from e
+    with service_errors(), transaction.atomic():
+        if decision == "accept":
+            wanted = set(request.data.get("with", []))
+            extra = list(visible.filter(pk__in=wanted))
+            if len(extra) != len(wanted):
+                raise NotFound("not found")
+            result = accept([suggestion, *extra], request.user)
+            return Response({"accepted": True, "revision_id": result.pk if isinstance(result, Revision) else None})
+        reject(suggestion, request.user, reason=request.data.get("reason", ""))
+        return Response({"rejected": True})
 
 
 # ── the registry ───────────────────────────────────────────────────────────
