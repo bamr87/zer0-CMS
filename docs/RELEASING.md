@@ -2,6 +2,8 @@
 
 # Releasing zer0-CMS
 
+> What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding.
+
 Nobody edits a version number by hand in this repository. Conventional Commits on `main` drive everything: the version, the changelog, the tag, the GitHub Release, and the packaged extension attached to it. This page explains the machinery so that when it does something surprising you can tell whether it was right.
 
 ## The short version

@@ -1,6 +1,10 @@
 # `media/` — the design system
 
+> The extension's design system: four stylesheets, the `--z-*` token layer, themes, metrics and icons, and the rules for adding a style.
+
 Four stylesheets and the extension's icons. The build copies every `*.css` here into `dist/media/` (see the `copy-media` plugin in `esbuild.js`), which is one of the two directories a webview may load from; the other is `dist/`.
+
+The lane templates shipped beside them have their own guide, [`templates/README.md`](templates/README.md).
 
 | File | Loaded by | What it owns |
 |---|---|---|

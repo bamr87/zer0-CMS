@@ -1,5 +1,7 @@
 # PLAN: zer0-CMS → one Python platform with a React frontend (ADR 0006)
 
+> The build plan: ADR 0006's order of work (§ 3), every milestone and phase with what is done, what is blocked and what overtook it, and the open decisions.
+
 **The target is [ADR 0006](../adr/0006-one-python-platform.md), described in [`TARGET.md`](TARGET.md); what each merged repository can do, and where it goes, is [`capabilities.yml`](capabilities.yml); the order of work is § 3's list.** This plan grew in layers (the agent-native content plane, then one home, one platform, the theme going home, and now one Python platform), and its older sections are kept as the record of what was built and why; where an older line says Ruby, Jekyll or the Wagtail admin "stays", ADR 0006 has superseded it. Source of truth for the target: `docs/plan/agent-native-design.md` (called "the note"; section numbers refer to it). Working rules: [`AGENTS.md`](../../AGENTS.md). The decision record is [ADR 0001](../adr/0001-target-architecture.md), which also makes the interim calls on §7's open decisions. One milestone = one Claude Code session = one PR. Tick boxes in the same PR that does the work.
 
 ## 0. What is in this repo today (review findings)
@@ -250,7 +252,7 @@ Each milestone: one branch `m<N>-<slug>`, one PR, green CI. Commands assume `doc
 
 ### Phase E: Cutover — one home ([ADR 0002](../adr/0002-one-home-cutover.md))
 
-Ordered: each step needs the one before it. A step that needs a credential, a repository setting, a DNS change or an archive stops and asks (AGENTS.md § Workflow 5); those are the owner's.
+Ordered: each step needs the one before it. A step that needs a credential, a repository setting, a DNS change or an archive stops and asks (AGENTS.md § Conventions, "Stop and ask"); those are the owner's.
 
 - [ ] **C0: Restore the imported history** — found 2026-10-19: #29 and #36 were *squash*-merged, so `main` holds each imported tree as one commit (`packages/zer0-mistakes`: 3 commits here, 770 in the original) and the rewritten histories survive only in `refs/pull/29/head`, `refs/pull/36/head` and the originals. Nothing is archived before this lands.
   - Tasks: a branch from `main` that removes the imported paths, merges each rewritten history back (`git merge --allow-unrelated-histories`, the tips taken from the PR refs so the hashes match what was reviewed), then replays every later `main` commit that touched those paths as its own commit, so the branch's tree ends equal to `main`'s.

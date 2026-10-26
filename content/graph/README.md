@@ -1,5 +1,7 @@
 # `graph/` — the content graph
 
+> The content graph: structural, agent and behavioural edges, the vectors beside them in Postgres, and the retrieval built on them.
+
 Entities, edges and vectors in Postgres (note §5), and the retrieval built on them.
 
 - **Structural edges come free.** On every publish, `index_page` rebuilds the page's `child_of`, `references` (Wagtail's `ReferenceIndex`: chooser blocks, foreign keys), `links_to` (Markdown links and Obsidian wikilinks resolved by permalink, URL or source path), `tagged` / `in_category` (topic entities) and `translation_of` edges. They are derived, so they are replaced, never edited.

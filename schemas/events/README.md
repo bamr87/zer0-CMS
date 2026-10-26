@@ -1,5 +1,7 @@
 # `schemas/events/` — the event contracts between the planes
 
+> The CloudEvents contracts between the planes: every event type, who publishes and consumes it, and the schema its data is validated against.
+
 Every event the content plane (`content/`) or the experience plane (`rails/`) publishes is a [CloudEvents 1.0](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md) envelope in structured JSON mode, validated against [`cloudevent.v1.json`](cloudevent.v1.json), whose `data` is validated against the schema its `dataschema` names. Events travel through each plane's transactional outbox to Redis Streams (`zer0:content`, `zer0:app`); delivery is at least once, so every consumer dedupes on the envelope's `id`. ADR 0001 and [`../../content/outbox/README.md`](../../content/outbox/README.md) explain the mechanism.
 
 | Type | Published by | Data schema | Consumed by |

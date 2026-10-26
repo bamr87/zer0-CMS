@@ -1,5 +1,7 @@
 # `mcp_server/` — the content plane over MCP
 
+> The content plane over MCP: the one tool registry served over Streamable HTTP and stdio, with the same checks as an agent run or a GraphQL/REST mutation.
+
 The tool registry, served to MCP clients (M15). Three surfaces, one definition: an agent run, an MCP `tools/call` and a GraphQL/REST mutation all reach a tool through `registry.call`, with the same checks.
 
 ```bash

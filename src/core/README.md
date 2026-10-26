@@ -1,5 +1,7 @@
 # `src/core` — the pure layer
 
+> The pure layer — everything zer0-CMS knows how to do, with no `vscode` import: the one rule, the module map, where a type lives, and how it is tested.
+
 Everything zer0-CMS knows how to *do*, with nothing that knows it is running inside an editor.
 
 ## The one rule
@@ -18,17 +20,17 @@ The second rule follows from the first: **zero runtime dependencies**. YAML subs
 
 | Directory | What lives there |
 |---|---|
-| `shared/` | Primitives with no domain knowledge: types, config resolution, atomic writes, JSON I/O, timestamps, dates, globbing, text. See `shared/README.md`. |
-| `content/` | The content model: front-matter parse/serialize, fields, content types, folders, placeholders, slugs, article read/write, the page index, SEO metrics. |
-| `governance/` | The governed queue: drafts, the brand guard, the ledger, the approval gates, publishing. |
-| `catering/` | Distribution planning: the four lanes and the worklist renderer. |
-| `contract/` | The `.cms/` file bus: loader, fallback projection, and the Python engine driver. |
-| `analytics/` | The read surface, and the join that turns a platform's statistics into `performance.json`. |
-| `portfolio/` | The published track record: volume, cadence, streak, collections. |
-| `media/` | Resolving the preview image a page already has, or emitting the generator's brief. |
-| `platform/` | What kind of site this is (decision D12): seven profiles as data, the zer0-mistakes overlay on Jekyll, marker-file detection over injected readers, the site's own config, and the permalink and content-root derivations. See `platform/README.md`. |
-| `fleet/` | The Fleet console's pure half: `fleet.manifest.yml` → typed lanes, the switch/dispatch gate, and the GitHub surface declared as data over an injected `fetch`. See `fleet/README.md`. |
-| `harness/` | One vocabulary for the editor agent and CI: the agent, skill and `_data/ai.yml` readers, the harness profile (model precedence, permission-mode clamp, SDK and CI projections), the inventory and its joins, the `wtd fleet adopt` port, the usage ledger, and lane generation. See `harness/README.md`. |
+| [`shared/`](shared/README.md) | Primitives with no domain knowledge: types, config resolution, atomic writes, JSON I/O, timestamps, dates, globbing, text. See `shared/README.md`. |
+| [`content/`](content/README.md) | The content model: front-matter parse/serialize, fields, content types, folders, placeholders, slugs, article read/write, the page index, SEO metrics. |
+| [`governance/`](governance/README.md) | The governed queue: drafts, the brand guard, the ledger, the approval gates, publishing. |
+| [`catering/`](catering/README.md) | Distribution planning: the four lanes and the worklist renderer. |
+| [`contract/`](contract/README.md) | The `.cms/` file bus: loader, fallback projection, and the Python engine driver. |
+| [`analytics/`](analytics/README.md) | The read surface, and the join that turns a platform's statistics into `performance.json`. |
+| [`portfolio/`](portfolio/README.md) | The published track record: volume, cadence, streak, collections. |
+| [`media/`](media/README.md) | Resolving the preview image a page already has, or emitting the generator's brief. |
+| [`platform/`](platform/README.md) | What kind of site this is (decision D12): seven profiles as data, the zer0-mistakes overlay on Jekyll, marker-file detection over injected readers, the site's own config, and the permalink and content-root derivations. See `platform/README.md`. |
+| [`fleet/`](fleet/README.md) | The Fleet console's pure half: `fleet.manifest.yml` → typed lanes, the switch/dispatch gate, and the GitHub surface declared as data over an injected `fetch`. See `fleet/README.md`. |
+| [`harness/`](harness/README.md) | One vocabulary for the editor agent and CI: the agent, skill and `_data/ai.yml` readers, the harness profile (model precedence, permission-mode clamp, SDK and CI projections), the inventory and its joins, the `wtd fleet adopt` port, the usage ledger, and lane generation. See `harness/README.md`. |
 | `index.ts` | The barrel. Import from `../core`, not from individual files, outside of core itself. |
 
 ## Where a type lives

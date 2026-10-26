@@ -1,5 +1,7 @@
 # Agent-Native Headless CMS: Rails + Django/Wagtail
 
+> The design note the plan implements ("the note"): agent runs as content-adjacent data — Wagtail revisions, moderation tasks and graph edges — across a Django/Wagtail content plane and a Rails experience plane.
+
 ## 0. Core thesis
 
 Treat an **agent run as content-adjacent data**, not an external script. Every agent action becomes a versioned, attributable, reviewable change in the same place an editor's change would go: a Wagtail revision, a moderation workflow task, or a graph edge. Agents use the same permission system, the same API, and the same audit trail as people.

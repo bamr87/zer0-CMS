@@ -1,5 +1,7 @@
 # The zer0 monorepo
 
+> Every project under `packages/`, `sites/` and `apps/` — the sources the platform is absorbing (ADR 0006) — how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs from the originals.
+
 zer0-CMS carries the zer0 stack's content-management half in one repository: the Django + Wagtail platform that is its centre ([ADR 0001](adr/0001-target-architecture.md), [ADR 0004](adr/0004-one-platform.md)), the VS Code extension that is its editor client, the Rails fleet CMS the platform is absorbing, plus the image generator, the books app, nine Jekyll sites and the parodynews and aieo apps — the image generator's panel, the books studio and both apps being absorbed into the platform function by function (PLAN Phase G). The zer0-mistakes theme the sites build with is developed in its own repository, [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes), together with its Rails studio ([ADR 0005](adr/0005-theme-goes-home.md)), and reaches the sites here only through the Jekyll-theme option ([ADR 0006](adr/0006-one-python-platform.md) decision 4, PLAN P2): a site's `render:` setting in `workspace.yml` pins the theme's tag and the Jekyll server that builds it in Docker (`tools/jekyll_theme.py`), with no Gemfile — every site but zer0-pages, which still builds with its own until its two recorded differences are accepted. Each of those used to live in its own repository and was imported here **with its full history**, under its own directory. This page explains how the pieces fit, how one repository manages all of them, how the import was done, and what still runs from the original repositories.
 
 ## Layout
@@ -24,7 +26,7 @@ zer0-CMS carries the zer0 stack's content-management half in one repository: the
 | `apps/parodynews/` | `bamr87/barodybroject` | A Django 5.2 + React app that generates parody news with AI, with a Jekyll sidecar (`src/pages`) and an Azure Container Apps deploy. |
 | `apps/aieo/` | `bamr87/aieo` | AI Engine Optimization: a FastAPI backend (PostgreSQL, Redis, Celery) and a React + Vite frontend that score website content against what AI engines cite and rewrite it, plus a CLI, WordPress REST snippets and a reusable content-scoring workflow. |
 
-`packages/` holds libraries and tools, `sites/` holds what gets published as a website, and `apps/` holds deployed applications; the plan's eventual layout (`clients/`, `frontends/`, PLAN §2) is milestone M2 and has not been applied. Each imported directory keeps its own `README.md`, `AGENTS.md` (with a `CLAUDE.md` pointer) and tooling, and its own commands still run from inside it.
+`packages/` holds libraries and tools, `sites/` holds what gets published as a website, and `apps/` holds deployed applications; the plan's eventual layout (`clients/`, `frontends/`, PLAN §2) is milestone M2 and has not been applied. Each imported directory keeps its own `README.md` and tooling, most keep an `AGENTS.md` (with a `CLAUDE.md` pointer), and its own commands still run from inside it.
 
 ## How one repository manages all of them
 

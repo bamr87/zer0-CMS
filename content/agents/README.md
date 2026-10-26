@@ -1,5 +1,7 @@
 # `agents/` — the harness
 
+> The agent harness: definitions, runs and the one tool registry every surface dispatches through.
+
 Definitions, runs and the one tool registry every surface dispatches through (note §4; ADR 0001).
 
 ## The pieces
