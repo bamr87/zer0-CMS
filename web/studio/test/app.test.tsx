@@ -135,6 +135,31 @@ describe('the shell and its routes', () => {
     expect(pathFor({ to: 'books' })).toBe('/books');
     expect(pathFor({ to: 'book', id: 20 })).toBe('/books/20');
     expect(pathFor({ to: 'chapter', book: 20, id: 31 })).toBe('/books/20/chapters/31');
+    expect(pathFor({ to: 'outbox' })).toBe('/outbox');
+    expect(pathFor({ to: 'outbox', tab: 'belt' })).toBe('/outbox');
+    expect(pathFor({ to: 'outbox', tab: 'claims' })).toBe('/outbox/claims');
+    expect(pathFor({ to: 'trial', id: 't1' })).toBe('/outbox/trials/t1');
+    expect(pathFor({ to: 'claim-check', id: 'k1' })).toBe('/outbox/claims/k1');
+  });
+
+  it('opens the Outbox desk on its tabs, and a trial and a claim check at their addresses', async () => {
+    const routes = {
+      'GET /api/v2/outbox/belt/': () => ({ delivered: 0, dead_letters: 0, traces: 0, kinds: [], seq_gapless: true, ids_unique: true, pending: 0, stations: ['editor'], editor: 'editor', harness: '0.1.0' }),
+      'GET /api/v2/outbox/belt/messages/': () => EMPTY,
+      'GET /api/v2/outbox/belt/dead-letters/': () => [],
+      'GET /api/v2/outbox/trials/': () => EMPTY,
+      'GET /api/v2/outbox/trials/t1/': () => new Reply(404, { error: { code: 'resource.not_found', message: 'no trial t1', status: 404, details: [] } }),
+      'GET /api/v2/outbox/claim-checks/k1/': () => new Reply(404, { error: { code: 'resource.not_found', message: 'no check k1', status: 404, details: [] } }),
+    };
+    renderStudio('/outbox', platformFor(routes));
+    expect(await screen.findByRole('heading', { name: 'Outbox' })).toBeInTheDocument();
+    expect(await screen.findByText('The relay has refused nothing.')).toBeInTheDocument();
+    renderStudio('/outbox/trials', platformFor(routes));
+    expect(await screen.findByText('No trial yet')).toBeInTheDocument();
+    renderStudio('/outbox/trials/t1', platformFor(routes));
+    expect(await screen.findByText('no trial t1')).toBeInTheDocument();
+    renderStudio('/outbox/claims/k1', platformFor(routes));
+    expect(await screen.findByText('no check k1')).toBeInTheDocument();
   });
 
   it('opens the shelf at /books', async () => {

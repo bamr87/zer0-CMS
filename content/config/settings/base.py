@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "graph",
     "workflow",
     "outbox",
+    "outboxdesk",
     "api",
     "mcp_server",
     "importers",
@@ -277,6 +278,10 @@ SPECTACULAR_SETTINGS = {
         "SubscriptionStatusEnum": "newsroom.models.Subscriber.Status",
         "IssueLevelEnum": "books.serializers.ISSUE_LEVELS",
         "BookTaskEnum": "books.serializers.TASK_CHOICES",
+        "HandoffKindEnum": "outboxdesk.serializers.KINDS",
+        "SendableKindEnum": "outboxdesk.services.SENDABLE",
+        "ClaimVerdictEnum": "outboxdesk.serializers.VERDICTS",
+        "OutboxRunStatusEnum": "outboxdesk.models.Status",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -326,6 +331,8 @@ CELERY_BEAT_SCHEDULE = {
     "publish-scheduled": {"task": "cms.tasks.publish_scheduled", "schedule": 60.0},
     # The research library's feed subscriptions that are due (research/tasks.py).
     "research-feeds": {"task": "research.tasks.refresh_feeds", "schedule": 300.0},
+    # The outbox harness's belt: one relay pass a minute delivers what stations sent (outboxdesk/tasks.py).
+    "outbox-belt": {"task": "outboxdesk.tasks.deliver_belt", "schedule": 60.0},
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
@@ -391,6 +398,22 @@ EVENTS_SOURCE = "zer0-cms/content"
 EVENTS_STREAM = env("EVENTS_STREAM", default="zer0:content")
 # OUTBOX_RELAY: redis (Redis Streams, PLAN-D6) | memory (tests)
 OUTBOX_RELAY = env("OUTBOX_RELAY", default="redis")
+
+# ── The outbox desk (outboxdesk/README.md, ADR 0007) ─────────────────────────
+# The outbox harness (bamr87/outbox) run from the platform. Its belt lives in files that are the record — each
+# station's outbox and inbox, the relay's ledger.jsonl and dead_letter.jsonl — under OUTBOX_BELT_ROOT; trials and
+# claim checks write their arenas under OUTBOX_OUT_DIR (`runs/<run-id>/`, as the harness's `--out`). Compose keeps
+# both on the `outbox-data` volume. The stations are the belt's (the e2e's by default); a person sends as the
+# editor station, and a page going live is announced by the publisher station to OUTBOX_BELT_PUBLISHED_TO.
+OUTBOX_OUT_DIR = Path(env("OUTBOX_OUT_DIR", default=str(BASE_DIR / "var" / "outbox")))
+OUTBOX_BELT_ROOT = Path(env("OUTBOX_BELT_ROOT", default=str(OUTBOX_OUT_DIR / "belt")))
+OUTBOX_BELT_STATIONS = env.list(
+    "OUTBOX_BELT_STATIONS",
+    default=["scout-a", "scout-b", "wire-scout", "planner", "drafter", "verifier", "editor", "publisher", "learner"],
+)
+OUTBOX_BELT_EDITOR = env("OUTBOX_BELT_EDITOR", default="editor")
+OUTBOX_BELT_PUBLISHER = env("OUTBOX_BELT_PUBLISHER", default="publisher")
+OUTBOX_BELT_PUBLISHED_TO = env.list("OUTBOX_BELT_PUBLISHED_TO", default=["learner", "ledger"])
 
 # ── MCP (mcp_server/README.md) ──────────────────────────────────────────────
 # Origins a browser-based MCP client may call from; a request with any other

@@ -38,6 +38,9 @@ EMBEDDING_MODEL = "hashing-256"
 EMBEDDING_DIMENSIONS = 256
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "tests"}}
 MEDIA_ROOT = str(BASE_DIR / ".test-media")
+# The outbox desk's files; its own tests give each test a directory of its own (tests/outboxdesk/conftest.py).
+OUTBOX_OUT_DIR = BASE_DIR / ".test-media" / "outbox"
+OUTBOX_BELT_ROOT = OUTBOX_OUT_DIR / "belt"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},

@@ -3,6 +3,7 @@
 // (docs/plan/PLAN.md), so the navigation shows the whole product from day one
 // and nobody mistakes an empty area for a broken one.
 import {
+  IconArrowsExchange,
   IconBook,
   IconBulb,
   IconChecklist,
@@ -47,6 +48,12 @@ export const AREAS: Area[] = [
     label: 'AI',
     summary: 'Agent runs, assistants, pipelines, output schemas, conversations, providers and models.',
     icon: IconSparkles,
+  },
+  {
+    path: '/outbox',
+    label: 'Outbox',
+    summary: 'The outbox harness: the belt of handoffs between pipeline stations, arena trials, the claim desk and its calibration.',
+    icon: IconArrowsExchange,
   },
   {
     path: '/sites',

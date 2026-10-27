@@ -40,7 +40,13 @@ RUN apt-get update \
 
 WORKDIR /app/content
 COPY content/requirements.txt content/requirements-providers.txt ./
-RUN pip install -r requirements.txt
+# The outbox harness installs from git (content/requirements.txt, ADR 0007): git is there for that install only,
+# and leaves with the same layer.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && pip install -r requirements.txt \
+    && apt-get purge -y --auto-remove git \
+    && rm -rf /var/lib/apt/lists/*
 # The model providers' SDKs (ai/README.md): optional for the platform, which
 # imports each only inside its adapter; build with AI_PROVIDERS=false to leave them out.
 ARG AI_PROVIDERS=true
@@ -51,9 +57,10 @@ COPY content /app/content
 # STUDIO_DIST's default (config/settings/base.py): collectstatic gathers the
 # studio's assets under /static/studio/ and api/studio.py serves its index.
 COPY --from=studio /app/web/studio/dist /app/web/studio/dist
+# media/ and the outbox desk's var/outbox/ are the app user's, so the volumes compose mounts there start out its.
 RUN SECRET_KEY=build-only python manage.py collectstatic --noinput -v0 \
-    && mkdir -p /app/content/media \
-    && chown -R app:app /app/content/media /app/content/static
+    && mkdir -p /app/content/media /app/content/var/outbox \
+    && chown -R app:app /app/content/media /app/content/static /app/content/var
 
 USER app
 EXPOSE 8000

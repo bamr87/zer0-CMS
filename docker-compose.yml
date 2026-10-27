@@ -206,6 +206,9 @@ services:
       - ${SITES_DIR:-.}:/sites:ro
       - ./packages/books/library:/app/packages/books/library
       - content-media:/app/content/media
+      # The outbox desk's belt and arenas (content/outboxdesk/README.md): read and sent on here, delivered and run in the
+      # worker, published to by belt-publisher.
+      - outbox-data:/app/content/var/outbox
     labels: &content-labels
       <<: *fleet-labels
       com.bamr87.fleet.stack: django
@@ -228,6 +231,7 @@ services:
     environment: *content-env
     volumes:
       - content-media:/app/content/media
+      - outbox-data:/app/content/var/outbox
     labels: *content-labels
     logging: *fleet-logging
     depends_on:
@@ -282,9 +286,27 @@ services:
     healthcheck:
       disable: true
 
+  # The outbox desk's publisher (content/outboxdesk/README.md): this plane's own stream, read through a consumer group
+  # of its own, puts a `published` handoff on the outbox harness's belt for every page that goes live — from the
+  # transactional outbox's event, never from the request that published the page.
+  belt-publisher:
+    profiles: ["content"]
+    build: *content-build
+    command: python manage.py consume_events --stream zer0:content --group outboxdesk --name outboxdesk-1
+    environment: *content-env
+    volumes:
+      - outbox-data:/app/content/var/outbox
+    labels: *content-labels
+    logging: *fleet-logging
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      disable: true
+
 volumes:
   storage:
   imagegen-storage:
   imagegen-forge:
   pgdata:
   content-media:
+  outbox-data:

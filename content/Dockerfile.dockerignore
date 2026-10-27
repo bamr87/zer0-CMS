@@ -9,6 +9,8 @@ content/**/__pycache__
 content/**/*.pyc
 content/db.sqlite3
 content/media
+content/var
+content/.venv
 content/static
 content/.test-media
 content/.env

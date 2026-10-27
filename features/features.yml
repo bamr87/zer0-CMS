@@ -282,6 +282,24 @@ features:
       - test/evidence/studio-ai-brief/
       - test/evidence/studio-ai-chat/
 
+  - id: ZER0-045
+    title: "The studio's Outbox desk: the belt, arena trials and the claim desk"
+    description: "An editor operates the outbox harness from the studio's Outbox area: reads the belt of handoffs between pipeline stations (its numbers, messages filtered by kind, station and trace, a piece of work's journey, each message's CloudEvent, the dead letters), sends an idea, an approval or a signal as the editor station and runs the relay now; runs an arena trial from a task card and follows it to its scored result and ledger; checks a draft's claims against their sources' timeline, reads a verdict per claim, resolves the check against the truth and reads calibration per verifier and per author. A page that goes live is announced on the belt from the transactional outbox's event. Blocked from landing until the harness is pinned (ADR 0007)."
+    implemented: true
+    surface: ui
+    link: /studio/outbox
+    docs: content/outboxdesk/README.md
+    tags: [studio, web, outbox, belt, claim-desk, pipelines]
+    date: 2026-10-27
+    tests:
+      - content/tests/outboxdesk/test_belt.py
+      - content/tests/outboxdesk/test_runs.py
+      - content/tests/outboxdesk/test_publish.py
+      - web/packages/ui/test/outbox.test.tsx
+      - web/studio/test/app.test.tsx
+    scenarios: []
+    evidence: []
+
   # ── The VS Code extension (the platform's editor client) ──────────────────
   - id: ZER0-030
     title: "Metadata panel: front matter as typed controls"

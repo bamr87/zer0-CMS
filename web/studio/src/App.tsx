@@ -8,8 +8,10 @@ import {
   BookShelf,
   BookView,
   ChapterWriter,
+  ClaimCheckView,
   IdeasWorkspace,
   Newsroom,
+  OutboxDesk,
   Overview,
   PageEditor,
   PageList,
@@ -17,8 +19,10 @@ import {
   SourceView,
   StudioProvider,
   SuggestionInbox,
+  TrialView,
   type Destination,
   type OpenStream,
+  type OutboxTab,
 } from '@zer0/ui';
 import { useCallback, type ReactNode } from 'react';
 import { Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router';
@@ -72,6 +76,12 @@ export function pathFor(to: Destination): string {
       return `/books/${to.id}`;
     case 'chapter':
       return `/books/${to.book}/chapters/${to.id}`;
+    case 'outbox':
+      return to.tab && to.tab !== 'belt' ? `/outbox/${to.tab}` : '/outbox';
+    case 'trial':
+      return `/outbox/trials/${to.id}`;
+    case 'claim-check':
+      return `/outbox/claims/${to.id}`;
   }
 }
 
@@ -99,6 +109,10 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="books" element={<Books />} />
                 <Route path="books/:id" element={<BookPage />} />
                 <Route path="books/:book/chapters/:id" element={<ChapterPage />} />
+                <Route path="outbox" element={<Outbox />} />
+                <Route path="outbox/:tab" element={<Outbox />} />
+                <Route path="outbox/trials/:id" element={<TrialPage />} />
+                <Route path="outbox/claims/:id" element={<ClaimCheckPage />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -214,6 +228,27 @@ function BookPage() {
 function ChapterPage() {
   const { book, id } = useParams();
   return <ChapterWriter key={id} bookId={Number(book)} chapterId={Number(id)} />;
+}
+
+const OUTBOX_TABS: readonly string[] = ['belt', 'trials', 'claims'];
+
+function Outbox() {
+  const { tab } = useParams();
+  return (
+    <Section title="Outbox">
+      <OutboxDesk tab={tab && OUTBOX_TABS.includes(tab) ? (tab as OutboxTab) : 'belt'} />
+    </Section>
+  );
+}
+
+function TrialPage() {
+  const { id = '' } = useParams();
+  return <TrialView key={id} trialId={id} />;
+}
+
+function ClaimCheckPage() {
+  const { id = '' } = useParams();
+  return <ClaimCheckView key={id} checkId={id} />;
 }
 
 function Planned({ area }: { area: Area }) {
