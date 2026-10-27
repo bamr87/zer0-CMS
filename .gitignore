@@ -23,3 +23,12 @@ __pycache__/
 
 # Short-lived worktrees of parallel agent work (AGENTS.md § Workflow); merged into main and removed the same day.
 .claude/worktrees/
+
+# The verify kit's Playwright MCP output (verify/mcp.json --output-dir). Evidence
+# bundles under test/evidence/<slug>/ are committed; this scratch is not.
+test/evidence/agent/
+
+# Machine-local state of other tools: a Codex mirror of .claude/, the Front Matter CMS cache.
+.agents/
+.codex/
+.frontmatter/
