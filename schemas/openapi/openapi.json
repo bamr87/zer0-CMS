@@ -13024,6 +13024,1665 @@
                 }
             }
         },
+        "/api/v2/outbox/belt/": {
+            "get": {
+                "operationId": "outbox_belt_retrieve",
+                "summary": "The belt: what it delivered, refused and still holds",
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BeltSummary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/belt/dead-letters/": {
+            "get": {
+                "operationId": "outbox_belt_dead_letters_list",
+                "summary": "What the relay refused, newest first",
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DeadLetter"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/belt/deliver/": {
+            "post": {
+                "operationId": "outbox_belt_deliver_create",
+                "summary": "Run the relay now, in the worker; the summary's `pending` follows it",
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QueuedDelivery"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/belt/messages/": {
+            "get": {
+                "operationId": "outbox_belt_messages_list",
+                "summary": "Delivered messages, newest first",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "kind",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "approval",
+                                "assignment",
+                                "draft",
+                                "idea",
+                                "published",
+                                "signal",
+                                "verdict"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "ordering",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "-seq",
+                                "seq"
+                            ]
+                        },
+                        "description": "`seq`: oldest first."
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "station",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Sent by or to this station."
+                    },
+                    {
+                        "in": "query",
+                        "name": "trace",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "One piece of work's messages."
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedHandoffList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/belt/messages/{message_id}/": {
+            "get": {
+                "operationId": "outbox_belt_messages_retrieve",
+                "summary": "A delivered message, and its CloudEvents form",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "message_id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BeltMessage"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/belt/send/": {
+            "post": {
+                "operationId": "outbox_belt_send_create",
+                "summary": "Send a handoff as the editor station: an idea, an approval of a delivered message, or a signal",
+                "tags": [
+                    "outbox"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Handoff"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/belt/traces/{trace}/": {
+            "get": {
+                "operationId": "outbox_belt_traces_retrieve",
+                "summary": "A piece of work's journey: its messages in relay order",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "trace",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Journey"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/claim-checks/": {
+            "get": {
+                "operationId": "outbox_claim_checks_list",
+                "summary": "Claim checks, newest first",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedClaimCheckList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "outbox_claim_checks_create",
+                "summary": "Check a draft's claims against their sources' timeline, in the worker (the desk never edits a page)",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartClaimCheckRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartClaimCheckRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartClaimCheckRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClaimCheck"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/claim-checks/{public_id}/": {
+            "get": {
+                "operationId": "outbox_claim_checks_retrieve",
+                "summary": "A claim check: its verdicts, and its resolutions once resolved",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-fA-F-]{36}$"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClaimCheckDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/claim-checks/{public_id}/resolve/": {
+            "post": {
+                "operationId": "outbox_claim_checks_resolve_create",
+                "summary": "Resolve a check against the truth, in the worker: who was right, and Brier scores",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    },
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-fA-F-]{36}$"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClaimCheckDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/claim-checks/calibration/": {
+            "get": {
+                "operationId": "outbox_claim_checks_calibration_retrieve",
+                "summary": "Calibration: mean Brier per verifier and per draft author, over every resolved check",
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Calibration"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/trials/": {
+            "get": {
+                "operationId": "outbox_trials_list",
+                "summary": "Arena trials, newest first",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedTrialList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "outbox_trials_create",
+                "summary": "Run an arena trial from a task card, in the worker",
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Idempotency-Key",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Send the same key again (within a day, same request) to get the first answer instead of a new run."
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartTrialRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartTrialRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartTrialRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Trial"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v2/outbox/trials/{public_id}/": {
+            "get": {
+                "operationId": "outbox_trials_retrieve",
+                "summary": "A trial: where it stands, its result and the arena's ledger",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "public_id",
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-fA-F-]{36}$"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "outbox"
+                ],
+                "security": [
+                    {
+                        "agentToken": []
+                    },
+                    {
+                        "cookieAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrialDetail"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "405": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorEnvelope"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/research/citations/": {
             "get": {
                 "operationId": "research_citations_list",
@@ -16830,6 +18489,68 @@
                     }
                 }
             },
+            "ArenaRow": {
+                "type": "object",
+                "description": "A line of the arena's ledger: a tick, or a delivered message (`outbox watch` reads the same).",
+                "properties": {
+                    "event": {
+                        "type": "string"
+                    },
+                    "tick": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "task_id": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "env_seq": {
+                        "type": "integer"
+                    },
+                    "created_at_tick": {
+                        "type": "integer"
+                    },
+                    "closes_at_tick": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "confidence": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double"
+                    },
+                    "parent_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "payload": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string"
+                    }
+                }
+            },
             "AskAIRequest": {
                 "type": "object",
                 "properties": {
@@ -17382,6 +19103,144 @@
                 },
                 "required": [
                     "name"
+                ]
+            },
+            "BeltMessage": {
+                "type": "object",
+                "description": "Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them.",
+                "properties": {
+                    "seq": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The relay's number; none until delivered."
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/HandoffKindEnum"
+                    },
+                    "to": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "The stable key of the piece of work."
+                    },
+                    "trace": {
+                        "type": "string",
+                        "description": "Shared by every message about one piece of work (32 hex digits)."
+                    },
+                    "parent_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    },
+                    "ref": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {},
+                        "description": "What the message is about: a page, a file, a URL."
+                    },
+                    "cloudevent": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/CloudEvent"
+                            }
+                        ],
+                        "description": "The message as a CloudEvents 1.0 envelope (the library's binding)."
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "The station that sent it."
+                    }
+                },
+                "required": [
+                    "cloudevent",
+                    "created_at",
+                    "from",
+                    "id",
+                    "kind",
+                    "parent_id",
+                    "payload",
+                    "ref",
+                    "subject",
+                    "to",
+                    "trace"
+                ]
+            },
+            "BeltSummary": {
+                "type": "object",
+                "properties": {
+                    "delivered": {
+                        "type": "integer",
+                        "description": "Messages on the ledger."
+                    },
+                    "dead_letters": {
+                        "type": "integer"
+                    },
+                    "traces": {
+                        "type": "integer",
+                        "description": "Pieces of work the ledger has seen."
+                    },
+                    "kinds": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/KindCount"
+                        }
+                    },
+                    "seq_gapless": {
+                        "type": "boolean",
+                        "description": "The relay's sequence runs 1, 2, 3 … with no gap."
+                    },
+                    "ids_unique": {
+                        "type": "boolean"
+                    },
+                    "pending": {
+                        "type": "integer",
+                        "description": "Outbox records the relay has not delivered or dead-lettered yet."
+                    },
+                    "stations": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "editor": {
+                        "type": "string",
+                        "description": "The station a person sends as."
+                    },
+                    "harness": {
+                        "type": "string",
+                        "description": "The installed outbox harness's version."
+                    }
+                },
+                "required": [
+                    "dead_letters",
+                    "delivered",
+                    "editor",
+                    "harness",
+                    "ids_unique",
+                    "kinds",
+                    "pending",
+                    "seq_gapless",
+                    "stations",
+                    "traces"
                 ]
             },
             "Block": {
@@ -18319,6 +20178,58 @@
                     "schemas"
                 ]
             },
+            "Calibration": {
+                "type": "object",
+                "properties": {
+                    "resolved": {
+                        "type": "integer"
+                    },
+                    "winner_accuracy": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "verifiers": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalibrationRow"
+                        }
+                    },
+                    "authors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalibrationRow"
+                        }
+                    }
+                },
+                "required": [
+                    "authors",
+                    "resolved",
+                    "verifiers",
+                    "winner_accuracy"
+                ]
+            },
+            "CalibrationRow": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "n": {
+                        "type": "integer",
+                        "description": "Resolved claims scored."
+                    },
+                    "brier": {
+                        "type": "number",
+                        "format": "double",
+                        "description": "Mean Brier score: 0 is perfect, 0.25 a coin flip at 0.5."
+                    }
+                },
+                "required": [
+                    "brier",
+                    "n",
+                    "name"
+                ]
+            },
             "CaptureRequest": {
                 "type": "object",
                 "properties": {
@@ -18634,6 +20545,406 @@
                     "source",
                     "title",
                     "verified"
+                ]
+            },
+            "Claim": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Letters, digits, `_`, `.` and `-`: it names a directory.",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$"
+                    },
+                    "question": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "answer": {
+                        "description": "What the draft says."
+                    },
+                    "confidence": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double",
+                        "maximum": 1,
+                        "minimum": 0
+                    },
+                    "sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "maxLength": 255
+                        },
+                        "description": "Only these sources' rows; none for all."
+                    }
+                },
+                "required": [
+                    "answer",
+                    "id",
+                    "question"
+                ]
+            },
+            "ClaimCheck": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "author": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Whose draft the claims are, for calibration."
+                    },
+                    "page": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/PageRef"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "claim_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/OutboxRunStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "passed": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ],
+                        "readOnly": true
+                    },
+                    "resolution_status": {
+                        "readOnly": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OutboxRunStatusEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    },
+                    "requested_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "finished_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "resolved_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "author",
+                    "claim_count",
+                    "created_at",
+                    "finished_at",
+                    "id",
+                    "page",
+                    "passed",
+                    "resolution_status",
+                    "resolved_at",
+                    "status",
+                    "title"
+                ]
+            },
+            "ClaimCheckDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "author": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Whose draft the claims are, for calibration."
+                    },
+                    "page": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/PageRef"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "claim_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/OutboxRunStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "passed": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ],
+                        "readOnly": true
+                    },
+                    "resolution_status": {
+                        "readOnly": true,
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/OutboxRunStatusEnum"
+                            },
+                            {
+                                "$ref": "#/components/schemas/NullEnum"
+                            }
+                        ]
+                    },
+                    "requested_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "finished_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "resolved_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "claims": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Claim"
+                        }
+                    },
+                    "timeline": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TimelineRow"
+                        }
+                    },
+                    "closes_at_tick": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "lag_b": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "error": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "report": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/DeskReport"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "truth": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {}
+                    },
+                    "resolutions": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/Resolution"
+                        }
+                    },
+                    "resolution_error": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "run_dir": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Under OUTBOX_OUT_DIR."
+                    }
+                },
+                "required": [
+                    "author",
+                    "claim_count",
+                    "claims",
+                    "closes_at_tick",
+                    "created_at",
+                    "error",
+                    "finished_at",
+                    "id",
+                    "lag_b",
+                    "page",
+                    "passed",
+                    "report",
+                    "resolution_error",
+                    "resolution_status",
+                    "resolutions",
+                    "resolved_at",
+                    "run_dir",
+                    "status",
+                    "timeline",
+                    "title",
+                    "truth"
+                ]
+            },
+            "ClaimRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Letters, digits, `_`, `.` and `-`: it names a directory.",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$"
+                    },
+                    "question": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2000
+                    },
+                    "answer": {
+                        "description": "What the draft says."
+                    },
+                    "confidence": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double",
+                        "maximum": 1,
+                        "minimum": 0
+                    },
+                    "sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255
+                        },
+                        "description": "Only these sources' rows; none for all."
+                    }
+                },
+                "required": [
+                    "answer",
+                    "id",
+                    "question"
+                ]
+            },
+            "ClaimVerdictEnum": {
+                "enum": [
+                    "pass",
+                    "block"
+                ],
+                "type": "string",
+                "description": "* `pass` - pass\n* `block` - block"
+            },
+            "CloudEvent": {
+                "type": "object",
+                "properties": {
+                    "specversion": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "time": {
+                        "type": "string"
+                    },
+                    "datacontenttype": {
+                        "type": "string"
+                    },
+                    "traceparent": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    }
+                },
+                "required": [
+                    "data",
+                    "datacontenttype",
+                    "id",
+                    "source",
+                    "specversion",
+                    "subject",
+                    "time",
+                    "traceparent",
+                    "type"
                 ]
             },
             "Cluster": {
@@ -18956,6 +21267,33 @@
                 "type": "string",
                 "description": "* `correction` - Correction\n* `update` - Update"
             },
+            "DeadLetter": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "station": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "The outbox file's name."
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "errors",
+                    "id",
+                    "path",
+                    "station"
+                ]
+            },
             "Desk": {
                 "type": "object",
                 "properties": {
@@ -19043,6 +21381,26 @@
                     "site",
                     "slug",
                     "updated_at"
+                ]
+            },
+            "DeskReport": {
+                "type": "object",
+                "description": "Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them.",
+                "properties": {
+                    "claims": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Verdict"
+                        }
+                    },
+                    "pass": {
+                        "type": "boolean",
+                        "description": "Every claim passed."
+                    }
+                },
+                "required": [
+                    "claims",
+                    "pass"
                 ]
             },
             "DeskWriteRequest": {
@@ -19141,6 +21499,85 @@
                     "a",
                     "b",
                     "similarity"
+                ]
+            },
+            "EnvEvent": {
+                "type": "object",
+                "properties": {
+                    "tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 0
+                    },
+                    "env_seq": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "fact": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "answer_hint": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "source": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "env_seq",
+                    "fact",
+                    "tick"
+                ]
+            },
+            "EnvEventRequest": {
+                "type": "object",
+                "properties": {
+                    "tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 0
+                    },
+                    "env_seq": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "fact": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2000
+                    },
+                    "answer_hint": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "source": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "env_seq",
+                    "fact",
+                    "tick"
                 ]
             },
             "Error": {
@@ -19807,6 +22244,89 @@
                     "slug"
                 ]
             },
+            "Handoff": {
+                "type": "object",
+                "description": "Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them.",
+                "properties": {
+                    "seq": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The relay's number; none until delivered."
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "$ref": "#/components/schemas/HandoffKindEnum"
+                    },
+                    "to": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "The stable key of the piece of work."
+                    },
+                    "trace": {
+                        "type": "string",
+                        "description": "Shared by every message about one piece of work (32 hex digits)."
+                    },
+                    "parent_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    },
+                    "ref": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {},
+                        "description": "What the message is about: a page, a file, a URL."
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "The station that sent it."
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "from",
+                    "id",
+                    "kind",
+                    "parent_id",
+                    "payload",
+                    "ref",
+                    "subject",
+                    "to",
+                    "trace"
+                ]
+            },
+            "HandoffKindEnum": {
+                "enum": [
+                    "idea",
+                    "assignment",
+                    "draft",
+                    "verdict",
+                    "approval",
+                    "published",
+                    "signal"
+                ],
+                "type": "string",
+                "description": "* `idea` - idea\n* `assignment` - assignment\n* `draft` - draft\n* `verdict` - verdict\n* `approval` - approval\n* `published` - published\n* `signal` - signal"
+            },
             "Idea": {
                 "type": "object",
                 "description": "A row people work on together: the editors of its site change it, but only its owner (or staff) changes who\nsees it — `site` and `visibility`; anyone else's change to either is refused (403).",
@@ -20258,6 +22778,24 @@
                     "subject"
                 ]
             },
+            "Journey": {
+                "type": "object",
+                "properties": {
+                    "trace": {
+                        "type": "string"
+                    },
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Handoff"
+                        }
+                    }
+                },
+                "required": [
+                    "messages",
+                    "trace"
+                ]
+            },
             "KeepRequest": {
                 "type": "object",
                 "properties": {
@@ -20302,6 +22840,21 @@
                 },
                 "required": [
                     "ideas"
+                ]
+            },
+            "KindCount": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/HandoffKindEnum"
+                    },
+                    "count": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "count",
+                    "kind"
                 ]
             },
             "LoginRequest": {
@@ -20799,6 +23352,9 @@
                     "slug"
                 ]
             },
+            "NullEnum": {
+                "type": "null"
+            },
             "OriginEnum": {
                 "enum": [
                     "written",
@@ -20807,6 +23363,16 @@
                 ],
                 "type": "string",
                 "description": "* `written` - written\n* `captured` - captured\n* `brainstormed` - brainstormed"
+            },
+            "OutboxRunStatusEnum": {
+                "enum": [
+                    "queued",
+                    "running",
+                    "succeeded",
+                    "failed"
+                ],
+                "type": "string",
+                "description": "* `queued` - Queued\n* `running` - Running\n* `succeeded` - Succeeded\n* `failed` - Failed"
             },
             "OutcomeEnum": {
                 "enum": [
@@ -21494,6 +24060,37 @@
                     }
                 }
             },
+            "PaginatedClaimCheckList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ClaimCheck"
+                        }
+                    }
+                }
+            },
             "PaginatedCollectionList": {
                 "type": "object",
                 "required": [
@@ -21661,6 +24258,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Front"
+                        }
+                    }
+                }
+            },
+            "PaginatedHandoffList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Handoff"
                         }
                     }
                 }
@@ -22101,6 +24729,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Suggestion"
+                        }
+                    }
+                }
+            },
+            "PaginatedTrialList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Trial"
                         }
                     }
                 }
@@ -23558,6 +26217,18 @@
                     "run"
                 ]
             },
+            "QueuedDelivery": {
+                "type": "object",
+                "properties": {
+                    "pending": {
+                        "type": "integer",
+                        "description": "Records waiting for the relay pass just queued."
+                    }
+                },
+                "required": [
+                    "pending"
+                ]
+            },
             "Quote": {
                 "type": "object",
                 "properties": {
@@ -23647,6 +26318,80 @@
                 },
                 "required": [
                     "topic"
+                ]
+            },
+            "Resolution": {
+                "type": "object",
+                "properties": {
+                    "claim_id": {
+                        "type": "string"
+                    },
+                    "task_id": {
+                        "type": "string",
+                        "description": "The arena task the claim was raced in."
+                    },
+                    "truth": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "winner_correct": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "confidence_inversion": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "draft_correct": {
+                        "type": "boolean"
+                    },
+                    "brier": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "number",
+                            "format": "double"
+                        },
+                        "description": "Per verifier; lower is better."
+                    },
+                    "draft_brier": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double",
+                        "description": "The draft's own confidence, scored."
+                    }
+                },
+                "required": [
+                    "brier",
+                    "claim_id",
+                    "confidence_inversion",
+                    "draft_brier",
+                    "draft_correct",
+                    "task_id",
+                    "truth",
+                    "winner_correct"
+                ]
+            },
+            "ResolveRequest": {
+                "type": "object",
+                "properties": {
+                    "truth": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "Claim id → what turned out to be true."
+                    }
+                },
+                "required": [
+                    "truth"
                 ]
             },
             "ResolvedSlot": {
@@ -24188,6 +26933,73 @@
                     "query"
                 ]
             },
+            "SendRequest": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/SendableKindEnum"
+                    },
+                    "to": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                        },
+                        "maxItems": 20,
+                        "minItems": 1
+                    },
+                    "subject": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "payload": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    },
+                    "parent_id": {
+                        "type": "string",
+                        "description": "A delivered message this answers (an approval must).",
+                        "maxLength": 64
+                    },
+                    "trace": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{32}$"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "ref": {
+                        "type": "object",
+                        "additionalProperties": {}
+                    },
+                    "page": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "A page the message is about."
+                    }
+                },
+                "required": [
+                    "kind",
+                    "to"
+                ]
+            },
+            "SendableKindEnum": {
+                "enum": [
+                    "idea",
+                    "approval",
+                    "signal"
+                ],
+                "type": "string",
+                "description": "* `idea` - idea\n* `approval` - approval\n* `signal` - signal"
+            },
             "SetDocumentRequest": {
                 "type": "object",
                 "properties": {
@@ -24622,6 +27434,75 @@
                 ],
                 "type": "string",
                 "description": "* `pending` - pending\n* `fetching` - fetching\n* `ready` - ready\n* `failed` - failed"
+            },
+            "StartClaimCheckRequest": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "author": {
+                        "type": "string",
+                        "description": "Whose draft it is.",
+                        "maxLength": 120
+                    },
+                    "page": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "The draft the claims are from."
+                    },
+                    "claims": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ClaimRequest"
+                        }
+                    },
+                    "timeline": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TimelineRowRequest"
+                        }
+                    },
+                    "closes_at_tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 1,
+                        "default": 8
+                    },
+                    "lag_b": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "default": 2
+                    }
+                },
+                "required": [
+                    "claims",
+                    "timeline"
+                ]
+            },
+            "StartTrialRequest": {
+                "type": "object",
+                "properties": {
+                    "task": {
+                        "$ref": "#/components/schemas/TaskCardRequest"
+                    },
+                    "lag_b": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "maximum": 100,
+                        "minimum": 0,
+                        "description": "Widen or close the race."
+                    }
+                },
+                "required": [
+                    "task"
+                ]
             },
             "Step": {
                 "type": "object",
@@ -25496,6 +28377,205 @@
                 "type": "string",
                 "description": "* `page` - page\n* `image` - image"
             },
+            "TaskCard": {
+                "type": "object",
+                "description": "A task card, as the harness's tasks/*.json and protocol/schema.json describe one.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "family": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "question": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "expected_answer": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "The judge; none leaves it open."
+                    },
+                    "closes_at_tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 1
+                    },
+                    "deadline_ping_tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": -1
+                    },
+                    "lag_b": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0
+                    },
+                    "max_env_lag": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 0
+                    },
+                    "inversion_confidence": {
+                        "type": "number",
+                        "format": "double",
+                        "maximum": 1,
+                        "minimum": 0
+                    },
+                    "a_sticky": {
+                        "type": "boolean"
+                    },
+                    "env_schedule": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EnvEvent"
+                        }
+                    }
+                },
+                "required": [
+                    "closes_at_tick",
+                    "env_schedule",
+                    "id",
+                    "question"
+                ]
+            },
+            "TaskCardRequest": {
+                "type": "object",
+                "description": "A task card, as the harness's tasks/*.json and protocol/schema.json describe one.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    },
+                    "family": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "question": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2000
+                    },
+                    "expected_answer": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "The judge; none leaves it open."
+                    },
+                    "closes_at_tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 1
+                    },
+                    "deadline_ping_tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": -1
+                    },
+                    "lag_b": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0
+                    },
+                    "max_env_lag": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 0
+                    },
+                    "inversion_confidence": {
+                        "type": "number",
+                        "format": "double",
+                        "maximum": 1,
+                        "minimum": 0
+                    },
+                    "a_sticky": {
+                        "type": "boolean"
+                    },
+                    "env_schedule": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EnvEventRequest"
+                        }
+                    }
+                },
+                "required": [
+                    "closes_at_tick",
+                    "env_schedule",
+                    "id",
+                    "question"
+                ]
+            },
+            "TimelineRow": {
+                "type": "object",
+                "properties": {
+                    "tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 0
+                    },
+                    "source": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "says": {
+                        "description": "What the source said then."
+                    },
+                    "fact": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "says",
+                    "source",
+                    "tick"
+                ]
+            },
+            "TimelineRowRequest": {
+                "type": "object",
+                "properties": {
+                    "tick": {
+                        "type": "integer",
+                        "maximum": 1000,
+                        "minimum": 0
+                    },
+                    "source": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "says": {
+                        "description": "What the source said then."
+                    },
+                    "fact": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 2000
+                    }
+                },
+                "required": [
+                    "says",
+                    "source",
+                    "tick"
+                ]
+            },
             "ToEnum": {
                 "enum": [
                     "brief",
@@ -25529,6 +28609,271 @@
                 "required": [
                     "description",
                     "name"
+                ]
+            },
+            "Trial": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "task": {
+                        "$ref": "#/components/schemas/TaskCard"
+                    },
+                    "lag_b": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "readOnly": true,
+                        "description": "Overrides the card's lag_b."
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/OutboxRunStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "error": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/TrialResult"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "run_dir": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Under OUTBOX_OUT_DIR."
+                    },
+                    "requested_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "started_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "finished_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "error",
+                    "finished_at",
+                    "id",
+                    "lag_b",
+                    "result",
+                    "run_dir",
+                    "started_at",
+                    "status",
+                    "task"
+                ]
+            },
+            "TrialDetail": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "task": {
+                        "$ref": "#/components/schemas/TaskCard"
+                    },
+                    "lag_b": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "readOnly": true,
+                        "description": "Overrides the card's lag_b."
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/OutboxRunStatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "error": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/TrialResult"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "run_dir": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Under OUTBOX_OUT_DIR."
+                    },
+                    "requested_by": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "started_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "finished_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "ledger": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ArenaRow"
+                        },
+                        "readOnly": true,
+                        "description": "The arena's ledger, in the order it was written."
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "error",
+                    "finished_at",
+                    "id",
+                    "lag_b",
+                    "ledger",
+                    "result",
+                    "run_dir",
+                    "started_at",
+                    "status",
+                    "task"
+                ]
+            },
+            "TrialResult": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "string"
+                    },
+                    "family": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "latest_env_seq": {
+                        "type": "integer"
+                    },
+                    "n_active_claims": {
+                        "type": "integer"
+                    },
+                    "winner": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Winner"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "first_claim_from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "resolved": {
+                        "type": "boolean"
+                    },
+                    "correct": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "confidence_inversion": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "retracts": {
+                        "type": "integer"
+                    },
+                    "claims_per_agent": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "integer"
+                        }
+                    },
+                    "expected_answer": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "claims_per_agent",
+                    "confidence_inversion",
+                    "correct",
+                    "expected_answer",
+                    "family",
+                    "first_claim_from",
+                    "latest_env_seq",
+                    "n_active_claims",
+                    "resolved",
+                    "retracts",
+                    "task_id",
+                    "winner"
                 ]
             },
             "UploadRequest": {
@@ -25586,6 +28931,66 @@
                     "username"
                 ]
             },
+            "Verdict": {
+                "type": "object",
+                "properties": {
+                    "claim_id": {
+                        "type": "string"
+                    },
+                    "question": {
+                        "type": "string"
+                    },
+                    "draft_answer": {},
+                    "verdict": {
+                        "$ref": "#/components/schemas/ClaimVerdictEnum"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "sources_agree, sources_disagree, winner_is_stale, low_confidence, …"
+                    },
+                    "supported_answer": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "winner_from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "winner_confidence": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double"
+                    },
+                    "winner_env_seq": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "latest_env_seq": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "claim_id",
+                    "draft_answer",
+                    "question",
+                    "reason",
+                    "supported_answer",
+                    "verdict"
+                ]
+            },
             "VerdictEnum": {
                 "enum": [
                     "supported",
@@ -25603,6 +29008,59 @@
                 ],
                 "type": "string",
                 "description": "* `private` - Private — its owner\n* `site` - Site — everyone who edits its site\n* `shared` - Shared — everyone signed in"
+            },
+            "Winner": {
+                "type": "object",
+                "description": "Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them.",
+                "properties": {
+                    "id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "confidence": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "format": "double"
+                    },
+                    "env_seq": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "answer": {
+                        "oneOf": [
+                            {},
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "tick": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "from": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "answer",
+                    "confidence",
+                    "env_seq",
+                    "from",
+                    "id",
+                    "tick"
+                ]
             },
             "WireItem": {
                 "type": "object",

@@ -10,6 +10,9 @@ import { createContext, use, type ReactNode } from 'react';
 /** A section of the AI area (G8). */
 export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models';
 
+/** A tab of the Outbox desk (ADR 0007): the belt, arena trials, the claim desk. */
+export type OutboxTab = 'belt' | 'trials' | 'claims';
+
 /** Where a workspace asks to go; the host maps it to a route or a panel. */
 export type Destination =
   | { to: 'page'; id: number; tab?: 'suggestions' }
@@ -29,7 +32,11 @@ export type Destination =
   | { to: 'story'; id: string }
   | { to: 'books' }
   | { to: 'book'; id: number }
-  | { to: 'chapter'; book: number; id: number };
+  | { to: 'chapter'; book: number; id: number }
+  // The outbox desk; a trial and a claim check each have an address.
+  | { to: 'outbox'; tab?: OutboxTab }
+  | { to: 'trial'; id: string }
+  | { to: 'claim-check'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

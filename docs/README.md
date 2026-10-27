@@ -45,7 +45,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`docs/PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
 | [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 | [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
-| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0006, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
+| [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0007, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
 | [`docs/amendments/`](amendments/README.md) | The append-only log of changes to [the constitution](constitution.md). |
 
 ### `schemas/`

@@ -81,7 +81,7 @@ python manage.py spectacular --format openapi-json --urlconf ops.openapi --fail-
 cd web && npm ci && npm run lint && npm run typecheck && npm test && npm run check:api && npm run build
 
 # the platform's stack, when content/Dockerfile, web/ or docker-compose.yml changed (the image builds the studio)
-GIT_SHA=$(git rev-parse --short HEAD) BUILT_AT=$(date -u +%FT%TZ) docker compose --profile content up -d --build --wait db redis content worker research-worker beat relay
+GIT_SHA=$(git rev-parse --short HEAD) BUILT_AT=$(date -u +%FT%TZ) docker compose --profile content up -d --build --wait db redis content worker research-worker beat relay belt-publisher
 curl -fsS http://localhost:8000/healthz && curl -fsS http://localhost:8000/readyz && curl -fsS http://localhost:8000/version
 curl -fsS -o /dev/null -w '%{http_code}\n' http://localhost:8000/studio/   # 200, with an enforced Content-Security-Policy
 docker compose --profile content down -v

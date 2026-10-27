@@ -1757,6 +1757,229 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/outbox/belt/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The belt: what it delivered, refused and still holds */
+        get: operations["outbox_belt_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/belt/dead-letters/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the relay refused, newest first */
+        get: operations["outbox_belt_dead_letters_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/belt/deliver/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run the relay now, in the worker; the summary's `pending` follows it */
+        post: operations["outbox_belt_deliver_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/belt/messages/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Delivered messages, newest first */
+        get: operations["outbox_belt_messages_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/belt/messages/{message_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A delivered message, and its CloudEvents form */
+        get: operations["outbox_belt_messages_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/belt/send/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a handoff as the editor station: an idea, an approval of a delivered message, or a signal */
+        post: operations["outbox_belt_send_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/belt/traces/{trace}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A piece of work's journey: its messages in relay order */
+        get: operations["outbox_belt_traces_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/claim-checks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Claim checks, newest first */
+        get: operations["outbox_claim_checks_list"];
+        put?: never;
+        /** Check a draft's claims against their sources' timeline, in the worker (the desk never edits a page) */
+        post: operations["outbox_claim_checks_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/claim-checks/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A claim check: its verdicts, and its resolutions once resolved */
+        get: operations["outbox_claim_checks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/claim-checks/{public_id}/resolve/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve a check against the truth, in the worker: who was right, and Brier scores */
+        post: operations["outbox_claim_checks_resolve_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/claim-checks/calibration/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration: mean Brier per verifier and per draft author, over every resolved check */
+        get: operations["outbox_claim_checks_calibration_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/trials/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Arena trials, newest first */
+        get: operations["outbox_trials_list"];
+        put?: never;
+        /** Run an arena trial from a task card, in the worker */
+        post: operations["outbox_trials_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/outbox/trials/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A trial: where it stands, its result and the arena's ledger */
+        get: operations["outbox_trials_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/research/citations/": {
         parameters: {
             query?: never;
@@ -2318,6 +2541,26 @@ export interface components {
             /** @description e.g. cms.ArticlePage; else the brief's. */
             page_type?: string;
         };
+        /** @description A line of the arena's ledger: a tick, or a delivered message (`outbox watch` reads the same). */
+        ArenaRow: {
+            event?: string;
+            tick?: number;
+            type?: string;
+            id?: string;
+            task_id?: string;
+            to?: string[];
+            env_seq?: number;
+            created_at_tick?: number;
+            closes_at_tick?: number | null;
+            /** Format: double */
+            confidence?: number | null;
+            parent_id?: string | null;
+            payload?: {
+                [key: string]: unknown;
+            };
+            note?: string;
+            from?: string;
+        };
         AskAIRequest: {
             kind: components["schemas"]["StoryAiKindEnum"];
             /** @description For a correction: what changed. */
@@ -2468,6 +2711,49 @@ export interface components {
             bio?: string;
             email?: string;
             user?: number | null;
+        };
+        /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
+        BeltMessage: {
+            /** @description The relay's number; none until delivered. */
+            seq?: number | null;
+            id: string;
+            kind: components["schemas"]["HandoffKindEnum"];
+            to: string[];
+            /** @description The stable key of the piece of work. */
+            subject: string;
+            /** @description Shared by every message about one piece of work (32 hex digits). */
+            trace: string;
+            parent_id: string | null;
+            created_at: string;
+            payload: {
+                [key: string]: unknown;
+            };
+            /** @description What the message is about: a page, a file, a URL. */
+            ref: {
+                [key: string]: unknown;
+            } | null;
+            /** @description The message as a CloudEvents 1.0 envelope (the library's binding). */
+            cloudevent: components["schemas"]["CloudEvent"];
+            /** @description The station that sent it. */
+            from: string;
+        };
+        BeltSummary: {
+            /** @description Messages on the ledger. */
+            delivered: number;
+            dead_letters: number;
+            /** @description Pieces of work the ledger has seen. */
+            traces: number;
+            kinds: components["schemas"]["KindCount"][];
+            /** @description The relay's sequence runs 1, 2, 3 … with no gap. */
+            seq_gapless: boolean;
+            ids_unique: boolean;
+            /** @description Outbox records the relay has not delivered or dead-lettered yet. */
+            pending: number;
+            stations: string[];
+            /** @description The station a person sends as. */
+            editor: string;
+            /** @description The installed outbox harness's version. */
+            harness: string;
         };
         Block: {
             /** @description Absent on a block that is new in this request. */
@@ -2783,6 +3069,23 @@ export interface components {
             schemas: string[];
             assistants: string[];
         };
+        Calibration: {
+            resolved: number;
+            /** Format: double */
+            winner_accuracy: number;
+            verifiers: components["schemas"]["CalibrationRow"][];
+            authors: components["schemas"]["CalibrationRow"][];
+        };
+        CalibrationRow: {
+            name: string;
+            /** @description Resolved claims scored. */
+            n: number;
+            /**
+             * Format: double
+             * @description Mean Brier score: 0 is perfect, 0.25 a coin flip at 0.5.
+             */
+            brier: number;
+        };
         CaptureRequest: {
             /** @description The first line is the title; the rest, the notes. */
             text: string;
@@ -2879,6 +3182,98 @@ export interface components {
             quote: string;
             /** @description The quote is in the source's text, word for word. */
             verified: boolean;
+        };
+        Claim: {
+            /** @description Letters, digits, `_`, `.` and `-`: it names a directory. */
+            id: string;
+            question: string;
+            /** @description What the draft says. */
+            answer: unknown;
+            /** Format: double */
+            confidence?: number | null;
+            /** @description Only these sources' rows; none for all. */
+            sources?: string[];
+        };
+        ClaimCheck: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly title: string;
+            /** @description Whose draft the claims are, for calibration. */
+            readonly author: string;
+            page: components["schemas"]["PageRef"] | null;
+            readonly claim_count: number;
+            readonly status: components["schemas"]["OutboxRunStatusEnum"];
+            readonly passed: boolean | null;
+            readonly resolution_status: components["schemas"]["OutboxRunStatusEnum"] | components["schemas"]["NullEnum"];
+            requested_by?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+            /** Format: date-time */
+            readonly resolved_at: string | null;
+        };
+        ClaimCheckDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly title: string;
+            /** @description Whose draft the claims are, for calibration. */
+            readonly author: string;
+            page: components["schemas"]["PageRef"] | null;
+            readonly claim_count: number;
+            readonly status: components["schemas"]["OutboxRunStatusEnum"];
+            readonly passed: boolean | null;
+            readonly resolution_status: components["schemas"]["OutboxRunStatusEnum"] | components["schemas"]["NullEnum"];
+            requested_by?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+            /** Format: date-time */
+            readonly resolved_at: string | null;
+            claims: components["schemas"]["Claim"][];
+            timeline: components["schemas"]["TimelineRow"][];
+            readonly closes_at_tick: number;
+            readonly lag_b: number;
+            readonly error: string;
+            report: components["schemas"]["DeskReport"] | null;
+            truth: {
+                [key: string]: unknown;
+            } | null;
+            resolutions: components["schemas"]["Resolution"][] | null;
+            readonly resolution_error: string;
+            /** @description Under OUTBOX_OUT_DIR. */
+            readonly run_dir: string;
+        };
+        ClaimRequest: {
+            /** @description Letters, digits, `_`, `.` and `-`: it names a directory. */
+            id: string;
+            question: string;
+            /** @description What the draft says. */
+            answer: unknown;
+            /** Format: double */
+            confidence?: number | null;
+            /** @description Only these sources' rows; none for all. */
+            sources?: string[];
+        };
+        /**
+         * @description * `pass` - pass
+         *     * `block` - block
+         * @enum {string}
+         */
+        ClaimVerdictEnum: "pass" | "block";
+        CloudEvent: {
+            specversion: string;
+            id: string;
+            source: string;
+            type: string;
+            subject: string;
+            time: string;
+            datacontenttype: string;
+            traceparent: string;
+            data: {
+                [key: string]: unknown;
+            };
         };
         Cluster: {
             ideas: components["schemas"]["IdeaRef"][];
@@ -2982,6 +3377,13 @@ export interface components {
          * @enum {string}
          */
         CorrectionKindEnum: "correction" | "update";
+        DeadLetter: {
+            id: string;
+            station: string;
+            /** @description The outbox file's name. */
+            path: string;
+            errors: string[];
+        };
         Desk: {
             /** Format: uuid */
             readonly id: string;
@@ -3004,6 +3406,12 @@ export interface components {
             readonly created_at: string;
             /** Format: date-time */
             readonly updated_at: string;
+        };
+        /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
+        DeskReport: {
+            claims: components["schemas"]["Verdict"][];
+            /** @description Every claim passed. */
+            pass: boolean;
         };
         DeskWriteRequest: {
             site: number;
@@ -3029,6 +3437,22 @@ export interface components {
             b: components["schemas"]["IdeaRef"];
             /** Format: double */
             similarity: number;
+        };
+        EnvEvent: {
+            tick: number;
+            env_seq: number;
+            fact: string;
+            answer_hint?: unknown | null;
+            note?: string;
+            source?: string;
+        };
+        EnvEventRequest: {
+            tick: number;
+            env_seq: number;
+            fact: string;
+            answer_hint?: unknown | null;
+            note?: string;
+            source?: string;
         };
         Error: {
             /** @description `<domain>.<reason>`, stable across releases (ops/README.md). */
@@ -3238,6 +3662,40 @@ export interface components {
             /** @description In order; replaced as a whole. */
             slots?: components["schemas"]["FrontSlotRequest"][];
         };
+        /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
+        Handoff: {
+            /** @description The relay's number; none until delivered. */
+            seq?: number | null;
+            id: string;
+            kind: components["schemas"]["HandoffKindEnum"];
+            to: string[];
+            /** @description The stable key of the piece of work. */
+            subject: string;
+            /** @description Shared by every message about one piece of work (32 hex digits). */
+            trace: string;
+            parent_id: string | null;
+            created_at: string;
+            payload: {
+                [key: string]: unknown;
+            };
+            /** @description What the message is about: a page, a file, a URL. */
+            ref: {
+                [key: string]: unknown;
+            } | null;
+            /** @description The station that sent it. */
+            from: string;
+        };
+        /**
+         * @description * `idea` - idea
+         *     * `assignment` - assignment
+         *     * `draft` - draft
+         *     * `verdict` - verdict
+         *     * `approval` - approval
+         *     * `published` - published
+         *     * `signal` - signal
+         * @enum {string}
+         */
+        HandoffKindEnum: "idea" | "assignment" | "draft" | "verdict" | "approval" | "published" | "signal";
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
          *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
@@ -3370,6 +3828,10 @@ export interface components {
             /** @description Its stories, in order. */
             story_ids?: string[];
         };
+        Journey: {
+            trace: string;
+            messages: components["schemas"]["Handoff"][];
+        };
         KeepRequest: {
             /**
              * Format: uuid
@@ -3386,6 +3848,10 @@ export interface components {
         };
         Kept: {
             ideas: components["schemas"]["Idea"][];
+        };
+        KindCount: {
+            kind: components["schemas"]["HandoffKindEnum"];
+            count: number;
         };
         LoginRequest: {
             username: string;
@@ -3531,6 +3997,7 @@ export interface components {
             /** @description Empty: DEFAULT_FROM_EMAIL. */
             from_email?: string;
         };
+        NullEnum: null;
         /**
          * @description * `written` - written
          *     * `captured` - captured
@@ -3538,6 +4005,14 @@ export interface components {
          * @enum {string}
          */
         OriginEnum: "written" | "captured" | "brainstormed";
+        /**
+         * @description * `queued` - Queued
+         *     * `running` - Running
+         *     * `succeeded` - Succeeded
+         *     * `failed` - Failed
+         * @enum {string}
+         */
+        OutboxRunStatusEnum: "queued" | "running" | "succeeded" | "failed";
         /**
          * @description * `pending` - pending
          *     * `ready` - ready
@@ -3767,6 +4242,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Citation"][];
         };
+        PaginatedClaimCheckList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["ClaimCheck"][];
+        };
         PaginatedCollectionList: {
             /**
              * Format: uri
@@ -3850,6 +4340,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Front"][];
+        };
+        PaginatedHandoffList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Handoff"][];
         };
         PaginatedIdeaList: {
             /**
@@ -4065,6 +4570,21 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Suggestion"][];
+        };
+        PaginatedTrialList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Trial"][];
         };
         PatchedAssistantRequest: {
             /** @description A site its owner edits. */
@@ -4546,6 +5066,10 @@ export interface components {
             question: components["schemas"]["Question"];
             run: components["schemas"]["RunRef"];
         };
+        QueuedDelivery: {
+            /** @description Records waiting for the relay pass just queued. */
+            pending: number;
+        };
         Quote: {
             /** Format: uuid */
             readonly id: string;
@@ -4573,6 +5097,30 @@ export interface components {
         };
         ResearchBriefRequest: {
             topic: string;
+        };
+        Resolution: {
+            claim_id: string;
+            /** @description The arena task the claim was raced in. */
+            task_id: string;
+            truth: unknown | null;
+            winner_correct: boolean | null;
+            confidence_inversion: boolean | null;
+            draft_correct: boolean;
+            /** @description Per verifier; lower is better. */
+            brier: {
+                [key: string]: number;
+            };
+            /**
+             * Format: double
+             * @description The draft's own confidence, scored.
+             */
+            draft_brier: number | null;
+        };
+        ResolveRequest: {
+            /** @description Claim id → what turned out to be true. */
+            truth: {
+                [key: string]: unknown;
+            };
         };
         ResolvedSlot: {
             position: number;
@@ -4758,6 +5306,29 @@ export interface components {
             /** @description A provider's slug. */
             provider?: string;
         };
+        SendRequest: {
+            kind: components["schemas"]["SendableKindEnum"];
+            to: string[];
+            subject?: string;
+            payload?: {
+                [key: string]: unknown;
+            };
+            /** @description A delivered message this answers (an approval must). */
+            parent_id?: string;
+            trace?: string;
+            ref?: {
+                [key: string]: unknown;
+            };
+            /** @description A page the message is about. */
+            page?: number | null;
+        };
+        /**
+         * @description * `idea` - idea
+         *     * `approval` - approval
+         *     * `signal` - signal
+         * @enum {string}
+         */
+        SendableKindEnum: "idea" | "approval" | "signal";
         SetDocumentRequest: {
             /** @description The revision edited; a newer one is a 409. */
             base_revision_id: number | null;
@@ -4897,6 +5468,24 @@ export interface components {
          * @enum {string}
          */
         SourceStatusEnum: "pending" | "fetching" | "ready" | "failed";
+        StartClaimCheckRequest: {
+            title?: string;
+            /** @description Whose draft it is. */
+            author?: string;
+            /** @description The draft the claims are from. */
+            page?: number | null;
+            claims: components["schemas"]["ClaimRequest"][];
+            timeline: components["schemas"]["TimelineRowRequest"][];
+            /** @default 8 */
+            closes_at_tick: number;
+            /** @default 2 */
+            lag_b: number;
+        };
+        StartTrialRequest: {
+            task: components["schemas"]["TaskCardRequest"];
+            /** @description Widen or close the race. */
+            lag_b?: number | null;
+        };
         Step: {
             idx: number;
             kind: string;
@@ -5164,6 +5753,54 @@ export interface components {
          * @enum {string}
          */
         TargetTypeEnum: "page" | "image";
+        /** @description A task card, as the harness's tasks/*.json and protocol/schema.json describe one. */
+        TaskCard: {
+            id: string;
+            family?: string;
+            question: string;
+            /** @description The judge; none leaves it open. */
+            expected_answer?: unknown | null;
+            closes_at_tick: number;
+            deadline_ping_tick?: number;
+            lag_b?: number;
+            max_env_lag?: number;
+            /** Format: double */
+            inversion_confidence?: number;
+            a_sticky?: boolean;
+            env_schedule: components["schemas"]["EnvEvent"][];
+        };
+        /** @description A task card, as the harness's tasks/*.json and protocol/schema.json describe one. */
+        TaskCardRequest: {
+            id: string;
+            family?: string;
+            question: string;
+            /** @description The judge; none leaves it open. */
+            expected_answer?: unknown | null;
+            closes_at_tick: number;
+            deadline_ping_tick?: number;
+            lag_b?: number;
+            max_env_lag?: number;
+            /** Format: double */
+            inversion_confidence?: number;
+            a_sticky?: boolean;
+            env_schedule: components["schemas"]["EnvEventRequest"][];
+        };
+        TimelineRow: {
+            tick: number;
+            source: string;
+            /** @description What the source said then. */
+            says: unknown;
+            fact?: string;
+            note?: string;
+        };
+        TimelineRowRequest: {
+            tick: number;
+            source: string;
+            /** @description What the source said then. */
+            says: unknown;
+            fact?: string;
+            note?: string;
+        };
         /**
          * @description * `brief` - brief
          *     * `draft` - draft
@@ -5176,6 +5813,62 @@ export interface components {
         Tool: {
             name: string;
             description: string;
+        };
+        Trial: {
+            /** Format: uuid */
+            readonly id: string;
+            task: components["schemas"]["TaskCard"];
+            /** @description Overrides the card's lag_b. */
+            readonly lag_b: number | null;
+            readonly status: components["schemas"]["OutboxRunStatusEnum"];
+            readonly error: string;
+            result: components["schemas"]["TrialResult"] | null;
+            /** @description Under OUTBOX_OUT_DIR. */
+            readonly run_dir: string;
+            requested_by?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly started_at: string | null;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+        };
+        TrialDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            task: components["schemas"]["TaskCard"];
+            /** @description Overrides the card's lag_b. */
+            readonly lag_b: number | null;
+            readonly status: components["schemas"]["OutboxRunStatusEnum"];
+            readonly error: string;
+            result: components["schemas"]["TrialResult"] | null;
+            /** @description Under OUTBOX_OUT_DIR. */
+            readonly run_dir: string;
+            requested_by?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly started_at: string | null;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+            /** @description The arena's ledger, in the order it was written. */
+            readonly ledger: components["schemas"]["ArenaRow"][];
+        };
+        TrialResult: {
+            task_id: string;
+            family: string | null;
+            latest_env_seq: number;
+            n_active_claims: number;
+            winner: components["schemas"]["Winner"] | null;
+            first_claim_from: string | null;
+            resolved: boolean;
+            correct: boolean | null;
+            confidence_inversion: boolean | null;
+            retracts: number;
+            claims_per_agent: {
+                [key: string]: number;
+            };
+            expected_answer: unknown | null;
         };
         UploadRequest: {
             /**
@@ -5195,6 +5888,20 @@ export interface components {
             is_staff: boolean;
             is_superuser: boolean;
         };
+        Verdict: {
+            claim_id: string;
+            question: string;
+            draft_answer: unknown;
+            verdict: components["schemas"]["ClaimVerdictEnum"];
+            /** @description sources_agree, sources_disagree, winner_is_stale, low_confidence, … */
+            reason: string;
+            supported_answer: unknown | null;
+            winner_from?: string | null;
+            /** Format: double */
+            winner_confidence?: number | null;
+            winner_env_seq?: number | null;
+            latest_env_seq?: number | null;
+        };
         /**
          * @description * `supported` - supported
          *     * `contradicted` - contradicted
@@ -5209,6 +5916,16 @@ export interface components {
          * @enum {string}
          */
         VisibilityEnum: "private" | "site" | "shared";
+        /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
+        Winner: {
+            id: string | null;
+            /** Format: double */
+            confidence: number | null;
+            env_seq: number | null;
+            answer: unknown | null;
+            tick: number | null;
+            from: string | null;
+        };
         /** @description A wire story, a feed entry or a page to pitch from (`services.WireItem`). */
         WireItem: {
             /** Format: uri */
@@ -13035,6 +13752,1124 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Subscription"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_belt_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeltSummary"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_belt_dead_letters_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeadLetter"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_belt_deliver_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueuedDelivery"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_belt_messages_list: {
+        parameters: {
+            query?: {
+                kind?: "approval" | "assignment" | "draft" | "idea" | "published" | "signal" | "verdict";
+                /** @description `seq`: oldest first. */
+                ordering?: "-seq" | "seq";
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Sent by or to this station. */
+                station?: string;
+                /** @description One piece of work's messages. */
+                trace?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedHandoffList"];
+                };
+            };
+        };
+    };
+    outbox_belt_messages_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeltMessage"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_belt_send_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SendRequest"];
+                "multipart/form-data": components["schemas"]["SendRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Handoff"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_belt_traces_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trace: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Journey"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_claim_checks_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedClaimCheckList"];
+                };
+            };
+        };
+    };
+    outbox_claim_checks_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartClaimCheckRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["StartClaimCheckRequest"];
+                "multipart/form-data": components["schemas"]["StartClaimCheckRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimCheck"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_claim_checks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimCheckDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_claim_checks_resolve_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResolveRequest"];
+                "multipart/form-data": components["schemas"]["ResolveRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimCheckDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_claim_checks_calibration_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Calibration"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_trials_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedTrialList"];
+                };
+            };
+        };
+    };
+    outbox_trials_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartTrialRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["StartTrialRequest"];
+                "multipart/form-data": components["schemas"]["StartTrialRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trial"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    outbox_trials_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrialDetail"];
                 };
             };
             401: {
