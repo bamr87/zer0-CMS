@@ -39,12 +39,14 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 | [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | The design decisions D1–D17 and why the code follows them: the `src/core` layer boundary, the five bundles, the webview contract, the ledger, the Fleet console's guards, and the shared-files boundary with the Rails CMS. |
 | [`docs/CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
 | [`docs/CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, every `zer0Cms.*` setting (generated from `package.json`), the placeholder tokens, and which layer a decision belongs in. |
+| [`docs/constitution.md`](constitution.md) | The rules every change to this repo must satisfy, whoever makes it — a human or an AI agent. Agents read this before [AGENTS.md](../AGENTS.md) conventions, the [PRD](../PRD.md), or the [feature catalog](../features/features.yml). Ratified… |
 | [`docs/DISTRIBUTION.md`](DISTRIBUTION.md) | The governed LinkedIn lane — queue, brand guard, human approval, ledger and the reusable workflow — that carries a site's content to LinkedIn and its aggregate response back. |
 | [`docs/MONOREPO.md`](MONOREPO.md) | Every project under `packages/`, `sites/` and `apps/` — the sources the platform is absorbing (ADR 0006) — how `workspace.yml` and `bin/zer0` manage them as one repository, how they were imported with their history, and what still runs… |
 | [`docs/PLATFORM.md`](PLATFORM.md) | The Rails fleet CMS: the index models and the sync, the write-back rules, every route and filter, the security posture, the image-engine seam, the ABC wizard, and how to run it. |
 | [`docs/RELEASING.md`](RELEASING.md) | What release-please owns, the repo-owned marketplace job and the secrets it needs, and the operator steps still outstanding. |
 | [`docs/ZER0-STACK.md`](ZER0-STACK.md) | The zer0 stack from this repository's side: the three pillars, the consumer contract `zer0 doctor` checks, and the reusable workflow that runs it. |
 | [`docs/adr/`](adr/README.md) | The architecture decision records, 0001–0006, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target. |
+| [`docs/amendments/`](amendments/README.md) | The append-only log of changes to [the constitution](constitution.md). |
 
 ### `schemas/`
 
