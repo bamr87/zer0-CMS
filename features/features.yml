@@ -1,7 +1,7 @@
 # =============================================================================
-# features/features.yml — THE FEATURE INDEX for zer0-CMS
+# features/features.yml — THE FEATURE INDEX for bamr87/zer0-CMS
 # =============================================================================
-# kit: verify v0.1.0 (seeded from bamr87/bamr87 templates/verify/)
+# kit: verify v0.1.0 · governance v0.1.0 (bamr87/bamr87 templates/verify/, templates/governance/)
 #
 # One entry per user-facing capability. This file is what an AI agent reads to
 # know what the product DOES, where it lives, how it is documented, which tests

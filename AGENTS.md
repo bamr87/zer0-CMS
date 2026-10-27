@@ -209,6 +209,17 @@ One of ~40 repositories managed by the [bamr87/bamr87 hub](https://github.com/ba
 
 ## Standard deviations
 
+Five. The first three are dated 2026-09-09 and are all consequences of consuming the hub's engines package rather than copying it; the last two, dated 2026-10-22, are the same choice made for `web/` for the same reason — generated output that a floating version would churn.
+
+- **The lockfile is committed**, against the hub's `lockfiles: never-commit` posture. `npm ci` needs it, and so does the reusable relock job; more importantly an exact-pinned engines version is only reproducible with one.
+- **`@bamr87/fleet-engines` is exact-pinned**, against the hub's always-latest convention. A bump changes generated goldens, so it is a deliberate `chore(deps)` pull request whose diff a person reads, not an ambient upgrade.
+- **`yaml` is bundled.** The hand-rolled YAML subset in `src/core/shared/config.ts` reads front matter and manifests; GitHub Actions workflow files exceed it (anchors, merge keys, multi-line flow collections), and the engines answer that with the `yaml` package. It is bundled into the extension host only, never into the MCP server.
+
+## Governance
+
+Read [`docs/constitution.md`](docs/constitution.md) before changing anything: it is the highest-precedence rule set here and wins over this file when they disagree. It changes only through a numbered record in [`docs/amendments/`](docs/amendments/), ratified by the maintainer merging the PR; agents propose, never merge. Every user-facing feature has a stable id in [`features/features.yml`](features/features.yml) with `status`, location and the PRD requirement ids it serves; the PRD's "Feature catalog" block is generated from it (`python3 <bamr87/bamr87>/tools/governance_lint.py prd-sync . --write`; check with `… check .`). Never hand-edit that block or `CHANGELOG.md`.
+- **`web/package-lock.json` is committed**, against the hub's `lockfiles: never-commit` posture. `npm ci` in `web.yml` and in the platform image's Node stage needs it, and the studio's build and tests then run on the versions they were checked against.
+- **`openapi-typescript` is exact-pinned** in `web/packages/api`, against the always-latest convention. Its output is committed (`src/schema.d.ts`) and drift-checked against `schemas/openapi/openapi.json`, so a new generator version would fail the check with no change to the API; a bump is a deliberate `chore(deps)` change that regenerates the file in the same commit. Every other `web/` dependency takes caret ranges and moves when the lockfile is refreshed.
 - **Lockfile committed** (2026-09-09), against `lockfiles: never-commit`: `npm ci` and the relock job need it, and the exact-pinned engines are only reproducible with one.
 - **`@bamr87/fleet-engines` exact-pinned** (2026-09-09), against always-latest: a bump changes goldens, so it is a deliberate `chore(deps)` PR.
 - **`yaml` bundled** (2026-09-09): the hand-rolled subset in `src/core/shared/config.ts` cannot read Actions workflows (anchors, merge keys, multi-line flows); extension host only, never the MCP server.
