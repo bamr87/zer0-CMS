@@ -190,6 +190,8 @@ services:
       # Tool rate limits are counted in the cache, so it has to be shared by
       # every worker and process.
       CACHE_URL: rediscache://redis:6379/1
+      # Books are generated in packages/books/library/, outside the image.
+      BOOKS_LIBRARY_DIR: /app/packages/books/library
       # recorded (fixtures, no network) unless a deployment opts into a model.
       LLM_BACKEND: ${LLM_BACKEND:-recorded}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
@@ -202,6 +204,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:
       - ${SITES_DIR:-.}:/sites:ro
+      - ./packages/books/library:/app/packages/books/library
       - content-media:/app/content/media
     labels: &content-labels
       <<: *fleet-labels

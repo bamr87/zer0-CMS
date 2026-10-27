@@ -38,7 +38,7 @@ Two chapters never share a file. A chapter keeps its own file while that file's 
 
 A directory whose name starts with `_` is a template (`_template`): it round-trips like a book, is never on the shelf, and `books new` (and the studio's "New book") starts a book from it — its manifest, its outline with `{{title}}` and `{{slug}}` filled, its other files — stamped with the slug, title, `status: idea` and today's date.
 
-The library lives at `packages/books/library/` for now (`BOOKS_LIBRARY_DIR`, under the site root `BOOKS_SITE_KEY`, default `library`, with its Wagtail site `library.localhost`); PLAN G11 decides its permanent home. The Books workspace holds the library's books; a Jekyll site's books (drsai's picture books, the ABC books) stay that site's pages until the ABC wizard and the story engine become book types (`books.abc`).
+The library lives at `packages/books/library/` for now (`BOOKS_LIBRARY_DIR`, under the site root `BOOKS_SITE_KEY`, default `library`, with its Wagtail site `library.localhost`); PLAN G11 decides its permanent home. The image carries only `content/`, so under Docker Compose the `content` service bind-mounts the library from the checkout. The Books workspace holds the library's books; a Jekyll site's books (drsai's picture books, the ABC books) stay that site's pages until the ABC wizard and the story engine become book types (`books.abc`).
 
 ## The bookshelf's commands
 
