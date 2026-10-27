@@ -1,5 +1,7 @@
 # `web/` — the React frontend
 
+> The React frontend: the studio where people write, create and review content and follow agent runs, the shared packages it is built from, and the site renderer to come.
+
 The one web frontend of zer0-CMS ([ADR 0006](../docs/adr/0006-one-python-platform.md) decisions 2 and 9; [`TARGET.md`](../docs/plan/TARGET.md) § The studio): the **studio**, where people write, create and review content, follow agent runs and work with the AI content layer (assistants, pipelines, output schemas, briefs, conversations, providers and models), and the **shared packages** its workspaces are built from — which the VS Code extension's webviews will render as they are (PLAN G10), so a studio capability reaches the extension by construction. It talks to the platform (`content/`) only through the platform's API, through a client generated from the committed OpenAPI document. PLAN P4 built it; the site renderer (`web/site/`, PLAN P6) joins it later.
 
 ## Layout

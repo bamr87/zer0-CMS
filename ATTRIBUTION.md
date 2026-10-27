@@ -1,5 +1,7 @@
 # Attribution
 
+> Where zer0-CMS came from — a fork of Front Matter CMS, since rewritten from scratch — what of its design remains, and the MIT notice that covers it.
+
 zer0-CMS began, in 2026, as a fork of [Front Matter CMS](https://github.com/estruyf/vscode-front-matter) by **Elio Struyf**, taken at upstream **v10.10.1**.
 
 It is no longer a fork. The extension was rewritten from scratch: vanilla TypeScript instead of React, esbuild instead of webpack, its own `zer0Cms.*` command namespace, its own `zer0.json` project file, and no runtime dependencies. It does not track upstream and cannot merge from it.

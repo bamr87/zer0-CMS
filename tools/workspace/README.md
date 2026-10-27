@@ -1,5 +1,7 @@
 # tools/workspace — `bin/zer0`
 
+> The tooling behind `bin/zer0` (Python 3.9+ and PyYAML since PLAN P5): every command, the contract `bin/zer0 check` enforces, ownership of files, and the library's layout.
+
 The tooling behind `bin/zer0`, the one command that manages every project in this repository from the root `workspace.yml`. Python 3.9+ with PyYAML and nothing else, none of a project's own dependencies, so it runs in any CI job before they are installed. Why it exists and how it fits the rest of the repository: [`docs/MONOREPO.md`](../../docs/MONOREPO.md).
 
 **PyYAML.** Any Python that can import `yaml` runs it. Homebrew's and Debian's Pythons have no PyYAML and refuse a global `pip install` (PEP 668), so create the repository's virtual environment once: `python3 -m venv .venv && .venv/bin/pip install pyyaml`. When `python3` cannot import PyYAML, `bin/zer0` runs itself on `.venv/bin/python` (once — never a loop; a task it runs starts afresh), so `bin/zer0 check` works unchanged; run the tests with `.venv/bin/python -m unittest discover tools/workspace`. `sudo apt install python3-yaml` also works on Debian and Ubuntu, and CI installs PyYAML with pip. Without PyYAML anywhere, `bin/zer0` lists these routes and exits 2.

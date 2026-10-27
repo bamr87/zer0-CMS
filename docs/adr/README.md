@@ -1,5 +1,7 @@
 # Architecture decision records
 
+> The architecture decision records, 0001–0006, one per decision that changes how the repository is put together; ADR 0006 (one Python platform with a React frontend, every merged repository absorbed, no Ruby) is the current target.
+
 One file per decision that changes how the repository is put together. An ADR records the question, the answer and what it costs; it changes only when the decision does. The extension's own decisions (D1–D17) and lettered decisions (D-A–D-I) predate this directory and live in [`../ARCHITECTURE.md`](../ARCHITECTURE.md); the build plan the ADRs feed is [`../plan/PLAN.md`](../plan/PLAN.md).
 
 | ADR | Decision | Status |

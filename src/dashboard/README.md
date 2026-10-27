@@ -1,5 +1,7 @@
 # `src/dashboard` — the dashboard host
 
+> The dashboard's extension-host side: the state builder and intent router behind the `zer0Cms.dashboard` tab, whose UI lives in `src/webview/dashboard/`.
+
 One file: `dashboardPanel.ts`, the extension-host side of the `zer0Cms.dashboard` editor tab. The UI it drives lives in [`src/webview/dashboard/`](../webview/dashboard/README.md); this directory contains no DOM code and the webview contains no `vscode` import. That split is the whole architecture, and it is enforced by eslint and by the build.
 
 ```

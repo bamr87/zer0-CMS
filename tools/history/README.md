@@ -1,5 +1,7 @@
 # tools/history
 
+> `graft.sh`, which restores the imported history a squash merge dropped (cutover milestone C0), and how to run it safely.
+
 `graft.sh` restores history that a squash merge dropped: it builds a branch on top of `main` that lifts the imported paths out, merges each original's rewritten history back, replays every later change, and ends on a tree identical to `main`'s. It is cutover milestone C0 (`docs/plan/PLAN.md`), and it has to land as a **fast-forward** — a merge commit leaves `git log` and `git blame` stopping at the squash. Run it in a throwaway worktree, never in a checkout you are working in.
 
 The zer0-CMS invocation, with the tips taken from `refs/pull/29/head` and `refs/pull/36/head` (each is the second parent of that PR's `import … with full history` merge):

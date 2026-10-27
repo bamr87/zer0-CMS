@@ -1,5 +1,7 @@
 # `content/` — the platform
 
+> The Django 5.2 + Wagtail 7.4 platform — pages and revisions, the agent harness and tool registry, suggestions, the graph, the outbox, the operational baseline, and its GraphQL, REST and MCP surfaces — and how to run it.
+
 The Django 5.2 + Wagtail 7.4 project that is zer0-CMS ([ADR 0001](../docs/adr/0001-target-architecture.md), [ADR 0004](../docs/adr/0004-one-platform.md)): pages and their revisions, the agent harness and its one tool registry, suggestions, the content graph, the transactional outbox, the GraphQL, REST and MCP surfaces over all of it, and the operational baseline every one of them answers through. The Jekyll files stay the source of truth for a site until it cuts over (ADR 0002), and the importer and exporter keep both directions exact.
 
 ```bash
