@@ -165,3 +165,13 @@ def test_questions_are_counted_as_aieo_counted_them_in_linear_time():
     started = time.perf_counter()
     scoring._recursive_depth({"text": "why " * 12_500, "headers": []}, 30)
     assert time.perf_counter() - started < 1
+
+
+def test_a_pattern_with_no_heuristic_is_left_to_a_model_and_never_lowers_a_heuristic_score():
+    """A pattern a person adds to the library has no deterministic check: the heuristics leave it out and name it,
+    so adding one never drags down every heuristic score (score/, the CI runner, the citability review)."""
+    added = {"name": "brand_story", "display_name": "Brand story", "weight": 100, "max_score": 10, "body": "Tell it."}
+    before = scoring.score(read("article.md"), "markdown")
+    after = scoring.score(read("article.md"), "markdown", [*scoring.bundled_patterns(), added])
+    assert after["score"] == before["score"] and after["model_only"] == ["brand_story"]
+    assert "brand_story" not in after["pattern_scores"] and "model_only" not in before

@@ -172,26 +172,19 @@ def _result(pattern_scores, penalty, parsed, patterns, *, keywords, competitor_t
 
 
 def heuristic(parsed: dict, patterns=None, *, keywords=(), competitor_topics=()) -> dict:
-    """The deterministic score: each pattern's check, then the anti-pattern penalties."""
+    """The deterministic score: each pattern's check, then the anti-pattern penalties. A pattern with no check — one a
+    person added to the library — is a model's to score: left out here and named (`model_only`), where AIEO scored it
+    0 and weighed it in, so adding one lowered every heuristic score."""
     patterns = list(patterns if patterns is not None else bundled_patterns())
-    pattern_scores = {}
-    for p in patterns:
-        check = HEURISTICS.get(p["name"])
-        if check is not None:
-            pattern_scores[p["name"]] = check(parsed, p["max_score"])
-        else:
-            pattern_scores[p["name"]] = {
-                "score": 0,
-                "max": p["max_score"],
-                "detected": False,
-                "evidence": [],
-                "recommendation": f"Configure AI API key for {p['name']} scoring.",
-            }
+    checked = [p for p in patterns if p["name"] in HEURISTICS]
+    pattern_scores = {p["name"]: HEURISTICS[p["name"]](parsed, p["max_score"]) for p in checked}
+    unchecked = [p["name"] for p in patterns if p["name"] not in HEURISTICS]
     return _result(
         pattern_scores,
         anti_patterns(parsed),
         parsed,
-        patterns,
+        checked,
+        **({"model_only": unchecked} if unchecked else {}),
         keywords=keywords,
         competitor_topics=competitor_topics,
         anti_pattern_details={"detected": [], "evidence": []},
