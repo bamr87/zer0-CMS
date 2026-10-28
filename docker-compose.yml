@@ -313,13 +313,17 @@ services:
 
   # The platform's own consumers of its own events (content/outbox/README.md):
   # a page going live drafts a post for every channel of its site that drafts
-  # automatically (distribution/consumers.py). A consumer group of its own, so
-  # the Rails plane's reading of the same stream is untouched.
+  # automatically (distribution/consumers.py). A consumer group of its own.
+  # Whichever process reads an event first runs every handler for it, once
+  # (outbox/consumers.py), the outbox desk's included, so this one mounts the
+  # belt as belt-publisher does: a handoff written anywhere else is lost.
   events:
     profiles: ["content"]
     build: *content-build
     command: python manage.py consume_events --stream zer0:content --group platform --name platform-1
     environment: *content-env
+    volumes:
+      - outbox-data:/app/content/var/outbox
     labels: *content-labels
     logging: *fleet-logging
     depends_on:
