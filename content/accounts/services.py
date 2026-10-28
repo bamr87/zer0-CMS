@@ -38,12 +38,11 @@ def tokens_of(user):
     return UserToken.objects.visible_to(user).filter(user=user).order_by("-created_at")
 
 
-def revoke(user, prefix: str) -> UserToken:
-    """Revoke `user`'s one active token that starts with `prefix`."""
+def revoke(user, prefix: str, by=None) -> UserToken:
+    """Revoke `user`'s one active token that starts with `prefix`; `by`, when known, is who did (Wagtail's log)."""
     found = tokens_of(user).filter(prefix__startswith=prefix[:14], revoked_at__isnull=True)
     if found.count() != 1:
         raise TokenError(f"{found.count()} active tokens of {user.username} start with {prefix}; name exactly one")
     token = found.get()
-    token.revoked_at = timezone.now()
-    token.save(update_fields=["revoked_at"])
+    token.revoke(by=by)
     return token

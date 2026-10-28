@@ -36,6 +36,7 @@ from django.db import transaction
 from django.utils import timezone
 from wagtail.admin.rich_text.converters.editor_html import EditorHTMLConverter
 from wagtail.blocks import RichTextBlock
+from wagtail.log_actions import log
 from wagtail.models import Revision
 
 from agents.schema import META_FIELDS, BlockInvalid, validate_block
@@ -207,6 +208,7 @@ def propose(*, target, op, user, run=None, agent=None, block_id="", payload=None
         base_revision=base,
         created_by=user,
     )
+    log(suggestion, "zer0.suggestion.propose", user=user, data=_logged(suggestion))
     emit(
         "content.suggestion.created",
         subject=f"{'page' if isinstance(target, BasePage) else 'image'}:{target.pk}",
@@ -222,6 +224,17 @@ def propose(*, target, op, user, run=None, agent=None, block_id="", payload=None
         },
     )
     return suggestion
+
+
+def _logged(suggestion) -> dict:
+    """What a suggestion's log entry records beside who and when (`wagtail.log_actions.log`)."""
+    return {
+        "target": f"{suggestion.target_ct.model}:{suggestion.target_id}",
+        "op": suggestion.op,
+        "field": suggestion.field or None,
+        "block_id": suggestion.block_id or None,
+        "run_id": suggestion.run_id,
+    }
 
 
 # ── accept / reject ────────────────────────────────────────────────────────
@@ -320,6 +333,7 @@ def accept(suggestions, user):
         s.decided_at = now
         s.applied_revision = applied
         s.save(update_fields=["status", "decided_by", "decided_at", "applied_revision"])
+        log(s, "zer0.suggestion.accept", user=user, data={**_logged(s), "revision_id": applied.pk if applied else None})
     runs = {s.run for s in suggestions if s.run}
     _record_human_step(
         runs,
@@ -345,6 +359,7 @@ def reject(suggestion, user, reason=""):
     suggestion.decided_at = timezone.now()
     suggestion.error = reason
     suggestion.save(update_fields=["status", "decided_by", "decided_at", "error"])
+    log(suggestion, "zer0.suggestion.reject", user=user, data={**_logged(suggestion), "reason": reason})
     if suggestion.run:
         _record_human_step([suggestion.run], user, "reject", {"suggestion": suggestion.pk}, {"reason": reason})
     return suggestion

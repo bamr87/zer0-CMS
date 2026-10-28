@@ -653,6 +653,7 @@ platform:
     surfaces: {api: partial, studio: missing}
   - id: platform.audit
     what: An audit log of who did what, people and agents alike.
+    # P4 (G2's log actions): Wagtail's log records suggestions proposed, accepted and rejected, runs started and finished, and tokens issued and revoked, each by who did it (content/tests/agents/test_log_actions.py); no API or studio screen reads it yet.
     surfaces: {api: missing, studio: missing}
   - id: platform.events
     what: Outbox events with versioned schemas, and webhooks.
