@@ -77,6 +77,7 @@ platform:
   - id: content.types
     what: Page types, fields and StreamField blocks, per-type default field values, and the exported agent block schema.
     # P4: every type and the creatable ones under a parent (api), each type's editable fields as specs the studio renders.
+    # P4 (G2's blocks): Wagtail's table, typed table, embed (a URL, never fetched) and document blocks, raw HTML, Liquid and an Obsidian callout, each in the agent schema, cut by the importer from a paragraph it writes back byte for byte (content/tests/importers/test_blocks.py) and edited in the studio (web/packages/ui/test/editor.test.tsx); per-type default values to come.
     surfaces: {api: partial, studio: partial, mcp: partial}
   - id: content.list
     what: Browse and filter pages across sites — tree, lists, and a filter language (status, collection, site, kind, tag, category, author, errors).

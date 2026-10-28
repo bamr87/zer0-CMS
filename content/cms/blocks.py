@@ -10,10 +10,23 @@ they are written for a model to read as much as for an editor.
 includes, raw HTML and Obsidian wikilinks that no structured block can hold
 without changing them, so the importer keeps each such chunk as Markdown,
 verbatim, and the exporter writes it back byte for byte (PLAN §7, "Markdown →
-StreamField is lossy").
+StreamField is lossy"). A paragraph that one of the blocks below writes back
+exactly as it was becomes that block instead (importers/markdown.py): a pipe
+table (`table`, or `typed_table` when a column holds only numbers), an
+Obsidian callout, a bare URL (`embed`), a link to a file (`document`), an
+HTML block (`raw_html`) or a Liquid template (`liquid`).
+
+The platform is headless and never reaches the network in a request: an
+`embed` is checked as a URL, not fetched, and the editor's preview shows an
+embed, raw HTML and Liquid as their source — the site's own build renders them.
 """
 
+from django.utils.html import format_html
 from wagtail import blocks
+from wagtail.contrib.table_block.blocks import TableBlock
+from wagtail.contrib.typed_table_block.blocks import TypedTableBlock
+from wagtail.documents.blocks import DocumentChooserBlock
+from wagtail.embeds.blocks import EmbedBlock as WagtailEmbedBlock
 from wagtail.images.blocks import ImageChooserBlock
 
 HEADING_LEVELS = [("2", "H2"), ("3", "H3"), ("4", "H4"), ("5", "H5"), ("6", "H6")]
@@ -118,6 +131,95 @@ class LetterBlock(blocks.StructBlock):
         label = "Letter"
 
 
+class EmbedBlock(WagtailEmbedBlock):
+    """Wagtail's embed, checked as a URL rather than fetched: saving a page
+    never reaches a provider, and the preview links to it."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("help_text", "The address of a video, post or other page to embed, e.g. a YouTube URL.")
+        super().__init__(**kwargs)
+
+    def clean(self, value):
+        return blocks.URLBlock.clean(self, value)
+
+    def render_basic(self, value, context=None):
+        return format_html('<p><a href="{0}">{0}</a></p>', value.url) if value else ""
+
+    class Meta:
+        icon = "media"
+        label = "Embed"
+
+
+class DocumentBlock(blocks.StructBlock):
+    """A link to a file — a PDF, a spreadsheet — written as `[title](href)`."""
+
+    title = blocks.CharBlock(max_length=250, help_text="The link text.")
+    href = blocks.CharBlock(
+        max_length=500,
+        help_text="Where the site serves the file, e.g. /assets/files/report.pdf, or its full URL.",
+    )
+    document = DocumentChooserBlock(required=False, help_text="The file in the document library, when it is there.")
+
+    class Meta:
+        icon = "doc-full-inverse"
+        label = "Document"
+
+
+class RawHTMLBlock(blocks.RawHTMLBlock):
+    """HTML the site renders as it is (Liquid inside it included); the preview shows its source."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("help_text", "An HTML block, verbatim: the site's build renders it.")
+        super().__init__(**kwargs)
+
+    def render_basic(self, value, context=None):
+        return format_html("<pre>{}</pre>", value)
+
+    class Meta:
+        icon = "code"
+        label = "Raw HTML"
+
+
+class LiquidBlock(blocks.TextBlock):
+    class Meta:
+        icon = "cogs"
+        label = "Liquid"
+        help_text = "A Liquid template — an include, a loop, a capture — verbatim: the site's build evaluates it."
+
+
+class CalloutBlock(blocks.StructBlock):
+    """An Obsidian callout: `> [!kind]± title`, then its body, each line quoted."""
+
+    kind = blocks.RegexBlock(
+        regex=r"^[A-Za-z][\w-]*$", max_length=40, help_text="note, tip, warning, quote … as written, e.g. NOTE."
+    )
+    fold = blocks.ChoiceBlock(
+        choices=[("+", "foldable, open"), ("-", "foldable, closed")],
+        required=False,
+        help_text="Empty: not foldable.",
+    )
+    title = blocks.CharBlock(required=False, help_text="The callout's title; empty uses its kind.")
+    body = blocks.TextBlock(required=False, help_text="The callout's Markdown, without the > quoting.")
+
+    class Meta:
+        icon = "warning"
+        label = "Callout"
+
+
+class TypedTable(TypedTableBlock):
+    text = blocks.CharBlock(required=False, help_text="Text, Markdown allowed.")
+    number = blocks.RegexBlock(
+        regex=r"^-?\d+(\.\d+)?$",
+        error_messages={"invalid": "a number column takes numbers, e.g. 21 or -3.5"},
+        help_text="A number as written, e.g. 21 or -3.5.",
+    )
+
+    class Meta:
+        icon = "table"
+        label = "Typed table"
+        help_text = "A table whose columns each hold text or numbers; written as a Markdown pipe table."
+
+
 class BodyBlock(blocks.StreamBlock):
     markdown = MarkdownBlock()
     heading = HeadingBlock()
@@ -128,6 +230,17 @@ class BodyBlock(blocks.StreamBlock):
     page_link = PageLinkBlock()
     brief = BriefBlock()
     letter = LetterBlock()
+    embed = EmbedBlock()
+    document = DocumentBlock()
+    table = TableBlock(
+        help_text="A Markdown pipe table: `data` is its rows of cells, the first row its header.",
+        icon="table",
+        label="Table",
+    )
+    typed_table = TypedTable()
+    raw_html = RawHTMLBlock()
+    liquid = LiquidBlock()
+    callout = CalloutBlock()
 
     class Meta:
         block_counts = {"brief": {"max_num": 1}}

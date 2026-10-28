@@ -310,14 +310,10 @@ def chapter_files(chapters) -> dict[str, ChapterPage]:
     return placed
 
 
-def _content(blocks) -> list:
-    return [(b["type"], b["value"]) for b in blocks]
-
-
 def chapter_text(chapter: ChapterPage, path: str | None = None) -> str:
     """The chapter's file (at `path`, else the one it wants): its front matter
-    rewritten where a field changed, its body kept as written while it still
-    has the blocks it was read as."""
+    rewritten where a field changed, its body kept as written while its blocks
+    still write the Markdown the body's own blocks write."""
     blocks = list(chapter.body.get_prep_value())
     stem = posixpath.splitext(posixpath.basename(path or chapter_path(chapter)))[0]
     source = source_of(chapter)
@@ -326,7 +322,7 @@ def chapter_text(chapter: ChapterPage, path: str | None = None) -> str:
     text = source.source_text
     match = FENCED.match(text)
     body = text[match.end() :] if match else text
-    if _content(to_blocks(body)) != _content(blocks):
+    if from_blocks(to_blocks(body)) != from_blocks(blocks):
         body = from_blocks(blocks)
     if match is None:
         changes = changed_keys(chapter, {}, CHAPTER_KEYS, stem)

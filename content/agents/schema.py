@@ -23,6 +23,9 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from wagtail import blocks
 from wagtail.blocks.base import Block
+from wagtail.contrib.table_block.blocks import TableBlock
+from wagtail.contrib.typed_table_block.blocks import BaseTypedTableBlock
+from wagtail.documents.blocks import DocumentChooserBlock
 from wagtail.images.blocks import ImageChooserBlock
 
 from cms.models import BasePage, stable_hash
@@ -60,7 +63,44 @@ def block_schema(block: Block) -> dict:
         schema = {"type": "integer"}
     elif isinstance(block, (blocks.FloatBlock, blocks.DecimalBlock)):
         schema = {"type": "number"}
-    elif isinstance(block, (ImageChooserBlock, blocks.PageChooserBlock)):
+    elif isinstance(block, TableBlock):
+        schema = {
+            "type": "object",
+            "properties": {
+                "data": {"type": "array", "items": {"type": "array", "items": {"type": ["string", "null"]}}},
+                "table_header_choice": {"type": "string", "enum": ["row", "col", "both", "neither"]},
+                "first_row_is_table_header": {"type": "boolean"},
+                "first_col_is_header": {"type": "boolean"},
+                "table_caption": {"type": "string"},
+            },
+            "required": ["data", "table_header_choice"],
+        }
+    elif isinstance(block, BaseTypedTableBlock):
+        column = {
+            "type": "object",
+            "properties": {"type": {"type": "string", "enum": list(block.child_blocks)}, "heading": {"type": "string"}},
+            "required": ["type", "heading"],
+            "additionalProperties": False,
+        }
+        row = {
+            "type": "object",
+            "properties": {"values": {"type": "array", "items": {"type": "string"}}},
+            "required": ["values"],
+            "additionalProperties": False,
+        }
+        schema = {
+            "type": "object",
+            "properties": {
+                "columns": {"type": "array", "items": column},
+                "rows": {"type": "array", "items": row, "description": "One value per column, in column order."},
+                "caption": {"type": "string"},
+            },
+            "required": ["columns", "rows"],
+            "additionalProperties": False,
+        }
+    elif isinstance(block, blocks.URLBlock):
+        schema = {"type": "string", "format": "uri"}
+    elif isinstance(block, (ImageChooserBlock, blocks.PageChooserBlock, DocumentChooserBlock)):
         schema = {"type": "integer"} if block.required else {"type": ["integer", "null"]}
     elif isinstance(block, blocks.RichTextBlock):
         schema = {"type": "string", "contentMediaType": "text/html"}
@@ -179,6 +219,12 @@ def validate_block(block_type: str, value):
 
 
 def _messages(error: ValidationError) -> str:
+    if getattr(error, "cell_errors", None):  # a typed table's, by row and column
+        return "; ".join(
+            f"row {row + 1}, column {column + 1}: {_messages(sub)}"
+            for row, columns in error.cell_errors.items()
+            for column, sub in columns.items()
+        )
     if hasattr(error, "block_errors") and error.block_errors:
         parts = []
         items = error.block_errors.items() if isinstance(error.block_errors, dict) else enumerate(error.block_errors)

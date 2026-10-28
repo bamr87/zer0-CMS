@@ -201,6 +201,68 @@ describe('<BodyEditor>', () => {
   });
 });
 
+describe('<BodyEditor> blocks', () => {
+  const START: Block[] = [
+    {
+      id: 't',
+      type: 'table',
+      value: { data: [['Name', 'Role'], ['Ada', 'engineer']], first_row_is_table_header: true, first_col_is_header: false, table_caption: '', table_header_choice: 'row' },
+    },
+    { id: 'tt', type: 'typed_table', value: { columns: [{ type: 'text', heading: 'Quarter' }, { type: 'number', heading: 'Score' }], rows: [{ values: ['Q1', '7'] }], caption: '' } },
+    { id: 'c', type: 'callout', value: { kind: 'tip', fold: '-', title: 'Rule of thumb', body: 'Keep notes small.' } },
+    { id: 'h', type: 'raw_html', value: '<div class="note">Raw</div>' },
+  ];
+
+  function Many() {
+    const [blocks, setBlocks] = useState(START);
+    return (
+      <>
+        <BodyEditor blocks={blocks} onChange={setBlocks} />
+        <output aria-label="Saved">{JSON.stringify(blocks)}</output>
+      </>
+    );
+  }
+  const saved = () => JSON.parse(screen.getByLabelText('Saved').textContent ?? '[]') as { type: string; value: Record<string, unknown> }[];
+
+  it('edits a table’s cells, rows and columns in place', async () => {
+    renderUi(<Many />, { api: fakePlatform({}).api });
+    const table = within(screen.getByLabelText('Block 1: table'));
+    await userEvent.type(table.getByLabelText('Row 1, column 2'), ', mathematician');
+    await userEvent.click(table.getByRole('button', { name: '+ row' }));
+    await userEvent.click(table.getByRole('button', { name: 'Remove column 1' }));
+    expect(saved()[0]?.value.data).toEqual([['Role'], ['engineer, mathematician'], ['']]);
+    expect(saved()[0]?.value.table_header_choice).toBe('row');
+  });
+
+  it('keeps a typed table’s column types, and shows a callout’s fold and the source of raw HTML', async () => {
+    renderUi(<Many />, { api: fakePlatform({}).api });
+    const typed = within(screen.getByLabelText('Block 2: typed_table'));
+    expect(typed.getByRole('combobox', { name: 'Column 2 type' })).toHaveValue('number');
+    await userEvent.click(typed.getByRole('button', { name: '+ column' }));
+    await userEvent.type(typed.getByLabelText('Heading 3'), 'Notes');
+    expect(saved()[1]?.value).toEqual({
+      columns: [
+        { type: 'text', heading: 'Quarter' },
+        { type: 'number', heading: 'Score' },
+        { type: 'text', heading: 'Notes' },
+      ],
+      rows: [{ values: ['Q1', '7', ''] }],
+      caption: '',
+    });
+    const callout = within(screen.getByLabelText('Block 3: callout'));
+    expect(callout.getByRole('combobox', { name: 'Fold' })).toHaveValue('Foldable, closed');
+    expect(callout.getByLabelText('body')).toHaveValue('Keep notes small.');
+    expect(within(screen.getByLabelText('Block 4: raw_html')).getByRole('textbox')).toHaveValue('<div class="note">Raw</div>');
+  });
+
+  it('adds a block of each new kind with an empty value', async () => {
+    renderUi(<Many />, { api: fakePlatform({}).api });
+    for (const kind of ['table', 'callout', 'embed', 'liquid']) await userEvent.click(screen.getByRole('button', { name: `+ ${kind}` }));
+    expect(saved().slice(4).map((b) => b.type)).toEqual(['table', 'callout', 'embed', 'liquid']);
+    expect(within(screen.getByLabelText('Block 5: table')).getAllByRole('textbox')).toHaveLength(4);
+  });
+});
+
 describe('<RevisionHistory>', () => {
   const revisions = {
     count: 2,

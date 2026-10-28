@@ -10,7 +10,9 @@ For each page under a site root, in tree order:
   — the front matter by line surgery (sites/frontmatter.py: a key whose value
   changed is rewritten in place, a new one goes in before the closing fence, a
   dropped one goes, and comments, quoting and every other line stay as they
-  were), the body kept as it was while its blocks are the ones it was read as;
+  were), the body kept as it was while its blocks write the Markdown the
+  body's own blocks write (so a page read before a block type existed keeps
+  its body too);
 - **created in Wagtail** (or a source the surgery cannot edit): front matter +
   body rendered from the page. Either way the front matter is the source's, in
   its original key order, with the typed fields written over it (title, description, seo_title, date — kept as
@@ -251,9 +253,8 @@ def _render_over(source_text: str, fm: dict, blocks: list, leading: str) -> str:
     changes.update({key: None for key in original if key not in fm})
     text = surgery.update_keys(source_text, changes)
     _, body = frontmatter.split(text)
-    mine = [(b["type"], b["value"]) for b in blocks if b["type"] != "letter"]
-    if mine == [(b["type"], b["value"]) for b in to_blocks(body)]:
-        return text
+    if from_blocks(blocks, leading=leading) == from_blocks(to_blocks(body), leading=leading):
+        return text  # the blocks write what the body's own blocks write (cut by any version of the importer)
     return text[: len(text) - len(body)] + from_blocks(blocks, leading=leading)
 
 
