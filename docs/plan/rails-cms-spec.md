@@ -625,6 +625,6 @@ User-visible behaviour of `rails/app`, `rails/config` and `rails/lib/zer0_cms` (
   - The producer belongs to the public site, through the P6 renderer, with an anonymous rotating `anon_id` and a beacon endpoint.
   - No row tracks it. Suggest one under sites.analytics.
 - **Future-dated posts and `status: draft` files import as live** (rails.page-search's decision). Rails showed them as `future`/`draft` and kept them out of `live:`. Jekyll does not build a future post unless `future: true`.
-- **The importer misses previews under `assets/`, and SVG previews** (rails.assets-terms). This is a correctness bug on main and G4 affecting `sites/zer0-pages` and `sites/2005`, not only a gap.
+- **Fixed: the importer finds previews under `assets/`, and SVG previews** (rails.assets-terms): `importers.jekyll.preview_file` tries the source, `source/assets` and the root, each confined by `sites/writer.py`, and an SVG is a Wagtail image like any other (`content/tests/importers/test_jekyll.py::test_a_preview_under_assets_is_found_like_the_engine_finds_it`).
 - **Root `/` redirects to `/admin`; `/up` is Rails' health check.** Covered by platform.ops (`/healthz`, `/readyz`, `/version`; `content/tests/ops/test_health.py`). Nothing to build.
 - **The "Image generator ↗" link-out** (sidebar, site page, page page; `ZER0_IMAGE_GENERATOR_URL`, only `http(s)` accepted, default `http://localhost:3000`) is covered by the imagegen.* rows (G6's Media area). Nothing to build.

@@ -1,0 +1,4 @@
+# A zer0-pages-style Jekyll site whose source is a subdirectory, for the importer's tests of preview images and of files the site does not publish.
+title: Source Site
+url: "https://source.example"
+source: src

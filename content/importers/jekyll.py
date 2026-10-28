@@ -11,7 +11,7 @@ One Jekyll site becomes one `SiteRootPage` (and one Wagtail `Site`) with a
 | `_books/<book>/<chapter>.md`                | `ChapterPage` under its book                 |
 | any other document or page with front matter | `StandardPage`                              |
 | `title`, `description`, `seo_title`        | `title`, `search_description`, `seo_title`   |
-| `preview` / `image`                         | a Wagtail image in the site's collection     |
+| `preview` / `image`                         | a Wagtail image (SVG too) in the site's collection, the file found where Jekyll serves it (`preview_file`) |
 | every other front-matter key                | `front_matter`, in source order              |
 | the body                                    | StreamField blocks (importers/markdown.py)   |
 
@@ -237,21 +237,43 @@ def _is_draft(doc: Document) -> bool:
 # ── images ─────────────────────────────────────────────────────────────────
 
 
+def preview_file(root: Path, source: str, value: str) -> Path | None:
+    """The file a front-matter `preview`/`image` value names, looked up where
+    the site serves it from (rails.assets-terms): `<source>/<value>`, then
+    `<source>/assets/<value>` — the image engine writes `/images/previews/x.png`
+    for a file in `assets/images/previews/`, and the theme adds the prefix —
+    then `<root>/<value>`, without the value's query or fragment. `source` is
+    the source directory relative to the root ("" when it is the root). Every
+    candidate is confined like any other disk path (sites/writer.py): a plain
+    path, no symlink at any component, its realpath inside the root. None for
+    an external URL or a file that is not in the site."""
+    if "://" in value:
+        return None
+    path = value.split("#", 1)[0].split("?", 1)[0].lstrip("/")
+    prefix = f"{source}/" if source else ""
+    for candidate in dict.fromkeys((f"{prefix}{path}", f"{prefix}assets/{path}", path)):
+        try:
+            return writer.confined_file(root, candidate)
+        except writer.Refused:  # NotFound included: try the next place the site serves it from
+            continue
+    return None
+
+
 def import_images(root: Path, config: dict, docs: list[Document], collection: Collection) -> dict:
-    """Front-matter preview images that exist on disk → Wagtail images, one per
-    distinct file, in the site's collection. Returns {front-matter path: image}."""
-    source = (root / str(config.get("source", "."))).resolve()
+    """Front-matter preview images that exist in the site → Wagtail images, one
+    per distinct file, in the site's collection; an SVG is one too (Willow reads
+    it with defusedxml). Returns {front-matter value: image}."""
+    real_root = writer.root_of(root)
+    source = catalog.confine(real_root, real_root, config.get("source"), "source")
+    source = "" if source == real_root else source.relative_to(real_root).as_posix()
     Image = get_image_model()
     out = {}
     for doc in docs:
         value = doc.front_matter.get("preview") or doc.front_matter.get("image")
-        if not isinstance(value, str) or value in out or "://" in value:
+        if not isinstance(value, str) or value in out:
             continue
-        for base in (source, root):
-            path = (base / value.lstrip("/")).resolve()
-            if str(path).startswith(str(root.resolve())) and path.is_file() and not path.is_symlink():
-                break
-        else:
+        path = preview_file(real_root, source, value)
+        if path is None:
             continue
         data = path.read_bytes()
         digest = hashlib.sha256(data).hexdigest()
@@ -259,8 +281,8 @@ def import_images(root: Path, config: dict, docs: list[Document], collection: Co
         if image is None:
             with path.open("rb") as fh:
                 image = Image(title=path.stem, collection=collection, content_hash=digest)
-                image.file = ImageFile(fh, name=path.name)
                 try:
+                    image.file = ImageFile(fh, name=path.name)  # reads the dimensions: a broken file raises here
                     image.save()
                 except Exception:  # noqa: BLE001 — an unreadable image is skipped, the page still imports
                     continue

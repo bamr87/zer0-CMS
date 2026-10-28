@@ -20,6 +20,9 @@ from importers.models import ImportedSource
 from outbox.models import OutboxEvent
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "jekyll" / "site"
+# A site whose `source:` is a subdirectory, as zer0-pages's is: preview images and publish states.
+SOURCE_SITE = FIXTURE.parent / "source-site"
+POSTS = "src/_posts"
 REPO = Path(settings.REPO_ROOT)
 
 
@@ -30,8 +33,8 @@ def imported(db):
     return report
 
 
-def page_at(rel):
-    return ImportedSource.objects.get(site_key="fixture", legacy_path=rel).page.specific
+def page_at(rel, site="fixture"):
+    return ImportedSource.objects.get(site_key=site, legacy_path=rel).page.specific
 
 
 @pytest.mark.django_db
@@ -189,6 +192,63 @@ def test_a_page_made_in_wagtail_gets_a_jekyll_path(imported, tmp_path):
         text.startswith("---\ntitle: Made in Wagtail\ndate: 2026-09-01 00:00:00 +0000\n")
         and "Written in the CMS." in text
     )
+
+
+@pytest.mark.django_db
+def test_a_preview_under_assets_is_found_like_the_engine_finds_it(tmp_path):
+    """rails.assets-terms: `preview: /images/previews/x.png` is a file in the
+    source's `assets/images/previews/` (sites/zer0-pages, sites/2005), an SVG is
+    imported like any other image, an `/assets/…` value is the same file, and
+    an external or missing one sets nothing and keeps its key."""
+    report = import_site(SOURCE_SITE, "sourced")
+    assert not report.errors, report.errors
+    engine = page_at(f"{POSTS}/2026-01-01-engine-preview.md", "sourced")
+    assert engine.preview_image is not None and engine.preview_image.width == 8
+    assert engine.preview_image.collection.name == "site: sourced"
+    svg = page_at(f"{POSTS}/2026-01-02-svg-preview.md", "sourced").preview_image
+    assert svg is not None and svg.is_svg() and (svg.width, svg.height) == (16, 9)
+    assets = page_at(f"{POSTS}/2026-01-03-assets-preview.md", "sourced")
+    assert assets.preview_image == engine.preview_image  # one file, one image; the query is not part of it
+    external = page_at(f"{POSTS}/2026-01-04-external-preview.md", "sourced")
+    assert external.preview_image is None and external.front_matter["preview"] == "https://images.example/x.png"
+    assert page_at(f"{POSTS}/2026-01-05-missing-preview.md", "sourced").preview_image is None
+    # The front matter still names the file as written, so every file exports byte for byte.
+    export = export_site("sourced", tmp_path, include_drafts=True)
+    assert export.rendered == [] and sorted(export.verbatim) == sorted(report.created)
+    for rel in export.verbatim:
+        assert (tmp_path / rel).read_bytes() == (SOURCE_SITE / rel).read_bytes(), rel
+
+
+@pytest.mark.django_db
+def test_a_preview_is_read_only_through_plain_paths_inside_the_site(tmp_path):
+    """A preview is confined like every disk path (sites/writer.py): a symlink
+    at any component — even one that stays inside the site — or a `..` that
+    leaves it is never read; a file that is not an image is skipped, and its
+    page still imports."""
+    import shutil
+
+    site = tmp_path / "site"
+    shutil.copytree(SOURCE_SITE, site)
+    previews = site / "src/assets/images/previews"
+    (previews / "alias.png").symlink_to("engine.png")
+    (tmp_path / "elsewhere").mkdir()
+    shutil.copy(previews / "engine.png", tmp_path / "elsewhere" / "far.png")
+    shutil.copy(previews / "engine.png", tmp_path / "outside.png")
+    (previews / "linked").symlink_to(tmp_path / "elsewhere", target_is_directory=True)
+    (previews / "broken.png").write_bytes((previews / "engine.png").read_bytes()[:40])
+    values = {
+        "alias": "/images/previews/alias.png",
+        "linked": "/assets/images/previews/linked/far.png",
+        "escape": "/../../outside.png",
+        "broken": "/images/previews/broken.png",
+    }
+    for slug, value in values.items():
+        (site / POSTS / f"2026-02-01-{slug}.md").write_text(f"---\ntitle: {slug}\npreview: {value}\n---\n\nText.\n")
+    report = import_site(site, "confined")
+    assert not report.errors, report.errors
+    for slug in values:
+        assert page_at(f"{POSTS}/2026-02-01-{slug}.md", "confined").preview_image is None, slug
+    assert page_at(f"{POSTS}/2026-01-01-engine-preview.md", "confined").preview_image is not None
 
 
 # The theme's docs site (376 files) is the largest fixture, and it lives in its
