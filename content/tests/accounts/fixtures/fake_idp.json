@@ -1,0 +1,77 @@
+{
+  "_comment": "A fake OpenID Connect IdP's answers, recorded once (tests/accounts/test_providers.py replays them with `responses`; nothing reaches a network). The ID token's signature is not checked in the code flow (the platform fetched it from the token endpoint itself, OpenID Connect Core 3.1.3.7), its issuer, audience and expiry are; it expires in 2100.",
+  "issuer": "https://idp.example",
+  "discovery": {
+    "issuer": "https://idp.example",
+    "authorization_endpoint": "https://idp.example/oauth2/authorize",
+    "token_endpoint": "https://idp.example/oauth2/token",
+    "userinfo_endpoint": "https://idp.example/oauth2/userinfo",
+    "jwks_uri": "https://idp.example/oauth2/keys",
+    "response_types_supported": [
+      "code"
+    ],
+    "subject_types_supported": [
+      "public"
+    ],
+    "id_token_signing_alg_values_supported": [
+      "RS256",
+      "HS256"
+    ],
+    "scopes_supported": [
+      "openid",
+      "profile",
+      "email",
+      "groups"
+    ],
+    "token_endpoint_auth_methods_supported": [
+      "client_secret_post",
+      "client_secret_basic"
+    ],
+    "code_challenge_methods_supported": [
+      "S256"
+    ]
+  },
+  "token": {
+    "access_token": "fake-idp-access-token",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "scope": "openid profile email groups",
+    "id_token": "eyJhbGciOiJIUzI1NiIsImtpZCI6ImZha2UtaWRwLTEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlIiwiYXVkIjoiemVyMC1jbXMiLCJzdWIiOiJ1LTEwMDEiLCJpYXQiOjE3OTMwNTkyMDAsImV4cCI6NDEwMjQ0NDgwMCwiZW1haWwiOiJncmFjZUBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJncmFjZSIsIm5hbWUiOiJHcmFjZSBIb3BwZXIiLCJnaXZlbl9uYW1lIjoiR3JhY2UiLCJmYW1pbHlfbmFtZSI6IkhvcHBlciIsImdyb3VwcyI6WyJjbXMtZWRpdG9ycyIsImV2ZXJ5b25lIl19._sWgYerjpGKTusZDUy3MROCQ_46KvLXMM4m-kqsp7bY"
+  },
+  "userinfo": {
+    "sub": "u-1001",
+    "email": "grace@example.com",
+    "email_verified": true,
+    "preferred_username": "grace",
+    "name": "Grace Hopper",
+    "given_name": "Grace",
+    "family_name": "Hopper",
+    "groups": [
+      "cms-editors",
+      "everyone"
+    ]
+  },
+  "github": {
+    "token": {
+      "access_token": "fake-github-access-token",
+      "token_type": "bearer",
+      "scope": "read:user,user:email"
+    },
+    "user": {
+      "login": "octo-ada",
+      "id": 583231,
+      "name": "Ada Octo",
+      "email": null,
+      "html_url": "https://github.com/octo-ada",
+      "avatar_url": "https://avatars.githubusercontent.com/u/583231"
+    },
+    "emails": [
+      {
+        "email": "octo-ada@example.com",
+        "primary": true,
+        "verified": true,
+        "visibility": "public"
+      }
+    ]
+  }
+}
