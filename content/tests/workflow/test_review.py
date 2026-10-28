@@ -75,6 +75,32 @@ def test_clean_reviews_approve_in_order_and_leave_publishing_to_a_person(
 
 
 @pytest.mark.django_db
+def test_the_brand_review_leaves_the_built_in_bans_off_a_chapter_whose_book_switched_them_off(
+    site_root, editor, django_capture_on_commit_callbacks
+):
+    """PLAN P-D7: the review judges a book's chapter as propose and accept do; the site's own bans still hold."""
+    from cms.models import BookPage, ChapterPage
+    from sites.models import SiteSettings
+
+    own = SiteSettings.for_site(site_root.get_site())
+    own.banned_patterns = [{"name": "nightly", "pattern": r"\bnightly\b"}]
+    own.save()
+    book = BookPage(title="A novel", slug="a-novel", builtin_bans=False)
+    site_root.add_child(instance=book)
+    states = []
+    for number, text in ((1, "It was a revolutionary night."), (2, "The nightly ferry was late.")):
+        chapter = ChapterPage(title=f"Chapter {number}", slug=f"ch0{number}", number=number, live=False)
+        chapter.body = [{"type": "markdown", "value": text}]
+        book.add_child(instance=chapter)
+        chapter.save_revision()
+        with django_capture_on_commit_callbacks(execute=True):
+            states.append(workflow_with("brand").start(chapter, editor))
+    for state in states:
+        state.refresh_from_db()
+    assert [state.status for state in states] == ["in_progress", "needs_changes"]
+
+
+@pytest.mark.django_db
 def test_an_agent_review_cannot_be_the_last_task(site_root, editor, django_capture_on_commit_callbacks):
     page = make_article(site_root, "Last", publish=False, body=[{"type": "markdown", "value": "Fine."}])
     with django_capture_on_commit_callbacks(execute=True):

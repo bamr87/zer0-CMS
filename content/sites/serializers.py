@@ -131,6 +131,7 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             "navigation",
             "brand_voice",
             "banned_patterns",
+            "chapter_builtin_bans",
             "skin",
             "design_tokens",
             "monthly_budget_usd",
