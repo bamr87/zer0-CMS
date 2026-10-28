@@ -6,11 +6,14 @@ an agent token refused (an agent works through the tool registry)."""
 
 from pathlib import Path
 
+import pytest
 from django.contrib.auth.models import Permission
+from wagtail.models import Site
 
 from agents.models import AgentRun
+from agents.registry import ToolContext, ToolError, registry
 from aieo import services
-from aieo.models import Audit, Pattern
+from aieo.models import Audit, BrandContext, Pattern
 from aieo.prompts import AGENTS
 
 from .conftest import answer
@@ -118,6 +121,50 @@ def test_the_aieo_agents_are_listed_and_run_with_the_sites_context(
     assert "## Content\n\n# Nightly backups" in sent and "Plain and warm." in sent
     assert "meta title options" in fake.calls[0]["system"]  # AIEO's meta-creator prompt
     assert api(alice).post("/api/v2/aieo/agents/run/", {"agent": "aieo-writer"}, format="json").status_code == 422
+
+
+def test_a_sites_context_and_its_search_console_rows_reach_its_editors_alone_however_asked(
+    alice, bob, api, agent, fake, page, django_capture_on_commit_callbacks
+):
+    """The brand context, its keywords and competitors, and the priorities from a site's Search Console rows are its
+    editors' (context/<site>/ is a 404 to anyone else): a score, an agent's prompt and the priorities tool ask the
+    same, so none of them hands another site's to someone who names it — a person, or an agent over MCP."""
+    from aieo.models import Connector, ConnectorData
+
+    site = page.get_site()
+    BrandContext.objects.update_or_create(
+        site=site,
+        defaults={
+            "brand_voice": "# Voice\n\nTOP-SECRET-VOICE",
+            "competitors": {"competitors": [], "keywords": ["secret-keyword"], "topics": ["secret topic"]},
+        },
+    )
+    gsc = Connector.objects.create(site=site, kind=Connector.GSC, options={"site_url": "sc-domain:x"})
+    ConnectorData.objects.create(connector=gsc, report="queries", rows=[{"query": "secret query", "impressions": 9}])
+    other = Site.objects.create(hostname="other.example.com", port=80, root_page=site.root_page)
+    for target in (site, other):  # bob edits no site: each is a 404 that names nothing, and nothing is made
+        assert api(bob).get(f"/api/v2/aieo/context/{target.pk}/").status_code == 404
+        scored = api(bob).post("/api/v2/aieo/score/", {"content": "hello there", "site": target.pk}, format="json")
+        assert scored.status_code == 404 and "secret" not in scored.content.decode()
+        ran = api(bob).post(
+            "/api/v2/aieo/agents/run/", {"agent": "aieo-meta-creator", "content": "x", "site": target.pk}, format="json"
+        )
+        assert ran.status_code == 404
+    assert not BrandContext.objects.filter(site=other).exists() and not AgentRun.objects.filter(started_by=bob).exists()
+    mine = api(alice).post("/api/v2/aieo/score/", {"content": "hello there", "site": site.pk}, format="json").json()
+    assert mine["result"]["keyword_analysis"]["primary"]["keyword"] == "secret-keyword"
+    # An agent over MCP is asked the same: `agent:aieo` holds no page rights, so it edits no site.
+    ctx = ToolContext(user=agent("aieo").user, agent=agent("aieo"))
+    for name, args in (
+        ("aieo.run_agent", {"agent": "meta-creator", "content": "x", "site": site.pk}),
+        ("aieo.run_agent", {"agent": "meta-creator", "content": "x", "site": 999}),
+        ("aieo.priorities", {"site": site.pk}),
+        ("aieo_priorities", {"site": site.pk}),
+    ):
+        with pytest.raises(ToolError) as refused:
+            registry.call(name, args, ctx)
+        assert refused.value.code == "not_found" and "secret" not in refused.value.message
+    assert not AgentRun.objects.filter(started_by=agent("aieo").user, input__kind="assistant").exists()
 
 
 def test_the_brand_context_and_the_lifecycle_are_the_sites_editors(alice, bob, api, page):

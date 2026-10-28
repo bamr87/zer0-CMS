@@ -26,12 +26,12 @@ from wagtail.models import Page, Site
 
 from agents.models import AgentRun
 from ai import crypto, providers
-from ai.models import Assistant, Visibility, sites_for, usable
+from ai.models import Assistant, Visibility, is_staff, sites_for, usable
 from ai.services import check_page, check_provider, provider_slug, run_assistant, stable_id, start
 from cms.models import BasePage
 from graph.services import embed_object, knn
 from importers.markdown import block_to_markdown, from_blocks, to_blocks
-from ops.errors import Conflict, Forbidden, Invalid, Unavailable
+from ops.errors import Conflict, Forbidden, Invalid, NotFound, Unavailable
 from research import fetch
 
 from . import analyzers, scoring
@@ -69,8 +69,18 @@ def bundled(key: str, user) -> Assistant:
     return row
 
 
+def editor_of(user, site):
+    """`site`, if `user` edits it (staff: every site), else a 404 that names nothing: asked before a site's brand
+    context, its keywords and competitors, or its Search Console rows reach anyone, whichever surface asked. No site
+    stays no site."""
+    if site is None or is_staff(user) or (user is not None and user.is_authenticated and site.pk in sites_for(user)):
+        return site
+    raise NotFound(f"no site {site.pk}")
+
+
 def context_for(site) -> BrandContext | None:
-    """A site's brand context (made from the templates the first time it is read), or None for no site."""
+    """A site's brand context (made from the templates the first time it is read), or None for no site — of a site
+    the caller has asked `editor_of` about, or one the platform resolved for the person (their page's, their row's)."""
     return BrandContext.for_site(site) if site is not None else None
 
 
@@ -103,7 +113,7 @@ def _person(user) -> None:
 
 def _placement(user, site, visibility) -> dict:
     """An owned row's site and visibility: a site the person edits (staff: any), shared only when asked."""
-    if site is not None and not (user.is_staff or user.is_superuser) and site.pk not in sites_for(user):
+    if site is not None and not is_staff(user) and site.pk not in sites_for(user):
         raise Forbidden(f"{user} does not edit site {site.pk}")
     visibility = visibility or (Visibility.SITE if site is not None else Visibility.PRIVATE)
     if visibility == Visibility.SITE and site is None:
@@ -114,13 +124,14 @@ def _placement(user, site, visibility) -> dict:
 # ── scoring at once ────────────────────────────────────────────────────────
 
 
-def quick_score(content: str, format: str = "markdown", *, site=None) -> dict:
-    """The heuristic score of a text, now, with nothing recorded — what the editor shows while a person types."""
+def quick_score(content: str, format: str = "markdown", *, site=None, user=None) -> dict:
+    """The heuristic score of a text, now, with nothing recorded; with a site `user` edits, against its target
+    keywords and its competitors' topics."""
     if not content.strip():
         raise Invalid("there is nothing to score")
     if len(content) > NOW_MAX:
         raise Invalid(f"a text is scored at once up to {NOW_MAX} characters: audit a longer one")
-    return scoring.score(content, format, library(), **signals(site))
+    return scoring.score(content, format, library(), **signals(editor_of(user, site)))
 
 
 # ── audits ─────────────────────────────────────────────────────────────────
@@ -422,8 +433,9 @@ def agent_prompt(*, content: str = "", page=None, site=None, inputs: dict | None
 
 
 def run_agent(user, key: str, *, content: str = "", page=None, site=None, inputs=None, trigger="rest") -> AgentRun:
-    """One of the AIEO agents on a text or a page, with the site's context: a run of its bundled assistant whose
-    structured answer a person reads (and, in the editor, may land as suggestions through the AI panel)."""
+    """One of the AIEO agents on a text or a page, with the context of a site `user` edits (the page's, unless they
+    name one): a run of its bundled assistant whose structured answer a person reads (and, in the editor, may land as
+    suggestions through the AI panel)."""
     from .prompts import AGENTS
 
     _person(user)
@@ -432,6 +444,7 @@ def run_agent(user, key: str, *, content: str = "", page=None, site=None, inputs
     if page is not None:
         page = editable(user, page)
         site = site or page.get_site()
+    site = editor_of(user, site)
     prompt = agent_prompt(content=content, page=page, site=site, inputs=inputs)
     if not prompt.strip():
         raise Invalid("give the agent something to read: a text, a page or its inputs")
@@ -584,10 +597,11 @@ def latest(site, report: str, *, before=None) -> ConnectorData | None:
     return rows.first()
 
 
-def priorities(site) -> dict:
-    """The ranked content-update queue and the quick wins: Search Console's last rows through AIEO's opportunity
-    rule — the trend is the change in impressions since the sync before, and a query that names one of the site's
-    target keywords is a business priority."""
+def priorities(user, site) -> dict:
+    """The ranked content-update queue and the quick wins of a site `user` edits: Search Console's last rows through
+    AIEO's opportunity rule — the trend is the change in impressions since the sync before, and a query that names
+    one of the site's target keywords is a business priority."""
+    editor_of(user, site)
     snapshot = latest(site, "queries")
     if snapshot is None:
         return {"site": site.pk, "fetched_at": None, "queue": [], "quick_wins": []}

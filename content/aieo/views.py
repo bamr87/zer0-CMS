@@ -41,7 +41,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from wagtail.models import Site
 
-from ai.models import Assistant, sites_for
+from ai.models import Assistant
 from ai.serializers import RunRefSerializer
 from ai.services import stable_id
 from ai.views import IDEMPOTENCY, CanEdit, OwnedViewSet, accepted, idempotent, page_or_404
@@ -75,12 +75,6 @@ def site_param(request, *, required=False):
     return site
 
 
-def editor_of(user, site):
-    if not (user.is_staff or user.is_superuser or site.pk in sites_for(user)):
-        raise NotFound(f"no site {site.pk}")
-    return site
-
-
 class Newest(CursorPagination):
     ordering = "-created_at"
     page_size = 50
@@ -98,7 +92,7 @@ class ScoreView(APIView):
 
     def post(self, request):
         body = valid(s.AieoScoreInputSerializer, request)
-        result = services.quick_score(body["content"], body["format"], site=body.get("site"))
+        result = services.quick_score(body["content"], body["format"], site=body.get("site"), user=request.user)
         return Response(s.AieoScoreSerializer(result).data)
 
 
@@ -506,8 +500,8 @@ class PrioritiesView(APIView):
     permission_classes = [IsPerson]
 
     def get(self, request):
-        site = editor_of(request.user, site_param(request, required=True))
-        return Response(s.AieoPrioritiesSerializer(services.priorities(site)).data)
+        found = services.priorities(request.user, site_param(request, required=True))
+        return Response(s.AieoPrioritiesSerializer(found).data)
 
 
 @extend_schema_view(
@@ -527,7 +521,7 @@ class ContextView(APIView):
         site = Site.objects.filter(pk=site_id).first()
         if site is None:
             raise NotFound(f"no site {site_id}")
-        return BrandContext.for_site(editor_of(request.user, site))
+        return BrandContext.for_site(services.editor_of(request.user, site))
 
     def get(self, request, site_id):
         return Response(s.AieoBrandContextSerializer(self._context(request, site_id)).data)
@@ -549,5 +543,5 @@ class LifecycleView(APIView):
     permission_classes = [IsPerson]
 
     def get(self, request):
-        site = editor_of(request.user, site_param(request, required=True))
+        site = services.editor_of(request.user, site_param(request, required=True))
         return Response(services.lifecycle(request.user, site))

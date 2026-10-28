@@ -348,7 +348,7 @@ def apply_pattern(ctx, pattern_name, content):
     "aieo.run_agent",
     effect="propose",
     description=(
-        "Run one of the AIEO agents on a text or a page, with the site's brand context: "
+        "Run one of the AIEO agents on a text or a page, with the brand context of a site you edit: "
         + ", ".join(key.removeprefix("aieo-") for key in AGENTS)
         + ". Returns the run; its structured answer is a proposal."
     ),
@@ -367,6 +367,8 @@ def apply_pattern(ctx, pattern_name, content):
 )
 def run_agent(ctx, agent, content="", page_id=None, site=None, inputs=None):
     where = Site.objects.filter(pk=site).first() if site else None
+    if site and where is None:
+        raise ToolError("not_found", f"no site {site}")
     run = _calling(
         services.run_agent,
         ctx.user,
@@ -416,14 +418,14 @@ def research(ctx, topic):
 @tool(
     "aieo.priorities",
     effect="read",
-    description="A site's ranked content-update queue and quick wins, from its last Search Console sync.",
+    description="The ranked content-update queue and quick wins of a site you edit, from its last Search Console sync.",
     input_schema=obj({"site": {"type": "integer"}}, required=["site"]),
 )
 def priorities(ctx, site):
     found = Site.objects.filter(pk=site).first()
     if found is None:
         raise ToolError("not_found", f"no site {site}")
-    data = services.priorities(found)
+    data = _calling(services.priorities, ctx.user, found)  # a site the agent edits, as REST asks of a person
     return {**data, "fetched_at": data["fetched_at"].isoformat() if data["fetched_at"] else None}
 
 

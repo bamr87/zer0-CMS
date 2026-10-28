@@ -92,7 +92,7 @@ def test_a_keys_own_token_uri_is_never_where_the_grant_goes(site, google):
     assert row.error == ""
 
 
-def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(site, google):
+def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(alice, site, google):
     BrandContext.objects.update_or_create(
         site=site, defaults={"competitors": {"keywords": ["backup"], "competitors": [], "topics": []}}
     )
@@ -119,7 +119,7 @@ def test_search_console_rows_rank_the_update_queue_by_aieos_opportunity_rule(sit
     rows[0]["impressions"] = 6000
     query.respond(200, json={"rows": rows})
     assert tasks.sync_connector(row.pk) == Connector.OK
-    ranked = services.priorities(site)
+    ranked = services.priorities(alice, site)
     first = ranked["queue"][0]
     assert first["query"] == "nightly backup" and first["components"]["business_priority"] == 100
     assert first["components"]["trend"] == 100  # impressions up 50% since the sync before
