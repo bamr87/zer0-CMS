@@ -150,3 +150,36 @@ def test_a_model_chosen_for_the_probe_goes_to_its_own_provider_only(alice, fake,
     with providers.override(FakeProvider([probe([])]), "openai") as openai:
         worker(services.check_citations, query, user=alice)
     assert fake.calls[0]["model"] == "fake-only-model" and openai.calls[0]["model"] == "fake-1"
+
+
+def test_a_question_is_scheduled_whenever_it_is_switched_to_a_schedule_and_only_its_keepers_move_it(
+    alice, bob, api, fake, worker, django_capture_on_commit_callbacks
+):
+    """A question made to be asked on request and given an interval later — or switched back on — joins beat's queue;
+    switched off, it leaves it. Asking it now is open to everyone it is shared with, but only its owner's asking (or
+    beat's) moves its schedule."""
+    made = (
+        api(alice)
+        .post(
+            "/api/v2/aieo/citations/queries/",
+            {
+                "prompt": "Who explains backups?",
+                "domain": "backups.example.com",
+                "interval_days": 0,
+                "visibility": "shared",
+            },
+            format="json",
+        )
+        .json()
+    )
+    url = f"/api/v2/aieo/citations/queries/{made['id']}/"
+    assert made["next_check_at"] is None
+    assert api(alice).patch(url, {"interval_days": 7}, format="json").json()["next_check_at"]
+    assert api(alice).patch(url, {"active": False}, format="json").json()["next_check_at"] is None
+    scheduled = api(alice).patch(url, {"active": True}, format="json").json()
+    assert scheduled["next_check_at"] and services.due_queries().filter(public_id=made["id"]).exists()
+    fake.script = [probe([])]
+    with django_capture_on_commit_callbacks(execute=True):
+        assert api(bob).post(f"{url}check/").status_code == 202
+    after = api(alice).get(url).json()
+    assert (after["next_check_at"], after["last_checked_at"]) == (scheduled["next_check_at"], None)

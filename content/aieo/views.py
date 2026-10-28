@@ -378,10 +378,10 @@ class CitationQueryViewSet(OwnedViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
 
     def perform_create(self, serializer):
-        row = serializer.save(owner=self.request.user)
-        if row.interval_days and row.active:
-            row.next_check_at = timezone.now()
-            row.save(update_fields=["next_check_at"])
+        services.schedule(serializer.save(owner=self.request.user))
+
+    def perform_update(self, serializer):
+        services.schedule(serializer.save())
 
     @extend_schema(
         summary="Ask every engine the question now: a check and a run per engine (202)",

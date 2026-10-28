@@ -470,8 +470,19 @@ def engines(query: CitationQuery) -> list[str]:
     return [str(e) for e in query.engines or []] or [providers.default_slug()]
 
 
+def schedule(query: CitationQuery) -> CitationQuery:
+    """A tracked question on beat's queue while it is active with an interval — due now if it was not scheduled — and
+    off it otherwise; asked when it is made or changed."""
+    due = (query.next_check_at or timezone.now()) if query.active and query.interval_days else None
+    if due != query.next_check_at:
+        CitationQuery.objects.filter(pk=query.pk).update(next_check_at=due)
+        query.next_check_at = due
+    return query
+
+
 def check_citations(query: CitationQuery, *, user, trigger: str = "rest") -> list[CitationCheck]:
-    """Ask every engine of the query, now: a check and a run per engine (the probe answers through that provider)."""
+    """Ask every engine of the query, now: a check and a run per engine (the probe answers through that provider).
+    Everyone it is shared with may ask; only its keepers' asking — or beat's — moves its schedule on."""
     if not query.can_edit(user) and not usable(query, user):
         raise Forbidden(f"citation query {query.public_id} is not {user}'s to check")
     bundled(PROBE, user)  # the probe every check's run answers with, if the person may use it
@@ -483,6 +494,8 @@ def check_citations(query: CitationQuery, *, user, trigger: str = "rest") -> lis
             check.run = start(user, {"kind": "aieo.citation", "check": str(check.public_id)}, trigger=trigger)
             check.save(update_fields=["run"])
             made.append(check)
+        if trigger != "schedule" and not query.can_edit(user):
+            return made
         now = timezone.now()
         query.last_checked_at = now
         query.next_check_at = now + timedelta(days=query.interval_days) if query.interval_days else None
