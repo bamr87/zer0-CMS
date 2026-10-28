@@ -19,7 +19,7 @@ steps:
   - wait: { selector: "role=heading[name='Home']" }
   - click: "role=link[name='Review']"
   - wait: { selector: "role=article" }
-  - expect: { visible: "text=Run #" }
+  - expect: { visible: "text=/^Run [0-9a-f]{8}$/" }  # a run by the first eight characters of its public id
   - expect: { visible: "ins" }
   - screenshot: inbox-with-diff
   - click: "role=button[name='Accept']"
