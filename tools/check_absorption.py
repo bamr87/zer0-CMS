@@ -28,8 +28,9 @@ It asserts:
     `theme_ratchet:` prefix within its ceiling, or is listed in `theme_allowed:`
     (the Jekyll-theme option's own files, and this gate). Content that merely talks
     about the theme (Markdown, a site's `_posts`/`_docs`/`_data`, `docs/`, test
-    fixtures that model outside repositories, the workspace tool's golden
-    recordings of what its Ruby predecessor printed about the old tree, and the
+    fixtures that model outside repositories, the workspace tool's and the
+    distribution lane's golden recordings of what their Ruby predecessors
+    printed or computed about the old tree and its sites' pages, and the
     recordings of what each site's Jekyll build wrote, `web/site/fixtures/`,
     whose paths include the theme's own asset names) is not counted — it is
     content, and content is kept;
@@ -39,10 +40,13 @@ It asserts:
     command line or a CI job, which prove nothing by existing;
   * **the sources** — every capability has a unique id, a known status and a
     `target` that is a platform capability id; a `done` capability names a `proof` that is such a test; a `dropped`
-    one names the owner's decision in `decided_by`;
+    one names the owner's decision in `decided_by`; a `specified` one — its source deleted by the owner's decision
+    before it moved, what it did kept as a written spec — names that decision in `decided_by` and the spec, a file
+    that exists, in `spec`, and keeps a live `target`: the platform still owes it;
   * **the deletion gate** — a source whose `path` no longer exists has no
     capability left `missing` or `partial`. Deleting a directory before its
-    capabilities moved is exactly the loss ADR 0006 forbids.
+    capabilities moved is exactly the loss ADR 0006 forbids, unless the owner
+    decided it and what each capability did survives as its spec (`specified`).
 
 `--report` prints the burn-down: Ruby files per prefix, capability status per
 source, surface coverage per platform domain, and every capability the studio
@@ -74,12 +78,19 @@ RUBY_NAMES = {"Gemfile", "Gemfile.lock", "Rakefile", ".ruby-version", "Guardfile
 THEME_TERMS = re.compile(rb"zer0-mistakes|jekyll-theme-zer0|ZER0_THEME_")
 THEME_SUFFIXES = (".py", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".rb", ".yml", ".yaml", ".json", ".gemspec", ".toml")
 THEME_NAMES = {"Gemfile", "Gemfile.lock", "Dockerfile"}
-THEME_SKIP_PREFIXES = ("docs/", "src/test/fixtures/", "features/", "tools/workspace/tests/golden/", "web/site/fixtures/")
+THEME_SKIP_PREFIXES = (
+    "docs/",
+    "src/test/fixtures/",
+    "features/",
+    "tools/workspace/tests/golden/",
+    "content/tests/distribution/golden/",
+    "web/site/fixtures/",
+)
 # A proof is a test: a test file (under tests/ or test/, test_*, *.test.ts, *_test.py), optionally
 # followed by `::` and a test id in it (`test_x`, `SomeTest`, `SomeTest::test_x`, `test_x[case]`).
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*$|[._]test\.[a-z]+$")
 TEST_ID = re.compile(r"[A-Za-z_]\w*(\[[^\]]*\])?(::[A-Za-z_]\w*(\[[^\]]*\])?)*")
-STATUSES = ("missing", "partial", "done", "dropped")
+STATUSES = ("missing", "partial", "done", "dropped", "specified")
 OPEN = ("missing", "partial")
 SURFACES = ("api", "studio", "extension", "mcp", "site", "ops")
 SURFACE_STATUSES = ("missing", "partial", "done")
@@ -156,6 +167,16 @@ def proof_problem(proof: str, exists: Callable[[str], bool]) -> str | None:
     return None
 
 
+def spec_problem(spec: str, exists: Callable[[str], bool]) -> str | None:
+    """What is wrong with a `specified` row's spec, or None: a file that exists, optionally `#` a section of it."""
+    path = spec.partition("#")[0]
+    if not path:
+        return "specified without a spec (the file that keeps what its deleted source did)"
+    if not exists(path):
+        return f"spec {path} does not exist"
+    return None
+
+
 def check_platform(platform: list[dict], exists: Callable[[str], bool]) -> list[str]:
     errors: list[str] = []
     seen: set[str] = set()
@@ -220,6 +241,11 @@ def check_ledger(sources: list[dict], exists: Callable[[str], bool], targets: se
                 errors.append(f"{where}: {problem}")
             if status == "dropped" and not cap.get("decided_by"):
                 errors.append(f"{where}: dropped without decided_by (only the owner drops a capability)")
+            if status == "specified":
+                if not cap.get("decided_by"):
+                    errors.append(f"{where}: specified without decided_by (only the owner deletes a source early)")
+                if problem := spec_problem(str(cap.get("spec") or ""), exists):
+                    errors.append(f"{where}: {problem}")
             if status in OPEN:
                 open_caps.append(cid)
         if open_caps and not exists(source["path"]):

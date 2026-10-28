@@ -47,15 +47,6 @@ class LoginSerializer(serializers.Serializer):
 # ── sites and pages ────────────────────────────────────────────────────────
 
 
-class SiteSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    name = serializers.CharField()
-    hostname = serializers.CharField()
-    port = serializers.IntegerField()
-    is_default = serializers.BooleanField()
-    root_page_id = serializers.IntegerField()
-
-
 class PageRefSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     title = serializers.CharField()

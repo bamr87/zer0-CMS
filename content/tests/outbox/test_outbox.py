@@ -98,8 +98,10 @@ def test_redis_streams_relay_and_consumer_round_trip():
 
 
 @pytest.mark.django_db
-def test_a_redelivered_event_is_handled_once_per_consumer():
+def test_a_redelivered_event_is_handled_once_per_consumer(monkeypatch):
     calls = []
+    # Only this test's consumer: the platform's own (distribution's drafts) are tested where they live.
+    monkeypatch.setitem(HANDLERS, "content.page.published", {})
 
     @handler("content.page.published", consumer="test.once")
     def count(envelope):

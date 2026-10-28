@@ -975,6 +975,264 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/distribution/channels/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The channels of the sites a person works on */
+        get: operations["distribution_channels_list"];
+        put?: never;
+        /** Set up a channel (people who manage channels) */
+        post: operations["distribution_channels_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/channels/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["distribution_channels_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["distribution_channels_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["distribution_channels_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/distribution/channels/{public_id}/check/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the target whether the credential works (on the worker); follow the channel */
+        post: operations["distribution_channels_check_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/channels/{public_id}/connect/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start connecting a LinkedIn account: the consent URL for its owner (state + PKCE) */
+        post: operations["distribution_channels_connect_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/channels/{public_id}/disconnect/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Forget the channel's credential here (and disarm it) */
+        post: operations["distribution_channels_disconnect_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/channels/{public_id}/ledger-file/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The channel's ledger as the file every lane reads and writes */
+        get: operations["distribution_channels_ledger_file_retrieve"];
+        put?: never;
+        /** Read a ledger file in (the extension's or a site's CI): what it published is never published again */
+        post: operations["distribution_channels_ledger_file_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/channels/{public_id}/statistics/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Read the channel's post statistics now (on the worker) */
+        post: operations["distribution_channels_statistics_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/ledger/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What has been published, keyed by canonical URL, with the latest statistics */
+        get: operations["distribution_ledger_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/oauth/linkedin/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where LinkedIn returns the account's owner; the code is exchanged on the worker */
+        get: operations["distribution_oauth_linkedin_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The queue: posts of the channels a person may see */
+        get: operations["distribution_posts_list"];
+        put?: never;
+        /** Compose a post of a page or a story for a channel (a draft) */
+        post: operations["distribution_posts_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A post, with every blocker it meets now and LinkedIn's exact payload */
+        get: operations["distribution_posts_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["distribution_posts_destroy"];
+        options?: never;
+        head?: never;
+        /** Change a post's text; an approved one goes back to draft */
+        patch: operations["distribution_posts_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/{public_id}/approve/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a draft (a person who may publish its page); the brand guard's errors block it */
+        post: operations["distribution_posts_approve_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/{public_id}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish an approved post: 202, the worker sends it; 409 with every blocker when it may not go */
+        post: operations["distribution_posts_publish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/{public_id}/record/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a post a person found at the target (after an unconfirmed attempt, or made by hand) */
+        post: operations["distribution_posts_record_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/distribution/posts/{public_id}/reject/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a post, with a reason */
+        post: operations["distribution_posts_reject_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/graph/neighbors/": {
         parameters: {
             query?: never;
@@ -1262,6 +1520,93 @@ export interface paths {
          * @description An owned row's API for people: newest first, by cursor.
          */
         post: operations["ideas_keep_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The jobs the caller may see, newest first */
+        get: operations["jobs_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["jobs_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/artifacts/{name}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One artifact of a job, as its media type */
+        get: operations["jobs_artifact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/cancel/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a queued job, or ask a running one to stop */
+        post: operations["jobs_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/stream/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A job's log as server-sent events
+         * @description `line` events (a JobLine) as the job writes them, then one `status` event and `end`.
+         */
+        get: operations["jobs_stream"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2447,6 +2792,134 @@ export interface paths {
         };
         get: operations["sites_list"];
         put?: never;
+        /** Register a site from its checkout; its first sync starts */
+        post: operations["sites_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sites_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a site's content source, renderer, domains or deploy target */
+        patch: operations["sites_update"];
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/doctor/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the site's checkout with zer0 doctor (a job)
+         * @description POST: start this view's kind of job for the site (202 with the job).
+         */
+        post: operations["sites_doctor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/export/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write the site's pages back into its checkout, under the stale-write guard (a job)
+         * @description POST: start this view's kind of job for the site (202 with the job).
+         */
+        post: operations["sites_export"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/findings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The last doctor run's findings */
+        get: operations["sites_findings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/settings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sites_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["sites_settings_update"];
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/sync/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync the site's files into the platform (a job)
+         * @description POST: start this view's kind of job for the site (202 with the job).
+         */
+        post: operations["sites_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/discover/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Checkouts that could be registered: workspace.yml's sites and the Jekyll roots under SITES_DIR */
+        get: operations["sites_discover"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -2755,6 +3228,8 @@ export interface components {
             /** @description The installed outbox harness's version. */
             harness: string;
         };
+        /** @enum {unknown} */
+        BlankEnum: "";
         Block: {
             /** @description Absent on a block that is new in this request. */
             id?: string;
@@ -3318,6 +3793,12 @@ export interface components {
             name: string;
             description?: string;
         };
+        /**
+         * @description * `files` - files — people still edit the site's files; sync brings them in
+         *     * `platform` - platform — the platform is the source; the files are generated
+         * @enum {string}
+         */
+        ContentSourceEnum: "files" | "platform";
         Context: {
             /** @description The request a task's model would be given, without calling it. */
             text: string;
@@ -3427,6 +3908,294 @@ export interface components {
             /** Format: uuid */
             pipeline?: string | null;
         };
+        DistributionBlocker: {
+            kind: string;
+            message: string;
+        };
+        DistributionChannel: {
+            /** Format: uuid */
+            readonly id: string;
+            site: number;
+            readonly site_name: string;
+            kind: components["schemas"]["DistributionKindEnum"];
+            readonly kind_label: string;
+            name: string;
+            /** @description What the kind needs; never a secret (README). */
+            settings?: {
+                [key: string]: unknown;
+            };
+            /** Format: uuid */
+            newsletter?: string | null;
+            /** @default  */
+            readonly newsletter_name: string;
+            readonly has_credential: boolean;
+            readonly secret_fields: string[];
+            /** @description LinkedIn came back; the worker is exchanging the code. */
+            readonly connecting: boolean;
+            /** @description Who it publishes as, as the target reports it. */
+            readonly account: string;
+            readonly scopes: string[];
+            /** Format: date-time */
+            readonly connected_at: string | null;
+            /** Format: date-time */
+            readonly expires_at: string | null;
+            /** Format: date-time */
+            readonly refresh_expires_at: string | null;
+            /** Format: date-time */
+            readonly checked_at: string | null;
+            readonly last_check: {
+                [key: string]: unknown;
+            };
+            readonly last_error: string;
+            /** @description Draft a post (never publish one) for each page of the site that goes live. */
+            auto_draft?: boolean;
+            /** @description Publishing to this channel is armed (a person's setting). */
+            armed?: boolean;
+            /** @description The deployment publishes to this kind. */
+            readonly deployment_armed: boolean;
+            readonly can_manage: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        DistributionChannelRequest: {
+            site: number;
+            kind: components["schemas"]["DistributionKindEnum"];
+            name: string;
+            /** @description What the kind needs; never a secret (README). */
+            settings?: {
+                [key: string]: unknown;
+            };
+            /** Format: uuid */
+            newsletter?: string | null;
+            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            credentials?: {
+                [key: string]: string;
+            };
+            /** @description Draft a post (never publish one) for each page of the site that goes live. */
+            auto_draft?: boolean;
+            /** @description Publishing to this channel is armed (a person's setting). */
+            armed?: boolean;
+        };
+        DistributionComposeRequest: {
+            /** Format: uuid */
+            channel: string;
+            page?: number | null;
+            /** Format: uuid */
+            story?: string | null;
+            /** @default article */
+            kind: components["schemas"]["DistributionPostKindEnum"];
+            title?: string;
+            description?: string;
+            commentary?: string;
+        };
+        DistributionConnect: {
+            /**
+             * Format: uri
+             * @description LinkedIn's consent screen, for the account's owner.
+             */
+            readonly url: string;
+        };
+        DistributionFinding: {
+            level: components["schemas"]["GuardLevelEnum"];
+            message: string;
+        };
+        /**
+         * @description * `linkedin` - LinkedIn
+         *     * `wordpress` - WordPress
+         *     * `github_pr` - GitHub pull request
+         *     * `email` - Email newsletter
+         * @enum {string}
+         */
+        DistributionKindEnum: "linkedin" | "wordpress" | "github_pr" | "email";
+        DistributionLedgerEntry: {
+            readonly id: number;
+            /** Format: uuid */
+            readonly channel: string;
+            readonly channel_name: string;
+            readonly channel_kind: string;
+            readonly key: string;
+            /** @description Empty for an attempt the target did not confirm. */
+            readonly urn: string;
+            readonly state: components["schemas"]["LedgerStateEnum"];
+            readonly kind: string;
+            /** Format: date-time */
+            readonly posted_at: string | null;
+            /** Format: date-time */
+            readonly attempted_at: string | null;
+            readonly error: string;
+            readonly source_file: string;
+            /** Format: uuid */
+            readonly post: string | null;
+            readonly page: number | null;
+            readonly latest: components["schemas"]["DistributionStatistic"] | null;
+        };
+        DistributionLedgerFile: {
+            readonly filename: string;
+            /** @description The ledger as a file: Python's json.dump, sorted, indented 2, ASCII. */
+            content: string;
+        };
+        DistributionLedgerFileRequest: {
+            /** @description The ledger as a file: Python's json.dump, sorted, indented 2, ASCII. */
+            content: string;
+        };
+        DistributionLedgerImport: {
+            added: number;
+            kept: number;
+            skipped: number;
+        };
+        /**
+         * @description * `person` - A person
+         *     * `agent` - An agent
+         *     * `auto` - Drafted when the page went live
+         * @enum {string}
+         */
+        DistributionOriginEnum: "person" | "agent" | "auto";
+        /**
+         * @description A post as the queue shows it; a person composes one with `DistributionCompose` and changes its text with
+         *     `DistributionPostEdit`.
+         */
+        DistributionPost: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly channel: string;
+            readonly channel_name: string;
+            readonly channel_kind: string;
+            readonly page: number | null;
+            /** @default  */
+            readonly page_title: string;
+            /** Format: uuid */
+            readonly story: string;
+            readonly kind: components["schemas"]["DistributionPostKindEnum"];
+            readonly title: string;
+            readonly description: string;
+            /** @description The text that goes out with it. */
+            readonly commentary: string;
+            /** @description The canonical URL — the ledger's key. */
+            readonly link: string;
+            readonly status: components["schemas"]["DistributionPostStatusEnum"];
+            readonly guard: components["schemas"]["DistributionFinding"][];
+            readonly origin: components["schemas"]["DistributionOriginEnum"];
+            readonly external_id: string;
+            readonly external_url: string;
+            readonly error: string;
+            readonly notes: string[];
+            /** @description Why it was rejected. */
+            readonly reason: string;
+            readonly created_by: string;
+            readonly approved_by: string;
+            /** Format: date-time */
+            readonly approved_at: string | null;
+            /** Format: date-time */
+            readonly attempted_at: string | null;
+            /** Format: date-time */
+            readonly published_at: string | null;
+            readonly can_publish: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description A post with what publishing it now would meet: every blocker, and for LinkedIn the exact payload. */
+        DistributionPostDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly channel: string;
+            readonly channel_name: string;
+            readonly channel_kind: string;
+            readonly page: number | null;
+            /** @default  */
+            readonly page_title: string;
+            /** Format: uuid */
+            readonly story: string;
+            readonly kind: components["schemas"]["DistributionPostKindEnum"];
+            readonly title: string;
+            readonly description: string;
+            /** @description The text that goes out with it. */
+            readonly commentary: string;
+            /** @description The canonical URL — the ledger's key. */
+            readonly link: string;
+            readonly status: components["schemas"]["DistributionPostStatusEnum"];
+            readonly guard: components["schemas"]["DistributionFinding"][];
+            readonly origin: components["schemas"]["DistributionOriginEnum"];
+            readonly external_id: string;
+            readonly external_url: string;
+            readonly error: string;
+            readonly notes: string[];
+            /** @description Why it was rejected. */
+            readonly reason: string;
+            readonly created_by: string;
+            readonly approved_by: string;
+            /** Format: date-time */
+            readonly approved_at: string | null;
+            /** Format: date-time */
+            readonly attempted_at: string | null;
+            /** Format: date-time */
+            readonly published_at: string | null;
+            readonly can_publish: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly blockers: components["schemas"]["DistributionBlocker"][];
+            readonly payload: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * @description * `article` - Article
+         *     * `update` - Text update
+         * @enum {string}
+         */
+        DistributionPostKindEnum: "article" | "update";
+        /**
+         * @description * `draft` - Draft — waiting for a person's approval
+         *     * `approved` - Approved
+         *     * `publishing` - Publishing
+         *     * `published` - Published
+         *     * `failed` - Failed
+         *     * `rejected` - Rejected
+         * @enum {string}
+         */
+        DistributionPostStatusEnum: "draft" | "approved" | "publishing" | "published" | "failed" | "rejected";
+        DistributionPublishRequest: {
+            /**
+             * @description Past a guard error, a ledger entry or an unconfirmed attempt — never approval or arming.
+             * @default false
+             */
+            force: boolean;
+        };
+        DistributionRecordRequest: {
+            /** @description What it was published as: a LinkedIn post URN, a post id, a URL. */
+            urn: string;
+        };
+        DistributionRejectRequest: {
+            reason?: string;
+        };
+        DistributionStatistic: {
+            /** Format: date */
+            readonly day: string;
+            readonly impressions: number;
+            readonly clicks: number;
+            readonly reactions: number;
+            readonly comments: number;
+            readonly shares: number;
+            readonly engagements: number;
+            /** Format: date-time */
+            readonly fetched_at: string;
+        };
+        DoctorFinding: {
+            check_id: string;
+            severity: components["schemas"]["IssueLevelEnum"];
+            file: string;
+            line: number | null;
+            rule: string;
+            evidence: string;
+            fingerprint: string;
+        };
         Document: {
             /** @description Inside the book, e.g. guides/act-1-chapters-01-05.md. */
             path: string;
@@ -3471,6 +4240,17 @@ export interface components {
         };
         ErrorEnvelope: {
             error: components["schemas"]["Error"];
+        };
+        ExportOptionsRequest: {
+            /**
+             * @description Write the latest revisions, not the live pages.
+             * @default false
+             */
+            include_drafts: boolean;
+            /** @description {path: sha256} as the caller saw each file; a file the platform re-indexed since is not written. */
+            base?: {
+                [key: string]: string;
+            };
         };
         /** @description `status` and `error`, from the run that fills the row. */
         FactCheck: {
@@ -3662,6 +4442,13 @@ export interface components {
             /** @description In order; replaced as a whole. */
             slots?: components["schemas"]["FrontSlotRequest"][];
         };
+        /**
+         * @description * `error` - error
+         *     * `warning` - warning
+         *     * `info` - info
+         * @enum {string}
+         */
+        GuardLevelEnum: "error" | "warning" | "info";
         /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
         Handoff: {
             /** @description The relay's number; none until delivered. */
@@ -3828,6 +4615,90 @@ export interface components {
             /** @description Its stories, in order. */
             story_ids?: string[];
         };
+        /**
+         * @description * `github-pages` - GitHub Pages' builder
+         *     * `jekyll-4` - the pinned Jekyll 4 image
+         * @enum {string}
+         */
+        JekyllServerEnum: "github-pages" | "jekyll-4";
+        Job: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description The handler that runs it: sync, export, doctor, … */
+            kind: string;
+            status: components["schemas"]["JobStatusEnum"];
+            /** @description It has ended: succeeded, failed or cancelled. */
+            is_final: boolean;
+            /** @description The Wagtail site it works on. */
+            site: number | null;
+            params?: unknown;
+            /** @description Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
+            readonly created_by: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            started_at?: string | null;
+            /** Format: date-time */
+            finished_at?: string | null;
+            cancel_requested?: boolean;
+            /** @description What the handler reports when it ends. */
+            result?: unknown;
+            error?: string;
+            artifacts: components["schemas"]["JobArtifact"][];
+        };
+        JobAccepted: {
+            job: components["schemas"]["Job"];
+        };
+        JobArtifact: {
+            name: string;
+            media_type?: string;
+            /** @description Characters. */
+            readonly size: number;
+        };
+        JobDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description The handler that runs it: sync, export, doctor, … */
+            kind: string;
+            status: components["schemas"]["JobStatusEnum"];
+            /** @description It has ended: succeeded, failed or cancelled. */
+            is_final: boolean;
+            /** @description The Wagtail site it works on. */
+            site: number | null;
+            params?: unknown;
+            /** @description Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
+            readonly created_by: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            started_at?: string | null;
+            /** Format: date-time */
+            finished_at?: string | null;
+            cancel_requested?: boolean;
+            /** @description What the handler reports when it ends. */
+            result?: unknown;
+            error?: string;
+            artifacts: components["schemas"]["JobArtifact"][];
+            /** @description The whole log so far, in order. */
+            lines: components["schemas"]["JobLine"][];
+        };
+        JobLine: {
+            /** Format: int64 */
+            idx: number;
+            /** Format: date-time */
+            readonly at: string;
+            level?: components["schemas"]["GuardLevelEnum"];
+            text: string;
+        };
+        /**
+         * @description * `queued` - Queued
+         *     * `running` - Running
+         *     * `succeeded` - Succeeded
+         *     * `failed` - Failed
+         *     * `cancelled` - Cancelled
+         * @enum {string}
+         */
+        JobStatusEnum: "queued" | "running" | "succeeded" | "failed" | "cancelled";
         Journey: {
             trace: string;
             messages: components["schemas"]["Handoff"][];
@@ -3853,9 +4724,46 @@ export interface components {
             kind: components["schemas"]["HandoffKindEnum"];
             count: number;
         };
+        /**
+         * @description * `published` - Published
+         *     * `unconfirmed` - Unconfirmed
+         * @enum {string}
+         */
+        LedgerStateEnum: "published" | "unconfirmed";
         LoginRequest: {
             username: string;
             password: string;
+        };
+        ManagedSite: {
+            /** @description The site key its pages were imported under (SiteRootPage.site_key). */
+            key: string;
+            /** @description The site's file tree (its Jekyll root): relative to the repository when inside it, else absolute. */
+            checkout: string;
+            content_source?: components["schemas"]["ContentSourceEnum"];
+            render?: components["schemas"]["SiteRenderEnum"];
+            /** @description The Jekyll-theme option: the theme's tag. */
+            theme_tag?: string;
+            /**
+             * @description The Jekyll-theme option: what builds it.
+             *
+             *     * `github-pages` - GitHub Pages' builder
+             *     * `jekyll-4` - the pinned Jekyll 4 image
+             */
+            server?: components["schemas"]["JekyllServerEnum"] | components["schemas"]["BlankEnum"];
+            /** @description The host names it is published at. */
+            domains: string[];
+            /** @description Where its build goes: a Pages route (`/drsai/`), a repository, a host. */
+            deploy_target?: string;
+            /** Format: date-time */
+            last_synced_at?: string | null;
+            /** Format: date-time */
+            last_exported_at?: string | null;
+            /** Format: date-time */
+            last_doctor_at?: string | null;
+            /** @description Errors in the last doctor run. */
+            readonly errors: number;
+            /** @description Warnings in the last doctor run. */
+            readonly warnings: number;
         };
         Manuscript: {
             filename: string;
@@ -3961,6 +4869,14 @@ export interface components {
             go_live_at?: string | null;
             /** @description To corrected or updated: the note. */
             text?: string;
+        };
+        NavigationItem: {
+            label: string;
+            url: string;
+        };
+        NavigationItemRequest: {
+            label: string;
+            url: string;
         };
         NewBookRequest: {
             title: string;
@@ -4069,6 +4985,12 @@ export interface components {
             schema: unknown;
             /** @description A Django template that turns a result into Markdown; empty renders generically. */
             render_template?: string;
+        };
+        PageCounts: {
+            total: number;
+            live: number;
+            /** @description Never published, or with changes not yet published. */
+            drafts: number;
         };
         PageCreateRequest: {
             parent: number;
@@ -4300,6 +5222,51 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Desk"][];
         };
+        PaginatedDistributionChannelList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["DistributionChannel"][];
+        };
+        PaginatedDistributionLedgerEntryList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["DistributionLedgerEntry"][];
+        };
+        PaginatedDistributionPostList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["DistributionPost"][];
+        };
         PaginatedFactCheckList: {
             /**
              * Format: uri
@@ -4383,6 +5350,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Issue"][];
+        };
+        PaginatedJobList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Job"][];
         };
         PaginatedMessageList: {
             /**
@@ -4689,6 +5669,31 @@ export interface components {
             /** Format: uuid */
             pipeline?: string | null;
         };
+        PatchedDistributionChannelRequest: {
+            site?: number;
+            kind?: components["schemas"]["DistributionKindEnum"];
+            name?: string;
+            /** @description What the kind needs; never a secret (README). */
+            settings?: {
+                [key: string]: unknown;
+            };
+            /** Format: uuid */
+            newsletter?: string | null;
+            /** @description The kind's secret (linkedin: access_token, refresh_token; wordpress: application_password; github_pr: token). Encrypted at rest and never returned. */
+            credentials?: {
+                [key: string]: string;
+            };
+            /** @description Draft a post (never publish one) for each page of the site that goes live. */
+            auto_draft?: boolean;
+            /** @description Publishing to this channel is armed (a person's setting). */
+            armed?: boolean;
+        };
+        PatchedDistributionPostEditRequest: {
+            kind?: components["schemas"]["DistributionPostKindEnum"];
+            title?: string;
+            description?: string;
+            commentary?: string;
+        };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
          *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
@@ -4811,6 +5816,49 @@ export interface components {
             note?: string;
             /** @description Where in the source: a page, a paragraph. */
             location?: string;
+        };
+        PatchedSiteSettingsRequest: {
+            /** @description Appended to every page title. */
+            seo_title_suffix?: string;
+            /** @description The description a page without its own gets. */
+            seo_description?: string;
+            /** @description The social image a page without its own gets. */
+            seo_image?: string;
+            /** @description Ask search engines not to index the site. */
+            noindex?: boolean;
+            /** @description Google Analytics 4, e.g. G-XXXXXXX. */
+            ga4_measurement_id?: string;
+            /** @description Search Console's property. */
+            search_console_property?: string;
+            navigation?: components["schemas"]["NavigationItemRequest"][];
+            /** @description How the site writes; AI help reads it. */
+            brand_voice?: string;
+            /** @description The design's skin. */
+            skin?: string;
+            design_tokens?: {
+                [key: string]: string;
+            };
+            /**
+             * Format: decimal
+             * @description What AI work for the site may spend a month.
+             */
+            monthly_budget_usd?: string | null;
+        };
+        PatchedSiteUpdateRequest: {
+            content_source?: components["schemas"]["ContentSourceEnum"];
+            render?: components["schemas"]["SiteRenderEnum"];
+            /** @description The Jekyll-theme option: the theme's tag. */
+            theme_tag?: string;
+            /**
+             * @description The Jekyll-theme option: what builds it.
+             *
+             *     * `github-pages` - GitHub Pages' builder
+             *     * `jekyll-4` - the pinned Jekyll 4 image
+             */
+            server?: components["schemas"]["JekyllServerEnum"] | components["schemas"]["BlankEnum"];
+            domains?: string[];
+            /** @description Where its build goes: a Pages route (`/drsai/`), a repository, a host. */
+            deploy_target?: string;
         };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
@@ -5091,6 +6139,17 @@ export interface components {
             /** @description Where in the source: a page, a paragraph. */
             location?: string;
         };
+        RegisterSiteRequest: {
+            /** @description The site's Jekyll root, relative to the repository or absolute under SITES_DIR. */
+            checkout: string;
+            /** @description Defaults to its name. */
+            key?: string;
+        };
+        RegisteredSite: {
+            site: components["schemas"]["Site"];
+            /** @description Its first sync, queued. */
+            job: components["schemas"]["Job"];
+        };
         RerunRequest: {
             /** Format: uuid */
             assistant?: string;
@@ -5343,6 +6402,68 @@ export interface components {
             port: number;
             is_default: boolean;
             root_page_id: number;
+            /** @description The platform's registry entry, or null for a site it does not manage. */
+            managed?: components["schemas"]["ManagedSite"] | null;
+            /** @description The caller may sync, write back and configure it. */
+            can_manage?: boolean;
+        };
+        SiteCandidate: {
+            key: string;
+            checkout: string;
+            render: string;
+            theme_tag: string;
+            server: string;
+            deploy_target: string;
+        };
+        SiteDetail: {
+            id: number;
+            name: string;
+            hostname: string;
+            port: number;
+            is_default: boolean;
+            root_page_id: number;
+            /** @description The platform's registry entry, or null for a site it does not manage. */
+            managed?: components["schemas"]["ManagedSite"] | null;
+            /** @description The caller may sync, write back and configure it. */
+            can_manage?: boolean;
+            pages: components["schemas"]["PageCounts"];
+            /** @description Content files the platform has read from or written to its checkout. */
+            files: number;
+            /** @description Its latest jobs, newest first. */
+            jobs: components["schemas"]["Job"][];
+        };
+        /**
+         * @description * `react` - the React renderer
+         *     * `jekyll-theme` - the Jekyll-theme option
+         * @enum {string}
+         */
+        SiteRenderEnum: "react" | "jekyll-theme";
+        SiteSettings: {
+            /** @description Appended to every page title. */
+            seo_title_suffix?: string;
+            /** @description The description a page without its own gets. */
+            seo_description?: string;
+            /** @description The social image a page without its own gets. */
+            seo_image?: string;
+            /** @description Ask search engines not to index the site. */
+            noindex?: boolean;
+            /** @description Google Analytics 4, e.g. G-XXXXXXX. */
+            ga4_measurement_id?: string;
+            /** @description Search Console's property. */
+            search_console_property?: string;
+            navigation?: components["schemas"]["NavigationItem"][];
+            /** @description How the site writes; AI help reads it. */
+            brand_voice?: string;
+            /** @description The design's skin. */
+            skin?: string;
+            design_tokens?: {
+                [key: string]: string;
+            };
+            /**
+             * Format: decimal
+             * @description What AI work for the site may spend a month.
+             */
+            monthly_budget_usd?: string | null;
         };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
@@ -5741,6 +6862,13 @@ export interface components {
         SuggestionDecisionRequest: {
             with?: number[];
             reason?: string;
+        };
+        SyncOptionsRequest: {
+            /**
+             * @description Take a changed file over a page changed here since (else a conflict).
+             * @default false
+             */
+            force: boolean;
         };
         Target: {
             type: components["schemas"]["TargetTypeEnum"];
@@ -10934,6 +12062,1442 @@ export interface operations {
             };
         };
     };
+    distribution_channels_list: {
+        parameters: {
+            query?: {
+                /**
+                 * @description * `linkedin` - LinkedIn
+                 *     * `wordpress` - WordPress
+                 *     * `github_pr` - GitHub pull request
+                 *     * `email` - Email newsletter
+                 */
+                kind?: "email" | "github_pr" | "linkedin" | "wordpress";
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                site?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDistributionChannelList"];
+                };
+            };
+        };
+    };
+    distribution_channels_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DistributionChannelRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DistributionChannelRequest"];
+                "multipart/form-data": components["schemas"]["DistributionChannelRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionChannel"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_channels_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionChannel"];
+                };
+            };
+        };
+    };
+    distribution_channels_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    distribution_channels_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDistributionChannelRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedDistributionChannelRequest"];
+                "multipart/form-data": components["schemas"]["PatchedDistributionChannelRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionChannel"];
+                };
+            };
+        };
+    };
+    distribution_channels_check_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionChannel"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_channels_connect_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionConnect"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_channels_disconnect_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionChannel"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_channels_ledger_file_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionLedgerFile"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_channels_ledger_file_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DistributionLedgerFileRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DistributionLedgerFileRequest"];
+                "multipart/form-data": components["schemas"]["DistributionLedgerFileRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionLedgerImport"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_channels_statistics_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_ledger_list: {
+        parameters: {
+            query?: {
+                channel?: string;
+                /** @description -posted_at (default) or posted_at */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                site?: number;
+                /**
+                 * @description * `published` - Published
+                 *     * `unconfirmed` - Unconfirmed
+                 */
+                state?: "published" | "unconfirmed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDistributionLedgerEntryList"];
+                };
+            };
+        };
+    };
+    distribution_oauth_linkedin_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_list: {
+        parameters: {
+            query?: {
+                channel?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                site?: number;
+                /**
+                 * @description One or more statuses.
+                 *
+                 *     * `draft` - Draft — waiting for a person's approval
+                 *     * `approved` - Approved
+                 *     * `publishing` - Publishing
+                 *     * `published` - Published
+                 *     * `failed` - Failed
+                 *     * `rejected` - Rejected
+                 */
+                status?: ("approved" | "draft" | "failed" | "published" | "publishing" | "rejected")[];
+                story?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDistributionPostList"];
+                };
+            };
+        };
+    };
+    distribution_posts_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DistributionComposeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DistributionComposeRequest"];
+                "multipart/form-data": components["schemas"]["DistributionComposeRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+        };
+    };
+    distribution_posts_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    distribution_posts_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDistributionPostEditRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedDistributionPostEditRequest"];
+                "multipart/form-data": components["schemas"]["PatchedDistributionPostEditRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_approve_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_publish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DistributionPublishRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DistributionPublishRequest"];
+                "multipart/form-data": components["schemas"]["DistributionPublishRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_record_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DistributionRecordRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DistributionRecordRequest"];
+                "multipart/form-data": components["schemas"]["DistributionRecordRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    distribution_posts_reject_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DistributionRejectRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DistributionRejectRequest"];
+                "multipart/form-data": components["schemas"]["DistributionRejectRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DistributionPostDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     graph_neighbors_retrieve: {
         parameters: {
             query: {
@@ -12181,6 +14745,397 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    jobs_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description sync, export, doctor, … */
+                kind?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description A Wagtail site id: that site's jobs. */
+                site?: number;
+                /**
+                 * @description * `queued` - Queued
+                 *     * `running` - Running
+                 *     * `succeeded` - Succeeded
+                 *     * `failed` - Failed
+                 *     * `cancelled` - Cancelled
+                 */
+                status?: "cancelled" | "failed" | "queued" | "running" | "succeeded";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedJobList"];
+                };
+            };
+        };
+    };
+    jobs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    jobs_artifact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    jobs_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    jobs_stream: {
+        parameters: {
+            query?: {
+                /** @description Send only lines after this index. */
+                after?: number;
+                format?: "event-stream" | "json";
+                /** @description Seconds to hold the stream (at most 300). */
+                timeout?: number;
+            };
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
@@ -16817,6 +19772,895 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Site"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterSiteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RegisterSiteRequest"];
+                "multipart/form-data": components["schemas"]["RegisterSiteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisteredSite"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSiteUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSiteUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_doctor: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_export: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExportOptionsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ExportOptionsRequest"];
+                "multipart/form-data": components["schemas"]["ExportOptionsRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_findings: {
+        parameters: {
+            query?: {
+                /** @description config, image-engine, cms, fleet, distribution or content. */
+                check?: string;
+                severity?: "error" | "warning";
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorFinding"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_settings_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSiteSettingsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteSettingsRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSiteSettingsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_sync: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SyncOptionsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SyncOptionsRequest"];
+                "multipart/form-data": components["schemas"]["SyncOptionsRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_discover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteCandidate"][];
                 };
             };
             401: {

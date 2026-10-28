@@ -10,8 +10,9 @@
 #         fail-on-error: false    # report-only by default
 #
 # It checks out the CALLER repository and bamr87/zer0-CMS (main) side by side,
-# runs `bin/zer0-cms doctor <site> --format findings` on plain Ruby (the doctor
-# is stdlib-only: no bundle, no gems), writes the findings as a job summary
+# runs the platform's doctor, `python -m sites.doctor <site> --format findings`
+# from zer0-CMS's content/ (PyYAML and jsonschema, no Django, no Ruby — PLAN
+# G4 ported it from rails/bin/zer0-cms), writes the findings as a job summary
 # table and a `zer0-doctor-findings` artifact, and fails only when
 # `fail-on-error` is true and the doctor reported an error. A bad `site-path`
 # (missing, absolute, or climbing out of the checkout) always fails.
@@ -77,10 +78,12 @@ jobs:
           path: zer0-cms
           persist-credentials: false
 
-      # The doctor's stdlib floor; abc-engine.yml runs its tests on 3.3 too.
-      - uses: ruby/setup-ruby@v1
+      # The platform's doctor (content/sites/doctor.py) needs no Django: PyYAML and
+      # jsonschema on the Python the platform runs on.
+      - uses: actions/setup-python@v7
         with:
-          ruby-version: "3.3"
+          python-version: "3.13"
+      - run: python -m pip install --quiet pyyaml jsonschema
 
       - name: Run the doctor
         id: doctor
@@ -98,7 +101,7 @@ jobs:
           fi
           mkdir -p doctor-report
           set +e
-          ruby -I zer0-cms/rails/lib zer0-cms/rails/bin/zer0-cms doctor "site/$SITE_PATH" --format findings > doctor-report/findings.jsonl
+          (cd zer0-cms/content && python -m sites.doctor "$GITHUB_WORKSPACE/site/$SITE_PATH" --format findings) > doctor-report/findings.jsonl
           status=$?
           set -e
           echo "status=$status" >> "$GITHUB_OUTPUT"
@@ -111,32 +114,33 @@ jobs:
         if: always() && steps.doctor.outputs.status != ''
         env:
           SITE_PATH: ${{ inputs.site-path }}
+        shell: python
         run: |
-          cat > "$RUNNER_TEMP/doctor-summary.rb" <<'RUBY'
-          require "json"
-            findings = File.readlines("doctor-report/findings.jsonl", chomp: true).reject(&:empty?).map { |line| JSON.parse(line) }
-            cell = ->(text) { text.to_s.gsub("|", "\\|").gsub(/\s+/, " ")[0, 200] }
-            errors = findings.select { |f| f["severity"] == "error" }
-            warnings = findings.select { |f| f["severity"] == "warning" }
-            out = +"## zer0 doctor: `#{cell.(ENV["SITE_PATH"])}`\n\n"
-            out << "**#{errors.size} error(s), #{warnings.size} warning(s).** Full findings: the `zer0-doctor-findings` artifact.\n\n"
-            listed = errors + warnings.reject { |f| f["check_id"] == "content" }
-            if listed.any?
-              out << "| Severity | Check | Rule | File | Evidence |\n|---|---|---|---|---|\n"
-              listed.first(200).each do |f|
-                file = f["line"] ? "#{f["file"]}:#{f["line"]}" : f["file"]
-                out << "| #{f["severity"]} | #{cell.(f["check_id"])} | #{cell.(f["rule"])} | #{cell.(file)} | #{cell.(f["evidence"])} |\n"
-              end
-              out << "\n_#{listed.size - 200} more rows in the artifact._\n" if listed.size > 200
-            end
-            content = warnings.select { |f| f["check_id"] == "content" }.group_by { |f| f["rule"] }
-            if content.any?
-              out << "\n### Content warnings by rule (report-only)\n\n| Rule | Files |\n|---|---|\n"
-              content.sort_by { |rule, list| [-list.size, rule] }.each { |rule, list| out << "| #{cell.(rule)} | #{list.size} |\n" }
-            end
-            File.write(ENV.fetch("GITHUB_STEP_SUMMARY"), out, mode: "a")
-          RUBY
-          ruby "$RUNNER_TEMP/doctor-summary.rb"
+          import json, os, re
+          findings = [json.loads(line) for line in open("doctor-report/findings.jsonl") if line.strip()]
+          cell = lambda text: re.sub(r"\s+", " ", str(text or "").replace("|", "\\|"))[:200]
+          errors = [f for f in findings if f["severity"] == "error"]
+          warnings = [f for f in findings if f["severity"] == "warning"]
+          out = f"## zer0 doctor: `{cell(os.environ['SITE_PATH'])}`\n\n"
+          out += f"**{len(errors)} error(s), {len(warnings)} warning(s).** Full findings: the `zer0-doctor-findings` artifact.\n\n"
+          listed = errors + [f for f in warnings if f["check_id"] != "content"]
+          if listed:
+              out += "| Severity | Check | Rule | File | Evidence |\n|---|---|---|---|---|\n"
+              for f in listed[:200]:
+                  where = f"{f['file']}:{f['line']}" if f["line"] else f["file"]
+                  out += f"| {f['severity']} | {cell(f['check_id'])} | {cell(f['rule'])} | {cell(where)} | {cell(f['evidence'])} |\n"
+              if len(listed) > 200:
+                  out += f"\n_{len(listed) - 200} more rows in the artifact._\n"
+          content = {}
+          for f in warnings:
+              if f["check_id"] == "content":
+                  content[f["rule"]] = content.get(f["rule"], 0) + 1
+          if content:
+              out += "\n### Content warnings by rule (report-only)\n\n| Rule | Files |\n|---|---|\n"
+              for rule, count in sorted(content.items(), key=lambda item: (-item[1], item[0])):
+                  out += f"| {cell(rule)} | {count} |\n"
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(out)
 
       - name: Upload the findings
         if: always() && steps.doctor.outputs.status != ''

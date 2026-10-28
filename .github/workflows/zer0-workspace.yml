@@ -11,9 +11,9 @@
 # prints its burn-down. It also prints, to the job summary, the projects a pull request affects (so
 # a reviewer can see which projects' gates should have run) and the CMS's own
 # `zer0 doctor` over every zer0 site in the repository — report-only, like the
-# reusable zer0-doctor.yml it mirrors, because two sites carry known errors
-# (docs/MONOREPO.md). That doctor is still Ruby (rails/bin/zer0-cms) until
-# PLAN G4 ports it, so Ruby is installed for that last step and nothing else.
+# reusable zer0-doctor.yml it mirrors. The doctor is the platform's
+# (content/sites/doctor.py, PLAN G4): Python with PyYAML and jsonschema, so no
+# step here installs Ruby.
 name: zer0-workspace
 
 on:
@@ -40,7 +40,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - run: python -m pip install --quiet pyyaml
+      # PyYAML for bin/zer0; jsonschema for the doctor it runs (zer0.json against
+      # schemas/zer0.schema.json).
+      - run: python -m pip install --quiet pyyaml jsonschema
       - name: Workspace tool tests
         run: python -m unittest discover tools/workspace
       - name: bin/zer0 check
@@ -62,11 +64,6 @@ jobs:
             echo
             bin/zer0 affected --base "origin/$BASE_REF" | sed 's/^/- /'
           } >> "$GITHUB_STEP_SUMMARY"
-      # Temporary, until PLAN G4 ports zer0 doctor to the platform: the doctor
-      # `bin/zer0 doctor` runs is rails/bin/zer0-cms, stdlib Ruby. Remove with G4.
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
       - name: zer0 doctor over every site (report-only)
         run: |
           {

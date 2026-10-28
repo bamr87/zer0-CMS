@@ -1,11 +1,13 @@
-"""`bin/zer0 doctor`: the CMS's own `zer0 doctor` run against every project the
-manifest marks as a zer0 site, so the stack contract the CMS enforces on the
-wider fleet is enforced on this repository's sites in one command. Each run's
-last line is "result: N error(s), M warning(s)"; that is what gets collected.
+"""`bin/zer0 doctor`: the platform's zer0 doctor run against every project the
+manifest marks as a zer0 site, so the contract the platform checks on the wider
+fleet is checked on this repository's sites in one command. Each run's last
+line is "result: N error(s), M warning(s)"; that is what gets collected.
 
-The doctor itself is still `rails/bin/zer0-cms`, stdlib Ruby, until PLAN G4
-ports it to the platform; this module runs it with whatever `ruby` is on PATH
-and says so when there is none.
+The doctor is `content/sites/doctor.py` (PLAN G4), run as `python -m
+sites.doctor <site>` from `content/` on this Python: it needs no Django, only
+PyYAML and jsonschema, and the Python the platform needs (3.12+). It replaced
+the Ruby `rails/bin/zer0-cms doctor`; the theme's rules did not come with it
+(ADR 0006 decision 4).
 """
 
 from __future__ import annotations
@@ -13,12 +15,15 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 from .manifest import Manifest, WorkspaceError
 
 RESULT = re.compile(r"^result: (\d+) error\(s\), (\d+) warning\(s\)", re.MULTILINE | re.ASCII)
-CLI = "rails/bin/zer0-cms"
+# The platform this tool ships with: the doctor is its, not the checked workspace's.
+PLATFORM = Path(__file__).resolve().parents[2] / "content"
 
 
 @dataclass(frozen=True)
@@ -58,12 +63,13 @@ class Doctor:
 
     def run_doctor(self, root: str) -> str:
         """The doctor's whole report (stdout and stderr) on one site root."""
-        command = ["ruby", os.path.join(self.manifest.root, CLI), "doctor", os.path.join(self.manifest.root, root)]
-        try:
-            done = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        except FileNotFoundError:
+        command = [sys.executable, "-m", "sites.doctor", os.path.join(self.manifest.root, root)]
+        done = subprocess.run(command, cwd=PLATFORM, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = done.stdout.decode("utf-8", "replace")
+        missing = re.search(r"ModuleNotFoundError: No module named '([\w.]+)'", output)
+        if missing and not RESULT.search(output):
             raise WorkspaceError(
-                f"doctor runs the CMS's zer0 doctor ({CLI}), which needs Ruby until PLAN G4 ports it to the "
-                "platform — install Ruby 3.3+ or run it in a ruby:3.3 container"
-            ) from None
-        return done.stdout.decode("utf-8", "replace")
+                "doctor runs the platform's zer0 doctor (content/sites/doctor.py), which needs "
+                f"{missing[1]} on {sys.executable} — e.g. .venv/bin/pip install pyyaml jsonschema"
+            )
+        return output

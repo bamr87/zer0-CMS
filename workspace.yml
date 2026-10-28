@@ -116,19 +116,6 @@ projects:
       test: npm run lint && npm run typecheck && npm test && npm run check:api
       build: npm run build
 
-  cms-rails:
-    path: rails
-    kind: rails
-    stack: [ruby]
-    summary: The fleet CMS — a Rails 8.1 app that indexes every registered site and writes edits back to the files, plus the stdlib-only zer0 library (catalog, doctor, ABC generator).
-    upstream: bamr87/zer0-CMS
-    depends_on: [zer0-image-generator]
-    ci: rails-app.yml
-    tasks:
-      setup: bundle install
-      check: bash bin/test-stdlib
-      test: bin/rails test && bin/rails zeitwerk:check
-
   # The zer0 theme is developed in its own repository (ADR 0005). The sites
   # below render with it only through the Jekyll-theme option — their `render:`
   # setting pins its tag (ADR 0006 decision 4, PLAN P2) — except zer0-pages,
@@ -343,18 +330,9 @@ projects:
         cwd: frontend
 
 vendored:
-  - copy: rails/app/assets/stylesheets/zer0-tokens.css
-    source: packages/zer0-image-generator/web/app/assets/stylesheets/zer0-tokens.css
-    why: The fleet CMS is themed by the zer0-ui-tokens kit; rails/ is its own Docker build context.
-  - copy: rails/lib/zer0_cms/data/abc_art_styles.yml
-    source: packages/zer0-image-generator/lib/zer0_image_generator/abc/art_styles.yml
-    why: The ABC wizard offers the image generator's art styles; rails/lib is stdlib-only and loads no gem.
-  - copy: content/agents/data/abc_lexicons/it_systems.yml
-    source: rails/lib/zer0_cms/abc/lexicons/it_systems.yml
-    why: The content plane's ABC drafter generates the same offline books as the Rails wizard, from the same lexicon.
+  # Nothing is vendored since the Rails fleet CMS went (ADR 0008): its two copies
+  # of the image generator's files went with it, and the ABC lexicon's one copy,
+  # content/agents/data/abc_lexicons/, is now the only one — its source.
   # The hub-seeded one-paragraph-per-line fixer, tools/unwrap-prose.py, has one
   # copy: the root's, which markdown-oneline.yml runs over the whole repository
   # and every project calls as ../../tools/unwrap-prose.py.
-  # rails/lib/zer0_cms/data/frontmatter_schema.yml is a copy of the theme's
-  # .github/config/frontmatter_schema.yml, refreshed from bamr87/zer0-mistakes by
-  # tag (its README records the commit) now that the theme lives there (ADR 0005).

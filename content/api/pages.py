@@ -1,6 +1,6 @@
-"""The studio's content endpoints: sites, pages, revisions and publishing.
+"""The studio's content endpoints: pages, revisions and publishing (the sites
+they live in are sites/views.py).
 
-    GET   /api/v2/sites/                                  the sites a person can work in
     GET   /api/v2/content/types/                          every page type, for filters
     GET   /api/v2/content/pages/                          pages across sites, any status, filtered and paginated
     POST  /api/v2/content/pages/                          a new page under a parent, as a draft
@@ -65,7 +65,6 @@ from .serializers import (
     RevisionCompareSerializer,
     RevisionSerializer,
     ScheduleSerializer,
-    SiteSerializer,
 )
 
 SEO = {"slug", "seo_title", "search_description", "ai_summary", "ai_keywords"}
@@ -288,28 +287,6 @@ def detail(page, user) -> dict:
 def _detail_response(request, pk, code=status.HTTP_200_OK):
     page = _page(request, pk)
     return Response(PageDetailSerializer(detail(page, request.user)).data, status=code)
-
-
-# ── sites ──────────────────────────────────────────────────────────────────
-
-
-@extend_schema(operation_id="sites_list", responses={200: SiteSerializer(many=True), **ERROR_RESPONSES})
-@api_view(["GET"])
-@permission_classes([IsPerson])
-def sites(request):
-    rows = Site.objects.filter(root_page__in=services.visible_pages(request.user)).order_by("site_name", "hostname")
-    data = [
-        {
-            "id": s.pk,
-            "name": s.site_name or s.hostname,
-            "hostname": s.hostname,
-            "port": s.port,
-            "is_default": s.is_default_site,
-            "root_page_id": s.root_page_id,
-        }
-        for s in rows
-    ]
-    return Response(SiteSerializer(data, many=True).data)
 
 
 # ── pages ──────────────────────────────────────────────────────────────────

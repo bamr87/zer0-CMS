@@ -113,6 +113,20 @@ class LedgerTest(unittest.TestCase):
         self.assertIn("decided_by", ca.check_ledger([source(status="dropped")], lambda p: True)[0])
         self.assertEqual(ca.check_ledger([source(status="dropped", decided_by="ADR 0006")], lambda p: True), [])
 
+    def test_specified_needs_the_owners_decision_and_a_spec_that_exists(self):
+        spec = "docs/plan/x-spec.md#rails.x"
+        exists = lambda p: p == "docs/plan/x-spec.md"
+        self.assertIn("decided_by", ca.check_ledger([source(status="specified", spec=spec)], exists)[0])
+        self.assertIn("without a spec", ca.check_ledger([source(status="specified", decided_by="owner")], exists)[0])
+        gone = source(status="specified", decided_by="owner", spec="docs/plan/gone.md")
+        self.assertIn("spec docs/plan/gone.md does not exist", ca.check_ledger([gone], exists)[0])
+        self.assertEqual(ca.check_ledger([source(status="specified", decided_by="owner", spec=spec)], exists), [])
+
+    def test_deleted_source_whose_open_rows_are_specified_passes(self):
+        exists = lambda p: p == "docs/plan/x-spec.md"
+        row = source(status="specified", decided_by="owner, 2026-10-27", spec="docs/plan/x-spec.md")
+        self.assertEqual(ca.check_ledger([row], exists), [])
+
     def test_bad_status_missing_target_and_duplicates(self):
         self.assertIn("status", ca.check_ledger([source(status="later")], lambda p: True)[0])
         self.assertIn("no target", ca.check_ledger([source(target="")], lambda p: True)[0])
@@ -128,6 +142,10 @@ class LedgerTargetTest(unittest.TestCase):
 
     def test_dropped_rows_need_no_live_target(self):
         self.assertEqual(ca.check_ledger([source(status="dropped", decided_by="owner")], lambda p: True, set()), [])
+
+    def test_specified_rows_keep_a_live_target(self):
+        row = source(status="specified", decided_by="owner", spec="docs/plan/x-spec.md")
+        self.assertIn("not a platform capability", ca.check_ledger([row], lambda p: True, set())[0])
 
 
 def platform_cap(**surfaces):
@@ -169,7 +187,7 @@ class ThemeDependencyTest(unittest.TestCase):
 
     def test_content_never_counts(self):
         read = lambda p: b"remote_theme: bamr87/zer0-mistakes"  # noqa: E731
-        for path in ("sites/a/pages/_docs/quick-start.md", "sites/a/_data/navigation/main.yml", "sites/a/_posts/2024-01-01-x.yml", "docs/MONOREPO.md", "src/test/fixtures/sites/x/_config.yml", "CHANGELOG.md", "features/features.yml", "tools/workspace/tests/golden/recordings.json", "web/site/fixtures/drsai/manifest.json"):
+        for path in ("sites/a/pages/_docs/quick-start.md", "sites/a/_data/navigation/main.yml", "sites/a/_posts/2024-01-01-x.yml", "docs/MONOREPO.md", "src/test/fixtures/sites/x/_config.yml", "CHANGELOG.md", "features/features.yml", "tools/workspace/tests/golden/recordings.json", "content/tests/distribution/golden/ruby-lane.json", "web/site/fixtures/drsai/manifest.json"):
             self.assertFalse(ca.is_theme_dependency(path, read), path)
 
     def test_files_that_do_not_name_it_do_not_count(self):

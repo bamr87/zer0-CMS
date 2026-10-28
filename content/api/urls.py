@@ -1,8 +1,8 @@
 """`/api/v2/`: Wagtail's page, image and document endpoints (public, live
 content only) plus the content plane's own endpoints: agent runs, the graph,
 suggestions and the tool registry (api/views.py), and what the studio and the
-extension work with — the session (api/session.py), sites, pages, revisions
-and publishing (api/pages.py), and the review inbox (api/review.py)."""
+extension work with — the session (api/session.py), pages, revisions and
+publishing (api/pages.py), and the review inbox (api/review.py)."""
 
 from django.urls import path
 from rest_framework.permissions import AllowAny
@@ -47,7 +47,6 @@ urlpatterns = [
     path("me", session.me, name="me"),
     path("session/login", session.login, name="session-login"),
     path("session/logout", session.logout, name="session-logout"),
-    path("sites/", pages.sites, name="sites"),
     path("content/types/", pages.all_types, name="content-types"),
     path("content/pages/", pages.PageList.as_view(), name="content-pages"),
     path("content/pages/<int:pk>/", pages.page_detail, name="content-page"),

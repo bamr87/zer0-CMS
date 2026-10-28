@@ -53,7 +53,7 @@ def test_a_page_that_goes_live_is_announced_by_the_outbox_events_consumer_once(a
     event = published_event(article)  # the publish wrote the event, in its transaction …
     assert not settings.OUTBOX_BELT_ROOT.exists()  # … and nothing on the belt
     envelope = event.envelope()
-    assert handle_envelope(envelope) == [consumer]
+    assert consumer in handle_envelope(envelope)  # with any other consumer of the event (distribution's auto-draft)
     assert handle_envelope(envelope) == []  # redelivered: handled once (ProcessedEvent)
     assert services.publish_page(envelope) is None  # and the handoff's id is the event's: never sent twice
     [path] = outbox_files("publisher")
@@ -97,9 +97,9 @@ def test_a_published_handoff_answers_the_approval_about_its_page_and_follows_the
 
     traced = "4bf92f3577b34da6a3ce929d0e0e4736"
     with_trace = example(article, traceparent=f"00-{traced}-0000000000000001-01")
-    assert handle_envelope(with_trace) == [consumer]
+    assert consumer in handle_envelope(with_trace)
     without = example(article)
-    assert handle_envelope(without) == [consumer]
+    assert consumer in handle_envelope(without)
     services.deliver()
     first, second = services.messages(kind="published", oldest_first=True)
     assert (first["parent_id"], first["trace"]) == (approval["id"], traced)  # the event's trace wins

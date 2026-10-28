@@ -48,7 +48,7 @@ from importers.markdown import to_blocks
 from ops.errors import ApiError, Conflict, Forbidden, Invalid, NotFound, Unavailable
 from suggestions.models import Suggestion
 
-from . import providers
+from . import crypto, providers
 from .models import Assistant, Brief, Message, ModelEntry, OutputSchema, Pipeline, ProviderConfig, Visibility, usable
 
 AGENT = "assistant"
@@ -428,13 +428,14 @@ def set_default(row: ProviderConfig) -> ProviderConfig:
 
 @transaction.atomic
 def rotate_credentials() -> int:
-    """Re-encrypt every stored credential with the first key; returns how many. One no key can read stops it
-    (`NotConfigured`, naming the provider) and nothing is changed."""
+    """Re-encrypt every stored credential with the first key — the providers' here, every other app's through
+    `crypto.credentials_rotated` — and return how many. One no key can read stops it (`NotConfigured`, naming
+    whose it is) and nothing is changed."""
     rows = list(ProviderConfig.objects.exclude(credential_encrypted=""))
     for row in rows:
         row.set_credential(row.get_credential())
         row.save(update_fields=["credential_encrypted", "updated_at"])
-    return len(rows)
+    return len(rows) + sum(count for _, count in crypto.credentials_rotated.send(sender=ProviderConfig))
 
 
 def record_models(row: ProviderConfig, found) -> dict:

@@ -1,0 +1,29 @@
+# The distribution agent: drafts posts of a page for its site's channels (PLAN G5).
+# The published-page consumer (distribution/consumers.py) runs it for every page
+# that goes live on a site with a channel that drafts automatically; an MCP client
+# holding its token drafts through the same tool. A person approves every post,
+# and `distribution.publish` stays refused until the page's policy is auto, the
+# agent earned auto, its group holds the publish right and a person armed the channel.
+slug: distribution
+name: Distribution
+role: author
+description: Drafts a post of a page for each channel of its site that drafts automatically; never approves or publishes.
+handler: distribution.agent.draft_for_page
+policy: suggest
+max_steps: 20
+budget_usd: "0"
+tools:
+  - distribution.compose
+  - distribution.publish
+evals:
+  - name: a-page-outside-any-channel-drafts-nothing
+    input:
+      page:
+        type: ArticlePage
+        title: Nightly backups
+        search_description: Why we copy the site every night.
+        body:
+          - {type: markdown, value: "We copy the site to a second disk every night."}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: output, path: drafted, equals: 0}

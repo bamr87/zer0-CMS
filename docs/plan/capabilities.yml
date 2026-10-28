@@ -20,8 +20,11 @@
 #   sources — every repository merged into zer0-CMS, every capability it had,
 #     and the platform capability it lands in (`target:`, a platform id). A row
 #     is `missing`, `partial`, `done` (with `proof:`) or `dropped` (with
-#     `decided_by:` naming the owner's decision — an agent never drops a row).
-#     A source's directory may be deleted only when no row is missing/partial.
+#     `decided_by:` naming the owner's decision — an agent never drops a row) or
+#     `specified` (the owner deleted the source before the row moved: `decided_by:`
+#     names that decision, `spec:` the file that keeps what it did, and the
+#     `target:` still owes it). A source's directory may be deleted only when no
+#     row is missing/partial.
 #
 # Statuses here were set on 2026-10-21 from two code inventories, conservatively:
 # nothing is `done` without a test that proves it, and `partial` means the
@@ -31,7 +34,6 @@ schema: capabilities/v1
 
 ruby_ratchet:
   packages/zer0-image-generator/: 223
-  rails/: 151
   sites/zer0-pages/: 11
 
 theme_ratchet:
@@ -43,9 +45,6 @@ theme_ratchet:
   content/: 1
   media/: 1
   packages/zer0-image-generator/: 8
-  rails/lib/: 5
-  rails/schema/: 1
-  rails/test/: 2
   schemas/: 1
   sites/2005/: 1
   sites/drsai/: 3
@@ -58,7 +57,6 @@ theme_ratchet:
   src/core/: 13
   src/test/: 6
   src/webview/: 1
-  workspace.yml: 1
 
 theme_allowed:
   # The only files that may name the theme for good: the Jekyll-theme option's
@@ -152,8 +150,10 @@ platform:
     # G9, books' half: export_books byte-stable and re-importable, and a hand edit is never lost or silently
     # overwritten — the export keeps it as a conflict (content/tests/books/test_files.py); not yet committed by a job
     # (G4's jobs), and a hand edit updates its page (or is a conflict) rather than arriving as a suggestion. Sites'
-    # trees are G4.
-    surfaces: {api: missing, studio: missing, ops: partial}
+    # trees (G4): a site's write-back job writes its tree from the platform (api, studio), byte-stably — an unchanged
+    # write-back writes nothing — and a hand edit is a conflict, never overwritten; committing the tree by a job and a
+    # hand edit arriving as a suggestion are still to come.
+    surfaces: {api: partial, studio: partial, ops: partial}
   - id: content.repurpose
     what: Turn one piece into others — an article into a newsletter item, a social thread, a summary, a landing page.
     surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
@@ -385,14 +385,32 @@ platform:
   # ── Sites: manage, monitor, improve ─────────────────────────────────────────
   - id: sites.registry
     what: Register and discover sites; per-site settings, domains, design and skin, budgets.
-    # P4: the sites a person can work in, listed (api) and switched between (studio); registering and settings are G4.
-    surfaces: {api: partial, studio: partial, extension: partial}
+    # P4: the sites a person can work in, listed (api) and switched between (studio). G4: content/sites — ManagedSite
+    # (checkout, content source, renderer, domains, deploy target, digests, findings) and SiteSettings (SEO defaults,
+    # analytics ids, navigation, brand voice, skin and tokens, budget); /api/v2/sites/ registers a checkout (workspace.yml's
+    # or SITES_DIR's), discovers, edits; the studio's Sites area does all of it. The extension's half is G10.
+    surfaces: {api: done, studio: done, extension: partial}
+    proof:
+      api: content/tests/sites/test_sites.py
+      studio: web/packages/ui/test/sites.test.tsx
   - id: sites.sync
     what: Sync a site's files with the platform — the exact Jekyll reader, line-level front-matter surgery, the confined writer, write-back with a stale-write guard.
-    surfaces: {api: missing, extension: partial, ops: partial}
+    # G4: sites/catalog.py (Jekyll 4.4's reader, byte for byte against Jekyll's own lists; the importer reads through it),
+    # sites/frontmatter.py (line surgery; the exporter renders a changed page over its file with it), sites/writer.py;
+    # sync and write-back as jobs (/api/v2/sites/<id>/sync/ and export/, manage.py site_job) under the Rails PageEditor's
+    # stale-write guard. The extension's file mode keeps its own until G10.
+    surfaces: {api: done, extension: partial, ops: done}
+    proof:
+      api: content/tests/sites/test_sites.py::test_a_file_changed_by_hand_since_the_last_sync_is_never_overwritten
+      ops: content/tests/sites/test_catalog.py::test_the_fixture_sites_match_jekylls_reader_byte_for_byte
   - id: sites.jobs
     what: Background jobs (sync, render, deploy, preview, doctor, reports) with live logs, artifacts and cancel.
-    surfaces: {api: missing, studio: missing}
+    # G4: content/jobs — Job, its log lines (streamed as server-sent events) and artifacts, cancel, one exclusive job per
+    # site; sync, write-back and doctor are its first kinds (render, deploy, preview and reports come with their milestones).
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/jobs/test_jobs.py
+      studio: web/packages/ui/test/sites.test.tsx
   - id: sites.render
     what: The React site renderer, in the platform's own design system — layouts, skins, feeds, sitemap, robots, search index, redirects — reproducing each site's recorded build.
     surfaces: {site: missing, ops: missing}
@@ -400,9 +418,10 @@ platform:
     what: The Jekyll-theme option — render a site with the zer0-mistakes theme and deploy it with a Jekyll server (GitHub Pages' builder or a pinned container), with nothing Ruby in this repository.
     # P2: tools/jekyll_theme.py — a site's `render:` setting in workspace.yml, the export with the theme's tag pinned
     # and an Obsidian vault resolved, GitHub Pages' builder or the jekyll-4 image (tools/jekyll/Dockerfile); pages.yml,
-    # sites.yml, drsai.yml and irony-works.yml build eight sites through it (ops). Choosing it per site and running the
-    # build as a job a person follows is G4's (api, studio).
-    surfaces: {api: missing, studio: missing, ops: done}
+    # sites.yml, drsai.yml and irony-works.yml build eight sites through it (ops). G4: a site's renderer, the theme's tag
+    # and the Jekyll server are its registry fields, chosen over the API and in the studio (partial: running its build
+    # as a job a person follows needs the Jekyll server's container, which the worker does not start — still to come).
+    surfaces: {api: partial, studio: partial, ops: done}
     proof: {ops: tools/tests/test_jekyll_theme.py}
   - id: sites.obsidian
     what: Obsidian-flavoured content — wikilinks, embeds, callouts, Dataview queries, the graph index.
@@ -413,8 +432,15 @@ platform:
     what: Build, preview and deploy each site, with history.
     surfaces: {api: missing, studio: missing, ops: partial}
   - id: sites.doctor
-    what: Consistency checks over a site (theme, image engine, CMS, fleet and content rules) as findings.
-    surfaces: {api: missing, studio: missing, extension: partial, ops: missing}
+    what: Consistency checks over a site (config, image engine, CMS, fleet, distribution and content rules) as findings.
+    # G4: content/sites/doctor.py — the Ruby doctor ported rule for rule but the theme's (ADR 0006 decision 4); a site's
+    # doctor job keeps its findings (api, studio); `python -m sites.doctor`, `manage.py doctor`, `bin/zer0 doctor` and the
+    # reusable zer0-doctor.yml run it (ops).
+    surfaces: {api: done, studio: done, extension: partial, ops: done}
+    proof:
+      api: content/tests/sites/test_sites.py::test_the_doctor_job_records_its_findings
+      studio: web/packages/ui/test/sites.test.tsx
+      ops: content/tests/sites/test_doctor.py::test_each_scenario_matches_the_ruby_doctor
   - id: sites.monitor
     what: Scheduled uptime, broken-link, performance and Core Web Vitals, accessibility and SEO checks, with history, trends and alerts.
     surfaces: {api: missing, studio: missing, extension: missing, ops: missing}
@@ -454,13 +480,26 @@ platform:
   # ── Distribution ────────────────────────────────────────────────────────────
   - id: distribution.channels
     what: Channels — LinkedIn (OAuth, encrypted token), WordPress, GitHub pull request — connected per site.
-    surfaces: {api: missing, studio: missing}
+    # G5: content/distribution (/api/v2/distribution/channels/) and the studio's Distribution → Channels — LinkedIn, WordPress, a GitHub repository as pull requests and a newsroom newsletter, per site; a credential encrypted with the AI layer's keys and never returned; LinkedIn connected with state and PKCE, the code exchanged on the worker; Check it on the worker; armed by a channel manager and by the deployment's switch for the kind.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/distribution/test_platform.py::test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker
+      studio: web/packages/ui/test/distribution.test.tsx
   - id: distribution.queue
     what: Compose, brand guard, approve and publish to a channel, with the ledger keyed by canonical URL and readable errors.
-    surfaces: {api: missing, studio: missing, extension: partial, mcp: missing}
+    # G5: posts of a page or a story, always drafts — by a person (Distribute in the editor and a story's panel), an agent (distribution.compose, over MCP too) or the published-page consumer; the brand guard's findings on the post; approval by someone who may publish the page; publishing answers 202 and the worker checks every gate again (distribution/gates.py) before LinkedIn, WordPress, GitHub or the newsletter; the ledger keyed by canonical URL in the extension's byte format, downloaded and imported. A site that is still files keeps the same lane in its CI (manage.py linkedin). Extension partial: it keeps its own file-mode publishing lane until it is the platform's client (G10).
+    surfaces: {api: done, studio: done, extension: partial, mcp: done}
+    proof:
+      api: content/tests/distribution/test_platform.py::test_publish_checks_every_gate_in_the_request_and_again_on_the_worker
+      studio: web/packages/ui/test/distribution.test.tsx
+      mcp: content/tests/distribution/test_platform.py::test_an_mcp_client_with_the_distribution_token_drafts_and_cannot_publish
   - id: distribution.stats
     what: Statistics for published posts, ingested and reported.
-    surfaces: {api: missing, studio: missing}
+    # G5: LinkedIn's aggregate counts for a channel's own posts, daily on beat (distribution-statistics) or on request, one row per post a day, in the studio's Distribution → Statistics and beside each ledger entry. LinkedIn is the only channel with statistics: WordPress, pull requests and newsletters report none.
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/distribution/test_platform.py::test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger
+      studio: web/packages/ui/test/distribution.test.tsx
 
   # ── Books ───────────────────────────────────────────────────────────────────
   - id: books.manage
@@ -539,9 +578,9 @@ platform:
     surfaces: {ops: partial}
   - id: platform.workspace
     what: The repository's workspace tool — list, info, run, affected, matrix, routes, check, vendor, doctor, tags — in Python.
-    # partial: every command is Python and tested (tools/workspace/tests/), but the doctor
-    # `bin/zer0 doctor` runs is still rails/bin/zer0-cms (Ruby); G4 makes it done.
-    surfaces: {ops: partial}
+    # Every command is Python and tested (tools/workspace/tests/); since G4 `bin/zer0 doctor` runs the platform's doctor.
+    surfaces: {ops: done}
+    proof: {ops: tools/workspace/tests/test_workspace.py::DoctorTest}
 
   - id: platform.shared-ui
     what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
@@ -588,9 +627,9 @@ sources:
       - {id: parodynews.post-editing, what: "Edit a post's Markdown body (with a rendered preview), front matter and status.", target: content.edit, status: partial}
       - {id: parodynews.render-preview, what: "See the exact Jekyll document and its YYYY-MM-DD-slug.md file name.", target: content.preview, status: partial}
       - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
-      - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: missing}
+      - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: done, proof: content/tests/distribution/test_transports.py::test_a_github_channel_opens_a_pull_request_with_the_pages_jekyll_file, note: "G5: a GitHub pull request channel (PyGithub) — the page exported as its Jekyll file onto a distribute/… branch, then a pull request into the channel's branch; 401, 403, 404 and 422 are sentences and an open pull request is named with its link (content/tests/distribution/test_transports.py::test_github_failures_are_reported_as_themselves_never_answered_with_another_write, ::test_an_already_open_pull_request_is_named_with_its_link); studio: Distribution → Channels → GitHub pull request, then a post's Publish (web/packages/ui/test/distribution.test.tsx)"}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and choosing its renderer and following its build from the studio are G4's"}
+      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: done, proof: content/tests/importers/test_parodynews.py}
       - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: missing}
       - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: missing}
@@ -618,32 +657,32 @@ sources:
     summary: The Rails 8.1 + Administrate fleet CMS — a SQLite index over every registered Jekyll site, edits written back to the files.
     content: None of its own — git holds the content and SQLite is an index (D16); its LinkedIn channel rows and tokens move with distribution (tokens re-entered).
     capabilities:
-      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: partial}
-      - {id: rails.page-search, what: "Search and filter pages with a filter language (draft:, live:, future:, error:, collection:, site:, kind:, tag:, category:, author:).", target: content.list, status: partial}
-      - {id: rails.page-edit, what: "Edit front matter and body in the file with the digest stale-write guard, key-level surgery, an atomic write and a re-sync.", target: sites.sync, status: partial}
-      - {id: rails.page-create, what: "Create, duplicate as draft and delete pages, confined by realpath with symlinks refused.", target: content.create, status: partial}
-      - {id: rails.assets-terms, what: "Browse images and terms, with a thumbnail server.", target: media.library, status: partial}
-      - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: partial}
-      - {id: rails.missing-previews, what: "List pages missing a preview image and draw one with a provider.", target: media.generate, status: missing}
-      - {id: rails.abc-wizard-ui, what: "The ABC book wizard — new, preview, export into drsai.", target: books.abc, status: partial}
-      - {id: rails.distribution-queue, what: "The LinkedIn queue — approve, publish, statistics.", target: distribution.queue, status: missing}
-      - {id: rails.channels, what: "Connect a LinkedIn channel over OAuth with an encrypted token.", target: distribution.channels, status: missing}
-      - {id: rails.access-guard, what: "Loopback or password access, a Host allow-list, a per-request CSP nonce.", target: platform.ops, status: partial}
+      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railssite-registry, note: "G4: register, discover (SITES_DIR and workspace.yml) and sync, from the API and the studio (content/tests/sites/test_sites.py). Open: per-collection counts (the overview counts pages, live and drafts) and the read-only _config.yml view"}
+      - {id: rails.page-search, what: "Search and filter pages with a filter language (draft:, live:, future:, error:, collection:, site:, kind:, tag:, category:, author:).", target: content.list, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railspage-search}
+      - {id: rails.page-edit, what: "Edit front matter and body in the file with the digest stale-write guard, key-level surgery, an atomic write and a re-sync.", target: sites.sync, status: done, proof: "content/tests/sites/test_sites.py::test_a_write_back_rewrites_only_what_changed_and_an_unchanged_one_writes_nothing", note: "G4: a page is edited in Write (P4) and written into its file by the site's write-back job — key-level line surgery, the indexed and base digest guard re-checked before an atomic rename, an unchanged save writing nothing, the digests and the page's source recorded as a re-sync would"}
+      - {id: rails.page-create, what: "Create, duplicate as draft and delete pages, confined by realpath with symlinks refused.", target: content.create, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railspage-create}
+      - {id: rails.assets-terms, what: "Browse images and terms, with a thumbnail server.", target: media.library, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsassets-terms}
+      - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsmarkdown-preview}
+      - {id: rails.missing-previews, what: "List pages missing a preview image and draw one with a provider.", target: media.generate, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsmissing-previews}
+      - {id: rails.abc-wizard-ui, what: "The ABC book wizard — new, preview, export into drsai.", target: books.abc, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsabc-wizard-ui}
+      - {id: rails.distribution-queue, what: "The LinkedIn queue — approve, publish, statistics.", target: distribution.queue, status: done, proof: web/packages/ui/test/distribution.test.tsx, note: "G5: the studio's Distribution → Queue (the guard, the exact payload, approve, publish with every blocker, force, record) and Statistics; API: content/tests/distribution/test_platform.py::test_publish_checks_every_gate_in_the_request_and_again_on_the_worker. /admin/distribution is deleted."}
+      - {id: rails.channels, what: "Connect a LinkedIn channel over OAuth with an encrypted token.", target: distribution.channels, status: done, proof: content/tests/distribution/test_platform.py::test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker, note: "G5: Distribution → Channels → Connect with LinkedIn (web/packages/ui/test/distribution.test.tsx), state and PKCE, the token encrypted with ai/crypto.py's keys and never returned. /admin/channels and the channels table are deleted; a Rails channel is set up again and reconnected, its token re-entered."}
+      - {id: rails.access-guard, what: "Loopback or password access, a Host allow-list, a per-request CSP nonce.", target: platform.ops, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsaccess-guard}
 
   - id: rails-lib
     path: rails/lib
-    summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator, the LinkedIn distribution lane.
-    content: The ABC lexicons (lib/zer0_cms/abc/lexicons/*.yml — content/agents/data vendors one), art styles, schema/abc-book.schema.json, and the parity fixtures rails/test/fixtures/jekyll-site{,-src} with their expected lists (move to content/tests/fixtures before rails/ goes).
+    summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator; until G5, the LinkedIn distribution lane.
+    content: Deleted with rails/ on 2026-10-27 (ADR 0008) once its content was placed — the ABC lexicon's one copy is content/agents/data/abc_lexicons/, the art styles' source stays in packages/zer0-image-generator, schema/abc-book.schema.json is schemas/books/abc-book.schema.json, and G4 moved the parity fixtures to content/tests/fixtures/.
     capabilities:
-      - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: partial}
-      - {id: rails.front-matter, what: "Parse front matter and update keys by line surgery, keeping comments, quoting, BOM and line endings.", target: sites.sync, status: partial}
-      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: partial}
-      - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: missing}
-      - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: partial}
-      - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: missing}
-      - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: missing}
-      - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: partial}
-      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: partial}
+      - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: done, proof: "content/tests/sites/test_catalog.py::test_the_fixture_sites_match_jekylls_reader_byte_for_byte", note: "G4: content/sites/catalog.py; the parity fixtures moved to content/tests/fixtures. The Ruby catalog stays while the Rails app and the LinkedIn lane run on it"}
+      - {id: rails.front-matter, what: "Parse front matter and update keys by line surgery, keeping comments, quoting, BOM and line endings.", target: sites.sync, status: done, proof: "content/tests/sites/test_frontmatter.py::test_surgery_table", note: "G4: content/sites/frontmatter.py, every Ruby test ported. The Ruby one stays while the Rails app and the LinkedIn lane run on it"}
+      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railswriter, note: "G4: content/sites/writer.py — confinement, O_EXCL create, the atomic replace and the transliterating slugs (content/tests/sites/test_writer.py); a page made in the platform gets its file from the write-back. Open: duplicating a page as a draft (content.create)"}
+      - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: done, proof: "content/tests/sites/test_doctor.py::test_each_scenario_matches_the_ruby_doctor", note: "G4: content/sites/doctor.py, held to the Ruby doctor's recorded findings; zer0-doctor.yml runs it. Dropped by ADR 0006 decision 4 (the owner's): the theme check's theme-not-zer0 and no-theme-overrides, and the theme's front-matter schema, replaced by the site's own zer0.json content types. The Ruby doctor is deleted"}
+      - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsabc-generator}
+      - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: done, proof: content/tests/distribution/test_lane.py::test_the_command_line_walks_the_governed_path, note: "G5: manage.py linkedin (content/distribution/lane/), held to the Ruby lane's recording (golden/ruby-lane.json): the other commands (content/tests/distribution/test_lane.py::test_the_command_line_reads_linkedin_back_and_records_by_hand), the loopback OAuth with state and PKCE (::test_the_oauth_callback_request_line), the MCP server (::test_the_mcp_server_lists_tools_previews_and_keeps_publish_off); zer0-linkedin.yml runs it on Python. A lane over a site's own files is a command line and CI by design; its studio counterpart is the platform's queue. rails/lib/zer0_cms/{linkedin,distribution} and their tests are deleted; the doctor's distribution check is content/distribution/lane/doctor.py, for G4."}
+      - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: done, proof: content/tests/distribution/test_lane.py::test_statistics_join_onto_content_paths_and_merge_into_performance_json, note: "G5: the lane's stats --write into .cms/distribution/performance.json; the platform's daily ingest (content/tests/distribution/test_platform.py::test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger) shown in Distribution → Statistics"}
+      - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: done, proof: content/tests/outbox/test_contracts.py::test_every_type_has_a_v1_schema_and_a_valid_example}
+      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsparity-tools, note: "G4: the Python catalog is held to the lists jekyll-parity recorded from Jekyll 4.4.1 (content/tests/sites/test_catalog.py) and the surgery to the round-trip property over real front matter (test_frontmatter.py). Open: re-recording those lists needs jekyll-parity, which is Ruby beside the Jekyll gem"}
 
   - id: workspace-tool
     path: tools/workspace
@@ -656,9 +695,7 @@ sources:
       - {id: workspace.routes, what: "routes — each site's Pages route, for the one Pages deploy.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::ScenarioTest}
       - {id: workspace.check, what: "check — registration, paths, workflow path filters, routes and vendored-copy drift.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_real_manifest.py::RealManifestTest}
       - {id: workspace.vendor, what: "vendor — re-sync vendored copies from their source.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::ChecksTest::test_vendored_drift_is_a_finding_and_vendor_write_repairs_it}
-      # partial: `bin/zer0 doctor` is Python and tested, but the doctor it runs is still
-      # rails/bin/zer0-cms (Ruby) until G4 ports it to the platform (sites.doctor).
-      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: partial}
+      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: done, proof: "tools/workspace/tests/test_workspace.py::DoctorTest", note: "G4: it runs the platform's doctor (content/sites/doctor.py) on this Python"}
       - {id: workspace.tags, what: "tags — this repository's release tags against those inherited from the Front Matter fork.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::TagsTest}
 
   - id: zer0-image-generator
@@ -712,7 +749,7 @@ sources:
     capabilities:
       - {id: site-2005.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site 2005 identical; sites.yml fails a pull request whose build differs from the recording). Partial: year-of-ai.github.io still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site 2005 identical; sites.yml fails a pull request whose build differs from the recording). Partial: year-of-ai.github.io still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-drsai
     path: sites/drsai
     summary: The children's picture-book site, its Python story engine (PyPI drsai) and the ABC books the wizard exports into it.
@@ -720,7 +757,7 @@ sources:
     capabilities:
       - {id: site-drsai.content, what: "Its pages and books import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site drsai identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/drsai still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site drsai identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/drsai still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: site-drsai.story-engine, what: "The Dr. Seuss-style poem and story generator.", target: ai.briefs, status: partial}
       - {id: site-drsai.abc-import, what: "Validate and import an ABC book against its spec sidecar.", target: books.abc, status: partial}
   - id: site-irony-works
@@ -730,7 +767,7 @@ sources:
     capabilities:
       - {id: site-irony-works.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site irony-works identical; irony-works.yml fails a pull request whose build differs from the recording). Partial: bamr87/irony-works still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site irony-works identical; irony-works.yml fails a pull request whose build differs from the recording). Partial: bamr87/irony-works still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: site-irony-works.wikilinks, what: "Wikilinks resolved before the build.", target: sites.obsidian, status: partial}
   - id: site-wargames
     path: sites/wargames
@@ -739,7 +776,7 @@ sources:
     capabilities:
       - {id: site-wargames.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site wargames identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/wargames still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site wargames identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/wargames still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-zer0-demo-cookbook
     path: sites/zer0-demo-cookbook
     summary: The cookbook demo site.
@@ -747,7 +784,7 @@ sources:
     capabilities:
       - {id: site-cookbook.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-cookbook identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-cookbook still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-cookbook identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-cookbook still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-zer0-demo-garden
     path: sites/zer0-demo-garden
     summary: The garden demo site.
@@ -755,7 +792,7 @@ sources:
     capabilities:
       - {id: site-garden.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-garden identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-garden still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-garden identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-garden still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-zer0-pages
     path: sites/zer0-pages
     summary: One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge.
@@ -779,7 +816,7 @@ sources:
     capabilities:
       - {id: site-zer0-pages-remote.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-pages-remote identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-pages-remote still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-pages-remote identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-pages-remote still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
 
   - id: aieo
     path: apps/aieo
@@ -826,7 +863,7 @@ sources:
       - {id: aieo.rewrite, what: "Rewrite a workspace file, shown side by side with the original.", target: ai.suggestions, status: partial}
       - {id: aieo.priorities, what: "A ranked content-update queue and quick wins from Search Console rows (position, impressions, CTR, trend, business priority).", target: sites.evolve, status: missing}
       - {id: aieo.landing-pages, what: "Draft landing pages, research them, analyze a competitor URL, CRO-audit copy.", target: aieo.lifecycle, status: missing}
-      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: missing}
+      - {id: aieo.publish-wordpress, what: "Publish a draft to WordPress over REST (draft by default, Yoast title and meta).", target: distribution.channels, status: done, proof: content/tests/distribution/test_transports.py::test_wordpress_publishes_a_draft_with_the_yoast_fields_through_the_ssrf_guard, note: "G5: a WordPress channel — POST /wp-json/wp/v2/posts with the user's application password, a draft unless the channel says otherwise, yoast_title and yoast_metadesc, every request behind research/fetch.py's SSRF guard; errors as sentences (::test_wordpress_errors_are_sentences_and_a_5xx_is_left_unconfirmed); studio: Distribution → Channels → WordPress (web/packages/ui/test/distribution.test.tsx)"}
       - {id: aieo.connectors, what: "GA4 top pages, Search Console queries, DataForSEO SERP (stub: placeholder or mock rows).", target: aieo.connectors, status: missing}
       - {id: aieo.citations, what: "Citations by URL, domain and engine, and a share-of-voice dashboard (stub: probing returns nothing).", target: aieo.citations, status: missing}
       - {id: aieo.site-context, what: "Crawl a seed URL N levels into a dataset — link map with hubs and orphans, per-page content and meta.", target: research.capture, status: missing}

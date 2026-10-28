@@ -13,11 +13,14 @@ from datetime import UTC, datetime
 
 import yaml
 
+from sites.frontmatter import Loader as JekyllLoader
+
 FENCE = re.compile(r"\A---[ \t]*\r?\n(.*?)^---[ \t]*\r?\n?", re.S | re.M)
 
 
-class _Loader(yaml.SafeLoader):
-    pass
+class _Loader(JekyllLoader):
+    """Jekyll's front-matter YAML (sites/frontmatter.py: a collection used as a
+    key read as its text), with dates left as the strings they are written as."""
 
 
 class _Dumper(yaml.SafeDumper):

@@ -10,7 +10,7 @@ The transactional outbox (M8). A change and the event announcing it commit toget
 
 | Stream | Written by | Read by |
 |---|---|---|
-| `zer0:content` | this plane | Rails; this plane's outbox desk (`outboxdesk.consumers`, group `outboxdesk`) |
-| `zer0:app` | Rails | this plane (`graph.consumers`) |
+| `zer0:content` | this plane | this plane's outbox desk (`outboxdesk.consumers`, group `outboxdesk`) and its own consumers (`distribution.consumers`), through `consume_events --stream zer0:content --group platform` (the compose `events` service) |
+| `zer0:app` | nothing since the Rails app was deleted (ADR 0008); the site renderer is its next publisher | this plane (`graph.consumers`) |
 
 Event types and their schemas: [`schemas/events/README.md`](../../schemas/events/README.md). A CloudEvents envelope carries the run's trace id as `traceparent`, so a trace started in either plane can be followed into the other.

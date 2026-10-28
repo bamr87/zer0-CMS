@@ -32,7 +32,7 @@ The platform also keeps everything the merged repositories did ([`capabilities.y
 | Contracts | `schemas/` | The committed OpenAPI document, GraphQL schema, agent block schema and event schemas. Clients are generated from them; CI fails when they drift. | JSON |
 | Tooling | `tools/`, `bin/zer0` | The workspace tool and the repository's gates. | Python |
 
-Nothing else remains at the end: `rails/`, `apps/`, `packages/` and the Jekyll parts of `sites/` are sources being absorbed.
+Nothing else remains at the end: `apps/`, `packages/` and the Jekyll parts of `sites/` are sources being absorbed (`rails/` is already gone: what it did that the platform does not yet do is in [`rails-cms-spec.md`](rails-cms-spec.md)).
 
 ## Content in the database, files generated
 
@@ -61,7 +61,7 @@ The full list, with each capability's surfaces and status, is the `platform:` se
 | Improvement | the editorial plan, improvement proposals, measured outcomes | the agent runtime, Suggestions |
 | AIEO | the analyzers and five-dimension scoring, patterns, audits of pages, URLs and crawled sites, citation tracking, the AIEO agents, connectors, reports, the `aieo_*` MCP tools | absorbed from `apps/aieo/`; Qdrant replaced by pgvector |
 | Distribution | channels (LinkedIn, WordPress, GitHub pull request, email), a queue with approval, the ledger keyed by canonical URL, statistics | `httpx`, PyGithub, django-anymail |
-| Books | books, parts and chapters, outline, characters, continuity, style guide, manuscripts, the ABC wizard, story generators | absorbed from `packages/books/`, `rails/lib` and drsai's engine |
+| Books | books, parts and chapters, outline, characters, continuity, style guide, manuscripts, the ABC wizard, story generators | absorbed from `packages/books/`, the Rails ABC generator ([`rails-cms-spec.md`](rails-cms-spec.md)) and drsai's engine |
 | Accounts and access | email sign-up and login by code, OIDC SSO, GitHub login, MFA (TOTP, passkeys), sessions, personal and agent tokens, roles and per-site permissions, ownership and sharing | django-allauth (account, socialaccount, mfa, usersessions, headless), Wagtail groups and permissions |
 | Operations | install and bootstrap, jobs with live logs, audit log, notifications and email, error reporting (Sentry, GitHub issues), probes, logs, metrics, traces, backups, deploy | Celery, Wagtail log entries, django-anymail, sentry-sdk, OpenTelemetry, compose and Helm |
 

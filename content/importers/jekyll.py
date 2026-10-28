@@ -15,13 +15,13 @@ One Jekyll site becomes one `SiteRootPage` (and one Wagtail `Site`) with a
 | every other front-matter key                | `front_matter`, in source order              |
 | the body                                    | StreamField blocks (importers/markdown.py)   |
 
-The reader follows the parts of Jekyll's that decide *which* files are
-content: `source:` and `collections_dir:`, `exclude:` (plus Jekyll's own
-defaults), underscore and dot directories, and front matter — a file without
-a leading `---` fence is a static file, not a page. It is deliberately less
-than the Rails catalog's transcription of Jekyll's reader (rails/lib), which
-remains the authority on edge cases; the round-trip test is what proves this
-reader on the real sites in this repository.
+Which files are content is the platform's one Jekyll reader's answer
+(sites/catalog.py, Jekyll 4.4's reader rules, held to Jekyll's own lists by
+tests/sites/test_catalog.py): pages with front matter (Markdown and HTML),
+posts and drafts, the documents of each declared collection, and `include:`d
+files. A draft (`_drafts/`) is imported as a draft. A file the reader marks as
+unreadable (not UTF-8, front matter that does not parse) is reported as an
+error and the rest of the site still imports.
 
 **Idempotent.** A file whose digest has not changed is skipped. A changed file
 updates its page — unless an editor changed that page in Wagtail since the
@@ -31,7 +31,6 @@ front matter says `published: false` or `draft: true`. Links are indexed in a
 second pass, once every page of the site exists.
 """
 
-import fnmatch
 import hashlib
 import re
 from dataclasses import dataclass, field
@@ -47,27 +46,12 @@ from wagtail.models import Collection, Page, Site
 from agents.principals import ensure_legacy_import_user
 from cms.models import ArticlePage, BookPage, Category, ChapterPage, CollectionPage, SiteRootPage, StandardPage
 from cms.services import publish, save_draft
+from sites import catalog
 
 from . import frontmatter
 from .markdown import to_blocks
 from .models import ImportedSource
 
-MARKDOWN = (".md", ".markdown")
-DEFAULT_EXCLUDE = [
-    "_site",
-    ".sass-cache",
-    ".jekyll-cache",
-    ".jekyll-metadata",
-    "gemfiles",
-    "Gemfile",
-    "Gemfile.lock",
-    "node_modules",
-    "vendor",
-    "vendor/bundle",
-    "vendor/cache",
-    "vendor/gems",
-    "vendor/ruby",
-]
 DATED_POST = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)$")
 LETTER_KEYS = ("letter", "word", "tagline", "alt", "subject")
 
@@ -80,6 +64,7 @@ class Document:
     front_matter: dict
     body: str
     text: str
+    kind: str = "page"  # the catalog's: page | post | draft | document
 
 
 @dataclass
@@ -112,66 +97,31 @@ def read_config(root: Path) -> dict:
     return data or {}
 
 
-def collection_names(config: dict) -> list[str]:
-    raw = config.get("collections") or {}
-    names = list(raw.keys()) if isinstance(raw, dict) else [str(n) for n in raw]
-    return ["posts"] + [n for n in names if n != "posts"]
-
-
-def _excluded(rel: str, patterns: list[str]) -> bool:
-    parts = rel.split("/")
-    for pattern in patterns:
-        pattern = pattern.rstrip("/")
-        if fnmatch.fnmatch(rel, pattern) or fnmatch.fnmatch(parts[-1], pattern):
-            return True
-        if any("/".join(parts[: i + 1]) == pattern for i in range(len(parts))):
-            return True
-    return False
-
-
-def documents(root: Path, config: dict) -> list[Document]:
-    root = root.resolve()
-    source = (root / str(config.get("source", "."))).resolve()
-    if not str(source).startswith(str(root)):
-        raise ValueError(f"source {config.get('source')!r} escapes the site root")
-    collections_dir = str(config.get("collections_dir", "") or "").strip("/")
-    exclude = DEFAULT_EXCLUDE + [str(p) for p in (config.get("exclude") or [])]
-    collections = {name: (source / collections_dir / f"_{name}") for name in collection_names(config)}
+def documents(root: Path, config: dict | None = None, errors: list | None = None) -> list[Document]:
+    """The site's content files, as the catalog reads them. A file it cannot
+    read as front matter and Markdown is appended to `errors` (when given)."""
     found: list[Document] = []
-    seen: set[Path] = set()
-
-    def add(path: Path, collection):
-        if path in seen or path.suffix not in MARKDOWN or not path.is_file() or path.is_symlink():
-            return
-        rel_source = path.relative_to(source).as_posix()
-        if _excluded(rel_source, exclude):
-            return
-        text = path.read_text(encoding="utf-8")
-        data, body = frontmatter.split(text)
-        if data is None:
-            return
-        seen.add(path)
+    for entry in catalog.scan(root).entries:
+        try:
+            if entry.error:
+                raise ValueError(entry.error)
+            text = Path(entry.path).read_bytes().decode("utf-8")  # bytes, so CRLF stays CRLF
+            data, body = frontmatter.split(text)
+        except (ValueError, yaml.YAMLError) as e:
+            if errors is not None:
+                errors.append(f"{entry.relative}: {e}".replace("\n", " "))
+            continue
         found.append(
             Document(
-                path=path,
-                rel=path.relative_to(root).as_posix(),
-                collection=collection,
-                front_matter=data,
+                path=Path(entry.path),
+                rel=entry.relative,
+                collection=None if entry.kind == "page" else entry.collection,
+                front_matter=data or {},
                 body=body,
                 text=text,
+                kind=entry.kind,
             )
         )
-
-    for name, directory in collections.items():
-        if directory.is_dir():
-            for path in sorted(directory.rglob("*")):
-                if not any(part.startswith(".") for part in path.relative_to(directory).parts):
-                    add(path, name)
-    for path in sorted(source.rglob("*")):
-        rel_parts = path.relative_to(source).parts
-        if any(p.startswith(("_", ".")) for p in rel_parts[:-1]) or rel_parts[-1].startswith(("_", ".")):
-            continue
-        add(path, None)
     return found
 
 
@@ -268,8 +218,10 @@ def _filename_date(doc: Document):
     return frontmatter.parse_date(match.group(1)) if match else None
 
 
-def _is_draft(fm: dict) -> bool:
-    return fm.get("published") is False or str(fm.get("published")).lower() == "false" or fm.get("draft") is True
+def _is_draft(doc: Document) -> bool:
+    fm = doc.front_matter
+    published = fm.get("published") is False or str(fm.get("published")).lower() == "false"
+    return doc.kind == "draft" or published or fm.get("draft") is True
 
 
 # ── images ─────────────────────────────────────────────────────────────────
@@ -389,8 +341,8 @@ def import_site(root, site_key: str, *, force=False, repo_root=None) -> Report:
     root = Path(root)
     repo_root = Path(repo_root or settings.REPO_ROOT)
     config = read_config(root)
-    docs = documents(root, config)
     report = Report(site_key=site_key)
+    docs = documents(root, config, report.errors)
     importer = ensure_legacy_import_user()
     with transaction.atomic():
         site_root = ensure_site_root(site_key, root, config, repo_root)
@@ -461,7 +413,7 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
 
 
 def _save(page, doc, importer):
-    if _is_draft(doc.front_matter):
+    if _is_draft(doc):
         save_draft(page, user=importer)
     else:
         publish(page, user=importer)

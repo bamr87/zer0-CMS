@@ -20,7 +20,7 @@ Definitions, runs and the one tool registry every surface dispatches through (no
 | `tools.py` | `memory.recall`, `memory.remember`, `brand.rules` |
 | `definitions/` | the agents, as reviewable YAML — including `assistant`, which runs the AI content layer's user-managed assistants (`ai/handlers.py`), and `books`, the book assistant (`books/handlers.py`); an eval's fixture page may have `children` (a book's chapters) |
 | `recordings/` | recorded model responses for the eval scenarios |
-| `data/abc_lexicons/` | the ABC lexicons (a vendored copy of `rails/lib/zer0_cms/abc/lexicons/`) |
+| `data/abc_lexicons/` | the ABC lexicons (the only copy since the Rails generator went, ADR 0008) |
 
 ## Effects and policies
 

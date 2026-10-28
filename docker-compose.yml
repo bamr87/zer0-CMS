@@ -1,10 +1,10 @@
 # zer0-CMS — the platform (Django + Wagtail, docs/adr/0004-one-platform.md)
-# behind `--profile content`, and, until their functions have moved into it,
-# the Rails fleet CMS and the image generator's panel.
+# behind `--profile content`, and, until its functions have moved into it, the
+# image generator's panel behind `--profile imagegen`. The Rails fleet CMS that
+# ran here without a profile is gone (docs/adr/0008-retire-the-rails-cms.md).
 #
 #   docker compose --profile content up -d --wait # the platform on :8000
-#   docker compose up --build                     # the Rails CMS on :3001/admin
-#   docker compose --profile imagegen up --build  # + zer0-image-generator on :3000
+#   docker compose --profile imagegen up --build  # zer0-image-generator on :3000
 #
 # The content profile is Postgres with pgvector, Redis, the Django app on
 # gunicorn's threaded workers (content/gunicorn.conf.py, so a run's event
@@ -22,18 +22,11 @@
 # The image generator's profile mounts the same directory at the same path,
 # so a site means the same checkout in both apps.
 #
-# Every port is published on 127.0.0.1 only. Without ZER0_CMS_PASSWORD the
-# Rails CMS refuses any request whose TCP peer is not loopback, and it treats
-# the container's default gateway as loopback (ZER0_CMS_TRUST_DOCKER_GATEWAY)
-# only because the port is not reachable from anywhere else. Publish it on
-# another interface only together with ZER0_CMS_PASSWORD.
+# Every port is published on 127.0.0.1 only.
 #
 # Every service carries the fleet's labels and log rotation (UPS-OPS-17), so
 # the hub's log plane can pick it up by label; GIT_SHA and BUILT_AT reach the
 # platform image from the environment (`GIT_SHA=$(git rev-parse --short HEAD)`).
-#
-# ABC export needs an explicit target: DRSAI_SITE_ROOT or the form field.
-# There is deliberately no default under the /sites mount.
 
 x-fleet-logging: &fleet-logging
   driver: json-file
@@ -53,47 +46,6 @@ x-content-build: &content-build
     BUILT_AT: ${BUILT_AT:-unknown}
 
 services:
-  cms:
-    build:
-      context: ./rails
-      dockerfile: Dockerfile
-    ports:
-      - "127.0.0.1:${PORT:-3001}:3000"
-    volumes:
-      - ${SITES_DIR:-.}:/sites
-      - storage:/app/storage
-    environment:
-      SITES_DIR: /sites
-      ZER0_CMS_TRUST_DOCKER_GATEWAY: "1"
-      ZER0_CMS_PASSWORD: ${ZER0_CMS_PASSWORD:-}
-      ZER0_CMS_USER: ${ZER0_CMS_USER:-}
-      ZER0_CMS_HOSTS: ${ZER0_CMS_HOSTS:-}
-      ZER0_IMAGE_GENERATOR_URL: ${ZER0_IMAGE_GENERATOR_URL:-http://localhost:3000}
-      DRSAI_SITE_ROOT: ${DRSAI_SITE_ROOT:-}
-      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
-      # The ABC wizard's Claude fallback for themes without a bundled lexicon.
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
-      # LinkedIn distribution (docs/DISTRIBUTION.md). The app credentials let a
-      # person connect a channel; LINKEDIN_ACCESS_TOKEN is the fallback token
-      # when a site has none; nothing publishes unless ZER0_LINKEDIN_PUBLISH=1.
-      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
-      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
-      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN:-}
-      ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
-      ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
-    labels:
-      <<: *fleet-labels
-      com.bamr87.fleet.stack: rails
-      com.bamr87.fleet.log_format: text
-    logging: *fleet-logging
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/up"]
-      interval: 10s
-      timeout: 3s
-      retries: 12
-      start_period: 40s
-
   # zer0-image-generator's web panel (full preview runs, compositions, the
   # studio), built from packages/zer0-image-generator in this monorepo. Its
   # Dockerfile's build context is that package's root (it loads the engine
@@ -202,6 +154,21 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Sites (content/sites/README.md): checkouts may be registered from /sites;
+      # the worker, which runs their sync and write-back jobs, mounts it writable.
+      SITES_DIR: /sites
+      # Distribution (content/distribution/README.md): the LinkedIn app lets a
+      # person connect a channel, LINKEDIN_ACCESS_TOKEN serves a LinkedIn
+      # channel with no token of its own, and nothing goes out to a kind unless
+      # its switch is 1 here and a person armed the channel.
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
+      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN:-}
+      ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
+      ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
+      ZER0_WORDPRESS_PUBLISH: ${ZER0_WORDPRESS_PUBLISH:-}
+      ZER0_GITHUB_PR_PUBLISH: ${ZER0_GITHUB_PR_PUBLISH:-}
+      ZER0_EMAIL_PUBLISH: ${ZER0_EMAIL_PUBLISH:-}
     volumes:
       - ${SITES_DIR:-.}:/sites:ro
       - ./packages/books/library:/app/packages/books/library
@@ -230,6 +197,7 @@ services:
     command: celery -A config worker --loglevel=INFO
     environment: *content-env
     volumes:
+      - ${SITES_DIR:-.}:/sites
       - content-media:/app/content/media
       - outbox-data:/app/content/var/outbox
     labels: *content-labels
@@ -303,8 +271,27 @@ services:
     healthcheck:
       disable: true
 
+  # The platform's own consumers of its own events (content/outbox/README.md):
+  # a page going live drafts a post for every channel of its site that drafts
+  # automatically (distribution/consumers.py). A consumer group of its own.
+  # Whichever process reads an event first runs every handler for it, once
+  # (outbox/consumers.py), the outbox desk's included, so this one mounts the
+  # belt as belt-publisher does: a handoff written anywhere else is lost.
+  events:
+    profiles: ["content"]
+    build: *content-build
+    command: python manage.py consume_events --stream zer0:content --group platform --name platform-1
+    environment: *content-env
+    volumes:
+      - outbox-data:/app/content/var/outbox
+    labels: *content-labels
+    logging: *fleet-logging
+    depends_on:
+      content: {condition: service_healthy}
+    healthcheck:
+      disable: true
+
 volumes:
-  storage:
   imagegen-storage:
   imagegen-forge:
   pgdata:

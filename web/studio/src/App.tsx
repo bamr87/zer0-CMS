@@ -9,13 +9,17 @@ import {
   BookView,
   ChapterWriter,
   ClaimCheckView,
+  Distribution,
   IdeasWorkspace,
+  JobLog,
   Newsroom,
   OutboxDesk,
   Overview,
   PageEditor,
   PageList,
   ResearchWorkspace,
+  SitesWorkspace,
+  SiteView,
   SourceView,
   StudioProvider,
   SuggestionInbox,
@@ -82,6 +86,18 @@ export function pathFor(to: Destination): string {
       return `/outbox/trials/${to.id}`;
     case 'claim-check':
       return `/outbox/claims/${to.id}`;
+    case 'sites':
+      return '/sites';
+    case 'site':
+      return `/sites/${to.id}`;
+    case 'job':
+      return `/sites/jobs/${to.id}`;
+    case 'distribution':
+      return to.tab && to.tab !== 'queue' ? `/distribution?tab=${to.tab}` : '/distribution';
+    case 'distribution-post':
+      return `/distribution/posts/${to.id}`;
+    case 'channel':
+      return `/distribution/channels/${to.id}`;
   }
 }
 
@@ -113,6 +129,12 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="outbox/:tab" element={<Outbox />} />
                 <Route path="outbox/trials/:id" element={<TrialPage />} />
                 <Route path="outbox/claims/:id" element={<ClaimCheckPage />} />
+                <Route path="sites" element={<Sites />} />
+                <Route path="sites/jobs/:id" element={<JobPage />} />
+                <Route path="sites/:id" element={<SitePage />} />
+                <Route path="distribution" element={<DistributionArea />} />
+                <Route path="distribution/posts/:post" element={<DistributionArea />} />
+                <Route path="distribution/channels/:channel" element={<DistributionArea />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -249,6 +271,38 @@ function TrialPage() {
 function ClaimCheckPage() {
   const { id = '' } = useParams();
   return <ClaimCheckView key={id} checkId={id} />;
+}
+
+function Sites() {
+  return (
+    <Section title="Sites">
+      <SitesWorkspace />
+    </Section>
+  );
+}
+
+function SitePage() {
+  const { id } = useParams();
+  return <SiteView key={id} siteId={Number(id)} />;
+}
+
+function JobPage() {
+  const { id = '' } = useParams();
+  return <JobLog key={id} jobId={id} />;
+}
+
+const DISTRIBUTION_TABS = ['queue', 'channels', 'ledger', 'statistics'] as const;
+
+function DistributionArea() {
+  const { siteId } = useSite();
+  const { post, channel } = useParams();
+  const [params] = useSearchParams();
+  const tab = DISTRIBUTION_TABS.find((t) => t === params.get('tab'));
+  return (
+    <Section title="Distribution">
+      <Distribution siteId={siteId} tab={tab} postId={post} channelId={channel} connecting={params.get('connecting') === '1'} />
+    </Section>
+  );
 }
 
 function Planned({ area }: { area: Area }) {

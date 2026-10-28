@@ -59,7 +59,7 @@ const NO_ENGINES_FROM_MCP = {
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'out/**', 'node_modules/**', 'rails/**', 'tools/**', '.vscode-test/**'],
+    ignores: ['dist/**', 'out/**', 'node_modules/**', 'tools/**', '.vscode-test/**'],
   },
 
   // 1 — baseline house rules
