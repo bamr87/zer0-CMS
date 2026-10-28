@@ -2,10 +2,14 @@
 heuristics and — when a model's evaluation is asked for — has the bundled evaluator score it through the AI layer
 (AIEO's system prompt, rubric and patterns, its answer held to the rubric's schema), the heuristics standing in when
 the provider fails. URLs and crawls go through the research library's guarded fetcher (respx answers; robots.txt
-honoured, private addresses refused); the visual audit's browser is faked. The reports AIEO wrote for its ten site
-audits come out byte for byte from the audits imported here."""
+honoured, private addresses refused). The visual audit's browser is a stand-in that records what it is asked to do,
+and a real Chromium where Playwright and its browser are installed (not in CI). The reports AIEO wrote for its ten
+site audits come out byte for byte from the audits imported here."""
 
 import json
+import sys
+import time
+import types
 from datetime import datetime
 from pathlib import Path
 
@@ -21,6 +25,7 @@ from ai.providers.fake import FakeProvider
 from aieo import parser, reports, scoring, services, visual
 from aieo.models import Audit
 from ops.errors import Forbidden, Invalid
+from research import fetch
 
 from .conftest import answer, at, evaluation
 
@@ -215,6 +220,154 @@ def test_every_request_the_browser_makes_goes_through_the_guarded_fetcher(web):
     visual.through_guard(inside)
     visual.through_guard(post)
     assert inside.aborted and post.aborted and len(web.calls) == 1
+
+
+class Recorder:
+    """A stand-in for Playwright's sync API that keeps what `capture` asks of it, and plays a page that requests its
+    own address, opens a WebSocket and a popup."""
+
+    class Error(Exception):
+        pass
+
+    def __init__(self):
+        self.launched, self.context, self.routes, self.closed = {}, {}, {}, []
+        outer = self
+
+        class Socket:
+            def connect_to_server(self):
+                outer.closed.append("the socket reached its server")
+
+        class Popup:
+            def close(self):
+                outer.closed.append("popup")
+
+        class Page:
+            def on(self, event, handler):
+                outer.routes[event] = handler
+
+            def goto(self, url, **options):
+                outer.routes["**/*"](Route(url))  # the page's own request, through the context's route
+                outer.routes["socket"](Socket())
+                outer.routes["popup"](Popup())
+
+            def screenshot(self, **options):
+                return b"\x89PNG-real"
+
+        class Context:
+            def route(self, pattern, handler):
+                outer.routes[pattern] = handler
+
+            def route_web_socket(self, pattern, handler):
+                outer.routes["socket"] = handler
+
+            def new_page(self):
+                return Page()
+
+        class Browser:
+            def new_context(self, **options):
+                outer.context = options
+                return Context()
+
+            def close(self):
+                outer.closed.append("browser")
+
+        class Chromium:
+            def launch(self, **options):
+                outer.launched = options
+                return Browser()
+
+        class Session:
+            chromium = Chromium()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        self.module = types.ModuleType("playwright.sync_api")
+        self.module.BrowserContext, self.module.Error, self.module.sync_playwright = Context, self.Error, Session
+
+
+def test_the_browser_reaches_the_web_only_through_the_guard_and_has_no_way_of_its_own(web, monkeypatch):
+    """Routes on one page miss a popup's requests, a service worker's and WebSockets, and Chromium ran unsandboxed
+    with the worker's environment (its secrets). The browser context is routed now (popups included), service workers
+    blocked, every WebSocket held without a server, popups closed; the browser launched sandboxed, with an
+    environment of a few names, a proxy that is a closed port and no name it can resolve."""
+    recorder = Recorder()
+    monkeypatch.setitem(sys.modules, "playwright", types.ModuleType("playwright"))
+    monkeypatch.setitem(sys.modules, "playwright.sync_api", recorder.module)
+    monkeypatch.setattr(settings, "AIEO_VISUAL_AUDIT", True)
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "never-handed-to-the-browser")
+    web.get(at("/")).respond(200, text=_page("Home"), headers={"Content-Type": "text/html"})
+    assert visual.capture("https://example.com/") == b"\x89PNG-real"
+    launched = recorder.launched
+    assert launched["chromium_sandbox"] is True and launched["proxy"]["server"] == "http://127.0.0.1:9"
+    assert "--host-resolver-rules=MAP * ~NOTFOUND" in launched["args"]
+    assert "AWS_SECRET_ACCESS_KEY" not in launched["env"] and set(launched["env"]) <= set(visual.KEPT_ENV)
+    assert recorder.context["service_workers"] == "block" and recorder.context["accept_downloads"] is False
+    assert recorder.routes["**/*"] is visual.through_guard  # on the context, so a popup's requests are routed too
+    assert recorder.closed == ["popup", "browser"] and len(web.calls) == 1  # the WebSocket never met its server
+
+
+def test_a_real_browser_reaches_nothing_but_the_guard(monkeypatch):
+    """Where Playwright (1.48 or later) and its Chromium are installed — not in CI: a page that opens a popup, a
+    WebSocket, a service worker, an image and a POST to a server on this machine, captured for real. Every HTTP
+    request reaches the (stand-in) guard, which refuses that server, and the server is never contacted."""
+    import socket
+    import threading
+
+    sync_api = pytest.importorskip("playwright.sync_api")
+    try:
+        with sync_api.sync_playwright() as p:
+            p.chromium.launch(headless=True).close()
+    except sync_api.Error as e:
+        pytest.skip(f"no browser for Playwright here: {str(e).splitlines()[0]}")
+    listener = socket.socket()
+    listener.bind(("127.0.0.1", 0))
+    listener.listen()
+    listener.settimeout(0.2)
+    port, contacted, done = listener.getsockname()[1], [], threading.Event()
+
+    def watch():
+        while not done.is_set():
+            try:
+                contacted.append(listener.accept())
+            except TimeoutError:
+                continue
+
+    watcher = threading.Thread(target=watch, daemon=True)
+    watcher.start()
+    inside = f"127.0.0.1:{port}"
+    html = f"""<html><head><title>Home</title><link rel="stylesheet" href="/style.css"></head><body><h1>Home</h1>
+    <img src="http://{inside}/pixel.png"><script>
+    window.open("http://{inside}/popup");
+    try {{ new WebSocket("ws://{inside}/socket"); }} catch (e) {{}}
+    fetch("http://{inside}/beacon", {{method: "POST", body: "x"}}).catch(() => 0);
+    if (navigator.serviceWorker) navigator.serviceWorker.register("/sw.js").catch(() => 0);
+    </script></body></html>"""
+    asked = []
+
+    def guard(url):
+        asked.append(url)
+        if not url.startswith("https://example.com/"):
+            raise fetch.Blocked(f"{url} is not public")
+        body, kind = (html, "text/html") if url == "https://example.com/" else ("body{}", "text/css")
+        return fetch.Fetched(url, 200, kind, body.encode(), {"Content-Type": kind})
+
+    monkeypatch.setattr(visual, "_get", guard)
+    monkeypatch.setattr(settings, "AIEO_VISUAL_AUDIT", True)
+    try:
+        png = visual.capture("https://example.com/")
+        time.sleep(0.5)  # what the page started after load has had time to try
+    finally:
+        done.set()
+        watcher.join()
+        listener.close()
+    assert png.startswith(b"\x89PNG")
+    assert {"https://example.com/", "https://example.com/style.css", f"http://{inside}/pixel.png"} <= set(asked)
+    assert not any("beacon" in url for url in asked)  # a POST is aborted before the guard
+    assert contacted == []  # nothing reached this machine's server: not the image, the socket, the popup, the beacon
 
 
 def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain(alice, api, fake, worker, web):

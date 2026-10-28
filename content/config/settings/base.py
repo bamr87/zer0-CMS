@@ -554,8 +554,8 @@ RESEARCH_TASK_TIME_LIMIT = env.int("RESEARCH_TASK_TIME_LIMIT", default=120)
 AUTOMATIONS_EMAILS_PER_HOUR = env.int("AUTOMATIONS_EMAILS_PER_HOUR", default=100)
 
 # ── AIEO (aieo/README.md) ───────────────────────────────────────────────────
-# The visual audit: a screenshot in a headless browser (Playwright, an optional install) whose every request goes
-# through the research fetcher's guard; off unless set.
+# The visual audit: a screenshot in a headless browser (Playwright 1.48 or later, an optional install) whose every
+# request goes through the research fetcher's guard, with no network of its own; off unless set.
 AIEO_VISUAL_AUDIT = env.bool("AIEO_VISUAL_AUDIT", default=False)
 # Seconds an audit's or a rewrite's run may take before Celery stops it (soft; the hard limit is 30 seconds later):
 # scoring a long text is slow, and a site's crawl waits on someone else's server (aieo/services.py `limits`).
