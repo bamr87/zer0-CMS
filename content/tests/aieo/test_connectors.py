@@ -240,3 +240,20 @@ def test_removing_a_connector_takes_the_right_to_delete_one(configurer, site, ap
     configurer.user_permissions.add(Permission.objects.get(codename="delete_connector"))
     remover = type(configurer).objects.get(pk=configurer.pk)
     assert api(remover).delete(url).status_code == 204 and not Connector.objects.filter(pk=row.pk).exists()
+
+
+def test_a_failed_sync_is_logged_without_the_frames_that_hold_its_credential(site, caplog, monkeypatch):
+    """A traceback carries its frames' variables — a service account's whole key, its private key, the signed grant —
+    which Sentry sends unless a name is on its list; an unexpected failure is logged by its type alone."""
+
+    def broken(connector):
+        key = connector.get_credential()  # what the vendor client's frames hold when it fails  # noqa: F841
+        raise KeyError("access_token")
+
+    monkeypatch.setattr(connectors, "fetch_rows", broken)
+    row = connect(site, Connector.GA4, {"property_id": "1"})
+    with caplog.at_level("ERROR", logger="aieo.tasks"):
+        assert tasks.sync_connector(row.pk) == Connector.FAILED
+    assert caplog.records and all(r.exc_info is None for r in caplog.records)
+    row.refresh_from_db()
+    assert row.error == "the sync failed: KeyError"

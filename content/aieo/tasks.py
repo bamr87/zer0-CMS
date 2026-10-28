@@ -35,7 +35,9 @@ def sync_connector(pk: int) -> str:
     except httpx.HTTPError as e:
         outcome = {"status": Connector.FAILED, "error": f"the service could not be reached: {type(e).__name__}"}
     except Exception as e:  # noqa: BLE001 — a failed sync is recorded on the connector, never left syncing
-        log.exception("syncing connector %s failed", pk)
+        # By its type alone: a traceback's frames hold the credential (a service account's private key), and Sentry
+        # sends a frame's variables unless a name is on its list.
+        log.error("syncing connector %s failed: %s", pk, type(e).__name__)
         outcome = {"status": Connector.FAILED, "error": f"the sync failed: {type(e).__name__}"}
     Connector.objects.filter(pk=pk).update(**outcome, updated_at=timezone.now())
     return outcome["status"]
