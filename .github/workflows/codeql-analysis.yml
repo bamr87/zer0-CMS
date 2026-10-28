@@ -1,7 +1,7 @@
 # CodeQL over both halves of the repository.
 #
 # `javascript-typescript` covers the VS Code extension (`src/`, `esbuild.js`,
-# `test-runner.js`); `ruby` covers the ABC content engine under `rails/`. Both
+# `test-runner.js`); `ruby` covers the Ruby still being absorbed (`packages/zer0-image-generator/`, `sites/zer0-pages/`). Both
 # run with `build-mode: none`, the supported mode for interpreted languages —
 # CodeQL extracts straight from source and there is nothing to compile. The
 # `autobuild` step this file used to carry only ever did anything for C/C++, C#

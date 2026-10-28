@@ -1,6 +1,6 @@
 """`manage.py consume_events`: handle a stream's events through a consumer group —
-the Rails plane's (`zer0:app`, group `content`, the default) or this plane's own
-(`zer0:content`, e.g. group `outboxdesk`: the outbox desk's belt publisher).
+the experience plane's (`zer0:app`, group `content`, the default; nothing publishes there since the
+Rails app was deleted, ADR 0008) or this plane's own (`zer0:content`, e.g. group `outboxdesk`).
 
 Every installed app's `consumers` module registers its handlers
 (`autodiscover_modules`); each handler runs once per event (outbox/consumers.py).

@@ -6,10 +6,7 @@
 # "Missing X server or $DISPLAY" followed by a SIGSEGV. It is the single most
 # commonly missed piece of a VS Code extension pipeline.
 #
-# The Rails half has its own workflows — `abc-engine.yml` (stdlib, no bundler)
-# and `rails-app.yml` (the app, its tests and a boot) — so a TypeScript pull
-# request no longer boots a Ruby toolchain it does not use, and a change to
-# `rails/` or the compose file no longer downloads VS Code: hence the
+# A change to the compose file no longer downloads VS Code: hence the
 # `paths-ignore` below. The same goes for the imported `packages/`, `sites/` and
 # `apps/` trees, the content plane (`content/` and the schemas it owns,
 # gated by content.yml) the React frontend (`web/`, gated by web.yml, including the recordings of each site's Jekyll build in `web/site/fixtures/`, compared by pages.yml),
@@ -22,7 +19,6 @@ name: extension
 on:
   pull_request:
     paths-ignore:
-      - "rails/**"
       - "packages/**"
       - "sites/**"
       - "apps/**"
@@ -31,11 +27,11 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
+      - "schemas/books/**"
       - "web/**"
   push:
     branches: [main]
     paths-ignore:
-      - "rails/**"
       - "packages/**"
       - "sites/**"
       - "apps/**"
@@ -44,6 +40,7 @@ on:
       - "schemas/events/**"
       - "schemas/graphql/**"
       - "schemas/content/**"
+      - "schemas/books/**"
       - "web/**"
 
 permissions:

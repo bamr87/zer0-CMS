@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Themed A–Z lexicon: "IT systems" — a toddler's first alphabet of the concepts
 # that run the digital world, each turned into something small, friendly and
-# drawable. Consumed by Zer0Cms::Abc::Providers::Deterministic so the seed book
+# drawable. Read by the ABC drafter's deterministic path (agents/handlers/abc.py) so the seed book
 # "The IT Alphabet: A is for Automation" generates fully offline (no API key).
 #
 # Each letter carries:

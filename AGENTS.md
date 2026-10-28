@@ -15,8 +15,8 @@
 - **Workspaces:** the studio is organised around what people do — Write, Create, Ideas, Research, Newsroom, Books, Sites — on one runtime of AI pipelines, editorial workflows and automations (TARGET.md § What it is for).
 - **Content in the database, files generated:** every site and book lives in the platform and also exists as a generated, committed, re-importable file tree (a site's source, a book's `library/<slug>/`).
 - **Sites:** manage (registry, settings, render, deploy), monitor (uptime, links, performance, accessibility, SEO, analytics, AIEO scores) and improve (agents propose changes from those signals; a person accepts them). Sites render with React by default; zer0-mistakes survives only as an option — render a site with that theme and deploy it with a Jekyll server.
-- **No Ruby.** The workspace tool (`bin/zer0`) is Python already (PLAN P5); the Rails fleet CMS, the image generator's gem and the sites' Jekyll builds are being ported away, and until they are, a ratchet in CI stops Ruby from growing or spreading.
-- **Every merged repository is absorbed, not discarded:** parodynews (formerly barodybroject — every one of its capabilities), aieo, books, the image generator, the Rails CMS, the workspace tool and the nine sites' content. A source directory is deleted only when the ledger shows every capability `done` (with a test) or `dropped` by the owner.
+- **No Ruby.** The workspace tool (`bin/zer0`) is Python already (PLAN P5); the Rails fleet CMS is gone ([ADR 0008](docs/adr/0008-retire-the-rails-cms.md)); the image generator's gem and the sites' Jekyll builds are being ported away, and until they are, a ratchet in CI stops Ruby from growing or spreading.
+- **Every merged repository is absorbed, not discarded:** parodynews (formerly barodybroject — every one of its capabilities), aieo, books, the image generator, the Rails CMS, the workspace tool and the nine sites' content. A source directory is deleted only when the ledger shows every capability `done` (with a test), `dropped` by the owner, or — by the owner's decision, as for the Rails CMS — `specified`: what it did kept in a written spec the platform still owes ([`docs/plan/rails-cms-spec.md`](docs/plan/rails-cms-spec.md)).
 
 **What an agent must not do** — each of these has happened, or is the next obvious mistake:
 
@@ -29,16 +29,16 @@
 - Build a capability that only an API can reach. A capability is done when a person can use it from its studio workspace (and, where it belongs next to a file, from the extension).
 - Add a dependency on zer0-mistakes — a vendored file, a fixture checkout, a CI job against it, a design port, an overlay. Only the Jekyll-theme option names it (`theme_allowed:` in the ledger); its home is `bamr87/zer0-mistakes` ([ADR 0005](docs/adr/0005-theme-goes-home.md)).
 - Hand-edit a generated file tree (a site's exported source, a book's `library/<slug>/`) as if it were the source. Edit in the platform; the files are regenerated. Likewise a recorded site build (`web/site/fixtures/`): re-record it with `tools/site_manifest.py`, never edit it to make a check pass.
-- Delete a source directory, a site or a capability because it looks obsolete, or mark a capability `dropped`. Deletion follows the ledger, and dropping is the owner's decision.
-- Run a fleet-wide kit (docs framework, governance, standards) over an imported project as if it were a live product. Imported projects under `apps/`, `packages/`, `rails/` and `sites/` are **sources being absorbed**; fleet kits apply to the platform, `web/` and the extension.
+- Delete a source directory, a site or a capability because it looks obsolete, or mark a capability `dropped`. Deletion follows the ledger; dropping a capability, or deleting its source before it moved (`specified`), is the owner's decision.
+- Run a fleet-wide kit (docs framework, governance, standards) over an imported project as if it were a live product. Imported projects under `apps/`, `packages/` and `sites/` are **sources being absorbed**; fleet kits apply to the platform, `web/` and the extension.
 - Pick work by "the first unchecked box" in the plan. The order of work is PLAN § 3's list; older phases keep boxes later decisions overtook.
 - Stack a pull request on another unmerged branch. Base every pull request on `main` (#52 merged into a dead branch and left `main` contradicting the owner for a day).
 
-**Today's code vs. the target.** Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's Rails app and Jekyll sites are enforced by today's build and still hold — keep them working, but do not extend them. When a rule below and ADR 0006 seem to disagree about *new* work, ADR 0006 wins.
+**Today's code vs. the target.** Until a milestone lands, the code as it is wins over the plan: the rules below that describe today's Jekyll sites are enforced by today's build and still hold — keep them working, but do not extend them. When a rule below and ADR 0006 seem to disagree about *new* work, ADR 0006 wins.
 
-Where a project under `packages/`, `sites/`, `apps/` or `content/` has its own `AGENTS.md`, it governs that tree — read it first. Never call Rails "the content engine": that is `.cms/` (`src/core/contract/`).
+Where a project under `packages/`, `sites/`, `apps/` or `content/` has its own `AGENTS.md`, it governs that tree — read it first.
 
-"Done": extension — `npm run compile`, `npm test`; `rails/lib` — `rails/bin/test-stdlib`, no bundler; Rails app — `bin/rails test`, `bin/rails zeitwerk:check`, and after a `rails/Dockerfile` or `docker-compose.yml` change the image builds, boots and answers `/up`; `content/` — `pytest -q`, `makemigrations --check`, ruff, the recorded evals and its three committed schemas unchanged ([`content/AGENTS.md`](content/AGENTS.md)).
+"Done": extension — `npm run compile`, `npm test`; after a `content/Dockerfile` or `docker-compose.yml` change the image builds, boots and answers `/readyz`; `content/` — `pytest -q`, `makemigrations --check`, ruff, the recorded evals and its three committed schemas unchanged ([`content/AGENTS.md`](content/AGENTS.md)).
 
 ## Stack & commands
 
@@ -47,7 +47,6 @@ npm install
 npm run compile          # check-types + lint + all five bundles
 npm run watch            # rebuild on change, then F5 in VS Code to launch the Extension Host
 npm test                 # unit, golden, MCP stdio and integration suites
-SITES_DIR=$HOME/github docker compose up --build                                   # fleet CMS → http://localhost:3001/admin
 docker compose --profile content up -d --wait db redis content worker research-worker beat relay belt-publisher events  # the platform → http://localhost:8000/studio/
 bin/zer0 run check --affected                                                      # fast checks of every project this branch touched
 ```
@@ -60,13 +59,8 @@ npx mocha --ui tdd out/test/{core,fields,governance,golden,loop,fleet,engines,ro
 npx mocha --ui tdd out/test/governance.test.js --grep "ledger"   # one suite or one test
 npx @vscode/vsce package                                         # the .vsix
 
-# ── Fleet CMS (rails/) — rails/lib stays stdlib-only ──
-cd rails && bash bin/test-stdlib                                       # rails/lib, no bundler
-ruby bin/zer0-cms doctor ../sites/drsai                                # zer0 stack alignment; exit 1 on error
-ruby bin/zer0-cms new --theme "IT systems" --out ../sites/drsai        # an ABC book, headless
-bundle install && bin/rails db:prepare && SITES_DIR=$HOME/github bin/rails server   # http://localhost:3000/admin
-bin/rails test && bin/rails zeitwerk:check                             # image-engine tests need python3 + PyYAML
-SITES_DIR=$HOME/github docker compose --profile imagegen up --build    # (repo root) + zer0-image-generator on :3000
+# ── The image generator's panel (packages/zer0-image-generator/), until PLAN G6 absorbs it ──
+SITES_DIR=$HOME/github docker compose --profile imagegen up --build    # (repo root) zer0-image-generator on :3000
 
 # ── The platform (content/) — Django 5.2 + Wagtail 7.4; see content/AGENTS.md ──
 cd content && pip install -r requirements-dev.txt
@@ -111,7 +105,6 @@ The fourteen-suite line omits the three suites that need an extension host or a 
 |---|---|
 | `src/` | The extension, a client of the platform with the studio's capabilities from PLAN G10 (ADR 0006 decision 9), keeping its file mode: `core/` (pure Node), `mcp/`, `webview/`, the `vscode` shell, `test/` ([`src/README.md`](src/README.md)). |
 | `media/`, `schemas/` | Stylesheets, icons and lane templates; `zer0.schema.json` and the platform's schemas. |
-| `rails/` | The fleet CMS, being absorbed by the platform (PLAN G4, G5, G9) and then deleted; `rails/lib` is the stdlib-only zer0 library. |
 | `content/` | The platform, including the studio's APIs (`api/session.py`, `api/pages.py`, `api/review.py`) and the built studio at `/studio/`; `content/ops/` is its operational baseline (probes, request ids, errors, logs, throttling, OpenAPI). |
 | `web/` | The React frontend (PLAN P4): the studio (`web/studio/`) and the packages it is built from (`web/packages/`: `@zer0/api`, the client generated from the OpenAPI document; `@zer0/tokens`; `@zer0/ui`, the workspaces, which take client, streams and navigation from their host so the extension's webviews can render them in G10) ([`web/README.md`](web/README.md)). |
 | `packages/`, `sites/`, `apps/` | Imported sources being absorbed, each capability a row in [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) ([`docs/MONOREPO.md`](docs/MONOREPO.md)). |
@@ -135,7 +128,6 @@ The fourteen-suite line omits the three suites that need an extension host or a 
 Non-negotiable; ADRs 0001 and 0004 record where today's code still crosses it and which milestone ends that.
 
 - **The platform (`content/`) owns** content, revisions, workflow, the graph, embeddings, the agent harness, the tool registry, MCP, users and sign-in and every API (its screens are React, in `web/` — ADR 0006), and, as Phase G lands, the site registry, distribution, media, scoring, conversations and books.
-- **Rails is being retired** and **never** writes content tables: it changes content only through a site's still-canonical files (`PageEditor`, `Zer0Cms::Cms::Writer`, D16) or platform tools with a scoped agent token. Add no third Rails writer and no Rails feature Phase G would have to move.
 - A new capability is a platform app on the one registry, agent users, Suggestions and outbox, with its UI in `web/`; a second LLM client, ledger or registry is federation, not absorption.
 - Side effects leaving the platform go through the transactional outbox and `schemas/events/`. Changing a schema means bumping its version and updating the contract tests on both sides.
 - Frontends (`web/`'s studio and site renderer; the Jekyll sites until each switches) and clients (the extension) are headless: APIs, exported files and stored outputs, never a database.
@@ -177,19 +169,13 @@ Why each exists: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (decisions D1–
 - **Eleven context keys, each gating something:** grep `package.json` before adding one; a key is a rendering hint, so every spawn re-asks `workspaceTrusted()`.
 - **Adding a command:** `contributes.commands` (+ `menus`), `register(shell, id, …)` in its `src/commands/*.ts`, `ALL_COMMAND_IDS`, and `ALL_COMMANDS` in `src/test/extension.test.ts` with its `54` bumped ([`src/README.md`](src/README.md#adding-a-command)). Anything that writes, publishes or approves re-reads disk and re-runs `evaluateGates()` in the palette's function.
 
-## Fleet CMS invariants (`rails/`)
+## A site's files (`content/sites/`)
 
-Explained in [`docs/PLATFORM.md`](docs/PLATFORM.md).
+The rules the Rails fleet CMS kept, carried into the platform by PLAN G4 and explained in [`content/sites/README.md`](content/sites/README.md); what the Rails CMS did that the platform does not do yet is in [`docs/plan/rails-cms-spec.md`](docs/plan/rails-cms-spec.md).
 
-- **Git is the source of truth; SQLite is an index** (D16): `Site#sync!` rebuilds it in one transaction; `PageEditor` and `Zer0Cms::Cms::Writer` are the only writers, each write re-syncs its path, no page row is saved from a form.
-- **A stale write is refused twice** (indexed digest, form `base_digest`), re-checked before the atomic rename; an unchanged save writes nothing.
-- **`rails/lib` is stdlib-only** (D15; CI: no bundle, Ruby 3.3 and 4.0.5); Rails-only code stays in `app/`.
-- **The catalog is Jekyll 4.4's reader**, not a glob; its fixture lists come from Jekyll 4.4.1 (`bin/jekyll-parity`) — never re-baseline by hand.
-- **Every disk path is confined** to realpaths inside `SITES_DIR`, through `SitePath`; escaping `source:` or `collections_dir:` is refused.
-- **`ImageEngine` alone loads or runs zer0-image-generator**; its write goes through `PageEditor#replace_engine_write!`, its subprocess gets no credentials.
-- **Loopback or a password:** `AccessGuard` reads `REMOTE_ADDR` and every `X-Forwarded-For` hop, never `remote_ip`; publish beyond 127.0.0.1 only with `ZER0_CMS_PASSWORD`.
-- **No inline script or style:** per-request CSP nonce, no `unsafe-inline`, Administrate's compiled JS/CSS not loaded, flashes escaped.
-- **The ABC wizard** exports only into an explicit Jekyll root; re-run it rather than hand-edit a generated book in drsai.
+- **A stale write is refused twice** (the indexed digest, and the caller's base digest when the job names one), re-checked right before the atomic rename; an unchanged write-back writes nothing.
+- **The catalog is Jekyll 4.4's reader**, not a glob; its fixture lists (`content/tests/fixtures/jekyll-site*.expected.json`) came from Jekyll 4.4.1's own reader — never re-baseline them by hand.
+- **Every disk path is confined** (`sites/writer.py`): plain relative paths, no symlink at any component, the realpath inside the site's root.
 
 ## The monorepo (`workspace.yml`, `bin/zer0`)
 
@@ -199,7 +185,7 @@ Fourteen imported repositories, each a **source being absorbed** into the platfo
 - **A new directory under `packages/`, `sites/` or `apps/`, or a new top-level project, gets its `workspace.yml` entry in the same change**, with a root workflow or `ci: none — <reason>`, or `bin/zer0 check` fails.
 - **Only the root `.github/workflows/` runs**, path-filtered per project; nested workflow files are reference copies.
 - **Nothing under `packages/`, `sites/` or `apps/` assumes it is the git root**; resolve paths from the file.
-- **A file two projects need is `vendored:`** in `workspace.yml` with one source (including `rails/`'s tokens CSS, art styles and front-matter schema): edit the source, `bin/zer0 vendor --write`, read the diff.
+- **A file two projects need is `vendored:`** in `workspace.yml` with one source: edit the source, `bin/zer0 vendor --write`, read the diff.
 - **A Jekyll site lists `AGENTS.md` and `CLAUDE.md` under `exclude:`**, or Jekyll publishes them.
 - **This repository is the only home** (ADR 0002): change an imported project here, never in its original; originals publish until cutover C1–C7, so don't archive one `docs/MONOREPO.md` still lists. The theme is the exception ([ADR 0005](docs/adr/0005-theme-goes-home.md)): `jekyll-theme-zer0` is developed in `bamr87/zer0-mistakes`, never here; a site here consumes it as the gem or `remote_theme` it declares until it moves to the Jekyll-theme option (PLAN P2), and a theme change is a pull request there.
 

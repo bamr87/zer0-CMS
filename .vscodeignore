@@ -14,7 +14,6 @@
 .github/**
 src/**
 out/**
-rails/**
 tools/**
 docs/**
 node_modules/**
@@ -56,7 +55,7 @@ schemas/content/**
 workspace.yml
 bin/**
 
-# The Rails half's container definition: repository infrastructure, not payload.
+# The compose stack: repository infrastructure, not payload.
 docker-compose.yml
 
 # Release plumbing and toolchain pins: repository infrastructure, not payload.

@@ -9,7 +9,7 @@ assignees: ''
 
 **Describe the bug** A clear and concise description of what the bug is.
 
-**Which half?** The VS Code extension (`src/`), the ABC generator (`rails/`), or the bundled MCP server.
+**Which half?** The VS Code extension (`src/`), the platform (`content/`), the studio (`web/`), or the bundled MCP server.
 
 **To Reproduce** Steps to reproduce the behavior:
 

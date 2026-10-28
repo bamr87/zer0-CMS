@@ -11,13 +11,13 @@
 ## How it was tested
 
 <!--
-What you actually ran, and what it told you. `npm run compile` and `npm test` at minimum for extension changes; for `rails/`, `./bin/test-stdlib`. If you skipped something, say so. -->
+What you actually ran, and what it told you. `npm run compile` and `npm test` at minimum for extension changes; for `content/`, `python -m pytest -q`; for `web/`, `npm test`. If you skipped something, say so. -->
 
 ## Checklist
 
-- [ ] `npm run compile` passes (type-check + lint + all five bundles) — skip if `rails/**` only
-- [ ] `npm test` passes — skip if `rails/**` only
-- [ ] `cd rails && ./bin/test-stdlib` passes — skip if `src/**` only
+- [ ] `npm run compile` passes (type-check + lint + all five bundles) — skip if `content/**` or `web/**` only
+- [ ] `npm test` passes — skip if `content/**` or `web/**` only
+- [ ] `cd content && python -m pytest -q -m "not slow"` passes — skip if `src/**` only
 - [ ] `src/core/` and `src/mcp/` still import no `vscode`
 - [ ] No `innerHTML` added under `src/webview/`
 - [ ] Every gate is still re-checked host-side — no new check that lives only in a webview

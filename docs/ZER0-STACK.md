@@ -10,7 +10,7 @@ Three repositories, one contract each: a theme that renders, an image engine tha
 |---|---|---|---|
 | Theme | [bamr87/zer0-mistakes](https://github.com/bamr87/zer0-mistakes) | layouts, includes, the front-matter contract (`.github/config/frontmatter_schema.yml`), the consumer kit (`templates/consumer/`), the consumer registry (`_data/consumers.yml`) | `remote_theme: bamr87/zer0-mistakes` (a floating ref is a deliberate posture in lifehacker.dev and it-journey; pinning stays the owner's call) |
 | Image engine | [bamr87/zer0-image-generator](https://github.com/bamr87/zer0-image-generator) | the preview pipeline (the Python oracle and its pure-Ruby port under `lib/zer0_image_generator/`), the `preview_images:` config, the `jekyll preview-images` command, the web image forge, the design tokens | the `zer0-image-generator` gem in `group :jekyll_plugins` plus one `preview_images:` block — no vendored `_plugins/preview_*` forks, no copied Python or bash generators |
-| CMS | [bamr87/zer0-CMS](https://github.com/bamr87/zer0-CMS) (this repo) | the Rails fleet CMS (`rails/`), the VS Code extension (`src/`), the platform (`content/`, with the Jekyll catalog and the consumer contract check `zer0 doctor` in `content/sites/`), the `zer0.json` schema | a valid `zer0.json` (console dialect, with a `$schema` pointer) plus an optional report-only `zer0-doctor` workflow caller |
+| CMS | [bamr87/zer0-CMS](https://github.com/bamr87/zer0-CMS) (this repo) | the VS Code extension (`src/`), the platform (`content/`, with the Jekyll catalog and the consumer contract check `zer0 doctor` in `content/sites/`), the `zer0.json` schema | a valid `zer0.json` (console dialect, with a `$schema` pointer) plus an optional report-only `zer0-doctor` workflow caller |
 
 lifehacker.dev's Trace Bloom generator (`scripts/preview/`) is the one sanctioned exception: a deliberate offline style, recorded as a candidate to port upstream into the image engine, not a drifted copy of it.
 
@@ -69,19 +69,15 @@ The workflow checks out the caller and `bamr87/zer0-CMS` at `main` side by side,
 
 ## What zer0-CMS consumes
 
-**The image engine.** The Rails app bundles `zer0-image-generator ~> 0.6` with `require: false`, and `app/services/image_engine.rb` is the only file that loads or runs it. It lists a site's missing previews (the `missing_preview:` filter) and draws one page's preview with the free `local` provider, writing the key back through `PageEditor` so the engine's own writer never has the last word. Against the released 0.6.0 gem it runs the gem's Python engine as the CLI would; when a release ships `Zer0ImageGenerator::Facade` (the first after 0.7.0), raise the Gemfile floor, re-lock, and the app uses the facade with no code change. Everything bigger than one page links out to the image generator's panel at `ZER0_IMAGE_GENERATOR_URL`. See [`PLATFORM.md`](PLATFORM.md#the-image-engine-seam).
-
-**The design tokens.** `rails/app/assets/stylesheets/zer0-tokens.css` is a byte-identical copy of the image generator's `web/app/assets/stylesheets/zer0-tokens.css`, the `zer0-ui-tokens` kit (1.0.1 today; the stamp is its first comment line). Administrate is themed through it by `administrate-theme.css`. Never edit the copy: change the kit in `packages/zer0-image-generator`, bump its version, and re-vendor with `bin/zer0 vendor --write`; `bin/zer0 check` fails CI while the two differ.
-
-**The theme's contracts.** `rails/lib/zer0_cms/data/frontmatter_schema.yml` is the theme's front-matter schema, and `rails/lib/zer0_cms/data/abc_art_styles.yml` is the image generator's ABC art-style catalog; both are byte-identical vendored copies, re-synced rather than edited.
+**The image engine.** Nothing in the platform loads zer0-image-generator yet. The Rails fleet CMS's seam to it — listing a site's missing previews and drawing one with the free `local` provider, written back through the stale-write guard — went with the Rails CMS ([ADR 0008](adr/0008-retire-the-rails-cms.md)); what it did is `rails.missing-previews` in [`plan/rails-cms-spec.md`](plan/rails-cms-spec.md), and PLAN G6 imports the engine into the platform as a library. The image generator's own panel still runs (`--profile imagegen`).
 
 ## Ports and compose
 
 | App | Repo | Start | URL | Sites mount |
 |---|---|---|---|---|
-| Fleet CMS (admin, editor, ABC wizard) | zer0-CMS | `docker compose up --build` at the repo root | http://localhost:3001/admin | `${SITES_DIR:-.}:/sites` |
+| The platform (studio, APIs, admin) | zer0-CMS | `docker compose --profile content up -d --wait` at the repo root | http://localhost:8000/studio/ | `${SITES_DIR:-.}:/sites` (read-only; the worker writes the write-back) |
 | Image generator (forge, runs, studio) | zer0-image-generator | `docker compose --profile imagegen up --build` here, or `docker compose up --build` in `packages/zer0-image-generator` | http://localhost:3000 | `${SITES_DIR:-.}:/sites` |
 
 - Both apps mount the same `SITES_DIR` at `/sites`, so a site registered as `/sites/<name>` means the same checkout in both. Register container paths, never host paths.
-- The default `.` is this repository: the CMS discovers the zer0 sites the monorepo holds (`/sites/sites/drsai`, `/sites/sites/zer0-pages`, …) with no setup. To manage repositories that live outside it, export `SITES_DIR` once (for example `export SITES_DIR=~/github`). The `imagegen` profile builds from `${ZER0_IMAGE_GENERATOR_DIR:-./packages/zer0-image-generator}`.
-- Both ports are published on 127.0.0.1 only. `PORT` moves the CMS and `IMAGEGEN_PORT` moves the image generator; point `ZER0_IMAGE_GENERATOR_URL` at the new address when you move it.
+- The default `.` is this repository: the platform discovers the zer0 sites the monorepo holds (`/sites/sites/drsai`, `/sites/sites/zer0-pages`, …) with no setup. To manage repositories that live outside it, export `SITES_DIR` once (for example `export SITES_DIR=~/github`). The `imagegen` profile builds from `${ZER0_IMAGE_GENERATOR_DIR:-./packages/zer0-image-generator}`.
+- Both ports are published on 127.0.0.1 only. `CONTENT_PORT` moves the platform and `IMAGEGEN_PORT` moves the image generator.

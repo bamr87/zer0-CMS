@@ -20,8 +20,11 @@
 #   sources — every repository merged into zer0-CMS, every capability it had,
 #     and the platform capability it lands in (`target:`, a platform id). A row
 #     is `missing`, `partial`, `done` (with `proof:`) or `dropped` (with
-#     `decided_by:` naming the owner's decision — an agent never drops a row).
-#     A source's directory may be deleted only when no row is missing/partial.
+#     `decided_by:` naming the owner's decision — an agent never drops a row) or
+#     `specified` (the owner deleted the source before the row moved: `decided_by:`
+#     names that decision, `spec:` the file that keeps what it did, and the
+#     `target:` still owes it). A source's directory may be deleted only when no
+#     row is missing/partial.
 #
 # Statuses here were set on 2026-10-21 from two code inventories, conservatively:
 # nothing is `done` without a test that proves it, and `partial` means the
@@ -31,7 +34,6 @@ schema: capabilities/v1
 
 ruby_ratchet:
   packages/zer0-image-generator/: 223
-  rails/: 110
   sites/zer0-pages/: 11
 
 theme_ratchet:
@@ -43,8 +45,6 @@ theme_ratchet:
   content/: 1
   media/: 1
   packages/zer0-image-generator/: 8
-  rails/lib/: 4
-  rails/schema/: 1
   schemas/: 1
   sites/2005/: 1
   sites/drsai/: 3
@@ -657,32 +657,32 @@ sources:
     summary: The Rails 8.1 + Administrate fleet CMS — a SQLite index over every registered Jekyll site, edits written back to the files.
     content: None of its own — git holds the content and SQLite is an index (D16); its LinkedIn channel rows and tokens move with distribution (tokens re-entered).
     capabilities:
-      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: partial, note: "G4: register, discover (SITES_DIR and workspace.yml) and sync, from the API and the studio (content/tests/sites/test_sites.py). Open: per-collection counts (the overview counts pages, live and drafts) and the read-only _config.yml view"}
-      - {id: rails.page-search, what: "Search and filter pages with a filter language (draft:, live:, future:, error:, collection:, site:, kind:, tag:, category:, author:).", target: content.list, status: partial}
+      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railssite-registry, note: "G4: register, discover (SITES_DIR and workspace.yml) and sync, from the API and the studio (content/tests/sites/test_sites.py). Open: per-collection counts (the overview counts pages, live and drafts) and the read-only _config.yml view"}
+      - {id: rails.page-search, what: "Search and filter pages with a filter language (draft:, live:, future:, error:, collection:, site:, kind:, tag:, category:, author:).", target: content.list, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railspage-search}
       - {id: rails.page-edit, what: "Edit front matter and body in the file with the digest stale-write guard, key-level surgery, an atomic write and a re-sync.", target: sites.sync, status: done, proof: "content/tests/sites/test_sites.py::test_a_write_back_rewrites_only_what_changed_and_an_unchanged_one_writes_nothing", note: "G4: a page is edited in Write (P4) and written into its file by the site's write-back job — key-level line surgery, the indexed and base digest guard re-checked before an atomic rename, an unchanged save writing nothing, the digests and the page's source recorded as a re-sync would"}
-      - {id: rails.page-create, what: "Create, duplicate as draft and delete pages, confined by realpath with symlinks refused.", target: content.create, status: partial}
-      - {id: rails.assets-terms, what: "Browse images and terms, with a thumbnail server.", target: media.library, status: partial}
-      - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: partial}
-      - {id: rails.missing-previews, what: "List pages missing a preview image and draw one with a provider.", target: media.generate, status: missing}
-      - {id: rails.abc-wizard-ui, what: "The ABC book wizard — new, preview, export into drsai.", target: books.abc, status: partial}
+      - {id: rails.page-create, what: "Create, duplicate as draft and delete pages, confined by realpath with symlinks refused.", target: content.create, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railspage-create}
+      - {id: rails.assets-terms, what: "Browse images and terms, with a thumbnail server.", target: media.library, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsassets-terms}
+      - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsmarkdown-preview}
+      - {id: rails.missing-previews, what: "List pages missing a preview image and draw one with a provider.", target: media.generate, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsmissing-previews}
+      - {id: rails.abc-wizard-ui, what: "The ABC book wizard — new, preview, export into drsai.", target: books.abc, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsabc-wizard-ui}
       - {id: rails.distribution-queue, what: "The LinkedIn queue — approve, publish, statistics.", target: distribution.queue, status: done, proof: web/packages/ui/test/distribution.test.tsx, note: "G5: the studio's Distribution → Queue (the guard, the exact payload, approve, publish with every blocker, force, record) and Statistics; API: content/tests/distribution/test_platform.py::test_publish_checks_every_gate_in_the_request_and_again_on_the_worker. /admin/distribution is deleted."}
       - {id: rails.channels, what: "Connect a LinkedIn channel over OAuth with an encrypted token.", target: distribution.channels, status: done, proof: content/tests/distribution/test_platform.py::test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker, note: "G5: Distribution → Channels → Connect with LinkedIn (web/packages/ui/test/distribution.test.tsx), state and PKCE, the token encrypted with ai/crypto.py's keys and never returned. /admin/channels and the channels table are deleted; a Rails channel is set up again and reconnected, its token re-entered."}
-      - {id: rails.access-guard, what: "Loopback or password access, a Host allow-list, a per-request CSP nonce.", target: platform.ops, status: partial}
+      - {id: rails.access-guard, what: "Loopback or password access, a Host allow-list, a per-request CSP nonce.", target: platform.ops, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsaccess-guard}
 
   - id: rails-lib
     path: rails/lib
     summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator; until G5, the LinkedIn distribution lane.
-    content: The ABC lexicons (lib/zer0_cms/abc/lexicons/*.yml — content/agents/data vendors one), art styles, schema/abc-book.schema.json, and the parity fixtures rails/test/fixtures/jekyll-site{,-src} with their expected lists (move to content/tests/fixtures before rails/ goes).
+    content: Deleted with rails/ on 2026-10-27 (ADR 0008) once its content was placed — the ABC lexicon's one copy is content/agents/data/abc_lexicons/, the art styles' source stays in packages/zer0-image-generator, schema/abc-book.schema.json is schemas/books/abc-book.schema.json, and G4 moved the parity fixtures to content/tests/fixtures/.
     capabilities:
       - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: done, proof: "content/tests/sites/test_catalog.py::test_the_fixture_sites_match_jekylls_reader_byte_for_byte", note: "G4: content/sites/catalog.py; the parity fixtures moved to content/tests/fixtures. The Ruby catalog stays while the Rails app and the LinkedIn lane run on it"}
       - {id: rails.front-matter, what: "Parse front matter and update keys by line surgery, keeping comments, quoting, BOM and line endings.", target: sites.sync, status: done, proof: "content/tests/sites/test_frontmatter.py::test_surgery_table", note: "G4: content/sites/frontmatter.py, every Ruby test ported. The Ruby one stays while the Rails app and the LinkedIn lane run on it"}
-      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: partial, note: "G4: content/sites/writer.py — confinement, O_EXCL create, the atomic replace and the transliterating slugs (content/tests/sites/test_writer.py); a page made in the platform gets its file from the write-back. Open: duplicating a page as a draft (content.create)"}
+      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railswriter, note: "G4: content/sites/writer.py — confinement, O_EXCL create, the atomic replace and the transliterating slugs (content/tests/sites/test_writer.py); a page made in the platform gets its file from the write-back. Open: duplicating a page as a draft (content.create)"}
       - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: done, proof: "content/tests/sites/test_doctor.py::test_each_scenario_matches_the_ruby_doctor", note: "G4: content/sites/doctor.py, held to the Ruby doctor's recorded findings; zer0-doctor.yml runs it. Dropped by ADR 0006 decision 4 (the owner's): the theme check's theme-not-zer0 and no-theme-overrides, and the theme's front-matter schema, replaced by the site's own zer0.json content types. The Ruby doctor is deleted"}
-      - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: partial}
+      - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsabc-generator}
       - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: done, proof: content/tests/distribution/test_lane.py::test_the_command_line_walks_the_governed_path, note: "G5: manage.py linkedin (content/distribution/lane/), held to the Ruby lane's recording (golden/ruby-lane.json): the other commands (content/tests/distribution/test_lane.py::test_the_command_line_reads_linkedin_back_and_records_by_hand), the loopback OAuth with state and PKCE (::test_the_oauth_callback_request_line), the MCP server (::test_the_mcp_server_lists_tools_previews_and_keeps_publish_off); zer0-linkedin.yml runs it on Python. A lane over a site's own files is a command line and CI by design; its studio counterpart is the platform's queue. rails/lib/zer0_cms/{linkedin,distribution} and their tests are deleted; the doctor's distribution check is content/distribution/lane/doctor.py, for G4."}
       - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: done, proof: content/tests/distribution/test_lane.py::test_statistics_join_onto_content_paths_and_merge_into_performance_json, note: "G5: the lane's stats --write into .cms/distribution/performance.json; the platform's daily ingest (content/tests/distribution/test_platform.py::test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger) shown in Distribution → Statistics"}
-      - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: partial}
-      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: partial, note: "G4: the Python catalog is held to the lists jekyll-parity recorded from Jekyll 4.4.1 (content/tests/sites/test_catalog.py) and the surgery to the round-trip property over real front matter (test_frontmatter.py). Open: re-recording those lists needs jekyll-parity, which is Ruby beside the Jekyll gem"}
+      - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: done, proof: content/tests/outbox/test_contracts.py::test_every_type_has_a_v1_schema_and_a_valid_example}
+      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: specified, decided_by: "the owner, 2026-10-27: delete the Rails CMS and keep only the specs of what the platform still has to build (ADR 0008)", spec: docs/plan/rails-cms-spec.md#railsparity-tools, note: "G4: the Python catalog is held to the lists jekyll-parity recorded from Jekyll 4.4.1 (content/tests/sites/test_catalog.py) and the surgery to the round-trip property over real front matter (test_frontmatter.py). Open: re-recording those lists needs jekyll-parity, which is Ruby beside the Jekyll gem"}
 
   - id: workspace-tool
     path: tools/workspace
