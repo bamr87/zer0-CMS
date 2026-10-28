@@ -6,9 +6,10 @@ GitHub repository as a pull request, and a newsroom newsletter by email.
   user's application password, as a draft unless the channel says otherwise,
   with the Yoast title and meta description AIEO's plugin exposes
   (`yoast_title`, `yoast_metadesc`). The site's address is a person's input, so
-  every request goes through the research library's SSRF guard
-  (`research.fetch.pinned`: public addresses only, the connection pinned to
-  the address checked) and follows no redirect.
+  every request goes through the research library's fetcher (`research.fetch.
+  send`: public addresses only, the connection pinned to the address checked,
+  one deadline, a size cap, no redirect followed), and only over https — the
+  application password is a credential.
 * **GitHub pull request** (absorbed from barodybroject's
   `push_to_github_and_create_pr`): the page exported as its Jekyll file
   (`exporters.jekyll`) onto a branch, and a pull request — with PyGithub, and a
@@ -29,20 +30,22 @@ the ledger marks the attempt unconfirmed.
 
 import base64
 import functools
+import json
 from contextlib import contextmanager
+from http import HTTPStatus
 
 import httpx
 import markdown
 import requests
-from django.conf import settings
 
 from exporters.jekyll import path_for, render
 from importers.markdown import from_blocks
 from importers.models import ImportedSource
 from research import fetch
 
-TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 WP_STATUSES = ("draft", "pending", "private", "publish")
+# Failures before a request could be written: nothing reached the target, so nothing may have been published.
+NEVER_SENT = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout, httpx.UnsupportedProtocol)
 
 
 class TransportError(Exception):
@@ -56,32 +59,36 @@ class TransportError(Exception):
 
 def _wordpress(channel, credentials, method: str, path: str, body=None) -> dict:
     base = str(channel.setting("url")).rstrip("/")
+    if not base.startswith("https://"):
+        raise TransportError(
+            f"WordPress at {base} is not https: an application password never travels in the clear — set the "
+            "channel's https address"
+        )
     url = f"{base}/wp-json/wp/v2/{path}"
     try:
-        target, host, name = fetch.pinned(url)
+        fetch.pinned(url)  # the guard first: an address it refuses is never reached, so nothing is in doubt
     except fetch.FetchError as e:
         raise TransportError(f"WordPress at {base} cannot be reached: {e}") from e
     user = f"{channel.setting('username')}:{credentials.get('application_password', '')}"
-    headers = {
-        "Host": host,
-        "Accept": "application/json",
-        "User-Agent": settings.RESEARCH_USER_AGENT,
-        "Authorization": "Basic " + base64.b64encode(user.encode()).decode(),
-    }
+    headers = {"Accept": "application/json", "Authorization": "Basic " + base64.b64encode(user.encode()).decode()}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
     try:
-        with httpx.Client(trust_env=False, follow_redirects=False, timeout=TIMEOUT) as http:
-            response = http.request(method, target, json=body, headers=headers, extensions={"sni_hostname": name})
-    except httpx.HTTPError as e:
-        raise TransportError(f"WordPress at {base} did not answer ({type(e).__name__})", doubt=method != "GET") from e
+        response = fetch.send(method, url, body=json.dumps(body).encode() if body is not None else b"", headers=headers)
+    except fetch.FetchError as e:
+        # A write whose request may have reached WordPress may have published; one whose connection never opened
+        # did not.
+        doubt = method != "GET" and not isinstance(e.__cause__, NEVER_SENT)
+        raise TransportError(f"WordPress at {base} did not answer: {e}", doubt=doubt) from e
     try:
-        data = response.json()
+        data = json.loads(response.body or b"null")
     except ValueError:
         data = {}
-    if response.is_success:
+    status = response.status
+    if 200 <= status < 300:
         return data if isinstance(data, dict) else {}
-    said = (data.get("message") if isinstance(data, dict) else "") or response.reason_phrase
-    status = response.status_code
-    if response.has_redirect_location:
+    said = (data.get("message") if isinstance(data, dict) else "") or _phrase(status)
+    if 300 <= status < 400 and response.headers.get("location"):
         raise TransportError(
             f"WordPress answered with a redirect to {response.headers['location']}: set the channel's address to it"
         )
@@ -91,6 +98,13 @@ def _wordpress(channel, credentials, method: str, path: str, body=None) -> dict:
         404: f"There is no WordPress REST API at {base}/wp-json/ (404): check the site's address.",
     }
     raise TransportError(messages.get(status, f"WordPress refused the post ({status}): {said}"), doubt=status >= 500)
+
+
+def _phrase(status: int) -> str:
+    try:
+        return HTTPStatus(status).phrase
+    except ValueError:
+        return f"HTTP {status}"
 
 
 def page_html(page) -> str:

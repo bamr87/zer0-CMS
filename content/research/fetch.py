@@ -2,7 +2,8 @@
 
 `get(url)` is the only way research reaches the web, and only ever in a worker
 (`post(url, body)`, the same guard and deadline, is how an automation notifies a
-webhook):
+webhook, and `send(method, url)` how a distribution channel reaches the API a
+person named — a WordPress site):
 
 * http and https only, and no credentials in the URL;
 * the SSRF guard: the host is resolved and every address it resolves to must
@@ -165,6 +166,20 @@ def post(url: str, body: bytes, *, headers: dict | None = None) -> int:
         raise FetchError(f"{host} could not be reached: {type(e).__name__}") from e
 
 
+def send(method: str, url: str, *, body: bytes = b"", headers: dict | None = None) -> Fetched:
+    """One request of any method under the same guard and the same one deadline as `get`, with no redirect followed
+    (a 3xx comes back as itself) and the answer read up to the size cap. A `FetchError` from the exchange keeps
+    httpx's error as its cause, so a caller can tell a connection that never opened from an answer that never
+    came."""
+    limit, host = settings.RESEARCH_FETCH_TIMEOUT, urlsplit(url).hostname or "the address"
+    try:
+        return asyncio.run(asyncio.wait_for(_send(method, url, body, headers or {}), limit))
+    except TimeoutError as e:
+        raise FetchError(f"{host} did not answer within {limit:g} seconds") from e
+    except httpx.HTTPError as e:
+        raise FetchError(f"{host} could not be reached: {type(e).__name__}") from e
+
+
 def _client() -> httpx.AsyncClient:
     """No proxy from the environment and no redirect followed by httpx (`get` follows them by hand)."""
     return httpx.AsyncClient(
@@ -180,6 +195,17 @@ async def _post(url: str, body: bytes, headers: dict) -> int:
             "POST", target, content=body, headers=sent, extensions={"sni_hostname": name}
         ) as reply:
             return reply.status_code
+
+
+async def _send(method: str, url: str, body: bytes, headers: dict) -> Fetched:
+    async with _client() as client:
+        target, host, name = pinned(url)
+        sent = {"User-Agent": settings.RESEARCH_USER_AGENT, **headers, "Host": host}
+        async with client.stream(
+            method, target, content=body or None, headers=sent, extensions={"sni_hostname": name}
+        ) as response:
+            kind, charset = response.headers.get("content-type", ""), response.charset_encoding or ""
+            return Fetched(url, response.status_code, kind, await _read(response), dict(response.headers), charset)
 
 
 async def _get(url: str, headers: dict) -> Fetched:

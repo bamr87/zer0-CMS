@@ -11,9 +11,11 @@ reaches WordPress, GitHub or a mail server.
 import base64
 import json
 
+import httpx
 import pytest
 import requests
 import responses
+from django.contrib.auth.models import Permission
 from django.core import mail
 from django.core.mail.backends.base import BaseEmailBackend
 from django.test import override_settings
@@ -131,6 +133,46 @@ def test_wordpress_on_a_private_address_is_refused_before_a_socket(alice, page, 
     worker(services.request_publish, post, alice)
     post.refresh_from_db()
     assert post.status == "failed" and "not a public address" in post.error and not web.calls
+
+
+@override_settings(DISTRIBUTION_ARMED={"wordpress"})
+@pytest.mark.parametrize(
+    ("error", "doubted"),
+    [(httpx.ConnectError("refused"), False), (httpx.ConnectTimeout("slow"), False), (httpx.ReadTimeout("quiet"), True)],
+)
+def test_a_wordpress_connection_that_never_opened_is_no_doubt_and_an_answer_that_never_came_is(
+    alice, page, web, worker, error, doubted
+):
+    """Only a request that may have reached WordPress may have published: a refused or timed-out connection did
+    not, and leaves nothing for a person to check; a request sent and never answered is ledgered unconfirmed."""
+    channel = channel_for(
+        page, "wordpress", {"url": "https://blog.example.com", "username": "ed"}, {"application_password": "x"}
+    )
+    web.post(f"https://{PUBLIC}/wp-json/wp/v2/posts").mock(side_effect=error)
+    post = ready(channel, page, alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "did not answer" in post.error
+    assert LedgerEntry.objects.filter(channel=channel, state="unconfirmed").exists() is doubted
+
+
+@override_settings(DISTRIBUTION_ARMED={"wordpress"})
+def test_a_wordpress_application_password_never_travels_over_http(api, alice, page, web, worker):
+    """The address is the person's input: https only, refused when the channel is set up — and by the transport for
+    a channel saved before, before any socket."""
+    alice.user_permissions.add(*Permission.objects.filter(content_type__app_label="distribution"))
+    settings = {"url": "http://blog.example.com", "username": "ed"}
+    made = api(alice).post(
+        "/api/v2/distribution/channels/",
+        {"site": page.get_site().pk, "kind": "wordpress", "name": "Blog", "settings": settings},
+        format="json",
+    )
+    assert made.status_code == 422 and "https address" in made.json()["error"]["message"]
+    channel = channel_for(page, "wordpress", settings, {"application_password": "x"})
+    post = ready(channel, page, alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "is not https" in post.error and not web.calls
 
 
 def test_checking_a_wordpress_channel_names_the_account(alice, page, web, worker):

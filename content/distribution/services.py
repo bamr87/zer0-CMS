@@ -133,8 +133,11 @@ def clean_settings(kind: str, values: dict) -> dict:
             if text.startswith("/") or ".." in text.split("/"):
                 raise Invalid("ledger_file is a path inside the site", details=_detail("settings", "ledger_file"))
     if kind == Kind.WORDPRESS and out.get("url"):
-        if not re.match(r"https?://[^\s/]+", str(out["url"])):
-            raise Invalid("url is the WordPress site's address, http(s)", details=_detail("settings", "url"))
+        if not re.match(r"https://[^\s/]+", str(out["url"])):
+            raise Invalid(
+                "url is the WordPress site's https address: an application password never travels in the clear",
+                details=_detail("settings", "url"),
+            )
         if out.get("status", "draft") not in ("draft", "pending", "private", "publish"):
             raise Invalid("status is draft, pending, private or publish", details=_detail("settings", "status"))
     if kind == Kind.GITHUB_PR and out.get("repo") and not re.fullmatch(r"[\w.-]+/[\w.-]+", str(out["repo"])):
