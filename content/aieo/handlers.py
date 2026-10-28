@@ -21,7 +21,6 @@ succeeding — even one refused before reaching its handler — leaves its audit
 (`settle`).
 """
 
-import copy
 import time
 
 from bs4 import BeautifulSoup
@@ -37,6 +36,7 @@ from ai import providers, rendering
 from ai.handlers import Persona, generate, owned, register, used
 from ai.models import Assistant
 from ai.providers.base import InvalidOutput, ProviderError
+from ai.services import _propose as propose
 from ai.services import acting_for, check_page, stable_id
 from ops.errors import ApiError
 from research import fetch
@@ -44,7 +44,6 @@ from research import fetch
 from . import crawl, parser, scoring, services, visual
 from .models import Audit, CitationCheck, CitationQuery, Pattern, library
 
-PROPOSE = "content.propose_edit"
 SCREENSHOT = (
     "\n\n## Screenshot\n\nA screenshot of the live page is attached. Use it to evaluate visual layout, design "
     "quality, information hierarchy, readability, and UX signals that affect AI citability. Include a "
@@ -210,24 +209,6 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
 # ── rewrites ───────────────────────────────────────────────────────────────
 
 
-def _propose(run: AgentRun, ctx: ToolContext, page, operations, rationale: str) -> list[int]:
-    """Every operation as a suggestion on `page`, through the registry as this agent acting for the run's starter,
-    each call a step of the run — all of them, or (a refusal) none."""
-    proposer = copy.copy(ctx.agent)  # this call may use the one propose tool its definition lists, and nothing else
-    proposer.tools = [tool for tool in ctx.agent.tools or [] if tool == PROPOSE]
-    acting = acting_for(ToolContext(user=ctx.user, agent=proposer, run=run, trigger=ctx.trigger, extra=ctx.extra))
-    made = []
-    with transaction.atomic():
-        for op, block_id, block in operations:
-            args = {"page_id": page.pk, "op": op, "rationale": rationale[:2000]}
-            if block_id:
-                args["block_id"] = block_id
-            if block is not None:
-                args["block"] = block
-            made.append(registry.call(PROPOSE, args, acting)["suggestion_id"])
-    return made
-
-
 @register("aieo.rewrite")
 def rewrite(run: AgentRun, ctx: ToolContext) -> dict:
     mode, style = run.input.get("mode", "optimize"), run.input.get("style", "preserve")
@@ -267,7 +248,10 @@ def rewrite(run: AgentRun, ctx: ToolContext) -> dict:
         why = {"optimize": "optimized for AI citability", "expand": "expanded for AI citability"}.get(mode, mode)
         if mode == "pattern":
             why = f"applied the {run.input.get('pattern')} pattern"
-        made = _propose(run, ctx, page, operations, f"AIEO {why} (score {before['score']} → {after['score']})")
+        rationale = f"AIEO {why} (score {before['score']} → {after['score']})"
+        with transaction.atomic():  # all of them, or (a refusal) none
+            proposed = propose(page, acting_for(ctx), [(op, at, "", block) for op, at, block in operations], rationale)
+        made = [s.pk for s in proposed]
     return {
         "markdown": markdown,
         "mode": mode,

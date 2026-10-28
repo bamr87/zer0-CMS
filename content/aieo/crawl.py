@@ -109,13 +109,12 @@ def _get(url: str):
 
 
 def robots_for(base: str) -> tuple[RobotFileParser, list[str], bool]:
-    """The site's robots.txt rules, the sitemaps it declares, and whether it has one."""
-    rules = RobotFileParser()
-    got = _get(urljoin(base, "/robots.txt"))
-    if got is None:
+    """The site's robots.txt rules (`research.fetch.robots_rules`), the sitemaps it declares, and whether it has one."""
+    rules = fetch.robots_rules(base)
+    if rules is None:
+        rules = RobotFileParser()
         rules.allow_all = True
         return rules, [], False
-    rules.parse(fetch.decode(got.body, got.charset).splitlines())
     return rules, list(rules.site_maps() or []), True
 
 

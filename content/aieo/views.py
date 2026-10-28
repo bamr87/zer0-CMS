@@ -35,7 +35,6 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -48,7 +47,7 @@ from ai.views import IDEMPOTENCY, CanEdit, OwnedViewSet, accepted, idempotent, p
 from api.pages import IsPerson
 from ops.errors import Invalid, NotFound
 from ops.openapi import ERROR_RESPONSES
-from research.views import FetchThrottle
+from research.views import FetchThrottle, Newest
 
 from . import prompts, reports, services
 from . import serializers as s
@@ -89,13 +88,6 @@ class BatchThrottle(FetchThrottle):
     def throttle_success(self):
         self.history[:0] = [self.now] * (self.cost - 1)
         return super().throttle_success()
-
-
-class Newest(CursorPagination):
-    ordering = "-created_at"
-    page_size = 50
-    page_size_query_param = "page_size"
-    max_page_size = 200
 
 
 @extend_schema(
@@ -414,11 +406,8 @@ class CitationCheckViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vie
     filterset_class = CheckFilter
     filter_backends = [filters.DjangoFilterBackend]
 
-    class Pages(CursorPagination):
+    class Pages(Newest):
         ordering = "-checked_at"
-        page_size = 50
-        page_size_query_param = "page_size"
-        max_page_size = 200
 
     pagination_class = Pages
 

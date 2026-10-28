@@ -26,11 +26,12 @@ from wagtail.models import Page, Site
 
 from agents.models import AgentRun
 from ai import crypto, providers
+from ai.handlers import page_text
 from ai.models import Assistant, Visibility, is_staff, sites_for, usable
 from ai.services import check_page, check_provider, provider_slug, run_assistant, stable_id, start
 from cms.models import BasePage
 from graph.services import embed_object, knn, vector_of
-from importers.markdown import block_to_markdown, from_blocks, to_blocks
+from importers.markdown import block_to_markdown, to_blocks
 from ops.errors import Conflict, Forbidden, Invalid, NotFound, Unavailable
 from research import fetch
 
@@ -93,10 +94,10 @@ def signals(site) -> dict:
 
 
 def page_markdown(page, *, title=True) -> str:
-    """A page's latest revision as the Markdown AIEO scores: its title as the heading, then its body."""
-    latest = page.get_latest_revision_as_object()
-    body = from_blocks(latest.body.get_prep_value(), leading="").strip() if hasattr(latest, "body") else ""
-    return f"# {latest.title}\n\n{body}\n" if title else f"{body}\n"
+    """A page's latest revision as the Markdown AIEO scores: its title as the heading, then its body (the AI layer's
+    `page_text`)."""
+    body = page_text(page, "body")
+    return f"# {page_text(page, 'title')}\n\n{body}\n" if title else f"{body}\n"
 
 
 def editable(user, page) -> BasePage:
