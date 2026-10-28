@@ -7,8 +7,9 @@ continuity check (structured findings), the critique and the outline are the
 run's output; a book from a premise is an outline brief a person turns into a
 draft book and its chapter stubs, whichever endpoint applies it. What a run is
 given is the book's own material; who may ask is checked when it is asked and
-again when it runs; a book's notes are not copied into the agents' memory.
-Nothing reaches a model."""
+again when it runs; a book's notes are not copied into the agents' memory. A
+book, or its site, may switch the built-in bans off for its chapters (P-D7),
+never the markup check or the site's own bans. Nothing reaches a model."""
 
 import json
 from pathlib import Path
@@ -25,8 +26,9 @@ from books.handlers import plan, prose_regions
 from cms.models import BookPage, ChapterPage
 from cms.services import save_draft
 from ops.errors import Forbidden, Invalid
+from sites.models import SiteSettings
 from suggestions.models import Suggestion
-from suggestions.services import accept
+from suggestions.services import SuggestionError, accept
 
 FINDINGS = {
     "findings": [
@@ -374,6 +376,67 @@ def test_a_phrase_the_author_wrote_never_blocks_continue_or_revise(impairment, a
     assert "Nobody in the room asked a question." in text and "of finding efficiencies" in text
     again = run_of(worker, impairment, alice, task="continue", chapter=third)  # the model's own banned phrase
     assert again.status == AgentRun.FAILED and "unlocking value" in again.error
+
+
+def builtin_bans(api, book, user, on: bool):
+    """The book's switch, saved from the Books overview as the studio saves it: a draft revision of the book."""
+    base = BookPage.objects.get(pk=book.pk).get_latest_revision()
+    body = {"base_revision_id": base.pk if base else None, "fields": {"builtin_bans": on}}
+    saved = api(user).patch(f"/api/v2/content/pages/{book.pk}/", body, format="json")
+    assert saved.status_code == 200, saved.content
+
+
+@pytest.mark.django_db
+def test_a_book_with_the_built_in_bans_off_takes_their_words_but_not_markup_or_its_sites_bans(
+    sample, alice, api, fake, worker
+):
+    """P-D7: the built-in bans were written for marketing copy; a novel may need "revolutionary"."""
+    first = chapter(sample, 1)
+    own = SiteSettings.for_site(first.get_site())
+    own.banned_patterns = [{"name": "nightly", "pattern": r"\bnightly\b"}]
+    own.save()
+    builtin_bans(api, sample, alice, False)
+    fake.script += [
+        {"text": "It was a revolutionary night."},
+        {"text": 'She waved. <img src=x onerror="alert(1)">'},
+        {"text": "The nightly ferry was late."},
+    ]
+    drafted = run_of(worker, sample, alice, task="draft", chapter=first)
+    assert drafted.status == AgentRun.SUCCEEDED, drafted.error
+    accept(list(Suggestion.objects.filter(run=drafted)), alice)
+    assert "It was a revolutionary night." in files.chapter_text(fresh(first))
+    markup = run_of(worker, sample, alice, task="continue", chapter=first)
+    assert markup.status == AgentRun.FAILED and "active markup" in markup.error
+    sites_own = run_of(worker, sample, alice, task="continue", chapter=first)
+    assert sites_own.status == AgentRun.FAILED and "nightly" in sites_own.error
+
+
+@pytest.mark.django_db
+def test_with_the_built_in_bans_on_a_chapter_still_refuses_their_words_at_propose_and_accept(
+    sample, alice, api, fake, worker
+):
+    first = chapter(sample, 1)
+    fake.script += [{"text": "It was a revolutionary night."}, {"text": "It was a revolutionary night."}]
+    held = run_of(worker, sample, alice, task="draft", chapter=first)  # the default: on
+    assert held.status == AgentRun.FAILED and "revolutionary" in held.error
+    builtin_bans(api, sample, alice, False)
+    proposed = run_of(worker, sample, alice, task="draft", chapter=first)
+    assert proposed.status == AgentRun.SUCCEEDED, proposed.error
+    builtin_bans(api, sample, alice, True)  # switched back on before anyone accepted: accept judges again
+    with pytest.raises(SuggestionError, match="revolutionary"):
+        accept(list(Suggestion.objects.filter(run=proposed)), alice)
+
+
+@pytest.mark.django_db
+def test_a_site_may_switch_the_built_in_bans_off_for_every_books_chapters(sample, alice, fake, worker):
+    first = chapter(sample, 1)
+    own = SiteSettings.for_site(first.get_site())
+    own.chapter_builtin_bans = False
+    own.save()
+    fake.script.append({"text": "It was a revolutionary night."})
+    drafted = run_of(worker, sample, alice, task="draft", chapter=first)
+    assert drafted.status == AgentRun.SUCCEEDED, drafted.error
+    assert fresh(sample).builtin_bans  # whatever the book says
 
 
 @pytest.mark.django_db
