@@ -12,6 +12,7 @@ from django.test import Client
 from agents.models import AgentRun, AgentToken
 from agents.registry import ToolContext, ToolError, registry
 from agents.runner import execute, start_run
+from aieo import services
 from aieo.models import Audit
 from aieo.tools import ALIASES
 
@@ -63,6 +64,23 @@ def test_an_mcp_client_with_the_aieo_token_lists_aieos_tool_names_and_scores_a_t
     assert len(patterns["patterns"]) == 10
     one = rpc(raw, "tools/call", {"name": "aieo_get_pattern", "arguments": {"pattern_name": "nope"}})["result"]
     assert one["isError"] and one["structuredContent"]["error"] == "not_found"
+
+
+def test_a_text_is_scored_at_once_only_when_short_and_a_long_one_is_audited(
+    agent, db, django_capture_on_commit_callbacks
+):
+    ctx = ToolContext(user=agent("aieo").user, agent=agent("aieo"))
+    long = "Backups are copies. " * (services.NOW_MAX // 20 + 1)
+    for name in ("aieo.score_text", "aieo_score_content", "aieo.readability", "aieo.landing_audit"):
+        try:
+            registry.call(name, {"content": long}, ctx)
+            raise AssertionError(f"{name} scored {len(long)} characters inside the call")
+        except ToolError as e:
+            assert e.code == "invalid_args"
+    with django_capture_on_commit_callbacks(execute=True):
+        started = registry.call("aieo.audit_text", {"content": long, "method": "heuristic"}, ctx)
+    row = Audit.objects.get(public_id=started["audit"])
+    assert row.kind == Audit.TEXT and row.status == Audit.READY and row.owner.username == "agent:aieo"
 
 
 def test_auditing_a_url_over_mcp_is_a_run_the_agent_owns(agent, db, fake, web, django_capture_on_commit_callbacks):

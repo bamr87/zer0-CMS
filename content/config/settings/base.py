@@ -557,6 +557,9 @@ AUTOMATIONS_EMAILS_PER_HOUR = env.int("AUTOMATIONS_EMAILS_PER_HOUR", default=100
 # The visual audit: a screenshot in a headless browser (Playwright, an optional install) whose every request goes
 # through the research fetcher's guard; off unless set.
 AIEO_VISUAL_AUDIT = env.bool("AIEO_VISUAL_AUDIT", default=False)
+# Seconds an audit's or a rewrite's run may take before Celery stops it (soft; the hard limit is 30 seconds later):
+# scoring a long text is slow, and a site's crawl waits on someone else's server (aieo/services.py `limits`).
+AIEO_RUN_TIME_LIMIT = env.int("AIEO_RUN_TIME_LIMIT", default=900)
 # Seconds a GA4, Search Console or DataForSEO request may take (aieo/connectors.py).
 AIEO_CONNECTOR_TIMEOUT = env.float("AIEO_CONNECTOR_TIMEOUT", default=30.0)
 # The citability review (the `aieo` agent as a workflow task) passes a page that scores at least this.

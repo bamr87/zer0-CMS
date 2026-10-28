@@ -382,13 +382,16 @@ def _citation_hooks(parsed, max_score):
 
 
 def _recursive_depth(parsed, max_score):
-    questions = re.findall(r"[^.!?\n]+\?", parsed["text"])
+    # AIEO counted `re.findall(r"[^.!?\n]+\?", text)`, whose time grows with the square of a long run with no stop or
+    # newline. Each of its matches ends at a "?" right after a character that is none of those, so counting those
+    # question marks is the same number in linear time.
+    questions = len(re.findall(r"(?<=[^.!?\n])\?", parsed["text"]))
     headed = [h for h in parsed["headers"] if "?" in h["text"]]
     return _pattern(
-        min(max_score, len(questions) * 0.5 + len(headed) * 2.5),
+        min(max_score, questions * 0.5 + len(headed) * 2.5),
         max_score,
-        len(questions) > 0,
-        f"{len(questions)} questions, {len(headed)} question headers",
+        questions > 0,
+        f"{questions} questions, {len(headed)} question headers",
         "Add FAQ sections or question-style headers.",
     )
 

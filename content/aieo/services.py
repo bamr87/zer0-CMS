@@ -18,6 +18,7 @@ from datetime import timedelta
 from statistics import mean
 from urllib.parse import urlsplit
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -44,7 +45,18 @@ EVALUATOR, OPTIMIZER, SCRUBBER, REWRITER, PROBE = (
     "aieo-citation-probe",
 )
 MODES = {"optimize": OPTIMIZER, "expand": OPTIMIZER, "scrub": SCRUBBER, "rewrite": REWRITER, "pattern": OPTIMIZER}
-MAX_TEXT = 200_000  # characters of a pasted text an audit keeps
+MAX_TEXT = 200_000  # characters of a pasted text an audit keeps (scored in a run, under its time limit)
+# Characters of a text scored at once, inside a request or a tool call. Python-Markdown (the parser AIEO's scores
+# were made with) takes time with the square of a long paragraph or of many short lines: 5,000 "[" in one paragraph
+# take about two seconds, 10,000 seven. A longer text is audited.
+NOW_MAX = 5_000
+
+
+def limits() -> dict:
+    """How a run that scores is queued: stopped once it has run `AIEO_RUN_TIME_LIMIT` seconds (soft; the hard limit
+    half a minute later), since scoring a long text is slow (`NOW_MAX`) and nothing else would stop it."""
+    limit = settings.AIEO_RUN_TIME_LIMIT
+    return {"soft_time_limit": limit, "time_limit": limit + 30}
 
 
 def bundled(key: str, user) -> Assistant:
@@ -106,8 +118,8 @@ def quick_score(content: str, format: str = "markdown", *, site=None) -> dict:
     """The heuristic score of a text, now, with nothing recorded — what the editor shows while a person types."""
     if not content.strip():
         raise Invalid("there is nothing to score")
-    if len(content) > MAX_TEXT:
-        raise Invalid(f"a text is scored up to {MAX_TEXT} characters")
+    if len(content) > NOW_MAX:
+        raise Invalid(f"a text is scored at once up to {NOW_MAX} characters: audit a longer one")
     return scoring.score(content, format, library(), **signals(site))
 
 
@@ -170,7 +182,8 @@ def audit(
         raise Invalid("an audit is of a text, a page, a URL or a site")
     _evaluator(user, method, provider)
     row = Audit.objects.create(owner=user, batch=batch, **fields, **_placement(user, site, visibility))
-    row.run = start(user, {"kind": "aieo.audit", "audit": str(row.public_id)}, target=page, trigger=trigger)
+    data = {"kind": "aieo.audit", "audit": str(row.public_id)}
+    row.run = start(user, data, target=page, trigger=trigger, options=limits())
     row.save(update_fields=["run"])
     return row
 
@@ -289,7 +302,7 @@ def rewrite(
     else:
         data["content"] = content
     provider_slug(bundled(MODES[mode], user))
-    return start(user, data, target=page, trigger=trigger)
+    return start(user, data, target=page, trigger=trigger, options=limits())
 
 
 def optimization_prompt(content: str, gaps: list[dict], style: str, expand: bool) -> str:

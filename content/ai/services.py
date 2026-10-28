@@ -71,9 +71,11 @@ def agent() -> AgentDefinition:
     return definition
 
 
-def start(user, input: dict, *, target=None, parent=None, trigger="rest") -> AgentRun:
+def start(user, input: dict, *, target=None, parent=None, trigger="rest", options=None) -> AgentRun:
     try:
-        return start_run(agent(), trigger=trigger, target=target, input=input, user=user, parent=parent)
+        return start_run(
+            agent(), trigger=trigger, target=target, input=input, user=user, parent=parent, options=options
+        )
     except RunRefused as e:
         raise Conflict(str(e)) from e
 

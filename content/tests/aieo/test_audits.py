@@ -256,6 +256,23 @@ def test_a_run_that_ends_without_succeeding_fails_its_audit(alice, fake, worker)
     assert audited(row).status == Audit.FAILED and audited(row).error == "assistant has policy off"
 
 
+def test_a_run_that_scores_is_stopped_at_its_time_limit(alice, monkeypatch, django_capture_on_commit_callbacks):
+    """Scoring a long text takes time with the square of a long paragraph (Python-Markdown), so an audit's run and a
+    rewrite's (it scores the text before and after) are queued with a time limit, soft and then hard."""
+    from agents.tasks import run_agent
+
+    queued = []
+    monkeypatch.setattr(run_agent, "apply_async", lambda args, kwargs=None, **options: queued.append((args, options)))
+    with django_capture_on_commit_callbacks(execute=True):
+        audit = services.audit(alice, kind="text", content="# Backups", method="heuristic")
+        rewrite = services.rewrite(alice, mode="scrub", content="Copies — of a site.")
+    limit = settings.AIEO_RUN_TIME_LIMIT
+    assert queued == [
+        ((audit.run.pk,), {"soft_time_limit": limit, "time_limit": limit + 30}),
+        ((rewrite.pk,), {"soft_time_limit": limit, "time_limit": limit + 30}),
+    ]
+
+
 FIXED = datetime(2026, 10, 22, 12, 0, 0)
 
 

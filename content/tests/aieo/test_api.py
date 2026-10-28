@@ -9,6 +9,7 @@ from pathlib import Path
 from django.contrib.auth.models import Permission
 
 from agents.models import AgentRun
+from aieo import services
 from aieo.models import Audit, Pattern
 from aieo.prompts import AGENTS
 
@@ -26,6 +27,10 @@ def test_a_text_is_scored_at_once_and_nothing_is_recorded(bob, api):
     assert set(data["dimensions"]) == {"aieo", "seo", "readability", "humanity", "cro"}
     assert data["result"]["cro"]["checklist"]["total"] == 4 and not Audit.objects.exists()
     assert api(bob).post("/api/v2/aieo/score/", {"content": "  "}, format="json").status_code == 422
+    # Inside a request only a short text: Python-Markdown's time grows with the square of a long paragraph (5,000
+    # "[" take about two seconds), so a longer text is audited, in a run with a time limit.
+    long = api(bob).post("/api/v2/aieo/score/", {"content": "a" * (services.NOW_MAX + 1)}, format="json")
+    assert long.status_code == 422 and "audit" in long.json()["error"]["message"] and not Audit.objects.exists()
 
 
 def test_audits_are_runs_kept_as_history_and_seen_only_where_shared(

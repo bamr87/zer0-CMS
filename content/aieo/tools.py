@@ -32,7 +32,8 @@ from .models import Audit, Pattern, library
 from .prompts import AGENTS
 
 UUID = {"type": "string", "format": "uuid"}
-CONTENT = {"type": "string", "minLength": 1, "maxLength": services.MAX_TEXT}
+CONTENT = {"type": "string", "minLength": 1, "maxLength": services.MAX_TEXT}  # read in a run, in a worker
+NOW = {"type": "string", "minLength": 1, "maxLength": services.NOW_MAX}  # scored at once, inside the call
 FORMAT = {"type": "string", "enum": ["markdown", "html"], "default": "markdown"}
 METHOD = {"type": "string", "enum": ["heuristic", "ai"], "default": "ai"}
 URL = {"type": "string", "minLength": 1, "maxLength": 2000}
@@ -74,9 +75,10 @@ def _calling(fn, *args, **kwargs):
     description=(
         "Score content (Markdown or HTML) for AI citability with AIEO's heuristics: a 0-100 score and grade, each "
         "pattern's score with evidence and a recommendation, the gaps, anti-pattern penalties and the five "
-        "dimensions (aieo, seo, readability, humanity, cro). Nothing is recorded."
+        "dimensions (aieo, seo, readability, humanity, cro). Nothing is recorded. A text longer than "
+        f"{services.NOW_MAX} characters is audited instead (aieo.audit_text)."
     ),
-    input_schema=obj({"content": CONTENT, "format": FORMAT}, required=["content"]),
+    input_schema=obj({"content": NOW, "format": FORMAT}, required=["content"]),
     rate="120/m",
 )
 def score_text(ctx, content, format="markdown"):
@@ -91,7 +93,7 @@ def _analysis(key: str, about: str):
         f"aieo.{key}",
         effect="read",
         description=f"{about} of the content (Markdown), as AIEO's analyzers compute it.",
-        input_schema=obj({"content": CONTENT}, required=["content"]),
+        input_schema=obj({"content": NOW}, required=["content"]),
         rate="120/m",
     )(analyze)
 
@@ -109,7 +111,7 @@ _analysis("search_intent", "The search intent (informational, navigational, tran
     "aieo.landing_audit",
     effect="read",
     description="The landing-page CRO score of copy: above the fold, calls to action and trust signals, as AIEO.",
-    input_schema=obj({"content": CONTENT}, required=["content"]),
+    input_schema=obj({"content": NOW}, required=["content"]),
     rate="120/m",
 )
 def landing_audit(ctx, content):
@@ -159,6 +161,31 @@ def get_pattern(ctx, pattern_name):
 
 
 # ── audits ─────────────────────────────────────────────────────────────────
+
+
+@tool(
+    "aieo.audit_text",
+    effect="propose",
+    description=(
+        "Audit a text (Markdown or HTML) of any length for AI citability, in a run: scored by a model's evaluation "
+        "with the heuristics as the fallback (method ai) or the heuristics alone. Returns the audit and the run to "
+        "follow; read it with aieo.get_audit."
+    ),
+    input_schema=obj({"content": CONTENT, "format": FORMAT, "method": METHOD}, required=["content"]),
+    rate="30/m",
+)
+def audit_text(ctx, content, format="markdown", method="ai"):
+    row = _calling(
+        services.audit,
+        ctx.user,
+        kind=Audit.TEXT,
+        content=content,
+        format=format,
+        method=method,
+        origin="mcp",
+        trigger=ctx.trigger,
+    )
+    return _audit(row)
 
 
 @tool(
