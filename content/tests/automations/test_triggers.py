@@ -21,7 +21,7 @@ from agents.runner import start_run
 from automations import services
 from automations.models import Automation, AutomationRun
 from ideas.models import Idea
-from outbox.consumers import consume_stream, handle_envelope
+from outbox.consumers import HANDLERS, consume_stream, handle_envelope
 from outbox.models import OutboxEvent, ProcessedEvent
 from outbox.relay import RedisStreamsRelay, relay_pending
 from research import services as research
@@ -92,8 +92,19 @@ def test_the_events_consumer_reads_the_platforms_own_stream_through_quiet_spells
         return Quiet()
 
     monkeypatch.setattr(redis.Redis, "from_url", staticmethod(from_url))
-    call_command("consume_events", "--own", "--group", "automations", "--name", "automations-1", "--once")
-    assert Quiet.asked[-1] == ("automations", [settings.EVENTS_STREAM])  # where the relay writes, not a fixed name
+    # The command registers every app's handlers (`autodiscover_modules`) — the outbox desk's belt handler among them,
+    # which no other test's `handle_envelope` expects to run (distribution's asserts it ran alone) — so the table is
+    # put back as it was however the command ends.
+    before = {event_type: dict(consumers) for event_type, consumers in HANDLERS.items()}
+    try:
+        call_command("consume_events", "--own", "--group", "platform", "--name", "platform-1", "--once")
+        published = set(HANDLERS.get("content.page.published", {}))
+    finally:
+        HANDLERS.clear()
+        HANDLERS.update(before)
+    # As the compose `events` service runs it: the automations' handler beside every app's that hears the event.
+    assert {"automations", "distribution.auto-draft", "outboxdesk.belt"} <= published
+    assert Quiet.asked[-1] == ("platform", [settings.EVENTS_STREAM])  # where the relay writes, not a fixed name
     assert made["socket_timeout"] > 5  # the read blocks for five seconds: the socket waits longer
 
 
