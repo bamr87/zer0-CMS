@@ -892,6 +892,12 @@ def test_a_published_page_drafts_a_post_for_each_auto_channel_never_a_publish(
     run = AgentRun.objects.filter(agent__slug="distribution", trigger="event").latest("id")
     assert run.status == "succeeded" and run.output["json"]["drafted"] == 1
     assert worker(handle_envelope, event.envelope()) == [], "an event is handled once"
+    services.reject(posts.get(), alice, "not this one")
+    for fix in ("Restores, tested", "Restores, tested again"):  # each publish of the page is a new event
+        page.title = fix
+        worker(lambda: page.save_revision().publish())
+        worker(handle_envelope, OutboxEvent.objects.filter(subject=f"page:{page.pk}").latest("id").envelope())
+    assert list(posts.values_list("status", flat=True)) == ["rejected"], "a person's no is not asked again"
     second = make_article(site_root, "Off limits", publish=False, search_description="No agents here.")
     second.agent_policy = "off"
     second.save()

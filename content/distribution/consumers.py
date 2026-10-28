@@ -7,7 +7,8 @@ The drafting is a run of the GitOps `distribution` agent
 and goes through the registry: `distribution.compose` under the agent's policy
 narrowed by the page's (a page at policy `off` gets nothing), as the agent user.
 The outbox dedupes the event per consumer (`ProcessedEvent`); the handler also
-skips a channel that already has a post of the page, or a ledger entry for it.
+skips a channel that already has a post of the page (a rejected one too), or a
+ledger entry for it.
 """
 
 import logging
