@@ -5,11 +5,13 @@
 | `Channel` | where a site's content goes: a LinkedIn page or profile, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters — one channel of a site per target (`target_of`), so one ledger holds what went there. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
 | `DistributionPost` | a page or a story going to a channel: composed (by a person, an agent or the published-page consumer) → brand guard → approved by a person (`approved_digest`: the exact text they approved — a text changed since needs approving again) → published or failed, with a readable error; an email post follows its newsletter `issue` until the newsroom has sent it |
 | `LedgerEntry` | what a channel has published, keyed by canonical URL (or `draft:<post>` for a text update) — the platform's half of the ledger file every lane writes (`ledger.py`); an attempt the target did not confirm is an entry with no URN |
-| `Statistic` | a published post's aggregate counts on a day |
+| `Statistic` | a published post's aggregate counts on a day, read through its entry |
 
-Every row has a UUID `public_id`; `visible_to(user, site)` is the one scope:
-the channels of the sites a person edits (people who manage channels — the
-`distribution.change_channel` permission — see every site's).
+Channels, posts and ledger entries have a UUID `public_id`, the only id the API
+gives (P-D6); `visible_to(user, site)` is each one's scope: the channels of the
+sites a person edits (people who manage channels — the
+`distribution.change_channel` permission — see every site's), and their posts
+and ledger entries.
 """
 
 import json
@@ -229,7 +231,13 @@ class DistributionPost(models.Model):
         return self.link if self.kind == "article" else f"draft:{self.public_id}"
 
 
+class LedgerQuerySet(models.QuerySet):
+    def visible_to(self, user, site=None):
+        return self.filter(channel__in=Channel.objects.visible_to(user, site))
+
+
 class LedgerEntry(models.Model):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE, related_name="ledger")
     key = models.CharField(max_length=2048)
     urn = models.CharField(max_length=512, blank=True, help_text="Empty for an attempt the target did not confirm.")
@@ -247,6 +255,8 @@ class LedgerEntry(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = LedgerQuerySet.as_manager()
 
     class Meta:
         ordering = ["-posted_at", "-id"]

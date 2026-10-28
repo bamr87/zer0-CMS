@@ -358,7 +358,7 @@ class DistributionLedgerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     filterset_class = LedgerFilter
 
     def get_queryset(self):
-        rows = LedgerEntry.objects.filter(channel__in=Channel.objects.visible_to(self.request.user))
+        rows = LedgerEntry.objects.visible_to(self.request.user)
         order = "posted_at" if self.request.query_params.get("ordering") == "posted_at" else "-posted_at"
         return (
             rows.select_related("channel", "post")

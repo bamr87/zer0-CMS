@@ -689,7 +689,7 @@ def test_a_site_ledger_file_the_worker_cannot_write_is_refused_before_anything_i
 # ── statistics ──────────────────────────────────────────────────────────────
 
 
-def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api, alice, channel, web, worker):
+def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api, alice, bob, channel, web, worker):
     from distribution.tasks import ingest_statistics
 
     LedgerEntry.objects.create(channel=channel, key="https://example.test/a/", urn="urn:li:share:1", author=AUTHOR)
@@ -719,6 +719,8 @@ def test_statistics_are_ingested_per_post_and_day_and_shown_with_the_ledger(api,
     entries = api(alice).get(f"{API}/ledger/").json()["results"]
     latest = {e["key"]: e["latest"] for e in entries}
     assert latest["https://example.test/a/"]["impressions"] == 90 and latest["https://example.test/b/"] is None
+    assert {e["id"] for e in entries} == {str(row.public_id) for row in LedgerEntry.objects.all()}, "UUIDs only"
+    assert api(bob).get(f"{API}/ledger/").json()["results"] == [], "the ledger's scope is its channels'"
     assert worker(api(alice).post, f"{API}/channels/{channel.public_id}/statistics/").status_code == 202
 
 

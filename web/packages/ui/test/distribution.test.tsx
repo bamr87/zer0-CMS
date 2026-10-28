@@ -90,7 +90,7 @@ function post(overrides: Record<string, unknown> = {}) {
 
 function entry(overrides: Record<string, unknown> = {}) {
   return {
-    id: 1,
+    id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e5f',
     channel: 'c1',
     channel_name: 'The page',
     channel_kind: 'linkedin',
@@ -321,7 +321,7 @@ describe('the ledger and its statistics', () => {
   it('marks an attempt that may have landed and links a LinkedIn post', async () => {
     const platform = fakePlatform({
       [`GET ${API}/ledger/`]: () =>
-        listOf([entry(), entry({ id: 2, key: 'https://example.test/b/', urn: '', state: 'unconfirmed', posted_at: null, attempted_at: '2026-10-21T09:00:00Z' })]),
+        listOf([entry(), entry({ id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e60', key: 'https://example.test/b/', urn: '', state: 'unconfirmed', posted_at: null, attempted_at: '2026-10-21T09:00:00Z' })]),
       [`GET ${API}/channels/`]: () => listOf([channel()]),
     });
     renderUi(<Ledger siteId={1} />, { api: platform.api });
@@ -333,7 +333,7 @@ describe('the ledger and its statistics', () => {
   it('lists the most seen first, with the totals', async () => {
     const platform = fakePlatform({
       [`GET ${API}/ledger/`]: () =>
-        listOf([entry({ key: 'https://example.test/a/', latest: stats(10) }), entry({ id: 2, key: 'https://example.test/b/', latest: stats(90) }), entry({ id: 3, key: 'https://example.test/c/' })]),
+        listOf([entry({ key: 'https://example.test/a/', latest: stats(10) }), entry({ id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e60', key: 'https://example.test/b/', latest: stats(90) }), entry({ id: '7d3c9f0e-4a1b-4c2d-9e8f-0a1b2c3d4e61', key: 'https://example.test/c/' })]),
       [`GET ${API}/channels/`]: () => listOf([channel()]),
     });
     renderUi(<Statistics />, { api: platform.api });

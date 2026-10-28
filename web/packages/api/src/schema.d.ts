@@ -5631,7 +5631,8 @@ export interface components {
          */
         DistributionKindEnum: "linkedin" | "wordpress" | "github_pr" | "email";
         DistributionLedgerEntry: {
-            readonly id: number;
+            /** Format: uuid */
+            readonly id: string;
             /** Format: uuid */
             readonly channel: string;
             readonly channel_name: string;

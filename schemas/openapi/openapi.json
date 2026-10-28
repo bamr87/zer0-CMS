@@ -34791,7 +34791,8 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "integer",
+                        "type": "string",
+                        "format": "uuid",
                         "readOnly": true
                     },
                     "channel": {
