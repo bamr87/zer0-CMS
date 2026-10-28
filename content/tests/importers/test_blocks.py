@@ -4,6 +4,7 @@ document link, an HTML block, a Liquid template — writes its paragraph back
 byte for byte, a paragraph no block writes back exactly stays Markdown, and on
 every real site in the repository the cut changes nothing the body writes."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -167,3 +168,24 @@ def test_an_edited_page_writes_its_other_blocks_back_byte_for_byte(tmp_path):
     draft.save_revision().publish()
     export_site("blocks", out)
     assert (out / post).read_text() == head + EVERY_BLOCK.replace("Closing paragraph.", "A new closing paragraph.")
+
+
+@pytest.mark.django_db
+def test_the_preview_shows_every_block_and_runs_none_of_them(tmp_path, client, editor):
+    site = tmp_path / "site"
+    (site / "_posts").mkdir(parents=True)
+    (site / "_config.yml").write_text("title: Blocks\n")
+    hostile = '<div onclick="alert(1)"><script>alert(2)</script></div>'
+    (site / "_posts/2026-10-01-blocks.md").write_text(
+        "---\ntitle: Blocks\ndate: 2026-10-01\n---\n" + EVERY_BLOCK + "\n" + hostile + "\n"
+    )
+    assert not import_site(site, "blocks").errors
+    page = ImportedSource.objects.get(site_key="blocks").page.specific
+    assert page.body[-1].block_type == "raw_html"
+    client.force_login(editor)
+    response = client.get(f"/admin/pages/{page.pk}/view_draft/")
+    html = response.content.decode()
+    assert response.status_code == 200 and html.count('data-block-type="') == 10
+    assert re.search(r"<td\s*>\s*engineer\s*</td>", html) and "<td>14</td>" in html  # by Wagtail's table templates
+    assert '<a href="https://www.youtube.com/watch?v=7_LPdttKXPc">' in html  # an embed is a link, never fetched
+    assert "&lt;script&gt;alert(2)&lt;/script&gt;" in html and "<script>alert(2)" not in html  # raw HTML is source

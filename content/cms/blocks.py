@@ -21,7 +21,7 @@ The platform is headless and never reaches the network in a request: an
 embed, raw HTML and Liquid as their source — the site's own build renders them.
 """
 
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from wagtail import blocks
 from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.contrib.typed_table_block.blocks import TypedTableBlock
@@ -173,7 +173,7 @@ class RawHTMLBlock(blocks.RawHTMLBlock):
         super().__init__(**kwargs)
 
     def render_basic(self, value, context=None):
-        return format_html("<pre>{}</pre>", value)
+        return format_html("<pre>{}</pre>", escape(str(value)))  # `escape`, not `format_html`'s: the value is safe
 
     class Meta:
         icon = "code"
