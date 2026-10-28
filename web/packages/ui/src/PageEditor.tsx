@@ -8,7 +8,9 @@
 // person (`page.lock`: someone else's, a workflow's, a schedule's) opens
 // read-only and says why; cancelling a schedule is the one thing it allows.
 // The AI panel opens beside the editor: an assistant or a pipeline run on the
-// page, whose answer arrives in the Suggestions tab (ai/AiPanel.tsx).
+// page, whose answer arrives in the Suggestions tab (ai/AiPanel.tsx). The
+// Citability tab scores the page with AIEO and lands an optimize or scrub
+// rewrite there as suggestions too (aieo/PageScore.tsx).
 // Distribute drafts a post of the live page for one of its site's channels
 // (distribution/Compose.tsx); a person approves it in the queue.
 import { Alert, Anchor, Badge, Button, Grid, Group, Loader, Paper, Popover, Stack, Tabs, Text, TextInput, Title } from '@mantine/core';
@@ -18,6 +20,7 @@ import type { Block, PageDetail } from '@zer0/api';
 import { useState } from 'react';
 
 import { AiPanel } from './ai/AiPanel';
+import { PageScore } from './aieo/PageScore';
 import { BodyEditor } from './BodyEditor';
 import { call, errorText } from './call';
 import { useApi } from './context';
@@ -221,6 +224,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
               <Tabs.Tab value="suggestions">Suggestions ({page.pending_suggestions})</Tabs.Tab>
               <Tabs.Tab value="revisions">Revisions</Tabs.Tab>
               <Tabs.Tab value="research">Research</Tabs.Tab>
+              <Tabs.Tab value="citability">Citability</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="content" pt="md">
               <Stack>
@@ -247,6 +251,9 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
             </Tabs.Panel>
             <Tabs.Panel value="research" pt="md">
               <PageResearch pageId={page.id} pageTitle={page.title} />
+            </Tabs.Panel>
+            <Tabs.Panel value="citability" pt="md">
+              <PageScore pageId={page.id} dirty={dirty} held={editable ? null : (page.lock ?? 'You cannot change this page.')} onReview={() => setTab('suggestions')} />
             </Tabs.Panel>
           </Tabs>
         </Grid.Col>

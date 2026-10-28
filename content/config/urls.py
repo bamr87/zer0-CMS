@@ -17,6 +17,7 @@
 /api/v2/jobs/    background jobs: their logs (also as server-sent events), artifacts, cancel
 /api/v2/distribution/ channels, the publishing queue, the ledger and statistics, LinkedIn's OAuth callback
 /api/v2/automations/ automations: triggers, conditions, actions, runs, YAML, each webhook trigger's endpoint
+/api/v2/aieo/     AIEO: scores, audits, patterns, rewrites, agents, citations, connectors, priorities, reports
 /api/v2/openapi.json, /api/v2/docs/  the OpenAPI document and its UI (ops/openapi.py)
 /graphql/         GraphQL (Grapple + api/graphql.py); /graphiql/ in DEBUG
 /mcp/             MCP over Streamable HTTP (mcp_server/)
@@ -66,6 +67,7 @@ urlpatterns = [
     path("api/v2/jobs/", include("jobs.urls")),
     path("api/v2/distribution/", include("distribution.urls")),
     path("api/v2/automations/", include("automations.urls")),
+    path("api/v2/aieo/", include("aieo.urls")),
     path("api/v2/", include("api.urls")),
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),

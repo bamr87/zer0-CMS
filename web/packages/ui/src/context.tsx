@@ -15,6 +15,9 @@ export type DistributionTab = 'queue' | 'channels' | 'ledger' | 'statistics';
 /** A tab of the Outbox desk (ADR 0007): the belt, arena trials, the claim desk. */
 export type OutboxTab = 'belt' | 'trials' | 'claims';
 
+/** A section of the AIEO workspace (G7). */
+export type AieoSection = 'audit' | 'optimize' | 'patterns' | 'agents' | 'citations' | 'connectors' | 'priorities' | 'reports' | 'context';
+
 /** Where a workspace asks to go; the host maps it to a route or a panel. */
 export type Destination =
   | { to: 'page'; id: number; tab?: 'suggestions' }
@@ -48,7 +51,9 @@ export type Destination =
   | { to: 'distribution-post'; id: string }
   | { to: 'channel'; id: string }
   // Automations (G16), under the AI area; one without an id is a new one.
-  | { to: 'automation'; id?: string };
+  | { to: 'automation'; id?: string }
+  // The AIEO workspace (G7), under Sites.
+  | { to: 'aieo'; section?: AieoSection };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

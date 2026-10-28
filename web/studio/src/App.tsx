@@ -5,6 +5,7 @@
 import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import type { ApiClient } from '@zer0/api';
 import {
+  AieoWorkspace,
   BookShelf,
   BookView,
   ChapterWriter,
@@ -24,6 +25,7 @@ import {
   StudioProvider,
   SuggestionInbox,
   TrialView,
+  type AieoSection,
   type Destination,
   type OpenStream,
   type OutboxTab,
@@ -100,6 +102,8 @@ export function pathFor(to: Destination): string {
       return `/distribution/channels/${to.id}`;
     case 'automation':
       return `/ai/automations/${to.id ?? 'new'}`;
+    case 'aieo':
+      return to.section && to.section !== 'audit' ? `/sites/aieo/${to.section}` : '/sites/aieo';
   }
 }
 
@@ -137,6 +141,7 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="distribution" element={<DistributionArea />} />
                 <Route path="distribution/posts/:post" element={<DistributionArea />} />
                 <Route path="distribution/channels/:channel" element={<DistributionArea />} />
+                <Route path="sites/aieo/:section?" element={<Aieo />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -303,6 +308,16 @@ function DistributionArea() {
   return (
     <Section title="Distribution">
       <Distribution siteId={siteId} tab={tab} postId={post} channelId={channel} connecting={params.get('connecting') === '1'} />
+    </Section>
+  );
+}
+
+function Aieo() {
+  const { siteId } = useSite();
+  const { section } = useParams();
+  return (
+    <Section title="AIEO">
+      <AieoWorkspace siteId={siteId} section={(section as AieoSection | undefined) ?? 'audit'} />
     </Section>
   );
 }

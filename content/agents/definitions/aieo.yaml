@@ -1,0 +1,108 @@
+# AIEO: the citability review, and AIEO's tools over MCP (content/aieo/, PLAN G7).
+# As a workflow task (AgentReviewTask, agent "aieo") it scores a page's latest
+# revision with AIEO's heuristics (aieo/scoring.py) and passes it at
+# AIEO_REVIEW_MIN_SCORE or above, its worst gaps as the comments — a review step,
+# never the last one before publishing. Over MCP (`manage.py agent_token aieo`)
+# a client sees the aieo.* tools and AIEO's own tool names, kept as aliases
+# (aieo/tools.py). It is a review agent, so its group holds no page permissions:
+# grant `agent:aieo` page rights to let a client audit or run agents on pages;
+# scoring a text, auditing a URL or a site, the pattern library and the
+# analyzers need none. A run it starts is the AI layer's, and only proposes.
+slug: aieo
+name: AIEO citability review
+role: review
+description: Scores a page for AI citability with AIEO's heuristics and passes or fails it with its worst gaps; over MCP, AIEO's tools.
+handler: aieo.handlers.review
+policy: suggest
+max_steps: 1
+budget_usd: "0"
+tools:
+  - review.submit_verdict
+  - content.get_page
+  - aieo.score_text
+  - aieo.readability
+  - aieo.keyword_analysis
+  - aieo.search_intent
+  - aieo.landing_audit
+  - aieo.list_patterns
+  - aieo.get_pattern
+  - aieo.audit_url
+  - aieo.audit_site
+  - aieo.audit_page
+  - aieo.get_audit
+  - aieo.optimize
+  - aieo.scrub
+  - aieo.apply_pattern
+  - aieo.run_agent
+  - aieo.research_brief
+  - aieo.priorities
+  - aieo_score_content
+  - aieo_audit_url
+  - aieo_analyze_existing
+  - aieo_crawl_site
+  - aieo_site_context
+  - aieo_crawl_manifest
+  - aieo_context_map
+  - aieo_context_manifest
+  - aieo_list_patterns
+  - aieo_get_pattern
+  - aieo_readability
+  - aieo_keyword_analysis
+  - aieo_search_intent
+  - aieo_landing_audit
+  - aieo_priorities
+  - aieo_rewrite
+  - aieo_scrub
+  - aieo_research
+  - aieo_write
+  - aieo_workspace_list
+  - aieo_workspace_read
+  - aieo_workspace_write
+  - aieo_editor_review
+  - aieo_headline_generate
+evals:
+  - name: a-structured-page-passes
+    input:
+      page:
+        type: ArticlePage
+        title: How to back up a small website
+        body:
+          - type: markdown
+            value: "A backup is defined as a complete, restorable copy of a site, kept somewhere else. According to the Uptime Institute, 40 percent of outages in 2025 involved storage. This is important because a single disk fails without warning, and it is essential to test a restore before you need one."
+          - {type: heading, value: {level: "2", text: "What should a backup include?"}}
+          - type: markdown
+            value: |-
+              A backup includes the files, the database and the configuration. WordPress, Drupal and Jekyll sites store them differently, but every site needs all three.
+
+              - Site files: themes, uploads and plugins
+              - The database: posts, users and settings
+              - Configuration: DNS records and certificates
+          - {type: heading, value: {level: "2", text: "How often should you back up?"}}
+          - type: markdown
+            value: |-
+              Daily backups suit a site that changes every day; weekly backups suit a brochure site. As of October 2026, Amazon S3 Glacier stores a gigabyte for under a cent a month.
+
+              | Plan | Frequency | Kept for |
+              |------|-----------|----------|
+              | Basic | Weekly | 30 days |
+              | Standard | Daily | 90 days |
+          - {type: heading, value: {level: "2", text: "Frequently asked questions"}}
+          - type: markdown
+            value: |-
+              Is a host's backup enough? No: keep a copy you control, as Backblaze recommends (https://www.backblaze.com/).
+
+              1. Step 1: Export the database.
+              2. Step 2: Copy the files to Backblaze B2.
+    checks:
+      - {check: status, is: succeeded}
+      - {check: verdict, passed: true}
+  - name: a-thin-page-fails
+    input:
+      page:
+        type: ArticlePage
+        title: About us
+        body:
+          - {type: markdown, value: "We make websites. Our team is friendly and we care about quality."}
+    checks:
+      - {check: status, is: succeeded}
+      - {check: verdict, passed: false}

@@ -16,6 +16,7 @@ import {
   IconSend,
   IconSettings,
   IconSparkles,
+  IconTarget,
   IconWorld,
   type Icon,
 } from '@tabler/icons-react';
@@ -60,6 +61,12 @@ export const AREAS: Area[] = [
     label: 'Sites',
     summary: 'The site registry and settings, render and deploy, monitoring, AIEO, improvement proposals.',
     icon: IconWorld,
+  },
+  {
+    path: '/sites/aieo',
+    label: 'AIEO',
+    summary: 'Citability scores and audits, rewrites, patterns, agents, citations, connectors, priorities, reports.',
+    icon: IconTarget,
   },
   { path: '/media', label: 'Media', summary: 'The library, generation runs, compositions, the SVG studio.', icon: IconPhoto, milestone: 'G6' },
   { path: '/distribution', label: 'Distribution', summary: 'Channels, the queue, the ledger, statistics.', icon: IconSend },
