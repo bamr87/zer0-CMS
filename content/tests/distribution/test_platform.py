@@ -15,15 +15,16 @@ import json
 import shutil
 from datetime import timedelta
 
+import httpx
 import pytest
 from cryptography.fernet import Fernet
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import override_settings
 from django.utils import timezone
-from wagtail.models import Page
+from wagtail.models import GroupPagePermission, Page
 
 from agents.models import AgentDefinition, AgentRun
 from agents.registry import ToolContext, ToolError, registry
@@ -42,6 +43,26 @@ from .conftest import AUTHOR, FIXTURE, TOKEN
 REST = "https://api.linkedin.com/rest"
 API = "/api/v2/distribution"
 LINKEDIN_APP = {"LINKEDIN_CLIENT_ID": "cid", "LINKEDIN_CLIENT_SECRET": "csecret-abcdef"}
+
+
+def grant(user, group_name: str, *codenames):
+    """Page rights on every page, through a group of their own."""
+    group, _ = Group.objects.get_or_create(name=group_name)
+    for codename in codenames:
+        GroupPagePermission.objects.get_or_create(
+            group=group,
+            page=Page.get_first_root_node(),
+            permission=Permission.objects.get(content_type__app_label="wagtailcore", codename=codename),
+        )
+    user.groups.add(group)
+    return get_user_model().objects.get(pk=user.pk)
+
+
+@pytest.fixture
+def carol(db):
+    """Edits every page and may publish none: she may change a post's text, never approve it."""
+    user = get_user_model().objects.create_user("carol", password="pw")
+    return grant(user, "editors who do not publish", "add_page", "change_page")
 
 
 @pytest.fixture
@@ -242,9 +263,48 @@ def test_compose_runs_the_brand_guard_and_approval_needs_a_clean_text_and_the_pu
         f"{API}/posts/{post['id']}/", {"commentary": "We copy the site every night, twice."}, format="json"
     )
     assert again.json()["status"] == "draft", "approval is of the exact text"
-    nobody = get_user_model().objects.create_user("carol")
+    nobody = get_user_model().objects.create_user("dave")
     with pytest.raises(Exception, match="edit"):
         services.compose(channel, user=nobody, page=article)
+
+
+def test_the_gates_compare_the_text_with_the_text_a_person_approved(alice, channel, article):
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Approved words."), alice)
+    assert "status_not_accepted" not in [b.kind for b in services.preview(post).blockers]
+    DistributionPost.objects.filter(pk=post.pk).update(commentary="Words changed behind the services' back.")
+    post.refresh_from_db()
+    [blocker] = [b for b in services.preview(post).blockers if b.kind == "status_not_accepted"]
+    assert blocker.message == "the text is not the text a person approved: a person approves it again"
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_a_failed_posts_changed_text_needs_a_new_approval_before_anything_goes(
+    api, alice, carol, channel, article, web, worker
+):
+    """A post that failed was approved; its approval is of the text that failed. Someone who may only edit the page
+    changes it: it is a draft again, refused even with force until a person who may publish approves it — and what
+    then goes is the text they approved."""
+    route = web.post(f"{REST}/posts").mock(
+        side_effect=[
+            httpx.Response(422, json={"message": "Unprocessable"}),
+            httpx.Response(201, headers={"x-restli-id": "urn:li:share:8"}),
+        ]
+    )
+    post = approved(services.compose(channel, user=alice, page=article, commentary="The text alice approved."), alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed"
+    changed = api(carol).patch(f"{API}/posts/{post.public_id}/", {"commentary": "Words carol wrote."}, format="json")
+    assert changed.status_code == 200 and (changed.json()["status"], changed.json()["approved_by"]) == ("draft", None)
+    refused = api(alice).post(f"{API}/posts/{post.public_id}/publish/", {"force": True}, format="json")
+    assert refused.status_code == 409 and "status_not_accepted" in refused.json()["error"]["message"]
+    assert api(carol).post(f"{API}/posts/{post.public_id}/approve/").status_code == 403
+    assert route.call_count == 1
+    assert api(alice).post(f"{API}/posts/{post.public_id}/approve/").status_code == 200
+    assert worker(api(alice).post, f"{API}/posts/{post.public_id}/publish/", {}, format="json").status_code == 202
+    post.refresh_from_db()
+    assert (post.status, post.approved_by) == ("published", alice)
+    assert json.loads(route.calls.last.request.content)["commentary"] == "Words carol wrote."
 
 
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})

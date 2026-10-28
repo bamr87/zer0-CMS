@@ -177,10 +177,10 @@ describe('a post', () => {
     expect(await screen.findByText('The worker is publishing it…')).toBeInTheDocument();
   });
 
-  it('saves only the text that changed, and records a post found after a failure', async () => {
+  it('saves only the text that changed — a failed post’s goes back to draft — and records a post found after a failure', async () => {
     const platform = fakePlatform({
       [`GET ${API}/posts/p1/`]: () => post({ status: 'failed', error: 'HTTP 503: down — it may have published' }),
-      [`PATCH ${API}/posts/p1/`]: () => post({ status: 'failed' }),
+      [`PATCH ${API}/posts/p1/`]: () => post({ status: 'draft' }),
       [`POST ${API}/posts/p1/record/`]: () => post({ status: 'published', external_id: 'urn:li:share:42' }),
     });
     renderUi(<PostPanel postId="p1" />, { api: platform.api });
@@ -188,6 +188,8 @@ describe('a post', () => {
     const text = screen.getByLabelText('Text');
     await userEvent.clear(text);
     await userEvent.type(text, 'Every night, a copy.');
+    expect(screen.getByText(/Saving a changed text sends the post back to draft/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Publish…' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: 'Save the text' }));
     await waitFor(() => expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({ commentary: 'Every night, a copy.' }));
     await userEvent.type(screen.getByLabelText(/Record it/), 'urn:li:share:42');

@@ -1,8 +1,10 @@
 // A post in the queue: where it goes and what it shares, its text (saved as
-// what changed — changing an approved post's text sends it back to draft),
+// what changed — changing the text of an approved post, or of one whose
+// attempt failed, sends it back to draft: a person approves the exact text),
 // the brand guard's findings, every blocker publishing it now would meet, and
-// for LinkedIn the exact payload. Approve, reject, publish (asked first, and
-// past a lifted gate only when the person ticks "force"), and record a post
+// for LinkedIn the exact payload. Approve, reject, publish (asked first, never
+// with unsaved changes, and past a lifted gate only when the person ticks
+// "force"), and record a post
 // found at the target after an attempt that may have landed. The platform
 // checks every one of these again; a disabled button is a courtesy.
 import { Alert, Anchor, Badge, Button, Checkbox, Code, Group, Loader, Modal, Stack, Text, Textarea, TextInput, Title } from '@mantine/core';
@@ -65,6 +67,8 @@ function Panel({ post }: { post: DistributionPostDetail }) {
   });
 
   const editable = !['publishing', 'published'].includes(post.status);
+  const approved = ['approved', 'failed'].includes(post.status);
+  const unsaved = Object.keys(changed).length > 0;
   const status = statusOf(post.status);
   const forceable = post.blockers.some((b) => FORCEABLE.includes(b.kind));
   const failure = save.error ?? approve.error ?? reject.error ?? publish.error ?? record.error ?? remove.error;
@@ -139,7 +143,12 @@ function Panel({ post }: { post: DistributionPostDetail }) {
       />
       {editable ? (
         <Group justify="flex-end">
-          <Button variant="default" disabled={Object.keys(changed).length === 0} loading={save.isPending} onClick={() => save.mutate()}>
+          {approved && unsaved ? (
+            <Text size="sm" c="dimmed">
+              Saving a changed text sends the post back to draft: a person approves the exact text that goes.
+            </Text>
+          ) : null}
+          <Button variant="default" disabled={!unsaved} loading={save.isPending} onClick={() => save.mutate()}>
             Save the text
           </Button>
         </Group>
@@ -182,8 +191,8 @@ function Panel({ post }: { post: DistributionPostDetail }) {
             Approve
           </Button>
         ) : null}
-        {['approved', 'failed'].includes(post.status) ? (
-          <Button disabled={!post.can_publish} onClick={() => setConfirming(true)}>
+        {approved ? (
+          <Button disabled={!post.can_publish || unsaved} onClick={() => setConfirming(true)}>
             Publish…
           </Button>
         ) : null}

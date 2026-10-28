@@ -1882,7 +1882,7 @@ export interface paths {
         delete: operations["distribution_posts_destroy"];
         options?: never;
         head?: never;
-        /** Change a post's text; an approved one goes back to draft */
+        /** Change a post's text; an approved or failed one goes back to draft for a person to approve */
         patch: operations["distribution_posts_partial_update"];
         trace?: never;
     };

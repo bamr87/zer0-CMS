@@ -218,7 +218,7 @@ class PostFilter(filters.FilterSet):
         responses={201: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
     ),
     partial_update=extend_schema(
-        summary="Change a post's text; an approved one goes back to draft",
+        summary="Change a post's text; an approved or failed one goes back to draft for a person to approve",
         request=s.DistributionPostEditSerializer,
         responses={200: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
     ),

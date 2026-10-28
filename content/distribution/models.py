@@ -3,7 +3,7 @@
 | Model | What it is |
 |---|---|
 | `Channel` | where a site's content goes: a LinkedIn page or profile, a WordPress site, a GitHub repository (as pull requests), or one of the site's newsletters. Its credential is encrypted at rest (`ai.crypto`, the AI layer's MultiFernet keys) and write-only over the API; `armed` is the per-channel switch a publish needs, beside the deployment's own for the kind |
-| `DistributionPost` | a page or a story going to a channel: composed (by a person, an agent or the published-page consumer) → brand guard → approved by a person → published or failed, with a readable error |
+| `DistributionPost` | a page or a story going to a channel: composed (by a person, an agent or the published-page consumer) → brand guard → approved by a person (`approved_digest`: the exact text they approved — a text changed since needs approving again) → published or failed, with a readable error |
 | `LedgerEntry` | what a channel has published, keyed by canonical URL (or `draft:<post>` for a text update) — the platform's half of the ledger file every lane writes (`ledger.py`); an attempt the target did not confirm is an entry with no URN |
 | `Statistic` | a published post's aggregate counts on a day |
 
@@ -182,6 +182,9 @@ class DistributionPost(models.Model):
     created_by = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     approved_by = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     approved_at = models.DateTimeField(null=True, blank=True)
+    approved_digest = models.CharField(
+        max_length=64, blank=True, editable=False, help_text="What the person approved (`services.approval_digest`)."
+    )
     published_by = models.ForeignKey(USER, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     attempted_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)

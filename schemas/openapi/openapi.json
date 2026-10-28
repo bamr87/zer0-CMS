@@ -15092,7 +15092,7 @@
             },
             "patch": {
                 "operationId": "distribution_posts_partial_update",
-                "summary": "Change a post's text; an approved one goes back to draft",
+                "summary": "Change a post's text; an approved or failed one goes back to draft for a person to approve",
                 "parameters": [
                     {
                         "in": "path",

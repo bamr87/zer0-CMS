@@ -10,7 +10,8 @@ writes the tables.
     page         stored)     the page    deployment's switch
 
 The gates are `gates.ORDER`, the same as a site's own lane's: a post publishes
-only when a person approved it, the channel is armed (`Channel.armed`) and the
+only when a person approved its exact text (`approval_digest`), the channel is
+armed (`Channel.armed`) and the
 deployment armed the kind (`DISTRIBUTION_ARMED`, from `ZER0_LINKEDIN_PUBLISH`,
 `ZER0_WORDPRESS_PUBLISH`, `ZER0_GITHUB_PR_PUBLISH`, `ZER0_EMAIL_PUBLISH`), the
 ledger has no entry for its key — in the channel's rows and, for a LinkedIn
@@ -19,6 +20,7 @@ extension and CI write — and the brand guard has no error. The worker runs the
 gates again before anything leaves.
 """
 
+import hashlib
 import json
 import logging
 import os
@@ -61,10 +63,18 @@ from .transports import TransportError
 log = logging.getLogger(__name__)
 FINAL = (DistributionPost.Status.PUBLISHED, DistributionPost.Status.REJECTED)
 EDITABLE = ("title", "description", "commentary", "kind")
+# A post a person approved: waiting, going, or back after an attempt that failed.
+APPROVED = (DistributionPost.Status.APPROVED, DistributionPost.Status.PUBLISHING, DistributionPost.Status.FAILED)
 
 
 def _detail(field_name, message):
     return [{"field": field_name, "code": "invalid", "message": message}]
+
+
+def approval_digest(post) -> str:
+    """What a person approves: the post's kind and text, exactly. `approve` keeps it and the gates compare it, so a
+    text changed afterwards — by any path — is not one anybody approved."""
+    return hashlib.sha256(json.dumps([post.kind, post.title, post.description, post.commentary]).encode()).hexdigest()
 
 
 # ── who may do what ─────────────────────────────────────────────────────────
@@ -535,7 +545,8 @@ def compose(
 
 @transaction.atomic
 def edit(post, user, **fields) -> DistributionPost:
-    """A change to an approved post's text returns it to draft: approval is of the exact text."""
+    """A change to the text of a post a person approved — waiting, or back after a failed attempt — returns it to
+    draft: approval is of the exact text, and someone who may edit the page need not be someone who may publish it."""
     post = DistributionPost.objects.select_for_update().get(pk=post.pk)
     if not may_compose(post, user):
         raise PermissionDenied("you may not edit this page, so you may not change its posts")
@@ -548,8 +559,9 @@ def edit(post, user, **fields) -> DistributionPost:
         setattr(post, name, fields[name])
     if changed:
         post.guard = guard(post.commentary, post.channel)
-        if post.status == DistributionPost.Status.APPROVED:
+        if post.status in APPROVED:
             post.status, post.approved_by, post.approved_at = DistributionPost.Status.DRAFT, None, None
+            post.approved_digest = ""
         post.save()
     return post
 
@@ -566,7 +578,7 @@ def approve(post, user) -> DistributionPost:
         post.save(update_fields=["guard", "updated_at"])
         raise Conflict(f"brand guard: {'; '.join(errors)}")
     post.status, post.approved_by, post.approved_at = DistributionPost.Status.APPROVED, user, timezone.now()
-    post.reason = ""
+    post.approved_digest, post.reason = approval_digest(post), ""
     post.save()
     return post
 
@@ -720,8 +732,12 @@ def preview(post, *, live: bool = True) -> Preview:
                 ),
             )
         )
-    if post.status not in (DistributionPost.Status.APPROVED, DistributionPost.Status.PUBLISHING):
+    if post.status not in APPROVED:
         blockers.append(Blocker("status_not_accepted", f"the post is {post.status}: a person approves it first"))
+    elif post.approved_digest != approval_digest(post):
+        blockers.append(
+            Blocker("status_not_accepted", "the text is not the text a person approved: a person approves it again")
+        )
     if not channel.armed:
         blockers.append(
             Blocker("publish_disabled", f"publishing to {channel.name} is not armed (the channel's setting)")
@@ -752,7 +768,8 @@ def preview(post, *, live: bool = True) -> Preview:
 def request_publish(post, user, *, force: bool = False, agent: bool = False) -> DistributionPost:
     """A person asks for the post to go — or an agent, through `distribution.publish`, whose call the registry
     has already held to the `auto` policy and the page's publish permission, and which never forces: every gate now
-    (the worker asks again), then the work is queued. Either way only a post a person approved goes."""
+    (the worker asks again), then the work is queued. Either way only the text a person approved goes — a failed
+    post's included, whose approval stands only while its text is the one approved."""
     from .tasks import publish_post
 
     post = DistributionPost.objects.select_for_update().get(pk=post.pk)
@@ -762,10 +779,6 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
         raise PermissionDenied("publishing a post is the right of someone who may publish its page")
     if post.status == DistributionPost.Status.PUBLISHING and post.attempted_at is not None:
         raise Conflict("it is being sent now: wait for it to finish", code="distribution.sending")
-    if post.status == DistributionPost.Status.FAILED:
-        post.status = (
-            DistributionPost.Status.APPROVED
-        )  # a failed post was approved; trying again is not re-approving it
     blockers = gates.lifted(preview(post).blockers, force=force)
     if blockers:
         raise Conflict("; ".join(f"{b.kind}: {b.message}" for b in blockers), code="distribution.blocked")
