@@ -189,8 +189,11 @@ class BasePage(AgentManagedMixin, Page):
         "seo_title": "seo_title",
         **seo.KEYS,
     }
-    # Headless first: this template exists for the editor's preview only.
-    template = "cms/page.html"
+
+    # Headless first: one template, for the editor's preview only. Wagtail names a
+    # template per page type (`cms/article_page.html` …), which none of them has.
+    def get_template(self, request, *args, **kwargs):
+        return "cms/page.html"
 
     content_panels = Page.content_panels + [FieldPanel("body"), SuggestionsPanel(heading="Agent suggestions")]
     promote_panels = Page.promote_panels + [

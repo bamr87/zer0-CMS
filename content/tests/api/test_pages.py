@@ -157,6 +157,10 @@ def test_page_detail_has_fields_blocks_markdown_and_what_the_person_may_do(artic
     assert (perms["edit"], perms["publish"], perms["unpublish"], perms["add_subpage"]) == (True, True, True, False)
     assert body["latest_revision"]["id"] == body["live_revision_id"] and body["preview_url"].endswith("/view_draft/")
     assert body["lock"] is None
+    client = Client()
+    client.force_login(editor)
+    preview = client.get(body["preview_url"])  # one template for every page type (cms/page.html)
+    assert preview.status_code == 200 and "We copy the site to a second disk every night." in preview.content.decode()
 
 
 @pytest.mark.django_db
