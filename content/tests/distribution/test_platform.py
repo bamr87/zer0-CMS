@@ -13,12 +13,14 @@ request queued after it commits (`worker`).
 import io
 import json
 import os
+import re
 import shutil
 from datetime import timedelta
 
 import httpx
 import pytest
 from cryptography.fernet import Fernet
+from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
@@ -959,6 +961,31 @@ def test_a_published_page_drafts_a_post_for_each_auto_channel_never_a_publish(
     event = OutboxEvent.objects.filter(type="content.page.published", subject=f"page:{second.pk}").latest("id")
     worker(handle_envelope, event.envelope())
     assert not DistributionPost.objects.filter(page=second).exists(), "a page at policy off gets nothing"
+
+
+def test_every_component_of_the_distribution_api_is_named_for_it():
+    """drf-spectacular names a component after its serializer or enum; a generic name (`GuardLevelEnum`) collides
+    with another app's once both are in the one document. Every component the distribution paths reach is named
+    for distribution — apart from the platform's error envelope and drf-spectacular's own wrappers of ours."""
+    doc = json.loads((django_settings.REPO_ROOT / "schemas" / "openapi" / "openapi.json").read_text())
+    components, found = doc["components"]["schemas"], set()
+
+    def reached(node):
+        if isinstance(node, dict):
+            ref = node.get("$ref", "")
+            if ref.startswith("#/components/schemas/") and (name := ref.rsplit("/", 1)[1]) not in found:
+                found.add(name)
+                reached(components[name])
+            for value in node.values():
+                reached(value)
+        elif isinstance(node, list):
+            for value in node:
+                reached(value)
+
+    reached({path: item for path, item in doc["paths"].items() if path.startswith("/api/v2/distribution/")})
+    shared = {"Error", "ErrorDetail", "ErrorEnvelope"}
+    wrapped = re.compile(r"^(Paginated|Patched)Distribution")
+    assert sorted(n for n in found - shared if not n.startswith("Distribution") and not wrapped.match(n)) == []
 
 
 def test_the_agents_definition_is_live_and_gated(db, agent):

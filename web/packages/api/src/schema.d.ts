@@ -5619,9 +5619,16 @@ export interface components {
             readonly url: string;
         };
         DistributionFinding: {
-            level: components["schemas"]["GuardLevelEnum"];
+            level: components["schemas"]["DistributionGuardLevelEnum"];
             message: string;
         };
+        /**
+         * @description * `error` - error
+         *     * `warning` - warning
+         *     * `info` - info
+         * @enum {string}
+         */
+        DistributionGuardLevelEnum: "error" | "warning" | "info";
         /**
          * @description * `linkedin` - LinkedIn
          *     * `wordpress` - WordPress
@@ -5640,7 +5647,7 @@ export interface components {
             readonly key: string;
             /** @description Empty for an attempt the target did not confirm. */
             readonly urn: string;
-            readonly state: components["schemas"]["LedgerStateEnum"];
+            readonly state: components["schemas"]["DistributionLedgerStateEnum"];
             readonly kind: components["schemas"]["DistributionPostKindEnum"];
             /** Format: date-time */
             readonly posted_at: string | null;
@@ -5667,6 +5674,12 @@ export interface components {
             kept: number;
             skipped: number;
         };
+        /**
+         * @description * `published` - Published
+         *     * `unconfirmed` - Unconfirmed
+         * @enum {string}
+         */
+        DistributionLedgerStateEnum: "published" | "unconfirmed";
         /**
          * @description * `person` - A person
          *     * `agent` - An agent
@@ -6073,13 +6086,6 @@ export interface components {
             /** @description In order; replaced as a whole. */
             slots?: components["schemas"]["FrontSlotRequest"][];
         };
-        /**
-         * @description * `error` - error
-         *     * `warning` - warning
-         *     * `info` - info
-         * @enum {string}
-         */
-        GuardLevelEnum: "error" | "warning" | "info";
         /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
         Handoff: {
             /** @description The relay's number; none until delivered. */
@@ -6344,7 +6350,7 @@ export interface components {
             readonly idx: number;
             /** Format: date-time */
             readonly at: string;
-            readonly level: components["schemas"]["GuardLevelEnum"];
+            readonly level: components["schemas"]["DistributionGuardLevelEnum"];
             readonly text: string;
         };
         /**
@@ -6381,12 +6387,6 @@ export interface components {
             kind: components["schemas"]["HandoffKindEnum"];
             count: number;
         };
-        /**
-         * @description * `published` - Published
-         *     * `unconfirmed` - Unconfirmed
-         * @enum {string}
-         */
-        LedgerStateEnum: "published" | "unconfirmed";
         ManagedSite: {
             /** @description The site key its pages were imported under (SiteRootPage.site_key). */
             key: string;
