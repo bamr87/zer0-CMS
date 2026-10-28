@@ -13,7 +13,9 @@ last doctor run's findings.
 
 `SiteSettings` holds what a site's people set for it, through Wagtail's site
 settings (`SiteSettings.for_site(site)`): SEO defaults, analytics ids,
-navigation, brand voice, design and skin, and a monthly budget. Who may see a
+navigation, design and skin, a monthly budget, and its brand rules — the voice
+AI help reads and the phrases the brand guard refuses on its pages, on top of
+the built-in bans and every active `cms.BrandRules` (suggestions/guard.py). Who may see a
 site and who may manage it is sites/access.py.
 """
 
@@ -92,6 +94,12 @@ class SiteSettings(BaseSiteSetting):
     search_console_property = models.CharField(max_length=200, blank=True, help_text="Search Console's property.")
     navigation = models.JSONField(default=list, blank=True, help_text="The main menu: [{label, url}].")
     brand_voice = models.TextField(blank=True, help_text="How the site writes; AI help reads it.")
+    banned_patterns = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='The site\'s own banned phrases: [{"name": "…", "pattern": "regex", "flags": "i"}]; the brand '
+        "guard refuses them on its pages, on top of the built-in bans and every active BrandRules.",
+    )
     skin = models.CharField(max_length=40, blank=True, help_text="The design's skin.")
     design_tokens = models.JSONField(
         default=dict, blank=True, help_text="Design tokens over the skin's: {name: value}."

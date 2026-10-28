@@ -50,22 +50,19 @@ def tokens_of(user):
     return UserToken.objects.visible_to(user).filter(user=user).order_by("-created_at")
 
 
-def _revoke(token: UserToken) -> UserToken:
-    if token.revoked_at is None:
-        token.revoked_at = timezone.now()
-        token.save(update_fields=["revoked_at"])
-    return token
-
-
-def revoke(user, prefix: str) -> UserToken:
-    """Revoke `user`'s one active token that starts with `prefix`."""
+def revoke(user, prefix: str, by=None) -> UserToken:
+    """Revoke `user`'s one active token that starts with `prefix`; `by`, when known, is who did (Wagtail's log)."""
     found = tokens_of(user).filter(prefix__startswith=prefix[:14], revoked_at__isnull=True)
     if found.count() != 1:
         raise TokenError(f"{found.count()} active tokens of {user.username} start with {prefix}; name exactly one")
-    return _revoke(found.get())
+    token = found.get()
+    token.revoke(by=by)
+    return token
 
 
-def revoke_by_id(user, public_id) -> UserToken | None:
+def revoke_by_id(user, public_id, by=None) -> UserToken | None:
     """Revoke `user`'s own token with this public id; None when they have none (a 404, never someone else's)."""
     token = tokens_of(user).filter(public_id=public_id).first()
-    return _revoke(token) if token else None
+    if token is not None and token.revoked_at is None:
+        token.revoke(by=by)
+    return token

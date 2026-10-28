@@ -52,6 +52,36 @@ describe('<PageEditor>', () => {
     expect(order).toEqual(['PATCH', 'POST']);
   });
 
+  it('edits the SEO tab’s Open Graph fields, canonical URL and noindex, and saves only those', async () => {
+    const seo = (name: string, label: string, kind: string) => ({ name, label, group: 'seo', kind, required: false, help_text: '', max_length: null, choices: [] });
+    const detail = pageDetail({
+      fields: { title: 'Nightly backups', og_title: '', og_image: '/assets/images/backups.png', canonical_url: '', noindex: false },
+      field_specs: [
+        { name: 'title', label: 'Title', group: 'content', kind: 'text', required: true, help_text: '', max_length: 255, choices: [] },
+        seo('og_title', 'Open Graph title', 'text'),
+        seo('og_image', 'Open Graph image', 'text'),
+        seo('canonical_url', 'Canonical URL', 'text'),
+        seo('noindex', 'Hide from search engines', 'boolean'),
+      ],
+    });
+    const platform = fakePlatform({
+      'GET /api/v2/content/pages/5/': () => detail,
+      'PATCH /api/v2/content/pages/5/': () => detail,
+    });
+    renderUi(<PageEditor pageId={5} />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('tab', { name: 'SEO' }));
+    expect(screen.getByLabelText('Open Graph image')).toHaveValue('/assets/images/backups.png');
+    await userEvent.type(screen.getByLabelText('Open Graph title'), 'Backups, nightly');
+    await userEvent.type(screen.getByLabelText('Canonical URL'), 'https://example.com/backups/');
+    await userEvent.click(screen.getByRole('switch', { name: 'Hide from search engines' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(platform.calls.find((c) => c.method === 'PATCH')).toBeDefined());
+    expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+      base_revision_id: 41,
+      fields: { og_title: 'Backups, nightly', canonical_url: 'https://example.com/backups/', noindex: true },
+    });
+  });
+
   it('schedules a time to go live and one to come down, cancels the schedule, and unpublishes — each one request', async () => {
     const scheduled = pageDetail({
       status: 'scheduled',
@@ -198,6 +228,68 @@ describe('<BodyEditor>', () => {
     await userEvent.click(within(screen.getByLabelText('Block 1: markdown')).getByRole('button', { name: 'Remove block' }));
     expect(screen.getByLabelText('Saved')).toHaveTextContent('SECOND block | THIRD block edited');
     expect(within(screen.getByLabelText('Block 2: markdown')).getByRole('textbox')).toHaveValue('THIRD block edited');
+  });
+});
+
+describe('<BodyEditor> blocks', () => {
+  const START: Block[] = [
+    {
+      id: 't',
+      type: 'table',
+      value: { data: [['Name', 'Role'], ['Ada', 'engineer']], first_row_is_table_header: true, first_col_is_header: false, table_caption: '', table_header_choice: 'row' },
+    },
+    { id: 'tt', type: 'typed_table', value: { columns: [{ type: 'text', heading: 'Quarter' }, { type: 'number', heading: 'Score' }], rows: [{ values: ['Q1', '7'] }], caption: '' } },
+    { id: 'c', type: 'callout', value: { kind: 'tip', fold: '-', title: 'Rule of thumb', body: 'Keep notes small.' } },
+    { id: 'h', type: 'raw_html', value: '<div class="note">Raw</div>' },
+  ];
+
+  function Many() {
+    const [blocks, setBlocks] = useState(START);
+    return (
+      <>
+        <BodyEditor blocks={blocks} onChange={setBlocks} />
+        <output aria-label="Saved">{JSON.stringify(blocks)}</output>
+      </>
+    );
+  }
+  const saved = () => JSON.parse(screen.getByLabelText('Saved').textContent ?? '[]') as { type: string; value: Record<string, unknown> }[];
+
+  it('edits a table’s cells, rows and columns in place', async () => {
+    renderUi(<Many />, { api: fakePlatform({}).api });
+    const table = within(screen.getByLabelText('Block 1: table'));
+    await userEvent.type(table.getByLabelText('Row 1, column 2'), ', mathematician');
+    await userEvent.click(table.getByRole('button', { name: '+ row' }));
+    await userEvent.click(table.getByRole('button', { name: 'Remove column 1' }));
+    expect(saved()[0]?.value.data).toEqual([['Role'], ['engineer, mathematician'], ['']]);
+    expect(saved()[0]?.value.table_header_choice).toBe('row');
+  });
+
+  it('keeps a typed table’s column types, and shows a callout’s fold and the source of raw HTML', async () => {
+    renderUi(<Many />, { api: fakePlatform({}).api });
+    const typed = within(screen.getByLabelText('Block 2: typed_table'));
+    expect(typed.getByRole('combobox', { name: 'Column 2 type' })).toHaveValue('number');
+    await userEvent.click(typed.getByRole('button', { name: '+ column' }));
+    await userEvent.type(typed.getByLabelText('Heading 3'), 'Notes');
+    expect(saved()[1]?.value).toEqual({
+      columns: [
+        { type: 'text', heading: 'Quarter' },
+        { type: 'number', heading: 'Score' },
+        { type: 'text', heading: 'Notes' },
+      ],
+      rows: [{ values: ['Q1', '7', ''] }],
+      caption: '',
+    });
+    const callout = within(screen.getByLabelText('Block 3: callout'));
+    expect(callout.getByRole('combobox', { name: 'Fold' })).toHaveValue('Foldable, closed');
+    expect(callout.getByLabelText('body')).toHaveValue('Keep notes small.');
+    expect(within(screen.getByLabelText('Block 4: raw_html')).getByRole('textbox')).toHaveValue('<div class="note">Raw</div>');
+  });
+
+  it('adds a block of each new kind with an empty value', async () => {
+    renderUi(<Many />, { api: fakePlatform({}).api });
+    for (const kind of ['table', 'callout', 'embed', 'liquid']) await userEvent.click(screen.getByRole('button', { name: `+ ${kind}` }));
+    expect(saved().slice(4).map((b) => b.type)).toEqual(['table', 'callout', 'embed', 'liquid']);
+    expect(within(screen.getByLabelText('Block 5: table')).getAllByRole('textbox')).toHaveLength(4);
   });
 });
 

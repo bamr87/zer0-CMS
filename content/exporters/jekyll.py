@@ -10,12 +10,16 @@ For each page under a site root, in tree order:
   — the front matter by line surgery (sites/frontmatter.py: a key whose value
   changed is rewritten in place, a new one goes in before the closing fence, a
   dropped one goes, and comments, quoting and every other line stay as they
-  were), the body kept as it was while its blocks are the ones it was read as;
+  were), the body kept as it was while its blocks write the Markdown the
+  body's own blocks write (so a page read before a block type existed keeps
+  its body too);
 - **created in Wagtail** (or a source the surgery cannot edit): front matter +
   body rendered from the page. Either way the front matter is the source's, in
   its original key order, with the typed fields written over it (title, description, seo_title, date — kept as
   the original string when the parsed date did not change —, author, tags,
-  categories, book fields: the model's `front_matter_fields`); a page made in
+  categories, book fields: the model's `front_matter_fields`; the SEO fields —
+  `canonical_url`, `og_title`, `og_description`, `image`, `noindex` — only
+  where a person set one to other than its file says, cms/seo.py); a page made in
   the platform, whose front matter holds only the raw keys a person gave it
   (cms/files.py), gets its typed keys first and its raw keys after them, as a
   file a person writes. For an ABC book the `alphabet:` list is rebuilt
@@ -74,6 +78,7 @@ from django.utils import timezone
 from wagtail.models import Page
 
 from books import abc
+from cms import seo
 from cms.files import SUFFIXES
 from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, SiteRootPage
 from importers import frontmatter
@@ -182,6 +187,8 @@ def front_matter_for(page) -> dict:
     fm["title"] = page.title
     put("description", page.search_description)
     put("seo_title", page.seo_title)
+    for name, value in seo.changed(page).items():  # never a key a person did not change, in whatever form it has
+        put(seo.FIELDS[name], value)
     if isinstance(page, ArticlePage):
         original = frontmatter.parse_date(fm.get("date"))
         if page.date and (original is None or original != page.date):
@@ -251,9 +258,8 @@ def _render_over(source_text: str, fm: dict, blocks: list, leading: str) -> str:
     changes.update({key: None for key in original if key not in fm})
     text = surgery.update_keys(source_text, changes)
     _, body = frontmatter.split(text)
-    mine = [(b["type"], b["value"]) for b in blocks if b["type"] != "letter"]
-    if mine == [(b["type"], b["value"]) for b in to_blocks(body)]:
-        return text
+    if from_blocks(blocks, leading=leading) == from_blocks(to_blocks(body), leading=leading):
+        return text  # the blocks write what the body's own blocks write (cut by any version of the importer)
     return text[: len(text) - len(body)] + from_blocks(blocks, leading=leading)
 
 

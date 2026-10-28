@@ -12,6 +12,7 @@ One Jekyll site becomes one `SiteRootPage` (and one Wagtail `Site`) with a
 | any other document or page with front matter | `StandardPage`                              |
 | `title`, `description`, `seo_title`        | `title`, `search_description`, `seo_title`   |
 | `preview` / `image`                         | a Wagtail image (SVG too) in the site's collection, the file found where Jekyll serves it (`preview_file`) |
+| `canonical_url`, `og_title`, `og_description`, `image`, `noindex` | the SEO fields (cms/seo.py), left null: the page says what its file says until a person sets one |
 | every other front-matter key                | `front_matter`, in source order              |
 | the body                                    | StreamField blocks (importers/markdown.py)   |
 
@@ -66,6 +67,7 @@ from wagtail.models import Collection, Page, Site
 
 from agents.principals import ensure_legacy_import_user
 from books import abc
+from cms import seo
 from cms.files import holder_of
 from cms.models import ArticlePage, BookPage, Category, ChapterPage, CollectionPage, SiteRootPage, StandardPage
 from cms.services import publish, save_draft, take_down
@@ -213,6 +215,8 @@ def apply_document(page, doc: Document, images: dict):
     page.search_description = str(fm.get("description", "") or "")
     page.legacy_path = doc.rel
     page.front_matter = fm
+    for name in seo.FIELDS:  # the file decides them again
+        setattr(page, name, None)
     blocks = to_blocks(doc.body)
     if isinstance(page, BookPage):
         layout = fm.get("layout")

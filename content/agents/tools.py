@@ -62,16 +62,20 @@ def remember(ctx, scope, key, value, scope_id="", ttl_days=None):
 @tool(
     "brand.rules",
     effect="read",
-    description="The house style guide and the banned phrases every proposal is checked against.",
+    description="The house style guide and the banned phrases every proposal is checked against — the run's "
+    "page's site's own brand voice and bans included.",
     input_schema=obj({}),
 )
 def brand_rules(ctx):
     from cms.models import BrandRules
-    from suggestions.guard import BANNED_PATTERNS
+    from sites.models import SiteSettings
+    from suggestions.guard import BANNED_PATTERNS, site_of
 
     active = BrandRules.objects.filter(is_active=True)
+    own = SiteSettings.objects.filter(site=site_of(ctx.extra.get("target"))).first()
+    entries = [p for r in active for p in (r.banned_patterns or [])] + (own.banned_patterns if own else [])
     return {
-        "style_guides": [r.style_guide for r in active if r.style_guide],
-        "banned": [name for name, _ in BANNED_PATTERNS]
-        + [p.get("name") for r in active for p in (r.banned_patterns or [])],
+        "style_guides": [r.style_guide for r in active if r.style_guide]
+        + ([own.brand_voice] if own and own.brand_voice else []),
+        "banned": [name for name, _ in BANNED_PATTERNS] + [p.get("name") for p in entries if isinstance(p, dict)],
     }

@@ -1,8 +1,10 @@
 """`manage.py seed_demo`: a small demo site to open the studio on.
 
 Creates, once, a site (`demo`, served at demo.localhost) with a section, a
-published article and a draft, and a person to sign in as (`editor`, in
-Wagtail's Editors and Moderators groups, so they may edit and publish). Every
+published article and a draft, reviewed by the "Editorial" workflow (the
+brand agent, then a moderator: `manage.py seed_editorial`), and a person to
+sign in as (`editor`, in Wagtail's Editors and Moderators groups, so they may
+edit and publish). Every
 run then makes sure the published article has a finished SEO-agent run with
 pending suggestions, so the review inbox is never empty. Local development and
 the browser scenarios (verify/scenarios/studio-*.yml) start from it.
@@ -30,6 +32,7 @@ from cms.models import ArticlePage, CollectionPage, SiteRootPage
 from cms.services import publish, save_draft
 from suggestions.models import Suggestion
 from suggestions.services import propose
+from workflow.services import assign, editorial
 
 DEMO_PASSWORD = "zer0-demo"
 WELCOME_BODY = [
@@ -61,6 +64,7 @@ class Command(BaseCommand):
         with transaction.atomic():
             editor = self.person(username, password)
             article = self.site(editor)
+            assign(editorial(), SiteRootPage.objects.get(site_key="demo"))
             created = self.suggestions(article, editor)
         self.stdout.write(f"demo site ready: sign in as {username!r}; {created} new suggestion(s) on {article.title!r}")
 

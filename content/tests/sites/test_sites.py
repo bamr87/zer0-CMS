@@ -137,6 +137,7 @@ def test_per_site_settings(api, registered):
             "ga4_measurement_id": "G-ABC1234",
             "navigation": [{"label": "Docs", "url": "/docs/"}],
             "brand_voice": "Plain and calm.",
+            "banned_patterns": [{"name": "synergy", "pattern": r"\bsynerg\w*"}],
             "skin": "dark",
             "design_tokens": {"accent": "#0af"},
             "monthly_budget_usd": "12.50",
@@ -149,10 +150,16 @@ def test_per_site_settings(api, registered):
         settings_row.navigation == [{"label": "Docs", "url": "/docs/"}]
         and str(settings_row.monthly_budget_usd) == "12.50"
     )
+    assert settings_row.banned_patterns == [{"name": "synergy", "pattern": r"\bsynerg\w*"}]  # no flags: any case
     assert (
         api.patch(f"/api/v2/sites/{site_id}/settings/", {"ga4_measurement_id": "UA-1"}, format="json").status_code
         == 422
     )
+    broken = api.patch(
+        f"/api/v2/sites/{site_id}/settings/", {"banned_patterns": [{"name": "x", "pattern": "("}]}, format="json"
+    )
+    assert broken.status_code == 422 and broken.json()["error"]["details"][0]["field"] == "banned_patterns.0.pattern"
+    assert "not a regular expression" in broken.json()["error"]["details"][0]["message"]
 
 
 def test_seeing_a_site_is_not_managing_it(registered, editor):

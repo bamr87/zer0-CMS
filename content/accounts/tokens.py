@@ -9,7 +9,10 @@ transaction commits and never as the request's failure. A write on every
 request inside `ATOMIC_REQUESTS` held a lock for the whole request, so a
 client's parallel requests failed on SQLite and ran one at a time on Postgres.
 `raw` is a sensitive variable wherever it is a local, so an error report shows
-stars, and `ops.logging` redacts both token shapes everywhere else.
+stars, and `ops.logging` redacts both token shapes everywhere else. Issuing and
+revoking one are entries in Wagtail's log (`zer0.token.issue`, `.revoke`:
+accounts/wagtail_hooks.py), which name the token by its holder, name and
+prefix, never by the token.
 """
 
 import hashlib
@@ -19,6 +22,7 @@ from datetime import timedelta
 from django.db import models, transaction
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_variables
+from wagtail.log_actions import log
 
 USED_EVERY = timedelta(minutes=5)
 
@@ -50,7 +54,19 @@ class HashedToken(models.Model):
         """A new row and its raw token, which is neither stored nor shown again."""
         raw = cls.PREFIX + secrets.token_urlsafe(32)
         shown = cls._meta.get_field("prefix").max_length
-        return cls.objects.create(prefix=raw[:shown], key_hash=cls.digest(raw), **fields), raw
+        token = cls.objects.create(prefix=raw[:shown], key_hash=cls.digest(raw), **fields)
+        log(token, "zer0.token.issue", data=token.logged())
+        return token, raw
+
+    def revoke(self, by=None):
+        """Revoked from now on, and logged as `by`'s doing; the row stays, for the record."""
+        self.revoked_at = timezone.now()
+        self.save(update_fields=["revoked_at"])
+        log(self, "zer0.token.revoke", user=by, data=self.logged())
+
+    def logged(self) -> dict:
+        """What a log entry says of the token — whose, its name and its shown prefix, never the token."""
+        return {"holder": self.user.username, "name": self.name, "prefix": self.prefix}
 
     @classmethod
     @sensitive_variables("raw")

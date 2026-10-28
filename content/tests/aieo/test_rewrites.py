@@ -67,9 +67,22 @@ def test_the_rewrite_is_aligned_block_by_block():
     assert services.proposals(blocks, f"## Zero\n\n{same}") == [
         ("replace", "a", {"type": "markdown", "value": "## Zero\n\nOne."})
     ]
-    assert services.proposals(blocks, same.replace("Three.", "Three.\n\n| A | B |\n|---|---|\n| 1 | 2 |")) == [
-        ("replace", "c", {"type": "markdown", "value": "Three.\n\n| A | B |\n|---|---|\n| 1 | 2 |"})
-    ]
+    assert services.proposals(blocks, same.replace("Three.", "Three.\n\n| A | B |\n|---|---|\n| x | y |")) == [
+        (
+            "insert",
+            "c",
+            {
+                "type": "table",
+                "value": {
+                    "data": [["A", "B"], ["x", "y"]],
+                    "first_row_is_table_header": True,
+                    "first_col_is_header": False,
+                    "table_caption": "",
+                    "table_header_choice": "row",
+                },
+            },
+        )
+    ]  # a table the rewrite adds is a table block of its own, after the paragraph it follows
     assert services.proposals([], "Brand new.") == [("insert", "", {"type": "markdown", "value": "Brand new."})]
 
 

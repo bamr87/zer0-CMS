@@ -180,6 +180,33 @@ def test_brand_rules_add_patterns_and_a_broken_one_is_skipped(article):
 
 
 @pytest.mark.django_db
+def test_a_sites_own_brand_rules_hold_on_its_pages_and_nowhere_else(article, run, root_page):
+    from wagtail.models import Site
+
+    from cms.models import SiteRootPage
+    from sites.models import SiteSettings
+
+    from ..conftest import make_article
+
+    site = article.get_site()
+    SiteSettings.objects.create(
+        site=site, banned_patterns=[{"name": "nightly", "pattern": r"\bnightly\b"}, {"name": "broken", "pattern": "("}]
+    )
+    with pytest.raises(SuggestionError, match=r'banned phrase "Nightly" \(nightly\)'):
+        proposal(article, run, op="meta", field="seo_title", payload={"value": "Nightly copies"})
+    elsewhere = SiteRootPage(title="Elsewhere", slug="elsewhere", site_key="elsewhere")
+    root_page.add_child(instance=elsewhere)
+    Site.objects.create(hostname="elsewhere.localhost", root_page=elsewhere)
+    other = make_article(elsewhere, "Copies")
+    assert proposal(other, run, op="meta", field="seo_title", payload={"value": "Nightly copies"}).pk
+    # a phrase banned after the proposal is still refused at accept, with the site's rules
+    pending = proposal(article, run, op="meta", field="seo_title", payload={"value": "Weekly copies"})
+    SiteSettings.objects.filter(site=site).update(banned_patterns=[{"name": "weekly", "pattern": "weekly"}])
+    with pytest.raises(SuggestionError, match="weekly"):
+        accept([pending], get_user_model().objects.create_superuser("boss", password="pw"))
+
+
+@pytest.mark.django_db
 def test_editor_admin_view_lists_and_accepts(client, article, run, editor):
     s = proposal(article, run, op="meta", field="seo_title", payload={"value": "Admin accepted"})
     client.force_login(editor)

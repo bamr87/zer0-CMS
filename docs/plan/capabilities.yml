@@ -77,6 +77,7 @@ platform:
   - id: content.types
     what: Page types, fields and StreamField blocks, per-type default field values, and the exported agent block schema.
     # P4: every type and the creatable ones under a parent (api), each type's editable fields as specs the studio renders.
+    # P4 (G2's blocks): Wagtail's table, typed table, embed (a URL, never fetched) and document blocks, raw HTML, Liquid and an Obsidian callout, each in the agent schema, cut by the importer from a paragraph it writes back byte for byte (content/tests/importers/test_blocks.py) and edited in the studio (web/packages/ui/test/editor.test.tsx); per-type default values to come.
     surfaces: {api: partial, studio: partial, mcp: partial}
   - id: content.list
     what: Browse and filter pages across sites — tree, lists, and a filter language (status, collection, site, kind, tag, category, author, errors).
@@ -97,7 +98,7 @@ platform:
       studio: web/packages/ui/test/pagefile.test.tsx
   - id: content.seo
     what: SEO and social fields (title, description, keywords, canonical, Open Graph, noindex) with insights and agent proposals for a page.
-    # P4: title tag, description (with lengths shown), keywords, summary; canonical, Open Graph and noindex to come.
+    # P4: title tag, description (with lengths shown), keywords, summary; and (2026-10-27) canonical URL, Open Graph title, description and image, and noindex — each its file's front-matter key (`image` for the image), imported, exported only where changed, and edited in the SEO tab (content/tests/importers/test_seo.py, web/packages/ui/test/editor.test.tsx). Insights beyond the lengths, and agent proposals for the social fields, to come.
     surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.preview
     what: Live preview of a draft in the site's own design, including the exact exported document and file name.
@@ -113,6 +114,7 @@ platform:
       extension: web/packages/webview/test/webview.test.tsx
   - id: content.workflow
     what: Editorial workflows with moderation states, tasks and assignments, and the governed publish path (draft → brand guard → approval → publish).
+    # P4 (G2's Editorial workflow): the seeded "Editorial" workflow — the brand agent's review, then a moderator — made and given to sites by manage.py seed_editorial (content/tests/workflow/test_editorial.py); submitting, moderating and its states have no API or studio screen yet.
     surfaces: {api: missing, studio: missing, extension: partial}
   - id: content.publish
     what: Publish and unpublish now or on a schedule.
@@ -432,6 +434,7 @@ platform:
     # analytics ids, navigation, brand voice, skin and tokens, budget); /api/v2/sites/ registers a checkout (workspace.yml's
     # or SITES_DIR's), discovers, edits; the studio's Sites area does all of it. The extension's half is G10.
     # G10 (merge): the extension's Sites workspace renders the same registry and site page; registering, the registry fields and the settings not yet proved through its host.
+    # P4 (G2's BrandRules per site): the settings carry the site's brand rules — its voice and its banned phrases, which the brand guard refuses on its pages (content/tests/suggestions/test_suggestions.py::test_a_sites_own_brand_rules_hold_on_its_pages_and_nowhere_else).
     surfaces: {api: done, studio: done, extension: partial}
     proof:
       api: content/tests/sites/test_sites.py
@@ -665,6 +668,7 @@ platform:
     surfaces: {api: partial, studio: missing}
   - id: platform.audit
     what: An audit log of who did what, people and agents alike.
+    # P4 (G2's log actions): Wagtail's log records suggestions proposed, accepted and rejected, runs started and finished, and tokens issued and revoked, each by who did it (content/tests/agents/test_log_actions.py); no API or studio screen reads it yet.
     surfaces: {api: missing, studio: missing}
   - id: platform.events
     what: Outbox events with versioned schemas, and webhooks.

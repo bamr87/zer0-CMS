@@ -63,7 +63,7 @@ def test_each_file_becomes_the_right_page(imported):
     assert [c.slug for c in hello.categories.all()] == ["guides"]
     assert hello.front_matter["date"] == "2026-07-31 10:00:00 -0500"  # a string, as written
     assert hello.preview_image is not None and hello.preview_image.width == 8
-    assert [b.block_type for b in hello.body] == ["markdown", "heading", "markdown", "code", "markdown"]
+    assert [b.block_type for b in hello.body] == ["markdown", "heading", "markdown", "code", "raw_html"]
     assert "{% include callout.html" in hello.body[0].value
     assert isinstance(page_at("about.md"), StandardPage) and page_at("about.md").get_parent().pk == root.pk
     assert not page_at("pages/_posts/2026-08-01-unfinished.md").live
@@ -384,7 +384,11 @@ REAL_SITES = [
     "sites/zer0-pages-remote",
     "sites/zer0-demo-cookbook",
     "sites/drsai",
-    # The two big ones (210 and 376 files) run in the full suite, not the fast tier.
+    "sites/irony-works",
+    # The big ones run in the full suite, not the fast tier: wargames and 2005 (whose bodies are
+    # mostly HTML blocks and tables), zer0-pages (210 files) and the theme's docs site (376).
+    pytest.param("sites/wargames", marks=pytest.mark.slow),
+    pytest.param("sites/2005", marks=pytest.mark.slow),
     pytest.param("sites/zer0-pages", marks=pytest.mark.slow),
     pytest.param(THEME_CHECKOUT, marks=pytest.mark.slow, id="zer0-mistakes"),
 ]

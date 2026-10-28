@@ -75,6 +75,7 @@ def test_seed_demo_makes_a_site_a_person_and_pending_suggestions():
     assert client.login(username="editor", password="zer0-demo")
     sites = client.get("/api/v2/sites/").json()
     assert "Demo site" in [s["name"] for s in sites]
+    assert welcome.get_workflow().name == "Editorial"  # the brand agent, then a moderator
 
 
 @pytest.mark.django_db

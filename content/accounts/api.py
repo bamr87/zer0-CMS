@@ -89,7 +89,7 @@ class Token(APIView):
         responses={200: s.UserTokenSerializer, **ERROR_RESPONSES},
     )
     def delete(self, request, public_id):
-        token = services.revoke_by_id(request.user, public_id)
+        token = services.revoke_by_id(request.user, public_id, by=request.user)
         if token is None:
             raise NotFound("no such token")
         return Response(s.UserTokenSerializer(token_json(token, request, timezone.now())).data)
