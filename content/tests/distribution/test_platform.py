@@ -216,6 +216,8 @@ def test_a_post_is_seen_by_those_who_find_its_page_and_a_page_is_distributed_onc
     assert api(dana).get(f"{API}/channels/{channel.public_id}/").status_code == 200
     assert [p["id"] for p in api(dana).get(f"{API}/posts/").json()["results"]] == [str(theirs.public_id)]
     assert len(api(manager).get(f"{API}/posts/").json()["results"]) == 3
+    hidden = api(dana).post(f"{API}/posts/", {"channel": str(channel.public_id), "page": article.pk}, format="json")
+    assert hidden.status_code == 404, "a page dana cannot find is not named, nor composed"
     draft = make_article(site_root, "Not yet", publish=False, search_description="Soon.")
     refused = api(manager).post(f"{API}/posts/", {"channel": str(channel.public_id), "page": draft.pk}, format="json")
     assert refused.status_code == 409 and "not live" in refused.json()["error"]["message"]

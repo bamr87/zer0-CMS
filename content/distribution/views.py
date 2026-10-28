@@ -21,10 +21,10 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from wagtail.models import Page
 
 from api.pages import IsPerson, service_errors
-from ops.errors import Conflict, Forbidden, Invalid, NotFound
+from cms.services import visible_pages
+from ops.errors import Forbidden, NotFound
 from ops.openapi import ERROR_RESPONSES
 
 from . import serializers as s
@@ -172,8 +172,9 @@ def linkedin_callback(request):
         raise NotFound("no such channel")
     target = f"/studio/distribution/channels/{channel.public_id}"
     if request.query_params.get("error"):
-        reason = request.query_params.get("error_description") or request.query_params["error"]
-        Channel.objects.filter(pk=channel.pk).update(last_error=f"LinkedIn: {reason}"[:1000])
+        services.connect_refused(
+            channel, request.query_params.get("error_description") or request.query_params["error"]
+        )
         return HttpResponseRedirect(target)
     with service_errors():
         services.finish_connect(
@@ -246,10 +247,10 @@ class DistributionPostViewSet(
         body.is_valid(raise_exception=True)
         data = body.validated_data
         page = None
-        if data.get("page") is not None:
-            page = Page.objects.filter(pk=data["page"]).first()
+        if data.get("page") is not None:  # a page the person cannot find is a 404, never named
+            page = visible_pages(request.user).filter(pk=data["page"]).first()
             if page is None:
-                raise Invalid("no such page", details=[{"field": "page", "code": "invalid", "message": "unknown"}])
+                raise NotFound(f"no page {data['page']}")
         with service_errors():
             post = services.compose(
                 data["channel"],
@@ -271,11 +272,7 @@ class DistributionPostViewSet(
         return self.respond(post)
 
     def perform_destroy(self, post):
-        if post.status not in (DistributionPost.Status.DRAFT, DistributionPost.Status.REJECTED):
-            raise Conflict(f"a {post.status} post stays in the record; only a draft or a rejected post is deleted")
-        if not services.may_compose(post, self.request.user):
-            raise Forbidden("you may not edit this page, so you may not delete its posts")
-        post.delete()
+        services.delete_post(post, self.request.user)
 
     @extend_schema(
         request=None,

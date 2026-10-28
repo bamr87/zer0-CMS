@@ -38,9 +38,8 @@ import httpx
 import markdown
 import requests
 
-from exporters.jekyll import path_for, render
+from exporters.jekyll import file_of
 from importers.markdown import from_blocks
-from importers.models import ImportedSource
 from research import fetch
 
 WP_STATUSES = ("draft", "pending", "private", "publish")
@@ -172,24 +171,6 @@ def _answered(action: str, *, doubt: bool = False):
         raise TransportError(f"Could not {action}: GitHub did not answer ({type(e).__name__}).", doubt=doubt) from e
 
 
-def exported_file(page) -> tuple[str, str]:
-    """(path in the site, text): the stored source of an unchanged imported page, byte for byte, else the page
-    rendered — what `export_jekyll` writes for it."""
-    from cms.models import SiteRootPage
-    from newsroom.services import with_front_matter
-
-    page = page.specific
-    root = page.get_ancestors(inclusive=True).type(SiteRootPage).last()
-    if root is None:
-        raise TransportError("the page is not in a site that exports to Jekyll files")
-    root = root.specific
-    source = ImportedSource.objects.filter(page_id=page.pk).first()
-    unchanged = source is not None and page.compute_content_hash() == source.import_hash
-    if unchanged and page.pk not in with_front_matter():
-        return path_for(page, root), source.source_text
-    return path_for(page, root), render(page)
-
-
 def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
     from github import Auth, Github, GithubException
 
@@ -197,7 +178,11 @@ def github_publish(channel, credentials: dict, post, page) -> tuple[str, str]:
     base = str(channel.setting("branch", "main"))
     directory = str(channel.setting("directory")).strip("/")
     describe = functools.partial(_github_message, repo=repo_name, base=base)
-    path, text = exported_file(page)
+    try:
+        file = file_of(page.specific)  # what a write-back writes for it
+    except ValueError as e:
+        raise TransportError(str(e)) from e
+    path, text = file.rel, file.text
     repo_path = f"{directory}/{path}" if directory else path
     branch = f"distribute/{post.public_id.hex[:12]}"
 

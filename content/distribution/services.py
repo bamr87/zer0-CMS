@@ -38,11 +38,10 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-from wagtail.models import Page
 
 from ai import crypto
 from ai.providers import NotConfigured
-from ops.errors import Conflict, Forbidden, Invalid, NotFound
+from ops.errors import Conflict, Forbidden, Invalid
 from suggestions.guard import extra_patterns, guard_text
 
 from . import gates, permalink
@@ -270,6 +269,11 @@ def start_connect(channel, user, redirect_uri: str) -> dict:
         redirect_uri=redirect_uri, state=state, scopes=list(scopes), code_challenge=oauth.challenge(verifier)
     )
     return {"url": url, "state": state, "verifier": verifier}
+
+
+def connect_refused(channel, reason: str) -> None:
+    """LinkedIn came back without a code (the owner declined, or LinkedIn refused): the channel says why."""
+    Channel.objects.filter(pk=channel.pk).update(last_error=f"LinkedIn: {reason}"[:1000])
 
 
 @transaction.atomic
@@ -523,14 +527,11 @@ def default_commentary(page, limit: int = 3) -> str:
 
 def guard(text: str, channel) -> list[dict]:
     """The brand guard (suggestions/guard.py, the extension's rules, with the active brand rules and the channel's
-    site's own), and for LinkedIn its own limit once the text is escaped."""
-    findings = guard_text(text or "", extra_patterns(channel.site))
-    if channel.kind == Kind.LINKEDIN:
-        escaped = posts.commentary_length(text)
-        if escaped > plan.COMMENTARY_MAX and len(text or "") <= 3000:
-            message = f"commentary is {escaped} chars once escaped for LinkedIn (max {plan.COMMENTARY_MAX})"
-            findings.insert(len(findings) - 1, {"level": "error", "message": message})
-    return findings
+    site's own), and for LinkedIn its own limit once the text is escaped — the site lane's check, the same rule."""
+    from .lane.pipeline import check_commentary
+
+    extra = extra_patterns(channel.site)
+    return check_commentary(text or "", extra) if channel.kind == Kind.LINKEDIN else guard_text(text or "", extra)
 
 
 def guard_errors(findings) -> list[str]:
@@ -627,6 +628,16 @@ def edit(post, user, **fields) -> DistributionPost:
             post.approved_digest = ""
         post.save()
     return post
+
+
+@transaction.atomic
+def delete_post(post, user) -> None:
+    """A draft or a rejected post goes, by someone who may change it; any other stays in the record."""
+    if post.status not in (DistributionPost.Status.DRAFT, DistributionPost.Status.REJECTED):
+        raise Conflict(f"a {post.status} post stays in the record; only a draft or a rejected post is deleted")
+    if not may_compose(post, user):
+        raise Forbidden("you may not edit this page, so you may not delete its posts")
+    post.delete()
 
 
 @transaction.atomic
@@ -1376,17 +1387,3 @@ def ingest_statistics(channel, *, today=None) -> int:
                 entry=row, day=day, defaults={**counts[row.urn], "fetched_at": timezone.now()}
             )
     return len(counts)
-
-
-def get_visible(model, public_id, user):
-    row = model.objects.visible_to(user).filter(public_id=public_id).first()
-    if row is None:
-        raise NotFound(f"no such {model._meta.verbose_name}")
-    return row
-
-
-def page_or_404(page_id, user):
-    page = Page.objects.filter(pk=page_id).first()
-    if page is None or not page.specific.permissions_for_user(user).can_edit():
-        raise NotFound("no such page")
-    return page.specific

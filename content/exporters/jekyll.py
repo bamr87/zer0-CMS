@@ -338,20 +338,36 @@ def site_files(site_key: str, *, include_drafts=False, report: ExportReport | No
             continue
         current = page.get_latest_revision_as_object() if include_drafts else page
         rel = path_for(current, root)
-        unchanged = source is not None and source.unchanged(current)
         moved = source is not None and current.file_editor_fields and source.legacy_path != rel
         if moved and report is not None and source.legacy_path.endswith(SUFFIXES):  # a page's file it was read from
             report.moved.append((source.legacy_path, rel))
-        verbatim = unchanged and page.pk not in newsroom_pages
-        if verbatim:
-            text = mark(source.source_text, rel, current, live=page.live, now=now)
-            yield File(rel, text, page, current, source, verbatim=text == source.source_text)
-        else:
-            text = render(current, source.source_text if source is not None else None)
-            text = mark(text, rel, current, live=page.live, now=now)
-            yield File(rel, text, page, current, source, verbatim=False)
+        verbatim = source is not None and source.unchanged(current) and page.pk not in newsroom_pages
+        yield page_file(page, current, root, source, verbatim=verbatim, now=now)
         if source is not None and source.sidecars:
             yield from _sidecar_files(page, current, source, verbatim)
+
+
+def page_file(page, current, root, source: ImportedSource | None, *, verbatim: bool, now) -> File:
+    """`current` — the page, or its latest revision — as its file: the stored source byte for byte when `verbatim`
+    (unchanged since it was read, `ImportedSource.unchanged`, and given nothing by the newsroom), else rendered over
+    it; marked not built unless the page is live (`mark`). The one rule for a page's file — a write-back's, and the
+    one distribution's GitHub channel opens a pull request with."""
+    rel = path_for(current, root)
+    if verbatim:
+        text = mark(source.source_text, rel, current, live=page.live, now=now)
+        return File(rel, text, page, current, source, verbatim=text == source.source_text)
+    text = render(current, source.source_text if source is not None else None)
+    return File(rel, mark(text, rel, current, live=page.live, now=now), page, current, source, verbatim=False)
+
+
+def file_of(page) -> File:
+    """A live page's file as an export writes it now — `page_file` for one page, outside a write-back."""
+    root = page.get_ancestors(inclusive=True).type(SiteRootPage).last()
+    if root is None:
+        raise ValueError("the page is not in a site that exports to Jekyll files")
+    source = ImportedSource.objects.filter(page_id=page.pk).first()
+    verbatim = source is not None and source.unchanged(page) and page.pk not in with_newsroom_front_matter()
+    return page_file(page, page, root.specific, source, verbatim=verbatim, now=timezone.now())
 
 
 def _sidecar_files(page, current, source: ImportedSource, verbatim: bool) -> Iterator[File]:
