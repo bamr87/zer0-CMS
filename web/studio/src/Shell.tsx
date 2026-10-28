@@ -1,10 +1,9 @@
 // The studio's frame: the navigation over every area, the site switcher, the
 // light/dark switch and sign-out, around whichever area is open.
-import { ActionIcon, AppShell, Badge, Burger, Group, Menu, NavLink, Select, Text, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, AppShell, Badge, Burger, Group, Menu, NavLink, Text, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconMoon, IconSun } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
-import { call, useApi } from '@zer0/ui';
+import { SitePicker } from '@zer0/ui';
 import { Link, Outlet, useLocation } from 'react-router';
 
 import { AREAS } from './areas';
@@ -51,20 +50,8 @@ export function Shell({ person }: { person: Person }) {
 }
 
 function SiteSwitcher() {
-  const api = useApi();
   const { siteId, setSiteId } = useSite();
-  const sites = useQuery({ queryKey: ['sites'], queryFn: () => call(api.GET('/api/v2/sites/')) });
-  return (
-    <Select
-      aria-label="Site"
-      size="xs"
-      w={190}
-      data={[{ value: '', label: 'All sites' }, ...(sites.data ?? []).map((s) => ({ value: String(s.id), label: s.name }))]}
-      value={siteId ? String(siteId) : ''}
-      allowDeselect={false}
-      onChange={(value) => setSiteId(Number(value) || undefined)}
-    />
-  );
+  return <SitePicker value={siteId} onChange={setSiteId} />;
 }
 
 function SchemeToggle() {

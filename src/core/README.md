@@ -14,7 +14,7 @@ a stray `vscode` import anywhere in this graph becomes a *build* error rather th
 
 If a core function needs the editor, it takes what it needs as a parameter — a path, a `LogSink`, a callback — and the shell supplies it. That is what makes this layer unit-testable with plain `node`, reusable from the bundled MCP server, and runnable from a script.
 
-The second rule follows from the first: **zero runtime dependencies**. YAML subset parsing, globbing, date formatting, JSON-with-comments and Python-parity JSON output are all hand-rolled here against the Node standard library.
+The second rule: **zero *shipped* runtime dependencies, and libraries over hand-rolled code** (ADR 0006 decision 9, amending D3 and D14). YAML (`yaml`), JSON with comments (`jsonc-parser`), globs (`picomatch`) and dates (`date-fns`, `@date-fns/tz`) are the maintained libraries, bundled by esbuild into both node bundles from `devDependencies` (`esbuild.js`'s `CORE_LIBRARIES`); Python-parity JSON output stays hand-rolled, because no library writes `json.dumps` byte for byte. The engines package never enters this layer's graph.
 
 ## Layout
 
@@ -30,6 +30,7 @@ The second rule follows from the first: **zero runtime dependencies**. YAML subs
 | [`media/`](media/README.md) | Resolving the preview image a page already has, or emitting the generator's brief. |
 | [`platform/`](platform/README.md) | What kind of site this is (decision D12): seven profiles as data, the zer0-mistakes overlay on Jekyll, marker-file detection over injected readers, the site's own config, and the permalink and content-root derivations. See `platform/README.md`. |
 | [`fleet/`](fleet/README.md) | The Fleet console's pure half: `fleet.manifest.yml` → typed lanes, the switch/dispatch gate, and the GitHub surface declared as data over an injected `fetch`. See `fleet/README.md`. |
+| `studio/` | The studio in a webview (PLAN G10): `bridge.ts`, the host side of the studio webviews' postMessage transport — every gate on a request a webview asks for (the path, the method, a modal before a live-site change, the token added for the configured origin only) over an injected `fetch` — and `page.ts`, the strict-CSP page those webviews load. |
 | [`harness/`](harness/README.md) | One vocabulary for the editor agent and CI: the agent, skill and `_data/ai.yml` readers, the harness profile (model precedence, permission-mode clamp, SDK and CI projections), the inventory and its joins, the `wtd fleet adopt` port, the usage ledger, and lane generation. See `harness/README.md`. |
 | `index.ts` | The barrel. Import from `../core`, not from individual files, outside of core itself. |
 

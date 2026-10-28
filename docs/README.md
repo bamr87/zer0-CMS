@@ -36,7 +36,7 @@ Markdown here is **one paragraph per line** — no soft wrapping. CI enforces it
 
 | Document | What it covers |
 | --- | --- |
-| [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | The design decisions D1–D17 and why the code follows them: the `src/core` layer boundary, the five bundles, the webview contract, the ledger, the Fleet console's guards, and the shared-files boundary with the Rails CMS… |
+| [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) | The design decisions D1–D17 and why the code follows them: the `src/core` layer boundary, the six bundles, the webview contract, the ledger, the Fleet console's guards, and the shared-files boundary with the Rails CMS… |
 | [`docs/CICD.md`](CICD.md) | Every workflow and what its green means, the reusable doctor, the commands to run before a PR, and the specs CI actually pins. |
 | [`docs/CONFIG.md`](CONFIG.md) | Every configuration key: the three layers and their precedence, all of `zer0.json`, every `zer0Cms.*` setting (generated from `package.json`), the placeholder tokens, and which layer a decision belongs in. |
 | [`docs/constitution.md`](constitution.md) | The rules every change to this repo must satisfy, whoever makes it — a human or an AI agent. Agents read this before [AGENTS.md](../AGENTS.md) conventions, the [PRD](../PRD.md), or the [feature catalog](../features/features.yml). Ratified… |

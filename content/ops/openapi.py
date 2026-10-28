@@ -52,6 +52,22 @@ class AgentTokenScheme(OpenApiAuthenticationExtension):
         }
 
 
+class UserTokenScheme(OpenApiAuthenticationExtension):
+    """How `accounts.auth.UserTokenAuthentication` appears in the document."""
+
+    target_class = "accounts.auth.UserTokenAuthentication"
+    name = "userToken"
+
+    def get_security_definition(self, auto_schema):
+        return {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "zer0u_…",
+            "description": "A person's token (`manage.py user_token <username> --name …`), as the VS Code extension sends it; "
+            "the caller acts as that person.",
+        }
+
+
 class ErrorDetailSerializer(serializers.Serializer):
     field = serializers.CharField(allow_null=True, help_text="The field at fault, or null for the whole request.")
     code = serializers.CharField()

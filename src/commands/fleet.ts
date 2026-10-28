@@ -1829,13 +1829,13 @@ export function registerFleetCommands(shell: Zer0Shell): FleetActions {
   // revealed rather than re-routed, which is `DashboardPanel.open()`'s own rule.
   register(shell, 'fleet.open', async () => {
     await shell.context.workspaceState.update(ROUTE_STATE_KEY, 'fleet');
-    await vscode.commands.executeCommand('zer0Cms.dashboard');
+    await vscode.commands.executeCommand('zer0Cms.dashboard.files');
   });
 
   // --- Open the Monitor tab -----------------------------------------------
   register(shell, 'monitor.open', async () => {
     await shell.context.workspaceState.update(ROUTE_STATE_KEY, 'monitor');
-    await vscode.commands.executeCommand('zer0Cms.dashboard');
+    await vscode.commands.executeCommand('zer0Cms.dashboard.files');
   });
 
   // --- Refresh -------------------------------------------------------------

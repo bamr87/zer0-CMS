@@ -36,7 +36,8 @@ How this repository, the zer0-mistakes theme and zer0-image-generator fit togeth
 - a **front-matter audit** of every page against the site's own schema, whose fixes you see as a diff before any of them lands,
 - **platform profiles** — Jekyll (with the zer0-mistakes theme as an overlay), MkDocs, Wiki.js, Hugo, Docusaurus, Astro and a generic fallback — so a site is read the way its own generator reads it,
 - **many sites in one window**, each with its own configuration, draft queue and MCP server,
-- and a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs.
+- a **fleet console** — the Harness, Fleet, Monitor and Workflows tabs — for the AI lanes a repository runs,
+- and, pointed at a zer0-CMS platform (`zer0Cms.platform.url`, with your token in the editor's secret storage), the **studio's own workspaces** in its webviews — the dashboard, the page behind the open file, the AI view — built from the same React code as the studio, with every request sent by the extension host so the token never reaches a page.
 
 ## Quick start
 

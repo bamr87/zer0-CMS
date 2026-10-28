@@ -81,6 +81,7 @@ platform:
   - id: content.list
     what: Browse and filter pages across sites — tree, lists, and a filter language (status, collection, site, kind, tag, category, author, errors).
     # P4: any status across sites, filtered by site, parent (the tree), type, status and text; tag/category/author/errors filters to come.
+    # G10: the extension renders the same PageList (the dashboard's Write tab) and finds the page behind the open file (?source=).
     surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.create
     what: Create a page or a draft from a type in a site and section, or duplicate one as a draft.
@@ -89,6 +90,7 @@ platform:
   - id: content.edit
     what: A block editor with a Markdown round trip, front matter and fields, autosave, and a stale-write guard.
     # P4: blocks (TipTap with the Markdown round trip; rich text keeps its internal links), typed fields, save as a draft with a required stale-write guard (409) under the page row's lock; autosave and raw front matter to come.
+    # G10: the extension's Metadata view is the same PageEditor, for the page behind the open file; file mode keeps front matter as controls.
     surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.seo
     what: SEO and social fields (title, description, keywords, canonical, Open Graph, noindex) with insights and agent proposals for a page.
@@ -100,24 +102,29 @@ platform:
     surfaces: {api: partial, studio: partial, extension: partial}
   - id: content.revisions
     what: Revisions with diff, compare and revert.
-    surfaces: {api: done, studio: done, extension: missing, mcp: missing}
+    # G10: the extension's page view compares and reverts through the same RevisionHistory.
+    surfaces: {api: done, studio: done, extension: done, mcp: missing}
     proof:
       api: content/tests/api/test_pages.py::test_revisions_compare_and_revert_as_a_new_draft
       studio: web/packages/ui/test/editor.test.tsx
+      extension: web/packages/webview/test/webview.test.tsx
   - id: content.workflow
     what: Editorial workflows with moderation states, tasks and assignments, and the governed publish path (draft → brand guard → approval → publish).
     surfaces: {api: missing, studio: missing, extension: partial}
   - id: content.publish
     what: Publish and unpublish now or on a schedule.
     # P4: publish now, unpublish now, a go-live time and an expiry (each carried out by beat, one page per transaction); the studio's editor offers all four.
-    surfaces: {api: done, studio: done, extension: partial, mcp: partial}
+    # G10: the extension's editor offers the same four, and its host asks modally before each live-site change, gating the URL it sends so no spelling of a publish path skips the question (src/test/webview.test.ts); file mode keeps the governed path.
+    surfaces: {api: done, studio: done, extension: done, mcp: partial}
     proof:
       api: content/tests/api/test_pages.py::test_publish_and_unpublish_now_or_on_a_schedule
       studio: web/packages/ui/test/editor.test.tsx
+      extension: web/packages/webview/test/webview.test.tsx
   - id: content.collaboration
     what: Comments, mentions and page locking.
     # P4: Wagtail's locks hold in every writer (409 resource.locked) and the editor shows a locked page read-only, saying why; locking and unlocking, comments and mentions to come.
-    surfaces: {api: partial, studio: partial, extension: missing}
+    # G10: the extension's editor is the same PageEditor, so a locked page opens read-only there too.
+    surfaces: {api: partial, studio: partial, extension: partial}
   - id: content.localization
     what: Locales, per-locale trees and a translation workflow.
     surfaces: {api: missing, studio: missing, site: missing}
@@ -363,10 +370,12 @@ platform:
   - id: ai.suggestions
     what: Suggestions with diffs — accept, reject with a reason, accept all of a run.
     # P4: one scope (Suggestion.objects.visible_to) on every surface; accepting all of a run accepts the ones the person was shown.
-    surfaces: {api: done, studio: done, extension: partial, mcp: partial}
+    # G10: the extension's Review tab and its editor's Suggestions tab are the same SuggestionInbox.
+    surfaces: {api: done, studio: done, extension: done, mcp: partial}
     proof:
       api: content/tests/api/test_review.py
       studio: web/packages/ui/test/review.test.tsx
+      extension: web/packages/webview/test/webview.test.tsx
   - id: ai.evals
     what: Eval suites over recorded fixtures that gate an agent's policy.
     surfaces: {ops: partial}
@@ -377,7 +386,8 @@ platform:
   - id: ai.streaming
     what: A run's event stream to the client, asynchronous runs, and idempotent run creation.
     # P4: /api/v2/agent-runs/<id>/stream/ answers a browser's EventSource on gthread workers (it outlives gunicorn's worker timeout), and the studio's timeline follows it live — stopping at a final status, reopening after a pause, backing off from a broken stream. G8: every screen that starts a run (202) follows it the same way (useLiveRun) and reads its result when it ends, and every request that starts a run carries an Idempotency-Key made when the person acts (the API replays the first answer to a repeat); its control waits while the request is out and a double click asks once — conversations.test.tsx (keys, Ctrl+Enter sends once, a message's actions held), providers.test.tsx (one check per double click), briefs.test.tsx and aipanel.test.tsx.
-    surfaces: {api: done, studio: done, extension: missing}
+    # G10: the extension follows the same stream host-side (with the person's token as a header) and relays it to the same RunTimeline.
+    surfaces: {api: done, studio: done, extension: partial}
     proof:
       api: content/tests/ai/test_api.py::test_running_a_visible_assistant_is_a_202_with_the_run_and_a_key_replays_it
       studio: web/packages/ui/test/ai/conversations.test.tsx
@@ -540,7 +550,8 @@ platform:
     surfaces: {api: partial, studio: partial, extension: missing}
   - id: platform.tokens
     what: Personal API tokens and agent tokens, issued and revoked.
-    surfaces: {api: partial, studio: missing, extension: missing}
+    # G10: accounts.UserToken (hashed, 90 days unless the issuer says otherwise, a superuser's only with --superuser, revoked; accounts.services and manage.py user_token) authenticates a person over REST, sharing accounts.tokens.HashedToken with AgentToken; the extension sets and clears one in SecretStorage, per platform origin. Issuing from the account menu, scopes and GraphQL are G3's.
+    surfaces: {api: partial, studio: missing, extension: partial}
   - id: platform.permissions
     what: Roles, groups, per-site permissions, and per-person ownership and sharing.
     surfaces: {api: partial, studio: missing}
@@ -584,10 +595,13 @@ platform:
 
   - id: platform.shared-ui
     what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
-    # P4: the studio renders @zer0/ui's workspaces through the host contract (StudioProvider), and ESLint keeps routers, transports and page globals out of them; the extension's half is G10.
-    surfaces: {studio: done, extension: missing}
+    # P4: the studio renders @zer0/ui's workspaces through the host contract (StudioProvider), and ESLint keeps routers, transports and page globals out of them.
+    # G10: the extension's webviews render them from WORKSPACES (dist/studio.js, built from web/packages/webview) over a postMessage transport whose host re-checks every request and holds the token.
+    # Gap: the transport carries JSON bodies (with Idempotency-Key and If-Match) and text replies; an upload is refused in the extension (extension.unsupported_body), so a workspace that uploads a file (research.capture, media.library) is done in the studio and a gap in the extension until the transport carries files.
+    surfaces: {studio: done, extension: done}
     proof:
       studio: web/studio/test/app.test.tsx
+      extension: web/packages/webview/test/webview.test.tsx
 
   # ── The extension's own (file mode) ─────────────────────────────────────────
   - id: extension.file-mode

@@ -11055,6 +11055,8 @@ export interface operations {
                 q?: string;
                 /** @description A site id: the pages of that site. */
                 site?: number;
+                /** @description A file's path from the folder a client has open, starting with that folder's name (`drsai/_posts/a.md`): the pages imported from that file, in the sites whose folder that is. */
+                source?: string;
                 /**
                  * @description * `draft` - draft
                  *     * `live` - live

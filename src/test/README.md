@@ -2,7 +2,7 @@
 
 > The test suite: seventeen suites in three execution contexts behind `npm test`, the fixtures and generated goldens, and the fast plain-Mocha loop.
 
-Seventeen suites, three execution contexts, one command: `npm test`. The runner is `@vscode/test-cli` driving Mocha's **tdd** interface (`suite` / `test`) over the plain `tsc` output in `out/test/`, configured by `.vscode-test.mjs` at the repository root. `npm run pretest` compiles that output, builds the five esbuild bundles and runs eslint first, so a green `npm test` means the tests, the types, the lint gate and the shipped artifacts all agree.
+Seventeen suites, three execution contexts, one command: `npm test`. The runner is `@vscode/test-cli` driving Mocha's **tdd** interface (`suite` / `test`) over the plain `tsc` output in `out/test/`, configured by `.vscode-test.mjs` at the repository root. `npm run pretest` compiles that output, builds the six esbuild bundles and runs eslint first, so a green `npm test` means the tests, the types, the lint gate and the shipped artifacts all agree.
 
 | File | Runs in | Covers |
 |---|---|---|
@@ -12,16 +12,16 @@ Seventeen suites, three execution contexts, one command: `npm test`. The runner 
 | `golden.test.ts` | plain Node | Cross-lane byte contracts against fixtures written by Python. |
 | `loop.test.ts` | plain Node | The feedback loop: the analytics join and its read-surface boundary, the portfolio, and media coverage. |
 | `fleet.test.ts` | plain Node | The Fleet console's pure half: the verbatim irony-works manifest (wrapped summary whole), a malformed manifest coercing without throwing, the blocker order in both modes, the repo-scoped-only surface guard, and every request the client makes landing in the declared plan — with a `fetch` that records and answers. |
-| `engines.test.ts` | plain Node | The engines seam: exactly one importer, no re-export through the barrel, `dist/mcp-server.js` free of the package (skipped without a build), the adapters, and parity against real sister-repository workflows and manifests. |
+| `engines.test.ts` | plain Node | The engines seam: exactly one importer, no re-export through the barrel, `dist/mcp-server.js` holding only the core libraries and never the package (skipped without a build), the adapters, and parity against real sister-repository workflows and manifests. |
 | `routes.test.ts` | plain Node | The route registry: the tabs' ids are a subset of the routes, in the same relative order. |
-| `webview.test.ts` | plain Node, over a mini-DOM | Every route renders an empty state, the operator primitives keep their promises, field widgets mount and dispose without leaking, and an unread run list renders as unknown. |
-| `styling.test.ts` | plain Node | The styling gate: only `media/tokens.css` may name a VS Code theme variable. |
+| `webview.test.ts` | plain Node, over a mini-DOM | Every route renders an empty state, the operator primitives keep their promises, field widgets mount and dispose without leaking, and an unread run list renders as unknown — and the studio webviews' host-side transport (PLAN G10): the token reaches the configured platform only, a path that could leave the API is refused before a socket, a live-site change asks every time, and the page's CSP has no connection and no inline code. |
+| `styling.test.ts` | plain Node | The styling gate: only `media/tokens.css` may name a VS Code theme variable — in `src/`, `media/` and the `web/packages/` the studio bundle is built from. |
 | `platform.test.ts` | plain Node | The seven profiles and the zer0-mistakes overlay, detection over the fixture sites, a site's own configuration, and the Jekyll golden. |
 | `audit.test.ts` | plain Node | The thirteen front-matter rule ids, the parser's warnings channel, schema ingestion from sister sites' own files, and the fix-it that never writes. |
 | `harness.test.ts` | plain Node | One harness vocabulary over verbatim copies of four sibling repositories' agents, skills, workflows and AI configuration: the inventory, the joins and the profile. |
 | `lanes.test.ts` | plain Node | Lane generation: drift against the hub's reusable `ai-lane.yml`, and the rendered files against the `golden/lanes/` fixtures. |
 | `mcp.test.ts` | child process | Spawns the bundled `dist/mcp-server.js` over stdio with a scrubbed environment. |
-| `extension.test.ts` | extension host | Activation, the contributed commands, the context keys, and the fixture workspace's live settings — plus, by launching a second editor with no folder (the bundle's `Contents/MacOS/Electron` on macOS, `process.execPath` elsewhere), that activation survives a folderless window. |
+| `extension.test.ts` | extension host | Activation, the contributed commands, the context keys, and the fixture workspace's live settings — plus, by launching a second editor with no folder (the bundle's `Contents/MacOS/Electron` on macOS, `process.execPath` elsewhere), that activation survives a folderless window; and the studio in the webviews once a platform is configured: the panels the commands open, the open file the page view is told, and the token reaching the platform from SecretStorage and nowhere else. |
 | `multiroot.test.ts` | extension host, its own `multiroot` entry | The two-folder window: per-site stores, the active-site rule, per-site MCP servers. See below. |
 
 ## The two rules every test here obeys

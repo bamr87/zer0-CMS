@@ -469,15 +469,15 @@ suite('audit: the thirteen rule ids are lifehacker.dev/scripts/ci/lint_frontmatt
 
   test('unreadable-frontmatter suppresses every other check on that file', async () => {
     const { audit } = await auditFixture();
-    const issues = on(audit, post('2026-02-01-anchor.md'));
-    assert.deepEqual(issues.map((issue) => issue.kind), ['unreadable-frontmatter']);
+    const issues = on(audit, post('2026-02-02-alias.md'));
+    assert.deepEqual(issues.map((issue) => issue.kind), ['unreadable-frontmatter', 'unreadable-frontmatter']);
     assert.equal(issues[0]?.severity, 'warning');
-    assert.equal(issues[0]?.line, 1);
-    assert.match(issues[0]?.message ?? '', /anchor/);
+    assert.deepEqual(issues.map((issue) => issue.line), [5, 6]);
+    assert.match(issues[0]?.message ?? '', /\*base names no anchor/);
     assert.equal(
       issues.filter((issue) => issue.rule === 'missing-key').length,
       0,
-      'the anchor was meant to supply `layout`; reporting it missing would be confidently wrong',
+      'the merge was meant to supply keys; reporting them missing would be confidently wrong',
     );
   });
 });
@@ -489,31 +489,24 @@ suite("audit: the parser's warnings channel", () => {
     return block.warnings;
   };
 
-  test('an anchor is named, on its line, and the block still parses', () => {
-    const warnings = warningsOf(post('2026-02-01-anchor.md'));
-    assert.equal(warnings.length, 1);
-    assert.match(warnings[0] ?? '', /^line 1: a YAML anchor \(`&series`\)/);
+  test('an anchored mapping and a flow collection over two lines read whole, with nothing to report', () => {
+    assert.deepEqual(warningsOf(post('2026-02-01-anchor.md')), []);
+    assert.deepEqual(warningsOf(post('2026-02-04-multiline-flow.md')), []);
   });
 
-  test('an alias and a merge key are two findings on two lines', () => {
+  test('an alias and a merge key that name no anchor are two findings on two lines', () => {
     const warnings = warningsOf(post('2026-02-02-alias.md'));
     assert.equal(warnings.length, 2);
-    assert.match(warnings[0] ?? '', /^line 5: a YAML alias \(`\*base`\)/);
-    assert.match(warnings[1] ?? '', /^line 6: a YAML merge key \(`<<`\)/);
+    assert.match(warnings[0] ?? '', /^line 5: the alias \*base names no anchor, so its value is unknown/);
+    assert.match(warnings[1] ?? '', /^line 6: the alias \*defaults names no anchor, so nothing is merged/);
   });
 
-  test('a quoted scalar that never closes is reported as truncated', () => {
-    // A quote that closes on a later, more-indented line is read whole now
-    // (see core.test.ts); one that never closes is still a finding.
+  test('a quoted scalar that never closes is reported', () => {
+    // A quote that closes on a later, more-indented line is read whole (see
+    // core.test.ts); one that never closes is a finding.
     const warnings = warningsOf(post('2026-02-03-multiline-quote.md'));
-    assert.equal(warnings.length, 1);
-    assert.match(warnings[0] ?? '', /^line 1: a quoted scalar that never closes inside its value/);
-  });
-
-  test('a multi-line flow collection is reported as truncated', () => {
-    const warnings = warningsOf(post('2026-02-04-multiline-flow.md'));
-    assert.equal(warnings.length, 1);
-    assert.match(warnings[0] ?? '', /^line 6: a flow collection that closes on a later line/);
+    assert.ok(warnings.length > 0);
+    assert.match(warnings[0] ?? '', /^line \d+: .*quote/i);
   });
 
   test("TOML's array-of-tables and ''' string are both named", () => {
@@ -715,14 +708,14 @@ suite('audit: the fix-it', () => {
 
   test('a block the parser could not read refuses the fix-it outright', async () => {
     const { audit } = await auditFixture();
-    const relPath = post('2026-02-01-anchor.md');
+    const relPath = post('2026-02-02-alias.md');
     const { article, ct, cfg } = articleAt(relPath);
     assert.ok(article.block !== null && article.block.warnings.length > 0);
 
     const refusal = dryRunFix(article, [{ key: 'layout', value: 'post' }], cfg);
     assert.ok('refused' in refusal);
     assert.match(refusal.refused, /could not read/);
-    assert.match(refusal.refused, /anchor/, 'and it says which construct');
+    assert.match(refusal.refused, /\*base names no anchor/, 'and it says what it could not read');
 
     // `fixFor` refuses one step earlier, so a caller that only asks "is there a
     // fix?" gets the same answer as one that asks for the preview.
@@ -810,7 +803,7 @@ suite('audit: the sites declare their own schemas', () => {
     assert.ok(posts.optional.includes('estimated_time'));
     assert.ok(posts.optional.includes('estimated_reading_time'));
     assert.ok(posts.optional.includes('updated'));
-    assert.ok(posts.optional.includes('sub-title'), 'a hyphenated key survives the subset parser');
+    assert.ok(posts.optional.includes('sub-title'), 'a hyphenated key survives the parser');
   });
 
   test("it-journey's .cms/config.yml and content-schema.json, read verbatim", () => {

@@ -15,6 +15,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -144,6 +147,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -262,6 +268,9 @@
                     "agent-runs"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -402,6 +411,9 @@
                     "agent-runs"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -584,6 +596,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -757,6 +772,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -803,6 +821,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -841,6 +862,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -899,6 +923,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -955,6 +982,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -992,6 +1022,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -1024,6 +1057,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -1092,6 +1128,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -1222,6 +1261,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -1330,6 +1372,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -1523,6 +1568,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -1568,6 +1616,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -1606,6 +1657,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -1663,6 +1717,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -1719,6 +1776,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -1755,6 +1815,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -1807,6 +1870,9 @@
                     }
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -1935,6 +2001,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -2110,6 +2179,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -2155,6 +2227,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -2193,6 +2268,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -2250,6 +2328,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -2306,6 +2387,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -2342,6 +2426,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -2430,6 +2517,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -2576,6 +2666,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -2734,6 +2827,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -2854,6 +2950,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -2911,6 +3010,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -2948,6 +3050,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -3009,6 +3114,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -3167,6 +3275,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3320,6 +3431,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3359,6 +3473,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -3445,6 +3562,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3492,6 +3612,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3530,6 +3653,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -3588,6 +3714,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3644,6 +3773,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3681,6 +3813,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3714,6 +3849,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3742,6 +3880,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -3901,6 +4042,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3947,6 +4091,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -3985,6 +4132,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -4043,6 +4193,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -4099,6 +4252,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -4135,6 +4291,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -4195,6 +4354,9 @@
                     }
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -4348,6 +4510,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -4387,6 +4552,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -4445,6 +4613,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -4502,6 +4673,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -4541,6 +4715,9 @@
                     "ai"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -4670,6 +4847,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -4798,6 +4978,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -4916,6 +5099,9 @@
                     "books"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -5047,6 +5233,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -5165,6 +5354,9 @@
                     "books"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -5313,6 +5505,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -5451,6 +5646,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -5595,6 +5793,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -5713,6 +5914,9 @@
                     "books"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -5851,6 +6055,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -5969,6 +6176,9 @@
                     "books"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -6099,6 +6309,9 @@
                     "books"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -6239,6 +6452,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -6359,6 +6575,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -6468,6 +6687,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -6557,6 +6779,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "source",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "A file's path from the folder a client has open, starting with that folder's name (`drsai/_posts/a.md`): the pages imported from that file, in the sites whose folder that is."
+                    },
+                    {
+                        "in": "query",
                         "name": "status",
                         "schema": {
                             "type": "string",
@@ -6582,6 +6812,9 @@
                     "content"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -6629,6 +6862,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -6748,6 +6984,9 @@
                     "content"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -6885,6 +7124,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -7003,6 +7245,9 @@
                     "content"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -7141,6 +7386,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -7187,6 +7435,9 @@
                     "content"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -7324,6 +7575,9 @@
                     "content"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -7463,6 +7717,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -7581,6 +7838,9 @@
                     "content"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -7704,6 +7964,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -7823,6 +8086,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -7931,6 +8197,9 @@
                     "content"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -8085,6 +8354,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -8131,6 +8403,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -8251,6 +8526,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -8307,6 +8585,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -8344,6 +8625,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -8376,6 +8660,9 @@
                     "distribution"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -8497,6 +8784,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -8617,6 +8907,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -8736,6 +9029,9 @@
                     "distribution"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -8875,6 +9171,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -8994,6 +9293,9 @@
                     "distribution"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -9152,6 +9454,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -9180,6 +9485,9 @@
                     "distribution"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -9347,6 +9655,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -9393,6 +9704,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -9514,6 +9828,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -9570,6 +9887,9 @@
                     }
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -9688,6 +10008,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -9720,6 +10043,9 @@
                     "distribution"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -9859,6 +10185,9 @@
                     }
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -10000,6 +10329,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -10139,6 +10471,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -10275,6 +10610,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -10403,6 +10741,9 @@
                     "graph"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -10541,6 +10882,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -10677,6 +11021,9 @@
                     "graph"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -10878,6 +11225,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -10925,6 +11275,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -10964,6 +11317,9 @@
                     "ideas"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -11023,6 +11379,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -11060,6 +11419,9 @@
                     "ideas"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -11114,6 +11476,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -11264,6 +11629,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -11395,6 +11763,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -11433,6 +11804,9 @@
                     "ideas"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -11513,6 +11887,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -11560,6 +11937,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -11599,6 +11979,9 @@
                     "ideas"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -11658,6 +12041,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -11715,6 +12101,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -11752,6 +12141,9 @@
                     "ideas"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -11805,6 +12197,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -11935,6 +12330,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -12072,6 +12470,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -12201,6 +12602,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -12362,6 +12766,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -12400,6 +12807,9 @@
                     "jobs"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -12529,6 +12939,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -12648,6 +13061,9 @@
                     "jobs"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -12797,6 +13213,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -12945,6 +13364,9 @@
                     "me"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -13101,6 +13523,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13148,6 +13573,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13188,6 +13616,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -13246,6 +13677,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13284,6 +13718,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -13345,6 +13782,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13392,6 +13832,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13431,6 +13874,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -13489,6 +13935,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13527,6 +13976,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13560,6 +14012,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -13631,6 +14086,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13678,6 +14136,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13717,6 +14178,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -13775,6 +14239,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13813,6 +14280,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13846,6 +14316,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -13930,6 +14403,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -13978,6 +14454,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14017,6 +14496,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -14075,6 +14557,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14113,6 +14598,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14146,6 +14634,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -14195,6 +14686,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -14343,6 +14837,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14390,6 +14887,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14429,6 +14929,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -14487,6 +14990,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14524,6 +15030,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -14577,6 +15086,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -14834,6 +15346,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14882,6 +15397,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -14921,6 +15439,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -14979,6 +15500,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -15017,6 +15541,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -15079,6 +15606,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -15200,6 +15730,9 @@
                     "newsroom"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -15342,6 +15875,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -15483,6 +16019,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -15621,6 +16160,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -15762,6 +16304,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -15872,6 +16417,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -15980,6 +16528,9 @@
                     "outbox"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -16092,6 +16643,9 @@
                     "outbox"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -16266,6 +16820,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -16304,6 +16861,9 @@
                     "outbox"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -16434,6 +16994,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -16552,6 +17115,9 @@
                     "outbox"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -16682,6 +17248,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -16738,6 +17307,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -16858,6 +17430,9 @@
                     "outbox"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -17007,6 +17582,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17115,6 +17693,9 @@
                     "outbox"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -17245,6 +17826,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17301,6 +17885,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -17421,6 +18008,9 @@
                     "outbox"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -17574,6 +18164,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17621,6 +18214,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17660,6 +18256,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17696,6 +18295,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -17769,6 +18371,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17816,6 +18421,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17855,6 +18463,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -17914,6 +18525,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -17971,6 +18585,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18008,6 +18625,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -18070,6 +18690,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -18225,6 +18848,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18282,6 +18908,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -18403,6 +19032,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18489,6 +19121,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18537,6 +19172,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18576,6 +19214,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -18635,6 +19276,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18692,6 +19336,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18730,6 +19377,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18763,6 +19413,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -18918,6 +19571,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -18975,6 +19631,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -19096,6 +19755,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19133,6 +19795,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -19183,6 +19848,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19229,6 +19897,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19267,6 +19938,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -19324,6 +19998,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19360,6 +20037,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -19473,6 +20153,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19530,6 +20213,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -19662,6 +20348,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19720,6 +20409,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19758,6 +20450,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -19791,6 +20486,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -19920,6 +20618,9 @@
                     "research"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -20061,6 +20762,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -20180,6 +20884,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -20319,6 +21026,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -20479,6 +21189,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -20527,6 +21240,9 @@
                     "required": true
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -20638,6 +21354,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -20746,6 +21465,9 @@
                     "sites"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -20877,6 +21599,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -20994,6 +21719,9 @@
                     "sites"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -21131,6 +21859,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -21258,6 +21989,9 @@
                     "sites"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -21406,6 +22140,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -21544,6 +22281,9 @@
                 ],
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -21664,6 +22404,9 @@
                     "sites"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -21799,6 +22542,9 @@
                     }
                 },
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -21947,6 +22693,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -22055,6 +22804,9 @@
                     "sites"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -22177,6 +22929,9 @@
                     "suggestions"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -22326,6 +23081,9 @@
                 },
                 "security": [
                     {
+                        "userToken": []
+                    },
+                    {
                         "agentToken": []
                     },
                     {
@@ -22435,6 +23193,9 @@
                     "tools"
                 ],
                 "security": [
+                    {
+                        "userToken": []
+                    },
                     {
                         "agentToken": []
                     },
@@ -35269,6 +36030,12 @@
                 "type": "apiKey",
                 "in": "cookie",
                 "name": "sessionid"
+            },
+            "userToken": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "zer0u_…",
+                "description": "A person's token (`manage.py user_token <username> --name …`), as the VS Code extension sends it; the caller acts as that person."
             }
         }
     }

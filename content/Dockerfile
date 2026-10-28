@@ -13,6 +13,7 @@ COPY web/package.json web/package-lock.json ./
 COPY web/packages/api/package.json packages/api/
 COPY web/packages/tokens/package.json packages/tokens/
 COPY web/packages/ui/package.json packages/ui/
+COPY web/packages/webview/package.json packages/webview/
 COPY web/studio/package.json studio/
 RUN npm ci --no-audit --no-fund
 COPY web ./
