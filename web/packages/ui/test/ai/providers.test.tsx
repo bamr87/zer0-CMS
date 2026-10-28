@@ -8,9 +8,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { ModelCatalog, ProviderList } from '../../src';
+import { ModelCatalog, ProviderList, shortId } from '../../src';
 import { fakePlatform, held, renderUi } from '../../../../test/harness';
-import { agentRun, liveStream, me, page, runRef } from './fixtures';
+import { agentRun, liveStream, me, OTHER_RUN, page, RUN, runRef } from './fixtures';
 
 const provider = (overrides: Record<string, unknown> = {}) => ({
   id: 'p-anthropic',
@@ -94,15 +94,15 @@ describe('<ProviderList>', () => {
     const { api, calls } = fakePlatform({
       'GET /api/v2/me': () => me(['ai.change_providerconfig']),
       'GET /api/v2/ai/providers/': () => page([provider({ ...CONFIG, last_health: health })]),
-      'POST /api/v2/ai/providers/p-anthropic/test/': () => ({ run: runRef(9) }),
-      'POST /api/v2/ai/providers/p-anthropic/sync-models/': () => ({ run: runRef(9) }),
+      'POST /api/v2/ai/providers/p-anthropic/test/': () => ({ run: runRef() }),
+      'POST /api/v2/ai/providers/p-anthropic/sync-models/': () => ({ run: runRef() }),
       'POST /api/v2/ai/providers/p-anthropic/set-default/': () => provider({ ...CONFIG, is_default: true }),
-      'GET /api/v2/agent-runs/9/': () => agentRun(status, { ok: true }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun(status, { ok: true }),
     });
     renderUi(<ProviderList />, { api, stream });
     await userEvent.click(await screen.findByRole('button', { name: 'Test anthropic' }));
-    expect(await screen.findByRole('status', { name: 'Run #9' })).toHaveTextContent('running');
-    await waitFor(() => expect(stream).toHaveBeenCalledWith('/api/v2/agent-runs/9/stream/', ['step', 'status', 'end'], expect.any(Function)));
+    expect(await screen.findByRole('status', { name: `Run ${shortId(RUN)}` })).toHaveTextContent('running');
+    await waitFor(() => expect(stream).toHaveBeenCalledWith(`/api/v2/agent-runs/${RUN}/stream/`, ['step', 'status', 'end'], expect.any(Function)));
     health = { ok: true };
     status = 'succeeded';
     finish();
@@ -114,13 +114,13 @@ describe('<ProviderList>', () => {
   });
 
   it('starts one check for a double click, with an Idempotency-Key, and holds every check while it is out', async () => {
-    const testing = held({ run: runRef(9) });
+    const testing = held({ run: runRef() });
     const { api, calls } = fakePlatform({
       'GET /api/v2/me': () => me(['ai.change_providerconfig']),
       'GET /api/v2/ai/providers/': () => page([provider(CONFIG), provider({ ...CONFIG, id: 'p-openai', slug: 'openai', display_name: 'OpenAI' })]),
       'POST /api/v2/ai/providers/p-anthropic/test/': () => testing.reply,
-      'POST /api/v2/ai/providers/p-anthropic/sync-models/': () => ({ run: runRef(10) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun('running'),
+      'POST /api/v2/ai/providers/p-anthropic/sync-models/': () => ({ run: runRef(OTHER_RUN) }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun('running'),
     });
     renderUi(<ProviderList />, { api });
     await userEvent.dblClick(await screen.findByRole('button', { name: 'Test anthropic' }));
@@ -131,7 +131,7 @@ describe('<ProviderList>', () => {
     expect(tests).toHaveLength(1);
     expect(tests[0]?.idempotencyKey).toMatch(/^[0-9a-f-]{32,36}$/);
     testing.answer();
-    expect(await screen.findByRole('status', { name: 'Run #9' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: `Run ${shortId(RUN)}` })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: "Sync anthropic's models" })).toBeEnabled());
     await userEvent.dblClick(screen.getByRole('button', { name: "Sync anthropic's models" }));
     await waitFor(() => expect(calls.filter((c) => c.path.endsWith('/sync-models/'))).toHaveLength(1));

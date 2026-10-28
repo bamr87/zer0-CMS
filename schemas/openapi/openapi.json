@@ -618,16 +618,17 @@
                 }
             }
         },
-        "/api/v2/agent-runs/{id}/": {
+        "/api/v2/agent-runs/{public_id}/": {
             "get": {
                 "operationId": "agent_runs_retrieve",
                 "summary": "One run with its steps",
                 "parameters": [
                     {
                         "in": "path",
-                        "name": "id",
+                        "name": "public_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     }
@@ -740,7 +741,7 @@
                 }
             }
         },
-        "/api/v2/agent-runs/{id}/stream/": {
+        "/api/v2/agent-runs/{public_id}/stream/": {
             "get": {
                 "operationId": "agent_runs_stream_retrieve",
                 "description": "Server-sent events: each step as it lands, then the final status.",
@@ -759,9 +760,10 @@
                     },
                     {
                         "in": "path",
-                        "name": "id",
+                        "name": "public_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     },
@@ -26237,7 +26239,8 @@
                         "in": "path",
                         "name": "run_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     }
@@ -26412,8 +26415,10 @@
                         "in": "query",
                         "name": "run",
                         "schema": {
-                            "type": "number"
-                        }
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A run's id: the suggestions it proposed."
                     },
                     {
                         "in": "query",
@@ -28028,7 +28033,7 @@
                 }
             }
         },
-        "/api/v2/suggestions/{id}/{decision}/": {
+        "/api/v2/suggestions/{public_id}/{decision}/": {
             "post": {
                 "operationId": "suggestions_create",
                 "description": "`decision` is `accept` or `reject`.",
@@ -28044,9 +28049,10 @@
                     },
                     {
                         "in": "path",
-                        "name": "id",
+                        "name": "public_id",
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "required": true
                     }
@@ -28301,7 +28307,8 @@
                     "ids": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "description": "The run's pending suggestions the caller saw and accepts — only these, never the rest of the run.",
                         "minItems": 1
@@ -28317,7 +28324,8 @@
                     "accepted": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     },
                     "revision_ids": {
@@ -30005,7 +30013,8 @@
                     "suggestions": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         },
                         "description": "To accept on the draft."
                     }
@@ -30028,7 +30037,8 @@
                     "suggestions": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 },
@@ -31839,10 +31849,11 @@
                                 },
                                 "result": {
                                     "type": "object",
-                                    "description": "What it made: an agent run's id (`run`), a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status.",
+                                    "description": "What it made: an agent run, a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status.",
                                     "properties": {
                                         "run": {
-                                            "type": "integer"
+                                            "type": "string",
+                                            "format": "uuid"
                                         },
                                         "brief": {
                                             "type": "string",
@@ -36131,9 +36142,10 @@
                     },
                     "suggestion": {
                         "type": [
-                            "integer",
+                            "string",
                             "null"
                         ],
+                        "format": "uuid",
                         "description": "The suggestion it became — with the block's other corrections — to accept or reject."
                     },
                     "error": {
@@ -42114,7 +42126,8 @@
                 "description": "What `api.views.run_json` returns; `steps` only on a single run.",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "agent": {
                         "type": "string"
@@ -42325,10 +42338,11 @@
             },
             "RunRef": {
                 "type": "object",
-                "description": "An agent run to follow on the existing runs API.",
+                "description": "An agent run to follow on the existing runs API, by its public id.",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "status": {
                         "type": "string"
@@ -42350,10 +42364,11 @@
             },
             "RunRefRequest": {
                 "type": "object",
-                "description": "An agent run to follow on the existing runs API.",
+                "description": "An agent run to follow on the existing runs API, by its public id.",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "status": {
                         "type": "string",
@@ -43999,7 +44014,8 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "integer"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "op": {
                         "type": "string"
@@ -44025,9 +44041,11 @@
                     },
                     "run_id": {
                         "type": [
-                            "integer",
+                            "string",
                             "null"
-                        ]
+                        ],
+                        "format": "uuid",
+                        "description": "The run that proposed it."
                     },
                     "created_at": {
                         "type": "string",
@@ -44078,7 +44096,8 @@
                     "with": {
                         "type": "array",
                         "items": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     },
                     "reason": {

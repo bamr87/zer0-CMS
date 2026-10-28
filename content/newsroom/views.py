@@ -262,7 +262,7 @@ class StoryViewSet(Scoped):
             page, suggestions = services.apply_draft(self.get_object(), user=request.user)
         story = self.get_object()
         return Response(
-            {"story": self.panel(story), "page_id": page.pk, "suggestions": [x.pk for x in suggestions]},
+            {"story": self.panel(story), "page_id": page.pk, "suggestions": [x.public_id for x in suggestions]},
             status=status.HTTP_201_CREATED,
         )
 

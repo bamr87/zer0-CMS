@@ -62,7 +62,7 @@ def test_an_assistant_runs_as_the_owner_and_answers_in_its_run(alice, bob, make,
     [run] = fired(worker, {"url": "https://example.com/a"})
     assert run.status == AutomationRun.SUCCEEDED, run.outcomes
     [outcome] = run.outcomes
-    started = AgentRun.objects.get(pk=outcome["result"]["run"])
+    started = AgentRun.objects.get(public_id=outcome["result"]["run"])
     assert (started.started_by, started.status, started.output["text"]) == (alice, "succeeded", "A short summary.")
     assert started.trigger == "event" and started.started_by_event == f"automation-run:{run.public_id}"
     assert outcome["input"]["prompt"] == "Summarize https://example.com/a"
@@ -98,7 +98,7 @@ def test_a_pipeline_runs_as_the_owner(alice, make, fake, worker):
     make(alice, HOOK, [{"kind": "pipeline", "pipeline": str(pipeline.public_id), "prompt": "About {{ data.topic }}"}])
     fake.script.append({"text": "A draft about tides."})
     [run] = fired(worker, {"topic": "tides"})
-    started = AgentRun.objects.get(pk=run.outcomes[0]["result"]["run"])
+    started = AgentRun.objects.get(public_id=run.outcomes[0]["result"]["run"])
     assert run.status == AutomationRun.SUCCEEDED and started.started_by == alice and started.status == "succeeded"
     assert started.input["prompt"] == "About tides" and started.children.count() == 1
 
@@ -109,7 +109,7 @@ def test_an_agent_runs_on_a_page_its_owner_may_edit_and_never_one_that_publishes
     make(alice, HOOK, [action])
     with use_llm(FakeLLM([{"text": "The metadata reads well."}])):
         [run] = fired(worker, {"page_id": article.pk, "why": "it went live"})
-    started = AgentRun.objects.get(pk=run.outcomes[0]["result"]["run"])
+    started = AgentRun.objects.get(public_id=run.outcomes[0]["result"]["run"])
     assert run.status == AutomationRun.SUCCEEDED and started.agent.slug == "seo" and started.target == article
     assert (started.started_by, started.input, started.status) == (alice, {"note": "it went live"}, "succeeded")
     assert started.started_by_event == f"automation-run:{run.public_id}"
@@ -143,7 +143,7 @@ def test_a_brief_is_made_and_written_for_a_person_to_apply_never_applied(alice, 
     before = published()
     [run] = fired(worker, {"topic": "tides"})
     brief = Brief.objects.get(public_id=run.outcomes[0]["result"]["brief"])
-    assert run.status == AutomationRun.SUCCEEDED and run.outcomes[0]["result"]["run"] == brief.run_id
+    assert run.status == AutomationRun.SUCCEEDED and run.outcomes[0]["result"]["run"] == str(brief.run.public_id)
     assert (brief.owner, brief.prompt, brief.status) == (alice, "Write about tides", "ready")
     assert brief.visibility == Visibility.PRIVATE
     assert run.outcomes[0]["input"]["title"] == "On tides"  # the title it was made with; writing it found a better one

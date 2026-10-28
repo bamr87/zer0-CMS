@@ -161,11 +161,11 @@ describe('the calendar and assignments', () => {
 
 describe('a story’s panel', () => {
   it('saves the plan, asks for headlines and applies the AI’s pitch', async () => {
-    const pitchRun = { kind: 'pitch', run: { id: 9, status: 'succeeded', links: { self: '', stream: '' } }, result: { headline: 'Bridge shut for six weeks', angle: 'Commuters lose their route.' }, text: '', error: '' };
+    const pitchRun = { kind: 'pitch', run: { id: 'r9', status: 'succeeded', links: { self: '', stream: '' } }, result: { headline: 'Bridge shut for six weeks', angle: 'Commuters lose their route.' }, text: '', error: '' };
     const platform = fakePlatform({
       [`GET ${STORIES}s1/`]: () => detail({ page: { id: 5, title: 'Bridge closes', live: false, url_path: '/x/', first_published_at: null }, ai_runs: [pitchRun] }),
       [`PATCH ${STORIES}s1/`]: () => story(),
-      [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 10, status: 'queued', links: { self: '', stream: '' } } }),
+      [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 'r10', status: 'queued', links: { self: '', stream: '' } } }),
       'GET /api/v2/newsroom/desks/d1/people/': () => PEOPLE,
       'GET /api/v2/newsroom/authors/': () => listOf([{ id: 'a1', name: 'Ada Reporter', slug: 'ada' }]),
     });
@@ -199,11 +199,11 @@ describe('a story’s panel', () => {
   });
 
   it('asks the AI for a draft from the pitch and makes it the story’s page', async () => {
-    const draftRun = { kind: 'draft', run: { id: 13, status: 'succeeded', links: { self: '', stream: '' } }, result: null, text: '# Draft', error: '' };
+    const draftRun = { kind: 'draft', run: { id: 'r13', status: 'succeeded', links: { self: '', stream: '' } }, result: null, text: '# Draft', error: '' };
     const platform = fakePlatform({
       [`GET ${STORIES}s1/`]: () => detail({ status: 'assigned', moves: ['drafting'], ai_runs: [draftRun] }),
-      [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 14, status: 'queued', links: { self: '', stream: '' } } }),
-      [`POST ${STORIES}s1/apply-draft/`]: () => new Reply(201, { story: detail({ status: 'drafting' }), page_id: 7, suggestions: [1, 2] }),
+      [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 'r14', status: 'queued', links: { self: '', stream: '' } } }),
+      [`POST ${STORIES}s1/apply-draft/`]: () => new Reply(201, { story: detail({ status: 'drafting' }), page_id: 7, suggestions: ['s1', 's2'] }),
       'GET /api/v2/newsroom/desks/d1/people/': () => PEOPLE,
       'GET /api/v2/newsroom/authors/': () => listOf([]),
     });
@@ -230,11 +230,11 @@ describe('a story’s panel', () => {
   });
 
   it('drafts a correction note with the AI and posts the one the editor keeps, which publishes nothing else', async () => {
-    const noteRun = { kind: 'correction', run: { id: 11, status: 'succeeded', links: { self: '', stream: '' } }, result: { text: 'An earlier version misstated the day.' }, text: '', error: '' };
+    const noteRun = { kind: 'correction', run: { id: 'r11', status: 'succeeded', links: { self: '', stream: '' } }, result: { text: 'An earlier version misstated the day.' }, text: '', error: '' };
     const page = { id: 5, title: 'Bridge closes', live: true, has_unpublished_changes: true, url_path: '/x/', first_published_at: null };
     const platform = fakePlatform({
       [`GET ${STORIES}s1/`]: () => detail({ status: 'published', moves: ['updated', 'corrected'], ai_runs: [noteRun], page }),
-      [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 12, status: 'queued', links: { self: '', stream: '' } } }),
+      [`POST ${STORIES}s1/ai/`]: () => new Reply(202, { run: { id: 'r12', status: 'queued', links: { self: '', stream: '' } } }),
       [`POST ${STORIES}s1/move/`]: () => detail({ status: 'corrected' }),
       'GET /api/v2/newsroom/desks/d1/people/': () => PEOPLE,
       'GET /api/v2/newsroom/authors/': () => listOf([]),
@@ -361,7 +361,7 @@ describe('pitching', () => {
       'GET /api/v2/newsroom/desks/': () => listOf([DESK]),
       [`GET ${STORIES}`]: () => listOf([]),
       [`POST ${STORIES}`]: () => story({ id: 's9', status: 'pitch' }),
-      [`POST ${STORIES}s9/ai/`]: () => new Reply(202, { run: { id: 3, status: 'queued', links: { self: '', stream: '' } } }),
+      [`POST ${STORIES}s9/ai/`]: () => new Reply(202, { run: { id: 'r3', status: 'queued', links: { self: '', stream: '' } } }),
     });
     const { go } = renderUi(<Newsroom siteId={1} />, { api: platform.api });
     await userEvent.click(await screen.findByRole('button', { name: 'Pitch a story' }));

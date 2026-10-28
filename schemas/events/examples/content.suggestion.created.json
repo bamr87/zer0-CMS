@@ -6,15 +6,15 @@
   "subject": "page:42",
   "time": "2026-10-19T12:01:00Z",
   "datacontenttype": "application/json",
-  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.suggestion.created.v1.json",
+  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/content.suggestion.created.v2.json",
   "data": {
-    "suggestion_id": 7,
+    "suggestion_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
     "target": "page:42",
     "page_id": 42,
     "op": "meta",
     "block_id": null,
     "field": "seo_title",
     "agent": "seo",
-    "run_id": 3
+    "run_id": "3f2b8c1e-9d4a-4e7b-b6c5-0a1d2e3f4a5b"
   }
 }

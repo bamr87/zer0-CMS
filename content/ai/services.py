@@ -213,8 +213,8 @@ def _propose(page, ctx: ToolContext, proposals, rationale: str) -> list:
             args["block"] = payload
         with _as_api_errors():
             made.append(registry.call(PROPOSE, args, ctx)["suggestion_id"])
-    found = Suggestion.objects.in_bulk(made)
-    return [found[pk] for pk in made]
+    found = {str(s.public_id): s for s in Suggestion.objects.filter(public_id__in=made)}
+    return [found[public_id] for public_id in made]
 
 
 # ── runs on a page: the answer proposed there ──────────────────────────────

@@ -127,7 +127,7 @@ def test_a_story_is_drafted_from_its_pitch_by_the_bundled_pipeline_as_suggestion
     page = Page.objects.get(pk=answer.json()["page_id"]).specific
     assert page.get_parent().pk == desk.section_id and not page.live
     assert answer.json()["story"]["status"] == "drafting" and answer.json()["story"]["page"]["id"] == page.pk
-    suggestions = Suggestion.objects.filter(pk__in=answer.json()["suggestions"])
+    suggestions = Suggestion.objects.filter(public_id__in=answer.json()["suggestions"])
     assert suggestions.count() >= 2 and {s.agent.slug for s in suggestions} == {"assistant"}
     assert all(s.status == Suggestion.PENDING for s in suggestions)
 

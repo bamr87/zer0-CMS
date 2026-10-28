@@ -4,6 +4,8 @@ accept the suggestions of a run a person saw — all through one scope, so a
 person sees, decides and opens the runs of exactly what they may — and the
 run's live event stream as a browser's EventSource asks for it."""
 
+import uuid
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -44,19 +46,25 @@ def test_the_inbox_lists_pending_suggestions_with_before_and_after(article, run,
     )
     insert = suggest(article, run, op="insert", payload={"type": "heading", "value": {"level": "3", "text": "Why"}})
     rows = {r["id"]: r for r in signed_in(editor).get(INBOX).json()["results"]}
-    assert set(rows) == {title.pk, replace.pk, insert.pk}
-    assert rows[title.pk]["change"] == {
+    assert set(rows) == {str(title.public_id), str(replace.public_id), str(insert.public_id)}
+    assert rows[str(title.public_id)]["change"] == {
         "kind": "field",
         "label": "seo_title",
         "before": "",
         "after": "Backups, explained",
         "stale": False,
     }
-    assert rows[replace.pk]["change"]["before"] == "We copy the site to a second disk every night."
-    assert rows[replace.pk]["change"]["after"] == "Twice." and rows[replace.pk]["change"]["label"] == "replace markdown"
-    assert rows[insert.pk]["change"]["after"] == "### Why" and rows[insert.pk]["change"]["before"] == ""
-    assert rows[title.pk]["target"] == {"type": "page", "id": article.pk, "title": "Nightly backups"}
-    assert rows[title.pk]["agent"] == "seo" and rows[title.pk]["run_id"] == run.pk
+    assert rows[str(replace.public_id)]["change"]["before"] == "We copy the site to a second disk every night."
+    assert (
+        rows[str(replace.public_id)]["change"]["after"] == "Twice."
+        and rows[str(replace.public_id)]["change"]["label"] == "replace markdown"
+    )
+    assert (
+        rows[str(insert.public_id)]["change"]["after"] == "### Why"
+        and rows[str(insert.public_id)]["change"]["before"] == ""
+    )
+    assert rows[str(title.public_id)]["target"] == {"type": "page", "id": article.pk, "title": "Nightly backups"}
+    assert rows[str(title.public_id)]["agent"] == "seo" and rows[str(title.public_id)]["run_id"] == str(run.public_id)
 
 
 @pytest.mark.django_db
@@ -66,8 +74,8 @@ def test_the_inbox_filters_and_shows_people_only_what_they_may_decide(site_root,
     mine = suggest(article, run, op="meta", field="seo_title", payload={"value": "One"})
     theirs = suggest(other_page, other_run, op="meta", field="seo_title", payload={"value": "Two"})
     client = signed_in(editor)
-    assert [r["id"] for r in client.get(INBOX, {"run": run.pk}).json()["results"]] == [mine.pk]
-    assert [r["id"] for r in client.get(INBOX, {"page_id": other_page.pk}).json()["results"]] == [theirs.pk]
+    assert [r["id"] for r in client.get(INBOX, {"run": str(run.public_id)}).json()["results"]] == [str(mine.public_id)]
+    assert [r["id"] for r in client.get(INBOX, {"page_id": other_page.pk}).json()["results"]] == [str(theirs.public_id)]
     assert client.get(INBOX, {"site": 999999}).json()["count"] == 0
     stranger = get_user_model().objects.create_user("stranger", password="pw")
     assert signed_in(stranger).get(INBOX).json()["count"] == 0
@@ -86,8 +94,8 @@ def test_a_pages_suggestions_never_include_an_image_with_the_same_id(article, ru
     )
     admin = get_user_model().objects.create_superuser("admin", password="pw")
     client = signed_in(admin)
-    assert [r["id"] for r in client.get(INBOX, {"page_id": article.pk}).json()["results"]] == [on_page.pk]
-    assert {r["id"] for r in client.get(INBOX).json()["results"]} == {on_page.pk, image.pk}
+    assert [r["id"] for r in client.get(INBOX, {"page_id": article.pk}).json()["results"]] == [str(on_page.public_id)]
+    assert {r["id"] for r in client.get(INBOX).json()["results"]} == {str(on_page.public_id), str(image.public_id)}
 
 
 @pytest.mark.django_db
@@ -97,7 +105,7 @@ def test_a_suggestion_whose_block_is_gone_is_marked_stale(article, run, editor):
     page.body = [b for b in page.body.get_prep_value() if b["id"] != article.body[0].id]
     page.save_revision(user=editor)
     row = signed_in(editor).get(INBOX).json()["results"][0]
-    assert row["id"] == gone.pk and row["change"]["stale"] is True
+    assert row["id"] == str(gone.public_id) and row["change"]["stale"] is True
 
 
 @pytest.mark.django_db
@@ -105,21 +113,21 @@ def test_accept_one_and_reject_one_with_a_reason(article, run, editor):
     a = suggest(article, run, op="meta", field="seo_title", payload={"value": "Accepted title"})
     b = suggest(article, run, op="meta", field="search_description", payload={"value": "Off-brand"})
     client = signed_in(editor)
-    accepted = client.post(f"/api/v2/suggestions/{a.pk}/accept/", {}, content_type="application/json").json()
+    accepted = client.post(f"/api/v2/suggestions/{a.public_id}/accept/", {}, content_type="application/json").json()
     assert accepted["accepted"] is True and accepted["revision_id"]
     rejected = client.post(
-        f"/api/v2/suggestions/{b.pk}/reject/", {"reason": "not our voice"}, content_type="application/json"
+        f"/api/v2/suggestions/{b.public_id}/reject/", {"reason": "not our voice"}, content_type="application/json"
     ).json()
     assert rejected == {"rejected": True}
     b.refresh_from_db()
     assert (b.status, b.error) == ("rejected", "not our voice")
     assert client.get(INBOX).json()["count"] == 0
-    assert client.post(f"/api/v2/suggestions/{a.pk}/approve/").status_code == 404
+    assert client.post(f"/api/v2/suggestions/{a.public_id}/approve/").status_code == 404
 
 
 def accept_shown(client, run, suggestions):
-    ids = [s.pk for s in suggestions]
-    return client.post(f"/api/v2/review/runs/{run.pk}/accept/", {"ids": ids}, content_type="application/json")
+    ids = [str(s.public_id) for s in suggestions]
+    return client.post(f"/api/v2/review/runs/{run.public_id}/accept/", {"ids": ids}, content_type="application/json")
 
 
 @pytest.mark.django_db
@@ -134,14 +142,17 @@ def test_accept_all_shown_of_a_run_makes_one_revision_per_page_and_nothing_more(
     before = Revision.page_revisions.count()
     client = signed_in(editor)
     result = accept_shown(client, run, [*on_first, on_second]).json()
-    assert sorted(result["accepted"]) == sorted([s.pk for s in on_first] + [on_second.pk])
+    assert sorted(result["accepted"]) == sorted([str(s.public_id) for s in on_first] + [str(on_second.public_id)])
     assert len(result["revision_ids"]) == 2 and Revision.page_revisions.count() == before + 2
     unseen.refresh_from_db()
     assert unseen.status == "pending"  # the person never saw it, so it was not accepted
     again = accept_shown(client, run, [on_second])
     assert again.status_code == 409 and again.json()["error"]["code"] == "resource.conflict"
-    assert client.post(f"/api/v2/review/runs/{run.pk}/accept/", {}, content_type="application/json").status_code == 422
-    assert accept_shown(client, AgentRun(pk=999999), [unseen]).status_code == 404
+    assert (
+        client.post(f"/api/v2/review/runs/{run.public_id}/accept/", {}, content_type="application/json").status_code
+        == 422
+    )
+    assert accept_shown(client, AgentRun(), [unseen])  # a run that does not exist.status_code == 404
 
 
 @pytest.mark.django_db
@@ -151,8 +162,8 @@ def test_deciding_needs_the_right_to_edit_and_never_names_what_it_refuses(articl
     client = signed_in(stranger)
     for refused in (
         accept_shown(client, run, [shown]),  # a run they may not see
-        client.post(f"/api/v2/suggestions/{shown.pk}/accept/", {}, content_type="application/json"),
-        client.post(f"/api/v2/suggestions/{shown.pk}/reject/", {}, content_type="application/json"),
+        client.post(f"/api/v2/suggestions/{shown.public_id}/accept/", {}, content_type="application/json"),
+        client.post(f"/api/v2/suggestions/{shown.public_id}/reject/", {}, content_type="application/json"),
     ):
         assert refused.status_code == 404 and "Nightly" not in refused.content.decode()
     run.started_by = stranger  # a run they started, on a page they may not change
@@ -166,10 +177,10 @@ def test_deciding_needs_the_right_to_edit_and_never_names_what_it_refuses(articl
 def test_a_reviewer_opens_the_run_behind_what_they_review(article, run, editor):
     suggest(article, run, op="meta", field="seo_title", payload={"value": "Why"})
     client = signed_in(editor)  # did not start the run, may decide its suggestion
-    assert client.get(f"/api/v2/agent-runs/{run.pk}/").json()["id"] == run.pk
-    assert run.pk in {r["id"] for r in client.get("/api/v2/agent-runs/").json()["results"]}
+    assert client.get(f"/api/v2/agent-runs/{run.public_id}/").json()["id"] == str(run.public_id)
+    assert str(run.public_id) in {r["id"] for r in client.get("/api/v2/agent-runs/").json()["results"]}
     stranger = signed_in(get_user_model().objects.create_user("stranger", password="pw"))
-    assert stranger.get(f"/api/v2/agent-runs/{run.pk}/").status_code == 404
+    assert stranger.get(f"/api/v2/agent-runs/{run.public_id}/").status_code == 404
     assert stranger.get("/api/v2/agent-runs/").json()["results"] == []
 
 
@@ -179,7 +190,10 @@ def test_an_accepted_paragraph_keeps_its_internal_link(site_root, article, run, 
     value = f'<p>Read <a linktype="page" id="{target.pk}">the docs</a> first.</p>'
     s = suggest(article, run, op="insert", payload={"type": "paragraph", "value": value})
     client = signed_in(editor)
-    assert client.post(f"/api/v2/suggestions/{s.pk}/accept/", {}, content_type="application/json").status_code == 200
+    assert (
+        client.post(f"/api/v2/suggestions/{s.public_id}/accept/", {}, content_type="application/json").status_code
+        == 200
+    )
     block = ArticlePage.objects.get(pk=article.pk).get_latest_revision_as_object().body[-1]
     raw = block.block.get_prep_value(block.value)
     assert f'id="{target.pk}"' in raw and 'linktype="page"' in raw
@@ -190,7 +204,7 @@ def test_a_locked_page_refuses_an_accept(article, run, editor):
     s = suggest(article, run, op="meta", field="seo_title", payload={"value": "Later"})
     other = get_user_model().objects.create_user("other", password="pw")
     Page.objects.filter(pk=article.pk).update(locked=True, locked_by=other, locked_at=timezone.now())
-    refused = signed_in(editor).post(f"/api/v2/suggestions/{s.pk}/accept/", {}, content_type="application/json")
+    refused = signed_in(editor).post(f"/api/v2/suggestions/{s.public_id}/accept/", {}, content_type="application/json")
     assert refused.status_code == 409 and refused.json()["error"]["code"] == "resource.locked"
     s.refresh_from_db()
     assert s.status == "pending"
@@ -201,10 +215,10 @@ def test_a_browsers_event_source_gets_the_run_stream(article, run, editor):
     run.started_by = editor
     run.status = AgentRun.SUCCEEDED
     run.save()
-    response = signed_in(editor).get(f"/api/v2/agent-runs/{run.pk}/stream/", HTTP_ACCEPT="text/event-stream")
+    response = signed_in(editor).get(f"/api/v2/agent-runs/{run.public_id}/stream/", HTTP_ACCEPT="text/event-stream")
     assert response.status_code == 200 and response["Content-Type"] == "text/event-stream"
     body = b"".join(response.streaming_content).decode()
     assert body.startswith(": open\n\n")  # a comment first, so the headers reach the browser at once
     assert '"status": "succeeded", "is_final": true' in body and body.endswith("event: end\ndata: {}\n\n")
-    missing = signed_in(editor).get("/api/v2/agent-runs/999999/stream/", HTTP_ACCEPT="text/event-stream")
+    missing = signed_in(editor).get(f"/api/v2/agent-runs/{uuid.uuid4()}/stream/", HTTP_ACCEPT="text/event-stream")
     assert missing.status_code == 404

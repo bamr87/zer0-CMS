@@ -98,7 +98,7 @@ def start_run(
 
 
 def execute(run: AgentRun) -> AgentRun:
-    with trace(run.trace_id), span("agent.run", agent=run.agent.slug, run_id=run.pk, trigger=run.trigger):
+    with trace(run.trace_id), span("agent.run", agent=run.agent.slug, run_id=str(run.public_id), trigger=run.trigger):
         return _execute(run)
 
 
@@ -286,9 +286,10 @@ def _finish(run: AgentRun, status: str, output=None, error="") -> AgentRun:
         run.save(update_fields=["status", "output", "error", "finished_at"])
         emit(
             "agent.run.completed",
-            subject=f"run:{run.pk}",
+            subject=f"run:{run.public_id}",
+            version=2,
             data={
-                "run_id": run.pk,
+                "run_id": str(run.public_id),
                 "agent": run.agent.slug,
                 "status": status,
                 "trigger": run.trigger,

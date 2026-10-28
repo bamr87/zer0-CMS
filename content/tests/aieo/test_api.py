@@ -45,7 +45,7 @@ def test_audits_are_runs_kept_as_history_and_seen_only_where_shared(
     assert made.status_code == 202, made.content
     audit, run = made.json()["audit"], made.json()["run"]
     assert audit["status"] == "pending" and run["links"]["stream"] == f"/api/v2/agent-runs/{run['id']}/stream/"
-    assert AgentRun.objects.get(pk=run["id"]).input == {"kind": "aieo.audit", "audit": audit["id"]}
+    assert AgentRun.objects.get(public_id=run["id"]).input == {"kind": "aieo.audit", "audit": audit["id"]}
     replay = api(alice).post("/api/v2/aieo/audits/", body, format="json", HTTP_IDEMPOTENCY_KEY="a1")
     assert replay.json() == made.json() and Audit.objects.count() == 1
     one = api(alice).get(f"/api/v2/aieo/audits/{audit['id']}/").json()
@@ -135,7 +135,7 @@ def test_the_aieo_agents_are_listed_and_run_with_the_sites_context(
             "/api/v2/aieo/agents/run/", {"agent": "aieo-meta-creator", "page_id": page.pk}, format="json"
         )
     assert ran.status_code == 202, ran.content
-    run = AgentRun.objects.get(pk=ran.json()["run"]["id"])
+    run = AgentRun.objects.get(public_id=ran.json()["run"]["id"])
     assert run.status == AgentRun.SUCCEEDED and run.output["json"]["recommended_pair"]["title"] == "A"
     sent = fake.calls[0]["messages"][0]["content"]
     assert "## Content\n\n# Nightly backups" in sent and "Plain and warm." in sent

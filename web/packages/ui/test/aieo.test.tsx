@@ -13,7 +13,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AieoWorkspace, PageScore } from '../src';
 import { fakePlatform, renderUi, type Call } from '../../../test/harness';
-import { agentRun, EMPTY, me, page, runRef } from './ai/fixtures';
+import { agentRun, EMPTY, me, OTHER_RUN, page, RUN, runRef } from './ai/fixtures';
 
 const OWNED = { owner: 'editor', site: 1, visibility: 'site', can_edit: true, created_at: '2026-10-22T09:00:00Z', updated_at: '2026-10-22T09:00:00Z' };
 const RESULT = {
@@ -54,7 +54,7 @@ const audit = (rest: Record<string, unknown> = {}) => ({
   screenshot: null,
   batch: '',
   origin: 'studio',
-  run: runRef(9),
+  run: runRef(),
   error: '',
   audited_at: '2026-10-22T09:00:00Z',
   ...rest,
@@ -64,8 +64,8 @@ const posts = (calls: Call[], path: string) => calls.filter((c) => c.method === 
 describe('<AieoWorkspace> audits', () => {
   it('audits a text as a run and opens it with its breakdown and evidence', async () => {
     const { api, calls } = fakePlatform({
-      'POST /api/v2/aieo/audits/': () => ({ audit: audit({ status: 'pending', score: null, grade: '', result: {} }), run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun('succeeded', { audit: 'u1', score: 52 }),
+      'POST /api/v2/aieo/audits/': () => ({ audit: audit({ status: 'pending', score: null, grade: '', result: {} }), run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun('succeeded', { audit: 'u1', score: 52 }),
       'GET /api/v2/aieo/audits/u1/': () => audit(),
       'GET /api/v2/aieo/audits/': () => page([audit()]),
     });
@@ -125,8 +125,8 @@ describe('<AieoWorkspace> rewrites and patterns', () => {
   it('rewrites a text into a draft beside the original, and a page into suggestions to review', async () => {
     const output = { markdown: 'Backups, defined.', score_before: 10, score_after: 30, uplift: 20, suggestions: [] };
     const { api, calls } = fakePlatform({
-      'POST /api/v2/aieo/rewrites/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun('succeeded', output),
+      'POST /api/v2/aieo/rewrites/': () => ({ run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun('succeeded', output),
     });
     renderUi(<AieoWorkspace section="optimize" />, { api });
     await userEvent.click(screen.getByRole('radio', { name: 'A text (a draft)' }));
@@ -155,14 +155,14 @@ describe('<AieoWorkspace> rewrites and patterns', () => {
       created_at: '',
       updated_at: '',
     };
-    const output = { markdown: '', score_before: 10, score_after: 30, uplift: 20, suggestions: [41, 42] };
+    const output = { markdown: '', score_before: 10, score_after: 30, uplift: 20, suggestions: ['s41', 's42'] };
     const { api, calls } = fakePlatform({
       'GET /api/v2/me': () => me(['aieo.change_pattern']),
       'GET /api/v2/aieo/patterns/': () => [pattern],
       'PATCH /api/v2/aieo/patterns/faq_injection/': ({ body }) => ({ ...pattern, ...(body as object) }),
       'GET /api/v2/content/pages/': () => page([{ id: 5, title: 'Nightly backups', type_label: 'Article page' }]),
-      'POST /api/v2/aieo/patterns/faq_injection/apply/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun('succeeded', output),
+      'POST /api/v2/aieo/patterns/faq_injection/apply/': () => ({ run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun('succeeded', output),
     });
     const { go } = renderUi(<AieoWorkspace section="patterns" />, { api });
     await userEvent.click(await screen.findByRole('button', { name: 'FAQ Injection' }));
@@ -177,7 +177,7 @@ describe('<AieoWorkspace> rewrites and patterns', () => {
     await waitFor(() => expect(posts(calls, '/api/v2/aieo/patterns/faq_injection/apply/')[0]?.body).toMatchObject({ page_id: 5, content: '' }));
     expect(await screen.findByText(/2 suggestions wait on the page/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Review them' }));
-    expect(go).toHaveBeenCalledWith({ to: 'review', runId: 9 });
+    expect(go).toHaveBeenCalledWith({ to: 'review', runId: RUN });
   });
 
   it('shows a pattern read-only to someone who does not keep the library', async () => {
@@ -202,8 +202,8 @@ describe('<AieoWorkspace> agents, citations, connectors, priorities, reports, co
     const { api, calls } = fakePlatform({
       'GET /api/v2/aieo/agents/': () => agents,
       'GET /api/v2/content/pages/': () => EMPTY,
-      'POST /api/v2/aieo/agents/run/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun('succeeded', { markdown: '**Backups**', json: { recommended_pair: { title: 'Backups' } } }),
+      'POST /api/v2/aieo/agents/run/': () => ({ run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun('succeeded', { markdown: '**Backups**', json: { recommended_pair: { title: 'Backups' } } }),
     });
     renderUi(<AieoWorkspace section="agents" siteId={1} />, { api });
     await userEvent.click(screen.getByLabelText('Agent', { selector: 'input' }));
@@ -342,14 +342,14 @@ describe('<AieoWorkspace> agents, citations, connectors, priorities, reports, co
 describe('<PageScore>', () => {
   it("shows the page's last score, scores it again, and lands an optimize as suggestions", async () => {
     const onReview = vi.fn();
-    const output = { markdown: '', score_before: 52, score_after: 60, uplift: 8, suggestions: [41] };
+    const output = { markdown: '', score_before: 52, score_after: 60, uplift: 8, suggestions: ['s41'] };
     const { api, calls } = fakePlatform({
       'GET /api/v2/aieo/audits/': () => page([audit({ kind: 'page', page: 5, target: 'Nightly backups' })]),
       'GET /api/v2/aieo/audits/u1/': () => audit({ kind: 'page', page: 5 }),
-      'POST /api/v2/aieo/audits/': () => ({ audit: audit({ status: 'pending' }), run: runRef(8) }),
-      'GET /api/v2/agent-runs/8/': () => agentRun('succeeded', {}, 8),
-      'POST /api/v2/aieo/rewrites/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun('succeeded', output),
+      'POST /api/v2/aieo/audits/': () => ({ audit: audit({ status: 'pending' }), run: runRef(OTHER_RUN) }),
+      [`GET /api/v2/agent-runs/${OTHER_RUN}/`]: () => agentRun('succeeded', {}, OTHER_RUN),
+      'POST /api/v2/aieo/rewrites/': () => ({ run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun('succeeded', output),
     });
     const { go } = renderUi(<PageScore pageId={5} onReview={onReview} />, { api });
     expect(await screen.findByText('Grade D')).toBeInTheDocument();

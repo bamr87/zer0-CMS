@@ -138,4 +138,4 @@ def upsert_edge(ctx, page_id, rel, dst, confidence, rationale):
         )
     except (services.GraphError, SuggestionError) as e:
         raise ToolError("invalid_args", str(e)) from e
-    return {"written": False, "suggestion_id": s.pk}
+    return {"written": False, "suggestion_id": str(s.public_id)}

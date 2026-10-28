@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ProviderStatus } from './ai/Providers';
 import { call } from './call';
 import { useApi, useGo } from './context';
-import { RunStatus } from './RunTimeline';
+import { RunStatus, shortId } from './RunTimeline';
 import { StatusBadge } from './StatusBadge';
 
 export function Overview({ siteId }: { siteId?: number }) {
@@ -40,8 +40,8 @@ export function Overview({ siteId }: { siteId?: number }) {
         <Stack gap={6}>
           {(runs.data?.results ?? []).slice(0, 6).map((r) => (
             <Group key={r.id} justify="space-between">
-              <Anchor component="button" type="button" onClick={() => go({ to: 'run', id: r.id })}>
-                #{r.id} {r.agent}
+              <Anchor component="button" type="button" title={r.id} onClick={() => go({ to: 'run', id: r.id })}>
+                {r.agent} · {shortId(r.id)}
               </Anchor>
               <RunStatus status={r.status} />
             </Group>

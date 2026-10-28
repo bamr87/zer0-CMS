@@ -11,7 +11,7 @@ python manage.py mcp_stdio --agent seo                    # stdio, for a client 
 ```
 
 - **Principal.** A token resolves to one agent user; the agent's *live* definition decides what `tools/list` returns — exactly the tools `registry.call` would allow, narrowed further by the token's own `tools` list if it has one. A definition that has not passed its evals lists nothing.
-- **Audit.** Every `tools/call` is a one-step `AgentRun` with trigger `mcp` and the call's trace id.
+- **Audit.** Every `tools/call` is a one-step `AgentRun` with trigger `mcp` and the call's trace id. A tool's answer names a run or a suggestion by its public id (`run_id`, `suggestion_id`: UUIDs), as every other surface does.
 - **Errors.** A tool's refusal (policy, permission, invalid arguments) is a result with `isError: true`, which the model can read and act on; an unknown tool or a malformed request is a JSON-RPC error.
 - **Transport.** POST only (GET is 405: no server-initiated streams), no batches, `MCP-Protocol-Version` checked when sent, and any `Origin` header outside `MCP_ALLOWED_ORIGINS` refused — MCP's rule against DNS rebinding.
 

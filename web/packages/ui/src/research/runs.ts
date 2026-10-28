@@ -8,12 +8,12 @@ import { call } from '../call';
 import { useApi } from '../context';
 
 /** An agent run, read again every 1.5 s until it is final. */
-export function useRun(runId: number | null) {
+export function useRun(runId: string | null) {
   const api = useApi();
   return useQuery({
     queryKey: ['run', runId],
     enabled: runId !== null,
-    queryFn: () => call(api.GET('/api/v2/agent-runs/{id}/', { params: { path: { id: runId ?? 0 } } })),
+    queryFn: () => call(api.GET('/api/v2/agent-runs/{public_id}/', { params: { path: { public_id: runId ?? '' } } })),
     refetchInterval: (query) => (query.state.data?.is_final ? false : 1500),
   });
 }

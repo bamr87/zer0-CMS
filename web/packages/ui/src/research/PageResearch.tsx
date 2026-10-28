@@ -121,7 +121,7 @@ export function PageResearch({ pageId, pageTitle }: { pageId: number; pageTitle:
   );
 }
 
-function Findings({ check, onReview }: { check: FactCheck; onReview: (runId: number) => void }) {
+function Findings({ check, onReview }: { check: FactCheck; onReview: (runId: string) => void }) {
   if (check.status === 'pending') return <Text size="sm" c="dimmed" mt="sm">Checking the claims…</Text>;
   if (check.status === 'failed') return <Alert color="red" mt="sm">{check.error}</Alert>;
   const suggested = new Set(check.findings.flatMap((f) => (f.suggestion === null ? [] : [f.suggestion]))).size;

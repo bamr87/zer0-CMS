@@ -22,7 +22,7 @@ export function Agents({ siteId }: { siteId?: number }) {
   const [content, setContent] = useState('');
   const [pageId, setPageId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
-  const [runId, setRunId] = useState<number | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const [done, setDone] = useState<Run | null>(null);
   const chosen = listed.find((a) => a.key === agent);
   const run = useMutation({

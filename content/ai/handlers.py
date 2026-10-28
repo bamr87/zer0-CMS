@@ -284,7 +284,7 @@ def _page(run: AgentRun, ctx: ToolContext) -> dict:
         start=run.input.get("selection_start"),
         rationale=why,
     )
-    return {**out, "suggestions": [s.pk for s in proposed]}
+    return {**out, "suggestions": [str(s.public_id) for s in proposed]}
 
 
 def run_steps(run: AgentRun, ctx: ToolContext, pipeline, *, prompt="", conversation=None, brief=None) -> dict:
@@ -321,7 +321,7 @@ def run_steps(run: AgentRun, ctx: ToolContext, pipeline, *, prompt="", conversat
         if message is not None:
             Message.objects.filter(pk=message.pk).update(run=child)  # so the step's reply takes its run's outcome
         execute(child)
-        children.append(child.pk)
+        children.append(str(child.public_id))
         run.tokens += child.tokens
         run.cost_usd += child.cost_usd
         run.save(update_fields=["tokens", "cost_usd"])

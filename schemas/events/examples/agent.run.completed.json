@@ -3,10 +3,10 @@
   "id": "c4a5e6f7-1b2c-4d3e-8f90-a1b2c3d4e5f6",
   "source": "zer0-cms/content",
   "type": "agent.run.completed",
-  "subject": "run:3",
+  "subject": "run:3f2b8c1e-9d4a-4e7b-b6c5-0a1d2e3f4a5b",
   "time": "2026-10-19T12:01:05Z",
   "datacontenttype": "application/json",
-  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/agent.run.completed.v1.json",
+  "dataschema": "https://github.com/bamr87/zer0-CMS/blob/main/schemas/events/agent.run.completed.v2.json",
   "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000000001-01",
-  "data": { "run_id": 3, "agent": "seo", "status": "succeeded", "trigger": "graphql", "cost_usd": "0.0042", "tokens": 1830, "suggestions": 2 }
+  "data": { "run_id": "3f2b8c1e-9d4a-4e7b-b6c5-0a1d2e3f4a5b", "agent": "seo", "status": "succeeded", "trigger": "graphql", "cost_usd": "0.0042", "tokens": 1830, "suggestions": 2 }
 }

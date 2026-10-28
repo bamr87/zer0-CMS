@@ -1,7 +1,8 @@
 """Admin views: a page's pending suggestions, accept (one or all of a run's)
 and reject. POST-only, CSRF-protected Wagtail admin views; every decision goes
 through `services.accept` / `services.reject`, which re-check the editor's
-permission, the page's lock and its current state; a refusal is a message."""
+permission, the page's lock and its current state; a refusal is a message. A
+suggestion and a run are named by their public ids here too (P-D6)."""
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -22,7 +23,7 @@ def page_suggestions(request, page_id):
     pending = list(pending_for(page))
     runs = {}
     for s in pending:
-        runs.setdefault(s.run_id, []).append(s)
+        runs.setdefault(s.run.public_id if s.run else None, []).append(s)
     return TemplateResponse(
         request, "suggestions/page_suggestions.html", {"page": page, "pending": pending, "runs": runs}
     )
@@ -30,7 +31,7 @@ def page_suggestions(request, page_id):
 
 @require_POST
 def decide(request, suggestion_id, decision):
-    suggestion = get_object_or_404(Suggestion, pk=suggestion_id)
+    suggestion = get_object_or_404(Suggestion, public_id=suggestion_id)
     try:
         if decision == "accept":
             batch = [suggestion]

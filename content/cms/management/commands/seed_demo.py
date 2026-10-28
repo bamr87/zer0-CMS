@@ -153,7 +153,7 @@ class Command(BaseCommand):
                 kind=AgentStep.TOOL,
                 name="content.propose_edit",
                 args={"op": s.op, "field": s.field, "block_id": s.block_id},
-                result={"suggestion_id": s.pk},
+                result={"suggestion_id": str(s.public_id)},
                 latency_ms=40,
             )
         run.finish(AgentRun.SUCCEEDED, output={"note": "Two suggestions: a search title and a clearer opening."})

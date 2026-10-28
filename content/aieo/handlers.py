@@ -142,7 +142,7 @@ def _page_summary(doc: dict, result: dict | None) -> dict:
 def _started_for(row, run: AgentRun):
     """`row`, if `run` is the run its service started for it."""
     if row.run_id != run.pk:
-        raise PermissionError(f"run {run.pk} was not started for {type(row).__name__} {row.public_id}")
+        raise PermissionError(f"run {run.public_id} was not started for {type(row).__name__} {row.public_id}")
     return row
 
 
@@ -251,7 +251,7 @@ def rewrite(run: AgentRun, ctx: ToolContext) -> dict:
         rationale = f"AIEO {why} (score {before['score']} → {after['score']})"
         with transaction.atomic():  # all of them, or (a refusal) none
             proposed = propose(page, acting_for(ctx), [(op, at, "", block) for op, at, block in operations], rationale)
-        made = [s.pk for s in proposed]
+        made = [str(s.public_id) for s in proposed]
     return {
         "markdown": markdown,
         "mode": mode,

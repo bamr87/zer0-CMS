@@ -1,7 +1,7 @@
 """The AI API's shapes (`/api/v2/ai/`).
 
-Rows are addressed by their UUID public id (`id`), never by their integer key;
-a related row is named by its public id too, and only a row the requester may
+Rows are addressed by their UUID public id (`id`), never by their integer key —
+an agent run too (`RunRefSerializer`, P-D6); a related row is named by its public id too, and only a row the requester may
 see can be named (`Visible`). A provider is named by its slug, a page and a
 site by Wagtail's own ids. A provider's credential is write-only: it goes in,
 is encrypted, and only `has_credential` ever comes back; changing the base URL
@@ -64,15 +64,15 @@ def _clean(model, instance, attrs):
 
 
 class RunRefSerializer(serializers.Serializer):
-    """An agent run to follow on the existing runs API."""
+    """An agent run to follow on the existing runs API, by its public id."""
 
-    id = serializers.IntegerField()
+    id = serializers.UUIDField(source="public_id")
     status = serializers.CharField()
     links = serializers.SerializerMethodField()
 
     @extend_schema_field(RunLinksSerializer)
     def get_links(self, run):
-        return {"self": f"/api/v2/agent-runs/{run.pk}/", "stream": f"/api/v2/agent-runs/{run.pk}/stream/"}
+        return run.links
 
 
 class RunAcceptedSerializer(serializers.Serializer):
@@ -487,7 +487,7 @@ class ApplyBriefSerializer(serializers.Serializer):
 class AppliedBriefSerializer(serializers.Serializer):
     brief = BriefSerializer()
     page_id = serializers.IntegerField(help_text="The draft page (not live).")
-    suggestions = serializers.ListField(child=serializers.IntegerField(), help_text="To accept on the draft.")
+    suggestions = serializers.ListField(child=serializers.UUIDField(), help_text="To accept on the draft.")
 
 
 class PostMessageSerializer(serializers.Serializer):

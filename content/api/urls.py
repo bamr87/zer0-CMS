@@ -3,7 +3,9 @@ content only) plus the content plane's own endpoints: agent runs, the graph,
 suggestions and the tool registry (api/views.py), and what the studio and the
 extension work with — who is signed in (api/session.py; signing in is
 allauth's headless API, accounts/README.md), pages, revisions and
-publishing (api/pages.py), and the review inbox (api/review.py)."""
+publishing (api/pages.py), and the review inbox (api/review.py). A run and a
+suggestion are addressed by their UUID public ids; pages, revisions and sites
+by Wagtail's integer ids (P-D6)."""
 
 from django.urls import path
 from rest_framework.permissions import AllowAny
@@ -34,15 +36,15 @@ router.register_endpoint("documents", PublicDocuments)
 
 urlpatterns = [
     path("agent-runs/", views.agent_runs, name="agent-runs"),
-    path("agent-runs/<int:pk>/", views.agent_run, name="agent-run"),
-    path("agent-runs/<int:pk>/stream/", views.agent_run_stream, name="agent-run-stream"),
+    path("agent-runs/<uuid:public_id>/", views.agent_run, name="agent-run"),
+    path("agent-runs/<uuid:public_id>/stream/", views.agent_run_stream, name="agent-run-stream"),
     path("agents/<slug:slug>/runs", views.agent_runs_for, name="agent-runs-for"),
     path("graph/neighbors/", views.graph_neighbors, name="graph-neighbors"),
     path("graph/path/", views.graph_path, name="graph-path"),
     path("graph/related/<int:page_id>/", views.graph_related, name="graph-related"),
     path("graph/search/", views.graph_search, name="graph-search"),
     path("suggestions/", views.suggestions, name="suggestions"),
-    path("suggestions/<int:pk>/<str:decision>/", views.suggestion_decide, name="suggestion-decide"),
+    path("suggestions/<uuid:public_id>/<str:decision>/", views.suggestion_decide, name="suggestion-decide"),
     path("tools/", views.tools, name="tools"),
     # The studio and the extension (people only; agents use the tool registry).
     path("me", session.me, name="me"),
@@ -62,5 +64,5 @@ urlpatterns = [
         name="content-page-revisions-revert",
     ),
     path("review/suggestions/", review.Inbox.as_view(), name="review-suggestions"),
-    path("review/runs/<int:run_id>/accept/", review.accept_all, name="review-run-accept"),
+    path("review/runs/<uuid:run_id>/accept/", review.accept_all, name="review-run-accept"),
 ]

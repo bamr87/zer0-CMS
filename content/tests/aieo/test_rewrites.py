@@ -52,7 +52,7 @@ def test_a_rewrite_that_drops_blocks_proposes_their_deletion(alice, fake, worker
     run.refresh_from_db()
     assert run.status == AgentRun.SUCCEEDED, run.error
     made = Suggestion.objects.filter(run=run).order_by("pk")
-    assert [s.op for s in made] == ["delete"] * 4 and run.output["suggestions"] == [s.pk for s in made]
+    assert [s.op for s in made] == ["delete"] * 4 and run.output["suggestions"] == [str(s.public_id) for s in made]
 
 
 def test_the_rewrite_is_aligned_block_by_block():
@@ -122,7 +122,7 @@ def test_applying_a_pattern_over_the_api_rewrites_with_that_pattern(
             "/api/v2/aieo/patterns/faq_injection/apply/", {"page_id": page.pk}, format="json", HTTP_IDEMPOTENCY_KEY="k1"
         )
     assert got.status_code == 202, got.content
-    run = AgentRun.objects.get(pk=got.json()["run"]["id"])
+    run = AgentRun.objects.get(public_id=got.json()["run"]["id"])
     assert run.status == AgentRun.SUCCEEDED and run.input["pattern"] == "faq_injection"
     assert "FAQ Injection" in fake.calls[0]["messages"][0]["content"]
     assert Suggestion.objects.filter(run=run).exists()

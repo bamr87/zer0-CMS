@@ -9,9 +9,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { BriefList, BriefWorkspace } from '../../src';
+import { BriefList, BriefWorkspace, shortId } from '../../src';
 import { fakePlatform, pageDetail, renderUi, Reply } from '../../../../test/harness';
-import { agentRun, assistant, EMPTY, liveStream, page, runRef } from './fixtures';
+import { agentRun, assistant, EMPTY, liveStream, OTHER_RUN, page, RUN, runRef } from './fixtures';
 
 const brief = (overrides: Record<string, unknown> = {}) => ({
   id: 'b1',
@@ -57,7 +57,7 @@ describe('<BriefWorkspace>', () => {
     const { api, calls } = fakePlatform({
       ...places,
       'POST /api/v2/ai/briefs/': ({ body }) => brief({ ...(body as object) }),
-      'POST /api/v2/ai/briefs/b1/generate/': () => ({ brief: brief({ status: 'generating', run: runRef(9) }), run: runRef(9) }),
+      'POST /api/v2/ai/briefs/b1/generate/': () => ({ brief: brief({ status: 'generating', run: runRef() }), run: runRef() }),
     });
     const { go } = renderUi(<BriefWorkspace siteId={1} />, { api });
     await userEvent.type(await screen.findByLabelText('Prompt'), 'Why a small site needs nightly backups');
@@ -114,7 +114,7 @@ describe('<BriefWorkspace>', () => {
   it('shows on the brief why generating it was refused', async () => {
     const { api } = fakePlatform({
       ...places,
-      'GET /api/v2/ai/briefs/b1/': () => brief({ status: 'failed', error: 'the provider is down', run: runRef(9) }),
+      'GET /api/v2/ai/briefs/b1/': () => brief({ status: 'failed', error: 'the provider is down', run: runRef() }),
       'POST /api/v2/ai/briefs/b1/generate/': () => new Reply(429, { error: { code: 'budget.exceeded', message: 'the fake provider has spent its $5 budget this month', status: 429, details: [] } }),
     });
     renderUi(<BriefWorkspace id="b1" />, { api });
@@ -124,22 +124,22 @@ describe('<BriefWorkspace>', () => {
   });
 
   it('follows the generation live, then reviews the result and applies it as a draft with suggestions', async () => {
-    let current = brief({ status: 'generating', run: runRef(9), parent: 3 });
+    let current = brief({ status: 'generating', run: runRef(), parent: 3 });
     let status = 'running';
     const { stream, finish } = liveStream();
     const { api, calls } = fakePlatform({
       ...places,
       'GET /api/v2/ai/briefs/b1/': () => current,
-      'GET /api/v2/agent-runs/9/': () => agentRun(status),
-      'POST /api/v2/ai/briefs/b1/apply/': () => ({ brief: { ...current, status: 'applied', page: 12 }, page_id: 12, suggestions: [41, 42, 43] }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun(status),
+      'POST /api/v2/ai/briefs/b1/apply/': () => ({ brief: { ...current, status: 'applied', page: 12 }, page_id: 12, suggestions: ['s41', 's42', 's43'] }),
     });
     const { go } = renderUi(<BriefWorkspace id="b1" />, { api, stream });
     expect(await screen.findByText('Writing…')).toBeInTheDocument();
-    expect(await screen.findByRole('status', { name: 'Run #9' })).toHaveTextContent('running');
-    await waitFor(() => expect(stream).toHaveBeenCalledWith('/api/v2/agent-runs/9/stream/', ['step', 'status', 'end'], expect.any(Function)));
+    expect(await screen.findByRole('status', { name: `Run ${shortId(RUN)}` })).toHaveTextContent('running');
+    await waitFor(() => expect(stream).toHaveBeenCalledWith(`/api/v2/agent-runs/${RUN}/stream/`, ['step', 'status', 'end'], expect.any(Function)));
     current = brief({
       status: 'ready',
-      run: runRef(9),
+      run: runRef(),
       parent: 3,
       title: 'Backups, nightly',
       markdown: '## Why it matters\n\nA copy every night.',
@@ -172,8 +172,8 @@ describe('<BriefWorkspace>', () => {
   it('says why a generation failed and asks again', async () => {
     const { api, calls } = fakePlatform({
       ...places,
-      'GET /api/v2/ai/briefs/b1/': () => brief({ status: 'failed', error: 'the anthropic provider is disabled', run: runRef(9) }),
-      'POST /api/v2/ai/briefs/b1/generate/': () => ({ brief: brief({ status: 'generating', run: runRef(10) }), run: runRef(10) }),
+      'GET /api/v2/ai/briefs/b1/': () => brief({ status: 'failed', error: 'the anthropic provider is disabled', run: runRef() }),
+      'POST /api/v2/ai/briefs/b1/generate/': () => ({ brief: brief({ status: 'generating', run: runRef(OTHER_RUN) }), run: runRef(OTHER_RUN) }),
     });
     renderUi(<BriefWorkspace id="b1" />, { api });
     expect(await screen.findByText('the anthropic provider is disabled')).toBeInTheDocument();

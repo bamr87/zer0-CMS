@@ -82,7 +82,7 @@ export function AiArea() {
         <Routes>
           <Route index element={<RunList />} />
           <Route path="runs" element={<RunList />} />
-          <Route path="runs/:id" element={<WithId>{(id) => <RunTimeline key={id} runId={Number(id)} />}</WithId>} />
+          <Route path="runs/:id" element={<WithId>{(id) => <RunTimeline key={id} runId={id ?? ''} />}</WithId>} />
           <Route path="assistants" element={<AssistantList />} />
           <Route path="assistants/:id" element={<WithId>{(id) => <AssistantEditor key={id ?? 'new'} id={id} />}</WithId>} />
           <Route path="pipelines" element={<PipelineList />} />

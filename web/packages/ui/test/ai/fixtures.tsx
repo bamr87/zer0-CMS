@@ -2,7 +2,8 @@
 // agent run as /api/v2/agent-runs/<id>/ sends it, the person signed in (with or
 // without the permission to configure providers), and a host stream the test
 // drives — the run's events arrive when the test sends them, as the platform's
-// server-sent events would. Nothing reaches a network or a model.
+// server-sent events would. Nothing reaches a network or a model. A run is
+// named by its public id, a UUID (`RUN`, and `OTHER_RUN` for a second one).
 import { act } from '@testing-library/react';
 import type { OpenStream } from '@zer0/ui';
 import { vi } from 'vitest';
@@ -47,10 +48,13 @@ export const schema = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-export const runRef = (id = 9) => ({ id, status: 'queued', links: { self: `/api/v2/agent-runs/${id}/`, stream: `/api/v2/agent-runs/${id}/stream/` } });
+export const RUN = '9b2f6c4e-1d3a-4f5b-8c7d-0e1f2a3b4c5d';
+export const OTHER_RUN = '4c7a9e21-8b3d-4e6f-9a1b-2c3d4e5f6a7b';
+
+export const runRef = (id = RUN) => ({ id, status: 'queued', links: { self: `/api/v2/agent-runs/${id}/`, stream: `/api/v2/agent-runs/${id}/stream/` } });
 
 /** An agent run as the runs API sends it. */
-export const agentRun = (status: string, output: unknown = {}, id = 9) => ({
+export const agentRun = (status: string, output: unknown = {}, id = RUN) => ({
   id,
   agent: 'assistant',
   status,
@@ -81,7 +85,7 @@ export function liveStream() {
   const finish = (status = 'succeeded') =>
     act(() => {
       const last = opened.at(-1);
-      last?.send('status', { id: 9, status, is_final: true, error: '' });
+      last?.send('status', { id: RUN, status, is_final: true, error: '' });
       last?.send('end', {});
     });
   return { stream, opened, finish };

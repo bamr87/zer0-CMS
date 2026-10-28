@@ -144,7 +144,9 @@ def test_capture_from_anywhere_and_a_brainstorm_kept_by_a_person(
         )
     assert response.status_code == 202, response.content
     body = response.json()
-    assert AgentRun.objects.get(pk=body["run"]["id"]).status == "succeeded" and body["reply"]["status"] == "queued"
+    assert (
+        AgentRun.objects.get(public_id=body["run"]["id"]).status == "succeeded" and body["reply"]["status"] == "queued"
+    )
     reply = api(alice).get(f"/api/v2/ai/messages/{body['reply']['id']}/").json()
     assert reply["status"] == "completed" and reply["result"] == IDEAS
     assert api(bob).post(f"{BASE}/keep/", {"message": body["reply"]["id"]}, format="json").status_code == 422  # not his
@@ -192,7 +194,7 @@ def test_promotion_to_a_brief_written_now_and_to_an_article_draft(
     assert response.status_code == 202, response.content
     promoted = response.json()
     assert promoted["idea"]["status"] == "promoted" and promoted["idea"]["brief"]["id"] == promoted["brief"]["id"]
-    assert promoted["page_id"] is None and AgentRun.objects.get(pk=promoted["run"]["id"]).status == "succeeded"
+    assert promoted["page_id"] is None and AgentRun.objects.get(public_id=promoted["run"]["id"]).status == "succeeded"
     brief = api(alice).get(f"/api/v2/ai/briefs/{promoted['brief']['id']}/").json()
     assert brief["status"] == "ready" and brief["markdown"] == "# Restore drills\n\nRun them."
     other = api(alice).post(f"{BASE}/capture/", {"text": "A guide to restores"}, format="json").json()

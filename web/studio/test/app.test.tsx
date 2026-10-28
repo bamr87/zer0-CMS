@@ -16,6 +16,7 @@ import { authConfig, authenticated, fakePlatform, noStream, pageDetail, Provider
 const PERSON = { id: 1, username: 'editor', name: 'Demo Editor', email: 'editor@example.com', is_staff: true, is_superuser: false };
 const SIGNED_IN = { authenticated: true, user: PERSON, permissions: [], csrf_token: 'b' };
 const EMPTY = { count: 0, next: null, previous: null, results: [] };
+const RUN = '9b2f6c4e-1d3a-4f5b-8c7d-0e1f2a3b4c5d'; // a run's public id
 
 const platformFor = (routes: Record<string, Handler> = {}) =>
   fakePlatform({
@@ -189,16 +190,16 @@ describe('the shell and its routes', () => {
   it('opens the editor at /write/:id and the inbox for one run at /review?run=', async () => {
     renderStudio('/write/5', platformFor({ 'GET /api/v2/content/pages/5/': () => pageDetail() }));
     expect(await screen.findByRole('heading', { name: 'Nightly backups' })).toBeInTheDocument();
-    renderStudio('/review?run=7');
-    expect(await screen.findByRole('heading', { name: 'Review run #7' })).toBeInTheDocument();
+    renderStudio('/review?run=7d1c5e3a-2b4f-4c6d-8e9f-0a1b2c3d4e5f');
+    expect(await screen.findByRole('heading', { name: 'Review run 7d1c5e3a' })).toBeInTheDocument();
   });
 
   it('maps every destination a workspace asks for to a route', () => {
     expect(pathFor({ to: 'page', id: 5 })).toBe('/write/5');
     expect(pathFor({ to: 'pages' })).toBe('/write');
     expect(pathFor({ to: 'create' })).toBe('/create');
-    expect(pathFor({ to: 'run', id: 9 })).toBe('/ai/runs/9');
-    expect(pathFor({ to: 'review', runId: 9 })).toBe('/review?run=9');
+    expect(pathFor({ to: 'run', id: RUN })).toBe(`/ai/runs/${RUN}`);
+    expect(pathFor({ to: 'review', runId: RUN })).toBe(`/review?run=${RUN}`);
     expect(pathFor({ to: 'review' })).toBe('/review');
     expect(pathFor({ to: 'ideas' })).toBe('/ideas');
     expect(pathFor({ to: 'research' })).toBe('/research');

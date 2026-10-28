@@ -140,7 +140,7 @@ def test_aieos_agents_rewrites_and_patterns_over_mcp_are_runs_that_only_propose(
         with django_capture_on_commit_callbacks(execute=True):
             result = rpc(raw, "tools/call", {"name": name, "arguments": arguments})["result"]
         assert not result["isError"], result
-        run = AgentRun.objects.get(pk=result["structuredContent"]["run_id"])
+        run = AgentRun.objects.get(public_id=result["structuredContent"]["run_id"])
         assert run.status == AgentRun.SUCCEEDED and run.started_by.username == "agent:aieo", run.error
     assert AgentRun.objects.filter(input__kind="aieo.rewrite").count() == 2
 
@@ -158,7 +158,7 @@ def test_a_page_tool_needs_page_rights_and_an_agent_rewrites_a_text_never_a_page
     fake.script = [{"text": "Copies of a site, kept elsewhere."}]
     with django_capture_on_commit_callbacks(execute=True):
         started = registry.call("aieo.scrub", {"content": "Copies — of a site."}, ctx)
-    run = AgentRun.objects.get(pk=started["run_id"])
+    run = AgentRun.objects.get(public_id=started["run_id"])
     assert run.status == AgentRun.SUCCEEDED and run.output["markdown"] == "Copies of a site, kept elsewhere."
 
 

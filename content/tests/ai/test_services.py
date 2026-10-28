@@ -197,7 +197,7 @@ def test_a_pipeline_is_a_parent_run_with_a_child_run_per_step_each_fed_the_last(
     parent = fresh(worker(services.run_pipeline, pipeline, user=alice, prompt="Write about cats"))
     children = list(parent.children.order_by("id"))
     assert parent.status == AgentRun.SUCCEEDED and [c.status for c in children] == ["succeeded", "succeeded"]
-    assert parent.output["text"] == "A draft." and parent.output["steps"] == [c.pk for c in children]
+    assert parent.output["text"] == "A draft." and parent.output["steps"] == [str(c.public_id) for c in children]
     assert parent.cost_usd == Decimal("0.03") and [c.cost_usd for c in children] == [Decimal("0.01"), Decimal("0.02")]
     assert fake.calls[0]["messages"] == [{"role": "user", "content": "Write about cats"}]
     assert fake.calls[1]["messages"] == [{"role": "user", "content": "Tighten:\nA long draft."}]

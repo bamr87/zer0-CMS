@@ -333,7 +333,7 @@ def test_a_fact_check_turns_corrections_into_suggestions_and_changes_nothing_its
     )
     assert suggestion.payload == {"type": "markdown", "value": "Back up nightly."}
     assert "Fact-check: Back up weekly" in suggestion.rationale and "Backup guide" in suggestion.rationale
-    assert [f["suggestion"] for f in check.findings] == [suggestion.pk, None]
+    assert [f["suggestion"] for f in check.findings] == [str(suggestion.public_id), None]
     assert [f["block"] for f in check.findings] == [first, second] and check.summary == "One claim is wrong."
     assert check.findings[0]["sources"] == [{"id": str(guide.public_id), "title": "Backup guide"}]
     assert check.sources == [{"id": str(guide.public_id), "title": "Backup guide", "cited": True}]
@@ -343,7 +343,7 @@ def test_a_fact_check_turns_corrections_into_suggestions_and_changes_nothing_its
         "content.propose_edit",
         "agent:assistant",
         "",
-        suggestion.pk,
+        str(suggestion.public_id),
     )
     request = fake.calls[0]["messages"][0]["content"]
     assert "[B1] Back up weekly." in request and "[S1] Backup guide" in request
@@ -417,7 +417,8 @@ def test_a_blocks_corrections_are_proposed_together_and_keep_its_links_and_empha
     made = list(Suggestion.objects.filter(run=check.run).order_by("pk"))
     assert len(made) == 2  # one per block it could correct
     first, second, third, fourth, fifth, sixth = check.findings
-    assert first["suggestion"] == second["suggestion"] == made[0].pk and fourth["suggestion"] == made[1].pk
+    assert first["suggestion"] == second["suggestion"] == str(made[0].public_id)
+    assert fourth["suggestion"] == str(made[1].public_id)
     assert third["suggestion"] is None and third["error"] == "the words to correct are not in the block as it reads now"
     assert fifth["suggestion"] is None and "run across a link or emphasis" in fifth["error"]
     assert sixth["suggestion"] is None and sixth["error"] == ""

@@ -2381,7 +2381,7 @@ type Query {
   related(pageId: Int!, first: Int = 5, kind: String): [Hit]
   entities(pageId: Int!): [EntityType]
   suggestions(pageId: Int!): [SuggestionType]
-  agentRun(id: Int!): AgentRunType
+  agentRun(id: UUID!): AgentRunType
   aiSchema: GenericScalar
 }
 
@@ -2411,7 +2411,7 @@ type EntityType {
 }
 
 type SuggestionType {
-  id: Int
+  id: UUID
   op: String
   blockId: String
   field: String
@@ -2419,11 +2419,11 @@ type SuggestionType {
   rationale: String
   status: String
   agent: String
-  runId: Int
+  runId: UUID
 }
 
 type AgentRunType {
-  id: Int
+  id: UUID
   agent: String
   status: String
   trigger: String
@@ -2445,12 +2445,12 @@ type StepType {
 
 type Mutation {
   requestAgentRun(agent: String!, input: GenericScalar, pageId: Int): RequestAgentRun
-  acceptSuggestion(id: Int, ids: [Int]): AcceptSuggestion
-  rejectSuggestion(id: Int!, reason: String): RejectSuggestion
+  acceptSuggestion(id: UUID, ids: [UUID]): AcceptSuggestion
+  rejectSuggestion(id: UUID!, reason: String): RejectSuggestion
 }
 
 type RequestAgentRun {
-  runId: Int
+  runId: UUID
   status: String
   traceId: String
 }
@@ -2458,7 +2458,7 @@ type RequestAgentRun {
 type AcceptSuggestion {
   ok: Boolean
   revisionId: Int
-  accepted: [Int]
+  accepted: [UUID]
 }
 
 type RejectSuggestion {

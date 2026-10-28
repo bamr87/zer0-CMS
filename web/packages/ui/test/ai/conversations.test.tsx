@@ -10,9 +10,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import { ConversationList, ConversationThread } from '../../src';
+import { ConversationList, ConversationThread, shortId } from '../../src';
 import { fakePlatform, held, renderUi } from '../../../../test/harness';
-import { agentRun, assistant, EMPTY, liveStream, page, runRef } from './fixtures';
+import { agentRun, assistant, EMPTY, liveStream, OTHER_RUN, page, RUN, runRef } from './fixtures';
 
 const conversation = {
   id: 'c1',
@@ -67,10 +67,10 @@ describe('<ConversationThread>', () => {
       ...helpers,
       'GET /api/v2/ai/conversations/c1/messages/': ({ url }) => cursor(messages, url),
       'POST /api/v2/ai/conversations/c1/messages/': () => {
-        messages = [...messages, message(3, 'user', 'What is my name?'), message(4, 'assistant', '', { status: 'queued', run: runRef(9) })];
-        return { message: messages[2], reply: messages[3], run: runRef(9) };
+        messages = [...messages, message(3, 'user', 'What is my name?'), message(4, 'assistant', '', { status: 'queued', run: runRef() })];
+        return { message: messages[2], reply: messages[3], run: runRef() };
       },
-      'GET /api/v2/agent-runs/9/': () => agentRun(status),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun(status),
     });
     renderUi(<ConversationThread id="c1" />, { api, stream });
     const thread = within(await screen.findByRole('list', { name: 'Messages' }));
@@ -84,8 +84,8 @@ describe('<ConversationThread>', () => {
     expect(screen.getByLabelText('Your message')).toHaveValue('');
     const waiting = await thread.findByRole('listitem', { name: 'Namer, message 4' });
     expect(within(waiting).getByText('queued')).toBeInTheDocument();
-    expect(await within(waiting).findByRole('status', { name: 'Run #9' })).toBeInTheDocument();
-    await waitFor(() => expect(stream).toHaveBeenCalledWith('/api/v2/agent-runs/9/stream/', ['step', 'status', 'end'], expect.any(Function)));
+    expect(await within(waiting).findByRole('status', { name: `Run ${shortId(RUN)}` })).toBeInTheDocument();
+    await waitFor(() => expect(stream).toHaveBeenCalledWith(`/api/v2/agent-runs/${RUN}/stream/`, ['step', 'status', 'end'], expect.any(Function)));
     messages = [...messages.slice(0, 3), message(4, 'assistant', 'Your name is Alice.')];
     status = 'succeeded';
     finish();
@@ -111,9 +111,9 @@ describe('<ConversationThread>', () => {
     const { api, calls } = fakePlatform({
       ...helpers,
       'GET /api/v2/ai/conversations/c1/messages/': ({ url }) => cursor([message(1, 'user', 'Ideas?'), message(2, 'assistant', 'Three ideas.')], url),
-      'POST /api/v2/ai/messages/m2/rerun/': () => ({ message: message(3, 'assistant', '', { status: 'queued', run: runRef(9) }), run: runRef(9) }),
-      'POST /api/v2/ai/messages/m2/promote/': () => ({ brief: { id: 'b7' }, run: runRef(10) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun('running'),
+      'POST /api/v2/ai/messages/m2/rerun/': () => ({ message: message(3, 'assistant', '', { status: 'queued', run: runRef() }), run: runRef() }),
+      'POST /api/v2/ai/messages/m2/promote/': () => ({ brief: { id: 'b7' }, run: runRef(OTHER_RUN) }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun('running'),
     });
     const { go } = renderUi(<ConversationThread id="c1" />, { api });
     await userEvent.click(await screen.findByRole('button', { name: 'Actions for message 2' }));
@@ -157,14 +157,14 @@ describe('<ConversationThread>', () => {
       'GET /api/v2/ai/conversations/c1/': () => ({ ...conversation, pipeline: 'p1' }),
       'GET /api/v2/ai/pipelines/': () => page([{ id: 'p1', name: 'Draft, then edit', owner: 'editor', site: null, visibility: 'private', can_edit: true, created_at: '', updated_at: '', steps: [] }]),
       'GET /api/v2/ai/conversations/c1/messages/': () => cursor([]),
-      'POST /api/v2/ai/conversations/c1/run-pipeline/': () => ({ run: runRef(9) }),
-      'GET /api/v2/agent-runs/9/': () => agentRun(status),
+      'POST /api/v2/ai/conversations/c1/run-pipeline/': () => ({ run: runRef() }),
+      [`GET /api/v2/agent-runs/${RUN}/`]: () => agentRun(status),
     });
     renderUi(<ConversationThread id="c1" />, { api, stream });
     await userEvent.type(await screen.findByLabelText('Your message'), 'A post about backups');
     await userEvent.click(screen.getByRole('button', { name: 'Run the pipeline' }));
     await waitFor(() => expect(calls.find((c) => c.path.endsWith('/run-pipeline/'))?.body).toEqual({ prompt: 'A post about backups' }));
-    expect(await screen.findByRole('status', { name: 'Run #9' })).toHaveTextContent('running');
+    expect(await screen.findByRole('status', { name: `Run ${shortId(RUN)}` })).toHaveTextContent('running');
     const before = calls.filter((c) => c.path.endsWith('/messages/')).length;
     status = 'succeeded';
     finish();
@@ -191,7 +191,7 @@ describe('<ConversationThread>', () => {
   });
 
   it('holds a message’s actions while one is out, each with its own key, and promotes an answer to a brief', async () => {
-    const asking = held({ message: message(3, 'assistant', '', { status: 'queued' }), run: runRef(9) });
+    const asking = held({ message: message(3, 'assistant', '', { status: 'queued' }), run: runRef() });
     const { api, calls } = fakePlatform({
       ...helpers,
       'GET /api/v2/ai/conversations/c1/messages/': ({ url }) => cursor([message(1, 'user', 'Ideas?'), message(2, 'assistant', 'Three ideas.')], url),

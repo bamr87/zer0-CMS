@@ -301,7 +301,7 @@ class AskAISerializer(serializers.Serializer):
 class AppliedDraftSerializer(serializers.Serializer):
     story = StoryDetailSerializer()
     page_id = serializers.IntegerField()
-    suggestions = serializers.ListField(child=serializers.IntegerField())
+    suggestions = serializers.ListField(child=serializers.UUIDField())
 
 
 # ── authors ────────────────────────────────────────────────────────────────

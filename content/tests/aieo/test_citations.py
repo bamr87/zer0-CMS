@@ -128,7 +128,7 @@ def test_a_run_made_by_hand_never_overwrites_a_check_or_redoes_an_audit(
                 "/api/v2/agent-runs/", {"agent": "assistant", "page_id": page.pk, "input": data}, format="json"
             )
         assert made.status_code == 201, made.content
-        run = AgentRun.objects.get(pk=made.json()["id"])
+        run = AgentRun.objects.get(public_id=made.json()["id"])
         assert run.status == AgentRun.FAILED and "PermissionError" in run.error
     check.refresh_from_db()
     assert check.status == CitationCheck.READY and check.cited is False and check.answer != "alice's answer"

@@ -28,10 +28,10 @@ OUTCOME = {
         "input": {**spec.OBJECT, "description": "What it was asked: its templates rendered against the payload."},
         "result": {
             "type": "object",
-            "description": "What it made: an agent run's id (`run`), a brief, an idea or a story by public id (and the "
-            "story's new status), an email's recipients, a webhook's HTTP status.",
+            "description": "What it made: an agent run, a brief, an idea or a story by public id (and the story's new "
+            "status), an email's recipients, a webhook's HTTP status.",
             "properties": {
-                "run": {"type": "integer"},
+                "run": {"type": "string", "format": "uuid"},
                 "brief": {"type": "string", "format": "uuid"},
                 "idea": {"type": "string", "format": "uuid"},
                 "story": {"type": "string", "format": "uuid"},

@@ -35,7 +35,7 @@ import { call, errorText } from '../call';
 import { useApi, useGo } from '../context';
 import { fromLocalInput, toLocalInput } from '../FieldsPanel';
 import { Distribute } from '../distribution/Compose';
-import { RunStatus } from '../RunTimeline';
+import { RunStatus, shortId } from '../RunTimeline';
 import { MoveDialog } from './MoveDialog';
 import { moveLabel, needOf, PRIORITIES, PUBLISHED, statusOf, useDesks, useMove, when } from './shared';
 
@@ -262,8 +262,8 @@ function Panel({ story }: { story: StoryDetail }) {
               {AI_LABEL[r.kind as Kind]}
             </Text>
             <RunStatus status={r.run.status} />
-            <Anchor component="button" type="button" size="xs" onClick={() => go({ to: 'run', id: r.run.id })}>
-              run #{r.run.id}
+            <Anchor component="button" type="button" size="xs" title={r.run.id} onClick={() => go({ to: 'run', id: r.run.id })}>
+              run {shortId(r.run.id)}
             </Anchor>
           </Group>
           {r.error ? (
