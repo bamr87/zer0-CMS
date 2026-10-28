@@ -48,6 +48,8 @@ content/**
 schemas/events/**
 schemas/graphql/**
 schemas/content/**
+# The books' card schema (schemas/books/, what the retired Rails CMS owed — ADR 0008).
+schemas/books/**
 .markdownlint-cli2.jsonc
 # The workspace registry and its command (tools/** above holds the library).
 workspace.yml
