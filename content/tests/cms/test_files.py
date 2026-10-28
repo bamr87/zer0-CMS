@@ -40,6 +40,7 @@ def test_every_key_the_exporter_writes_from_a_field_is_refused_as_raw_front_matt
         assert written <= set(files.owned_keys(type(page))), written - set(files.owned_keys(type(page)))
 
 
+@pytest.mark.django_db  # an unsaved page still reads its content type, which may not be cached
 def test_raw_front_matter_fills_the_raw_places_and_keeps_the_typed_keys_where_they_were():
     page = ArticlePage(front_matter={"layout": "post", "title": "T", "date": "2026-07-31", "comments": True})
     assert files.raw_front_matter(page) == {"layout": "post", "comments": True}
@@ -52,6 +53,7 @@ def test_raw_front_matter_fills_the_raw_places_and_keeps_the_typed_keys_where_th
     assert page.front_matter == {"title": "T", "date": "2026-07-31"}
 
 
+@pytest.mark.django_db  # an unsaved page still reads its content type, which may not be cached
 def test_raw_front_matter_holds_only_what_the_exporters_yaml_gives_back():
     page = StandardPage(front_matter={})
     for value in (float("inf"), float("nan"), ["ok", {"deep": float("-inf")}], "\ud800"):
@@ -84,6 +86,7 @@ def test_a_file_paths_shape(path, problem):
     assert (found is None) if problem is None else (problem in found)
 
 
+@pytest.mark.django_db  # an unsaved page still reads its content type, which may not be cached
 def test_a_dated_file_name_is_the_dates_day_in_utc():
     page = ArticlePage(legacy_path="pages/_posts/2026-10-28-x.md", date=datetime(2026, 10, 28, 23, 59, tzinfo=UTC))
     assert files.date_problem(page) is None
