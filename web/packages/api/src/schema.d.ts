@@ -5980,9 +5980,10 @@ export interface components {
          *     * `multichoice` - multichoice
          *     * `tags` - tags
          *     * `json` - json
+         *     * `boolean` - boolean
          * @enum {string}
          */
-        FieldKindEnum: "text" | "textarea" | "datetime" | "integer" | "choice" | "multichoice" | "tags" | "json";
+        FieldKindEnum: "text" | "textarea" | "datetime" | "integer" | "choice" | "multichoice" | "tags" | "json" | "boolean";
         FieldSpec: {
             name: string;
             label: string;

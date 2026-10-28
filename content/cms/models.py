@@ -15,6 +15,10 @@ and the Jekyll bridge need on every page:
   typed fields win over it on export (`front_matter_fields`), so an editor's
   change lands and every key no field holds survives; a person edits those
   other keys as the page's raw front matter (cms/files.py).
+- The SEO and social fields beyond Wagtail's own — `canonical_url`, the Open
+  Graph title, description and image, `noindex` (cms/seo.py) — each null while
+  the page says what its file says, so a page read before they existed, or
+  imported since, keeps its file's values and hash.
 
 `ai_keywords` is a JSON list rather than the note's `ArrayField`, so SQLite
 (development and the fast test tier) and Postgres share one schema. Vectors
@@ -51,6 +55,7 @@ from wagtail.snippets.models import register_snippet
 
 from suggestions.panels import SuggestionsPanel
 
+from . import seo
 from .blocks import BodyBlock
 from .fields import OrderedJSONField
 
@@ -114,6 +119,42 @@ class BasePage(AgentManagedMixin, Page):
         related_name="+",
         help_text="The page's preview image (front matter `preview`).",
     )
+    # The SEO and social fields beyond Wagtail's own (cms/seo.py): null means "what the file says".
+    og_title = models.CharField(
+        "Open Graph title",
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="The title social sites show (front matter `og_title`); empty: the title tag, else the title.",
+    )
+    og_description = models.TextField(
+        "Open Graph description",
+        null=True,
+        blank=True,
+        help_text="The description social sites show (front matter `og_description`); empty: the meta description.",
+    )
+    og_image = models.CharField(
+        "Open Graph image",
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="The image social sites show, a path in the site such as /assets/images/x.png or a full URL "
+        "(front matter `image`, jekyll-seo-tag's og:image); empty: the preview image.",
+    )
+    canonical_url = models.URLField(
+        "canonical URL",
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="The address search engines should treat as this page's, when it is published elsewhere first "
+        "(front matter `canonical_url`); empty: the page's own.",
+    )
+    noindex = models.BooleanField(
+        "hide from search engines",
+        null=True,
+        blank=True,
+        help_text="Ask search engines not to index this page (front matter `noindex`).",
+    )
 
     # The typed fields a subclass adds to the hash, beyond the shared ones.
     hashed_fields: tuple[str, ...] = ()
@@ -129,6 +170,7 @@ class BasePage(AgentManagedMixin, Page):
         "slug",
         "seo_title",
         "search_description",
+        *seo.FIELDS,
         "ai_summary",
         "ai_keywords",
         "agent_policy",
@@ -145,6 +187,7 @@ class BasePage(AgentManagedMixin, Page):
         "title": "title",
         "description": "search_description",
         "seo_title": "seo_title",
+        **seo.KEYS,
     }
     # Headless first: this template exists for the editor's preview only.
     template = "cms/page.html"
@@ -219,6 +262,7 @@ class BasePage(AgentManagedMixin, Page):
             value = self.hashed_value(name)
             if name not in self.sparse_hashed_fields or value != self._meta.get_field(name).get_default():
                 data[name] = value
+        data.update(seo.changed(self))  # only where the page says other than its file
         return data
 
     def hashed_value(self, name):

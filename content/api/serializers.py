@@ -14,7 +14,7 @@ from rest_framework import serializers
 
 # The enums, named in the document by SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"].
 GROUPS = ("content", "seo", "settings", "file")
-KINDS = ("text", "textarea", "datetime", "integer", "choice", "multichoice", "tags", "json")
+KINDS = ("text", "textarea", "datetime", "integer", "choice", "multichoice", "tags", "json", "boolean")
 PAGE_STATUSES = ("draft", "live", "changed", "scheduled", "expired")
 CHANGE_KINDS = ("block", "field", "edge")
 TARGET_TYPES = ("page", "image")

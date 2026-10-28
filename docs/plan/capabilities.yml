@@ -98,7 +98,7 @@ platform:
       studio: web/packages/ui/test/pagefile.test.tsx
   - id: content.seo
     what: SEO and social fields (title, description, keywords, canonical, Open Graph, noindex) with insights and agent proposals for a page.
-    # P4: title tag, description (with lengths shown), keywords, summary; canonical, Open Graph and noindex to come.
+    # P4: title tag, description (with lengths shown), keywords, summary; and (2026-10-27) canonical URL, Open Graph title, description and image, and noindex — each its file's front-matter key (`image` for the image), imported, exported only where changed, and edited in the SEO tab (content/tests/importers/test_seo.py, web/packages/ui/test/editor.test.tsx). Insights beyond the lengths, and agent proposals for the social fields, to come.
     surfaces: {api: partial, studio: partial, extension: partial, mcp: partial}
   - id: content.preview
     what: Live preview of a draft in the site's own design, including the exact exported document and file name.

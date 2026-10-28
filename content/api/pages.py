@@ -55,7 +55,7 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from wagtail.models import Page, Site, get_page_models
 
-from cms import files, services
+from cms import files, seo, services
 from importers.markdown import from_blocks
 from importers.services import pages_imported_from
 from ops.errors import Conflict, Forbidden, Invalid, Locked, NotFound
@@ -73,7 +73,7 @@ from .serializers import (
     ScheduleSerializer,
 )
 
-SEO = {"slug", "seo_title", "search_description", "ai_summary", "ai_keywords"}
+SEO = {"slug", "seo_title", "search_description", *seo.FIELDS, "ai_summary", "ai_keywords"}
 SETTINGS = {"agent_policy"}
 # The page's file (cms/files.py): `file_path` is `legacy_path`, and `front_matter` only its raw keys, so
 # their specs are written here rather than read from the model fields.
@@ -216,9 +216,14 @@ def summary(page) -> dict:
 
 def read_fields(page) -> dict:
     """The editor fields' values, as JSON: tags as names, relations as id strings,
-    the page's file as its path and its raw front matter (cms/files.py)."""
+    the page's file as its path and its raw front matter (cms/files.py), the SEO
+    fields as the page says them — its own value, or its file's (cms/seo.py)."""
     out = {}
+    said = seo.effective(page)
     for name in services.editable_fields(type(page)):
+        if name in said:
+            out[name] = said[name]
+            continue
         if name == "file_path":
             out[name] = page.legacy_path
             continue
@@ -247,6 +252,8 @@ def _spec(model, name) -> dict:
         kind = "tags"
     elif field.many_to_many:
         kind = "multichoice"
+    elif isinstance(field, models.BooleanField):
+        kind = "boolean"
     elif choices:
         kind = "choice"
     elif isinstance(field, models.DateTimeField):

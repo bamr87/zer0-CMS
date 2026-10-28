@@ -396,13 +396,15 @@ def jekyll_config_of(root) -> dict:
 
 def canonical_url(page) -> str | None:
     """The URL the page is read at — what every lane keys the ledger by. A Jekyll-backed site's page has the URL
-    Jekyll gives its file (`permalink.path_for`, as the site's own lane computes it); any other page, Wagtail's."""
+    Jekyll gives its file (`permalink.path_for`, as the site's own lane computes it); any other page, Wagtail's —
+    unless the page names its canonical URL (its SEO field, or its file's `canonical_url`)."""
+    from cms import seo
     from cms.models import ArticlePage, CollectionPage
     from exporters.jekyll import front_matter_for
     from exporters.jekyll import path_for as file_path
 
     page = page.specific
-    stated = (page.front_matter or {}).get("canonical_url") if hasattr(page, "front_matter") else None
+    stated = seo.effective(page)["canonical_url"] if hasattr(page, "front_matter") else None
     if isinstance(stated, str) and re.match(r"https?://", stated):
         return stated
     root = site_root_of(page)

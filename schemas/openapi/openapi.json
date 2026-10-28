@@ -35902,10 +35902,11 @@
                     "choice",
                     "multichoice",
                     "tags",
-                    "json"
+                    "json",
+                    "boolean"
                 ],
                 "type": "string",
-                "description": "* `text` - text\n* `textarea` - textarea\n* `datetime` - datetime\n* `integer` - integer\n* `choice` - choice\n* `multichoice` - multichoice\n* `tags` - tags\n* `json` - json"
+                "description": "* `text` - text\n* `textarea` - textarea\n* `datetime` - datetime\n* `integer` - integer\n* `choice` - choice\n* `multichoice` - multichoice\n* `tags` - tags\n* `json` - json\n* `boolean` - boolean"
             },
             "FieldSpec": {
                 "type": "object",

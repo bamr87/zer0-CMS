@@ -52,6 +52,36 @@ describe('<PageEditor>', () => {
     expect(order).toEqual(['PATCH', 'POST']);
   });
 
+  it('edits the SEO tab’s Open Graph fields, canonical URL and noindex, and saves only those', async () => {
+    const seo = (name: string, label: string, kind: string) => ({ name, label, group: 'seo', kind, required: false, help_text: '', max_length: null, choices: [] });
+    const detail = pageDetail({
+      fields: { title: 'Nightly backups', og_title: '', og_image: '/assets/images/backups.png', canonical_url: '', noindex: false },
+      field_specs: [
+        { name: 'title', label: 'Title', group: 'content', kind: 'text', required: true, help_text: '', max_length: 255, choices: [] },
+        seo('og_title', 'Open Graph title', 'text'),
+        seo('og_image', 'Open Graph image', 'text'),
+        seo('canonical_url', 'Canonical URL', 'text'),
+        seo('noindex', 'Hide from search engines', 'boolean'),
+      ],
+    });
+    const platform = fakePlatform({
+      'GET /api/v2/content/pages/5/': () => detail,
+      'PATCH /api/v2/content/pages/5/': () => detail,
+    });
+    renderUi(<PageEditor pageId={5} />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('tab', { name: 'SEO' }));
+    expect(screen.getByLabelText('Open Graph image')).toHaveValue('/assets/images/backups.png');
+    await userEvent.type(screen.getByLabelText('Open Graph title'), 'Backups, nightly');
+    await userEvent.type(screen.getByLabelText('Canonical URL'), 'https://example.com/backups/');
+    await userEvent.click(screen.getByRole('switch', { name: 'Hide from search engines' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(platform.calls.find((c) => c.method === 'PATCH')).toBeDefined());
+    expect(platform.calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+      base_revision_id: 41,
+      fields: { og_title: 'Backups, nightly', canonical_url: 'https://example.com/backups/', noindex: true },
+    });
+  });
+
   it('schedules a time to go live and one to come down, cancels the schedule, and unpublishes — each one request', async () => {
     const scheduled = pageDetail({
       status: 'scheduled',

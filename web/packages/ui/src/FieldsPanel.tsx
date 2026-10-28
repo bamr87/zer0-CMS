@@ -1,10 +1,11 @@
 // A page's fields, rendered from the specs the platform sends with every page
 // (api/pages.py field_specs) — content, SEO, the page's file and settings — so
 // a new field or page type needs no change here. Values stay JSON: strings,
-// numbers, string lists, ISO date-times, and a JSON object (a file's raw front
-// matter) edited as text in Mantine's JsonInput. The two search fields count
-// their characters against the lengths search engines show.
-import { JsonInput, MultiSelect, NumberInput, Select, Stack, TagsInput, Textarea, TextInput } from '@mantine/core';
+// numbers, string lists, ISO date-times, a switch (`noindex`), and a JSON
+// object (a file's raw front matter) edited as text in Mantine's JsonInput. The
+// two search fields count their characters against the lengths search engines
+// show.
+import { JsonInput, MultiSelect, NumberInput, Select, Stack, Switch, TagsInput, Textarea, TextInput } from '@mantine/core';
 import type { FieldSpec } from '@zer0/api';
 import { useState } from 'react';
 
@@ -115,6 +116,10 @@ function Field({ spec, value, onChange, disabled }: { spec: FieldSpec; value: un
       return <TagsInput {...common} value={list(value)} onChange={onChange} />;
     case 'json':
       return <JsonField common={common} value={value} onChange={onChange} />;
+    case 'boolean':
+      return (
+        <Switch label={common.label} description={common.description} disabled={disabled} checked={value === true} onChange={(e) => onChange(e.currentTarget.checked)} />
+      );
     default:
       return (
         <TextInput {...common} maxLength={spec.max_length ?? undefined} value={text(value)} onChange={(e) => onChange(e.currentTarget.value)} />
