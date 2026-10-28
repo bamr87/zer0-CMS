@@ -531,3 +531,15 @@ def test_the_reports_keep_the_scorers_pattern_order_where_the_database_reorders_
     for item in data:
         assert reports.site_report(item, FIXED) == (golden / f"{item['_name']}.md").read_text(encoding="utf-8")
     assert reports.summary_report(data, FIXED) == (golden / "REPORT.md").read_text(encoding="utf-8")
+
+
+def test_a_reports_html_keeps_what_its_markdown_renders_and_nothing_a_page_or_a_model_slipped_in():
+    """A report quotes crawled titles and URLs and a model's evidence, and Python-Markdown passes raw HTML through: the
+    HTML is held to what the Markdown renders — headings, tables, lists, code, links to safe addresses."""
+    text = (
+        "# Report: <script>alert(1)</script>\n\n| A | B |\n|---|---|\n"
+        "| <img src=x onerror=alert(1)> | [x](javascript:alert(1)) |\n\n[ok](https://example.com/) `<b>`\n"
+    )
+    out = reports.html(text)
+    assert "<table>" in out and '<a href="https://example.com/">ok</a>' in out and "<code>&lt;b&gt;</code>" in out
+    assert "<script" not in out and "onerror" not in out and "javascript:" not in out
