@@ -38,7 +38,7 @@ from outbox.consumers import handle_envelope
 from outbox.models import OutboxEvent
 
 from ..conftest import make_article
-from .conftest import AUTHOR, FIXTURE, TOKEN
+from .conftest import AUTHOR, FIXTURE, MCP_POST, MCP_URL, TOKEN
 
 REST = "https://api.linkedin.com/rest"
 API = "/api/v2/distribution"
@@ -63,6 +63,17 @@ def carol(db):
     """Edits every page and may publish none: she may change a post's text, never approve it."""
     user = get_user_model().objects.create_user("carol", password="pw")
     return grant(user, "editors who do not publish", "add_page", "change_page")
+
+
+def imported(tmp_path, settings, *, at=None):
+    """The fixture site copied to `at` (default: inside the repository, REPO_ROOT = tmp_path) and imported."""
+    from importers.jekyll import import_site
+
+    settings.REPO_ROOT, settings.SITES_DIR = tmp_path, ""
+    at = at or tmp_path / "site"
+    shutil.copytree(FIXTURE, at)
+    import_site(at, "fixture", repo_root=tmp_path)
+    return at, {p.legacy_path: p for p in Page.objects.specific() if getattr(p, "legacy_path", "")}
 
 
 @pytest.fixture
@@ -221,17 +232,43 @@ def test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged
 
 
 def test_a_jekyll_sites_page_is_keyed_by_the_url_its_own_lane_computes(db, tmp_path, settings):
-    from importers.jekyll import import_site
+    site, pages = imported(tmp_path, settings)
+    expected = {s.entry.relative: s.url for s in Pipeline(Config(site, env={})).sources()}
+    assert {path: services.canonical_url(pages[path]) for path in expected} == expected
+    assert services.canonical_url(pages["about.md"]) == "https://example.test/about/"
 
-    settings.REPO_ROOT = tmp_path
-    shutil.copytree(FIXTURE, tmp_path / "site")
-    import_site(tmp_path / "site", "fixture", repo_root=tmp_path)
-    lane = Pipeline(Config(tmp_path / "site", env={}))
-    expected = {s.entry.relative: s.url for s in lane.sources()}
-    pages = {p.legacy_path: p for p in Page.objects.specific() if getattr(p, "legacy_path", "") in expected}
-    assert {path: services.canonical_url(page) for path, page in pages.items()} == expected
-    about = next(p for p in Page.objects.specific() if getattr(p, "legacy_path", "") == "about.md")
-    assert services.canonical_url(about) == "https://example.test/about/"
+
+def test_a_site_outside_the_repository_is_keyed_only_where_its_checkout_may_be_read(db, tmp_path, settings, alice):
+    """The importer records an absolute source_root for a site outside the repository (compose's /sites). Its pages
+    are keyed from that checkout's own `_config.yml` — exactly as its lane keys them — where the platform may read
+    it (SITES_DIR), and refused with a sentence, never keyed by a URL Jekyll does not build, anywhere else or when
+    the checkout is not here (a process without the mount). A source_root a person changed to leave those places is
+    not followed, for the `_config.yml` or the ledger file."""
+    (tmp_path / "app").mkdir()
+    site, pages = imported(tmp_path / "app", settings, at=tmp_path / "sites" / "site")
+    expected = {s.entry.relative: s.url for s in Pipeline(Config(site, env={})).sources()}
+    mcp = pages[MCP_POST]
+    channel = Channel.objects.create(
+        site=mcp.get_site(), kind="linkedin", name="Page", settings={"author": AUTHOR, "ledger_file": "log.json"}
+    )
+    with pytest.raises(Conflict, match="needs the site's _config.yml, which cannot be read here"):
+        services.compose(channel, user=alice, page=mcp)
+    settings.SITES_DIR = str(tmp_path / "sites")
+    assert {path: services.canonical_url(pages[path]) for path in expected} == expected
+    post = services.compose(channel, user=alice, page=mcp, commentary="The plug.")
+    assert post.link == MCP_URL and isinstance(services.site_ledger(channel), Ledger)
+    shutil.move(site, tmp_path / "elsewhere")
+    with pytest.raises(Conflict, match="cannot be read here"):
+        services.canonical_url(mcp)
+    assert "ledger_unreadable" in [b.kind for b in services.preview(post).blockers]
+    shutil.move(tmp_path / "elsewhere", site)
+    root = mcp.get_site().root_page.specific
+    root.source_root = "../.."  # a person who edits the root may change it; it is not followed out of those places
+    root.save()
+    channel = Channel.objects.get(pk=channel.pk)
+    assert services.site_ledger(channel).readable is False
+    with pytest.raises(Conflict, match="outside this repository and SITES_DIR"):
+        services.canonical_url(mcp)
 
 
 # ── the queue ───────────────────────────────────────────────────────────────

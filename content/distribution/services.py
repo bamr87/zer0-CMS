@@ -394,25 +394,47 @@ def site_root_of(page):
     return root.specific if root else None
 
 
-def jekyll_config_of(root) -> dict:
-    """The site's `_config.yml` from its checkout when the platform can read it (permalinks need its styles,
-    collections and defaults), else the parts the importer kept."""
-    from importers.jekyll import read_config
+def site_checkout(root) -> Path:
+    """Where a site's files are on this machine — the one rule for reading its `_config.yml` and its ledger file:
+    the importer's `source_root`, followed (through symlinks) only into this repository or SITES_DIR, where the
+    platform registers checkouts (`sites.services.resolve_checkout`). A person who edits the site's root page may
+    change `source_root`, so nowhere else is read or written. `SiteError` (its message says why) otherwise."""
+    from sites.services import SiteError, resolve_checkout
 
-    if root.source_root:
-        folder = (Path(settings.REPO_ROOT) / root.source_root).resolve()
-        if folder.is_relative_to(Path(settings.REPO_ROOT).resolve()) and (folder / "_config.yml").is_file():
-            try:
-                return read_config(folder)
-            except (OSError, ValueError):
-                pass  # an unreadable checkout falls back to what the import kept
-    return dict(root.jekyll_config or {})
+    if not getattr(root, "source_root", ""):
+        raise SiteError("the site has no files of its own")
+    return resolve_checkout(root.source_root)
+
+
+def jekyll_config_of(root) -> dict:
+    """The site's configuration for its pages' URLs. A site that lives in files is read from its checkout's
+    `_config.yml`: the URL Jekyll gives a page depends on its permalink styles, collections and defaults, and a guess
+    from the few keys the importer kept would key the page by a URL Jekyll never builds — one the site's own lane
+    and the extension never wrote, so what they published would not stop the platform. Refused (409) when that file
+    cannot be read here; a site without files, or whose files name no URL, gets the keys the platform keeps."""
+    from importers.jekyll import read_config
+    from sites.services import SiteError
+
+    kept = dict(root.jekyll_config or {})
+    if not root.source_root:
+        return kept
+    try:
+        return read_config(site_checkout(root))
+    except (SiteError, OSError, ValueError) as e:
+        if not kept.get("url"):
+            return kept  # files with no URL of their own (an imported app's root): its pages have Wagtail's
+        raise Conflict(
+            f"the URL Jekyll gives this page — the ledger's key, the one its own lane and the extension use — needs "
+            f"the site's _config.yml, which cannot be read here ({e}); the platform reads a site's files inside its "
+            "repository or SITES_DIR"
+        ) from e
 
 
 def canonical_url(page) -> str | None:
     """The URL the page is read at — what every lane keys the ledger by. A Jekyll-backed site's page has the URL
-    Jekyll gives its file (`permalink.path_for`, as the site's own lane computes it); any other page, Wagtail's —
-    unless the page names its canonical URL (its SEO field, or its file's `canonical_url`)."""
+    Jekyll gives its file (`permalink.path_for`, as the site's own lane computes it, from the checkout's
+    `_config.yml` — `jekyll_config_of` refuses rather than guess); any other page, Wagtail's — unless the page names
+    its canonical URL (its SEO field, or its file's `canonical_url`)."""
     from cms import seo
     from cms.models import ArticlePage, CollectionPage
     from exporters.jekyll import front_matter_for
@@ -616,8 +638,9 @@ class Preview:
 
 
 class AbsentLedger:
-    """A ledger file a channel names that cannot be reached from here — the site's checkout is not on this machine,
-    or the path leaves it. Refused like an unreadable file, never read as "nothing published"."""
+    """A ledger file a channel names that cannot be reached from here — the site's checkout is not on this machine
+    (or not where the platform may read it), or the path leaves it. Refused like an unreadable file, never read as
+    "nothing published"."""
 
     readable = False
 
@@ -635,14 +658,16 @@ class AbsentLedger:
 
 def site_ledger(channel) -> Ledger | AbsentLedger | None:
     """The site's own ledger file, where the extension and the site's CI record what they published — None when the
-    channel names none."""
+    channel names none. Found by the same rule as the site's `_config.yml` (`site_checkout`)."""
+    from sites.services import SiteError
+
     relative = channel.setting("ledger_file")
     if not relative:
         return None
-    source_root = getattr(channel.site.root_page.specific, "source_root", "")
-    base = (Path(settings.REPO_ROOT) / source_root).resolve() if source_root else None
-    if base is None or not base.is_dir():
-        return AbsentLedger(f"the site's checkout is not here to read its ledger file {relative}")
+    try:
+        base = site_checkout(channel.site.root_page.specific)
+    except SiteError as e:
+        return AbsentLedger(f"the site's checkout is not here to read its ledger file {relative} ({e})")
     path = (base / relative).resolve()
     if not path.is_relative_to(base):
         return AbsentLedger(f"the ledger file {relative} is outside the site's checkout")

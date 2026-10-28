@@ -278,8 +278,9 @@ services:
   # that drafts automatically (distribution/consumers.py), and an event fires the automations waiting for it
   # (content/automations/README.md). Whichever process reads an event first runs every handler for it, once
   # (outbox/consumers.py), the outbox desk's included, so this one mounts the belt as belt-publisher does: a handoff
-  # written anywhere else is lost. Restarted if it stops: without it, event automations are accepted and enabled but
-  # never fire.
+  # written anywhere else is lost. A draft post is keyed by the URL Jekyll gives its page, read from the site's
+  # _config.yml, so it mounts the sites read-only as the content service does. Restarted if it stops: without it,
+  # event automations are accepted and enabled but never fire.
   events:
     profiles: ["content"]
     build: *content-build
@@ -287,6 +288,7 @@ services:
     restart: unless-stopped
     environment: *content-env
     volumes:
+      - ${SITES_DIR:-.}:/sites:ro
       - outbox-data:/app/content/var/outbox
     labels: *content-labels
     logging: *fleet-logging
