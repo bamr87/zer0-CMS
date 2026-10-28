@@ -256,36 +256,36 @@ platform:
     surfaces: {api: missing, studio: missing}
 
   # ── The outbox desk (ADR 0007): the outbox harness (bamr87/outbox) run from the platform ──
-  # Partial until bamr87/outbox#10 merges: content/requirements.txt pins that pull request's head commit, which has the
-  # belt, and moves to its merge commit afterwards (ADR 0007 decision 1, open item 1). The extension's half is G10's.
+  # content/requirements.txt pins the harness at bamr87/outbox#10's merge commit (ADR 0007 decision 1). The extension's
+  # half is G10's.
   - id: outbox.belt
     what: The outbox harness's belt of handoffs between pipeline stations — its numbers, messages filtered by kind, station and trace, a piece of work's journey, the dead letters, each message's CloudEvents form — read from its files, which are the record.
-    surfaces: {api: partial, studio: partial, extension: missing}
+    surfaces: {api: done, studio: done, extension: missing}
     proof:
       api: content/tests/outboxdesk/test_belt.py::test_an_approval_answers_a_delivered_message_keeps_its_trace_and_names_its_page
       studio: web/packages/ui/test/outbox.test.tsx
   - id: outbox.handoff
     what: A person sends a handoff onto the belt as the editor station — an idea, an approval of a delivered message, a signal — validated by the harness and recorded with who sent it; the relay delivers it on beat or now, in the worker.
-    surfaces: {api: partial, studio: partial, extension: missing}
+    surfaces: {api: done, studio: done, extension: missing}
     proof:
       api: content/tests/outboxdesk/test_belt.py::test_a_person_sends_an_idea_as_the_editor_and_the_relay_delivers_it
       studio: web/packages/ui/test/outbox.test.tsx
   - id: outbox.trials
     what: Arena trials from a task card — a scout and two claimants racing, run in the worker, scored at close — with the arena's ledger.
-    surfaces: {api: partial, studio: partial, extension: missing}
+    surfaces: {api: done, studio: done, extension: missing}
     proof:
       api: content/tests/outboxdesk/test_runs.py::test_a_trial_runs_in_the_worker_and_keeps_its_scored_result_and_ledger
       studio: web/packages/ui/test/outbox.test.tsx
   - id: outbox.claim-desk
     what: The claim desk — a draft's claims checked against their sources' timeline in the worker, a verdict per claim, resolved against the truth into Brier scores, and calibration per verifier and per author; it advises and never edits a page.
-    surfaces: {api: partial, studio: partial, extension: missing}
+    surfaces: {api: done, studio: done, extension: missing}
     proof:
       api: content/tests/outboxdesk/test_runs.py::test_a_resolved_check_scores_its_verifiers_and_its_author_and_calibration_averages_them
       studio: web/packages/ui/test/outbox.test.tsx
   - id: outbox.publish
     what: A page that goes live is announced on the belt as a `published` handoff naming it, from the transactional outbox's event through a consumer group of its own, once per event.
     # The compose belt-publisher service runs the consumer (manage.py consume_events --stream zer0:content --group outboxdesk).
-    surfaces: {ops: partial}
+    surfaces: {ops: done}
     proof:
       ops: content/tests/outboxdesk/test_publish.py::test_a_page_that_goes_live_is_announced_by_the_outbox_events_consumer_once
 
