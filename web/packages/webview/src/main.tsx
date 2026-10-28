@@ -2,13 +2,16 @@
 // bundles it into dist/studio.js and its styles into dist/studio.css. The
 // styles go in the studio's order — the zer0 tokens, Mantine's, @zer0/ui's —
 // with the editor's theme last; then the VS Code message port, the CSP nonce
-// the host put on the page, and the view it asked for.
+// the host put on the page (for Mantine's <style> elements, and through
+// get-nonce for the one a modal's or a drawer's scroll lock writes, as the
+// studio's main.tsx does), and the view it asked for.
 import '@zer0/tokens/tokens.css';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@zer0/ui/ui.css';
 import './editor.css';
 
+import { setNonce } from 'get-nonce';
 import { createRoot } from 'react-dom/client';
 
 import { App, type View } from './App';
@@ -31,4 +34,5 @@ const root = document.getElementById('root');
 const view = VIEWS.find((v) => v === root?.dataset.view) ?? 'dashboard';
 // `.nonce` is the attribute browsers keep readable (src/studio/studio.ts writes it).
 const nonce = document.querySelector<HTMLMetaElement>('meta[property="csp-nonce"]')?.nonce || undefined;
+if (nonce) setNonce(nonce);
 if (root) createRoot(root).render(<App view={view} port={port} nonce={nonce} />);

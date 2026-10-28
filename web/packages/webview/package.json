@@ -12,6 +12,7 @@
     "@zer0/api": "*",
     "@zer0/tokens": "*",
     "@zer0/ui": "*",
+    "get-nonce": "^1.0.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   }

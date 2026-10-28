@@ -328,6 +328,8 @@ const STUDIO_LIBRARIES = [
   '@tiptap/react',
   '@tiptap/starter-kit',
   'diff',
+  // The CSP nonce for the <style> a modal's or a drawer's scroll lock writes (react-style-singleton).
+  'get-nonce',
   'openapi-fetch',
 ];
 
