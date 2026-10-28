@@ -1,7 +1,8 @@
 """Rules-based review agents: brand and accessibility.
 
-`brand` runs the brand guard (suggestions/guard.py, the extension's rules)
-over every text in the page's latest revision and fails the page on any
+`brand` runs the brand guard (suggestions/guard.py, the extension's rules,
+with the active brand rules and the page's site's own) over every text in the
+page's latest revision and fails the page on any
 error-level finding. `a11y` fails on an image block with no alternative text
 (neither the block's `alt` nor the image's `ai_alt`), a Markdown image with an
 empty `![]()`, and a heading that skips a level. Both end, like any review,
@@ -10,7 +11,7 @@ by calling `review.submit_verdict`.
 
 import re
 
-from suggestions.guard import page_findings, text_of
+from suggestions.guard import extra_patterns, page_findings, site_of, text_of
 
 from ..registry import registry
 
@@ -24,14 +25,15 @@ def _page(run):
 
 def brand(run, ctx):
     page = _page(run)
+    extra = extra_patterns(site_of(run.target))  # the active brand rules and the page's site's own
     comments = []
     for field in ("title", "seo_title", "search_description", "ai_summary"):
-        for f in page_findings(getattr(page, field, "") or ""):
+        for f in page_findings(getattr(page, field, "") or "", extra):
             if f["level"] == "error":
                 comments.append({"text": f"{field}: {f['message']}"})
     for block in page.body:
         raw = block.block.get_prep_value(block.value)
-        for f in page_findings(text_of(raw)):
+        for f in page_findings(text_of(raw), extra):
             if f["level"] == "error":
                 comments.append({"block_id": block.id, "text": f["message"]})
     passed = not comments

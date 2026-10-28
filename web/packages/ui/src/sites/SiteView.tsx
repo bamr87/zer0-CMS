@@ -1,8 +1,10 @@
 // One site: its overview — how it renders, where its files live, its pages,
 // and its jobs — with sync, write-back and the doctor as jobs that a person
 // starts and follows live (JobLog), its registry fields, its per-site
-// settings, and what its last doctor run found. Only someone who may manage the
-// site sees the actions and may save; the platform re-checks every one.
+// settings (its brand rules among them: the voice AI help reads and the
+// phrases the brand guard refuses on its pages), and what its last doctor run
+// found. Only someone who may manage the site sees the actions and may save;
+// the platform re-checks every one.
 import {
   Alert,
   Anchor,
@@ -277,12 +279,17 @@ function SettingsFields({ siteId, initial, editable }: { siteId: number; initial
   const qc = useQueryClient();
   const [form, setForm] = useState(initial);
   const [tokens, setTokens] = useState(Object.entries(initial.design_tokens ?? {}).map(([name, value]) => ({ name, value })));
+  const [bans, setBans] = useState<[string, string][]>((initial.banned_patterns ?? []).map((ban) => [ban.name, ban.pattern]));
   const save = useMutation({
     mutationFn: () =>
       call(
         api.PATCH('/api/v2/sites/{id}/settings/', {
           params: { path: { id: siteId } },
-          body: { ...form, design_tokens: Object.fromEntries(tokens.filter((t) => t.name.trim()).map((t) => [t.name.trim(), t.value])) },
+          body: {
+            ...form,
+            design_tokens: Object.fromEntries(tokens.filter((t) => t.name.trim()).map((t) => [t.name.trim(), t.value])),
+            banned_patterns: bans.filter(([name, pattern]) => name.trim() || pattern.trim()).map(([name, pattern]) => ({ name: name.trim(), pattern })),
+          },
         }),
       ),
     onSuccess: (saved) => qc.setQueryData(['site-settings', siteId], saved),
@@ -333,6 +340,8 @@ function SettingsFields({ siteId, initial, editable }: { siteId: number; initial
             <Textarea label="Brand voice" description="How the site writes; AI help reads it" autosize minRows={3} disabled={!editable} value={form.brand_voice ?? ''} onChange={(e) => set({ brand_voice: e.currentTarget.value })} />
             {text('skin', 'Skin')}
             <Pairs label="Design tokens" left="Token" right="Value" rows={tokens.map((t) => [t.name, t.value])} editable={editable} onChange={(rows) => setTokens(rows.map(([name, value]) => ({ name, value })))} />
+            <Pairs label="Banned phrases (the brand guard refuses them on this site's pages, as regular expressions, any case)" left="Phrase" right="Pattern" rows={bans} editable={editable} onChange={setBans} />
+            {fieldError(save.error, 'banned_patterns') ? <Text size="sm" c="red">{fieldError(save.error, 'banned_patterns')}</Text> : null}
           </Stack>
         </Card>
         <Card withBorder>

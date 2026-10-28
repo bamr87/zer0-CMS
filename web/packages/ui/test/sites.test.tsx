@@ -76,6 +76,7 @@ const SETTINGS = {
   search_console_property: '',
   navigation: [{ label: 'Books', url: '/books/' }],
   brand_voice: '',
+  banned_patterns: [{ name: 'synergy', pattern: '\\bsynerg\\w*', flags: 'i' }],
   skin: '',
   design_tokens: {},
   monthly_budget_usd: null,
@@ -233,7 +234,7 @@ describe('<SiteView>', () => {
     renderUi(<SiteView siteId={3} />, { api });
     await userEvent.click(await screen.findByRole('tab', { name: 'Settings' }));
     await screen.findByRole('textbox', { name: 'Brand voice' });
-    const adds = screen.getAllByRole('button', { name: 'Add' }); // the design tokens', then the menu's
+    const adds = screen.getAllByRole('button', { name: 'Add' }); // the design tokens', the banned phrases', then the menu's
     await userEvent.click(nth(adds, adds.length - 1));
     await userEvent.type(screen.getByRole('textbox', { name: 'Label 2' }), 'About');
     await userEvent.type(screen.getByRole('textbox', { name: 'Link 2' }), '/about/');
@@ -245,6 +246,27 @@ describe('<SiteView>', () => {
       { label: 'About', url: '/about/' },
     ]);
     expect(body.brand_voice).toBe('Plain and warm.');
+    expect(body.banned_patterns).toEqual([{ name: 'synergy', pattern: '\\bsynerg\\w*' }]);
+  });
+
+  it('adds a banned phrase to the site’s brand rules and shows the platform’s refusal of a broken pattern', async () => {
+    const { api } = fakePlatform({
+      'GET /api/v2/sites/3/': () => detail(),
+      'GET /api/v2/sites/3/settings/': () => SETTINGS,
+      'PATCH /api/v2/sites/3/settings/': () =>
+        new Reply(422, {
+          error: { code: 'validation.failed', message: 'validation failed', status: 422, details: [{ field: 'banned_patterns.1.pattern', code: 'invalid', message: 'not a regular expression: missing ), unterminated subpattern' }] },
+        }),
+    });
+    renderUi(<SiteView siteId={3} />, { api });
+    await userEvent.click(await screen.findByRole('tab', { name: 'Settings' }));
+    expect(await screen.findByRole('textbox', { name: 'Pattern 1' })).toHaveValue('\\bsynerg\\w*');
+    const adds = screen.getAllByRole('button', { name: 'Add' });
+    await userEvent.click(nth(adds, 1));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Phrase 2' }), 'disrupt');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Pattern 2' }), 'disrupt(');
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+    expect(await screen.findAllByText(/not a regular expression/)).not.toHaveLength(0); // by the field, and in the save's alert
   });
 
   it('filters the doctor’s findings by severity', async () => {

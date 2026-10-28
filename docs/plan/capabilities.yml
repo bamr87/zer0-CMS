@@ -433,6 +433,7 @@ platform:
     # analytics ids, navigation, brand voice, skin and tokens, budget); /api/v2/sites/ registers a checkout (workspace.yml's
     # or SITES_DIR's), discovers, edits; the studio's Sites area does all of it. The extension's half is G10.
     # G10 (merge): the extension's Sites workspace renders the same registry and site page; registering, the registry fields and the settings not yet proved through its host.
+    # P4 (G2's BrandRules per site): the settings carry the site's brand rules — its voice and its banned phrases, which the brand guard refuses on its pages (content/tests/suggestions/test_suggestions.py::test_a_sites_own_brand_rules_hold_on_its_pages_and_nowhere_else).
     surfaces: {api: done, studio: done, extension: partial}
     proof:
       api: content/tests/sites/test_sites.py

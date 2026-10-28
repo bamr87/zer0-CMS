@@ -40,7 +40,7 @@ from wagtail.models import Revision
 
 from agents.schema import META_FIELDS, BlockInvalid, validate_block
 
-from .guard import has_errors, markup_findings, page_findings, text_of
+from .guard import has_errors, markup_findings, page_findings, site_of, text_of
 from .models import BlockProvenance, Suggestion, target_content_type
 
 IMAGE_META_FIELDS = ("ai_alt", "ai_caption", "ai_tags")
@@ -94,15 +94,15 @@ def clean_meta(field: str, value):
     return value
 
 
-def guard(value, block_type=None, before=None):
+def guard(value, block_type=None, before=None, site=None):
     """The checks every agent-proposed value passes, at propose time and again
     at accept time: the brand guard — on what a replace adds to the block it
-    replaces (`before`), so the author's own words never block it — and,
-    outside a code block, which shows markup rather than running it, no active
-    markup at all."""
+    replaces (`before`), so the author's own words never block it, with the
+    brand rules of the `site` it is for — and, outside a code block, which
+    shows markup rather than running it, no active markup at all."""
     text = text_of(value)
     old = None if before is None else text_of(before)
-    findings = page_findings(text, before=old) + ([] if block_type == "code" else markup_findings(text))
+    findings = page_findings(text, before=old, site=site) + ([] if block_type == "code" else markup_findings(text))
     if has_errors(findings):
         raise SuggestionError("brand guard: " + "; ".join(f["message"] for f in findings if f["level"] == "error"))
     return findings
@@ -168,9 +168,10 @@ def validate_proposal(target, op, block_id, payload, field):
         guard(value)
         return {"value": value}
     latest = target.get_latest_revision_as_object()
+    site = site_of(target)
     if op == Suggestion.META:
         value = clean_meta(field, (payload or {}).get("value"))
-        guard(value)
+        guard(value, site=site)
         return {"value": value}
     if op in (Suggestion.REPLACE, Suggestion.DELETE) and block_id not in _block_ids(latest):
         raise SuggestionError(f"block {block_id!r} is not in page {target.pk}")
@@ -178,9 +179,8 @@ def validate_proposal(target, op, block_id, payload, field):
         raise SuggestionError(f"block {block_id!r} is not in page {target.pk}")
     if op in (Suggestion.INSERT, Suggestion.REPLACE):
         block = clean_block(payload)
-        guard(
-            block["value"], block["type"], before=_block_value(latest, block_id) if op == Suggestion.REPLACE else None
-        )
+        before = _block_value(latest, block_id) if op == Suggestion.REPLACE else None
+        guard(block["value"], block["type"], before=before, site=site)
         return block
     if op == Suggestion.DELETE:
         return {}
@@ -285,13 +285,14 @@ def accept(suggestions, user):
         # same revision runs after this one and builds on its revision; and a
         # page someone has locked is refused, as for any other writer.
         page = writable(target, user).get_latest_revision_as_object()
+        site = site_of(target)
         for s in rest:
             payload = s.payload
             if s.op == Suggestion.META:
-                guard(payload.get("value"))
+                guard(payload.get("value"), site=site)
             elif s.op in (Suggestion.INSERT, Suggestion.REPLACE):
                 before = _block_value(page, s.block_id) if s.op == Suggestion.REPLACE else None
-                guard(payload.get("value"), payload.get("type"), before=before)
+                guard(payload.get("value"), payload.get("type"), before=before, site=site)
             block = apply_op(page, s.op, block_id=s.block_id, payload=payload, field=s.field)
             if block:
                 written.append((s, block))

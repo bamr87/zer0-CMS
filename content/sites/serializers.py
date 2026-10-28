@@ -96,8 +96,27 @@ class NavigationItemSerializer(serializers.Serializer):
     url = serializers.CharField(max_length=500)
 
 
+class BannedPatternSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=80, help_text="What the guard calls it in a refusal.")
+    pattern = serializers.CharField(max_length=500, help_text="A regular expression (Python's).")
+    flags = serializers.CharField(
+        max_length=8,
+        required=False,
+        allow_blank=True,
+        help_text="`i`, or none given, matches any case; empty matches case.",
+    )
+
+    def validate_pattern(self, value):
+        try:
+            re.compile(value)
+        except re.error as e:
+            raise serializers.ValidationError(f"not a regular expression: {e}") from e
+        return value
+
+
 class SiteSettingsSerializer(serializers.ModelSerializer):
     navigation = NavigationItemSerializer(many=True, required=False)
+    banned_patterns = BannedPatternSerializer(many=True, required=False)
     design_tokens = serializers.DictField(child=serializers.CharField(max_length=200), required=False)
 
     class Meta:
@@ -111,6 +130,7 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             "search_console_property",
             "navigation",
             "brand_voice",
+            "banned_patterns",
             "skin",
             "design_tokens",
             "monthly_budget_usd",

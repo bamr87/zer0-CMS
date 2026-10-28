@@ -4767,6 +4767,22 @@ export interface components {
             /** @description The automation as a YAML document: no owner, secret or enabled. */
             yaml: string;
         };
+        BannedPattern: {
+            /** @description What the guard calls it in a refusal. */
+            name: string;
+            /** @description A regular expression (Python's). */
+            pattern: string;
+            /** @description `i`, or none given, matches any case; empty matches case. */
+            flags?: string;
+        };
+        BannedPatternRequest: {
+            /** @description What the guard calls it in a refusal. */
+            name: string;
+            /** @description A regular expression (Python's). */
+            pattern: string;
+            /** @description `i`, or none given, matches any case; empty matches case. */
+            flags?: string;
+        };
         /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
         BeltMessage: {
             /** @description The relay's number; none until delivered. */
@@ -7676,6 +7692,7 @@ export interface components {
             navigation?: components["schemas"]["NavigationItemRequest"][];
             /** @description How the site writes; AI help reads it. */
             brand_voice?: string;
+            banned_patterns?: components["schemas"]["BannedPatternRequest"][];
             /** @description The design's skin. */
             skin?: string;
             design_tokens?: {
@@ -8312,6 +8329,7 @@ export interface components {
             navigation?: components["schemas"]["NavigationItem"][];
             /** @description How the site writes; AI help reads it. */
             brand_voice?: string;
+            banned_patterns?: components["schemas"]["BannedPattern"][];
             /** @description The design's skin. */
             skin?: string;
             design_tokens?: {

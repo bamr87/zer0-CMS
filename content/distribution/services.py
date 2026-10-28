@@ -449,9 +449,9 @@ def default_commentary(page, limit: int = 3) -> str:
 
 
 def guard(text: str, channel) -> list[dict]:
-    """The brand guard (suggestions/guard.py, the extension's rules, with the active brand rules), and for LinkedIn
-    its own limit once the text is escaped."""
-    findings = guard_text(text or "", extra_patterns())
+    """The brand guard (suggestions/guard.py, the extension's rules, with the active brand rules and the channel's
+    site's own), and for LinkedIn its own limit once the text is escaped."""
+    findings = guard_text(text or "", extra_patterns(channel.site))
     if channel.kind == Kind.LINKEDIN:
         escaped = posts.commentary_length(text)
         if escaped > plan.COMMENTARY_MAX and len(text or "") <= 3000:

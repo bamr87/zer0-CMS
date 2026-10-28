@@ -8,8 +8,10 @@ extension's two deduplications. `page_findings` is what applies to a page:
 the bans (errors) and filler (warnings), without the commentary-only length
 ceiling, fold or hook, which make no sense for an article (the extension's
 guard README says the same). Extra patterns come from the active
-`cms.BrandRules` snippets; a malformed one is skipped, never fatal, like a
-broken `governance.bannedPatternsFile`.
+`cms.BrandRules` snippets, which hold for every site, and — given the site a
+text is for — that site's own (`sites.SiteSettings.banned_patterns`, its brand
+rules); a malformed one is skipped, never fatal, like a broken
+`governance.bannedPatternsFile`.
 
 An accepted suggestion whose text has an error-level finding is refused: the
 guard is a validator in the accept flow (M10), not a report. A suggestion that
@@ -56,24 +58,33 @@ FILLER = [
 ]
 
 
-def extra_patterns() -> list[tuple[str, re.Pattern]]:
+def extra_patterns(site=None) -> list[tuple[str, re.Pattern]]:
+    """The active `BrandRules`' patterns and, given a Wagtail `Site`, that site's own."""
     from cms.models import BrandRules
+    from sites.models import SiteSettings
 
+    entries = [entry for rules in BrandRules.objects.filter(is_active=True) for entry in rules.banned_patterns or []]
+    if site is not None:
+        entries += SiteSettings.objects.filter(site=site).values_list("banned_patterns", flat=True).first() or []
     patterns = []
-    for rules in BrandRules.objects.filter(is_active=True):
-        for entry in rules.banned_patterns or []:
-            if (
-                not isinstance(entry, dict)
-                or not isinstance(entry.get("name"), str)
-                or not isinstance(entry.get("pattern"), str)
-            ):
-                continue
-            flags = re.I if "i" in str(entry.get("flags", "i")) else 0
-            try:
-                patterns.append((entry["name"], re.compile(entry["pattern"], flags)))
-            except re.error:
-                continue  # a broken addition never bricks the guard; the built-in bans still run
+    for entry in entries:
+        if (
+            not isinstance(entry, dict)
+            or not isinstance(entry.get("name"), str)
+            or not isinstance(entry.get("pattern"), str)
+        ):
+            continue
+        flags = re.I if "i" in str(entry.get("flags", "i")) else 0
+        try:
+            patterns.append((entry["name"], re.compile(entry["pattern"], flags)))
+        except re.error:
+            continue  # a broken addition never bricks the guard; the built-in bans still run
     return patterns
+
+
+def site_of(target):
+    """The Wagtail `Site` a page belongs to, for its brand rules; None for anything else."""
+    return target.get_site() if hasattr(target, "get_site") else None
 
 
 def _bans(text: str, extra, before: str | None = None) -> tuple[list[dict], set[str]]:
@@ -113,9 +124,10 @@ def guard_text(text: str, extra=()) -> list[dict]:
     return findings
 
 
-def page_findings(text: str, extra=None, before: str | None = None) -> list[dict]:
-    """The bans and the filler; given `before` (the text this one replaces), only a ban it adds."""
-    extra = extra_patterns() if extra is None else extra
+def page_findings(text: str, extra=None, before: str | None = None, site=None) -> list[dict]:
+    """The bans and the filler; given `before` (the text this one replaces), only a ban it adds. Without `extra`,
+    the active brand rules' patterns and `site`'s own."""
+    extra = extra_patterns(site) if extra is None else extra
     bans, errored = _bans(text or "", extra, before)
     return bans + _filler(text or "", errored)
 

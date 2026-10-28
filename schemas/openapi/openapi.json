@@ -31903,6 +31903,56 @@
                     "yaml"
                 ]
             },
+            "BannedPattern": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "What the guard calls it in a refusal.",
+                        "maxLength": 80
+                    },
+                    "pattern": {
+                        "type": "string",
+                        "description": "A regular expression (Python's).",
+                        "maxLength": 500
+                    },
+                    "flags": {
+                        "type": "string",
+                        "description": "`i`, or none given, matches any case; empty matches case.",
+                        "maxLength": 8
+                    }
+                },
+                "required": [
+                    "name",
+                    "pattern"
+                ]
+            },
+            "BannedPatternRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "What the guard calls it in a refusal.",
+                        "maxLength": 80
+                    },
+                    "pattern": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A regular expression (Python's).",
+                        "maxLength": 500
+                    },
+                    "flags": {
+                        "type": "string",
+                        "description": "`i`, or none given, matches any case; empty matches case.",
+                        "maxLength": 8
+                    }
+                },
+                "required": [
+                    "name",
+                    "pattern"
+                ]
+            },
             "BeltMessage": {
                 "type": "object",
                 "description": "Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them.",
@@ -40649,6 +40699,12 @@
                         "type": "string",
                         "description": "How the site writes; AI help reads it."
                     },
+                    "banned_patterns": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BannedPatternRequest"
+                        }
+                    },
                     "skin": {
                         "type": "string",
                         "description": "The design's skin.",
@@ -42544,6 +42600,12 @@
                     "brand_voice": {
                         "type": "string",
                         "description": "How the site writes; AI help reads it."
+                    },
+                    "banned_patterns": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/BannedPattern"
+                        }
                     },
                     "skin": {
                         "type": "string",
