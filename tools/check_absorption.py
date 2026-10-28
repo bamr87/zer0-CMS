@@ -40,10 +40,13 @@ It asserts:
     command line or a CI job, which prove nothing by existing;
   * **the sources** — every capability has a unique id, a known status and a
     `target` that is a platform capability id; a `done` capability names a `proof` that is such a test; a `dropped`
-    one names the owner's decision in `decided_by`;
+    one names the owner's decision in `decided_by`; a `specified` one — its source deleted by the owner's decision
+    before it moved, what it did kept as a written spec — names that decision in `decided_by` and the spec, a file
+    that exists, in `spec`, and keeps a live `target`: the platform still owes it;
   * **the deletion gate** — a source whose `path` no longer exists has no
     capability left `missing` or `partial`. Deleting a directory before its
-    capabilities moved is exactly the loss ADR 0006 forbids.
+    capabilities moved is exactly the loss ADR 0006 forbids, unless the owner
+    decided it and what each capability did survives as its spec (`specified`).
 
 `--report` prints the burn-down: Ruby files per prefix, capability status per
 source, surface coverage per platform domain, and every capability the studio
@@ -87,7 +90,7 @@ THEME_SKIP_PREFIXES = (
 # followed by `::` and a test id in it (`test_x`, `SomeTest`, `SomeTest::test_x`, `test_x[case]`).
 TEST_FILE = re.compile(r"(^|/)tests?/|(^|/)test_[^/]*$|[._]test\.[a-z]+$")
 TEST_ID = re.compile(r"[A-Za-z_]\w*(\[[^\]]*\])?(::[A-Za-z_]\w*(\[[^\]]*\])?)*")
-STATUSES = ("missing", "partial", "done", "dropped")
+STATUSES = ("missing", "partial", "done", "dropped", "specified")
 OPEN = ("missing", "partial")
 SURFACES = ("api", "studio", "extension", "mcp", "site", "ops")
 SURFACE_STATUSES = ("missing", "partial", "done")
@@ -164,6 +167,16 @@ def proof_problem(proof: str, exists: Callable[[str], bool]) -> str | None:
     return None
 
 
+def spec_problem(spec: str, exists: Callable[[str], bool]) -> str | None:
+    """What is wrong with a `specified` row's spec, or None: a file that exists, optionally `#` a section of it."""
+    path = spec.partition("#")[0]
+    if not path:
+        return "specified without a spec (the file that keeps what its deleted source did)"
+    if not exists(path):
+        return f"spec {path} does not exist"
+    return None
+
+
 def check_platform(platform: list[dict], exists: Callable[[str], bool]) -> list[str]:
     errors: list[str] = []
     seen: set[str] = set()
@@ -228,6 +241,11 @@ def check_ledger(sources: list[dict], exists: Callable[[str], bool], targets: se
                 errors.append(f"{where}: {problem}")
             if status == "dropped" and not cap.get("decided_by"):
                 errors.append(f"{where}: dropped without decided_by (only the owner drops a capability)")
+            if status == "specified":
+                if not cap.get("decided_by"):
+                    errors.append(f"{where}: specified without decided_by (only the owner deletes a source early)")
+                if problem := spec_problem(str(cap.get("spec") or ""), exists):
+                    errors.append(f"{where}: {problem}")
             if status in OPEN:
                 open_caps.append(cid)
         if open_caps and not exists(source["path"]):
