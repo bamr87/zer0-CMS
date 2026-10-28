@@ -262,10 +262,34 @@ describe('<AieoWorkspace> agents, citations, connectors, priorities, reports, co
     await waitFor(() =>
       expect(posts(calls, '/api/v2/aieo/connectors/')[0]?.body).toEqual({ site: 1, kind: 'ga4', enabled: true, options: { property_id: '123' }, credential: 'service-account-key' }),
     );
-    expect(await within(ga4).findByText(/set; type a new one to replace it/)).toBeInTheDocument();
-    expect(within(ga4).getByLabelText('Credential')).toHaveValue('');
-    await userEvent.click(within(ga4).getByRole('button', { name: 'Sync now' }));
+    expect(await screen.findByText(/set; type a new one to replace it/)).toBeInTheDocument();
+    const connected = screen.getByRole('form', { name: 'Google Analytics 4' }); // drawn afresh from the saved row
+    expect(within(connected).getByLabelText('Credential')).toHaveValue('');
+    await userEvent.click(within(connected).getByRole('button', { name: 'Sync now' }));
     await waitFor(() => expect(posts(calls, '/api/v2/aieo/connectors/c1/sync/')).toHaveLength(1));
+  });
+
+  it("edits a saved connector from what is saved, and opens the rows its last sync fetched", async () => {
+    const saved = {
+      id: 'c1', site: 1, kind: 'ga4', enabled: false, options: { property_id: '987', days: 7 }, has_credential: true, status: 'ok', error: '',
+      last_synced_at: '2026-10-22T09:00:00Z', can_edit: true, rows: 1, created_at: '', updated_at: '2026-10-22T09:00:00Z',
+    };
+    const { api, calls } = fakePlatform({
+      'GET /api/v2/aieo/connectors/': () => [saved],
+      'PATCH /api/v2/aieo/connectors/c1/': ({ body }) => ({ ...saved, ...(body as object), updated_at: '2026-10-22T10:00:00Z' }),
+      'GET /api/v2/aieo/connectors/c1/data/': () => ({ report: 'top_pages', fetched_at: '2026-10-22T09:00:00Z', rows: [{ page: '/backups/', sessions: 420 }] }),
+    });
+    renderUi(<AieoWorkspace section="connectors" siteId={1} />, { api });
+    const ga4 = await screen.findByRole('form', { name: 'Google Analytics 4' });
+    expect(within(ga4).getByLabelText('property id')).toHaveValue('987');
+    await userEvent.type(within(ga4).getByLabelText('Credential'), 'a-new-key');
+    await userEvent.click(within(ga4).getByRole('button', { name: 'Save' }));
+    // Replacing the credential keeps the saved options and leaves the connector off.
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ enabled: false, options: { property_id: '987', days: 7 }, credential: 'a-new-key' }),
+    );
+    await userEvent.click(within(await screen.findByRole('form', { name: 'Google Analytics 4' })).getByRole('button', { name: 'Show the rows' }));
+    expect(await screen.findByRole('table', { name: 'Google Analytics 4 rows' })).toHaveTextContent('/backups/420');
   });
 
   it('ranks the priorities, marks the quick wins, and asks for a site first', async () => {
