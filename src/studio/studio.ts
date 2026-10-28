@@ -162,7 +162,7 @@ export class Studio implements vscode.Disposable {
     const token = await vscode.window.showInputBox({
       title: `zer0-CMS: your token for ${origin}`,
       prompt:
-        'A personal token from the platform (python manage.py user_token <you> --name "VS Code"). ' +
+        'A personal token from the platform — in the studio, your menu → API tokens (or python manage.py user_token <you> --name "VS Code"). ' +
         "It is kept in the editor's secret storage and sent to this platform only.",
       password: true,
       ignoreFocusOut: true,

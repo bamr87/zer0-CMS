@@ -39,11 +39,6 @@ class MeSerializer(serializers.Serializer):
     csrf_token = serializers.CharField(help_text="Send it as `X-CSRFToken` on every unsafe request.")
 
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField(trim_whitespace=False, style={"input_type": "password"})
-
-
 # ── sites and pages ────────────────────────────────────────────────────────
 
 

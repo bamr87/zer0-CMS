@@ -15,6 +15,8 @@ import environ
 from celery.schedules import crontab
 from corsheaders.defaults import default_headers as cors_default_headers
 
+from accounts.providers import group_map, socialaccount_providers
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # content/
 REPO_ROOT = BASE_DIR.parent  # the zer0-CMS checkout
 
@@ -94,6 +96,16 @@ INSTALLED_APPS = [
     "grapple",
     # Email through an ESP (newsroom/README.md).
     "anymail",
+    # Accounts (accounts/README.md): django-allauth, served headless to the studio — local accounts, OpenID
+    # Connect IdPs and GitHub from the environment, TOTP, recovery codes and passkeys, the session list.
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.openid_connect",
+    "allauth.socialaccount.providers.github",
+    "allauth.mfa",
+    "allauth.usersessions",
+    "allauth.headless",
     # Django.
     "django.contrib.admin",
     "django.contrib.auth",
@@ -118,6 +130,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # allauth's request context, and the session list's row for a session that started before it existed.
+    "allauth.account.middleware.AccountMiddleware",
+    "allauth.usersessions.middleware.UserSessionsMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
@@ -151,12 +166,83 @@ DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / '
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# ── Accounts: sign-in, MFA, sessions, password policy (accounts/README.md) ──
+# django-allauth, configured rather than hand-rolled, and served only headless
+# (`/_allauth/browser/v1/…`) to the studio's sign-in and account menu: every
+# screen is React in web/, never a template here. Signing in to the Wagtail
+# admin or the Django admin goes there too (accounts/views.py), so a password
+# never skips a second factor through another form.
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+LOGIN_URL = "/studio/"
+WAGTAILADMIN_LOGIN_URL = LOGIN_URL
+# The studio's account menu changes and resets passwords (allauth), not the admin's own forms.
+WAGTAIL_PASSWORD_MANAGEMENT_ENABLED = False
+WAGTAIL_PASSWORD_RESET_ENABLED = False
+HEADLESS_ONLY = True
+HEADLESS_CLIENTS = ("browser", "app")
+# Where allauth's email and provider redirects send a person: the studio's account screens.
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": "/studio/account/verify-email/{key}",
+    "account_reset_password": "/studio/account/password/reset",
+    "account_reset_password_from_key": "/studio/account/password/reset/{key}",
+    "account_signup": "/studio/account/signup",
+    "socialaccount_login_error": "/studio/account/provider/callback",
+}
+ACCOUNT_ADAPTER = "accounts.adapter.AccountAdapter"
+SOCIALACCOUNT_ADAPTER = "accounts.adapter.SocialAccountAdapter"
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+# Sign-up is closed unless a deployment opens it; an operator (or an OpenID Connect IdP) makes accounts otherwise.
+SIGNUP_OPEN = env.bool("SIGNUP_OPEN", default=False)
+# mandatory: no sign-in until the address is verified — by a code sent to it, as are sign-in codes and password
+# resets, so every flow finishes in the screen that started it. An account an operator made verifies its address
+# at its first sign-in (seed_demo's person is verified already). `optional` or `none` send a link instead, which
+# opens the studio's account screen (allauth verifies by code only when verification is mandatory).
+ACCOUNT_EMAIL_VERIFICATION = env("ACCOUNT_EMAIL_VERIFICATION", default="mandatory")
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = ACCOUNT_EMAIL_VERIFICATION == "mandatory"
+ACCOUNT_LOGIN_BY_CODE_ENABLED = env.bool("ACCOUNT_LOGIN_BY_CODE_ENABLED", default=True)
+ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[zer0-CMS] "
+# Changing the password, the second factor or the email asks for the password (or a factor) again after this long.
+ACCOUNT_REAUTHENTICATION_TIMEOUT = env.int("ACCOUNT_REAUTHENTICATION_TIMEOUT", default=300)
+# The password policy: these validators, at sign-up, change and reset.
+PASSWORD_MIN_LENGTH = env.int("PASSWORD_MIN_LENGTH", default=12)
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": PASSWORD_MIN_LENGTH},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+# The session policy: how long a sign-in lasts, whether closing the browser ends it, and cookies a page's
+# script cannot read or another site send.
+SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=60 * 60 * 24 * 14)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = env.bool("SESSION_EXPIRE_AT_BROWSER_CLOSE", default=False)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+# The session list records each sign-in; it does not write on every request (USERSESSIONS_TRACK_ACTIVITY), for the
+# reason authenticating writes nothing in a request (content/AGENTS.md).
+USERSESSIONS_TRACK_ACTIVITY = False
+# Second factors: TOTP, recovery codes, passkeys (WebAuthn) — which also sign in on their own.
+MFA_SUPPORTED_TYPES = ["totp", "recovery_codes", "webauthn"]
+MFA_PASSKEY_LOGIN_ENABLED = True
+# Signing up with a passkey instead of a password, where sign-up is open: allauth needs the address verified by code.
+MFA_PASSKEY_SIGNUP_ENABLED = ACCOUNT_EMAIL_VERIFICATION == "mandatory"
+MFA_TOTP_ISSUER = "zer0-CMS"
+MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN = env.bool("MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN", default=False)
+# Third-party sign-in, each from the environment (accounts/providers.py): one OpenID Connect app per IdP named in
+# OIDC_PROVIDERS, and GitHub when GITHUB_LOGIN_CLIENT_ID is set. None set: local accounts only.
+SOCIALACCOUNT_PROVIDERS = socialaccount_providers(env.ENVIRON)
+SOCIALACCOUNT_STORE_TOKENS = False
+# An IdP's groups claim → Wagtail groups, synced at each sign-in through that IdP (accounts/groups.py).
+OIDC_GROUP_MAP = group_map(env("OIDC_GROUP_MAP", default=""))
+OIDC_GROUPS_CLAIM = env("OIDC_GROUPS_CLAIM", default="groups")
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -252,7 +338,8 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "zer0-CMS platform API",
     "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry; and for the studio and the "
-    "extension, the session, sites, pages, revisions, publishing and the review inbox. "
+    "extension, who is signed in and their API tokens, sites, pages, revisions, publishing and the review inbox. "
+    "Signing in is django-allauth's headless API at /_allauth/, which documents itself. "
     "Wagtail's pages, images and documents endpoints live beside these at /api/v2/ and are documented by Wagtail.",
     "VERSION": "2",
     "OAS_VERSION": "3.1.0",
@@ -315,6 +402,8 @@ SPECTACULAR_SETTINGS = {
         "RewriteModeEnum": "aieo.serializers.MODES",
         "RewriteStyleEnum": "aieo.serializers.STYLES",
         "AieoAgentGroupEnum": "aieo.serializers.GROUPS",
+        "TokenScopeEnum": "accounts.models.SCOPES",
+        "TokenStateEnum": "accounts.serializers.TOKEN_STATES",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }

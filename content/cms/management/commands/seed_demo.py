@@ -17,6 +17,7 @@ demo value only under DEBUG; anywhere else it must be given.
     python manage.py seed_demo [--username editor] [--password …]
 """
 
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -76,6 +77,8 @@ class Command(BaseCommand):
         user.set_password(password)
         user.save()
         user.groups.add(*Group.objects.filter(name__in=["Editors", "Moderators"]))
+        # The demo person's address counts as verified, so they sign in at once wherever verification is mandatory.
+        EmailAddress.objects.update_or_create(user=user, email=user.email, defaults={"verified": True, "primary": True})
         return user
 
     def site(self, editor) -> ArticlePage:

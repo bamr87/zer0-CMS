@@ -36,6 +36,27 @@ def test_every_studio_path_is_the_index_with_a_fresh_nonce(tmp_path):
 
 
 @pytest.mark.django_db
+def test_the_studio_may_post_only_to_itself_and_the_configured_idps(tmp_path, settings):
+    from accounts.providers import socialaccount_providers
+
+    (tmp_path / "index.html").write_text(INDEX)
+    settings.STUDIO_DIST = tmp_path
+    assert "form-action 'self';" in Client().get("/studio/")["Content-Security-Policy"]
+    settings.SOCIALACCOUNT_PROVIDERS = socialaccount_providers(
+        {
+            "OIDC_PROVIDERS": "corp",
+            "OIDC_CORP_SERVER_URL": "https://login.corp.example/realms/staff",
+            "OIDC_CORP_CLIENT_ID": "zer0-cms",
+            "GITHUB_LOGIN_CLIENT_ID": "id",
+            "GITHUB_LOGIN_CLIENT_SECRET": "secret",
+        }
+    )
+    policy = Client().get("/studio/")["Content-Security-Policy"]
+    assert "form-action 'self' https://login.corp.example https://github.com;" in policy
+    assert "secret" not in policy and "zer0-cms" not in policy
+
+
+@pytest.mark.django_db
 def test_an_unbuilt_studio_says_how_to_build_it(tmp_path):
     with override_settings(STUDIO_DIST=tmp_path / "missing"):
         response = Client().get("/studio")

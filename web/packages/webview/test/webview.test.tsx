@@ -126,7 +126,7 @@ describe('the extension webviews', () => {
   it('has a workspace for every destination the studio has, each the studio area for that path', () => {
     // HOME's keys are the whole Destination union (the type checker holds it to that); each names a registered workspace.
     const ids = WORKSPACES.map((w) => w.id);
-    expect(ids).toEqual(['home', 'write', 'create', 'ideas', 'research', 'newsroom', 'books', 'review', 'ai', 'outbox', 'sites', 'distribution']);
+    expect(ids).toEqual(['home', 'write', 'create', 'ideas', 'research', 'newsroom', 'books', 'review', 'ai', 'outbox', 'sites', 'distribution', 'account']);
     for (const [to, id] of Object.entries(HOME)) {
       expect(ids, to).toContain(id);
       expect(workspaceFor({ to } as Destination)?.id, to).toBe(id);
@@ -157,11 +157,14 @@ describe('the extension webviews', () => {
     await at({ to: 'job', id: 'job-1' }, 'Sites');
     await at({ to: 'aieo', section: 'patterns' }, 'Sites');
     await at({ to: 'channel', id: 'ch-1' }, 'Distribution');
+    // The account (G3): with no browser session in a webview, the person's API tokens, through the host like the rest.
+    await at({ to: 'account', section: 'tokens' }, 'Account');
+    expect(await screen.findByText(/managed in the studio/)).toBeInTheDocument();
 
     // Each asked the platform for what it shows — through the host, by path, never with a credential.
     await waitFor(() => {
       const paths = host.sent.filter((m) => m.type === 'api').map((m) => String(m.path));
-      for (const path of ['/api/v2/ai/briefs/', '/api/v2/research/sources/src-1/', '/api/v2/books/3/', '/api/v2/ai/assistants/a-1/', '/api/v2/jobs/job-1/']) {
+      for (const path of ['/api/v2/ai/briefs/', '/api/v2/research/sources/src-1/', '/api/v2/books/3/', '/api/v2/ai/assistants/a-1/', '/api/v2/jobs/job-1/', '/api/v2/account/tokens/']) {
         expect(paths.some((p) => p.startsWith(path)), path).toBe(true);
       }
     });

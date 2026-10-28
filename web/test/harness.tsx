@@ -1,4 +1,5 @@
-// The test harness: a fake platform behind the real openapi-fetch client —
+// The test harness: a fake platform behind the real openapi-fetch client (and
+// allauth's headless API over the same fake, for the sign-in screens) —
 // routes keyed by "METHOD /path", every request recorded (with its CSRF token
 // and Idempotency-Key), a route may answer later (a promise, for a request a
 // test holds open) — and the providers every @zer0/ui component and the
@@ -9,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { createSessionClient, type ApiClient } from '@zer0/api';
 import { theme } from '@zer0/tokens';
-import { StudioProvider, type Destination, type OpenStream } from '@zer0/ui';
+import { StudioProvider, type AuthHost, type Destination, type OpenStream } from '@zer0/ui';
 import type { ReactNode } from 'react';
 import { vi } from 'vitest';
 
@@ -56,8 +57,62 @@ export function fakePlatform(routes: Record<string, Handler>) {
     return new Response(JSON.stringify(reply.body), { status: reply.status, headers: { 'Content-Type': 'application/json' } });
   };
   const api: ApiClient = createSessionClient({ baseUrl: 'http://studio.test', fetch, csrfToken: () => 'test-csrf' });
-  return { api, calls };
+  return { api, calls, fetch };
 }
+
+/**
+ * allauth's headless API over the same fake (G3): what a host's `AuthHost`
+ * does with a request — `/_allauth/browser/v1` + path, JSON, the CSRF token —
+ * with the provider redirect and the browser's WebAuthn as spies a test reads.
+ */
+export function fakeAuth(fetch: (request: Request) => Promise<Response>, extra: Partial<AuthHost> = {}): AuthHost {
+  return {
+    async request(method, path, body) {
+      const response = await fetch(
+        new Request(`http://studio.test/_allauth/browser/v1${path}`, {
+          method,
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': 'test-csrf' },
+          ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        }),
+      );
+      return { status: response.status, ...((await response.json()) as object) };
+    },
+    redirectToProvider: vi.fn(),
+    ...extra,
+  };
+}
+
+/** allauth's answer: signed in as `username`, by these methods. */
+export const authenticated = (username = 'editor', methods = ['password']) =>
+  new Reply(200, {
+    status: 200,
+    data: { user: { id: 1, username, display: username, has_usable_password: true }, methods: methods.map((method) => ({ method, at: 1 })) },
+    meta: { is_authenticated: true },
+  });
+
+/** allauth's 401: not signed in (yet), with this flow pending if one is named. */
+export const unauthenticated = (pending?: { id: string; types?: string[] }) =>
+  new Reply(401, {
+    status: 401,
+    data: { flows: [{ id: 'login' }, ...(pending ? [{ ...pending, is_pending: true }] : [])] },
+    meta: { is_authenticated: false },
+  });
+
+/** allauth's 400, field by field. */
+export const refused = (message: string, param?: string, code = 'invalid') =>
+  new Reply(400, { status: 400, errors: [{ message, code, ...(param ? { param } : {}) }] });
+
+/** allauth's configuration, as the sign-in screen reads it, with overrides. */
+export const authConfig = (overrides: Record<string, unknown> = {}) => ({
+  status: 200,
+  data: {
+    account: { login_methods: ['username', 'email'], is_open_for_signup: false, login_by_code_enabled: true, email_verification_by_code_enabled: true },
+    socialaccount: { providers: [] },
+    mfa: { supported_types: ['totp', 'recovery_codes', 'webauthn'], passkey_login_enabled: true },
+    usersessions: { track_activity: false },
+    ...overrides,
+  },
+});
 
 export const noStream: OpenStream = () => () => undefined;
 
@@ -88,11 +143,11 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 }
 
-export function renderUi(ui: ReactNode, host: { api: ApiClient; stream?: OpenStream; go?: (to: Destination) => void }) {
+export function renderUi(ui: ReactNode, host: { api: ApiClient; stream?: OpenStream; go?: (to: Destination) => void; auth?: AuthHost }) {
   const go = host.go ?? vi.fn();
   const result = render(
     <Providers>
-      <StudioProvider api={host.api} stream={host.stream ?? noStream} go={go}>
+      <StudioProvider api={host.api} stream={host.stream ?? noStream} go={go} auth={host.auth}>
         {ui}
       </StudioProvider>
     </Providers>,

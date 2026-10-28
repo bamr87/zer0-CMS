@@ -3,8 +3,9 @@
 **GraphQL.** Grapple's view is CSRF-exempt, which is right for a token client
 and wrong for a browser session: a page elsewhere could post a mutation with
 the editor's cookie. `ContentGraphQLView` authenticates a bearer token itself
-(an agent user), and enforces Django's CSRF check on any POST that is
-authenticated by session instead — DRF's rule. Its `format_error` keeps
+— an agent's (`zer0_…`, the agent user) or a person's (`zer0u_…`, that person;
+one without the `write` scope runs queries only) — and enforces Django's CSRF
+check on any POST that is authenticated by session instead — DRF's rule. Its `format_error` keeps
 GraphQL's own `errors` array and adds the platform's `code` and `request_id`
 in `extensions`; a resolver crash is reported as `internal.error` with the
 traceback in the log, never in the response.
@@ -37,7 +38,7 @@ from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from graphene_django.views import GraphQLView
-from graphql import GraphQLError
+from graphql import ExecutionResult, GraphQLError, OperationType, get_operation_ast, parse
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -45,6 +46,8 @@ from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 from wagtail.models import Page, Revision
 
+from accounts.auth import READ_ONLY
+from accounts.models import WRITE, UserToken
 from agents.auth import bearer
 from agents.models import AgentDefinition, AgentRun, AgentToken
 from agents.registry import ToolContext, registry
@@ -91,7 +94,13 @@ def _graphql_error(message, code, status_code):
 class ContentGraphQLView(GraphQLView):
     def dispatch(self, request, *args, **kwargs):
         raw = bearer(request.headers.get("Authorization"))
-        if raw is not None:
+        if raw is not None and raw.startswith(UserToken.PREFIX):
+            token = UserToken.authenticate(raw)
+            if token is None:
+                return _graphql_error("unknown, expired or revoked token", "auth.invalid_token", 401)
+            request.user = token.user
+            request.user_token = token
+        elif raw is not None:
             token = AgentToken.authenticate(raw)
             if token is None:
                 return _graphql_error("unknown, revoked or inactive agent token", "auth.invalid_token", 401)
@@ -104,6 +113,18 @@ class ContentGraphQLView(GraphQLView):
             if reason:
                 return _graphql_error(f"CSRF failed: {reason}", "auth.csrf_failed", 403)
         return super().dispatch(request, *args, **kwargs)
+
+    def execute_graphql_request(self, request, data, query, variables, operation_name, show_graphiql=False):
+        """A person's read-only token runs queries; a mutation is refused before anything resolves."""
+        token = getattr(request, "user_token", None)
+        if token is not None and not token.allows(WRITE) and query:
+            try:
+                operation = get_operation_ast(parse(query), operation_name)
+            except GraphQLError:
+                operation = None  # unparsable: the base class reports it as graphql.invalid
+            if operation is not None and operation.operation != OperationType.QUERY:
+                return ExecutionResult(errors=[GraphQLError(READ_ONLY, original_error=Forbidden(READ_ONLY))])
+        return super().execute_graphql_request(request, data, query, variables, operation_name, show_graphiql)
 
     @staticmethod
     def format_error(error):

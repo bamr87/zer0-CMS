@@ -1,14 +1,16 @@
 """`UserToken`: a person's API token, for a client that is not a browser.
 
-The studio signs in with a session; the VS Code extension (PLAN G10) cannot
-hold one, so it sends `Authorization: Bearer zer0u_<…>` from the editor's
-secret storage and the platform treats the request as that person — the same
-Wagtail permissions, the same `IsPerson` endpoints. What it shares with an
-agent's token (the hash, the one-time raw token, authentication) is
-`accounts.tokens.HashedToken`; what is a person's is here: an expiry, a public
-id, and `visible_to`, the one scope a token is read through. Issuing, listing
-and revoking are `accounts.services`. PLAN G3 grows this (scopes, the account
-menu).
+The studio signs in with a session (django-allauth); the VS Code extension
+(PLAN G10) cannot hold one, so it sends `Authorization: Bearer zer0u_<…>` from
+the editor's secret storage and the platform treats the request as that
+person — the same Wagtail permissions, the same `IsPerson` endpoints, over
+REST and GraphQL. What it shares with an agent's token (the hash, the one-time
+raw token, authentication) is `accounts.tokens.HashedToken`; what is a
+person's is here: an expiry, a public id, its **scopes** — `read` (safe
+requests and GraphQL queries) and `write` (everything else the person may do)
+— and `visible_to`, the one scope a token is read through. Issuing, listing
+and revoking are `accounts.services`, from the account menu or
+`manage.py user_token`.
 """
 
 import uuid
@@ -17,6 +19,13 @@ from django.conf import settings
 from django.db import models
 
 from .tokens import HashedToken
+
+READ, WRITE = "read", "write"
+SCOPES = (READ, WRITE)
+
+
+def every_scope() -> list[str]:
+    return list(SCOPES)
 
 
 class UserTokenQuerySet(models.QuerySet):
@@ -35,8 +44,19 @@ class UserToken(HashedToken):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_tokens")
     prefix = models.CharField(max_length=14, db_index=True)
     expires_at = models.DateTimeField(null=True, blank=True)
+    scopes = models.JSONField(
+        default=every_scope, help_text="What the token may do: `read`, and `write` to change anything."
+    )
 
     objects = UserTokenQuerySet.as_manager()
 
     def in_date(self, now) -> bool:
         return self.expires_at is None or self.expires_at > now
+
+    def allows(self, scope: str) -> bool:
+        return scope in (self.scopes or [])
+
+    def state(self, now) -> str:
+        if self.revoked_at:
+            return "revoked"
+        return "active" if self.in_date(now) else "expired"

@@ -643,13 +643,28 @@ platform:
   - id: platform.accounts
     what: Email sign-up with verification, login by code, password reset, OIDC SSO, GitHub login, MFA (TOTP, passkeys, recovery codes), the session list.
     # P4: sign-in with a username and password over a session with CSRF (api/session.py, studio/src/auth.tsx); everything else is G3's allauth.
-    surfaces: {api: partial, studio: partial, extension: missing}
+    # G3: django-allauth served headless (/_allauth/browser/v1/) — every capability above, OpenID Connect IdPs from the environment
+    # with their groups mapped (tests/accounts/test_providers.py), TOTP, recovery codes and passkeys (test_mfa.py), sign-up,
+    # codes and reset (test_signup.py), the session list (test_signin.py); the studio's sign-in screen and account menu
+    # (web/packages/ui/test/account.test.tsx, web/studio/test/app.test.tsx). The extension: no browser session in a webview,
+    # so it signs in with a token issued in the account menu; signing in from the editor through allauth's app client is open.
+    surfaces: {api: done, studio: done, extension: missing}
+    proof:
+      api: content/tests/accounts/test_signin.py
+      studio: web/packages/ui/test/account.test.tsx
   - id: platform.tokens
     what: Personal API tokens and agent tokens, issued and revoked.
-    # G10: accounts.UserToken (hashed, 90 days unless the issuer says otherwise, a superuser's only with --superuser, revoked; accounts.services and manage.py user_token) authenticates a person over REST, sharing accounts.tokens.HashedToken with AgentToken; the extension sets and clears one in SecretStorage, per platform origin. Issuing from the account menu, scopes and GraphQL are G3's.
-    surfaces: {api: partial, studio: missing, extension: partial}
+    # G10: accounts.UserToken (hashed, 90 days unless the issuer says otherwise, a superuser's only with --superuser, revoked; accounts.services and manage.py user_token) authenticates a person over REST, sharing accounts.tokens.HashedToken with AgentToken; the extension sets and clears one in SecretStorage, per platform origin.
+    # G3: a person's tokens are scoped (read, write), issued from a signed-in session, listed and revoked in the account menu
+    # (/api/v2/account/tokens/: content/tests/accounts/test_tokens.py; the studio: web/packages/ui/test/account.test.tsx) and
+    # accepted by GraphQL; the extension lists and revokes them through its host (web/packages/webview/test/webview.test.tsx).
+    # Partial for the agent tokens, still issued and revoked only with manage.py agent_token (the Admin area, G3's open item),
+    # and the extension cannot issue a token (that needs a browser session).
+    surfaces: {api: partial, studio: partial, extension: partial}
   - id: platform.permissions
     what: Roles, groups, per-site permissions, and per-person ownership and sharing.
+    # G3: an OpenID Connect IdP's groups claim sets the Wagtail groups OIDC_GROUP_MAP names, at every sign-in
+    # (content/tests/accounts/test_providers.py). Roles, groups and per-site permissions in the studio are the Admin area's (G3, open).
     surfaces: {api: partial, studio: missing}
   - id: platform.audit
     what: An audit log of who did what, people and agents alike.
@@ -742,10 +757,10 @@ sources:
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
       - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: done, proof: content/tests/importers/test_parodynews.py}
-      - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: missing}
-      - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: missing}
-      - {id: parodynews.mfa, what: "TOTP, WebAuthn passkeys (passkey login and sign-up) and recovery codes.", target: platform.accounts, status: missing}
-      - {id: parodynews.sessions, what: "List and end one's other sessions.", target: platform.accounts, status: missing}
+      - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: done, proof: web/packages/ui/test/account.test.tsx, note: "G3: the studio's sign-in screen and account menu over django-allauth — sign-up where SIGNUP_OPEN (closed by default), the address verified by code before the first sign-in (ACCOUNT_EMAIL_VERIFICATION, mandatory by default everywhere), login by password or by a code, reset by code, the password changed or set in the account menu. API: content/tests/accounts/test_signup.py, content/tests/accounts/test_signin.py"}
+      - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: done, proof: content/tests/accounts/test_providers.py::test_github_follows_signup_open_and_signs_in_a_person_it_knows, note: "G3: allauth's GitHub provider when GITHUB_LOGIN_CLIENT_ID/_SECRET are set (recorded GitHub, never the network); new accounts through it follow SIGNUP_OPEN, connecting it to an account works either way (::test_a_person_connects_github_to_their_account_and_lists_it). The studio shows a button per configured provider and connects or disconnects one in the account menu (web/packages/ui/test/account.test.tsx, web/studio/test/app.test.tsx)"}
+      - {id: parodynews.mfa, what: "TOTP, WebAuthn passkeys (passkey login and sign-up) and recovery codes.", target: platform.accounts, status: done, proof: web/packages/ui/test/account.test.tsx, note: "G3: allauth.mfa — TOTP with recovery codes, passkeys as a second factor, to sign in on their own and to sign up where sign-up is open; set up in the studio's account menu behind the password asked again. API: content/tests/accounts/test_mfa.py, content/tests/accounts/test_signup.py::test_a_passkey_sign_up_verifies_the_address_then_makes_the_passkey (a software authenticator python-fido2 verifies)"}
+      - {id: parodynews.sessions, what: "List and end one's other sessions.", target: platform.accounts, status: done, proof: web/packages/ui/test/account.test.tsx, note: "G3: allauth.usersessions in the account menu's Sessions tab — one ended, or every other. API: content/tests/accounts/test_signin.py::test_a_person_lists_their_sessions_and_ends_another"}
       - {id: parodynews.ownership, what: "People see their own rows and shared ones; staff see all.", target: platform.permissions, status: done, proof: content/tests/ai/test_models.py::test_visible_to_is_the_one_scope}
       - {id: parodynews.install-wizard, what: "First-run setup on the web or the CLI (headless with an expiring token), admin creation, status and health, the redirect until installed.", target: platform.install, status: missing}
       - {id: parodynews.ops-commands, what: "ensure_admin, ensure_e2e_user, reset_db, refreshmigrations.", target: platform.install, status: partial}

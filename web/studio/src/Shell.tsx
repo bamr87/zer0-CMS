@@ -1,10 +1,11 @@
 // The studio's frame: the navigation over every area, the site switcher, the
-// light/dark switch and sign-out, around whichever area is open.
+// light/dark switch and the person's menu (their account, API tokens,
+// sign-out), around whichever area is open.
 import { ActionIcon, AppShell, Badge, Burger, Group, Menu, NavLink, Text, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconMoon, IconSun } from '@tabler/icons-react';
 import { SitePicker } from '@zer0/ui';
-import { Link, Outlet, useLocation } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { AREAS } from './areas';
 import { useSignOut, type Person } from './auth';
@@ -66,6 +67,7 @@ function SchemeToggle() {
 
 function PersonMenu({ person }: { person: Person }) {
   const signOut = useSignOut();
+  const navigate = useNavigate();
   return (
     <Menu position="bottom-end">
       <Menu.Target>
@@ -75,6 +77,8 @@ function PersonMenu({ person }: { person: Person }) {
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{person.email || person.username}</Menu.Label>
+        <Menu.Item onClick={() => void navigate('/account')}>Account and security</Menu.Item>
+        <Menu.Item onClick={() => void navigate('/account/tokens')}>API tokens</Menu.Item>
         <Menu.Item onClick={() => signOut.mutate()}>Sign out</Menu.Item>
       </Menu.Dropdown>
     </Menu>
