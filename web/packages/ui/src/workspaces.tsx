@@ -10,6 +10,7 @@
 import { Button, Group, Stack, Tabs } from '@mantine/core';
 import { useState, type ReactNode } from 'react';
 
+import { AccountWorkspace } from './account/Account';
 import {
   AssistantEditor,
   AssistantList,
@@ -67,7 +68,8 @@ export type WorkspaceId =
   | 'ai'
   | 'outbox'
   | 'sites'
-  | 'distribution';
+  | 'distribution'
+  | 'account';
 
 export interface Workspace {
   id: WorkspaceId;
@@ -111,6 +113,7 @@ export const HOME: { readonly [To in Destination['to']]: WorkspaceId } = {
   channel: 'distribution',
   automation: 'ai',
   aieo: 'sites',
+  account: 'account',
 };
 
 /**
@@ -277,9 +280,15 @@ function DistributionWorkspace({ siteId, at }: WorkspaceProps) {
   );
 }
 
+/** The person's account (G3): with no browser session (the extension), its API tokens; the rest is the studio's. */
+function AccountView({ at }: WorkspaceProps) {
+  const [section, setSection] = useSection(at, (to) => (to.to === 'account' ? (to.section ?? 'security') : undefined), 'security');
+  return <AccountWorkspace section={section} onSection={setSection} />;
+}
+
 const showing = (id: WorkspaceId) => (to: Destination) => HOME[to.to] === id;
 
-/** In the studio's navigation order (web/studio/src/areas.ts), less the areas a later milestone builds. */
+/** In the studio's navigation order (web/studio/src/areas.ts), less the areas a later milestone builds; then the account (the studio's person menu). */
 export const WORKSPACES: readonly Workspace[] = [
   { id: 'home', label: 'Home', summary: 'What needs attention.', shows: showing('home'), View: ({ siteId }) => <Overview siteId={siteId} /> },
   { id: 'write', label: 'Write', summary: 'Pages across your sites, the editor, revisions.', shows: showing('write'), View: Write },
@@ -352,6 +361,13 @@ export const WORKSPACES: readonly Workspace[] = [
     summary: 'Channels, the queue, the ledger, statistics.',
     shows: showing('distribution'),
     View: DistributionWorkspace,
+  },
+  {
+    id: 'account',
+    label: 'Account',
+    summary: 'Your sign-in and security, your sessions, your API tokens.',
+    shows: showing('account'),
+    View: AccountView,
   },
 ];
 

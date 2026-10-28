@@ -3,8 +3,11 @@
 /healthz          liveness: the process answers, touching nothing
 /readyz           readiness: database, cache and Redis, 503 when one is down
 /version          name, version, commit, built_at
-/admin/           Wagtail admin (pages, snippets, suggestions, agent runs)
-/django-admin/    Django admin
+/admin/           Wagtail admin (pages, snippets, suggestions, agent runs); its sign-in is the studio's
+/django-admin/    Django admin; its sign-in is the studio's too (accounts/views.py)
+/_allauth/        django-allauth's headless API: sign-in, sign-up, codes, MFA, passkeys, sessions (accounts/README.md)
+/accounts/        allauth's provider endpoints: an OpenID Connect IdP's or GitHub's callback
+/api/v2/account/  a person's API tokens, issued, listed and revoked (accounts/urls.py)
 /api/v2/          Wagtail API v2 + agent runs, graph, suggestions, tools
 /api/v2/ai/       the AI content layer: providers, models, schemas, assistants, pipelines, briefs, conversations
 /api/v2/ideas/    ideas, boards, capture, brainstorm, clusters, promotion
@@ -36,6 +39,7 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from accounts.views import django_admin_login, wagtail_admin_login
 from api.studio import studio
 from api.urls import router
 from api.views import ContentGraphQLView
@@ -52,8 +56,13 @@ urlpatterns = [
     path("healthz", healthz, name="healthz"),
     path("readyz", readyz, name="readyz"),
     path("version", version, name="version"),
+    path("django-admin/login/", django_admin_login),
     path("django-admin/", admin.site.urls),
+    path("admin/login/", wagtail_admin_login),
     path("admin/", include(wagtailadmin_urls)),
+    path("_allauth/", include("allauth.headless.urls")),
+    path("accounts/", include("allauth.urls")),
+    path("api/v2/account/", include("accounts.urls")),
     path("documents/", include(wagtaildocs_urls)),
     path("api/v2/openapi.json", SpectacularJSONAPIView.as_view(), name="openapi"),
     path("api/v2/ai/", include("ai.urls")),

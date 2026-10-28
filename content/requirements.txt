@@ -56,3 +56,8 @@ json5==0.17.3
 jmespath==1.1.0
 # AIEO's GA4 and Search Console connectors (aieo/README.md): a Google service account's signed JWT, traded for a token.
 PyJWT==2.12.1
+# Accounts (accounts/README.md, PLAN G3): sign-in, sign-up, codes, OpenID Connect IdPs and GitHub, TOTP, recovery codes,
+# passkeys and the session list, served headless to the studio — configured, never hand-rolled. 65.21 supports Django 5.2
+# (Wagtail 7.4's). The extras bring what those use: requests and oauthlib (providers), PyJWT (ID tokens), fido2 (WebAuthn)
+# and qrcode.
+django-allauth[headless,mfa,socialaccount]==65.21.0

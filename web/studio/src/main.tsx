@@ -17,6 +17,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 
 import { App } from './App';
+import { browserAuth } from './auth';
 import { api, openStream } from './transport';
 
 // The platform replaces the placeholder in this meta's nonce on every request
@@ -48,7 +49,7 @@ if (root) {
         >
           <Notifications position="bottom-right" />
           <BrowserRouter basename="/studio">
-            <App api={api} stream={openStream} />
+            <App api={api} stream={openStream} auth={browserAuth} />
           </BrowserRouter>
         </MantineProvider>
       </QueryClientProvider>
