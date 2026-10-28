@@ -458,7 +458,7 @@ CELERY_BEAT_SCHEDULE = {
     # Aggregate statistics for every LinkedIn channel's published posts, once a day (distribution/tasks.py).
     "distribution-statistics": {"task": "distribution.tasks.ingest_statistics", "schedule": crontab(hour=4, minute=23)},
     # Distribution's attempts that are over without their worker saying so: a send whose worker died, a post no
-    # worker took (distribution/tasks.py).
+    # worker took, an email post whose newsletter issue the newsroom sent or failed (distribution/tasks.py).
     "distribution-settle": {"task": "distribution.tasks.settle_posts", "schedule": 60.0},
     # The automations whose schedule came due: one dispatcher reads every cron line (automations/tasks.py).
     "automations-schedule": {"task": "automations.tasks.tick", "schedule": 60.0},

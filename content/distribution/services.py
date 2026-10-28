@@ -18,9 +18,10 @@ ledger has no entry for its key — in the channel's rows and, for a LinkedIn
 channel with a `ledger_file`, in the site's own ledger file, where the
 extension and CI write — and the brand guard has no error. The worker runs the
 gates again before anything leaves, and every attempt ends published or
-failed: an error nobody expected fails it as one that may have published, and
-an attempt whose worker died — or that no worker took — is settled by the next
-request for it or by the beat's sweep (`settle_due`).
+failed: an error nobody expected fails it as one that may have published, an
+attempt whose worker died — or that no worker took — is settled by the next
+request for it or by the beat's sweep (`settle_due`), and an email post follows
+its newsletter issue until the newsroom has sent it.
 """
 
 import hashlib
@@ -778,7 +779,7 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
     and comes back as it ended — failed and doubted, for a person to check before anything goes again."""
     from .tasks import publish_post
 
-    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
+    post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=post.pk)
     if agent:
         force = False
     elif not may_publish(post, user):
@@ -811,7 +812,7 @@ def deliver(post_id: int) -> DistributionPost:
     holds it, and an older one is settled (`_settle`). Whatever happens after the claim ends the attempt published
     or failed; an error nobody expected leaves the outcome unknown, so it is doubted as well."""
     with transaction.atomic():
-        post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post_id)
+        post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=post_id)
         if post.status != DistributionPost.Status.PUBLISHING:
             return post
         if post.attempted_at is not None:
@@ -844,6 +845,8 @@ def deliver(post_id: int) -> DistributionPost:
         )
         _doubt(post, message)
         return _failed(post, message)
+    if post.channel.kind == Kind.EMAIL:
+        return post  # the newsroom sends the issue; the post follows it (`_settle`)
     try:
         with transaction.atomic():
             entry = record(post, external_id, **extra)
@@ -875,15 +878,19 @@ def _failed(post, message: str, *, url: str = "") -> DistributionPost:
 
 def _settle(post) -> bool:
     """End an attempt that is over without its worker saying so, on a post the caller holds locked; False while it
-    may still be going. Past the send's time limit (`tasks.SEND_TIME_LIMIT`, after which the worker is killed), a
-    post no worker took goes back to approved — nothing was sent —, and one a worker claimed belonged to a worker
-    that died mid-send: the post may exist, so it is ledgered unconfirmed and failed for a person to check."""
+    may still be going. An email post follows its newsletter issue (`_follow_issue`). Past the send's time limit
+    (`tasks.SEND_TIME_LIMIT`, after which the worker is killed), a post no worker took goes back to approved —
+    nothing was sent —, and one a worker claimed belonged to a worker that died mid-send: the post may exist, so it
+    is ledgered unconfirmed and failed for a person to check."""
     from .tasks import SEND_TIME_LIMIT
 
     if post.status != DistributionPost.Status.PUBLISHING:
         return False
     since = post.attempted_at or post.updated_at
-    if (timezone.now() - since).total_seconds() < SEND_TIME_LIMIT:
+    stale = (timezone.now() - since).total_seconds() >= SEND_TIME_LIMIT
+    if post.issue_id is not None and post.attempted_at is not None:
+        return _follow_issue(post, stale=stale)
+    if not stale:
         return False
     if post.attempted_at is None:
         post.status, post.error = DistributionPost.Status.APPROVED, "no worker took it: publish it again"
@@ -898,6 +905,38 @@ def _settle(post) -> bool:
     return True
 
 
+def _follow_issue(post, *, stale: bool) -> bool:
+    """An email post is published when the newsroom has sent its issue — and ledgered then, under the issue's id —
+    and failed with the newsroom's reason when it could not (publishing again sends the same issue to those who have
+    not had it), or when no worker holds a send that went quiet. Mail is never doubted: the newsroom records each
+    message the backend accepted."""
+    from django.core.cache import cache
+
+    from newsroom.models import Issue
+    from newsroom.services import sending
+
+    issue = post.issue
+    if issue.status == Issue.Status.SENT:
+        record(post, str(issue.public_id), now=issue.sent_at)
+        post.status, post.external_id, post.error, post.force = (
+            DistributionPost.Status.PUBLISHED,
+            str(issue.public_id),
+            "",
+            False,
+        )
+        post.published_at = issue.sent_at or timezone.now()
+    elif issue.status == Issue.Status.FAILED or (stale and not cache.get(sending(issue.pk))):
+        post.status = DistributionPost.Status.FAILED
+        post.error = (
+            f"The newsletter issue did not reach everyone: {issue.error or 'its send stopped'}. Publishing again "
+            "sends it to those who have not had it."
+        )
+    else:
+        return False
+    post.save()
+    return True
+
+
 def settle_due() -> int:
     """The beat's sweep (`distribution-settle`): every post whose attempt is over without its worker saying so,
     settled one at a time — so the studio never waits on one forever."""
@@ -905,12 +944,15 @@ def settle_due() -> int:
 
     cutoff = timezone.now() - timedelta(seconds=SEND_TIME_LIMIT)
     due = DistributionPost.objects.filter(status=DistributionPost.Status.PUBLISHING).filter(
-        Q(attempted_at__lt=cutoff) | Q(attempted_at__isnull=True, updated_at__lt=cutoff)
+        Q(attempted_at__lt=cutoff)
+        | Q(attempted_at__isnull=True, updated_at__lt=cutoff)
+        | Q(attempted_at__isnull=False, issue__isnull=False)
     )
     settled = 0
     for pk in due.values_list("pk", flat=True):
         with transaction.atomic():
-            settled += _settle(DistributionPost.objects.select_for_update().select_related("channel").get(pk=pk))
+            post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=pk)
+            settled += _settle(post)
     return settled
 
 
@@ -926,8 +968,8 @@ def _send(post) -> tuple[str, str, dict]:
         number, url = github_publish(channel, channel.credentials(), post, page)
         return f"pr:{channel.setting('repo')}#{number}", url, {}
     if channel.kind == Kind.EMAIL:
-        issue, _ = email_publish(channel, post, post.published_by)
-        return f"issue:{issue}", "", {}
+        issue = email_publish(channel, post, post.published_by)
+        return str(issue.public_id), "", {}
     return _send_linkedin(post, page)
 
 

@@ -2,7 +2,8 @@
 // what changed — changing the text of an approved post, or of one whose
 // attempt failed, sends it back to draft: a person approves the exact text),
 // the brand guard's findings, every blocker publishing it now would meet, and
-// for LinkedIn the exact payload. Approve, reject, publish (asked first, never
+// for LinkedIn the exact payload — and, while an email post waits, that the
+// newsroom is sending its issue. Approve, reject, publish (asked first, never
 // with unsaved changes, and past a lifted gate only when the person ticks
 // "force"), and record a post
 // found at the target after an attempt that may have landed. The platform
@@ -93,7 +94,11 @@ function Panel({ post }: { post: DistributionPostDetail }) {
           Canonical URL (the ledger’s key): <Code>{post.link}</Code>
         </Text>
       ) : null}
-      {post.status === 'publishing' ? <Alert color="blue">The worker is publishing it…</Alert> : null}
+      {post.status === 'publishing' ? (
+        <Alert color="blue">
+          {post.channel_kind === 'email' && post.attempted_at ? 'The newsroom is sending the newsletter issue…' : 'The worker is publishing it…'}
+        </Alert>
+      ) : null}
       {post.status === 'published' ? (
         <Alert color="green" title="Published">
           {post.external_url ? (

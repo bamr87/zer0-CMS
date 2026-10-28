@@ -198,6 +198,16 @@ describe('a post', () => {
   });
 });
 
+describe('an email post', () => {
+  it('says the newsroom is sending its issue while it waits', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/posts/p1/`]: () => post({ status: 'publishing', channel_kind: 'email', attempted_at: '2026-10-28T09:00:00Z', blockers: [] }),
+    });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(await screen.findByText('The newsroom is sending the newsletter issue…')).toBeInTheDocument();
+  });
+});
+
 describe('Distribute', () => {
   it('drafts a post of the page for a channel and leads to the queue', async () => {
     const platform = fakePlatform({

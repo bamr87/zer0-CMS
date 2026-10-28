@@ -15,11 +15,13 @@ import pytest
 import requests
 import responses
 from django.core import mail
+from django.core.mail.backends.base import BaseEmailBackend
 from django.test import override_settings
 
 from distribution import services
 from distribution.models import Channel, LedgerEntry
-from newsroom.models import Newsletter, Subscriber
+from distribution.tasks import settle_posts
+from newsroom.models import Issue, Newsletter, Subscriber
 from research import fetch
 
 from ..conftest import make_article
@@ -288,18 +290,60 @@ def test_a_github_request_never_answered_is_a_sentence_and_doubted_only_for_the_
 # ── email: a newsroom newsletter ────────────────────────────────────────────
 
 
-@override_settings(DISTRIBUTION_ARMED={"email"})
-def test_an_email_channel_sends_the_story_as_an_issue_of_its_newsletter(desk, advance, ed, worker):
+class Refusing(BaseEmailBackend):
+    """A mail backend whose provider refuses every message."""
+
+    def send_messages(self, messages):
+        raise ConnectionError("the provider is down")
+
+
+@pytest.fixture
+def weekly(desk, advance):
+    """A published story, and a newsletter of its site with one confirmed reader, as an armed email channel."""
     story = advance(desk, "published", headline="Bridge reopens")
     newsletter = Newsletter.objects.create(site=desk.site, name="The Weekly", slug="weekly")
     Subscriber.objects.create(newsletter=newsletter, email="reader@example.com", status=Subscriber.Status.CONFIRMED)
     channel = Channel.objects.create(site=desk.site, kind="email", name="Weekly", newsletter=newsletter, armed=True)
+    return story, channel
+
+
+@override_settings(DISTRIBUTION_ARMED={"email"})
+def test_an_email_channel_sends_the_story_as_an_issue_of_its_newsletter(weekly, ed, worker):
+    """The newsroom sends the issue; the post is published — and ledgered, under the issue's id — once it has."""
+    story, channel = weekly
     with pytest.raises(Exception, match="story"):
         services.compose(channel, user=ed, page=story.page)
     post = services.approve(services.compose(channel, user=ed, story=story, commentary="This week: the bridge."), ed)
     worker(services.request_publish, post, ed)
     post.refresh_from_db()
-    assert post.status == "published" and post.external_id.startswith("issue:")
+    assert post.status == "publishing" and post.issue.status == Issue.Status.SENT, "the newsroom sends it, not us"
+    assert not LedgerEntry.objects.exists()
     assert [m.to for m in mail.outbox] == [["reader@example.com"]]
     assert "Bridge reopens" in mail.outbox[0].body and "This week: the bridge." in mail.outbox[0].body
+    assert settle_posts() == 1, "the beat's sweep: the post follows its issue"
+    post.refresh_from_db()
+    assert post.status == "published" and post.external_id == str(post.issue.public_id)
     assert LedgerEntry.objects.get(channel=channel).urn == post.external_id
+
+
+@override_settings(DISTRIBUTION_ARMED={"email"})
+def test_an_email_post_fails_with_the_newsrooms_reason_and_publishing_again_resumes_its_issue(
+    weekly, ed, worker, settings
+):
+    """Published means the newsletter went: a provider that refuses it fails the post with the newsroom's reason
+    and ledgers nothing; publishing again sends the same issue to those who have not had it."""
+    story, channel = weekly
+    settings.EMAIL_BACKEND = "tests.distribution.test_transports.Refusing"
+    post = services.approve(services.compose(channel, user=ed, story=story, commentary="This week: the bridge."), ed)
+    worker(services.request_publish, post, ed)
+    assert settle_posts() == 1
+    post.refresh_from_db()
+    assert post.status == "failed" and "did not reach everyone" in post.error
+    assert "the mail backend refused the rest" in post.error and "Publishing again" in post.error
+    assert mail.outbox == [] and not LedgerEntry.objects.filter(channel=channel).exists()
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    worker(services.request_publish, post, ed)
+    settle_posts()
+    post.refresh_from_db()
+    assert post.status == "published" and Issue.objects.filter(newsletter=channel.newsletter).count() == 1
+    assert [m.to for m in mail.outbox] == [["reader@example.com"]]

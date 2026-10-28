@@ -18,7 +18,9 @@ GitHub repository as a pull request, and a newsroom newsletter by email.
   else is reported as itself, never answered with a second, unrelated write.
 * **Email**: the newsroom's newsletters (`newsroom.services`, django-anymail)
   — an issue of the channel's newsletter carrying the story, sent as the
-  newsroom sends every issue. Nothing about sending mail is duplicated here.
+  newsroom sends every issue; the post follows the issue until the newsroom
+  has sent it, and publishing again resumes the same issue. Nothing about
+  sending mail is duplicated here.
 
 Each raises `TransportError`, whose message is safe to show; `doubt` says the
 target may have acted anyway (a 5xx or a dropped connection after a write), so
@@ -274,7 +276,11 @@ def github_check(channel, credentials: dict) -> dict:
 # ── email: a newsroom newsletter ────────────────────────────────────────────
 
 
-def email_publish(channel, post, user) -> tuple[str, str]:
+def email_publish(channel, post, user):
+    """The post as an issue of the channel's newsletter, handed to the newsroom to send (its worker marks the issue
+    sent or failed, and sends a failed one again only to those who have not had it). The issue is linked to the post
+    before it can go, so the post follows it whatever happens next; publishing again resumes the same issue, with
+    the post's approved text while nobody has had it yet."""
     from newsroom import services as newsroom
     from newsroom.models import Issue
     from ops.errors import ApiError
@@ -285,13 +291,25 @@ def email_publish(channel, post, user) -> tuple[str, str]:
         raise TransportError(
             "email goes out as a newsletter issue, which carries newsroom stories: this is not a story"
         )
-    issue = Issue.objects.create(
-        newsletter=channel.newsletter, subject=post.title[:200], intro=post.commentary, created_by=user
-    )
+    issue, made = post.issue, post.issue is None
+    if not made and issue.status == Issue.Status.SENT:
+        return issue  # it went: the post follows it
+    if made:
+        issue = Issue.objects.create(
+            newsletter=channel.newsletter, subject=post.title[:200], intro=post.commentary, created_by=user
+        )
+    elif not issue.deliveries.exists():  # nobody has had it: it carries the text a person approved last
+        issue.subject, issue.intro = post.title[:200], post.commentary
+        issue.save(update_fields=["subject", "intro", "updated_at"])
     try:
-        newsroom.set_issue_stories(issue, [post.story])
+        if made:
+            newsroom.set_issue_stories(issue, [post.story])
         newsroom.send_issue(issue, user=user)
     except ApiError as e:
-        issue.delete()
+        if made:
+            issue.delete()
         raise TransportError(f"The newsletter refused the issue: {e.message}") from e
-    return str(issue.public_id), ""
+    if made:
+        post.issue = issue
+        post.save(update_fields=["issue", "updated_at"])
+    return issue

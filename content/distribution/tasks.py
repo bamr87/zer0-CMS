@@ -2,8 +2,9 @@
 post (`services.deliver`: the gates again, the channel's transport, the
 ledger), exchanging an OAuth code, checking a channel's credential, and — on
 Celery beat — settling every attempt that is over without its worker saying so
-(each minute: a send whose worker died, a post no worker took) and the
-statistics of every LinkedIn channel's posts (daily).
+(each minute: a send whose worker died, a post no worker took, an email post
+whose newsletter issue the newsroom sent or failed) and the statistics of every
+LinkedIn channel's posts (daily).
 """
 
 import logging
