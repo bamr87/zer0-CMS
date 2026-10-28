@@ -27,7 +27,6 @@ its newsletter issue until the newsroom has sent it.
 import hashlib
 import json
 import logging
-import os
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, timedelta
@@ -310,16 +309,12 @@ def exchange(channel) -> Channel:
 
 
 def linkedin_credentials(channel) -> Credentials:
-    """The channel's token, or — with none stored — the environment's (LINKEDIN_ACCESS_TOKEN …), as the Rails CMS
-    fell back; the app's id and secret are the deployment's."""
+    """The channel's own token and the deployment's app (id and secret). Never the environment's
+    LINKEDIN_ACCESS_TOKEN, which is the site lane's (`lane/`): a channel that fell back to it would check, read
+    statistics as — and look connected for — an identity nobody connected it to."""
     stored = channel.credentials()
     client_id, client_secret = linkedin_app()
-    if stored:
-        return Credentials(stored.get("access_token", ""), stored.get("refresh_token", ""), client_id, client_secret)
-    env = Credentials.from_env(os.environ)
-    return Credentials(
-        env.access_token, env.refresh_token, client_id or env.client_id, client_secret or env.client_secret
-    )
+    return Credentials(stored.get("access_token", ""), stored.get("refresh_token", ""), client_id, client_secret)
 
 
 def _client(channel, token):
@@ -1326,8 +1321,9 @@ def import_ledger(channel, user, text: str) -> dict:
 
 
 def ingest_statistics(channel, *, today=None) -> int:
-    """Aggregate counts for the channel's own LinkedIn posts, one row per post a day; nothing about who engaged."""
-    if channel.kind != Kind.LINKEDIN:
+    """Aggregate counts for the channel's own LinkedIn posts, one row per post a day; nothing about who engaged. A
+    channel nobody connected is skipped: it has no token of its own."""
+    if channel.kind != Kind.LINKEDIN or not channel.connected:
         return 0
     author = channel.setting("author")
     rows = [

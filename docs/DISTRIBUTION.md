@@ -33,7 +33,7 @@ A channel belongs to a site and has a kind. Everyone who edits the site sees its
 
 | Kind | Publishing a post | Credential |
 |---|---|---|
-| `linkedin` | an article (a link card for the page, with its preview image when it has one) or a text update, as the channel's author | an OAuth token from **Connect with LinkedIn**; without one, the environment's `LINKEDIN_ACCESS_TOKEN` |
+| `linkedin` | an article (a link card for the page, with its preview image when it has one) or a text update, as the channel's author | its own OAuth token, from **Connect with LinkedIn** |
 | `wordpress` | `POST /wp-json/wp/v2/posts` with the page's HTML, a draft unless the channel says `pending`, `private` or `publish`, with the Yoast title and meta description (`yoast_title`, `yoast_metadesc`); the address goes through the research library's SSRF guard and no redirect is followed | the user's application password |
 | `github_pr` | the page exported as its Jekyll file (`exporters/jekyll.py`) onto a `distribute/…` branch, and a pull request into the channel's branch | a token that may push and open pull requests |
 | `email` | an issue of the site's newsletter carrying the story, sent as the newsroom sends every issue (django-anymail) | none |
@@ -77,7 +77,7 @@ The environment, all optional, overrides the file for one process: `LINKEDIN_AUT
 
 | Variable | Kind | Used for |
 |---|---|---|
-| `LINKEDIN_ACCESS_TOKEN` | secret | Every LinkedIn call of the lane, and of a platform channel with no token of its own. Sixty days |
+| `LINKEDIN_ACCESS_TOKEN` | secret | Every LinkedIn call of the lane (never a platform channel's: each uses its own token). Sixty days |
 | `LINKEDIN_REFRESH_TOKEN` | secret | Renewing the lane's access token on a 401, when LinkedIn issued one |
 | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | secret | OAuth: connecting an account, refreshing, and introspecting a token's expiry |
 | `ZER0_LINKEDIN_PUBLISH` | switch | `1` arms a live LinkedIn publish for this process. The CLI also needs `--live`; the platform also needs a channel a person armed |
@@ -164,7 +164,7 @@ Each account is authorized by its owner through LinkedIn's three-legged OAuth: a
 | organization | `w_organization_social r_organization_social rw_organization_admin` |
 | person | `openid profile w_member_social r_member_postAnalytics` |
 
-Both ways to connect send a fresh `state` and a PKCE challenge (S256). In the studio, a LinkedIn channel's **Connect with LinkedIn** is a POST, so no other site can start a connection; the person's session keeps the state and the verifier, the callback (`/api/v2/distribution/oauth/linkedin/`) is accepted only when its `state` matches one this session started less than ten minutes ago and is consumed on first use, and the worker exchanges the code with the verifier and stores the token encrypted on the channel. A channel's token is used for its site; without one the platform falls back to the environment's `LINKEDIN_ACCESS_TOKEN`. In a terminal, `manage.py linkedin connect` prints the consent URL, waits for LinkedIn's redirect on `http://127.0.0.1:8765/callback` (add it to the app's authorized redirect URLs; `--redirect-uri` may name another loopback port, which is then the one it listens on), checks `state`, exchanges the code and — only with `--write-env FILE` for a file git ignores, or `--print-token` — stores or shows the token for a CI secret.
+Both ways to connect send a fresh `state` and a PKCE challenge (S256). In the studio, a LinkedIn channel's **Connect with LinkedIn** is a POST, so no other site can start a connection; the person's session keeps the state and the verifier, the callback (`/api/v2/distribution/oauth/linkedin/`) is accepted only when its `state` matches one this session started less than ten minutes ago and is consumed on first use, and the worker exchanges the code with the verifier and stores the token encrypted on the channel. A channel's token is used for its site, and only its own: a channel nobody connected has none, so it is not checked, read for statistics or published to. In a terminal, `manage.py linkedin connect` prints the consent URL, waits for LinkedIn's redirect on `http://127.0.0.1:8765/callback` (add it to the app's authorized redirect URLs; `--redirect-uri` may name another loopback port, which is then the one it listens on), checks `state`, exchanges the code and — only with `--write-env FILE` for a file git ignores, or `--print-token` — stores or shows the token for a CI secret.
 
 Access tokens last sixty days. LinkedIn issues refresh tokens (365 days) only to apps it has enabled for programmatic refresh; with one, a 401 refreshes once and repeats the call — safe, because a 401 means LinkedIn did nothing — and the platform keeps the new token on the channel. Without one, the owner re-runs consent, which LinkedIn skips while they are signed in and the old token is alive. `manage.py linkedin status --check` and a channel's **Check it** ask LinkedIn: with the app credentials they introspect the token (active, scopes, expiry); without them they only prove the token works with a cheap read, so its expiry is not known. A 403 on that read is reported as "authenticates but may not read", not as a dead token.
 

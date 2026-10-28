@@ -709,6 +709,20 @@ def test_a_site_ledger_file_the_worker_cannot_write_is_refused_before_anything_i
     assert route.call_count == 0 and (folder / "linkedin-log.json").read_text() == "{}\n"
 
 
+def test_a_channel_nobody_connected_never_uses_the_environments_token(channel, web, monkeypatch):
+    """LINKEDIN_ACCESS_TOKEN is the site lane's. A platform channel with no token of its own is not checked, read
+    for statistics or published to with it — so it never shows another identity's answers as its own."""
+    monkeypatch.setenv("LINKEDIN_ACCESS_TOKEN", "env-token-of-the-deployment")
+    LedgerEntry.objects.create(channel=channel, key="https://example.test/a/", urn="urn:li:share:1", author=AUTHOR)
+    channel.forget_credentials()
+    channel.save()
+    checked = services.check(channel)
+    assert checked.last_check == {"ok": False, "problems": ["no LinkedIn credential: connect the channel"]}
+    assert services.ingest_statistics(channel) == 0
+    assert "no_credential" in [b.kind for b in services.preview(DistributionPost(channel=channel)).blockers]
+    assert not web.calls, "nothing was asked of LinkedIn"
+
+
 # ── statistics ──────────────────────────────────────────────────────────────
 
 

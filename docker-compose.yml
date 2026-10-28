@@ -160,12 +160,11 @@ services:
       # the worker, which runs their sync and write-back jobs, mounts it writable.
       SITES_DIR: /sites
       # Distribution (content/distribution/README.md): the LinkedIn app lets a
-      # person connect a channel, LINKEDIN_ACCESS_TOKEN serves a LinkedIn
-      # channel with no token of its own, and nothing goes out to a kind unless
-      # its switch is 1 here and a person armed the channel.
+      # person connect a channel (each publishes with its own token), and
+      # nothing goes out to a kind unless its switch is 1 here and a person
+      # armed the channel.
       LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID:-}
       LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET:-}
-      LINKEDIN_ACCESS_TOKEN: ${LINKEDIN_ACCESS_TOKEN:-}
       ZER0_CMS_LINKEDIN_REDIRECT_URI: ${ZER0_CMS_LINKEDIN_REDIRECT_URI:-}
       ZER0_LINKEDIN_PUBLISH: ${ZER0_LINKEDIN_PUBLISH:-}
       ZER0_WORDPRESS_PUBLISH: ${ZER0_WORDPRESS_PUBLISH:-}
