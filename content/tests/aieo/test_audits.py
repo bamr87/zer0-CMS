@@ -22,12 +22,12 @@ from agents.models import AgentRun
 from ai import providers
 from ai.providers.base import ProviderError
 from ai.providers.fake import FakeProvider
-from aieo import parser, reports, scoring, services, visual
+from aieo import crawl, parser, reports, scoring, services, visual
 from aieo.models import Audit
 from ops.errors import Forbidden, Invalid
 from research import fetch
 
-from .conftest import answer, at, evaluation
+from .conftest import PUBLIC, answer, at, evaluation
 
 HERE = Path(__file__).resolve().parent
 ARTICLE = (HERE / "fixtures" / "article.md").read_text(encoding="utf-8")
@@ -151,6 +151,54 @@ def test_a_site_is_crawled_cheap_first_and_scored_page_by_page_with_its_link_map
 
 class Seeing(FakeProvider):
     capabilities = FakeProvider.capabilities | {"vision"}
+
+
+def test_a_crawl_reads_no_more_than_its_pages_need_and_stops_at_its_deadline(db, web):
+    """A sitemap index may list thousands of sitemaps: they are opened one at a time, only while the queue has room
+    for another page, and at most MAX_SITEMAPS of them, however many are listed; with a deadline, no page is read
+    once the time is up."""
+    index = "".join(f"<sitemap><loc>https://example.com/s{i}.xml</loc></sitemap>" for i in range(150))
+    web.get(at("/robots.txt")).respond(200, text="User-agent: *\nAllow: /\nSitemap: https://example.com/index.xml\n")
+    web.get(at("/index.xml")).respond(200, text=f"<sitemapindex>{index}</sitemapindex>")
+    for i in range(150):
+        web.get(at(f"/s{i}.xml")).respond(200, text=f"<urlset><url><loc>https://example.com/p{i}/</loc></url></urlset>")
+    html = {"Content-Type": "text/html"}
+    web.get(url__regex=rf"https://{PUBLIC}/(p\d+/)?$").respond(200, text=_page("Page"), headers=html)
+    found = crawl.crawl("https://example.com/", max_pages=3)
+    # robots.txt, the index, the two sitemaps that fill the queue and its three pages — not 150 sitemaps
+    assert [p.url for p in found.pages] == [
+        "https://example.com/",
+        "https://example.com/p0/",
+        "https://example.com/p1/",
+    ]
+    assert len(web.calls) == 7 and found.discovery["queued"] == 3
+    for i in range(150):
+        web.get(at(f"/s{i}.xml")).respond(404)
+    web.get(url__regex=rf"https://{PUBLIC}/(feed|atom|rss).*").respond(404)
+    calls = len(web.calls)
+    crawl.crawl("https://example.com/", max_pages=3)
+    opened = [c for c in list(web.calls)[calls:] if "/s" in str(c.request.url) and str(c.request.url).endswith(".xml")]
+    assert len(opened) == crawl.MAX_SITEMAPS - 1  # the index and nine of its sitemaps, however many it lists
+    late = crawl.crawl("https://example.com/", max_pages=3, deadline=time.monotonic() - 1)
+    assert late.pages == [] and late.discovery["stopped"] == "time"
+
+
+def test_an_audit_that_reaches_the_web_runs_on_the_research_queue(
+    alice, monkeypatch, django_capture_on_commit_callbacks
+):
+    """A URL's or a site's audit waits on someone else's server, so it runs where every research fetch does — the
+    `research` queue, which only the research worker consumes — and never holds the worker that runs agents."""
+    from agents.tasks import run_agent
+
+    queued = {}
+    monkeypatch.setattr(
+        run_agent, "apply_async", lambda args, kwargs=None, **options: queued.update({args[0]: options.get("queue")})
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        text = services.audit(alice, kind="text", content="# Backups", method="heuristic")
+        url = services.audit(alice, kind="url", url="https://example.com/", method="heuristic")
+        site = services.audit(alice, kind="site", url="https://example.com/", method="heuristic")
+    assert queued == {text.run.pk: None, url.run.pk: "research", site.run.pk: "research"}
 
 
 def test_the_visual_audit_screenshots_the_page_and_the_evaluator_sees_it(alice, worker, web, api, monkeypatch):

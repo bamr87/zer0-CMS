@@ -22,6 +22,7 @@ succeeding — even one refused before reaching its handler — leaves its audit
 """
 
 import copy
+import time
 
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -84,7 +85,10 @@ def _documents(audit: Audit, run: AgentRun) -> tuple[list[dict], dict]:
         if kind.startswith("text/"):
             return [{"url": got.url, "title": "", "content": fetch.decode(got.body, got.charset)}], {}
         raise fetch.FetchError(f"{kind or 'this'} is not a web page or text")
-    found = crawl.crawl(audit.url, max_pages=audit.max_pages)
+    # Half the run's time for reading pages, the rest for scoring them and asking a model (services.limits).
+    found = crawl.crawl(
+        audit.url, max_pages=audit.max_pages, deadline=time.monotonic() + settings.AIEO_RUN_TIME_LIMIT / 2
+    )
     documents = [
         {"url": p.url, "title": p.title, "content": p.html, "format": Audit.HTML, "error": p.error, "how": p.source}
         for p in found.pages

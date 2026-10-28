@@ -6,12 +6,16 @@ levels deep), then the feed (`/feed.xml`, `/atom.xml`, `/feed/`, `/rss.xml`, rea
 `research.fetch.entries`), then the links of the pages fetched — same host only, never an asset, a date archive, a
 pagination or a taxonomy page, never a path robots.txt disallows for the platform's user agent. Every request —
 robots.txt, a sitemap, a feed, a page — goes through `research.fetch.get`, so the SSRF guard, the redirect checks,
-and the size and time limits hold for each, and it runs only in a worker (an audit's run). A crawl stops at
-`max_pages` pages; what it reads becomes the audit's pages and its link map — the hubs most pages link to, and the
-orphans no other crawled page links to.
+and the size and time limits hold for each, and it runs only in a worker (an audit's run, on the research queue).
+
+A crawl is bounded however big the site: it queues at most `max_pages` pages (it reads every page it queues), opens
+a sitemap only while the queue has room and at most `MAX_SITEMAPS` of them, reads the feed only when the sitemaps
+left room, and with a `deadline` reads no page once the time is up (`discovery.stopped`). What it reads becomes the
+audit's pages and its link map — the hubs most pages link to, and the orphans no other crawled page links to.
 """
 
 import re
+import time
 import xml.etree.ElementTree as ET
 from collections import Counter
 from dataclasses import dataclass, field
@@ -33,6 +37,7 @@ DENIED = ("/assets/", "/tag/", "/tags/", "/category/", "/categories/", "/page/")
 FEEDS = ("/feed.xml", "/atom.xml", "/feed/", "/rss.xml")
 XML_DECLARATION = re.compile(rb"<!(?:DOCTYPE|ENTITY)\b", re.IGNORECASE)
 HTML = ("text/html", "application/xhtml+xml")
+MAX_SITEMAPS = 10  # sitemap documents one crawl opens, an index's sitemaps included
 
 
 @dataclass
@@ -115,26 +120,25 @@ def robots_for(base: str) -> tuple[RobotFileParser, list[str], bool]:
     return rules, list(rules.site_maps() or []), True
 
 
-def sitemap_urls(sitemaps: list[str], depth: int = 0, seen: set | None = None) -> list[str]:
-    """The page URLs of a sitemap or a sitemap index (nested at most three levels)."""
-    seen = seen if seen is not None else set()
-    found: list[str] = []
-    if depth > 3:
-        return found
-    for address in sitemaps:
-        if address in seen:
+def sitemap_urls(sitemaps: list[str]):
+    """The page URLs of sitemaps and sitemap indexes (nested at most three levels), yielded as each sitemap is read —
+    so a caller that has enough stops the reading — from at most `MAX_SITEMAPS` documents."""
+    waiting, seen, budget = [(address, 0) for address in sitemaps], set(), MAX_SITEMAPS
+    while waiting and budget:
+        address, depth = waiting.pop(0)
+        if address in seen or depth > 3:
             continue
         seen.add(address)
+        budget -= 1
         got = _get(address)
         root = xml_root(got.body) if got is not None else None
         if root is None:
             continue
         locations = [el.text.strip() for el in root.iter() if _local(el.tag) == "loc" and el.text and el.text.strip()]
         if _local(root.tag) == "sitemapindex":
-            found += sitemap_urls(locations, depth + 1, seen)
+            waiting += [(location, depth + 1) for location in locations]
         else:
-            found += locations
-    return found
+            yield from locations
 
 
 def feed_urls(base: str) -> list[str]:
@@ -171,8 +175,9 @@ def read_page(url: str, source: str) -> Fetched:
     return page
 
 
-def crawl(base: str, *, max_pages: int = 25) -> Crawl:
-    """Pages of the site at `base`, discovered cheap-first and fetched in order until `max_pages` are read."""
+def crawl(base: str, *, max_pages: int = 25, deadline: float | None = None) -> Crawl:
+    """Pages of the site at `base`, discovered cheap-first and read in order — at most `max_pages`, and none once
+    `time.monotonic()` passes `deadline`."""
     root = host(urlparse(base).netloc)
     rules, declared, present = robots_for(base)
     agent = settings.RESEARCH_USER_AGENT
@@ -180,9 +185,11 @@ def crawl(base: str, *, max_pages: int = 25) -> Crawl:
     queued: set[str] = set()
 
     def add(url: str, source: str) -> bool:
-        """Queue a page of this site the crawl may read; True when it was not queued before."""
+        """Queue a page of this site the crawl may read, while there is room; True when it was queued."""
         found = normalize(url, base)
-        if not found or found in queued or host(urlparse(found).netloc) != root or TRAP.search(found):
+        if len(order) >= max_pages or not found or found in queued:
+            return False
+        if host(urlparse(found).netloc) != root or TRAP.search(found):
             return False
         if any((urlparse(found).path or "/").startswith(prefix) for prefix in DENIED):
             return False
@@ -196,13 +203,18 @@ def crawl(base: str, *, max_pages: int = 25) -> Crawl:
     counts = {"sitemap": 0, "feed": 0, "link": 0}
     for url in sitemap_urls(declared or [urljoin(base, "/sitemap.xml")]):
         counts["sitemap"] += add(url, "sitemap")
-    for url in feed_urls(base):
+        if len(order) >= max_pages:  # no other sitemap is opened
+            break
+    for url in feed_urls(base) if len(order) < max_pages else []:
         counts["feed"] += add(url, "feed")
 
     pages: list[Fetched] = []
-    for url, source in iter_queue(order):
-        if len(pages) >= max_pages:
+    stopped = ""
+    while len(pages) < len(order):  # the queue, including what reading it adds
+        if deadline is not None and time.monotonic() > deadline:
+            stopped = "time"
             break
+        url, source = order[len(pages)]
         page = read_page(url, source)
         pages.append(page)
         for link in page.links:
@@ -214,16 +226,9 @@ def crawl(base: str, *, max_pages: int = 25) -> Crawl:
         "link_followed": counts["link"],
         "robots_sitemaps": len(declared),
         "queued": len(order),
+        **({"stopped": stopped} if stopped else {}),
     }
     return Crawl(pages, discovery, "present" if present else "absent")
-
-
-def iter_queue(order: list):
-    """The queue in order, including what is added to it while it is read."""
-    i = 0
-    while i < len(order):
-        yield order[i]
-        i += 1
 
 
 def link_map(pages: list[Fetched], base: str, limit: int = 10) -> dict:

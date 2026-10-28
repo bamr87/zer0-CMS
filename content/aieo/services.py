@@ -52,11 +52,13 @@ MAX_TEXT = 200_000  # characters of a pasted text an audit keeps (scored in a ru
 NOW_MAX = 5_000
 
 
-def limits() -> dict:
+def limits(*, fetches=False) -> dict:
     """How a run that scores is queued: stopped once it has run `AIEO_RUN_TIME_LIMIT` seconds (soft; the hard limit
-    half a minute later), since scoring a long text is slow (`NOW_MAX`) and nothing else would stop it."""
+    half a minute later), since scoring a long text is slow (`NOW_MAX`) and nothing else would stop it; and one that
+    `fetches` — a URL's or a site's audit — on the `research` queue, where every fetch of the web waits
+    (CELERY_TASK_ROUTES), so a slow site never holds the worker that runs agents and publishes pages."""
     limit = settings.AIEO_RUN_TIME_LIMIT
-    return {"soft_time_limit": limit, "time_limit": limit + 30}
+    return {"soft_time_limit": limit, "time_limit": limit + 30} | ({"queue": "research"} if fetches else {})
 
 
 def bundled(key: str, user) -> Assistant:
@@ -195,7 +197,9 @@ def audit(
     with transaction.atomic():  # its run is queued once it is the audit's run, which the handler asks
         row = Audit.objects.create(owner=user, batch=batch, **fields, **_placement(user, site, visibility))
         data = {"kind": "aieo.audit", "audit": str(row.public_id)}
-        row.run = start(user, data, target=page, trigger=trigger, options=limits())
+        row.run = start(
+            user, data, target=page, trigger=trigger, options=limits(fetches=kind in (Audit.URL, Audit.SITE))
+        )
         row.save(update_fields=["run"])
     return row
 

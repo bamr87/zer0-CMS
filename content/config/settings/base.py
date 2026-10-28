@@ -464,7 +464,8 @@ CELERY_BEAT_SCHEDULE = {
 }
 # A research fetch waits on someone else's server, so it runs on a queue of its own, which only the
 # `research-worker` service consumes (docker-compose.yml): a slow site never holds the worker that runs agents and
-# publishes pages. An automation's run joins it, since its webhooks and email wait on someone else's server too.
+# publishes pages. An automation's run joins it, since its webhooks and email wait on someone else's server too, and
+# so does an AIEO audit of a URL or a site (queued there by aieo/services.py `limits`).
 CELERY_TASK_ROUTES = {
     **{f"research.tasks.{task}": {"queue": "research"} for task in ("fetch_source", "refresh_feed")},
     "automations.tasks.execute_run": {"queue": "research"},
@@ -558,7 +559,8 @@ AUTOMATIONS_EMAILS_PER_HOUR = env.int("AUTOMATIONS_EMAILS_PER_HOUR", default=100
 # request goes through the research fetcher's guard, with no network of its own; off unless set.
 AIEO_VISUAL_AUDIT = env.bool("AIEO_VISUAL_AUDIT", default=False)
 # Seconds an audit's or a rewrite's run may take before Celery stops it (soft; the hard limit is 30 seconds later):
-# scoring a long text is slow, and a site's crawl waits on someone else's server (aieo/services.py `limits`).
+# scoring a long text is slow, and a site's crawl waits on someone else's server — for half of it at most, on the
+# research queue (aieo/services.py `limits`).
 AIEO_RUN_TIME_LIMIT = env.int("AIEO_RUN_TIME_LIMIT", default=900)
 # Seconds a GA4, Search Console or DataForSEO request may take (aieo/connectors.py).
 AIEO_CONNECTOR_TIMEOUT = env.float("AIEO_CONNECTOR_TIMEOUT", default=30.0)
