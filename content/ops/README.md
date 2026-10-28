@@ -32,9 +32,8 @@ A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Con
 | `auth.invalid_token` | 401 | a bearer token that is unknown, revoked or inactive |
 | `auth.forbidden` | 403 | signed in, not allowed — and a person's token without the `write` scope on anything but a read |
 | `auth.session_required` | 403 | issuing an API token with a token (`/api/v2/account/tokens/`): only a signed-in session issues one |
+| `auth.csrf_failed` | 403 | a session-authenticated POST without the CSRF token |
 | `token.refused` | 422 | a token that cannot be issued (an agent's, a superuser's not asked for, a scope that is not one) |
-| `auth.csrf_failed` | 403 | a session-authenticated POST without the CSRF token, or a sign-in without it |
-| `auth.invalid_credentials` | 400 | a sign-in (`/api/v2/session/login`) with a wrong username or password |
 | `request.malformed` | 400 | unparsable body or query |
 | `request.method_not_allowed` | 405 | |
 | `request.unsupported_media_type` | 415 | |
@@ -47,7 +46,7 @@ A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Con
 | `upstream.unavailable` | 503 | a dependency the request needed is down |
 | `internal.error` | 500 | |
 
-Two surfaces keep their own protocol's shape and carry the same ids: **GraphQL** keeps its `errors` array and adds `extensions.code` (`graphql.invalid` for a parse or validation error, the resolver's own code or `graphql.error` for an error raised on purpose, `internal.error` for a crash — with the message replaced) and `extensions.request_id`; **MCP** keeps JSON-RPC errors and adds `data.request_id` over HTTP (a crash is `-32603`), and nothing over stdio, where there is no request.
+Two surfaces keep their own protocol's shape and carry the same ids: **GraphQL** keeps its `errors` array and adds `extensions.code` (`graphql.invalid` for a parse or validation error, the resolver's own code or `graphql.error` for an error raised on purpose, `internal.error` for a crash — with the message replaced) and `extensions.request_id`; **MCP** keeps JSON-RPC errors and adds `data.request_id` over HTTP (a crash is `-32603`), and nothing over stdio, where there is no request. Signing in is django-allauth's headless API (`/_allauth/`, accounts/README.md), which answers in its own documented shape (`status`, `data`, `meta`, `errors`), as its clients expect.
 
 ## Origins
 

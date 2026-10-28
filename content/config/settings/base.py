@@ -336,7 +336,8 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "zer0-CMS platform API",
     "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry; and for the studio and the "
-    "extension, the session and a person's API tokens, sites, pages, revisions, publishing and the review inbox. "
+    "extension, who is signed in and their API tokens, sites, pages, revisions, publishing and the review inbox. "
+    "Signing in is django-allauth's headless API at /_allauth/, which documents itself. "
     "Wagtail's pages, images and documents endpoints live beside these at /api/v2/ and are documented by Wagtail.",
     "VERSION": "2",
     "OAS_VERSION": "3.1.0",

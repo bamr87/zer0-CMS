@@ -65,6 +65,14 @@ def test_a_wrong_password_and_an_agent_principal_are_refused(browser, person):
     assert browser.sign_in("seo-agent@example.com").status_code == 400
 
 
+def test_the_old_session_endpoints_are_gone(person):
+    client = Client()
+    for path in ("/api/v2/session/login/", "/api/v2/session/logout/"):
+        answer = client.post(path, {"username": "ada", "password": PASSWORD}, content_type="application/json")
+        assert answer.status_code == 404
+    assert client.get("/api/v2/me").json()["authenticated"] is False
+
+
 def test_an_unverified_address_must_be_verified_before_the_first_sign_in(browser, mailoutbox):
     make_person("bea", "bea@example.com", verified=False)
     pending = browser.sign_in("bea")
