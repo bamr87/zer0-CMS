@@ -15,7 +15,7 @@ reversal: >
   for exactly the pages he ordered destroyed.
 planted: 2026-08-08
 tended: 2026-08-08
-gardener: engine (germination cycle 1, domain: literature-and-language)
+gardener: "engine (germination cycle 1, domain: literature-and-language)"
 alanis: 9/10 — PASS
 sources:
   - Max Brod, Postscript to the first edition of "Der Prozess" (1925), recording that Kafka showed him the burn instruction in 1921 and that Brod refused it then

@@ -34,6 +34,6 @@
     {%- if gate %}<span title="{{ gate_name }}: {{ gate }}"><i class="bi bi-funnel me-1"></i>{{ gate | split: " " | first }}</span>{% endif -%}
     {%- if it.kind %}<span title="Quine's kind"><i class="bi bi-infinity me-1"></i>{{ it.kind }}</span>{% endif -%}
     {%- if it.veracity %}<span title="How well the evidence holds"><i class="bi bi-shield-check me-1"></i>{{ it.veracity }}</span>{% endif -%}
-    {%- unless gate or it.veracity %}{% if it.date %}<span><i class="bi bi-calendar3 me-1"></i>{{ it.date | date: "%b %-d, %Y" }}</span>{% endif %}{% endunless -%}
+    {%- unless gate or it.veracity %}{% if it.planted %}<span><i class="bi bi-calendar3 me-1"></i>{{ it.date | date: "%b %-d, %Y" }}</span>{% endif %}{% endunless -%}
   </div>
 </div>

@@ -17,7 +17,7 @@ reversal: >
   citizen of nowhere.
 planted: 2026-08-08
 tended: 2026-08-08
-gardener: engine (germination cycle 1, domain: literature-and-language)
+gardener: "engine (germination cycle 1, domain: literature-and-language)"
 alanis: 9/10 — PASS
 sources:
   - L. L. Zamenhof, Unua Libro, published 26 July 1887, Warsaw
