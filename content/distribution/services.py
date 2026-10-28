@@ -17,7 +17,10 @@ deployment armed the kind (`DISTRIBUTION_ARMED`, from `ZER0_LINKEDIN_PUBLISH`,
 ledger has no entry for its key — in the channel's rows and, for a LinkedIn
 channel with a `ledger_file`, in the site's own ledger file, where the
 extension and CI write — and the brand guard has no error. The worker runs the
-gates again before anything leaves.
+gates again before anything leaves, and every attempt ends published or
+failed: an error nobody expected fails it as one that may have published, and
+an attempt whose worker died — or that no worker took — is settled by the next
+request for it or by the beat's sweep (`settle_due`).
 """
 
 import hashlib
@@ -26,13 +29,14 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import UTC
+from datetime import UTC, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from wagtail.models import Page
 
@@ -769,16 +773,26 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
     """A person asks for the post to go — or an agent, through `distribution.publish`, whose call the registry
     has already held to the `auto` policy and the page's publish permission, and which never forces: every gate now
     (the worker asks again), then the work is queued. Either way only the text a person approved goes — a failed
-    post's included, whose approval stands only while its text is the one approved."""
+    post's included, whose approval stands only while its text is the one approved. A post already queued or being
+    sent is not queued again; an attempt that is over without its worker saying so is settled instead (`_settle`),
+    and comes back as it ended — failed and doubted, for a person to check before anything goes again."""
     from .tasks import publish_post
 
-    post = DistributionPost.objects.select_for_update().get(pk=post.pk)
+    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
     if agent:
         force = False
     elif not may_publish(post, user):
         raise PermissionDenied("publishing a post is the right of someone who may publish its page")
-    if post.status == DistributionPost.Status.PUBLISHING and post.attempted_at is not None:
-        raise Conflict("it is being sent now: wait for it to finish", code="distribution.sending")
+    if post.status == DistributionPost.Status.PUBLISHING:
+        if not _settle(post):
+            raise Conflict(
+                "it is being sent now: wait for it to finish"
+                if post.attempted_at is not None
+                else "it is queued for the worker: wait for it",
+                code="distribution.sending",
+            )
+        if post.status != DistributionPost.Status.APPROVED:
+            return post  # it may have gone: a person checks before anything is sent again
     blockers = gates.lifted(preview(post).blockers, force=force)
     if blockers:
         raise Conflict("; ".join(f"{b.kind}: {b.message}" for b in blockers), code="distribution.blocked")
@@ -791,55 +805,113 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
 
 def deliver(post_id: int) -> DistributionPost:
     """In the worker: the gates again, then the channel's transport, then the ledger. The attempt is claimed
-    (`attempted_at`, committed) before anything is sent, so a second delivery of one request — a task redelivered
-    after its worker died (acks are late), or a duplicate — never sends the post twice: within the send's time limit
-    it leaves the post to the worker that claimed it; after that, that worker is gone and the post may exist, so it
-    is ledgered unconfirmed for a person to check."""
-    from .tasks import SEND_TIME_LIMIT
-
+    (`attempted_at`, committed, by a conditional update — `select_for_update` does nothing on SQLite) before anything
+    is sent, so a second delivery of one request — a task redelivered after its worker died (acks are late), or a
+    duplicate — never sends the post twice: a claim younger than the send's time limit is left to the worker that
+    holds it, and an older one is settled (`_settle`). Whatever happens after the claim ends the attempt published
+    or failed; an error nobody expected leaves the outcome unknown, so it is doubted as well."""
     with transaction.atomic():
         post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post_id)
         if post.status != DistributionPost.Status.PUBLISHING:
             return post
         if post.attempted_at is not None:
-            if (timezone.now() - post.attempted_at).total_seconds() < SEND_TIME_LIMIT:
-                return post
-            message = (
-                "an earlier attempt to send this never finished, so it may have published: check, then record the "
-                "post if it did, or publish again with force if it did not"
-            )
-            _doubt(post, message)
-            post.status, post.error = DistributionPost.Status.FAILED, message
-            post.save()
+            _settle(post)
             return post
         blockers = gates.lifted(preview(post).blockers, force=post.force)
         if blockers:
             post.status, post.error = DistributionPost.Status.APPROVED, "; ".join(b.message for b in blockers)
             post.save()
             return post
-        post.attempted_at = timezone.now()
-        post.save(update_fields=["attempted_at", "updated_at"])
+        now = timezone.now()
+        unclaimed = DistributionPost.objects.filter(
+            pk=post.pk, status=DistributionPost.Status.PUBLISHING, attempted_at__isnull=True
+        )
+        if not unclaimed.update(attempted_at=now, updated_at=now):
+            return post  # another delivery claimed it first
+        post.attempted_at = now
     try:
         external_id, url, extra = _send(post)
     except (TransportError, LinkedInError, LedgerError, ValueError) as e:
         message = getattr(e, "message", None) or str(e)
-        if LedgerEntry.objects.filter(channel=post.channel, key=post.ledger_key, urn="").exists():
-            message += " — it may have published: the ledger marks it unconfirmed until a person checks"
-        DistributionPost.objects.filter(pk=post.pk).update(
-            status=DistributionPost.Status.FAILED,
-            error=message[:2000],
-            external_url=getattr(e, "url", "") or "",
-            updated_at=timezone.now(),
+        if getattr(e, "doubt", False):
+            _doubt(post, message)
+        return _failed(post, message, url=getattr(e, "url", "") or "")
+    except Exception as e:  # noqa: BLE001 — anything else (an error a library left unwrapped, the soft time limit, an unreadable image, the database) leaves the outcome unknown: doubted and failed, never left publishing
+        log.exception("distribution: post %s stopped mid-send", post.public_id)
+        message = (
+            f"the send stopped on an unexpected error ({type(e).__name__}), so it may have published: check "
+            f"{post.channel.name}, then record the post if it did, or publish again with force if it did not"
         )
-        post.refresh_from_db()
-        return post
-    with transaction.atomic():
-        entry = record(post, external_id, **extra)
-        post.status, post.external_id, post.external_url = DistributionPost.Status.PUBLISHED, external_id, url
-        post.published_at, post.error, post.force = timezone.now(), "", False
-        post.save()
-        log.info("distribution: post %s published to %s as %s", post.public_id, post.channel_id, entry.urn)
+        _doubt(post, message)
+        return _failed(post, message)
+    try:
+        with transaction.atomic():
+            entry = record(post, external_id, **extra)
+            post.status, post.external_id, post.external_url = DistributionPost.Status.PUBLISHED, external_id, url
+            post.published_at, post.error, post.force = timezone.now(), "", False
+            post.save()
+    except Exception:  # noqa: BLE001 — logged with what it went out as, then raised: the sweep settles the claim as doubted
+        log.exception("distribution: post %s went out as %s but was not recorded", post.public_id, external_id)
+        raise
+    log.info("distribution: post %s published to %s as %s", post.public_id, post.channel_id, entry.urn)
     return post
+
+
+def _failed(post, message: str, *, url: str = "") -> DistributionPost:
+    """The attempt is over and nothing says it went: failed, with the sentence a person acts on."""
+    unconfirmed = LedgerEntry.objects.filter(channel=post.channel, key=post.ledger_key, urn="").exists()
+    if unconfirmed and "may have published" not in message:
+        message += " — it may have published: the ledger marks it unconfirmed until a person checks"
+    DistributionPost.objects.filter(pk=post.pk).update(
+        status=DistributionPost.Status.FAILED,
+        error=message[:2000],
+        external_url=url,
+        notes=post.notes,
+        updated_at=timezone.now(),
+    )
+    post.refresh_from_db()
+    return post
+
+
+def _settle(post) -> bool:
+    """End an attempt that is over without its worker saying so, on a post the caller holds locked; False while it
+    may still be going. Past the send's time limit (`tasks.SEND_TIME_LIMIT`, after which the worker is killed), a
+    post no worker took goes back to approved — nothing was sent —, and one a worker claimed belonged to a worker
+    that died mid-send: the post may exist, so it is ledgered unconfirmed and failed for a person to check."""
+    from .tasks import SEND_TIME_LIMIT
+
+    if post.status != DistributionPost.Status.PUBLISHING:
+        return False
+    since = post.attempted_at or post.updated_at
+    if (timezone.now() - since).total_seconds() < SEND_TIME_LIMIT:
+        return False
+    if post.attempted_at is None:
+        post.status, post.error = DistributionPost.Status.APPROVED, "no worker took it: publish it again"
+    else:
+        message = (
+            "an earlier attempt to send this never finished, so it may have published: check, then record the "
+            "post if it did, or publish again with force if it did not"
+        )
+        _doubt(post, message)
+        post.status, post.error = DistributionPost.Status.FAILED, message
+    post.save()
+    return True
+
+
+def settle_due() -> int:
+    """The beat's sweep (`distribution-settle`): every post whose attempt is over without its worker saying so,
+    settled one at a time — so the studio never waits on one forever."""
+    from .tasks import SEND_TIME_LIMIT
+
+    cutoff = timezone.now() - timedelta(seconds=SEND_TIME_LIMIT)
+    due = DistributionPost.objects.filter(status=DistributionPost.Status.PUBLISHING).filter(
+        Q(attempted_at__lt=cutoff) | Q(attempted_at__isnull=True, updated_at__lt=cutoff)
+    )
+    settled = 0
+    for pk in due.values_list("pk", flat=True):
+        with transaction.atomic():
+            settled += _settle(DistributionPost.objects.select_for_update().select_related("channel").get(pk=pk))
+    return settled
 
 
 def _send(post) -> tuple[str, str, dict]:
@@ -848,12 +920,7 @@ def _send(post) -> tuple[str, str, dict]:
     channel = post.channel
     page = post.page.specific if post.page_id else None
     if channel.kind == Kind.WORDPRESS:
-        try:
-            external_id, url = wordpress_publish(channel, channel.credentials(), post, page)
-        except TransportError as e:
-            if e.doubt:
-                _doubt(post, e.message)
-            raise
+        external_id, url = wordpress_publish(channel, channel.credentials(), post, page)
         return f"wp:{external_id}", url, {}
     if channel.kind == Kind.GITHUB_PR:
         number, url = github_publish(channel, channel.credentials(), post, page)

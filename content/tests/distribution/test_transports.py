@@ -12,6 +12,7 @@ import base64
 import json
 
 import pytest
+import requests
 import responses
 from django.core import mail
 from django.test import override_settings
@@ -260,6 +261,28 @@ def test_github_failures_are_reported_as_themselves_never_answered_with_another_
     post.refresh_from_db()
     assert post.status == "failed" and says in post.error
     assert writes == [], "a refused read is not answered by writing a file or opening a pull request"
+
+
+@override_settings(DISTRIBUTION_ARMED={"github_pr"})
+@pytest.mark.parametrize(("where", "doubted"), [("repo", False), ("pull", True)])
+def test_a_github_request_never_answered_is_a_sentence_and_doubted_only_for_the_pull_request(
+    alice, page, worker, where, doubted
+):
+    """PyGithub lets `requests`' own errors through. A read that never came back is a failure to try again; the pull
+    request — the publish — may have been opened, so it is ledgered unconfirmed for a person to check. Either way the
+    post ends failed, never left publishing."""
+    channel = channel_for(page, "github_pr", {"repo": "bamr87/it-journey", "directory": "sites/news"}, {"token": "x"})
+    post = ready(channel, page, alice)
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        if where == "repo":
+            rsps.add(responses.GET, GITHUB, body=requests.exceptions.ConnectionError("connection reset by peer"))
+        else:
+            github(rsps, f"distribute/{post.public_id.hex[:12]}", pull={"body": requests.exceptions.ReadTimeout()})
+        worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "GitHub did not answer" in post.error
+    assert LedgerEntry.objects.filter(channel=channel, state="unconfirmed").exists() is doubted
+    assert ("may have published" in post.error) is doubted
 
 
 # ── email: a newsroom newsletter ────────────────────────────────────────────

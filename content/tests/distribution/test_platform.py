@@ -378,6 +378,101 @@ def test_a_delivery_never_sends_a_post_another_delivery_claimed(alice, channel, 
 
 
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_two_deliveries_that_read_the_post_at_once_send_it_once(alice, channel, article, web, monkeypatch):
+    """`select_for_update` does nothing on SQLite, so two workers may both read the post unclaimed: the claim is a
+    conditional update, and the delivery whose claim another made first sends nothing."""
+    route = web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:5"})
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Nightly, always."), alice)
+    services.request_publish(post, alice)  # queued; no worker runs it here
+    gates_of = services.preview
+
+    def meanwhile(row, **kwargs):  # the other worker claims it between this one's read and its claim
+        DistributionPost.objects.filter(pk=row.pk).update(attempted_at=timezone.now())
+        return gates_of(row, **kwargs)
+
+    monkeypatch.setattr(services, "preview", meanwhile)
+    assert services.deliver(post.pk).status == "publishing" and route.call_count == 0
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_a_post_is_queued_once_and_one_no_worker_took_is_given_back(api, alice, channel, article, web, worker):
+    """A second Publish while the first waits for a worker is refused, not queued again; a post no worker took
+    within the send's time limit goes back to approved by the beat's sweep — nothing was sent — and publishes."""
+    from distribution.tasks import settle_posts
+
+    route = web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:6"})
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Nightly, always."), alice)
+    assert api(alice).post(f"{API}/posts/{post.public_id}/publish/", {}, format="json").status_code == 202
+    again = api(alice).post(f"{API}/posts/{post.public_id}/publish/", {}, format="json")
+    assert again.status_code == 409 and "queued for the worker" in again.json()["error"]["message"]
+    assert settle_posts() == 0, "a queued post is the worker's for the send's time limit"
+    DistributionPost.objects.filter(pk=post.pk).update(updated_at=timezone.now() - timedelta(hours=1))
+    assert settle_posts() == 1
+    post.refresh_from_db()
+    assert (post.status, post.error) == ("approved", "no worker took it: publish it again")
+    assert not LedgerEntry.objects.exists() and route.call_count == 0
+    assert worker(api(alice).post, f"{API}/posts/{post.public_id}/publish/", {}, format="json").status_code == 202
+    post.refresh_from_db()
+    assert post.status == "published" and route.call_count == 1
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_an_attempt_whose_worker_died_is_settled_by_the_next_request_and_by_the_sweep(
+    api, alice, channel, article, site_root, web
+):
+    """A task that raised, or whose worker was killed, is acknowledged and never delivered again: the claim is all
+    that is left. The next request settles it — the post comes back failed and doubted, and force is not applied to
+    an attempt nobody has checked yet — and so does the beat's sweep, so the studio never waits on it forever."""
+    from distribution.tasks import settle_posts
+
+    route = web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:5"})
+    hours_ago = timezone.now() - timedelta(hours=6)
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Nightly, always."), alice)
+    services.request_publish(post, alice)  # queued; its worker claims it and dies
+    DistributionPost.objects.filter(pk=post.pk).update(attempted_at=hours_ago)
+    settled = api(alice).post(f"{API}/posts/{post.public_id}/publish/", {"force": True}, format="json")
+    assert settled.status_code == 202 and settled.json()["status"] == "failed"
+    assert "never finished, so it may have published" in settled.json()["error"]
+    assert "publish_unconfirmed" in [b["kind"] for b in settled.json()["blockers"]] and route.call_count == 0
+    other = make_article(site_root, "Restores tested", search_description="Test your restores.")
+    second = approved(services.compose(channel, user=alice, page=other, commentary="Restores."), alice)
+    services.request_publish(second, alice)
+    DistributionPost.objects.filter(pk=second.pk).update(attempted_at=hours_ago)
+    assert settle_posts() == 1
+    second.refresh_from_db()
+    assert second.status == "failed" and LedgerEntry.objects.get(key=second.link).state == "unconfirmed"
+    edited = api(alice).patch(f"{API}/posts/{second.public_id}/", {"commentary": "Restores, tested."}, format="json")
+    assert edited.status_code == 200 and edited.json()["status"] == "draft"
+    assert services.reject(second, alice, "not this week").status == "rejected"
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_an_error_nobody_expected_fails_the_post_as_one_that_may_have_published(
+    alice, channel, article, monkeypatch, worker
+):
+    """An exception the transports do not turn into a sentence — an unreadable image, a library's own network
+    error, the soft time limit, the database — leaves the outcome unknown: the post is failed and doubted, never
+    left publishing."""
+
+    def broken(post, page):
+        raise OSError("the preview image could not be read")
+
+    monkeypatch.setattr(services, "_send_linkedin", broken)
+    post = approved(services.compose(channel, user=alice, page=article, commentary="Nightly."), alice)
+    worker(services.request_publish, post, alice)
+    post.refresh_from_db()
+    assert post.status == "failed" and "stopped on an unexpected error (OSError)" in post.error
+    assert LedgerEntry.objects.get(channel=channel).state == "unconfirmed"
+    assert "publish_unconfirmed" in [b.kind for b in services.preview(post).blockers]
+
+
+def test_a_send_stops_from_the_inside_before_its_worker_is_killed():
+    from distribution.tasks import SEND_TIME_LIMIT, publish_post
+
+    assert publish_post.soft_time_limit < publish_post.time_limit == SEND_TIME_LIMIT
+
+
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
 def test_force_lifts_the_ledger_but_never_approval(api, alice, channel, article, web, worker):
     web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:9"})
     post = services.compose(channel, user=alice, page=article, commentary="Nightly.")
@@ -559,15 +654,21 @@ def test_the_armed_agent_publishes_only_what_a_person_approved_and_never_forces(
     distributor = agent("distribution")
     distributor.policy = "auto"  # this call's definition only: the row stays at suggest
     robot = grant(
-        get_user_model().objects.get(username=distributor.username), "agents that publish", "change_page", "publish_page"
+        get_user_model().objects.get(username=distributor.username),
+        "agents that publish",
+        "change_page",
+        "publish_page",
     )
     ctx = ToolContext(user=robot, agent=distributor)
     pages = [
-        make_article(site_root, f"Page {n}", search_description="Why it matters.", agent_policy="auto") for n in range(4)
+        make_article(site_root, f"Page {n}", search_description="Why it matters.", agent_policy="auto")
+        for n in range(4)
     ]
 
     def publish(post):
-        return worker(registry.call, "distribution.publish", {"post": str(post.public_id), "page_id": post.page_id}, ctx)
+        return worker(
+            registry.call, "distribution.publish", {"post": str(post.public_id), "page_id": post.page_id}, ctx
+        )
 
     def refused(post):
         with pytest.raises(ToolError) as e:

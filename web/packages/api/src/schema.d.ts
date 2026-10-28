@@ -1912,7 +1912,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish an approved post: 202, the worker sends it; 409 with every blocker when it may not go */
+        /** Publish an approved post: 202, the worker sends it — or, for an attempt that is over without its worker saying so, the post as it ended; 409 while it is queued or being sent, or with every blocker */
         post: operations["distribution_posts_publish_create"];
         delete?: never;
         options?: never;

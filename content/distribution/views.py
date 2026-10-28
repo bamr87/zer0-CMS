@@ -311,7 +311,10 @@ class DistributionPostViewSet(
     @extend_schema(
         request=s.DistributionPublishSerializer,
         responses={202: s.DistributionPostDetailSerializer, **ERROR_RESPONSES},
-        summary="Publish an approved post: 202, the worker sends it; 409 with every blocker when it may not go",
+        summary=(
+            "Publish an approved post: 202, the worker sends it — or, for an attempt that is over without its worker "
+            "saying so, the post as it ended; 409 while it is queued or being sent, or with every blocker"
+        ),
     )
     @action(detail=True, methods=["post"])
     def publish(self, request, public_id=None):
