@@ -542,6 +542,58 @@ def test_an_agent_composes_through_the_registry_and_publishing_stays_armed_off(a
         registry.call("distribution.compose", {"channel": str(channel.public_id), "page_id": article.pk}, ctx)
 
 
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_the_armed_agent_publishes_only_what_a_person_approved_and_never_forces(
+    agent, alice, carol, channel, site_root, web, worker
+):
+    """`distribution.publish` once every switch is set on purpose — the agent and the page at auto, the agent's group
+    given the page's publish right, the channel and the deployment armed: a post a person approved goes; a draft, a
+    rejected post and a failed one whose text was changed since do not; nor does one an earlier attempt may have
+    published, because an agent never forces."""
+    route = web.post(f"{REST}/posts").mock(
+        side_effect=[
+            httpx.Response(201, headers={"x-restli-id": "urn:li:share:31"}),
+            httpx.Response(422, json={"message": "Unprocessable"}),
+        ]
+    )
+    distributor = agent("distribution")
+    distributor.policy = "auto"  # this call's definition only: the row stays at suggest
+    robot = grant(
+        get_user_model().objects.get(username=distributor.username), "agents that publish", "change_page", "publish_page"
+    )
+    ctx = ToolContext(user=robot, agent=distributor)
+    pages = [
+        make_article(site_root, f"Page {n}", search_description="Why it matters.", agent_policy="auto") for n in range(4)
+    ]
+
+    def publish(post):
+        return worker(registry.call, "distribution.publish", {"post": str(post.public_id), "page_id": post.page_id}, ctx)
+
+    def refused(post):
+        with pytest.raises(ToolError) as e:
+            publish(post)
+        assert e.value.code == "not_allowed"
+        return e.value.message
+
+    went = approved(services.compose(channel, user=alice, page=pages[0], commentary="Approved by alice."), alice)
+    assert publish(went)["status"] == "publishing"
+    went.refresh_from_db()
+    assert (went.status, went.external_id, went.published_by) == ("published", "urn:li:share:31", robot)
+    draft = services.compose(channel, user=alice, page=pages[1], commentary="Only a draft.")
+    assert "status_not_accepted" in refused(draft)
+    assert "status_not_accepted" in refused(services.reject(draft, alice, "not this one"))
+    failed = approved(services.compose(channel, user=alice, page=pages[2], commentary="Approved, then failed."), alice)
+    publish(failed)
+    failed.refresh_from_db()
+    assert failed.status == "failed"
+    services.edit(failed, carol, commentary="Words nobody approved.")
+    assert "status_not_accepted" in refused(failed)
+    doubted = approved(services.compose(channel, user=alice, page=pages[3], commentary="Approved, doubted."), alice)
+    LedgerEntry.objects.create(channel=channel, key=doubted.link, state="unconfirmed", error="HTTP 503")
+    assert "publish_unconfirmed" in refused(doubted)
+    assert route.call_count == 2, "only the approved post and the attempt that failed reached LinkedIn"
+
+
 def test_an_mcp_client_with_the_distribution_token_drafts_and_cannot_publish(channel, article):
     from tests.mcp.test_mcp import rpc, token_for
 
