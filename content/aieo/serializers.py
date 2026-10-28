@@ -16,6 +16,7 @@ from ai.models import Visibility
 from ai.serializers import OWNED, OwnedSerializer, RunRefSerializer
 
 from .models import Audit, BrandContext, CitationCheck, CitationQuery, Connector, Pattern
+from .services import benchmark_for
 
 # Choice sets the OpenAPI document names (SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"]).
 MODES = ["optimize", "expand", "scrub", "rewrite", "pattern"]
@@ -56,6 +57,10 @@ class AieoAuditSerializer(OwnedSerializer):
     target = serializers.CharField(read_only=True)
     run = RunRefSerializer(read_only=True, allow_null=True)
     screenshot = serializers.SerializerMethodField()
+    benchmark = serializers.SerializerMethodField(
+        help_text="Its percentile among the audits of its kind and how many; on one finished audit, also per engine "
+        "how often its domain was cited and the audits nearest it in meaning, of those the reader sees."
+    )
 
     class Meta:
         model = Audit
@@ -91,13 +96,23 @@ class AieoAuditSerializer(OwnedSerializer):
     def get_screenshot(self, row) -> str | None:
         return f"/api/v2/aieo/audits/{row.public_id}/screenshot/" if row.screenshot else None
 
+    @extend_schema_field(serializers.JSONField())
+    def get_benchmark(self, row):
+        user = getattr(self.context.get("request"), "user", None)
+        stored = dict(row.benchmark or {})
+        return {**stored, **benchmark_for(row, user)} if row.status == Audit.READY and user is not None else stored
+
 
 class AieoAuditListSerializer(AieoAuditSerializer):
-    """An audit in a list: everything but the whole result and the pages."""
+    """An audit in a list: everything but the whole result and the pages, and of its benchmark the counts."""
 
     class Meta(AieoAuditSerializer.Meta):
         fields = [f for f in AieoAuditSerializer.Meta.fields if f not in ("result", "pages")]
         read_only_fields = fields
+
+    @extend_schema_field(serializers.JSONField())
+    def get_benchmark(self, row):
+        return dict(row.benchmark or {})
 
 
 class AieoAuditCreateSerializer(serializers.Serializer):

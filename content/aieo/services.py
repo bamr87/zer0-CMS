@@ -29,7 +29,7 @@ from ai import crypto, providers
 from ai.models import Assistant, Visibility, is_staff, sites_for, usable
 from ai.services import check_page, check_provider, provider_slug, run_assistant, stable_id, start
 from cms.models import BasePage
-from graph.services import embed_object, knn
+from graph.services import embed_object, knn, vector_of
 from importers.markdown import block_to_markdown, from_blocks, to_blocks
 from ops.errors import Conflict, Forbidden, Invalid, NotFound, Unavailable
 from research import fetch
@@ -214,39 +214,46 @@ def batch_audit(user, urls: list[str], *, method: str = Audit.AI, origin="api", 
         ]
 
 
-def remember(row: Audit, parsed: dict) -> list[float] | None:
+def remember(row: Audit, parsed: dict) -> None:
     """Store what an audit read as a vector (`graph.Embedding`, kind `audit`; pgvector on Postgres), for the
     semantic benchmark — AIEO's configured, never-used Qdrant, done on the platform's vectors."""
     text = parsed.get("text", "")[:6000]
-    if not text.strip():
-        return None
-    stored, _ = embed_object(row, text, parsed.get("content_hash", ""), "audit")
-    return list(stored.vector)
+    if text.strip():
+        embed_object(row, text, parsed.get("content_hash", ""), "audit")
 
 
-def benchmark(row: Audit, vector: list[float] | None = None) -> dict:
-    """Where an audit stands: its percentile among the platform's audits of the same kind of thing (a page among
-    pages, a site among sites); per engine, how often the AI engines asked about its domain cited it; and the
-    audits closest to it in meaning, of those its owner sees, with their scores."""
+def benchmark(row: Audit) -> dict:
+    """What an audit keeps of its benchmark: its percentile among the platform's audits of the same kind of thing (a
+    page among pages, a site among sites) and how many it was compared with — counts that name no other row, so they
+    are shown to whoever the audit is shared with (`benchmark_for` adds the rest, per reader)."""
     peers = Audit.objects.filter(status=Audit.READY, score__isnull=False).exclude(pk=row.pk)
     peers = peers.filter(kind__in=(Audit.SITE,) if row.kind == Audit.SITE else (Audit.TEXT, Audit.PAGE, Audit.URL))
     scores = list(peers.values_list("score", flat=True)[:5000])
     below = sum(1 for s in scores if s < (row.score or 0))
+    return {"percentile": round(100 * below / len(scores), 1) if scores else None, "compared_with": len(scores)}
+
+
+def benchmark_for(row: Audit, user) -> dict:
+    """The parts of a finished audit's benchmark that name other rows, worked out for the person reading it and never
+    stored, so sharing an audit shares none of its owner's other audits or citation checks: per engine, how often
+    the engines asked about its domain (or a subdomain) cited it, of the checks `user` sees; and the audits nearest
+    it in meaning (its vector, `graph.Embedding` kind `audit`), of those `user` sees, with their scores."""
     domain = urlsplit(row.url).hostname or ""
     if row.page_id and not domain:
         domain = (row.page.get_site().hostname if row.page.get_site() else "") or ""
     engines = {}
-    if domain and row.owner_id:
-        checks = CitationCheck.objects.visible_to(row.owner).filter(
-            status=CitationCheck.READY, query__domain__iendswith=_bare(domain)
+    if domain:
+        bare = _bare(domain)
+        checks = CitationCheck.objects.visible_to(user).filter(
+            Q(query__domain__iexact=bare) | Q(query__domain__iendswith=f".{bare}"), status=CitationCheck.READY
         )
         for engine in sorted(set(checks.values_list("engine", flat=True))):
             asked = checks.filter(engine=engine)
             engines[engine] = {"checks": asked.count(), "cited": asked.filter(cited=True).count()}
             engines[engine]["rate"] = round(engines[engine]["cited"] / engines[engine]["checks"], 3)
-    similar = []
-    if vector is not None and row.owner_id:
-        seen = Audit.objects.visible_to(row.owner).filter(status=Audit.READY).exclude(pk=row.pk)
+    similar, vector = [], vector_of(row)
+    if vector is not None:
+        seen = Audit.objects.visible_to(user).filter(status=Audit.READY).exclude(pk=row.pk)
         near = knn(vector, kind="audit", k=3, exclude=[row.pk], only_ids=list(seen.values_list("pk", flat=True)[:5000]))
         found = Audit.objects.in_bulk([pk for pk, _ in near])
         similar = [
@@ -259,12 +266,7 @@ def benchmark(row: Audit, vector: list[float] | None = None) -> dict:
             for pk, s in near
             if pk in found
         ]
-    return {
-        "percentile": round(100 * below / len(scores), 1) if scores else None,
-        "compared_with": len(scores),
-        "engines": engines,
-        "similar": similar,
-    }
+    return {"engines": engines, "similar": similar}
 
 
 def history(user, *, page=None, url: str = ""):

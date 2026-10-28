@@ -3767,6 +3767,7 @@ export interface components {
             readonly result: unknown;
             /** @description A site audit's pages: url, title, score, grade … */
             readonly pages: unknown;
+            /** @description Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees. */
             readonly benchmark: unknown;
             readonly screenshot: string | null;
             /** @description Audits made together. */
@@ -3804,7 +3805,7 @@ export interface components {
             site?: number | null;
             visibility?: components["schemas"]["VisibilityEnum"];
         };
-        /** @description An audit in a list: everything but the whole result and the pages. */
+        /** @description An audit in a list: everything but the whole result and the pages, and of its benchmark the counts. */
         AieoAuditList: {
             /** Format: uuid */
             readonly id: string;
@@ -3844,6 +3845,7 @@ export interface components {
             /** @description What scored it: heuristic or ai. */
             readonly scoring_method: string;
             readonly content_hash: string;
+            /** @description Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees. */
             readonly benchmark: unknown;
             readonly screenshot: string | null;
             /** @description Audits made together. */

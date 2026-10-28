@@ -217,15 +217,15 @@ def test_every_request_the_browser_makes_goes_through_the_guarded_fetcher(web):
     assert inside.aborted and post.aborted and len(web.calls) == 1
 
 
-def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain(alice, fake, worker, web):
+def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_its_domain(alice, api, fake, worker, web):
     from aieo.models import CitationCheck, CitationQuery
 
     for text in ("We make websites.", "# Short\n\nA page.", ARTICLE):
         worker(services.audit, alice, kind="text", content=text, method="heuristic")
     best = Audit.objects.get(content=ARTICLE)
-    assert best.benchmark["compared_with"] == 2 and best.benchmark["percentile"] == 100.0
+    assert best.benchmark == {"compared_with": 2, "percentile": 100.0}  # counts only: no other row is kept with it
     # Its neighbours in meaning (graph.Embedding, kind audit — the platform's vectors in place of AIEO's Qdrant).
-    near = best.benchmark["similar"]
+    near = api(alice).get(f"/api/v2/aieo/audits/{best.public_id}/").json()["benchmark"]["similar"]
     assert (
         len(near) == 2
         and {n["target"] for n in near} == {"the text"}
@@ -239,13 +239,38 @@ def test_an_audit_is_benchmarked_against_the_others_and_the_engines_that_cite_it
     query = CitationQuery.objects.create(owner=alice, prompt="Who explains backups?", domain="example.com")
     for engine, hit in (("fake", True), ("fake", False), ("openai", True)):
         CitationCheck.objects.create(query=query, engine=engine, status=CitationCheck.READY, cited=hit)
+    for domain in ("notexample.com", "www.example.com"):  # another site's domain is not this one's; a subdomain is
+        other = CitationQuery.objects.create(owner=alice, prompt="Who explains backups?", domain=domain)
+        CitationCheck.objects.create(query=other, engine="openai", status=CitationCheck.READY, cited=False)
     web.get(at("/robots.txt")).respond(404)
     web.get(at("/")).respond(200, text=_page("Home"), headers={"Content-Type": "text/html"})
     row = audited(worker(services.audit, alice, kind="url", url="https://example.com/", method="heuristic"))
-    assert row.benchmark["engines"] == {
+    assert api(alice).get(f"/api/v2/aieo/audits/{row.public_id}/").json()["benchmark"]["engines"] == {
         "fake": {"checks": 2, "cited": 1, "rate": 0.5},
-        "openai": {"checks": 1, "cited": 1, "rate": 1.0},
+        "openai": {"checks": 2, "cited": 1, "rate": 0.5},
     }
+
+
+def test_a_shared_audits_benchmark_names_only_what_its_reader_sees(alice, bob, api, fake, worker, web):
+    """Sharing an audit shares it, not its owner's other audits and citation checks: the rows its benchmark names are
+    worked out for whoever reads it, from what they see; only the counts, which name nothing, are kept with it."""
+    from aieo.models import CitationCheck, CitationQuery
+
+    text = "# Backups\n\nA backup is a copy of a site kept elsewhere. According to Ada, test restores."
+    private = worker(services.audit, alice, kind="text", content=text, method="heuristic", title="ALICE-PRIVATE-PLAN")
+    query = CitationQuery.objects.create(owner=alice, prompt="Who explains backups?", domain="example.com")
+    CitationCheck.objects.create(query=query, engine="fake", status=CitationCheck.READY, cited=True)
+    web.get(at("/robots.txt")).respond(404)
+    web.get(at("/")).respond(200, text=_page("Backups", body=text), headers={"Content-Type": "text/html"})
+    shared = worker(services.audit, alice, kind="url", url="https://example.com/", method="heuristic")
+    Audit.objects.filter(pk=shared.pk).update(visibility="shared")
+    assert api(bob).get(f"/api/v2/aieo/audits/{private.public_id}/").status_code == 404
+    theirs = api(bob).get(f"/api/v2/aieo/audits/{shared.public_id}/").json()["benchmark"]
+    assert theirs["compared_with"] == 1 and theirs["engines"] == {} and theirs["similar"] == []
+    hers = api(alice).get(f"/api/v2/aieo/audits/{shared.public_id}/").json()["benchmark"]
+    assert [s["target"] for s in hers["similar"]] == ["ALICE-PRIVATE-PLAN"] and hers["engines"]["fake"]["cited"] == 1
+    listed = api(bob).get("/api/v2/aieo/audits/").json()["results"]
+    assert [set(a["benchmark"]) for a in listed] == [{"percentile", "compared_with"}]
 
 
 def test_a_run_that_ends_without_succeeding_fails_its_audit(alice, fake, worker):

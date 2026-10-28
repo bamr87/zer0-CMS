@@ -28573,7 +28573,8 @@
                         "description": "A site audit's pages: url, title, score, grade …"
                     },
                     "benchmark": {
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees."
                     },
                     "screenshot": {
                         "type": [
@@ -28736,7 +28737,7 @@
             },
             "AieoAuditList": {
                 "type": "object",
-                "description": "An audit in a list: everything but the whole result and the pages.",
+                "description": "An audit in a list: everything but the whole result and the pages, and of its benchmark the counts.",
                 "properties": {
                     "id": {
                         "type": "string",
@@ -28869,7 +28870,8 @@
                         "readOnly": true
                     },
                     "benchmark": {
-                        "readOnly": true
+                        "readOnly": true,
+                        "description": "Its percentile among the audits of its kind and how many; on one finished audit, also per engine how often its domain was cited and the audits nearest it in meaning, of those the reader sees."
                     },
                     "screenshot": {
                         "type": [
