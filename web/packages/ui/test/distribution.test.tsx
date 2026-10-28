@@ -297,6 +297,26 @@ describe('a channel', () => {
   });
 });
 
+describe('removing a channel', () => {
+  it('asks first, says how many posts go with it, and shows the platform’s refusal', async () => {
+    const platform = fakePlatform({
+      [`GET ${API}/channels/c1/`]: () => channel(),
+      [`GET ${API}/channels/c1/ledger-file/`]: () => ({ filename: 'linkedin-c1.json', content: '{}\n' }),
+      [`GET ${API}/posts/`]: () => ({ count: 3, next: null, previous: null, results: [post()] }),
+      [`DELETE ${API}/channels/c1/`]: () =>
+        new Reply(409, { error: { code: 'conflict', message: 'The page’s ledger holds 1 entry: disconnect the channel instead', status: 409, details: [] } }),
+    });
+    renderUi(<ChannelPanel channelId="c1" />, { api: platform.api });
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove the channel…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Remove this channel?' });
+    expect(await within(dialog).findByText(/and its 3 posts with it/)).toBeInTheDocument();
+    expect(platform.calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove it' }));
+    expect(await within(dialog).findByText(/disconnect the channel instead/)).toBeInTheDocument();
+    expect(platform.calls.find((c) => c.path === `${API}/posts/`)?.query.get('channel')).toBe('c1');
+  });
+});
+
 describe('the ledger and its statistics', () => {
   it('marks an attempt that may have landed and links a LinkedIn post', async () => {
     const platform = fakePlatform({

@@ -79,13 +79,7 @@ class DistributionChannelViewSet(viewsets.ModelViewSet):
             serializer.save()
 
     def perform_destroy(self, channel):
-        if not services.may_manage(self.request.user):
-            raise Forbidden("removing a channel needs the right to manage channels")
-        if channel.ledger.exclude(urn="").exists():
-            raise Conflict(
-                "this channel has published posts, and its ledger is what keeps them from going twice: disconnect it instead"
-            )
-        channel.delete()
+        services.delete_channel(channel, self.request.user)
 
     @extend_schema(
         request=None,

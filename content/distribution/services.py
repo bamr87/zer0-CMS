@@ -184,6 +184,20 @@ def save_channel(user, *, channel=None, **fields) -> Channel:
 
 
 @transaction.atomic
+def delete_channel(channel, user) -> None:
+    """A channel goes, with its posts, only while its ledger is empty: a post that went out, or an attempt that may
+    have, is what keeps a page from going there twice — a new channel for the same place would not know it."""
+    if not manages_channels(user):
+        raise Forbidden("removing a channel needs the right to manage channels")
+    if held := channel.ledger.count():
+        raise Conflict(
+            f"{channel.name}'s ledger holds {held} entr{'y' if held == 1 else 'ies'} — posts that went out or may "
+            "have — and is what keeps them from going there twice: disconnect the channel instead"
+        )
+    channel.delete()
+
+
+@transaction.atomic
 def set_credentials(channel, user, values: dict) -> Channel:
     if not manages_channels(user):
         raise Forbidden("changing a channel's credential needs the right to manage channels")

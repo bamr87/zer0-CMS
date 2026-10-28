@@ -7,6 +7,8 @@
 // the credential works, arms or disarms it, and holds its ledger file —
 // downloaded byte for byte as every lane writes it, or imported from the
 // extension's or a site's CI so what they published never goes twice.
+// Removing a channel asks first, saying how many posts go with it; the
+// platform refuses while its ledger holds anything (disconnect it instead).
 import {
   Alert,
   Anchor,
@@ -16,6 +18,7 @@ import {
   FileButton,
   Group,
   Loader,
+  Modal,
   PasswordInput,
   Select,
   Stack,
@@ -207,6 +210,7 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
   const [secrets, setSecrets] = useState<Settings>({});
   const [consent, setConsent] = useState<string | null>(null);
   const [imported, setImported] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ['distribution'] });
   const patch = useMutation({
     mutationFn: (body: Record<string, unknown>) => call(api.PATCH('/api/v2/distribution/channels/{public_id}/', { ...path, body })),
@@ -244,7 +248,13 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
       go({ to: 'distribution', tab: 'channels' });
     },
   });
-  const failure = patch.error ?? connect.error ?? disconnect.error ?? check.error ?? statistics.error ?? importLedger.error ?? remove.error;
+  // Only while the person decides: how many posts would go with the channel.
+  const posts = useQuery({
+    queryKey: ['distribution', 'posts', 'of-channel', channel.id],
+    queryFn: () => call(api.GET('/api/v2/distribution/posts/', { params: { query: { channel: channel.id, page_size: 1 } } })),
+    enabled: removing,
+  });
+  const failure = patch.error ?? connect.error ?? disconnect.error ?? check.error ?? statistics.error ?? importLedger.error;
   const typed = Object.fromEntries(Object.entries(secrets).filter(([, v]) => v.trim()));
   const cleanSettings = () => {
     const out: Record<string, unknown> = {};
@@ -386,10 +396,29 @@ function Channel({ channel, returned }: { channel: DistributionChannel; returned
       {ledger.data ? <Code block>{ledger.data.content.length > 2000 ? `${ledger.data.content.slice(0, 2000)}…` : ledger.data.content}</Code> : null}
 
       <Group justify="flex-end">
-        <Button variant="subtle" color="red" disabled={!channel.can_manage} loading={remove.isPending} onClick={() => remove.mutate()}>
-          Remove the channel
+        <Button variant="subtle" color="red" disabled={!channel.can_manage} onClick={() => setRemoving(true)}>
+          Remove the channel…
         </Button>
       </Group>
+
+      <Modal opened={removing} onClose={() => setRemoving(false)} title="Remove this channel?" closeButtonProps={{ 'aria-label': 'Close' }}>
+        <Stack>
+          <Text size="sm">
+            {channel.name} goes{posts.data ? `, and its ${posts.data.count} post${posts.data.count === 1 ? '' : 's'} with it` : ''}. A channel whose
+            ledger holds anything — a post that went out, or an attempt that may have — stays: its ledger is what keeps a page from going there
+            twice, so disconnect it instead.
+          </Text>
+          {remove.error ? <Alert color="red">{errorText(remove.error)}</Alert> : null}
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setRemoving(false)}>
+              Cancel
+            </Button>
+            <Button color="red" loading={remove.isPending} onClick={() => remove.mutate()}>
+              Remove it
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }

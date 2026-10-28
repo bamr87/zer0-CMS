@@ -209,6 +209,21 @@ def test_one_channel_of_a_site_per_target_so_nothing_goes_twice_to_one_place(api
     assert made("github_pr", "Repo again", {"repo": "Bamr87/News", "directory": "/site/"}).status_code == 409
 
 
+def test_a_channel_whose_ledger_holds_anything_stays(api, manager, carol, channel, article):
+    """A ledger row — a post that went out, or an attempt that may have — is what keeps a page from going there
+    twice; a new channel for the same target would not know it. A channel with none goes, with its posts."""
+    LedgerEntry.objects.create(channel=channel, key="https://example.test/x/", state="unconfirmed", error="HTTP 503")
+    kept = api(manager).delete(f"{API}/channels/{channel.public_id}/")
+    assert kept.status_code == 409 and "holds 1 entry" in kept.json()["error"]["message"]
+    assert "disconnect the channel instead" in kept.json()["error"]["message"]
+    assert LedgerEntry.objects.filter(channel=channel).exists()
+    LedgerEntry.objects.filter(channel=channel).delete()
+    services.compose(channel, user=manager, page=article)
+    assert api(carol).delete(f"{API}/channels/{channel.public_id}/").status_code == 403, "carol edits; she manages none"
+    assert api(manager).delete(f"{API}/channels/{channel.public_id}/").status_code == 204
+    assert not DistributionPost.objects.exists()
+
+
 @override_settings(**LINKEDIN_APP)
 def test_connecting_linkedin_is_state_and_pkce_one_use_and_the_code_is_exchanged_on_the_worker(
     api, manager, channel, web, worker
