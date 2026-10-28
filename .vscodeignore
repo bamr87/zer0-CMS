@@ -50,6 +50,7 @@ web/**
 schemas/events/**
 schemas/graphql/**
 schemas/content/**
+schemas/books/**
 .markdownlint-cli2.jsonc
 # The workspace registry and its command (tools/** above holds the library).
 workspace.yml
