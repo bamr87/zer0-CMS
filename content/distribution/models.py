@@ -242,7 +242,7 @@ class LedgerEntry(models.Model):
     key = models.CharField(max_length=2048)
     urn = models.CharField(max_length=512, blank=True, help_text="Empty for an attempt the target did not confirm.")
     state = models.CharField(max_length=12, choices=LEDGER_STATES, default="published")
-    kind = models.CharField(max_length=8, default="article")
+    kind = models.CharField(max_length=8, choices=POST_KINDS, default="article")
     posted_at = models.DateTimeField(null=True, blank=True)
     attempted_at = models.DateTimeField(null=True, blank=True)
     error = models.TextField(blank=True)

@@ -609,6 +609,29 @@ def test_the_ledger_round_trips_a_lanes_file_byte_for_byte_and_imported_keys_are
     assert {e["state"] for e in entries} == {"published", "unconfirmed"}
 
 
+def test_a_ledger_file_that_cannot_be_read_in_is_refused_whole_naming_its_entries(api, manager, channel):
+    """An impossible date or a value longer than its column was a 500 (Postgres refuses the write, SQLite stored it):
+    every entry is checked first, and the file is refused — 422, naming them — with nothing half imported."""
+    content = json.dumps(
+        {
+            "https://example.test/fine/": {"urn": "urn:li:share:1", "posted_at": "2026-02-28T10:00:00Z"},
+            "https://example.test/feb-30/": {"urn": "urn:li:share:2", "posted_at": "2026-02-30T10:00:00Z"},
+            "https://example.test/long/": {"urn": "urn:li:share:3", "type": "a-type-far-too-long"},
+            "https://example.test/author/": {"urn": "urn:li:share:4", "author": "x" * 300},
+        }
+    )
+    refused = api(manager).post(f"{API}/channels/{channel.public_id}/ledger-file/", {"content": content}, format="json")
+    assert refused.status_code == 422 and refused.json()["error"]["message"].startswith("3 entries of the file")
+    said = [d["message"] for d in refused.json()["error"]["details"]]
+    assert [m.split(":")[0] + ":" + m.split(":")[1] for m in said] == [
+        "https://example.test/feb-30/",
+        "https://example.test/long/",
+        "https://example.test/author/",
+    ]
+    assert "not a date and time" in said[0] and said[1].startswith("https://example.test/long/: type:")
+    assert not LedgerEntry.objects.exists(), "nothing is half imported"
+
+
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})
 def test_a_site_ledger_file_is_read_before_and_written_after_a_publish(tmp_path, settings, alice, web, worker):
     """The extension and the site's CI write the site's own ledger file: what they published blocks the platform,

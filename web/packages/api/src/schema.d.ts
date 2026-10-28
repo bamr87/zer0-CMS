@@ -5641,7 +5641,7 @@ export interface components {
             /** @description Empty for an attempt the target did not confirm. */
             readonly urn: string;
             readonly state: components["schemas"]["LedgerStateEnum"];
-            readonly kind: string;
+            readonly kind: components["schemas"]["DistributionPostKindEnum"];
             /** Format: date-time */
             readonly posted_at: string | null;
             /** Format: date-time */

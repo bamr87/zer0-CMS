@@ -35,7 +35,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -1228,16 +1228,53 @@ def ledger_file(channel) -> str:
 
 
 def _parse_stamp(value):
+    """A file's timestamp; ValueError for one that is not a real date and time (`2026-02-30T10:00:00Z`, `soon`)."""
     from django.utils.dateparse import parse_datetime
 
-    parsed = parse_datetime(str(value)) if value else None
+    try:
+        parsed = parse_datetime(str(value)) if value else None
+    except ValueError as e:
+        raise ValueError(f"{value!r} is not a date and time ({e})") from e
+    if value and parsed is None:
+        raise ValueError(f"{value!r} is not a date and time")
     return parsed if parsed is None or parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _ledger_row(channel, key, entry) -> LedgerEntry:
+    """A file's entry as the row it becomes, checked as the model checks a row (lengths, `type`, dates) —
+    `ValidationError` naming the file's keys otherwise."""
+    urn = urn_of(entry) or ""
+    try:
+        stamps = {name: _parse_stamp(entry.get(name)) for name in ("posted_at", "attempted_at")}
+    except ValueError as e:
+        raise ValidationError(str(e)) from e
+    row = LedgerEntry(
+        channel=channel,
+        key=key,
+        urn=urn,
+        state="published" if urn else "unconfirmed",
+        kind=str(entry.get("type") or "article"),
+        error=str(entry.get("error") or ""),
+        author=str(entry.get("author") or ""),
+        source_file=str(entry.get("source_file") or ""),
+        image_urn=str(entry.get("image_urn") or ""),
+        extra={k: v for k, v in entry.items() if k not in MODELLED},
+        **stamps,
+    )
+    try:
+        row.full_clean(exclude=["channel", "post", "public_id"], validate_unique=False, validate_constraints=False)
+    except ValidationError as e:
+        named = {"kind": "type", "urn": "urn"}
+        raise ValidationError("; ".join(f"{named.get(f, f)}: {' '.join(m)}" for f, m in e.message_dict.items())) from e
+    return row
 
 
 @transaction.atomic
 def import_ledger(channel, user, text: str) -> dict:
     """Read a ledger file's entries in (the extension's, CI's, the Ruby lane's): what another lane published is
-    then never published again from here. A row this channel already has a URN for is kept."""
+    then never published again from here. A row this channel already has a URN for is kept. Every entry is checked
+    first, and one that cannot be a row (a date that does not exist, a value longer than its column, a `type` that
+    is neither article nor update) refuses the file (422, naming them) — nothing is half imported."""
     if not manages_channels(user):
         raise Forbidden("importing a ledger needs the right to manage channels")
     try:
@@ -1246,7 +1283,8 @@ def import_ledger(channel, user, text: str) -> dict:
         raise Invalid(f"the ledger is not valid JSON: {e}") from e
     if not isinstance(data, dict):
         raise Invalid("a ledger is a JSON object keyed by URL")
-    added = kept = skipped = 0
+    kept = skipped = 0
+    rows, problems = [], []
     for key, entry in data.items():
         if key.startswith("_") or not isinstance(entry, dict):
             skipped += 1
@@ -1255,25 +1293,33 @@ def import_ledger(channel, user, text: str) -> dict:
         if existing is not None and existing.urn:
             kept += 1
             continue
-        urn = urn_of(entry) or ""
-        LedgerEntry.objects.update_or_create(
-            channel=channel,
-            key=key,
-            defaults={
-                "urn": urn,
-                "state": "published" if urn else "unconfirmed",
-                "kind": str(entry.get("type") or "article"),
-                "posted_at": _parse_stamp(entry.get("posted_at")),
-                "attempted_at": _parse_stamp(entry.get("attempted_at")),
-                "error": str(entry.get("error") or ""),
-                "author": str(entry.get("author") or ""),
-                "source_file": str(entry.get("source_file") or ""),
-                "image_urn": str(entry.get("image_urn") or ""),
-                "extra": {k: v for k, v in entry.items() if k not in MODELLED},
-            },
+        try:
+            rows.append(_ledger_row(channel, key, entry))
+        except ValidationError as e:
+            problems.append({"field": "content", "code": "invalid", "message": f"{key[:200]}: {' '.join(e.messages)}"})
+    if problems:
+        raise Invalid(
+            f"{len(problems)} entr{'y' if len(problems) == 1 else 'ies'} of the file cannot be read in, so nothing was "
+            "imported",
+            details=problems[:50],
         )
-        added += 1
-    return {"added": added, "kept": kept, "skipped": skipped}
+    fields = (
+        "urn",
+        "state",
+        "kind",
+        "posted_at",
+        "attempted_at",
+        "error",
+        "author",
+        "source_file",
+        "image_urn",
+        "extra",
+    )
+    for row in rows:
+        LedgerEntry.objects.update_or_create(
+            channel=channel, key=row.key, defaults={name: getattr(row, name) for name in fields}
+        )
+    return {"added": len(rows), "kept": kept, "skipped": skipped}
 
 
 # ── statistics ──────────────────────────────────────────────────────────────

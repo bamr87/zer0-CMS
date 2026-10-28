@@ -34826,7 +34826,11 @@
                         "readOnly": true
                     },
                     "kind": {
-                        "type": "string",
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/DistributionPostKindEnum"
+                            }
+                        ],
                         "readOnly": true
                     },
                     "posted_at": {
