@@ -16,7 +16,7 @@ reversal: >
   the book.
 planted: 2026-08-08
 tended: 2026-08-08
-gardener: engine (germination cycle 1, domain: literature-and-language)
+gardener: "engine (germination cycle 1, domain: literature-and-language)"
 alanis: 10/10 — PASS
 sources:
   - Ballantine "Bal-Hi" edition of Fahrenheit 451 (1967), prepared for American high schools; approximately 75 passages altered, including removal of "damn" and "hell"

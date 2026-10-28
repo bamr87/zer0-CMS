@@ -20,7 +20,10 @@ Modeled on lifehacker.dev's news homepage, sourced from this site's real content
   ============================================================================
 {%- endcomment -%}
 
-{%- assign dated = site.entries | where_exp: "e", "e.date" | sort: "date" | reverse -%}
+{%- comment -%}
+Jekyll gives every collection document a `date`, and one with none of its own gets the build's clock. Only `planted` (which transplant.mjs copies into `date`) says when an entry was planted, so it, not `date`, decides what is dated — else the vault index and the compost ledgers read as planted today on every build.
+{%- endcomment -%}
+{%- assign dated = site.entries | where_exp: "e", "e.planted" | sort: "date" | reverse -%}
 {%- assign gated = site.entries | where_exp: "e", "e.reversal" -%}
 
 {%- comment -%} Hero = the vault's signature specimen, with a fallback to newest. {%- endcomment -%}
@@ -76,7 +79,7 @@ The theme's `home` layout is bare — `<div class="home">{{ content }}</div>` wi
       <div class="d-flex align-items-center gap-3 mb-4 flex-wrap small text-white-50">
         {% if hero.alanis %}<span><i class="bi bi-funnel me-1"></i>Gate {{ hero.alanis }}</span>{% endif %}
         {% if hero.veracity %}<span><i class="bi bi-shield-check me-1"></i>{{ hero.veracity }}</span>{% endif %}
-        {% if hero.date %}<span><i class="bi bi-calendar3 me-1"></i>Planted {{ hero.date | date: "%B %-d, %Y" }}</span>{% endif %}
+        {% if hero.planted %}<span><i class="bi bi-calendar3 me-1"></i>Planted {{ hero.date | date: "%B %-d, %Y" }}</span>{% endif %}
       </div>
       <a href="{{ hero.url | relative_url }}" class="btn btn-light btn-lg align-self-start">
         Read the entry <i class="bi bi-arrow-right ms-2"></i>

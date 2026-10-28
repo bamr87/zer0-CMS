@@ -1,10 +1,12 @@
 // A page's fields, rendered from the specs the platform sends with every page
-// (api/pages.py field_specs) — content, SEO and settings — so a new field or
-// page type needs no change here. Values stay JSON: strings, numbers, string
-// lists, ISO date-times. The two search fields count their characters against
-// the lengths search engines show.
-import { MultiSelect, NumberInput, Select, Stack, TagsInput, Textarea, TextInput } from '@mantine/core';
+// (api/pages.py field_specs) — content, SEO, the page's file and settings — so
+// a new field or page type needs no change here. Values stay JSON: strings,
+// numbers, string lists, ISO date-times, and a JSON object (a file's raw front
+// matter) edited as text in Mantine's JsonInput. The two search fields count
+// their characters against the lengths search engines show.
+import { JsonInput, MultiSelect, NumberInput, Select, Stack, TagsInput, Textarea, TextInput } from '@mantine/core';
 import type { FieldSpec } from '@zer0/api';
+import { useState } from 'react';
 
 export type FieldValues = Record<string, unknown>;
 
@@ -44,12 +46,51 @@ export function FieldsPanel({ specs, values, onChange, group, disabled }: Props)
   );
 }
 
+/** What every input of a field shares. */
+interface Common {
+  label: string;
+  description: string | undefined;
+  required: boolean;
+  disabled: boolean | undefined;
+}
+
+/** Text as the JSON it holds: empty is no value, and text that is not JSON stays text. */
+export function fromJsonText(text: string): unknown {
+  if (!text.trim()) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+/** A JSON value edited as text. The field's value is what the text parses to, or the text itself while it does
+ * not parse — so a save sends what the person sees, and the platform refuses it by field rather than an older
+ * value going out unnoticed. Key order is kept: it is the order the file is written in. */
+function JsonField({ common, value, onChange }: { common: Common; value: unknown; onChange: (v: unknown) => void }) {
+  const [text, setText] = useState(() => (value == null ? '' : typeof value === 'string' ? value : JSON.stringify(value, null, 2)));
+  return (
+    <JsonInput
+      {...common}
+      autosize
+      minRows={4}
+      formatOnBlur
+      validationError="Not valid JSON"
+      value={text}
+      onChange={(next) => {
+        setText(next);
+        onChange(fromJsonText(next));
+      }}
+    />
+  );
+}
+
 function Field({ spec, value, onChange, disabled }: { spec: FieldSpec; value: unknown; onChange: (v: unknown) => void; disabled?: boolean }) {
   const limit = SHOWN[spec.name];
   const hint = [spec.help_text, limit ? `${text(value).length} / ${limit} characters shown in search results` : '']
     .filter(Boolean)
     .join(' · ');
-  const common = { label: spec.label, description: hint || undefined, required: spec.required, disabled };
+  const common: Common = { label: spec.label, description: hint || undefined, required: spec.required, disabled };
   switch (spec.kind) {
     case 'textarea':
       return <Textarea {...common} autosize minRows={2} value={text(value)} onChange={(e) => onChange(e.currentTarget.value)} />;
@@ -72,6 +113,8 @@ function Field({ spec, value, onChange, disabled }: { spec: FieldSpec; value: un
       return <MultiSelect {...common} data={spec.choices} value={list(value)} onChange={onChange} />;
     case 'tags':
       return <TagsInput {...common} value={list(value)} onChange={onChange} />;
+    case 'json':
+      return <JsonField common={common} value={value} onChange={onChange} />;
     default:
       return (
         <TextInput {...common} maxLength={spec.max_length ?? undefined} value={text(value)} onChange={(e) => onChange(e.currentTarget.value)} />

@@ -6,8 +6,9 @@ functions rather than calling `save_revision()` / `publish()` directly, so a
 revision, its log entry, the graph rows and the outbox event either all commit
 or none do.
 
-`save_draft` and `publish` are the two primitives. The rest are what a person
-does to a page in the studio or the extension: create it as a draft, save a
+`save_draft` and `publish` are the two primitives, with `take_down` beside
+them for the importer (a file its site no longer builds). The rest are what a
+person does to a page in the studio or the extension: create it as a draft, save a
 draft over the latest revision, publish the latest revision now, schedule it
 (and its expiry), cancel the schedule, unpublish, and revert to an old revision
 — which is a new draft revision, never a publish. Each checks the person's
@@ -30,7 +31,10 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django.utils.html import strip_tags
+from wagtail.actions.unpublish_page import UnpublishPageAction
 from wagtail.permission_policies.pages import PagePermissionPolicy
+
+from . import files
 
 
 class StaleRevision(Exception):
@@ -56,6 +60,21 @@ def publish(page, user, log_action=True):
     revision = save_draft(page, user, log_action=log_action)
     revision.publish(user=user, log_action=log_action, skip_permission_checks=True)
     return revision
+
+
+@transaction.atomic
+def take_down(page, user):
+    """Nothing of `page` live or due to go live: unpublished as `user` when it is
+    live, and any scheduled revision and go-live time cancelled — `publish`'s
+    counterpart for the importer, which acts for a site's files (one the site
+    no longer builds), never for a person (`unpublish`, `unschedule`). The
+    instance passed in is told it is no longer live."""
+    row = type(page).objects.get(pk=page.pk)
+    if row.live:
+        UnpublishPageAction(row, user=user).execute(skip_permission_checks=True)
+    row.revisions.update(approved_go_live_at=None)
+    type(page).objects.filter(pk=page.pk).update(go_live_at=None)
+    page.live, page.live_revision = False, None
 
 
 # ── what a person does in the studio ───────────────────────────────────────
@@ -101,21 +120,31 @@ def creatable_types(parent, user) -> list:
 
 
 def editable_fields(model) -> tuple[str, ...]:
-    return model.shared_editor_fields + model.editor_fields
+    return model.shared_editor_fields + model.editor_fields + model.file_editor_fields
 
 
-def apply_fields(page, values: dict):
+def apply_fields(page, values: dict, parent=None):
     """Set editor fields on `page` in memory. Each value is parsed and validated
     by its own model field, so every error names the field it belongs to (an
-    empty slug is left for Wagtail to make from the title)."""
+    empty slug is left for Wagtail to make from the title). The page's file —
+    `file_path` and raw `front_matter` — is checked against its site
+    (cms/files.py; `parent` is where a new page goes), and a dated file name
+    against the date whenever either changes."""
     allowed = editable_fields(type(page))
     errors = {}
+    dated = (page.legacy_path, getattr(page, "date", None))
     for name, value in values.items():
         if name not in allowed:
             errors[name] = [f"{name} is not an editable field of a {page._meta.verbose_name}"]
             continue
-        field = page._meta.get_field(name)
         try:
+            if name == "file_path":
+                files.set_file_path(page, value, parent)
+                continue
+            if name == "front_matter":
+                files.set_front_matter(page, value)
+                continue
+            field = page._meta.get_field(name)
             if name == "tags":
                 if not isinstance(value, list) or not all(isinstance(v, str) and v.strip() for v in value):
                     raise ValidationError("tags is a list of names")
@@ -136,7 +165,10 @@ def apply_fields(page, values: dict):
                     page, name, field.to_python(value) if name == "slug" and not value else field.clean(value, page)
                 )
         except ValidationError as e:
-            errors[name] = e.messages
+            errors.update(e.message_dict if hasattr(e, "error_dict") else {name: e.messages})
+    redated = (page.legacy_path, getattr(page, "date", None)) != dated
+    if redated and not errors.keys() & {"file_path", "date"} and (problem := files.date_problem(page)) is not None:
+        errors["file_path" if "file_path" in values else "date"] = [problem]
     if errors:
         raise ValidationError(errors)
 
@@ -178,7 +210,7 @@ def create_draft(parent, model, user, *, fields: dict, body: list | None = None)
     """A new page under `parent`, not live, with one draft revision."""
     _require(model in creatable_types(parent, user), f"{user} may not create a {model._meta.verbose_name} here")
     page = model(owner=user, live=False, has_unpublished_changes=True)
-    apply_fields(page, fields)
+    apply_fields(page, fields, parent=parent)
     if body:
         page.body = clean_body(page, body)
     parent.add_child(instance=page)

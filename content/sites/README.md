@@ -17,7 +17,7 @@ None of `catalog.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Djan
 
 ## Sync and write-back
 
-**Sync** is `importers.jekyll.import_site` as a job: the catalog's files become pages; a file changed by hand updates its page unless the page changed here since (a conflict, reported, never overwritten — `force` takes the file). The digest of each file read is recorded on the site.
+**Sync** is `importers.jekyll.import_site` as a job: the catalog's files become pages; a file changed by hand updates its page unless the page changed here since (a conflict, reported, never overwritten — `force` takes the file). The digest of each file read is recorded on the site — an ABC book's spec sidecar (`_data/abc_books/<slug>.json`, read with its page, `../books/README.md`) too. A page is live exactly when the catalog says the site builds its file (`Entry.live`): a draft (`published: false`, `draft: true`, `status: draft`, `_drafts/`) is a draft page, never published, and a file dated in the future is scheduled for its date unless `_config.yml` sets `future: true`; a changed file moves its page with it, an unchanged one never does.
 
 **Write-back** (`export`) writes what `exporters.jekyll.site_files` renders — the live pages, or the latest revisions with `include_drafts` — into the checkout under the stale-write guard of the Rails `PageEditor`:
 
@@ -25,10 +25,12 @@ None of `catalog.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Djan
 - a file whose rendering equals what is on disk is not written at all, so a write-back with nothing to do writes nothing;
 - a file changed (or deleted) by hand since is a conflict and stays as it is: sync first;
 - a page is never written into another page's file (a new page whose slug lands on a draft's file name, say): a conflict;
-- the file of a page deleted here is removed while it is unchanged since; a draft's or an unpublished page's file is left alone;
+- the file of a page deleted here is removed while it is unchanged since, and an ABC book's sidecar stays while its page does;
+- a page that is not live — never published, unpublished or expired — reaches its file as not built: Jekyll's own switch, `published: false` (the file stays, Jekyll skips it), goes in before the closing fence, unless the file already keeps itself out of the build in the site's own way (`catalog.held_back`: `published: false`, `draft: true`, `status: draft`, a draft in `_drafts/` or a future date — the reader's own rules, so such a file exports byte for byte); a page that goes live again loses only the marker the platform added (`exporters.jekyll.mark`);
+- every write-back covers the pages that are not live, not only one with `include_drafts`: a file without the marker is live on the site, so a take-down that waited for "drafts too" would leave an unpublished page built after every ordinary write-back. A write-back of the live pages writes only the marker onto the file as the platform last read or wrote it — never a draft's content, and never a new file (a page with no file yet, or moved since, has nothing to take down there) — and with `include_drafts` the latest revision is written, marked;
 - a changed page is rendered over its original file by line surgery, so only the keys and the body that changed move.
 
-What a write-back writes is recorded both ways, the digest on the site and the text on the page's `ImportedSource`, so the next sync sees the platform's own file and the next write-back writes it verbatim.
+What a write-back writes is recorded both ways, the digest on the site and the text on the page's `ImportedSource` (an ABC book's sidecar in its `sidecars`), so the next sync sees the platform's own file and the next write-back writes it verbatim.
 
 ## The API
 

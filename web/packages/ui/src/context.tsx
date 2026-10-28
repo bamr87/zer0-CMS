@@ -7,13 +7,16 @@
 import type { ApiClient } from '@zer0/api';
 import { createContext, use, type ReactNode } from 'react';
 
-/** A section of the AI area (G8). */
-export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models';
+/** A section of the AI area (G8; automations, G16). */
+export type AiSection = 'runs' | 'assistants' | 'pipelines' | 'schemas' | 'conversations' | 'providers' | 'models' | 'automations';
 /** A tab of the Distribution area (G5). */
 export type DistributionTab = 'queue' | 'channels' | 'ledger' | 'statistics';
 
 /** A tab of the Outbox desk (ADR 0007): the belt, arena trials, the claim desk. */
 export type OutboxTab = 'belt' | 'trials' | 'claims';
+
+/** A section of the AIEO workspace (G7). */
+export type AieoSection = 'audit' | 'optimize' | 'patterns' | 'agents' | 'citations' | 'connectors' | 'priorities' | 'reports' | 'context';
 
 /** Where a workspace asks to go; the host maps it to a route or a panel. */
 export type Destination =
@@ -46,7 +49,11 @@ export type Destination =
   // Distribution (G5): the area, a post of the queue, a channel.
   | { to: 'distribution'; tab?: DistributionTab }
   | { to: 'distribution-post'; id: string }
-  | { to: 'channel'; id: string };
+  | { to: 'channel'; id: string }
+  // Automations (G16), under the AI area; one without an id is a new one.
+  | { to: 'automation'; id?: string }
+  // The AIEO workspace (G7), under Sites.
+  | { to: 'aieo'; section?: AieoSection };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

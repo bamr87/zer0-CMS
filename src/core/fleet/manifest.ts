@@ -18,7 +18,7 @@
  * is not a manifest I understand" rather than render an empty table and let
  * somebody dispatch against it.
  *
- * Parsing goes through `parseYamlSubset`, the same hand-rolled reader front
+ * Parsing goes through `parseYaml`, the same hand-rolled reader front
  * matter uses (decision D3: zero runtime dependencies). The manifest's wrapped
  * `summary:` is why that parser learned to fold plain-scalar continuations.
  */
@@ -26,7 +26,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
-import { parseYamlSubset } from '../content/frontmatter';
+import { parseYaml } from '../content/frontmatter';
 import {
   FLEET_HARNESSES,
   FLEET_TRIGGER_KINDS,
@@ -236,7 +236,7 @@ export function coerceFleetManifest(raw: unknown): ParsedFleetManifest {
 
 /** Parse manifest text. Never throws: the YAML reader is tolerant by design. */
 export function parseFleetManifest(text: string): ParsedFleetManifest {
-  return coerceFleetManifest(parseYamlSubset(text));
+  return coerceFleetManifest(parseYaml(text));
 }
 
 /**

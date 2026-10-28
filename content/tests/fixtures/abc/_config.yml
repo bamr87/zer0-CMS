@@ -1,0 +1,10 @@
+# The smallest Jekyll root drsai's ABC book needs, for the ABC export tests
+# (content/tests/books/test_abc.py): drsai's collections_dir and its books
+# collection. The book and its spec sidecar are frozen copies; see README.md.
+title: ABC fixture
+collections_dir: pages
+collections:
+  books:
+    output: true
+exclude:
+  - README.md

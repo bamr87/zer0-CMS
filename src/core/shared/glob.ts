@@ -1,18 +1,13 @@
 /**
- * A glob just big enough for content discovery: `*`, `?`, `**`, and nothing
- * else. No brace expansion, no character classes, no negation — the patterns
- * this CMS meets are `pages/_posts/**\/*.md`-shaped, and a dependency for that
- * is a dependency too many.
+ * Globs for content discovery. Matching is picomatch's (ADR 0006 decision 9:
+ * the maintained library, not a hand-rolled subset), so `*`, `?`, `**`,
+ * braces, classes and extglobs mean what they mean everywhere else.
  *
- * Two properties matter and are easy to get wrong:
- *
- *  1. **Single-pass translation.** Cascading string replaces (`**` → `.*`,
- *     then `*` → `[^/]*`) rewrite the regex fragments emitted by earlier
- *     steps. The loop below walks the pattern once, left to right.
- *  2. **A static base.** Everything before the first magic character is a
- *     literal directory, so the walk starts there instead of at the workspace
- *     root — which is the difference between reading one folder and reading
- *     `node_modules`.
+ * One property is this module's own: **a static base.** Everything before a
+ * pattern's first magic character is a literal directory (picomatch's `scan`
+ * finds it), so the walk starts there instead of at the workspace root —
+ * which is the difference between reading one folder and reading
+ * `node_modules`.
  *
  * Output is always workspace-relative POSIX, deduplicated and sorted, so two
  * runs on the same tree produce byte-identical lists.
@@ -20,6 +15,8 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+
+import picomatch from 'picomatch';
 
 /**
  * Directories never worth walking into for content.
@@ -54,41 +51,16 @@ export function toPosix(value: string): string {
   return value.split('\\').join('/');
 }
 
-const REGEX_SPECIALS = /[.+^${}()|[\]\\]/;
-
-/** Translate one glob into its static base plus an anchored `RegExp`. */
+/**
+ * One glob as its static base and an anchored `RegExp`. A dotted name matches
+ * like any other (`dot`), as it always has here: hidden directories are kept
+ * out by the walk, not by the pattern.
+ */
 export function compileGlob(glob: string): CompiledGlob {
   const norm = toPosix(glob).replace(/^\.\//, '');
-  const firstMagic = norm.search(/[*?]/);
-  const base =
-    firstMagic === -1
-      ? path.posix.dirname(norm)
-      : norm.slice(0, firstMagic).replace(/\/[^/]*$/, '') || '.';
-
-  let source = '';
-  for (let i = 0; i < norm.length; i += 1) {
-    if (norm.startsWith('**/', i)) {
-      // Zero or more directories.
-      source += '(?:[^/]+/)*';
-      i += 2;
-      continue;
-    }
-    if (norm.startsWith('**', i)) {
-      source += '.*';
-      i += 1;
-      continue;
-    }
-    const ch = norm.charAt(i);
-    if (ch === '*') {
-      source += '[^/]*';
-    } else if (ch === '?') {
-      source += '[^/]';
-    } else {
-      source += REGEX_SPECIALS.test(ch) ? `\\${ch}` : ch;
-    }
-  }
-
-  return { base: base === '' ? '.' : base, re: new RegExp(`^${source}$`) };
+  const scan = picomatch.scan(norm);
+  const base = scan.isGlob ? scan.base : path.posix.dirname(norm);
+  return { base: base === '' ? '.' : base, re: picomatch.makeRe(norm, { dot: true }) };
 }
 
 /** Does a workspace-relative POSIX path match any of the compiled globs? */

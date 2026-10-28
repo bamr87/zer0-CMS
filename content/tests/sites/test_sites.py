@@ -206,13 +206,14 @@ def test_a_write_back_rewrites_only_what_changed_and_an_unchanged_one_writes_not
     hello.save_revision().publish()
     before = (checkout / HELLO).read_text()
     job = start(api, site_id, "export", django_capture_on_commit_callbacks)
-    assert job.status == Job.Status.SUCCEEDED and job.result == {"written": 1, "unchanged": 6}
+    # Seven unchanged: the draft's file too, which every write-back keeps out of the build (its own `published: false`).
+    assert job.status == Job.Status.SUCCEEDED and job.result == {"written": 1, "unchanged": 7}
     after = (checkout / HELLO).read_text()
     assert after == before.replace('title: "Hello, backups"', 'title: "Hello again, backups"'), "line surgery"
     assert ManagedSite.objects.get(key="fixture").digests[HELLO] == writer.sha256(after)
     mtimes = {p: p.stat().st_mtime_ns for p in checkout.rglob("*.md")}
     unchanged = start(api, site_id, "export", django_capture_on_commit_callbacks)
-    assert unchanged.result == {"unchanged": 7}
+    assert unchanged.result == {"unchanged": 8}
     assert {p: p.stat().st_mtime_ns for p in checkout.rglob("*.md")} == mtimes, "an unchanged save writes nothing"
     # The platform now calls that file its own: a sync reads nothing new.
     assert start(api, site_id, "sync", django_capture_on_commit_callbacks).result["updated"] == 0
@@ -243,11 +244,11 @@ def test_a_base_digest_the_index_moved_past_is_refused(api, registered, checkout
     page.title = "Changed"
     page.save_revision().publish()
     stale = start(api, site_id, "export", django_capture_on_commit_callbacks, {"base": {HELLO: "0" * 64}})
-    assert stale.result == {"conflict": 1, "unchanged": 6}
+    assert stale.result == {"conflict": 1, "unchanged": 7}
     assert 'title: "Hello, backups"' in (checkout / HELLO).read_text()
     current = {HELLO: ManagedSite.objects.get(key="fixture").digests[HELLO]}
     fresh = start(api, site_id, "export", django_capture_on_commit_callbacks, {"base": current})
-    assert fresh.result == {"written": 1, "unchanged": 6}
+    assert fresh.result == {"written": 1, "unchanged": 7}
 
 
 def test_the_file_of_a_page_deleted_here_goes_unless_it_changed_by_hand(
@@ -261,6 +262,106 @@ def test_the_file_of_a_page_deleted_here_goes_unless_it_changed_by_hand(
     assert not (checkout / "about.md").exists() and (checkout / "index.md").exists()
     assert job.result["removed"] == 1 and job.result["conflict"] == 1
     assert (checkout / "pages/_posts/2026-08-01-unfinished.md").exists(), "a draft's file is not a deleted page's"
+
+
+# ── a page that is not live reaches its file as not built ──────────────────
+
+
+def built(checkout, rel) -> bool:
+    """Whether Jekyll would build the file: the catalog is Jekyll 4.4's reader."""
+    from sites import catalog
+
+    return next(e for e in catalog.scan(checkout).entries if e.relative == rel).live
+
+
+def test_a_never_published_draft_written_back_is_marked_and_jekyll_skips_it(
+    api, registered, checkout, django_capture_on_commit_callbacks
+):
+    """Rails wrote `draft: true` for a new draft; the platform writes Jekyll's own
+    switch, and takes it off again once the page goes live."""
+    from datetime import UTC, datetime
+
+    from cms.models import ArticlePage, CollectionPage
+
+    site_id, rel = registered["site"]["id"], "pages/_posts/2026-09-02-a-draft.md"
+    posts = CollectionPage.objects.get(collection="posts", path__startswith=Page.objects.get(slug="fixture").path)
+    page = ArticlePage(title="A draft", slug="a-draft", date=datetime(2026, 9, 2, tzinfo=UTC), body=[], live=False)
+    posts.add_child(instance=page)
+    page.save_revision()
+    assert not page.live
+    drafts = start(api, site_id, "export", django_capture_on_commit_callbacks, {"include_drafts": True})
+    assert drafts.result == {"written": 1, "unchanged": 8}
+    text = (checkout / rel).read_text()
+    assert text.startswith("---\ntitle: A draft\ndate: 2026-09-02 00:00:00 +0000\npublished: false\n---\n"), text
+    assert not built(checkout, rel)
+    # A write-back of the live pages leaves the draft's file as it is: already taken down, never rewritten.
+    mtime = (checkout / rel).stat().st_mtime_ns
+    assert start(api, site_id, "export", django_capture_on_commit_callbacks).result == {"unchanged": 9}
+    assert (checkout / rel).stat().st_mtime_ns == mtime
+    # Published here, it loses the marker the platform added and nothing else.
+    page.get_latest_revision().publish()
+    live = start(api, site_id, "export", django_capture_on_commit_callbacks)
+    assert live.result == {"written": 1, "unchanged": 8}
+    assert (checkout / rel).read_text() == text.replace("published: false\n", "") and built(checkout, rel)
+
+
+def test_unpublishing_a_live_page_takes_its_file_down_and_republishing_restores_its_bytes(
+    api, registered, checkout, django_capture_on_commit_callbacks
+):
+    site_id = registered["site"]["id"]
+    original = (checkout / HELLO).read_bytes()
+    page_at(HELLO).unpublish()
+    down = start(api, site_id, "export", django_capture_on_commit_callbacks)  # the live pages: no "drafts too"
+    assert down.result == {"written": 1, "unchanged": 7}
+    text = (checkout / HELLO).read_text()
+    assert text == original.decode().replace("comments: true\n---\n", "comments: true\npublished: false\n---\n")
+    assert not built(checkout, HELLO)
+    line = next(line.text for line in down.lines.all() if line.text.startswith(f"{HELLO}:"))
+    assert "taken down" in line
+    assert ManagedSite.objects.get(key="fixture").digests[HELLO] == writer.sha256(text)
+    # The platform calls the marked file its own: a sync reads nothing new, and the page stays down.
+    assert start(api, site_id, "sync", django_capture_on_commit_callbacks).result["updated"] == 0
+    assert not page_at(HELLO).live
+    assert start(api, site_id, "export", django_capture_on_commit_callbacks).result == {"unchanged": 8}
+    # Republished with nothing else changed, the file is its original bytes again.
+    page_at(HELLO).get_latest_revision().publish()
+    up = start(api, site_id, "export", django_capture_on_commit_callbacks)
+    assert up.result == {"written": 1, "unchanged": 7}
+    assert (checkout / HELLO).read_bytes() == original and built(checkout, HELLO)
+
+
+def test_a_take_down_goes_through_the_stale_write_guard(api, registered, checkout, django_capture_on_commit_callbacks):
+    site_id = registered["site"]["id"]
+    original = (checkout / HELLO).read_bytes()
+    page_at(HELLO).unpublish()
+    stale = start(api, site_id, "export", django_capture_on_commit_callbacks, {"base": {HELLO: "0" * 64}})
+    assert stale.result == {"conflict": 1, "unchanged": 7} and (checkout / HELLO).read_bytes() == original
+    hand = original.decode().replace("Every night we copy the site.", "Edited by hand.")
+    (checkout / HELLO).write_text(hand)
+    by_hand = start(api, site_id, "export", django_capture_on_commit_callbacks)
+    assert by_hand.result == {"conflict": 1, "unchanged": 7} and (checkout / HELLO).read_text() == hand
+    line = next(line for line in by_hand.lines.all() if line.text.startswith(f"{HELLO}:"))
+    assert line.level == "warning" and "changed on disk since the platform last read or wrote it" in line.text
+
+
+@pytest.mark.parametrize("marker", ["draft: true", "status: draft", "published: false"])
+def test_a_file_that_holds_itself_back_keeps_its_own_marker_and_its_bytes(
+    marker, api, registered, checkout, django_capture_on_commit_callbacks
+):
+    site_id, rel = registered["site"]["id"], "pages/_posts/2026-08-02-held.md"
+    source = f"---\ntitle: Held\ndate: 2026-08-02\n{marker}\nlayout: post\n---\n\nNot yet.\n"
+    (checkout / rel).write_text(source)
+    assert start(api, site_id, "sync", django_capture_on_commit_callbacks).result["created"] == 1
+    for params in ({}, {"include_drafts": True}):
+        job = start(api, site_id, "export", django_capture_on_commit_callbacks, params)
+        assert job.result == {"unchanged": 9}, params
+        assert (checkout / rel).read_text() == source
+    page = page_at(rel).get_latest_revision_as_object()
+    page.title = "Held back"
+    page.save_revision()
+    edited = start(api, site_id, "export", django_capture_on_commit_callbacks, {"include_drafts": True})
+    assert edited.result == {"written": 1, "unchanged": 8}
+    assert (checkout / rel).read_text() == source.replace("title: Held\n", "title: Held back\n"), "no marker of ours"
 
 
 def test_a_new_page_gets_a_file_and_the_job_says_so(api, registered, checkout, django_capture_on_commit_callbacks):

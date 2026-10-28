@@ -464,7 +464,7 @@ def _linkedin_problems(root: Path, today: date):
 def check_distribution(root: Path, findings: list, today: date | None = None) -> None:
     vendored = next((rel for rel in VENDORED_LINKEDIN if (root / rel).is_file()), None)
     if vendored:
-        evidence = "a per-site LinkedIn publisher; zer0-cms linkedin replaces it"
+        evidence = "a per-site LinkedIn publisher; manage.py linkedin replaces it"
         findings.append(finding("distribution", "warning", "vendored-linkedin-publisher", evidence, file=vendored))
     if not (root / "zer0.json").is_file():
         return

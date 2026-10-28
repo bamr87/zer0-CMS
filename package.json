@@ -1,7 +1,7 @@
 {
   "name": "zer0-cms",
   "displayName": "zer0-CMS",
-  "description": "A lightweight, governed CMS for your markdown repo — metadata panel, content dashboard, brand guard, human approval, and an idempotency ledger. Zero runtime dependencies.",
+  "description": "A governed CMS for your markdown repo — metadata panel, content dashboard, brand guard, human approval, and an idempotency ledger — and, pointed at a zer0-CMS platform, the studio's workspaces in the editor. Zero runtime dependencies.",
   "version": "0.3.0",
   "private": true,
   "preview": true,
@@ -64,7 +64,8 @@
         "zer0Cms.fleet.manifestPath",
         "zer0Cms.agent.enabled",
         "zer0Cms.agent.model",
-        "zer0Cms.agent.permissionMode"
+        "zer0Cms.agent.permissionMode",
+        "zer0Cms.platform.url"
       ]
     },
     "virtualWorkspaces": {
@@ -150,6 +151,12 @@
         "title": "Close dashboard",
         "category": "zer0-CMS",
         "icon": "$(close)"
+      },
+      {
+        "command": "zer0Cms.dashboard.files",
+        "title": "Open the file dashboard",
+        "category": "zer0-CMS",
+        "icon": "$(files)"
       },
       {
         "command": "zer0Cms.refresh",
@@ -429,6 +436,16 @@
         "title": "Open the fleet monitor",
         "category": "zer0-CMS",
         "icon": "$(dashboard)"
+      },
+      {
+        "command": "zer0Cms.platform.setToken",
+        "title": "Set platform token",
+        "category": "zer0-CMS"
+      },
+      {
+        "command": "zer0Cms.platform.clearToken",
+        "title": "Clear platform token",
+        "category": "zer0-CMS"
       }
     ],
     "menus": {
@@ -881,7 +898,7 @@
             "type": "string",
             "default": "yyyy-MM-dd",
             "scope": "resource",
-            "markdownDescription": "Date format for front-matter date fields. Tokens: `yyyy MM dd HH hh mm ss aaa`."
+            "markdownDescription": "Date format for front-matter date fields. Tokens: `yyyy yy MMMM MMM MM M dd d do EEEE EEE HH H hh h mm m ss s SSS aaa a XXX`, and Front Matter's Moment spellings `YYYY YY DD D Do`. Every other letter, and text in single quotes, is written as typed: `yyyy-MM-ddTHH:mm` writes a `T`."
           },
           "zer0Cms.date.timezone": {
             "type": "string",
@@ -1123,6 +1140,19 @@
             "description": "Verbosity of the zer0-CMS output channel."
           }
         }
+      },
+      {
+        "title": "Platform",
+        "order": 12,
+        "properties": {
+          "zer0Cms.platform.url": {
+            "type": "string",
+            "default": "",
+            "scope": "window",
+            "format": "uri",
+            "markdownDescription": "The zer0-CMS platform to work with, e.g. `https://cms.example.org` — https, or plain http on this machine only (`localhost`, `127.0.0.1`, `[::1]`), because your token goes with every request. When set, the dashboard and the agent view render the studio's workspaces from the platform, and the Metadata view the studio's page editor for a file the platform has a page for; any other file keeps file mode, and **zer0-CMS: Open the file dashboard** opens the file-mode dashboard. Nothing reaches the platform until you open one of those views, or a file with the Metadata view showing. Read from **your settings only** — a `zer0.json` cannot point the extension at a server — and ignored in an untrusted workspace. Your token for it is kept in the editor's secret storage: run **zer0-CMS: Set platform token**."
+          }
+        }
       }
     ],
     "configurationDefaults": {
@@ -1142,24 +1172,30 @@
     "lint": "eslint src",
     "compile-tests": "tsc -p . --outDir out",
     "pretest": "npm run compile-tests && npm run compile",
-    "test": "node test-runner.js"
+    "test": "node test-runner.js",
+    "postinstall": "npm ci --prefix web --no-audit --no-fund"
   },
-  "dependencies": {},
   "optionalDependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.181"
   },
   "devDependencies": {
     "@bamr87/fleet-engines": "0.1.0",
+    "@date-fns/tz": "^1.5.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.1",
+    "@types/picomatch": "^4.0.3",
     "@types/vscode": "1.101.x",
     "@vscode/codicons": "^0.0.36",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
+    "date-fns": "^4.4.0",
     "esbuild": "^0.27.0",
     "eslint": "^9.39.1",
+    "eventsource": "^5.1.3",
+    "jsonc-parser": "^3.3.1",
     "npm-run-all": "^4.1.5",
+    "picomatch": "^4.0.7",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.3",
     "yaml": "2.9.0"

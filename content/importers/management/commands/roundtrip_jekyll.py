@@ -1,5 +1,6 @@
 """`manage.py roundtrip_jekyll --path DIR`: import a site into a throwaway
-transaction, export it, and compare every imported file with the original
+transaction, export it, and compare every imported file — each page's, and
+each file read with one (an ABC book's spec sidecar) — with the original
 (PLAN §4.7). Prints the files that differ; exit status 1 if any does.
 Nothing is left in the database."""
 
@@ -11,6 +12,7 @@ from django.db import transaction
 
 from exporters.jekyll import export_site
 from importers.jekyll import import_site
+from importers.models import ImportedSource
 
 
 class _Rollback(Exception):
@@ -32,7 +34,10 @@ class Command(BaseCommand):
                 report = import_site(root, site)
                 summary = report.summary()
                 export = export_site(site, out, include_drafts=True)
-                for rel in report.created:
+                read = list(report.created)
+                for sidecars in ImportedSource.objects.filter(site_key=site).values_list("sidecars", flat=True):
+                    read.extend(sidecars)
+                for rel in read:
                     compared += 1
                     exported = Path(out) / rel
                     if not exported.is_file() or exported.read_bytes() != (root / rel).read_bytes():

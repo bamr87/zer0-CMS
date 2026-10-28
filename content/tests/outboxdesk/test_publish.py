@@ -1,8 +1,8 @@
 """A page that goes live is announced on the belt (outboxdesk/consumers.py): not by the publish or its signal, which
 write nothing to the belt, but by the transactional outbox's `content.page.published` event — the consumer, once
-per event, sends a `published` handoff from the publisher station whose `ref` names the page, whose trace is the
-event's `traceparent`'s when it has one, and whose parent is the latest delivered message about the page (an
-editor's approval) or else the event."""
+per event, sends a `published` handoff from the publisher station whose `ref` names the page, whose parent is the latest
+delivered message about the page (an editor's approval) or else the event, and whose trace is that parent's (a page
+nothing on the belt names takes the event's `traceparent`'s)."""
 
 import json
 import uuid
@@ -49,6 +49,20 @@ def outbox_files(station):
 
 
 @pytest.mark.django_db
+def test_a_page_an_import_published_is_not_announced(article, consumer):
+    """Importing a site publishes each of its pages as `legacy:import`: that brings existing pages in, and no piece of
+    work went live, so the desk sends nothing for them (an import of lifehacker.dev sent 401 handoffs)."""
+    from agents.principals import ensure_legacy_import_user
+    from cms.services import publish
+
+    article.title = "Nightly backups, imported again"
+    publish(article, user=ensure_legacy_import_user())  # as importers/jekyll.py does
+    envelope = published_event(article).envelope()
+    assert consumer in handle_envelope(envelope)  # handled, and recorded once …
+    assert outbox_files("publisher") == []  # … with nothing on the belt
+
+
+@pytest.mark.django_db
 def test_a_page_that_goes_live_is_announced_by_the_outbox_events_consumer_once(article, consumer):
     event = published_event(article)  # the publish wrote the event, in its transaction …
     assert not settings.OUTBOX_BELT_ROOT.exists()  # … and nothing on the belt
@@ -76,9 +90,7 @@ def test_a_page_that_goes_live_is_announced_by_the_outbox_events_consumer_once(a
 
 
 @pytest.mark.django_db
-def test_a_published_handoff_answers_the_approval_about_its_page_and_follows_the_events_trace(
-    api, ed, article, consumer
-):
+def test_a_published_handoff_answers_the_approval_about_its_page_and_stays_on_its_trace(api, ed, article, consumer):
     lib = services.module("belt")
     belt = services.open_belt()
     idea = lib.Handoff(kind="idea", from_station="scout-a", to=["editor", "ledger"], subject="backups")
@@ -102,10 +114,14 @@ def test_a_published_handoff_answers_the_approval_about_its_page_and_follows_the
     assert consumer in handle_envelope(without)
     services.deliver()
     first, second = services.messages(kind="published", oldest_first=True)
-    assert (first["parent_id"], first["trace"]) == (approval["id"], traced)  # the event's trace wins
-    assert (second["parent_id"], second["trace"]) == (approval["id"], idea.trace)  # else the approval's
+    # The piece of work keeps its trace through the publish, whatever request published it; the request's own
+    # trace stays readable in the payload.
+    assert (first["parent_id"], first["trace"]) == (approval["id"], idea.trace)
+    assert first["payload"]["traceparent"] == with_trace["traceparent"]
+    assert (second["parent_id"], second["trace"]) == (approval["id"], idea.trace)
+    assert "traceparent" not in second["payload"]
     journey = [m["kind"] for m in services.journey(idea.trace)]
-    assert journey == ["idea", "approval", "published"]
+    assert journey == ["idea", "approval", "published", "published"]
 
 
 def test_a_traceparent_gives_its_trace_and_anything_else_none():

@@ -28,19 +28,27 @@ for (const dir of readdirSync(root("vault"))) {
   for (const f of readdirSync(full).filter((f) => f.endsWith(".md"))) notes.push({ dir, file: f });
 }
 
-const splitFrontmatter = (src) => {
+// Frontmatter that does not parse is an error, not an empty mapping: dropped
+// silently, the note publishes with its slug for a title and no date, which
+// Jekyll then fills with the build's — so it ships as planted on every build day.
+const unreadable = [];
+const splitFrontmatter = (src, file) => {
   const m = src.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!m) return { data: {}, body: src };
-  let data = {};
-  try { data = yaml.load(m[1]) ?? {}; } catch { data = {}; }
-  return { data, body: m[2] };
+  try {
+    return { data: yaml.load(m[1]) ?? {}, body: m[2] };
+  } catch (error) {
+    // js-yaml counts lines from 0 inside the block; the file has the opening `---` above it.
+    unreadable.push({ file, reason: error.reason ?? error.message, line: error.mark ? error.mark.line + 2 : "?" });
+    return { data: {}, body: m[2] };
+  }
 };
 
 const bySlug = new Map();   // slug -> note
 const index = new Map();    // lowercased title OR slug -> slug
 for (const n of notes) {
   const src = readFileSync(root("vault", n.dir, n.file), "utf8");
-  const { data, body } = splitFrontmatter(src);
+  const { data, body } = splitFrontmatter(src, join("vault", n.dir, n.file));
   n.slug = n.file.replace(/\.md$/, "");
   n.data = data;
   n.body = body;
@@ -48,6 +56,13 @@ for (const n of notes) {
   index.set(n.title.toLowerCase(), n.slug);
   index.set(n.slug.toLowerCase(), n.slug);
   bySlug.set(n.slug, n);
+}
+
+if (unreadable.length) {
+  console.error(`✗ ${unreadable.length} note(s) whose frontmatter is not YAML — nothing transplanted:`);
+  for (const u of unreadable) console.error(`   ${u.file}:${u.line}: ${u.reason}`);
+  console.error("   Quote a value that contains `: ` or starts with a YAML indicator.");
+  process.exit(1);
 }
 
 // ---------- helpers ----------

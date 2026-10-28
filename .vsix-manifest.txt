@@ -2,6 +2,7 @@ ATTRIBUTION.md
 CHANGELOG.md
 LICENSE
 README.md
+dist/THIRD_PARTY_NOTICES.txt
 dist/agent.js
 dist/dashboard.js
 dist/extension.js
@@ -13,6 +14,8 @@ dist/media/dashboard.css
 dist/media/panel.css
 dist/media/tokens.css
 dist/panel.js
+dist/studio.css
+dist/studio.js
 media/base.css
 media/dashboard.css
 media/panel.css

@@ -13,8 +13,8 @@ page type without knowing the types in advance.
 from rest_framework import serializers
 
 # The enums, named in the document by SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"].
-GROUPS = ("content", "seo", "settings")
-KINDS = ("text", "textarea", "datetime", "integer", "choice", "multichoice", "tags")
+GROUPS = ("content", "seo", "settings", "file")
+KINDS = ("text", "textarea", "datetime", "integer", "choice", "multichoice", "tags", "json")
 PAGE_STATUSES = ("draft", "live", "changed", "scheduled", "expired")
 CHANGE_KINDS = ("block", "field", "edge")
 TARGET_TYPES = ("page", "image")
@@ -128,10 +128,18 @@ class PageDetailSerializer(PageSummarySerializer):
     live_url = serializers.CharField(allow_null=True)
 
 
+FIELDS_HELP = (
+    "The type's editable fields by name, as `field_specs` describes them. A page that is a file of its own "
+    "(`cms.ArticlePage`, `cms.StandardPage`) also takes `file_path` — its file, relative to the site's root, e.g. "
+    "`pages/_posts/wire/2026-10-28-example.md` — and `front_matter`, the file's other front-matter keys as a JSON "
+    "object in order, e.g. `excerpt`, `permalink`, `sources`; a key a typed field writes is refused (422)."
+)
+
+
 class PageCreateSerializer(serializers.Serializer):
     parent = serializers.IntegerField()
     type = serializers.CharField(help_text="One of the parent's creatable types, e.g. `cms.ArticlePage`.")
-    fields = serializers.DictField(child=serializers.JSONField(allow_null=True))
+    fields = serializers.DictField(child=serializers.JSONField(allow_null=True), help_text=FIELDS_HELP)
     body = BlockSerializer(many=True, required=False)
 
 
@@ -140,7 +148,9 @@ class PageUpdateSerializer(serializers.Serializer):
         allow_null=True,
         help_text="The revision edited (null only for a page without one); a newer one makes the save a 409.",
     )
-    fields = serializers.DictField(child=serializers.JSONField(allow_null=True), required=False)
+    fields = serializers.DictField(
+        child=serializers.JSONField(allow_null=True), required=False, help_text=f"Only what changed. {FIELDS_HELP}"
+    )
     body = BlockSerializer(many=True, required=False)
 
 

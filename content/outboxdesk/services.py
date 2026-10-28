@@ -19,8 +19,9 @@ from pathlib import Path
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from wagtail.models import Page
+from wagtail.models import Page, Revision
 
+from agents.principals import LEGACY_IMPORT_USER
 from ops.errors import Conflict, Invalid, NotFound
 
 from .harness import module, version
@@ -214,13 +215,19 @@ def trace_of(traceparent: str | None) -> str:
 
 def publish_page(envelope: dict) -> dict | None:
     """The `published` handoff for a `content.page.published` event, from the publisher station: `ref` names the
-    page (its id and URL), the trace is the event's `traceparent`'s when it has one, and the parent is the latest
-    delivered message about the page (`ref.page_id`) — an editor's approval, say — else the outbox event itself, since
-    the belt parents every `published`. Idempotent: a redelivered event finds its handoff already in the outbox and
-    sends nothing (None)."""
+    page (its id and URL), and the parent is the latest delivered message about the page (`ref.page_id`) — an
+    editor's approval, say — else the outbox event itself, since the belt parents every `published`. The trace is the
+    parent's, because the belt keeps one trace per piece of work; only a page nothing on the belt names takes the
+    event's `traceparent`'s (else the event id's). The event's `traceparent`, the platform request's trace, rides in
+    the payload. Idempotent: a redelivered event finds its handoff already in the outbox and sends nothing (None).
+    A revision the importers published (`legacy:import`) sends nothing either: an import brings a site's existing pages
+    into the platform, and no piece of work went live — announcing each one flooded the belt with a site's whole
+    history (one `published` per imported page)."""
     lib = module("belt")
     data = envelope["data"]
     page_id = data["page_id"]
+    if Revision.objects.filter(pk=data["revision_id"], user__username=LEGACY_IMPORT_USER).exists():
+        return None
     handoff_id = str(uuid.uuid5(PUBLISHED, envelope["id"]))
     belt = open_belt()
     station = belt.station(settings.OUTBOX_BELT_PUBLISHER)
@@ -229,7 +236,7 @@ def publish_page(envelope: dict) -> dict | None:
     page = Page.objects.filter(pk=page_id).first()
     url = (page.full_url if page is not None else None) or data["url_path"]
     about = next((r for r in reversed(belt.ledger()) if (r.get("ref") or {}).get("page_id") == page_id), None)
-    trace = trace_of(envelope.get("traceparent")) or (about["trace"] if about else uuid.UUID(envelope["id"]).hex)
+    trace = about["trace"] if about else (trace_of(envelope.get("traceparent")) or uuid.UUID(envelope["id"]).hex)
     handoff = lib.Handoff(
         kind="published",
         from_station=settings.OUTBOX_BELT_PUBLISHER,
@@ -242,6 +249,7 @@ def publish_page(envelope: dict) -> dict | None:
             "content_hash": data["content_hash"],
             "locale": data["locale"],
             "event_id": envelope["id"],
+            **({"traceparent": envelope["traceparent"]} if envelope.get("traceparent") else {}),
         },
         parent_id=about["id"] if about else envelope["id"],
         trace=trace,

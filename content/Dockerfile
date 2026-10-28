@@ -13,6 +13,7 @@ COPY web/package.json web/package-lock.json ./
 COPY web/packages/api/package.json packages/api/
 COPY web/packages/tokens/package.json packages/tokens/
 COPY web/packages/ui/package.json packages/ui/
+COPY web/packages/webview/package.json packages/webview/
 COPY web/studio/package.json studio/
 RUN npm ci --no-audit --no-fund
 COPY web ./
@@ -40,17 +41,17 @@ RUN apt-get update \
 
 WORKDIR /app/content
 COPY content/requirements.txt content/requirements-providers.txt ./
-# The outbox harness installs from git (content/requirements.txt, ADR 0007): git is there for that install only,
-# and leaves with the same layer.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
-    && pip install -r requirements.txt \
-    && apt-get purge -y --auto-remove git \
-    && rm -rf /var/lib/apt/lists/*
 # The model providers' SDKs (ai/README.md): optional for the platform, which
 # imports each only inside its adapter; build with AI_PROVIDERS=false to leave them out.
 ARG AI_PROVIDERS=true
-RUN if [ "$AI_PROVIDERS" = "true" ]; then pip install -r requirements-providers.txt; fi
+# The outbox harness installs from git (content/requirements.txt, ADR 0007), and requirements-providers.txt includes
+# requirements.txt, so pip needs git for both installs: both run in this layer, and git leaves with it.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && pip install -r requirements.txt \
+    && if [ "$AI_PROVIDERS" = "true" ]; then pip install -r requirements-providers.txt; fi \
+    && apt-get purge -y --auto-remove git \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY schemas /app/schemas
 COPY content /app/content

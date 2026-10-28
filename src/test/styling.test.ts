@@ -28,6 +28,8 @@ import * as path from 'node:path';
 const ROOT = path.resolve(__dirname, '..', '..');
 const MEDIA = path.join(ROOT, 'media');
 const SRC = path.join(ROOT, 'src');
+/** The studio's packages, which `dist/studio.js` and `dist/studio.css` are built from (PLAN G10). */
+const WEB_PACKAGES = path.join(ROOT, 'web', 'packages');
 
 /** The one file allowed to know VS Code's variable names. */
 const TOKEN_LAYER = 'media/tokens.css';
@@ -35,7 +37,7 @@ const TOKEN_LAYER = 'media/tokens.css';
 function walk(dir: string, extensions: readonly string[], out: string[] = []): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const abs = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
+    if (entry.isDirectory() && entry.name !== 'node_modules') {
       walk(abs, extensions, out);
     } else if (extensions.includes(path.extname(entry.name))) {
       out.push(abs);
@@ -74,12 +76,15 @@ function describe(hits: readonly Hit[]): string {
 suite('styling gate', () => {
   test('`--vscode-` appears only in media/tokens.css', () => {
     // The shipped surface: every stylesheet, and every TypeScript module that
-    // could name a colour — the three webview bundles and the two host files
-    // that template a `<style>` block. `src/test/` is excluded because this
-    // very file has to be able to write the string it is banning.
+    // could name a colour — the webview bundles, the host files that template
+    // a page, and the studio's packages the studio bundle is built from (its
+    // editor theme maps --zer0-* onto the --z-* tokens, never onto VS Code's
+    // names). `src/test/` is excluded because this very file has to be able to
+    // write the string it is banning.
     const files = [
       ...walk(MEDIA, ['.css']),
       ...walk(SRC, ['.ts']).filter((file) => !rel(file).startsWith('src/test/')),
+      ...walk(WEB_PACKAGES, ['.ts', '.tsx', '.css']),
     ].filter((file) => rel(file) !== TOKEN_LAYER);
     const hits = grep(files, /--vscode-/);
     // The positive half of the same rule, so a token layer that stopped

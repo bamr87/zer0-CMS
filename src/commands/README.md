@@ -2,7 +2,7 @@
 
 > The command layer: every command by file, the gates only `governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold, the Workspace Trust re-checks, and how to add a command.
 
-Fifty-four commands, ten files, and one rule that matters more than the other fifty-three: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
+Fifty-seven commands, eleven files, and one rule that matters more than the other fifty-six: **`governance.ts`, `fleet.ts`, `audit.ts` and `harness.ts` hold the only gates.** Three more files — `contract.ts`, `content.ts` and `agent.ts` — hold the *other* kind of gate, the one Workspace Trust decides; see "Trust is re-checked inside the function" below, which `audit.ts` also belongs to because `audit.verify` is the fifth execution vector.
 
 Everything here may import `vscode`. Nothing here implements domain logic — the bodies ask questions (which folder? which content type? are you sure?), call into `src/core`, and report what happened. When a command starts formatting front matter or computing a slug, it is doing `src/core`'s job.
 
@@ -24,11 +24,11 @@ Everything here may import `vscode`. Nothing here implements domain logic — th
 | `harness.ts` | `harness.open`, `workflows.open`, `lane.scaffold` | 1255 |
 | `index.ts` | barrel + `ALL_COMMAND_IDS` | 164 |
 
-`dashboard` and `dashboard.close` are registered by `extension.ts`, beside the panel object they operate on. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
+`dashboard`, `dashboard.close` and `dashboard.files` are registered by `extension.ts`, beside the panel object they operate on. With a platform configured `dashboard` opens the studio (PLAN G10), so every command here that means the file-mode dashboard — `fleet.open`, `monitor.open`, the audit, the harness routes, a draft's review — executes `dashboard.files`. They are still listed in `ALL_COMMAND_IDS`, because that list is about the contribution surface and not about which file happens to hold the closure.
 
 ### Four places, on purpose
 
-An id has to appear in `contributes.commands` (`package.json`), in a `register(shell, id, …)` call here, in `ALL_COMMAND_IDS` — and in `src/test/extension.test.ts`'s own `ALL_COMMANDS` list, whose `54` count is asserted too. Nothing in TypeScript connects the first two, and both failure modes are silent — a contributed id with no handler is a palette entry that does nothing; a handler with no contribution is a command nobody can find. The extension-host test compares its own list against the registered commands and, in order, against the manifest, so skipping one fails loudly instead of quietly; nothing else reads `ALL_COMMAND_IDS` today.
+An id has to appear in `contributes.commands` (`package.json`), in a `register(shell, id, …)` call here, in `ALL_COMMAND_IDS` — and in `src/test/extension.test.ts`'s own `ALL_COMMANDS` list, whose `57` count is asserted too. Nothing in TypeScript connects the first two, and both failure modes are silent — a contributed id with no handler is a palette entry that does nothing; a handler with no contribution is a command nobody can find. The extension-host test compares its own list against the registered commands and, in order, against the manifest, so skipping one fails loudly instead of quietly; nothing else reads `ALL_COMMAND_IDS` today.
 
 ---
 
@@ -246,7 +246,7 @@ Guard findings, engine output and publish previews open as untitled markdown. Th
 2. `register(shell, 'my.command', handler)` in the file that owns its subject.
 The wrapper turns a rejected promise into a notification instead of an unhandled rejection nobody sees.
 3. Add the id to `ALL_COMMAND_IDS` in `index.ts`.
-4. Add it to `ALL_COMMANDS` in `src/test/extension.test.ts` and bump that list's `54`. A new command module also needs its `register*Commands(shell)` call in `activate()`.
+4. Add it to `ALL_COMMANDS` in `src/test/extension.test.ts` and bump that list's `57`. A new command module also needs its `register*Commands(shell)` call in `activate()`.
 5. If a webview should be able to invoke it, add the literal to `CommandId` in
 `src/webview/shared/protocol.ts` **and** a handler entry in the host's `Record<CommandId, Handler>`. Adding the literal alone grants nothing.
 6. If it is privileged, it goes through `evaluateGates()` and a modal

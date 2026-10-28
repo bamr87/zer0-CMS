@@ -43,8 +43,8 @@ Where a project under `packages/`, `sites/`, `apps/` or `content/` has its own `
 ## Stack & commands
 
 ```bash
-npm install
-npm run compile          # check-types + lint + all five bundles
+npm ci                   # the root postinstall installs web/ from its lockfile too (dist/studio.js is built from it)
+npm run compile          # check-types + lint + all six bundles
 npm run watch            # rebuild on change, then F5 in VS Code to launch the Extension Host
 npm test                 # unit, golden, MCP stdio and integration suites
 docker compose --profile content up -d --wait db redis content worker research-worker beat relay belt-publisher events  # the platform → http://localhost:8000/studio/
@@ -103,10 +103,10 @@ The fourteen-suite line omits the three suites that need an extension host or a 
 
 | Path | What lives there |
 |---|---|
-| `src/` | The extension, a client of the platform with the studio's capabilities from PLAN G10 (ADR 0006 decision 9), keeping its file mode: `core/` (pure Node), `mcp/`, `webview/`, the `vscode` shell, `test/` ([`src/README.md`](src/README.md)). |
+| `src/` | The extension, a client of the platform with the studio's capabilities from PLAN G10 (ADR 0006 decision 9), keeping its file mode: in file mode it edits a site's files; with a platform configured (`zer0Cms.platform.url`) its webviews render the studio's workspaces and its own code is the host around them. `core/` (pure Node; `core/studio/` is the bridge that gates every webview request), `mcp/`, `webview/` (file mode's), `studio/`, the `vscode` shell, `test/` ([`src/README.md`](src/README.md)). |
 | `media/`, `schemas/` | Stylesheets, icons and lane templates; `zer0.schema.json` and the platform's schemas. |
 | `content/` | The platform, including the studio's APIs (`api/session.py`, `api/pages.py`, `api/review.py`) and the built studio at `/studio/`; `content/ops/` is its operational baseline (probes, request ids, errors, logs, throttling, OpenAPI). |
-| `web/` | The React frontend (PLAN P4): the studio (`web/studio/`) and the packages it is built from (`web/packages/`: `@zer0/api`, the client generated from the OpenAPI document; `@zer0/tokens`; `@zer0/ui`, the workspaces, which take client, streams and navigation from their host so the extension's webviews can render them in G10) ([`web/README.md`](web/README.md)). |
+| `web/` | The React frontend (PLAN P4): the studio (`web/studio/`) and the packages it is built from (`web/packages/`: `@zer0/api`, the client generated from the OpenAPI document; `@zer0/tokens`; `@zer0/ui`, the workspaces and their registry `WORKSPACES`, which take client, streams and navigation from their host so the extension's webviews render them; `@zer0/webview`, the extension's webview entry) ([`web/README.md`](web/README.md)). |
 | `packages/`, `sites/`, `apps/` | Imported sources being absorbed, each capability a row in [`docs/plan/capabilities.yml`](docs/plan/capabilities.yml) ([`docs/MONOREPO.md`](docs/MONOREPO.md)). |
 | `bin/`, `tools/`, `workspace.yml` | `bin/zer0` and its registry, the absorption gate (`check_absorption.py`), the docs gates, vendored `unwrap-prose.py`, `tools/history/` (cutover C0). |
 | `docs/` | Guides, ADRs, the target (`plan/TARGET.md`) and the plan, indexed in [`docs/README.md`](docs/README.md). |
@@ -145,12 +145,14 @@ Why each exists: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (decisions D1–
 
 - **`src/core/` and `src/mcp/` never import `vscode`** (eslint, and the MCP bundle marks nothing external — `Could not resolve "vscode"` from `npm run compile` *is* the gate). Take the editor as a parameter or an injected callback.
 - **`src/webview/` never imports `vscode`, `commands/` or `views/`** (it speaks `postMessage` only) and never uses `innerHTML` — `el()` and `textContent`.
-- **Zero shipped runtime dependencies** (D3/D14): `dependencies` stays empty; a build-time library is bundled only when named in that target's `esbuild.js` allow-list (today `@bamr87/fleet-engines` and `yaml`, into `dist/extension.js` alone); the MCP bundle allows no bare import; `@anthropic-ai/claude-agent-sdk` is the one optional dynamic import. YAML, globbing, dates, JSONC and Python-parity JSON stay hand-rolled in `src/core/shared/`. *ADR 0006 decision 9 amends this: the extension moves onto the studio's libraries through the same allow-list, and G10 replaces the hand-rolled helpers; until then keep the gates green and add no new hand-rolled helper.*
+- **Zero shipped runtime dependencies, and libraries over hand-rolled code** (D3/D14, amended by ADR 0006 decision 9): `dependencies` stays empty; a build-time library is bundled only when named in that bundle's `esbuild.js` allow-list, which reads what this repository's own code (`src/`, `web/packages/`) imports — `dist/extension.js` the engines package, `eventsource` and `CORE_LIBRARIES` (`yaml`, `jsonc-parser`, `picomatch`, `date-fns`, `@date-fns/tz`); **`dist/mcp-server.js` `CORE_LIBRARIES` and nothing else** (never `vscode`, never the engines package); `dist/panel.js` the two date libraries; `dist/studio.js` the studio's libraries. `@anthropic-ai/claude-agent-sdk` is the one optional dynamic import. Python-parity JSON stays hand-rolled (no library writes `json.dumps` byte for byte); a new helper a maintained library already provides needs a reason in the pull request.
 - **The engines seam is never re-exported:** only `src/core/fleet/engines.ts` imports `@bamr87/fleet-engines`, never through `src/core/index.ts` (names collide); convert in `src/core/fleet/adapters.ts` and keep our tristate (`null` = "the manifest did not say").
 - **The webview is UI, never the gate:** a button posts an intent and a target, never a payload or an override; every gate re-runs host-side in the function the command palette calls.
+- **The studio webviews are the studio's code, and the host is their gate** (PLAN G10): `dist/studio.js` is `web/packages/webview` over `@zer0/ui` — never write a workspace, a component or an API call into `src/`; add it to `@zer0/ui` and its registry (`WORKSPACES`, and the destination's workspace in `HOME`, which the type checker holds to the whole `Destination` union) and the extension renders it. Every request goes through `sendToPlatform` in `src/core/studio/bridge.ts`, whose gates read the URL that is sent, never the text the webview posted: a path under `/api/v2/` exactly as the platform routes it (no `%`, no `.`, `..` or empty segment — `%70ublish` and `./publish/` are refused, not normalised past the modal), never the session endpoints, a modal before each request that changes a live site or reaches people past the platform (`LIVE_CHANGES`: a page published, unpublished or scheduled; a story moved live; a distribution post published; a newsletter issue sent — an id is any one segment), JSON bodies only, and only the headers the platform reads (`Idempotency-Key`, `If-Match`). The platform URL is settings-layer only (`settingsPlatformUrl`, trusted workspaces) and https or http on this machine; the person's token lives in SecretStorage per platform origin, never posted, logged or put in an error. The page is `default-src 'none'`, scripts and styles by nonce, images from the extension, the platform, `data:` and `blob:` only (`src/core/studio/page.ts`). No request at activation (D11).
+- **Platform mode is decided per file, never per window:** the Metadata view shows the studio's page editor only for a file the platform has a page for (`Studio.modeFor`: `?source=` with the folder's name first); any other file keeps file mode in the same window. `zer0Cms.dashboard` opens the studio; `zer0Cms.dashboard.files` always opens the file-mode dashboard, and every file-mode caller (fleet console, monitor, audit, harness, drafts, the file-mode panel) opens it through that command.
 - **Import core through the barrel** (`../core`); declare cross-cutting types once, in `src/core/shared/types.ts`.
 - **Goldens are generated** (`src/test/fixtures/golden/generate.py`, `{engines,lanes,platform}/generate.mjs`): regenerate and read the diff, never edit one to pass a test.
-- **Five bundles** (`esbuild.js`): `extension`, `mcp-server` (nothing external), `panel`, `dashboard`, `agent`; a missing codicon file is a deliberate build error.
+- **Six bundles** (`esbuild.js`): `extension`, `mcp-server` (no `vscode`, no engines — the layering gate), `panel`, `dashboard`, `agent` (file mode), and `studio` (`dist/studio.js` + `dist/studio.css`, the studio's workspaces from `web/packages/webview`; a missing `web/node_modules` is one clear build error); a missing codicon file is a deliberate build error.
 
 ## Extension invariants that are easy to break
 
@@ -167,7 +169,7 @@ Why each exists: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (decisions D1–
 - **MCP registration is two-phase:** `provideMcpServerDefinitions` returns an empty `env`; `resolveMcpServerDefinition` reads the publish flag from the **settings** layer (disabled → `null`). `ZER0_CMS_MCP_ALLOW_EXEC` (trusted only) and `ZER0_CMS_MCP_ALLOW_SCAFFOLD` gate `zer0_contract` and `zer0_lane_scaffold`; otherwise the server only reads and drafts, and never opens a socket ([`docs/CONFIG.md`](docs/CONFIG.md) §6).
 - **`src/core/harness/` is one vocabulary** for the editor agent and CI: `resolveHarnessProfile` alone decides roles, skills and model ([`src/core/harness/README.md`](src/core/harness/README.md)).
 - **Eleven context keys, each gating something:** grep `package.json` before adding one; a key is a rendering hint, so every spawn re-asks `workspaceTrusted()`.
-- **Adding a command:** `contributes.commands` (+ `menus`), `register(shell, id, …)` in its `src/commands/*.ts`, `ALL_COMMAND_IDS`, and `ALL_COMMANDS` in `src/test/extension.test.ts` with its `54` bumped ([`src/README.md`](src/README.md#adding-a-command)). Anything that writes, publishes or approves re-reads disk and re-runs `evaluateGates()` in the palette's function.
+- **Adding a command:** `contributes.commands` (+ `menus`), `register(shell, id, …)` in its `src/commands/*.ts`, `ALL_COMMAND_IDS`, and `ALL_COMMANDS` in `src/test/extension.test.ts` with its `57` bumped ([`src/README.md`](src/README.md#adding-a-command)). Anything that writes, publishes or approves re-reads disk and re-runs `evaluateGates()` in the palette's function.
 
 ## A site's files (`content/sites/`)
 
@@ -191,7 +193,7 @@ Fourteen imported repositories, each a **source being absorbed** into the platfo
 
 ## Fleet context
 
-One of ~40 repositories managed by the [bamr87/bamr87 hub](https://github.com/bamr87/bamr87) (registry `_data/projects.yml`, standards in `specs/`), as a submodule: commit and push here first; the hub bumps its pointer afterwards. Prefer the hub's `templates/` kits; don't edit the logic of the hub-seeded `ci.yml` (`standard-ci@v2`) and `markdown-oneline.yml`. Every workflow is in [`docs/CICD.md`](docs/CICD.md) (`web.yml` gates `web/`, including the generated client's drift against the OpenAPI document); `claude.yml` (`@claude`) is the only one that calls a model, and the one lane in `fleet.manifest.yml`. Hub loops reach it by PR or label: the `fleet-pulse` doctor, the `issue-pipeline`, the fan-outs and `token-rotation`.
+One of ~40 repositories managed by the [bamr87/bamr87 hub](https://github.com/bamr87/bamr87) (registry `_data/projects.yml`, standards in `specs/`), as a submodule: commit and push here first; the hub bumps its pointer afterwards. Prefer the hub's `templates/` kits; don't edit the logic of the hub-seeded `ci.yml` (`standard-ci@v2`) and `markdown-oneline.yml`. Every workflow is in [`docs/CICD.md`](docs/CICD.md) (`web.yml` gates `web/`, including the generated client's drift against the OpenAPI document; `extension.yml` the extension, including a change to `web/packages/`, which `dist/studio.js` is built from); `claude.yml` (`@claude`) is the only one that calls a model, and the one lane in `fleet.manifest.yml`. Hub loops reach it by PR or label: the `fleet-pulse` doctor, the `issue-pipeline`, the fan-outs and `token-rotation`.
 
 ## Standard deviations
 
@@ -199,7 +201,7 @@ Five. The first three are dated 2026-09-09 and are all consequences of consuming
 
 - **The lockfile is committed**, against the hub's `lockfiles: never-commit` posture. `npm ci` needs it, and so does the reusable relock job; more importantly an exact-pinned engines version is only reproducible with one.
 - **`@bamr87/fleet-engines` is exact-pinned**, against the hub's always-latest convention. A bump changes generated goldens, so it is a deliberate `chore(deps)` pull request whose diff a person reads, not an ambient upgrade.
-- **`yaml` is bundled.** The hand-rolled YAML subset in `src/core/shared/config.ts` reads front matter and manifests; GitHub Actions workflow files exceed it (anchors, merge keys, multi-line flow collections), and the engines answer that with the `yaml` package. It is bundled into the extension host only, never into the MCP server.
+- **`yaml` is bundled** — exact-pinned with the engines, because the engines read workflow files with it — and since PLAN G10 it is also what core reads front matter, site configs and manifests with, in the extension host and in the MCP server alike (one of `CORE_LIBRARIES`; ADR 0006 decision 9).
 
 ## Governance
 
@@ -208,7 +210,7 @@ Read [`docs/constitution.md`](docs/constitution.md) before changing anything: it
 - **`openapi-typescript` is exact-pinned** in `web/packages/api`, against the always-latest convention. Its output is committed (`src/schema.d.ts`) and drift-checked against `schemas/openapi/openapi.json`, so a new generator version would fail the check with no change to the API; a bump is a deliberate `chore(deps)` change that regenerates the file in the same commit. Every other `web/` dependency takes caret ranges and moves when the lockfile is refreshed.
 - **Lockfile committed** (2026-09-09), against `lockfiles: never-commit`: `npm ci` and the relock job need it, and the exact-pinned engines are only reproducible with one.
 - **`@bamr87/fleet-engines` exact-pinned** (2026-09-09), against always-latest: a bump changes goldens, so it is a deliberate `chore(deps)` PR.
-- **`yaml` bundled** (2026-09-09): the hand-rolled subset in `src/core/shared/config.ts` cannot read Actions workflows (anchors, merge keys, multi-line flows); extension host only, never the MCP server.
+- **`yaml` bundled** (2026-09-09): exact-pinned with the engines, which read workflow files with it; since PLAN G10 core reads front matter, site configs and manifests with it too, in the extension host and the MCP server alike (one of `CORE_LIBRARIES`).
 - **`web/package-lock.json` committed** (2026-10-22), against `lockfiles: never-commit`: `npm ci` in `web.yml` and the platform image's Node stage need it.
 - **`openapi-typescript` exact-pinned** (2026-10-22) in `web/packages/api`, against always-latest: its committed output is drift-checked against `schemas/openapi/openapi.json`, so a new generator version would fail the check with no API change; a bump regenerates the file in the same commit.
 - **UPS-DOC-08:** the prose is over the 2,000-word budget: during the overhaul AGENTS.md carries ADR 0006's target and its must-not list on top of the rules today's build still enforces; their commands blocks come on top.

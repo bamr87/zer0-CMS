@@ -100,3 +100,27 @@ export type DistributionBlocker = Schemas['DistributionBlocker'];
 export type DistributionFinding = Schemas['DistributionFinding'];
 export type DistributionLedgerEntry = Schemas['DistributionLedgerEntry'];
 export type DistributionStatistic = Schemas['DistributionStatistic'];
+// Automations (PLAN G16): a trigger and an action are unions by `kind`.
+export type Automation = Schemas['Automation'];
+export type AutomationTrigger = Automation['trigger'];
+export type AutomationAction = NonNullable<Automation['actions']>[number];
+export type AutomationRun = Schemas['AutomationRun'];
+export type AutomationRunStatus = Schemas['AutomationRunStatusEnum'];
+export type AutomationOptions = Schemas['AutomationOptions'];
+// AIEO (/api/v2/aieo/, PLAN G7).
+export type AieoScore = Schemas['AieoScore'];
+export type AieoAudit = Schemas['AieoAudit'];
+export type AieoAuditSummary = Schemas['AieoAuditList'];
+export type AieoAuditKind = Schemas['AuditKindEnum'];
+export type AieoPattern = Schemas['AieoPattern'];
+export type AieoAgent = Schemas['AieoAgent'];
+export type AieoCitationQuery = Schemas['AieoCitationQuery'];
+export type AieoCitationCheck = Schemas['AieoCitationCheck'];
+export type AieoShareOfVoice = Schemas['AieoShareOfVoice'];
+export type AieoConnector = Schemas['AieoConnector'];
+export type AieoConnectorKind = Schemas['ConnectorKindEnum'];
+export type AieoPriorities = Schemas['AieoPriorities'];
+export type AieoBrandContext = Schemas['AieoBrandContext'];
+export type AieoLifecycle = Schemas['AieoLifecycle'];
+export type AieoReport = Schemas['AieoReport'];
+export type AieoRewriteMode = Schemas['RewriteModeEnum'];

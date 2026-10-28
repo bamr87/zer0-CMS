@@ -1,0 +1,325 @@
+# AIEO's bundled output schemas, seeded after every migrate through
+# ai.services.import_bundled() (aieo/apps.py); the assistants that answer with
+# them are made from AIEO's prompt files by aieo/prompts.py. Each row's public id
+# is derived from its key, so seeding is idempotent and a row a person edited is
+# left alone. Every property is required (an empty string or list when there is
+# nothing), so every provider's structured output accepts them.
+#
+# `aieo-evaluation` is the scoring rubric's answer (prompts/scoring_rubric.md):
+# its `patterns` lists the ten bundled patterns, and an evaluation run replaces
+# them with the library's enabled patterns (aieo.scoring.evaluation_schema).
+schemas:
+  - key: aieo-evaluation
+    name: AIEO evaluation
+    description: The scoring rubric's answer — each pattern's score, evidence and recommendation, the anti-pattern penalties, the content type, an assessment, an executive summary, three priority actions, before/after improvements and, with a screenshot, the visual analysis.
+    schema:
+      type: object
+      properties:
+        patterns:
+          type: object
+          properties:
+            citation_hooks: &pattern
+              type: object
+              properties:
+                score: {type: number, minimum: 0}
+                max: {type: number}
+                detected: {type: boolean}
+                evidence: {type: array, items: {type: string}}
+                recommendation: {type: string}
+              required: [score, max, detected, evidence, recommendation]
+              additionalProperties: false
+            comparison_tables: *pattern
+            definitional_precision: *pattern
+            entity_density: *pattern
+            faq_injection: *pattern
+            meta_context: *pattern
+            procedural_clarity: *pattern
+            recursive_depth: *pattern
+            structured_data: *pattern
+            temporal_anchoring: *pattern
+          required: [citation_hooks, comparison_tables, definitional_precision, entity_density, faq_injection, meta_context, procedural_clarity, recursive_depth, structured_data, temporal_anchoring]
+          additionalProperties: false
+        anti_patterns:
+          type: object
+          properties:
+            penalties: {type: number, minimum: 0, maximum: 50}
+            detected: {type: array, items: {type: string}}
+            evidence: {type: array, items: {type: string}}
+          required: [penalties, detected, evidence]
+          additionalProperties: false
+        content_type: {type: string, enum: [article, landing_page, documentation, blog_post, product_page, faq, comparison, tutorial, other]}
+        overall_assessment: {type: string}
+        executive_summary: {type: string}
+        priority_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              title: {type: string}
+              impact: {type: string, enum: [high, medium, low]}
+              effort: {type: string, enum: [low, medium, high]}
+              description: {type: string}
+            required: [title, impact, effort, description]
+            additionalProperties: false
+        sample_improvements:
+          type: array
+          items:
+            type: object
+            properties:
+              section: {type: string}
+              current: {type: string}
+              improved: {type: string}
+              patterns_addressed: {type: array, items: {type: string}}
+            required: [section, current, improved, patterns_addressed]
+            additionalProperties: false
+        visual_analysis:
+          type: object
+          description: Empty strings, a design score of 0 and no recommendations when no screenshot was attached.
+          properties:
+            layout_quality: {type: string}
+            visual_hierarchy: {type: string}
+            readability: {type: string}
+            trust_signals: {type: string}
+            mobile_readiness: {type: string}
+            scannability: {type: string}
+            design_score: {type: number, minimum: 0, maximum: 10}
+            design_recommendations: {type: array, items: {type: string}}
+          required: [layout_quality, visual_hierarchy, readability, trust_signals, mobile_readiness, scannability, design_score, design_recommendations]
+          additionalProperties: false
+      required: [patterns, anti_patterns, content_type, overall_assessment, executive_summary, priority_actions, sample_improvements, visual_analysis]
+      additionalProperties: false
+    template: |
+      {{ overall_assessment }}
+
+      {{ executive_summary }}
+
+      {% for action in priority_actions %}- **{{ action.title }}** ({{ action.impact }} impact, {{ action.effort }} effort): {{ action.description }}
+      {% endfor %}
+  - key: aieo-seo-optimizer
+    name: SEO recommendations
+    description: On-page SEO — a score, the critical fixes, quick wins and an updated outline.
+    schema:
+      type: object
+      properties:
+        score: {type: number, minimum: 0, maximum: 100}
+        critical_fixes: {type: array, items: {type: string}}
+        quick_wins: {type: array, items: {type: string}}
+        updated_outline: {type: array, items: {type: string}, description: "The headings, in order."}
+      required: [score, critical_fixes, quick_wins, updated_outline]
+      additionalProperties: false
+    template: |
+      SEO score: {{ score }}
+
+      {% for fix in critical_fixes %}- Fix: {{ fix }}
+      {% endfor %}{% for win in quick_wins %}- Quick win: {{ win }}
+      {% endfor %}
+  - key: aieo-meta-creator
+    name: Meta titles and descriptions
+    description: Five meta title options, five meta description options and the recommended pair.
+    schema:
+      type: object
+      properties:
+        titles: {type: array, items: {type: string}}
+        descriptions: {type: array, items: {type: string}}
+        recommended_pair:
+          type: object
+          properties:
+            title: {type: string}
+            description: {type: string}
+          required: [title, description]
+          additionalProperties: false
+      required: [titles, descriptions, recommended_pair]
+      additionalProperties: false
+    template: |
+      **{{ recommended_pair.title }}**
+
+      {{ recommended_pair.description }}
+  - key: aieo-keyword-mapper
+    name: Keyword map
+    description: Keyword placement and coverage — a density report, the missing keywords and revisions.
+    schema:
+      type: object
+      properties:
+        density_report:
+          type: array
+          items:
+            type: object
+            properties:
+              keyword: {type: string}
+              count: {type: integer, minimum: 0}
+              placement: {type: string, description: "Where it appears: title, headings, intro, body, conclusion."}
+            required: [keyword, count, placement]
+            additionalProperties: false
+        missing_keywords: {type: array, items: {type: string}}
+        revisions: {type: array, items: {type: string}}
+      required: [density_report, missing_keywords, revisions]
+      additionalProperties: false
+    template: |
+      {% for row in density_report %}- {{ row.keyword }}: {{ row.count }} ({{ row.placement }})
+      {% endfor %}{% for revision in revisions %}- Revise: {{ revision }}
+      {% endfor %}
+  - key: aieo-editor
+    name: Human editor's notes
+    description: Clarity, flow and human voice — a humanity score, the edits and a rewritten excerpt.
+    schema:
+      type: object
+      properties:
+        humanity_score: {type: number, minimum: 0, maximum: 100}
+        edits: {type: array, items: {type: string}}
+        rewritten_excerpt: {type: string}
+      required: [humanity_score, edits, rewritten_excerpt]
+      additionalProperties: false
+    template: |
+      Humanity: {{ humanity_score }}
+
+      {% for edit in edits %}- {{ edit }}
+      {% endfor %}
+      {{ rewritten_excerpt }}
+  - key: aieo-headline-generator
+    name: Headline variants
+    description: Headline variants, the rationale and a testing plan.
+    schema:
+      type: object
+      properties:
+        headlines: {type: array, items: {type: string}}
+        rationale: {type: string}
+        testing_plan: {type: string}
+      required: [headlines, rationale, testing_plan]
+      additionalProperties: false
+    template: |
+      {% for headline in headlines %}- {{ headline }}
+      {% endfor %}
+      {{ rationale }}
+  - key: aieo-internal-linker
+    name: Internal link suggestions
+    description: Internal links with anchor text and placement, from the site's internal links map.
+    schema:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              anchor_text: {type: string}
+              target_url: {type: string}
+              placement: {type: string, description: "The sentence or section it goes in."}
+              reason: {type: string}
+            required: [anchor_text, target_url, placement, reason]
+            additionalProperties: false
+      required: [suggestions]
+      additionalProperties: false
+    template: |
+      {% for s in suggestions %}- [{{ s.anchor_text }}]({{ s.target_url }}) — {{ s.placement }}: {{ s.reason }}
+      {% endfor %}
+  - key: aieo-content-analyzer
+    name: Content analysis
+    description: A draft's executive summary, strengths, weaknesses, priority actions and scorecard.
+    schema:
+      type: object
+      properties:
+        executive_summary: {type: string}
+        strengths: {type: array, items: {type: string}}
+        weaknesses: {type: array, items: {type: string}}
+        priority_actions: {type: array, items: {type: string}}
+        scorecard:
+          type: object
+          properties:
+            seo: {type: number, minimum: 0, maximum: 100}
+            readability: {type: number, minimum: 0, maximum: 100}
+            humanity: {type: number, minimum: 0, maximum: 100}
+            aieo: {type: number, minimum: 0, maximum: 100}
+          required: [seo, readability, humanity, aieo]
+          additionalProperties: false
+      required: [executive_summary, strengths, weaknesses, priority_actions, scorecard]
+      additionalProperties: false
+    template: |
+      {{ executive_summary }}
+
+      {% for action in priority_actions %}- {{ action }}
+      {% endfor %}
+  - key: aieo-cro-analyst
+    name: Conversion analysis
+    description: A CRO score, the findings and the experiments to run.
+    schema:
+      type: object
+      properties:
+        cro_score: {type: number, minimum: 0, maximum: 100}
+        findings: {type: array, items: {type: string}}
+        experiments: {type: array, items: {type: string}}
+      required: [cro_score, findings, experiments]
+      additionalProperties: false
+    template: |
+      CRO score: {{ cro_score }}
+
+      {% for finding in findings %}- {{ finding }}
+      {% endfor %}
+  - key: aieo-landing-page-optimizer
+    name: Landing page guidance
+    description: CRO and SEO guidance for a landing page — the score breakdown, priority actions and revised sections.
+    schema:
+      type: object
+      properties:
+        score_breakdown:
+          type: object
+          properties:
+            above_the_fold: {type: number, minimum: 0, maximum: 100}
+            calls_to_action: {type: number, minimum: 0, maximum: 100}
+            trust: {type: number, minimum: 0, maximum: 100}
+            seo: {type: number, minimum: 0, maximum: 100}
+          required: [above_the_fold, calls_to_action, trust, seo]
+          additionalProperties: false
+        priority_actions: {type: array, items: {type: string}}
+        revised_sections:
+          type: array
+          items:
+            type: object
+            properties:
+              section: {type: string}
+              revised: {type: string}
+            required: [section, revised]
+            additionalProperties: false
+      required: [score_breakdown, priority_actions, revised_sections]
+      additionalProperties: false
+    template: |
+      {% for action in priority_actions %}- {{ action }}
+      {% endfor %}
+  - key: aieo-performance
+    name: Performance plan
+    description: Content updates by impact and effort — quick wins, declining content and a roadmap — from analytics.
+    schema:
+      type: object
+      properties:
+        quick_wins: {type: array, items: {type: string}}
+        declining_content: {type: array, items: {type: string}}
+        roadmap: {type: array, items: {type: string}}
+      required: [quick_wins, declining_content, roadmap]
+      additionalProperties: false
+    template: |
+      {% for win in quick_wins %}- Quick win: {{ win }}
+      {% endfor %}{% for step in roadmap %}- {{ step }}
+      {% endfor %}
+  - key: aieo-citation-probe
+    name: An engine's answer and its sources
+    description: How an AI engine answers a question, and the sources (URLs) it would cite for it.
+    schema:
+      type: object
+      properties:
+        answer: {type: string}
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              url: {type: string}
+              title: {type: string}
+            required: [url, title]
+            additionalProperties: false
+      required: [answer, sources]
+      additionalProperties: false
+    template: |
+      {{ answer }}
+
+      {% for s in sources %}- {{ s.title }} {{ s.url }}
+      {% endfor %}
+assistants: []

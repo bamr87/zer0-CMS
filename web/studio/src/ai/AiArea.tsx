@@ -1,11 +1,14 @@
 // The AI area (/ai, PLAN G8): agent runs, assistants, pipelines, output
-// schemas, conversations, providers and the model catalog — one tab each,
-// every tab a route — and one row of each opened under it. The workspaces are
-// @zer0/ui's; this file only places them, as App.tsx does for the others.
+// schemas, conversations, providers, the model catalog and automations (G16)
+// — one tab each, every tab a route — and one row of each opened under it.
+// The workspaces are @zer0/ui's; this file only places them, as App.tsx does
+// for the others.
 import { Stack, Tabs, Title } from '@mantine/core';
 import {
   AssistantEditor,
   AssistantList,
+  AutomationEditor,
+  AutomationList,
   ConversationList,
   ConversationThread,
   ModelCatalog,
@@ -31,6 +34,7 @@ const SECTIONS: { value: AiSection; label: string }[] = [
   { value: 'conversations', label: 'Conversations' },
   { value: 'providers', label: 'Providers' },
   { value: 'models', label: 'Models' },
+  { value: 'automations', label: 'Automations' },
 ];
 
 /**
@@ -89,6 +93,8 @@ export function AiArea() {
           <Route path="conversations/:id" element={<WithId>{(id) => <ConversationThread key={id} id={id ?? ''} />}</WithId>} />
           <Route path="providers" element={<ProviderList />} />
           <Route path="models" element={<ModelCatalog />} />
+          <Route path="automations" element={<AutomationList siteId={siteId} />} />
+          <Route path="automations/:id" element={<WithId>{(id) => <AutomationEditor key={id ?? 'new'} id={id} />}</WithId>} />
         </Routes>
       </SectionTabs>
     </Stack>

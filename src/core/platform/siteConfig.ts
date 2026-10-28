@@ -5,15 +5,14 @@
  * `_config.yml`, `mkdocs.yml` and `hugo.toml` all answer questions a CMS needs:
  * where content lives, what the URLs look like, what the site is called. They
  * are also real files written by people, and real `_config.yml` files in this
- * fleet use YAML anchors and aliases (`&title`, `*name`, `<<:`) that the
- * hand-rolled subset parser cannot resolve — by design, since resolving them
- * would mean a YAML implementation, and the zero-dependency rule says no.
+ * fleet use YAML anchors, aliases and merge keys (`&title`, `*name`, `<<:`);
+ * the `yaml` package reads those as YAML does (ADR 0006 decision 9).
  *
- * So the contract of this module is: **an anchor becomes a warning, never a
- * guessed value.** `SiteConfigFacts.warnings` exists for exactly that, and
- * every field is `null` when the file did not say. A guessed `baseurl` is worse
- * than no `baseurl`: it produces URLs that look right and are wrong, and the
- * ledger is keyed by URL.
+ * So the contract of this module is: **a value the file did not state clearly
+ * is a warning, never a guess.** `SiteConfigFacts.warnings` carries what the
+ * YAML package could not read, and every field is `null` when the file did
+ * not say. A guessed `baseurl` is worse than no `baseurl`: it produces URLs
+ * that look right and are wrong, and the ledger is keyed by URL.
  *
  * The same rule covers configuration that is *code*. Docusaurus and Astro
  * configure themselves in JavaScript; this module reads none of it and says so
@@ -27,13 +26,7 @@
  * that every reader understands beats six shapes each reader must switch on.
  */
 
-import {
-  asBool,
-  asString,
-  parseTomlFlat,
-  parseYamlScalar,
-  parseYamlSubset,
-} from '../content/frontmatter';
+import { asBool, asString, parseTomlFlat, readYaml } from '../content/frontmatter';
 import type { FmValue, FrontMatter } from '../content/frontmatter';
 import type { PlatformProfile, SiteConfigFacts } from '../shared/types';
 
@@ -52,49 +45,6 @@ export function emptySiteConfigFacts(): SiteConfigFacts {
   };
 }
 
-/**
- * An anchor is a label on a value, so the value is still right there.
- *
- * `parseYamlSubset` keeps both YAML back-references literally: `"*base"` for an
- * alias and `"&name pages"` for an anchored scalar. They are not the same
- * problem. An **alias** points at a value defined somewhere else, and resolving
- * it needs a real parser — so it stays unknown. An **anchor** merely names the
- * scalar it is attached to, and `collections_dir: &collections_dir pages`
- * says `pages` as plainly as the unanchored form does. Reading it is not a
- * guess; refusing to read it is a bug.
- *
- * That bug was real: it-journey.dev anchors its `collections_dir`, and treating
- * the anchor as unresolvable made every one of that site's 409 content files
- * invisible to this console — a CMS that cannot see a page cannot help with it.
- *
- * Returns the value with the anchor stripped, or `null` when the string is
- * genuinely unresolvable.
- */
-function anchoredValue(value: string): string | null {
-  const match = /^&[A-Za-z0-9_-]+\s+(.*)$/u.exec(value);
-  const inner = match?.[1]?.trim();
-  if (inner === undefined || inner === '' || inner.startsWith('*')) {
-    return null;
-  }
-  // With the anchor gone, what is left is a scalar exactly as it would have
-  // been written without one, and it is read the same way: `&title "X"` is
-  // `X`, not `"X"` with its quotes still on, and `&baseurl ""` is empty.
-  return asString(parseYamlScalar(inner));
-}
-
-/** Does this string carry a YAML construct that cannot be resolved here? */
-function unresolved(value: string): 'alias' | 'anchor' | null {
-  if (value.startsWith('*')) {
-    return 'alias';
-  }
-  // A bare `&name` with nothing after it anchors the *next* node, which this
-  // parser did not keep — that one really is unknown.
-  if (value.startsWith('&')) {
-    return anchoredValue(value) === null ? 'anchor' : null;
-  }
-  return null;
-}
-
 /** A record for `key`, or `undefined` when the value is not a mapping. */
 function asMap(value: FmValue | undefined): FrontMatter | undefined {
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
@@ -103,21 +53,9 @@ function asMap(value: FmValue | undefined): FrontMatter | undefined {
   return undefined;
 }
 
-/**
- * A reader that records why it returned nothing.
- *
- * Every field of `SiteConfigFacts` goes through this, so "the file did not say"
- * and "the file said something this parser cannot resolve" are different
- * outcomes with different consequences — the first is silence, the second is a
- * line in `warnings` naming the key and the construct.
- */
+/** Every field of `SiteConfigFacts` is read through this: a value the file states, or `null`. */
 class FactReader {
-  readonly warnings: string[] = [];
-
-  constructor(
-    private readonly data: FrontMatter,
-    private readonly file: string,
-  ) {}
+  constructor(private readonly data: FrontMatter) {}
 
   /** The first of `keys` that holds a resolvable scalar, else `null`. */
   string(...keys: string[]): string | null {
@@ -127,22 +65,10 @@ class FactReader {
         continue;
       }
       const value = asString(raw).trim();
-      if (value === '') {
-        continue;
+      // `baseurl: ""` says nothing, and neither does a collection or a mapping.
+      if (value !== '') {
+        return value;
       }
-      const kind = unresolved(value);
-      if (kind !== null) {
-        this.warnings.push(
-          `${this.file}: \`${key}\` is a YAML ${kind} (${value}); zer0-CMS resolves neither, so the value is unknown rather than guessed`,
-        );
-        continue;
-      }
-      const resolved = anchoredValue(value) ?? value;
-      if (resolved === '') {
-        // `baseurl: &baseurl ""` says nothing, exactly as `baseurl: ""` does.
-        continue;
-      }
-      return resolved;
     }
     return null;
   }
@@ -157,18 +83,9 @@ class FactReader {
       if (typeof raw === 'boolean') {
         return raw;
       }
-      const text = asString(raw).trim();
-      if (text === '') {
-        continue;
+      if (asString(raw).trim() !== '') {
+        return asBool(raw);
       }
-      const kind = unresolved(text);
-      if (kind !== null) {
-        this.warnings.push(
-          `${this.file}: \`${key}\` is a YAML ${kind}; the flag is left unknown`,
-        );
-        continue;
-      }
-      return asBool(raw);
     }
     return null;
   }
@@ -183,29 +100,6 @@ class FactReader {
   }
 }
 
-/**
- * Merge keys and aliases the parser stepped over.
- *
- * `<<: *defaults` parses as a key literally named `<<`, and a sequence item
- * `- *base` is kept as the string `"*base"`. Neither reaches a field this
- * module reads, so without this scan a config built entirely out of anchors
- * would produce empty facts and no explanation at all.
- */
-function structuralWarnings(text: string, file: string): string[] {
-  const out: string[] = [];
-  if (/^\s*<<\s*:/m.test(text)) {
-    out.push(
-      `${file}: uses YAML merge keys (\`<<:\`); the merged values are not resolved, so anything they supply is missing here`,
-    );
-  }
-  if (/^\s*[A-Za-z0-9_.-]+\s*:\s*&[A-Za-z0-9_-]+/m.test(text)) {
-    out.push(
-      `${file}: declares YAML anchors (\`&name\`); an anchored scalar is read as its value, but nothing reached through an alias (\`*name\`) is resolved`,
-    );
-  }
-  return out;
-}
-
 /** Jekyll `collections:` — a mapping of options, or a bare list of names. */
 function jekyllCollections(reader: FactReader): SiteConfigFacts['collections'] {
   const out: SiteConfigFacts['collections'] = {};
@@ -217,8 +111,7 @@ function jekyllCollections(reader: FactReader): SiteConfigFacts['collections'] {
       // Jekyll's own default is `output: false` for a collection that does not
       // say — `posts` is the exception, and it says so in its own entry.
       const output = options === undefined ? false : asBool(options.output);
-      const usable = permalink !== null && unresolved(permalink) === null ? permalink : null;
-      out[name] = { permalink: usable, output };
+      out[name] = { permalink, output };
     }
     return out;
   }
@@ -244,7 +137,7 @@ function hugoSections(data: FrontMatter): SiteConfigFacts['collections'] {
   }
   for (const [section, value] of Object.entries(permalinks)) {
     const template = asString(value).trim();
-    if (template !== '' && unresolved(template) === null) {
+    if (template !== '') {
       out[section] = { permalink: template, output: true };
     }
   }
@@ -281,9 +174,9 @@ export function readSiteConfigFacts(
     return facts;
   }
 
-  const data =
-    profile.siteConfig.format === 'toml' ? parseTomlFlat(text) : parseYamlSubset(text);
-  const reader = new FactReader(data, file);
+  const { data, warnings } =
+    profile.siteConfig.format === 'toml' ? { data: parseTomlFlat(text), warnings: [] } : readYaml(text);
+  const reader = new FactReader(data);
 
   if (profile.id === 'mkdocs') {
     facts.title = reader.string('site_name');
@@ -307,6 +200,6 @@ export function readSiteConfigFacts(
     facts.collections = jekyllCollections(reader);
   }
 
-  facts.warnings.push(...reader.warnings, ...structuralWarnings(text, file));
+  facts.warnings.push(...warnings.map((warning) => `${file}: ${warning}`));
   return facts;
 }

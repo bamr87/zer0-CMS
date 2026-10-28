@@ -4,13 +4,15 @@
 // its event streams, its navigation), Mantine and TanStack Query, and imports
 // '@zer0/ui/ui.css' after Mantine's core styles.
 export * from './ai';
+export * from './automations';
+export * from './aieo';
 export { BodyEditor } from './BodyEditor';
 export { BookAssist } from './books/BookAssist';
 export { BookShelf, PremiseToBook } from './books/BookShelf';
 export { BookView } from './books/BookView';
 export { ChapterWriter } from './books/ChapterWriter';
 export { ApiError, call, errorText } from './call';
-export { StudioProvider, useApi, useGo, useStream, type AiSection, type Destination, type Host, type OpenStream, type OutboxTab } from './context';
+export { StudioProvider, useApi, useGo, useStream, type AieoSection, type AiSection, type Destination, type Host, type OpenStream, type OutboxTab } from './context';
 export type { DistributionTab } from './context';
 export { CreatePage } from './CreatePage';
 export { DiffView } from './DiffView';
@@ -33,8 +35,10 @@ export { SourceView } from './research/SourceView';
 export { RevisionHistory } from './RevisionHistory';
 export { RichText, roundTrips, throughEditor, type TextFormat } from './RichText';
 export { RunList, RunStatus, RunTimeline, useLiveRun } from './RunTimeline';
+export { SitePicker } from './SitePicker';
 export { STATUS_OPTIONS, StatusBadge } from './StatusBadge';
 export { JobLog, JobStatus, useLiveJob } from './sites/JobLog';
 export { RegisterSite, SitesWorkspace } from './sites/SitesWorkspace';
 export { SiteView } from './sites/SiteView';
 export { SuggestionInbox } from './SuggestionInbox';
+export { HOME, WORKSPACES, workspaceFor, type Workspace, type WorkspaceId, type WorkspaceProps } from './workspaces';

@@ -39,7 +39,7 @@
  * no marginal cost at all. A dashboard that forgets that lies quietly.
  */
 
-import { parseYamlSubset, type FmValue } from '../content/frontmatter';
+import { parseYaml, type FmValue } from '../content/frontmatter';
 import type { LedgerSummary } from '../shared/types';
 import type { HarnessIo } from './agents';
 
@@ -126,7 +126,7 @@ function windowsOf(summaryText: string | undefined): {
   if (summaryText === undefined) {
     return { last7dUsd: null, last30dUsd: null, allTimeUsd: null };
   }
-  const data = parseYamlSubset(summaryText);
+  const data = parseYaml(summaryText);
   return {
     last7dUsd: costIn(data['last_7d']),
     last30dUsd: costIn(data['last_30d']),
@@ -151,7 +151,7 @@ function bucketsFromSummary(
   if (summaryText === undefined) {
     return out;
   }
-  const rows = parseYamlSubset(summaryText)[key];
+  const rows = parseYaml(summaryText)[key];
   if (!Array.isArray(rows)) {
     return out;
   }

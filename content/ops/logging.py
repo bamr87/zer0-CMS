@@ -5,8 +5,12 @@ log plane joins on (`ts level msg logger request_id trace_id app version`);
 `TextFormatter` is the human format for development. Both go through
 `redact()`, and `RedactionFilter` scrubs the message and its arguments before
 any handler sees them, so a token pasted into an exception message or logged
-by a library never reaches stdout. Hand-written on purpose: a JSON line is
-twenty lines of code, and one fewer dependency in the image.
+by a library never reaches stdout. `ExceptionReporterFilter` does the same for
+the error reports Django writes (its technical 500 page, the mails to admins):
+every token-shaped string in a frame's variables is redacted, and variables
+marked `sensitive_variables` are hidden in development too. Hand-written on
+purpose: a JSON line is twenty lines of code, and one fewer dependency in the
+image.
 """
 
 import json
@@ -15,15 +19,19 @@ import re
 import traceback
 from datetime import UTC, datetime
 
+from django.views.debug import SafeExceptionReporterFilter
+
 from agents.tracing import current_trace_id
 
 from .context import current_request_id
 
-# Token shapes the fleet knows (UPS-OPS-12) plus this platform's own agent
-# tokens, which are `zer0_` + 43 url-safe characters; the twelve-character
-# prefix the admin shows is deliberately shorter than the match.
+# Token shapes the fleet knows (UPS-OPS-12) plus this platform's own: an
+# agent's `zer0_` and a person's `zer0u_`, each followed by 43 url-safe
+# characters; the prefix the admin and `user_token --list` show is
+# deliberately shorter than the match.
 SECRET = re.compile(
-    r"(?:sk-ant-[A-Za-z0-9_-]{8,}|ghp_[A-Za-z0-9]{8,}|github_pat_[A-Za-z0-9_]{8,}|AIza[A-Za-z0-9_-]{8,}|zer0_[A-Za-z0-9_-]{32,})"
+    r"(?:sk-ant-[A-Za-z0-9_-]{8,}|ghp_[A-Za-z0-9]{8,}|github_pat_[A-Za-z0-9_]{8,}|AIza[A-Za-z0-9_-]{8,}"
+    r"|zer0u?_[A-Za-z0-9_-]{32,})"
 )
 AUTHORIZATION = re.compile(r"(?i)(authorization\s*[:=]\s*)(?:bearer|basic|token)?\s*\S+")
 REDACTED = "[REDACTED]"
@@ -39,6 +47,19 @@ def redact(text: str) -> str:
 
 def _scrub(value):
     return redact(value) if isinstance(value, str) else value
+
+
+class ExceptionReporterFilter(SafeExceptionReporterFilter):
+    """Django's error-report filter (`DEFAULT_EXCEPTION_REPORTER_FILTER`), with
+    two changes: it is on with `DEBUG` too, since a token on a development
+    error page is still a token, and it redacts every token-shaped string a
+    frame holds, whatever the variable is called."""
+
+    def is_active(self, request):
+        return True
+
+    def get_traceback_frame_variables(self, request, tb_frame):
+        return [(name, _scrub(value)) for name, value in super().get_traceback_frame_variables(request, tb_frame)]
 
 
 class RedactionFilter(logging.Filter):

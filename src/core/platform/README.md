@@ -19,7 +19,7 @@ Decision **D12**: a site's platform is a *profile*, resolved once, never guessed
 
 **Detection records its evidence.** "Why does it think this is Hugo?" is a question somebody asks at the worst possible moment, and re-running the same guess is not an answer. `ResolvedPlatform.evidence` is the list of files that were actually found — `_config.yml`, `Gemfile`, `pages`, `_config.yml contains "remote_theme: bamr87/zer0-mistakes"` — including the branch that gives up, which records `no platform marker file found` rather than leaving an empty array to be read as "not checked".
 
-**An anchor becomes a warning, never a guessed value.** Real `_config.yml` files in this fleet use YAML anchors, aliases and merge keys; the hand-rolled subset parser keeps them as literal text and does not resolve them, because resolving them would mean a YAML implementation and the zero-dependency rule says no. So `title: &site_title lifehacker.dev` yields `title: null` plus a `warnings` line naming the key and the construct. A guessed `baseurl` is worse than no `baseurl`: it produces URLs that look right and are wrong, and the ledger is keyed by URL.
+**What the file does not state clearly is a warning, never a guessed value.** Real `_config.yml` files in this fleet use YAML anchors, aliases and merge keys; the `yaml` package reads them as YAML does (ADR 0006 decision 9), so `title: &site_title lifehacker.dev` is `lifehacker.dev`. What it cannot read — an alias that names no anchor, an unclosed quote — leaves that field `null` and becomes a `warnings` line. A guessed `baseurl` is worse than no `baseurl`: it produces URLs that look right and are wrong, and the ledger is keyed by URL.
 
 ## Detection order
 

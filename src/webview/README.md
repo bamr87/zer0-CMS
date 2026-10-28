@@ -2,7 +2,9 @@
 
 > The vanilla TypeScript UI: three framework-free bundles for the panel, dashboard and agent, the shared kernel they are built from, and the two rules every surface keeps.
 
-Three bundles, no framework: `dist/panel.js`, `dist/dashboard.js` and `dist/agent.js`, each an esbuild IIFE with **zero** dependencies. What React, Recoil, Tailwind, Headless UI, Radix and Downshift did in the fork this replaces, seven files in `shared/` do here.
+Three bundles, no framework: `dist/panel.js`, `dist/dashboard.js` and `dist/agent.js`, each an esbuild IIFE (the panel bundles `date-fns` for its date field). What React, Recoil, Tailwind, Headless UI, Radix and Downshift did in the fork this replaces, seven files in `shared/` do here.
+
+These are **file mode**: a site's files, with no server. With a platform configured (`zer0Cms.platform.url`) the same three views load `dist/studio.js` instead — the studio's own React workspaces, built from `web/packages/webview` (PLAN G10, ADR 0006 decision 9) — so a feature for a platform-backed site belongs in `@zer0/ui`, not here.
 
 ```
 shared/      the kernel every surface uses     (this work package)

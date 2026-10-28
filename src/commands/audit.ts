@@ -485,7 +485,7 @@ export async function doOpenAudit(shell: Zer0Shell): Promise<void> {
   }
 
   await shell.context.workspaceState.update(ROUTE_STATE_KEY, 'audit');
-  await vscode.commands.executeCommand('zer0Cms.dashboard');
+  await vscode.commands.executeCommand('zer0Cms.dashboard.files');
 
   if (scan.audit.issues.length === 0) {
     await notifyInfo(`audit: ${summarise(scan.audit)}. The site is clean.`);

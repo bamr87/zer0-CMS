@@ -4,7 +4,7 @@ Twelve files that know what a content file *is*: how to read its front matter, h
 
 | File | Exports | Owner |
 |---|---|---|
-| `frontmatter.ts` | `FmValue`, `FrontMatter`, `FmFormat`, `FmBlock`, `detectFormat`, `splitFrontMatter`, `parseFrontMatterBlock`, `parseYamlSubset`, `parseTomlFlat`, `parseYamlKeyLine`, `isYamlSequenceItem`, `scanFrontMatterWarnings`, `ownValue`, `setOwn`, `asString`, `asList`, `asBool` | WP03, WP2.3 |
+| `frontmatter.ts` | `FmValue`, `FrontMatter`, `FmFormat`, `FmBlock`, `detectFormat`, `splitFrontMatter`, `parseFrontMatterBlock`, `readYaml`, `parseYaml`, `parseTomlFlat`, `parseYamlKeyLine`, `isYamlSequenceItem`, `scanFrontMatterWarnings`, `ownValue`, `setOwn`, `asString`, `asList`, `asBool` | WP03, WP2.3 |
 | `serialize.ts` | `SerializeOptions`, `DEFAULT_SERIALIZE_OPTIONS`, `serializeOptions`, `KeyChange`, `applyChanges`, `applyCommaSeparatedFields`, `updateFrontMatterKeys`, `serializeFrontMatter`, `quoteScalar`, `stitch` | WP03 |
 | `article.ts` | `Article`, `parseArticle`, `readArticle`, `writeArticle`, `setFieldValue`, `stampModified`, `isSupported`, `CONVENTIONAL_MODIFIED_KEYS` | WP03 |
 | `fields.ts` | `inlineFieldCollections`, `evaluateWhen`, `visibleFields`, `emptyValueFor`, `isEmpty`, `validateFields`, `FieldViolation`, `violationToIssue`, `labelOf`, `limitFor`, `findField` | WP04, WP2.3 |
@@ -37,22 +37,15 @@ Twelve files that know what a content file *is*: how to read its front matter, h
 
 **A malformed file has no front matter.** Every parser here is written not to throw, and `parseFrontMatterBlock` catches anything that slips through and returns `{}`. The panel re-parses on every keystroke of a file somebody is mid-edit, so "unreadable" has to be a value, not an exception. Nothing is written as a result: a construct we cannot read is a construct we cannot corrupt.
 
-**And now it says so out loud.** `FmBlock.warnings` is one line per construct from the parser's own "not supported" table that this block actually contains — an anchor, an alias, a merge key, a tag, a quoted scalar that never closes inside its value, a flow collection that closes on a later line, an undecoded `\uXXXX` escape, and in TOML `[[array-of-tables]]` and `'''`. Every line starts `line <n>: `, 1-based within the block body, and that prefix is a contract `audit.ts` reads. The warnings come from a **separate scan** (`scanFrontMatterWarnings`), not from a sink threaded through the recursive descent, so the parse path is the code it always was and the never-throws promise is untouched. It inspects only lines that carry a value — a key line or a sequence item — because an `&` in the body of a block scalar is an ampersand, and a warning that fires on ordinary prose teaches its reader to ignore the channel.
+**And it says so out loud.** `FmBlock.warnings` is one line per problem the reader met in this block: each error and warning the `yaml` package reports (an unclosed quote, an unknown tag, a tab used as indentation …), each alias that names no anchor (its value is then `null`, and a merge of it merges nothing — never the reason the rest of the block is lost), and in TOML `[[array-of-tables]]` and `'''`. Every line starts `line <n>: `, 1-based within the block body, and that prefix is a contract `audit.ts` reads. A YAML block is parsed once for its data and its warnings (`readYaml`).
 
-The reason the channel exists is two floors up: an audit over a file containing `defaults: &series` would otherwise emit a confident `missing-key` for every key that anchor was meant to supply, and a fix-it would stand ready to rewrite a file nothing had read. An empty `warnings` array is the only state under which `data` is a complete account of the block.
+The reason the channel exists is two floors up: an audit over a file whose `<<: *defaults` names no anchor would otherwise emit a confident `missing-key` for every key that merge was meant to supply, and a fix-it would stand ready to rewrite a file nothing had read. An empty `warnings` array is the only state under which `data` is a complete account of the block.
 
 **Nested changes are dotted keys.** `setFieldValue(data, ['seo','title'], v)` yields `{ key: 'seo.title', value: v }`, which the surgery resolves to the exact leaf line. A key that literally contains a dot (`image.alt`) wins over the path reading, decided against the block's own top-level keys. Path segments address mappings only — there is no index syntax for reaching into a sequence, and a segment that itself contains a dot falls back to rewriting the whole top-level container.
 
-## The YAML subset
+## Reading YAML
 
-The zero-dependency rule (D3) buys a hand-rolled parser instead of js-yaml. The full list of what is and is not supported — and, for each unsupported construct, what happens instead — is the header comment of `frontmatter.ts`. Read it before filing a bug against the parser. The short version:
-
-- **Supported:** scalars with coercion, nested mappings, block sequences
-(indented or not, including sequences of mappings), one-line flow collections with quoted commas, block scalars with every chomping and indentation indicator, comments, CRLF, BOM, common quote escapes.
-- **Not supported:** anchors/aliases/merge keys, tags, multi-document,
-multi-line flow collections, multi-line plain scalars, complex keys. Each one degrades to a documented result (usually "the literal text" or "the line is skipped") and never throws.
-- **Coercion:** `true`/`false` → boolean, `null`/`~`/empty → `null`, integers
-and decimals → number. `yes`/`no`/`on`/`off`, zero-padded integers, integers past `Number.MAX_SAFE_INTEGER` and anything date-shaped all stay strings.
+YAML is read by the `yaml` package (ADR 0006 decision 9, amending D3: a maintained library bundled at build time, not a hand-rolled subset). Anchors, aliases, merge keys, tags, block and folded scalars, multi-line plain, quoted and flow values and every escape mean what YAML says they mean. The YAML 1.2 core schema decides the scalars, with three kinds kept as the text that was written, because front matter means them as text: a zero-padded integer (`007`), an integer past `Number.MAX_SAFE_INTEGER`, and the octal, hex, `.inf` and `.nan` spellings. So `true`/`false` → boolean, `null`/`~`/empty → `null`, decimal integers and floats → number, and `yes`/`no`/`on`/`off` and anything date-shaped stay strings — the core schema has no timestamp type, so dates stay strings end to end (D7). TOML keeps its own small reader (`parseTomlFlat`).
 
 On the way back out, `serializeFrontMatter` quotes a string when a *reader* would coerce it — including the YAML 1.1 words Jekyll's Ruby parser treats as booleans, which our own parser does not. Keys are quoted only when they would not parse back as themselves.
 

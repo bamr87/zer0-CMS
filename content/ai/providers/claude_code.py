@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
 from .anthropic import AnthropicProvider
-from .base import EFFORT, Completion, NotConfigured, Provider, ProviderError
+from .base import EFFORT, Completion, NotConfigured, Provider, ProviderError, text_of
 
 API_KEY_PREFIX = "sk-ant-api"
 
@@ -41,8 +41,9 @@ def _run(coroutine):
 
 
 def transcript(messages: list[dict]) -> str:
-    """The conversation as the single prompt the SDK takes."""
-    turns = [m for m in messages if m["role"] in ("user", "assistant") and m.get("content")]
+    """The conversation as the single prompt the SDK takes (a message's text only: the SDK's prompt sees no image)."""
+    turns = [{**m, "content": text_of(m.get("content") or "")} for m in messages if m["role"] in ("user", "assistant")]
+    turns = [m for m in turns if m["content"]]
     if len(turns) == 1:
         return turns[0]["content"]
     lines = ["<conversation>"]

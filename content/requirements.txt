@@ -44,11 +44,15 @@ beautifulsoup4==4.15.0
 # The newsroom's newsletters and subscription email (newsroom/README.md): any ESP behind Django's mail API.
 django-anymail==15.2
 # The outbox harness (bamr87/outbox, stdlib only, Python 3.11+): the belt, arena trials and the claim desk the outbox
-# desk runs (outboxdesk/README.md). It has no release tags, so it installs from git, pinned to a commit: the head of
-# bamr87/outbox#10 (feature/platform-e2e-proof), which adds outbox/belt.py and outbox/claimdesk.py; its `main` does not
-# have them yet. Move the pin to that pull request's merge commit once it merges (ADR 0007, open item 1).
-outbox @ git+https://github.com/bamr87/outbox.git@4221c90a1f1cfa31148fec7ef5fab98e50539dc3
+# desk runs (outboxdesk/README.md). It has no release tags, so it installs from git, pinned to a commit on its `main`:
+# the merge of bamr87/outbox#10, which added outbox/belt.py and outbox/claimdesk.py (ADR 0007 decision 1).
+outbox @ git+https://github.com/bamr87/outbox.git@ec82031c3f4d6f16a14fdef6e792dc5110bd733f
 # Distribution (distribution/README.md): pull requests to a site's repository (barodybroject's client), and a
 # site's zer0.json — JSONC, comments and trailing commas — read by the LinkedIn lane's CLI.
 PyGithub==2.10.0
 json5==0.17.3
+# Automations' conditions (automations/README.md): JMESPath expressions over a trigger's payload, evaluated by the
+# maintained library rather than an evaluator of our own. Schedules use Celery's own crontab, above.
+jmespath==1.1.0
+# AIEO's GA4 and Search Console connectors (aieo/README.md): a Google service account's signed JWT, traded for a token.
+PyJWT==2.12.1

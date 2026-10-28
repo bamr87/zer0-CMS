@@ -16,6 +16,11 @@ they live in are sites/views.py).
     GET   /api/v2/content/pages/<id>/revisions/compare/   two revisions side by side, for a diff
     POST  /api/v2/content/pages/<id>/revisions/<rev>/revert/   a new draft with that revision's content
 
+A page's `fields` are its editor fields by name, each described by a
+`field_specs` entry; a page that is a file of its own (`ArticlePage`,
+`StandardPage`) also has that file's `file_path` and raw `front_matter`, every
+key no typed field writes (group `file`, cms/files.py).
+
 Views validate, call `cms.services` and serialize (api/serializers.py). They
 serve people only: an agent changes content through the tool registry and
 the accept flow, never through these (content/AGENTS.md). A session request
@@ -50,8 +55,9 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from wagtail.models import Page, Site, get_page_models
 
-from cms import services
+from cms import files, services
 from importers.markdown import from_blocks
+from importers.services import pages_imported_from
 from ops.errors import Conflict, Forbidden, Invalid, Locked, NotFound
 from ops.openapi import ERROR_RESPONSES
 from suggestions.services import SuggestionError, pending_for
@@ -69,6 +75,26 @@ from .serializers import (
 
 SEO = {"slug", "seo_title", "search_description", "ai_summary", "ai_keywords"}
 SETTINGS = {"agent_policy"}
+# The page's file (cms/files.py): `file_path` is `legacy_path`, and `front_matter` only its raw keys, so
+# their specs are written here rather than read from the model fields.
+FILE_SPECS = {
+    "file_path": {
+        "label": "File path",
+        "kind": "text",
+        "max_length": files.MAX_PATH,
+        "help_text": "Where the page's file goes, relative to the site's root, e.g. "
+        "pages/_posts/wire/2026-10-28-example.md (.md, .markdown or .html; a dated name matches the date). "
+        "Empty: the exporter picks one from the page's type and section.",
+    },
+    "front_matter": {
+        "label": "Front matter",
+        "kind": "json",
+        "max_length": None,
+        "help_text": "Every other key of the file's front matter, as a JSON object in the order it is written — "
+        "excerpt, permalink, sources … These keys are written from the page's fields and the newsroom, and "
+        "are set there: {owned}.",
+    },
+}
 
 
 class IsPerson(BasePermission):
@@ -189,9 +215,16 @@ def summary(page) -> dict:
 
 
 def read_fields(page) -> dict:
-    """The editor fields' values, as JSON: tags as names, relations as id strings."""
+    """The editor fields' values, as JSON: tags as names, relations as id strings,
+    the page's file as its path and its raw front matter (cms/files.py)."""
     out = {}
     for name in services.editable_fields(type(page)):
+        if name == "file_path":
+            out[name] = page.legacy_path
+            continue
+        if name == "front_matter":
+            out[name] = files.raw_front_matter(page)
+            continue
         field = page._meta.get_field(name)
         if name == "tags":
             out[name] = sorted(t.name for t in page.tags.all())
@@ -205,6 +238,9 @@ def read_fields(page) -> dict:
 
 @cache
 def _spec(model, name) -> dict:
+    if name in FILE_SPECS:
+        spec = {"name": name, "group": "file", "required": False, "choices": [], **FILE_SPECS[name]}
+        return {**spec, "help_text": spec["help_text"].format(owned=", ".join(files.owned_keys(model)))}
     field = model._meta.get_field(name)
     choices = [{"value": str(v), "label": str(label)} for v, label in (field.choices or [])]
     if name == "tags" or isinstance(field, models.JSONField):  # a list of names: ai_keywords, a cast, themes
@@ -303,6 +339,11 @@ class PageFilter(django_filters.FilterSet):
     status = django_filters.ChoiceFilter(choices=[(s, s) for s in STATUS_FILTERS], method="by_status")
     q = django_filters.CharFilter(method="by_text", help_text="Text in the title or the slug.")
     can_have_children = django_filters.BooleanFilter(method="by_children", help_text="Only pages that take children.")
+    source = django_filters.CharFilter(
+        method="by_source",
+        help_text="A file's path from the folder a client has open, starting with that folder's name "
+        "(`drsai/_posts/a.md`): the pages imported from that file, in the sites whose folder that is.",
+    )
 
     # The `value` type hints are what the OpenAPI document reads for each parameter.
     def by_site(self, qs, name, value: int):
@@ -325,6 +366,9 @@ class PageFilter(django_filters.FilterSet):
     def by_children(self, qs, name, value: bool):
         parents = [m for m in get_page_models() if m is not Page and m.creatable_subpage_models()]
         return qs.type(*parents) if value else qs.not_type(*parents)
+
+    def by_source(self, qs, name, value: str):
+        return qs.filter(pk__in=pages_imported_from(value))
 
 
 class PageList(generics.ListAPIView):

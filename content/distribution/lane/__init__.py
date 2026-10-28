@@ -10,7 +10,6 @@ and a terminal, through `manage.py linkedin`.
 | `pipeline.py` | compose, approve, preview (pure), publish (gated), record, posts, statistics, token status |
 | `cli.py` | `manage.py linkedin COMMAND --site PATH` and the loopback OAuth callback |
 | `mcp.py` | `manage.py linkedin mcp`: the lane's tools over MCP (stdio), publishing off unless the operator armed it |
-| `doctor.py` | `zer0 doctor`'s `distribution` check, for PLAN G4's Python doctor |
 
 It shares the platform's LinkedIn client (`distribution/linkedin/`), its gates
 (`distribution/gates.py`), its ledger file (`distribution/ledger.py`), its

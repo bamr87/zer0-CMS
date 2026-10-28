@@ -20,6 +20,9 @@ from importers.models import ImportedSource
 from outbox.models import OutboxEvent
 
 FIXTURE = Path(__file__).resolve().parent.parent / "fixtures" / "jekyll" / "site"
+# A site whose `source:` is a subdirectory, as zer0-pages's is: preview images and publish states.
+SOURCE_SITE = FIXTURE.parent / "source-site"
+POSTS = "src/_posts"
 REPO = Path(settings.REPO_ROOT)
 
 
@@ -30,8 +33,8 @@ def imported(db):
     return report
 
 
-def page_at(rel):
-    return ImportedSource.objects.get(site_key="fixture", legacy_path=rel).page.specific
+def page_at(rel, site="fixture"):
+    return ImportedSource.objects.get(site_key=site, legacy_path=rel).page.specific
 
 
 @pytest.mark.django_db
@@ -189,6 +192,186 @@ def test_a_page_made_in_wagtail_gets_a_jekyll_path(imported, tmp_path):
         text.startswith("---\ntitle: Made in Wagtail\ndate: 2026-09-01 00:00:00 +0000\n")
         and "Written in the CMS." in text
     )
+
+
+@pytest.mark.django_db
+def test_a_preview_under_assets_is_found_like_the_engine_finds_it(tmp_path):
+    """rails.assets-terms: `preview: /images/previews/x.png` is a file in the
+    source's `assets/images/previews/` (sites/zer0-pages, sites/2005), an SVG is
+    imported like any other image, an `/assets/…` value is the same file, and
+    an external or missing one sets nothing and keeps its key."""
+    report = import_site(SOURCE_SITE, "sourced")
+    assert not report.errors, report.errors
+    engine = page_at(f"{POSTS}/2026-01-01-engine-preview.md", "sourced")
+    assert engine.preview_image is not None and engine.preview_image.width == 8
+    assert engine.preview_image.collection.name == "site: sourced"
+    svg = page_at(f"{POSTS}/2026-01-02-svg-preview.md", "sourced").preview_image
+    assert svg is not None and svg.is_svg() and (svg.width, svg.height) == (16, 9)
+    assets = page_at(f"{POSTS}/2026-01-03-assets-preview.md", "sourced")
+    assert assets.preview_image == engine.preview_image  # one file, one image; the query is not part of it
+    external = page_at(f"{POSTS}/2026-01-04-external-preview.md", "sourced")
+    assert external.preview_image is None and external.front_matter["preview"] == "https://images.example/x.png"
+    assert page_at(f"{POSTS}/2026-01-05-missing-preview.md", "sourced").preview_image is None
+    # The front matter still names the file as written, so every file exports byte for byte.
+    export = export_site("sourced", tmp_path, include_drafts=True)
+    assert export.rendered == [] and sorted(export.verbatim) == sorted(report.created)
+    for rel in export.verbatim:
+        assert (tmp_path / rel).read_bytes() == (SOURCE_SITE / rel).read_bytes(), rel
+
+
+@pytest.mark.django_db
+def test_a_preview_is_read_only_through_plain_paths_inside_the_site(tmp_path):
+    """A preview is confined like every disk path (sites/writer.py): a symlink
+    at any component — even one that stays inside the site — or a `..` that
+    leaves it is never read; a file that is not an image is skipped, and its
+    page still imports."""
+    import shutil
+
+    site = tmp_path / "site"
+    shutil.copytree(SOURCE_SITE, site)
+    previews = site / "src/assets/images/previews"
+    (previews / "alias.png").symlink_to("engine.png")
+    (tmp_path / "elsewhere").mkdir()
+    shutil.copy(previews / "engine.png", tmp_path / "elsewhere" / "far.png")
+    shutil.copy(previews / "engine.png", tmp_path / "outside.png")
+    (previews / "linked").symlink_to(tmp_path / "elsewhere", target_is_directory=True)
+    (previews / "broken.png").write_bytes((previews / "engine.png").read_bytes()[:40])
+    values = {
+        "alias": "/images/previews/alias.png",
+        "linked": "/assets/images/previews/linked/far.png",
+        "escape": "/../../outside.png",
+        "broken": "/images/previews/broken.png",
+    }
+    for slug, value in values.items():
+        (site / POSTS / f"2026-02-01-{slug}.md").write_text(f"---\ntitle: {slug}\npreview: {value}\n---\n\nText.\n")
+    report = import_site(site, "confined")
+    assert not report.errors, report.errors
+    for slug in values:
+        assert page_at(f"{POSTS}/2026-02-01-{slug}.md", "confined").preview_image is None, slug
+    assert page_at(f"{POSTS}/2026-01-01-engine-preview.md", "confined").preview_image is not None
+
+
+DRAFTS = [
+    f"{POSTS}/2026-03-01-unpublished.md",  # published: false — Jekyll never builds it
+    f"{POSTS}/2026-03-02-draft-flag.md",  # draft: true — how the zer0 sites mark a draft
+    f"{POSTS}/2026-03-03-status-draft.md",  # status: draft — and the other way
+    "src/_drafts/idea.md",
+]
+FAR_FUTURE = f"{POSTS}/2999-01-01-far-future.md"  # dated by its file name
+UPCOMING = "src/_docs/upcoming.md"  # a collection document dated in the front matter
+SOMEDAY = "src/someday.md"  # a page dated in the front matter
+
+
+def state(rel, site):
+    page = page_at(rel, site)
+    return "live" if page.live else "scheduled" if page.scheduled_revision else "draft"
+
+
+@pytest.mark.django_db
+def test_a_file_the_site_does_not_build_imports_as_a_draft_or_scheduled(tmp_path):
+    """rails.page-search: a file is live exactly when the catalog says the site
+    builds it (`Entry.live`, the write-back's rule too). `published: false`,
+    `draft: true`, `status: draft` and `_drafts/` are drafts, never published (a
+    quoted "false" is true to Ruby: built, so live); a file dated in the future
+    is scheduled for its date. A re-import changes nothing, not even once
+    Wagtail's sweep has published the scheduled page, and every file exports
+    byte for byte."""
+    from datetime import UTC, datetime, timedelta
+
+    from django.utils import timezone
+
+    from cms.tasks import publish_scheduled
+    from sites import catalog
+
+    report = import_site(SOURCE_SITE, "states")
+    assert not report.errors, report.errors
+    states = {rel: state(rel, "states") for rel in report.created}
+    assert {rel for rel, s in states.items() if s == "draft"} == set(DRAFTS)
+    assert {rel for rel, s in states.items() if s == "scheduled"} == {FAR_FUTURE, UPCOMING, SOMEDAY}
+    assert states[f"{POSTS}/2026-03-04-quoted-false.md"] == "live"
+    assert {e.relative: e.live for e in catalog.scan(SOURCE_SITE).entries} == {
+        rel: s == "live" for rel, s in states.items()
+    }
+    for rel in DRAFTS:
+        page = page_at(rel, "states")
+        assert page.go_live_at is None and page.get_latest_revision() is not None, rel
+    # The file's own marker stays in the page's front matter (the write-back tells it from its own by that).
+    for rel, (key, value) in zip(DRAFTS, [("published", False), ("draft", True), ("status", "draft")], strict=False):
+        assert page_at(rel, "states").front_matter[key] == value, rel
+    # A date with no zone is local time, as the catalog (and Ruby) read it.
+    assert page_at(FAR_FUTURE, "states").scheduled_revision.approved_go_live_at == datetime(2999, 1, 1).astimezone()
+    assert page_at(UPCOMING, "states").go_live_at == datetime(2999, 2, 1, 9, tzinfo=UTC)
+    assert page_at(SOMEDAY, "states").go_live_at == datetime(2999, 3, 1, 12, tzinfo=UTC)
+
+    revisions = Revision.objects.count()
+    again = import_site(SOURCE_SITE, "states")
+    assert again.created == again.updated == [] and sorted(again.unchanged) == sorted(report.created)
+    assert Revision.objects.count() == revisions and {rel: state(rel, "states") for rel in report.created} == states
+
+    # The clock reaches the post's date: the sweep publishes it, and a re-import leaves it live.
+    revision = page_at(FAR_FUTURE, "states").scheduled_revision
+    past = timezone.now() - timedelta(minutes=1)
+    revision.content["go_live_at"] = past.isoformat()
+    revision.approved_go_live_at = past
+    revision.save(update_fields=["content", "approved_go_live_at"])
+    publish_scheduled()
+    assert state(FAR_FUTURE, "states") == "live"
+    revisions = Revision.objects.count()
+    assert FAR_FUTURE in import_site(SOURCE_SITE, "states").unchanged
+    assert state(FAR_FUTURE, "states") == "live" and Revision.objects.count() == revisions
+
+    live_only = export_site("states", tmp_path / "live")
+    assert not {*DRAFTS, UPCOMING, SOMEDAY} & {*live_only.verbatim, *live_only.rendered}
+    export = export_site("states", tmp_path / "all", include_drafts=True)
+    assert export.rendered == [] and sorted(export.verbatim) == sorted(report.created)
+    for rel in export.verbatim:
+        assert (tmp_path / "all" / rel).read_bytes() == (SOURCE_SITE / rel).read_bytes(), rel
+
+
+@pytest.mark.django_db
+def test_a_site_with_future_true_publishes_what_is_dated_in_the_future_now(tmp_path):
+    """Jekyll builds a file dated in the future when `_config.yml` says
+    `future: true`, so it imports live; a draft stays a draft."""
+    import shutil
+
+    site = tmp_path / "site"
+    shutil.copytree(SOURCE_SITE, site)
+    with (site / "_config.yml").open("a") as config:
+        config.write("future: true\n")
+    assert not import_site(site, "future").errors
+    assert state(FAR_FUTURE, "future") == state(UPCOMING, "future") == state(SOMEDAY, "future") == "live"
+    assert page_at(FAR_FUTURE, "future").go_live_at is None
+    assert {state(rel, "future") for rel in DRAFTS} == {"draft"}
+
+
+@pytest.mark.django_db
+def test_a_changed_file_moves_its_page_between_live_scheduled_and_draft(tmp_path):
+    """The file decides: a live page whose file now marks it a draft, or dates
+    it in the future, comes down; a scheduled one dated in the past goes up
+    now; a draft cancels a schedule."""
+    import shutil
+    from datetime import datetime
+
+    site = tmp_path / "site"
+    shutil.copytree(SOURCE_SITE, site)
+    assert not import_site(site, "moving").errors
+
+    def edit(rel, old, new):
+        path = site / rel
+        path.write_text(path.read_text().replace(old, new, 1))
+        report = import_site(site, "moving")
+        assert report.updated == [rel] and not report.errors, report.errors + report.conflicts
+        return state(rel, "moving")
+
+    engine = f"{POSTS}/2026-01-01-engine-preview.md"
+    assert edit(engine, "\n---\n", "\nstatus: draft\n---\n") == "draft"
+    assert edit(engine, "status: draft\n", "") == "live"
+    assert edit(engine, "\n---\n", "\ndate: 2999-04-01\n---\n") == "scheduled"
+    assert page_at(engine, "moving").scheduled_revision.approved_go_live_at == datetime(2999, 4, 1).astimezone()
+    assert edit(FAR_FUTURE, "\n---\n", "\ndate: 2026-01-10\n---\n") == "live"
+    assert page_at(FAR_FUTURE, "moving").go_live_at is None
+    assert edit(UPCOMING, "\n---\n", "\npublished: false\n---\n") == "draft"
+    assert page_at(UPCOMING, "moving").go_live_at is None
 
 
 # The theme's docs site (376 files) is the largest fixture, and it lives in its

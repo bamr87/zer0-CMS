@@ -50,7 +50,7 @@ CAPS = {"structured_output": True, "tools": True, "vision": True, "context": 1_0
 class AnthropicProvider(Provider):
     slug = "anthropic"
     display_name = "Anthropic (Claude API)"
-    capabilities = frozenset({"complete", "stream", "structured", "tools", "models", "search"})
+    capabilities = frozenset({"complete", "stream", "structured", "tools", "models", "search", "vision"})
     credential_env = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
     default_model = "claude-opus-5-5"
     static_models = (
@@ -241,6 +241,15 @@ def anthropic_messages(messages: list[dict]) -> list[dict]:
                 for c in m["tool_calls"]
             ]
             wire.append({"role": "assistant", "content": content})
+        elif isinstance(m["content"], list):
+            wire.append({"role": m["role"], "content": [_part(part) for part in m["content"]]})
         else:
             wire.append({"role": m["role"], "content": m["content"]})
     return wire
+
+
+def _part(part: dict) -> dict:
+    """A message part as a Messages API block: an image as base64, the rest as text."""
+    if part.get("type") == "image":
+        return {"type": "image", "source": {"type": "base64", "media_type": part["media_type"], "data": part["data"]}}
+    return {"type": "text", "text": part.get("text", "")}

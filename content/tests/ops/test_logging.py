@@ -1,15 +1,23 @@
 """JSON lines carry the standard fields; tokens and Authorization values never
-reach a log; one access line per request, probes excepted (UPS-OPS-10..12)."""
+reach a log, an error report or Sentry; one access line per request, probes
+excepted (UPS-OPS-10..12, OPS-13)."""
 
 import json
 import logging
 import sys
 
 import pytest
+from django.test import RequestFactory, override_settings
+from django.views.debug import ExceptionReporter
 
+from accounts.auth import UserTokenAuthentication
+from accounts.models import UserToken
 from agents.tracing import trace
 from ops.context import bind
 from ops.logging import ContextFilter, JsonFormatter, RedactionFilter, TextFormatter, redact
+from ops.sentry import _scrub
+
+PERSON_TOKEN = "zer0u_" + "a1B2c3D4" * 6
 
 
 def record(msg, *args, level=logging.INFO, exc_info=None, **extra):
@@ -49,6 +57,7 @@ def test_an_unbound_record_says_so():
         "github_pat_11ABCDEF_abcdefghijklmnopqrstuvwxyz",
         "AIzaSyAbcdefghijklmnopqrstuvwxyz0123456",
         "zer0_" + "a1B2c3D4" * 6,
+        PERSON_TOKEN,
     ],
 )
 def test_tokens_are_redacted(secret):
@@ -63,23 +72,49 @@ def test_authorization_values_are_redacted():
 
 
 def test_the_admin_token_prefix_is_not_a_secret():
-    shown = "token zer0_abcdefg revoked"
+    shown = "token zer0_abcdefg revoked, and zer0u_abcdefgh listed"
     assert redact(shown) == shown
 
 
 def test_arguments_are_redacted_before_formatting():
-    found = record("token %s for %s", "ghp_abcdefghijklmnopqrstuvwxyz012345", "seo")
+    found = record("token %s for %s, then %s", "ghp_abcdefghijklmnopqrstuvwxyz012345", "seo", PERSON_TOKEN)
     RedactionFilter().filter(found)
-    assert found.getMessage() == "token [REDACTED] for seo"
+    assert found.getMessage() == "token [REDACTED] for seo, then [REDACTED]"
 
 
 def test_exception_text_is_redacted():
     try:
-        raise ValueError("leaked sk-ant-api03-abcdefghijklmnopqrstuvwxyz")
+        raise ValueError(f"leaked sk-ant-api03-abcdefghijklmnopqrstuvwxyz and {PERSON_TOKEN}")
     except ValueError:
         found = record("failed", level=logging.ERROR, exc_info=sys.exc_info())
-    assert "sk-ant" not in JsonFormatter().format(found)
-    assert "sk-ant" not in TextFormatter("%(message)s").format(found)
+    for formatted in (JsonFormatter().format(found), TextFormatter("%(message)s").format(found)):
+        assert "sk-ant" not in formatted and PERSON_TOKEN not in formatted
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True)
+def test_an_error_inside_token_authentication_reports_no_token(monkeypatch):
+    """A failure while a token is checked (a locked database, say) shows the
+    frames' variables on Django's error page — in development too — and sends
+    them to Sentry: the token is in two of those frames, and in neither report."""
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("database is locked")
+
+    monkeypatch.setattr(UserToken.objects, "select_related", fail)
+    request = RequestFactory().get("/api/v2/me", HTTP_AUTHORIZATION=f"Bearer {PERSON_TOKEN}")
+    try:
+        UserTokenAuthentication().authenticate(request)
+    except RuntimeError:
+        exc_info = sys.exc_info()
+    reporter = ExceptionReporter(request, *exc_info)
+    assert "authenticate" in reporter.get_traceback_text()
+    assert PERSON_TOKEN not in reporter.get_traceback_html()
+    assert PERSON_TOKEN not in reporter.get_traceback_text()
+    frame = {"function": "authenticate", "vars": {"raw": PERSON_TOKEN, "header": [f"Bearer {PERSON_TOKEN}"]}}
+    event = _scrub({"exception": {"values": [{"value": "locked", "stacktrace": {"frames": [frame]}}]}}, {})
+    assert PERSON_TOKEN not in json.dumps(event)
+    assert event["exception"]["values"][0]["stacktrace"]["frames"][0]["vars"]["raw"] == "[REDACTED]"
 
 
 def test_one_access_line_per_request(client, caplog):
