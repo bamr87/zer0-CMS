@@ -1152,10 +1152,19 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
 
 @transaction.atomic
 def record_by_hand(post, user, urn: str) -> DistributionPost:
-    """A person found the post at the target — after an unconfirmed attempt, or one made by hand — and records it."""
-    post = DistributionPost.objects.select_for_update().get(pk=post.pk)
+    """A person found the post at the target — after an unconfirmed attempt, or one made by hand — and records it.
+    Only a post a person approved: waiting, or failed (an attempt that is over without its worker saying so is
+    settled first). A draft or a rejected post is not recorded as published, nor one a worker is sending now."""
+    post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=post.pk)
     if not may_publish(post, user):
         raise PermissionDenied("recording a post is the right of someone who may publish its page")
+    _settle(post)
+    if post.status not in (DistributionPost.Status.APPROVED, DistributionPost.Status.FAILED):
+        raise Conflict(
+            f"a {post.status} post is not recorded: approve it first"
+            if post.status in (DistributionPost.Status.DRAFT, DistributionPost.Status.REJECTED)
+            else f"a {post.status} post is not recorded"
+        )
     if post.channel.kind == Kind.LINKEDIN and not plan.POST_URN.match(urn or ""):
         raise Invalid("not a LinkedIn post URN (urn:li:share:… or urn:li:ugcPost:…)", details=_detail("urn", "invalid"))
     if not str(urn or "").strip():

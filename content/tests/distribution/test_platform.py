@@ -454,6 +454,27 @@ def test_a_delivery_never_sends_a_post_another_delivery_claimed(alice, channel, 
     assert "publish_unconfirmed" in blocked, "nothing sends it again until a person records it or forces"
 
 
+def test_record_needs_a_post_a_person_approved(api, alice, channel, article, site_root):
+    """Record says a post went out: only of a post a person approved (waiting, or failed) — never a draft, a
+    rejected post, or one a worker is sending now."""
+    urn = {"urn": "urn:li:share:42"}
+    draft = services.compose(channel, user=alice, page=article, commentary="A draft.")
+    refused = api(alice).post(f"{API}/posts/{draft.public_id}/record/", urn, format="json")
+    assert refused.status_code == 409 and "approve it first" in refused.json()["error"]["message"]
+    services.reject(draft, alice, "no")
+    assert api(alice).post(f"{API}/posts/{draft.public_id}/record/", urn, format="json").status_code == 409
+    sending = approved(
+        services.compose(channel, user=alice, page=make_article(site_root, "Other"), commentary="Hi."), alice
+    )
+    DistributionPost.objects.filter(pk=sending.pk).update(status="publishing", attempted_at=timezone.now())
+    assert api(alice).post(f"{API}/posts/{sending.public_id}/record/", urn, format="json").status_code == 409
+    assert not LedgerEntry.objects.exists()
+    DistributionPost.objects.filter(pk=sending.pk).update(status="failed", attempted_at=None)
+    assert (
+        api(alice).post(f"{API}/posts/{sending.public_id}/record/", urn, format="json").json()["status"] == "published"
+    )
+
+
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})
 def test_two_deliveries_that_read_the_post_at_once_send_it_once(alice, channel, article, web, monkeypatch):
     """`select_for_update` does nothing on SQLite, so two workers may both read the post unclaimed: the claim is a

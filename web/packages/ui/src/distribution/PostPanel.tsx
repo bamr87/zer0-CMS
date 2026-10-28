@@ -225,7 +225,7 @@ function Panel({ post }: { post: DistributionPostDetail }) {
           </Button>
         </Group>
       ) : null}
-      {post.status === 'failed' || post.blockers.some((b) => b.kind === 'publish_unconfirmed') ? (
+      {post.status === 'failed' || (post.status === 'approved' && post.blockers.some((b) => b.kind === 'publish_unconfirmed')) ? (
         <Group align="flex-end">
           <TextInput
             label="It went out after all? Record it"
