@@ -192,10 +192,11 @@ def audit(
     else:
         raise Invalid("an audit is of a text, a page, a URL or a site")
     _evaluator(user, method, provider)
-    row = Audit.objects.create(owner=user, batch=batch, **fields, **_placement(user, site, visibility))
-    data = {"kind": "aieo.audit", "audit": str(row.public_id)}
-    row.run = start(user, data, target=page, trigger=trigger, options=limits())
-    row.save(update_fields=["run"])
+    with transaction.atomic():  # its run is queued once it is the audit's run, which the handler asks
+        row = Audit.objects.create(owner=user, batch=batch, **fields, **_placement(user, site, visibility))
+        data = {"kind": "aieo.audit", "audit": str(row.public_id)}
+        row.run = start(user, data, target=page, trigger=trigger, options=limits())
+        row.save(update_fields=["run"])
     return row
 
 
@@ -469,14 +470,13 @@ def check_citations(query: CitationQuery, *, user, trigger: str = "rest") -> lis
     """Ask every engine of the query, now: a check and a run per engine (the probe answers through that provider)."""
     if not query.can_edit(user) and not usable(query, user):
         raise Forbidden(f"citation query {query.public_id} is not {user}'s to check")
-    assistant = bundled(PROBE, user)
+    bundled(PROBE, user)  # the probe every check's run answers with, if the person may use it
     asked = [check_provider(engine) for engine in engines(query)]
     made = []
     with transaction.atomic():
         for engine in asked:
             check = CitationCheck.objects.create(query=query, engine=engine)
-            data = {"kind": "aieo.citation", "check": str(check.public_id), "assistant": str(assistant.public_id)}
-            check.run = start(user, data, trigger=trigger)
+            check.run = start(user, {"kind": "aieo.citation", "check": str(check.public_id)}, trigger=trigger)
             check.save(update_fields=["run"])
             made.append(check)
         now = timezone.now()

@@ -14,8 +14,11 @@ followed on `/api/v2/agent-runs/<id>/stream/` like any other:
   whether its answer cites the domain.
 
 What a run names is asked again here, as for every AI run: the row must still be its starter's to use (`owned`),
-the assistant visible to them (`used`), a page one they may edit. A run that ends without succeeding — even one
-refused before reaching its handler — leaves its audit or check failed with the run's error (`settle`).
+the assistant visible to them (`used`), a page one they may edit — and an audit or a citation check must be the one
+its service started this very run for (`_started_for`): the generic run endpoint takes any input, so a run made by
+hand never re-does an audit or answers a check, and the probe is always the bundled one. A run that ends without
+succeeding — even one refused before reaching its handler — leaves its audit or check failed with the run's error
+(`settle`).
 """
 
 import copy
@@ -126,9 +129,16 @@ def _page_summary(doc: dict, result: dict | None) -> dict:
     }
 
 
+def _started_for(row, run: AgentRun):
+    """`row`, if `run` is the run its service started for it."""
+    if row.run_id != run.pk:
+        raise PermissionError(f"run {run.pk} was not started for {type(row).__name__} {row.public_id}")
+    return row
+
+
 @register("aieo.audit")
 def audit(run: AgentRun, ctx: ToolContext) -> dict:
-    row = owned(Audit, run.input.get("audit"), run, edit=True)
+    row = _started_for(owned(Audit, run.input.get("audit"), run, edit=True), run)
     Audit.objects.filter(pk=row.pk).update(status=Audit.RUNNING, error="")
     patterns = library()
     extra = services.signals(row.site)
@@ -262,9 +272,11 @@ def rewrite(run: AgentRun, ctx: ToolContext) -> dict:
 
 @register("aieo.citation")
 def citation(run: AgentRun, ctx: ToolContext) -> dict:
-    check = CitationCheck.objects.select_related("query").get(public_id=run.input.get("check"))
+    check = CitationCheck.objects.select_related("query").filter(public_id=run.input.get("check")).first()
+    if check is None or _started_for(check, run).status != CitationCheck.QUEUED:
+        raise PermissionError("this run has no citation check waiting for its answer")
     query = owned(CitationQuery, check.query.public_id, run)
-    persona = Persona.of(used(Assistant.objects.get(public_id=run.input.get("assistant")), run))
+    persona = Persona.of(_assistant(services.PROBE, run))
     persona.provider = check.engine
     out = generate(run, ctx, persona, [{"role": "user", "content": f"Question: {query.prompt}"}])
     data = out["json"]

@@ -7,10 +7,12 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from agents.models import AgentRun
 from ai import providers
 from ai.providers.fake import FakeProvider
+from ai.services import stable_id
 from aieo import services, tasks
-from aieo.models import CitationCheck, CitationQuery
+from aieo.models import Audit, CitationCheck, CitationQuery
 
 from .conftest import answer
 
@@ -99,3 +101,35 @@ def test_the_api_tracks_a_question_checks_it_and_reports_share_of_voice(
     assert share["engines"] == [{"engine": "fake", "checks": 1, "cited": 1, "rate": 1.0}]
     latest = api(alice).get(f"/api/v2/aieo/citations/queries/{query}/").json()["latest"]
     assert latest["fake"]["cited"] is True
+
+
+def test_a_run_made_by_hand_never_overwrites_a_check_or_redoes_an_audit(
+    alice, bob, api, fake, worker, page, django_capture_on_commit_callbacks
+):
+    """The generic agent-runs endpoint takes any input from someone who edits a page, so an AIEO run kind there could
+    name any check or audit its starter sees. Only the run a check or an audit was started with records its answer:
+    a crafted run is refused before a model is asked, and the finished check and audit are left as they were."""
+    query = CitationQuery.objects.create(
+        owner=bob, prompt="Who explains backups?", domain="backups.example.com", visibility="shared"
+    )
+    fake.script = [probe(["https://other.example.org/"])]
+    [check] = worker(services.check_citations, query, user=bob)
+    audit = worker(services.audit, alice, kind="text", content="# Backups\n\nCopies.", method="heuristic")
+    before = Audit.objects.values().get(pk=audit.pk)
+    probe_id = str(stable_id("bundled-assistant", services.PROBE))
+    fake.script = [probe(["https://backups.example.com/"], text="alice's answer")]
+    crafted = (
+        {"kind": "aieo.citation", "check": str(check.public_id), "assistant": probe_id},
+        {"kind": "aieo.audit", "audit": str(audit.public_id)},  # her own audit, by a run it was not started with
+    )
+    for data in crafted:
+        with django_capture_on_commit_callbacks(execute=True):
+            made = api(alice).post(
+                "/api/v2/agent-runs/", {"agent": "assistant", "page_id": page.pk, "input": data}, format="json"
+            )
+        assert made.status_code == 201, made.content
+        run = AgentRun.objects.get(pk=made.json()["id"])
+        assert run.status == AgentRun.FAILED and "PermissionError" in run.error
+    check.refresh_from_db()
+    assert check.status == CitationCheck.READY and check.cited is False and check.answer != "alice's answer"
+    assert Audit.objects.values().get(pk=audit.pk) == before and len(fake.calls) == 1  # no model was asked again
