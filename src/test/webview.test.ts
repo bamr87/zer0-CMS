@@ -742,6 +742,36 @@ suite('studio: the host side of the webview transport (G10)', () => {
     assert.equal(agreed.sent.length, 4);
   });
 
+  test("main's other live changes ask too: a story moved live, a distribution post published, a newsletter issue sent", async () => {
+    const declined = fake({ answer: false });
+    const bridge = new StudioBridge(declined.deps);
+    await bridge.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"published","reason":"breaking"}'));
+    await bridge.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"scheduled","go_live_at":"2026-11-01T09:00:00Z"}'));
+    await bridge.receive(api('/api/v2/distribution/posts/p-1/publish/', 'POST', '{"force":false}'));
+    await bridge.receive(api('/api/v2/newsroom/issues/i-1/send/', 'POST'));
+    assert.deepEqual(declined.asked, [
+      `Publish story s-1 on ${ORIGIN}?`,
+      `Schedule story s-1 to go live on ${ORIGIN}?`,
+      `Publish distribution post p-1 to its channel from ${ORIGIN}?`,
+      `Send newsletter issue i-1 to its subscribers from ${ORIGIN}?`,
+    ]);
+    assert.equal(declined.sent.length, 0, 'a declined live change reached the platform');
+
+    // A move that puts nothing live, a body that is not an object, and the posts' other verbs do not ask.
+    const agreed = fake({ answer: true });
+    const quiet = new StudioBridge(agreed.deps);
+    await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"copy"}'));
+    await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"corrected","text":"A date."}'));
+    await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '"published"'));
+    await quiet.receive(api('/api/v2/distribution/posts/p-1/approve/', 'POST'));
+    await quiet.receive(api('/api/v2/distribution/posts/p-1/', 'PATCH', '{"status":"published"}'));
+    assert.deepEqual(agreed.asked, []);
+    assert.equal(agreed.sent.length, 5);
+    // The question reads the body that is sent: the last `status` wins, as it does on the platform.
+    await quiet.receive(api('/api/v2/newsroom/stories/s-1/move/', 'POST', '{"status":"copy","status":"published"}'));
+    assert.deepEqual(agreed.asked, [`Publish story s-1 on ${ORIGIN}?`]);
+  });
+
   test('only the headers the platform reads cross, each way', async () => {
     const f = fake({
       respond: () =>

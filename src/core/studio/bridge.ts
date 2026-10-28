@@ -20,8 +20,10 @@
  *     is exactly the path the platform routes — no `%`, no `.`, `..` or empty
  *     segment, nothing the URL parser would rewrite — and only `GET`, `POST`,
  *     `PATCH`, `PUT` and `DELETE`; never the session endpoints (the extension
- *     signs in with a token). A request that changes the live site — publish,
- *     unpublish, schedule — asks the person modally first, whatever the
+ *     signs in with a token). A request that changes a live site or reaches
+ *     people past the platform — a page published, unpublished or scheduled,
+ *     from the editor or by a story's move; a distribution post published; a
+ *     newsletter issue sent — asks the person modally first, whatever the
  *     webview showed; the platform then checks their permissions.
  *   - **Network only from an explicit act.** Nothing here runs until a webview
  *     the person opened asks, or the Metadata view asks which file is a page;
@@ -48,12 +50,28 @@ const MAX_BODY = 1_000_000;
 const MAX_PATH = 2048;
 const MAX_HEADER = 255;
 const MAX_STREAMS = 8;
-/** The three requests that change what the live site shows, and how to ask. A page id is any one segment. */
+/**
+ * The requests that change what a live site shows, or send something past the
+ * platform to people, and how to ask. An id is any one segment. A page goes
+ * live from the editor (publish, unpublish, schedule) and from the newsroom (a
+ * story moved to published or scheduled — the body's `status` says which, so
+ * that question is asked of the body that is sent); a distribution post goes to
+ * its channel (LinkedIn, WordPress, a pull request, a newsletter) and a
+ * newsletter issue to its subscribers.
+ */
 const LIVE_CHANGES: ReadonlyArray<readonly [RegExp, string]> = [
   [/^\/api\/v2\/content\/pages\/([^/]+)\/publish\/$/, 'Publish page $1 on $origin?'],
   [/^\/api\/v2\/content\/pages\/([^/]+)\/unpublish\/$/, 'Take page $1 off the live site on $origin?'],
   [/^\/api\/v2\/content\/pages\/([^/]+)\/schedule\/$/, 'Schedule page $1 to go live (or come down) on $origin?'],
+  [/^\/api\/v2\/distribution\/posts\/([^/]+)\/publish\/$/, 'Publish distribution post $1 to its channel from $origin?'],
+  [/^\/api\/v2\/newsroom\/issues\/([^/]+)\/send\/$/, 'Send newsletter issue $1 to its subscribers from $origin?'],
 ];
+/** A story's move that puts its page live, by the `status` the body asks for. */
+const STORY_MOVE = /^\/api\/v2\/newsroom\/stories\/([^/]+)\/move\/$/;
+const STORY_RELEASES: Readonly<Record<string, string>> = {
+  published: 'Publish story $1 on $origin?',
+  scheduled: 'Schedule story $1 to go live on $origin?',
+};
 
 export interface BridgeDeps {
   /** Posts a message into the webview. */
@@ -122,19 +140,44 @@ export function apiUrl(origin: string, path: unknown): URL | undefined {
   return url.origin === origin && url.pathname === pathname ? url : undefined;
 }
 
-/** The question a person answers before `method pathname` changes the live site, or undefined. */
-export function liveChange(method: string, pathname: string, origin: string): string | undefined {
+/** A question with the id and the origin put in; by function, so a `$` in the path is text, not a replacement pattern. */
+function ask(question: string, id: string | undefined, origin: string): string {
+  return question.replace('$1', () => id ?? '').replace('$origin', () => origin);
+}
+
+/** The `status` a JSON body asks for, if it is an object that names one. */
+function askedStatus(body: unknown): string | undefined {
+  if (typeof body !== 'string') {
+    return undefined;
+  }
+  try {
+    const parsed: unknown = JSON.parse(body);
+    const status = record(parsed)?.status;
+    return typeof status === 'string' ? status : undefined;
+  } catch {
+    return undefined; // not JSON: the platform refuses it, and nothing goes live
+  }
+}
+
+/**
+ * The question a person answers before `method pathname` (with `body`, the
+ * text that is sent) changes a live site or reaches people past the platform,
+ * or undefined.
+ */
+export function liveChange(method: string, pathname: string, origin: string, body?: unknown): string | undefined {
   if (method !== 'POST') {
     return undefined;
   }
   for (const [pattern, question] of LIVE_CHANGES) {
     const match = pattern.exec(pathname);
     if (match) {
-      // Replaced by function, so a `$` in the path is text, not a replacement pattern.
-      return question.replace('$1', () => match[1] ?? '').replace('$origin', () => origin);
+      return ask(question, match[1], origin);
     }
   }
-  return undefined;
+  const move = STORY_MOVE.exec(pathname);
+  const status = move ? askedStatus(body) : undefined;
+  const question = status === undefined ? undefined : STORY_RELEASES[status];
+  return question === undefined ? undefined : ask(question, move?.[1], origin);
 }
 
 /** A link in a webview, made something to open: a platform path against its origin, or an http(s) URL. */
@@ -213,7 +256,7 @@ export async function sendToPlatform(deps: PlatformDeps, request: Record<string,
   if (token === undefined) {
     return refusal(401, 'auth.no_token', `No token for ${origin}: run “zer0-CMS: Set platform token”.`);
   }
-  const question = liveChange(method, url.pathname, origin);
+  const question = liveChange(method, url.pathname, origin, body);
   if (question !== undefined && !(await deps.confirm(question))) {
     return refusal(409, 'extension.cancelled', 'Cancelled: nothing was sent to the platform.');
   }
