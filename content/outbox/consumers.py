@@ -6,13 +6,15 @@ Delivery is at least once, so a handler can see the same envelope twice.
 handler's own writes: the second delivery finds the row and does nothing.
 
 `consume_stream` reads a Redis stream through a consumer group and acks what
-it handled; tests call `handle_envelope` directly.
+it handled; tests call `handle_envelope` directly. A read that waits out its
+block, or times out on the socket, is a quiet stream: nothing to handle yet.
 """
 
 import json
 import logging
 
 from django.db import IntegrityError, transaction
+from redis.exceptions import TimeoutError as ReadTimedOut
 
 from .models import ProcessedEvent
 from .schemas import check_envelope
@@ -59,7 +61,11 @@ def consume_stream(client, stream: str, group: str, name: str, count: int = 100,
         if "BUSYGROUP" not in str(exc):
             raise
     handled = 0
-    for _stream, messages in client.xreadgroup(group, name, {stream: ">"}, count=count, block=block_ms) or []:
+    try:
+        read = client.xreadgroup(group, name, {stream: ">"}, count=count, block=block_ms)
+    except ReadTimedOut:
+        return 0  # nothing arrived while the socket waited; the next read asks again
+    for _stream, messages in read or []:
         for message_id, fields in messages:
             raw = fields.get(b"event") or fields.get("event")
             handle_envelope(json.loads(raw))

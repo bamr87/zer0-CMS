@@ -59,6 +59,17 @@ describe('the AI area', () => {
     renderStudio('/ai/pipelines/new');
     expect(await screen.findByRole('heading', { name: 'New pipeline' })).toBeInTheDocument();
   });
+
+  it('lists the automations under their tab and opens a new one (G16)', async () => {
+    renderStudio('/ai/automations', {
+      'GET /api/v2/automations/': () => EMPTY,
+      'GET /api/v2/automations/options/': () => ({ events: ['content.page.published'], stages: [], agents: [], samples: {} }),
+    });
+    expect(await screen.findByText('No automations yet')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Automations' })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(nth(screen.getAllByRole('button', { name: 'New automation' })));
+    expect(await screen.findByRole('heading', { name: 'New automation' })).toBeInTheDocument();
+  });
 });
 
 describe('the Create area', () => {
@@ -131,5 +142,8 @@ describe('the AI destinations', () => {
     expect(pathFor({ to: 'brief', id: 'b1' })).toBe('/create/briefs/b1');
     expect(pathFor({ to: 'brief' })).toBe('/create/briefs/new');
     expect(pathFor({ to: 'briefs' })).toBe('/create/briefs');
+    expect(pathFor({ to: 'ai', section: 'automations' })).toBe('/ai/automations');
+    expect(pathFor({ to: 'automation' })).toBe('/ai/automations/new');
+    expect(pathFor({ to: 'automation', id: 'au1' })).toBe('/ai/automations/au1');
   });
 });

@@ -51,3 +51,8 @@ outbox @ git+https://github.com/bamr87/outbox.git@ec82031c3f4d6f16a14fdef6e792dc
 # site's zer0.json — JSONC, comments and trailing commas — read by the LinkedIn lane's CLI.
 PyGithub==2.10.0
 json5==0.17.3
+# Automations' conditions (automations/README.md): JMESPath expressions over a trigger's payload, evaluated by the
+# maintained library rather than an evaluator of our own. Schedules use Celery's own crontab, above.
+jmespath==1.1.0
+# AIEO's GA4 and Search Console connectors (aieo/README.md): a Google service account's signed JWT, traded for a token.
+PyJWT==2.12.1

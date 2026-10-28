@@ -7,8 +7,9 @@ credential is never stored in the clear, one stored before
 `AI_CREDENTIAL_KEYS` was set (or before `SECRET_KEY` rotated) still reads, and
 `manage.py rotate_ai_credentials` moves every credential to the first key. To
 rotate: put a new key first, run the command, then drop the old key. Another
-app that keeps credentials under these keys (distribution's channels) connects
-to `credentials_rotated`, which the command sends in its transaction: the
+app that keeps credentials under these keys (distribution's channels, the
+automations' webhook secrets, AIEO's connectors) connects to
+`credentials_rotated`, which the command sends in its transaction: the
 receiver re-encrypts its own and answers how many, or raises to stop it all.
 """
 

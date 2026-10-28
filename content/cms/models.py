@@ -246,7 +246,7 @@ class SiteRootPage(BasePage):
     jekyll_config = models.JSONField(default=dict, blank=True, help_text="The parts of _config.yml the bridge reads.")
 
     parent_page_types = ["wagtailcore.Page"]
-    subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage"]
+    subpage_types = ["cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "aieo.LandingPage"]
     hashed_fields = ("site_key", "jekyll_config")
     editor_fields = ("source_root",)
     content_panels = BasePage.content_panels + [FieldPanel("site_key"), FieldPanel("source_root")]
@@ -259,7 +259,7 @@ class CollectionPage(BasePage):
     collection = models.CharField(max_length=80, help_text="The collection's name, e.g. posts.")
     output_dir = models.CharField(max_length=255, blank=True, help_text="Its directory in the site, e.g. pages/_posts.")
 
-    subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage"]
+    subpage_types = ["cms.ArticlePage", "cms.StandardPage", "cms.BookPage", "cms.CollectionPage", "aieo.LandingPage"]
     hashed_fields = ("collection", "output_dir")
     editor_fields = ("collection", "output_dir")
     content_panels = BasePage.content_panels + [FieldPanel("collection"), FieldPanel("output_dir")]

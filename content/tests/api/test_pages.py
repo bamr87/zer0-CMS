@@ -164,7 +164,13 @@ def test_creatable_types_follow_the_tree_rules_and_permissions(site_root, articl
     every = {t["type"]: t["label"] for t in client.get("/api/v2/content/types/").json()}
     assert every["cms.ArticlePage"] == "Article page" and "wagtailcore.Page" not in every
     under_site = {t["type"] for t in client.get(f"{PAGES}{site_root.pk}/types/").json()}
-    assert under_site == {"cms.CollectionPage", "cms.ArticlePage", "cms.StandardPage", "cms.BookPage"}
+    assert under_site == {
+        "cms.CollectionPage",
+        "cms.ArticlePage",
+        "cms.StandardPage",
+        "cms.BookPage",
+        "aieo.LandingPage",
+    }
     assert client.get(f"{PAGES}{article.pk}/types/").json() == []
     reader = person("reader", "change_page")
     assert signed_in(reader).get(f"{PAGES}{site_root.pk}/types/").json() == []

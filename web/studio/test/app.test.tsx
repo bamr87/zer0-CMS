@@ -140,6 +140,9 @@ describe('the shell and its routes', () => {
     expect(pathFor({ to: 'outbox', tab: 'claims' })).toBe('/outbox/claims');
     expect(pathFor({ to: 'trial', id: 't1' })).toBe('/outbox/trials/t1');
     expect(pathFor({ to: 'claim-check', id: 'k1' })).toBe('/outbox/claims/k1');
+    expect(pathFor({ to: 'aieo' })).toBe('/sites/aieo');
+    expect(pathFor({ to: 'aieo', section: 'audit' })).toBe('/sites/aieo');
+    expect(pathFor({ to: 'aieo', section: 'citations' })).toBe('/sites/aieo/citations');
   });
 
   it('opens the Outbox desk on its tabs, and a trial and a claim check at their addresses', async () => {
@@ -160,6 +163,14 @@ describe('the shell and its routes', () => {
     expect(await screen.findByText('no trial t1')).toBeInTheDocument();
     renderStudio('/outbox/claims/k1', platformFor(routes));
     expect(await screen.findByText('no check k1')).toBeInTheDocument();
+  });
+
+  it('opens the AIEO workspace at /sites/aieo and a section at /sites/aieo/:section', async () => {
+    renderStudio('/sites/aieo', platformFor({ 'GET /api/v2/aieo/audits/': () => EMPTY }));
+    expect(await screen.findByRole('heading', { name: 'AIEO' })).toBeInTheDocument();
+    expect(await screen.findByRole('form', { name: 'Audit' })).toBeInTheDocument();
+    renderStudio('/sites/aieo/patterns', platformFor({ 'GET /api/v2/aieo/patterns/': () => [] }));
+    expect(await screen.findByRole('table', { name: 'Pattern library' })).toBeInTheDocument();
   });
 
   it('opens the shelf at /books', async () => {
