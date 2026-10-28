@@ -24,6 +24,8 @@ import uuid
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from grapple.models import GraphQLString
+from wagtail.api import APIField
 from wagtail.contrib.settings.models import BaseSiteSetting
 
 from ai import crypto
@@ -350,6 +352,9 @@ class BrandContext(BaseSiteSetting):
 # ── landing pages ──────────────────────────────────────────────────────────
 
 
+# The call to action is the page's content like any typed field: in its hash, the Wagtail API and GraphQL (registered
+# with grapple by apps.py, not through GRAPPLE["APPS"], which would publish this app's site setting too), and its
+# file's front matter, which the importer reads back as this type (exporters/jekyll.py, importers/jekyll.py).
 class LandingPage(BasePage):
     """A conversion page: the copy AIEO's landing-page workflow drafts, researches and CRO-audits, with the one
     action it asks a reader to take."""
@@ -359,7 +364,11 @@ class LandingPage(BasePage):
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage"]
     subpage_types: list[str] = []
+    hashed_fields = ("cta_text", "cta_url")
     editor_fields = ("cta_text", "cta_url")
+    front_matter_fields = {**BasePage.front_matter_fields, "cta_text": "cta_text", "cta_url": "cta_url"}
+    api_fields = BasePage.api_fields + [APIField("cta_text"), APIField("cta_url")]
+    graphql_fields = BasePage.graphql_fields + [GraphQLString("cta_text"), GraphQLString("cta_url")]
 
     class Meta:
         verbose_name = "landing page"

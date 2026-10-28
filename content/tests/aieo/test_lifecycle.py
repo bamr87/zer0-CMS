@@ -4,6 +4,8 @@ keyword agents run on that page; a landing page drafted by the Landing page writ
 type, its copy CRO-audited; and the stages counted from the platform's own rows. The bundled assistants and the
 pattern library are made from AIEO's prompt files after every migrate — once, and a person's edit is kept."""
 
+import json
+
 from agents.models import AgentRun
 from ai import services as ai_services
 from ai.models import Assistant, Brief
@@ -64,6 +66,26 @@ def test_a_landing_page_is_drafted_as_its_own_type_and_its_copy_cro_audited(alic
     cro = services.quick_score(copy)["cro"]
     assert cro["landing_page"]["score"] > 0 and cro["checklist"]["checks"]["cta_present"]
     assert services.lifecycle(alice, site)["landing_pages"] == 1
+
+
+def test_a_landing_pages_call_to_action_reaches_the_headless_apis_and_its_content_hash(client, site):
+    """The call to action is the landing page's content: the Wagtail API and GraphQL carry it, and a change to it
+    alone changes the content hash the exporter, the published event and the embeddings compare."""
+    page = LandingPage(title="Ledgerly", slug="ledgerly", cta_text="Start your free trial", cta_url="/trial/")
+    site.root_page.add_child(instance=page)
+    page.save_revision().publish()
+    listed = client.get(f"/api/v2/pages/{page.pk}/").json()
+    assert (listed["cta_text"], listed["cta_url"]) == ("Start your free trial", "/trial/")
+    query = "query($id: ID) { page(id: $id) { title ... on LandingPage { ctaText ctaUrl } } }"
+    got = client.post(
+        "/graphql/", json.dumps({"query": query, "variables": {"id": page.pk}}), content_type="application/json"
+    ).json()
+    assert "errors" not in got, got
+    assert got["data"]["page"] == {"title": "Ledgerly", "ctaText": "Start your free trial", "ctaUrl": "/trial/"}
+    before = page.content_hash
+    page.cta_url = "/demo/"
+    page.save()
+    assert page.content_hash != before
 
 
 def test_the_library_and_the_assistants_are_seeded_once_and_a_persons_edit_is_kept(db):

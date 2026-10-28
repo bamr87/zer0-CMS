@@ -195,6 +195,44 @@ def test_a_page_made_in_wagtail_gets_a_jekyll_path(imported, tmp_path):
 
 
 @pytest.mark.django_db
+def test_a_landing_page_carries_its_call_to_action_into_its_file_and_back(imported, tmp_path):
+    """A landing page's file keeps its call to action in its front matter (`cta_text`, `cta_url`), and a page whose
+    front matter has one is read back as a landing page — `layout: landing` alone is a theme's layout, not this type."""
+    from aieo.models import LandingPage
+
+    root = SiteRootPage.objects.get(site_key="fixture")
+    page = LandingPage(
+        title="Bookkeeping for founders",
+        slug="founders",
+        cta_text="Start your free trial",
+        cta_url="/trial/",
+        body=[{"type": "markdown", "value": "Close the books in a day."}],
+    )
+    root.add_child(instance=page)
+    page.save_revision().publish()
+    export_site("fixture", tmp_path)
+    text = (tmp_path / "founders.md").read_text()
+    assert text.startswith(
+        "---\ntitle: Bookkeeping for founders\ncta_text: Start your free trial\ncta_url: /trial/\n---"
+    )
+    copy = tmp_path / "copy"  # the generated file, read back as a site of its own
+    copy.mkdir()
+    (copy / "_config.yml").write_text("title: Landing copy\n")
+    (copy / "founders.md").write_text(text)
+    (copy / "index.md").write_text("---\ntitle: Home\nlayout: landing\n---\nWelcome.\n")
+    report = import_site(copy, "landing-copy")
+    assert not report.errors and sorted(report.created) == ["founders.md", "index.md"]
+    back = ImportedSource.objects.get(site_key="landing-copy", legacy_path="founders.md").page.specific
+    assert isinstance(back, LandingPage) and (back.cta_text, back.cta_url) == ("Start your free trial", "/trial/")
+    home = ImportedSource.objects.get(site_key="landing-copy", legacy_path="index.md").page.specific
+    assert isinstance(home, StandardPage)
+    back.cta_text = "Book a demo"
+    back.save_revision().publish()
+    export_site("landing-copy", tmp_path / "again")
+    assert "\ncta_text: Book a demo\ncta_url: /trial/\n" in (tmp_path / "again" / "founders.md").read_text()
+
+
+@pytest.mark.django_db
 def test_a_preview_under_assets_is_found_like_the_engine_finds_it(tmp_path):
     """rails.assets-terms: `preview: /images/previews/x.png` is a file in the
     source's `assets/images/previews/` (sites/zer0-pages, sites/2005), an SVG is

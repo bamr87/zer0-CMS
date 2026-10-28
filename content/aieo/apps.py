@@ -3,8 +3,10 @@ audit or a citation check whose run ended without succeeding, and the one that d
 every migrate, the pattern library and the bundled assistants and output schemas made from AIEO's prompt files where
 they do not exist yet (aieo/prompts.py, with the migrated models, and not while the tables they need are
 unapplied); and the connectors' credentials, kept under the AI layer's keys, join `manage.py rotate_ai_credentials`
-(`ai.crypto.credentials_rotated`), so one rotation moves them too. Its tools (aieo/tools.py) are found by the agents
-app's tool discovery."""
+(`ai.crypto.credentials_rotated`), so one rotation moves them too; and `LandingPage` is registered with grapple, alone
+— this app comes before grapple in INSTALLED_APPS, so it is in place when grapple builds the schema — since naming
+the app in GRAPPLE["APPS"] would put its site setting (the brand context) and its rows in GraphQL too. Its tools
+(aieo/tools.py) are found by the agents app's tool discovery."""
 
 from django.apps import AppConfig
 from django.apps import apps as installed
@@ -17,14 +19,17 @@ class AieoConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
 
     def ready(self):
+        from grapple.actions import register_page_model
+
         from agents.runner import run_finished
         from ai.crypto import credentials_rotated
         from research.services import forget
 
         from .handlers import settle
-        from .models import Audit
+        from .models import Audit, LandingPage
         from .services import rotate_credentials
 
+        register_page_model(LandingPage, "")
         post_migrate.connect(_seed, sender=self)
         run_finished.connect(settle, dispatch_uid="aieo.settle")
         post_delete.connect(forget, sender=Audit, dispatch_uid="aieo.forget")  # an audit's vector goes with it

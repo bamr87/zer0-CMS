@@ -17,7 +17,7 @@ For each page under a site root, in tree order:
   body rendered from the page. Either way the front matter is the source's, in
   its original key order, with the typed fields written over it (title, description, seo_title, date — kept as
   the original string when the parsed date did not change —, author, tags,
-  categories, book fields: the model's `front_matter_fields`; the SEO fields —
+  categories, book fields, a landing page's call to action: the model's `front_matter_fields`; the SEO fields —
   `canonical_url`, `og_title`, `og_description`, `image`, `noindex` — only
   where a person set one to other than its file says, cms/seo.py); a page made in
   the platform, whose front matter holds only the raw keys a person gave it
@@ -77,6 +77,7 @@ import yaml
 from django.utils import timezone
 from wagtail.models import Page
 
+from aieo.models import LandingPage
 from books import abc
 from cms import seo
 from cms.files import SUFFIXES
@@ -212,6 +213,9 @@ def front_matter_for(page) -> dict:
                 fm["alphabet"] = alphabet
     if isinstance(page, ChapterPage) and page.number is not None:
         fm["chapter"] = page.number
+    if isinstance(page, LandingPage):
+        put("cta_text", page.cta_text)
+        put("cta_url", page.cta_url)
     fm.update(newsroom_front_matter(page))
     if made_here:
         fm.update((key, value) for key, value in stored.items() if key not in fm)
