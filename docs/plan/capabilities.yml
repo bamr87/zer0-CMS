@@ -114,6 +114,7 @@ platform:
       extension: web/packages/webview/test/webview.test.tsx
   - id: content.workflow
     what: Editorial workflows with moderation states, tasks and assignments, and the governed publish path (draft → brand guard → approval → publish).
+    # P4 (G2's Editorial workflow): the seeded "Editorial" workflow — the brand agent's review, then a moderator — made and given to sites by manage.py seed_editorial (content/tests/workflow/test_editorial.py); submitting, moderating and its states have no API or studio screen yet.
     surfaces: {api: missing, studio: missing, extension: partial}
   - id: content.publish
     what: Publish and unpublish now or on a schedule.
