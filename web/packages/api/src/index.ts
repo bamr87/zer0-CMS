@@ -100,3 +100,10 @@ export type DistributionBlocker = Schemas['DistributionBlocker'];
 export type DistributionFinding = Schemas['DistributionFinding'];
 export type DistributionLedgerEntry = Schemas['DistributionLedgerEntry'];
 export type DistributionStatistic = Schemas['DistributionStatistic'];
+// Automations (PLAN G16): a trigger and an action are unions by `kind`.
+export type Automation = Schemas['Automation'];
+export type AutomationTrigger = Automation['trigger'];
+export type AutomationAction = NonNullable<Automation['actions']>[number];
+export type AutomationRun = Schemas['AutomationRun'];
+export type AutomationRunStatus = Schemas['AutomationRunStatusEnum'];
+export type AutomationOptions = Schemas['AutomationOptions'];

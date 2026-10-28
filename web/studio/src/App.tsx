@@ -98,6 +98,8 @@ export function pathFor(to: Destination): string {
       return `/distribution/posts/${to.id}`;
     case 'channel':
       return `/distribution/channels/${to.id}`;
+    case 'automation':
+      return `/ai/automations/${to.id ?? 'new'}`;
   }
 }
 

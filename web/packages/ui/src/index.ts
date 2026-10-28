@@ -4,6 +4,7 @@
 // its event streams, its navigation), Mantine and TanStack Query, and imports
 // '@zer0/ui/ui.css' after Mantine's core styles.
 export * from './ai';
+export * from './automations';
 export { BodyEditor } from './BodyEditor';
 export { BookAssist } from './books/BookAssist';
 export { BookShelf, PremiseToBook } from './books/BookShelf';

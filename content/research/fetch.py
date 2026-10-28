@@ -1,6 +1,8 @@
 """Fetching what a person or a feed points at, without letting a URL reach inside the network.
 
-`get(url)` is the only way research reaches the web, and only ever in a worker:
+`get(url)` is the only way research reaches the web, and only ever in a worker
+(`post(url, body)`, the same guard and deadline, is how an automation notifies a
+webhook):
 
 * http and https only, and no credentials in the URL;
 * the SSRF guard: the host is resolved and every address it resolves to must
@@ -151,9 +153,37 @@ def get(url: str, *, headers: dict | None = None) -> Fetched:
         raise FetchError(f"could not fetch {url[:200]}: {e}") from e
 
 
+def post(url: str, body: bytes, *, headers: dict | None = None) -> int:
+    """POST `body` to `url` under the same guard and the same one deadline as `get`; the status it answered. No
+    redirect is followed — a notification is never replayed somewhere else — and the answer's body is not read."""
+    limit, host = settings.RESEARCH_FETCH_TIMEOUT, urlsplit(url).hostname or "the address"
+    try:
+        return asyncio.run(asyncio.wait_for(_post(url, body, headers or {}), limit))
+    except TimeoutError as e:
+        raise FetchError(f"{host} did not answer within {limit:g} seconds") from e
+    except httpx.HTTPError as e:
+        raise FetchError(f"{host} could not be reached: {type(e).__name__}") from e
+
+
+def _client() -> httpx.AsyncClient:
+    """No proxy from the environment and no redirect followed by httpx (`get` follows them by hand)."""
+    return httpx.AsyncClient(
+        trust_env=False, follow_redirects=False, timeout=httpx.Timeout(settings.RESEARCH_FETCH_TIMEOUT)
+    )
+
+
+async def _post(url: str, body: bytes, headers: dict) -> int:
+    async with _client() as client:
+        target, host, name = pinned(url)
+        sent = {"User-Agent": settings.RESEARCH_USER_AGENT, **headers, "Host": host}
+        async with client.stream(
+            "POST", target, content=body, headers=sent, extensions={"sni_hostname": name}
+        ) as reply:
+            return reply.status_code
+
+
 async def _get(url: str, headers: dict) -> Fetched:
-    limit = settings.RESEARCH_FETCH_TIMEOUT
-    async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=httpx.Timeout(limit)) as client:
+    async with _client() as client:
         for _ in range(MAX_REDIRECTS + 1):
             target, host, name = pinned(url)
             sent = {"User-Agent": settings.RESEARCH_USER_AGENT, **headers, "Host": host}

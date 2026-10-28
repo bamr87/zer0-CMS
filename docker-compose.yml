@@ -11,8 +11,10 @@
 # stream holds a thread, not a worker)
 # (/studio/ — the React studio its image builds from web/ —, /healthz, /readyz,
 # /version, /admin/, /graphql/, /api/v2/, /mcp/), a Celery worker and beat
-# (agent runs, scheduled publishing, the nightly graph job) and the outbox
-# relay to Redis Streams.
+# (agent runs, scheduled publishing, the nightly graph job, automations'
+# schedules), the outbox relay to Redis Streams, and the consumers of the
+# platform's own events: the outbox desk's (`belt-publisher`) and the one that
+# hands them to distribution and the automations waiting for them (`events`).
 #
 # SITES_DIR (default: this repository, whose sites/, packages/ and apps/ hold
 # the zer0 sites — discovery finds them two levels down, e.g.
@@ -211,9 +213,9 @@ services:
       retries: 5
       start_period: 30s
 
-  # The research library's fetches wait on other people's servers, so they have a queue of their own
-  # (CELERY_TASK_ROUTES in content/config/settings/base.py) that only this worker consumes: a slow site holds it,
-  # never the worker that runs agents and publishes pages.
+  # The research library's fetches — and automations' runs, whose webhooks and email wait too — wait on other people's
+  # servers, so they have a queue of their own (CELERY_TASK_ROUTES in content/config/settings/base.py) that only this
+  # worker consumes: a slow site holds it, never the worker that runs agents and publishes pages.
   research-worker:
     profiles: ["content"]
     build: *content-build
@@ -271,16 +273,18 @@ services:
     healthcheck:
       disable: true
 
-  # The platform's own consumers of its own events (content/outbox/README.md):
-  # a page going live drafts a post for every channel of its site that drafts
-  # automatically (distribution/consumers.py). A consumer group of its own.
-  # Whichever process reads an event first runs every handler for it, once
-  # (outbox/consumers.py), the outbox desk's included, so this one mounts the
-  # belt as belt-publisher does: a handoff written anywhere else is lost.
+  # The platform's own consumers of its own events (content/outbox/README.md), read back from the stream the relay
+  # writes (EVENTS_STREAM) by a consumer group of its own: a page going live drafts a post for every channel of its site
+  # that drafts automatically (distribution/consumers.py), and an event fires the automations waiting for it
+  # (content/automations/README.md). Whichever process reads an event first runs every handler for it, once
+  # (outbox/consumers.py), the outbox desk's included, so this one mounts the belt as belt-publisher does: a handoff
+  # written anywhere else is lost. Restarted if it stops: without it, event automations are accepted and enabled but
+  # never fire.
   events:
     profiles: ["content"]
     build: *content-build
-    command: python manage.py consume_events --stream zer0:content --group platform --name platform-1
+    command: python manage.py consume_events --own --group platform --name platform-1
+    restart: unless-stopped
     environment: *content-env
     volumes:
       - outbox-data:/app/content/var/outbox

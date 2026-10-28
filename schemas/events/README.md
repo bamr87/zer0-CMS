@@ -6,9 +6,9 @@ Every event the content plane (`content/`) or an experience plane publishes is a
 
 | Type | Published by | Data schema | Consumed by |
 |---|---|---|---|
-| `content.page.published` | content | [`content.page.published.v1.json`](content.page.published.v1.json) | the outbox desk's belt publisher; distribution's drafts (`content/distribution/consumers.py`) |
-| `content.suggestion.created` | content | [`content.suggestion.created.v1.json`](content.suggestion.created.v1.json) | editor notifications |
-| `agent.run.completed` | both | [`agent.run.completed.v1.json`](agent.run.completed.v1.json) | run dashboards; the other plane's trace view |
+| `content.page.published` | content | [`content.page.published.v1.json`](content.page.published.v1.json) | the outbox desk's belt publisher; distribution's drafts (`content/distribution/consumers.py`); the automations it fires (`content/automations/consumers.py`) |
+| `content.suggestion.created` | content | [`content.suggestion.created.v1.json`](content.suggestion.created.v1.json) | editor notifications; content: the automations it fires |
+| `agent.run.completed` | both | [`agent.run.completed.v1.json`](agent.run.completed.v1.json) | run dashboards; the other plane's trace view; content: the automations its own runs fire |
 | `app.user.interaction` | none today (the Rails app until ADR 0008) | [`app.user.interaction.v1.json`](app.user.interaction.v1.json) | content: nightly behavioural edges (aggregates only — `anon_id` is never stored) |
 
 `examples/` holds one valid envelope per type. The content plane's contract tests validate its events against these schemas and parse every example: `content/tests/outbox/test_contracts.py` (the Rails plane's, `test_event_contracts.rb`, went with it in ADR 0008). The v1 schemas' descriptions still name the Rails app as their publisher or consumer, as they were when cut; a v2 corrects them.

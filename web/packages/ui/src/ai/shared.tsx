@@ -285,12 +285,16 @@ export function RunBox({ start, promptRequired = true }: { start: (prompt: strin
   );
 }
 
-const fileName = (name: string) => `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'export'}.json`;
+/** The format a document is exported and imported in: JSON, or YAML (automations), which travels as its text. */
+export type DocumentFormat = 'json' | 'yaml';
 
-/** Export a row as a document: shown, copied, or saved as a file. */
-export function ExportButton({ name, load }: { name: string; load: () => Promise<unknown> }) {
+const fileName = (name: string, format: DocumentFormat = 'json') =>
+  `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'export'}.${format}`;
+
+/** Export a row as a document: shown, copied, or saved as a file. A YAML document is the text `load` gives. */
+export function ExportButton({ name, load, format = 'json' }: { name: string; load: () => Promise<unknown>; format?: DocumentFormat }) {
   const [text, setText] = useState<string | null>(null);
-  const exported = useMutation({ mutationFn: load, onSuccess: (data) => setText(JSON.stringify(data, null, 2)) });
+  const exported = useMutation({ mutationFn: load, onSuccess: (data) => setText(typeof data === 'string' ? data : JSON.stringify(data, null, 2)) });
   return (
     <>
       <Button variant="default" loading={exported.isPending} onClick={() => exported.mutate()}>
@@ -304,8 +308,8 @@ export function ExportButton({ name, load }: { name: string; load: () => Promise
           </Code>
           <Group>
             <CopyButton value={text ?? ''}>{({ copied, copy }) => <Button onClick={copy}>{copied ? 'Copied' : 'Copy'}</Button>}</CopyButton>
-            <Button component="a" variant="light" href={`data:application/json;charset=utf-8,${encodeURIComponent(text ?? '')}`} download={fileName(name)}>
-              Download {fileName(name)}
+            <Button component="a" variant="light" href={`data:application/${format};charset=utf-8,${encodeURIComponent(text ?? '')}`} download={fileName(name, format)}>
+              Download {fileName(name, format)}
             </Button>
           </Group>
         </Stack>
@@ -314,12 +318,13 @@ export function ExportButton({ name, load }: { name: string; load: () => Promise
   );
 }
 
-/** Import a document someone exported: pasted, or read from a file. */
-export function ImportButton({ label, onImport }: { label: string; onImport: (document: unknown) => Promise<unknown> }) {
+/** Import a document someone exported: pasted, or read from a file. A YAML document is handed over as its text. */
+export function ImportButton(props: { label: string; onImport: (document: unknown) => Promise<unknown>; format?: DocumentFormat }) {
+  const { label, onImport, format = 'json' } = props;
   const [opened, setOpened] = useState(false);
   const [text, setText] = useState('');
   const imported = useMutation({
-    mutationFn: () => onImport(JSON.parse(text)),
+    mutationFn: () => onImport(format === 'yaml' ? text : JSON.parse(text)),
     onSuccess: () => {
       setOpened(false);
       setText('');
@@ -332,14 +337,18 @@ export function ImportButton({ label, onImport }: { label: string; onImport: (do
       </Button>
       <Modal opened={opened} onClose={() => setOpened(false)} title={label} size="lg">
         <Stack>
-          <FileButton accept="application/json,.json" onChange={(file) => void file?.text().then(setText)}>
-            {(props) => (
-              <Button variant="default" {...props}>
+          <FileButton accept={format === 'yaml' ? 'application/yaml,.yaml,.yml' : 'application/json,.json'} onChange={(file) => void file?.text().then(setText)}>
+            {(button) => (
+              <Button variant="default" {...button}>
                 Read a file…
               </Button>
             )}
           </FileButton>
-          <JsonInput label="The document" description="Paste an exported document, or read one from a file" autosize minRows={8} maxRows={20} value={text} onChange={setText} validationError="This is not valid JSON" />
+          {format === 'yaml' ? (
+            <Textarea label="The document" description="Paste an exported document, or read one from a file" autosize minRows={8} maxRows={20} styles={MONO} value={text} onChange={(e) => setText(e.currentTarget.value)} />
+          ) : (
+            <JsonInput label="The document" description="Paste an exported document, or read one from a file" autosize minRows={8} maxRows={20} value={text} onChange={setText} validationError="This is not valid JSON" />
+          )}
           {imported.isError ? <Alert color="red">{errorText(imported.error)}</Alert> : null}
           <Group justify="end">
             <Button disabled={!text.trim()} loading={imported.isPending} onClick={oneClick(() => imported.mutate())}>

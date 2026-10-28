@@ -250,7 +250,19 @@ platform:
   # ── Pipelines and workflows (TARGET.md § Pipelines and workflows) ───────────
   - id: workflows.automations
     what: Automations — a trigger (event, schedule, webhook, new source item, monitor finding), conditions and actions (run a pipeline or an agent, create a brief or an idea, notify, move a stage) — with a run history; new ones start paused.
-    surfaces: {api: missing, studio: missing}
+    # G16 (content/automations/): the platform's events read back from zer0:content by the outbox consumer `automations`,
+    # cron schedules dispatched every minute on beat, HMAC-signed webhooks, new research sources and named hooks —
+    # a monitor finding is the hook `monitor.finding`, which G12's monitor will fire — each trigger proved in
+    # content/tests/automations/test_triggers.py; JMESPath conditions (test_conditions.py); actions that run as the
+    # owner and publish nothing (test_actions.py); paused when made, rate-limited, every run logged with its payload and
+    # each action's outcome — shown to its owner and staff only —, YAML export and import (test_api.py). MCP: the
+    # `automations.fire_hook` tool (`write`; an agent fires only `agent.<slug>.<name>`). The extension's view comes with
+    # G10, like every workspace's.
+    surfaces: {api: done, studio: done, mcp: done}
+    proof:
+      api: content/tests/automations/test_api.py
+      studio: web/packages/ui/test/automations.test.tsx
+      mcp: content/tests/automations/test_tool.py::test_an_mcp_client_whose_agent_lists_the_tool_fires_its_hook
 
   # ── The outbox desk (ADR 0007): the outbox harness (bamr87/outbox) run from the platform ──
   # Partial until bamr87/outbox#10 merges: content/requirements.txt pins that pull request's head commit, which has the

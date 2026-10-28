@@ -4,7 +4,8 @@ drf-spectacular walks a URLconf; this one holds the platform's own REST
 endpoints (`api/urls.py` `urlpatterns`, the AI content layer's router,
 `ai/urls.py`, the ideas and research routers, `ideas/urls.py` and
 `research/urls.py`, the newsroom's, `newsroom/urls.py`, the books app's, `books/urls.py`, the outbox desk's,
-`outboxdesk/urls.py`, and the site registry's and jobs', `sites/urls.py` and `jobs/urls.py`) and nothing else. Wagtail's
+`outboxdesk/urls.py`, the site registry's and jobs', `sites/urls.py` and `jobs/urls.py`, distribution's,
+`distribution/urls.py`, and the automations', `automations/urls.py`) and nothing else. Wagtail's
 `pages`/`images`/`documents` viewsets build their serializer per request
 (`get_serializer_class` reads `self.request`), which no static generator can
 introspect, so they are documented by Wagtail itself and left out here. The
@@ -32,6 +33,7 @@ def __getattr__(name):
             path("api/v2/sites/", include("sites.urls")),
             path("api/v2/jobs/", include("jobs.urls")),
             path("api/v2/distribution/", include("distribution.urls")),
+            path("api/v2/automations/", include("automations.urls")),
             path("api/v2/", include("api.urls")),
         ]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

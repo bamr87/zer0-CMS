@@ -597,6 +597,247 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/automations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["automations_list"];
+        put?: never;
+        /** Create an automation — paused until enabled; its secret is in this answer only */
+        post: operations["automations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["automations_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["automations_destroy"];
+        options?: never;
+        head?: never;
+        /** Change an automation (its owner's): it keeps running or stays paused */
+        patch: operations["automations_partial_update"];
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/disable/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause it (its owner, or staff) */
+        post: operations["automations_disable_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/dry-run/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** What it would do with a sample payload — the condition's verdict, each action rendered — doing nothing */
+        post: operations["automations_dry_run_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/enable/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enable it: checked again, then it runs */
+        post: operations["automations_enable_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/export/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The automation as a YAML document */
+        get: operations["automations_export_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/rotate-secret/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A new secret for its webhooks, shown this once */
+        post: operations["automations_rotate_secret_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/test/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fire it now with a sample payload, paused or not — a real run, followed in its runs */
+        post: operations["automations_test_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/{public_id}/webhook/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A webhook trigger: fire the automation (no session or token: the request is signed with its secret) */
+        post: operations["automations_webhook_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/condition/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A condition tried against a sample payload */
+        post: operations["automations_condition_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/import/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A new automation from a YAML document — yours, private, paused, with a secret of its own */
+        post: operations["automations_import_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/options/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What an automation may pick from, and a sample payload per trigger
+         * @description Handler method for HTTP 'OPTIONS' request.
+         */
+        get: operations["automations_options_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/runs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Runs of your automations (staff: everyone's), newest first */
+        get: operations["automations_runs_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/automations/runs/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One run: its payload, the condition's verdict, each action's outcome */
+        get: operations["automations_runs_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/books/": {
         parameters: {
             query?: never;
@@ -3185,6 +3426,405 @@ export interface components {
             email?: string;
             user?: number | null;
         };
+        Automation: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly owner: string | null;
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            /** @description Whether the requester may change, enable or test it: its owner, or a superuser — it runs as its owner. */
+            readonly can_edit: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            name: string;
+            description?: string;
+            /** @description A new automation is paused until a person enables it. */
+            readonly enabled: boolean;
+            trigger: {
+                /** @constant */
+                kind: "event";
+                /** @enum {unknown} */
+                event: "content.page.published" | "content.suggestion.created" | "agent.run.completed";
+            } | {
+                /** @constant */
+                kind: "schedule";
+                cron: string;
+            } | {
+                /** @constant */
+                kind: "webhook";
+            } | {
+                /** @constant */
+                kind: "source";
+                /** Format: uuid */
+                collection?: string;
+                /** Format: uuid */
+                feed?: string;
+            } | {
+                /** @constant */
+                kind: "hook";
+                /** @description e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires */
+                hook: string;
+            };
+            /** @description A JMESPath expression over the payload; empty always runs. */
+            condition?: string;
+            actions?: ({
+                /** @constant */
+                kind: "assistant";
+                /** Format: uuid */
+                assistant: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+            } | {
+                /** @constant */
+                kind: "pipeline";
+                /** Format: uuid */
+                pipeline: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt?: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+            } | {
+                /** @constant */
+                kind: "agent";
+                agent: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+                input?: {
+                    [key: string]: unknown;
+                };
+            } | {
+                /** @constant */
+                kind: "brief";
+                /** @description A Django template, rendered against the payload. */
+                title?: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt: string;
+                /** Format: uuid */
+                assistant?: string;
+                /** Format: uuid */
+                pipeline?: string;
+                /** Format: uuid */
+                output_schema?: string;
+                generate?: boolean;
+            } | {
+                /** @constant */
+                kind: "idea";
+                /** @description A Django template, rendered against the payload. */
+                title: string;
+                /** @description A Django template, rendered against the payload. */
+                notes?: string;
+                /** @description A Django template, rendered against the payload. */
+                url?: string;
+                /** Format: uuid */
+                board?: string;
+                tags?: string[];
+            } | {
+                /** @constant */
+                kind: "email";
+                to: string[];
+                /** @description A Django template, rendered against the payload. */
+                subject: string;
+                /** @description A Django template, rendered against the payload. */
+                body?: string;
+            } | {
+                /** @constant */
+                kind: "webhook";
+                url: string;
+            } | {
+                /** @constant */
+                kind: "story";
+                /** @description A Django template, rendered against the payload. */
+                story: string;
+                /** @enum {unknown} */
+                to: "assigned" | "drafting" | "editing" | "copy";
+                /** @description A Django template, rendered against the payload. */
+                assignee?: string;
+                /** @description A Django template, rendered against the payload. */
+                comment?: string;
+            })[];
+            on_error?: components["schemas"]["AutomationOnErrorEnum"];
+            /** @description Further firings are limited. */
+            max_runs_per_hour?: number;
+            /** @description Where a webhook trigger's requests go, signed with the automation's secret; null for any other trigger. */
+            readonly webhook_url: string | null;
+            /** @description The secret that signs its webhooks, in the answer that made it (or a new one) and never again. */
+            readonly secret: string | null;
+            readonly last_run: components["schemas"]["AutomationLastRun"] | null;
+        };
+        AutomationAgent: {
+            slug: string;
+            name: string;
+        };
+        AutomationConditionRequest: {
+            /** @description A sample of what its trigger sends (options/ has one for each kind). */
+            payload?: {
+                [key: string]: unknown;
+            };
+            /** @description A JMESPath expression. */
+            condition: string;
+        };
+        AutomationDryRun: {
+            /** @description Null when the condition could not be evaluated. */
+            matched: boolean | null;
+            /** @description What the expression found in the payload. */
+            value: unknown | null;
+            error: string;
+            actions: components["schemas"]["AutomationDryRunAction"][];
+        };
+        AutomationDryRunAction: {
+            index: number;
+            kind: string;
+            /** @description The action with its templates rendered against the payload. */
+            input: {
+                [key: string]: unknown;
+            };
+        };
+        AutomationImportRequest: {
+            /** @description A document `export/` wrote. */
+            yaml: string;
+        };
+        AutomationLastRun: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly trigger: components["schemas"]["AutomationRunTriggerEnum"];
+            readonly status: components["schemas"]["AutomationRunStatusEnum"];
+            readonly error: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+        };
+        /**
+         * @description * `stop` - Stop at the first action that fails
+         *     * `continue` - Record the failure and go on
+         * @enum {string}
+         */
+        AutomationOnErrorEnum: "stop" | "continue";
+        AutomationOptions: {
+            /** @description The events a trigger may wait for. */
+            events: string[];
+            /** @description Where an action may move a story. */
+            stages: string[];
+            /** @description The agents an action may start. */
+            agents: components["schemas"]["AutomationAgent"][];
+            /** @description A sample payload per trigger kind; an event's per event type. */
+            samples: {
+                [key: string]: unknown;
+            };
+        };
+        AutomationPayloadRequest: {
+            /** @description A sample of what its trigger sends (options/ has one for each kind). */
+            payload?: {
+                [key: string]: unknown;
+            };
+        };
+        AutomationRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name: string;
+            description?: string;
+            trigger: {
+                /** @constant */
+                kind: "event";
+                /** @enum {unknown} */
+                event: "content.page.published" | "content.suggestion.created" | "agent.run.completed";
+            } | {
+                /** @constant */
+                kind: "schedule";
+                cron: string;
+            } | {
+                /** @constant */
+                kind: "webhook";
+            } | {
+                /** @constant */
+                kind: "source";
+                /** Format: uuid */
+                collection?: string;
+                /** Format: uuid */
+                feed?: string;
+            } | {
+                /** @constant */
+                kind: "hook";
+                /** @description e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires */
+                hook: string;
+            };
+            /** @description A JMESPath expression over the payload; empty always runs. */
+            condition?: string;
+            actions?: ({
+                /** @constant */
+                kind: "assistant";
+                /** Format: uuid */
+                assistant: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+            } | {
+                /** @constant */
+                kind: "pipeline";
+                /** Format: uuid */
+                pipeline: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt?: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+            } | {
+                /** @constant */
+                kind: "agent";
+                agent: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+                input?: {
+                    [key: string]: unknown;
+                };
+            } | {
+                /** @constant */
+                kind: "brief";
+                /** @description A Django template, rendered against the payload. */
+                title?: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt: string;
+                /** Format: uuid */
+                assistant?: string;
+                /** Format: uuid */
+                pipeline?: string;
+                /** Format: uuid */
+                output_schema?: string;
+                generate?: boolean;
+            } | {
+                /** @constant */
+                kind: "idea";
+                /** @description A Django template, rendered against the payload. */
+                title: string;
+                /** @description A Django template, rendered against the payload. */
+                notes?: string;
+                /** @description A Django template, rendered against the payload. */
+                url?: string;
+                /** Format: uuid */
+                board?: string;
+                tags?: string[];
+            } | {
+                /** @constant */
+                kind: "email";
+                to: string[];
+                /** @description A Django template, rendered against the payload. */
+                subject: string;
+                /** @description A Django template, rendered against the payload. */
+                body?: string;
+            } | {
+                /** @constant */
+                kind: "webhook";
+                url: string;
+            } | {
+                /** @constant */
+                kind: "story";
+                /** @description A Django template, rendered against the payload. */
+                story: string;
+                /** @enum {unknown} */
+                to: "assigned" | "drafting" | "editing" | "copy";
+                /** @description A Django template, rendered against the payload. */
+                assignee?: string;
+                /** @description A Django template, rendered against the payload. */
+                comment?: string;
+            })[];
+            on_error?: components["schemas"]["AutomationOnErrorEnum"];
+            /** @description Further firings are limited. */
+            max_runs_per_hour?: number;
+        };
+        AutomationRun: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly automation: string;
+            readonly automation_name: string;
+            readonly trigger: components["schemas"]["AutomationRunTriggerEnum"];
+            readonly status: components["schemas"]["AutomationRunStatusEnum"];
+            /** @description The condition's verdict, once evaluated. */
+            readonly matched: boolean | null;
+            readonly payload: unknown;
+            readonly outcomes: {
+                /** @description The action's place in the list, from 0. */
+                index: number;
+                kind: string;
+                /** @enum {unknown} */
+                status: "succeeded" | "failed" | "not_run";
+                /** @description What it was asked: its templates rendered against the payload. */
+                input?: {
+                    [key: string]: unknown;
+                };
+                /** @description What it made: an agent run's id (`run`), a brief, an idea or a story by public id (and the story's new status), an email's recipients, a webhook's HTTP status. */
+                result?: {
+                    run?: number;
+                    /** Format: uuid */
+                    brief?: string;
+                    /** Format: uuid */
+                    idea?: string;
+                    /** Format: uuid */
+                    story?: string;
+                    status?: string;
+                    http_status?: number;
+                    to?: string[];
+                    sent?: number;
+                };
+                error?: string;
+                ms?: number;
+            }[];
+            readonly error: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly started_at: string | null;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+        };
+        /**
+         * @description * `queued` - Queued
+         *     * `running` - Running
+         *     * `succeeded` - Succeeded
+         *     * `failed` - Failed
+         *     * `skipped` - Skipped — the condition said no, or it was paused
+         *     * `limited` - Limited — over its runs per hour
+         * @enum {string}
+         */
+        AutomationRunStatusEnum: "queued" | "running" | "succeeded" | "failed" | "skipped" | "limited";
+        /**
+         * @description * `event` - event
+         *     * `schedule` - schedule
+         *     * `webhook` - webhook
+         *     * `source` - source
+         *     * `hook` - hook
+         *     * `test` - test
+         * @enum {string}
+         */
+        AutomationRunTriggerEnum: "event" | "schedule" | "webhook" | "source" | "hook" | "test";
+        AutomationSecret: {
+            /** @description Shown this once. */
+            secret: string;
+        };
+        AutomationVerdict: {
+            /** @description Null when the condition could not be evaluated. */
+            matched: boolean | null;
+            /** @description What the expression found in the payload. */
+            value: unknown | null;
+            error: string;
+        };
+        AutomationWebhookAccepted: {
+            /** Format: uuid */
+            run: string;
+            /** @description queued — or limited, when the automation is over its runs per hour. */
+            status: string;
+        };
+        AutomationYaml: {
+            name: string;
+            /** @description The automation as a YAML document: no owner, secret or enabled. */
+            yaml: string;
+        };
         /** @description Fields named by Python keywords (`from`, `pass`), added where a class body cannot declare them. */
         BeltMessage: {
             /** @description The relay's number; none until delivered. */
@@ -5123,6 +5763,34 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Author"][];
         };
+        PaginatedAutomationList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Automation"][];
+        };
+        PaginatedAutomationRunList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["AutomationRun"][];
+        };
         PaginatedBoardList: {
             /**
              * Format: uri
@@ -5594,6 +6262,120 @@ export interface components {
             bio?: string;
             email?: string;
             user?: number | null;
+        };
+        PatchedAutomationRequest: {
+            /** @description A site its owner edits. */
+            site?: number | null;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            name?: string;
+            description?: string;
+            trigger?: {
+                /** @constant */
+                kind: "event";
+                /** @enum {unknown} */
+                event: "content.page.published" | "content.suggestion.created" | "agent.run.completed";
+            } | {
+                /** @constant */
+                kind: "schedule";
+                cron: string;
+            } | {
+                /** @constant */
+                kind: "webhook";
+            } | {
+                /** @constant */
+                kind: "source";
+                /** Format: uuid */
+                collection?: string;
+                /** Format: uuid */
+                feed?: string;
+            } | {
+                /** @constant */
+                kind: "hook";
+                /** @description e.g. monitor.finding, or agent.<slug>.<name> for one an agent fires */
+                hook: string;
+            };
+            /** @description A JMESPath expression over the payload; empty always runs. */
+            condition?: string;
+            actions?: ({
+                /** @constant */
+                kind: "assistant";
+                /** Format: uuid */
+                assistant: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+            } | {
+                /** @constant */
+                kind: "pipeline";
+                /** Format: uuid */
+                pipeline: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt?: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+            } | {
+                /** @constant */
+                kind: "agent";
+                agent: string;
+                /** @description A Django template, rendered against the payload. */
+                page?: string;
+                input?: {
+                    [key: string]: unknown;
+                };
+            } | {
+                /** @constant */
+                kind: "brief";
+                /** @description A Django template, rendered against the payload. */
+                title?: string;
+                /** @description A Django template, rendered against the payload. */
+                prompt: string;
+                /** Format: uuid */
+                assistant?: string;
+                /** Format: uuid */
+                pipeline?: string;
+                /** Format: uuid */
+                output_schema?: string;
+                generate?: boolean;
+            } | {
+                /** @constant */
+                kind: "idea";
+                /** @description A Django template, rendered against the payload. */
+                title: string;
+                /** @description A Django template, rendered against the payload. */
+                notes?: string;
+                /** @description A Django template, rendered against the payload. */
+                url?: string;
+                /** Format: uuid */
+                board?: string;
+                tags?: string[];
+            } | {
+                /** @constant */
+                kind: "email";
+                to: string[];
+                /** @description A Django template, rendered against the payload. */
+                subject: string;
+                /** @description A Django template, rendered against the payload. */
+                body?: string;
+            } | {
+                /** @constant */
+                kind: "webhook";
+                url: string;
+            } | {
+                /** @constant */
+                kind: "story";
+                /** @description A Django template, rendered against the payload. */
+                story: string;
+                /** @enum {unknown} */
+                to: "assigned" | "drafting" | "editing" | "copy";
+                /** @description A Django template, rendered against the payload. */
+                assignee?: string;
+                /** @description A Django template, rendered against the payload. */
+                comment?: string;
+            })[];
+            on_error?: components["schemas"]["AutomationOnErrorEnum"];
+            /** @description Further firings are limited. */
+            max_runs_per_hour?: number;
         };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
@@ -9954,6 +10736,1096 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_list: {
+        parameters: {
+            query?: {
+                enabled?: boolean;
+                /**
+                 * @description Only automations this kind fires.
+                 *
+                 *     * `event` - event
+                 *     * `schedule` - schedule
+                 *     * `webhook` - webhook
+                 *     * `source` - source
+                 *     * `hook` - hook
+                 */
+                kind?: "event" | "hook" | "schedule" | "source" | "webhook";
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Only rows of this Wagtail site and rows that belong to no site. */
+                site?: number;
+                /**
+                 * @description * `private` - Private — its owner
+                 *     * `site` - Site — everyone who edits its site
+                 *     * `shared` - Shared — everyone signed in
+                 */
+                visibility?: "private" | "shared" | "site";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAutomationList"];
+                };
+            };
+        };
+    };
+    automations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AutomationRequest"];
+                "multipart/form-data": components["schemas"]["AutomationRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Automation"];
+                };
+            };
+        };
+    };
+    automations_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Automation"];
+                };
+            };
+        };
+    };
+    automations_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    automations_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAutomationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAutomationRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAutomationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Automation"];
+                };
+            };
+        };
+    };
+    automations_disable_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Automation"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_dry_run_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AutomationPayloadRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AutomationPayloadRequest"];
+                "multipart/form-data": components["schemas"]["AutomationPayloadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationDryRun"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_enable_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Automation"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_export_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationYaml"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_rotate_secret_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationSecret"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_test_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AutomationPayloadRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AutomationPayloadRequest"];
+                "multipart/form-data": components["schemas"]["AutomationPayloadRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRun"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_webhook_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description A delivery's id (or GitHub's `X-GitHub-Delivery`): sent again, it gets the run it made. */
+                "X-Zer0-Delivery"?: string;
+                /** @description `sha256=` and the hex HMAC-SHA256 of the raw body with the automation's secret (GitHub's `X-Hub-Signature-256` is read the same way). */
+                "X-Zer0-Signature-256"?: string;
+            };
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationWebhookAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_condition_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationConditionRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AutomationConditionRequest"];
+                "multipart/form-data": components["schemas"]["AutomationConditionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationVerdict"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_import_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationImportRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AutomationImportRequest"];
+                "multipart/form-data": components["schemas"]["AutomationImportRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Automation"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_options_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationOptions"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    automations_runs_list: {
+        parameters: {
+            query?: {
+                automation?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /**
+                 * @description * `queued` - Queued
+                 *     * `running` - Running
+                 *     * `succeeded` - Succeeded
+                 *     * `failed` - Failed
+                 *     * `skipped` - Skipped — the condition said no, or it was paused
+                 *     * `limited` - Limited — over its runs per hour
+                 */
+                status?: "failed" | "limited" | "queued" | "running" | "skipped" | "succeeded";
+                /**
+                 * @description * `event` - event
+                 *     * `schedule` - schedule
+                 *     * `webhook` - webhook
+                 *     * `source` - source
+                 *     * `hook` - hook
+                 *     * `test` - test
+                 */
+                trigger?: "event" | "hook" | "schedule" | "source" | "test" | "webhook";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAutomationRunList"];
+                };
+            };
+        };
+    };
+    automations_runs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRun"];
                 };
             };
         };

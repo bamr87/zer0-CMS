@@ -429,8 +429,8 @@ def set_default(row: ProviderConfig) -> ProviderConfig:
 @transaction.atomic
 def rotate_credentials() -> int:
     """Re-encrypt every stored credential with the first key — the providers' here, every other app's through
-    `crypto.credentials_rotated` — and return how many. One no key can read stops it (`NotConfigured`, naming
-    whose it is) and nothing is changed."""
+    `crypto.credentials_rotated` — and return how many. One no key can read stops it (`NotConfigured`, or a
+    receiver's ValueError, naming whose it is) and nothing is changed."""
     rows = list(ProviderConfig.objects.exclude(credential_encrypted=""))
     for row in rows:
         row.set_credential(row.get_credential())
