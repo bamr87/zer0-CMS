@@ -34,7 +34,6 @@ schema: capabilities/v1
 
 ruby_ratchet:
   packages/zer0-image-generator/: 223
-  sites/zer0-pages/: 11
 
 theme_ratchet:
   # zer0-mistakes leaves completely (ADR 0006 decision 4): code and configuration
@@ -53,7 +52,7 @@ theme_ratchet:
   sites/zer0-demo-cookbook/: 2
   sites/zer0-demo-garden/: 2
   sites/zer0-pages-remote/: 1
-  sites/zer0-pages/: 4
+  sites/zer0-pages/: 2
   src/core/: 13
   src/test/: 6
   src/webview/: 1
@@ -466,16 +465,19 @@ platform:
     what: The Jekyll-theme option — render a site with the zer0-mistakes theme and deploy it with a Jekyll server (GitHub Pages' builder or a pinned container), with nothing Ruby in this repository.
     # P2: tools/jekyll_theme.py — a site's `render:` setting in workspace.yml, the export with the theme's tag pinned
     # and an Obsidian vault resolved, GitHub Pages' builder or the jekyll-4 image (tools/jekyll/Dockerfile); pages.yml,
-    # sites.yml, drsai.yml and irony-works.yml build eight sites through it (ops). G4: a site's renderer, the theme's tag
+    # sites.yml, drsai.yml and irony-works.yml build eight sites through it (ops), and since P-D7 (2026-10-28)
+    # pages.yml and zer0-pages.yml build the ninth, zer0-pages, so no site builds with Ruby. G4: a site's renderer, the theme's tag
     # and the Jekyll server are its registry fields, chosen over the API and in the studio (partial: running its build
     # as a job a person follows needs the Jekyll server's container, which the worker does not start — still to come).
     surfaces: {api: partial, studio: partial, ops: done}
     proof: {ops: tools/tests/test_jekyll_theme.py}
   - id: sites.obsidian
     what: Obsidian-flavoured content — wikilinks, embeds, callouts, Dataview queries, the graph index.
-    # P2: zer0-pages's plugins ported to Python for the Jekyll-theme option (tools/obsidian, tests in tools/tests);
-    # zer0-pages builds with its Ruby plugins until the two differences its option build shows are accepted (PLAN P2).
-    surfaces: {api: partial, site: missing, ops: partial}
+    # P2: zer0-pages's plugins ported to Python for the Jekyll-theme option (tools/obsidian, tests in tools/tests).
+    # P-D7 (2026-10-28): zer0-pages builds through it, re-recorded with the two differences the owner accepted, and its
+    # Ruby plugins and their tests are deleted (ops). The React renderer's plugins are P6's (site).
+    surfaces: {api: partial, site: missing, ops: done}
+    proof: {ops: tools/tests/test_obsidian_vault.py}
   - id: sites.deploy
     what: Build, preview and deploy each site, with history.
     surfaces: {api: missing, studio: missing, ops: partial}
@@ -925,16 +927,15 @@ sources:
     content: The vault (every note and attachment).
     capabilities:
       - {id: site-zer0-pages.content, what: "Its notes import into the platform and round-trip.", target: content.import, status: partial}
-      - {id: site-zer0-pages.publish, what: "The public site at /zer0-pages/ with the same URLs.", target: sites.render, status: missing}
-      # P2: the bridge is ported to Python (tools/obsidian, its Ruby tests ported to tools/tests) and builds the site
-      # through the Jekyll-theme option with every page, title, feed, sitemap and Dataview table of its recording; the
-      # site stays on its Ruby plugins until the owner accepts the two differences that build shows (PLAN P2), so the
-      # rows stay partial.
-      - {id: site-zer0-pages.wikilinks, what: "[[target|alias#anchor]] links and ![[embed]] images.", target: sites.obsidian, status: partial}
-      - {id: site-zer0-pages.callouts, what: "> [!note] callouts rendered as alerts.", target: sites.obsidian, status: partial}
-      - {id: site-zer0-pages.dataview, what: "A Dataview subset — TABLE and LIST, FROM, WHERE, FLATTEN, GROUP BY, SORT, LIMIT.", target: sites.obsidian, status: partial}
-      - {id: site-zer0-pages.graph-index, what: "A deterministic wiki-index.json for the graph view.", target: sites.obsidian, status: partial}
-      - {id: site-zer0-pages.fence-mask, what: "Code fences and inline code left untouched by the bridge; root-relative links prefixed with the base URL.", target: sites.obsidian, status: partial}
+      - {id: site-zer0-pages.publish, what: "The public site at /zer0-pages/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P-D7 (2026-10-28): renders through the Jekyll-theme option (jekyll-4, the theme at v1.28.0, its Obsidian vault resolved in Python) with its P1 recording's URLs, pages, titles, feed and sitemap; re-recorded from that build with the two differences the owner accepted — 88 theme images the gem left out, fuller Linked mentions panels on five Obsidian docs pages — and --check --site zer0-pages identical to the re-recording; pages.yml fails a pull request whose build differs. Partial: bamr87/zer0-pages still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
+      # P2 ported the bridge to Python (tools/obsidian, its Ruby tests ported test for test to tools/tests); since P-D7
+      # (2026-10-28) the site builds through it, every wikilink, callout and Dataview table as the plugins wrote them,
+      # and the plugins and their tests are deleted.
+      - {id: site-zer0-pages.wikilinks, what: "[[target|alias#anchor]] links and ![[embed]] images.", target: sites.obsidian, status: done, proof: "tools/tests/test_obsidian_bridge.py::WikilinksTest"}
+      - {id: site-zer0-pages.callouts, what: "> [!note] callouts rendered as alerts.", target: sites.obsidian, status: done, proof: "tools/tests/test_obsidian_bridge.py::CalloutsTest"}
+      - {id: site-zer0-pages.dataview, what: "A Dataview subset — TABLE and LIST, FROM, WHERE, FLATTEN, GROUP BY, SORT, LIMIT.", target: sites.obsidian, status: done, proof: "tools/tests/test_obsidian_bridge.py::DataviewRenderTest", note: "the parser in DataviewParseTest; every real query of the vault parses and renders (test_every_real_query_renders_against_pool)"}
+      - {id: site-zer0-pages.graph-index, what: "A deterministic wiki-index.json for the graph view.", target: sites.obsidian, status: done, proof: "tools/tests/test_graph_index.py::PayloadTest", note: "its edges and excerpts in EdgesTest and ExcerptTest; written as a page of the exported vault (test_obsidian_vault.py::VaultTest::test_resolve_writes_the_graph_index_as_a_page)"}
+      - {id: site-zer0-pages.fence-mask, what: "Code fences and inline code left untouched by the bridge; root-relative links prefixed with the base URL.", target: sites.obsidian, status: done, proof: "tools/tests/test_obsidian_bridge.py::FenceMaskTest", note: "the base URL in PostprocessHtmlTest"}
   - id: site-zer0-pages-remote
     path: sites/zer0-pages-remote
     summary: The remote_theme demo of zer0-pages.

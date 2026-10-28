@@ -16,6 +16,3 @@ pages/.jekyll-cache/
 
 # Playwright MCP artifacts
 .playwright-mcp/
-
-# Local bundler install (BUNDLE_PATH=vendor/bundle)
-vendor/

@@ -43,11 +43,13 @@ overrides:
       Site-specific trim of the theme's graph page: drops the theme's H1/intro
       (pages/_docs/obsidian/graph.md supplies its own) and its "See also"
       wikilinks (five theme-only targets that would render broken in this vault),
-      credits the local generator pages/_plugins/obsidian_graph_index.rb in the
-      "How it's built" table, and reduces the legend to the collections this vault
-      keeps (posts/docs/notes/pages). Also still pins
-      window.OBSIDIAN_WIKI_INDEX_URL — redundant now that the Gemfile is
-      unconstrained and resolves 1.26.0+ (see `upstream:`), but harmless.
+      credits the local generator in the "How it's built" table (it names
+      pages/_plugins/obsidian_graph_index.rb, deleted when the site moved to
+      zer0-CMS's Jekyll-theme option; the generator is tools/obsidian/graph_index.py
+      there), and reduces the legend to the collections this vault keeps
+      (posts/docs/notes/pages). Also still pins window.OBSIDIAN_WIKI_INDEX_URL —
+      redundant now that the site builds with theme v1.28.0, past 1.26.0 (see
+      `upstream:`), but harmless.
     upstream: >-
       bamr87/zer0-mistakes#294 (OBSIDIAN_WIKI_INDEX_URL global-name mismatch) was
       fixed in theme v1.26.0 — obsidian-graph.js now reads

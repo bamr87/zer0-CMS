@@ -15,7 +15,7 @@
 - **Workspaces:** the studio is organised around what people do — Write, Create, Ideas, Research, Newsroom, Books, Sites — on one runtime of AI pipelines, editorial workflows and automations (TARGET.md § What it is for).
 - **Content in the database, files generated:** every site and book lives in the platform and also exists as a generated, committed, re-importable file tree (a site's source, a book's `library/<slug>/`).
 - **Sites:** manage (registry, settings, render, deploy), monitor (uptime, links, performance, accessibility, SEO, analytics, AIEO scores) and improve (agents propose changes from those signals; a person accepts them). Sites render with React by default; zer0-mistakes survives only as an option — render a site with that theme and deploy it with a Jekyll server.
-- **No Ruby.** The workspace tool (`bin/zer0`) is Python already (PLAN P5); the Rails fleet CMS is gone ([ADR 0008](docs/adr/0008-retire-the-rails-cms.md)); the image generator's gem and the sites' Jekyll builds are being ported away, and until they are, a ratchet in CI stops Ruby from growing or spreading.
+- **No Ruby.** The workspace tool (`bin/zer0`) is Python already (PLAN P5); the Rails fleet CMS is gone ([ADR 0008](docs/adr/0008-retire-the-rails-cms.md)); every site builds with the Jekyll-theme option's Jekyll server, Ruby only inside its container (PLAN P2, zer0-pages last); the image generator's gem is being ported away, and until it is, a ratchet in CI stops Ruby from growing or spreading.
 - **Every merged repository is absorbed, not discarded:** parodynews (formerly barodybroject — every one of its capabilities), aieo, books, the image generator, the Rails CMS, the workspace tool and the nine sites' content. A source directory is deleted only when the ledger shows every capability `done` (with a test), `dropped` by the owner, or — by the owner's decision, as for the Rails CMS — `specified`: what it did kept in a written spec the platform still owes ([`docs/plan/rails-cms-spec.md`](docs/plan/rails-cms-spec.md)).
 
 **What an agent must not do** — each of these has happened, or is the next obvious mistake:
@@ -92,7 +92,7 @@ python3 tools/check-config-docs.py            # generated docs current: CONFIG.m
 python3 tools/docs_index.py --lint            # every indexed doc has one H1 and a summary line
 python3 tools/unwrap-prose.py --write --exclude '(^|/)SCHEMA\.md$' --exclude '(^|/)CHANGELOG\.md$'
 
-# ── The sites' recorded Jekyll builds (web/site/fixtures/, PLAN P1) — Ruby 3.3, bundler, network ──
+# ── The sites' recorded Jekyll builds (web/site/fixtures/, PLAN P1) — Docker (the Jekyll-theme option's server), network ──
 python3 tools/site_manifest.py --check --site drsai    # rebuild a routed site as pages.yml does (UTC, none of your JEKYLL_/ZER0_ variables), compare
 python3 tools/site_manifest.py compare --pages <recorded> <candidate>   # what a renderer must match: pages, titles, text, feeds, sitemaps, redirects
 ```
@@ -189,7 +189,7 @@ Fourteen imported repositories, each a **source being absorbed** into the platfo
 - **Nothing under `packages/`, `sites/` or `apps/` assumes it is the git root**; resolve paths from the file.
 - **A file two projects need is `vendored:`** in `workspace.yml` with one source: edit the source, `bin/zer0 vendor --write`, read the diff.
 - **A Jekyll site lists `AGENTS.md` and `CLAUDE.md` under `exclude:`**, or Jekyll publishes them.
-- **This repository is the only home** (ADR 0002): change an imported project here, never in its original; originals publish until cutover C1–C7, so don't archive one `docs/MONOREPO.md` still lists. The theme is the exception ([ADR 0005](docs/adr/0005-theme-goes-home.md)): `jekyll-theme-zer0` is developed in `bamr87/zer0-mistakes`, never here; a site here consumes it as the gem or `remote_theme` it declares until it moves to the Jekyll-theme option (PLAN P2), and a theme change is a pull request there.
+- **This repository is the only home** (ADR 0002): change an imported project here, never in its original; originals publish until cutover C1–C7, so don't archive one `docs/MONOREPO.md` still lists. The theme is the exception ([ADR 0005](docs/adr/0005-theme-goes-home.md)): `jekyll-theme-zer0` is developed in `bamr87/zer0-mistakes`, never here; a site here renders with it only through the Jekyll-theme option (PLAN P2), at the tag its `render:` setting pins, and a theme change is a pull request there.
 
 ## Fleet context
 

@@ -120,9 +120,7 @@ projects:
 
   # The zer0 theme is developed in its own repository (ADR 0005). The sites
   # below render with it only through the Jekyll-theme option — their `render:`
-  # setting pins its tag (ADR 0006 decision 4, PLAN P2) — except zer0-pages,
-  # which still builds with its Gemfile until the two differences its option
-  # build shows are accepted (web/site/fixtures/README.md).
+  # setting pins its tag (ADR 0006 decision 4, PLAN P2).
   zer0-image-generator:
     path: packages/zer0-image-generator
     kind: gem
@@ -203,19 +201,18 @@ projects:
   zer0-pages:
     path: sites/zer0-pages
     kind: site
-    stack: [ruby, jekyll]
+    stack: [jekyll, docker, python]
     summary: One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge.
     upstream: bamr87/zer0-pages
-    depends_on: [zer0-image-generator]
     publishes: [pages]
     ci: zer0-pages.yml
     site: "."
     route: /zer0-pages/
+    render: {as: jekyll-theme, theme: v1.28.0, server: jekyll-4, obsidian: true}
     tasks:
-      setup: bundle install
-      check: ruby -Ipages/_plugins tests/test_obsidian_bridge.rb && ruby -Ipages/_plugins tests/test_graph_index.rb && python3 tools/schema_lint.py check .
-      build: bundle exec jekyll build
-      pages: bundle exec jekyll build --config "_config.yml,$ZER0_PAGES_CONFIG" --destination "$ZER0_PAGES_DEST"
+      check: python3 tools/schema_lint.py check . && (cd ../.. && python3 -m unittest tools/tests/test_obsidian_bridge.py tools/tests/test_graph_index.py tools/tests/test_obsidian_vault.py)
+      build: python3 ../../tools/jekyll_theme.py build zer0-pages
+      pages: python3 ../../tools/jekyll_theme.py build zer0-pages
 
   zer0-pages-remote:
     path: sites/zer0-pages-remote
