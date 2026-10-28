@@ -25,10 +25,14 @@ error and the rest of the site still imports.
 
 **Idempotent.** A file whose digest has not changed is skipped. A changed file
 updates its page — unless an editor changed that page in Wagtail since the
-last import, in which case it is reported as a conflict and left alone
-(`--force` overrides). Pages are published, as `legacy:import`, unless the
-front matter says `published: false` or `draft: true`. Links are indexed in a
-second pass, once every page of the site exists.
+last import (`ImportedSource.unchanged`: its content, or the path and
+front-matter order of a page whose file a person edits), in which case it is
+reported as a conflict and left alone (`--force` overrides). A new file at a
+path a page made or moved in the platform already has (cms/files.py) is that
+page's export, not a new page: it is skipped. Pages are published, as
+`legacy:import`, unless the front matter says `published: false` or
+`draft: true`. Links are indexed in a second pass, once every page of the site
+exists.
 """
 
 import hashlib
@@ -44,6 +48,7 @@ from wagtail.images import get_image_model
 from wagtail.models import Collection, Page, Site
 
 from agents.principals import ensure_legacy_import_user
+from cms.files import holder_of
 from cms.models import ArticlePage, BookPage, Category, ChapterPage, CollectionPage, SiteRootPage, StandardPage
 from cms.services import publish, save_draft
 from sites import catalog
@@ -380,7 +385,7 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
             report.unchanged.append(doc.rel)
             return
         current = page.get_latest_revision_as_object()
-        if current.compute_content_hash() != source.import_hash and not force:
+        if not source.unchanged(current) and not force:
             report.conflicts.append(f"{doc.rel}: changed in Wagtail since the last import (pass --force to overwrite)")
             return
         apply_document(current, doc, images)
@@ -389,6 +394,9 @@ def _import_document(doc, site_key, site_root, collections, books, images, impor
         source.import_hash = current.compute_content_hash()
         source.save()
         report.updated.append(doc.rel)
+        return
+    if holder_of(doc.rel, site_root):  # a page made or moved here writes this file: the platform's, not a new page
+        report.unchanged.append(doc.rel)
         return
     parent = _container(site_root, doc, collections, books)
     page = cls(slug="")

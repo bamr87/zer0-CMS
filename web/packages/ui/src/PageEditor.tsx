@@ -1,5 +1,6 @@
-// The editor: a page's latest revision — blocks, fields, SEO, settings — with
-// its suggestions and revisions beside it. Save writes a draft revision and
+// The editor: a page's latest revision — blocks, fields, SEO, settings and,
+// for a page that is a file of its site, that file (its path and its raw front
+// matter: the File tab) — with its suggestions and revisions beside it. Save writes a draft revision and
 // sends only what changed plus the revision it was edited from, so a save
 // over someone else's newer one is refused (409) rather than replacing it.
 // Publish, schedule (a time to go live, a time to come down, or both) and
@@ -119,6 +120,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
     : null;
   const can = page.permissions;
   const editable = can.edit && !page.lock;
+  const hasFile = page.field_specs.some((spec) => spec.group === 'file');
   const setField = (name: string, value: unknown) => setFields((current) => ({ ...current, [name]: value }));
   // Accepting a suggestion or reverting makes a new revision, which would replace these edits.
   const hold = page.lock ?? (dirty ? 'You have unsaved edits: save them before accepting a suggestion or reverting.' : undefined);
@@ -217,6 +219,7 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
             <Tabs.List>
               <Tabs.Tab value="content">Content</Tabs.Tab>
               <Tabs.Tab value="seo">SEO</Tabs.Tab>
+              {hasFile ? <Tabs.Tab value="file">File</Tabs.Tab> : null}
               <Tabs.Tab value="settings">Settings</Tabs.Tab>
               <Tabs.Tab value="suggestions">Suggestions ({page.pending_suggestions})</Tabs.Tab>
               <Tabs.Tab value="revisions">Revisions</Tabs.Tab>
@@ -231,6 +234,11 @@ function Draft({ page, tab: firstTab, busy, failure, run }: DraftProps) {
             <Tabs.Panel value="seo" pt="md">
               <FieldsPanel specs={page.field_specs} values={fields} group="seo" disabled={!editable} onChange={setField} />
             </Tabs.Panel>
+            {hasFile ? (
+              <Tabs.Panel value="file" pt="md">
+                <FieldsPanel specs={page.field_specs} values={fields} group="file" disabled={!editable} onChange={setField} />
+              </Tabs.Panel>
+            ) : null}
             <Tabs.Panel value="settings" pt="md">
               <FieldsPanel specs={page.field_specs} values={fields} group="settings" disabled={!editable} onChange={setField} />
             </Tabs.Panel>

@@ -2,9 +2,10 @@
 
 For each page under a site root, in tree order:
 
-- **unchanged since import** (its `content_hash` still equals the import's)
-  and without bylines or corrections from the newsroom: the stored source
-  file, byte for byte;
+- **unchanged since import** (`ImportedSource.unchanged`: its `content_hash`
+  still equals the import's, and a page whose file a person edits still has
+  the file's path and front-matter key order) and without bylines or
+  corrections from the newsroom: the stored source file, byte for byte;
 - **changed since import**: the source file with only what changed rewritten
   — the front matter by line surgery (sites/frontmatter.py: a key whose value
   changed is rewritten in place, a new one goes in before the closing fence, a
@@ -14,23 +15,29 @@ For each page under a site root, in tree order:
   body rendered from the page. Either way the front matter is the source's, in
   its original key order, with the typed fields written over it (title, description, seo_title, date — kept as
   the original string when the parsed date did not change —, author, tags,
-  categories, book fields), and for an ABC book the `alphabet:` list rebuilt
+  categories, book fields: the model's `front_matter_fields`); a page made in
+  the platform, whose front matter holds only the raw keys a person gave it
+  (cms/files.py), gets its typed keys first and its raw keys after them, as a
+  file a person writes. For an ABC book the `alphabet:` list is rebuilt
   from its `letter` blocks, each merged into the original entry so a plate's
   `image`, `prompt` and `status` survive an edit to its word; a story's
   `authors` (its bylines) and `corrections` (its corrections and updates log:
   date, kind, text) come from the newsroom, for the site to render. The body
   is the blocks as Markdown (importers/markdown.py).
 
-A page keeps the file it was read from or last written to (its
-`ImportedSource`). A page created in Wagtail gets a path from its type: an
-`ArticlePage` in `_posts` becomes `<collections_dir>/_posts/YYYY-MM-DD-<slug>.md`,
-anything in another collection `<collections_dir>/_<collection>/<slug>.md`, a
-page at the site root `<slug>.md` — the slug transliterated to `a-z0-9` and
-hyphens (sites/writer.py). Only live pages are exported unless
-`include_drafts`. `site_files` lists what an export writes; `export_site`
-writes it into `out` and nothing else, refusing a path that would leave it,
-and a site's write-back writes it into the site's checkout under the
-stale-write guard (sites/services.py).
+A page is written at its file path (`legacy_path`: the file it was imported
+from, or the one a person gave it). A page created in Wagtail without one gets
+a path from its type: an `ArticlePage` in `_posts` becomes
+`<collections_dir>/_posts/YYYY-MM-DD-<slug>.md`, anything in another collection
+`<collections_dir>/_<collection>/<slug>.md`, a page at the site root
+`<slug>.md` — the slug transliterated to `a-z0-9` and hyphens
+(sites/writer.py). An imported page a person moved is rendered at its new path
+and listed in `moved`; nothing deletes its old file. Only live pages are
+exported unless `include_drafts`. `site_files` lists what an export writes;
+`export_site` writes it into `out` and nothing else, refusing a path that would
+leave it and never writing two pages to one path (the second is skipped), and a
+site's write-back writes it into the site's checkout under the stale-write
+guard (sites/services.py).
 """
 
 from collections.abc import Iterator
@@ -40,6 +47,7 @@ from pathlib import Path
 import yaml
 from wagtail.models import Page
 
+from cms.files import SUFFIXES
 from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, SiteRootPage
 from importers import frontmatter
 from importers.markdown import from_blocks, to_blocks
@@ -56,6 +64,8 @@ class ExportReport:
     verbatim: list = field(default_factory=list)
     rendered: list = field(default_factory=list)
     skipped: list = field(default_factory=list)
+    # (old, new): an imported page a person moved; its old file is not deleted.
+    moved: list = field(default_factory=list)
 
     def summary(self) -> str:
         return (
@@ -106,7 +116,10 @@ def _alphabet(page, original) -> list | None:
 
 
 def front_matter_for(page) -> dict:
-    fm = dict(page.front_matter or {})
+    stored = dict(page.front_matter or {})
+    # A file page made in the platform holds no typed key of its own: the typed keys lead.
+    made_here = bool(page.file_editor_fields) and not stored.keys() & page.front_matter_fields.keys()
+    fm = {} if made_here else stored
 
     def put(key, value):
         """Write a typed value over the source's; an empty one only clears a key
@@ -142,6 +155,8 @@ def front_matter_for(page) -> dict:
     if isinstance(page, ChapterPage) and page.number is not None:
         fm["chapter"] = page.number
     fm.update(newsroom_front_matter(page))
+    if made_here:
+        fm.update((key, value) for key, value in stored.items() if key not in fm)
     return fm
 
 
@@ -172,6 +187,9 @@ def render(page, source_text: str | None = None) -> str:
 def _render_over(source_text: str, fm: dict, blocks: list, leading: str) -> str:
     original, _ = frontmatter.split(source_text)
     original = original or {}
+    if [key for key in original if key in fm] != [key for key in fm if key in original]:
+        # a person reordered the file's keys (cms/files.py): surgery keeps the file's order, so render it whole
+        raise surgery.EditError("the front matter's keys were reordered")
     changes = {key: value for key, value in fm.items() if key not in original or original[key] != value}
     changes.update({key: None for key in original if key not in fm})
     text = surgery.update_keys(source_text, changes)
@@ -209,8 +227,11 @@ def site_files(site_key: str, *, include_drafts=False, report: ExportReport | No
             continue
         current = page.get_latest_revision_as_object() if include_drafts else page
         source = sources.get(page.pk)
-        rel = source.legacy_path if source is not None else path_for(current, root)
-        unchanged = source is not None and current.compute_content_hash() == source.import_hash
+        rel = path_for(current, root)
+        unchanged = source is not None and source.unchanged(current)
+        moved = source is not None and current.file_editor_fields and source.legacy_path != rel
+        if moved and report is not None and source.legacy_path.endswith(SUFFIXES):  # a page's file it was read from
+            report.moved.append((source.legacy_path, rel))
         if unchanged and page.pk not in newsroom_pages:
             yield File(rel, source.source_text, page, current, source, verbatim=True)
         else:
@@ -221,11 +242,16 @@ def site_files(site_key: str, *, include_drafts=False, report: ExportReport | No
 def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:
     out = Path(out).resolve()
     report = ExportReport(site_key=site_key)
+    written = set()
     for file in site_files(site_key, include_drafts=include_drafts, report=report):
         target = (out / file.rel).resolve()
         if not str(target).startswith(str(out) + "/"):
             report.skipped.append(f"{file.rel} (outside the export directory)")
             continue
+        if target in written:
+            report.skipped.append(f"{file.rel} (another page was written there)")
+            continue
+        written.add(target)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(file.text, encoding="utf-8")
         (report.verbatim if file.verbatim else report.rendered).append(file.rel)

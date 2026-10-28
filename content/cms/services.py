@@ -32,6 +32,8 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 from wagtail.permission_policies.pages import PagePermissionPolicy
 
+from . import files
+
 
 class StaleRevision(Exception):
     """The page has a newer revision than the one the caller edited."""
@@ -101,21 +103,31 @@ def creatable_types(parent, user) -> list:
 
 
 def editable_fields(model) -> tuple[str, ...]:
-    return model.shared_editor_fields + model.editor_fields
+    return model.shared_editor_fields + model.editor_fields + model.file_editor_fields
 
 
-def apply_fields(page, values: dict):
+def apply_fields(page, values: dict, parent=None):
     """Set editor fields on `page` in memory. Each value is parsed and validated
     by its own model field, so every error names the field it belongs to (an
-    empty slug is left for Wagtail to make from the title)."""
+    empty slug is left for Wagtail to make from the title). The page's file —
+    `file_path` and raw `front_matter` — is checked against its site
+    (cms/files.py; `parent` is where a new page goes), and a dated file name
+    against the date whenever either changes."""
     allowed = editable_fields(type(page))
     errors = {}
+    dated = (page.legacy_path, getattr(page, "date", None))
     for name, value in values.items():
         if name not in allowed:
             errors[name] = [f"{name} is not an editable field of a {page._meta.verbose_name}"]
             continue
-        field = page._meta.get_field(name)
         try:
+            if name == "file_path":
+                files.set_file_path(page, value, parent)
+                continue
+            if name == "front_matter":
+                files.set_front_matter(page, value)
+                continue
+            field = page._meta.get_field(name)
             if name == "tags":
                 if not isinstance(value, list) or not all(isinstance(v, str) and v.strip() for v in value):
                     raise ValidationError("tags is a list of names")
@@ -136,7 +148,10 @@ def apply_fields(page, values: dict):
                     page, name, field.to_python(value) if name == "slug" and not value else field.clean(value, page)
                 )
         except ValidationError as e:
-            errors[name] = e.messages
+            errors.update(e.message_dict if hasattr(e, "error_dict") else {name: e.messages})
+    redated = (page.legacy_path, getattr(page, "date", None)) != dated
+    if redated and not errors.keys() & {"file_path", "date"} and (problem := files.date_problem(page)) is not None:
+        errors["file_path" if "file_path" in values else "date"] = [problem]
     if errors:
         raise ValidationError(errors)
 
@@ -178,7 +193,7 @@ def create_draft(parent, model, user, *, fields: dict, body: list | None = None)
     """A new page under `parent`, not live, with one draft revision."""
     _require(model in creatable_types(parent, user), f"{user} may not create a {model._meta.verbose_name} here")
     page = model(owner=user, live=False, has_unpublished_changes=True)
-    apply_fields(page, fields)
+    apply_fields(page, fields, parent=parent)
     if body:
         page.body = clean_body(page, body)
     parent.add_child(instance=page)

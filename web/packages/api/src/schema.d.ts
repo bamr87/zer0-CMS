@@ -4347,9 +4347,10 @@ export interface components {
          * @description * `content` - content
          *     * `seo` - seo
          *     * `settings` - settings
+         *     * `file` - file
          * @enum {string}
          */
-        FieldGroupEnum: "content" | "seo" | "settings";
+        FieldGroupEnum: "content" | "seo" | "settings" | "file";
         /**
          * @description * `text` - text
          *     * `textarea` - textarea
@@ -4358,9 +4359,10 @@ export interface components {
          *     * `choice` - choice
          *     * `multichoice` - multichoice
          *     * `tags` - tags
+         *     * `json` - json
          * @enum {string}
          */
-        FieldKindEnum: "text" | "textarea" | "datetime" | "integer" | "choice" | "multichoice" | "tags";
+        FieldKindEnum: "text" | "textarea" | "datetime" | "integer" | "choice" | "multichoice" | "tags" | "json";
         FieldSpec: {
             name: string;
             label: string;
@@ -4996,6 +4998,7 @@ export interface components {
             parent: number;
             /** @description One of the parent's creatable types, e.g. `cms.ArticlePage`. */
             type: string;
+            /** @description The type's editable fields by name, as `field_specs` describes them. A page that is a file of its own (`cms.ArticlePage`, `cms.StandardPage`) also takes `file_path` — its file, relative to the site's root, e.g. `pages/_posts/wire/2026-10-28-example.md` — and `front_matter`, the file's other front-matter keys as a JSON object in order, e.g. `excerpt`, `permalink`, `sources`; a key a typed field writes is refused (422). */
             fields: {
                 [key: string]: unknown | null;
             };
@@ -5775,6 +5778,7 @@ export interface components {
         PatchedPageUpdateRequest: {
             /** @description The revision edited (null only for a page without one); a newer one makes the save a 409. */
             base_revision_id?: number | null;
+            /** @description Only what changed. The type's editable fields by name, as `field_specs` describes them. A page that is a file of its own (`cms.ArticlePage`, `cms.StandardPage`) also takes `file_path` — its file, relative to the site's root, e.g. `pages/_posts/wire/2026-10-28-example.md` — and `front_matter`, the file's other front-matter keys as a JSON object in order, e.g. `excerpt`, `permalink`, `sources`; a key a typed field writes is refused (422). */
             fields?: {
                 [key: string]: unknown | null;
             };

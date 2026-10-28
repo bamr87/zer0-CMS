@@ -27159,10 +27159,11 @@
                 "enum": [
                     "content",
                     "seo",
-                    "settings"
+                    "settings",
+                    "file"
                 ],
                 "type": "string",
-                "description": "* `content` - content\n* `seo` - seo\n* `settings` - settings"
+                "description": "* `content` - content\n* `seo` - seo\n* `settings` - settings\n* `file` - file"
             },
             "FieldKindEnum": {
                 "enum": [
@@ -27172,10 +27173,11 @@
                     "integer",
                     "choice",
                     "multichoice",
-                    "tags"
+                    "tags",
+                    "json"
                 ],
                 "type": "string",
-                "description": "* `text` - text\n* `textarea` - textarea\n* `datetime` - datetime\n* `integer` - integer\n* `choice` - choice\n* `multichoice` - multichoice\n* `tags` - tags"
+                "description": "* `text` - text\n* `textarea` - textarea\n* `datetime` - datetime\n* `integer` - integer\n* `choice` - choice\n* `multichoice` - multichoice\n* `tags` - tags\n* `json` - json"
             },
             "FieldSpec": {
                 "type": "object",
@@ -29163,7 +29165,8 @@
                                     "type": "null"
                                 }
                             ]
-                        }
+                        },
+                        "description": "The type's editable fields by name, as `field_specs` describes them. A page that is a file of its own (`cms.ArticlePage`, `cms.StandardPage`) also takes `file_path` — its file, relative to the site's root, e.g. `pages/_posts/wire/2026-10-28-example.md` — and `front_matter`, the file's other front-matter keys as a JSON object in order, e.g. `excerpt`, `permalink`, `sources`; a key a typed field writes is refused (422)."
                     },
                     "body": {
                         "type": "array",
@@ -31132,7 +31135,8 @@
                                     "type": "null"
                                 }
                             ]
-                        }
+                        },
+                        "description": "Only what changed. The type's editable fields by name, as `field_specs` describes them. A page that is a file of its own (`cms.ArticlePage`, `cms.StandardPage`) also takes `file_path` — its file, relative to the site's root, e.g. `pages/_posts/wire/2026-10-28-example.md` — and `front_matter`, the file's other front-matter keys as a JSON object in order, e.g. `excerpt`, `permalink`, `sources`; a key a typed field writes is refused (422)."
                     },
                     "body": {
                         "type": "array",

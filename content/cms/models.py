@@ -9,10 +9,12 @@ and the Jekyll bridge need on every page:
   `content_hash`, which drives re-embedding and tells the exporter whether a
   page changed since it was imported.
 - `legacy_path`: where the page lived in its Jekyll site, kept for redirects
-  and for the exporter.
+  and for the exporter — and, for a page that is a file of its own
+  (`file_editor_fields`), the path a person gives it (`file_path`, cms/files.py).
 - `front_matter`: the source file's whole front matter, in source order. The
-  typed fields win over it on export, so an editor's change lands and every
-  key no field holds survives.
+  typed fields win over it on export (`front_matter_fields`), so an editor's
+  change lands and every key no field holds survives; a person edits those
+  other keys as the page's raw front matter (cms/files.py).
 
 `ai_keywords` is a JSON list rather than the note's `ArrayField`, so SQLite
 (development and the fast test tier) and Postgres share one schema. Vectors
@@ -63,6 +65,9 @@ POLICY_CHOICES = [
     (POLICY_AUTO, "Auto — agents may publish low-risk changes"),
 ]
 POLICY_ORDER = [POLICY_OFF, POLICY_SUGGEST, POLICY_DRAFT, POLICY_AUTO]
+# The page's file, as a person edits it beside the typed fields (cms/files.py):
+# `file_path` is `legacy_path` under the name a person reads.
+FILE_FIELDS = ("file_path", "front_matter")
 
 
 def _strip_ids(value):
@@ -129,6 +134,18 @@ class BasePage(AgentManagedMixin, Page):
         "agent_policy",
     )
     editor_fields: tuple[str, ...] = ()
+    # A page the Jekyll exporter writes as a file of its own also lets a person
+    # edit that file: its path in the site and its raw front matter (FILE_FIELDS,
+    # cms/files.py). Books are left out: their files are the library's (books/).
+    file_editor_fields: tuple[str, ...] = ()
+    # The front-matter keys the exporter writes from a typed field
+    # (exporters/jekyll.py's `front_matter_for`), each with the editor field that
+    # holds it: raw front matter never sets one (cms/files.py).
+    front_matter_fields: dict[str, str] = {
+        "title": "title",
+        "description": "search_description",
+        "seo_title": "seo_title",
+    }
     # Headless first: this template exists for the editor's preview only.
     template = "cms/page.html"
 
@@ -281,6 +298,14 @@ class ArticlePage(BasePage):
     subpage_types: list[str] = []
     hashed_fields = ("date", "author", "tags", "categories")
     editor_fields = ("date", "author", "tags", "categories")
+    file_editor_fields = FILE_FIELDS
+    front_matter_fields = {
+        **BasePage.front_matter_fields,
+        "date": "date",
+        "author": "author",
+        "tags": "tags",
+        "categories": "categories",
+    }
 
     content_panels = Page.content_panels + [
         MultiFieldPanel([FieldPanel("date"), FieldPanel("author"), FieldPanel("tags"), FieldPanel("categories")]),
@@ -310,6 +335,7 @@ class StandardPage(BasePage):
 
     parent_page_types = ["cms.SiteRootPage", "cms.CollectionPage", "cms.StandardPage"]
     subpage_types = ["cms.StandardPage"]
+    file_editor_fields = FILE_FIELDS
 
 
 BOOK_PROFILES = [("book", "Book"), ("abc", "ABC board book"), ("story", "Picture-book story")]

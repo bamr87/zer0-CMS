@@ -2,10 +2,12 @@
 than on it (a revision copies every page field, and this is the whole file).
 
 It is what makes the bridge exact: the exporter writes `source_text` back
-verbatim while the page's `content_hash` still equals `import_hash` — an
-unchanged page round-trips byte for byte — and the importer skips a file whose
-digest has not moved, and refuses to overwrite a page an editor changed in
-Wagtail since the last import.
+verbatim while the page is still what was imported (`unchanged`: its
+`content_hash` still equals `import_hash`, and a page whose file a person edits
+keeps the file's path and front-matter key order) — an unchanged page
+round-trips byte for byte — and the importer skips a file whose digest has not
+moved, and refuses to overwrite a page an editor changed in Wagtail since the
+last import.
 
 `ImportedRecord` is the same promise for a row that is not a page (the AI
 layer's assistants, briefs, conversations …, importers/parodynews_ai.py): a
@@ -13,7 +15,11 @@ digest of the fields the import last wrote, so a re-import leaves alone a row a
 person changed or deleted here since (`--force` aside).
 """
 
+import json
+
 from django.db import models
+
+from . import frontmatter
 
 
 class ImportedSource(models.Model):
@@ -30,6 +36,25 @@ class ImportedSource(models.Model):
 
     def __str__(self):
         return f"{self.site_key}:{self.legacy_path}"
+
+    def unchanged(self, page) -> bool:
+        """Whether `page` (the live page or a revision's) is still the file this
+        was read from: the content hash it was imported with and — for a page
+        whose file a person edits (cms/files.py) — this path and the file's
+        front-matter key order, which the hash cannot see (it sorts keys), so a
+        move or a reorder alone is never written back as the old file."""
+        if page.compute_content_hash() != self.import_hash:
+            return False
+        if not page.file_editor_fields:
+            return True
+        if page.legacy_path != self.legacy_path:
+            return False
+        source, _ = frontmatter.split(self.source_text)
+        return source is None or _in_order(page.front_matter) == _in_order(source)
+
+
+def _in_order(value) -> str:
+    return json.dumps(value, ensure_ascii=False, default=str)
 
 
 class ImportedRecord(models.Model):
