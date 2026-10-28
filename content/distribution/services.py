@@ -851,7 +851,7 @@ def request_publish(post, user, *, force: bool = False, agent: bool = False) -> 
     and comes back as it ended — failed and doubted, for a person to check before anything goes again."""
     from .tasks import publish_post
 
-    post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=post.pk)
+    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
     if agent:
         force = False
     elif not may_publish(post, user):
@@ -884,7 +884,7 @@ def deliver(post_id: int) -> DistributionPost:
     holds it, and an older one is settled (`_settle`). Whatever happens after the claim ends the attempt published
     or failed; an error nobody expected leaves the outcome unknown, so it is doubted as well."""
     with transaction.atomic():
-        post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=post_id)
+        post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post_id)
         if post.status != DistributionPost.Status.PUBLISHING:
             return post
         if post.attempted_at is not None:
@@ -1033,7 +1033,7 @@ def settle_due() -> int:
     settled = 0
     for pk in due.values_list("pk", flat=True):
         with transaction.atomic():
-            post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=pk)
+            post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=pk)
             settled += _settle(post)
     return settled
 
@@ -1185,7 +1185,7 @@ def record_by_hand(post, user, urn: str) -> DistributionPost:
     """A person found the post at the target — after an unconfirmed attempt, or one made by hand — and records it.
     Only a post a person approved: waiting, or failed (an attempt that is over without its worker saying so is
     settled first). A draft or a rejected post is not recorded as published, nor one a worker is sending now."""
-    post = DistributionPost.objects.select_for_update().select_related("channel", "issue").get(pk=post.pk)
+    post = DistributionPost.objects.select_for_update().select_related("channel").get(pk=post.pk)
     if not may_publish(post, user):
         raise PermissionDenied("recording a post is the right of someone who may publish its page")
     _settle(post)
