@@ -81,3 +81,12 @@ export type ClaimCheck = Schemas['ClaimCheck'];
 export type ClaimCheckDetail = Schemas['ClaimCheckDetail'];
 export type Verdict = Schemas['Verdict'];
 export type Calibration = Schemas['Calibration'];
+// Sites and jobs (PLAN G4).
+export type ManagedSite = Schemas['ManagedSite'];
+export type SiteDetail = Schemas['SiteDetail'];
+export type SiteCandidate = Schemas['SiteCandidate'];
+export type SiteSettings = Schemas['SiteSettings'];
+export type DoctorFinding = Schemas['DoctorFinding'];
+export type Job = Schemas['Job'];
+export type JobDetail = Schemas['JobDetail'];
+export type JobLine = Schemas['JobLine'];

@@ -196,10 +196,10 @@ class TestFrontMatterSurgery < Minitest::Test
   end
 end
 
-# Real front matter copied from the sister sites (test/fixtures/front_matter/).
+# Real front matter copied from the sister sites (content/tests/fixtures/front_matter/).
 class TestFrontMatterRealFiles < Minitest::Test
   FM = Zer0Cms::Cms::FrontMatter
-  DIR = File.expand_path("../fixtures/front_matter", __dir__)
+  DIR = File.expand_path("../../../content/tests/fixtures/front_matter", __dir__)
   SENTINEL = "zer0-sentinel"
 
   def fixture(name) = File.read(File.join(DIR, name))
@@ -252,8 +252,8 @@ class TestFrontMatterRealFiles < Minitest::Test
     assert_equal original.except("quest_dependencies", "prerequisites"), data.except("quest_dependencies")
   end
 
-  def test_zer0_mistakes_block_lists_and_typed_dates
-    text = fixture("zer0-mistakes-post.md")
+  def test_theme_docs_block_lists_and_typed_dates
+    text = fixture("theme-docs-post.md")
     doc = FM.parse(text)
     assert_same text, FM.update_keys(text, "date" => doc.raw_values["date"], "lastmod" => doc.raw_values["lastmod"])
     out = FM.update_keys(text, "tags" => %w[jekyll themes], "lastmod" => "2026-09-14T00:00:00.000Z")

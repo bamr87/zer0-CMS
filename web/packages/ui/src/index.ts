@@ -31,4 +31,7 @@ export { RevisionHistory } from './RevisionHistory';
 export { RichText, roundTrips, throughEditor, type TextFormat } from './RichText';
 export { RunList, RunStatus, RunTimeline, useLiveRun } from './RunTimeline';
 export { STATUS_OPTIONS, StatusBadge } from './StatusBadge';
+export { JobLog, JobStatus, useLiveJob } from './sites/JobLog';
+export { RegisterSite, SitesWorkspace } from './sites/SitesWorkspace';
+export { SiteView } from './sites/SiteView';
 export { SuggestionInbox } from './SuggestionInbox';

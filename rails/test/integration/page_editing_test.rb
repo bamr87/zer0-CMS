@@ -35,7 +35,7 @@ class PageEditingTest < ActionDispatch::IntegrationTest
   end
 
   test "an unchanged save of any indexed file is a byte-for-byte no-op" do
-    Dir[Rails.root.join("test/fixtures/front_matter/*.md")].each do |source|
+    Dir[Rails.root.join("../content/tests/fixtures/front_matter/*.md")].each do |source|
       write_file(@site, "pages/_docs/#{File.basename(source)}", File.binread(source))
     end
     write_file(@site, "pages/_docs/windows.md", "﻿---\r\ntitle: 'Windows'\r\ndate: 2025-09-03\r\n---\r\nBody\r\n")

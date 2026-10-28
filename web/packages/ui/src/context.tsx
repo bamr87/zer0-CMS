@@ -36,7 +36,11 @@ export type Destination =
   // The outbox desk; a trial and a claim check each have an address.
   | { to: 'outbox'; tab?: OutboxTab }
   | { to: 'trial'; id: string }
-  | { to: 'claim-check'; id: string };
+  | { to: 'claim-check'; id: string }
+  // Sites and their jobs (G4).
+  | { to: 'sites' }
+  | { to: 'site'; id: number }
+  | { to: 'job'; id: string };
 
 /**
  * Follow a server-sent event stream's named events; returns what closes it.

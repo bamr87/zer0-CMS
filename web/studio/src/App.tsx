@@ -10,12 +10,15 @@ import {
   ChapterWriter,
   ClaimCheckView,
   IdeasWorkspace,
+  JobLog,
   Newsroom,
   OutboxDesk,
   Overview,
   PageEditor,
   PageList,
   ResearchWorkspace,
+  SitesWorkspace,
+  SiteView,
   SourceView,
   StudioProvider,
   SuggestionInbox,
@@ -82,6 +85,12 @@ export function pathFor(to: Destination): string {
       return `/outbox/trials/${to.id}`;
     case 'claim-check':
       return `/outbox/claims/${to.id}`;
+    case 'sites':
+      return '/sites';
+    case 'site':
+      return `/sites/${to.id}`;
+    case 'job':
+      return `/sites/jobs/${to.id}`;
   }
 }
 
@@ -113,6 +122,9 @@ export function App({ api, stream }: { api: ApiClient; stream: OpenStream }) {
                 <Route path="outbox/:tab" element={<Outbox />} />
                 <Route path="outbox/trials/:id" element={<TrialPage />} />
                 <Route path="outbox/claims/:id" element={<ClaimCheckPage />} />
+                <Route path="sites" element={<Sites />} />
+                <Route path="sites/jobs/:id" element={<JobPage />} />
+                <Route path="sites/:id" element={<SitePage />} />
                 {AREAS.filter((area) => area.milestone).map((area) => (
                   <Route key={area.path} path={area.path.slice(1)} element={<Planned area={area} />} />
                 ))}
@@ -249,6 +261,24 @@ function TrialPage() {
 function ClaimCheckPage() {
   const { id = '' } = useParams();
   return <ClaimCheckView key={id} checkId={id} />;
+}
+
+function Sites() {
+  return (
+    <Section title="Sites">
+      <SitesWorkspace />
+    </Section>
+  );
+}
+
+function SitePage() {
+  const { id } = useParams();
+  return <SiteView key={id} siteId={Number(id)} />;
+}
+
+function JobPage() {
+  const { id = '' } = useParams();
+  return <JobLog key={id} jobId={id} />;
 }
 
 function Planned({ area }: { area: Area }) {

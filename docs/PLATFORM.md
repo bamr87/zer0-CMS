@@ -21,8 +21,8 @@ Ruby 4.0.5 (`rails/.ruby-version`), Rails 8.1.3, Administrate 1.0, propshaft, im
 rails/
   lib/zer0_cms/cms/     Catalog (Jekyll 4.4 reader rules), FrontMatter (line surgery), Writer — stdlib only
   lib/zer0_cms/abc/     the ABC book generator — stdlib only
-  lib/zer0_cms/doctor.rb  zer0 doctor, the consumer contract check — stdlib only
-  bin/zer0-cms          the CLI (ABC books, doctor) — runs without bundler
+  lib/zer0_cms/doctor.rb  the zer0.json (JSONC) reader the LinkedIn lane uses — zer0 doctor is content/sites/doctor.py since PLAN G4
+  bin/zer0-cms          the CLI (ABC books, the LinkedIn lane) — runs without bundler
   app/                  the Rails app: models, SiteSync, PageEditor, ImageEngine, dashboards, fields, views
   schema/               the ABC Book Spec
 ```

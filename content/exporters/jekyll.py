@@ -5,9 +5,14 @@ For each page under a site root, in tree order:
 - **unchanged since import** (its `content_hash` still equals the import's)
   and without bylines or corrections from the newsroom: the stored source
   file, byte for byte;
-- **changed, or created in Wagtail**: front matter + body rendered from the
-  page. The front matter is the source's, in its original key order, with the
-  typed fields written over it (title, description, seo_title, date — kept as
+- **changed since import**: the source file with only what changed rewritten
+  — the front matter by line surgery (sites/frontmatter.py: a key whose value
+  changed is rewritten in place, a new one goes in before the closing fence, a
+  dropped one goes, and comments, quoting and every other line stay as they
+  were), the body kept as it was while its blocks are the ones it was read as;
+- **created in Wagtail** (or a source the surgery cannot edit): front matter +
+  body rendered from the page. Either way the front matter is the source's, in
+  its original key order, with the typed fields written over it (title, description, seo_title, date — kept as
   the original string when the parsed date did not change —, author, tags,
   categories, book fields), and for an ABC book the `alphabet:` list rebuilt
   from its `letter` blocks, each merged into the original entry so a plate's
@@ -16,25 +21,33 @@ For each page under a site root, in tree order:
   date, kind, text) come from the newsroom, for the site to render. The body
   is the blocks as Markdown (importers/markdown.py).
 
-A page created in Wagtail gets a path from its type: an `ArticlePage` in
-`_posts` becomes `<collections_dir>/_posts/YYYY-MM-DD-<slug>.md`, anything in
-another collection `<collections_dir>/_<collection>/<slug>.md`, a page at the
-site root `<slug>.md`. Only live pages are exported unless `include_drafts`;
-an export writes into `out` and nothing else, and refuses a path that would
-leave it.
+A page keeps the file it was read from or last written to (its
+`ImportedSource`). A page created in Wagtail gets a path from its type: an
+`ArticlePage` in `_posts` becomes `<collections_dir>/_posts/YYYY-MM-DD-<slug>.md`,
+anything in another collection `<collections_dir>/_<collection>/<slug>.md`, a
+page at the site root `<slug>.md` — the slug transliterated to `a-z0-9` and
+hyphens (sites/writer.py). Only live pages are exported unless
+`include_drafts`. `site_files` lists what an export writes; `export_site`
+writes it into `out` and nothing else, refusing a path that would leave it,
+and a site's write-back writes it into the site's checkout under the
+stale-write guard (sites/services.py).
 """
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import yaml
 from wagtail.models import Page
 
 from cms.models import ArticlePage, BookPage, ChapterPage, CollectionPage, SiteRootPage
 from importers import frontmatter
-from importers.markdown import from_blocks
+from importers.markdown import from_blocks, to_blocks
 from importers.models import ImportedSource
 from newsroom.services import front_matter_for as newsroom_front_matter
 from newsroom.services import with_front_matter as with_newsroom_front_matter
+from sites import frontmatter as surgery
+from sites.writer import slugify
 
 
 @dataclass
@@ -63,10 +76,10 @@ def path_for(page, root: SiteRootPage) -> str:
     if isinstance(parent, CollectionPage):
         folder = "/".join(p for p in (base, f"_{parent.collection}") if p)
         if isinstance(page, ArticlePage) and parent.collection == "posts" and page.date:
-            return f"{folder}/{page.date:%Y-%m-%d}-{page.slug}.md"
+            return f"{folder}/{page.date:%Y-%m-%d}-{_file_slug(page)}.md"
         if isinstance(page, BookPage):
-            return f"{folder}/{page.slug}/index.md"
-        return f"{folder}/{page.slug}.md"
+            return f"{folder}/{_file_slug(page)}/index.md"
+        return f"{folder}/{_file_slug(page)}.md"
     if isinstance(page, ChapterPage) and parent.legacy_path:
         return str(Path(parent.legacy_path).parent / f"{page.slug}.md")
     return f"{page.slug}.md"
@@ -138,16 +151,52 @@ def _as_list(value):
     return list(value or [])
 
 
-def render(page) -> str:
-    leading = "\n" if any(b.block_type != "letter" for b in page.body) else ""
-    body = from_blocks(list(page.body.get_prep_value()), leading=leading or "\n")
-    return frontmatter.join(front_matter_for(page), body)
+def _file_slug(page) -> str:
+    return slugify(page.slug) or page.slug
 
 
-def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:
+def render(page, source_text: str | None = None) -> str:
+    """The page as a Jekyll file: over `source_text` (the file it was read from)
+    when there is one, else from scratch."""
+    blocks = list(page.body.get_prep_value())
+    fm = front_matter_for(page)
+    leading = "\n" if any(b["type"] != "letter" for b in blocks) else ""
+    if source_text is not None:
+        try:
+            return _render_over(source_text, fm, blocks, leading or "\n")
+        except (surgery.EditError, yaml.YAMLError):
+            pass  # a front matter the surgery cannot place: the whole file is rendered instead
+    return frontmatter.join(fm, from_blocks(blocks, leading=leading or "\n"))
+
+
+def _render_over(source_text: str, fm: dict, blocks: list, leading: str) -> str:
+    original, _ = frontmatter.split(source_text)
+    original = original or {}
+    changes = {key: value for key, value in fm.items() if key not in original or original[key] != value}
+    changes.update({key: None for key in original if key not in fm})
+    text = surgery.update_keys(source_text, changes)
+    _, body = frontmatter.split(text)
+    mine = [(b["type"], b["value"]) for b in blocks if b["type"] != "letter"]
+    if mine == [(b["type"], b["value"]) for b in to_blocks(body)]:
+        return text
+    return text[: len(text) - len(body)] + from_blocks(blocks, leading=leading)
+
+
+@dataclass
+class File:
+    """One file an export writes: where, what, and which page it is."""
+
+    rel: str
+    text: str
+    page: Page
+    rendered: Page  # what was rendered: the live page, or its latest revision
+    source: ImportedSource | None
+    verbatim: bool
+
+
+def site_files(site_key: str, *, include_drafts=False, report: ExportReport | None = None) -> Iterator[File]:
+    """Every file an export of the site writes, in tree order."""
     root = SiteRootPage.objects.get(site_key=site_key)
-    out = Path(out).resolve()
-    report = ExportReport(site_key=site_key)
     pages = Page.objects.descendant_of(root).specific().order_by("path")
     sources = {s.page_id: s for s in ImportedSource.objects.filter(site_key=site_key)}
     newsroom_pages = with_newsroom_front_matter()
@@ -155,21 +204,29 @@ def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:
         if isinstance(page, CollectionPage):
             continue
         if not page.live and not include_drafts:
-            report.skipped.append(f"{page.url_path} (not live)")
+            if report is not None:
+                report.skipped.append(f"{page.url_path} (not live)")
             continue
         current = page.get_latest_revision_as_object() if include_drafts else page
-        rel = path_for(current, root)
-        target = (out / rel).resolve()
-        if not str(target).startswith(str(out) + "/"):
-            report.skipped.append(f"{rel} (outside the export directory)")
-            continue
         source = sources.get(page.pk)
-        target.parent.mkdir(parents=True, exist_ok=True)
+        rel = source.legacy_path if source is not None else path_for(current, root)
         unchanged = source is not None and current.compute_content_hash() == source.import_hash
         if unchanged and page.pk not in newsroom_pages:
-            target.write_text(source.source_text, encoding="utf-8")
-            report.verbatim.append(rel)
+            yield File(rel, source.source_text, page, current, source, verbatim=True)
         else:
-            target.write_text(render(current), encoding="utf-8")
-            report.rendered.append(rel)
+            text = render(current, source.source_text if source is not None else None)
+            yield File(rel, text, page, current, source, verbatim=False)
+
+
+def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:
+    out = Path(out).resolve()
+    report = ExportReport(site_key=site_key)
+    for file in site_files(site_key, include_drafts=include_drafts, report=report):
+        target = (out / file.rel).resolve()
+        if not str(target).startswith(str(out) + "/"):
+            report.skipped.append(f"{file.rel} (outside the export directory)")
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(file.text, encoding="utf-8")
+        (report.verbatim if file.verbatim else report.rendered).append(file.rel)
     return report

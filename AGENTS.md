@@ -92,7 +92,7 @@ node verify/runner.mjs --only studio-create-page,studio-accept-suggestion,studio
 # ── Workspace and docs (Python 3.9+ and PyYAML, nothing else) ──
 python3 -m venv .venv && .venv/bin/pip install pyyaml   # once, where python3 lacks PyYAML; bin/zer0 then runs on .venv
 bin/zer0 list && bin/zer0 check && bin/zer0 tags       # projects; registry, paths, workflows and vendored copies agree; release tags
-bin/zer0 doctor                                        # zer0 doctor over every in-repo site (runs rails/bin/zer0-cms: needs Ruby until G4)
+bin/zer0 doctor                                        # zer0 doctor over every in-repo site (content/sites/doctor.py; needs PyYAML and jsonschema)
 .venv/bin/python -m unittest discover tools/workspace  # the tool's tests, with the golden replay of its Ruby predecessor
 python3 tools/check-config-docs.py            # generated docs current: CONFIG.md §5 + the docs indexes (--write regenerates)
 python3 tools/docs_index.py --lint            # every indexed doc has one H1 and a summary line

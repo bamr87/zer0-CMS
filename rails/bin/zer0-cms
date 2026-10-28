@@ -1,10 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# zer0-cms — headless CLI for the ABC content engine and the zer0 doctor.
+# zer0-cms — headless CLI for the ABC content engine and the LinkedIn lane.
 #
-#   bin/zer0-cms doctor PATH [--format text|findings] [--schema FILE]
-#                                             # zer0 stack alignment; exit 1 on any error
 #   bin/zer0-cms styles                       # list ABC art styles
 #   bin/zer0-cms themes                       # list bundled A–Z lexicons
 #   bin/zer0-cms new --theme "IT systems" \
@@ -13,7 +11,8 @@
 #   bin/zer0-cms linkedin status --site PATH  # LinkedIn distribution (see `linkedin --help`)
 #
 # Pure stdlib — no bundler needed. The web wizard (Rails) drives the same
-# Zer0Cms::Abc::Wizard + JekyllExporter this CLI drives.
+# Zer0Cms::Abc::Wizard + JekyllExporter this CLI drives. zer0 doctor is the
+# platform's since PLAN G4: `cd content && python -m sites.doctor PATH`.
 
 require "optparse"
 require_relative "../lib/zer0_cms"
@@ -28,7 +27,6 @@ module Zer0Cms
       when "styles" then styles
       when "themes" then themes
       when "new"    then new_book(argv)
-      when "doctor" then doctor(argv)
       when "linkedin" then Distribution::CLI.main(argv)
       when nil, "-h", "--help", "help" then usage
       else
@@ -111,31 +109,6 @@ module Zer0Cms
       0
     end
 
-    # zer0 stack alignment for one content repository (RFC §4). Exit 0 when
-    # there are no errors, 1 when there are, 2 on bad usage.
-    def doctor(argv)
-      opts = { format: "text" }
-      parser = OptionParser.new do |o|
-        o.banner = "Usage: zer0-cms doctor PATH [--format text|findings] [--schema FILE]"
-        o.on("--format FORMAT", %w[text findings], "text (default) or findings (JSONL)") { |v| opts[:format] = v }
-        o.on("--schema FILE", "front-matter schema (default: the site's own, else the vendored theme copy)") { |v| opts[:schema] = v }
-      end
-      parser.parse!(argv)
-      path = argv.shift
-      unless path && File.directory?(path) && argv.empty?
-        warn parser.banner
-        return 2
-      end
-
-      report = Doctor.run(path, schema: opts[:schema])
-      text = opts[:format] == "findings" ? Doctor.to_jsonl(report) : Doctor.to_text(report)
-      puts text unless text.empty?
-      report.ok? ? 0 : 1
-    rescue OptionParser::ParseError => e
-      warn "error: #{e.message}"
-      2
-    end
-
     def usage
       puts <<~USAGE
         zer0-cms — ABC content engine
@@ -144,8 +117,6 @@ module Zer0Cms
           styles                 list the ABC illustration styles
           themes                 list the bundled A–Z lexicons
           new --theme THEME ...  generate a book and export it to a Jekyll site
-          doctor PATH            check a site against the zer0 stack contract
-                                 [--format text|findings] [--schema FILE]
           linkedin COMMAND       LinkedIn distribution: draft, approve, preview,
                                  publish, statistics (`zer0-cms linkedin --help`)
 

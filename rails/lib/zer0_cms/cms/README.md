@@ -10,7 +10,7 @@ The read/write layer the Rails app drives. Stdlib only — no gems — so `bin/t
 
 ## Proving it on real sites
 
-- `ruby bin/jekyll-parity SITE` diffs the catalog against Jekyll's own reader and exits 1 on any difference. It needs the jekyll gem, so it is not part of `bin/test-stdlib`; `--json` prints the lists committed as `test/fixtures/*.expected.json`, which the stdlib test asserts without Jekyll.
+- `ruby bin/jekyll-parity SITE` diffs the catalog against Jekyll's own reader and exits 1 on any difference. It needs the jekyll gem, so it is not part of `bin/test-stdlib`; `--json` prints the lists committed as `content/tests/fixtures/*.expected.json`, which this stdlib test and the platform's Python port (`content/sites/catalog.py`, PLAN G4) both assert without Jekyll.
 - `ruby bin/front-matter-roundtrip SITE...` runs the `update_keys` round-trip property over every catalogued file of one or more sites, read-only: an update with the parsed values is a byte no-op, and re-emitting each key reads back unchanged without moving any other line.
 
 Keep the front-matter contract aligned with the extension's `src/core/content/serialize.ts`: dates stay strings, comments survive, a missing key goes in before the closing fence. Where the extension hand-rolls a YAML subset, this port takes each key's line range from Psych's node marks — the parser Jekyll itself reads front matter with — so the two cannot disagree about where a value ends.

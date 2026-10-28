@@ -1268,6 +1268,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/jobs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The jobs the caller may see, newest first */
+        get: operations["jobs_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["jobs_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/artifacts/{name}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One artifact of a job, as its media type */
+        get: operations["jobs_artifact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/cancel/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a queued job, or ask a running one to stop */
+        post: operations["jobs_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/jobs/{public_id}/stream/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A job's log as server-sent events
+         * @description `line` events (a JobLine) as the job writes them, then one `status` event and `end`.
+         */
+        get: operations["jobs_stream"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/me": {
         parameters: {
             query?: never;
@@ -2447,6 +2534,134 @@ export interface paths {
         };
         get: operations["sites_list"];
         put?: never;
+        /** Register a site from its checkout; its first sync starts */
+        post: operations["sites_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sites_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a site's content source, renderer, domains or deploy target */
+        patch: operations["sites_update"];
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/doctor/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the site's checkout with zer0 doctor (a job)
+         * @description POST: start this view's kind of job for the site (202 with the job).
+         */
+        post: operations["sites_doctor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/export/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write the site's pages back into its checkout, under the stale-write guard (a job)
+         * @description POST: start this view's kind of job for the site (202 with the job).
+         */
+        post: operations["sites_export"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/findings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The last doctor run's findings */
+        get: operations["sites_findings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/settings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sites_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["sites_settings_update"];
+        trace?: never;
+    };
+    "/api/v2/sites/{id}/sync/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync the site's files into the platform (a job)
+         * @description POST: start this view's kind of job for the site (202 with the job).
+         */
+        post: operations["sites_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/sites/discover/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Checkouts that could be registered: workspace.yml's sites and the Jekyll roots under SITES_DIR */
+        get: operations["sites_discover"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -2755,6 +2970,8 @@ export interface components {
             /** @description The installed outbox harness's version. */
             harness: string;
         };
+        /** @enum {unknown} */
+        BlankEnum: "";
         Block: {
             /** @description Absent on a block that is new in this request. */
             id?: string;
@@ -3318,6 +3535,12 @@ export interface components {
             name: string;
             description?: string;
         };
+        /**
+         * @description * `files` - files — people still edit the site's files; sync brings them in
+         *     * `platform` - platform — the platform is the source; the files are generated
+         * @enum {string}
+         */
+        ContentSourceEnum: "files" | "platform";
         Context: {
             /** @description The request a task's model would be given, without calling it. */
             text: string;
@@ -3427,6 +3650,15 @@ export interface components {
             /** Format: uuid */
             pipeline?: string | null;
         };
+        DoctorFinding: {
+            check_id: string;
+            severity: components["schemas"]["IssueLevelEnum"];
+            file: string;
+            line: number | null;
+            rule: string;
+            evidence: string;
+            fingerprint: string;
+        };
         Document: {
             /** @description Inside the book, e.g. guides/act-1-chapters-01-05.md. */
             path: string;
@@ -3471,6 +3703,17 @@ export interface components {
         };
         ErrorEnvelope: {
             error: components["schemas"]["Error"];
+        };
+        ExportOptionsRequest: {
+            /**
+             * @description Write the latest revisions, not the live pages.
+             * @default false
+             */
+            include_drafts: boolean;
+            /** @description {path: sha256} as the caller saw each file; a file the platform re-indexed since is not written. */
+            base?: {
+                [key: string]: string;
+            };
         };
         /** @description `status` and `error`, from the run that fills the row. */
         FactCheck: {
@@ -3828,6 +4071,97 @@ export interface components {
             /** @description Its stories, in order. */
             story_ids?: string[];
         };
+        /**
+         * @description * `github-pages` - GitHub Pages' builder
+         *     * `jekyll-4` - the pinned Jekyll 4 image
+         * @enum {string}
+         */
+        JekyllServerEnum: "github-pages" | "jekyll-4";
+        Job: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description The handler that runs it: sync, export, doctor, … */
+            kind: string;
+            status: components["schemas"]["JobStatusEnum"];
+            /** @description It has ended: succeeded, failed or cancelled. */
+            is_final: boolean;
+            /** @description The Wagtail site it works on. */
+            site: number | null;
+            params?: unknown;
+            /** @description Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
+            readonly created_by: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            started_at?: string | null;
+            /** Format: date-time */
+            finished_at?: string | null;
+            cancel_requested?: boolean;
+            /** @description What the handler reports when it ends. */
+            result?: unknown;
+            error?: string;
+            artifacts: components["schemas"]["JobArtifact"][];
+        };
+        JobAccepted: {
+            job: components["schemas"]["Job"];
+        };
+        JobArtifact: {
+            name: string;
+            media_type?: string;
+            /** @description Characters. */
+            readonly size: number;
+        };
+        JobDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            /** @description The handler that runs it: sync, export, doctor, … */
+            kind: string;
+            status: components["schemas"]["JobStatusEnum"];
+            /** @description It has ended: succeeded, failed or cancelled. */
+            is_final: boolean;
+            /** @description The Wagtail site it works on. */
+            site: number | null;
+            params?: unknown;
+            /** @description Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
+            readonly created_by: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            started_at?: string | null;
+            /** Format: date-time */
+            finished_at?: string | null;
+            cancel_requested?: boolean;
+            /** @description What the handler reports when it ends. */
+            result?: unknown;
+            error?: string;
+            artifacts: components["schemas"]["JobArtifact"][];
+            /** @description The whole log so far, in order. */
+            lines: components["schemas"]["JobLine"][];
+        };
+        JobLine: {
+            /** Format: int64 */
+            idx: number;
+            /** Format: date-time */
+            readonly at: string;
+            level?: components["schemas"]["JobLineLevelEnum"];
+            text: string;
+        };
+        /**
+         * @description * `info` - info
+         *     * `warning` - warning
+         *     * `error` - error
+         * @enum {string}
+         */
+        JobLineLevelEnum: "info" | "warning" | "error";
+        /**
+         * @description * `queued` - Queued
+         *     * `running` - Running
+         *     * `succeeded` - Succeeded
+         *     * `failed` - Failed
+         *     * `cancelled` - Cancelled
+         * @enum {string}
+         */
+        JobStatusEnum: "queued" | "running" | "succeeded" | "failed" | "cancelled";
         Journey: {
             trace: string;
             messages: components["schemas"]["Handoff"][];
@@ -3856,6 +4190,37 @@ export interface components {
         LoginRequest: {
             username: string;
             password: string;
+        };
+        ManagedSite: {
+            /** @description The site key its pages were imported under (SiteRootPage.site_key). */
+            key: string;
+            /** @description The site's file tree (its Jekyll root): relative to the repository when inside it, else absolute. */
+            checkout: string;
+            content_source?: components["schemas"]["ContentSourceEnum"];
+            render?: components["schemas"]["SiteRenderEnum"];
+            /** @description The Jekyll-theme option: the theme's tag. */
+            theme_tag?: string;
+            /**
+             * @description The Jekyll-theme option: what builds it.
+             *
+             *     * `github-pages` - GitHub Pages' builder
+             *     * `jekyll-4` - the pinned Jekyll 4 image
+             */
+            server?: components["schemas"]["JekyllServerEnum"] | components["schemas"]["BlankEnum"];
+            /** @description The host names it is published at. */
+            domains: string[];
+            /** @description Where its build goes: a Pages route (`/drsai/`), a repository, a host. */
+            deploy_target?: string;
+            /** Format: date-time */
+            last_synced_at?: string | null;
+            /** Format: date-time */
+            last_exported_at?: string | null;
+            /** Format: date-time */
+            last_doctor_at?: string | null;
+            /** @description Errors in the last doctor run. */
+            readonly errors: number;
+            /** @description Warnings in the last doctor run. */
+            readonly warnings: number;
         };
         Manuscript: {
             filename: string;
@@ -3961,6 +4326,14 @@ export interface components {
             go_live_at?: string | null;
             /** @description To corrected or updated: the note. */
             text?: string;
+        };
+        NavigationItem: {
+            label: string;
+            url: string;
+        };
+        NavigationItemRequest: {
+            label: string;
+            url: string;
         };
         NewBookRequest: {
             title: string;
@@ -4069,6 +4442,12 @@ export interface components {
             schema: unknown;
             /** @description A Django template that turns a result into Markdown; empty renders generically. */
             render_template?: string;
+        };
+        PageCounts: {
+            total: number;
+            live: number;
+            /** @description Never published, or with changes not yet published. */
+            drafts: number;
         };
         PageCreateRequest: {
             parent: number;
@@ -4383,6 +4762,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Issue"][];
+        };
+        PaginatedJobList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Job"][];
         };
         PaginatedMessageList: {
             /**
@@ -4812,6 +5204,49 @@ export interface components {
             /** @description Where in the source: a page, a paragraph. */
             location?: string;
         };
+        PatchedSiteSettingsRequest: {
+            /** @description Appended to every page title. */
+            seo_title_suffix?: string;
+            /** @description The description a page without its own gets. */
+            seo_description?: string;
+            /** @description The social image a page without its own gets. */
+            seo_image?: string;
+            /** @description Ask search engines not to index the site. */
+            noindex?: boolean;
+            /** @description Google Analytics 4, e.g. G-XXXXXXX. */
+            ga4_measurement_id?: string;
+            /** @description Search Console's property. */
+            search_console_property?: string;
+            navigation?: components["schemas"]["NavigationItemRequest"][];
+            /** @description How the site writes; AI help reads it. */
+            brand_voice?: string;
+            /** @description The design's skin. */
+            skin?: string;
+            design_tokens?: {
+                [key: string]: string;
+            };
+            /**
+             * Format: decimal
+             * @description What AI work for the site may spend a month.
+             */
+            monthly_budget_usd?: string | null;
+        };
+        PatchedSiteUpdateRequest: {
+            content_source?: components["schemas"]["ContentSourceEnum"];
+            render?: components["schemas"]["SiteRenderEnum"];
+            /** @description The Jekyll-theme option: the theme's tag. */
+            theme_tag?: string;
+            /**
+             * @description The Jekyll-theme option: what builds it.
+             *
+             *     * `github-pages` - GitHub Pages' builder
+             *     * `jekyll-4` - the pinned Jekyll 4 image
+             */
+            server?: components["schemas"]["JekyllServerEnum"] | components["schemas"]["BlankEnum"];
+            domains?: string[];
+            /** @description Where its build goes: a Pages route (`/drsai/`), a repository, a host. */
+            deploy_target?: string;
+        };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
          *     sees it — `site` and `visibility`; anyone else's change to either is refused (403).
@@ -5091,6 +5526,17 @@ export interface components {
             /** @description Where in the source: a page, a paragraph. */
             location?: string;
         };
+        RegisterSiteRequest: {
+            /** @description The site's Jekyll root, relative to the repository or absolute under SITES_DIR. */
+            checkout: string;
+            /** @description Defaults to its name. */
+            key?: string;
+        };
+        RegisteredSite: {
+            site: components["schemas"]["Site"];
+            /** @description Its first sync, queued. */
+            job: components["schemas"]["Job"];
+        };
         RerunRequest: {
             /** Format: uuid */
             assistant?: string;
@@ -5343,6 +5789,68 @@ export interface components {
             port: number;
             is_default: boolean;
             root_page_id: number;
+            /** @description The platform's registry entry, or null for a site it does not manage. */
+            managed?: components["schemas"]["ManagedSite"] | null;
+            /** @description The caller may sync, write back and configure it. */
+            can_manage?: boolean;
+        };
+        SiteCandidate: {
+            key: string;
+            checkout: string;
+            render: string;
+            theme_tag: string;
+            server: string;
+            deploy_target: string;
+        };
+        SiteDetail: {
+            id: number;
+            name: string;
+            hostname: string;
+            port: number;
+            is_default: boolean;
+            root_page_id: number;
+            /** @description The platform's registry entry, or null for a site it does not manage. */
+            managed?: components["schemas"]["ManagedSite"] | null;
+            /** @description The caller may sync, write back and configure it. */
+            can_manage?: boolean;
+            pages: components["schemas"]["PageCounts"];
+            /** @description Content files the platform has read from or written to its checkout. */
+            files: number;
+            /** @description Its latest jobs, newest first. */
+            jobs: components["schemas"]["Job"][];
+        };
+        /**
+         * @description * `react` - the React renderer
+         *     * `jekyll-theme` - the Jekyll-theme option
+         * @enum {string}
+         */
+        SiteRenderEnum: "react" | "jekyll-theme";
+        SiteSettings: {
+            /** @description Appended to every page title. */
+            seo_title_suffix?: string;
+            /** @description The description a page without its own gets. */
+            seo_description?: string;
+            /** @description The social image a page without its own gets. */
+            seo_image?: string;
+            /** @description Ask search engines not to index the site. */
+            noindex?: boolean;
+            /** @description Google Analytics 4, e.g. G-XXXXXXX. */
+            ga4_measurement_id?: string;
+            /** @description Search Console's property. */
+            search_console_property?: string;
+            navigation?: components["schemas"]["NavigationItem"][];
+            /** @description How the site writes; AI help reads it. */
+            brand_voice?: string;
+            /** @description The design's skin. */
+            skin?: string;
+            design_tokens?: {
+                [key: string]: string;
+            };
+            /**
+             * Format: decimal
+             * @description What AI work for the site may spend a month.
+             */
+            monthly_budget_usd?: string | null;
         };
         /**
          * @description A row people work on together: the editors of its site change it, but only its owner (or staff) changes who
@@ -5741,6 +6249,13 @@ export interface components {
         SuggestionDecisionRequest: {
             with?: number[];
             reason?: string;
+        };
+        SyncOptionsRequest: {
+            /**
+             * @description Take a changed file over a page changed here since (else a conflict).
+             * @default false
+             */
+            force: boolean;
         };
         Target: {
             type: components["schemas"]["TargetTypeEnum"];
@@ -12185,6 +12700,397 @@ export interface operations {
             };
         };
     };
+    jobs_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description sync, export, doctor, … */
+                kind?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description A Wagtail site id: that site's jobs. */
+                site?: number;
+                /**
+                 * @description * `queued` - Queued
+                 *     * `running` - Running
+                 *     * `succeeded` - Succeeded
+                 *     * `failed` - Failed
+                 *     * `cancelled` - Cancelled
+                 */
+                status?: "cancelled" | "failed" | "queued" | "running" | "succeeded";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedJobList"];
+                };
+            };
+        };
+    };
+    jobs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    jobs_artifact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    jobs_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    jobs_stream: {
+        parameters: {
+            query?: {
+                /** @description Send only lines after this index. */
+                after?: number;
+                format?: "event-stream" | "json";
+                /** @description Seconds to hold the stream (at most 300). */
+                timeout?: number;
+            };
+            header?: never;
+            path: {
+                public_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                    "text/event-stream": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     me: {
         parameters: {
             query?: never;
@@ -16817,6 +17723,895 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Site"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterSiteRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RegisterSiteRequest"];
+                "multipart/form-data": components["schemas"]["RegisterSiteRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisteredSite"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSiteUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSiteUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteDetail"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_doctor: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_export: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExportOptionsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ExportOptionsRequest"];
+                "multipart/form-data": components["schemas"]["ExportOptionsRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_findings: {
+        parameters: {
+            query?: {
+                /** @description config, image-engine, cms, fleet, distribution or content. */
+                check?: string;
+                severity?: "error" | "warning";
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorFinding"][];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_settings_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSiteSettingsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteSettingsRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSiteSettingsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_sync: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send the same key again (within a day, same request) to get the first answer instead of a new run. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SyncOptionsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SyncOptionsRequest"];
+                "multipart/form-data": components["schemas"]["SyncOptionsRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sites_discover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteCandidate"][];
                 };
             };
             401: {

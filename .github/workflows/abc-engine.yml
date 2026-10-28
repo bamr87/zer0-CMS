@@ -23,11 +23,19 @@ on:
   pull_request:
     paths:
       - "rails/**"
+      # The catalog's parity fixtures and the front-matter fixtures (moved there in PLAN G4).
+      - "content/tests/fixtures/jekyll-site*/**"
+      - "content/tests/fixtures/jekyll-site*.expected.json"
+      - "content/tests/fixtures/front_matter/**"
       - ".github/workflows/abc-engine.yml"
   push:
     branches: [main]
     paths:
       - "rails/**"
+      # The catalog's parity fixtures and the front-matter fixtures (moved there in PLAN G4).
+      - "content/tests/fixtures/jekyll-site*/**"
+      - "content/tests/fixtures/jekyll-site*.expected.json"
+      - "content/tests/fixtures/front_matter/**"
       - ".github/workflows/abc-engine.yml"
 
 permissions:

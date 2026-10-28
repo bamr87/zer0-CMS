@@ -25,8 +25,7 @@ The generator is **stdlib-only Ruby** — the CLI and the tests run without `bun
 cd rails
 ruby bin/zer0-cms styles                      # list ABC art styles
 ruby bin/zer0-cms themes                      # list bundled A–Z lexicons
-./bin/test-stdlib                             # ABC + catalog + front-matter + writer + doctor, no bundler
-ruby bin/zer0-cms doctor ../../lifehacker.dev  # zer0 stack alignment (RFC §4); exit 1 on any error
+./bin/test-stdlib                             # ABC + catalog + front-matter + writer + LinkedIn lane, no bundler
 ruby bin/jekyll-parity ../../lifehacker.dev    # catalog vs Jekyll's own reader (needs the jekyll gem)
 
 # Draft the toddler "IT systems" book (A is for Automation) into the monorepo's sites/drsai:
@@ -39,7 +38,7 @@ ruby bin/zer0-cms new --theme "the ocean" --art-style watercolor-storybook --pri
 
 Bundled themes (`ruby bin/zer0-cms themes`) generate **offline and deterministically**. Any other theme falls back to Claude and needs `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`.
 
-`./bin/test-stdlib` is exactly what CI runs in `.github/workflows/abc-engine.yml` — no `bundle install`, on Ruby 3.3 and 4.0.5, triggered only by a change under `rails/`. The app half is `.github/workflows/rails-app.yml`. Platform contract: [`docs/PLATFORM.md`](../docs/PLATFORM.md). Stack contract and the reusable doctor workflow: [`docs/ZER0-STACK.md`](../docs/ZER0-STACK.md). Pipeline: [`docs/CICD.md`](../docs/CICD.md).
+`./bin/test-stdlib` is exactly what CI runs in `.github/workflows/abc-engine.yml` — no `bundle install`, on Ruby 3.3 and 4.0.5, triggered only by a change under `rails/`. The app half is `.github/workflows/rails-app.yml`. Platform contract: [`docs/PLATFORM.md`](../docs/PLATFORM.md). Stack contract and the reusable doctor workflow: [`docs/ZER0-STACK.md`](../docs/ZER0-STACK.md) — `zer0 doctor` is the platform's since PLAN G4 (`content/sites/doctor.py`), and so are the catalog, the front-matter surgery and the confined writer (`content/sites/`); the Ruby ones below stay while this app and the LinkedIn lane run on them (G11, G5). Pipeline: [`docs/CICD.md`](../docs/CICD.md).
 
 ## The web platform (Rails)
 
@@ -89,11 +88,11 @@ Custom Administrate fields live in `app/fields` + `app/views/fields`: `MarkdownF
 | Art styles | `lib/zer0_cms/abc/art_styles.rb` + `data/abc_art_styles.yml` | Style catalog + text-free prompt composition |
 | Wizard | `lib/zer0_cms/abc/wizard.rb` | theme → plan → art direction → per-letter → cover → validated Spec |
 | Exporter | `lib/zer0_cms/abc/jekyll_exporter.rb` | Spec → `pages/_books/<slug>/index.md` + `_data/abc_books/<slug>.json` |
-| CLI | `bin/zer0-cms` | Headless ABC driver and `doctor PATH [--format text\|findings] [--schema FILE]` |
+| CLI | `bin/zer0-cms` | Headless ABC driver and the LinkedIn lane (`linkedin`) |
 | CMS primitives | `lib/zer0_cms/cms/` | Catalog (Jekyll 4.4 reader rules), front-matter line surgery, confined writer — stdlib; see [`lib/zer0_cms/cms/README.md`](lib/zer0_cms/cms/README.md) |
-| Doctor | `lib/zer0_cms/doctor.rb` | The consumer contract check: theme, image engine, `zer0.json`, `fleet.manifest.yml`, front matter against the theme's schema; findings in lifehacker.dev's `findings.jsonl` shape |
+| JSONC reader | `lib/zer0_cms/doctor.rb` | What is left of the Ruby doctor (PLAN G4 moved the doctor to `content/sites/doctor.py`): `Zer0Cms::Doctor::Jsonc`, which the LinkedIn lane reads `zer0.json` with until G5 |
 | Event contract | `lib/zer0_cms/events.rb` | This plane's half of the event contract with the content plane: CloudEvents envelopes (`app.user.interaction`) and a validator for the shared `schemas/events/` (contract test: `test/zer0_cms/test_event_contracts.rb`). The outbox and consumers on top of it are milestone M16 |
-| Parity proofs | `bin/jekyll-parity`, `bin/front-matter-roundtrip`, `test/fixtures/` | The catalog diffed against Jekyll's reader; the front-matter round-trip property over real sites |
+| Parity proofs | `bin/jekyll-parity`, `bin/front-matter-roundtrip`, `../content/tests/fixtures/` | The catalog diffed against Jekyll's reader; the front-matter round-trip property over real sites |
 | Web | `app/` + `config/` + `db/` | Fleet CMS on Administrate: `Site`/`Page`/`Asset`/`Term` index, `SiteSync`, `PageEditor`, custom fields, the ABC wizard |
 | Image engine | `app/services/image_engine.rb` | The only file that loads or runs zer0-image-generator: `Zer0ImageGenerator::Facade` when the bundled gem ships it, else the released 0.6.0 gem's Python engine as a confined subprocess |
 | Container | `Dockerfile`, `bin/docker-entrypoint`, `../docker-compose.yml` | The production image and the `cms` service; the `imagegen` profile runs zer0-image-generator beside it |
@@ -106,7 +105,6 @@ Custom Administrate fields live in `app/fields` + `app/views/fields`: `MarkdownF
 - **`schema/abc-book.schema.json`** — the ABC Book Spec, the interchange format consumed by drsai.
 - **`lib/zer0_cms/data/abc_art_styles.yml`** — a **byte-identical vendored copy**
 of the source of truth in [zer0-image-generator](https://github.com/bamr87/zer0-image-generator) (`lib/zer0_image_generator/abc/art_styles.yml`). Each art-style `id` is a cross-repo contract (drsai front matter + the theme's CSS skin). Re-sync the copy whenever the gem's catalog changes.
-- **`lib/zer0_cms/data/frontmatter_schema.yml`** — a **byte-identical vendored copy** of the theme's front-matter contract, [zer0-mistakes](https://github.com/bamr87/zer0-mistakes) `.github/config/frontmatter_schema.yml`; the source commit is recorded in [`lib/zer0_cms/data/README.md`](lib/zer0_cms/data/README.md). `doctor` prefers a site's own copy, and `--schema FILE` over both.
 
 ## Conventions
 

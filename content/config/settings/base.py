@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     "ideas",
     "newsroom",
     "books",
+    "sites",
+    "jobs",
     "suggestions",
     "graph",
     "workflow",
@@ -282,6 +284,10 @@ SPECTACULAR_SETTINGS = {
         "SendableKindEnum": "outboxdesk.services.SENDABLE",
         "ClaimVerdictEnum": "outboxdesk.serializers.VERDICTS",
         "OutboxRunStatusEnum": "outboxdesk.models.Status",
+        "JobStatusEnum": "jobs.models.Job.Status",
+        "ContentSourceEnum": "sites.models.ManagedSite.ContentSource",
+        "SiteRenderEnum": "sites.models.ManagedSite.Render",
+        "JekyllServerEnum": "sites.models.ManagedSite.Server",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }
@@ -367,6 +373,12 @@ AI_CREDENTIAL_KEYS = env.list("AI_CREDENTIAL_KEYS", default=[])
 # decides its permanent home — and the site key of the site root they live under.
 BOOKS_LIBRARY_DIR = Path(env("BOOKS_LIBRARY_DIR", default=str(REPO_ROOT / "packages" / "books" / "library")))
 BOOKS_SITE_KEY = env("BOOKS_SITE_KEY", default="library")
+
+# ── Sites (sites/README.md) ─────────────────────────────────────────────────
+# Where checkouts outside this repository may be registered from (one or two
+# levels down, as the Rails fleet CMS discovered them); unset, only the
+# repository's own sites can be.
+SITES_DIR = env("SITES_DIR", default="")
 
 # ── The graph (graph/README.md) ─────────────────────────────────────────────
 # EMBEDDING_BACKEND: hashing (offline, deterministic) | litellm (or any provider that embeds)

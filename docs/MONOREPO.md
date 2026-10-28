@@ -72,11 +72,11 @@ It also writes the affected projects and a report-only `zer0 doctor` of every si
 
 **4. Vendored copies are a checked contract.** Some files must exist twice. The Rails app is its own Docker build context, `rails/lib` loads no gem, and several projects call `tools/unwrap-prose.py` by a project-relative path. `workspace.yml` lists each copy under `vendored:` with its single source and the reason the copy exists. `bin/zer0 vendor --write` re-copies, and `bin/zer0 check` fails CI on drift. The import found a real case: the CMS's `zer0-tokens.css` was still kit `1.0.0` while the image generator had shipped `1.0.1` (`--maxw` 1180px → 1320px). It is re-vendored here.
 
-**5. The CMS manages the repository's own sites.** Every project with a `site:` root is a zer0 site, and `bin/zer0 doctor` runs the CMS's `zer0 doctor` (`rails/bin/zer0-cms`, stdlib Ruby until PLAN G4 ports it to the platform; where there is no Ruby, `bin/zer0 doctor` says so) against each. Docker Compose now mounts this repository as `SITES_DIR` by default, so `docker compose up --build` shows the in-repo sites, two levels down (`/sites/sites/drsai`), with no setup. `SITES_DIR=~/github` still points it at a wider fleet. The sites build with the Jekyll-theme option, the theme pinned by tag, so a theme release reaches a site only when its `render:` setting moves to it, with its recording re-made and the reason said.
+**5. The CMS manages the repository's own sites.** Every project with a `site:` root is a zer0 site, and `bin/zer0 doctor` runs the platform's `zer0 doctor` (`content/sites/doctor.py`, Python since PLAN G4; it needs PyYAML and jsonschema and says so when they are missing) against each, and the studio's Sites area runs the same doctor as a site's job. Docker Compose now mounts this repository as `SITES_DIR` by default, so `docker compose up --build` shows the in-repo sites, two levels down (`/sites/sites/drsai`), with no setup. `SITES_DIR=~/github` still points it at a wider fleet. The sites build with the Jekyll-theme option, the theme pinned by tag, so a theme release reaches a site only when its `render:` setting moves to it, with its recording re-made and the reason said.
 
 ### Today's doctor baseline
 
-`bin/zer0 doctor` is report-only because one site carries an error that predates the merge, visible in its original repository: `apps/parodynews/src/pages`. Make the step `--strict` once it is clean.
+`bin/zer0 doctor` is report-only. On 2026-10-22 (PLAN G4) every site reports no error: their warnings are a missing `zer0.json` and `preview_images:` block. The step can become `--strict` once that holds for a while.
 
 ## How the import was done
 

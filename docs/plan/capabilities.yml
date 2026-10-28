@@ -31,7 +31,7 @@ schema: capabilities/v1
 
 ruby_ratchet:
   packages/zer0-image-generator/: 223
-  rails/: 151
+  rails/: 150
   sites/zer0-pages/: 11
 
 theme_ratchet:
@@ -43,9 +43,8 @@ theme_ratchet:
   content/: 1
   media/: 1
   packages/zer0-image-generator/: 8
-  rails/lib/: 5
+  rails/lib/: 4
   rails/schema/: 1
-  rails/test/: 2
   schemas/: 1
   sites/2005/: 1
   sites/drsai/: 3
@@ -58,7 +57,6 @@ theme_ratchet:
   src/core/: 13
   src/test/: 6
   src/webview/: 1
-  workspace.yml: 1
 
 theme_allowed:
   # The only files that may name the theme for good: the Jekyll-theme option's
@@ -152,8 +150,10 @@ platform:
     # G9, books' half: export_books byte-stable and re-importable, and a hand edit is never lost or silently
     # overwritten — the export keeps it as a conflict (content/tests/books/test_files.py); not yet committed by a job
     # (G4's jobs), and a hand edit updates its page (or is a conflict) rather than arriving as a suggestion. Sites'
-    # trees are G4.
-    surfaces: {api: missing, studio: missing, ops: partial}
+    # trees (G4): a site's write-back job writes its tree from the platform (api, studio), byte-stably — an unchanged
+    # write-back writes nothing — and a hand edit is a conflict, never overwritten; committing the tree by a job and a
+    # hand edit arriving as a suggestion are still to come.
+    surfaces: {api: partial, studio: partial, ops: partial}
   - id: content.repurpose
     what: Turn one piece into others — an article into a newsletter item, a social thread, a summary, a landing page.
     surfaces: {api: missing, studio: missing, extension: missing, mcp: missing}
@@ -385,14 +385,32 @@ platform:
   # ── Sites: manage, monitor, improve ─────────────────────────────────────────
   - id: sites.registry
     what: Register and discover sites; per-site settings, domains, design and skin, budgets.
-    # P4: the sites a person can work in, listed (api) and switched between (studio); registering and settings are G4.
-    surfaces: {api: partial, studio: partial, extension: partial}
+    # P4: the sites a person can work in, listed (api) and switched between (studio). G4: content/sites — ManagedSite
+    # (checkout, content source, renderer, domains, deploy target, digests, findings) and SiteSettings (SEO defaults,
+    # analytics ids, navigation, brand voice, skin and tokens, budget); /api/v2/sites/ registers a checkout (workspace.yml's
+    # or SITES_DIR's), discovers, edits; the studio's Sites area does all of it. The extension's half is G10.
+    surfaces: {api: done, studio: done, extension: partial}
+    proof:
+      api: content/tests/sites/test_sites.py
+      studio: web/packages/ui/test/sites.test.tsx
   - id: sites.sync
     what: Sync a site's files with the platform — the exact Jekyll reader, line-level front-matter surgery, the confined writer, write-back with a stale-write guard.
-    surfaces: {api: missing, extension: partial, ops: partial}
+    # G4: sites/catalog.py (Jekyll 4.4's reader, byte for byte against Jekyll's own lists; the importer reads through it),
+    # sites/frontmatter.py (line surgery; the exporter renders a changed page over its file with it), sites/writer.py;
+    # sync and write-back as jobs (/api/v2/sites/<id>/sync/ and export/, manage.py site_job) under the Rails PageEditor's
+    # stale-write guard. The extension's file mode keeps its own until G10.
+    surfaces: {api: done, extension: partial, ops: done}
+    proof:
+      api: content/tests/sites/test_sites.py::test_a_file_changed_by_hand_since_the_last_sync_is_never_overwritten
+      ops: content/tests/sites/test_catalog.py::test_the_fixture_sites_match_jekylls_reader_byte_for_byte
   - id: sites.jobs
     what: Background jobs (sync, render, deploy, preview, doctor, reports) with live logs, artifacts and cancel.
-    surfaces: {api: missing, studio: missing}
+    # G4: content/jobs — Job, its log lines (streamed as server-sent events) and artifacts, cancel, one exclusive job per
+    # site; sync, write-back and doctor are its first kinds (render, deploy, preview and reports come with their milestones).
+    surfaces: {api: done, studio: done}
+    proof:
+      api: content/tests/jobs/test_jobs.py
+      studio: web/packages/ui/test/sites.test.tsx
   - id: sites.render
     what: The React site renderer, in the platform's own design system — layouts, skins, feeds, sitemap, robots, search index, redirects — reproducing each site's recorded build.
     surfaces: {site: missing, ops: missing}
@@ -400,9 +418,10 @@ platform:
     what: The Jekyll-theme option — render a site with the zer0-mistakes theme and deploy it with a Jekyll server (GitHub Pages' builder or a pinned container), with nothing Ruby in this repository.
     # P2: tools/jekyll_theme.py — a site's `render:` setting in workspace.yml, the export with the theme's tag pinned
     # and an Obsidian vault resolved, GitHub Pages' builder or the jekyll-4 image (tools/jekyll/Dockerfile); pages.yml,
-    # sites.yml, drsai.yml and irony-works.yml build eight sites through it (ops). Choosing it per site and running the
-    # build as a job a person follows is G4's (api, studio).
-    surfaces: {api: missing, studio: missing, ops: done}
+    # sites.yml, drsai.yml and irony-works.yml build eight sites through it (ops). G4: a site's renderer, the theme's tag
+    # and the Jekyll server are its registry fields, chosen over the API and in the studio (partial: running its build
+    # as a job a person follows needs the Jekyll server's container, which the worker does not start — still to come).
+    surfaces: {api: partial, studio: partial, ops: done}
     proof: {ops: tools/tests/test_jekyll_theme.py}
   - id: sites.obsidian
     what: Obsidian-flavoured content — wikilinks, embeds, callouts, Dataview queries, the graph index.
@@ -413,8 +432,15 @@ platform:
     what: Build, preview and deploy each site, with history.
     surfaces: {api: missing, studio: missing, ops: partial}
   - id: sites.doctor
-    what: Consistency checks over a site (theme, image engine, CMS, fleet and content rules) as findings.
-    surfaces: {api: missing, studio: missing, extension: partial, ops: missing}
+    what: Consistency checks over a site (config, image engine, CMS, fleet, distribution and content rules) as findings.
+    # G4: content/sites/doctor.py — the Ruby doctor ported rule for rule but the theme's (ADR 0006 decision 4); a site's
+    # doctor job keeps its findings (api, studio); `python -m sites.doctor`, `manage.py doctor`, `bin/zer0 doctor` and the
+    # reusable zer0-doctor.yml run it (ops).
+    surfaces: {api: done, studio: done, extension: partial, ops: done}
+    proof:
+      api: content/tests/sites/test_sites.py::test_the_doctor_job_records_its_findings
+      studio: web/packages/ui/test/sites.test.tsx
+      ops: content/tests/sites/test_doctor.py::test_each_scenario_matches_the_ruby_doctor
   - id: sites.monitor
     what: Scheduled uptime, broken-link, performance and Core Web Vitals, accessibility and SEO checks, with history, trends and alerts.
     surfaces: {api: missing, studio: missing, extension: missing, ops: missing}
@@ -539,9 +565,9 @@ platform:
     surfaces: {ops: partial}
   - id: platform.workspace
     what: The repository's workspace tool — list, info, run, affected, matrix, routes, check, vendor, doctor, tags — in Python.
-    # partial: every command is Python and tested (tools/workspace/tests/), but the doctor
-    # `bin/zer0 doctor` runs is still rails/bin/zer0-cms (Ruby); G4 makes it done.
-    surfaces: {ops: partial}
+    # Every command is Python and tested (tools/workspace/tests/); since G4 `bin/zer0 doctor` runs the platform's doctor.
+    surfaces: {ops: done}
+    proof: {ops: tools/workspace/tests/test_workspace.py::DoctorTest}
 
   - id: platform.shared-ui
     what: One UI codebase — the studio and the extension's webviews render the same React workspaces from web/packages/ with the same libraries and generated client; the extension's own code is the VS Code host.
@@ -590,7 +616,7 @@ sources:
       - {id: parodynews.post-versions, what: "Each publish snapshots a numbered version; the versions are listed.", target: content.revisions, status: partial}
       - {id: parodynews.publish-pr, what: "Publish pushes a branch to the configured repository and opens a pull request, with readable errors for 401/403/404/422 and an already-open PR.", target: distribution.queue, status: missing}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and choosing its renderer and following its build from the studio are G4's"}
+      - {id: parodynews.sidecar-site, what: "The static parody-news site (59 posts, about and docs pages) at /parodynews, linked from the app as Publications.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site parodynews identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/barodybroject still publishes it until C4 and the app's Publications link goes with the app (G8), and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: parodynews.import, what: "Its posts, versions and assistants import into the platform (import_parodynews).", target: content.import, status: done, proof: content/tests/importers/test_parodynews.py}
       - {id: parodynews.accounts, what: "Email sign-up and login, mandatory verification in production, login by code, password reset, change and set.", target: platform.accounts, status: missing}
       - {id: parodynews.github-login, what: "Log in with GitHub.", target: platform.accounts, status: missing}
@@ -618,9 +644,9 @@ sources:
     summary: The Rails 8.1 + Administrate fleet CMS — a SQLite index over every registered Jekyll site, edits written back to the files.
     content: None of its own — git holds the content and SQLite is an index (D16); its LinkedIn channel rows and tokens move with distribution (tokens re-entered).
     capabilities:
-      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: partial}
+      - {id: rails.site-registry, what: "Register a site, or discover and sync everything under SITES_DIR; per-collection counts; read-only _config.yml.", target: sites.registry, status: partial, note: "G4: register, discover (SITES_DIR and workspace.yml) and sync, from the API and the studio (content/tests/sites/test_sites.py). Open: per-collection counts (the overview counts pages, live and drafts) and the read-only _config.yml view"}
       - {id: rails.page-search, what: "Search and filter pages with a filter language (draft:, live:, future:, error:, collection:, site:, kind:, tag:, category:, author:).", target: content.list, status: partial}
-      - {id: rails.page-edit, what: "Edit front matter and body in the file with the digest stale-write guard, key-level surgery, an atomic write and a re-sync.", target: sites.sync, status: partial}
+      - {id: rails.page-edit, what: "Edit front matter and body in the file with the digest stale-write guard, key-level surgery, an atomic write and a re-sync.", target: sites.sync, status: done, proof: "content/tests/sites/test_sites.py::test_a_write_back_rewrites_only_what_changed_and_an_unchanged_one_writes_nothing", note: "G4: a page is edited in Write (P4) and written into its file by the site's write-back job — key-level line surgery, the indexed and base digest guard re-checked before an atomic rename, an unchanged save writing nothing, the digests and the page's source recorded as a re-sync would"}
       - {id: rails.page-create, what: "Create, duplicate as draft and delete pages, confined by realpath with symlinks refused.", target: content.create, status: partial}
       - {id: rails.assets-terms, what: "Browse images and terms, with a thumbnail server.", target: media.library, status: partial}
       - {id: rails.markdown-preview, what: "Live Markdown preview while editing.", target: content.preview, status: partial}
@@ -635,15 +661,15 @@ sources:
     summary: The stdlib-only Zer0Cms library and its CLI (rails/bin/zer0-cms) — the exact Jekyll catalog, front-matter surgery, the confined writer, zer0 doctor, the ABC generator, the LinkedIn distribution lane.
     content: The ABC lexicons (lib/zer0_cms/abc/lexicons/*.yml — content/agents/data vendors one), art styles, schema/abc-book.schema.json, and the parity fixtures rails/test/fixtures/jekyll-site{,-src} with their expected lists (move to content/tests/fixtures before rails/ goes).
     capabilities:
-      - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: partial}
-      - {id: rails.front-matter, what: "Parse front matter and update keys by line surgery, keeping comments, quoting, BOM and line endings.", target: sites.sync, status: partial}
-      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: partial}
-      - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: missing}
+      - {id: rails.catalog, what: "Jekyll 4.4's reader rules — source, collections_dir, exclude, drafts, future posts, media — proven against real Jekyll.", target: sites.sync, status: done, proof: "content/tests/sites/test_catalog.py::test_the_fixture_sites_match_jekylls_reader_byte_for_byte", note: "G4: content/sites/catalog.py; the parity fixtures moved to content/tests/fixtures. The Ruby catalog stays while the Rails app and the LinkedIn lane run on it"}
+      - {id: rails.front-matter, what: "Parse front matter and update keys by line surgery, keeping comments, quoting, BOM and line endings.", target: sites.sync, status: done, proof: "content/tests/sites/test_frontmatter.py::test_surgery_table", note: "G4: content/sites/frontmatter.py, every Ruby test ported. The Ruby one stays while the Rails app and the LinkedIn lane run on it"}
+      - {id: rails.writer, what: "Confined create and duplicate with slugify and transliteration.", target: sites.sync, status: partial, note: "G4: content/sites/writer.py — confinement, O_EXCL create, the atomic replace and the transliterating slugs (content/tests/sites/test_writer.py); a page made in the platform gets its file from the write-back. Open: duplicating a page as a draft (content.create)"}
+      - {id: rails.doctor, what: "zer0-cms doctor PATH — theme, image-engine, CMS, fleet and content checks as findings.jsonl (and the reusable zer0-doctor.yml content repositories call).", target: sites.doctor, status: done, proof: "content/tests/sites/test_doctor.py::test_each_scenario_matches_the_ruby_doctor", note: "G4: content/sites/doctor.py, held to the Ruby doctor's recorded findings; zer0-doctor.yml runs it. Dropped by ADR 0006 decision 4 (the owner's): the theme check's theme-not-zer0 and no-theme-overrides, and the theme's front-matter schema, replaced by the site's own zer0.json content types. The Ruby doctor is deleted"}
       - {id: rails.abc-generator, what: "The ABC generator — spec, lexicons, wizard, art styles, deterministic and Anthropic providers, the Jekyll exporter and its spec sidecar; zer0-cms styles, themes, new.", target: books.abc, status: partial}
       - {id: rails.linkedin, what: "The LinkedIn lane — status, sources, draft, approve, preview, publish, record, posts, verify, connect, its MCP server, OAuth loopback, brand guard and ledger (and the reusable zer0-linkedin.yml).", target: distribution.queue, status: missing}
       - {id: rails.linkedin-stats, what: "LinkedIn post statistics.", target: distribution.stats, status: missing}
       - {id: rails.events, what: "The CloudEvents envelope and schema validator for app.user.interaction.", target: platform.events, status: partial}
-      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: partial}
+      - {id: rails.parity-tools, what: "jekyll-parity and front-matter-roundtrip, proving the catalog and the surgery against real Jekyll.", target: content.import, status: partial, note: "G4: the Python catalog is held to the lists jekyll-parity recorded from Jekyll 4.4.1 (content/tests/sites/test_catalog.py) and the surgery to the round-trip property over real front matter (test_frontmatter.py). Open: re-recording those lists needs jekyll-parity, which is Ruby beside the Jekyll gem"}
 
   - id: workspace-tool
     path: tools/workspace
@@ -656,9 +682,7 @@ sources:
       - {id: workspace.routes, what: "routes — each site's Pages route, for the one Pages deploy.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_golden.py::ScenarioTest}
       - {id: workspace.check, what: "check — registration, paths, workflow path filters, routes and vendored-copy drift.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_real_manifest.py::RealManifestTest}
       - {id: workspace.vendor, what: "vendor — re-sync vendored copies from their source.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::ChecksTest::test_vendored_drift_is_a_finding_and_vendor_write_repairs_it}
-      # partial: `bin/zer0 doctor` is Python and tested, but the doctor it runs is still
-      # rails/bin/zer0-cms (Ruby) until G4 ports it to the platform (sites.doctor).
-      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: partial}
+      - {id: workspace.doctor, what: "doctor — zer0 doctor over every in-repo site.", target: sites.doctor, status: done, proof: "tools/workspace/tests/test_workspace.py::DoctorTest", note: "G4: it runs the platform's doctor (content/sites/doctor.py) on this Python"}
       - {id: workspace.tags, what: "tags — this repository's release tags against those inherited from the Front Matter fork.", target: platform.workspace, status: done, proof: tools/workspace/tests/test_workspace.py::TagsTest}
 
   - id: zer0-image-generator
@@ -712,7 +736,7 @@ sources:
     capabilities:
       - {id: site-2005.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site 2005 identical; sites.yml fails a pull request whose build differs from the recording). Partial: year-of-ai.github.io still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-2005.publish, what: "The public site at /2005/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site 2005 identical; sites.yml fails a pull request whose build differs from the recording). Partial: year-of-ai.github.io still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-drsai
     path: sites/drsai
     summary: The children's picture-book site, its Python story engine (PyPI drsai) and the ABC books the wizard exports into it.
@@ -720,7 +744,7 @@ sources:
     capabilities:
       - {id: site-drsai.content, what: "Its pages and books import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site drsai identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/drsai still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-drsai.publish, what: "The public site at /drsai/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site drsai identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/drsai still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: site-drsai.story-engine, what: "The Dr. Seuss-style poem and story generator.", target: ai.briefs, status: partial}
       - {id: site-drsai.abc-import, what: "Validate and import an ABC book against its spec sidecar.", target: books.abc, status: partial}
   - id: site-irony-works
@@ -730,7 +754,7 @@ sources:
     capabilities:
       - {id: site-irony-works.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site irony-works identical; irony-works.yml fails a pull request whose build differs from the recording). Partial: bamr87/irony-works still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-irony-works.publish, what: "The public site with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site irony-works identical; irony-works.yml fails a pull request whose build differs from the recording). Partial: bamr87/irony-works still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
       - {id: site-irony-works.wikilinks, what: "Wikilinks resolved before the build.", target: sites.obsidian, status: partial}
   - id: site-wargames
     path: sites/wargames
@@ -739,7 +763,7 @@ sources:
     capabilities:
       - {id: site-wargames.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site wargames identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/wargames still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-wargames.publish, what: "The public site at /wargames/ with the same URLs and feeds.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site wargames identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/wargames still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-zer0-demo-cookbook
     path: sites/zer0-demo-cookbook
     summary: The cookbook demo site.
@@ -747,7 +771,7 @@ sources:
     capabilities:
       - {id: site-cookbook.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-cookbook identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-cookbook still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-cookbook.publish, what: "The public site at /demos/cookbook/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-cookbook identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-cookbook still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-zer0-demo-garden
     path: sites/zer0-demo-garden
     summary: The garden demo site.
@@ -755,7 +779,7 @@ sources:
     capabilities:
       - {id: site-garden.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-garden identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-garden still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-garden.publish, what: "The public site at /demos/garden/ with the same URLs and pagination.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-demo-garden identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-demo-garden still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
   - id: site-zer0-pages
     path: sites/zer0-pages
     summary: One body of content for two consumers — an Obsidian vault and a Jekyll site — joined by a build-time bridge.
@@ -779,7 +803,7 @@ sources:
     capabilities:
       - {id: site-zer0-pages-remote.content, what: "Its pages import into the platform and round-trip.", target: content.import, status: partial}
       # P2: on the Jekyll-theme option (P7 may move it to the React renderer).
-      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-pages-remote identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-pages-remote still publishes it until C4, and choosing its renderer and following its build from the studio are G4's"}
+      - {id: site-zer0-pages-remote.publish, what: "The public site at /zer0-pages-remote/ with the same URLs.", target: sites.render-jekyll, status: partial, note: "P2: renders through the Jekyll-theme option with its P1 recording's URLs, pages, feeds and sitemap (--check --site zer0-pages-remote identical; pages.yml fails a pull request whose build differs from the recording). Partial: bamr87/zer0-pages-remote still publishes it until C4, and following its build from the studio is still to come (its renderer has been chosen there since G4)"}
 
   - id: aieo
     path: apps/aieo
