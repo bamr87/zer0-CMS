@@ -6,8 +6,9 @@ functions rather than calling `save_revision()` / `publish()` directly, so a
 revision, its log entry, the graph rows and the outbox event either all commit
 or none do.
 
-`save_draft` and `publish` are the two primitives. The rest are what a person
-does to a page in the studio or the extension: create it as a draft, save a
+`save_draft` and `publish` are the two primitives, with `take_down` beside
+them for the importer (a file its site no longer builds). The rest are what a
+person does to a page in the studio or the extension: create it as a draft, save a
 draft over the latest revision, publish the latest revision now, schedule it
 (and its expiry), cancel the schedule, unpublish, and revert to an old revision
 — which is a new draft revision, never a publish. Each checks the person's
@@ -30,6 +31,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django.utils.html import strip_tags
+from wagtail.actions.unpublish_page import UnpublishPageAction
 from wagtail.permission_policies.pages import PagePermissionPolicy
 
 from . import files
@@ -58,6 +60,21 @@ def publish(page, user, log_action=True):
     revision = save_draft(page, user, log_action=log_action)
     revision.publish(user=user, log_action=log_action, skip_permission_checks=True)
     return revision
+
+
+@transaction.atomic
+def take_down(page, user):
+    """Nothing of `page` live or due to go live: unpublished as `user` when it is
+    live, and any scheduled revision and go-live time cancelled — `publish`'s
+    counterpart for the importer, which acts for a site's files (one the site
+    no longer builds), never for a person (`unpublish`, `unschedule`). The
+    instance passed in is told it is no longer live."""
+    row = type(page).objects.get(pk=page.pk)
+    if row.live:
+        UnpublishPageAction(row, user=user).execute(skip_permission_checks=True)
+    row.revisions.update(approved_go_live_at=None)
+    type(page).objects.filter(pk=page.pk).update(go_live_at=None)
+    page.live, page.live_revision = False, None
 
 
 # ── what a person does in the studio ───────────────────────────────────────

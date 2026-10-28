@@ -17,7 +17,7 @@ None of `catalog.py`, `frontmatter.py`, `writer.py` and `doctor.py` imports Djan
 
 ## Sync and write-back
 
-**Sync** is `importers.jekyll.import_site` as a job: the catalog's files become pages; a file changed by hand updates its page unless the page changed here since (a conflict, reported, never overwritten — `force` takes the file). The digest of each file read is recorded on the site — an ABC book's spec sidecar (`_data/abc_books/<slug>.json`, read with its page, `../books/README.md`) too.
+**Sync** is `importers.jekyll.import_site` as a job: the catalog's files become pages; a file changed by hand updates its page unless the page changed here since (a conflict, reported, never overwritten — `force` takes the file). The digest of each file read is recorded on the site — an ABC book's spec sidecar (`_data/abc_books/<slug>.json`, read with its page, `../books/README.md`) too. A page is live exactly when the catalog says the site builds its file (`Entry.live`): a draft (`published: false`, `draft: true`, `status: draft`, `_drafts/`) is a draft page, never published, and a file dated in the future is scheduled for its date unless `_config.yml` sets `future: true`; a changed file moves its page with it, an unchanged one never does.
 
 **Write-back** (`export`) writes what `exporters.jekyll.site_files` renders — the live pages, or the latest revisions with `include_drafts` — into the checkout under the stale-write guard of the Rails `PageEditor`:
 

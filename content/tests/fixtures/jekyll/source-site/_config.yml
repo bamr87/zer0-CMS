@@ -2,3 +2,6 @@
 title: Source Site
 url: "https://source.example"
 source: src
+collections:
+  docs:
+    output: true
