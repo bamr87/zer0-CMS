@@ -12,6 +12,7 @@ heuristic score, priorities from the last sync, share of voice — is answered h
 """
 
 import difflib
+import json
 import re
 import uuid
 from datetime import timedelta
@@ -45,6 +46,8 @@ EVALUATOR, OPTIMIZER, SCRUBBER, REWRITER, PROBE = (
     "aieo-rewriter",
     "aieo-citation-probe",
 )
+PERFORMANCE = "aieo-performance"
+ANALYTICS = {"ga_data": "top_pages", "gsc_data": "queries", "dataforseo_data": "serp"}  # its prompt's inputs, by report
 MODES = {"optimize": OPTIMIZER, "expand": OPTIMIZER, "scrub": SCRUBBER, "rewrite": REWRITER, "pattern": OPTIMIZER}
 MAX_TEXT = 200_000  # characters of a pasted text an audit keeps (scored in a run, under its time limit)
 # Characters of a text scored at once, inside a request or a tool call. Python-Markdown (the parser AIEO's scores
@@ -453,10 +456,23 @@ def run_agent(user, key: str, *, content: str = "", page=None, site=None, inputs
         page = editable(user, page)
         site = site or page.get_site()
     site = editor_of(user, site)
+    if key == PERFORMANCE:
+        inputs = analytics(site, inputs)
     prompt = agent_prompt(content=content, page=page, site=site, inputs=inputs)
     if not prompt.strip():
         raise Invalid("give the agent something to read: a text, a page or its inputs")
     return run_assistant(bundled(key, user), user=user, prompt=prompt, page=page, trigger=trigger)
+
+
+def analytics(site, inputs: dict | None) -> dict:
+    """The performance analyst's analytics, as its prompt names them: where the person gave none, the site's last
+    synced rows of each report — GA4's top pages, Search Console's queries, DataForSEO's results; the first 50."""
+    found = dict(inputs or {})
+    for name, report in ANALYTICS.items():
+        last = latest(site, report) if site is not None and not str(found.get(name) or "").strip() else None
+        if last is not None and last.rows:
+            found[name] = json.dumps(last.rows[:50], ensure_ascii=False)
+    return found
 
 
 # ── citations ──────────────────────────────────────────────────────────────

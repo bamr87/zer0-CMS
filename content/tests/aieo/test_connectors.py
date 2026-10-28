@@ -21,6 +21,8 @@ from django.test import override_settings
 from aieo import connectors, services, tasks
 from aieo.models import BrandContext, Connector, ConnectorData
 
+from .conftest import answer
+
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 PEM = KEY.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
 SERVICE_ACCOUNT = json.dumps({"client_email": "aieo@project.iam.gserviceaccount.com", "private_key": PEM.decode()})
@@ -257,3 +259,18 @@ def test_a_failed_sync_is_logged_without_the_frames_that_hold_its_credential(sit
     assert caplog.records and all(r.exc_info is None for r in caplog.records)
     row.refresh_from_db()
     assert row.error == "the sync failed: KeyError"
+
+
+def test_the_performance_analyst_reads_the_sites_last_synced_rows(alice, fake, worker, site):
+    """AIEO's performance agent reads analytics (`ga_data`, `gsc_data`, `dataforseo_data`): the site's last synced
+    rows of each connector, where the person gave none of their own."""
+    gsc = Connector.objects.create(site=site, kind=Connector.GSC, options={"site_url": "sc-domain:x"})
+    ga4 = Connector.objects.create(site=site, kind=Connector.GA4, options={"property_id": "1"})
+    ConnectorData.objects.create(connector=gsc, report="queries", rows=[{"query": "old query", "impressions": 1}])
+    ConnectorData.objects.create(connector=gsc, report="queries", rows=[{"query": "nightly backup", "impressions": 9}])
+    ConnectorData.objects.create(connector=ga4, report="top_pages", rows=[{"page": "/backups/", "sessions": 420}])
+    fake.script = [answer({"quick_wins": ["Refresh the guide"], "declining_content": [], "roadmap": []})]
+    worker(services.run_agent, alice, "aieo-performance", site=site, inputs={"dataforseo_data": "given by hand"})
+    sent = fake.calls[0]["messages"][0]["content"]
+    assert "## Gsc data" in sent and "nightly backup" in sent and "old query" not in sent  # the last sync's rows
+    assert "## Ga data" in sent and "/backups/" in sent and "## Dataforseo data\n\ngiven by hand" in sent
