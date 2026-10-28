@@ -3,7 +3,8 @@
 // attempt failed, sends it back to draft: a person approves the exact text),
 // the brand guard's findings, every blocker publishing it now would meet, and
 // for LinkedIn the exact payload — and, while an email post waits, that the
-// newsroom is sending its issue. Approve, reject, publish (asked first, never
+// newsroom is sending its issue — and its notes (where its site ledger entry
+// went, say). Approve, reject, publish (asked first, never
 // with unsaved changes, and past a lifted gate only when the person ticks
 // "force"), and record a post
 // found at the target after an attempt that may have landed. The platform
@@ -125,6 +126,15 @@ function Panel({ post }: { post: DistributionPostDetail }) {
         </Alert>
       ) : null}
       {post.status === 'rejected' && post.reason ? <Alert color="orange">Rejected: {post.reason}</Alert> : null}
+      {post.notes.length ? (
+        <Stack gap={2} aria-label="Notes">
+          {post.notes.map((note, i) => (
+            <Text key={i} size="sm" c="dimmed">
+              {note}
+            </Text>
+          ))}
+        </Stack>
+      ) : null}
       {failure ? <Alert color="red">{errorText(failure)}</Alert> : null}
 
       <TextInput label="Title" value={text.title} disabled={!editable} onChange={(e) => setText({ ...text, title: e.currentTarget.value })} />

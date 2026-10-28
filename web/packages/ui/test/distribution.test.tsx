@@ -198,7 +198,14 @@ describe('a post', () => {
   });
 });
 
-describe('an email post', () => {
+describe('what a post says about where it went', () => {
+  it('shows a post’s notes, such as where its site ledger entry went', async () => {
+    const note = "written to the site's ledger file (.github/linkedin-log.json): commit it";
+    const platform = fakePlatform({ [`GET ${API}/posts/p1/`]: () => post({ status: 'published', notes: [note], blockers: [] }) });
+    renderUi(<PostPanel postId="p1" />, { api: platform.api });
+    expect(within(await screen.findByLabelText('Notes')).getByText(note)).toBeInTheDocument();
+  });
+
   it('says the newsroom is sending its issue while it waits', async () => {
     const platform = fakePlatform({
       [`GET ${API}/posts/p1/`]: () => post({ status: 'publishing', channel_kind: 'email', attempted_at: '2026-10-28T09:00:00Z', blockers: [] }),

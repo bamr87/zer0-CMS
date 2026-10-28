@@ -642,7 +642,7 @@ class AbsentLedger:
     (or not where the platform may read it), or the path leaves it. Refused like an unreadable file, never read as
     "nothing published"."""
 
-    readable = False
+    readable = writable = False
 
     def __init__(self, problem: str):
         self.problem = problem
@@ -844,6 +844,16 @@ def deliver(post_id: int) -> DistributionPost:
             _settle(post)
             return post
         blockers = gates.lifted(preview(post).blockers, force=post.force)
+        ledger = site_ledger(post.channel)
+        if ledger is not None and ledger.readable and not ledger.writable:  # the worker writes it; the web may not
+            blockers.append(
+                Blocker(
+                    "ledger_unreadable",
+                    f"the worker cannot write the site's ledger file {post.channel.setting('ledger_file')}, so what "
+                    "this publishes would never reach it: mount the site's checkout writable for the worker, or take "
+                    "the file off the channel",
+                )
+            )
         if blockers:
             post.status, post.error = DistributionPost.Status.APPROVED, "; ".join(b.message for b in blockers)
             post.save()
@@ -1056,8 +1066,13 @@ def _doubt(post, message: str) -> None:
                     source_file=_source_file(post) or None,
                 ),
             )
-        except (OSError, LedgerError):
-            log.warning("distribution: could not mark %s unconfirmed in the site's ledger file", key)
+        except (OSError, LedgerError) as e:
+            log.warning("distribution: could not mark %s unconfirmed in the site's ledger file: %s", key, e)
+            _note(post, f"the site's ledger file ({channel.setting('ledger_file')}) did not take the doubt: {e}")
+
+
+def _note(post, text: str) -> None:
+    post.notes = [*(post.notes or []), text]
 
 
 def _source_file(post) -> str:
@@ -1065,7 +1080,9 @@ def _source_file(post) -> str:
 
 
 def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
-    """What was published, under its key: the channel's row (a re-publish replaces it) and the site's ledger file."""
+    """What was published, under its key: the channel's row (a re-publish replaces it) and the site's ledger file — a
+    change in the site's checkout, which the site's own CI reads once it is committed. The post's notes say where the
+    entry went; the caller saves the post."""
     from .ledger import entry_for
 
     channel, now = post.channel, now or timezone.now()
@@ -1104,6 +1121,13 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
             # The post exists at the target: the row above must survive a file that cannot take it, or the
             # platform would send the post again. The site's lane keeps its own copy (Download gives this one).
             log.warning("distribution: %s is recorded here but not in the site's ledger file: %s", post.ledger_key, e)
+            _note(
+                post,
+                f"not written to the site's ledger file ({channel.setting('ledger_file')}): {e} — the platform's "
+                "ledger has it; download the channel's ledger file for the site",
+            )
+        else:
+            _note(post, f"written to the site's ledger file ({channel.setting('ledger_file')}): commit it")
     return entry
 
 

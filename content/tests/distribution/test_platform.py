@@ -12,6 +12,7 @@ request queued after it commits (`worker`).
 
 import io
 import json
+import os
 import shutil
 from datetime import timedelta
 
@@ -572,18 +573,10 @@ def test_the_ledger_round_trips_a_lanes_file_byte_for_byte_and_imported_keys_are
 @override_settings(DISTRIBUTION_ARMED={"linkedin"})
 def test_a_site_ledger_file_is_read_before_and_written_after_a_publish(tmp_path, settings, alice, web, worker):
     """The extension and the site's CI write the site's own ledger file: what they published blocks the platform,
-    and what the platform publishes lands there for them."""
-    from importers.jekyll import import_site
-
-    settings.REPO_ROOT = tmp_path
-    shutil.copytree(FIXTURE, tmp_path / "site")
-    import_site(tmp_path / "site", "fixture", repo_root=tmp_path)
-    page = next(
-        p for p in Page.objects.specific() if getattr(p, "legacy_path", "") == "pages/_posts/tech/2026-07-10-moved.md"
-    )
-    mcp = next(
-        p for p in Page.objects.specific() if getattr(p, "legacy_path", "").endswith("mcp-for-the-back-office.md")
-    )
+    and what the platform publishes lands there for them — a change in the checkout the post says to commit, and a
+    write the file did not take is on the post too."""
+    _, pages = imported(tmp_path, settings)
+    page, mcp = pages["pages/_posts/tech/2026-07-10-moved.md"], pages[MCP_POST]
     channel = Channel.objects.create(
         site=page.get_site(),
         kind="linkedin",
@@ -604,20 +597,54 @@ def test_a_site_ledger_file_is_read_before_and_written_after_a_publish(tmp_path,
     worker(services.request_publish, post, alice)
     post.refresh_from_db()
     assert post.status == "published", post.error
-    written = file.entry("https://example.test/posts/2026/07/06/mcp-for-the-back-office/")
+    written = file.entry(MCP_URL)
     assert written["urn"] == written["linkedin_urn"] == "urn:li:share:2"
-    assert written["source_file"] == "pages/_posts/tech/2026-07-06-mcp-for-the-back-office.md"
+    assert written["source_file"] == MCP_POST
     assert (tmp_path / "site" / ".github" / "linkedin-log.json").read_text() == serialize(file.raw())
+    assert post.notes == ["written to the site's ledger file (.github/linkedin-log.json): commit it"]
     (tmp_path / "site" / ".github" / "linkedin-log.json").write_text("{ broken")
     assert "ledger_unreadable" in [b.kind for b in services.preview(post).blockers]
     # A file that cannot take an entry never undoes the platform's own: the post exists at the target.
     services.record(post, "urn:li:share:3")
     assert LedgerEntry.objects.get(channel=channel, key=post.ledger_key).urn == "urn:li:share:3"
     assert (tmp_path / "site" / ".github" / "linkedin-log.json").read_text() == "{ broken"
+    assert post.notes[-1].startswith("not written to the site's ledger file (.github/linkedin-log.json):")
     # A ledger file the channel names but cannot reach is refused too, never read as "nothing published".
     shutil.rmtree(tmp_path / "site")
     [blocker] = [b for b in services.preview(post).blockers if b.kind == "ledger_unreadable"]
     assert "checkout is not here" in blocker.message
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root writes through a folder's read-only mode")
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_a_site_ledger_file_the_worker_cannot_write_is_refused_before_anything_is_sent(
+    tmp_path, settings, alice, web, worker
+):
+    """A ledger file the worker can read but not write — a read-only checkout or mount — would let a post go and
+    its entry never reach the site's file: the worker refuses before sending, and says why."""
+    site, pages = imported(tmp_path, settings)
+    channel = Channel.objects.create(
+        site=pages[MCP_POST].get_site(),
+        kind="linkedin",
+        name="Page",
+        armed=True,
+        settings={"author": AUTHOR, "ledger_file": ".github/linkedin-log.json"},
+    )
+    channel.set_credentials({"access_token": TOKEN})
+    channel.save()
+    folder = site / ".github"
+    folder.mkdir()
+    (folder / "linkedin-log.json").write_text("{}\n")
+    route = web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:88"})
+    post = approved(services.compose(channel, user=alice, page=pages[MCP_POST], commentary="The plug."), alice)
+    folder.chmod(0o555)
+    try:
+        worker(services.request_publish, post, alice)
+    finally:
+        folder.chmod(0o755)
+    post.refresh_from_db()
+    assert post.status == "approved" and "the worker cannot write the site's ledger file" in post.error
+    assert route.call_count == 0 and (folder / "linkedin-log.json").read_text() == "{}\n"
 
 
 # ── statistics ──────────────────────────────────────────────────────────────
