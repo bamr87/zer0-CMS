@@ -5,6 +5,7 @@
 /version          name, version, commit, built_at
 /admin/           Wagtail admin (pages, snippets, suggestions, agent runs)
 /django-admin/    Django admin
+/api/v2/account/  a person's API tokens, issued, listed and revoked (accounts/urls.py)
 /api/v2/          Wagtail API v2 + agent runs, graph, suggestions, tools
 /api/v2/ai/       the AI content layer: providers, models, schemas, assistants, pipelines, briefs, conversations
 /api/v2/ideas/    ideas, boards, capture, brainstorm, clusters, promotion
@@ -68,6 +69,7 @@ urlpatterns = [
     path("api/v2/distribution/", include("distribution.urls")),
     path("api/v2/automations/", include("automations.urls")),
     path("api/v2/aieo/", include("aieo.urls")),
+    path("api/v2/account/", include("accounts.urls")),
     path("api/v2/", include("api.urls")),
     path("api/v2/", router.urls),
     path("graphql/", ContentGraphQLView.as_view(), name="graphql"),

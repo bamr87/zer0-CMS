@@ -250,7 +250,7 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "zer0-CMS platform API",
     "DESCRIPTION": "Agent runs, the content graph, suggestions and the tool registry; and for the studio and the "
-    "extension, the session, sites, pages, revisions, publishing and the review inbox. "
+    "extension, the session and a person's API tokens, sites, pages, revisions, publishing and the review inbox. "
     "Wagtail's pages, images and documents endpoints live beside these at /api/v2/ and are documented by Wagtail.",
     "VERSION": "2",
     "OAS_VERSION": "3.1.0",
@@ -313,6 +313,8 @@ SPECTACULAR_SETTINGS = {
         "RewriteModeEnum": "aieo.serializers.MODES",
         "RewriteStyleEnum": "aieo.serializers.STYLES",
         "AieoAgentGroupEnum": "aieo.serializers.GROUPS",
+        "TokenScopeEnum": "accounts.models.SCOPES",
+        "TokenStateEnum": "accounts.serializers.TOKEN_STATES",
     },
     "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
 }

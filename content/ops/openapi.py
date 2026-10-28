@@ -5,7 +5,8 @@ endpoints (`api/urls.py` `urlpatterns`, the AI content layer's router,
 `ai/urls.py`, the ideas and research routers, `ideas/urls.py` and
 `research/urls.py`, the newsroom's, `newsroom/urls.py`, the books app's, `books/urls.py`, the outbox desk's,
 `outboxdesk/urls.py`, the site registry's and jobs', `sites/urls.py` and `jobs/urls.py`, distribution's,
-`distribution/urls.py`, the automations', `automations/urls.py`, and AIEO's, `aieo/urls.py`) and nothing else. Wagtail's
+`distribution/urls.py`, the automations', `automations/urls.py`, AIEO's, `aieo/urls.py`, and a person's tokens,
+`accounts/urls.py`) and nothing else — allauth's headless API (`/_allauth/`) documents itself. Wagtail's
 `pages`/`images`/`documents` viewsets build their serializer per request
 (`get_serializer_class` reads `self.request`), which no static generator can
 introspect, so they are documented by Wagtail itself and left out here. The
@@ -35,6 +36,7 @@ def __getattr__(name):
             path("api/v2/distribution/", include("distribution.urls")),
             path("api/v2/automations/", include("automations.urls")),
             path("api/v2/aieo/", include("aieo.urls")),
+            path("api/v2/account/", include("accounts.urls")),
             path("api/v2/", include("api.urls")),
         ]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -66,8 +68,9 @@ class UserTokenScheme(OpenApiAuthenticationExtension):
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "zer0u_…",
-            "description": "A person's token (`manage.py user_token <username> --name …`), as the VS Code extension sends it; "
-            "the caller acts as that person.",
+            "description": "A person's token (issued in the studio's account menu, or `manage.py user_token <username> "
+            "--name …`), as the VS Code extension sends it; the caller acts as that person, and a token without the "
+            "`write` scope may only read.",
         }
 
 

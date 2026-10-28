@@ -30,7 +30,9 @@ A view raises `ops.errors.ApiError` (or `Invalid`, `Forbidden`, `NotFound`, `Con
 |---|---|---|
 | `auth.required` | 401 | no credentials (`WWW-Authenticate: Bearer`) |
 | `auth.invalid_token` | 401 | a bearer token that is unknown, revoked or inactive |
-| `auth.forbidden` | 403 | signed in, not allowed |
+| `auth.forbidden` | 403 | signed in, not allowed — and a person's token without the `write` scope on anything but a read |
+| `auth.session_required` | 403 | issuing an API token with a token (`/api/v2/account/tokens/`): only a signed-in session issues one |
+| `token.refused` | 422 | a token that cannot be issued (an agent's, a superuser's not asked for, a scope that is not one) |
 | `auth.csrf_failed` | 403 | a session-authenticated POST without the CSRF token, or a sign-in without it |
 | `auth.invalid_credentials` | 400 | a sign-in (`/api/v2/session/login`) with a wrong username or password |
 | `request.malformed` | 400 | unparsable body or query |

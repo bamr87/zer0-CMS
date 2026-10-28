@@ -643,7 +643,9 @@ platform:
     surfaces: {api: partial, studio: partial, extension: missing}
   - id: platform.tokens
     what: Personal API tokens and agent tokens, issued and revoked.
-    # G10: accounts.UserToken (hashed, 90 days unless the issuer says otherwise, a superuser's only with --superuser, revoked; accounts.services and manage.py user_token) authenticates a person over REST, sharing accounts.tokens.HashedToken with AgentToken; the extension sets and clears one in SecretStorage, per platform origin. Issuing from the account menu, scopes and GraphQL are G3's.
+    # G10: accounts.UserToken (hashed, 90 days unless the issuer says otherwise, a superuser's only with --superuser, revoked; accounts.services and manage.py user_token) authenticates a person over REST, sharing accounts.tokens.HashedToken with AgentToken; the extension sets and clears one in SecretStorage, per platform origin.
+    # G3: a person's tokens are scoped (read, write), issued from a signed-in session, listed and revoked over
+    # /api/v2/account/tokens/ and accepted by GraphQL (content/tests/accounts/test_tokens.py); the account menu that uses it is next.
     surfaces: {api: partial, studio: missing, extension: partial}
   - id: platform.permissions
     what: Roles, groups, per-site permissions, and per-person ownership and sharing.

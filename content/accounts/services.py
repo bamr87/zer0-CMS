@@ -1,25 +1,32 @@
 """A person's API tokens: issue, list and revoke — the rules in one place, for
-`manage.py user_token` today and the account menu (PLAN G3) next.
+the account menu (`/api/v2/account/tokens/`, accounts/api.py) and
+`manage.py user_token`.
 
-A token expires after `DEFAULT_DAYS` unless the issuer says otherwise. An
-agent never gets one (agents have `AgentToken`s), and a superuser's — every
-permission, unscoped — is issued only when the issuer asks for it by name.
+A token expires after `DEFAULT_DAYS` unless the issuer says otherwise (the
+account menu offers 1 to `MAX_DAYS`; only an operator's command line issues
+one that never expires). It carries its scopes — `read`, and `write` to change
+anything — and always `read`. An agent never gets one (agents have
+`AgentToken`s), and a superuser's — every permission, unscoped by Wagtail — is
+issued only when the issuer asks for it by name.
 """
 
 from datetime import timedelta
 
 from django.utils import timezone
 
-from .models import UserToken
+from .models import READ, SCOPES, UserToken
 
 DEFAULT_DAYS = 90
+MAX_DAYS = 365
 
 
 class TokenError(ValueError):
     """A token that cannot be issued or revoked; the message says why."""
 
 
-def issue(user, name: str, days: int | None = DEFAULT_DAYS, superuser: bool = False) -> tuple[UserToken, str]:
+def issue(
+    user, name: str, days: int | None = DEFAULT_DAYS, superuser: bool = False, scopes=SCOPES
+) -> tuple[UserToken, str]:
     """A new token for `user` and its raw value, shown once. It expires after
     `days` days; `None` or `0` is a token that never expires."""
     if user.username.startswith("agent:"):
@@ -29,8 +36,13 @@ def issue(user, name: str, days: int | None = DEFAULT_DAYS, superuser: bool = Fa
             f"{user.username} is a superuser, and their token would carry every permission; "
             "issue it with --superuser if that is what you mean"
         )
+    unknown = set(scopes) - set(SCOPES)
+    if unknown:
+        raise TokenError(f"unknown scopes {sorted(unknown)}; a token's scopes are {', '.join(SCOPES)}")
+    if READ not in scopes:
+        raise TokenError("every token can read; a token's scopes include read")
     expires_at = timezone.now() + timedelta(days=days) if days else None
-    return UserToken.mint(name=name, user=user, expires_at=expires_at)
+    return UserToken.mint(name=name, user=user, expires_at=expires_at, scopes=[s for s in SCOPES if s in scopes])
 
 
 def tokens_of(user):
@@ -38,12 +50,22 @@ def tokens_of(user):
     return UserToken.objects.visible_to(user).filter(user=user).order_by("-created_at")
 
 
+def _revoke(token: UserToken) -> UserToken:
+    if token.revoked_at is None:
+        token.revoked_at = timezone.now()
+        token.save(update_fields=["revoked_at"])
+    return token
+
+
 def revoke(user, prefix: str) -> UserToken:
     """Revoke `user`'s one active token that starts with `prefix`."""
     found = tokens_of(user).filter(prefix__startswith=prefix[:14], revoked_at__isnull=True)
     if found.count() != 1:
         raise TokenError(f"{found.count()} active tokens of {user.username} start with {prefix}; name exactly one")
-    token = found.get()
-    token.revoked_at = timezone.now()
-    token.save(update_fields=["revoked_at"])
-    return token
+    return _revoke(found.get())
+
+
+def revoke_by_id(user, public_id) -> UserToken | None:
+    """Revoke `user`'s own token with this public id; None when they have none (a 404, never someone else's)."""
+    token = tokens_of(user).filter(public_id=public_id).first()
+    return _revoke(token) if token else None
