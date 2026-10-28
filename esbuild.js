@@ -312,6 +312,10 @@ const STUDIO_LIBRARIES = [
   '@zer0/ui',
   'react',
   'react-dom',
+  // Drag and drop: the AI area's pipeline steps and the newsroom's story budget.
+  '@dnd-kit/core',
+  '@dnd-kit/sortable',
+  '@dnd-kit/utilities',
   '@mantine/core',
   '@mantine/hooks',
   '@mantine/notifications',
