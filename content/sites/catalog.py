@@ -106,6 +106,7 @@ class Entry:
 
     @property
     def live(self) -> bool:
+        """Whether the build publishes it — `held_back`'s rules, read at the scan's time."""
         return not self.draft and self.published and not self.future and self.status != "draft"
 
 
@@ -630,6 +631,30 @@ def _flatten(values) -> list:
 
 
 # ── helpers the rest of the platform uses ───────────────────────────────────
+
+
+def held_back(rel: str, data: dict, now: datetime) -> str | None:
+    """Why the site does not build the file at `rel` (a path under the site
+    root) whose front matter reads as `data` (`frontmatter.parse`), or None when
+    it builds it: the rules `Entry.live` reads — a draft in `_drafts/`,
+    `published: false`, `draft: true`, `status: draft`, or a date after `now`
+    (the front matter's, or a post's file name's). The exporter asks this before
+    it marks the file of a page that is not live, so the reader and the writer
+    agree on what already keeps a file out of the build."""
+    folders = rel.split("/")[:-1]
+    if "_drafts" in folders:
+        return "a draft in _drafts/"
+    if data.get("published") is False:
+        return "published: false"
+    if _truthy(data.get("draft")):
+        return "draft: true"
+    if _text(data.get("status")) == "draft":
+        return "status: draft"
+    named = DATE_FILENAME.match(rel) if "_posts" in folders else None
+    when, _ = _resolve_date(data.get("date"), named.group(1) if named else None)
+    if when is not None and when > now:
+        return "dated in the future"
+    return None
 
 
 def media(root) -> list[Path]:

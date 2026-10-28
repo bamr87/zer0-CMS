@@ -52,6 +52,43 @@ def test_fixture_details():
     assert result.collections == ["posts", "docs", "notes"]
 
 
+@pytest.mark.parametrize("name", ["jekyll-site", "jekyll-site-src"])
+def test_held_back_reads_a_file_as_the_scan_does(name):
+    """The exporter asks `held_back` before it marks a page's file `published:
+    false`; the reader's `live` must be the same answer, or an unchanged draft
+    would not export byte for byte."""
+    now = datetime(2026, 9, 14, tzinfo=UTC)
+    entries = catalog.scan(FIXTURES / name, now=now).entries
+    assert {e.relative: e.live for e in entries} == {
+        e.relative: catalog.held_back(e.relative, e.data, now) is None for e in entries
+    }
+    reasons = {e.relative: catalog.held_back(e.relative, e.data, now) for e in entries if not e.live}
+    if name == "jekyll-site":
+        assert reasons == {
+            "pages/_drafts/wip.md": "a draft in _drafts/",
+            "pages/_docs/hidden.md": "published: false",
+            "pages/_posts/2099-01-01-future.md": "dated in the future",
+        }
+
+
+@pytest.mark.parametrize(
+    ("rel", "data", "reason"),
+    [
+        ("a.md", {"draft": True}, "draft: true"),
+        ("a.md", {"draft": "true"}, "draft: true"),
+        ("a.md", {"status": "draft"}, "status: draft"),
+        ("a.md", {"published": False}, "published: false"),
+        ("a.md", {"published": "false"}, None),  # a string: Jekyll's `published` test is Ruby truthiness
+        ("a.md", {"date": "2099-01-01"}, "dated in the future"),
+        ("pages/_posts/2099-01-01-a.md", {}, "dated in the future"),
+        ("pages/_docs/2099-01-01-a.md", {}, None),  # only a post takes its date from its name
+        ("pages/_posts/2026-01-01-a.md", {"status": "published"}, None),
+    ],
+)
+def test_held_back_rules(rel, data, reason):
+    assert catalog.held_back(rel, data, datetime(2026, 9, 14, tzinfo=UTC)) == reason
+
+
 # ── hardening ──────────────────────────────────────────────────────────────
 
 

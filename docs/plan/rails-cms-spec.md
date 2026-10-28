@@ -200,7 +200,7 @@ Already absorbed, with their proofs in the ledger: `rails.page-edit`, `rails.cat
 - Gaps found:
   - (a) No section: `path_for` always puts a new page at the collection root.
   - (b) A declared collection with no files yet has no `CollectionPage` (`importers/jekyll.py::_container` makes one only when a file is imported), so nothing can be created in it.
-  - (c) A never-published page written back with "Write back drafts too" (`include_drafts`) gets no `draft: true`. `exporters/jekyll.py::front_matter_for` adds none, so the next Jekyll build publishes it. Rails wrote `draft: true` for a new draft and for every duplicate.
+  - (c) Fixed: a page that is not live is written back with Jekyll's own `published: false` (Rails wrote `draft: true`) unless its file already holds itself back, so the next Jekyll build skips it — `content/tests/sites/test_sites.py::test_a_never_published_draft_written_back_is_marked_and_jekyll_skips_it`.
   - (d) Slugs are transliterated silently at export. Rails refused an invalid slug, and a title like "!!!" with no usable slug, with a message.
 
 **Verdict:** specified.
@@ -219,7 +219,7 @@ Already absorbed, with their proofs in the ledger: `rails.page-edit`, `rails.cat
     - `GET /api/v2/sites/<id>/collections/` returns `{collection, sections[]}` for the create form.
     - Registration and sync create a `CollectionPage` for every declared collection (not `data`) whose directory exists, so empty collections are creatable.
     - Create returns a `file_path` preview, and refuses with 422 a slug whose file slug is empty ("!!!").
-  - **Write-back**: a page that is not live and is written with `include_drafts` carries `draft: true` in its file unless its front matter already makes it unpublished. This covers a new draft and a duplicate.
+  - **Write-back** (done, gap (c)): a page that is not live carries `published: false` in its file unless the file already holds itself back (`sites.catalog.held_back`). This covers a new draft and a duplicate.
 - Studio:
   - "Duplicate as draft" in the page editor's header; it opens the copy.
   - "Delete" with a confirm dialog naming the page and its file.
@@ -230,8 +230,8 @@ Already absorbed, with their proofs in the ledger: `rails.page-edit`, `rails.cat
   - `::test_delete_needs_the_permission_and_refuses_a_page_with_children_or_a_lock`.
   - `::test_create_into_an_existing_section_and_refuse_a_missing_or_traversing_one`: `hacks` ok; `missing` and `../_docs` are 422.
   - `::test_an_empty_declared_collection_can_take_a_page`.
-  - `content/tests/sites/test_sites.py::test_a_duplicate_writes_back_beside_its_original_as_a_draft`: on the moved fixture, `pages/_posts/2026-01-01-hello-copy.md` equals the original with `title: Hello (copy)`, no permalink, redirect_from or preview, and `draft: true` before the closing fence; the original is byte-identical.
-  - `::test_a_draft_written_back_with_drafts_is_marked_draft`.
+  - `content/tests/sites/test_sites.py::test_a_duplicate_writes_back_beside_its_original_as_a_draft`: on the moved fixture, `pages/_posts/2026-01-01-hello-copy.md` equals the original with `title: Hello (copy)`, no permalink, redirect_from or preview, and `published: false` before the closing fence; the original is byte-identical.
+  - `::test_a_never_published_draft_written_back_is_marked_and_jekyll_skips_it` (done).
   - `web/packages/ui/test/editor.test.tsx`: "duplicates a page as a draft and opens the copy", "deletes a page after confirming".
   - `web/packages/ui/test/create.test.tsx`: "creates a page in a section and shows its file name".
 - Milestone: P4 (content.create's "duplicate to come"). The section, empty-collection and draft-marker items ride with G4's write-back.
@@ -618,10 +618,7 @@ User-visible behaviour of `rails/app`, `rails/config` and `rails/lib/zer0_cms` (
 - **The page "file facts" view** (`SHOW_PAGE_ATTRIBUTES`): source path; front matter as indexed (pretty JSON); file bytes, mtime, SHA-256; the parse error. The studio shows none of them.
   - Nearest row: content.edit (raw front matter).
   - Proposal: a read-only "Source" tab in the page editor, showing `legacy_path`, `front_matter` and the `ImportedSource` digest.
-- **Unpublishing in the studio does not unpublish the Jekyll file.**
-  - G4's write-back leaves "a draft's or an unpublished page's file alone" (`content/sites/README.md`). A page taken down in the platform stays live on a Jekyll-built site.
-  - Rails' `published` checkbox wrote `published: false`.
-  - Owner decision for files sites, the same family as rails.page-create's missing `draft: true`.
+- **Fixed: unpublishing in the studio unpublishes the Jekyll file.** Every write-back, not only "drafts too", gives a page that is not live `published: false` (what Rails' `published` checkbox wrote) under the stale-write guard and takes it off when the page goes live again — `content/tests/sites/test_sites.py::test_unpublishing_a_live_page_takes_its_file_down_and_republishing_restores_its_bytes`.
 - **No producer of `app.user.interaction`.**
   - The graph's behavioural edges (`content/graph/consumers.py`, `build_viewed_together`) consume an event that nothing emits, and Rails never emitted it.
   - The producer belongs to the public site, through the P6 renderer, with an anonymous rotating `anon_id` and a beacon endpoint.

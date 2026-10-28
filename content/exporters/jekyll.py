@@ -32,12 +32,29 @@ a path from its type: an `ArticlePage` in `_posts` becomes
 `<collections_dir>/_<collection>/<slug>.md`, a page at the site root
 `<slug>.md` — the slug transliterated to `a-z0-9` and hyphens
 (sites/writer.py). An imported page a person moved is rendered at its new path
-and listed in `moved`; nothing deletes its old file. Only live pages are
-exported unless `include_drafts`. `site_files` lists what an export writes;
-`export_site` writes it into `out` and nothing else, refusing a path that would
-leave it and never writing two pages to one path (the second is skipped), and a
-site's write-back writes it into the site's checkout under the stale-write
-guard (sites/services.py).
+and listed in `moved`; nothing deletes its old file.
+
+**A page that is not live reaches its file as not built.** Never published,
+unpublished or expired, its file carries Jekyll's own switch,
+`published: false` (the file stays; Jekyll skips it), added by line surgery
+before the closing fence — unless the file already keeps itself out of the
+build in the site's own way (`sites.catalog.held_back`: `published: false`,
+`draft: true`, `status: draft`, a draft in `_drafts/`, a future date), as the
+reader reads it, so such a file exports byte for byte. When the page goes live
+again only the marker the platform added comes off: the file gets back the
+page's own `published` key, or none, and nothing else moves (`mark`).
+
+Only live pages are exported unless `include_drafts`, which writes every page's
+latest revision, marked when the page is not live. A write-back of the live
+pages also takes down the file of each page that is not live but has one (an
+`ImportedSource`): that file as the platform last read or wrote it, marked
+(`File.take_down`), so unpublishing reaches the site on the next write-back
+without writing a draft's content. `site_files` lists what an export writes;
+`export_site` writes it into `out` and nothing else — a take-down is skipped
+there, with no file to take down — refusing a path that would leave it and
+never writing two pages to one path (the second is skipped), and a site's
+write-back writes it into the site's checkout under the stale-write guard
+(sites/services.py).
 """
 
 from collections.abc import Iterator
@@ -45,6 +62,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+from django.utils import timezone
 from wagtail.models import Page
 
 from cms.files import SUFFIXES
@@ -54,8 +72,11 @@ from importers.markdown import from_blocks, to_blocks
 from importers.models import ImportedSource
 from newsroom.services import front_matter_for as newsroom_front_matter
 from newsroom.services import with_front_matter as with_newsroom_front_matter
+from sites import catalog
 from sites import frontmatter as surgery
 from sites.writer import slugify
+
+_ABSENT = object()  # a front-matter key the file does not have
 
 
 @dataclass
@@ -200,9 +221,48 @@ def _render_over(source_text: str, fm: dict, blocks: list, leading: str) -> str:
     return text[: len(text) - len(body)] + from_blocks(blocks, leading=leading)
 
 
+def mark(text: str, rel: str, page, *, live: bool, now) -> str:
+    """`text`, the file of `page` at `rel`, with the platform's `published:
+    false` where it belongs and nowhere else. A page that is not live gets it
+    unless the file, with the page's own `published` key, already keeps itself
+    out of the build (`catalog.held_back`, the reader's rules at `now`); a live
+    page's file carries the page's own `published` key, or none, so a marker the
+    platform added comes off. The page's front matter never holds the
+    platform's marker (it is written here, never stored), which is how the two
+    are told apart. Only that key's line moves (line surgery); a front matter
+    the surgery cannot edit is rendered whole instead."""
+    own = (page.front_matter or {}).get("published", _ABSENT)
+    if live and own is _ABSENT and "published" not in text:
+        return text  # nothing to take off, without parsing every live file
+    data = surgery.parse(text).data
+    want = own
+    if not live:
+        as_its_own = {key: value for key, value in data.items() if key != "published"}
+        if own is not _ABSENT:
+            as_its_own["published"] = own
+        if catalog.held_back(rel, as_its_own, now) is None:
+            want = False
+    have = data.get("published", _ABSENT)
+    if have is want or (_ABSENT not in (have, want) and surgery.same_value(have, want)):
+        return text
+    change = {"published": None if want is _ABSENT else want}
+    try:
+        return surgery.update_keys(text, change)
+    except (surgery.EditError, yaml.YAMLError):
+        fm = front_matter_for(page)
+        if want is _ABSENT:
+            fm.pop("published", None)
+        else:
+            fm["published"] = want
+        return frontmatter.join(fm, from_blocks(list(page.body.get_prep_value()), leading="\n"))
+
+
 @dataclass
 class File:
-    """One file an export writes: where, what, and which page it is."""
+    """One file an export writes: where, what, and which page it is. A
+    `take_down` is the file of a page that is not live in a write-back of the
+    live pages: the text the platform last read or wrote for it (`source`),
+    marked not built — written only over that very file, never created."""
 
     rel: str
     text: str
@@ -210,6 +270,7 @@ class File:
     rendered: Page  # what was rendered: the live page, or its latest revision
     source: ImportedSource | None
     verbatim: bool
+    take_down: bool = False
 
 
 def site_files(site_key: str, *, include_drafts=False, report: ExportReport | None = None) -> Iterator[File]:
@@ -218,24 +279,32 @@ def site_files(site_key: str, *, include_drafts=False, report: ExportReport | No
     pages = Page.objects.descendant_of(root).specific().order_by("path")
     sources = {s.page_id: s for s in ImportedSource.objects.filter(site_key=site_key)}
     newsroom_pages = with_newsroom_front_matter()
+    now = timezone.now()
     for page in pages:
         if isinstance(page, CollectionPage):
             continue
+        source = sources.get(page.pk)
         if not page.live and not include_drafts:
-            if report is not None:
-                report.skipped.append(f"{page.url_path} (not live)")
+            if source is None:  # no file of its own yet: nothing to take down, and a draft is not written
+                if report is not None:
+                    report.skipped.append(f"{page.url_path} (not live)")
+                continue
+            rel = path_for(page, root)
+            text = mark(source.source_text, rel, page, live=False, now=now)
+            yield File(rel, text, page, page, source, verbatim=text == source.source_text, take_down=True)
             continue
         current = page.get_latest_revision_as_object() if include_drafts else page
-        source = sources.get(page.pk)
         rel = path_for(current, root)
         unchanged = source is not None and source.unchanged(current)
         moved = source is not None and current.file_editor_fields and source.legacy_path != rel
         if moved and report is not None and source.legacy_path.endswith(SUFFIXES):  # a page's file it was read from
             report.moved.append((source.legacy_path, rel))
         if unchanged and page.pk not in newsroom_pages:
-            yield File(rel, source.source_text, page, current, source, verbatim=True)
+            text = mark(source.source_text, rel, current, live=page.live, now=now)
+            yield File(rel, text, page, current, source, verbatim=text == source.source_text)
         else:
             text = render(current, source.source_text if source is not None else None)
+            text = mark(text, rel, current, live=page.live, now=now)
             yield File(rel, text, page, current, source, verbatim=False)
 
 
@@ -244,6 +313,9 @@ def export_site(site_key: str, out, *, include_drafts=False) -> ExportReport:
     report = ExportReport(site_key=site_key)
     written = set()
     for file in site_files(site_key, include_drafts=include_drafts, report=report):
+        if file.take_down:
+            report.skipped.append(f"{file.page.url_path} (not live)")
+            continue
         target = (out / file.rel).resolve()
         if not str(target).startswith(str(out) + "/"):
             report.skipped.append(f"{file.rel} (outside the export directory)")

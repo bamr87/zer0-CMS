@@ -28,6 +28,13 @@ unchanged since. What it writes is recorded both ways — the digest on the site
 the text on the page's `ImportedSource` — so the next sync sees the file as the
 platform's own and the next write-back writes it verbatim.
 
+Every write-back covers the pages that are not live, not only one with
+`include_drafts`: a page unpublished here is taken down on the site by the
+next write-back of any kind. Its file gets `published: false`
+(`exporters.jekyll.mark`) under the same guard; a write-back of the live pages writes
+only that marker onto the file as the platform last read or wrote it — never a
+draft's content, never a new file — and a page that goes live again loses it.
+
 **Doctor** (a job) runs sites/doctor.py over the checkout and keeps its
 findings on the site and as the job's artifacts.
 """
@@ -253,17 +260,24 @@ def run_export(job, ctx):
     root = managed.root
     include_drafts = bool(job.params.get("include_drafts"))
     base = job.params.get("base") if isinstance(job.params.get("base"), dict) else {}
-    what = "the latest revisions" if include_drafts else "the live pages"
+    what = "the latest revisions" if include_drafts else "the live pages, taking down those that are not live,"
     ctx.log(f"Writing {what} of {managed.key} into {managed.checkout} …")
     digests, counts, planned = dict(managed.digests), Counter(), set()
     for file in site_files(managed.key, include_drafts=include_drafts):
         ctx.check()
-        if file.rel in planned:
-            counts["conflict"] += 1
-            ctx.log(f"{file.rel}: two pages want this file; the second was not written", "warning")
-            continue
-        planned.add(file.rel)
-        outcome, note = _write(root, file, digests, base, managed.key)
+        owner = (
+            ImportedSource.objects.filter(site_key=managed.key, legacy_path=file.rel)
+            .exclude(page_id=file.page.pk)
+            .first()
+        )
+        if owner is not None:  # a page made here whose path is another page's file — a draft's, say
+            outcome = "conflict"
+            note = f"the file of another page (#{owner.page_id}); this page was not written — change its slug"
+        elif file.rel in planned:
+            outcome, note = "conflict", "two pages want this file; the second was not written"
+        else:
+            planned.add(file.rel)
+            outcome, note = _write(root, file, digests, base, managed.key)
         counts[outcome] += 1
         if outcome != "unchanged":
             ctx.log(
@@ -273,7 +287,7 @@ def run_export(job, ctx):
     for rel in sorted(set(digests) - planned):
         ctx.check()
         if ImportedSource.objects.filter(site_key=managed.key, legacy_path=rel).exists():
-            continue  # its page is still here, only not exported now (a draft, or unpublished)
+            continue  # its page is still here, at another path now (a page moved: its old file stays)
         outcome, note = _remove(root, rel, digests)
         counts[outcome] += 1
         ctx.log(f"{rel}: {note}", "warning" if outcome == "conflict" else "info")
@@ -285,9 +299,11 @@ def run_export(job, ctx):
 
 
 def _write(root, file, digests, base, key) -> tuple[str, str]:
-    owner = ImportedSource.objects.filter(site_key=key, legacy_path=file.rel).exclude(page_id=file.page.pk).first()
-    if owner is not None:  # a page made here whose path is another page's file — a draft's, say
-        return "conflict", f"the file of another page (#{owner.page_id}); this page was not written — change its slug"
+    indexed = digests.get(file.rel)
+    if file.take_down and indexed != file.source.source_digest:
+        # Not the file the platform last read or wrote for this page (it never had
+        # one here, or the page moved since): nothing of its own to take down.
+        return "unchanged", "unchanged"
     data = file.text.encode("utf-8")
     try:
         disk = writer.read_bytes(root, file.rel)
@@ -298,7 +314,6 @@ def _write(root, file, digests, base, key) -> tuple[str, str]:
         if not file.verbatim:
             _record(file, key)
         return "unchanged", "unchanged"
-    indexed = digests.get(file.rel)
     if (writer.sha256(disk) if disk is not None else None) != indexed:
         state = "deleted" if disk is None else "changed"
         return "conflict", f"{state} on disk since the platform last read or wrote it; sync the site first"
@@ -312,16 +327,18 @@ def _write(root, file, digests, base, key) -> tuple[str, str]:
         return "refused", str(e)
     digests[file.rel] = writer.sha256(data)
     _record(file, key)
+    if file.take_down:
+        return "written", "taken down: its page is not live (published: false)"
     return "written", "written" if disk is not None else "created"
 
 
 def _record(file, key) -> None:
-    """The file as written is what the page was last exported as."""
-    fields = {
-        "source_text": file.text,
-        "source_digest": writer.sha256(file.text),
-        "import_hash": file.rendered.compute_content_hash(),
-    }
+    """The file as written is what the page was last exported as. A take-down
+    moved only the marker, so the content it holds — and the hash that says the
+    page is still that content — stays."""
+    fields = {"source_text": file.text, "source_digest": writer.sha256(file.text)}
+    if not file.take_down:
+        fields["import_hash"] = file.rendered.compute_content_hash()
     if file.source is not None:
         ImportedSource.objects.filter(pk=file.source.pk).update(**fields)
     else:
