@@ -1080,6 +1080,7 @@ def _doubt(post, message: str) -> None:
                 "attempted_at": timezone.now(),
                 "error": message[:300],
                 "kind": post.kind,
+                "extra": {},  # a new fact about the key: nothing another lane wrote about an older one
                 "post": post,
                 "author": channel.setting("author"),
                 "source_file": _source_file(post),
@@ -1133,6 +1134,7 @@ def record(post, urn: str, *, image_urn: str = "", now=None) -> LedgerEntry:
             "author": channel.setting("author"),
             "source_file": _source_file(post),
             "image_urn": image_urn,
+            "extra": {},  # a re-publish is a new fact about the key: nothing from an older entry (ledger.entry_for)
             "post": post,
         },
     )

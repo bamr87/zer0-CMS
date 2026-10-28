@@ -642,6 +642,20 @@ def test_the_ledger_round_trips_a_lanes_file_byte_for_byte_and_imported_keys_are
     assert {e["state"] for e in entries} == {"published", "unconfirmed"}
 
 
+@override_settings(DISTRIBUTION_ARMED={"linkedin"})
+def test_a_publish_writes_exactly_the_entry_every_lane_writes(manager, channel, article, web, worker):
+    """An imported entry keeps the keys it brought for the file; a publish over it — forced past its doubt — is a new
+    fact about the key, so the file holds exactly what `entry_for` writes, nothing of the older entry."""
+    post = approved(services.compose(channel, user=manager, page=article, commentary="Nightly."), manager)
+    stale = {"state": "unconfirmed", "attempted_at": "2026-10-01T09:00:00Z", "error": "HTTP 503", "lane": "ci"}
+    services.import_ledger(channel, manager, json.dumps({post.link: stale}))
+    web.post(f"{REST}/posts").respond(201, headers={"x-restli-id": "urn:li:share:9"})
+    worker(services.request_publish, post, manager, force=True)
+    written = json.loads(services.ledger_file(channel))[post.link]
+    expected = entry_for(urn="urn:li:share:9", kind="article", target="linkedin", author=AUTHOR)
+    assert written == {**expected, "posted_at": written["posted_at"]}
+
+
 def test_a_ledger_file_that_cannot_be_read_in_is_refused_whole_naming_its_entries(api, manager, channel):
     """An impossible date or a value longer than its column was a 500 (Postgres refuses the write, SQLite stored it):
     every entry is checked first, and the file is refused — 422, naming them — with nothing half imported."""
