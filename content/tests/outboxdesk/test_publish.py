@@ -49,6 +49,20 @@ def outbox_files(station):
 
 
 @pytest.mark.django_db
+def test_a_page_an_import_published_is_not_announced(article, consumer):
+    """Importing a site publishes each of its pages as `legacy:import`: that brings existing pages in, and no piece of
+    work went live, so the desk sends nothing for them (an import of lifehacker.dev sent 401 handoffs)."""
+    from agents.principals import ensure_legacy_import_user
+    from cms.services import publish
+
+    article.title = "Nightly backups, imported again"
+    publish(article, user=ensure_legacy_import_user())  # as importers/jekyll.py does
+    envelope = published_event(article).envelope()
+    assert consumer in handle_envelope(envelope)  # handled, and recorded once …
+    assert outbox_files("publisher") == []  # … with nothing on the belt
+
+
+@pytest.mark.django_db
 def test_a_page_that_goes_live_is_announced_by_the_outbox_events_consumer_once(article, consumer):
     event = published_event(article)  # the publish wrote the event, in its transaction …
     assert not settings.OUTBOX_BELT_ROOT.exists()  # … and nothing on the belt

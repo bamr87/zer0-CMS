@@ -19,8 +19,9 @@ from pathlib import Path
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
-from wagtail.models import Page
+from wagtail.models import Page, Revision
 
+from agents.principals import LEGACY_IMPORT_USER
 from ops.errors import Conflict, Invalid, NotFound
 
 from .harness import module, version
@@ -218,10 +219,15 @@ def publish_page(envelope: dict) -> dict | None:
     editor's approval, say — else the outbox event itself, since the belt parents every `published`. The trace is the
     parent's, because the belt keeps one trace per piece of work; only a page nothing on the belt names takes the
     event's `traceparent`'s (else the event id's). The event's `traceparent`, the platform request's trace, rides in
-    the payload. Idempotent: a redelivered event finds its handoff already in the outbox and sends nothing (None)."""
+    the payload. Idempotent: a redelivered event finds its handoff already in the outbox and sends nothing (None).
+    A revision the importers published (`legacy:import`) sends nothing either: an import brings a site's existing pages
+    into the platform, and no piece of work went live — announcing each one flooded the belt with a site's whole
+    history (one `published` per imported page)."""
     lib = module("belt")
     data = envelope["data"]
     page_id = data["page_id"]
+    if Revision.objects.filter(pk=data["revision_id"], user__username=LEGACY_IMPORT_USER).exists():
+        return None
     handoff_id = str(uuid.uuid5(PUBLISHED, envelope["id"]))
     belt = open_belt()
     station = belt.station(settings.OUTBOX_BELT_PUBLISHER)
