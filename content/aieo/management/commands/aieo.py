@@ -85,7 +85,7 @@ def _read(target: str, fmt: str) -> tuple[str, str]:
         if got.status >= 400:
             raise CommandError(f"{target} answered HTTP {got.status}")
         html = got.content_type.split(";", 1)[0].strip().lower() in crawl.HTML
-        return got.text(), "html" if html else fmt
+        return fetch.decode(got.body, got.charset), "html" if html else fmt
     path = Path(target)
     if not path.is_file():
         raise CommandError(f"no file {target}")

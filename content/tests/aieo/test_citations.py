@@ -133,3 +133,20 @@ def test_a_run_made_by_hand_never_overwrites_a_check_or_redoes_an_audit(
     check.refresh_from_db()
     assert check.status == CitationCheck.READY and check.cited is False and check.answer != "alice's answer"
     assert Audit.objects.values().get(pk=audit.pk) == before and len(fake.calls) == 1  # no model was asked again
+
+
+def test_a_model_chosen_for_the_probe_goes_to_its_own_provider_only(alice, fake, worker):
+    """The probe's model is its provider's: an engine it is not is asked with that engine's own default model, never
+    with a model it does not have."""
+    from ai.models import Assistant, ModelEntry, ProviderConfig
+
+    config, _ = ProviderConfig.objects.get_or_create(slug="fake")
+    entry = ModelEntry.objects.create(provider=config, model_id="fake-only-model")
+    Assistant.objects.filter(public_id=stable_id("bundled-assistant", services.PROBE)).update(model=entry)
+    query = CitationQuery.objects.create(
+        owner=alice, prompt="Who explains backups?", domain="backups.example.com", engines=["fake", "openai"]
+    )
+    fake.script = [probe([])]
+    with providers.override(FakeProvider([probe([])]), "openai") as openai:
+        worker(services.check_citations, query, user=alice)
+    assert fake.calls[0]["model"] == "fake-only-model" and openai.calls[0]["model"] == "fake-1"

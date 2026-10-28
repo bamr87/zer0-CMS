@@ -29,7 +29,8 @@ import yaml
 
 from . import analyzers, parser
 
-PROMPTS = Path(__file__).resolve().parent / "data" / "prompts"
+DATA = Path(__file__).resolve().parent / "data"
+PROMPTS = DATA / "prompts"
 FRONT_MATTER = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
 GRADES = ((90, "A+"), (80, "A"), (70, "B"), (60, "C"), (50, "D"))
 SEVERITY_ORDER = {"high": 0, "medium": 1, "low": 2}
@@ -303,10 +304,19 @@ def summary(parsed: dict) -> str:
     return "\n\n".join(sections)
 
 
+@cache
+def bundled_evaluation() -> dict:
+    """The bundled `aieo-evaluation` schema (data/bundled.yaml)."""
+    spec = yaml.safe_load((DATA / "bundled.yaml").read_text(encoding="utf-8"))
+    return next(item["schema"] for item in spec["schemas"] if item["key"] == "aieo-evaluation")
+
+
 def evaluation_schema(base: dict, patterns) -> dict:
-    """The bundled evaluation schema with one required property per pattern of the library as it is now, so a
-    pattern added or switched off changes what the model must answer."""
-    schema = copy.deepcopy(base)
+    """The evaluator's schema — the bundled one when a person left it without one that answers per pattern — with
+    one required property per pattern of the library as it is now, so a pattern added or switched off changes what
+    the model must answer."""
+    answers = (base or {}).get("properties", {}).get("patterns", {}).get("properties")
+    schema = copy.deepcopy(base if isinstance(answers, dict) and answers else bundled_evaluation())
     one = next(iter(schema["properties"]["patterns"]["properties"].values()))  # every pattern answers alike
     schema["properties"]["patterns"] = {
         "type": "object",

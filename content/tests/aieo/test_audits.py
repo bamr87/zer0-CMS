@@ -482,6 +482,50 @@ def test_a_run_that_ends_without_succeeding_fails_its_audit(alice, fake, worker)
     assert audited(row).status == Audit.FAILED and audited(row).error == "assistant has policy off"
 
 
+def test_a_page_in_a_charset_python_does_not_know_is_read_for_what_its_bytes_are(alice, worker, web):
+    """One page that declares a charset Python has no codec for never fails a URL's or a site's audit."""
+    bogus = {"Content-Type": "text/html; charset=x-bogus"}
+    web.get(at("/robots.txt")).respond(404)
+    web.get(at("/")).respond(200, content=_page("Home").encode(), headers=bogus)
+    row = audited(worker(services.audit, alice, kind="url", url="https://example.com/", method="heuristic"))
+    assert row.status == Audit.READY, row.error
+    site = audited(
+        worker(services.audit, alice, kind="site", url="https://example.com/", max_pages=1, method="heuristic")
+    )
+    assert site.status == Audit.READY and site.pages[0]["score"] is not None, site.error
+
+
+def test_an_evaluator_left_without_its_schema_answers_to_the_bundled_one(alice, fake, worker):
+    from ai.models import Assistant
+    from ai.services import stable_id
+
+    Assistant.objects.filter(public_id=stable_id("bundled-assistant", services.EVALUATOR)).update(output_schema=None)
+    fake.script = [answer(evaluation(0.5))]
+    row = audited(worker(services.audit, alice, kind="text", content=ARTICLE, method="ai"))
+    assert row.status == Audit.READY and row.scoring_method == "ai", row.error
+
+
+def test_a_provider_switched_off_after_the_audit_was_asked_for_leaves_the_heuristic_score(alice, fake):
+    from agents.runner import execute
+    from ai.models import ProviderConfig
+
+    row = services.audit(alice, kind="text", content=ARTICLE, method="ai")  # asked for; its run not executed yet
+    ProviderConfig.objects.update_or_create(slug="fake", defaults={"enabled": False})
+    execute(row.run)
+    row = audited(row)
+    assert row.status == Audit.READY and row.scoring_method == "heuristic" and "disabled" in row.result["fallback"]
+    assert fake.calls == []
+
+
+def test_an_embedder_that_fails_never_fails_a_finished_audit(alice, worker, monkeypatch):
+    def broken(*args, **kwargs):
+        raise ConnectionError("the embedding service is down")
+
+    monkeypatch.setattr(services, "embed_object", broken)
+    row = audited(worker(services.audit, alice, kind="text", content=ARTICLE, method="heuristic"))
+    assert row.status == Audit.READY and row.score == 52.0 and "could not be stored" in row.result["benchmark"]
+
+
 def test_a_run_that_scores_is_stopped_at_its_time_limit(alice, monkeypatch, django_capture_on_commit_callbacks):
     """Scoring a long text takes time with the square of a long paragraph (Python-Markdown), so an audit's run and a
     rewrite's (it scores the text before and after) are queued with a time limit, soft and then hard."""

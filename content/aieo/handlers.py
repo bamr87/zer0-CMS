@@ -38,6 +38,7 @@ from ai.handlers import Persona, generate, owned, register, used
 from ai.models import Assistant
 from ai.providers.base import InvalidOutput, ProviderError
 from ai.services import acting_for, check_page, stable_id
+from ops.errors import ApiError
 from research import fetch
 
 from . import crawl, parser, scoring, services, visual
@@ -78,7 +79,7 @@ def _documents(audit: Audit, run: AgentRun) -> tuple[list[dict], dict]:
             raise fetch.FetchError(f"the site answered HTTP {got.status}")
         kind = got.content_type.split(";", 1)[0].strip().lower()
         if kind in crawl.HTML:
-            body = got.text()
+            body = fetch.decode(got.body, got.charset)
             soup = BeautifulSoup(body, "html.parser")
             title = soup.title.get_text(strip=True) if soup.title else ""
             return [{"url": got.url, "title": title, "content": body, "format": Audit.HTML}], {}
@@ -103,9 +104,7 @@ def _documents(audit: Audit, run: AgentRun) -> tuple[list[dict], dict]:
 def _evaluate(run, ctx, audit: Audit, parsed: dict, patterns: list[dict], extra: dict, png: bytes | None) -> dict:
     """A model's evaluation, as a score: the bundled evaluator, its schema rebuilt from the library's patterns."""
     assistant = _assistant(services.EVALUATOR, run)
-    persona = Persona.of(assistant)
-    if audit.provider:
-        persona.provider = audit.provider
+    persona = _on(Persona.of(assistant), audit.provider)
     persona.schema = scoring.evaluation_schema(persona.schema or {}, patterns)
     persona.render_template = ""
     request = rendering.prompt(persona.prompt_template, scoring.evaluation_prompt(parsed, patterns))
@@ -115,6 +114,14 @@ def _evaluate(run, ctx, audit: Audit, parsed: dict, patterns: list[dict], extra:
         content = [{"type": "text", "text": request + SCREENSHOT}, visual.image_part(png)] if sees else request
     out = generate(run, ctx, persona, [{"role": "user", "content": content}])
     return scoring.from_evaluation(out["json"], parsed, patterns, provider=out["provider"], model=out["model"], **extra)
+
+
+def _on(persona: Persona, provider: str) -> Persona:
+    """`persona` asking `provider` instead of its own: then with that provider's default model, since its own model
+    is its own provider's."""
+    if provider and provider != persona.provider:
+        persona.provider, persona.model = provider, ""
+    return persona
 
 
 def _page_summary(doc: dict, result: dict | None) -> dict:
@@ -170,7 +177,7 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
     if row.method == Audit.AI:
         try:
             result = _evaluate(run, ctx, row, parsed, patterns, extra, png)
-        except (ProviderError, InvalidOutput) as e:
+        except (ProviderError, InvalidOutput, ApiError) as e:  # ApiError: the provider switched off or out of budget
             notes["fallback"] = f"the model's evaluation failed, so the heuristics scored it: {e}"
     scored[lead] = (doc, parsed, result)
     pages = [_page_summary(d, r) for d, _, r in scored] if row.kind == Audit.SITE else []
@@ -179,6 +186,10 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
         read = [p["score"] for p in pages if p["score"] is not None]
         score = round(sum(read) / len(read), 1)
         notes["site"] = {**site, "pages": len(read), "unread": len(pages) - len(read)}
+    try:
+        services.remember(row, parsed)  # the benchmark's vector, which is optional
+    except Exception as e:  # noqa: BLE001 — whatever an embedder raises, the scored audit stands without its neighbours
+        notes["benchmark"] = f"its vector could not be stored: {type(e).__name__}"
     with transaction.atomic():
         fresh = Audit.objects.select_for_update().get(pk=row.pk)
         fresh.status, fresh.error = Audit.READY, ""
@@ -191,7 +202,6 @@ def audit(run: AgentRun, ctx: ToolContext) -> dict:
         fresh.screenshot = shot or fresh.screenshot
         fresh.audited_at = timezone.now()
         fresh.save()
-        services.remember(fresh, parsed)
         fresh.benchmark = services.benchmark(fresh)
         fresh.save(update_fields=["benchmark"])
     return {"audit": str(row.public_id), "score": score, "grade": fresh.grade, "scoring_method": fresh.scoring_method}
@@ -280,8 +290,7 @@ def citation(run: AgentRun, ctx: ToolContext) -> dict:
     if check is None or _started_for(check, run).status != CitationCheck.QUEUED:
         raise PermissionError("this run has no citation check waiting for its answer")
     query = owned(CitationQuery, check.query.public_id, run)
-    persona = Persona.of(_assistant(services.PROBE, run))
-    persona.provider = check.engine
+    persona = _on(Persona.of(_assistant(services.PROBE, run)), check.engine)
     out = generate(run, ctx, persona, [{"role": "user", "content": f"Question: {query.prompt}"}])
     data = out["json"]
     found = services.cited(query.domain, data["answer"], data["sources"])

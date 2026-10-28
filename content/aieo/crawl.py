@@ -116,7 +116,7 @@ def robots_for(base: str) -> tuple[RobotFileParser, list[str], bool]:
     if got is None:
         rules.allow_all = True
         return rules, [], False
-    rules.parse(got.text().splitlines())
+    rules.parse(fetch.decode(got.body, got.charset).splitlines())
     return rules, list(rules.site_maps() or []), True
 
 
@@ -168,7 +168,7 @@ def read_page(url: str, source: str) -> Fetched:
     if got.content_type.split(";", 1)[0].strip().lower() not in HTML:
         page.error = f"not a web page ({got.content_type or 'no content type'})"
         return page
-    page.html = got.text()
+    page.html = fetch.decode(got.body, got.charset)  # a charset Python does not know is read for what the bytes are
     soup = BeautifulSoup(page.html, "html.parser")
     page.title = soup.title.get_text(strip=True)[:500] if soup.title else ""
     page.links = [a["href"] for a in soup.find_all("a", href=True)]
@@ -201,7 +201,7 @@ def crawl(base: str, *, max_pages: int = 25, deadline: float | None = None) -> C
 
     add(base, "seed")
     counts = {"sitemap": 0, "feed": 0, "link": 0}
-    for url in sitemap_urls(declared or [urljoin(base, "/sitemap.xml")]):
+    for url in sitemap_urls(declared or [urljoin(base, "/sitemap.xml")]) if len(order) < max_pages else ():
         counts["sitemap"] += add(url, "sitemap")
         if len(order) >= max_pages:  # no other sitemap is opened
             break
